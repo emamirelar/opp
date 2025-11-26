@@ -3,7 +3,16 @@
  * @author UNOPS Opportunity+ System Development Team
  */
 
-import { Component, input, output, signal, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  input,
+  output,
+  signal,
+  inject,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
@@ -11,19 +20,23 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { PanelModule } from 'primeng/panel';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
+import { MessageModule } from 'primeng/message';
 import { MarkdownModule } from 'ngx-markdown';
 
 // Services and Models
 import { OpportunityService } from '../../../../../services/opportunity.service';
-import { Opportunity } from '@shared/models/opportunity.model';
+import {
+  Opportunity,
+  OpportunityStatementValidationResponse,
+} from '@shared/models/opportunity.model';
 import { FeedbackDialogService } from '@shared/services/ui';
 import { GoogleOAuthService } from '@core/services/auth/google-oauth.service';
 
 /**
  * @class OpportunityStatementSectionComponent
  * @description Manages the AI-generated opportunity statement section with generate/regenerate functionality.
- * Displays markdown-formatted statement content.
- * 
+ * Displays markdown-formatted statement content and validates alignment with structured data.
+ *
  * @example
  * ```html
  * <app-opportunity-statement-section
@@ -31,7 +44,8 @@ import { GoogleOAuthService } from '@core/services/auth/google-oauth.service';
  *   (opportunityUpdated)="handleOpportunityUpdate($event)"
  * />
  * ```
- * 
+ *
+ * @implements OnInit
  * @since 1.0.0
  */
 @Component({
@@ -43,13 +57,14 @@ import { GoogleOAuthService } from '@core/services/auth/google-oauth.service';
     PanelModule,
     ButtonModule,
     DialogModule,
-    MarkdownModule
+    MessageModule,
+    MarkdownModule,
   ],
   templateUrl: './opportunity-statement-section.component.html',
   styleUrls: ['./opportunity-statement-section.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OpportunityStatementSectionComponent {
+export class OpportunityStatementSectionComponent implements OnInit {
   // Services
   private readonly opportunityService = inject(OpportunityService);
   private readonly translateService = inject(TranslateService);
@@ -96,6 +111,14 @@ export class OpportunityStatementSectionComponent {
   readonly isExporting = signal<boolean>(false);
 
   /**
+   * @description Signal indicating if statement validation is in progress
+   * @type {Signal<boolean>}
+   * @default false
+   * @since 1.0.0
+   */
+  readonly isValidating = signal<boolean>(false);
+
+  /**
    * @description Signal to control visibility of export success dialog
    * @type {Signal<boolean>}
    * @default false
@@ -112,6 +135,16 @@ export class OpportunityStatementSectionComponent {
   exportedDocUrl: string | null = null;
 
   /**
+   * @description Validation result for opportunity statement alignment
+   * @type {OpportunityStatementValidationResponse | null}
+   * @default null
+   * @since 1.0.0
+   */
+  validationResult = signal<OpportunityStatementValidationResponse | null>(
+    null,
+  );
+
+  /**
    * @description Generate or regenerate opportunity statement using AI
    * @returns {void}
    * @example
@@ -126,35 +159,90 @@ export class OpportunityStatementSectionComponent {
 
     this.generatingStatement.set(true);
 
-    this.opportunityService.generateOpportunityStatement(opportunityId).subscribe({
-      next: (response) => {
-        this.generatingStatement.set(false);
-        
-        // Update the opportunity with the generated statement
-        const currentOpportunity = this.opportunity();
-        if (currentOpportunity) {
-          const updatedOpportunity: Opportunity = {
-            ...currentOpportunity,
-            opportunityStatementMarkdown: response.statementMarkdown
-          };
-          
-          // Emit updated opportunity to parent
-          this.opportunityUpdated.emit(updatedOpportunity);
-        }
+    this.opportunityService
+      .generateOpportunityStatement(opportunityId)
+      .subscribe({
+        next: (response) => {
+          this.generatingStatement.set(false);
 
-        this.feedbackService.showSuccessToast({
-          detail: this.translateService.instant('message.opportunity.statementGenerated'),
-          summary: this.translateService.instant('message.success')
-        });
-        
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.generatingStatement.set(false);
-        this.cdr.detectChanges();
-        // Error handled by global interceptor
-      }
-    });
+          // Update the opportunity with the generated statement
+          const currentOpportunity = this.opportunity();
+          if (currentOpportunity) {
+            const updatedOpportunity: Opportunity = {
+              ...currentOpportunity,
+              opportunityStatementMarkdown: response.statementMarkdown,
+            };
+
+            // Emit updated opportunity to parent
+            this.opportunityUpdated.emit(updatedOpportunity);
+
+            // Trigger validation automatically after generating statement
+            this.validateOpportunityStatement();
+          }
+
+          this.feedbackService.showSuccessToast({
+            detail: this.translateService.instant(
+              'message.opportunity.statementGenerated',
+            ),
+            summary: this.translateService.instant('message.success'),
+          });
+
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.generatingStatement.set(false);
+          this.cdr.detectChanges();
+          // Error handled by global interceptor
+        },
+      });
+  }
+
+  /**
+   * @description Validate opportunity statement alignment with structured data
+   * @returns {void}
+   * @example
+   * ```typescript
+   * this.validateOpportunityStatement();
+   * ```
+   * @since 1.0.0
+   */
+  validateOpportunityStatement(): void {
+    const opportunityId = this.opportunity()?.id;
+    if (!opportunityId) return;
+
+    const statement = this.opportunity()?.opportunityStatementMarkdown;
+    if (!statement) return;
+
+    this.isValidating.set(true);
+    this.validationResult.set(null);
+
+    this.opportunityService
+      .validateOpportunityStatement(opportunityId)
+      .subscribe({
+        next: (response) => {
+          this.isValidating.set(false);
+          this.validationResult.set(response);
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.isValidating.set(false);
+          this.cdr.detectChanges();
+          // Error handled by global interceptor
+        },
+      });
+  }
+
+  /**
+   * @description Lifecycle hook - validate statement on component init if it exists
+   * @returns {void}
+   * @since 1.0.0
+   */
+  ngOnInit(): void {
+    // Validate statement when component initializes if statement exists
+    const statement = this.opportunity()?.opportunityStatementMarkdown;
+    if (statement) {
+      this.validateOpportunityStatement();
+    }
   }
 
   /**
@@ -178,17 +266,19 @@ export class OpportunityStatementSectionComponent {
     try {
       // Get valid Google OAuth ID token (will trigger auth popup if needed)
       let idToken: string;
-      
+
       try {
         idToken = await this.googleOAuthService.getValidIdToken();
       } catch (authError) {
         console.error('❌ Google authentication failed:', authError);
-        
+
         this.feedbackService.showErrorToast({
           summary: this.translateService.instant('message.error'),
-          detail: this.translateService.instant('message.opportunity.exportAuthRequired')
+          detail: this.translateService.instant(
+            'message.opportunity.exportAuthRequired',
+          ),
         });
-        
+
         this.isExporting.set(false);
         this.cdr.detectChanges();
         return;
@@ -204,45 +294,52 @@ export class OpportunityStatementSectionComponent {
       console.log('🌐 Exporting to Google Doc...');
 
       // Make API call with OAuth ID token
-      const response = await fetch('https://api.ai.unops.org/v1/convert/markdown-to-google-doc', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${idToken}`
+      const response = await fetch(
+        'https://api.ai.unops.org/v1/convert/markdown-to-google-doc',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+          },
+          body: formData,
         },
-        body: formData
-      });
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
         console.error('API Error:', errorText);
-        
+
         // Handle authentication errors - refresh token and retry
         if (response.status === 401 || response.status === 403) {
           console.log('🔄 Token expired, refreshing and retrying...');
-          
+
           try {
             // Refresh token and retry
             await this.googleOAuthService.refreshToken();
-            
+
             // Retry the export with fresh token
             this.isExporting.set(false);
             this.cdr.detectChanges();
             return this.exportToGoogleDoc();
           } catch (refreshError) {
             console.error('❌ Token refresh failed:', refreshError);
-            
+
             this.feedbackService.showErrorToast({
               summary: this.translateService.instant('message.error'),
-              detail: this.translateService.instant('message.opportunity.exportAuthExpired')
+              detail: this.translateService.instant(
+                'message.opportunity.exportAuthExpired',
+              ),
             });
           }
         } else {
           this.feedbackService.showErrorToast({
             summary: this.translateService.instant('message.error'),
-            detail: this.translateService.instant('message.opportunity.exportFailed')
+            detail: this.translateService.instant(
+              'message.opportunity.exportFailed',
+            ),
           });
         }
-        
+
         this.isExporting.set(false);
         this.cdr.detectChanges();
         return;
@@ -250,38 +347,44 @@ export class OpportunityStatementSectionComponent {
 
       const result = await response.json();
       console.log('✅ Export successful:', result);
-      
+
       // Extract the Google Doc URL from the response
       const docUrl = result.data?.data?.url || result.data?.url || result.url;
-      
+
       if (docUrl) {
         this.exportedDocUrl = docUrl;
         this.showExportSuccessDialog = true;
-        
+
         this.feedbackService.showSuccessToast({
           summary: this.translateService.instant('message.success'),
-          detail: this.translateService.instant('message.opportunity.exportSuccess')
+          detail: this.translateService.instant(
+            'message.opportunity.exportSuccess',
+          ),
         });
       } else {
         console.error('No URL found in response:', result);
         this.feedbackService.showWarningToast({
           summary: this.translateService.instant('message.warning'),
-          detail: this.translateService.instant('message.opportunity.exportNoUrl')
+          detail: this.translateService.instant(
+            'message.opportunity.exportNoUrl',
+          ),
         });
       }
 
       this.cdr.detectChanges();
     } catch (error: any) {
       console.error('Error exporting to Google Doc:', error);
-      
-      let errorMessage = this.translateService.instant('message.opportunity.exportError');
+
+      let errorMessage = this.translateService.instant(
+        'message.opportunity.exportError',
+      );
       if (error.message) {
         errorMessage = error.message;
       }
-      
+
       this.feedbackService.showErrorToast({
         summary: this.translateService.instant('message.error'),
-        detail: errorMessage
+        detail: errorMessage,
       });
     } finally {
       this.isExporting.set(false);
@@ -330,7 +433,7 @@ export class OpportunityStatementSectionComponent {
       const links = markdownContainer.querySelectorAll('a');
       links.forEach((link: HTMLAnchorElement) => {
         const href = link.getAttribute('href');
-        
+
         if (!href) return;
 
         // Handle hash links (internal anchors)
@@ -339,25 +442,29 @@ export class OpportunityStatementSectionComponent {
           link.addEventListener('click', (event: Event) => {
             event.preventDefault();
             event.stopPropagation();
-            
+
             // Extract the anchor target (remove the # symbol)
             const targetId = href.substring(1);
             const targetElement = document.getElementById(targetId);
-            
+
             if (targetElement) {
               // Smooth scroll to the target element
-              targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              targetElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+              });
             }
           });
         } else {
           // For all other links (external or internal paths), open in new tab
           link.setAttribute('target', '_blank');
           link.setAttribute('rel', 'noopener noreferrer');
-          
+
           // Add external link icon for visual indication
           if (!link.querySelector('.external-link-icon')) {
             const icon = document.createElement('i');
-            icon.className = 'pi pi-external-link external-link-icon ml-1 text-xs';
+            icon.className =
+              'pi pi-external-link external-link-icon ml-1 text-xs';
             link.appendChild(icon);
           }
         }
@@ -365,4 +472,3 @@ export class OpportunityStatementSectionComponent {
     }, 100);
   }
 }
-

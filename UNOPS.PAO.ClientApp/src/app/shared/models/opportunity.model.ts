@@ -643,3 +643,14 @@ export interface DSTRecommendationsResponse {
   executionTimeMs: number;
 }
 
+/**
+ * Response model for opportunity statement validation
+ * Contains information about whether the statement is aligned with structured data
+ */
+export interface OpportunityStatementValidationResponse {
+  opportunityId: number;
+  isAligned: boolean;
+  misalignmentItems: string[];
+  message: string;
+}
+
