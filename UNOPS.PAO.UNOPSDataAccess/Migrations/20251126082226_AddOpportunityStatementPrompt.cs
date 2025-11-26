@@ -108,7 +108,23 @@ Please analyze this information and generate the opportunity statement now, stri
     'GetOpportunityDetailsForAIAsync',
     'Generates a comprehensive opportunity statement in markdown format following the UNOPS template, analyzing opportunity data and attached documents to create a structured proposal document.',
     true
-);
+)
+ON CONFLICT (""Type"") DO UPDATE SET
+    ""SystemInstructions"" = EXCLUDED.""SystemInstructions"",
+    ""UserPrompt"" = EXCLUDED.""UserPrompt"",
+    ""CreatedAt"" = NOW(),
+    ""Name"" = EXCLUDED.""Name"",
+    ""Status"" = EXCLUDED.""Status"",
+    ""ContentConfig"" = EXCLUDED.""ContentConfig"",
+    ""GenerationConfig"" = EXCLUDED.""GenerationConfig"",
+    ""Location"" = EXCLUDED.""Location"",
+    ""Model"" = EXCLUDED.""Model"",
+    ""Project"" = EXCLUDED.""Project"",
+    ""SafetySettings"" = EXCLUDED.""SafetySettings"",
+    ""ToolsConfig"" = EXCLUDED.""ToolsConfig"",
+    ""DataRetrievalMethod"" = EXCLUDED.""DataRetrievalMethod"",
+    ""Description"" = EXCLUDED.""Description"",
+    ""AdminCanChange"" = EXCLUDED.""AdminCanChange"";
             ");
         }
 
@@ -122,3 +138,4 @@ WHERE ""Type"" = 'opportunity_generate_statement';
         }
     }
 }
+
