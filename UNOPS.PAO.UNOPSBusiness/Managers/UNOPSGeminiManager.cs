@@ -11,6 +11,7 @@ using Newtonsoft.Json;
 using Npgsql;
 using NpgsqlTypes;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.DataAccess.Context;
 using AutoMapper;
 using UNOPS.PAO.Business.Repositories.Generic;
@@ -4943,13 +4944,52 @@ public class UNOPSGeminiManager : IGeminiManager
                         throw new InvalidOperationException("AI response is empty");
                     }
                     
-                    var geminiResponse = JObject.Parse(aiResponse);
-                    var textContent = geminiResponse["candidates"]?[0]?["content"]?["parts"]?[0]?["text"]?.ToString();
+                    // Log the first 500 characters of the response for debugging
+                    _logger.LogDebug($"📋 [OPPORTUNITY-STATEMENT] Response preview: {aiResponse.Substring(0, Math.Min(500, aiResponse.Length))}");
                     
+                    var geminiResponse = JObject.Parse(aiResponse);
+                    
+                    // Check for error in the response
+                    var error = geminiResponse["error"];
+                    if (error != null)
+                    {
+                        var errorMessage = error["message"]?.ToString() ?? "Unknown error";
+                        var errorCode = error["code"]?.ToString() ?? "UNKNOWN";
+                        _logger.LogError($"❌ [OPPORTUNITY-STATEMENT] Gemini API returned error - Code: {errorCode}, Message: {errorMessage}");
+                        throw new InvalidOperationException($"Gemini API error: {errorMessage}");
+                    }
+                    
+                    // Navigate through the JSON structure safely
+                    var candidates = geminiResponse["candidates"];
+                    if (candidates == null || !candidates.Any())
+                    {
+                        _logger.LogError($"❌ [OPPORTUNITY-STATEMENT] No candidates found in response. Response structure: {geminiResponse.ToString(Newtonsoft.Json.Formatting.None).Substring(0, Math.Min(200, geminiResponse.ToString().Length))}");
+                        throw new InvalidOperationException("No candidates found in Gemini response");
+                    }
+                    
+                    var firstCandidate = candidates[0];
+                    var content = firstCandidate?["content"];
+                    if (content == null)
+                    {
+                        _logger.LogError($"❌ [OPPORTUNITY-STATEMENT] No content found in first candidate. Candidate structure: {firstCandidate?.ToString(Newtonsoft.Json.Formatting.None)}");
+                        throw new InvalidOperationException("No content found in Gemini response candidate");
+                    }
+                    
+                    var responseParts = content["parts"];
+                    if (responseParts == null || !responseParts.Any())
+                    {
+                        _logger.LogError($"❌ [OPPORTUNITY-STATEMENT] No parts found in content. Content structure: {content.ToString(Newtonsoft.Json.Formatting.None)}");
+                        throw new InvalidOperationException("No parts found in Gemini response content");
+                    }
+                    
+                    var textContent = responseParts[0]?["text"]?.ToString();
                     if (string.IsNullOrEmpty(textContent))
                     {
+                        _logger.LogError($"❌ [OPPORTUNITY-STATEMENT] No text found in first part. Part structure: {responseParts[0]?.ToString(Newtonsoft.Json.Formatting.None)}");
                         throw new InvalidOperationException("No text content found in Gemini response");
                     }
+
+                    _logger.LogInformation($"✅ [OPPORTUNITY-STATEMENT] Successfully extracted text content (length: {textContent.Length} chars)");
 
                     // Remove markdown code block wrapping if present (```markdown ... ```)
                     var markdownMatch = System.Text.RegularExpressions.Regex.Match(
@@ -4961,16 +5001,23 @@ public class UNOPSGeminiManager : IGeminiManager
                     if (markdownMatch.Success)
                     {
                         statementMarkdown = markdownMatch.Groups[1].Value.Trim();
+                        _logger.LogInformation($"📝 [OPPORTUNITY-STATEMENT] Extracted markdown from code block (length: {statementMarkdown.Length} chars)");
                     }
                     else
                     {
                         statementMarkdown = textContent.Trim();
+                        _logger.LogInformation($"📝 [OPPORTUNITY-STATEMENT] Using raw text content (length: {statementMarkdown.Length} chars)");
                     }
+                }
+                catch (Newtonsoft.Json.JsonException jsonEx)
+                {
+                    _logger.LogError(jsonEx, $"❌ [OPPORTUNITY-STATEMENT] Failed to parse JSON response. Response: {aiResponse?.Substring(0, Math.Min(1000, aiResponse?.Length ?? 0))}");
+                    throw new InvalidOperationException("Failed to parse AI response as JSON", jsonEx);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, $"❌ [OPPORTUNITY-STATEMENT] Failed to parse Gemini response: {ex.Message}");
-                    throw new InvalidOperationException("Failed to parse AI response", ex);
+                    _logger.LogError(ex, $"❌ [OPPORTUNITY-STATEMENT] Failed to extract text from Gemini response: {ex.Message}");
+                    throw new InvalidOperationException($"Failed to process AI response: {ex.Message}", ex);
                 }
 
                 // Step 9: Save the generated statement to the Opportunity entity
@@ -4995,6 +5042,209 @@ public class UNOPSGeminiManager : IGeminiManager
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"❌ [OPPORTUNITY-STATEMENT] Error generating opportunity statement for opportunity {opportunityId}: {ex.Message}");
+                stopwatch.Stop();
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Validates whether the opportunity statement is aligned with the structured data in the opportunity record
+        /// Uses Gemini AI to analyze the statement content against actual opportunity fields
+        /// Returns whether the statement is aligned and specific misalignment items if not aligned
+        /// </summary>
+        /// <param name="opportunityId">The opportunity ID to validate statement for</param>
+        /// <param name="user">Current user context</param>
+        /// <returns>Validation response with alignment status and misalignment items</returns>
+        public async Task<UNOPS.PAO.Models.Opportunities.OpportunityStatementValidationResponse> ValidateOpportunityStatementAsync(int opportunityId, ClaimsPrincipal? user = null)
+        {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            
+            try
+            {
+                _logger.LogInformation($"🔍 [STATEMENT-VALIDATION] Starting statement validation for opportunity {opportunityId}");
+
+                // Step 1: Get opportunity manager
+                var opportunityManager = _managerWrapper.OpportunityManager as UNOPSOpportunityManager;
+                if (opportunityManager == null)
+                {
+                    throw new InvalidOperationException("UNOPSOpportunityManager is required for statement validation");
+                }
+
+                // Step 2: Get comprehensive opportunity data using the same method as statement generation
+                var opportunityDetails = await opportunityManager.GetOpportunityDetailsForAIAsync(opportunityId);
+                
+                if (opportunityDetails == null || !opportunityDetails.Any())
+                {
+                    throw new KeyNotFoundException($"Opportunity with ID {opportunityId} not found");
+                }
+
+                // Step 3: Get the opportunity statement markdown separately
+                var opportunity = await _context.Opportunities
+                    .Where(o => o.Id == opportunityId)
+                    .Select(o => new { o.OpportunityStatementMarkdown })
+                    .FirstOrDefaultAsync();
+
+                if (opportunity == null || string.IsNullOrWhiteSpace(opportunity.OpportunityStatementMarkdown))
+                {
+                    throw new BusinessException("No opportunity statement exists to validate");
+                }
+
+                _logger.LogInformation($"📊 [STATEMENT-VALIDATION] Retrieved opportunity with statement (length: {opportunity.OpportunityStatementMarkdown.Length} chars)");
+
+                // Step 4: Get the validation prompt
+                var promptData = await _aiService.GetPromptData("opportunity_statement_validation");
+                var validationPrompt = promptData.FirstOrDefault();
+
+                if (validationPrompt == null)
+                {
+                    throw new InvalidOperationException("Validation prompt 'opportunity_statement_validation' not found in database");
+                }
+
+                // Step 5: Add the statement markdown to the opportunity details dictionary
+                opportunityDetails["statementMarkdown"] = opportunity.OpportunityStatementMarkdown;
+
+                var structuredDataJson = JsonConvert.SerializeObject(opportunityDetails, Formatting.Indented);
+                _logger.LogInformation($"📝 [STATEMENT-VALIDATION] Prepared structured data (length: {structuredDataJson.Length} chars)");
+
+                // Step 6: Process placeholders in system instructions and user prompt
+                var systemInstructionsTemplate = validationPrompt.SystemInstructions ?? string.Empty;
+                var fullyFormedSystemInstructions = _aiService.ProcessPlaceholders(systemInstructionsTemplate, structuredDataJson);
+                
+                var userPromptTemplate = validationPrompt.UserPrompt ?? string.Empty;
+                var fullyFormedUserPrompt = _aiService.ProcessPlaceholders(userPromptTemplate, structuredDataJson);
+
+                // Step 7: Call Gemini API for validation
+                var userContent = new
+                {
+                    role = "user",
+                    parts = new[] { new { text = fullyFormedUserPrompt } }
+                };
+
+                var aiResponse = await _aiService.CallGeminiApi(userContent, validationPrompt, fullyFormedSystemInstructions);
+                _logger.LogInformation($"🤖 [STATEMENT-VALIDATION] Received AI response (length: {aiResponse?.Length ?? 0} chars)");
+
+                // Step 8: Parse the AI response
+                string validationResultJson;
+                try
+                {
+                    if (string.IsNullOrEmpty(aiResponse))
+                    {
+                        throw new InvalidOperationException("AI response was null or empty");
+                    }
+                    
+                    var geminiResponse = JObject.Parse(aiResponse);
+                    
+                    // Check for errors
+                    var error = geminiResponse["error"];
+                    if (error != null)
+                    {
+                        var errorMessage = error["message"]?.ToString() ?? "Unknown error";
+                        var errorCode = error["code"]?.ToString() ?? "UNKNOWN";
+                        _logger.LogError($"❌ [STATEMENT-VALIDATION] Gemini API returned error - Code: {errorCode}, Message: {errorMessage}");
+                        throw new InvalidOperationException($"Gemini API error: {errorMessage}");
+                    }
+                    
+                    // Extract text content from response
+                    var candidates = geminiResponse["candidates"];
+                    if (candidates == null || !candidates.Any())
+                    {
+                        throw new InvalidOperationException("No candidates found in Gemini response");
+                    }
+                    
+                    var firstCandidate = candidates[0];
+                    var content = firstCandidate?["content"];
+                    if (content == null)
+                    {
+                        throw new InvalidOperationException("No content found in Gemini response candidate");
+                    }
+                    
+                    var responseParts = content["parts"];
+                    if (responseParts == null || !responseParts.Any())
+                    {
+                        throw new InvalidOperationException("No parts found in Gemini response content");
+                    }
+                    
+                    var textContent = responseParts[0]?["text"]?.ToString();
+                    if (string.IsNullOrEmpty(textContent))
+                    {
+                        throw new InvalidOperationException("No text content found in Gemini response");
+                    }
+
+                    validationResultJson = textContent.Trim();
+                    _logger.LogInformation($"✅ [STATEMENT-VALIDATION] Extracted validation result (length: {validationResultJson.Length} chars)");
+
+                    // Remove markdown JSON code block wrapping if present (```json ... ```)
+                    var jsonMatch = System.Text.RegularExpressions.Regex.Match(
+                        validationResultJson, 
+                        @"```(?:json)?\s*\n?(.*?)\n?```", 
+                        System.Text.RegularExpressions.RegexOptions.Singleline
+                    );
+                    
+                    if (jsonMatch.Success)
+                    {
+                        validationResultJson = jsonMatch.Groups[1].Value.Trim();
+                        _logger.LogInformation($"📝 [STATEMENT-VALIDATION] Extracted JSON from code block");
+                    }
+                    
+                    // Additional check: try to find JSON object boundaries if plain text was returned
+                    if (!validationResultJson.StartsWith("{"))
+                    {
+                        _logger.LogWarning($"⚠️ [STATEMENT-VALIDATION] Response doesn't start with JSON. First 100 chars: {validationResultJson.Substring(0, Math.Min(100, validationResultJson.Length))}");
+                        
+                        // Try to find the first { and last } to extract JSON
+                        var firstBrace = validationResultJson.IndexOf('{');
+                        var lastBrace = validationResultJson.LastIndexOf('}');
+                        
+                        if (firstBrace >= 0 && lastBrace > firstBrace)
+                        {
+                            validationResultJson = validationResultJson.Substring(firstBrace, lastBrace - firstBrace + 1);
+                            _logger.LogInformation($"📝 [STATEMENT-VALIDATION] Extracted JSON from text boundaries");
+                        }
+                        else
+                        {
+                            _logger.LogError($"❌ [STATEMENT-VALIDATION] Could not find valid JSON in response. Full response: {validationResultJson}");
+                            throw new InvalidOperationException("AI response does not contain valid JSON");
+                        }
+                    }
+                }
+                catch (Newtonsoft.Json.JsonException jsonEx)
+                {
+                    _logger.LogError(jsonEx, $"❌ [STATEMENT-VALIDATION] Failed to parse JSON response");
+                    throw new InvalidOperationException("Failed to parse AI response as JSON", jsonEx);
+                }
+
+                // Step 9: Parse validation result into response model
+                _logger.LogInformation($"🔍 [STATEMENT-VALIDATION] Attempting to deserialize JSON (length: {validationResultJson.Length})");
+                
+                OpportunityStatementValidationResponse? validationResult;
+                try 
+                {
+                    validationResult = JsonConvert.DeserializeObject<OpportunityStatementValidationResponse>(validationResultJson);
+                }
+                catch (Newtonsoft.Json.JsonException deserializeEx)
+                {
+                    _logger.LogError(deserializeEx, $"❌ [STATEMENT-VALIDATION] Failed to deserialize validation result. JSON content: {validationResultJson}");
+                    throw new InvalidOperationException($"Failed to deserialize AI response as OpportunityStatementValidationResponse. JSON: {validationResultJson}", deserializeEx);
+                }
+                
+                if (validationResult == null)
+                {
+                    throw new InvalidOperationException("Failed to deserialize validation result");
+                }
+
+                validationResult.OpportunityId = opportunityId;
+
+                stopwatch.Stop();
+
+                _logger.LogInformation(
+                    $"✅ [STATEMENT-VALIDATION] Validated opportunity statement for opportunity {opportunityId} in {stopwatch.ElapsedMilliseconds}ms. IsAligned: {validationResult.IsAligned}, Misalignments: {validationResult.MisalignmentItems?.Count ?? 0}"
+                );
+
+                return validationResult;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ [STATEMENT-VALIDATION] Error validating opportunity statement for opportunity {opportunityId}: {ex.Message}");
                 stopwatch.Stop();
                 throw;
             }

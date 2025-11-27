@@ -3245,6 +3245,78 @@ For each person, add a "relevanceExplanation" field with a one-line explanation 
         1440
     );
 
+    -- Insert opportunity_statement_validation prompt
+    INSERT INTO public."AiPrompt" (
+        "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
+        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
+        "ToolsConfig", "DataRetrievalMethod", "Description", "AdminCanChange", 
+        "Feature", "UseCache", "CacheInvalidationMinutes"
+    ) VALUES (
+        'opportunity_statement_validation',
+        'You are an expert analyst validating opportunity statements against structured data. Return ONLY valid JSON.
+
+VALIDATION RULES:
+1. Compare statementMarkdown field against ALL other data fields
+2. ONLY output items that are MISALIGNED - never output items that match correctly
+3. Empty or null data fields are ALIGNED with placeholder text like TBD or To be determined
+4. Do not flag empty fields as misalignments when statement uses placeholder text
+5. Use user-friendly field names in output, not technical field names
+
+MISALIGNMENT CRITERIA:
+- Contradictions: Statement value conflicts with data value (different numbers, dates, names)
+- Omissions: Data has real values but statement does not mention them
+- Inaccuracies: Wrong amounts, dates, names when data has actual values
+
+DO NOT FLAG:
+- Empty data field with statement placeholder text - THIS IS ALIGNED
+- Items that correctly match - NEVER include correct items in output
+- Minor wording differences when meaning is same
+
+USER-FRIENDLY FIELD NAMES:
+Use these readable names instead of technical field names:
+- InitiativeBudgetUSD → Budget
+- TargetSigningDate → Target Signing Date
+- TargetDeliveryDate → Target Delivery Date
+- FundingPartners → Funding Partners
+- ClientPartners → Client Partners
+- ExpectedBeneficiaries → Expected Beneficiaries
+- StrategicAlignment → Strategic Alignment
+- Countries → Countries
+- SDGs → SDGs (already user-friendly)
+- Deliverables/Outputs → Deliverables
+Always use natural, readable language in misalignment descriptions
+
+OUTPUT FORMAT:
+{
+  "isAligned": false if ANY real misalignments exist,
+  "misalignmentItems": [
+    "Budget - Statement mentions $500,000 but data shows $750,000",
+    "Funding Partners - Statement omits World Bank as a funding partner",
+    "Target Signing Date - Statement says June 2025 but data shows June 15, 2024"
+  ],
+  "message": "The opportunity statement has 3 misalignment(s) with the structured data."
+}
+
+CRITICAL: misalignmentItems must be array of strings NOT objects. Empty array if fully aligned.',
+        '{promptData}',
+        NOW(),
+        'Opportunity Statement Validation',
+        1,
+        '{"role":"user","parts":[{"text":"{promptData}"}]}',
+        '{"temperature":0.4,"top_p":0.95,"max_output_tokens":8192,"response_mime_type":"application/json"}',
+        'europe-west4',
+        'gemini-2.0-flash-001',
+        '{{PROJECT_ID}}',
+        NULL,
+        '[]',
+        'GetOpportunityDetailsForAIAsync',
+        'Validates opportunity statement alignment with structured data. Only outputs actual misalignments, ignores empty fields with placeholders.',
+        true,
+        'Opportunity',
+        false,
+        60
+    );
+
     -- Insert opportunity_generate_statement prompt
     INSERT INTO public."AiPrompt" (
         "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
@@ -3499,5 +3571,5 @@ Focus on concrete deliverables that UNOPS is expected to provide, not vague goal
         60
     );
 
-    RAISE NOTICE 'AI prompts inserted successfully: 29 records';
+    RAISE NOTICE 'AI prompts inserted successfully: 30 records';
 END $$;

@@ -683,7 +683,18 @@ export interface DSTRecommendationsResponse {
 }
 
 /**
- * AC2 (WHAT Section) - Framework Status Models
+ * Response model for opportunity statement validation
+ * Contains information about whether the statement is aligned with structured data
+ */
+export interface OpportunityStatementValidationResponse {
+  opportunityId: number;
+  isAligned: boolean;
+  misalignmentItems: string[];
+  message: string;
+}
+
+/**
+ * Framework Status Models
  * Response from framework status check endpoint
  */
 export interface FrameworkStatusResponse {
@@ -705,7 +716,7 @@ export interface TaggedFrameworkInfo {
 }
 
 /**
- * AC2 (WHAT Section) - Extracted Deliverable Models
+ * Extracted Deliverable Models
  * Temporary model for AI-extracted products/services (not yet saved to database)
  */
 export interface ExtractedDeliverableInfo {

@@ -64,6 +64,11 @@ public interface IGeminiManager
     Task<string> GenerateOpportunityStatementAsync(int opportunityId, ClaimsPrincipal user = null);
     
     /// <summary>
+    /// Validates whether the opportunity statement is aligned with the structured data in the opportunity record
+    /// </summary>
+    Task<OpportunityStatementValidationResponse> ValidateOpportunityStatementAsync(int opportunityId, ClaimsPrincipal user = null);
+    
+    /// <summary>
     /// Creates batch embeddings for a list of texts (delegates to AiContextualService)
     /// </summary>
     Task<List<string>> CreateBatchEmbeddingsAsync(List<string> texts);
