@@ -147,6 +147,7 @@
           [opportunityId]="opportunity()!.id!"
           [opportunity]="opportunity()"
           [collapsed]="documentsCollapsed()"
+          [canUpdate]="canUpdate()"
           (togglePanel)="toggleDocumentsPanel()"
           (opportunityUpdated)="reloadOpportunity()"
         />
