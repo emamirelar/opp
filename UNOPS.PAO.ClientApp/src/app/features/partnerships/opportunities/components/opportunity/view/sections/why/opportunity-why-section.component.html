@@ -7,38 +7,40 @@
         @if (isSaving()) {
           <i class="pi pi-spin pi-spinner text-xl text-primary"></i>
         }
-        @if (!isEditing()) {
-          <p-button
-            icon="pi pi-pencil"
-            [text]="true"
-            [rounded]="true"
-            severity="secondary"
-            size="small"
-            (onClick)="startEditing()"
-            pTooltip="{{ 'button.edit' | translate }}"
-            [disabled]="isSaving()"
-          />
-        } @else {
-          <p-button
-            icon="pi pi-check"
-            [text]="true"
-            [rounded]="true"
-            severity="success"
-            size="small"
-            (onClick)="saveSection()"
-            [disabled]="isSaving()"
-            pTooltip="{{ 'button.save' | translate }}"
-          />
-          <p-button
-            icon="pi pi-times"
-            [text]="true"
-            [rounded]="true"
-            severity="danger"
-            size="small"
-            (onClick)="cancelEditing()"
-            [disabled]="isSaving()"
-            pTooltip="{{ 'button.cancel' | translate }}"
-          />
+        @if (canUpdate()) {
+          @if (!isEditing()) {
+            <p-button
+              icon="pi pi-pencil"
+              [text]="true"
+              [rounded]="true"
+              severity="secondary"
+              size="small"
+              (onClick)="startEditing()"
+              pTooltip="{{ 'button.edit' | translate }}"
+              [disabled]="isSaving()"
+            />
+          } @else {
+            <p-button
+              icon="pi pi-check"
+              [text]="true"
+              [rounded]="true"
+              severity="success"
+              size="small"
+              (onClick)="saveSection()"
+              [disabled]="isSaving()"
+              pTooltip="{{ 'button.save' | translate }}"
+            />
+            <p-button
+              icon="pi pi-times"
+              [text]="true"
+              [rounded]="true"
+              severity="danger"
+              size="small"
+              (onClick)="cancelEditing()"
+              [disabled]="isSaving()"
+              pTooltip="{{ 'button.cancel' | translate }}"
+            />
+          }
         }
       </div>
     </div>

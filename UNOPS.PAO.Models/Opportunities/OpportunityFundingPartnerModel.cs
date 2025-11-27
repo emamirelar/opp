@@ -90,12 +90,12 @@ public class OpportunityFundingPartnerModel
     public bool IsPooledContribution { get; set; }
     
     /// <summary>
-    /// Selected Partner Agreement Number (AC9)
+    /// Selected Partner Agreement Number
     /// </summary>
     public string? SelectedPartnerAgreementNumber { get; set; }
     
     /// <summary>
-    /// Available partner agreements for this partner (AC9)
+    /// Available partner agreements for this partner
     /// </summary>
     public List<PartnerAgreementInfo>? AvailableAgreements { get; set; }
 }

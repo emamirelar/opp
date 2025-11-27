@@ -94,6 +94,11 @@ export class OpportunityWhereSectionComponent implements OnInit {
   // Inputs
   readonly opportunity = input.required<Opportunity>();
   readonly suggestions = input<any[]>([]);
+  
+  /**
+   * @description Input signal for update permission - controls visibility of edit button
+   */
+  readonly canUpdate = input<boolean>(false);
 
   // Outputs
   readonly opportunityUpdated = output<Opportunity>();

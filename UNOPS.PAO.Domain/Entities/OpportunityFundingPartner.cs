@@ -80,7 +80,7 @@ public class OpportunityFundingPartner
     public bool IsPooledContribution { get; set; }
     
     /// <summary>
-    /// Selected Partner Agreement Number for this funding relationship (AC9)
+    /// Selected Partner Agreement Number for this funding relationship
     /// </summary>
     [MaxLength(50)]
     public string? SelectedPartnerAgreementNumber { get; set; }

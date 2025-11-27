@@ -32,108 +32,43 @@
             {{ "message.opportunity.generateStatementPrompt" | translate }}
           </p>
         </div>
-        <p-button
-          [label]="
-            generatingStatement()
-              ? ('button.generating' | translate)
-              : ('button.generateOpportunityStatement' | translate)
-          "
-          icon="pi pi-sparkles"
-          [loading]="generatingStatement()"
-          [disabled]="generatingStatement()"
-          (onClick)="generateOpportunityStatement()"
-          styleClass="p-button-lg"
-        />
+        @if (canUpdate()) {
+          <p-button
+            [label]="generatingStatement() ? ('button.generating' | translate) : ('button.generateOpportunityStatement' | translate)"
+            icon="pi pi-sparkles"
+            [loading]="generatingStatement()"
+            [disabled]="generatingStatement()"
+            (onClick)="generateOpportunityStatement()"
+            styleClass="p-button-lg"
+          />
+        }
       </div>
     } @else {
       <!-- Show regenerate button, export button, and markdown content -->
       <div class="space-y-4">
-        <!-- Validation Result - Show above statement -->
-        @if (isValidating()) {
-          <div
-            class="flex items-center gap-2 p-4 bg-gray-50 border border-gray-200 rounded-md"
-          >
-            <i class="pi pi-spin pi-spinner text-lg text-blue-500"></i>
-            <span class="text-gray-700">{{
-              "message.opportunity.validatingStatement" | translate
-            }}</span>
+        @if (canUpdate()) {
+          <div class="flex justify-end gap-2">
+            <p-button
+              [label]="isExporting() ? ('button.exporting' | translate) : ('button.exportToGoogleDoc' | translate)"
+              icon="pi pi-google"
+              [loading]="isExporting()"
+              [disabled]="isExporting() || generatingStatement()"
+              (onClick)="exportToGoogleDoc()"
+              severity="secondary"
+              [outlined]="true"
+            />
+            <p-button
+              [label]="generatingStatement() ? ('button.regenerating' | translate) : ('button.regenerateOpportunityStatement' | translate)"
+              icon="pi pi-refresh"
+              [loading]="generatingStatement()"
+              [disabled]="generatingStatement() || isExporting()"
+              (onClick)="generateOpportunityStatement()"
+              severity="secondary"
+              [outlined]="true"
+            />
           </div>
         }
-
-        @if (!isValidating() && validationResult()) {
-          @if (validationResult()!.isAligned) {
-            <!-- Aligned - Show information message -->
-            <p-message severity="info" styleClass="w-full">
-              <div class="flex items-start gap-2">
-                <i class="pi pi-check-circle text-xl"></i>
-                <div class="flex-1">
-                  <div class="font-semibold mb-1">
-                    {{ "message.opportunity.statementAligned" | translate }}
-                  </div>
-                  <div class="text-sm">{{ validationResult()!.message }}</div>
-                </div>
-              </div>
-            </p-message>
-          } @else {
-            <!-- Not Aligned - Show warning message with misalignments -->
-            <p-message severity="warn" styleClass="w-full">
-              <div class="flex items-start gap-2">
-                <i class="pi pi-exclamation-triangle text-xl"></i>
-                <div class="flex-1">
-                  <div class="font-semibold mb-2">
-                    {{ "message.opportunity.statementNotAligned" | translate }}
-                  </div>
-                  <div class="text-sm mb-2">
-                    {{ validationResult()!.message }}
-                  </div>
-                  @if (
-                    validationResult()!.misalignmentItems &&
-                    validationResult()!.misalignmentItems.length > 0
-                  ) {
-                    <ul class="list-disc pl-5 space-y-1 text-sm">
-                      @for (
-                        item of validationResult()!.misalignmentItems;
-                        track $index
-                      ) {
-                        <li>{{ item }}</li>
-                      }
-                    </ul>
-                  }
-                </div>
-              </div>
-            </p-message>
-          }
-        }
-
-        <div class="flex justify-end gap-2">
-          <p-button
-            [label]="
-              isExporting()
-                ? ('button.exporting' | translate)
-                : ('button.exportToGoogleDoc' | translate)
-            "
-            icon="pi pi-google"
-            [loading]="isExporting()"
-            [disabled]="isExporting() || generatingStatement()"
-            (onClick)="exportToGoogleDoc()"
-            severity="secondary"
-            [outlined]="true"
-          />
-          <p-button
-            [label]="
-              generatingStatement()
-                ? ('button.regenerating' | translate)
-                : ('button.regenerateOpportunityStatement' | translate)
-            "
-            icon="pi pi-refresh"
-            [loading]="generatingStatement()"
-            [disabled]="generatingStatement() || isExporting()"
-            (onClick)="generateOpportunityStatement()"
-            severity="secondary"
-            [outlined]="true"
-          />
-        </div>
-
+        
         <!-- Display markdown content -->
         <div class="prose max-w-none markdown-content">
           <markdown

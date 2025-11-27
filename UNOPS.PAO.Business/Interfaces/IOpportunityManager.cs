@@ -9,8 +9,10 @@ public interface IOpportunityManager
 {
     Task<OpportunityModel> CreateOpportunityAsync(OpportunityRequest model);
     Task<OpportunityModel?> GetOpportunityAsync(int id);
+    Task<OpportunityModel?> GetOpportunityAsync(ClaimsPrincipal user, int id);
     Task<IEnumerable<OpportunityModel>> GetAllOpportunitiesAsync();
     Task<OpportunityModel?> UpdateOpportunityAsync(UpdateOpportunityRequest model);
+    Task<OpportunityModel> UpdateOverviewSectionAsync(int id, OverviewSectionRequest request);
     Task<OpportunityModel> UpdateWhatSectionAsync(int id, WhatSectionRequest request);
     Task<OpportunityModel> UpdateWhySectionAsync(int id, WhySectionRequest request);
     Task<OpportunityModel> UpdateWhoSectionAsync(int id, WhoSectionRequest request);

@@ -149,6 +149,15 @@
         },
         {
             "order": 17,
+            "name": "OutputEmbeddings",
+            "type": "seeder",
+            "className": "OutputEmbeddingSeeder",
+            "methodName": "SeedOutputEmbeddingsAsync",
+            "filePath": "Seeders/OutputEmbeddingSeeder.cs",
+            "description": "Output embeddings (placeholder - requires AI services, run separately)"
+        },
+        {
+            "order": 18,
             "name": "SequenceResync",
             "type": "seeder",
             "className": "SequenceResyncSeeder",
