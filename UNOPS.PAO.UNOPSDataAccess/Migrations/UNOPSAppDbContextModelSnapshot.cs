@@ -1738,6 +1738,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("OpportunityStatementMarkdown")
+                        .HasColumnType("text");
+
                     b.Property<string>("PartnerReference")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
@@ -1803,6 +1806,10 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     b.Property<int>("PartnerId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("SelectedPartnerAgreementNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.HasKey("Id");
 
@@ -1966,6 +1973,10 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     b.Property<decimal?>("Percentage")
                         .HasColumnType("decimal(5, 2)");
+
+                    b.Property<string>("SelectedPartnerAgreementNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.HasKey("Id");
 
@@ -2577,6 +2588,107 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.HasDiscriminator().HasValue("Partner");
 
                     b.UseTphMappingStrategy();
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.PartnerAgreement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BasePartnerAgreementNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("PartnerAgreementCountries")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("PartnerAgreementDescriptionLong")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTime?>("PartnerAgreementEndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PartnerAgreementNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("PartnerAgreementPartner")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("PartnerAgreementPartnerDescription")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("PartnerAgreementResponsibleOrgUnit")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("PartnerAgreementResponsibleOrgUnitDescription")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("PartnerAgreementScope")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("PartnerAgreementScopeDescription")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<bool>("PartnerAgreementServiceLineFundManagementFlag")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("PartnerAgreementServiceLineHumanResourcesFlag")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("PartnerAgreementServiceLineInfrastructureFlag")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("PartnerAgreementServiceLineOtherFlag")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("PartnerAgreementServiceLineProcurementFlag")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("PartnerAgreementServiceLineProjectManagementFlag")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("PartnerAgreementSignedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("PartnerAgreementStartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PartnerAgreementType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("PartnerAgreementTypeDescription")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PartnerAgreements", "public");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.PartnerTree", b =>

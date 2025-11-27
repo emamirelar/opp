@@ -662,7 +662,12 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
 
         private async Task<string> GetURL(AiPrompt promptData)
         {
-            return $"https://{promptData.Location}-aiplatform.googleapis.com/v1/projects/{promptData.Project}/locations/{promptData.Location}/publishers/google/models/{promptData.Model}:generateContent";
+            // Use project ID from environment configuration instead of database
+            // This allows different environments (Dev, QA, Prod) to use their respective Google Cloud projects
+            // without requiring database changes during deployment
+            // Note: The Project property still exists in AiPrompt entity for backward compatibility and potential future use
+            var projectId = _configuration.GetValue<string>("AISettings:ProjectId");
+            return $"https://{promptData.Location}-aiplatform.googleapis.com/v1/projects/{projectId}/locations/{promptData.Location}/publishers/google/models/{promptData.Model}:generateContent";
         }
 
         public async Task PublishMessageToPubSub(MyPubSubMessage message)

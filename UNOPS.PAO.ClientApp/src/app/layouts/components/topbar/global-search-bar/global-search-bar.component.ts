@@ -122,6 +122,7 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
   contactColumns = signal<ListViewColumn[]>([]);
   partnerColumns = signal<ListViewColumn[]>([]);
   interactionColumns = signal<ListViewColumn[]>([]);
+  opportunityColumns = signal<ListViewColumn[]>([]);
   columnsLoading = signal(false);
   
   // Current results based on active tab
@@ -140,6 +141,8 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
         return this.partnerColumns();
       case 'interactions':
         return this.interactionColumns();
+      case 'opportunities':
+        return this.opportunityColumns();
       default:
         return [];
     }
@@ -297,6 +300,8 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
       this.router.navigate(['/partnerships/partners', entityId]);
     } else if (currentActiveTabKey === 'interactions') {
       this.router.navigate(['/partnerships/interactions', entityId]);
+    } else if (currentActiveTabKey === 'opportunities') {
+      this.router.navigate(['/partnerships/opportunities', entityId]);
     }
   }
 
@@ -395,6 +400,7 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
       case 'contacts': return 'contacts';
       case 'partners': return 'corporate_fare';
       case 'interactions': return 'chat';
+      case 'opportunities': return 'lightbulb';
       default: return 'help';
     }
   }
@@ -404,6 +410,7 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
       case 'contacts': return 'blue';
       case 'partners': return 'green';
       case 'interactions': return 'purple';
+      case 'opportunities': return 'orange';
       default: return 'gray';
     }
   }
@@ -532,6 +539,7 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
       case 'contacts': return 'bg-blue-100 text-blue-600';
       case 'partners': return 'bg-green-100 text-green-600';
       case 'interactions': return 'bg-purple-100 text-purple-600';
+      case 'opportunities': return 'bg-orange-100 text-orange-600';
       default: return 'bg-gray-100 text-gray-600';
     }
   }
@@ -542,6 +550,7 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
       case 'contacts': return 'bg-blue-100 text-blue-700';
       case 'partners': return 'bg-green-100 text-green-700';
       case 'interactions': return 'bg-purple-100 text-purple-700';
+      case 'opportunities': return 'bg-orange-100 text-orange-700';
       default: return 'bg-gray-100 text-gray-700';
     }
   }
@@ -597,10 +606,21 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (columns) => {
           this.interactionColumns.set(this.processColumns(columns, 'Interaction'));
-          this.columnsLoading.set(false);
         },
         error: (error) => {
           console.error('Failed to load interaction columns:', error);
+        }
+      });
+    
+    // Load Opportunity columns
+    this.entityConfigurationService.getEntityListViewConfiguration('Opportunity')
+      .subscribe({
+        next: (columns) => {
+          this.opportunityColumns.set(this.processColumns(columns, 'Opportunity'));
+          this.columnsLoading.set(false);
+        },
+        error: (error) => {
+          console.error('Failed to load opportunity columns:', error);
           this.columnsLoading.set(false);
         }
       });
@@ -723,6 +743,8 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
       return entity['name'] || 'Unknown Partner';
     } else if (this.activeTabKey === 'interactions') {
       return entity['subject'] || entity['description'] || 'Unknown Interaction';
+    } else if (this.activeTabKey === 'opportunities') {
+      return entity['name'] || 'Unknown Opportunity';
     }
     return 'Unknown';
   }
@@ -753,6 +775,13 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
       const interactionType = entity['type'] || '';
       const date = entity['date'] ? new Date(entity['date']).toLocaleDateString() : '';
       return date ? `${interactionType} • ${date}` : interactionType;
+    } else if (this.activeTabKey === 'opportunities') {
+      const workflowStageName = entity['workflowStage']?.['name'] || entity['workflowStageName'] || '';
+      const partnerReference = entity['partnerReference'] || '';
+      if (workflowStageName && partnerReference) {
+        return `${workflowStageName} • ${partnerReference}`;
+      }
+      return workflowStageName || partnerReference || null;
     }
     return null;
   }

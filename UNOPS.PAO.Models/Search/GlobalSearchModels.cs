@@ -10,9 +10,10 @@ namespace UNOPS.PAO.Models.Search
         public List<GlobalSearchResult> Partners { get; set; } = new List<GlobalSearchResult>();
         public List<GlobalSearchResult> Contacts { get; set; } = new List<GlobalSearchResult>();
         public List<GlobalSearchResult> Interactions { get; set; } = new List<GlobalSearchResult>();
+        public List<GlobalSearchResult> Opportunities { get; set; } = new List<GlobalSearchResult>();
         public string SearchQuery { get; set; } = "";
         public double ExecutionTimeMs { get; set; }
-        public int TotalResults => (Partners?.Count ?? 0) + (Contacts?.Count ?? 0) + (Interactions?.Count ?? 0);
+        public int TotalResults => (Partners?.Count ?? 0) + (Contacts?.Count ?? 0) + (Interactions?.Count ?? 0) + (Opportunities?.Count ?? 0);
     }
 
     /// <summary>

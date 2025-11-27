@@ -50,6 +50,11 @@ public class Opportunity : ModifiableDeletableEntity
     public string? Challenges { get; set; }
     
     /// <summary>
+    /// AI-generated opportunity statement in markdown format
+    /// </summary>
+    public string? OpportunityStatementMarkdown { get; set; }
+    
+    /// <summary>
     /// Whether funding is pooled across multiple partners
     /// </summary>
     public bool IsPooledFunding { get; set; }

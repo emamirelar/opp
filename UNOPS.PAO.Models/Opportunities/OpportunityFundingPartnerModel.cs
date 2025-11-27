@@ -1,4 +1,5 @@
 using UNOPS.PAO.Models.Documents;
+using UNOPS.PAO.Models.Partners;
 
 namespace UNOPS.PAO.Models;
 
@@ -33,7 +34,6 @@ public class OpportunityFundingPartnerModel
     /// Partner's approval status (Approved/NotApproved)
     /// </summary>
     public string? PartnerApprovalStatus { get; set; }
-    
     /// <summary>
     /// Due Diligence approval status (NotRequired/Required/NotApproved/Approved)
     /// </summary>
@@ -88,5 +88,14 @@ public class OpportunityFundingPartnerModel
     /// Whether this partner's contribution is part of pooled funding
     /// </summary>
     public bool IsPooledContribution { get; set; }
+    
+    /// <summary>
+    /// Selected Partner Agreement Number (AC9)
+    /// </summary>
+    public string? SelectedPartnerAgreementNumber { get; set; }
+    
+    /// <summary>
+    /// Available partner agreements for this partner (AC9)
+    /// </summary>
+    public List<PartnerAgreementInfo>? AvailableAgreements { get; set; }
 }
-

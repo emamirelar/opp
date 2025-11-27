@@ -16,6 +16,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
             var documentTypesToSeed = new List<(string EntityType, string Name)>
             {
                 // Partner document types
+                ("Partner", "Partnership Agreement"),
                 ("Partner", "Partner/National strategic plan"),
                 ("Partner", "Concept note"),
                 ("Partner", "Action plan"),

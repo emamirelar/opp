@@ -24,6 +24,11 @@ public class OpportunityModel
     public string? ExpectedBeneficiaries { get; set; }
     public string? Challenges { get; set; }
     
+    /// <summary>
+    /// AI-generated opportunity statement in markdown format
+    /// </summary>
+    public string? OpportunityStatementMarkdown { get; set; }
+    
     public bool IsPooledFunding { get; set; }
     
     public List<OpportunityFundingPartnerModel>? FundingPartners { get; set; }
@@ -55,5 +60,10 @@ public class OpportunityModel
     public string? CreatedByName { get; set; }
     public int? LastModifiedBy { get; set; }
     public string? LastModifiedByName { get; set; }
+    
+    /// <summary>
+    /// The current user's role(s) for this opportunity (for dashboard display)
+    /// </summary>
+    public string? UserRole { get; set; }
 }
 

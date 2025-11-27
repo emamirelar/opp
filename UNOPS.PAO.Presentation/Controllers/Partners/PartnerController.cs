@@ -1763,6 +1763,110 @@ public class PartnerController : BaseController
     }
 
     /// <summary>
+    /// Searches opportunities related to a specific partner using text search
+    /// </summary>
+    /// <param name="partnerId">ID of the partner</param>
+    /// <param name="query">Search text to find opportunities</param>
+    /// <param name="pageIndex">Page number (1-based)</param>
+    /// <param name="pageSize">Number of items per page</param>
+    /// <param name="orderBy">Field to order results by</param>
+    /// <param name="ascending">Sort direction</param>
+    /// <param name="filterActive">Filter for active records only</param>
+    /// <returns>Paginated list of opportunities matching search criteria for this partner</returns>
+    [HttpGet(APIDictionary.Partner + "/{partnerId}/opportunities/search")]
+    [AccessControlled(EntityTypes.Partner, "read")]
+    public async Task<ActionResult<PaginationResponse<OpportunityModel>>> SearchPartnerOpportunities(
+        int partnerId,
+        [FromQuery] string query,
+        [FromQuery] int pageIndex = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? orderBy = "Name",
+        [FromQuery] bool ascending = true,
+        [FromQuery] bool filterActive = true)
+    {
+        try
+        {
+            _logger.LogInformation("Searching opportunities for partner {PartnerId} with query '{Query}'", partnerId, query);
+
+            // Validate partner exists
+            var partner = await _manager.GetPartnerAsync(partnerId);
+            if (partner == null)
+            {
+                _logger.LogWarning("Partner {PartnerId} not found", partnerId);
+                return NotFound(new { error = $"Partner with ID {partnerId} not found" });
+            }
+
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return BadRequest(new { error = "Search query is required" });
+            }
+
+            // Get all opportunities for this partner first
+            var partnerOpportunities = await _opportunityManager.GetOpportunitiesByPartnerIdAsync(partnerId);
+            var partnerOpportunityIds = partnerOpportunities.Select(o => o.Id).ToList();
+
+            if (!partnerOpportunityIds.Any())
+            {
+                _logger.LogInformation("No opportunities found for partner {PartnerId}", partnerId);
+                return Ok(new PaginationResponse<OpportunityModel>
+                {
+                    Records = new List<OpportunityModel>(),
+                    TotalCount = 0,
+                    PageIndex = pageIndex,
+                    PageSize = pageSize
+                });
+            }
+
+            // Perform search using AdvancedSearchService
+            var paginationRequest = new PaginationRequest
+            {
+                PageIndex = pageIndex,
+                PageSize = pageSize,
+                OrderBy = orderBy,
+                Ascending = ascending,
+                FilterActive = filterActive
+            };
+
+            // Use AdvancedSearchService for search with metadata
+            var searchResult = await _advancedSearchService.SearchWithQueryAndMetadataAsync<Opportunity, OpportunityModel>(
+                query,
+                paginationRequest,
+                User);
+
+            // Filter results to only include opportunities for this partner
+            var filteredRecords = searchResult.Records
+                .Where(o => partnerOpportunityIds.Contains(o.Id))
+                .ToList();
+
+            var totalFilteredCount = filteredRecords.Count;
+
+            // Apply pagination to filtered results
+            var startIndex = (pageIndex - 1) * pageSize;
+            var paginatedRecords = filteredRecords
+                .Skip(startIndex)
+                .Take(pageSize)
+                .ToList();
+
+            _logger.LogInformation("Found {Count} opportunities matching '{Query}' for partner {PartnerId}", 
+                totalFilteredCount, query, partnerId);
+
+            return Ok(new PaginationResponse<OpportunityModel>
+            {
+                Records = paginatedRecords,
+                TotalCount = totalFilteredCount,
+                PageIndex = pageIndex,
+                PageSize = pageSize,
+                SearchMetadata = searchResult.SearchMetadata // Preserve search metadata
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error searching opportunities for partner {PartnerId}", partnerId);
+            return StatusCode(500, new { error = "Internal server error while searching opportunities", details = ex.Message });
+        }
+    }
+
+    /// <summary>
     /// Helper method to create audit log entry with complete opportunity data
     /// </summary>
     private async Task CreateAuditLogAsync(int opportunityId, string action, OpportunityModel? opportunityData = null)

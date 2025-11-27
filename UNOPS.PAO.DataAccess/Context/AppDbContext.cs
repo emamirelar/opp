@@ -25,6 +25,7 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<PAOUser> PAOUsers { get; set; }
     public DbSet<Currency> Currencies { get; set; }
     public DbSet<Country> Countries { get; set; }
+    public DbSet<PartnerAgreement> PartnerAgreements { get; set; }
 
     public DbSet<EligibleEntity> EligibleEntities { get; set; }
 

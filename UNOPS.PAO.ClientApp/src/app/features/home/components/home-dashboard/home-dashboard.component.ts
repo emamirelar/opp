@@ -26,19 +26,24 @@ import { PartnerEditDialogComponent } from '@partnerships/partners/components/pa
 import { PartnerEditDialogFooterComponent } from '@partnerships/partners/components/partner/edit-dialog/footer/partner-edit-dialog-footer.component';
 import { ContactEditDialogComponent } from '@partnerships/contacts/components/contact/edit-dialog/contact-edit-dialog.component';
 import { InteractionModalComponent } from '@partnerships/interactions/components/interaction/modal/interaction-modal.component';
+import { CreateOpportunityFromInteractionsDialogComponent } from '@partnerships/interactions/components/dialogs/create-opportunity-from-interactions-dialog.component';
 import { Partner } from '@partnerships/partners/models/partner.model';
 import { Contact } from '@partnerships/contacts/models/contact.model';
 import { Interaction } from '@partnerships/interactions/models/interaction.model';
+import { Opportunity } from '@shared/models/opportunity.model';
+import { CreateOpportunityFromInteractionsConfig } from '@partnerships/interactions/models/interaction-selection.model';
 import { DashboardCardComponent, DashboardCardConfig, DashboardCardFilter } from '@app/shared/components/data-display/dashboard-card';
 
 interface DashboardData {
   myPartners: Partner[];
   myContacts: Contact[];
   myInteractions: Interaction[];
+  myOpportunities: Opportunity[];
   draftActions: {
     partners: Partner[];
     contacts: Contact[];
     interactions: Interaction[];
+    opportunities: Opportunity[];
   };
   orgUnitRecentUpdates: RecentUpdate[];
   orgUnitName: string;
@@ -47,7 +52,7 @@ interface DashboardData {
 interface RecentUpdate {
   id: number;
   name: string;
-  type: 'Partner' | 'Contact' | 'Interaction';
+  type: 'Partner' | 'Contact' | 'Interaction' | 'Opportunity';
   lastModifiedDate: string;
   lastModifiedBy: number;
   lastModifiedByName?: string;
@@ -65,6 +70,7 @@ interface DashboardSummary {
   totalMyPartners: number;
   totalMyContacts: number;
   totalMyInteractions: number;
+  totalMyOpportunities: number;
   totalDraftActions: number;
 }
 
@@ -85,7 +91,8 @@ interface DashboardSummary {
     RouterModule,
     ChartModule,
     HttpClientModule,
-    DashboardCardComponent
+    DashboardCardComponent,
+    CreateOpportunityFromInteractionsDialogComponent
   ],
   providers: [DialogService]
 })
@@ -170,6 +177,7 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
     totalMyPartners: 0,
     totalMyContacts: 0,
     totalMyInteractions: 0,
+    totalMyOpportunities: 0,
     totalDraftActions: 0
   });
 
@@ -196,6 +204,7 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
   partnerPermissions = signal<any>({ permissions: { canCreate: false } });
   contactPermissions = signal<any>({ permissions: { canCreate: false } });
   interactionPermissions = signal<any>({ permissions: { canCreate: false } });
+  opportunityPermissions = signal<any>({ permissions: { canCreate: false } });
   permissionsLoading = signal(true);
 
   // Live timestamp
@@ -457,7 +466,7 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
   private loadPermissions() {
     this.permissionsLoading.set(true);
     
-    // Load permissions for all three entities
+    // Load permissions for all four entities
     forkJoin({
       partners: this.permissionService.getEntityPermissions('/partnerships/partners').pipe(
         catchError(() => of({ permissions: { canCreate: false } }))
@@ -467,12 +476,16 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
       ),
       interactions: this.permissionService.getEntityPermissions('/partnerships/interactions').pipe(
         catchError(() => of({ permissions: { canCreate: false } }))
+      ),
+      opportunities: this.permissionService.getEntityPermissions('/partnerships/opportunities').pipe(
+        catchError(() => of({ permissions: { canCreate: false } }))
       )
     }).subscribe({
       next: (permissions) => {
         this.partnerPermissions.set(permissions.partners);
         this.contactPermissions.set(permissions.contacts);
         this.interactionPermissions.set(permissions.interactions);
+        this.opportunityPermissions.set(permissions.opportunities);
         this.permissionsLoading.set(false);
       },
       error: () => {
@@ -513,7 +526,8 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
   hasAnyCreatePermission(): boolean {
     return this.partnerPermissions().permissions.canCreate || 
            this.contactPermissions().permissions.canCreate || 
-           this.interactionPermissions().permissions.canCreate;
+           this.interactionPermissions().permissions.canCreate ||
+           this.opportunityPermissions().permissions.canCreate;
   }
 
   @HostListener('window:resize', ['$event'])
@@ -634,6 +648,28 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
       })
     );
 
+    // Load user's opportunities using dedicated dashboard API
+    const myOpportunities$ = this.http.get<any>(`/api/dashboard/my-opportunities`, {
+      params: { pageSize: '1000' }
+    }).pipe(
+      map(response => response.records || []),
+      catchError(err => {
+        console.error('Error loading my opportunities:', err);
+        return of([]);
+      })
+    );
+
+    // Load user's draft opportunities using dedicated dashboard API
+    const draftOpportunities$ = this.http.get<any>(`/api/dashboard/my-draft-opportunities`, {
+      params: { pageSize: '1000' }
+    }).pipe(
+      map(response => response.records || []),
+      catchError(err => {
+        console.error('Error loading draft opportunities:', err);
+        return of([]);
+      })
+    );
+
     // Load recent updates from current organization unit (top 10)
     const orgUnitRecentUpdates$ = this.getOrgUnitRecentUpdates().pipe(
       catchError(err => {
@@ -650,9 +686,11 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
       myPartners: myPartners$,
       myContacts: myContacts$,
       myInteractions: myInteractions$,
+      myOpportunities: myOpportunities$,
       draftPartners: draftPartners$,
       draftContacts: draftContacts$,
       draftInteractions: draftInteractions$,
+      draftOpportunities: draftOpportunities$,
       orgUnitRecentUpdates: orgUnitRecentUpdates$
     }).subscribe({
       next: (data) => {
@@ -660,10 +698,12 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
           myPartners: data.myPartners,
           myContacts: data.myContacts,
           myInteractions: data.myInteractions,
+          myOpportunities: data.myOpportunities,
           draftActions: {
             partners: data.draftPartners,
             contacts: data.draftContacts,
-            interactions: data.draftInteractions
+            interactions: data.draftInteractions,
+            opportunities: data.draftOpportunities
           },
           orgUnitRecentUpdates: data.orgUnitRecentUpdates.updates,
           orgUnitName: data.orgUnitRecentUpdates.orgUnitName
@@ -733,9 +773,11 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
       totalMyPartners: data.myPartners.length,
       totalMyContacts: data.myContacts.length,
       totalMyInteractions: data.myInteractions.length,
+      totalMyOpportunities: data.myOpportunities.length,
       totalDraftActions: data.draftActions.partners.length + 
                         data.draftActions.contacts.length + 
-                        data.draftActions.interactions.length
+                        data.draftActions.interactions.length +
+                        data.draftActions.opportunities.length
     };
     this.summary.set(summary);
   }
@@ -778,7 +820,8 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
     const actionableData = [
       { label: 'Partners', count: data.draftActions.partners.length },
       { label: 'Contacts', count: data.draftActions.contacts.length },
-      { label: 'Interactions', count: data.draftActions.interactions.length }
+      { label: 'Interactions', count: data.draftActions.interactions.length },
+      { label: 'Opportunities', count: data.draftActions.opportunities.length }
     ];
 
     // Always show all categories, including zero values
@@ -790,12 +833,14 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
         backgroundColor: [
           '#F59E0B', // Orange for Partners
           '#EF4444', // Red for Contacts  
-          '#8B5CF6'  // Purple for Interactions
+          '#8B5CF6', // Purple for Interactions
+          '#3B82F6'  // Blue for Opportunities
         ],
         borderColor: [
           '#D97706',
           '#DC2626', 
-          '#7C3AED'
+          '#7C3AED',
+          '#2563EB'
         ],
         borderWidth: 1,
         borderRadius: 4
@@ -879,6 +924,38 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
         this.loadDashboardData();
       }
     });
+  }
+
+  // Dialog state for Create Opportunity
+  showCreateOpportunityDialog = signal(false);
+  createOpportunityConfig = signal<CreateOpportunityFromInteractionsConfig>({
+    partnerId: 0,
+    partnerName: '',
+    mode: 'list-view',
+    preSelectedInteractionIds: []
+  });
+
+  openNewOpportunityModal() {
+    this.createOpportunityConfig.set({
+      partnerId: 0, // No specific partner - user can select
+      partnerName: '',
+      mode: 'list-view', // From dashboard
+      preSelectedInteractionIds: []
+    });
+    this.showCreateOpportunityDialog.set(true);
+  }
+
+  handleOpportunityCreated(result: any) {
+    if (result) {
+      // Refresh dashboard data
+      this.loadDashboardData();
+      
+      // Navigate to the new opportunity if ID is returned
+      if (result.id) {
+        this.router.navigate(['/partnerships/opportunities', result.id]);
+      }
+    }
+    this.showCreateOpportunityDialog.set(false);
   }
 
   navigateToContacts() {
@@ -1113,7 +1190,8 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
     const routes = {
       'Partner': ['partnerships', 'partners', entityId.toString()],
       'Contact': ['partnerships', 'contacts', entityId.toString()],
-      'Interaction': ['partnerships', 'interactions', entityId.toString()]
+      'Interaction': ['partnerships', 'interactions', entityId.toString()],
+      'Opportunity': ['partnerships', 'opportunities', entityId.toString()]
     };
     
     const routeSegments = routes[entityType as keyof typeof routes];
@@ -1221,6 +1299,7 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
       case 'Partner': return 'pi pi-users';
       case 'Contact': return 'pi pi-user';
       case 'Interaction': return 'pi pi-comments';
+      case 'Opportunity': return 'pi pi-briefcase';
       default: return 'pi pi-circle';
     }
   }
@@ -1230,6 +1309,7 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
       case 'Partner': return 'partner-icon';
       case 'Contact': return 'contact-icon';
       case 'Interaction': return 'interaction-icon';
+      case 'Opportunity': return 'opportunity-icon';
       default: return 'default-icon';
     }
   }
@@ -1268,7 +1348,8 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
     
     return dashboardData.draftActions.partners.length + 
            dashboardData.draftActions.contacts.length + 
-           dashboardData.draftActions.interactions.length;
+           dashboardData.draftActions.interactions.length +
+           dashboardData.draftActions.opportunities.length;
   }
 
   getDraftActionTypes(): string[] {
@@ -1279,6 +1360,7 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
     if (dashboardData.draftActions.partners.length > 0) types.push('Partners');
     if (dashboardData.draftActions.contacts.length > 0) types.push('Contacts');
     if (dashboardData.draftActions.interactions.length > 0) types.push('Interactions');
+    if (dashboardData.draftActions.opportunities.length > 0) types.push('Opportunities');
     
     return types;
   }
@@ -1294,6 +1376,8 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
         return dashboardData.draftActions.contacts.length;
       case 'Interactions':
         return dashboardData.draftActions.interactions.length;
+      case 'Opportunities':
+        return dashboardData.draftActions.opportunities.length;
       default:
         return 0;
     }
@@ -1314,7 +1398,8 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
       return [
         ...dashboardData.draftActions.partners,
         ...dashboardData.draftActions.contacts,
-        ...dashboardData.draftActions.interactions
+        ...dashboardData.draftActions.interactions,
+        ...dashboardData.draftActions.opportunities
       ];
     }
     
@@ -1325,6 +1410,8 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
         return dashboardData.draftActions.contacts;
       case 'Interactions':
         return dashboardData.draftActions.interactions;
+      case 'Opportunities':
+        return dashboardData.draftActions.opportunities;
       default:
         return [];
     }
@@ -1338,6 +1425,7 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
     if (dashboardData.draftActions.partners.some((p: any) => p.id === item.id)) return 'Partner';
     if (dashboardData.draftActions.contacts.some((c: any) => c.id === item.id)) return 'Contact';
     if (dashboardData.draftActions.interactions.some((i: any) => i.id === item.id)) return 'Interaction';
+    if (dashboardData.draftActions.opportunities.some((o: any) => o.id === item.id)) return 'Opportunity';
     
     return 'Partner'; // Default fallback
   }
@@ -1352,6 +1440,8 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
         return `${item.firstName || ''} ${item.lastName || ''}`.trim() || 'Unnamed Contact';
       case 'Interaction':
         return item.subject || 'Untitled Interaction';
+      case 'Opportunity':
+        return item.name || 'Untitled Opportunity';
       default:
         return 'Unknown Item';
     }
@@ -1368,6 +1458,8 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
       case 'Contact':
         return item.title || '';
       case 'Interaction':
+        return item.description || '';
+      case 'Opportunity':
         return item.description || '';
       default:
         return '';
