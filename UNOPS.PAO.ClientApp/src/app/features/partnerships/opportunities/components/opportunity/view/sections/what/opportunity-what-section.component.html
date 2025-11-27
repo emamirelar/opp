@@ -342,22 +342,14 @@
                           />
                         }
                         
-                        <!-- Procurement Expert Required Indicator -->
-                        @if (deliverable.procurementComponent && deliverable.serviceLine !== 'Procurement') {
+                        <!-- Procurement Expert Required Indicator (case-insensitive check) -->
+                        @if (deliverable.procurementComponent && deliverable.serviceLine?.toLowerCase() !== 'procurement') {
                           <p-chip 
                             [label]="'label.procurementExpertRequired' | translate" 
                             icon="pi pi-exclamation-triangle"
                             styleClass="text-xs"
                             [style]="{ 'background-color': '#fef3c7', 'color': '#92400e', 'border': '1px solid #fbbf24' }"
                             [pTooltip]="'message.procurementComponentDetected' | translate"
-                          />
-                        }
-                        @if (deliverable.procurementComponent && deliverable.serviceLine?.toLowerCase() !== 'procurement') {
-                          <p-chip 
-                            [label]="'⚠️ ' + ('label.procurementExpert' | translate)" 
-                            styleClass="text-xs font-semibold"
-                            [style]="{ 'background-color': '#fed7aa', 'color': '#9a3412' }"
-                            [pTooltip]="'message.procurementExpertNeeded' | translate"
                             tooltipPosition="top"
                           />
                         }

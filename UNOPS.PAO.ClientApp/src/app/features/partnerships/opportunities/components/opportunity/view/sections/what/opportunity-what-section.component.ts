@@ -247,6 +247,18 @@ export class OpportunityWhatSectionComponent implements OnInit {
     );
   });
 
+  constructor() {
+    // Effect must be in constructor (injection context)
+    // Re-check framework status when opportunity changes (e.g., when frameworks are tagged in WHO section)
+    effect(() => {
+      const opp = this.opportunity();
+      if (opp && opp.id) {
+        // Re-check framework status whenever opportunity signal changes
+        this.checkFrameworkStatus();
+      }
+    });
+  }
+
   ngOnInit(): void {
     // Load dropdown data on initialization
     this.loadDropdownData();
@@ -288,18 +300,6 @@ export class OpportunityWhatSectionComponent implements OnInit {
         this.filteredOutputs.set(data);
         
         this.cdr.detectChanges();
-      }
-    });
-
-    // Check framework status on load
-    this.checkFrameworkStatus();
-
-    // Re-check framework status when opportunity changes (e.g., when frameworks are tagged in WHO section)
-    effect(() => {
-      const opp = this.opportunity();
-      if (opp && opp.id) {
-        // Re-check framework status whenever opportunity signal changes
-        this.checkFrameworkStatus();
       }
     });
   }
