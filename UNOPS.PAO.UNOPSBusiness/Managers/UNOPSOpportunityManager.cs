@@ -165,6 +165,14 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 .ThenInclude(s => s.Targets)
                     .ThenInclude(t => t.Indicators)
                         .ThenInclude(i => i.SDGIndicator)
+            .Include(o => o.UNCFOutcomes)
+                .ThenInclude(uo => uo.UNCFOutcome)
+            .Include(o => o.UNCFOutcomes)
+                .ThenInclude(uo => uo.OpportunityCountry)
+                    .ThenInclude(oc => oc.Country)
+            .Include(o => o.UNCFOutcomes)
+                .ThenInclude(uo => uo.Indicators)
+                    .ThenInclude(ui => ui.UNCFIndicator)
             .FirstOrDefaultAsync(o => o.Id == id && !o.IsDeleted);
 
         if (entity == null)
@@ -691,7 +699,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     {
         var entity = await opportunityRepository.GetByIdAsync(id, new[]
         {
-            nameof(Opportunity.SDGs)
+            nameof(Opportunity.SDGs),
+            nameof(Opportunity.UNCFOutcomes),
+            nameof(Opportunity.UNCFIndicators)
         });
 
         if (entity == null)
@@ -902,6 +912,110 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                             }
                         }
                     }  // End of else block for differential target update
+                }
+            }
+        }
+
+        // Update UNCF Outcome alignments with differential update strategy
+        if (request.UncfOutcomes != null)
+        {
+            // Load existing UNCF outcomes with their indicators for comparison
+            var existingUNCFOutcomes = await context.OpportunityUNCFOutcomes
+                .Where(uo => uo.OpportunityId == id)
+                .Include(uo => uo.Indicators)
+                .ToListAsync();
+
+            // Create composite keys for comparison (OpportunityCountryId + UNCFOutcomeId)
+            var requestedOutcomeKeys = request.UncfOutcomes
+                .Select(uo => new { uo.OpportunityCountryId, uo.UNCFOutcomeId })
+                .ToHashSet();
+            
+            var existingOutcomeKeys = existingUNCFOutcomes
+                .Select(uo => new { uo.OpportunityCountryId, uo.UNCFOutcomeId })
+                .ToHashSet();
+
+            // Remove UNCF outcomes that are no longer in the request
+            var outcomesToRemove = existingUNCFOutcomes
+                .Where(uo => !requestedOutcomeKeys.Contains(new { uo.OpportunityCountryId, uo.UNCFOutcomeId }))
+                .ToList();
+            
+            if (outcomesToRemove.Any())
+            {
+                context.OpportunityUNCFOutcomes.RemoveRange(outcomesToRemove);
+            }
+
+            // Process each requested UNCF outcome
+            foreach (var outcomeRequest in request.UncfOutcomes)
+            {
+                var existingOutcome = existingUNCFOutcomes.FirstOrDefault(uo => 
+                    uo.OpportunityCountryId == outcomeRequest.OpportunityCountryId && 
+                    uo.UNCFOutcomeId == outcomeRequest.UNCFOutcomeId);
+
+                if (existingOutcome == null)
+                {
+                    // Add new UNCF outcome with its indicators
+                    var newOutcome = new OpportunityUNCFOutcome
+                    {
+                        OpportunityId = id,
+                        OpportunityCountryId = outcomeRequest.OpportunityCountryId,
+                        UNCFOutcomeId = outcomeRequest.UNCFOutcomeId,
+                        Notes = outcomeRequest.Notes
+                    };
+
+                    // Add indicators if provided
+                    if (outcomeRequest.UNCFIndicatorIds != null && outcomeRequest.UNCFIndicatorIds.Any())
+                    {
+                        foreach (var indicatorId in outcomeRequest.UNCFIndicatorIds)
+                        {
+                            newOutcome.Indicators.Add(new OpportunityUNCFIndicator
+                            {
+                                OpportunityId = id,
+                                UNCFIndicatorId = indicatorId
+                            });
+                        }
+                    }
+
+                    context.OpportunityUNCFOutcomes.Add(newOutcome);
+                }
+                else
+                {
+                    // Update existing UNCF outcome properties
+                    existingOutcome.Notes = outcomeRequest.Notes;
+
+                    // Update indicators with differential strategy
+                    var requestedIndicatorIds = outcomeRequest.UNCFIndicatorIds?.ToHashSet() ?? new HashSet<int>();
+                    var existingIndicatorIds = existingOutcome.Indicators.Select(i => i.UNCFIndicatorId).ToHashSet();
+
+                    // Remove indicators that are no longer in the request
+                    var indicatorsToRemove = existingOutcome.Indicators
+                        .Where(i => !requestedIndicatorIds.Contains(i.UNCFIndicatorId))
+                        .ToList();
+                    
+                    if (indicatorsToRemove.Any())
+                    {
+                        foreach (var indicator in indicatorsToRemove)
+                        {
+                            existingOutcome.Indicators.Remove(indicator);
+                            context.OpportunityUNCFIndicators.Remove(indicator);
+                        }
+                    }
+
+                    // Add new indicators
+                    if (outcomeRequest.UNCFIndicatorIds != null)
+                    {
+                        foreach (var indicatorId in outcomeRequest.UNCFIndicatorIds)
+                        {
+                            if (!existingIndicatorIds.Contains(indicatorId))
+                            {
+                                existingOutcome.Indicators.Add(new OpportunityUNCFIndicator
+                                {
+                                    OpportunityId = id,
+                                    OpportunityUNCFOutcomeId = existingOutcome.Id,
+                                    UNCFIndicatorId = indicatorId
+                                });
+                            }
+                        }
+                    }
                 }
             }
         }

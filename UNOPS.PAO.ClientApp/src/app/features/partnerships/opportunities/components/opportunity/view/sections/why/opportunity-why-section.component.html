@@ -107,8 +107,8 @@
 
     <!-- SDG Alignment -->
     <div>
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
           <i class="pi pi-globe text-green-600"></i>
           {{ 'label.opportunity.sdgAlignment' | translate }} ({{ sdgCount() }})
         </h3>
@@ -142,7 +142,7 @@
                     </div>
                   }
                   <div class="flex-1">
-                    <h4 class="font-semibold text-gray-900 mb-1">
+                    <h4 class="text-sm font-semibold text-gray-500 mb-2">
                       {{ 'label.opportunity.sdg' | translate }} {{ sdg.sdgNumber }}: {{ sdg.sdgName }}
                     </h4>
                     <div class="flex items-center gap-2 mb-2">
@@ -158,7 +158,7 @@
                       <div class="mt-3 pl-4 border-l-2 border-blue-200 space-y-2">
                         @for (target of sdg.targets; track target.id) {
                           <div class="text-sm">
-                            <div class="font-medium text-blue-700 flex items-center gap-2">
+                            <div class="font-medium text-gray-700 flex items-center gap-2">
                               <i class="pi pi-check-circle text-xs"></i>
                               {{ 'label.target' | translate }} {{ target.sdgTargetId }}
                             </div>
@@ -220,13 +220,10 @@
     <!-- UNCF Alignment (Country-specific UN Cooperation Framework) -->
     @if (countriesWithUNCF().length > 0) {
       <div>
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
             <i class="pi pi-flag text-blue-600"></i>
-            {{ 'label.opportunity.uncfAlignment' | translate }}
-            @if (uncfCount() > 0) {
-              <span class="text-sm font-normal text-gray-500">({{ uncfCount() }})</span>
-            }
+            {{ 'label.opportunity.uncfAlignment' | translate }} ({{ uncfCount() }})
           </h3>
         </div>
 
@@ -234,16 +231,16 @@
           <!-- Always show all countries with HasActiveUNSDCF = true -->
           @for (oppCountry of countriesWithUNCF(); track oppCountry.id) {
             @let outcomesForCountry = getUNCFOutcomesForOpportunityCountry(oppCountry.id);
-            <div class="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
+            <div class="border border-gray-200 rounded-lg p-2 bg-white shadow-sm hover:shadow-md transition-shadow">
               <div class="flex items-start justify-between gap-4">
                 <!-- Country Info and Outcomes -->
                 <div class="flex-1">
                   <!-- Country Header with Edit/Delete buttons (like SDG) -->
-                  <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center gap-2">
-                      <i class="pi pi-map-marker text-blue-600"></i>
-                      <h4 class="font-semibold text-gray-900">{{ oppCountry.country?.name }}</h4>
-                    </div>
+                    <div class="flex items-center justify-between mb-3">
+                      <h4 class="text-sm font-semibold text-gray-500 flex items-center gap-2">
+                        <i class="pi pi-map-marker text-blue-600"></i>
+                        {{ oppCountry.country?.name }}
+                      </h4>
                     
                     <!-- Edit/Delete Actions next to country name (only in edit mode) -->
                     @if (isEditing()) {
@@ -272,36 +269,40 @@
 
                   <!-- Display Outcomes and Indicators (if any are selected) -->
                   @if (outcomesForCountry.length > 0) {
-                    @for (uncfOutcome of outcomesForCountry; track uncfOutcome.id) {
-                      <div class="ml-4 mb-3 last:mb-0">
-                        <!-- Outcome -->
-                        <div class="flex items-start gap-2 mb-2">
-                          <i class="pi pi-check-circle text-blue-600 text-sm mt-0.5"></i>
-                          <div class="flex-1">
-                            <p class="font-medium text-gray-900">{{ uncfOutcome.uncfOutcomeName }}</p>
-                            @if (uncfOutcome.versionNo) {
-                              <p class="text-xs text-gray-500">{{ 'label.version' | translate }}: {{ uncfOutcome.versionNo }}</p>
-                            }
-                          </div>
-                        </div>
-
-                        <!-- Indicators for this outcome -->
-                        @if (uncfOutcome.indicators && uncfOutcome.indicators.length > 0) {
-                          <div class="ml-6 space-y-1">
-                            <p class="text-xs font-semibold text-gray-600 mb-1">{{ 'label.indicators' | translate }}:</p>
-                            @for (indicator of uncfOutcome.indicators; track indicator.id) {
-                              <div class="flex items-start gap-2 text-sm text-gray-700">
-                                <i class="pi pi-angle-right text-gray-400 mt-0.5 text-xs"></i>
-                                <span>{{ indicator.uncfIndicatorName }}</span>
-                              </div>
-                            }
-                          </div>
-                        }
+                    @let firstOutcome = outcomesForCountry[0];
+                    @if (firstOutcome.versionNo) {
+                      <div class="text-xs font-semibold text-gray-600 mb-2">
+                        {{ 'label.outcomes' | translate }} ({{ 'label.version' | translate }}: {{ firstOutcome.versionNo }})
                       </div>
                     }
+                    <div class="mt-3 pl-4 border-l-2 border-blue-200 space-y-2">
+                      @for (uncfOutcome of outcomesForCountry; track uncfOutcome.id) {
+                        <div class="text-sm">
+                          <!-- Outcome -->
+                          <div class="font-medium text-gray-700 flex items-center gap-2">
+                            <i class="pi pi-check-circle text-xs"></i>
+                            {{ uncfOutcome.uncfOutcomeName }}
+                          </div>
+
+                          <!-- Indicators for this outcome -->
+                          @if (uncfOutcome.indicators && uncfOutcome.indicators.length > 0) {
+                            <div class="ml-5 mt-2 space-y-1">
+                              @for (indicator of uncfOutcome.indicators; track indicator.id) {
+                                <div class="flex items-start gap-1.5">
+                                  <i class="pi pi-angle-right text-xs text-gray-400 mt-0.5"></i>
+                                  <div class="text-xs text-gray-600">
+                                    {{ indicator.uncfIndicatorName }}
+                                  </div>
+                                </div>
+                              }
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
                   } @else {
                     <!-- No outcomes selected for this country -->
-                    <div class="ml-4 text-sm text-gray-500 italic">
+                    <div class="text-sm text-gray-500 italic">
                       {{ 'label.noOutcomesSelected' | translate }}
                     </div>
                   }
