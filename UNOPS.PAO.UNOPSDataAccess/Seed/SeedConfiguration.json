@@ -149,30 +149,6 @@
         },
         {
             "order": 17,
-            "name": "PartnerTreeSeeder_v3",
-            "type": "seeder",
-            "className": "PartnerTreeSeeder_v3",
-            "methodName": "SeedPartnerTreeAsync",
-            "filePath": "Seeders/PartnerTreeSeeder_v3.cs"
-        },
-        {
-            "order": 18,
-            "name": "UnapprovedPartnerTreeSeeder_v3",
-            "type": "seeder",
-            "className": "UnapprovedPartnerTreeSeeder_v3",
-            "methodName": "SeedUnapprovedPartnerTreeAsync",
-            "filePath": "Seeders/UnapprovedPartnerTreeSeeder_v3.cs"
-        },
-        {
-            "order": 19,
-            "name": "PartnerTree_Update_Partner_ForIntegration_v3",
-            "type": "seeder",
-            "className": "PartnerTree_Update_Partner_ForIntegration_v3",
-            "methodName": "UpdatePartnersForIntegrationAsync",
-            "filePath": "Seeders/PartnerTree_Update_Partner_ForIntegration_v3.cs"
-        },
-        {
-            "order": 20,
             "name": "SequenceResync",
             "type": "seeder",
             "className": "SequenceResyncSeeder",
