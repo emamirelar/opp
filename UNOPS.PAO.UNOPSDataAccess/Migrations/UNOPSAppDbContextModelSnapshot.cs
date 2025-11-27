@@ -1140,6 +1140,14 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("vector(768)");
 
+                    b.Property<string>("Keywords")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Metadata")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("EntityId");
@@ -1699,6 +1707,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("DeliveryModality")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text");
@@ -1736,6 +1747,10 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("OpportunityStatementMarkdown")
                         .HasColumnType("text");
 
                     b.Property<string>("PartnerReference")
@@ -1871,8 +1886,17 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<int?>("OutputId")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime?>("PlannedEndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("PlannedStartDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<decimal?>("Quantity")
                         .HasColumnType("decimal(18, 2)");
+
+                    b.Property<int?>("SequenceOrder")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -2286,15 +2310,36 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("DefinitionLevel1")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("DefinitionLevel2")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("DefinitionLevel3")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("DefinitionLevel4")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
                     b.Property<int>("DeletedBy")
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Description")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
+                    b.Property<bool?>("GrantSupportComponent")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool?>("GrantSupportImplementingModality")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool?>("InfrastructureComponent")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
@@ -2305,40 +2350,44 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<DateTime?>("LastModifiedDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Level0")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Level1")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Level2")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Level3")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Level4")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("OutputGroup")
+                    b.Property<bool?>("ProcurementComponent")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool?>("ProcurementInstallationComponent")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ServiceLine")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
-
-                    b.Property<string>("OutputName")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("OutputServiceLine")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<string>("OutputSubGroup")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<int?>("ProjectCategoryId")
-                        .HasColumnType("integer");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("UnitId")
-                        .HasColumnType("integer");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("ProjectCategoryId");
-
-                    b.HasIndex("UnitId");
 
                     b.ToTable("Outputs", "public");
                 });
@@ -4427,21 +4476,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .IsRequired();
 
                     b.Navigation("OrganizationHierarchy");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Output", b =>
-                {
-                    b.HasOne("UNOPS.PAO.Domain.Entities.ProjectCategory", "ProjectCategory")
-                        .WithMany()
-                        .HasForeignKey("ProjectCategoryId");
-
-                    b.HasOne("UNOPS.PAO.Domain.Entities.Unit", "Unit")
-                        .WithMany()
-                        .HasForeignKey("UnitId");
-
-                    b.Navigation("ProjectCategory");
-
-                    b.Navigation("Unit");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Partner", b =>
