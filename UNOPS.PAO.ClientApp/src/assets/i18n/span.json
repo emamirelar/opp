@@ -1446,7 +1446,7 @@
   "message.confirmPartnerActivation": "¿Estás seguro de que quieres activar el socio \"{{partnerName}}\"?",
   "message.confirmRemoveCountry": "¿Está seguro de que desea eliminar este país?",
   "message.confirmation.deleteDocument": "¿Está seguro de que desea eliminar este documento? Esta acción no se puede deshacer.",
-  "message.confirmation.createWithoutInteractions": "Ha seleccionado interacciones, pero la creación directa solo utilizará el nombre y la descripción de la oportunidad. Los documentos seleccionados se cargarán y adjuntarán, pero las interacciones serán ignoradas. ¿Desea continuar?",
+  "message.confirmation.createWithoutInteractions": "Ha seleccionado interacciones, pero la creación directa solo utilizará el nombre y la descripción de la oportunidad. Los documentos seleccionados se cargarán y adjuntarán, pero las interacciones serán ignoradas. Para incluir las interacciones seleccionadas en su oportunidad, haga clic en Cancelar y utilice el botón 'Generar Borrador de Oportunidad con IA'. ¿Desea continuar con la creación directa?",
   "message.confirmation.createWithoutInteractionsDocuments": "Ha seleccionado interacciones, pero la creación directa solo utilizará el nombre y la descripción de la oportunidad. Los documentos seleccionados se cargarán y adjuntarán, pero las interacciones serán ignoradas. ¿Desea continuar?",
   "message.contactCreatedDuplicateConfirmed": "¡Contacto creado exitosamente (confirmación de duplicado reconocida)!",
   "message.contactCreatedSuccessfully": "¡Contacto creado exitosamente!",

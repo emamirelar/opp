@@ -76,7 +76,6 @@
           class="w-full"
           [placeholder]="'label.opportunity.descriptionPlaceholder' | translate"
         ></textarea>
-        <small class="text-gray-400 italic">{{ 'label.optional' | translate }}</small>
       } @else {
         <p class="text-gray-700 leading-relaxed whitespace-pre-wrap">
           {{ opportunity().description || '-' }}

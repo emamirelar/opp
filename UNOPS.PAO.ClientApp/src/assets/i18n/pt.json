@@ -1467,7 +1467,7 @@
   "message.confirmPartnerActivation": "Tem certeza de que deseja ativar o parceiro \"{{partnerName}}\"?",
   "message.confirmRemoveCountry": "Tem certeza de que deseja remover este país?",
   "message.confirmation.deleteDocument": "Tem certeza que deseja excluir este documento? Esta ação não pode ser desfeita.",
-  "message.confirmation.createWithoutInteractions": "Você selecionou interações, mas a criação direta usará apenas o nome e a descrição da oportunidade. Os documentos selecionados serão carregados e anexados, mas as interações serão ignoradas. Deseja continuar?",
+  "message.confirmation.createWithoutInteractions": "Você selecionou interações, mas a criação direta usará apenas o nome e a descrição da oportunidade. Os documentos selecionados serão carregados e anexados, mas as interações serão ignoradas. Para incluir as interações selecionadas na sua oportunidade, clique em Cancelar e use o botão 'Gerar Rascunho de Oportunidade usando IA'. Deseja continuar com a criação direta?",
   "message.confirmation.createWithoutInteractionsDocuments": "Você selecionou interações, mas a criação direta usará apenas o nome e a descrição da oportunidade. Os documentos selecionados serão carregados e anexados, mas as interações serão ignoradas. Deseja continuar?",
   "message.contactCreatedDuplicateConfirmed": "Contato criado com sucesso (confirmação de duplicata reconhecida)!",
   "message.contactCreatedSuccessfully": "Contato criado com sucesso!",

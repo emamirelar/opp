@@ -1472,7 +1472,7 @@
   "message.confirmPartnerActivation": "Êtes-vous sûr de vouloir activer le partenaire \"{{partnerName}}\" ?",
   "message.confirmRemoveCountry": "Êtes-vous sûr de vouloir supprimer ce pays ?",
   "message.confirmation.deleteDocument": "Êtes-vous sûr de vouloir supprimer ce document ? Cette action ne peut pas être annulée.",
-  "message.confirmation.createWithoutInteractions": "Vous avez sélectionné des interactions, mais la création directe n'utilisera que le nom et la description de l'opportunité. Les documents sélectionnés seront téléchargés et joints, mais les interactions seront ignorées. Voulez-vous continuer ?",
+  "message.confirmation.createWithoutInteractions": "Vous avez sélectionné des interactions, mais la création directe n'utilisera que le nom et la description de l'opportunité. Les documents sélectionnés seront téléchargés et joints, mais les interactions seront ignorées. Pour inclure les interactions sélectionnées dans votre opportunité, cliquez sur Annuler et utilisez le bouton 'Générer un brouillon d'opportunité avec l'IA'. Voulez-vous continuer avec la création directe ?",
   "message.confirmation.createWithoutInteractionsDocuments": "Vous avez sélectionné des interactions, mais la création directe n'utilisera que le nom et la description de l'opportunité. Les documents sélectionnés seront téléchargés et joints, mais les interactions seront ignorées. Voulez-vous continuer ?",
   "message.contactCreatedDuplicateConfirmed": "Contact créé avec succès (confirmation de doublon reconnue) !",
   "message.contactCreatedSuccessfully": "Contact créé avec succès !",

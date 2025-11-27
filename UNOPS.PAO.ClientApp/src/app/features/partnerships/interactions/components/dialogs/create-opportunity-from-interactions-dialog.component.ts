@@ -1379,12 +1379,17 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
       }
       
       // Build create request with basic info and documents
+      // Note: For direct creation from interaction detail view (mode: 'detail-view'),
+      // we don't send partnerId as the user hasn't explicitly selected partner roles
+      const isFromInteractionDetail = this.mode() === 'detail-view';
+      
       const createRequest: any = {
         name: this.opportunityName(),
         description: this.opportunityDescription(),
-        partnerId: this.partnerId() || 0,
-        isFundingPartner: this.isFundingPartner(),
-        isClientPartner: this.isClientPartner(),
+        // Only include partnerId when in list-view mode (from partner context with role selection)
+        partnerId: isFromInteractionDetail ? 0 : (this.partnerId() || 0),
+        isFundingPartner: isFromInteractionDetail ? false : this.isFundingPartner(),
+        isClientPartner: isFromInteractionDetail ? false : this.isClientPartner(),
         
         // Include uploaded documents as structured array
         documents: uploadedDocs.map(d => ({

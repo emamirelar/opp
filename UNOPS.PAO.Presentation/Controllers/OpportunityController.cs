@@ -1270,10 +1270,7 @@ public class OpportunityController : BaseController
                 return BadRequest(new { error = "Opportunity name is required" });
             }
 
-            if (string.IsNullOrWhiteSpace(request.Description))
-            {
-                return BadRequest(new { error = "Opportunity description is required" });
-            }
+            // Description is optional - no validation required
 
             // Partner validation: only required if partnerId is provided (creating from partner context)
             if (request.PartnerId.HasValue && request.PartnerId > 0)

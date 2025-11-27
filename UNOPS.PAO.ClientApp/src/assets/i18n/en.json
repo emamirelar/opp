@@ -1552,7 +1552,7 @@
   "message.confirmRemoveStakeholder": "Are you sure you want to remove this team member?",
   "message.confirmation.deleteDocument": "Are you sure you want to delete this document? This action cannot be undone.",
   "message.confirmation.deleteOpportunity": "Are you sure you want to delete this opportunity? This action cannot be undone.",
-  "message.confirmation.createWithoutInteractions": "You have selected interactions, but direct creation will only use the opportunity name and description. Selected documents will be uploaded and attached, but interactions will be ignored. Do you want to continue?",
+  "message.confirmation.createWithoutInteractions": "You have selected interactions, but direct creation will only use the opportunity name and description. Selected documents will be uploaded and attached, but interactions will be ignored. To include the selected interactions in your opportunity, click Cancel and use the 'Generate Draft Opportunity using AI' button instead. Do you want to continue with direct creation?",
   "message.confirmation.createWithoutInteractionsDocuments": "You have selected interactions, but direct creation will only use the opportunity name and description. Selected documents will be uploaded and attached, but interactions will be ignored. Do you want to continue?",
   "message.contactCreatedDuplicateConfirmed": "Contact created successfully (duplicate confirmation acknowledged)!",
   "message.contactCreatedSuccessfully": "Contact created successfully!",
