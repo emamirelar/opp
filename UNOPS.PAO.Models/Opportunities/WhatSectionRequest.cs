@@ -2,7 +2,7 @@ namespace UNOPS.PAO.Models.Opportunities;
 
 /// <summary>
 /// Request model for updating the WHAT section of an opportunity
-/// Includes name, description, org unit, initiative type, and deliverables
+/// Includes name, description, org unit, initiative type, delivery modality, and deliverables
 /// </summary>
 public class WhatSectionRequest
 {
@@ -25,6 +25,12 @@ public class WhatSectionRequest
     /// Proposed initiative type ID
     /// </summary>
     public int? ProposedInitiativeTypeId { get; set; }
+    
+    /// <summary>
+    /// Delivery modality for products and services
+    /// 1 = NotYetKnown, 2 = AllDirect, 3 = AllGrantSupport, 4 = Mixed
+    /// </summary>
+    public int? DeliveryModality { get; set; }
 
     /// <summary>
     /// List of deliverables for the opportunity

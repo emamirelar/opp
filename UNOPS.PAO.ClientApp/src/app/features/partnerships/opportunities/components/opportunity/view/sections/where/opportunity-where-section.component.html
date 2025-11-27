@@ -7,40 +7,42 @@
         <p-badge [value]="countryCount().toString()" severity="info" />
       </div>
       <div class="flex items-center gap-2">
-        @if (!isEditing()) {
-          <p-button
-            icon="pi pi-pencil"
-            [text]="true"
-            [rounded]="true"
-            severity="secondary"
-            size="small"
-            pTooltip="{{ 'button.edit' | translate }}"
-            (onClick)="startEditing()"
-          />
-        } @else {
-          @if (isSaving()) {
-            <i class="pi pi-spin pi-spinner text-blue-600"></i>
+        @if (canUpdate()) {
+          @if (!isEditing()) {
+            <p-button
+              icon="pi pi-pencil"
+              [text]="true"
+              [rounded]="true"
+              severity="secondary"
+              size="small"
+              pTooltip="{{ 'button.edit' | translate }}"
+              (onClick)="startEditing()"
+            />
+          } @else {
+            @if (isSaving()) {
+              <i class="pi pi-spin pi-spinner text-blue-600"></i>
+            }
+            <p-button
+              icon="pi pi-check"
+              [text]="true"
+              [rounded]="true"
+              severity="success"
+              size="small"
+              pTooltip="{{ 'button.save' | translate }}"
+              [disabled]="isSaving()"
+              (onClick)="saveSection()"
+            />
+            <p-button
+              icon="pi pi-times"
+              [text]="true"
+              [rounded]="true"
+              severity="secondary"
+              size="small"
+              pTooltip="{{ 'button.cancel' | translate }}"
+              [disabled]="isSaving()"
+              (onClick)="cancelEditing()"
+            />
           }
-          <p-button
-            icon="pi pi-check"
-            [text]="true"
-            [rounded]="true"
-            severity="success"
-            size="small"
-            pTooltip="{{ 'button.save' | translate }}"
-            [disabled]="isSaving()"
-            (onClick)="saveSection()"
-          />
-          <p-button
-            icon="pi pi-times"
-            [text]="true"
-            [rounded]="true"
-            severity="secondary"
-            size="small"
-            pTooltip="{{ 'button.cancel' | translate }}"
-            [disabled]="isSaving()"
-            (onClick)="cancelEditing()"
-          />
         }
       </div>
     </div>

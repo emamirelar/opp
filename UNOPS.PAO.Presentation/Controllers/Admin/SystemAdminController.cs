@@ -3,12 +3,16 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Identity.Context;
 using UNOPS.PAO.Identity.Entities;
 using UNOPS.PAO.Identity.Security.Enums;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Presentation.Security;
+using UNOPS.PAO.UNOPSDataAccess.Context;
+using UNOPS.PAO.UNOPSDataAccess.Seed.Seeders;
 
 [Route("/")]
 [ApiController]
@@ -19,17 +23,28 @@ public class SystemAdminController : ControllerBase
     private readonly UserManager<PAOIdentityUser> userManager;
     private readonly RoleManager<PAOIdentityRole> roleManager;
     private readonly IPAOExecutionContext executionContext;
+    private readonly UNOPSAppDbContext unopsContext;
+    private readonly IConfiguration configuration;
+    private readonly ILogger<SystemAdminController> logger;
+    private readonly IManagerWrapper managerWrapper;
     
     public SystemAdminController(
         IManagerWrapper manager, 
         UserManager<PAOIdentityUser> userManager,
         RoleManager<PAOIdentityRole> roleManager,
-        IPAOExecutionContext executionContext)
+        IPAOExecutionContext executionContext,
+        UNOPSAppDbContext unopsContext,
+        IConfiguration configuration,
+        ILogger<SystemAdminController> logger)
     {
         this.systemAdminManager = manager.SystemAdminManager;
         this.userManager = userManager;
         this.roleManager = roleManager;
         this.executionContext = executionContext;
+        this.unopsContext = unopsContext;
+        this.configuration = configuration;
+        this.logger = logger;
+        this.managerWrapper = manager;
     }
 
     /// <summary>
@@ -109,6 +124,15 @@ public class SystemAdminController : ControllerBase
                 },
                 permission = "CanRunSeedings",
                 examples = new[] { "Roles", "Entities", "DocumentTypes", "LiaisonOffices", "Partners" }
+            },
+            new
+            {
+                method = "POST",
+                path = APIDictionary.SystemAdmin + "/output-embeddings/generate",
+                description = "Generate embeddings and keywords for all Output entities (takes ~2 minutes)",
+                parameters = Array.Empty<object>(),
+                permission = "CanRunSeedings",
+                examples = (string[]?)null
             }
         };
 
@@ -225,5 +249,50 @@ public class SystemAdminController : ControllerBase
     {
         await systemAdminManager.DeleteSeedScript(name);
         return Ok(new { message = $"Seed script '{name}' deleted successfully. It will re-run on next execution." });
+    }
+
+    /// <summary>
+    /// Generate embeddings and keywords for all Output entities
+    /// This is a long-running operation (~2 minutes)
+    /// Creates semantic embeddings and AI-generated keywords for hybrid search
+    /// </summary>
+    [HttpGet(APIDictionary.SystemAdmin + "/output-embeddings/generate")]
+    [PermissionAuthorize(PermissionNames.CanRunSeedings)]
+    public async Task<IActionResult> GenerateOutputEmbeddings()
+    {
+        try
+        {
+            logger.LogInformation("🚀 Starting Output embeddings generation via API endpoint");
+
+            // Get the GeminiManager which already has AiContextualService configured
+            var geminiManager = managerWrapper.GeminiManager;
+            if (geminiManager == null)
+            {
+                return StatusCode(500, new { error = "GeminiManager not available in ManagerWrapper" });
+            }
+
+            // Create OutputEmbeddingSeeder instance - it will use the GeminiManager's AiContextualService
+            var seeder = new OutputEmbeddingSeeder(
+                unopsContext,
+                configuration,
+                geminiManager
+            );
+
+            // Generate embeddings
+            await seeder.GenerateOutputEmbeddingsAsync();
+
+            logger.LogInformation("✅ Output embeddings generation completed successfully");
+
+            return Ok(new 
+            { 
+                message = "Output embeddings generated successfully",
+                note = "Embeddings have been generated for all active Outputs with keywords for hybrid search"
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "❌ Error generating output embeddings");
+            return StatusCode(500, new { error = "Failed to generate output embeddings", details = ex.Message });
+        }
     }
 }

@@ -7,7 +7,7 @@ namespace UNOPS.PAO.Models.Opportunities;
 public class WhoSectionRequest
 {
     /// <summary>
-    /// Whether funding is pooled across multiple partners (AC8)
+    /// Whether funding is pooled across multiple partners
     /// </summary>
     public bool IsPooledFunding { get; set; }
     

@@ -1,7 +1,7 @@
 namespace UNOPS.PAO.Models.Partners;
 
 /// <summary>
-/// Partner Agreement information for display in opportunity context (AC9)
+/// Partner Agreement information for display in opportunity context
 /// </summary>
 public class PartnerAgreementInfo
 {

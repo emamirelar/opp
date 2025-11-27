@@ -1,5 +1,5 @@
 /**
- * @fileoverview Response model for Partner Results Framework status check (AC2).
+ * @fileoverview Response model for Partner Results Framework status check.
  * @author UNOPS Opportunity+ System Development Team
  */
 

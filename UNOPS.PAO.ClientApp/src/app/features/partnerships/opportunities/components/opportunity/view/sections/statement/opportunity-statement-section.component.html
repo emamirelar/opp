@@ -20,38 +20,42 @@
           <p class="text-lg">{{ 'message.opportunity.noStatement' | translate }}</p>
           <p class="text-sm mt-2">{{ 'message.opportunity.generateStatementPrompt' | translate }}</p>
         </div>
-        <p-button
-          [label]="generatingStatement() ? ('button.generating' | translate) : ('button.generateOpportunityStatement' | translate)"
-          icon="pi pi-sparkles"
-          [loading]="generatingStatement()"
-          [disabled]="generatingStatement()"
-          (onClick)="generateOpportunityStatement()"
-          styleClass="p-button-lg"
-        />
+        @if (canUpdate()) {
+          <p-button
+            [label]="generatingStatement() ? ('button.generating' | translate) : ('button.generateOpportunityStatement' | translate)"
+            icon="pi pi-sparkles"
+            [loading]="generatingStatement()"
+            [disabled]="generatingStatement()"
+            (onClick)="generateOpportunityStatement()"
+            styleClass="p-button-lg"
+          />
+        }
       </div>
     } @else {
       <!-- Show regenerate button, export button, and markdown content -->
       <div class="space-y-4">
-        <div class="flex justify-end gap-2">
-          <p-button
-            [label]="isExporting() ? ('button.exporting' | translate) : ('button.exportToGoogleDoc' | translate)"
-            icon="pi pi-google"
-            [loading]="isExporting()"
-            [disabled]="isExporting() || generatingStatement()"
-            (onClick)="exportToGoogleDoc()"
-            severity="secondary"
-            [outlined]="true"
-          />
-          <p-button
-            [label]="generatingStatement() ? ('button.regenerating' | translate) : ('button.regenerateOpportunityStatement' | translate)"
-            icon="pi pi-refresh"
-            [loading]="generatingStatement()"
-            [disabled]="generatingStatement() || isExporting()"
-            (onClick)="generateOpportunityStatement()"
-            severity="secondary"
-            [outlined]="true"
-          />
-        </div>
+        @if (canUpdate()) {
+          <div class="flex justify-end gap-2">
+            <p-button
+              [label]="isExporting() ? ('button.exporting' | translate) : ('button.exportToGoogleDoc' | translate)"
+              icon="pi pi-google"
+              [loading]="isExporting()"
+              [disabled]="isExporting() || generatingStatement()"
+              (onClick)="exportToGoogleDoc()"
+              severity="secondary"
+              [outlined]="true"
+            />
+            <p-button
+              [label]="generatingStatement() ? ('button.regenerating' | translate) : ('button.regenerateOpportunityStatement' | translate)"
+              icon="pi pi-refresh"
+              [loading]="generatingStatement()"
+              [disabled]="generatingStatement() || isExporting()"
+              (onClick)="generateOpportunityStatement()"
+              severity="secondary"
+              [outlined]="true"
+            />
+          </div>
+        }
         
         <!-- Display markdown content -->
         <div class="prose max-w-none markdown-content">

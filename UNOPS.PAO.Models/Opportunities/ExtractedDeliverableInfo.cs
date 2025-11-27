@@ -1,6 +1,6 @@
 /**
- * @fileoverview Model for AI-extracted deliverable information from Partner Results Framework and project documents (AC2).
- * This is temporary extraction data that is NOT stored in database until user verification (AC3).
+ * @fileoverview Model for AI-extracted deliverable information from Partner Results Framework and project documents.
+ * This is temporary extraction data that is NOT stored in database until user verification.
  * @author UNOPS Opportunity+ System Development Team
  */
 
@@ -11,8 +11,8 @@ namespace UNOPS.PAO.Models.Opportunities;
 /// This is TEMPORARY DATA used for display and verification before saving to database.
 /// </summary>
 /// <remarks>
-/// AC2: AI extraction phase - data returned to frontend for user review
-/// AC3: User verification phase - selected items are saved to OpportunityDeliverable table
+/// AI extraction phase - data returned to frontend for user review
+/// User verification phase - selected items are saved to OpportunityDeliverable table
 /// </remarks>
 public class ExtractedDeliverableInfo
 {
@@ -58,5 +58,27 @@ public class ExtractedDeliverableInfo
     /// </summary>
     /// <example>"Explicitly listed as Output 2.3 in the results framework"</example>
     public string Reasoning { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Matched Output ID from the Outputs table (if similarity match found).
+    /// Null if no match found or similarity score below threshold.
+    /// </summary>
+    public int? MatchedOutputId { get; set; }
+
+    /// <summary>
+    /// Name of the matched output from the Outputs table.
+    /// </summary>
+    public string? MatchedOutputName { get; set; }
+
+    /// <summary>
+    /// Similarity score for the matched output (0.0 to 1.0).
+    /// Indicates how closely the partner language matches the UNOPS output.
+    /// </summary>
+    public decimal? MatchScore { get; set; }
+
+    /// <summary>
+    /// Field name that was matched in the Outputs table (e.g., "Name", "Description").
+    /// </summary>
+    public string? MatchedField { get; set; }
 }
 

@@ -57,6 +57,27 @@ namespace UNOPS.PAO.IntegrationTests.Infrastructure
             return Task.FromResult(true);
         }
 
+        public Task<object> GetEntityInstancePermissionsAsync(string entityName, int entityId)
+        {
+            // For testing, return full permissions
+            return Task.FromResult<object>(new
+            {
+                CanRead = true,
+                CanCreate = true,
+                CanUpdate = true,
+                CanDelete = true,
+                CanExport = true,
+                CanImport = true,
+                IsTeamMember = true
+            });
+        }
+
+        public Task<bool> IsOpportunityTeamMemberAsync(int opportunityId)
+        {
+            // For testing, always return true (user is a team member)
+            return Task.FromResult(true);
+        }
+
         public string GetEffectiveRole(ClaimsPrincipal user)
         {
             // For testing, return the first role or a default test role

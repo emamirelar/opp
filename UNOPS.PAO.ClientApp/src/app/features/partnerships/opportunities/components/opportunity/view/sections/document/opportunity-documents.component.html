@@ -30,33 +30,35 @@
     <!-- Scrollable Content Area -->
     <div class="overflow-y-auto" style="max-height: calc(100vh - 280px)">
       <!-- Upload Actions -->
-      <div class="p-4">
-        <div class="flex gap-2">
-          <p-button
-            [label]="'button.upload' | translate"
-            icon="pi pi-upload"
-            size="small"
-            styleClass="flex-1"
-            (onClick)="openUploadDialog()"
-          />
-          <p-button
-            [label]="'button.link' | translate"
-            icon="pi pi-link"
-            size="small"
-            severity="secondary"
-            [outlined]="true"
-            styleClass="flex-1"
-            (onClick)="openLinkDialog()"
-          />
-        </div>
-        <!-- Help Text -->
-        <div class="mt-3 p-2 bg-blue-50 border border-blue-100 rounded text-xs text-blue-900">
-          <div class="flex items-start gap-2">
-            <i class="pi pi-info-circle text-blue-600 mt-0.5 flex-shrink-0"></i>
-            <span>{{ 'helpText.document.uploadForAutoFill' | translate }}</span>
+      @if (canUpdate()) {
+        <div class="p-4">
+          <div class="flex gap-2">
+            <p-button
+              [label]="'button.upload' | translate"
+              icon="pi pi-upload"
+              size="small"
+              styleClass="flex-1"
+              (onClick)="openUploadDialog()"
+            />
+            <p-button
+              [label]="'button.link' | translate"
+              icon="pi pi-link"
+              size="small"
+              severity="secondary"
+              [outlined]="true"
+              styleClass="flex-1"
+              (onClick)="openLinkDialog()"
+            />
+          </div>
+          <!-- Help Text -->
+          <div class="mt-3 p-2 bg-blue-50 border border-blue-100 rounded text-xs text-blue-900">
+            <div class="flex items-start gap-2">
+              <i class="pi pi-info-circle text-blue-600 mt-0.5 flex-shrink-0"></i>
+              <span>{{ 'helpText.document.uploadForAutoFill' | translate }}</span>
+            </div>
           </div>
         </div>
-      </div>
+      }
 
       @if (loading()) {
         <!-- Loading State -->
@@ -118,27 +120,29 @@
                   </div>
                 </div>
                 <div class="flex gap-1" (click)="$event.stopPropagation()">
-                  <p-button
-                    icon="pi pi-users"
-                    [rounded]="true"
-                    [text]="true"
-                    size="small"
-                    severity="secondary"
-                    [pTooltip]="'button.tagPartner' | translate"
-                    tooltipPosition="top"
-                    (onClick)="openPartnerTagDialog(doc)"
-                  />
-                  <p-button
-                    icon="pi pi-sparkles"
-                    [rounded]="true"
-                    [text]="true"
-                    size="small"
-                    severity="help"
-                    [pTooltip]="'helpText.document.aiTranscribe' | translate"
-                    tooltipPosition="top"
-                    (onClick)="aiTranscribe(doc)"
-                    [loading]="transcribingDocId() === doc.id"
-                  />
+                  @if (canUpdate()) {
+                    <p-button
+                      icon="pi pi-users"
+                      [rounded]="true"
+                      [text]="true"
+                      size="small"
+                      severity="secondary"
+                      [pTooltip]="'button.tagPartner' | translate"
+                      tooltipPosition="top"
+                      (onClick)="openPartnerTagDialog(doc)"
+                    />
+                    <p-button
+                      icon="pi pi-sparkles"
+                      [rounded]="true"
+                      [text]="true"
+                      size="small"
+                      severity="help"
+                      [pTooltip]="'helpText.document.aiTranscribe' | translate"
+                      tooltipPosition="top"
+                      (onClick)="aiTranscribe(doc)"
+                      [loading]="transcribingDocId() === doc.id"
+                    />
+                  }
                   <p-button
                     icon="pi pi-eye"
                     [rounded]="true"
@@ -149,14 +153,16 @@
                     [pTooltip]="'button.view' | translate"
                     tooltipPosition="top"
                   />
-                  <p-button
-                    icon="pi pi-trash"
-                    [rounded]="true"
-                    [text]="true"
-                    size="small"
-                    severity="danger"
-                    (onClick)="deleteDocument(doc)"
-                  />
+                  @if (canUpdate()) {
+                    <p-button
+                      icon="pi pi-trash"
+                      [rounded]="true"
+                      [text]="true"
+                      size="small"
+                      severity="danger"
+                      (onClick)="deleteDocument(doc)"
+                    />
+                  }
                 </div>
               </div>
             }
@@ -351,7 +357,7 @@
   <!-- Validation Error Message -->
   @if (showPartnerTagValidationError()) {
     <p-message severity="error" icon="pi pi-info-circle" styleClass="mb-4 w-full">
-      {{ 'message.validation.selectAtLeastOnePartner' | translate }}
+      {{ 'message.validation.noChangeInPartnerSelection' | translate }}
     </p-message>
   }
   
@@ -482,7 +488,7 @@
       [label]="'button.confirm' | translate"
       severity="primary"
       (onClick)="confirmPartnerTagging()"
-      [disabled]="selectedFundingPartners.length === 0 && selectedClientPartners.length === 0"
+      [disabled]="!hasPartnerSelectionChanged()"
     />
   </ng-template>
 </p-dialog>

@@ -62,6 +62,16 @@ public interface IGeminiManager
     /// Generates a comprehensive opportunity statement in markdown format following the UNOPS template
     /// </summary>
     Task<string> GenerateOpportunityStatementAsync(int opportunityId, ClaimsPrincipal user = null);
+    
+    /// <summary>
+    /// Creates batch embeddings for a list of texts (delegates to AiContextualService)
+    /// </summary>
+    Task<List<string>> CreateBatchEmbeddingsAsync(List<string> texts);
+    
+    /// <summary>
+    /// Generates keywords for a list of texts for hybrid search (delegates to AiContextualService)
+    /// </summary>
+    Task<Dictionary<string, string>> GenerateKeywordsAsync(List<string> texts);
 }
 
 /// <summary>

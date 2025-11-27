@@ -121,6 +121,16 @@ public class OpportunityManager : IOpportunityManager
     }
     
     /// <summary>
+    /// Gets an opportunity by ID with user-specific permissions
+    /// NOTE: This is a stub implementation. Use UNOPSOpportunityManager for full permission support.
+    /// </summary>
+    public virtual async Task<OpportunityModel?> GetOpportunityAsync(System.Security.Claims.ClaimsPrincipal user, int id)
+    {
+        // Base implementation just returns the opportunity without permissions
+        return await GetOpportunityAsync(id);
+    }
+    
+    /// <summary>
     /// Enriches country models with their organization unit hierarchy chains
     /// </summary>
     private async Task EnrichCountriesWithOrgUnitHierarchyAsync(IEnumerable<OpportunityCountryModel> countries)
@@ -314,6 +324,32 @@ public class OpportunityManager : IOpportunityManager
         return mapper.Map<OpportunityModel>(entity);
     }
 
+    public async Task<OpportunityModel> UpdateOverviewSectionAsync(int id, OverviewSectionRequest request)
+    {
+        var entity = await opportunityRepository.GetByIdAsync(id);
+
+        if (entity == null)
+        {
+            throw new KeyNotFoundException($"Opportunity with ID {id} not found");
+        }
+
+        // Update Overview section fields
+        if (request.Name != null)
+        {
+            entity.Name = request.Name;
+        }
+
+        if (request.Description != null)
+        {
+            entity.Description = request.Description;
+        }
+
+        await opportunityRepository.UpdateAsync(entity);
+
+        // Reload with all includes for complete response
+        return await GetOpportunityAsync(entity.Id) ?? throw new InvalidOperationException("Failed to reload opportunity after update");
+    }
+
     public async Task<OpportunityModel> UpdateWhatSectionAsync(int id, WhatSectionRequest request)
     {
         var entity = await opportunityRepository.GetByIdAsync(id, new[]
@@ -340,6 +376,12 @@ public class OpportunityManager : IOpportunityManager
         if (request.ProposedInitiativeTypeId.HasValue)
         {
             entity.ProposedInitiativeTypeId = request.ProposedInitiativeTypeId.Value;
+        }
+        
+        // Update delivery modality (always update if provided, including null to clear)
+        if (request.DeliveryModality.HasValue)
+        {
+            entity.DeliveryModality = (DeliveryModality)request.DeliveryModality.Value;
         }
 
         // Update deliverables

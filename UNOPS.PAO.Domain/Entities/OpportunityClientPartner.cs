@@ -18,14 +18,8 @@ public class OpportunityClientPartner
     public virtual Document? Document { get; set; }
     
     /// <summary>
-    /// Selected Partner Agreement Number for this client relationship (AC9)
+    /// Selected Partner Agreement Number for this client relationship
     /// </summary>
     [MaxLength(50)]
     public string? SelectedPartnerAgreementNumber { get; set; }
-    
-    /// <summary>
-    /// Link to Partner Results Framework document (AC2 - WHAT section)
-    /// </summary>
-    public int? PartnerResultsFrameworkDocumentId { get; set; }
-    public virtual Document? PartnerResultsFrameworkDocument { get; set; }
 }

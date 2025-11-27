@@ -115,13 +115,15 @@ public class OpportunityController : BaseController
     }
 
     /// <summary>
-    /// Gets a specific opportunity by ID
+    /// Gets a specific opportunity by ID with user-specific permissions
+    /// Stakeholders (team members) on the opportunity can update it even if they don't have global update permission
     /// </summary>
     [HttpGet(APIDictionary.Opportunity + "/{id}")]
     [AccessControlled(EntityTypes.Opportunity, "read")]
     public async Task<ActionResult> Get(int id)
     {
-        var result = await _manager.GetOpportunityAsync(id);
+        // Pass User context to get opportunity with record-level permissions
+        var result = await _manager.GetOpportunityAsync(User, id);
 
         if (result == null)
         {
@@ -383,7 +385,34 @@ public class OpportunityController : BaseController
     }
 
     /// <summary>
-    /// Updates the WHAT section of an opportunity (description, org unit, initiative type, deliverables)
+    /// Updates the Overview section of an opportunity (name, description)
+    /// </summary>
+    [HttpPatch(APIDictionary.OpportunityOverview)]
+    [AccessControlled(EntityTypes.Opportunity, "update")]
+    public async Task<ActionResult> UpdateOverviewSection(int id, [FromBody] OverviewSectionRequest req)
+    {
+        try
+        {
+            var result = await _manager.UpdateOverviewSectionAsync(id, req);
+            
+            // Create audit log
+            await CreateAuditLogAsync(id, "update_overview_section", result);
+            
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating Overview section for opportunity {OpportunityId}", id);
+            return StatusCode(500, new { error = "Internal server error while updating Overview section", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Updates the WHAT section of an opportunity (org unit, initiative type, delivery modality, deliverables)
     /// </summary>
     [HttpPatch(APIDictionary.OpportunityWhat)]
     [AccessControlled(EntityTypes.Opportunity, "update")]
@@ -548,6 +577,7 @@ public class OpportunityController : BaseController
     /// <summary>
     /// Tags a document as Partner Results Framework for specific funding/client partners
     /// Updates OpportunityFundingPartner and OpportunityClientPartner records with the document ID
+    /// Supports clearing associations by passing empty arrays
     /// </summary>
     [HttpPost(APIDictionary.Opportunity + "/{opportunityId}/tag-related-partner-to-doc")]
     [AccessControlled(EntityTypes.Opportunity, "update")]
@@ -558,13 +588,6 @@ public class OpportunityController : BaseController
             _logger.LogInformation("📎 [API] Tagging document {DocumentId} to partners for opportunity {OpportunityId}", 
                 request.DocumentId, opportunityId);
 
-            // Validate request
-            if ((request.FundingPartnerIds == null || !request.FundingPartnerIds.Any()) &&
-                (request.ClientPartnerIds == null || !request.ClientPartnerIds.Any()))
-            {
-                return BadRequest(new { error = "At least one funding or client partner must be selected" });
-            }
-
             // Get the document to verify it exists and get its name
             var document = await _context.Documents.FindAsync(request.DocumentId);
             if (document == null)
@@ -572,12 +595,37 @@ public class OpportunityController : BaseController
                 return NotFound(new { error = $"Document with ID {request.DocumentId} not found" });
             }
 
-            // Update funding partners with document ID
+            // Get all funding partners for this opportunity
+            var allFundingPartners = await _context.OpportunityFundingPartners
+                .Where(fp => fp.OpportunityId == opportunityId)
+                .ToListAsync();
+
+            // Get all client partners for this opportunity
+            var allClientPartners = await _context.OpportunityClientPartners
+                .Where(cp => cp.OpportunityId == opportunityId)
+                .ToListAsync();
+
+            // Clear document ID from ALL partners first (for this specific document)
+            foreach (var fp in allFundingPartners.Where(fp => fp.DocumentId == request.DocumentId))
+            {
+                fp.DocumentId = null;
+                _logger.LogInformation("🧹 [API] Cleared document {DocumentId} from funding partner {PartnerId}", 
+                    request.DocumentId, fp.PartnerId);
+            }
+
+            foreach (var cp in allClientPartners.Where(cp => cp.DocumentId == request.DocumentId))
+            {
+                cp.DocumentId = null;
+                _logger.LogInformation("🧹 [API] Cleared document {DocumentId} from client partner {PartnerId}", 
+                    request.DocumentId, cp.PartnerId);
+            }
+
+            // Now set document ID for selected partners (if any)
             if (request.FundingPartnerIds != null && request.FundingPartnerIds.Any())
             {
-                var fundingPartnersToUpdate = await _context.OpportunityFundingPartners
-                    .Where(fp => fp.OpportunityId == opportunityId && request.FundingPartnerIds.Contains(fp.PartnerId))
-                    .ToListAsync();
+                var fundingPartnersToUpdate = allFundingPartners
+                    .Where(fp => request.FundingPartnerIds.Contains(fp.PartnerId))
+                    .ToList();
 
                 foreach (var fundingPartner in fundingPartnersToUpdate)
                 {
@@ -587,12 +635,11 @@ public class OpportunityController : BaseController
                 }
             }
 
-            // Update client partners with document ID
             if (request.ClientPartnerIds != null && request.ClientPartnerIds.Any())
             {
-                var clientPartnersToUpdate = await _context.OpportunityClientPartners
-                    .Where(cp => cp.OpportunityId == opportunityId && request.ClientPartnerIds.Contains(cp.PartnerId))
-                    .ToListAsync();
+                var clientPartnersToUpdate = allClientPartners
+                    .Where(cp => request.ClientPartnerIds.Contains(cp.PartnerId))
+                    .ToList();
 
                 foreach (var clientPartner in clientPartnersToUpdate)
                 {
@@ -605,15 +652,20 @@ public class OpportunityController : BaseController
             // Save all changes
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("✅ [API] Successfully tagged document {DocumentId} to partners for opportunity {OpportunityId}", 
-                request.DocumentId, opportunityId);
+            var message = (request.FundingPartnerIds?.Count ?? 0) + (request.ClientPartnerIds?.Count ?? 0) == 0
+                ? "Document associations cleared successfully"
+                : "Document successfully tagged to partners";
+
+            _logger.LogInformation("✅ [API] {Message} - Document {DocumentId} for opportunity {OpportunityId}", 
+                message, request.DocumentId, opportunityId);
 
             return Ok(new
             {
-                message = "Document successfully tagged to partners",
+                message = message,
                 documentId = request.DocumentId,
                 fundingPartnersUpdated = request.FundingPartnerIds?.Count ?? 0,
-                clientPartnersUpdated = request.ClientPartnerIds?.Count ?? 0
+                clientPartnersUpdated = request.ClientPartnerIds?.Count ?? 0,
+                cleared = (request.FundingPartnerIds?.Count ?? 0) + (request.ClientPartnerIds?.Count ?? 0) == 0
             });
         }
         catch (Exception ex)
@@ -1416,7 +1468,7 @@ public class OpportunityController : BaseController
     {
         try
         {
-            _logger.LogInformation("🔍 AC2: Getting framework status for opportunity {OpportunityId}", id);
+            _logger.LogInformation("Getting framework status for opportunity {OpportunityId}", id);
 
             // Get opportunity with partners
             var opportunity = await _context.Opportunities
@@ -1431,10 +1483,10 @@ public class OpportunityController : BaseController
 
             var taggedFrameworks = new List<TaggedFrameworkInfo>();
 
-            // Get framework docs from funding partners
-            foreach (var fp in opportunity.FundingPartners.Where(fp => fp.PartnerResultsFrameworkDocumentId.HasValue))
+            // Get framework docs from funding partners (using existing DocumentId)
+            foreach (var fp in opportunity.FundingPartners.Where(fp => fp.DocumentId.HasValue))
             {
-                var doc = await _context.Documents.FirstOrDefaultAsync(d => d.Id == fp.PartnerResultsFrameworkDocumentId.Value);
+                var doc = await _context.Documents.FirstOrDefaultAsync(d => d.Id == fp.DocumentId.Value);
                 if (doc != null)
                 {
                     taggedFrameworks.Add(new TaggedFrameworkInfo
@@ -1449,10 +1501,10 @@ public class OpportunityController : BaseController
                 }
             }
 
-            // Get framework docs from client partners
-            foreach (var cp in opportunity.ClientPartners.Where(cp => cp.PartnerResultsFrameworkDocumentId.HasValue))
+            // Get framework docs from client partners (using existing DocumentId)
+            foreach (var cp in opportunity.ClientPartners.Where(cp => cp.DocumentId.HasValue))
             {
-                var doc = await _context.Documents.FirstOrDefaultAsync(d => d.Id == cp.PartnerResultsFrameworkDocumentId.Value);
+                var doc = await _context.Documents.FirstOrDefaultAsync(d => d.Id == cp.DocumentId.Value);
                 if (doc != null)
                 {
                     taggedFrameworks.Add(new TaggedFrameworkInfo
@@ -1478,7 +1530,7 @@ public class OpportunityController : BaseController
                 AllDocumentsCount = totalDocs
             };
 
-            _logger.LogInformation("✅ AC2: Framework status - {Count} tagged frameworks, {TotalDocs} total docs",
+            _logger.LogInformation("✅ Framework status - {Count} tagged frameworks, {TotalDocs} total docs",
                 taggedFrameworks.Count, totalDocs);
 
             return Ok(response);
@@ -1491,7 +1543,7 @@ public class OpportunityController : BaseController
     }
 
     /// <summary>
-    /// AC2: Extracts products and services from Partner Results Framework and other documents using AI
+    /// Extracts products and services from Partner Results Framework and other documents using AI
     /// Returns temporary extraction data for user verification (not saved to database)
     /// </summary>
     [HttpPost(APIDictionary.Opportunity + "/{id}/extract-deliverables")]
@@ -1500,7 +1552,7 @@ public class OpportunityController : BaseController
     {
         try
         {
-            _logger.LogInformation("🤖 AC2: Starting AI extraction for opportunity {OpportunityId}", id);
+            _logger.LogInformation("🤖 Starting AI extraction for opportunity {OpportunityId}", id);
 
             // Verify opportunity exists
             var opportunity = await _manager.GetOpportunityAsync(id);
@@ -1512,7 +1564,7 @@ public class OpportunityController : BaseController
             // Call Gemini manager for extraction
             var extracted = await _geminiManager.ExtractDeliverablesWithFrameworkPriorityAsync(id);
 
-            _logger.LogInformation("✅ AC2: Extracted {Count} deliverables for opportunity {OpportunityId}", 
+            _logger.LogInformation("✅ Extracted {Count} deliverables for opportunity {OpportunityId}", 
                 extracted.Count, id);
 
             return Ok(extracted);

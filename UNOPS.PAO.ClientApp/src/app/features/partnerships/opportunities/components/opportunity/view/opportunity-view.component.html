@@ -56,6 +56,7 @@
       [opportunityId]="opportunity()!.id!"
       [opportunity]="opportunity()"
       [collapsed]="documentsCollapsed()"
+      [canUpdate]="canUpdate()"
       (togglePanel)="toggleDocumentsPanel()"
       (opportunityUpdated)="reloadOpportunity()"
     />
@@ -137,10 +138,21 @@
             />
           </div>
 
+          <!-- OVERVIEW Section - Name & Description -->
+          <div id="section-overview" style="scroll-margin-top: 72px">
+            <app-opportunity-overview-section
+              [opportunity]="opportunity()!"
+              [canUpdate]="canUpdate()"
+              (opportunityUpdated)="handleOpportunityUpdate($event)"
+              (sectionSaved)="reloadOpportunity()"
+            />
+          </div>
+
           <!-- WHAT Section -->
           <div id="section-what" style="scroll-margin-top: 72px">
             <app-opportunity-what-section
               [opportunity]="opportunity()!"
+              [canUpdate]="canUpdate()"
               [suggestions]="whatSuggestions()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
             />
@@ -150,6 +162,7 @@
           <div id="section-why" style="scroll-margin-top: 72px">
             <app-opportunity-why-section
               [opportunity]="opportunity()!"
+              [canUpdate]="canUpdate()"
               [suggestions]="whySuggestions()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
             />
@@ -159,6 +172,7 @@
           <div id="section-who" style="scroll-margin-top: 72px">
             <app-opportunity-who-section
               [opportunity]="opportunity()!"
+              [canUpdate]="canUpdate()"
               [suggestions]="whoSuggestions()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
             />
@@ -168,6 +182,7 @@
           <div id="section-where" style="scroll-margin-top: 72px">
             <app-opportunity-where-section
               [opportunity]="opportunity()!"
+              [canUpdate]="canUpdate()"
               [suggestions]="whereSuggestions()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
             />
@@ -177,6 +192,7 @@
           <div id="section-when" style="scroll-margin-top: 72px">
             <app-opportunity-when-section
               [opportunity]="opportunity()!"
+              [canUpdate]="canUpdate()"
               [suggestions]="whenSuggestions()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
             />
@@ -210,6 +226,7 @@
           <div id="section-statement" style="scroll-margin-top: 72px">
             <app-opportunity-statement-section
               [opportunity]="opportunity()!"
+              [canUpdate]="canUpdate()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
             />
           </div>

@@ -64,7 +64,14 @@ export class OpportunityService {
   }
 
   /**
-   * Update WHAT section of opportunity (description, org unit, initiative type, deliverables)
+   * Update Overview section of opportunity (name, description)
+   */
+  updateOpportunityOverview(id: number, data: { name?: string; description?: string }): Observable<Opportunity> {
+    return this.http.patch<Opportunity>(`${this.apiUrl}/${id}/overview`, data);
+  }
+
+  /**
+   * Update WHAT section of opportunity (org unit, initiative type, delivery modality, deliverables)
    */
   updateOpportunityWhat(id: number, data: Partial<Opportunity>): Observable<Opportunity> {
     return this.http.patch<Opportunity>(`${this.apiUrl}/${id}/what`, data);
@@ -318,7 +325,7 @@ export class OpportunityService {
    * @returns Observable with framework status information
    */
   getFrameworkStatus(id: number): Observable<FrameworkStatusResponse> {
-    return this.http.get<FrameworkStatusResponse>(`${this.apiUrl}/${id}/what/framework-status`);
+    return this.http.get<FrameworkStatusResponse>(`${this.apiUrl}/${id}/framework-status`);
   }
 
   /**
@@ -328,7 +335,7 @@ export class OpportunityService {
    * @returns Observable with array of extracted deliverable information
    */
   extractProductsAndServices(id: number): Observable<ExtractedDeliverableInfo[]> {
-    return this.http.post<ExtractedDeliverableInfo[]>(`${this.apiUrl}/${id}/what/extract-products-services`, {});
+    return this.http.post<ExtractedDeliverableInfo[]>(`${this.apiUrl}/${id}/extract-deliverables`, {});
   }
 
   /**

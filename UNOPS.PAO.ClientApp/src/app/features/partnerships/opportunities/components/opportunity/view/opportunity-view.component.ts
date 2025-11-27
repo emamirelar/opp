@@ -34,6 +34,7 @@ import { OpportunityService } from '../../../services/opportunity.service';
 import { Opportunity } from '@shared/models/opportunity.model';
 import { OpportunityCollaborationComponent } from './sections/collaboration/opportunity-collaboration.component';
 import { OpportunityAnalysisSectionComponent } from './sections/analysis/opportunity-analysis-section.component';
+import { OpportunityOverviewSectionComponent } from './sections/overview/opportunity-overview-section.component';
 import { OpportunityWhatSectionComponent } from './sections/what/opportunity-what-section.component';
 import { OpportunityWhySectionComponent } from './sections/why/opportunity-why-section.component';
 import { OpportunityWhoSectionComponent } from './sections/who/opportunity-who-section.component';
@@ -81,6 +82,7 @@ import { ValuesService } from '@app/shared/services/api/values.service';
     MarkdownModule,
     OpportunityCollaborationComponent,
     OpportunityAnalysisSectionComponent,
+    OpportunityOverviewSectionComponent,
     OpportunityWhatSectionComponent,
     OpportunityWhySectionComponent,
     OpportunityWhoSectionComponent,
@@ -152,6 +154,7 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
   // Section navigation configuration
   sections = [
     { id: 'analysis', label: 'Analysis', icon: 'pi-chart-bar' },
+    { id: 'overview', label: 'Overview', icon: 'pi-file' },
     { id: 'what', label: 'What', icon: 'pi-briefcase' },
     { id: 'why', label: 'Why', icon: 'pi-lightbulb' },
     { id: 'who', label: 'Who', icon: 'pi-users' },
@@ -166,6 +169,17 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
   // Permission management using utility service
   private permissionUtils = this.permissionUtilityService.createInstancePermissions('Opportunity');
   recordPermissions = this.permissionUtils.recordPermissions;
+
+  // Computed canUpdate based on opportunity permissions (from backend including stakeholder check)
+  canUpdate = computed(() => {
+    const opp = this.opportunity();
+    // Check opportunity's inline permissions first (includes stakeholder check from backend)
+    if (opp?.permissions?.canUpdate) {
+      return true;
+    }
+    // Fallback to recordPermissions from utility service
+    return this.permissionUtilityService.canUpdate(this.recordPermissions());
+  });
 
   // Computed properties for conditional display
   showAdditionalInfo = computed(() => {
@@ -364,11 +378,15 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
           // Initial load - allow scrolling to specified section after data loads
           this.recordId = newRecordId;
           this.shouldScrollAfterDataLoad = section ? true : false;
+          // Load permissions for this specific opportunity instance
+          this.permissionUtils.loadPermissions(this.recordId, this.cdr);
           this._loadRecordDetails(section || 'analysis');
         } else if (newRecordId && newRecordId !== this.recordId) {
           // Record ID changed (navigating to different record) - don't auto-scroll
           this.recordId = newRecordId;
           this.shouldScrollAfterDataLoad = false;
+          // Load permissions for the new opportunity instance
+          this.permissionUtils.loadPermissions(this.recordId, this.cdr);
           this._loadRecordDetails(section || 'analysis');
         }
 
@@ -541,14 +559,25 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
     // Replace entire opportunity signal with fresh data from backend
     this.opportunity.set(updatedOpportunity);
     
-    // Refresh related items to reflect any changes in partners/stakeholders
-    if (this.relatedItemsComponent) {
-      this.relatedItemsComponent.loadSourceInteractions();
-    }
+    // Note: Source interactions are only reloaded on specific actions (e.g., partner changes from WHO section)
+    // Do NOT reload source interactions on every opportunity update to avoid unnecessary API calls
     
     // Angular signals automatically notify ALL child components
     // All sections will re-render with latest data
     this.cdr.detectChanges();
+  }
+  
+  /**
+   * Handle opportunity update that also requires refreshing related items
+   * Use this when partners or stakeholders change (from WHO section)
+   */
+  handleOpportunityUpdateWithRelatedItems(updatedOpportunity: Opportunity): void {
+    this.handleOpportunityUpdate(updatedOpportunity);
+    
+    // Refresh related items to reflect changes in partners/stakeholders
+    if (this.relatedItemsComponent) {
+      this.relatedItemsComponent.loadSourceInteractions();
+    }
   }
 
   /**

@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Npgsql;
+using NpgsqlTypes;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.DataAccess.Context;
 using AutoMapper;
@@ -4155,10 +4157,10 @@ public class UNOPSGeminiManager : IGeminiManager
             }
         }
 
-        #region AC2: Partner Results Framework & Products/Services Extraction
+        #region Partner Results Framework & Products/Services Extraction
 
         /// <summary>
-        /// AC2: Extracts products and services from Partner Results Framework documents and other sources.
+        /// Extracts products and services from Partner Results Framework documents and other sources.
         /// Priority: Tagged framework docs first, then fallback to all other documents if needed.
         /// Returns temporary extraction data for user verification (not saved to database).
         /// </summary>
@@ -4166,7 +4168,7 @@ public class UNOPSGeminiManager : IGeminiManager
         /// <returns>List of extracted deliverables with partner language, source, and confidence scores</returns>
         public async Task<List<ExtractedDeliverableInfo>> ExtractDeliverablesWithFrameworkPriorityAsync(int opportunityId)
         {
-            _logger.LogInformation($"🔍 AC2: Starting deliverable extraction for opportunity {opportunityId}");
+            _logger.LogInformation($"🔍 Starting deliverable extraction for opportunity {opportunityId}");
 
             // Step 1: Get opportunity with documents and partner relationships
             var opportunity = await _context.Opportunities
@@ -4216,12 +4218,37 @@ public class UNOPSGeminiManager : IGeminiManager
                 throw new BusinessException("AI prompt 'opportunity_extract_products_services' not found.");
             }
 
-            // Step 5: Build context data for AI
+            // Step 5: Get existing deliverables to avoid duplicates
+            var existingDeliverables = await _context.OpportunityDeliverables
+                .Where(od => od.OpportunityId == opportunityId)
+                .Include(od => od.Output)
+                .Select(od => new
+                {
+                    outputName = od.Output != null ? od.Output.Name : null,
+                    level0 = od.Output != null ? od.Output.Level0 : null,
+                    level1 = od.Output != null ? od.Output.Level1 : null,
+                    level2 = od.Output != null ? od.Output.Level2 : null,
+                    level3 = od.Output != null ? od.Output.Level3 : null,
+                    level4 = od.Output != null ? od.Output.Level4 : null
+                })
+                .ToListAsync();
+
+            // Step 6: Build context data for AI
+            // Step 5: Get UNOPS taxonomy for AI context
+            var unopsTaxonomy = await GetUNOPSTaxonomyForAIAsync();
+
             var contextData = new
             {
                 opportunityId = opportunity.Id,
                 opportunityName = opportunity.Name,
                 opportunityDescription = opportunity.Description,
+                unopsTaxonomy = unopsTaxonomy,
+                existingDeliverables = existingDeliverables.Select(ed => new
+                {
+                    outputName = ed.outputName,
+                    hierarchicalPath = string.Join(" > ", new[] { ed.level0, ed.level1, ed.level2, ed.level3, ed.level4 }
+                        .Where(l => !string.IsNullOrEmpty(l)))
+                }).ToList(),
                 priorityDocuments = taggedFrameworkDocs.Select(tf => new
                 {
                     documentId = tf.DocumentId,
@@ -4239,33 +4266,44 @@ public class UNOPSGeminiManager : IGeminiManager
 
             var contextJson = System.Text.Json.JsonSerializer.Serialize(contextData);
 
-            // Step 6: Call AI with all documents
-            // Note: We're using the first document's storage path for the AI call
-            // The AI will analyze all documents listed in the context
-            var primaryDoc = taggedFrameworkDocs.FirstOrDefault()?.DocumentStoragePath 
-                            ?? untaggedDocs.FirstOrDefault()?.StoragePath;
-
-            if (string.IsNullOrEmpty(primaryDoc))
+            // Step 7: Prepare ALL documents for AI (as file URIs)
+            var documentsForAI = new List<(string storagePath, string mimeType)>();
+            
+            // Add priority documents (tagged frameworks) first
+            foreach (var tf in taggedFrameworkDocs)
             {
-                _logger.LogWarning($"⚠️ No valid document storage paths found");
+                if (!string.IsNullOrEmpty(tf.DocumentStoragePath) && tf.DocumentStoragePath.StartsWith("gs://"))
+                {
+                    documentsForAI.Add((tf.DocumentStoragePath, "application/pdf"));
+                }
+            }
+            
+            // Add fallback documents (untagged)
+            foreach (var doc in untaggedDocs)
+            {
+                if (!string.IsNullOrEmpty(doc.StoragePath) && doc.StoragePath.StartsWith("gs://"))
+                {
+                    documentsForAI.Add((doc.StoragePath, "application/pdf"));
+                }
+            }
+
+            if (!documentsForAI.Any())
+            {
+                _logger.LogWarning($"⚠️ No valid document storage paths found (must be gs:// URIs)");
                 return new List<ExtractedDeliverableInfo>();
             }
 
-            var primaryMimeType = taggedFrameworkDocs.FirstOrDefault()?.DocumentStoragePath != null
-                ? "application/pdf" // Framework docs are typically PDFs
-                : "application/pdf"; // Default to PDF
+            _logger.LogInformation($"📝 Calling AI for extraction with {documentsForAI.Count} documents ({taggedFrameworkDocs.Count} priority, {untaggedDocs.Count} fallback)");
 
-            _logger.LogInformation($"📝 Calling AI for extraction with primary doc: {primaryDoc}");
-
+            // Step 8: Call AI with ALL documents attached as file URIs
             string aiResponse;
             try
             {
-                // Use FetchResultFromGeminiWithDocument to pass document URIs to AI
-                aiResponse = await _aiService.FetchResultFromGeminiWithDocument(
+                // Use FetchResultFromGeminiWithMultipleDocuments to pass ALL document URIs to AI
+                aiResponse = await _aiService.FetchResultFromGeminiWithMultipleDocuments(
                     prompt,
                     contextJson,
-                    primaryDoc,
-                    primaryMimeType,
+                    documentsForAI,
                     opportunityId.ToString()
                 );
             }
@@ -4275,12 +4313,199 @@ public class UNOPSGeminiManager : IGeminiManager
                 throw new InvalidOperationException($"AI extraction failed: {ex.Message}", ex);
             }
 
-            // Step 7: Parse AI response
+            // Step 9: Parse AI response
             var extracted = ParseExtractionResponse(aiResponse);
 
-            _logger.LogInformation($"✅ AC2: Extracted {extracted.Count} deliverables for opportunity {opportunityId}");
+            // Step 10: Match extracted items with Outputs table using batch similarity search
+            if (extracted.Any())
+            {
+                _logger.LogInformation($"🔍 Matching {extracted.Count} extracted items with Outputs table");
+                await MatchExtractedItemsWithOutputsAsync(extracted);
+                
+                // Step 11: Filter out items with no match found (matchedOutputId is null)
+                var beforeFilterCount = extracted.Count;
+                extracted = extracted.Where(e => e.MatchedOutputId.HasValue).ToList();
+                var filteredCount = beforeFilterCount - extracted.Count;
+                
+                if (filteredCount > 0)
+                {
+                    _logger.LogInformation($"🔍 Filtered out {filteredCount} items with no UNOPS taxonomy match");
+                }
+            }
+
+            _logger.LogInformation($"✅ Extracted {extracted.Count} deliverables for opportunity {opportunityId} (after filtering)");
 
             return extracted;
+        }
+
+        /// <summary>
+        /// Gets UNOPS Products and Services taxonomy for AI context.
+        /// Returns a formatted string representation of the hierarchical taxonomy.
+        /// </summary>
+        private async Task<string> GetUNOPSTaxonomyForAIAsync()
+        {
+            try
+            {
+                var outputs = await _context.Outputs
+                    .Where(o => o.Status == EntityStatus.Active)
+                    .OrderBy(o => o.Level0)
+                    .ThenBy(o => o.Level1)
+                    .ThenBy(o => o.Level2)
+                    .ThenBy(o => o.Level3)
+                    .ThenBy(o => o.Level4)
+                    .Select(o => new
+                    {
+                        o.Level0,
+                        o.Level1,
+                        o.DefinitionLevel1,
+                        o.Level2,
+                        o.DefinitionLevel2,
+                        o.Level3,
+                        o.DefinitionLevel3,
+                        o.Level4,
+                        o.DefinitionLevel4,
+                        o.ServiceLine
+                    })
+                    .AsNoTracking()
+                    .ToListAsync();
+
+                if (!outputs.Any())
+                {
+                    _logger.LogWarning("⚠️ No UNOPS taxonomy found in Outputs table");
+                    return "UNOPS Products and Services taxonomy not available.";
+                }
+
+                var sb = new StringBuilder();
+                sb.AppendLine("UNOPS Products and Services List (Hierarchical Structure):");
+                sb.AppendLine();
+
+                string currentLevel0 = null;
+                string currentLevel1 = null;
+                string currentLevel2 = null;
+                string currentLevel3 = null;
+
+                foreach (var output in outputs)
+                {
+                    // Level 0 (Top-level category)
+                    if (currentLevel0 != output.Level0 && !string.IsNullOrEmpty(output.Level0))
+                    {
+                        currentLevel0 = output.Level0;
+                        sb.AppendLine($"• {output.Level0}");
+                        currentLevel1 = null;
+                        currentLevel2 = null;
+                        currentLevel3 = null;
+                    }
+
+                    // Level 1
+                    if (currentLevel1 != output.Level1 && !string.IsNullOrEmpty(output.Level1))
+                    {
+                        currentLevel1 = output.Level1;
+                        sb.AppendLine($"  - {output.Level1}");
+                        if (!string.IsNullOrEmpty(output.DefinitionLevel1))
+                        {
+                            sb.AppendLine($"    ({output.DefinitionLevel1})");
+                        }
+                        currentLevel2 = null;
+                        currentLevel3 = null;
+                    }
+
+                    // Level 2
+                    if (currentLevel2 != output.Level2 && !string.IsNullOrEmpty(output.Level2))
+                    {
+                        currentLevel2 = output.Level2;
+                        sb.AppendLine($"    • {output.Level2}");
+                        if (!string.IsNullOrEmpty(output.DefinitionLevel2))
+                        {
+                            sb.AppendLine($"      ({output.DefinitionLevel2})");
+                        }
+                        currentLevel3 = null;
+                    }
+
+                    // Level 3
+                    if (currentLevel3 != output.Level3 && !string.IsNullOrEmpty(output.Level3))
+                    {
+                        currentLevel3 = output.Level3;
+                        sb.AppendLine($"      - {output.Level3}");
+                        if (!string.IsNullOrEmpty(output.DefinitionLevel3))
+                        {
+                            sb.AppendLine($"        ({output.DefinitionLevel3})");
+                        }
+                    }
+
+                    // Level 4
+                    if (!string.IsNullOrEmpty(output.Level4))
+                    {
+                        sb.AppendLine($"        • {output.Level4}");
+                        if (!string.IsNullOrEmpty(output.DefinitionLevel4))
+                        {
+                            sb.AppendLine($"          ({output.DefinitionLevel4})");
+                        }
+                    }
+                }
+
+                var taxonomy = sb.ToString();
+                _logger.LogInformation($"📚 Generated UNOPS taxonomy: {taxonomy.Length} characters, {outputs.Count} entries");
+                
+                return taxonomy;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error generating UNOPS taxonomy for AI");
+                return "UNOPS Products and Services taxonomy temporarily unavailable.";
+            }
+        }
+
+        /// <summary>
+        /// Parses embedding string (JSON array format "[1.0,2.0,...]") to byte array for pgvector
+        /// </summary>
+        private byte[]? ParseEmbeddingStringToBytes(string embeddingString)
+        {
+            try
+            {
+                // Remove brackets and whitespace
+                var cleaned = embeddingString.Trim().Trim('[', ']');
+                
+                // Parse to float array
+                var values = cleaned.Split(',')
+                    .Select(s => float.Parse(s.Trim(), System.Globalization.CultureInfo.InvariantCulture))
+                    .ToArray();
+                
+                // Convert float array to byte array
+                var bytes = new byte[values.Length * sizeof(float)];
+                Buffer.BlockCopy(values, 0, bytes, 0, bytes.Length);
+                
+                return bytes;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error parsing embedding string to bytes: {Message}", ex.Message);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Parses embedding string (JSON array format "[1.0,2.0,...]") to float array for pgvector
+        /// </summary>
+        private float[]? ParseEmbeddingStringToFloatArray(string embeddingString)
+        {
+            try
+            {
+                // Remove brackets and whitespace
+                var cleaned = embeddingString.Trim().Trim('[', ']');
+                
+                // Parse to float array
+                var values = cleaned.Split(',')
+                    .Select(s => float.Parse(s.Trim(), System.Globalization.CultureInfo.InvariantCulture))
+                    .ToArray();
+                
+                _logger.LogInformation($"✅ Parsed embedding: {values.Length} dimensions");
+                return values;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error parsing embedding string to float array: {Message}", ex.Message);
+                return null;
+            }
         }
 
         /// <summary>
@@ -4299,12 +4524,12 @@ public class UNOPSGeminiManager : IGeminiManager
 
             var taggedFrameworks = new List<TaggedFrameworkInfo>();
 
-            // Get framework docs from funding partners
-            foreach (var fp in opportunity.FundingPartners.Where(fp => fp.PartnerResultsFrameworkDocumentId.HasValue))
+            // Get framework docs from funding partners (using existing DocumentId)
+            foreach (var fp in opportunity.FundingPartners.Where(fp => fp.DocumentId.HasValue))
             {
                 var doc = await _context.Documents
                     .AsNoTracking()
-                    .FirstOrDefaultAsync(d => d.Id == fp.PartnerResultsFrameworkDocumentId.Value);
+                    .FirstOrDefaultAsync(d => d.Id == fp.DocumentId.Value);
 
                 if (doc != null)
                 {
@@ -4320,12 +4545,12 @@ public class UNOPSGeminiManager : IGeminiManager
                 }
             }
 
-            // Get framework docs from client partners
-            foreach (var cp in opportunity.ClientPartners.Where(cp => cp.PartnerResultsFrameworkDocumentId.HasValue))
+            // Get framework docs from client partners (using existing DocumentId)
+            foreach (var cp in opportunity.ClientPartners.Where(cp => cp.DocumentId.HasValue))
             {
                 var doc = await _context.Documents
                     .AsNoTracking()
-                    .FirstOrDefaultAsync(d => d.Id == cp.PartnerResultsFrameworkDocumentId.Value);
+                    .FirstOrDefaultAsync(d => d.Id == cp.DocumentId.Value);
 
                 if (doc != null)
                 {
@@ -4375,42 +4600,202 @@ public class UNOPSGeminiManager : IGeminiManager
             }
         }
 
+        /// <summary>
+        /// Matches extracted deliverables with Outputs table using batch similarity search.
+        /// Updates the extracted items with matched output information.
+        /// Deduplicates search texts to avoid redundant database queries.
+        /// </summary>
+        private async Task MatchExtractedItemsWithOutputsAsync(List<ExtractedDeliverableInfo> extractedItems)
+        {
+            try
+            {
+                // Step 1: Create a mapping of unique search texts to their indices
+                var searchTextToIndices = new Dictionary<string, List<int>>(StringComparer.OrdinalIgnoreCase);
+                
+                for (int i = 0; i < extractedItems.Count; i++)
+                {
+                    var searchText = extractedItems[i].PartnerLanguage?.Trim();
+                    if (string.IsNullOrEmpty(searchText)) continue;
+                    
+                    if (!searchTextToIndices.ContainsKey(searchText))
+                    {
+                        searchTextToIndices[searchText] = new List<int>();
+                    }
+                    searchTextToIndices[searchText].Add(i);
+                }
+
+                // Step 2: Get distinct search texts for batch query
+                var distinctSearchTexts = searchTextToIndices.Keys.ToArray();
+                
+                if (distinctSearchTexts.Length == 0)
+                {
+                    _logger.LogWarning("⚠️ No valid search texts found in extracted items");
+                    return;
+                }
+
+                _logger.LogInformation($"🔍 Matching {distinctSearchTexts.Length} distinct items using semantic search (threshold: 0.5)");
+                _logger.LogInformation($"📊 Search parameters: semantic_threshold=0.5, keyword_boost=0.1, similarity_boost=0.05");
+
+                // Step 3: Use hybrid search for each distinct text
+                var aiService = new AiContextualService(_configuration, _context, _credentials, null, _logger);
+                var connection = _context.Database.GetDbConnection();
+                if (connection.State != System.Data.ConnectionState.Open)
+                    await connection.OpenAsync();
+
+                int processedCount = 0;
+                foreach (var searchText in distinctSearchTexts)
+                {
+                    try
+                    {
+                        processedCount++;
+                        _logger.LogInformation($"🔄 [{processedCount}/{distinctSearchTexts.Length}] Processing: '{searchText}'");
+                        
+                        // Generate embedding for search text
+                        var embeddingString = (await aiService.CreateBatchEmbeddingsAsync(new List<string> { searchText })).FirstOrDefault();
+                        
+                        if (string.IsNullOrEmpty(embeddingString))
+                        {
+                            _logger.LogWarning($"⚠️ Failed to generate embedding for: {searchText}");
+                            continue;
+                        }
+                        
+                        _logger.LogInformation($"✅ Generated embedding (length: {embeddingString.Length} chars)");
+
+                        // Parse embedding string to float array, then format for PostgreSQL vector
+                        var embeddingVector = ParseEmbeddingStringToFloatArray(embeddingString);
+                        if (embeddingVector == null || embeddingVector.Length != 768)
+                        {
+                            _logger.LogWarning($"⚠️ Invalid embedding vector dimension. Expected 768, got {embeddingVector?.Length ?? 0}");
+                            continue;
+                        }
+                        
+                        // Convert float array to PostgreSQL vector format: [val1,val2,val3,...] (no spaces)
+                        // This matches the format used in retrieve_embedding_search.sql
+                        var vectorString = $"[{string.Join(",", embeddingVector.Select(v => v.ToString("G", System.Globalization.CultureInfo.InvariantCulture)))}]";
+                        _logger.LogInformation($"✅ Formatted as vector string (dimension: {embeddingVector.Length})");
+
+                        // Call hybrid search function - TEXT parameter will be cast to vector(768) in SQL
+                        var sql = @"
+                            SELECT output_id, entity_embedding_id, level_name, output_text, output_hierarchy, 
+                                   keywords, semantic_score, keyword_score, similarity_score, combined_score
+                            FROM public.retrieve_hybrid_search_outputs(
+                                @searchEmbedding, 
+                                @searchText, 
+                                @semanticThreshold, 
+                                @keywordBoost, 
+                                @similarityBoost, 
+                                @maxResults
+                            )";
+
+                        using var command = connection.CreateCommand();
+                        command.CommandText = sql;
+                        
+                        // Pass embedding as TEXT (same pattern as AiContextualService.ExecuteEmbeddingSearch)
+                        // The SQL function will cast it to vector(768) internally
+                        command.Parameters.Add(new NpgsqlParameter("@searchEmbedding", NpgsqlDbType.Text) { Value = vectorString });
+                        command.Parameters.Add(new NpgsqlParameter("@searchText", NpgsqlDbType.Text) { Value = searchText });
+                        command.Parameters.Add(new NpgsqlParameter("@semanticThreshold", NpgsqlDbType.Real) { Value = 0.5f });
+                        command.Parameters.Add(new NpgsqlParameter("@keywordBoost", NpgsqlDbType.Real) { Value = 0.1f });
+                        command.Parameters.Add(new NpgsqlParameter("@similarityBoost", NpgsqlDbType.Real) { Value = 0.05f });
+                        command.Parameters.Add(new NpgsqlParameter("@maxResults", NpgsqlDbType.Integer) { Value = 1 }); // Best match only
+
+                        _logger.LogInformation($"🔍 Calling retrieve_hybrid_search_outputs with semantic threshold 0.5");
+                        using var reader = await command.ExecuteReaderAsync();
+
+                        if (await reader.ReadAsync())
+                        {
+                            var outputId = reader.GetInt32(0);                                           // output_id
+                            var entityEmbeddingId = reader.GetInt32(1);                                  // entity_embedding_id
+                            var levelName = reader.GetString(2);                                         // level_name
+                            var outputText = reader.GetString(3);                                        // output_text
+                            var outputHierarchy = reader.GetString(4);                                   // output_hierarchy
+                            var keywords = reader.IsDBNull(5) ? "" : reader.GetString(5);               // keywords
+                            var semanticScore = reader.GetFloat(6);                                      // semantic_score
+                            var keywordScore = reader.GetFloat(7);                                       // keyword_score
+                            var similarityScore = reader.GetFloat(8);                                    // similarity_score
+                            var combinedScore = reader.GetFloat(9);                                      // combined_score
+
+                            // Find all extracted items with this search text and update them
+                            if (searchTextToIndices.TryGetValue(searchText, out var indices))
+                            {
+                                foreach (var index in indices)
+                                {
+                                    if (index >= 0 && index < extractedItems.Count)
+                                    {
+                                        extractedItems[index].MatchedOutputId = outputId;
+                                        extractedItems[index].MatchedOutputName = outputText;
+                                        extractedItems[index].MatchScore = (decimal)combinedScore;
+                                        extractedItems[index].MatchedField = $"{levelName} ({outputHierarchy})";
+                                    }
+                                }
+
+                                _logger.LogInformation($"✅ MATCH FOUND: '{searchText}'");
+                                _logger.LogInformation($"   → Matched to: '{outputText}' (Output ID: {outputId})");
+                                _logger.LogInformation($"   → Hierarchy: {outputHierarchy}");
+                                _logger.LogInformation($"   → Scores: Semantic={semanticScore:F3}, Keyword={keywordScore:F3}, Similarity={similarityScore:F3}, Combined={combinedScore:F3}");
+                                _logger.LogInformation($"   → Applied to {indices.Count} extracted item(s)");
+                            }
+                        }
+                        else
+                        {
+                            _logger.LogWarning($"⚠️ NO MATCH: No results above threshold 0.5 for '{searchText}'");
+                            _logger.LogWarning($"   → This item will be filtered out as it has no UNOPS taxonomy match");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, $"❌ Error in hybrid search for '{searchText}': {ex.Message}");
+                    }
+                }
+
+                var matchedCount = extractedItems.Count(e => e.MatchedOutputId.HasValue);
+                _logger.LogInformation($"📊 Hybrid search completed: {matchedCount}/{extractedItems.Count} items matched ({distinctSearchTexts.Length} unique searches)");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ Error matching extracted items with Outputs table: {ex.Message}");
+                // Don't throw - matching is optional, we can still return unmatched items
+            }
+        }
+
         #endregion
 
         /// <summary>
-        /// Gets the status of Partner Results Framework documents for an opportunity (AC2 - WHAT section)
+        /// Gets the status of Partner Results Framework documents for an opportunity
         /// </summary>
         public async Task<FrameworkStatusResponse> GetFrameworkStatusAsync(int opportunityId)
         {
             var response = new FrameworkStatusResponse();
 
-            // Get funding partner frameworks
+            // Get funding partner frameworks (using existing DocumentId)
             var fundingPartnerFrameworks = await _context.OpportunityFundingPartners
-                .Where(fp => fp.OpportunityId == opportunityId && fp.PartnerResultsFrameworkDocumentId.HasValue)
+                .Where(fp => fp.OpportunityId == opportunityId && fp.DocumentId.HasValue)
                 .Include(fp => fp.Partner)
-                .Include(fp => fp.PartnerResultsFrameworkDocument)
+                .Include(fp => fp.Document)
                 .Select(fp => new TaggedFrameworkInfo
                 {
                     PartnerId = fp.PartnerId,
                     PartnerName = fp.Partner!.Name,
-                    DocumentId = fp.PartnerResultsFrameworkDocumentId!.Value,
-                    DocumentName = fp.PartnerResultsFrameworkDocument!.Name,
-                    DocumentStoragePath = fp.PartnerResultsFrameworkDocument!.StoragePath
+                    DocumentId = fp.DocumentId!.Value,
+                    DocumentName = fp.Document!.Name,
+                    DocumentStoragePath = fp.Document!.StoragePath,
+                    PartnerType = "Funding"
                 })
                 .ToListAsync();
 
-            // Get client partner frameworks
+            // Get client partner frameworks (using existing DocumentId)
             var clientPartnerFrameworks = await _context.OpportunityClientPartners
-                .Where(cp => cp.OpportunityId == opportunityId && cp.PartnerResultsFrameworkDocumentId.HasValue)
+                .Where(cp => cp.OpportunityId == opportunityId && cp.DocumentId.HasValue)
                 .Include(cp => cp.Partner)
-                .Include(cp => cp.PartnerResultsFrameworkDocument)
+                .Include(cp => cp.Document)
                 .Select(cp => new TaggedFrameworkInfo
                 {
                     PartnerId = cp.PartnerId,
                     PartnerName = cp.Partner!.Name,
-                    DocumentId = cp.PartnerResultsFrameworkDocumentId!.Value,
-                    DocumentName = cp.PartnerResultsFrameworkDocument!.Name,
-                    DocumentStoragePath = cp.PartnerResultsFrameworkDocument!.StoragePath
+                    DocumentId = cp.DocumentId!.Value,
+                    DocumentName = cp.Document!.Name,
+                    DocumentStoragePath = cp.Document!.StoragePath,
+                    PartnerType = "Client"
                 })
                 .ToListAsync();
 
@@ -4615,6 +5000,28 @@ public class UNOPSGeminiManager : IGeminiManager
             }
         }
 
+        #endregion
+        
+        #region Embedding & Keyword Generation (Delegates to AiContextualService)
+        
+        /// <summary>
+        /// Creates batch embeddings for a list of texts
+        /// Delegates to AiContextualService which handles the actual Gemini API calls
+        /// </summary>
+        public async Task<List<string>> CreateBatchEmbeddingsAsync(List<string> texts)
+        {
+            return await _aiService.CreateBatchEmbeddingsAsync(texts);
+        }
+        
+        /// <summary>
+        /// Generates keywords for a list of texts for hybrid search
+        /// Delegates to AiContextualService which handles the actual Gemini API calls
+        /// </summary>
+        public async Task<Dictionary<string, string>> GenerateKeywordsAsync(List<string> texts)
+        {
+            return await _aiService.GenerateKeywordsAsync(texts);
+        }
+        
         #endregion
     }
 

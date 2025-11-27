@@ -15,7 +15,7 @@ export interface DocumentDetail {
 }
 
 /**
- * Partner Agreement Information model (AC9)
+ * Partner Agreement Information model
  */
 export interface PartnerAgreementInfo {
   partnerAgreementNumber: string;
@@ -64,6 +64,7 @@ export interface Opportunity {
   challenges: string | null;
   opportunityStatementMarkdown: string | null;
   isPooledFunding: boolean;
+  deliveryModality: number | null;
   fundingPartners: OpportunityFundingPartner[];
   clientPartners: OpportunityClientPartner[];
   stakeholders: OpportunityStakeholder[];
@@ -85,6 +86,27 @@ export interface Opportunity {
   createdByName: string | null;
   lastModifiedBy: number;
   lastModifiedByName: string | null;
+  permissions?: EntityPermissions;
+}
+
+/**
+ * Entity permissions model for record-level access control
+ */
+export interface EntityPermissions {
+  canRead: boolean;
+  canCreate: boolean;
+  canUpdate: boolean;
+  canDelete: boolean;
+  canEditFields?: string[];
+  canActivate?: boolean;
+  canClose?: boolean;
+  canArchive?: boolean;
+  canApprove?: boolean;
+  canUnapprove?: boolean;
+  canExport?: boolean;
+  canImport?: boolean;
+  permissionSource?: string;
+  notes?: string;
 }
 
 /**
@@ -116,14 +138,13 @@ export interface OpportunityFundingPartner {
   ddExpiryDate: Date | null;
   ddStatus: string | null;
   ddExpiresBeforeOpportunityEnd: boolean | null;
-  // AC5: Currency and USD conversion fields
+  // Currency and USD conversion fields
   partnerPreferredCurrency: string | null;
   amountUSD: number | null;
   exchangeRate: number | null;
   exchangeRateDate: Date | null;
   exchangeRateDisplay: string | null;
   isPooledContribution: boolean;
-  // AC9: Partner agreements
   selectedPartnerAgreementNumber: string | null;
   availableAgreements: PartnerAgreementInfo[] | null;
 }
@@ -147,7 +168,6 @@ export interface OpportunityClientPartner {
   ddExpiryDate: Date | null;
   ddStatus: string | null;
   ddExpiresBeforeOpportunityEnd: boolean | null;
-  // AC9: Partner agreements
   selectedPartnerAgreementNumber: string | null;
   availableAgreements: PartnerAgreementInfo[] | null;
 }
@@ -188,12 +208,31 @@ export interface OpportunityDeliverable {
   opportunityId: number;
   outputId: number | null;
   outputName: string | null;
-  outputDescription: string | null;
-  outputGroup: string | null;
-  outputSubGroup: string | null;
-  outputServiceLine: string | null;
-  unitCode: string | null;
-  projectCategoryCode: string | null;
+  
+  // Hierarchical Output fields from new Products and Services List
+  level0: string | null;
+  level1: string | null;
+  definitionLevel1: string | null;
+  level2: string | null;
+  definitionLevel2: string | null;
+  level3: string | null;
+  definitionLevel3: string | null;
+  level4: string | null;
+  definitionLevel4: string | null;
+  serviceLine: string | null;
+  
+  // Component flags from Output entity
+  grantSupportImplementingModality: boolean | null;
+  grantSupportComponent: boolean | null;
+  procurementComponent: boolean | null;
+  procurementInstallationComponent: boolean | null;
+  infrastructureComponent: boolean | null;
+  
+  // Timeline and Work Breakdown Structure fields
+  sequenceOrder: number | null;
+  plannedStartDate: string | null;  // ISO date string
+  plannedEndDate: string | null;    // ISO date string
+  
   quantity: number | null;
   notes: string | null;
 }
@@ -670,9 +709,16 @@ export interface TaggedFrameworkInfo {
  * Temporary model for AI-extracted products/services (not yet saved to database)
  */
 export interface ExtractedDeliverableInfo {
-  description: string;
+  partnerLanguage: string; // The exact partner language/wording from the source document
+  context: string; // Context information about where this was found in the document
+  sourceDocumentName: string; // Name of the source document
+  sourceDocumentId: number; // ID of the source document
   isPrioritySource: boolean; // True if extracted from tagged Partner Results Framework
-  sourceDocumentId: number | null;
-  sourceDocumentName: string | null;
+  confidence: number; // AI confidence score (0.0 to 1.0)
+  reasoning: string; // AI reasoning for why this item was extracted
+  matchedOutputId?: number | null; // Matched Output ID from the Outputs table (if similarity match found)
+  matchedOutputName?: string | null; // Name of the matched output from the Outputs table
+  matchScore?: number | null; // Similarity score for the matched output (0.0 to 1.0)
+  matchedField?: string | null; // Field name that was matched in the Outputs table
 }
 

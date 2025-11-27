@@ -50,6 +50,8 @@ public class Program
                             // Configure JSON serialization to use camelCase naming policy
                             options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
                             options.JsonSerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
+                            // Enable case-insensitive property name matching for deserialization
+                            options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
                             // Add global JsonStringEnumConverter to ensure consistent enum serialization
                             options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
                         });

@@ -189,22 +189,23 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     const needsPartnerRole = this.showPartnerFields();
     const hasRoleIfNeeded = !needsPartnerRole || (this.isFundingPartner() || this.isClientPartner());
     
-    return hasAnySources &&
-           this.opportunityName().trim().length > 0 &&
-           this.opportunityDescription().trim().length > 0 &&
-           hasRoleIfNeeded;
+    // Name is required (max 255 chars), description is optional
+    const nameValue = this.opportunityName().trim();
+    const hasValidName = nameValue.length > 0 && nameValue.length <= 255;
+    
+    return hasAnySources && hasValidName && hasRoleIfNeeded;
   });
   
   readonly canCreate = computed(() => {
-    // Can create if name and description are provided
-    const hasBasicInfo = this.opportunityName().trim().length > 0 &&
-                        this.opportunityDescription().trim().length > 0;
+    // Name is required (max 255 chars), description is optional
+    const nameValue = this.opportunityName().trim();
+    const hasValidName = nameValue.length > 0 && nameValue.length <= 255;
     
     // If in partner context (showPartnerFields), need role selection
     const needsPartnerRole = this.showPartnerFields();
     const hasRoleIfNeeded = !needsPartnerRole || (this.isFundingPartner() || this.isClientPartner());
     
-    return hasBasicInfo && hasRoleIfNeeded;
+    return hasValidName && hasRoleIfNeeded;
   });
   
   readonly showPartnerFields = computed(() => {

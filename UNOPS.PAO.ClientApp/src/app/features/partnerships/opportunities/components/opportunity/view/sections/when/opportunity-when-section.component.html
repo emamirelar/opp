@@ -6,37 +6,39 @@
         @if (isSaving()) {
           <i class="pi pi-spin pi-spinner text-xl text-primary"></i>
         }
-        @if (!isEditing()) {
-          <p-button
-            icon="pi pi-pencil"
-            [text]="true"
-            [rounded]="true"
-            severity="secondary"
-            size="small"
-            (onClick)="startEditing()"
-            pTooltip="{{ 'button.edit' | translate }}"
-          />
-        } @else {
-          <p-button
-            icon="pi pi-check"
-            [text]="true"
-            [rounded]="true"
-            severity="success"
-            size="small"
-            (onClick)="saveSection()"
-            [disabled]="isSaving()"
-            pTooltip="{{ 'button.save' | translate }}"
-          />
-          <p-button
-            icon="pi pi-times"
-            [text]="true"
-            [rounded]="true"
-            severity="danger"
-            size="small"
-            (onClick)="cancelEditing()"
-            [disabled]="isSaving()"
-            pTooltip="{{ 'button.cancel' | translate }}"
-          />
+        @if (canUpdate()) {
+          @if (!isEditing()) {
+            <p-button
+              icon="pi pi-pencil"
+              [text]="true"
+              [rounded]="true"
+              severity="secondary"
+              size="small"
+              (onClick)="startEditing()"
+              pTooltip="{{ 'button.edit' | translate }}"
+            />
+          } @else {
+            <p-button
+              icon="pi pi-check"
+              [text]="true"
+              [rounded]="true"
+              severity="success"
+              size="small"
+              (onClick)="saveSection()"
+              [disabled]="isSaving()"
+              pTooltip="{{ 'button.save' | translate }}"
+            />
+            <p-button
+              icon="pi pi-times"
+              [text]="true"
+              [rounded]="true"
+              severity="danger"
+              size="small"
+              (onClick)="cancelEditing()"
+              [disabled]="isSaving()"
+              pTooltip="{{ 'button.cancel' | translate }}"
+            />
+          }
         }
       </div>
     </div>
@@ -117,5 +119,161 @@
       </div>
     </div>
   }
+  
+  <!-- Work Breakdown Structure / Timeline -->
+  <div class="border-t border-gray-200 pt-6 mt-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold text-gray-900">
+        📋 {{ 'label.workBreakdownStructure' | translate }}
+      </h3>
+      @if (sortedDeliverables().length === 0 && !isEditing()) {
+        <p-button
+          [label]="'button.goToWhatSection' | translate"
+          icon="pi pi-arrow-down"
+          severity="secondary"
+          [outlined]="true"
+          size="small"
+          (onClick)="navigateToWhatSection()"
+        />
+      }
+    </div>
+    
+    <p class="text-sm text-gray-600 mb-4">
+      {{ 'message.wbsDescription' | translate }}
+    </p>
+    
+    <!-- Legend for Procurement Prerequisites -->
+    @if (hasDeliverablesWithProcurement()) {
+      <div class="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">
+        <div class="flex items-start gap-2">
+          <i class="pi pi-exclamation-triangle text-orange-600 text-sm mt-0.5"></i>
+          <div class="flex-1">
+            <p class="text-xs font-semibold text-orange-900 mb-1">
+              {{ 'label.procurementPrerequisiteNotice' | translate }}
+            </p>
+            <p class="text-xs text-orange-800">
+              {{ 'message.procurementPrerequisiteExplanation' | translate }}
+            </p>
+          </div>
+        </div>
+      </div>
+    }
+    
+    @if (sortedDeliverables().length === 0) {
+      <!-- Empty State -->
+      <div class="bg-gray-50 rounded-lg p-8 border border-dashed border-gray-300 text-center">
+        <i class="pi pi-box text-4xl text-gray-400 mb-3"></i>
+        <p class="text-gray-600 mb-4">
+          {{ 'message.noDeliverablesForTimeline' | translate }}
+        </p>
+        <p-button
+          [label]="'button.addProductsServices' | translate"
+          icon="pi pi-plus"
+          severity="primary"
+          [outlined]="true"
+          size="small"
+          (onClick)="navigateToWhatSection()"
+        />
+      </div>
+    } @else {
+      <!-- Timeline List View -->
+      <div class="space-y-3 max-h-[600px] overflow-y-auto">
+        @for (deliverable of sortedDeliverables(); track deliverable.id; let idx = $index) {
+          <div class="bg-white rounded-lg p-4 border border-gray-200 hover:border-blue-300 transition-colors">
+            <div class="flex items-start gap-4">
+              <!-- Sequence Number Badge -->
+              <div class="flex-shrink-0">
+                <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm">
+                  {{ idx + 1 }}
+                </div>
+              </div>
+              
+              <!-- Deliverable Info -->
+              <div class="flex-1">
+                <h4 class="font-semibold text-gray-900 mb-2">
+                  {{ deliverable.level4 || deliverable.level3 || deliverable.level2 || deliverable.level1 || deliverable.level0 }}
+                </h4>
+                
+                <!-- Service Line and Procurement Flag -->
+                <div class="flex items-center gap-2 mb-3 flex-wrap">
+                  @if (deliverable.serviceLine) {
+                    <p-chip 
+                      [label]="deliverable.serviceLine" 
+                      styleClass="text-xs"
+                      [style]="{ 'background-color': '#e0f2fe', 'color': '#0369a1' }"
+                    />
+                  }
+                  
+                  @if (requiresProcurementPrerequisite(deliverable)) {
+                    <p-chip 
+                      [label]="'⚠️ ' + ('label.procurementPrerequisite' | translate)" 
+                      styleClass="text-xs font-semibold"
+                      [style]="{ 'background-color': '#fed7aa', 'color': '#9a3412' }"
+                      [pTooltip]="'message.procurementMustBeCompletedFirst' | translate"
+                      tooltipPosition="top"
+                    />
+                  }
+                </div>
+                
+                <!-- Date Fields (Edit Mode) -->
+                @if (isEditing()) {
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-600 mb-1">
+                        {{ 'label.plannedStart' | translate }}
+                      </label>
+                      <p-datepicker
+                        [ngModel]="getDeliverableStartDate(deliverable.id)"
+                        (ngModelChange)="updateDeliverableStartDate(deliverable, $event)"
+                        dateFormat="yy-mm-dd"
+                        [showIcon]="true"
+                        class="w-full"
+                        [placeholder]="'placeholder.selectStartDate' | translate"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-600 mb-1">
+                        {{ 'label.plannedEnd' | translate }}
+                      </label>
+                      <p-datepicker
+                        [ngModel]="getDeliverableEndDate(deliverable.id)"
+                        (ngModelChange)="updateDeliverableEndDate(deliverable, $event)"
+                        dateFormat="yy-mm-dd"
+                        [showIcon]="true"
+                        class="w-full"
+                        [placeholder]="'placeholder.selectEndDate' | translate"
+                      />
+                    </div>
+                  </div>
+                } @else {
+                  <!-- Date Fields (View Mode) -->
+                  @if (deliverable.plannedStartDate || deliverable.plannedEndDate) {
+                    <div class="grid grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <span class="font-semibold text-gray-600">{{ 'label.plannedStart' | translate }}:</span>
+                        <span class="text-gray-900 ml-1">
+                          {{ deliverable.plannedStartDate ? formatDate(deliverable.plannedStartDate) : ('-' | translate) }}
+                        </span>
+                      </div>
+                      <div>
+                        <span class="font-semibold text-gray-600">{{ 'label.plannedEnd' | translate }}:</span>
+                        <span class="text-gray-900 ml-1">
+                          {{ deliverable.plannedEndDate ? formatDate(deliverable.plannedEndDate) : ('-' | translate) }}
+                        </span>
+                      </div>
+                    </div>
+                  } @else {
+                    <p class="text-xs text-gray-500 italic">
+                      {{ 'message.noDatesSet' | translate }}
+                    </p>
+                  }
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
 </p-panel>
 

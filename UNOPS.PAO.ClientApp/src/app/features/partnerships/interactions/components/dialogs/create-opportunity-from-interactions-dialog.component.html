@@ -17,8 +17,10 @@
         severity="error" 
         icon="pi pi-info-circle" 
         styleClass="mb-4 w-full">
-        @if (!opportunityName().trim() || !opportunityDescription().trim()) {
-          {{ 'message.validation.opportunityNameDescriptionRequired' | translate }}
+        @if (!opportunityName().trim()) {
+          {{ 'message.validation.opportunityNameRequired' | translate }}
+        } @else if (opportunityName().trim().length > 255) {
+          {{ 'message.validation.opportunityNameTooLong' | translate }}
         } @else if (showPartnerFields() && !isFundingPartner() && !isClientPartner()) {
           {{ 'message.validation.selectAtLeastOnePartnerRole' | translate }}
         }
@@ -40,9 +42,11 @@
               id="opp-name"
               [(ngModel)]="opportunityName"
               class="w-full"
+              maxlength="255"
               [disabled]="generating()">
             <label for="opp-name">{{ 'label.opportunityName' | translate }} *</label>
           </p-floatlabel>
+          <small class="text-gray-500">{{ opportunityName().length }} / 255</small>
         </div>
 
         <!-- Opportunity Description -->
@@ -56,8 +60,9 @@
               class="w-full"
               [disabled]="generating()">
             </textarea>
-            <label for="opp-desc">{{ 'label.opportunityDescription' | translate }} *</label>
+            <label for="opp-desc">{{ 'label.opportunityDescription' | translate }}</label>
           </p-floatlabel>
+          <small class="text-gray-400 italic">{{ 'label.optional' | translate }}</small>
         </div>
 
         <!-- Partner Role Selection (Only show when partner is provided) -->
@@ -652,7 +657,7 @@
                   (click)="$event.stopPropagation()"
                 />
                 <label class="block text-sm font-semibold text-gray-700 flex-1">
-                  {{ 'label.opportunityDescription' | translate }} *
+                  {{ 'label.opportunityDescription' | translate }}
                 </label>
               </div>
               <textarea

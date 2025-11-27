@@ -217,4 +217,14 @@ public class GeminiManager : IGeminiManager
     {
         throw new NotImplementedException();
     }
+    
+    public Task<List<string>> CreateBatchEmbeddingsAsync(List<string> texts)
+    {
+        throw new NotImplementedException("This method is only implemented in UNOPSGeminiManager");
+    }
+    
+    public Task<Dictionary<string, string>> GenerateKeywordsAsync(List<string> texts)
+    {
+        throw new NotImplementedException("This method is only implemented in UNOPSGeminiManager");
+    }
 }

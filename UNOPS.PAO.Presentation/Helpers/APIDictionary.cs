@@ -181,6 +181,7 @@ public class APIDictionary
 
     // Opportunity
     public const string Opportunity = APIPrefix + "opportunity";
+    public const string OpportunityOverview = Opportunity + "/{id}/overview";
     public const string OpportunityWhat = Opportunity + "/{id}/what";
     public const string OpportunityWhy = Opportunity + "/{id}/why";
     public const string OpportunityWho = Opportunity + "/{id}/who";

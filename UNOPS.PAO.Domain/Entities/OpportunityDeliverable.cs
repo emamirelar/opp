@@ -21,5 +21,21 @@ public class OpportunityDeliverable
     
     [MaxLength(2000)]
     public string? Notes { get; set; }
+    
+    // Timeline and Work Breakdown Structure fields
+    /// <summary>
+    /// Sequence order for displaying deliverables in timeline/WBS
+    /// </summary>
+    public int? SequenceOrder { get; set; }
+    
+    /// <summary>
+    /// Planned start date for this deliverable (milestone placeholder)
+    /// </summary>
+    public DateTime? PlannedStartDate { get; set; }
+    
+    /// <summary>
+    /// Planned end date for this deliverable (milestone placeholder)
+    /// </summary>
+    public DateTime? PlannedEndDate { get; set; }
 }
 
