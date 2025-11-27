@@ -20,7 +20,7 @@ BEGIN
     SELECT string_agg(
         format(
             'SELECT "%s"::INT AS EntityId,
-                    similarity("%s", %L)::REAL AS score,
+                    similarity("%s", %L)::REAL AS score,    
                     %L AS search_type
              FROM public.%I
              WHERE "%s" %% %L%s

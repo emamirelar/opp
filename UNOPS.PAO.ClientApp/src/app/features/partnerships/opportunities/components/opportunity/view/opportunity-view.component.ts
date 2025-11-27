@@ -3,7 +3,21 @@
  * @author UNOPS Opportunity+ System Development Team
  */
 
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal, computed, ViewChild, ElementRef, AfterViewInit, effect, untracked } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
+  computed,
+  ViewChild,
+  ElementRef,
+  AfterViewInit,
+  effect,
+  untracked,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -24,6 +38,7 @@ import { AvatarModule } from 'primeng/avatar';
 import { FileUploadModule } from 'primeng/fileupload';
 import { TooltipModule } from 'primeng/tooltip';
 import { DropdownModule } from 'primeng/dropdown';
+import { MarkdownModule } from 'ngx-markdown';
 
 // Services
 import { FeedbackDialogService } from '@shared/services/ui';
@@ -33,6 +48,7 @@ import { OpportunityService } from '../../../services/opportunity.service';
 import { Opportunity } from '@shared/models/opportunity.model';
 import { OpportunityCollaborationComponent } from './sections/collaboration/opportunity-collaboration.component';
 import { OpportunityAnalysisSectionComponent } from './sections/analysis/opportunity-analysis-section.component';
+import { OpportunityOverviewSectionComponent } from './sections/overview/opportunity-overview-section.component';
 import { OpportunityWhatSectionComponent } from './sections/what/opportunity-what-section.component';
 import { OpportunityWhySectionComponent } from './sections/why/opportunity-why-section.component';
 import { OpportunityWhoSectionComponent } from './sections/who/opportunity-who-section.component';
@@ -41,6 +57,7 @@ import { OpportunityWhenSectionComponent } from './sections/when/opportunity-whe
 import { OpportunityDstSectionComponent } from './sections/dst/opportunity-dst-section.component';
 import { OpportunityRelatedItemsComponent } from './sections/related/opportunity-related-items.component';
 import { OpportunityDocumentsComponent } from './sections/document/opportunity-documents.component';
+import { OpportunityStatementSectionComponent } from './sections/statement/opportunity-statement-section.component';
 import { ValuesService } from '@app/shared/services/api/values.service';
 
 /**
@@ -76,8 +93,10 @@ import { ValuesService } from '@app/shared/services/api/values.service';
     FileUploadModule,
     TooltipModule,
     DropdownModule,
+    MarkdownModule,
     OpportunityCollaborationComponent,
     OpportunityAnalysisSectionComponent,
+    OpportunityOverviewSectionComponent,
     OpportunityWhatSectionComponent,
     OpportunityWhySectionComponent,
     OpportunityWhoSectionComponent,
@@ -86,13 +105,16 @@ import { ValuesService } from '@app/shared/services/api/values.service';
     OpportunityDstSectionComponent,
     OpportunityRelatedItemsComponent,
     OpportunityDocumentsComponent,
+    OpportunityStatementSectionComponent,
   ],
   templateUrl: './opportunity-view.component.html',
   styleUrls: ['./opportunity-view.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [ConfirmationService]
+  providers: [ConfirmationService],
 })
-export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestroy {
+export class OpportunityViewComponent
+  implements OnInit, AfterViewInit, OnDestroy
+{
   router = inject(Router);
   activatedRoute = inject(ActivatedRoute);
   opportunityService = inject(OpportunityService);
@@ -111,30 +133,35 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
   showAIPanel = signal<boolean>(true); // AI Assistant panel toggle state
   documentsCollapsed = signal(true); // Document panel state
   activeSection = signal<string>(''); // Active section for navigation - will be set from route params
-  showDropdown = signal(false); // Navigation dropdown vs chips
-  selectedSection: { id: string; label: string; icon: string } | null = null;
+  headerScrolled = signal<boolean>(false); // Header shrunk state when scrolled
 
-  @ViewChild('navigationSizer', { read: ElementRef })
-  navigationSizer?: ElementRef;
-  @ViewChild('chipsContainer', { read: ElementRef })
-  chipsContainer?: ElementRef;
+  @ViewChild('contentScrollContainer', { read: ElementRef })
+  contentScrollContainer?: ElementRef;
   @ViewChild('relatedItemsComponent')
   relatedItemsComponent?: OpportunityRelatedItemsComponent;
+  @ViewChild(OpportunityDstSectionComponent)
+  dstSectionComponent?: OpportunityDstSectionComponent;
+  @ViewChild(OpportunityAnalysisSectionComponent)
+  analysisSectionComponent?: OpportunityAnalysisSectionComponent;
+  @ViewChild(OpportunityWhySectionComponent)
+  whySectionComponent?: OpportunityWhySectionComponent;
+  @ViewChild(OpportunityDocumentsComponent)
+  documentsComponent?: OpportunityDocumentsComponent;
 
-  private checkTimeout?: number;
-  private resizeObserver?: ResizeObserver;
   private intersectionObserver?: IntersectionObserver;
-  private chipsRequiredWidth: number = 0;
-  private hasInitialized = false;
-  private hasScrollSpyInitialized = false; // Track scroll spy initialization separately
   private navigationInProgress = false;
   private isScrolling = false; // Flag to prevent URL updates during programmatic scrolling
   private scrollTimeout?: number; // Debounce timeout for scroll spy
   private lastManualNavigationTime: number = 0; // Track last manual navigation
+  private isInitialLoad = true; // Track if this is the initial page load
+  private pendingScrollTarget: string | null = null; // Store pending scroll target
+  private scrollCheckInterval?: number; // Interval to check if content is loaded
+  private shouldScrollAfterDataLoad = false; // Flag to allow scrolling after data loads (only set on initial load with section in URL)
 
   // Section navigation configuration
   sections = [
     { id: 'analysis', label: 'Analysis', icon: 'pi-chart-bar' },
+    { id: 'overview', label: 'Overview', icon: 'pi-file' },
     { id: 'what', label: 'What', icon: 'pi-briefcase' },
     { id: 'why', label: 'Why', icon: 'pi-lightbulb' },
     { id: 'who', label: 'Who', icon: 'pi-users' },
@@ -143,36 +170,55 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
     { id: 'dst', label: 'DST', icon: 'pi-chart-line' },
     { id: 'related', label: 'Related', icon: 'pi-link' },
     { id: 'collaboration', label: 'Comments', icon: 'pi-comments' },
+    { id: 'statement', label: 'Statement', icon: 'pi-file-edit' },
   ];
 
   // Permission management using utility service
-  private permissionUtils = this.permissionUtilityService.createInstancePermissions('Opportunity');
+  private permissionUtils =
+    this.permissionUtilityService.createInstancePermissions('Opportunity');
   recordPermissions = this.permissionUtils.recordPermissions;
+
+  // Computed canUpdate based on opportunity permissions (from backend including stakeholder check)
+  canUpdate = computed(() => {
+    const opp = this.opportunity();
+    // Check opportunity's inline permissions first (includes stakeholder check from backend)
+    if (opp?.permissions?.canUpdate) {
+      return true;
+    }
+    // Fallback to recordPermissions from utility service
+    return this.permissionUtilityService.canUpdate(this.recordPermissions());
+  });
 
   // Computed properties for conditional display
   showAdditionalInfo = computed(() => {
     const data = this.opportunity();
     if (!data) return false;
-    return data.workflowStageName || data.responsibleOrgUnitName || 
-           data.partnershipAgreementReference || data.initiativeBudgetUSD ||
-           data.targetSigningDate || data.targetDeliveryDate || 
-           data.proposedInitiativeTypeName;
+    return (
+      data.workflowStageName ||
+      data.responsibleOrgUnitName ||
+      data.partnershipAgreementReference ||
+      data.initiativeBudgetUSD ||
+      data.targetSigningDate ||
+      data.targetDeliveryDate ||
+      data.proposedInitiativeTypeName
+    );
   });
 
   // Get opportunity manager from stakeholders (internal stakeholder with "Opportunity Manager" role)
   opportunityManager = computed(() => {
     const opp = this.opportunity();
     if (!opp || !opp.stakeholders || opp.stakeholders.length === 0) return null;
-    
+
     // Find the first internal stakeholder with "Opportunity Manager" role
-    const manager = opp.stakeholders.find(s => 
-      s.isInternal && 
-      s.entityRoleName && 
-      s.entityRoleName.toLowerCase().includes('opportunity') &&
-      s.entityRoleName.toLowerCase().includes('manager')
+    const manager = opp.stakeholders.find(
+      (s) =>
+        s.isInternal &&
+        s.entityRoleName &&
+        s.entityRoleName.toLowerCase().includes('opportunity') &&
+        s.entityRoleName.toLowerCase().includes('manager'),
     );
-    
-    return manager ? (manager.userName || manager.userEmail || '-') : '-';
+
+    return manager ? manager.userName || manager.userEmail || '-' : '-';
   });
 
   showFullContent = signal<boolean>(false);
@@ -219,15 +265,21 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
   internalStakeholderCount = computed(() => {
     const opp = this.opportunity();
     if (!opp) return 0;
-    return opp.stats?.internalStakeholderCount || 
-           opp.stakeholders?.filter(s => s.isInternal).length || 0;
+    return (
+      opp.stats?.internalStakeholderCount ||
+      opp.stakeholders?.filter((s) => s.isInternal).length ||
+      0
+    );
   });
 
   externalStakeholderCount = computed(() => {
     const opp = this.opportunity();
     if (!opp) return 0;
-    return opp.stats?.externalStakeholderCount || 
-           opp.stakeholders?.filter(s => !s.isInternal).length || 0;
+    return (
+      opp.stats?.externalStakeholderCount ||
+      opp.stakeholders?.filter((s) => !s.isInternal).length ||
+      0
+    );
   });
 
   deliverableCount = computed(() => {
@@ -250,45 +302,45 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
 
   // AI Suggestions state and filtering
   allSuggestions = signal<any[]>([]);
-  
+
   // Computed suggestions filtered by section
-  whoSuggestions = computed(() => 
-    this.allSuggestions().filter(s => s.actionTarget === 'WHO')
+  whoSuggestions = computed(() =>
+    this.allSuggestions().filter((s) => s.actionTarget === 'WHO'),
   );
-  
-  whereSuggestions = computed(() => 
-    this.allSuggestions().filter(s => s.actionTarget === 'WHERE')
+
+  whereSuggestions = computed(() =>
+    this.allSuggestions().filter((s) => s.actionTarget === 'WHERE'),
   );
-  
-  whatSuggestions = computed(() => 
-    this.allSuggestions().filter(s => s.actionTarget === 'WHAT')
+
+  whatSuggestions = computed(() =>
+    this.allSuggestions().filter((s) => s.actionTarget === 'WHAT'),
   );
-  
-  whySuggestions = computed(() => 
-    this.allSuggestions().filter(s => s.actionTarget === 'WHY')
+
+  whySuggestions = computed(() =>
+    this.allSuggestions().filter((s) => s.actionTarget === 'WHY'),
   );
-  
-  whenSuggestions = computed(() => 
-    this.allSuggestions().filter(s => s.actionTarget === 'WHEN')
+
+  whenSuggestions = computed(() =>
+    this.allSuggestions().filter((s) => s.actionTarget === 'WHEN'),
   );
 
   // Filtered stakeholder lists
   internalStakeholders = computed(() => {
     const opp = this.opportunity();
     if (!opp || !opp.stakeholders) return [];
-    return opp.stakeholders.filter(s => s.isInternal);
+    return opp.stakeholders.filter((s) => s.isInternal);
   });
 
   externalStakeholders = computed(() => {
     const opp = this.opportunity();
     if (!opp || !opp.stakeholders) return [];
-    return opp.stakeholders.filter(s => !s.isInternal);
+    return opp.stakeholders.filter((s) => !s.isInternal);
   });
 
   primarySDG = computed(() => {
     const opp = this.opportunity();
     if (!opp) return null;
-    return opp.sdGs?.find(s => s.isPrimary) || null;
+    return opp.sdGs?.find((s) => s.isPrimary) || null;
   });
 
   documentsChevronIcon = computed(() => {
@@ -296,21 +348,29 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
   });
 
   constructor() {
-    // Effect to setup observers once data is loaded
+    // Effect to setup scroll spy once data is loaded
     effect(() => {
       const isLoaded = !this.loading();
 
       if (isLoaded) {
         untracked(() => {
-          // Initialize navigation
-          if (!this.hasInitialized) {
-            setTimeout(() => this.initializeNavigation(), 200);
-          }
-          
-          // Initialize scroll spy
-          if (!this.hasScrollSpyInitialized) {
-            setTimeout(() => this.setupScrollSpy(), 300);
-          }
+          setTimeout(() => this.setupScrollSpy(), 300);
+        });
+      }
+    });
+
+    // Effect to setup scroll listener for header shrinking once data is loaded
+    effect(() => {
+      const opp = this.opportunity();
+      const isLoading = this.loading();
+
+      // Wait for data to load and element to be available
+      if (opp && !isLoading && !this.scrollListenerAttached) {
+        untracked(() => {
+          // Small delay to ensure DOM is updated
+          setTimeout(() => {
+            this.setupScrollListener();
+          }, 100);
         });
       }
     });
@@ -323,69 +383,99 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
     // Subscribe to route parameter changes for both recordId and section
     this.activatedRoute.paramMap.subscribe({
       next: (paramMap) => {
-        const newRecordId = paramMap.get("recordId") || '';
-        const section = paramMap.get("section");
-        
+        const newRecordId = paramMap.get('recordId') || '';
+        const section = paramMap.get('section');
+
         // Set the section FIRST before any other logic
         // This prevents the "analysis" default from triggering navigation
         if (section && this.isValidSection(section)) {
           this.activeSection.set(section);
-          this.updateSelectedSection();
           // Set manual navigation time to prevent scroll spy interference
           this.lastManualNavigationTime = Date.now();
           this.isScrolling = true;
         } else if (!section && !this.activeSection()) {
           // Only default to analysis if no section provided AND no section already set
           this.activeSection.set('analysis');
-          this.updateSelectedSection();
         }
-        
-        // Only reload data if recordId actually changed
-        if (newRecordId && newRecordId !== this.recordId) {
+
+        // Check for initial load FIRST (when recordId is empty or undefined)
+        if (newRecordId && (!this.recordId || this.recordId === '')) {
+          // Initial load - allow scrolling to specified section after data loads
           this.recordId = newRecordId;
+          this.shouldScrollAfterDataLoad = section ? true : false;
+          // Load permissions for this specific opportunity instance
+          this.permissionUtils.loadPermissions(this.recordId, this.cdr);
           this._loadRecordDetails(section || 'analysis');
-        } else if (newRecordId && !this.recordId) {
-          // Initial load
+        } else if (newRecordId && newRecordId !== this.recordId) {
+          // Record ID changed (navigating to different record) - don't auto-scroll
           this.recordId = newRecordId;
+          this.shouldScrollAfterDataLoad = false;
+          // Load permissions for the new opportunity instance
+          this.permissionUtils.loadPermissions(this.recordId, this.cdr);
           this._loadRecordDetails(section || 'analysis');
         }
 
-        // Handle section scrolling (without reloading data)
-        if (section && this.isValidSection(section)) {
-          // If data is already loaded, scroll immediately
-          if (!this.loading()) {
-            setTimeout(() => this.scrollToSectionInternal(section), 100);
-          }
-        } else if (!section && !this.activeSection()) {
+        // NOTE: Section scrolling is handled in two places ONLY:
+        // 1. Initial load with section in URL: _loadRecordDetails() with shouldScrollAfterDataLoad=true
+        // 2. User clicking section chips: scrollToSection() method
+        // We do NOT scroll on URL changes from scroll spy to avoid infinite scroll loops
+
+        if (!section && !this.activeSection()) {
           // Default to analysis if no section in URL and no section already set
           const currentUrl = this.router.url.split('?')[0];
           // Only navigate if we're not already at analysis
           if (!currentUrl.endsWith('/analysis')) {
-            this.router.navigate([currentUrl, 'analysis'], { replaceUrl: true });
+            this.router.navigate([currentUrl, 'analysis'], {
+              replaceUrl: true,
+            });
           }
         }
-      }
+      },
     });
   }
+
+  private scrollListenerAttached = false;
 
   ngAfterViewInit(): void {
     // Observers will be set up via effect after data loads
   }
 
+  /**
+   * Setup scroll listener to shrink header on scroll
+   */
+  private setupScrollListener(): void {
+    const scrollElement = this.contentScrollContainer?.nativeElement;
+
+    if (scrollElement) {
+      scrollElement.addEventListener('scroll', () => {
+        const scrollTop = scrollElement.scrollTop;
+        const newHeaderScrolled = scrollTop > 20; // Shrink after 20px scroll
+        if (this.headerScrolled() !== newHeaderScrolled) {
+          this.headerScrolled.set(newHeaderScrolled);
+          this.cdr.detectChanges();
+        }
+      });
+
+      this.scrollListenerAttached = true;
+      console.log('✅ Scroll listener added successfully');
+    } else {
+      console.error(
+        '❌ contentScrollContainer not found! Cannot attach scroll listener',
+      );
+    }
+  }
+
   ngOnDestroy(): void {
     // Clear component data for AI Assistant
     this.pageContextService.clearComponentData();
-    
-    // Cleanup navigation observer
-    if (this.checkTimeout) {
-      clearTimeout(this.checkTimeout);
-    }
-    if (this.resizeObserver) {
-      this.resizeObserver.disconnect();
-    }
+
     // Cleanup scroll spy observer
     if (this.intersectionObserver) {
       this.intersectionObserver.disconnect();
+    }
+    // Cleanup scroll check interval
+    if (this.scrollCheckInterval) {
+      clearInterval(this.scrollCheckInterval);
     }
     // Cleanup scroll timeout
     if (this.scrollTimeout) {
@@ -403,25 +493,37 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
         this.opportunity.set(data);
         this.loading.set(false);
         this.cdr.detectChanges();
-        
+
         // Load AI suggestions for sections
         this._loadSuggestions();
-        
-        // If a target section was specified, scroll to it after data loads
-        if (targetSection && this.isValidSection(targetSection)) {
-          setTimeout(() => {
-            this.scrollToSectionInternal(targetSection);
-          }, 500); // Longer delay to ensure DOM is fully rendered
+
+        // Only scroll after data loads if this is the initial page load with a section in the URL
+        // This prevents scrolling on every data reload when navigating between sections
+        if (
+          this.shouldScrollAfterDataLoad &&
+          targetSection &&
+          this.isValidSection(targetSection)
+        ) {
+          this.pendingScrollTarget = targetSection;
+          this.shouldScrollAfterDataLoad = false;
+
+          // Wait for ALL section content to load before scrolling
+          this.waitForContentAndScroll();
+        } else {
+          // Mark initial load as complete even if we didn't scroll
+          this.isInitialLoad = false;
         }
       },
       error: (error) => {
         console.error('Error loading opportunity details:', error);
         this.loading.set(false);
         this.feedbackDialogService.showErrorToast({
-          detail: this.translateService.instant('message.opportunity.loadFailed'),
-          summary: this.translateService.instant('message.error')
+          detail: this.translateService.instant(
+            'message.opportunity.loadFailed',
+          ),
+          summary: this.translateService.instant('message.error'),
         });
-      }
+      },
     });
   }
 
@@ -440,7 +542,7 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
       error: (error) => {
         console.error('Error loading suggestions:', error);
         // Silent failure - suggestions are optional enhancement
-      }
+      },
     });
   }
 
@@ -452,15 +554,17 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
     if (!this.permissionUtilityService.canUpdate(this.recordPermissions())) {
       this.feedbackDialogService.showErrorToast({
         detail: this.translateService.instant('message.noPermissionToEdit'),
-        summary: this.translateService.instant('message.permissionDenied')
+        summary: this.translateService.instant('message.permissionDenied'),
       });
       return;
     }
 
     // TODO: Implement edit dialog
     this.feedbackDialogService.showInfoToast({
-      detail: this.translateService.instant('message.opportunity.editComingSoon'),
-      summary: this.translateService.instant('message.info')
+      detail: this.translateService.instant(
+        'message.opportunity.editComingSoon',
+      ),
+      summary: this.translateService.instant('message.info'),
     });
   }
 
@@ -472,32 +576,38 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
     if (!this.permissionUtilityService.canDelete(this.recordPermissions())) {
       this.feedbackDialogService.showErrorToast({
         detail: this.translateService.instant('message.noPermissionToDelete'),
-        summary: this.translateService.instant('message.permissionDenied')
+        summary: this.translateService.instant('message.permissionDenied'),
       });
       return;
     }
 
     this.confirmationService.confirm({
-      message: this.translateService.instant('message.confirmation.deleteOpportunity'),
+      message: this.translateService.instant(
+        'message.confirmation.deleteOpportunity',
+      ),
       header: this.translateService.instant('title.deleteOpportunity'),
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
         if (this.opportunity()?.id) {
-          this.opportunityService.deleteOpportunityById(this.opportunity()!.id!).subscribe({
-            next: () => {
-              this.feedbackDialogService.showSuccessToast({
-                detail: this.translateService.instant('message.opportunity.deletedSuccessfully'),
-                summary: this.translateService.instant('message.success')
-              });
-              this.router.navigate(['/partnerships/opportunities']);
-            },
-            error: (error) => {
-              console.error('Error deleting opportunity:', error);
-              // Error handled by global interceptor
-            }
-          });
+          this.opportunityService
+            .deleteOpportunityById(this.opportunity()!.id!)
+            .subscribe({
+              next: () => {
+                this.feedbackDialogService.showSuccessToast({
+                  detail: this.translateService.instant(
+                    'message.opportunity.deletedSuccessfully',
+                  ),
+                  summary: this.translateService.instant('message.success'),
+                });
+                this.router.navigate(['/partnerships/opportunities']);
+              },
+              error: (error) => {
+                console.error('Error deleting opportunity:', error);
+                // Error handled by global interceptor
+              },
+            });
         }
-      }
+      },
     });
   }
 
@@ -510,14 +620,25 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
     // Replace entire opportunity signal with fresh data from backend
     this.opportunity.set(updatedOpportunity);
     
-    // Refresh related items to reflect any changes in partners/stakeholders
-    if (this.relatedItemsComponent) {
-      this.relatedItemsComponent.loadSourceInteractions();
-    }
+    // Note: Source interactions are only reloaded on specific actions (e.g., partner changes from WHO section)
+    // Do NOT reload source interactions on every opportunity update to avoid unnecessary API calls
     
     // Angular signals automatically notify ALL child components
     // All sections will re-render with latest data
     this.cdr.detectChanges();
+  }
+  
+  /**
+   * Handle opportunity update that also requires refreshing related items
+   * Use this when partners or stakeholders change (from WHO section)
+   */
+  handleOpportunityUpdateWithRelatedItems(updatedOpportunity: Opportunity): void {
+    this.handleOpportunityUpdate(updatedOpportunity);
+    
+    // Refresh related items to reflect changes in partners/stakeholders
+    if (this.relatedItemsComponent) {
+      this.relatedItemsComponent.loadSourceInteractions();
+    }
   }
 
   /**
@@ -525,11 +646,10 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
    * @returns {void}
    */
   reloadOpportunity(): void {
-    console.log('🔄 Reloading opportunity data...');
     if (this.recordId) {
-      // Get the current active section to maintain scroll position
-      const currentSection = this.activeSection();
-      this._loadRecordDetails(currentSection);
+      // Reload data without scrolling (user's scroll position is maintained)
+      this.shouldScrollAfterDataLoad = false;
+      this._loadRecordDetails();
     }
   }
 
@@ -537,7 +657,7 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
    * Toggle full content display
    */
   toggleFullContent() {
-    this.showFullContent.update(value => !value);
+    this.showFullContent.update((value) => !value);
   }
 
   /**
@@ -562,7 +682,7 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
     return dateObj.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     });
   }
 
@@ -576,7 +696,9 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
   /**
    * Get status severity class for badges
    */
-  getStatusSeverity(status: string | undefined): 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast' {
+  getStatusSeverity(
+    status: string | undefined,
+  ): 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast' {
     if (!status) return 'secondary';
     switch (status.toLowerCase()) {
       case 'active':
@@ -595,100 +717,13 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
   /**
    * Get risk score severity for country risk badges
    */
-  getRiskScoreSeverity(riskScore: number): 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast' {
+  getRiskScoreSeverity(
+    riskScore: number,
+  ): 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast' {
     if (riskScore >= 8) return 'danger';
     if (riskScore >= 6) return 'warn';
     if (riskScore >= 4) return 'info';
     return 'success';
-  }
-
-  /**
-   * Initialize navigation resize observer
-   */
-  private initializeNavigation(): void {
-    if (this.hasInitialized) {
-      return;
-    }
-
-    if (!this.navigationSizer || !this.chipsContainer) {
-      return;
-    }
-
-    // Step 1: Measure required width for chips (ONCE, while in chips mode)
-    this.showDropdown.set(false); // Ensure we're in chips mode
-    setTimeout(() => {
-      if (!this.chipsContainer) return;
-
-      this.chipsRequiredWidth = this.chipsContainer.nativeElement.scrollWidth;
-
-      // Step 2: Setup ResizeObserver ONLY on the container (not the chips)
-      this.resizeObserver = new ResizeObserver(() => {
-        this.checkNavigationFit();
-      });
-
-      this.resizeObserver.observe(this.navigationSizer!.nativeElement);
-
-      this.hasInitialized = true;
-
-      // Initial check
-      this.checkNavigationFit();
-    }, 100);
-  }
-
-  /**
-   * Check if navigation fits and switch between chips and dropdown
-   */
-  private checkNavigationFit(): void {
-    // Debounce checks
-    if (this.checkTimeout) {
-      clearTimeout(this.checkTimeout);
-    }
-
-    this.checkTimeout = window.setTimeout(() => {
-      if (!this.navigationSizer || this.chipsRequiredWidth === 0) {
-        return;
-      }
-
-      // Get current container width
-      const containerWidth = this.navigationSizer.nativeElement.clientWidth;
-
-      // Compare stored chips width vs container width
-      const needsDropdown = this.chipsRequiredWidth > containerWidth - 20; // 20px buffer
-
-      // Only update if different
-      if (needsDropdown !== this.showDropdown()) {
-        this.showDropdown.set(needsDropdown);
-      }
-    }, 100);
-  }
-
-  /**
-   * Update selected section for dropdown
-   */
-  private updateSelectedSection(): void {
-    this.selectedSection =
-      this.sections.find((section) => section.id === this.activeSection()) ||
-      null;
-  }
-
-  /**
-   * Handle section dropdown change
-   */
-  onSectionDropdownChange(event: any): void {
-    if (event.value) {
-      this.activeSection.set(event.value.id);
-      this.scrollToSection(event.value.id);
-    }
-  }
-
-  /**
-   * Get active section
-   */
-  getActiveSection(): { id: string; label: string; icon: string } | null {
-    return (
-      this.sections.find((section) => section.id === this.activeSection()) ||
-      null
-    );
   }
 
   /**
@@ -708,14 +743,16 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
     // Update URL with the section parameter
     const currentUrl = this.router.url;
     const urlSegments = currentUrl.split('/');
-    
+
     // Check if we already have a section in the URL
     const lastSegment = urlSegments[urlSegments.length - 1];
     const isSection = this.isValidSection(lastSegment);
-    
+
     if (isSection) {
       // Replace existing section
-      this.router.navigate([...urlSegments.slice(0, -1), sectionId], { replaceUrl: true });
+      this.router.navigate([...urlSegments.slice(0, -1), sectionId], {
+        replaceUrl: true,
+      });
     } else {
       // Add section to URL
       this.router.navigate([...urlSegments, sectionId], { replaceUrl: true });
@@ -723,7 +760,7 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
 
     // Scroll to the section
     this.scrollToSectionInternal(sectionId);
-    
+
     setTimeout(() => {
       this.navigationInProgress = false;
       // Clear scrolling flag after animation completes - shorter delay
@@ -734,45 +771,150 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
   }
 
   /**
+   * Wait for all section content to load before scrolling
+   * Polls until all asynchronous content has finished loading
+   */
+  private waitForContentAndScroll(): void {
+    // Wait 500ms for ViewChild components to initialize before starting polling
+    setTimeout(() => {
+      let checkCount = 0;
+      const maxChecks = 100; // Maximum 10 seconds (100 * 100ms)
+
+      this.scrollCheckInterval = window.setInterval(() => {
+        checkCount++;
+
+        // Check main opportunity loading
+        const mainLoading = this.loading();
+
+        // Check DST section loading (risks, recommendations, similar opportunities, projects, people)
+        let dstLoading = false;
+        let dstDetails = '';
+        if (this.dstSectionComponent) {
+          const risks = this.dstSectionComponent.loadingRisks();
+          const recs = this.dstSectionComponent.loadingRecommendations();
+          const simOps = this.dstSectionComponent.loadingSimilarOpportunities();
+          const simProjs = this.dstSectionComponent.loadingSimilarProjects();
+          const people = this.dstSectionComponent.loadingRelevantPeople();
+          dstLoading = risks || recs || simOps || simProjs || people;
+          dstDetails = `[risks=${risks}, recs=${recs}, simOps=${simOps}, simProjs=${simProjs}, people=${people}]`;
+        } else {
+          dstDetails = '[component not initialized]';
+        }
+
+        // Check Analysis section loading (AI insights)
+        const analysisLoading = this.analysisSectionComponent
+          ? this.analysisSectionComponent.loadingInsights()
+          : false;
+
+        // Check Why section loading (targets, indicators)
+        const whyLoading = this.whySectionComponent
+          ? this.whySectionComponent.loadingTargets()
+          : false;
+
+        // Check Documents section loading
+        const documentsLoading = this.documentsComponent
+          ? this.documentsComponent.loading() ||
+            this.documentsComponent.uploading()
+          : false;
+
+        // Check Related Items section loading
+        const relatedItemsLoading = this.relatedItemsComponent
+          ? this.relatedItemsComponent.isLoading()
+          : false;
+
+        const allContentLoaded =
+          !mainLoading &&
+          !dstLoading &&
+          !analysisLoading &&
+          !whyLoading &&
+          !documentsLoading &&
+          !relatedItemsLoading;
+
+        // If all content is loaded OR we've exceeded max checks, scroll now
+        if (allContentLoaded || checkCount >= maxChecks) {
+          clearInterval(this.scrollCheckInterval);
+          this.scrollCheckInterval = undefined;
+
+          if (this.pendingScrollTarget) {
+            const target = this.pendingScrollTarget;
+            this.pendingScrollTarget = null;
+
+            // Don't auto-reset isScrolling flag - we'll control it manually with longer delay
+            this.scrollToSectionInternal(target, false);
+            this.isInitialLoad = false;
+
+            // Extend the isScrolling flag for longer (3 seconds) after initial route-based scroll
+            // to prevent scroll spy from immediately detecting other visible sections while content settles
+            setTimeout(() => {
+              this.isScrolling = false;
+            }, 3000);
+          }
+        }
+      }, 100); // Check every 100ms
+    }, 500); // Wait 500ms for ViewChild initialization
+  }
+
+  /**
    * Internal scroll to section logic
    * Called for both programmatic navigation and URL-based navigation
+   * @param sectionId - The section to scroll to
+   * @param resetScrollingFlag - If true, resets isScrolling flag after animation (default: true)
    */
-  private scrollToSectionInternal(sectionId: string): void {
+  private scrollToSectionInternal(
+    sectionId: string,
+    resetScrollingFlag: boolean = true,
+  ): void {
     // Track manual navigation time to prevent scroll spy interference
     this.lastManualNavigationTime = Date.now();
     this.isScrolling = true;
 
-    // For the first section (analysis), scroll to the opportunity header
-    if (sectionId === 'analysis') {
-      const headerElement = document.getElementById('opportunity-header');
-      if (headerElement) {
-        headerElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-      
-      // Reset scrolling flag after animation - shorter delay
-      setTimeout(() => {
-        this.isScrolling = false;
-      }, 800); // Reduced from 1500ms to 800ms
-      return;
-    }
-
-    // For other sections, scroll to the section with offset
-    const element = document.getElementById(`section-${sectionId}`);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-
-    // Reset scrolling flag after animation - shorter delay
+    // Wait for content scroll container to be available
     setTimeout(() => {
-      this.isScrolling = false;
-    }, 800); // Reduced from 1500ms to 800ms
+      if (!this.contentScrollContainer?.nativeElement) {
+        return;
+      }
+
+      // For the first section (analysis), scroll to the top of the content
+      if (sectionId === 'analysis') {
+        this.contentScrollContainer.nativeElement.scrollTo({
+          top: 0,
+          behavior: 'smooth',
+        });
+
+        // Reset scrolling flag after animation if requested
+        if (resetScrollingFlag) {
+          setTimeout(() => {
+            this.isScrolling = false;
+          }, 800);
+        }
+        return;
+      }
+
+      // For other sections, scroll to the section within the content container
+      const element = document.getElementById(`section-${sectionId}`);
+      if (element) {
+        const container = this.contentScrollContainer.nativeElement;
+        const elementTop = element.offsetTop;
+        const containerTop = container.offsetTop;
+        const scrollPosition = elementTop - containerTop - 20; // 20px offset for spacing
+
+        container.scrollTo({ top: scrollPosition, behavior: 'smooth' });
+      }
+
+      // Reset scrolling flag after animation if requested
+      if (resetScrollingFlag) {
+        setTimeout(() => {
+          this.isScrolling = false;
+        }, 800);
+      }
+    }, 50);
   }
 
   /**
    * Validate section ID
    */
   private isValidSection(section: string): boolean {
-    return this.sections.some(s => s.id === section);
+    return this.sections.some((s) => s.id === section);
   }
 
   /**
@@ -781,13 +923,9 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
    * Only blocks during programmatic scrolling, works immediately for manual scrolling
    */
   private setupScrollSpy(): void {
-    if (this.hasScrollSpyInitialized) {
-      return;
-    }
-
     // Create an intersection observer to detect which section is in view
     const observerOptions = {
-      root: null, // Use viewport as root
+      root: this.contentScrollContainer?.nativeElement || null,
       rootMargin: '-20% 0px -70% 0px', // Trigger when section enters top 30% of viewport
       threshold: 0, // Trigger as soon as any part is visible
     };
@@ -816,13 +954,19 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
           }
         });
 
-        if (mostVisibleEntry && mostVisibleEntry.target instanceof HTMLElement) {
+        if (
+          mostVisibleEntry &&
+          mostVisibleEntry.target instanceof HTMLElement
+        ) {
           const sectionId = mostVisibleEntry.target.id.replace('section-', '');
-          
+
           // Only update if it's a different section
-          if (sectionId && this.isValidSection(sectionId) && sectionId !== this.activeSection()) {
+          if (
+            sectionId &&
+            this.isValidSection(sectionId) &&
+            sectionId !== this.activeSection()
+          ) {
             this.activeSection.set(sectionId);
-            this.updateSelectedSection();
 
             // Update URL without causing a scroll
             const currentUrl = this.router.url.split('?')[0];
@@ -832,10 +976,14 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
 
             if (isSection) {
               // Replace existing section in URL
-              this.router.navigate([...urlSegments.slice(0, -1), sectionId], { replaceUrl: true });
+              this.router.navigate([...urlSegments.slice(0, -1), sectionId], {
+                replaceUrl: true,
+              });
             } else {
               // Add section to URL
-              this.router.navigate([...urlSegments, sectionId], { replaceUrl: true });
+              this.router.navigate([...urlSegments, sectionId], {
+                replaceUrl: true,
+              });
             }
 
             // Trigger change detection
@@ -846,17 +994,12 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
     }, observerOptions);
 
     // Observe all section elements
-    let observedCount = 0;
     this.sections.forEach((section) => {
       const element = document.getElementById(`section-${section.id}`);
       if (element) {
         this.intersectionObserver!.observe(element);
-        observedCount++;
       }
     });
-
-    this.hasScrollSpyInitialized = true;
-    console.log(`Scroll spy initialized and observing ${observedCount} sections`);
   }
 
   /**
@@ -884,7 +1027,7 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
    * Get file icon color for document
    */
   getFileIconColor(fileType: string): string {
-    const colorMap: { [key: string]: string} = {
+    const colorMap: { [key: string]: string } = {
       pdf: 'text-red-500',
       docx: 'text-blue-500',
       xlsx: 'text-green-500',
@@ -902,4 +1045,3 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
     // TODO: Implement file upload
   }
 }
-

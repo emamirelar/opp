@@ -797,4 +797,71 @@ public class GeminiController : BaseController
     }
 
     #endregion
+
+    #region Opportunity Statement Generation
+
+    /// <summary>
+    /// Generates an AI-powered opportunity statement in markdown format following the UNOPS template
+    /// Retrieves opportunity data and attached documents, sends to Gemini for analysis
+    /// Results are cached and saved to the Opportunity entity
+    /// </summary>
+    /// <param name="id">Opportunity ID</param>
+    /// <example_uses>
+    /// Generate opportunity statement for opportunity 123
+    /// Create opportunity statement document
+    /// Generate formal opportunity proposal statement
+    /// </example_uses>
+    /// <when_to_use>Use this when the user needs to generate a formal opportunity statement document following the UNOPS template format.</when_to_use>
+    /// <returns>Generated opportunity statement in markdown format</returns>
+    [HttpPost(APIDictionary.OpportunityGenerateStatement)]
+    public async Task<ActionResult> GenerateOpportunityStatement(int id)
+    {
+        return await HandleOperationAsync(async () =>
+        {
+            var statementMarkdown = await _manager.GenerateOpportunityStatementAsync(id, User);
+            
+            if (string.IsNullOrEmpty(statementMarkdown))
+            {
+                throw new BusinessException("Failed to generate opportunity statement. AI analysis returned no results.");
+            }
+
+            return new
+            {
+                opportunityId = id,
+                statementMarkdown = statementMarkdown,
+                message = "Opportunity statement generated successfully"
+            };
+        });
+    }
+
+    /// <summary>
+    /// Validates whether the opportunity statement is aligned with the structured data in the opportunity record
+    /// Uses Gemini AI to analyze the statement content against actual opportunity fields
+    /// Returns whether the statement is aligned and specific misalignment items if not aligned
+    /// </summary>
+    /// <param name="id">Opportunity ID</param>
+    /// <example_uses>
+    /// Validate opportunity statement alignment for opportunity 123
+    /// Check if statement matches structured data
+    /// Find discrepancies between statement and opportunity fields
+    /// </example_uses>
+    /// <when_to_use>Use this when the user needs to verify that the opportunity statement accurately reflects the structured data in the opportunity record.</when_to_use>
+    /// <returns>Validation response with alignment status and misalignment items</returns>
+    [HttpPost(APIDictionary.OpportunityValidateStatement)]
+    public async Task<ActionResult> ValidateOpportunityStatement(int id)
+    {
+        return await HandleOperationAsync(async () =>
+        {
+            var validationResult = await _manager.ValidateOpportunityStatementAsync(id, User);
+            
+            if (validationResult == null)
+            {
+                throw new BusinessException("Failed to validate opportunity statement. AI analysis returned no results.");
+            }
+
+            return validationResult;
+        });
+    }
+
+    #endregion
 }

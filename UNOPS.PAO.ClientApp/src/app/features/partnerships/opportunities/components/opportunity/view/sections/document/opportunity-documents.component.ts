@@ -3,7 +3,17 @@
  * @author UNOPS Opportunity+ System Development Team
  */
 
-import { Component, inject, input, output, signal, computed, effect, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  inject,
+  input,
+  output,
+  signal,
+  computed,
+  effect,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
@@ -28,7 +38,10 @@ import { OpportunityService } from '@app/features/partnerships/opportunities/ser
 import { GoogleDriveService } from '@shared/services/google-drive.service';
 
 // Components
-import { AiComparisonComponent, FieldMapping } from '@shared/components/ai/ai-comparison/ai-comparison.component';
+import {
+  AiComparisonComponent,
+  FieldMapping,
+} from '@shared/components/ai/ai-comparison/ai-comparison.component';
 
 declare const google: any;
 
@@ -36,16 +49,16 @@ declare const google: any;
  * @class OpportunityDocumentsComponent
  * @description Component for managing documents in the opportunity view sidebar.
  * Supports uploading documents from local system and linking documents from Google Drive.
- * 
+ *
  * @example
  * ```html
- * <app-opportunity-documents 
+ * <app-opportunity-documents
  *   [opportunityId]="opportunity().id"
  *   [collapsed]="documentsCollapsed()"
  *   (collapsedChange)="toggleDocumentsPanel()">
  * </app-opportunity-documents>
  * ```
- * 
+ *
  * @since 1.0.0
  */
 @Component({
@@ -64,11 +77,11 @@ declare const google: any;
     FloatLabelModule,
     CheckboxModule,
     FormsModule,
-    AiComparisonComponent
+    AiComparisonComponent,
   ],
   templateUrl: './opportunity-documents.component.html',
   styleUrls: ['./opportunity-documents.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OpportunityDocumentsComponent implements OnInit {
   private readonly documentService = inject(DocumentService);
@@ -77,10 +90,10 @@ export class OpportunityDocumentsComponent implements OnInit {
   private readonly drivePickerService = inject(DrivePickerService);
   private readonly opportunityService = inject(OpportunityService);
   private readonly googleDriveService = inject(GoogleDriveService);
-  
+
   // Google Drive auth for Office file conversion
   private googleDriveAuthAvailable = false;
-  
+
   // Conversion progress
   private isConvertingFile = false;
   private conversionMessage = '';
@@ -90,7 +103,7 @@ export class OpportunityDocumentsComponent implements OnInit {
    * @type {Signal<number>}
    */
   readonly opportunityId = input.required<number>();
-  
+
   /**
    * @description The full opportunity object with partner details
    * @type {Signal<any>}
@@ -109,6 +122,13 @@ export class OpportunityDocumentsComponent implements OnInit {
    * @default false
    */
   readonly collapsed = input<boolean>(false);
+
+  /**
+   * @description Whether the user can update the opportunity (and thus manage documents)
+   * @type {Signal<boolean>}
+   * @default false
+   */
+  readonly canUpdate = input<boolean>(false);
 
   /**
    * @description Output event emitted when the collapse/expand button is clicked
@@ -211,25 +231,25 @@ export class OpportunityDocumentsComponent implements OnInit {
    * @type {Signal<any>}
    */
   aiExtractedData = signal<any>(null);
-  
+
   /**
    * @description Show partner selection dialog for document tagging
    * @type {Signal<boolean>}
    */
   showPartnerTagDialog = signal<boolean>(false);
-  
+
   /**
    * @description Document being tagged with partner
    * @type {any}
    */
   documentBeingTagged: any = null;
-  
+
   /**
    * @description Selected funding partners for document
    * @type {number[]}
    */
   selectedFundingPartners: number[] = [];
-  
+
   /**
    * @description Selected client partners for document
    * @type {number[]}
@@ -237,10 +257,28 @@ export class OpportunityDocumentsComponent implements OnInit {
   selectedClientPartners: number[] = [];
   
   /**
+   * @description Original funding partners (before changes)
+   * @type {number[]}
+   */
+  private originalFundingPartners: number[] = [];
+  
+  /**
+   * @description Original client partners (before changes)
+   * @type {number[]}
+   */
+  private originalClientPartners: number[] = [];
+  
+  /**
    * @description Show partner tag validation error
    * @type {Signal<boolean>}
    */
   showPartnerTagValidationError = signal<boolean>(false);
+  
+  /**
+   * @description Check if partner selection has changed
+   * @type {Signal<boolean>}
+   */
+  readonly hasPartnerSelectionChanged = signal<boolean>(false);
 
   /**
    * @description Field mappings for opportunity comparison display
@@ -249,89 +287,102 @@ export class OpportunityDocumentsComponent implements OnInit {
   readonly opportunityFieldMappings: FieldMapping[] = [
     {
       fieldPath: 'name',
-      displayName: 'Opportunity Name'
+      displayName: 'Opportunity Name',
     },
     {
       fieldPath: 'description',
-      displayName: 'Description'
+      displayName: 'Description',
     },
     {
       fieldPath: 'partnerReference',
-      displayName: 'Partner Reference'
+      displayName: 'Partner Reference',
     },
     {
       fieldPath: 'responsibleOrgUnitName',
-      displayName: 'Responsible Organization Unit'
+      displayName: 'Responsible Organization Unit',
     },
     {
       fieldPath: 'proposedInitiativeTypeName',
-      displayName: 'Initiative Type'
+      displayName: 'Initiative Type',
     },
     {
       fieldPath: 'initiativeBudgetUSD',
       displayName: 'Budget (USD)',
-      formatFn: (value) => value != null ? `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-'
+      formatFn: (value) =>
+        value != null
+          ? `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+          : '-',
     },
     {
       fieldPath: 'partnershipAgreementReference',
-      displayName: 'Partnership Agreement Reference'
+      displayName: 'Partnership Agreement Reference',
     },
     {
       fieldPath: 'targetSigningDate',
       displayName: 'Target Signing Date',
-      formatFn: (value) => value ? new Date(value).toLocaleDateString() : '-'
+      formatFn: (value) => (value ? new Date(value).toLocaleDateString() : '-'),
     },
     {
       fieldPath: 'targetDeliveryDate',
       displayName: 'Target Delivery Date',
-      formatFn: (value) => value ? new Date(value).toLocaleDateString() : '-'
+      formatFn: (value) => (value ? new Date(value).toLocaleDateString() : '-'),
     },
     {
       fieldPath: 'strategicAlignment',
-      displayName: 'Strategic Alignment'
+      displayName: 'Strategic Alignment',
     },
     {
       fieldPath: 'resultsFocus',
-      displayName: 'Results Focus'
+      displayName: 'Results Focus',
     },
     {
       fieldPath: 'intendedImpactOutcomes',
-      displayName: 'Intended Impact & Outcomes'
+      displayName: 'Intended Impact & Outcomes',
     },
     {
       fieldPath: 'expectedBeneficiaries',
-      displayName: 'Expected Beneficiaries'
+      displayName: 'Expected Beneficiaries',
     },
     {
       fieldPath: 'fundingPartners',
       displayName: 'Funding Partners',
-      formatFn: (value) => Array.isArray(value) ? `${value.length} partner(s)` : '0 partners'
+      formatFn: (value) =>
+        Array.isArray(value) ? `${value.length} partner(s)` : '0 partners',
     },
     {
       fieldPath: 'clientPartners',
       displayName: 'Client Partners',
-      formatFn: (value) => Array.isArray(value) ? `${value.length} partner(s)` : '0 partners'
+      formatFn: (value) =>
+        Array.isArray(value) ? `${value.length} partner(s)` : '0 partners',
     },
     {
       fieldPath: 'stakeholders',
       displayName: 'Stakeholders',
-      formatFn: (value) => Array.isArray(value) ? `${value.length} stakeholder(s)` : '0 stakeholders'
+      formatFn: (value) =>
+        Array.isArray(value)
+          ? `${value.length} stakeholder(s)`
+          : '0 stakeholders',
     },
     {
       fieldPath: 'deliverables',
       displayName: 'Deliverables',
-      formatFn: (value) => Array.isArray(value) ? `${value.length} deliverable(s)` : '0 deliverables'
+      formatFn: (value) =>
+        Array.isArray(value)
+          ? `${value.length} deliverable(s)`
+          : '0 deliverables',
     },
     {
       fieldPath: 'countries',
       displayName: 'Countries',
-      formatFn: (value) => Array.isArray(value) ? `${value.length} country/ies` : '0 countries'
+      formatFn: (value) =>
+        Array.isArray(value) ? `${value.length} country/ies` : '0 countries',
     },
     {
       fieldPath: 'sdGs',
       displayName: 'Sustainable Development Goals (SDGs)',
-      formatFn: (value) => Array.isArray(value) ? `${value.length} SDG(s)` : '0 SDGs'
-    }
+      formatFn: (value) =>
+        Array.isArray(value) ? `${value.length} SDG(s)` : '0 SDGs',
+    },
   ];
 
   /**
@@ -363,7 +414,7 @@ export class OpportunityDocumentsComponent implements OnInit {
   ngOnInit(): void {
     // Load document types
     this.loadDocumentTypes();
-    
+
     // Initialize Google Drive auth for Office file conversion
     // Note: GoogleDriveService now has built-in retry logic to wait for configuration to load
     this.googleDriveService.initializeAuth().subscribe({
@@ -371,14 +422,18 @@ export class OpportunityDocumentsComponent implements OnInit {
         this.googleDriveAuthAvailable = authAvailable;
         if (authAvailable) {
         } else {
-          console.warn('⚠️ Google Drive auth not available - Office file conversion will not be possible');
-          console.warn('Check console for detailed error messages from GoogleDriveService');
+          console.warn(
+            '⚠️ Google Drive auth not available - Office file conversion will not be possible',
+          );
+          console.warn(
+            'Check console for detailed error messages from GoogleDriveService',
+          );
         }
       },
       error: (error) => {
         console.error('❌ Failed to initialize Google Drive auth:', error);
         this.googleDriveAuthAvailable = false;
-      }
+      },
     });
   }
 
@@ -403,7 +458,7 @@ export class OpportunityDocumentsComponent implements OnInit {
       error: (error: any) => {
         console.error('Error loading document types:', error);
         this.documentTypes.set([]); // Ensure it's always an array even on error
-      }
+      },
     });
   }
 
@@ -413,19 +468,21 @@ export class OpportunityDocumentsComponent implements OnInit {
    */
   loadDocuments(): void {
     this.loading.set(true);
-    this.documentService.getDocumentsByEntity('Opportunity', this.opportunityId()).subscribe({
-      next: (docs: any) => {
-        // Ensure docs is always an array
-        const documentArray = Array.isArray(docs) ? docs : [];
-        this.documents.set(documentArray);
-        this.loading.set(false);
-      },
-      error: (error: any) => {
-        console.error('Error loading documents:', error);
-        this.documents.set([]); // Ensure it's always an array even on error
-        this.loading.set(false);
-      }
-    });
+    this.documentService
+      .getDocumentsByEntity('Opportunity', this.opportunityId())
+      .subscribe({
+        next: (docs: any) => {
+          // Ensure docs is always an array
+          const documentArray = Array.isArray(docs) ? docs : [];
+          this.documents.set(documentArray);
+          this.loading.set(false);
+        },
+        error: (error: any) => {
+          console.error('Error loading documents:', error);
+          this.documents.set([]); // Ensure it's always an array even on error
+          this.loading.set(false);
+        },
+      });
   }
 
   /**
@@ -455,19 +512,20 @@ export class OpportunityDocumentsComponent implements OnInit {
       'application/vnd.ms-excel',
       'application/vnd.google-apps.presentation',
       'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-      'application/vnd.ms-powerpoint'
+      'application/vnd.ms-powerpoint',
     ].join(',');
-    
+
     this.drivePickerService.setAcceptedMIMETypes(acceptedMIMETypes);
-    
+
     // Subscribe to file selection events
-    const subscription = this.drivePickerService.onFilesSelectedEmitter.subscribe({
-      next: (event: any) => {
-        this.handleGoogleDriveFilesSelected(event);
-        subscription.unsubscribe(); // Clean up subscription
-      }
-    });
-    
+    const subscription =
+      this.drivePickerService.onFilesSelectedEmitter.subscribe({
+        next: (event: any) => {
+          this.handleGoogleDriveFilesSelected(event);
+          subscription.unsubscribe(); // Clean up subscription
+        },
+      });
+
     // Open the Google Drive picker
     this.drivePickerService.openPicker();
   }
@@ -480,13 +538,14 @@ export class OpportunityDocumentsComponent implements OnInit {
   private handleGoogleDriveFilesSelected(event: any): void {
     if (event.files && event.files.length > 0) {
       const selectedFiles = event.files;
-      
+
       // If multiple files selected, link them one by one
       selectedFiles.forEach((file: any) => {
         const googleId = file.id;
         const fileName = file.name;
-        const fileUrl = file.url || `https://drive.google.com/file/d/${googleId}/view`;
-        
+        const fileUrl =
+          file.url || `https://drive.google.com/file/d/${googleId}/view`;
+
         // Show a dialog to select document type for this file
         this.showGoogleDriveFileDialog(file);
       });
@@ -500,7 +559,8 @@ export class OpportunityDocumentsComponent implements OnInit {
    */
   private showGoogleDriveFileDialog(file: any): void {
     this.selectedGoogleDriveFile = file;
-    this.googleDriveLink = file.url || `https://drive.google.com/file/d/${file.id}/view`;
+    this.googleDriveLink =
+      file.url || `https://drive.google.com/file/d/${file.id}/view`;
     this.googleDriveId = file.id;
     this.selectedDocumentType = null;
     this.showLinkValidationError.set(false);
@@ -556,55 +616,62 @@ export class OpportunityDocumentsComponent implements OnInit {
     }
 
     // Check file type - allow Office files AND PDFs
-    const fileExt = '.' + this.selectedFile.name.split('.').pop()?.toLowerCase();
-    const isOfficeFile = this.googleDriveService.isMicrosoftOfficeFile(this.selectedFile.type);
+    const fileExt =
+      '.' + this.selectedFile.name.split('.').pop()?.toLowerCase();
+    const isOfficeFile = this.googleDriveService.isMicrosoftOfficeFile(
+      this.selectedFile.type,
+    );
     const isPdf = fileExt === '.pdf';
-    
+
     if (!isOfficeFile && !isPdf) {
       this.feedbackService.showErrorToast({
         summary: this.translateService.instant('message.error'),
-        detail: this.translateService.instant('message.document.unsupportedFileType')
+        detail: this.translateService.instant(
+          'message.document.unsupportedFileType',
+        ),
       });
       return;
     }
 
     this.uploading.set(true);
-    
+
     try {
       // Convert Office files to PDF if needed
       let fileToUpload = this.selectedFile;
       if (isOfficeFile) {
         // If auth not available, try to initialize it now
         if (!this.googleDriveAuthAvailable) {
-          
           try {
-            const authAvailable = await firstValueFrom(this.googleDriveService.initializeAuth());
+            const authAvailable = await firstValueFrom(
+              this.googleDriveService.initializeAuth(),
+            );
             this.googleDriveAuthAvailable = authAvailable;
-            
+
             if (!authAvailable) {
               this.feedbackService.showErrorToast({
                 summary: this.translateService.instant('message.error'),
-                detail: 'Google Drive authorization failed. Please check your configuration and try again.'
+                detail:
+                  'Google Drive authorization failed. Please check your configuration and try again.',
               });
               this.uploading.set(false);
               return;
             }
-            
           } catch (error) {
             console.error('❌ Failed to initialize Google Drive auth:', error);
             this.feedbackService.showErrorToast({
               summary: this.translateService.instant('message.error'),
-              detail: 'Failed to initialize Google Drive authorization. Please refresh the page and try again.'
+              detail:
+                'Failed to initialize Google Drive authorization. Please refresh the page and try again.',
             });
             this.uploading.set(false);
             return;
           }
         }
-        
+
         // Show conversion progress
         this.isConvertingFile = true;
         this.conversionMessage = `Converting "${this.selectedFile.name}" to PDF...`;
-        
+
         try {
           const result = await this.processLocalFile(this.selectedFile);
           fileToUpload = result;
@@ -613,14 +680,14 @@ export class OpportunityDocumentsComponent implements OnInit {
           this.isConvertingFile = false;
           this.feedbackService.showErrorToast({
             summary: this.translateService.instant('message.error'),
-            detail: `Failed to convert Office file: ${error.message || 'Unknown error'}`
+            detail: `Failed to convert Office file: ${error.message || 'Unknown error'}`,
           });
           return;
         } finally {
           this.isConvertingFile = false;
         }
       }
-      
+
       const formData = new FormData();
       formData.append('File', fileToUpload);
       formData.append('Name', fileToUpload.name);
@@ -636,18 +703,20 @@ export class OpportunityDocumentsComponent implements OnInit {
           this.selectedFile = null;
           this.selectedDocumentType = null;
           this.showUploadValidationError.set(false);
-          
+
           this.feedbackService.showSuccessToast({
             summary: this.translateService.instant('message.success'),
-            detail: this.translateService.instant('message.document.uploadedSuccessfully')
+            detail: this.translateService.instant(
+              'message.document.uploadedSuccessfully',
+            ),
           });
-          
+
           this.loadDocuments();
         },
         error: (error: any) => {
           this.uploading.set(false);
           console.error('Upload error:', error);
-        }
+        },
       });
     } catch (error) {
       this.uploading.set(false);
@@ -666,75 +735,93 @@ export class OpportunityDocumentsComponent implements OnInit {
       return;
     }
 
-    if (!this.selectedGoogleDriveFile || !this.googleDriveId || !this.googleDriveLink) {
+    if (
+      !this.selectedGoogleDriveFile ||
+      !this.googleDriveId ||
+      !this.googleDriveLink
+    ) {
       this.feedbackService.showErrorToast({
         summary: this.translateService.instant('message.error'),
-        detail: this.translateService.instant('message.document.noGoogleDriveFileSelected')
+        detail: this.translateService.instant(
+          'message.document.noGoogleDriveFileSelected',
+        ),
       });
       return;
     }
 
     this.uploading.set(true);
-    
+
     try {
       // Check if file needs PDF conversion
-      const needsConversion = this.googleDriveService.needsPdfConversion(this.selectedGoogleDriveFile.mimeType || '');
-      
+      const needsConversion = this.googleDriveService.needsPdfConversion(
+        this.selectedGoogleDriveFile.mimeType || '',
+      );
+
       if (needsConversion) {
         // If auth not available, try to initialize it now
         if (!this.googleDriveAuthAvailable) {
-          
           try {
-            const authAvailable = await firstValueFrom(this.googleDriveService.initializeAuth());
+            const authAvailable = await firstValueFrom(
+              this.googleDriveService.initializeAuth(),
+            );
             this.googleDriveAuthAvailable = authAvailable;
-            
+
             if (!authAvailable) {
               this.feedbackService.showErrorToast({
                 summary: this.translateService.instant('message.error'),
-                detail: 'Google Drive authorization failed. Please check your configuration and try again.'
+                detail:
+                  'Google Drive authorization failed. Please check your configuration and try again.',
               });
               this.uploading.set(false);
               return;
             }
-            
           } catch (error) {
             console.error('❌ Failed to initialize Google Drive auth:', error);
             this.feedbackService.showErrorToast({
               summary: this.translateService.instant('message.error'),
-              detail: 'Failed to initialize Google Drive authorization. Please refresh the page and try again.'
+              detail:
+                'Failed to initialize Google Drive authorization. Please refresh the page and try again.',
             });
             this.uploading.set(false);
             return;
           }
         }
-        
+
         // Show conversion progress
         this.isConvertingFile = true;
         this.conversionMessage = `Exporting "${this.selectedGoogleDriveFile.name}" from Drive as PDF...`;
-        
+
         try {
           // Export Drive file as PDF
           const result = await firstValueFrom(
-            this.googleDriveService.exportDriveFileAsPdf(this.googleDriveId, this.selectedGoogleDriveFile.name || '')
+            this.googleDriveService.exportDriveFileAsPdf(
+              this.googleDriveId,
+              this.selectedGoogleDriveFile.name || '',
+            ),
           );
-          
+
           // Convert base64 to File object
           const blob = this.base64ToBlob(result.data, result.mimeType);
-          const pdfFile = new File([blob], result.name, { type: result.mimeType });
-          
+          const pdfFile = new File([blob], result.name, {
+            type: result.mimeType,
+          });
+
           // Upload PDF to GCS
           const formData = new FormData();
           formData.append('File', pdfFile);
           formData.append('Name', result.name);
           formData.append('ParentEntityName', 'Opportunity');
           formData.append('ParentEntityId', this.opportunityId().toString());
-          formData.append('DocumentTypeId', this.selectedDocumentType.toString());
+          formData.append(
+            'DocumentTypeId',
+            this.selectedDocumentType.toString(),
+          );
           formData.append('UploadToGCS', 'true');
           formData.append('Link', this.googleDriveLink); // Keep original Drive link
           formData.append('GoogleId', this.googleDriveId); // Keep Google Drive ID
-          
+
           this.isConvertingFile = false;
-          
+
           // Upload to server
           this.documentService.uploadFile(formData).subscribe({
             next: (doc: any) => {
@@ -745,25 +832,27 @@ export class OpportunityDocumentsComponent implements OnInit {
               this.selectedGoogleDriveFile = null;
               this.selectedDocumentType = null;
               this.showLinkValidationError.set(false);
-              
+
               this.feedbackService.showSuccessToast({
                 summary: this.translateService.instant('message.success'),
-                detail: this.translateService.instant('message.document.linkedAndConvertedSuccessfully')
+                detail: this.translateService.instant(
+                  'message.document.linkedAndConvertedSuccessfully',
+                ),
               });
-              
+
               this.loadDocuments();
             },
             error: (error: any) => {
               this.uploading.set(false);
               console.error('Upload error:', error);
-            }
+            },
           });
         } catch (error: any) {
           this.uploading.set(false);
           this.isConvertingFile = false;
           this.feedbackService.showErrorToast({
             summary: this.translateService.instant('message.error'),
-            detail: `Failed to export Drive file: ${error.message || 'Unknown error'}`
+            detail: `Failed to export Drive file: ${error.message || 'Unknown error'}`,
           });
         }
       } else {
@@ -775,7 +864,7 @@ export class OpportunityDocumentsComponent implements OnInit {
           type: this.selectedGoogleDriveFile.mimeType || '',
           parentEntityName: 'Opportunity',
           parentEntityId: this.opportunityId(),
-          documentTypeId: this.selectedDocumentType
+          documentTypeId: this.selectedDocumentType,
         };
 
         this.documentService.linkFile(linkModel).subscribe({
@@ -787,18 +876,20 @@ export class OpportunityDocumentsComponent implements OnInit {
             this.selectedGoogleDriveFile = null;
             this.selectedDocumentType = null;
             this.showLinkValidationError.set(false);
-            
+
             this.feedbackService.showSuccessToast({
               summary: this.translateService.instant('message.success'),
-              detail: this.translateService.instant('message.document.linkedSuccessfully')
+              detail: this.translateService.instant(
+                'message.document.linkedSuccessfully',
+              ),
             });
-            
+
             this.loadDocuments();
           },
           error: (error: any) => {
             this.uploading.set(false);
             console.error('Link error:', error);
-          }
+          },
         });
       }
     } catch (error) {
@@ -814,11 +905,7 @@ export class OpportunityDocumentsComponent implements OnInit {
    */
   private extractGoogleDriveId(url: string): string | null {
     // Match various Google Drive URL formats
-    const patterns = [
-      /\/file\/d\/([^\/]+)/,
-      /id=([^&]+)/,
-      /\/d\/([^\/]+)/
-    ];
+    const patterns = [/\/file\/d\/([^\/]+)/, /id=([^&]+)/, /\/d\/([^\/]+)/];
 
     for (const pattern of patterns) {
       const match = url.match(pattern);
@@ -839,11 +926,14 @@ export class OpportunityDocumentsComponent implements OnInit {
     const iconMap: { [key: string]: string } = {
       'application/pdf': 'pi-file-pdf',
       'application/msword': 'pi-file-word',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'pi-file-word',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+        'pi-file-word',
       'application/vnd.ms-excel': 'pi-file-excel',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'pi-file-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+        'pi-file-excel',
       'application/vnd.ms-powerpoint': 'pi-file',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pi-file',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation':
+        'pi-file',
       default: 'pi-file',
     };
     return iconMap[fileType] || iconMap['default'];
@@ -858,9 +948,11 @@ export class OpportunityDocumentsComponent implements OnInit {
     const colorMap: { [key: string]: string } = {
       'application/pdf': 'text-red-500',
       'application/msword': 'text-blue-500',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'text-blue-500',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+        'text-blue-500',
       'application/vnd.ms-excel': 'text-green-500',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'text-green-500',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+        'text-green-500',
       default: 'text-gray-500',
     };
     return colorMap[fileType] || colorMap['default'];
@@ -873,7 +965,7 @@ export class OpportunityDocumentsComponent implements OnInit {
    */
   downloadDocument(doc: any): void {
     if (!doc.id) return;
-    
+
     this.documentService.downloadDocument(doc.id).subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
@@ -887,7 +979,7 @@ export class OpportunityDocumentsComponent implements OnInit {
       },
       error: (error) => {
         console.error('Download error:', error);
-      }
+      },
     });
   }
 
@@ -898,7 +990,7 @@ export class OpportunityDocumentsComponent implements OnInit {
    */
   viewDocument(doc: any): void {
     if (!doc.id) return;
-    
+
     this.documentService.getDocumentViewUrl(doc.id).subscribe({
       next: (response) => {
         if (response.type === 'gcs' || response.type === 'link') {
@@ -913,9 +1005,9 @@ export class OpportunityDocumentsComponent implements OnInit {
         console.error('View error:', error);
         this.feedbackService.showErrorToast({
           summary: this.translateService.instant('message.error'),
-          detail: this.translateService.instant('message.document.viewFailed')
+          detail: this.translateService.instant('message.document.viewFailed'),
         });
-      }
+      },
     });
   }
 
@@ -930,22 +1022,26 @@ export class OpportunityDocumentsComponent implements OnInit {
     this.feedbackService.showConfirmDialog(
       {
         summary: this.translateService.instant('title.deleteDocument'),
-        detail: this.translateService.instant('message.confirmation.deleteDocument')
+        detail: this.translateService.instant(
+          'message.confirmation.deleteDocument',
+        ),
       },
       () => {
         this.documentService.deleteDocument(doc.id!).subscribe({
           next: () => {
             this.feedbackService.showSuccessToast({
               summary: this.translateService.instant('message.success'),
-              detail: this.translateService.instant('message.document.deletedSuccessfully')
+              detail: this.translateService.instant(
+                'message.document.deletedSuccessfully',
+              ),
             });
             this.loadDocuments();
           },
           error: (error) => {
             console.error('Delete error:', error);
-          }
+          },
         });
-      }
+      },
     );
   }
 
@@ -962,39 +1058,51 @@ export class OpportunityDocumentsComponent implements OnInit {
     this.documentService.transcribeDocument(doc.id).subscribe({
       next: (response: any) => {
         this.transcribingDocId.set(null);
-        
-        
+
         // Parse the AI response
         let extractedData;
         try {
           // Parse the response if it's a string
-          const parsedResponse = typeof response === 'string' ? JSON.parse(response) : response;
-          
+          const parsedResponse =
+            typeof response === 'string' ? JSON.parse(response) : response;
+
           // Extract JSON from Gemini response structure
           // Response structure: candidates[0].content.parts[0].text
           let jsonText = parsedResponse;
-          
-          if (parsedResponse.candidates && parsedResponse.candidates.length > 0) {
+
+          if (
+            parsedResponse.candidates &&
+            parsedResponse.candidates.length > 0
+          ) {
             const candidate = parsedResponse.candidates[0];
-            if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
+            if (
+              candidate.content &&
+              candidate.content.parts &&
+              candidate.content.parts.length > 0
+            ) {
               jsonText = candidate.content.parts[0].text;
             }
           }
-          
+
           // Remove markdown code block markers if present
           if (typeof jsonText === 'string') {
-            jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?$/g, '').trim();
+            jsonText = jsonText
+              .replace(/```json\n?/g, '')
+              .replace(/```\n?$/g, '')
+              .trim();
           }
-          
+
           // Parse the actual opportunity data
-          extractedData = typeof jsonText === 'string' ? JSON.parse(jsonText) : jsonText;
-          
+          extractedData =
+            typeof jsonText === 'string' ? JSON.parse(jsonText) : jsonText;
         } catch (e) {
           console.error('❌ Failed to parse AI response:', e);
           console.error('❌ Response that failed:', response);
           this.feedbackService.showErrorToast({
             summary: this.translateService.instant('message.error'),
-            detail: this.translateService.instant('message.document.aiTranscribeFailed')
+            detail: this.translateService.instant(
+              'message.document.aiTranscribeFailed',
+            ),
           });
           return;
         }
@@ -1002,19 +1110,21 @@ export class OpportunityDocumentsComponent implements OnInit {
         // Show success message
         this.feedbackService.showSuccessToast({
           summary: this.translateService.instant('message.success'),
-          detail: this.translateService.instant('message.document.aiTranscribeSuccess')
+          detail: this.translateService.instant(
+            'message.document.aiTranscribeSuccess',
+          ),
         });
 
         // Store AI extracted data
         this.aiExtractedData.set(extractedData);
-        
+
         // Open comparison dialog - reusable component will fetch audit log internally
         this.showComparisonDialog.set(true);
       },
       error: (error) => {
         this.transcribingDocId.set(null);
         console.error('AI Transcribe error:', error);
-      }
+      },
     });
   }
 
@@ -1024,37 +1134,39 @@ export class OpportunityDocumentsComponent implements OnInit {
    * @returns {void}
    */
   handleApplyChanges(changes: any): void {
-    
     // Transform the changes to match the backend API format
     const transformedChanges = this.transformAiChangesToApiFormat(changes);
-    
+
     // Call the API to apply the changes
-    this.opportunityService.applyAiChanges(this.opportunityId(), transformedChanges).subscribe({
-      next: (updatedOpportunity: any) => {
-        
-        // Show success feedback
-        this.feedbackService.showSuccessToast({
-          summary: this.translateService.instant('message.success'),
-          detail: this.translateService.instant('message.opportunity.updatedSuccessfully')
-        });
-        
-        // Close the comparison dialog
-        this.showComparisonDialog.set(false);
-        this.aiExtractedData.set(null);
-        
-        // Emit event to parent to reload entire opportunity view
-        this.opportunityUpdated.emit();
-        
-        // Reload documents to reflect any document-related changes
-        this.loadDocuments();
-      },
-      error: (error: any) => {
-        console.error('❌ Error applying AI changes:', error);
-        // Error is handled by global HTTP interceptor
-        // But we should close the dialog anyway
-        this.showComparisonDialog.set(false);
-      }
-    });
+    this.opportunityService
+      .applyAiChanges(this.opportunityId(), transformedChanges)
+      .subscribe({
+        next: (updatedOpportunity: any) => {
+          // Show success feedback
+          this.feedbackService.showSuccessToast({
+            summary: this.translateService.instant('message.success'),
+            detail: this.translateService.instant(
+              'message.opportunity.updatedSuccessfully',
+            ),
+          });
+
+          // Close the comparison dialog
+          this.showComparisonDialog.set(false);
+          this.aiExtractedData.set(null);
+
+          // Emit event to parent to reload entire opportunity view
+          this.opportunityUpdated.emit();
+
+          // Reload documents to reflect any document-related changes
+          this.loadDocuments();
+        },
+        error: (error: any) => {
+          console.error('❌ Error applying AI changes:', error);
+          // Error is handled by global HTTP interceptor
+          // But we should close the dialog anyway
+          this.showComparisonDialog.set(false);
+        },
+      });
   }
 
   /**
@@ -1084,7 +1196,10 @@ export class OpportunityDocumentsComponent implements OnInit {
       // Handle countries - extract country IDs from nested structure
       else if (key === 'countries' && Array.isArray(value)) {
         transformed.countries = value
-          .map((countryItem: any) => countryItem.country?.id || countryItem.countryId)
+          .map(
+            (countryItem: any) =>
+              countryItem.country?.id || countryItem.countryId,
+          )
           .filter((id: number) => id != null);
       }
       // Handle SDGs - extract SDG IDs
@@ -1106,7 +1221,7 @@ export class OpportunityDocumentsComponent implements OnInit {
           .map((deliverable: any) => ({
             outputId: deliverable.outputId,
             quantity: deliverable.quantity || null,
-            notes: deliverable.notes || null
+            notes: deliverable.notes || null,
           }));
       }
       // Handle all other properties - pass through as-is
@@ -1117,7 +1232,7 @@ export class OpportunityDocumentsComponent implements OnInit {
 
     return transformed;
   }
-  
+
   /**
    * @description Process local file - convert Office files to PDF using Google Drive
    * @param {File} file - File to process
@@ -1126,24 +1241,31 @@ export class OpportunityDocumentsComponent implements OnInit {
    */
   private async processLocalFile(file: File): Promise<File> {
     // Check if it's a Microsoft Office file
-    if (this.googleDriveAuthAvailable && this.googleDriveService.isMicrosoftOfficeFile(file.type)) {
+    if (
+      this.googleDriveAuthAvailable &&
+      this.googleDriveService.isMicrosoftOfficeFile(file.type)
+    ) {
       try {
-        const result = await firstValueFrom(this.googleDriveService.convertLocalOfficeFileToPdf(file));
-        
+        const result = await firstValueFrom(
+          this.googleDriveService.convertLocalOfficeFileToPdf(file),
+        );
+
         // Convert the base64 data back to a File object
         const blob = this.base64ToBlob(result.data, result.mimeType);
-        const convertedFile = new File([blob], result.name, { type: result.mimeType });
+        const convertedFile = new File([blob], result.name, {
+          type: result.mimeType,
+        });
         return convertedFile;
       } catch (error) {
         console.error(`Failed to convert Office file ${file.name}:`, error);
         throw error;
       }
     }
-    
+
     // Not an Office file or no auth - return as-is
     return file;
   }
-  
+
   /**
    * @description Convert base64 string to Blob
    * @param {string} base64 - Base64 string
@@ -1160,7 +1282,7 @@ export class OpportunityDocumentsComponent implements OnInit {
     const byteArray = new Uint8Array(byteNumbers);
     return new Blob([byteArray], { type: mimeType });
   }
-  
+
   /**
    * @description Open dialog to tag document with partners (Partner Results Framework)
    * @param {any} doc - Document to tag
@@ -1171,6 +1293,7 @@ export class OpportunityDocumentsComponent implements OnInit {
     this.selectedFundingPartners = [];
     this.selectedClientPartners = [];
     this.showPartnerTagValidationError.set(false);
+    this.hasPartnerSelectionChanged.set(false);
     
     // Call API to retrieve existing partner-document associations
     if (doc.id) {
@@ -1179,28 +1302,46 @@ export class OpportunityDocumentsComponent implements OnInit {
           if (response && response.partners) {
             // Pre-select partners based on existing associations
             response.partners.forEach((partner: any) => {
-              if (partner.partnerType === 'funding' && !this.selectedFundingPartners.includes(partner.partnerId)) {
+              if (
+                partner.partnerType === 'funding' &&
+                !this.selectedFundingPartners.includes(partner.partnerId)
+              ) {
                 this.selectedFundingPartners.push(partner.partnerId);
-              } else if (partner.partnerType === 'client' && !this.selectedClientPartners.includes(partner.partnerId)) {
+              } else if (
+                partner.partnerType === 'client' &&
+                !this.selectedClientPartners.includes(partner.partnerId)
+              ) {
                 this.selectedClientPartners.push(partner.partnerId);
               }
             });
           }
+          
+          // Store original selections for comparison
+          this.originalFundingPartners = [...this.selectedFundingPartners];
+          this.originalClientPartners = [...this.selectedClientPartners];
+          
           // Open dialog after loading associations
           this.showPartnerTagDialog.set(true);
         },
         error: (error) => {
           console.error('Error retrieving partner-document associations:', error);
+          
+          // Store empty original selections
+          this.originalFundingPartners = [];
+          this.originalClientPartners = [];
+          
           // Open dialog anyway even if API call fails
           this.showPartnerTagDialog.set(true);
-        }
+        },
       });
     } else {
-      // If no document ID, just open the dialog
+      // If no document ID, just open the dialog with empty original selections
+      this.originalFundingPartners = [];
+      this.originalClientPartners = [];
       this.showPartnerTagDialog.set(true);
     }
   }
-  
+
   /**
    * @description Cancel partner tagging
    * @returns {void}
@@ -1210,23 +1351,29 @@ export class OpportunityDocumentsComponent implements OnInit {
     this.documentBeingTagged = null;
     this.selectedFundingPartners = [];
     this.selectedClientPartners = [];
+    this.originalFundingPartners = [];
+    this.originalClientPartners = [];
     this.showPartnerTagValidationError.set(false);
+    this.hasPartnerSelectionChanged.set(false);
   }
-  
+
   /**
    * @description Confirm partner tagging for document
    * @returns {void}
    */
   confirmPartnerTagging(): void {
-    // Validate - at least one partner must be selected
-    if (this.selectedFundingPartners.length === 0 && this.selectedClientPartners.length === 0) {
+    // Check if there has been any change from original selection
+    const hasChange = this.checkIfPartnerSelectionChanged();
+    
+    // If no change, show validation error
+    if (!hasChange) {
       this.showPartnerTagValidationError.set(true);
       return;
     }
-    
+
     const opp = this.opportunity();
     if (!opp || !this.documentBeingTagged) return;
-    
+
     // Call the new API endpoint to tag the document with partners
     this.opportunityService.tagDocumentToPartners(
       opp.id!,
@@ -1244,7 +1391,10 @@ export class OpportunityDocumentsComponent implements OnInit {
         this.documentBeingTagged = null;
         this.selectedFundingPartners = [];
         this.selectedClientPartners = [];
+        this.originalFundingPartners = [];
+        this.originalClientPartners = [];
         this.showPartnerTagValidationError.set(false);
+        this.hasPartnerSelectionChanged.set(false);
         
         // Emit event to reload opportunity
         this.opportunityUpdated.emit();
@@ -1253,6 +1403,26 @@ export class OpportunityDocumentsComponent implements OnInit {
         console.error('Error tagging document with partners:', error);
       }
     });
+  }
+  
+  /**
+   * @description Check if partner selection has changed from original
+   * @returns {boolean} True if there's been any change
+   * @private
+   */
+  private checkIfPartnerSelectionChanged(): boolean {
+    // Compare current selection with original
+    const fundingChanged = 
+      this.selectedFundingPartners.length !== this.originalFundingPartners.length ||
+      !this.selectedFundingPartners.every(id => this.originalFundingPartners.includes(id)) ||
+      !this.originalFundingPartners.every(id => this.selectedFundingPartners.includes(id));
+    
+    const clientChanged = 
+      this.selectedClientPartners.length !== this.originalClientPartners.length ||
+      !this.selectedClientPartners.every(id => this.originalClientPartners.includes(id)) ||
+      !this.originalClientPartners.every(id => this.selectedClientPartners.includes(id));
+    
+    return fundingChanged || clientChanged;
   }
   
   /**
@@ -1268,8 +1438,11 @@ export class OpportunityDocumentsComponent implements OnInit {
       this.selectedFundingPartners.push(partnerId);
     }
     this.showPartnerTagValidationError.set(false);
+    
+    // Update change detection signal
+    this.hasPartnerSelectionChanged.set(this.checkIfPartnerSelectionChanged());
   }
-  
+
   /**
    * @description Toggle client partner selection
    * @param {number} partnerId - Partner ID to toggle
@@ -1283,8 +1456,11 @@ export class OpportunityDocumentsComponent implements OnInit {
       this.selectedClientPartners.push(partnerId);
     }
     this.showPartnerTagValidationError.set(false);
+    
+    // Update change detection signal
+    this.hasPartnerSelectionChanged.set(this.checkIfPartnerSelectionChanged());
   }
-  
+
   /**
    * @description Check if funding partner is selected
    * @param {number} partnerId - Partner ID
@@ -1293,7 +1469,7 @@ export class OpportunityDocumentsComponent implements OnInit {
   isFundingPartnerSelected(partnerId: number): boolean {
     return this.selectedFundingPartners.includes(partnerId);
   }
-  
+
   /**
    * @description Check if client partner is selected
    * @param {number} partnerId - Partner ID
@@ -1302,7 +1478,7 @@ export class OpportunityDocumentsComponent implements OnInit {
   isClientPartnerSelected(partnerId: number): boolean {
     return this.selectedClientPartners.includes(partnerId);
   }
-  
+
   /**
    * @description Get partners associated with a document
    * @param {any} doc - Document
@@ -1311,30 +1487,33 @@ export class OpportunityDocumentsComponent implements OnInit {
   getDocumentPartners(doc: any): any[] {
     const opp = this.opportunity();
     if (!opp || !doc) return [];
-    
+
     const partners: any[] = [];
-    
+
     // Find funding partners linked to this document
-    const fundingPartners = (opp.fundingPartners || []).filter((fp: any) => fp.documentId === doc.id);
+    const fundingPartners = (opp.fundingPartners || []).filter(
+      (fp: any) => fp.documentId === doc.id,
+    );
     fundingPartners.forEach((fp: any) => {
       partners.push({
         ...fp,
         type: 'funding',
-        typeName: this.translateService.instant('label.fundingPartner')
+        typeName: this.translateService.instant('label.fundingPartner'),
       });
     });
-    
+
     // Find client partners linked to this document
-    const clientPartners = (opp.clientPartners || []).filter((cp: any) => cp.documentId === doc.id);
+    const clientPartners = (opp.clientPartners || []).filter(
+      (cp: any) => cp.documentId === doc.id,
+    );
     clientPartners.forEach((cp: any) => {
       partners.push({
         ...cp,
         type: 'client',
-        typeName: this.translateService.instant('label.clientPartner')
+        typeName: this.translateService.instant('label.clientPartner'),
       });
     });
-    
+
     return partners;
   }
 }
-

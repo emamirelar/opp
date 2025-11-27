@@ -17,8 +17,10 @@
         severity="error" 
         icon="pi pi-info-circle" 
         styleClass="mb-4 w-full">
-        @if (!opportunityName().trim() || !opportunityDescription().trim()) {
-          {{ 'message.validation.opportunityNameDescriptionRequired' | translate }}
+        @if (!opportunityName().trim()) {
+          {{ 'message.validation.opportunityNameRequired' | translate }}
+        } @else if (opportunityName().trim().length > 255) {
+          {{ 'message.validation.opportunityNameTooLong' | translate }}
         } @else if (showPartnerFields() && !isFundingPartner() && !isClientPartner()) {
           {{ 'message.validation.selectAtLeastOnePartnerRole' | translate }}
         }
@@ -40,9 +42,11 @@
               id="opp-name"
               [(ngModel)]="opportunityName"
               class="w-full"
+              maxlength="255"
               [disabled]="generating()">
             <label for="opp-name">{{ 'label.opportunityName' | translate }} *</label>
           </p-floatlabel>
+          <small class="text-gray-500">{{ opportunityName().length }} / 255</small>
         </div>
 
         <!-- Opportunity Description -->
@@ -56,7 +60,7 @@
               class="w-full"
               [disabled]="generating()">
             </textarea>
-            <label for="opp-desc">{{ 'label.opportunityDescription' | translate }} *</label>
+            <label for="opp-desc">{{ 'label.opportunityDescription' | translate }}</label>
           </p-floatlabel>
         </div>
 
@@ -115,6 +119,14 @@
         <span class="text-sm font-normal text-gray-600">({{ 'label.optional' | translate }})</span>
       </h3>
       
+      <!-- Helper Text (matching opportunity-documents component) -->
+      <div class="mb-4 p-3 bg-blue-50 border border-blue-100 rounded text-sm text-blue-900">
+        <div class="flex items-start gap-2">
+          <i class="pi pi-info-circle text-blue-600 mt-0.5 flex-shrink-0"></i>
+          <span>{{ 'helpText.document.uploadForAutoFill' | translate }}</span>
+        </div>
+      </div>
+      
       <!-- Upload Progress -->
       @if (isUploadingToGCS()) {
         <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded">
@@ -130,11 +142,7 @@
       
       <!-- File Upload -->
       <div class="mb-4">
-        <label class="block text-sm font-medium mb-2 text-gray-700">
-          {{ 'label.uploadNewDocuments' | translate }}
-        </label>
-        
-        <div class="border-2 border-dashed border-gray-300 rounded p-4 text-center hover:border-primary-400 transition-colors">
+        <div class="flex gap-2 mb-3">
           <input
             #fileInput
             type="file"
@@ -146,29 +154,27 @@
             
           <button
             pButton
-            [label]="'button.selectFiles' | translate"
+            [label]="'button.upload' | translate"
             icon="pi pi-upload"
-            severity="secondary"
-            [outlined]="true"
+            styleClass="flex-1"
             (click)="fileInput.click()"
             [disabled]="generating() || isUploadingToGCS()">
           </button>
           
-          <span class="mx-2 text-gray-500">{{ 'label.or' | translate }}</span>
-          
           <button
             pButton
-            [label]="'button.selectFromGoogleDrive' | translate"
+            [label]="'button.uploadFromDrive' | translate"
             icon="pi pi-google"
             severity="secondary"
             [outlined]="true"
+            styleClass="flex-1"
             (click)="openGoogleDrivePicker()"
             [disabled]="generating() || isUploadingToGCS()">
           </button>
-          
-          <div class="text-sm text-gray-500 mt-2">
-            {{ 'message.acceptedFileTypes' | translate }}
-          </div>
+        </div>
+        
+        <div class="text-xs text-gray-500">
+          {{ 'message.acceptedFileTypes' | translate }}
         </div>
         
         <!-- Selected Local Files List -->
@@ -286,24 +292,6 @@
         </div>
       }
       
-      <!-- Document Source Summary -->
-      @if (selectedFiles().length > 0 || selectedExistingDocumentIds().length > 0) {
-        <div class="p-3 bg-green-50 border border-green-200 rounded">
-          <div class="text-sm text-green-800">
-            <i class="pi pi-check-circle mr-2"></i>
-            @if (selectedFiles().length > 0 && selectedExistingDocumentIds().length > 0) {
-              {{ 'message.documentSourcesSummaryBoth' | translate: {
-                newCount: selectedFiles().length,
-                existingCount: selectedExistingDocumentIds().length
-              } }}
-            } @else if (selectedFiles().length > 0) {
-              {{ 'message.documentSourcesSummaryNew' | translate: {count: selectedFiles().length} }}
-            } @else {
-              {{ 'message.documentSourcesSummaryExisting' | translate: {count: selectedExistingDocumentIds().length} }}
-            }
-          </div>
-        </div>
-      }
     </div>
     
     <p-divider />
@@ -652,7 +640,7 @@
                   (click)="$event.stopPropagation()"
                 />
                 <label class="block text-sm font-semibold text-gray-700 flex-1">
-                  {{ 'label.opportunityDescription' | translate }} *
+                  {{ 'label.opportunityDescription' | translate }}
                 </label>
               </div>
               <textarea

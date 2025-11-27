@@ -201,4 +201,35 @@ public class GeminiManager : IGeminiManager
     {
         throw new NotImplementedException();
     }
+
+    //Default stub implementations (overridden in UNOPSGeminiManager)
+    public virtual Task<List<ExtractedDeliverableInfo>> ExtractDeliverablesWithFrameworkPriorityAsync(int opportunityId)
+    {
+        throw new NotImplementedException("This method should be implemented in UNOPSGeminiManager");
+    }
+
+    public virtual Task<FrameworkStatusResponse> GetFrameworkStatusAsync(int opportunityId)
+    {
+        throw new NotImplementedException("This method should be implemented in UNOPSGeminiManager");
+    }
+    
+    public Task<string> GenerateOpportunityStatementAsync(int opportunityId, ClaimsPrincipal user = null)
+    {
+        throw new NotImplementedException();
+    }
+    
+    public Task<OpportunityStatementValidationResponse> ValidateOpportunityStatementAsync(int opportunityId, ClaimsPrincipal user = null)
+    {
+        throw new NotImplementedException();
+    }
+    
+    public Task<List<string>> CreateBatchEmbeddingsAsync(List<string> texts)
+    {
+        throw new NotImplementedException("This method is only implemented in UNOPSGeminiManager");
+    }
+    
+    public Task<Dictionary<string, string>> GenerateKeywordsAsync(List<string> texts)
+    {
+        throw new NotImplementedException("This method is only implemented in UNOPSGeminiManager");
+    }
 }

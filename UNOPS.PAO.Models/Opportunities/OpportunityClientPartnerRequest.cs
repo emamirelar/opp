@@ -4,6 +4,6 @@ public class OpportunityClientPartnerRequest
 {
     public int PartnerId { get; set; }
     public int? DocumentId { get; set; }
-    public string? SelectedPartnerAgreementNumber { get; set; }  // AC9
+    public string? SelectedPartnerAgreementNumber { get; set; }
 }
 

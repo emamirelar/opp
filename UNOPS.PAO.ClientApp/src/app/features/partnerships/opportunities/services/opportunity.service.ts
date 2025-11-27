@@ -18,7 +18,10 @@ import {
   DSTRecommendationsResponse,
   RiskCreateRequest,
   Risk,
-  OpportunityInsightsResponse
+  OpportunityInsightsResponse,
+  FrameworkStatusResponse,
+  ExtractedDeliverableInfo,
+  OpportunityStatementValidationResponse,
 } from '@shared/models/opportunity.model';
 
 /**
@@ -57,14 +60,27 @@ export class OpportunityService {
   /**
    * Update an existing opportunity
    */
-  updateOpportunity(id: number, request: Partial<Opportunity>): Observable<Opportunity> {
+  updateOpportunity(
+    id: number,
+    request: Partial<Opportunity>,
+  ): Observable<Opportunity> {
     return this.http.put<Opportunity>(`${this.apiUrl}/${id}`, request);
   }
 
   /**
-   * Update WHAT section of opportunity (description, org unit, initiative type, deliverables)
+   * Update Overview section of opportunity (name, description)
    */
-  updateOpportunityWhat(id: number, data: Partial<Opportunity>): Observable<Opportunity> {
+  updateOpportunityOverview(id: number, data: { name?: string; description?: string }): Observable<Opportunity> {
+    return this.http.patch<Opportunity>(`${this.apiUrl}/${id}/overview`, data);
+  }
+
+  /**
+   * Update WHAT section of opportunity (org unit, initiative type, delivery modality, deliverables)
+   */
+  updateOpportunityWhat(
+    id: number,
+    data: Partial<Opportunity>,
+  ): Observable<Opportunity> {
     return this.http.patch<Opportunity>(`${this.apiUrl}/${id}/what`, data);
   }
 
@@ -117,7 +133,10 @@ export class OpportunityService {
    * @returns Observable with updated opportunity
    */
   applyAiChanges(id: number, changes: any): Observable<Opportunity> {
-    return this.http.patch<Opportunity>(`${this.apiUrl}/${id}/apply-ai-changes`, changes);
+    return this.http.patch<Opportunity>(
+      `${this.apiUrl}/${id}/apply-ai-changes`,
+      changes,
+    );
   }
 
   /**
@@ -132,13 +151,16 @@ export class OpportunityService {
     opportunityId: number,
     documentId: number,
     fundingPartnerIds: number[],
-    clientPartnerIds: number[]
+    clientPartnerIds: number[],
   ): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/${opportunityId}/tag-related-partner-to-doc`, {
-      documentId: documentId,
-      fundingPartnerIds: fundingPartnerIds,
-      clientPartnerIds: clientPartnerIds
-    });
+    return this.http.post<any>(
+      `${this.apiUrl}/${opportunityId}/tag-related-partner-to-doc`,
+      {
+        documentId: documentId,
+        fundingPartnerIds: fundingPartnerIds,
+        clientPartnerIds: clientPartnerIds,
+      },
+    );
   }
 
   /**
@@ -158,8 +180,8 @@ export class OpportunityService {
     return this.http.get<any>(`/api/auditlog/latest`, {
       params: {
         entityType: entityType,
-        entityId: entityId.toString()
-      }
+        entityId: entityId.toString(),
+      },
     });
   }
 
@@ -228,23 +250,35 @@ export class OpportunityService {
    * @param maxResults - Maximum number of similar projects to return (default: 10)
    * @returns Observable with similar projects response
    */
-  getSimilarProjects(id: number, maxResults: number = 10): Observable<SimilarProjectsResponse> {
-    return this.http.get<SimilarProjectsResponse>(`${this.apiUrl}/${id}/similar-projects`, {
-      params: {
-        maxResults: maxResults.toString()
-      }
-    });
+  getSimilarProjects(
+    id: number,
+    maxResults: number = 10,
+  ): Observable<SimilarProjectsResponse> {
+    return this.http.get<SimilarProjectsResponse>(
+      `${this.apiUrl}/${id}/similar-projects`,
+      {
+        params: {
+          maxResults: maxResults.toString(),
+        },
+      },
+    );
   }
 
   /**
    * Get similar opportunities using semantic search
    */
-  getSimilarOpportunities(id: number, maxResults: number = 6): Observable<SimilarOpportunitiesResponse> {
-    return this.http.get<SimilarOpportunitiesResponse>(`${this.apiUrl}/${id}/similar-opportunities`, {
-      params: {
-        maxResults: maxResults.toString()
-      }
-    });
+  getSimilarOpportunities(
+    id: number,
+    maxResults: number = 6,
+  ): Observable<SimilarOpportunitiesResponse> {
+    return this.http.get<SimilarOpportunitiesResponse>(
+      `${this.apiUrl}/${id}/similar-opportunities`,
+      {
+        params: {
+          maxResults: maxResults.toString(),
+        },
+      },
+    );
   }
 
   /**
@@ -253,12 +287,18 @@ export class OpportunityService {
    * @param maxResults - Maximum number of relevant people to return (default: 10)
    * @returns Observable with relevant people response
    */
-  getRelevantPeople(id: number, maxResults: number = 10): Observable<RelevantPeopleResponse> {
-    return this.http.get<RelevantPeopleResponse>(`${this.apiUrl}/${id}/relevant-people`, {
-      params: {
-        maxResults: maxResults.toString()
-      }
-    });
+  getRelevantPeople(
+    id: number,
+    maxResults: number = 10,
+  ): Observable<RelevantPeopleResponse> {
+    return this.http.get<RelevantPeopleResponse>(
+      `${this.apiUrl}/${id}/relevant-people`,
+      {
+        params: {
+          maxResults: maxResults.toString(),
+        },
+      },
+    );
   }
 
   /**
@@ -276,7 +316,9 @@ export class OpportunityService {
    * @returns Observable with recommendations response
    */
   getDSTRecommendations(id: number): Observable<DSTRecommendationsResponse> {
-    return this.http.get<DSTRecommendationsResponse>(`${this.apiUrl}/${id}/dst-recommendations`);
+    return this.http.get<DSTRecommendationsResponse>(
+      `${this.apiUrl}/${id}/dst-recommendations`,
+    );
   }
 
   /**
@@ -285,7 +327,9 @@ export class OpportunityService {
    * @returns Observable with insights and suggestions
    */
   getInsights(id: number): Observable<OpportunityInsightsResponse> {
-    return this.http.get<OpportunityInsightsResponse>(`${this.apiUrl}/${id}/insights`);
+    return this.http.get<OpportunityInsightsResponse>(
+      `${this.apiUrl}/${id}/insights`,
+    );
   }
 
   /**
@@ -305,8 +349,67 @@ export class OpportunityService {
    * @param request - Risk update request
    * @returns Observable with updated risk
    */
-  updateDSTRisk(id: number, riskId: number, request: RiskCreateRequest): Observable<Risk> {
-    return this.http.put<Risk>(`${this.apiUrl}/${id}/dst-risks/${riskId}`, request);
+  updateDSTRisk(
+    id: number,
+    riskId: number,
+    request: RiskCreateRequest,
+  ): Observable<Risk> {
+    return this.http.put<Risk>(
+      `${this.apiUrl}/${id}/dst-risks/${riskId}`,
+      request,
+    ); 
+  }
+
+  /**
+   * Get Partner Results Framework status for an opportunity
+   * Checks if Partner Results Framework documents are tagged to funding/client partners
+   * @param id - Opportunity ID
+   * @returns Observable with framework status information
+   */
+  getFrameworkStatus(id: number): Observable<FrameworkStatusResponse> {
+    return this.http.get<FrameworkStatusResponse>(`${this.apiUrl}/${id}/framework-status`);
+  }
+
+  /**
+   * Trigger AI extraction of products and services from documents
+   * Extracts deliverables from documents, prioritizing tagged Partner Results Framework documents
+   * @param id - Opportunity ID
+   * @returns Observable with array of extracted deliverable information
+   */
+  extractProductsAndServices(id: number): Observable<ExtractedDeliverableInfo[]> {
+    return this.http.post<ExtractedDeliverableInfo[]>(`${this.apiUrl}/${id}/extract-deliverables`, {});
+  }
+
+  /**
+   * Generate AI-powered opportunity statement in markdown format
+   * @param id - Opportunity ID
+   * @returns Observable with generated statement markdown
+   */
+  generateOpportunityStatement(
+    id: number,
+  ): Observable<{
+    opportunityId: number;
+    statementMarkdown: string;
+    message: string;
+  }> {
+    return this.http.post<{
+      opportunityId: number;
+      statementMarkdown: string;
+      message: string;
+    }>(`${this.apiUrl}/${id}/generate-statement`, {});
+  }
+
+  /**
+   * Validate whether the opportunity statement is aligned with the structured data
+   * @param id - Opportunity ID
+   * @returns Observable with validation result including alignment status and misalignment items
+   */
+  validateOpportunityStatement(
+    id: number,
+  ): Observable<OpportunityStatementValidationResponse> {
+    return this.http.post<OpportunityStatementValidationResponse>(
+      `${this.apiUrl}/${id}/validate-statement`,
+      {},
+    );
   }
 }
-

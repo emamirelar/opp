@@ -47,6 +47,36 @@ public interface IGeminiManager
     /// Generates AI-powered opportunity proposal from multiple sources (interactions, documents, etc.)
     /// </summary>
     Task<OpportunityProposalResponse> GenerateOpportunityProposalAsync(OpportunityProposalRequest request, ClaimsPrincipal user = null);
+    
+    /// <summary>
+    /// Priority: Tagged framework docs first, then fallback to all other documents if needed.
+    /// Returns temporary extraction data for user verification (not saved to database).
+    /// </summary>
+    Task<List<ExtractedDeliverableInfo>> ExtractDeliverablesWithFrameworkPriorityAsync(int opportunityId);
+    
+    /// <summary>
+    /// </summary>
+    Task<FrameworkStatusResponse> GetFrameworkStatusAsync(int opportunityId);
+    
+    /// <summary>
+    /// Generates a comprehensive opportunity statement in markdown format following the UNOPS template
+    /// </summary>
+    Task<string> GenerateOpportunityStatementAsync(int opportunityId, ClaimsPrincipal user = null);
+    
+    /// <summary>
+    /// Validates whether the opportunity statement is aligned with the structured data in the opportunity record
+    /// </summary>
+    Task<OpportunityStatementValidationResponse> ValidateOpportunityStatementAsync(int opportunityId, ClaimsPrincipal user = null);
+    
+    /// <summary>
+    /// Creates batch embeddings for a list of texts (delegates to AiContextualService)
+    /// </summary>
+    Task<List<string>> CreateBatchEmbeddingsAsync(List<string> texts);
+    
+    /// <summary>
+    /// Generates keywords for a list of texts for hybrid search (delegates to AiContextualService)
+    /// </summary>
+    Task<Dictionary<string, string>> GenerateKeywordsAsync(List<string> texts);
 }
 
 /// <summary>

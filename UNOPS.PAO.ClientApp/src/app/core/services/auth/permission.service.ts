@@ -308,7 +308,25 @@ export class PermissionService {
     let entityId: string | undefined;
     
     // Known child route patterns that should be ignored for permission checks
-    const childRoutes = ['data', 'contacts', 'interactions', 'details'];
+    // Includes opportunity view sections and other child routes
+    const childRoutes = [
+      'data', 
+      'contacts', 
+      'interactions', 
+      'details',
+      // Opportunity view sections
+      'analysis',
+      'what',
+      'why',
+      'who',
+      'where',
+      'when',
+      'dst',
+      'related',
+      'collaboration',
+      'statement',
+      'view-option1' // Also include the demo route variant
+    ];
     
     // Check if we have a pattern like partnerships/partners/123/data
     if (segments.length >= 4) {

@@ -1,43 +1,45 @@
-<!-- WHAT - Opportunity Overview -->
+<!-- WHAT - Products & Services -->
 <p-panel [toggleable]="true" [collapsed]="false" class="{{isSaving() ? 'opacity-50 pointer-events-none' : ''}}">
   <ng-template pTemplate="header">
     <div class="flex items-center justify-between w-full pr-4">
-      <span class="font-semibold">🎯 {{ 'label.opportunity.what' | translate }} - {{ 'label.opportunity.overview' | translate }}</span>
+      <span class="font-semibold">🎯 {{ 'label.opportunity.what' | translate }} - {{ 'label.opportunity.productsServicesTitle' | translate }}</span>
       <div class="flex items-center gap-2">
         @if (isSaving()) {
           <i class="pi pi-spin pi-spinner text-xl text-primary"></i>
         }
-        @if (!isEditing()) {
-          <p-button
-            icon="pi pi-pencil"
-            [text]="true"
-            [rounded]="true"
-            severity="secondary"
-            size="small"
-            (onClick)="startEditing()"
-            pTooltip="{{ 'button.edit' | translate }}"
-          />
-        } @else {
-          <p-button
-            icon="pi pi-check"
-            [text]="true"
-            [rounded]="true"
-            severity="success"
-            size="small"
-            (onClick)="saveSection()"
-            [disabled]="isSaving()"
-            pTooltip="{{ 'button.save' | translate }}"
-          />
-          <p-button
-            icon="pi pi-times"
-            [text]="true"
-            [rounded]="true"
-            severity="danger"
-            size="small"
-            (onClick)="cancelEditing()"
-            [disabled]="isSaving()"
-            pTooltip="{{ 'button.cancel' | translate }}"
-          />
+        @if (canUpdate()) {
+          @if (!isEditing()) {
+            <p-button
+              icon="pi pi-pencil"
+              [text]="true"
+              [rounded]="true"
+              severity="secondary"
+              size="small"
+              (onClick)="startEditing()"
+              pTooltip="{{ 'button.edit' | translate }}"
+            />
+          } @else {
+            <p-button
+              icon="pi pi-check"
+              [text]="true"
+              [rounded]="true"
+              severity="success"
+              size="small"
+              (onClick)="saveSection()"
+              [disabled]="isSaving()"
+              pTooltip="{{ 'button.save' | translate }}"
+            />
+            <p-button
+              icon="pi pi-times"
+              [text]="true"
+              [rounded]="true"
+              severity="danger"
+              size="small"
+              (onClick)="cancelEditing()"
+              [disabled]="isSaving()"
+              pTooltip="{{ 'button.cancel' | translate }}"
+            />
+          }
         }
       </div>
     </div>
@@ -61,41 +63,6 @@
         </div>
       </div>
     }
-
-    <!-- Name -->
-    <div>
-      <h3 class="text-sm font-semibold text-gray-600 mb-2">{{ 'label.opportunity.name' | translate }}</h3>
-      @if (isEditing()) {
-        <input
-          pInputText
-          [formControl]="nameControl"
-          class="w-full"
-          [placeholder]="'label.opportunity.namePlaceholder' | translate"
-        />
-      } @else {
-        <p class="text-gray-900 font-medium text-lg">
-          {{ opportunity().name || '-' }}
-        </p>
-      }
-    </div>
-
-    <!-- Description -->
-    <div>
-      <h3 class="text-sm font-semibold text-gray-600 mb-2">{{ 'label.opportunity.description' | translate }}</h3>
-      @if (isEditing()) {
-        <textarea
-          pInputTextarea
-          [formControl]="descriptionControl"
-          rows="5"
-          class="w-full"
-          [placeholder]="'label.opportunity.descriptionPlaceholder' | translate"
-        ></textarea>
-      } @else {
-        <p class="text-gray-700 leading-relaxed">
-          {{ opportunity().description || '-' }}
-        </p>
-      }
-    </div>
 
     <!-- Responsible Org Unit and Initiative Type -->
     <div class="grid grid-cols-2 gap-4">
@@ -143,107 +110,441 @@
       </div>
     </div>
 
-    <!-- Deliverables -->
-    <div>
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold text-gray-900">
-          {{ 'label.opportunity.deliverables' | translate }} ({{ deliverableCount() }})
-        </h3>
-        @if (isEditing()) {
-          <p-button
-            [label]="'button.addNew' | translate"
-            icon="pi pi-plus"
-            size="small"
-            [outlined]="true"
-            (onClick)="openDeliverablesDialog()"
-          />
+    <!-- Delivery Modality Section -->
+    <div class="border-t border-gray-200 pt-6">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">
+        🚚 {{ 'label.deliveryModality.title' | translate }}
+      </h3>
+      <p class="text-sm text-gray-600 mb-4">
+        {{ 'message.deliveryModality.description' | translate }}
+      </p>
+      
+      @if (isEditing()) {
+        <p-select
+          [formControl]="deliveryModalityControl"
+          [options]="deliveryModalityOptions()"
+          optionValue="value"
+          class="w-full max-w-lg"
+        >
+          <ng-template let-option pTemplate="selectedItem">
+            @if (option) {
+              <span>{{ option.label | translate }}</span>
+            }
+          </ng-template>
+          <ng-template let-option pTemplate="item">
+            <div class="py-1">
+              <span>{{ option.label | translate }}</span>
+            </div>
+          </ng-template>
+        </p-select>
+        
+        <!-- Show additional guidance when "Mixed" is selected -->
+        @if (deliveryModalityControl.value === 4) {
+          <div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div class="flex items-start gap-2">
+              <i class="pi pi-info-circle text-blue-600 text-sm mt-0.5"></i>
+              <p class="text-xs text-blue-800">
+                {{ 'message.deliveryModality.mixedGuidance' | translate }}
+              </p>
+            </div>
+          </div>
         }
-      </div>
-      @if (deliverableCount() > 0) {
-        <div class="space-y-3">
-          @for (deliverable of opportunity().deliverables; track deliverable.id; let idx = $index) {
-            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <div class="flex items-start justify-between">
-                <div class="flex-1">
-                  <h4 class="font-semibold text-gray-900 mb-2">
-                    {{ deliverable.outputName }}
-                  </h4>
-                  
-                  <!-- Description -->
-                  @if (deliverable.outputDescription) {
-                    <p class="text-sm text-gray-700 leading-relaxed mb-3">
-                      {{ deliverable.outputDescription }}
-                    </p>
+      } @else {
+        <div class="flex items-center gap-2">
+          @switch (opportunity().deliveryModality) {
+            @case (1) {
+              <span class="inline-flex items-center px-3 py-1.5 rounded-lg bg-yellow-100 text-yellow-800 text-sm font-medium">
+                <i class="pi pi-question-circle mr-2"></i>
+                {{ 'label.deliveryModality.notYetKnown' | translate }}
+              </span>
+            }
+            @case (2) {
+              <span class="inline-flex items-center px-3 py-1.5 rounded-lg bg-green-100 text-green-800 text-sm font-medium">
+                <i class="pi pi-check-circle mr-2"></i>
+                {{ 'label.deliveryModality.allDirect' | translate }}
+              </span>
+            }
+            @case (3) {
+              <span class="inline-flex items-center px-3 py-1.5 rounded-lg bg-purple-100 text-purple-800 text-sm font-medium">
+                <i class="pi pi-share-alt mr-2"></i>
+                {{ 'label.deliveryModality.allGrantSupport' | translate }}
+              </span>
+            }
+            @case (4) {
+              <span class="inline-flex items-center px-3 py-1.5 rounded-lg bg-blue-100 text-blue-800 text-sm font-medium">
+                <i class="pi pi-sitemap mr-2"></i>
+                {{ 'label.deliveryModality.mixed' | translate }}
+              </span>
+            }
+            @default {
+              <span class="inline-flex items-center px-3 py-1.5 rounded-lg bg-gray-100 text-gray-500 text-sm font-medium italic">
+                <i class="pi pi-minus-circle mr-2"></i>
+                {{ 'label.notSelected' | translate }}
+              </span>
+            }
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Partner Results Framework Status & Extraction -->
+    <div class="border-t border-gray-200 pt-6">
+      <!-- Framework Status Warning (No frameworks tagged) -->
+      @if (showFrameworkWarning()) {
+        <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-200 mb-4">
+          <div class="flex items-start gap-3">
+            <i class="pi pi-exclamation-triangle text-yellow-600 text-lg mt-0.5"></i>
+            <div class="flex-1">
+              <h4 class="text-sm font-semibold text-gray-900 mb-1">
+                {{ 'label.partnerFrameworkNotDefined' | translate }}
+              </h4>
+              <p class="text-sm text-gray-700">
+                {{ 'message.tagFrameworkFirst' | translate }}
+              </p>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Framework Status Info (Frameworks tagged) -->
+      @if (showFrameworkInfo()) {
+        <div class="bg-green-50 rounded-lg p-4 border border-green-200 mb-4">
+          <div class="flex items-start gap-3">
+            <i class="pi pi-check-circle text-green-600 text-lg mt-0.5"></i>
+            <div class="flex-1">
+              <h4 class="text-sm font-semibold text-gray-900 mb-2">
+                {{ 'label.partnerFrameworkAvailable' | translate }}
+              </h4>
+              <p class="text-sm text-gray-700 mb-3">
+                {{ 'message.frameworkDocumentsIdentified' | translate: {count: frameworkStatus()?.taggedFrameworks?.length || 0} }}
+              </p>
+              
+              <!-- List of tagged framework documents -->
+              @if (frameworkStatus()?.taggedFrameworks && frameworkStatus()!.taggedFrameworks.length > 0) {
+                <div class="space-y-2 mt-2">
+                  @for (framework of frameworkStatus()!.taggedFrameworks; track framework.documentId) {
+                    <div class="bg-white rounded p-2 border border-green-100">
+                      <div class="flex items-center gap-2">
+                        <i class="pi pi-file-pdf text-red-500 text-sm"></i>
+                        <span class="text-xs font-medium text-gray-900">{{ framework.documentName }}</span>
+                        <p-chip 
+                          [label]="framework.partnerName" 
+                          styleClass="text-xs ml-auto"
+                          [style]="{ 'background-color': framework.partnerType === 'Funding' ? '#dbeafe' : '#fef3c7', 'color': framework.partnerType === 'Funding' ? '#1e40af' : '#92400e' }"
+                        />
+                        <span class="text-xs text-gray-500">({{ framework.partnerType }} Partner)</span>
+                      </div>
+                    </div>
                   }
-                  
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <!-- Group / Sub-Group Chip -->
-                    @if (deliverable.outputSubGroup && deliverable.outputGroup) {
-                      <p-chip 
-                        [label]="deliverable.outputSubGroup + ' / ' + deliverable.outputGroup" 
-                        styleClass="text-xs"
-                      />
-                    } @else if (deliverable.outputGroup) {
-                      <p-chip 
-                        [label]="deliverable.outputGroup" 
-                        styleClass="text-xs"
-                      />
-                    }
-                    
-                    <!-- Service Line Chip -->
-                    @if (deliverable.outputServiceLine) {
-                      <p-chip 
-                        [label]="deliverable.outputServiceLine" 
-                        styleClass="text-xs"
-                        [style]="{ 'background-color': '#e0f2fe', 'color': '#0369a1' }"
-                      />
-                    }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Procurement Expert Required Warning Banner -->
+      @if (requiresProcurementExpert()) {
+        <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-300 mb-4">
+          <div class="flex items-start gap-3">
+            <i class="pi pi-exclamation-triangle text-yellow-600 text-lg mt-0.5"></i>
+            <div class="flex-1">
+              <h4 class="text-sm font-semibold text-gray-900 mb-2">
+                {{ 'label.procurementExpertRequired' | translate }}
+              </h4>
+              <p class="text-sm text-gray-700 mb-2">
+                {{ 'message.procurementExpertNeededForDeliverables' | translate: {count: deliverablesRequiringProcurement().length} }}
+              </p>
+              
+              <!-- List of deliverables requiring procurement -->
+              @if (deliverablesRequiringProcurement().length > 0) {
+                <div class="space-y-1 mt-2">
+                  @for (deliverable of deliverablesRequiringProcurement(); track deliverable.id) {
+                    <div class="bg-white rounded p-2 border border-yellow-100">
+                      <div class="flex items-center gap-2">
+                        <i class="pi pi-box text-blue-600 text-xs"></i>
+                        <span class="text-xs font-medium text-gray-900">
+                          {{ deliverable.level4 || deliverable.level3 || deliverable.level2 || deliverable.level1 || deliverable.level0 }}
+                        </span>
+                        @if (deliverable.serviceLine) {
+                          <p-chip 
+                            [label]="deliverable.serviceLine" 
+                            styleClass="text-xs ml-auto"
+                            [style]="{ 'background-color': '#e0f2fe', 'color': '#0369a1' }"
+                          />
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Split Layout: Products & Services (Left) | AI Recommendations (Right) -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Left Panel: Products and Services -->
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">
+              {{ 'label.opportunity.productsServices' | translate }} ({{ deliverableCount() }})
+            </h3>
+            @if (isEditing()) {
+              <p-button
+                [label]="'button.addNew' | translate"
+                icon="pi pi-plus"
+                size="small"
+                [outlined]="true"
+                (onClick)="openDeliverablesDialog()"
+              />
+            }
+          </div>
+
+          @if (deliverableCount() > 0) {
+            <div class="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+              @for (deliverable of opportunity().deliverables; track deliverable.id; let idx = $index) {
+                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                      <!-- Product/Service Name -->
+                      <h4 class="font-semibold text-gray-900 mb-2">
+                        {{ deliverable.level4 || deliverable.level3 || deliverable.level2 || deliverable.level1 || deliverable.level0 }}
+                      </h4>
+                      
+                      <!-- Hierarchical Path -->
+                      @if (deliverable.level0 || deliverable.level1 || deliverable.level2) {
+                        <div class="text-xs text-gray-600 mb-3 space-y-0.5">
+                          @if (deliverable.level0) {
+                            <div><span class="font-medium">Level 0:</span> {{ deliverable.level0 }}</div>
+                          }
+                          @if (deliverable.level1) {
+                            <div><span class="font-medium">Level 1:</span> {{ deliverable.level1 }}</div>
+                          }
+                          @if (deliverable.level2) {
+                            <div><span class="font-medium">Level 2:</span> {{ deliverable.level2 }}</div>
+                          }
+                          @if (deliverable.level3 && deliverable.level4) {
+                            <div><span class="font-medium">Level 3:</span> {{ deliverable.level3 }}</div>
+                          }
+                        </div>
+                      }
+                      
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <!-- Service Line Chip -->
+                        @if (deliverable.serviceLine) {
+                          <p-chip 
+                            [label]="deliverable.serviceLine" 
+                            styleClass="text-xs"
+                            [style]="{ 'background-color': '#e0f2fe', 'color': '#0369a1' }"
+                          />
+                        }
+                        
+                        <!-- Procurement Expert Required Indicator (case-insensitive check) -->
+                        @if (deliverable.procurementComponent && deliverable.serviceLine?.toLowerCase() !== 'procurement') {
+                          <p-chip 
+                            [label]="'label.procurementExpertRequired' | translate" 
+                            icon="pi pi-exclamation-triangle"
+                            styleClass="text-xs"
+                            [style]="{ 'background-color': '#fef3c7', 'color': '#92400e', 'border': '1px solid #fbbf24' }"
+                            [pTooltip]="'message.procurementComponentDetected' | translate"
+                            tooltipPosition="top"
+                          />
+                        }
+                        
+                        <!-- Level 0 Chip (if exists) -->
+                        @if (deliverable.level0) {
+                          <p-chip 
+                            [label]="deliverable.level0" 
+                            styleClass="text-xs"
+                            [style]="{ 'background-color': '#f3f4f6', 'color': '#374151' }"
+                          />
+                        }
+                      </div>
+                    </div>
+                    <div class="flex flex-col items-end gap-2">
+                      @if (isEditing()) {
+                        <div class="flex gap-2">
+                          <p-button
+                            icon="pi pi-pencil"
+                            [text]="true"
+                            [rounded]="true"
+                            severity="secondary"
+                            size="small"
+                            (onClick)="editDeliverable(idx)"
+                            pTooltip="{{ 'button.edit' | translate }}"
+                          />
+                          <p-button
+                            icon="pi pi-trash"
+                            [text]="true"
+                            [rounded]="true"
+                            severity="danger"
+                            size="small"
+                            (onClick)="removeDeliverable(idx)"
+                            pTooltip="{{ 'button.delete' | translate }}"
+                          />
+                        </div>
+                      }
+                      <!-- Quantity Chip -->
+                      @if (deliverable.quantity !== null && deliverable.quantity !== undefined) {
+                        <div class="flex items-center gap-2">
+                          <p-chip 
+                            [label]="'Qty: ' + deliverable.quantity.toString()" 
+                            styleClass="text-xs font-bold"
+                            [style]="{ 'background-color': '#fef3c7', 'color': '#92400e' }"
+                          />
+                        </div>
+                      }
+                    </div>
                   </div>
                 </div>
-                <div class="flex flex-col items-end gap-2">
-                  @if (isEditing()) {
-                    <div class="flex gap-2">
-                      <p-button
-                        icon="pi pi-pencil"
-                        [text]="true"
-                        [rounded]="true"
-                        severity="secondary"
-                        size="small"
-                        (onClick)="editDeliverable(idx)"
-                        pTooltip="{{ 'button.edit' | translate }}"
-                      />
-                      <p-button
-                        icon="pi pi-trash"
-                        [text]="true"
-                        [rounded]="true"
-                        severity="danger"
-                        size="small"
-                        (onClick)="removeDeliverable(idx)"
-                        pTooltip="{{ 'button.delete' | translate }}"
-                      />
-                    </div>
-                  }
-                  <!-- Quantity and Unit Combined Chip -->
-                  @if ((deliverable.quantity !== null && deliverable.quantity !== undefined) || deliverable.unitCode) {
-                    <div class="flex items-center gap-2">
-                      <p-chip 
-                        [label]="(deliverable.quantity !== null && deliverable.quantity !== undefined ? deliverable.quantity.toString() : '') + (deliverable.unitCode ? ' ' + deliverable.unitCode : '')" 
-                        styleClass="text-xs font-bold"
-                        [style]="{ 'background-color': '#fef3c7', 'color': '#92400e' }"
-                      />
-                    </div>
-                  }
-                </div>
-              </div>
+              }
+            </div>
+          } @else {
+            <div class="text-center py-8 text-gray-400 bg-gray-50 rounded-lg border border-gray-200">
+              <i class="pi pi-box text-4xl mb-3"></i>
+              <p>{{ 'message.opportunity.noDeliverables' | translate }}</p>
             </div>
           }
         </div>
-      } @else {
-        <div class="text-center py-8 text-gray-400">
-          <i class="pi pi-box text-4xl mb-3"></i>
-          <p>{{ 'message.opportunity.noDeliverables' | translate }}</p>
+
+        <!-- Right Panel: AI Recommendations -->
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <i class="pi pi-lightbulb text-blue-600"></i>
+              <span>
+                {{ 'title.aiRecommendations' | translate }}
+                ({{ visibleExtractedDeliverables().length }})
+              </span>
+            </h3>
+            <!-- Recommendations button in the panel header -->
+            <p-button
+              [label]="'button.recommendations' | translate"
+              icon="pi pi-sparkles"
+              [loading]="isExtracting()"
+              [disabled]="isExtracting() || isCheckingFramework()"
+              (onClick)="extractProductsAndServices()"
+              size="small"
+              [outlined]="true"
+            />
+          </div>
+
+          @if (!hasRunExtraction()) {
+            <!-- Before extraction -->
+            <div class="bg-blue-50 rounded-lg p-6 border border-blue-200 text-center">
+              <i class="pi pi-lightbulb text-blue-500 text-4xl mb-3"></i>
+              <p class="text-sm text-gray-700 mb-3">
+                {{ 'message.clickRecommendationsToStart' | translate }}
+              </p>
+            </div>
+          } @else if (visibleExtractedDeliverables().length === 0) {
+            <!-- After extraction, no results -->
+            <div class="bg-gray-50 rounded-lg p-6 border border-gray-200 text-center text-gray-600">
+              <i class="pi pi-inbox text-gray-400 text-4xl mb-3"></i>
+              <p class="text-sm">{{ 'message.allRecommendationsReviewed' | translate }}</p>
+            </div>
+          } @else {
+            <!-- Show message if not in edit mode -->
+            @if (!isEditing()) {
+              <div class="bg-yellow-50 rounded-lg p-3 border border-yellow-200 mb-4">
+                <div class="flex items-start gap-2">
+                  <i class="pi pi-info-circle text-yellow-600 text-sm mt-0.5"></i>
+                  <p class="text-xs text-gray-700">
+                    {{ 'message.enableEditModeToAccept' | translate }}
+                  </p>
+                </div>
+              </div>
+            }
+
+            <!-- Recommendations list -->
+            <div class="max-h-[600px] overflow-y-auto pr-2">
+              @for (item of visibleExtractedDeliverables(); track $index) {
+                <div class="bg-white rounded-lg p-4 mb-3 border border-blue-200">
+                  <div class="flex items-start gap-2">
+                    @if (item.isPrioritySource) {
+                      <i class="pi pi-star-fill text-yellow-500 text-sm mt-0.5" pTooltip="{{ 'label.prioritySource' | translate }}"></i>
+                    } @else {
+                      <i class="pi pi-file text-gray-400 text-sm mt-0.5" pTooltip="{{ 'label.fallbackSource' | translate }}"></i>
+                    }
+                    <div class="flex-1">
+                      <p class="text-sm font-semibold text-gray-900">{{ item.partnerLanguage }}</p>
+                      
+                      <!-- Matched Output Info -->
+                      @if (item.matchedOutputName) {
+                        <div class="mt-2 p-2 bg-blue-50 rounded border border-blue-300">
+                          <p class="text-xs text-blue-900">
+                            <span class="font-medium">✓ {{ 'label.matched' | translate }}:</span> {{ item.matchedOutputName }}
+                          </p>
+                          @if (item.matchedField) {
+                            <p class="text-xs text-blue-700 mt-1">
+                              <span class="font-medium">{{ 'label.field' | translate }}:</span> {{ item.matchedField }}
+                            </p>
+                          }
+                          @if (item.matchScore) {
+                            <p class="text-xs text-blue-700">
+                              <span class="font-medium">{{ 'label.matchScore' | translate }}:</span> {{ (item.matchScore * 100).toFixed(0) }}%
+                            </p>
+                          }
+                        </div>
+                      } @else {
+                        <div class="mt-2 p-2 bg-yellow-50 rounded border border-yellow-300">
+                          <p class="text-xs text-yellow-900">
+                            <i class="pi pi-exclamation-triangle text-yellow-600 mr-1"></i>
+                            <span class="font-medium">{{ 'message.noMatchFound' | translate }}</span>
+                          </p>
+                        </div>
+                      }
+                      
+                      @if (item.context) {
+                        <p class="text-xs text-gray-600 mt-2">
+                          <span class="font-medium">{{ 'label.context' | translate }}:</span> {{ item.context }}
+                        </p>
+                      }
+                      @if (item.sourceDocumentName) {
+                        <p class="text-xs text-gray-500 mt-1">
+                          <span class="font-medium">{{ 'label.source' | translate }}:</span> {{ item.sourceDocumentName }}
+                        </p>
+                      }
+                      @if (item.confidence) {
+                        <p class="text-xs text-gray-400 mt-1">
+                          <span class="font-medium">{{ 'label.confidence' | translate }}:</span> {{ (item.confidence * 100).toFixed(0) }}%
+                        </p>
+                      }
+                      
+                      <!-- Action Buttons - Only enabled in edit mode -->
+                      <div class="mt-3 flex gap-2">
+                        <p-button
+                          [label]="'button.accept' | translate"
+                          icon="pi pi-check"
+                          size="small"
+                          severity="success"
+                          [outlined]="true"
+                          [disabled]="!isEditing() || !item.matchedOutputId"
+                          (onClick)="acceptExtractedDeliverable(item, $index)"
+                          [pTooltip]="!isEditing() ? ('message.enableEditModeToAccept' | translate) : (!item.matchedOutputId ? ('message.noMatchCannotAccept' | translate) : '')"
+                        />
+                        <p-button
+                          [label]="'button.findDifferentMatch' | translate"
+                          icon="pi pi-search"
+                          size="small"
+                          severity="secondary"
+                          [outlined]="true"
+                          [disabled]="!isEditing()"
+                          (onClick)="findDifferentMatch(item)"
+                          [pTooltip]="!isEditing() ? ('message.enableEditModeToAccept' | translate) : ('message.searchManuallyForBetterMatch' | translate)"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
         </div>
-      }
+      </div>
     </div>
   </div>
 </p-panel>
@@ -253,137 +554,502 @@
   [header]="isEditingDeliverable() ? ('label.opportunity.editDeliverable' | translate) : ('label.opportunity.addDeliverable' | translate)"
   [(visible)]="showDeliverablesDialog"
   [modal]="true"
-  [style]="{ width: '50rem' }"
-  [contentStyle]="{ 'max-height': '70vh', 'overflow-y': 'auto' }"
+  [style]="{ width: '55rem' }"
+  [contentStyle]="{ 'max-height': '75vh', 'overflow-y': 'auto' }"
   [draggable]="false"
   [resizable]="false"
+  (onHide)="closeDeliverablesDialog()"
 >
   <div class="space-y-6">
-    <!-- Output Group Dropdown -->
-    <div>
-      <label class="block text-sm font-semibold text-gray-600 mb-2">
-        {{ 'label.opportunity.outputGroup' | translate }} *
-      </label>
-      <p-select
-        [formControl]="outputGroupControl"
-        [options]="outputGroups()"
-        [placeholder]="'label.opportunity.selectOutputGroup' | translate"
-        class="w-full"
-        [appendTo]="'body'"
-        [showClear]="true"
-        (onChange)="onOutputGroupChange($event.value)"
-      >
-        <ng-template let-group pTemplate="item">
-          <div>{{ group }}</div>
-        </ng-template>
-      </p-select>
-    </div>
-
-    <!-- Output Sub-Group Dropdown -->
-    <div>
-      <label class="block text-sm font-semibold text-gray-600 mb-2">
-        {{ 'label.opportunity.outputSubGroup' | translate }} *
-      </label>
-      <p-select
-        [formControl]="outputSubGroupControl"
-        [options]="outputSubGroups()"
-        [placeholder]="'label.opportunity.selectOutputSubGroup' | translate"
-        class="w-full"
-        [appendTo]="'body'"
-        [showClear]="true"
-        (onChange)="onOutputSubGroupChange($event.value)"
-      >
-        <ng-template let-subGroup pTemplate="item">
-          <div>{{ subGroup }}</div>
-        </ng-template>
-      </p-select>
-    </div>
-
-    <!-- Output Dropdown -->
-    <div>
-      <label class="block text-sm font-semibold text-gray-600 mb-2">
-        {{ 'label.opportunity.output' | translate }} *
-      </label>
-      <p-select
-        [formControl]="outputControl"
-        [options]="filteredOutputs()"
-        optionLabel="outputName"
-        [placeholder]="'label.opportunity.selectOutput' | translate"
-        styleClass="w-full"
-        [appendTo]="'body'"
-        [showClear]="true"
-        [filter]="true"
-        filterBy="outputName"
-        (onChange)="onOutputChange($event.value)"
-      />
-    </div>
-
-    <!-- Output Details Section -->
-    @if (outputControl.value) {
-      <div class="bg-blue-50 border border-blue-200 rounded-lg p-5 space-y-4">
-        <!-- Description -->
-        @if (outputControl.value.description) {
-          <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">
-              {{ 'label.opportunity.description' | translate }}
-            </label>
-            <p class="text-sm text-gray-900 leading-relaxed">
-              {{ outputControl.value.description }}
+    <!-- Context Banner for Rejected Recommendation -->
+    @if (rejectedItemContext()) {
+      <div class="bg-yellow-50 border border-yellow-300 rounded-lg p-3">
+        <div class="flex items-start gap-2">
+          <i class="pi pi-info-circle text-yellow-600 text-sm mt-0.5"></i>
+          <div class="flex-1">
+            <p class="text-xs font-semibold text-yellow-900 mb-1">
+              {{ 'label.searchingForAlternativeMatch' | translate }}
             </p>
-          </div>
-        }
-
-        <!-- Grid for Unit, Service Line, and Project Category -->
-        <div class="grid grid-cols-3 gap-4">
-          <!-- Unit -->
-          <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">
-              {{ 'label.opportunity.unit' | translate }}
-            </label>
-            <div class="text-sm text-gray-900 font-medium">
-              {{ outputControl.value.unitName || '-' }}
-            </div>
-          </div>
-
-          <!-- Service Line -->
-          <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">
-              {{ 'label.opportunity.serviceLine' | translate }}
-            </label>
-            <div class="text-sm text-gray-900 font-medium">
-              {{ outputControl.value.outputServiceLine || '-' }}
-            </div>
-          </div>
-
-          <!-- Project Category -->
-          <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">
-              {{ 'label.opportunity.projectCategory' | translate }}
-            </label>
-            <div class="text-sm text-gray-900 font-medium">
-              {{ outputControl.value.projectCategoryName || '-' }}
-            </div>
+            <p class="text-xs text-yellow-800 italic">
+              "{{ rejectedItemContext() }}"
+            </p>
           </div>
         </div>
       </div>
     }
+    
+    <!-- Encouragement to Select at Lowest Level -->
+    <div class="bg-blue-50 border border-blue-300 rounded-lg p-3">
+      <div class="flex items-start gap-2">
+        <i class="pi pi-lightbulb text-blue-600 text-sm mt-0.5"></i>
+        <div class="flex-1">
+          <p class="text-xs font-semibold text-blue-900 mb-1">
+            {{ 'message.encourageLowestLevelSelection' | translate }}
+          </p>
+          <p class="text-xs text-blue-800">
+            {{ 'message.encourageLowestLevelDetails' | translate }}
+          </p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Quick Search Toggle -->
+    <div class="flex items-center justify-between border-b border-gray-200 pb-3">
+      <p class="text-sm text-gray-600">
+        {{ 'message.selectProductService' | translate }}
+      </p>
+      <p-button
+        [label]="showQuickSearch() ? ('button.hideQuickSearch' | translate) : ('button.showQuickSearch' | translate)"
+        icon="pi pi-search"
+        [text]="true"
+        size="small"
+        (onClick)="showQuickSearch.set(!showQuickSearch())"
+      />
+    </div>
 
-    <!-- Quantity Input -->
-    @if (outputControl.value) {
-      <div>
-        <label class="block text-sm font-semibold text-gray-600 mb-2">
-          {{ 'label.opportunity.quantity' | translate }} *
+    <!-- Quick Search -->
+    @if (showQuickSearch()) {
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <label class="block text-sm font-semibold text-gray-900 mb-2">
+          🔍 {{ 'label.quickSearch' | translate }}
         </label>
-        <p-inputnumber
-          [formControl]="quantityControl"
-          mode="decimal"
-          [minFractionDigits]="0"
-          [maxFractionDigits]="2"
-          [placeholder]="'label.opportunity.enterQuantity' | translate"
-          styleClass="w-full"
-        />
+        <p-select
+          [options]="outputs()"
+          optionLabel="name"
+          [filter]="true"
+          filterBy="name,level0,level1,level2,level3,level4,serviceLine"
+          [placeholder]="'placeholder.searchAllProducts' | translate"
+          class="w-full"
+          [appendTo]="'body'"
+          [showClear]="true"
+          (onChange)="selectFromQuickSearch($event.value)"
+        >
+          <ng-template let-output pTemplate="item">
+            <div class="py-1">
+              <div class="font-medium text-sm text-gray-900">{{ output.name }}</div>
+              <div class="text-xs text-gray-500 mt-0.5">
+                {{ getHierarchicalPath(output) }}
+              </div>
+              @if (output.serviceLine) {
+                <p-chip 
+                  [label]="output.serviceLine" 
+                  styleClass="text-xs mt-1"
+                  [style]="{ 'background-color': '#dbeafe', 'color': '#1e40af' }"
+                />
+              }
+            </div>
+          </ng-template>
+        </p-select>
+        <p class="text-xs text-gray-600 mt-2">
+          💡 {{ 'message.quickSearchHint' | translate }}
+        </p>
       </div>
     }
+
+    <!-- Breadcrumb Trail -->
+    @if (hasAnyLevelSelected()) {
+      <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+        <div class="text-xs font-semibold text-gray-600 mb-2">
+          📍 {{ 'label.currentPath' | translate }}:
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          @if (level0Control.value) {
+            <p-chip 
+              [label]="level0Control.value" 
+              styleClass="text-xs"
+              [style]="{ 'background-color': '#e0f2fe', 'color': '#075985' }"
+            />
+          }
+          @if (level1Control.value) {
+            <i class="pi pi-angle-right text-gray-400 text-xs"></i>
+            <p-chip 
+              [label]="level1Control.value" 
+              styleClass="text-xs"
+              [style]="{ 'background-color': '#ddd6fe', 'color': '#5b21b6' }"
+            />
+          }
+          @if (level2Control.value) {
+            <i class="pi pi-angle-right text-gray-400 text-xs"></i>
+            <p-chip 
+              [label]="level2Control.value" 
+              styleClass="text-xs"
+              [style]="{ 'background-color': '#fce7f3', 'color': '#9f1239' }"
+            />
+          }
+          @if (level3Control.value) {
+            <i class="pi pi-angle-right text-gray-400 text-xs"></i>
+            <p-chip 
+              [label]="level3Control.value" 
+              styleClass="text-xs"
+              [style]="{ 'background-color': '#fed7aa', 'color': '#92400e' }"
+            />
+          }
+          @if (level4Control.value) {
+            <i class="pi pi-angle-right text-gray-400 text-xs"></i>
+            <p-chip 
+              [label]="level4Control.value" 
+              styleClass="text-xs"
+              [style]="{ 'background-color': '#d1fae5', 'color': '#065f46' }"
+            />
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Level 0 Dropdown -->
+    @if (level0Options().length > 0) {
+      <div>
+        <label class="block text-sm font-semibold text-gray-600 mb-2">
+          {{ 'label.opportunity.level0' | translate }}
+          <span class="text-xs font-normal text-gray-500">({{ 'label.serviceCategory' | translate }})</span>
+        </label>
+        <p-select
+          [formControl]="level0Control"
+          [options]="level0Options()"
+          [placeholder]="'placeholder.selectServiceCategory' | translate"
+          class="w-full"
+          [appendTo]="'body'"
+          [showClear]="true"
+          [filter]="true"
+          (onChange)="onLevel0Change($event.value)"
+        >
+          <ng-template let-level0 pTemplate="item">
+            <div class="flex items-center justify-between">
+              <span>{{ level0 }}</span>
+              @if (hasChildLevelsForLevel0(level0)) {
+                <i class="pi pi-angle-right text-blue-600 text-xs ml-2" [pTooltip]="'message.hasMoreSpecificLevels' | translate"></i>
+              } @else {
+                <i class="pi pi-circle-fill text-green-600 text-xs ml-2" [pTooltip]="'message.terminalLevel' | translate"></i>
+              }
+            </div>
+          </ng-template>
+        </p-select>
+
+        <!-- "Select at this level" button for Level 0 -->
+        @if (level0Control.value && canSelectAtLevel0()) {
+          <div class="mt-2">
+            <p-button
+              [label]="'✓ ' + ('button.selectThisLevel' | translate) + ': ' + level0Control.value"
+              icon="pi pi-check-circle"
+              size="small"
+              [outlined]="true"
+              severity="success"
+              (onClick)="selectAtLevel0()"
+              styleClass="w-full"
+            />
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Level 1 Dropdown -->
+    @if (level1Options().length > 0) {
+      <div>
+        <label class="block text-sm font-semibold text-gray-600 mb-2">
+          {{ 'label.opportunity.level1' | translate }}
+          <span class="text-xs font-normal text-gray-500">({{ 'label.primaryService' | translate }})</span>
+        </label>
+        <p-select
+          [formControl]="level1Control"
+          [options]="level1Options()"
+          [placeholder]="'placeholder.selectPrimaryService' | translate"
+          class="w-full"
+          [appendTo]="'body'"
+          [showClear]="true"
+          [filter]="true"
+          (onChange)="onLevel1Change($event.value)"
+        >
+          <ng-template let-level1 pTemplate="item">
+            <div class="flex items-center justify-between">
+              <span>{{ level1 }}</span>
+              @if (hasChildLevelsForLevel1(level1)) {
+                <i class="pi pi-angle-right text-blue-600 text-xs ml-2" [pTooltip]="'message.hasMoreSpecificLevels' | translate"></i>
+              } @else {
+                <i class="pi pi-circle-fill text-green-600 text-xs ml-2" [pTooltip]="'message.terminalLevel' | translate"></i>
+              }
+            </div>
+          </ng-template>
+        </p-select>
+
+        <!-- Definition Display -->
+        @if (level1Control.value && getDefinitionForLevel1()) {
+          <div class="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <div class="flex items-start gap-2">
+              <i class="pi pi-info-circle text-blue-600 text-sm mt-0.5"></i>
+              <div class="flex-1">
+                <div class="text-xs font-semibold text-gray-700 mb-1">
+                  {{ 'label.description' | translate }}:
+                </div>
+                <p class="text-xs text-gray-700 leading-relaxed">
+                  {{ getDefinitionForLevel1() }}
+                </p>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- "Select at this level" button for Level 1 -->
+        @if (level1Control.value && canSelectAtLevel1()) {
+          <div class="mt-2">
+            <p-button
+              [label]="'✓ ' + ('button.selectThisLevel' | translate) + ': ' + level1Control.value"
+              icon="pi pi-check-circle"
+              size="small"
+              [outlined]="true"
+              severity="success"
+              (onClick)="selectAtLevel1()"
+              styleClass="w-full"
+            />
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Level 2 Dropdown -->
+    @if (level2Options().length > 0) {
+      <div>
+        <label class="block text-sm font-semibold text-gray-600 mb-2">
+          {{ 'label.opportunity.level2' | translate }}
+          <span class="text-xs font-normal text-gray-500">({{ 'label.specificService' | translate }})</span>
+        </label>
+        <p-select
+          [formControl]="level2Control"
+          [options]="level2Options()"
+          [placeholder]="'placeholder.selectSpecificService' | translate"
+          class="w-full"
+          [appendTo]="'body'"
+          [showClear]="true"
+          [filter]="true"
+          (onChange)="onLevel2Change($event.value)"
+        >
+          <ng-template let-level2 pTemplate="item">
+            <div class="flex items-center justify-between">
+              <span>{{ level2 }}</span>
+              @if (hasChildLevelsForLevel2(level2)) {
+                <i class="pi pi-angle-right text-blue-600 text-xs ml-2" [pTooltip]="'message.hasMoreSpecificLevels' | translate"></i>
+              } @else {
+                <i class="pi pi-circle-fill text-green-600 text-xs ml-2" [pTooltip]="'message.terminalLevel' | translate"></i>
+              }
+            </div>
+          </ng-template>
+        </p-select>
+
+        <!-- Definition Display -->
+        @if (level2Control.value && getDefinitionForLevel2()) {
+          <div class="mt-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
+            <div class="flex items-start gap-2">
+              <i class="pi pi-info-circle text-purple-600 text-sm mt-0.5"></i>
+              <div class="flex-1">
+                <div class="text-xs font-semibold text-gray-700 mb-1">
+                  {{ 'label.description' | translate }}:
+                </div>
+                <p class="text-xs text-gray-700 leading-relaxed">
+                  {{ getDefinitionForLevel2() }}
+                </p>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- "Select at this level" button for Level 2 -->
+        @if (level2Control.value && canSelectAtLevel2()) {
+          <div class="mt-2">
+            <p-button
+              [label]="'✓ ' + ('button.selectThisLevel' | translate) + ': ' + level2Control.value"
+              icon="pi pi-check-circle"
+              size="small"
+              [outlined]="true"
+              severity="success"
+              (onClick)="selectAtLevel2()"
+              styleClass="w-full"
+            />
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Level 3 Dropdown -->
+    @if (level3Options().length > 0) {
+      <div>
+        <label class="block text-sm font-semibold text-gray-600 mb-2">
+          {{ 'label.opportunity.level3' | translate }}
+          <span class="text-xs font-normal text-gray-500">({{ 'label.detailedService' | translate }})</span>
+        </label>
+        <p-select
+          [formControl]="level3Control"
+          [options]="level3Options()"
+          [placeholder]="'placeholder.selectDetailedService' | translate"
+          class="w-full"
+          [appendTo]="'body'"
+          [showClear]="true"
+          [filter]="true"
+          (onChange)="onLevel3Change($event.value)"
+        >
+          <ng-template let-level3 pTemplate="item">
+            <div class="flex items-center justify-between">
+              <span>{{ level3 }}</span>
+              @if (hasChildLevelsForLevel3(level3)) {
+                <i class="pi pi-angle-right text-blue-600 text-xs ml-2" [pTooltip]="'message.hasMoreSpecificLevels' | translate"></i>
+              } @else {
+                <i class="pi pi-circle-fill text-green-600 text-xs ml-2" [pTooltip]="'message.terminalLevel' | translate"></i>
+              }
+            </div>
+          </ng-template>
+        </p-select>
+
+        <!-- Definition Display -->
+        @if (level3Control.value && getDefinitionForLevel3()) {
+          <div class="mt-2 p-3 bg-orange-50 rounded-lg border border-orange-200">
+            <div class="flex items-start gap-2">
+              <i class="pi pi-info-circle text-orange-600 text-sm mt-0.5"></i>
+              <div class="flex-1">
+                <div class="text-xs font-semibold text-gray-700 mb-1">
+                  {{ 'label.description' | translate }}:
+                </div>
+                <p class="text-xs text-gray-700 leading-relaxed">
+                  {{ getDefinitionForLevel3() }}
+                </p>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- "Select at this level" button for Level 3 -->
+        @if (level3Control.value && canSelectAtLevel3()) {
+          <div class="mt-2">
+            <p-button
+              [label]="'✓ ' + ('button.selectThisLevel' | translate) + ': ' + level3Control.value"
+              icon="pi pi-check-circle"
+              size="small"
+              [outlined]="true"
+              severity="success"
+              (onClick)="selectAtLevel3()"
+              styleClass="w-full"
+            />
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Level 4 Dropdown -->
+    @if (level4Options().length > 0) {
+      <div>
+        <label class="block text-sm font-semibold text-gray-600 mb-2">
+          {{ 'label.opportunity.level4' | translate }}
+          <span class="text-xs font-normal text-gray-500">({{ 'label.mostSpecific' | translate }})</span>
+        </label>
+        <p-select
+          [formControl]="level4Control"
+          [options]="level4Options()"
+          [placeholder]="'placeholder.selectMostSpecific' | translate"
+          class="w-full"
+          [appendTo]="'body'"
+          [showClear]="true"
+          [filter]="true"
+          (onChange)="onLevel4Change($event.value)"
+        >
+          <ng-template let-level4 pTemplate="item">
+            <div class="flex items-center justify-between">
+              <span>{{ level4 }}</span>
+              <i class="pi pi-circle-fill text-green-600 text-xs ml-2" [pTooltip]="'message.terminalLevel' | translate"></i>
+            </div>
+          </ng-template>
+        </p-select>
+
+        <!-- Definition Display -->
+        @if (level4Control.value && getDefinitionForLevel4()) {
+          <div class="mt-2 p-3 bg-green-50 rounded-lg border border-green-200">
+            <div class="flex items-start gap-2">
+              <i class="pi pi-info-circle text-green-600 text-sm mt-0.5"></i>
+              <div class="flex-1">
+                <div class="text-xs font-semibold text-gray-700 mb-1">
+                  {{ 'label.description' | translate }}:
+                </div>
+                <p class="text-xs text-gray-700 leading-relaxed">
+                  {{ getDefinitionForLevel4() }}
+                </p>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- "Select at this level" button for Level 4 -->
+        @if (level4Control.value && canSelectAtLevel4()) {
+          <div class="mt-2">
+            <p-button
+              [label]="'✓ ' + ('button.selectThisLevel' | translate) + ': ' + level4Control.value"
+              icon="pi pi-check-circle"
+              size="small"
+              [outlined]="true"
+              severity="success"
+              (onClick)="selectAtLevel4()"
+              styleClass="w-full"
+            />
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Selected Output Display -->
+    @if (outputControl.value) {
+      <div class="bg-green-50 border-2 border-green-300 rounded-lg p-4">
+        <div class="flex items-start gap-3">
+          <i class="pi pi-check-circle text-green-600 text-2xl"></i>
+          <div class="flex-1">
+            <div class="text-xs font-semibold text-green-700 mb-1">
+              ✅ {{ 'label.selectedProductService' | translate }}
+            </div>
+            <div class="text-base font-bold text-gray-900 mb-2">
+              {{ outputControl.value.name }}
+            </div>
+            
+            <!-- Service Line -->
+            @if (outputControl.value.serviceLine) {
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-xs font-semibold text-gray-600">{{ 'label.opportunity.serviceLine' | translate }}:</span>
+                <p-chip 
+                  [label]="outputControl.value.serviceLine" 
+                  styleClass="text-xs"
+                  [style]="{ 'background-color': '#dbeafe', 'color': '#1e40af' }"
+                />
+              </div>
+            }
+            
+            <!-- Procurement Expert Required Warning -->
+            @if (selectedOutputRequiresProcurement()) {
+              <div class="bg-orange-50 border border-orange-300 rounded-lg p-3 mb-2">
+                <div class="flex items-start gap-2">
+                  <i class="pi pi-exclamation-triangle text-orange-600 text-sm mt-0.5"></i>
+                  <div class="flex-1">
+                    <p class="text-xs font-semibold text-orange-900">
+                      {{ 'label.procurementExpertRequired' | translate }}
+                    </p>
+                    <p class="text-xs text-orange-800 mt-1">
+                      {{ 'message.procurementExpertNeeded' | translate }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            }
+            
+            <!-- Hierarchical Path -->
+            <div class="text-xs text-gray-600">
+              <span class="font-semibold">{{ 'label.fullPath' | translate }}:</span> {{ getHierarchicalPath(outputControl.value) }}
+            </div>
+          </div>
+          <p-button
+            icon="pi pi-times"
+            [text]="true"
+            [rounded]="true"
+            severity="danger"
+            size="small"
+            (onClick)="outputControl.setValue(null)"
+            pTooltip="{{ 'button.clearSelection' | translate }}"
+          />
+        </div>
+      </div>
+    }
+
   </div>
 
   <ng-template pTemplate="footer">

@@ -181,6 +181,7 @@ public class APIDictionary
 
     // Opportunity
     public const string Opportunity = APIPrefix + "opportunity";
+    public const string OpportunityOverview = Opportunity + "/{id}/overview";
     public const string OpportunityWhat = Opportunity + "/{id}/what";
     public const string OpportunityWhy = Opportunity + "/{id}/why";
     public const string OpportunityWho = Opportunity + "/{id}/who";
@@ -188,6 +189,8 @@ public class APIDictionary
     public const string OpportunityWhen = Opportunity + "/{id}/when";
     public const string OpportunityRelated = Opportunity + "/{id}/related";
     public const string OpportunityApplyAiChanges = Opportunity + "/{id}/apply-ai-changes";
+    public const string OpportunityGenerateStatement = Opportunity + "/{id}/generate-statement";
+    public const string OpportunityValidateStatement = Opportunity + "/{id}/validate-statement";
 
     // Comment
     public const string Comment = APIPrefix + "comment";

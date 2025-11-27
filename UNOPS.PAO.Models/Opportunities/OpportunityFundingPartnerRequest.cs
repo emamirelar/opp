@@ -14,6 +14,6 @@ public class OpportunityFundingPartnerRequest
     public string? PartnershipAgreementReference { get; set; }
     public int? DocumentId { get; set; }
     public bool IsPooledContribution { get; set; }
-    public string? SelectedPartnerAgreementNumber { get; set; }  // AC9
+    public string? SelectedPartnerAgreementNumber { get; set; }
 }
 

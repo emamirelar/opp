@@ -8,7 +8,10 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Npgsql;
+using NpgsqlTypes;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.DataAccess.Context;
 using AutoMapper;
 using UNOPS.PAO.Business.Repositories.Generic;
@@ -52,6 +55,8 @@ using UNOPS.PAO.Models.Interactions;
 using UNOPS.PAO.Models.Partners;
 using UNOPS.PAO.Models.AI;
 using UNOPS.PAO.Models.Shared;
+using UNOPS.PAO.Models.Opportunities;
+using UNOPS.PAO.Domain.Infrastructure;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -4153,6 +4158,1120 @@ public class UNOPSGeminiManager : IGeminiManager
             }
         }
 
+        #region Partner Results Framework & Products/Services Extraction
+
+        /// <summary>
+        /// Extracts products and services from Partner Results Framework documents and other sources.
+        /// Priority: Tagged framework docs first, then fallback to all other documents if needed.
+        /// Returns temporary extraction data for user verification (not saved to database).
+        /// </summary>
+        /// <param name="opportunityId">Opportunity ID</param>
+        /// <returns>List of extracted deliverables with partner language, source, and confidence scores</returns>
+        public async Task<List<ExtractedDeliverableInfo>> ExtractDeliverablesWithFrameworkPriorityAsync(int opportunityId)
+        {
+            _logger.LogInformation($"🔍 Starting deliverable extraction for opportunity {opportunityId}");
+
+            // Step 1: Get opportunity with documents and partner relationships
+            var opportunity = await _context.Opportunities
+                .Include(o => o.FundingPartners)
+                .Include(o => o.ClientPartners)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(o => o.Id == opportunityId);
+
+            if (opportunity == null)
+            {
+                throw new KeyNotFoundException($"Opportunity with ID {opportunityId} not found");
+            }
+
+            // Step 2: Get tagged Partner Results Framework documents (PRIORITY SOURCES)
+            var taggedFrameworkDocs = await GetTaggedFrameworkDocumentsAsync(opportunityId);
+            
+            // Step 3: Get all other documents (FALLBACK SOURCES)
+            var allDocuments = await _context.DocumentRelationships
+                .Where(dr => dr.EntityType == "Opportunity" && dr.EntityId == opportunityId && dr.Document != null && !dr.Document.IsDeleted)
+                .Include(dr => dr.Document)
+                .Select(dr => new 
+                {
+                    Id = dr.Document!.Id,
+                    Name = dr.Document.Name,
+                    StoragePath = dr.Document.StoragePath
+                })
+                .ToListAsync();
+
+            var untaggedDocs = allDocuments
+                .Where(d => !taggedFrameworkDocs.Any(tf => tf.DocumentId == d.Id))
+                .ToList();
+
+            _logger.LogInformation($"📊 Found {taggedFrameworkDocs.Count} tagged framework docs, {untaggedDocs.Count} untagged docs");
+
+            if (taggedFrameworkDocs.Count == 0 && untaggedDocs.Count == 0)
+            {
+                _logger.LogWarning($"⚠️ No documents found for opportunity {opportunityId}");
+                return new List<ExtractedDeliverableInfo>();
+            }
+
+            // Step 4: Get AI prompt for extraction
+            var prompts = await GetPromptData("opportunity_extract_products_services");
+            var prompt = prompts.FirstOrDefault();
+
+            if (prompt == null)
+            {
+                throw new BusinessException("AI prompt 'opportunity_extract_products_services' not found.");
+            }
+
+            // Step 5: Get existing deliverables to avoid duplicates
+            var existingDeliverables = await _context.OpportunityDeliverables
+                .Where(od => od.OpportunityId == opportunityId)
+                .Include(od => od.Output)
+                .Select(od => new
+                {
+                    outputName = od.Output != null ? od.Output.Name : null,
+                    level0 = od.Output != null ? od.Output.Level0 : null,
+                    level1 = od.Output != null ? od.Output.Level1 : null,
+                    level2 = od.Output != null ? od.Output.Level2 : null,
+                    level3 = od.Output != null ? od.Output.Level3 : null,
+                    level4 = od.Output != null ? od.Output.Level4 : null
+                })
+                .ToListAsync();
+
+            // Step 6: Build context data for AI
+            // Step 5: Get UNOPS taxonomy for AI context
+            var unopsTaxonomy = await GetUNOPSTaxonomyForAIAsync();
+
+            var contextData = new
+            {
+                opportunityId = opportunity.Id,
+                opportunityName = opportunity.Name,
+                opportunityDescription = opportunity.Description,
+                unopsTaxonomy = unopsTaxonomy,
+                existingDeliverables = existingDeliverables.Select(ed => new
+                {
+                    outputName = ed.outputName,
+                    hierarchicalPath = string.Join(" > ", new[] { ed.level0, ed.level1, ed.level2, ed.level3, ed.level4 }
+                        .Where(l => !string.IsNullOrEmpty(l)))
+                }).ToList(),
+                priorityDocuments = taggedFrameworkDocs.Select(tf => new
+                {
+                    documentId = tf.DocumentId,
+                    documentName = tf.DocumentName,
+                    storagePath = tf.DocumentStoragePath,
+                    partnerName = tf.PartnerName
+                }).ToList(),
+                fallbackDocuments = untaggedDocs.Select(d => new
+                {
+                    documentId = d.Id,
+                    documentName = d.Name,
+                    storagePath = d.StoragePath
+                }).ToList()
+            };
+
+            var contextJson = System.Text.Json.JsonSerializer.Serialize(contextData);
+
+            // Step 7: Prepare ALL documents for AI (as file URIs)
+            var documentsForAI = new List<(string storagePath, string mimeType)>();
+            
+            // Add priority documents (tagged frameworks) first
+            foreach (var tf in taggedFrameworkDocs)
+            {
+                if (!string.IsNullOrEmpty(tf.DocumentStoragePath) && tf.DocumentStoragePath.StartsWith("gs://"))
+                {
+                    documentsForAI.Add((tf.DocumentStoragePath, "application/pdf"));
+                }
+            }
+            
+            // Add fallback documents (untagged)
+            foreach (var doc in untaggedDocs)
+            {
+                if (!string.IsNullOrEmpty(doc.StoragePath) && doc.StoragePath.StartsWith("gs://"))
+                {
+                    documentsForAI.Add((doc.StoragePath, "application/pdf"));
+                }
+            }
+
+            if (!documentsForAI.Any())
+            {
+                _logger.LogWarning($"⚠️ No valid document storage paths found (must be gs:// URIs)");
+                return new List<ExtractedDeliverableInfo>();
+            }
+
+            _logger.LogInformation($"📝 Calling AI for extraction with {documentsForAI.Count} documents ({taggedFrameworkDocs.Count} priority, {untaggedDocs.Count} fallback)");
+
+            // Step 8: Call AI with ALL documents attached as file URIs
+            string aiResponse;
+            try
+            {
+                // Use FetchResultFromGeminiWithMultipleDocuments to pass ALL document URIs to AI
+                aiResponse = await _aiService.FetchResultFromGeminiWithMultipleDocuments(
+                    prompt,
+                    contextJson,
+                    documentsForAI,
+                    opportunityId.ToString()
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ AI extraction failed for opportunity {opportunityId}");
+                throw new InvalidOperationException($"AI extraction failed: {ex.Message}", ex);
+            }
+
+            // Step 9: Parse AI response
+            var extracted = ParseExtractionResponse(aiResponse);
+
+            // Step 10: Match extracted items with Outputs table using batch similarity search
+            if (extracted.Any())
+            {
+                _logger.LogInformation($"🔍 Matching {extracted.Count} extracted items with Outputs table");
+                await MatchExtractedItemsWithOutputsAsync(extracted);
+                
+                // Step 11: Filter out items with no match found (matchedOutputId is null)
+                var beforeFilterCount = extracted.Count;
+                extracted = extracted.Where(e => e.MatchedOutputId.HasValue).ToList();
+                var filteredCount = beforeFilterCount - extracted.Count;
+                
+                if (filteredCount > 0)
+                {
+                    _logger.LogInformation($"🔍 Filtered out {filteredCount} items with no UNOPS taxonomy match");
+                }
+            }
+
+            _logger.LogInformation($"✅ Extracted {extracted.Count} deliverables for opportunity {opportunityId} (after filtering)");
+
+            return extracted;
+        }
+
+        /// <summary>
+        /// Gets UNOPS Products and Services taxonomy for AI context.
+        /// Returns a formatted string representation of the hierarchical taxonomy.
+        /// </summary>
+        private async Task<string> GetUNOPSTaxonomyForAIAsync()
+        {
+            try
+            {
+                var outputs = await _context.Outputs
+                    .Where(o => o.Status == EntityStatus.Active)
+                    .OrderBy(o => o.Level0)
+                    .ThenBy(o => o.Level1)
+                    .ThenBy(o => o.Level2)
+                    .ThenBy(o => o.Level3)
+                    .ThenBy(o => o.Level4)
+                    .Select(o => new
+                    {
+                        o.Level0,
+                        o.Level1,
+                        o.DefinitionLevel1,
+                        o.Level2,
+                        o.DefinitionLevel2,
+                        o.Level3,
+                        o.DefinitionLevel3,
+                        o.Level4,
+                        o.DefinitionLevel4,
+                        o.ServiceLine
+                    })
+                    .AsNoTracking()
+                    .ToListAsync();
+
+                if (!outputs.Any())
+                {
+                    _logger.LogWarning("⚠️ No UNOPS taxonomy found in Outputs table");
+                    return "UNOPS Products and Services taxonomy not available.";
+                }
+
+                var sb = new StringBuilder();
+                sb.AppendLine("UNOPS Products and Services List (Hierarchical Structure):");
+                sb.AppendLine();
+
+                string currentLevel0 = null;
+                string currentLevel1 = null;
+                string currentLevel2 = null;
+                string currentLevel3 = null;
+
+                foreach (var output in outputs)
+                {
+                    // Level 0 (Top-level category)
+                    if (currentLevel0 != output.Level0 && !string.IsNullOrEmpty(output.Level0))
+                    {
+                        currentLevel0 = output.Level0;
+                        sb.AppendLine($"• {output.Level0}");
+                        currentLevel1 = null;
+                        currentLevel2 = null;
+                        currentLevel3 = null;
+                    }
+
+                    // Level 1
+                    if (currentLevel1 != output.Level1 && !string.IsNullOrEmpty(output.Level1))
+                    {
+                        currentLevel1 = output.Level1;
+                        sb.AppendLine($"  - {output.Level1}");
+                        if (!string.IsNullOrEmpty(output.DefinitionLevel1))
+                        {
+                            sb.AppendLine($"    ({output.DefinitionLevel1})");
+                        }
+                        currentLevel2 = null;
+                        currentLevel3 = null;
+                    }
+
+                    // Level 2
+                    if (currentLevel2 != output.Level2 && !string.IsNullOrEmpty(output.Level2))
+                    {
+                        currentLevel2 = output.Level2;
+                        sb.AppendLine($"    • {output.Level2}");
+                        if (!string.IsNullOrEmpty(output.DefinitionLevel2))
+                        {
+                            sb.AppendLine($"      ({output.DefinitionLevel2})");
+                        }
+                        currentLevel3 = null;
+                    }
+
+                    // Level 3
+                    if (currentLevel3 != output.Level3 && !string.IsNullOrEmpty(output.Level3))
+                    {
+                        currentLevel3 = output.Level3;
+                        sb.AppendLine($"      - {output.Level3}");
+                        if (!string.IsNullOrEmpty(output.DefinitionLevel3))
+                        {
+                            sb.AppendLine($"        ({output.DefinitionLevel3})");
+                        }
+                    }
+
+                    // Level 4
+                    if (!string.IsNullOrEmpty(output.Level4))
+                    {
+                        sb.AppendLine($"        • {output.Level4}");
+                        if (!string.IsNullOrEmpty(output.DefinitionLevel4))
+                        {
+                            sb.AppendLine($"          ({output.DefinitionLevel4})");
+                        }
+                    }
+                }
+
+                var taxonomy = sb.ToString();
+                _logger.LogInformation($"📚 Generated UNOPS taxonomy: {taxonomy.Length} characters, {outputs.Count} entries");
+                
+                return taxonomy;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error generating UNOPS taxonomy for AI");
+                return "UNOPS Products and Services taxonomy temporarily unavailable.";
+            }
+        }
+
+        /// <summary>
+        /// Parses embedding string (JSON array format "[1.0,2.0,...]") to byte array for pgvector
+        /// </summary>
+        private byte[]? ParseEmbeddingStringToBytes(string embeddingString)
+        {
+            try
+            {
+                // Remove brackets and whitespace
+                var cleaned = embeddingString.Trim().Trim('[', ']');
+                
+                // Parse to float array
+                var values = cleaned.Split(',')
+                    .Select(s => float.Parse(s.Trim(), System.Globalization.CultureInfo.InvariantCulture))
+                    .ToArray();
+                
+                // Convert float array to byte array
+                var bytes = new byte[values.Length * sizeof(float)];
+                Buffer.BlockCopy(values, 0, bytes, 0, bytes.Length);
+                
+                return bytes;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error parsing embedding string to bytes: {Message}", ex.Message);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Parses embedding string (JSON array format "[1.0,2.0,...]") to float array for pgvector
+        /// </summary>
+        private float[]? ParseEmbeddingStringToFloatArray(string embeddingString)
+        {
+            try
+            {
+                // Remove brackets and whitespace
+                var cleaned = embeddingString.Trim().Trim('[', ']');
+                
+                // Parse to float array
+                var values = cleaned.Split(',')
+                    .Select(s => float.Parse(s.Trim(), System.Globalization.CultureInfo.InvariantCulture))
+                    .ToArray();
+                
+                _logger.LogInformation($"✅ Parsed embedding: {values.Length} dimensions");
+                return values;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error parsing embedding string to float array: {Message}", ex.Message);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets tagged Partner Results Framework documents from funding/client partners.
+        /// </summary>
+        private async Task<List<TaggedFrameworkInfo>> GetTaggedFrameworkDocumentsAsync(int opportunityId)
+        {
+            var opportunity = await _context.Opportunities
+                .Include(o => o.FundingPartners)
+                .Include(o => o.ClientPartners)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(o => o.Id == opportunityId);
+
+            if (opportunity == null)
+                return new List<TaggedFrameworkInfo>();
+
+            var taggedFrameworks = new List<TaggedFrameworkInfo>();
+
+            // Get framework docs from funding partners (using existing DocumentId)
+            foreach (var fp in opportunity.FundingPartners.Where(fp => fp.DocumentId.HasValue))
+            {
+                var doc = await _context.Documents
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(d => d.Id == fp.DocumentId.Value);
+
+                if (doc != null)
+                {
+                    taggedFrameworks.Add(new TaggedFrameworkInfo
+                    {
+                        PartnerId = fp.PartnerId,
+                        PartnerName = fp.Partner?.Name ?? "Unknown Partner",
+                        DocumentId = doc.Id,
+                        DocumentName = doc.Name,
+                        DocumentStoragePath = doc.StoragePath,
+                        PartnerType = "Funding"
+                    });
+                }
+            }
+
+            // Get framework docs from client partners (using existing DocumentId)
+            foreach (var cp in opportunity.ClientPartners.Where(cp => cp.DocumentId.HasValue))
+            {
+                var doc = await _context.Documents
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(d => d.Id == cp.DocumentId.Value);
+
+                if (doc != null)
+                {
+                    taggedFrameworks.Add(new TaggedFrameworkInfo
+                    {
+                        PartnerId = cp.PartnerId,
+                        PartnerName = cp.Partner?.Name ?? "Unknown Partner",
+                        DocumentId = doc.Id,
+                        DocumentName = doc.Name,
+                        DocumentStoragePath = doc.StoragePath,
+                        PartnerType = "Client"
+                    });
+                }
+            }
+
+            return taggedFrameworks;
+        }
+
+        /// <summary>
+        /// Parses AI extraction response JSON into ExtractedDeliverableInfo list.
+        /// </summary>
+        private List<ExtractedDeliverableInfo> ParseExtractionResponse(string aiResponse)
+        {
+            try
+            {
+                // Extract JSON from Gemini response (handles markdown wrapping)
+                var jsonContent = ExtractJsonFromGeminiResponse(aiResponse);
+
+                if (string.IsNullOrEmpty(jsonContent))
+                {
+                    _logger.LogWarning("⚠️ Empty JSON content from AI response");
+                    return new List<ExtractedDeliverableInfo>();
+                }
+
+                // Parse JSON array
+                var extracted = System.Text.Json.JsonSerializer.Deserialize<List<ExtractedDeliverableInfo>>(
+                    jsonContent,
+                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                );
+
+                return extracted ?? new List<ExtractedDeliverableInfo>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ Failed to parse AI extraction response: {ex.Message}");
+                return new List<ExtractedDeliverableInfo>();
+            }
+        }
+
+        /// <summary>
+        /// Matches extracted deliverables with Outputs table using batch similarity search.
+        /// Updates the extracted items with matched output information.
+        /// Deduplicates search texts to avoid redundant database queries.
+        /// </summary>
+        private async Task MatchExtractedItemsWithOutputsAsync(List<ExtractedDeliverableInfo> extractedItems)
+        {
+            try
+            {
+                // Step 1: Create a mapping of unique search texts to their indices
+                var searchTextToIndices = new Dictionary<string, List<int>>(StringComparer.OrdinalIgnoreCase);
+                
+                for (int i = 0; i < extractedItems.Count; i++)
+                {
+                    var searchText = extractedItems[i].PartnerLanguage?.Trim();
+                    if (string.IsNullOrEmpty(searchText)) continue;
+                    
+                    if (!searchTextToIndices.ContainsKey(searchText))
+                    {
+                        searchTextToIndices[searchText] = new List<int>();
+                    }
+                    searchTextToIndices[searchText].Add(i);
+                }
+
+                // Step 2: Get distinct search texts for batch query
+                var distinctSearchTexts = searchTextToIndices.Keys.ToArray();
+                
+                if (distinctSearchTexts.Length == 0)
+                {
+                    _logger.LogWarning("⚠️ No valid search texts found in extracted items");
+                    return;
+                }
+
+                _logger.LogInformation($"🔍 Matching {distinctSearchTexts.Length} distinct items using semantic search (threshold: 0.5)");
+                _logger.LogInformation($"📊 Search parameters: semantic_threshold=0.5, keyword_boost=0.1, similarity_boost=0.05");
+
+                // Step 3: Use hybrid search for each distinct text
+                var aiService = new AiContextualService(_configuration, _context, _credentials, null, _logger);
+                var connection = _context.Database.GetDbConnection();
+                if (connection.State != System.Data.ConnectionState.Open)
+                    await connection.OpenAsync();
+
+                int processedCount = 0;
+                foreach (var searchText in distinctSearchTexts)
+                {
+                    try
+                    {
+                        processedCount++;
+                        _logger.LogInformation($"🔄 [{processedCount}/{distinctSearchTexts.Length}] Processing: '{searchText}'");
+                        
+                        // Generate embedding for search text
+                        var embeddingString = (await aiService.CreateBatchEmbeddingsAsync(new List<string> { searchText })).FirstOrDefault();
+                        
+                        if (string.IsNullOrEmpty(embeddingString))
+                        {
+                            _logger.LogWarning($"⚠️ Failed to generate embedding for: {searchText}");
+                            continue;
+                        }
+                        
+                        _logger.LogInformation($"✅ Generated embedding (length: {embeddingString.Length} chars)");
+
+                        // Parse embedding string to float array, then format for PostgreSQL vector
+                        var embeddingVector = ParseEmbeddingStringToFloatArray(embeddingString);
+                        if (embeddingVector == null || embeddingVector.Length != 768)
+                        {
+                            _logger.LogWarning($"⚠️ Invalid embedding vector dimension. Expected 768, got {embeddingVector?.Length ?? 0}");
+                            continue;
+                        }
+                        
+                        // Convert float array to PostgreSQL vector format: [val1,val2,val3,...] (no spaces)
+                        // This matches the format used in retrieve_embedding_search.sql
+                        var vectorString = $"[{string.Join(",", embeddingVector.Select(v => v.ToString("G", System.Globalization.CultureInfo.InvariantCulture)))}]";
+                        _logger.LogInformation($"✅ Formatted as vector string (dimension: {embeddingVector.Length})");
+
+                        // Call hybrid search function - TEXT parameter will be cast to vector(768) in SQL
+                        var sql = @"
+                            SELECT output_id, entity_embedding_id, level_name, output_text, output_hierarchy, 
+                                   keywords, semantic_score, keyword_score, similarity_score, combined_score
+                            FROM public.retrieve_hybrid_search_outputs(
+                                @searchEmbedding, 
+                                @searchText, 
+                                @semanticThreshold, 
+                                @keywordBoost, 
+                                @similarityBoost, 
+                                @maxResults
+                            )";
+
+                        using var command = connection.CreateCommand();
+                        command.CommandText = sql;
+                        
+                        // Pass embedding as TEXT (same pattern as AiContextualService.ExecuteEmbeddingSearch)
+                        // The SQL function will cast it to vector(768) internally
+                        command.Parameters.Add(new NpgsqlParameter("@searchEmbedding", NpgsqlDbType.Text) { Value = vectorString });
+                        command.Parameters.Add(new NpgsqlParameter("@searchText", NpgsqlDbType.Text) { Value = searchText });
+                        command.Parameters.Add(new NpgsqlParameter("@semanticThreshold", NpgsqlDbType.Real) { Value = 0.5f });
+                        command.Parameters.Add(new NpgsqlParameter("@keywordBoost", NpgsqlDbType.Real) { Value = 0.1f });
+                        command.Parameters.Add(new NpgsqlParameter("@similarityBoost", NpgsqlDbType.Real) { Value = 0.05f });
+                        command.Parameters.Add(new NpgsqlParameter("@maxResults", NpgsqlDbType.Integer) { Value = 1 }); // Best match only
+
+                        _logger.LogInformation($"🔍 Calling retrieve_hybrid_search_outputs with semantic threshold 0.5");
+                        using var reader = await command.ExecuteReaderAsync();
+
+                        if (await reader.ReadAsync())
+                        {
+                            var outputId = reader.GetInt32(0);                                           // output_id
+                            var entityEmbeddingId = reader.GetInt32(1);                                  // entity_embedding_id
+                            var levelName = reader.GetString(2);                                         // level_name
+                            var outputText = reader.GetString(3);                                        // output_text
+                            var outputHierarchy = reader.GetString(4);                                   // output_hierarchy
+                            var keywords = reader.IsDBNull(5) ? "" : reader.GetString(5);               // keywords
+                            var semanticScore = reader.GetFloat(6);                                      // semantic_score
+                            var keywordScore = reader.GetFloat(7);                                       // keyword_score
+                            var similarityScore = reader.GetFloat(8);                                    // similarity_score
+                            var combinedScore = reader.GetFloat(9);                                      // combined_score
+
+                            // Find all extracted items with this search text and update them
+                            if (searchTextToIndices.TryGetValue(searchText, out var indices))
+                            {
+                                foreach (var index in indices)
+                                {
+                                    if (index >= 0 && index < extractedItems.Count)
+                                    {
+                                        extractedItems[index].MatchedOutputId = outputId;
+                                        extractedItems[index].MatchedOutputName = outputText;
+                                        extractedItems[index].MatchScore = (decimal)combinedScore;
+                                        extractedItems[index].MatchedField = $"{levelName} ({outputHierarchy})";
+                                    }
+                                }
+
+                                _logger.LogInformation($"✅ MATCH FOUND: '{searchText}'");
+                                _logger.LogInformation($"   → Matched to: '{outputText}' (Output ID: {outputId})");
+                                _logger.LogInformation($"   → Hierarchy: {outputHierarchy}");
+                                _logger.LogInformation($"   → Scores: Semantic={semanticScore:F3}, Keyword={keywordScore:F3}, Similarity={similarityScore:F3}, Combined={combinedScore:F3}");
+                                _logger.LogInformation($"   → Applied to {indices.Count} extracted item(s)");
+                            }
+                        }
+                        else
+                        {
+                            _logger.LogWarning($"⚠️ NO MATCH: No results above threshold 0.5 for '{searchText}'");
+                            _logger.LogWarning($"   → This item will be filtered out as it has no UNOPS taxonomy match");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, $"❌ Error in hybrid search for '{searchText}': {ex.Message}");
+                    }
+                }
+
+                var matchedCount = extractedItems.Count(e => e.MatchedOutputId.HasValue);
+                _logger.LogInformation($"📊 Hybrid search completed: {matchedCount}/{extractedItems.Count} items matched ({distinctSearchTexts.Length} unique searches)");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ Error matching extracted items with Outputs table: {ex.Message}");
+                // Don't throw - matching is optional, we can still return unmatched items
+            }
+        }
+
+        #endregion
+
+        /// <summary>
+        /// Gets the status of Partner Results Framework documents for an opportunity
+        /// </summary>
+        public async Task<FrameworkStatusResponse> GetFrameworkStatusAsync(int opportunityId)
+        {
+            var response = new FrameworkStatusResponse();
+
+            // Get funding partner frameworks (using existing DocumentId)
+            var fundingPartnerFrameworks = await _context.OpportunityFundingPartners
+                .Where(fp => fp.OpportunityId == opportunityId && fp.DocumentId.HasValue)
+                .Include(fp => fp.Partner)
+                .Include(fp => fp.Document)
+                .Select(fp => new TaggedFrameworkInfo
+                {
+                    PartnerId = fp.PartnerId,
+                    PartnerName = fp.Partner!.Name,
+                    DocumentId = fp.DocumentId!.Value,
+                    DocumentName = fp.Document!.Name,
+                    DocumentStoragePath = fp.Document!.StoragePath,
+                    PartnerType = "Funding"
+                })
+                .ToListAsync();
+
+            // Get client partner frameworks (using existing DocumentId)
+            var clientPartnerFrameworks = await _context.OpportunityClientPartners
+                .Where(cp => cp.OpportunityId == opportunityId && cp.DocumentId.HasValue)
+                .Include(cp => cp.Partner)
+                .Include(cp => cp.Document)
+                .Select(cp => new TaggedFrameworkInfo
+                {
+                    PartnerId = cp.PartnerId,
+                    PartnerName = cp.Partner!.Name,
+                    DocumentId = cp.DocumentId!.Value,
+                    DocumentName = cp.Document!.Name,
+                    DocumentStoragePath = cp.Document!.StoragePath,
+                    PartnerType = "Client"
+                })
+                .ToListAsync();
+
+            response.TaggedFrameworks.AddRange(fundingPartnerFrameworks);
+            response.TaggedFrameworks.AddRange(clientPartnerFrameworks);
+            response.HasTaggedFrameworks = response.TaggedFrameworks.Any();
+
+            return response;
+        }
+
+        #endregion
+
+        #region Opportunity Statement Generation
+
+        /// <summary>
+        /// Generates a comprehensive opportunity statement in markdown format following the UNOPS template
+        /// Retrieves opportunity details and attached documents, sends to Gemini for analysis
+        /// Caches the result and saves to the Opportunity entity
+        /// </summary>
+        /// <param name="opportunityId">The opportunity ID to generate statement for</param>
+        /// <param name="user">Current user context</param>
+        /// <returns>Generated opportunity statement in markdown format</returns>
+        public async Task<string> GenerateOpportunityStatementAsync(int opportunityId, ClaimsPrincipal? user = null)
+        {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            
+            try
+            {
+                _logger.LogInformation($"📝 [OPPORTUNITY-STATEMENT] Starting statement generation for opportunity {opportunityId}");
+
+                // Step 1: Get opportunity manager
+                var opportunityManager = _managerWrapper.OpportunityManager as UNOPSOpportunityManager;
+                if (opportunityManager == null)
+                {
+                    throw new InvalidOperationException("UNOPSOpportunityManager is required for statement generation");
+                }
+
+                // Step 2: Get comprehensive opportunity data
+                var opportunityDetails = await opportunityManager.GetOpportunityDetailsForAIAsync(opportunityId);
+
+                if (opportunityDetails == null || !opportunityDetails.Any())
+                {
+                    throw new KeyNotFoundException($"Opportunity with ID {opportunityId} not found");
+                }
+
+                _logger.LogInformation($"📊 [OPPORTUNITY-STATEMENT] Retrieved opportunity details with {opportunityDetails.Count} fields");
+
+                // Step 3: Get attached document GCS URIs through DocumentRelationships
+                var documents = await _context.DocumentRelationships
+                    .Where(dr => dr.EntityType == "Opportunity" && 
+                                dr.EntityId == opportunityId)
+                    .Include(dr => dr.Document)
+                    .Where(dr => dr.Document != null &&
+                                !string.IsNullOrEmpty(dr.Document.StoragePath) && 
+                                dr.Document.StoragePath.StartsWith("gs://"))
+                    .Select(dr => new 
+                    { 
+                        storagePath = dr.Document!.StoragePath, 
+                        mimeType = dr.Document.Type ?? "application/pdf",
+                        name = dr.Document.Name
+                    })
+                    .ToListAsync();
+
+                var documentCount = documents.Count;
+                _logger.LogInformation($"📄 [OPPORTUNITY-STATEMENT] Found {documentCount} attached documents");
+
+                // Step 4: Get the statement generation prompt
+                var promptData = await _aiService.GetPromptData("opportunity_generate_statement");
+                var statementPrompt = promptData.FirstOrDefault();
+                
+                if (statementPrompt == null)
+                {
+                    throw new InvalidOperationException("Statement generation prompt 'opportunity_generate_statement' not found in database");
+                }
+
+                // Step 5: Prepare opportunity context and document metadata for the prompt
+                var opportunityContextJson = JsonConvert.SerializeObject(opportunityDetails, Formatting.Indented);
+                var documentsMetadata = documents.Select((doc, index) => new
+                {
+                    index = index + 1,
+                    name = doc.name,
+                    storagePath = doc.storagePath,
+                    mimeType = doc.mimeType
+                }).ToList();
+                var documentsJson = JsonConvert.SerializeObject(documentsMetadata, Formatting.Indented);
+
+                // Build prompt context
+                var promptContext = new Dictionary<string, object>
+                {
+                    { "opportunityDetails", opportunityContextJson },
+                    { "documents", documentsJson },
+                    { "hasDocuments", documents.Any() },
+                    { "documentCount", documentCount }
+                };
+
+                var promptJson = JsonConvert.SerializeObject(promptContext);
+                
+                // Process placeholders in system instructions
+                var systemInstructionsTemplate = statementPrompt.SystemInstructions ?? string.Empty;
+                var fullyFormedSystemInstructions = _aiService.ProcessPlaceholders(systemInstructionsTemplate, promptJson);
+                
+                // Process placeholders in user prompt
+                var userPromptTemplate = statementPrompt.UserPrompt ?? string.Empty;
+                var fullyFormedUserPrompt = _aiService.ProcessPlaceholders(userPromptTemplate, promptJson);
+
+                _logger.LogInformation($"📝 [OPPORTUNITY-STATEMENT] Calling Gemini AI with {documentCount} document(s)");
+
+                // Step 6: Build parts array for Gemini API (text + document URIs)
+                var parts = new List<object>
+                {
+                    new { text = fullyFormedUserPrompt }
+                };
+
+                // Add each document as a fileData part
+                foreach (var doc in documents)
+                {
+                    parts.Add(new 
+                    { 
+                        fileData = new
+                        {
+                            fileUri = doc.storagePath,
+                            mimeType = doc.mimeType
+                        }
+                    });
+                }
+
+                // Build user content with parts array
+                var userContent = new
+                {
+                    role = "user",
+                    parts = parts.ToArray()
+                };
+                
+                // Step 7: Call Gemini API with caching support (use opportunityId as cache key)
+                var aiResponse = await _aiService.CallGeminiApi(userContent, statementPrompt, fullyFormedSystemInstructions);
+
+                _logger.LogInformation($"📄 [OPPORTUNITY-STATEMENT] Received AI response (length: {aiResponse?.Length ?? 0} chars)");
+
+                // Step 8: Extract markdown from Gemini response
+                string statementMarkdown;
+                try
+                {
+                    if (string.IsNullOrEmpty(aiResponse))
+                    {
+                        throw new InvalidOperationException("AI response is empty");
+                    }
+                    
+                    // Log the first 500 characters of the response for debugging
+                    _logger.LogDebug($"📋 [OPPORTUNITY-STATEMENT] Response preview: {aiResponse.Substring(0, Math.Min(500, aiResponse.Length))}");
+                    
+                    var geminiResponse = JObject.Parse(aiResponse);
+                    
+                    // Check for error in the response
+                    var error = geminiResponse["error"];
+                    if (error != null)
+                    {
+                        var errorMessage = error["message"]?.ToString() ?? "Unknown error";
+                        var errorCode = error["code"]?.ToString() ?? "UNKNOWN";
+                        _logger.LogError($"❌ [OPPORTUNITY-STATEMENT] Gemini API returned error - Code: {errorCode}, Message: {errorMessage}");
+                        throw new InvalidOperationException($"Gemini API error: {errorMessage}");
+                    }
+                    
+                    // Navigate through the JSON structure safely
+                    var candidates = geminiResponse["candidates"];
+                    if (candidates == null || !candidates.Any())
+                    {
+                        _logger.LogError($"❌ [OPPORTUNITY-STATEMENT] No candidates found in response. Response structure: {geminiResponse.ToString(Newtonsoft.Json.Formatting.None).Substring(0, Math.Min(200, geminiResponse.ToString().Length))}");
+                        throw new InvalidOperationException("No candidates found in Gemini response");
+                    }
+                    
+                    var firstCandidate = candidates[0];
+                    var content = firstCandidate?["content"];
+                    if (content == null)
+                    {
+                        _logger.LogError($"❌ [OPPORTUNITY-STATEMENT] No content found in first candidate. Candidate structure: {firstCandidate?.ToString(Newtonsoft.Json.Formatting.None)}");
+                        throw new InvalidOperationException("No content found in Gemini response candidate");
+                    }
+                    
+                    var responseParts = content["parts"];
+                    if (responseParts == null || !responseParts.Any())
+                    {
+                        _logger.LogError($"❌ [OPPORTUNITY-STATEMENT] No parts found in content. Content structure: {content.ToString(Newtonsoft.Json.Formatting.None)}");
+                        throw new InvalidOperationException("No parts found in Gemini response content");
+                    }
+                    
+                    var textContent = responseParts[0]?["text"]?.ToString();
+                    if (string.IsNullOrEmpty(textContent))
+                    {
+                        _logger.LogError($"❌ [OPPORTUNITY-STATEMENT] No text found in first part. Part structure: {responseParts[0]?.ToString(Newtonsoft.Json.Formatting.None)}");
+                        throw new InvalidOperationException("No text content found in Gemini response");
+                    }
+
+                    _logger.LogInformation($"✅ [OPPORTUNITY-STATEMENT] Successfully extracted text content (length: {textContent.Length} chars)");
+
+                    // Remove markdown code block wrapping if present (```markdown ... ```)
+                    var markdownMatch = System.Text.RegularExpressions.Regex.Match(
+                        textContent, 
+                        @"```(?:markdown)?\s*\n?(.*?)\n?```", 
+                        System.Text.RegularExpressions.RegexOptions.Singleline
+                    );
+                    
+                    if (markdownMatch.Success)
+                    {
+                        statementMarkdown = markdownMatch.Groups[1].Value.Trim();
+                        _logger.LogInformation($"📝 [OPPORTUNITY-STATEMENT] Extracted markdown from code block (length: {statementMarkdown.Length} chars)");
+                    }
+                    else
+                    {
+                        statementMarkdown = textContent.Trim();
+                        _logger.LogInformation($"📝 [OPPORTUNITY-STATEMENT] Using raw text content (length: {statementMarkdown.Length} chars)");
+                    }
+                }
+                catch (Newtonsoft.Json.JsonException jsonEx)
+                {
+                    _logger.LogError(jsonEx, $"❌ [OPPORTUNITY-STATEMENT] Failed to parse JSON response. Response: {aiResponse?.Substring(0, Math.Min(1000, aiResponse?.Length ?? 0))}");
+                    throw new InvalidOperationException("Failed to parse AI response as JSON", jsonEx);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"❌ [OPPORTUNITY-STATEMENT] Failed to extract text from Gemini response: {ex.Message}");
+                    throw new InvalidOperationException($"Failed to process AI response: {ex.Message}", ex);
+                }
+
+                // Step 9: Save the generated statement to the Opportunity entity
+                var opportunity = await _context.Opportunities.FindAsync(opportunityId);
+                if (opportunity != null)
+                {
+                    opportunity.OpportunityStatementMarkdown = statementMarkdown;
+                    _context.Opportunities.Update(opportunity);
+                    await _context.SaveChangesAsync();
+                    
+                    _logger.LogInformation($"💾 [OPPORTUNITY-STATEMENT] Saved statement to database for opportunity {opportunityId}");
+                }
+
+                stopwatch.Stop();
+
+                _logger.LogInformation(
+                    $"✅ [OPPORTUNITY-STATEMENT] Generated opportunity statement for opportunity {opportunityId} in {stopwatch.ElapsedMilliseconds}ms"
+                );
+
+                return statementMarkdown;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ [OPPORTUNITY-STATEMENT] Error generating opportunity statement for opportunity {opportunityId}: {ex.Message}");
+                stopwatch.Stop();
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Validates whether the opportunity statement is aligned with the structured data in the opportunity record
+        /// Uses Gemini AI to analyze the statement content against actual opportunity fields
+        /// Returns whether the statement is aligned and specific misalignment items if not aligned
+        /// </summary>
+        /// <param name="opportunityId">The opportunity ID to validate statement for</param>
+        /// <param name="user">Current user context</param>
+        /// <returns>Validation response with alignment status and misalignment items</returns>
+        public async Task<UNOPS.PAO.Models.Opportunities.OpportunityStatementValidationResponse> ValidateOpportunityStatementAsync(int opportunityId, ClaimsPrincipal? user = null)
+        {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            
+            try
+            {
+                _logger.LogInformation($"🔍 [STATEMENT-VALIDATION] Starting statement validation for opportunity {opportunityId}");
+
+                // Step 1: Get opportunity manager
+                var opportunityManager = _managerWrapper.OpportunityManager as UNOPSOpportunityManager;
+                if (opportunityManager == null)
+                {
+                    throw new InvalidOperationException("UNOPSOpportunityManager is required for statement validation");
+                }
+
+                // Step 2: Get comprehensive opportunity data using the same method as statement generation
+                var opportunityDetails = await opportunityManager.GetOpportunityDetailsForAIAsync(opportunityId);
+                
+                if (opportunityDetails == null || !opportunityDetails.Any())
+                {
+                    throw new KeyNotFoundException($"Opportunity with ID {opportunityId} not found");
+                }
+
+                // Step 3: Get the opportunity statement markdown separately
+                var opportunity = await _context.Opportunities
+                    .Where(o => o.Id == opportunityId)
+                    .Select(o => new { o.OpportunityStatementMarkdown })
+                    .FirstOrDefaultAsync();
+
+                if (opportunity == null || string.IsNullOrWhiteSpace(opportunity.OpportunityStatementMarkdown))
+                {
+                    throw new BusinessException("No opportunity statement exists to validate");
+                }
+
+                _logger.LogInformation($"📊 [STATEMENT-VALIDATION] Retrieved opportunity with statement (length: {opportunity.OpportunityStatementMarkdown.Length} chars)");
+
+                // Step 4: Get the validation prompt
+                var promptData = await _aiService.GetPromptData("opportunity_statement_validation");
+                var validationPrompt = promptData.FirstOrDefault();
+
+                if (validationPrompt == null)
+                {
+                    throw new InvalidOperationException("Validation prompt 'opportunity_statement_validation' not found in database");
+                }
+
+                // Step 5: Add the statement markdown to the opportunity details dictionary
+                opportunityDetails["statementMarkdown"] = opportunity.OpportunityStatementMarkdown;
+
+                var structuredDataJson = JsonConvert.SerializeObject(opportunityDetails, Formatting.Indented);
+                _logger.LogInformation($"📝 [STATEMENT-VALIDATION] Prepared structured data (length: {structuredDataJson.Length} chars)");
+
+                // Step 6: Process placeholders in system instructions and user prompt
+                var systemInstructionsTemplate = validationPrompt.SystemInstructions ?? string.Empty;
+                var fullyFormedSystemInstructions = _aiService.ProcessPlaceholders(systemInstructionsTemplate, structuredDataJson);
+                
+                var userPromptTemplate = validationPrompt.UserPrompt ?? string.Empty;
+                var fullyFormedUserPrompt = _aiService.ProcessPlaceholders(userPromptTemplate, structuredDataJson);
+
+                // Step 7: Call Gemini API for validation
+                var userContent = new
+                {
+                    role = "user",
+                    parts = new[] { new { text = fullyFormedUserPrompt } }
+                };
+
+                var aiResponse = await _aiService.CallGeminiApi(userContent, validationPrompt, fullyFormedSystemInstructions);
+                _logger.LogInformation($"🤖 [STATEMENT-VALIDATION] Received AI response (length: {aiResponse?.Length ?? 0} chars)");
+
+                // Step 8: Parse the AI response
+                string validationResultJson;
+                try
+                {
+                    if (string.IsNullOrEmpty(aiResponse))
+                    {
+                        throw new InvalidOperationException("AI response was null or empty");
+                    }
+                    
+                    var geminiResponse = JObject.Parse(aiResponse);
+                    
+                    // Check for errors
+                    var error = geminiResponse["error"];
+                    if (error != null)
+                    {
+                        var errorMessage = error["message"]?.ToString() ?? "Unknown error";
+                        var errorCode = error["code"]?.ToString() ?? "UNKNOWN";
+                        _logger.LogError($"❌ [STATEMENT-VALIDATION] Gemini API returned error - Code: {errorCode}, Message: {errorMessage}");
+                        throw new InvalidOperationException($"Gemini API error: {errorMessage}");
+                    }
+                    
+                    // Extract text content from response
+                    var candidates = geminiResponse["candidates"];
+                    if (candidates == null || !candidates.Any())
+                    {
+                        throw new InvalidOperationException("No candidates found in Gemini response");
+                    }
+                    
+                    var firstCandidate = candidates[0];
+                    var content = firstCandidate?["content"];
+                    if (content == null)
+                    {
+                        throw new InvalidOperationException("No content found in Gemini response candidate");
+                    }
+                    
+                    var responseParts = content["parts"];
+                    if (responseParts == null || !responseParts.Any())
+                    {
+                        throw new InvalidOperationException("No parts found in Gemini response content");
+                    }
+                    
+                    var textContent = responseParts[0]?["text"]?.ToString();
+                    if (string.IsNullOrEmpty(textContent))
+                    {
+                        throw new InvalidOperationException("No text content found in Gemini response");
+                    }
+
+                    validationResultJson = textContent.Trim();
+                    _logger.LogInformation($"✅ [STATEMENT-VALIDATION] Extracted validation result (length: {validationResultJson.Length} chars)");
+
+                    // Remove markdown JSON code block wrapping if present (```json ... ```)
+                    var jsonMatch = System.Text.RegularExpressions.Regex.Match(
+                        validationResultJson, 
+                        @"```(?:json)?\s*\n?(.*?)\n?```", 
+                        System.Text.RegularExpressions.RegexOptions.Singleline
+                    );
+                    
+                    if (jsonMatch.Success)
+                    {
+                        validationResultJson = jsonMatch.Groups[1].Value.Trim();
+                        _logger.LogInformation($"📝 [STATEMENT-VALIDATION] Extracted JSON from code block");
+                    }
+                    
+                    // Additional check: try to find JSON object boundaries if plain text was returned
+                    if (!validationResultJson.StartsWith("{"))
+                    {
+                        _logger.LogWarning($"⚠️ [STATEMENT-VALIDATION] Response doesn't start with JSON. First 100 chars: {validationResultJson.Substring(0, Math.Min(100, validationResultJson.Length))}");
+                        
+                        // Try to find the first { and last } to extract JSON
+                        var firstBrace = validationResultJson.IndexOf('{');
+                        var lastBrace = validationResultJson.LastIndexOf('}');
+                        
+                        if (firstBrace >= 0 && lastBrace > firstBrace)
+                        {
+                            validationResultJson = validationResultJson.Substring(firstBrace, lastBrace - firstBrace + 1);
+                            _logger.LogInformation($"📝 [STATEMENT-VALIDATION] Extracted JSON from text boundaries");
+                        }
+                        else
+                        {
+                            _logger.LogError($"❌ [STATEMENT-VALIDATION] Could not find valid JSON in response. Full response: {validationResultJson}");
+                            throw new InvalidOperationException("AI response does not contain valid JSON");
+                        }
+                    }
+                }
+                catch (Newtonsoft.Json.JsonException jsonEx)
+                {
+                    _logger.LogError(jsonEx, $"❌ [STATEMENT-VALIDATION] Failed to parse JSON response");
+                    throw new InvalidOperationException("Failed to parse AI response as JSON", jsonEx);
+                }
+
+                // Step 9: Parse validation result into response model
+                _logger.LogInformation($"🔍 [STATEMENT-VALIDATION] Attempting to deserialize JSON (length: {validationResultJson.Length})");
+                
+                OpportunityStatementValidationResponse? validationResult;
+                try 
+                {
+                    validationResult = JsonConvert.DeserializeObject<OpportunityStatementValidationResponse>(validationResultJson);
+                }
+                catch (Newtonsoft.Json.JsonException deserializeEx)
+                {
+                    _logger.LogError(deserializeEx, $"❌ [STATEMENT-VALIDATION] Failed to deserialize validation result. JSON content: {validationResultJson}");
+                    throw new InvalidOperationException($"Failed to deserialize AI response as OpportunityStatementValidationResponse. JSON: {validationResultJson}", deserializeEx);
+                }
+                
+                if (validationResult == null)
+                {
+                    throw new InvalidOperationException("Failed to deserialize validation result");
+                }
+
+                validationResult.OpportunityId = opportunityId;
+
+                stopwatch.Stop();
+
+                _logger.LogInformation(
+                    $"✅ [STATEMENT-VALIDATION] Validated opportunity statement for opportunity {opportunityId} in {stopwatch.ElapsedMilliseconds}ms. IsAligned: {validationResult.IsAligned}, Misalignments: {validationResult.MisalignmentItems?.Count ?? 0}"
+                );
+
+                return validationResult;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ [STATEMENT-VALIDATION] Error validating opportunity statement for opportunity {opportunityId}: {ex.Message}");
+                stopwatch.Stop();
+                throw;
+            }
+        }
+
+        #endregion
+        
+        #region Embedding & Keyword Generation (Delegates to AiContextualService)
+        
+        /// <summary>
+        /// Creates batch embeddings for a list of texts
+        /// Delegates to AiContextualService which handles the actual Gemini API calls
+        /// </summary>
+        public async Task<List<string>> CreateBatchEmbeddingsAsync(List<string> texts)
+        {
+            return await _aiService.CreateBatchEmbeddingsAsync(texts);
+        }
+        
+        /// <summary>
+        /// Generates keywords for a list of texts for hybrid search
+        /// Delegates to AiContextualService which handles the actual Gemini API calls
+        /// </summary>
+        public async Task<Dictionary<string, string>> GenerateKeywordsAsync(List<string> texts)
+        {
+            return await _aiService.GenerateKeywordsAsync(texts);
+        }
+        
         #endregion
     }
 

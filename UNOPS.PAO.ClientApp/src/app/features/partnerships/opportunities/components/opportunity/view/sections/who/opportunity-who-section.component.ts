@@ -91,6 +91,11 @@ export class OpportunityWhoSectionComponent implements OnInit {
   // Inputs
   readonly opportunity = input.required<Opportunity>();
   readonly suggestions = input<any[]>([]);
+  
+  /**
+   * @description Input signal for update permission - controls visibility of edit button
+   */
+  readonly canUpdate = input<boolean>(false);
 
   // Outputs
   readonly opportunityUpdated = output<Opportunity>();
@@ -292,7 +297,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
     if (!opp || !opp.id) return;
 
     const whoData = {
-      isPooledFunding: this.isPooledFunding, // AC8
+      isPooledFunding: this.isPooledFunding,
       fundingPartners: opp.fundingPartners?.map(fp => ({
         partnerId: fp.partnerId,
         amount: fp.amount,
@@ -305,12 +310,12 @@ export class OpportunityWhoSectionComponent implements OnInit {
         partnershipAgreementReference: fp.partnershipAgreementReference,
         documentId: fp.documentId, // Include document ID if set
         isPooledContribution: fp.isPooledContribution || false,
-        selectedPartnerAgreementNumber: fp.selectedPartnerAgreementNumber // AC9
+        selectedPartnerAgreementNumber: fp.selectedPartnerAgreementNumber 
       })),
       clientPartners: opp.clientPartners?.map(cp => ({
         partnerId: cp.partnerId,
         documentId: cp.documentId, // Include document ID if set
-        selectedPartnerAgreementNumber: cp.selectedPartnerAgreementNumber // AC9
+        selectedPartnerAgreementNumber: cp.selectedPartnerAgreementNumber 
       })),
       stakeholders: opp.stakeholders?.map(s => ({
         userId: s.userId!,
@@ -498,8 +503,8 @@ export class OpportunityWhoSectionComponent implements OnInit {
       exchangeRateDate: null,
       exchangeRateDisplay: null, // Backend will calculate
       isPooledContribution: false,
-      selectedPartnerAgreementNumber: null, // AC9
-      availableAgreements: null // AC9
+      selectedPartnerAgreementNumber: null, 
+      availableAgreements: null 
     };
 
     currentPartners.push(newPartner);
@@ -689,8 +694,8 @@ export class OpportunityWhoSectionComponent implements OnInit {
       ddExpiryDate: null,
       ddStatus: null,
       ddExpiresBeforeOpportunityEnd: null,
-      selectedPartnerAgreementNumber: null, // AC9
-      availableAgreements: null // AC9
+      selectedPartnerAgreementNumber: null, 
+      availableAgreements: null 
     };
 
     currentClients.push(newClient);
@@ -823,7 +828,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
   }
   
   /**
-   * @description Open Partnership Agreement document in new tab (AC9)
+   * @description Open Partnership Agreement document in new tab
    */
   openAgreementDocument(agreement: PartnerAgreementInfo): void {
     if (!agreement.documentId) return;
@@ -1056,7 +1061,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
   }
   
   // ==================================================================
-  // External Stakeholder Management Methods (AC10)
+  // External Stakeholder Management Methods
   // ==================================================================
   
   /**

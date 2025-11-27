@@ -1,3 +1,5 @@
+using UNOPS.PAO.Models.Shared;
+
 namespace UNOPS.PAO.Models;
 
 public class OpportunityModel
@@ -24,7 +26,17 @@ public class OpportunityModel
     public string? ExpectedBeneficiaries { get; set; }
     public string? Challenges { get; set; }
     
+    /// <summary>
+    /// AI-generated opportunity statement in markdown format
+    /// </summary>
+    public string? OpportunityStatementMarkdown { get; set; }
+    
     public bool IsPooledFunding { get; set; }
+    
+    /// <summary>
+    /// Indicates how UNOPS will deliver the Products & Services (nullable - not set by default)
+    /// </summary>
+    public int? DeliveryModality { get; set; }
     
     public List<OpportunityFundingPartnerModel>? FundingPartners { get; set; }
     public List<OpportunityClientPartnerModel>? ClientPartners { get; set; }
@@ -59,5 +71,10 @@ public class OpportunityModel
     /// The current user's role(s) for this opportunity (for dashboard display)
     /// </summary>
     public string? UserRole { get; set; }
+    
+    /// <summary>
+    /// Permission information for the current user on this opportunity
+    /// </summary>
+    public EntityPermissionsModel? Permissions { get; set; }
 }
 
