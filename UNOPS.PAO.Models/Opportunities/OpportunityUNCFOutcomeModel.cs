@@ -15,5 +15,15 @@ public class OpportunityUNCFOutcomeModel
     public string? Country { get; set; }  // ISO2 code
     public string? Notes { get; set; }
     public List<OpportunityUNCFIndicatorModel> Indicators { get; set; } = new List<OpportunityUNCFIndicatorModel>();
+    
+    /// <summary>
+    /// Indicates if this UNCF Outcome is currently inactive (outside its active date range)
+    /// </summary>
+    public bool IsInactive { get; set; }
+    
+    /// <summary>
+    /// Indicates if a newer version of this UNCF Outcome is available
+    /// </summary>
+    public bool HasNewerVersion { get; set; }
 }
 

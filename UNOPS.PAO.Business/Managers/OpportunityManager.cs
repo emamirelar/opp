@@ -115,7 +115,7 @@ public class OpportunityManager : IOpportunityManager
         if (model.Countries != null && model.Countries.Any())
         {
             await EnrichCountriesWithOrgUnitHierarchyAsync(model.Countries);
-            await EnrichCountriesWithUNCFOutcomeCountAsync(model.Countries);
+            await EnrichCountriesWithActiveUNCFAsync(model.Countries);
         }
 
         return model;
@@ -198,10 +198,10 @@ public class OpportunityManager : IOpportunityManager
     }
     
     /// <summary>
-    /// Enriches country models with their UNCF outcome counts
-    /// Counts only the latest version of each UNCF outcome per country
+    /// Enriches country models with active UNCF status based on UNCFMetadatas table
+    /// Checks if there's at least one active UNCF metadata record for each country
     /// </summary>
-    private async Task EnrichCountriesWithUNCFOutcomeCountAsync(IEnumerable<OpportunityCountryModel> opportunityCountries)
+    private async Task EnrichCountriesWithActiveUNCFAsync(IEnumerable<OpportunityCountryModel> opportunityCountries)
     {
         // Get all country ISO2 codes from the opportunity countries
         var iso2Codes = opportunityCountries
@@ -215,27 +215,26 @@ public class OpportunityManager : IOpportunityManager
             return;
         }
         
-        // Load all active UNCF outcomes for these countries
-        var allActiveOutcomes = await context.UNCFOutcomes
-            .Where(u => u.Status == EntityStatus.Active 
-                && iso2Codes.Contains(u.Country!)
-                && !string.IsNullOrEmpty(u.UNCFOutcomeId)
-                && u.UNCooperationFrameworkVersionNo.HasValue)
+        // Check which countries have active UNCF metadata
+        var countriesWithActiveUNCF = await context.UNCFMetadatas
+            .Where(m => m.Status == EntityStatus.Active 
+                && iso2Codes.Contains(m.Country!))
+            .Select(m => m.Country!)
+            .Distinct()
             .ToListAsync();
         
-        // Group by country and outcome, select latest version, then count per country
-        var uncfOutcomeCounts = allActiveOutcomes
-            .GroupBy(u => new { u.Country, u.UNCFOutcomeId })
-            .Select(g => g.OrderByDescending(x => x.UNCooperationFrameworkVersionNo).First())
-            .GroupBy(x => x.Country)
-            .ToDictionary(g => g.Key!, g => g.Count(), StringComparer.OrdinalIgnoreCase);
+        var countriesWithActiveUNCFSet = new HashSet<string>(
+            countriesWithActiveUNCF, 
+            StringComparer.OrdinalIgnoreCase
+        );
         
-        // Populate the counts
+        // Set HasActiveUNCF flag for each country
         foreach (var oppCountry in opportunityCountries)
         {
             if (oppCountry.Country != null && !string.IsNullOrEmpty(oppCountry.Country.Iso2Code))
             {
-                oppCountry.Country.UNCFOutcomeCount = uncfOutcomeCounts.GetValueOrDefault(oppCountry.Country.Iso2Code, 0);
+                oppCountry.Country.HasActiveUNCF = 
+                    countriesWithActiveUNCFSet.Contains(oppCountry.Country.Iso2Code);
             }
         }
     }

@@ -88,6 +88,7 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<SDGIndicator> SDGIndicators { get; set; }
     public DbSet<UNCFOutcome> UNCFOutcomes { get; set; }
     public DbSet<UNCFIndicator> UNCFIndicators { get; set; }
+    public DbSet<UNCFMetadata> UNCFMetadatas { get; set; }
     public DbSet<ExchangeRate> ExchangeRates { get; set; }
     
     // Output catalog entities
@@ -705,8 +706,6 @@ public class AppDbContext : AuditableDbContext<int, int>
             entity.HasIndex(x => x.UNCFOutcomeId);
             entity.HasIndex(x => x.Country);
             entity.HasIndex(x => x.UNCooperationFrameworkVersionNo);
-            entity.HasIndex(x => x.UNCFOutcomeStartDate);
-            entity.HasIndex(x => x.UNCFOutcomeEndDate);
             entity.HasIndex(x => x.Status);
         });
 
@@ -723,6 +722,19 @@ public class AppDbContext : AuditableDbContext<int, int>
             
             // Composite index for efficient parent outcome lookups
             entity.HasIndex(x => new { x.UNCFOutcomeExternalId, x.UNCooperationFrameworkVersionNo });
+        });
+
+        // UNCFMetadata configuration (External Data Service - Read Only)
+        modelBuilder.Entity<UNCFMetadata>(entity =>
+        {
+            entity.HasIndex(x => x.UNCFMetadataId);
+            entity.HasIndex(x => x.Country);
+            entity.HasIndex(x => x.UNCooperationFrameworkVersionNo);
+            entity.HasIndex(x => x.Status);
+            entity.HasIndex(x => x.UNCFLastUpdatedDate);
+            
+            // Composite unique index for Country + Version combination
+            entity.HasIndex(x => new { x.Country, x.UNCooperationFrameworkVersionNo }).IsUnique();
         });
 
         // Country configuration (External Data Service - Read Only)

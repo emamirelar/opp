@@ -36,22 +36,16 @@ public class CountryModel
     public List<OrganizationUnitHierarchyNode>? OrganizationUnitHierarchy { get; set; }
     
     /// <summary>
-    /// Number of UNCF (UN Cooperation Framework) outcomes available for this country
+    /// Indicates if country has active UNCF (UN Cooperation Framework) metadata
     /// Populated by the mapper/service when loading country data
     /// </summary>
-    public int UNCFOutcomeCount { get; set; }
+    public bool HasActiveUNCF { get; set; }
     
     /// <summary>
     /// Conditional tags based on country's current state for frontend display
     /// </summary>
     public List<EntityTagModel>? Tags => CalculateConditionalTags();
-    
-    /// <summary>
-    /// Indicates whether the country has an active UNSDCF requiring Strategic Alignment completion
-    /// Based on whether at least one UNCF outcome exists for this country
-    /// </summary>
-    public bool HasActiveUNSDCF => CheckForActiveUNSDCF();
-    
+        
     /// <summary>
     /// Calculate conditional tags based on country's artifacts and documents for frontend display
     /// </summary>
@@ -124,15 +118,6 @@ public class CountryModel
         
         // Handle string representation (for backward compatibility)
         return artifact.Value.ToString()?.Equals("true", StringComparison.OrdinalIgnoreCase) ?? false;
-    }
-    
-    /// <summary>
-    /// Check if the country has an active UNSDCF (UN Sustainable Development Cooperation Framework)
-    /// Returns true if at least one UNCF outcome exists for this country
-    /// </summary>
-    private bool CheckForActiveUNSDCF()
-    {
-        return UNCFOutcomeCount > 0;
     }
 }
 

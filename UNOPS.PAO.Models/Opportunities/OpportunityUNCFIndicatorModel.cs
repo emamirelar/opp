@@ -12,5 +12,15 @@ public class OpportunityUNCFIndicatorModel
     public string? UNCFIndicatorExternalId { get; set; }  // The string identifier from external system
     public string? UNCFIndicatorName { get; set; }
     public string? Notes { get; set; }
+    
+    /// <summary>
+    /// Indicates if this UNCF Indicator is currently inactive (outside its active date range)
+    /// </summary>
+    public bool IsInactive { get; set; }
+    
+    /// <summary>
+    /// Indicates if a newer version of this UNCF Indicator is available
+    /// </summary>
+    public bool HasNewerVersion { get; set; }
 }
 

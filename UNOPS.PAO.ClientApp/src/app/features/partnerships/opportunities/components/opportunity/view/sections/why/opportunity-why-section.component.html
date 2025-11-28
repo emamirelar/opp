@@ -267,6 +267,18 @@
                     }
                   </div>
 
+                  <!-- Warning banners for inactive UNCF data (per country) -->
+                  @if (hasInactiveUNCFWithUpdatesForCountry(oppCountry.id)) {
+                    <p-message severity="warn" styleClass="mb-3 w-full">
+                      {{ 'message.opportunity.uncfUpdatesAvailable' | translate }}
+                    </p-message>
+                  }
+                  @if (hasInactiveUNCFWithoutUpdatesForCountry(oppCountry.id)) {
+                    <p-message severity="warn" styleClass="mb-3 w-full">
+                      {{ 'message.opportunity.uncfInactiveNoUpdates' | translate }}
+                    </p-message>
+                  }
+
                   <!-- Display Outcomes and Indicators (if any are selected) -->
                   @if (outcomesForCountry.length > 0) {
                     @let firstOutcome = outcomesForCountry[0];
@@ -311,6 +323,18 @@
             </div>
           }
         </div>
+      </div>
+    } @else {
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
+            <i class="pi pi-flag text-blue-600"></i>
+            {{ 'label.opportunity.uncfAlignment' | translate }}
+          </h3>
+        </div>
+        <p-message severity="warn" styleClass="w-full">
+          {{ 'message.opportunity.uncfNotAvailable' | translate }}
+        </p-message>
       </div>
     }
 

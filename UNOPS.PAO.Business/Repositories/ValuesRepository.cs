@@ -331,38 +331,73 @@ public class ValuesRepository
     public IEnumerable<SDGIndicator> GetSDGIndicatorsByTargetId(string targetId)
         => context.SDGIndicators.Where(x => x.SDGTargetId == targetId && x.Status == EntityStatus.Active);
 
-    public IEnumerable<UNCFOutcome> GetUNCFOutcomes()
+    public IEnumerable<UNCFOutcome> GetUNCFOutcomes(bool includeInactive = false)
     {
+        // Join with UNCFMetadata to filter by active metadata status
+        var query = from outcome in context.UNCFOutcomes
+                    join metadata in context.UNCFMetadatas
+                        on new { outcome.Country, outcome.UNCooperationFrameworkVersionNo }
+                        equals new { metadata.Country, metadata.UNCooperationFrameworkVersionNo }
+                    where outcome.Status == EntityStatus.Active
+                        && metadata.Status == EntityStatus.Active
+                    select outcome;
+        
         // Return only latest version for each outcome-country combination
-        return context.UNCFOutcomes
-            .Where(x => x.Status == EntityStatus.Active)
+        return query
             .GroupBy(x => new { x.UNCFOutcomeId, x.Country })
             .Select(g => g.OrderByDescending(x => x.UNCooperationFrameworkVersionNo).First());
     }
 
-    public IEnumerable<UNCFOutcome> GetUNCFOutcomesByCountry(string countryCode)
+    public IEnumerable<UNCFOutcome> GetUNCFOutcomesByCountry(string countryCode, bool includeInactive = false)
     {
+        // Join with UNCFMetadata to filter by active metadata status
+        var query = from outcome in context.UNCFOutcomes
+                    join metadata in context.UNCFMetadatas
+                        on new { outcome.Country, outcome.UNCooperationFrameworkVersionNo }
+                        equals new { metadata.Country, metadata.UNCooperationFrameworkVersionNo }
+                    where outcome.Country == countryCode
+                        && outcome.Status == EntityStatus.Active
+                        && metadata.Status == EntityStatus.Active
+                    select outcome;
+        
         // Return only latest version for each outcome-country combination
-        return context.UNCFOutcomes
-            .Where(x => x.Country == countryCode && x.Status == EntityStatus.Active)
+        return query
             .GroupBy(x => new { x.UNCFOutcomeId, x.Country })
             .Select(g => g.OrderByDescending(x => x.UNCooperationFrameworkVersionNo).First());
     }
 
-    public IEnumerable<UNCFIndicator> GetUNCFIndicators()
-        => context.UNCFIndicators.Where(x => x.Status == EntityStatus.Active);
+    public IEnumerable<UNCFIndicator> GetUNCFIndicators(bool includeInactive = false)
+    {
+        // Join with UNCFMetadata to filter by active metadata status
+        var query = from indicator in context.UNCFIndicators
+                    join metadata in context.UNCFMetadatas
+                        on new { indicator.Country, indicator.UNCooperationFrameworkVersionNo }
+                        equals new { metadata.Country, metadata.UNCooperationFrameworkVersionNo }
+                    where indicator.Status == EntityStatus.Active
+                        && metadata.Status == EntityStatus.Active
+                    select indicator;
+        
+        return query;
+    }
 
-    public IEnumerable<UNCFIndicator> GetUNCFIndicatorsByOutcomeId(int outcomeId)
+    public IEnumerable<UNCFIndicator> GetUNCFIndicatorsByOutcomeId(int outcomeId, bool includeInactive = false)
     {
         // Get the outcome first to determine its external ID and version
         var outcome = context.UNCFOutcomes.FirstOrDefault(x => x.Id == outcomeId);
         if (outcome == null) return Enumerable.Empty<UNCFIndicator>();
         
-        // Return indicators matching the outcome's external ID and version
-        return context.UNCFIndicators
-            .Where(x => x.UNCFOutcomeExternalId == outcome.UNCFOutcomeId 
-                     && x.UNCooperationFrameworkVersionNo == outcome.UNCooperationFrameworkVersionNo
-                     && x.Status == EntityStatus.Active);
+        // Join with UNCFMetadata to filter by active metadata status
+        var query = from indicator in context.UNCFIndicators
+                    join metadata in context.UNCFMetadatas
+                        on new { indicator.Country, indicator.UNCooperationFrameworkVersionNo }
+                        equals new { metadata.Country, metadata.UNCooperationFrameworkVersionNo }
+                    where indicator.UNCFOutcomeExternalId == outcome.UNCFOutcomeId 
+                        && indicator.UNCooperationFrameworkVersionNo == outcome.UNCooperationFrameworkVersionNo
+                        && indicator.Status == EntityStatus.Active
+                        && metadata.Status == EntityStatus.Active
+                    select indicator;
+        
+        return query;
     }
 
     public async Task<IEnumerable<Models.Shared.SimpleValueModel>> GetEntityRolesAsync(string entityType)
@@ -394,5 +429,63 @@ public class ValuesRepository
                 Description = x.Email
             })
             .ToListAsync();
+    }
+
+    /// <summary>
+    /// Check if a UNCF Outcome has a newer active version available (checks UNCFMetadata for newer framework version)
+    /// </summary>
+    public bool HasNewerUNCFOutcomeVersion(string country, int currentVersionNo)
+    {
+        // Check UNCFMetadata table directly for a newer framework version for this country
+        return context.UNCFMetadatas
+            .Any(m => m.Country == country
+                   && m.UNCooperationFrameworkVersionNo > currentVersionNo
+                   && m.Status == EntityStatus.Active);
+    }
+
+    /// <summary>
+    /// Check if a UNCF Indicator has a newer active version available (checks UNCFMetadata for newer framework version)
+    /// </summary>
+    public bool HasNewerUNCFIndicatorVersion(string country, int currentVersionNo)
+    {
+        // Check UNCFMetadata table directly for a newer framework version for this country
+        return context.UNCFMetadatas
+            .Any(m => m.Country == country
+                   && m.UNCooperationFrameworkVersionNo > currentVersionNo
+                   && m.Status == EntityStatus.Active);
+    }
+
+    /// <summary>
+    /// Check if a UNCF Outcome is currently active (matching UNCFMetadata is active)
+    /// </summary>
+    public bool IsUNCFOutcomeActive(int uncfOutcomeId)
+    {
+        var outcome = context.UNCFOutcomes.FirstOrDefault(x => x.Id == uncfOutcomeId);
+        if (outcome == null || outcome.Status != EntityStatus.Active) return false;
+        
+        // Check if the matching UNCFMetadata record is active
+        var matchingMetadata = context.UNCFMetadatas.FirstOrDefault(m =>
+            m.Country == outcome.Country &&
+            m.UNCooperationFrameworkVersionNo == outcome.UNCooperationFrameworkVersionNo);
+        
+        // Outcome is active only if the metadata is active
+        return matchingMetadata != null && matchingMetadata.Status == EntityStatus.Active;
+    }
+
+    /// <summary>
+    /// Check if a UNCF Indicator is currently active (matching UNCFMetadata is active)
+    /// </summary>
+    public bool IsUNCFIndicatorActive(int uncfIndicatorId)
+    {
+        var indicator = context.UNCFIndicators.FirstOrDefault(x => x.Id == uncfIndicatorId);
+        if (indicator == null || indicator.Status != EntityStatus.Active) return false;
+        
+        // Check if the matching UNCFMetadata record is active
+        var matchingMetadata = context.UNCFMetadatas.FirstOrDefault(m =>
+            m.Country == indicator.Country &&
+            m.UNCooperationFrameworkVersionNo == indicator.UNCooperationFrameworkVersionNo);
+        
+        // Indicator is active only if the metadata is active
+        return matchingMetadata != null && matchingMetadata.Status == EntityStatus.Active;
     }
 }

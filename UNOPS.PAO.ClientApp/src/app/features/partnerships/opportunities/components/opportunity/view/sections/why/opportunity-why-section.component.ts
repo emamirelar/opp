@@ -121,9 +121,22 @@ export class OpportunityWhySectionComponent implements OnInit {
   );
 
   // UNCF data - country-specific outcomes
+  // Include countries that either have active UNCF Metadata OR have existing OpportunityUNCFOutcomes
   readonly countriesWithUNCF = computed(() => {
     const countries = this.opportunity().countries || [];
-    return countries.filter(c => c.country?.hasActiveUNSDCF);
+    const opp = this.opportunity();
+    const existingUNCFOutcomes = opp.uncfOutcomes || [];
+    
+    return countries.filter(c => {
+      // Show country if it has active UNCF Metadata
+      if (c.country?.hasActiveUNSDCF) {
+        return true;
+      }
+      
+      // Also show country if it has existing OpportunityUNCFOutcomes
+      const hasExistingOutcomes = existingUNCFOutcomes.some(uo => uo.opportunityCountryId === c.id);
+      return hasExistingOutcomes;
+    });
   });
   
   // UNCF outcomes grouped by country
@@ -1256,6 +1269,52 @@ export class OpportunityWhySectionComponent implements OnInit {
     return this.opportunity().uncfOutcomes?.filter(
       uo => uo.opportunityCountryId === oppCountryId
     ) || [];
+  }
+
+  /**
+   * @description Check if a specific country has inactive UNCF data with newer versions available
+   */
+  hasInactiveUNCFWithUpdatesForCountry(oppCountryId: number): boolean {
+    const outcomesForCountry = this.getUNCFOutcomesForOpportunityCountry(oppCountryId);
+    
+    // Check if any outcome for this country is inactive with newer version
+    const hasOutcomeWithUpdates = outcomesForCountry.some(outcome => 
+      outcome.isInactive && outcome.hasNewerVersion
+    );
+    
+    if (hasOutcomeWithUpdates) return true;
+    
+    // Check if any indicator for this country is inactive with newer version
+    const hasIndicatorWithUpdates = outcomesForCountry.some(outcome =>
+      outcome.indicators?.some(indicator => 
+        indicator.isInactive && indicator.hasNewerVersion
+      )
+    );
+    
+    return hasIndicatorWithUpdates;
+  }
+
+  /**
+   * @description Check if a specific country has inactive UNCF data without newer versions available
+   */
+  hasInactiveUNCFWithoutUpdatesForCountry(oppCountryId: number): boolean {
+    const outcomesForCountry = this.getUNCFOutcomesForOpportunityCountry(oppCountryId);
+    
+    // Check if any outcome for this country is inactive without newer version
+    const hasOutcomeWithoutUpdates = outcomesForCountry.some(outcome => 
+      outcome.isInactive && !outcome.hasNewerVersion
+    );
+    
+    if (hasOutcomeWithoutUpdates) return true;
+    
+    // Check if any indicator for this country is inactive without newer version
+    const hasIndicatorWithoutUpdates = outcomesForCountry.some(outcome =>
+      outcome.indicators?.some(indicator => 
+        indicator.isInactive && !indicator.hasNewerVersion
+      )
+    );
+    
+    return hasIndicatorWithoutUpdates;
   }
 
   /**

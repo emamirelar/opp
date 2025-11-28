@@ -285,12 +285,15 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }
         }
         
-        // Enrich country models with organization unit hierarchy and UNCF outcome counts
+        // Enrich country models with organization unit hierarchy and UNCF status
         if (model.Countries != null && model.Countries.Any())
         {
             await EnrichCountriesWithOrgUnitHierarchyAsync(model.Countries);
-            await EnrichCountriesWithUNCFOutcomeCountAsync(model.Countries);
+            await EnrichCountriesWithActiveUNCFAsync(model.Countries);
         }
+        
+        // Enrich UNCF data with activity status and newer version checks
+        EnrichUNCFDataWithActivityStatus(model);
 
         // Compute statistics
         model.Stats = ComputeOpportunityStats(entity);
@@ -476,10 +479,10 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     }
     
     /// <summary>
-    /// Enriches country models with their UNCF outcome counts
-    /// Counts only the latest version of each UNCF outcome per country
+    /// Enriches country models with active UNCF status based on UNCFMetadatas table
+    /// Checks if there's at least one active UNCF metadata record for each country
     /// </summary>
-    private async Task EnrichCountriesWithUNCFOutcomeCountAsync(IEnumerable<OpportunityCountryModel> opportunityCountries)
+    private async Task EnrichCountriesWithActiveUNCFAsync(IEnumerable<OpportunityCountryModel> opportunityCountries)
     {
         // Get all country ISO2 codes from the opportunity countries
         var iso2Codes = opportunityCountries
@@ -493,27 +496,79 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             return;
         }
         
-        // Load all active UNCF outcomes for these countries
-        var allActiveOutcomes = await context.UNCFOutcomes
-            .Where(u => u.Status == EntityStatus.Active 
-                && iso2Codes.Contains(u.Country!)
-                && !string.IsNullOrEmpty(u.UNCFOutcomeId)
-                && u.UNCooperationFrameworkVersionNo.HasValue)
+        // Check which countries have active UNCF metadata
+        var countriesWithActiveUNCF = await context.UNCFMetadatas
+            .Where(m => m.Status == EntityStatus.Active 
+                && iso2Codes.Contains(m.Country!))
+            .Select(m => m.Country!)
+            .Distinct()
             .ToListAsync();
         
-        // Group by country and outcome, select latest version, then count per country
-        var uncfOutcomeCounts = allActiveOutcomes
-            .GroupBy(u => new { u.Country, u.UNCFOutcomeId })
-            .Select(g => g.OrderByDescending(x => x.UNCooperationFrameworkVersionNo).First())
-            .GroupBy(x => x.Country)
-            .ToDictionary(g => g.Key!, g => g.Count(), StringComparer.OrdinalIgnoreCase);
+        var countriesWithActiveUNCFSet = new HashSet<string>(
+            countriesWithActiveUNCF, 
+            StringComparer.OrdinalIgnoreCase
+        );
         
-        // Populate the counts
+        // Set HasActiveUNCF flag for each country
         foreach (var oppCountry in opportunityCountries)
         {
             if (oppCountry.Country != null && !string.IsNullOrEmpty(oppCountry.Country.Iso2Code))
             {
-                oppCountry.Country.UNCFOutcomeCount = uncfOutcomeCounts.GetValueOrDefault(oppCountry.Country.Iso2Code, 0);
+                oppCountry.Country.HasActiveUNCF = 
+                    countriesWithActiveUNCFSet.Contains(oppCountry.Country.Iso2Code);
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Enriches UNCF outcome and indicator models with activity status and newer version availability
+    /// </summary>
+    private void EnrichUNCFDataWithActivityStatus(OpportunityModel model)
+    {
+        if (model.UNCFOutcomes == null || !model.UNCFOutcomes.Any())
+        {
+            return;
+        }
+        
+        var valuesRepo = new Business.Repositories.ValuesRepository(context);
+        
+        foreach (var uncfOutcome in model.UNCFOutcomes)
+        {
+            // Check if this outcome is currently active
+            bool isOutcomeActive = valuesRepo.IsUNCFOutcomeActive(uncfOutcome.UNCFOutcomeId);
+            uncfOutcome.IsInactive = !isOutcomeActive;
+            
+            // If inactive, check for newer versions
+            if (uncfOutcome.IsInactive && 
+                !string.IsNullOrEmpty(uncfOutcome.Country) &&
+                uncfOutcome.VersionNo.HasValue)
+            {
+                uncfOutcome.HasNewerVersion = valuesRepo.HasNewerUNCFOutcomeVersion(
+                    uncfOutcome.Country,
+                    uncfOutcome.VersionNo.Value
+                );
+            }
+            
+            // Check indicators for this outcome
+            if (uncfOutcome.Indicators != null && uncfOutcome.Indicators.Any())
+            {
+                foreach (var indicator in uncfOutcome.Indicators)
+                {
+                    // Check if this indicator is currently active
+                    bool isIndicatorActive = valuesRepo.IsUNCFIndicatorActive(indicator.UNCFIndicatorId);
+                    indicator.IsInactive = !isIndicatorActive;
+                    
+                    // If inactive, check for newer versions
+                    if (indicator.IsInactive &&
+                        !string.IsNullOrEmpty(uncfOutcome.Country) &&
+                        uncfOutcome.VersionNo.HasValue)
+                    {
+                        indicator.HasNewerVersion = valuesRepo.HasNewerUNCFIndicatorVersion(
+                            uncfOutcome.Country,
+                            uncfOutcome.VersionNo.Value
+                        );
+                    }
+                }
             }
         }
     }

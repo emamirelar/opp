@@ -305,6 +305,8 @@ export interface OpportunityUNCFOutcome {
   country: string | null;  // ISO2 code
   notes: string | null;
   indicators?: OpportunityUNCFIndicator[];
+  isInactive?: boolean;  // Indicates if this outcome is outside its active date range
+  hasNewerVersion?: boolean;  // Indicates if a newer version is available
 }
 
 /**
@@ -319,6 +321,8 @@ export interface OpportunityUNCFIndicator {
   uncfIndicatorExternalId: string | null;  // String identifier from external system
   uncfIndicatorName: string | null;
   notes: string | null;
+  isInactive?: boolean;  // Indicates if this indicator is outside its active date range
+  hasNewerVersion?: boolean;  // Indicates if a newer version is available
 }
 
 /**

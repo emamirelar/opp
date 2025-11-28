@@ -45,16 +45,6 @@ public class UNCFOutcome : IBaseBusinessEntity<int>
     /// </summary>
     [MaxLength(255)]
     public string? UNCFOutcomeId { get; set; }
-    
-    /// <summary>
-    /// UNCF Outcome Start Date - When this outcome period begins
-    /// </summary>
-    public DateTime? UNCFOutcomeStartDate { get; set; }
-    
-    /// <summary>
-    /// UNCF Outcome End Date - When this outcome period ends
-    /// </summary>
-    public DateTime? UNCFOutcomeEndDate { get; set; }
 
     /// <summary>
     /// UNCF Outcome Last Updated Date - When this outcome was last updated

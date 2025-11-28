@@ -17,7 +17,7 @@ public class CountryMappingProfile : Profile
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
             .ForMember(dest => dest.PartnerCount, opt => opt.MapFrom(src => src.PartnerCount))
             .ForMember(dest => dest.LiaisonOfficeCount, opt => opt.MapFrom(src => src.LiaisonOfficeCount))
-            .ForMember(dest => dest.UNCFOutcomeCount, opt => opt.MapFrom(src => src.UNCFOutcomeCount))
+            .ForMember(dest => dest.HasActiveUNCF, opt => opt.MapFrom(src => src.HasActiveUNCF))
             .ForMember(dest => dest.Permissions, opt => opt.Ignore()) // Will be populated separately
             .ForMember(dest => dest.Artifacts, opt => opt.MapFrom<EntityArtifactValueResolver>())
             .ForMember(dest => dest.Continent, opt => opt.MapFrom(src => src.ContinentDescription))
