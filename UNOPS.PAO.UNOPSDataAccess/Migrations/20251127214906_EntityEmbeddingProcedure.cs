@@ -13,7 +13,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
         {
             MigrationSqlScriptExecutor.ExecuteSqlScripts(migrationBuilder, new[]
             {
-                "InsertEntityEmbedding.sql"
+                "InsertEntityEmbeddings.sql"
             });
         }
 
