@@ -10,11 +10,11 @@ using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
 {
-    public static class UnapprovedPartnerTreeSeeder_v3
+    public static class UnapprovedPartnerTreeSeeder_DummyName_v3
     {
-        public static async Task SeedUnapprovedPartnerTreeAsync(UNOPSAppDbContext context)
+        public static async Task SeedUnapprovedPartnerTreeDummyNameAsync(UNOPSAppDbContext context)
         {
-            Console.WriteLine("Starting Unapproved PartnerTree seeding process (v3)...");
+            Console.WriteLine("Starting Unapproved PartnerTree DummyName seeding process (v3)...");
             
             int updatedCount = 0;
             int createdCount = 0;
@@ -33,7 +33,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "Private Sector";
+                        existingRecord.Name = "Private Sector.";
                         existingRecord.Description = "Private Sector";
                         existingRecord.Type = "Level_1";
                         existingRecord.Parent = null;
@@ -47,7 +47,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'PRIVATE_SECTOR' - Private Sector");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'PRIVATE_SECTOR' - Private Sector.");
                         updatedCount++;
                     }
                     else
@@ -55,7 +55,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "PRIVATE_SECTOR",
-                            Name = "Private Sector",
+                            Name = "Private Sector.",
                             Description = "Private Sector",
                             Type = "Level_1",
                             Parent = null,
@@ -73,7 +73,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'PRIVATE_SECTOR' - Private Sector");
+                        Console.WriteLine($"Created: PartnerTree with Code 'PRIVATE_SECTOR' - Private Sector.");
                         createdCount++;
                     }
                 }
@@ -85,7 +85,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "AAIC";
+                        existingRecord.Name = "AAIC.";
                         existingRecord.Description = "AAIC Japan Co., Ltd.";
                         existingRecord.Type = "Level_2";
                         existingRecord.Parent = "PRIVATE_SECTOR";
@@ -99,7 +99,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'AAIC' - AAIC");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'AAIC' - AAIC.");
                         updatedCount++;
                     }
                     else
@@ -107,7 +107,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "AAIC",
-                            Name = "AAIC",
+                            Name = "AAIC.",
                             Description = "AAIC Japan Co., Ltd.",
                             Type = "Level_2",
                             Parent = "PRIVATE_SECTOR",
@@ -125,7 +125,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'AAIC' - AAIC");
+                        Console.WriteLine($"Created: PartnerTree with Code 'AAIC' - AAIC.");
                         createdCount++;
                     }
                 }
@@ -137,7 +137,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "Foundation";
+                        existingRecord.Name = "Foundation.";
                         existingRecord.Description = "Foundation";
                         existingRecord.Type = "Level_1";
                         existingRecord.Parent = null;
@@ -151,7 +151,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'FOUNDATION' - Foundation");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'FOUNDATION' - Foundation.");
                         updatedCount++;
                     }
                     else
@@ -159,7 +159,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "FOUNDATION",
-                            Name = "Foundation",
+                            Name = "Foundation.",
                             Description = "Foundation",
                             Type = "Level_1",
                             Parent = null,
@@ -177,7 +177,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'FOUNDATION' - Foundation");
+                        Console.WriteLine($"Created: PartnerTree with Code 'FOUNDATION' - Foundation.");
                         createdCount++;
                     }
                 }
@@ -189,7 +189,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "AEF";
+                        existingRecord.Name = "AEF.";
                         existingRecord.Description = "AEF Africa-Europe Foundation";
                         existingRecord.Type = "Level_2";
                         existingRecord.Parent = "FOUNDATION";
@@ -203,7 +203,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'AEF' - AEF");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'AEF' - AEF.");
                         updatedCount++;
                     }
                     else
@@ -211,7 +211,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "AEF",
-                            Name = "AEF",
+                            Name = "AEF.",
                             Description = "AEF Africa-Europe Foundation",
                             Type = "Level_2",
                             Parent = "FOUNDATION",
@@ -229,7 +229,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'AEF' - AEF");
+                        Console.WriteLine($"Created: PartnerTree with Code 'AEF' - AEF.");
                         createdCount++;
                     }
                 }
@@ -241,7 +241,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "Allm";
+                        existingRecord.Name = "Allm.";
                         existingRecord.Description = "Allm Inc.";
                         existingRecord.Type = "Level_2";
                         existingRecord.Parent = "PRIVATE_SECTOR";
@@ -255,7 +255,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'ALLM' - Allm");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'ALLM' - Allm.");
                         updatedCount++;
                     }
                     else
@@ -263,7 +263,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "ALLM",
-                            Name = "Allm",
+                            Name = "Allm.",
                             Description = "Allm Inc.",
                             Type = "Level_2",
                             Parent = "PRIVATE_SECTOR",
@@ -281,7 +281,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'ALLM' - Allm");
+                        Console.WriteLine($"Created: PartnerTree with Code 'ALLM' - Allm.");
                         createdCount++;
                     }
                 }
@@ -293,7 +293,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "Government";
+                        existingRecord.Name = "Government.";
                         existingRecord.Description = "Government";
                         existingRecord.Type = "Level_1";
                         existingRecord.Parent = null;
@@ -307,7 +307,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'GOVERNMENT' - Government");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'GOVERNMENT' - Government.");
                         updatedCount++;
                     }
                     else
@@ -315,7 +315,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "GOVERNMENT",
-                            Name = "Government",
+                            Name = "Government.",
                             Description = "Government",
                             Type = "Level_1",
                             Parent = null,
@@ -333,7 +333,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'GOVERNMENT' - Government");
+                        Console.WriteLine($"Created: PartnerTree with Code 'GOVERNMENT' - Government.");
                         createdCount++;
                     }
                 }
@@ -345,7 +345,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "Gov: OECD/DAC";
+                        existingRecord.Name = "Gov: OECD/DAC.";
                         existingRecord.Description = "OECD/DAC Government";
                         existingRecord.Type = "Level_2";
                         existingRecord.Parent = "GOVERNMENT";
@@ -359,7 +359,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'OECD_DAC' - Gov: OECD/DAC");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'OECD_DAC' - Gov: OECD/DAC.");
                         updatedCount++;
                     }
                     else
@@ -367,7 +367,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "OECD_DAC",
-                            Name = "Gov: OECD/DAC",
+                            Name = "Gov: OECD/DAC.",
                             Description = "OECD/DAC Government",
                             Type = "Level_2",
                             Parent = "GOVERNMENT",
@@ -385,7 +385,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'OECD_DAC' - Gov: OECD/DAC");
+                        Console.WriteLine($"Created: PartnerTree with Code 'OECD_DAC' - Gov: OECD/DAC.");
                         createdCount++;
                     }
                 }
@@ -397,7 +397,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "UK";
+                        existingRecord.Name = "UK.";
                         existingRecord.Description = "UK United Kingdom";
                         existingRecord.Type = "Level_3";
                         existingRecord.Parent = "OECD_DAC";
@@ -411,7 +411,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'UK' - UK");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UK' - UK.");
                         updatedCount++;
                     }
                     else
@@ -419,7 +419,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "UK",
-                            Name = "UK",
+                            Name = "UK.",
                             Description = "UK United Kingdom",
                             Type = "Level_3",
                             Parent = "OECD_DAC",
@@ -437,7 +437,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'UK' - UK");
+                        Console.WriteLine($"Created: PartnerTree with Code 'UK' - UK.");
                         createdCount++;
                     }
                 }
@@ -449,7 +449,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "Camara de Comercio de Cortes";
+                        existingRecord.Name = "Camara de Comercio de Cortes.";
                         existingRecord.Description = "Camara de Comercio de Cortes";
                         existingRecord.Type = "Level_2";
                         existingRecord.Parent = "PRIVATE_SECTOR";
@@ -463,7 +463,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'CAMARA_DE_COMERCIO_DE_CO' - Camara de Comercio de Cortes");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'CAMARA_DE_COMERCIO_DE_CO' - Camara de Comercio de Cortes.");
                         updatedCount++;
                     }
                     else
@@ -471,7 +471,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "CAMARA_DE_COMERCIO_DE_CO",
-                            Name = "Camara de Comercio de Cortes",
+                            Name = "Camara de Comercio de Cortes.",
                             Description = "Camara de Comercio de Cortes",
                             Type = "Level_2",
                             Parent = "PRIVATE_SECTOR",
@@ -489,7 +489,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'CAMARA_DE_COMERCIO_DE_CO' - Camara de Comercio de Cortes");
+                        Console.WriteLine($"Created: PartnerTree with Code 'CAMARA_DE_COMERCIO_DE_CO' - Camara de Comercio de Cortes.");
                         createdCount++;
                     }
                 }
@@ -501,7 +501,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "Carlsberg";
+                        existingRecord.Name = "Carlsberg.";
                         existingRecord.Description = "Carlsberg Group A/S";
                         existingRecord.Type = "Level_2";
                         existingRecord.Parent = "PRIVATE_SECTOR";
@@ -515,7 +515,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'CARLSBERG' - Carlsberg");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'CARLSBERG' - Carlsberg.");
                         updatedCount++;
                     }
                     else
@@ -523,7 +523,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "CARLSBERG",
-                            Name = "Carlsberg",
+                            Name = "Carlsberg.",
                             Description = "Carlsberg Group A/S",
                             Type = "Level_2",
                             Parent = "PRIVATE_SECTOR",
@@ -541,7 +541,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'CARLSBERG' - Carlsberg");
+                        Console.WriteLine($"Created: PartnerTree with Code 'CARLSBERG' - Carlsberg.");
                         createdCount++;
                     }
                 }
@@ -553,7 +553,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "Other";
+                        existingRecord.Name = "Other.";
                         existingRecord.Description = "Other";
                         existingRecord.Type = "Level_1";
                         existingRecord.Parent = null;
@@ -567,7 +567,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'OTHER' - Other");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'OTHER' - Other.");
                         updatedCount++;
                     }
                     else
@@ -575,7 +575,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "OTHER",
-                            Name = "Other",
+                            Name = "Other.",
                             Description = "Other",
                             Type = "Level_1",
                             Parent = null,
@@ -593,7 +593,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'OTHER' - Other");
+                        Console.WriteLine($"Created: PartnerTree with Code 'OTHER' - Other.");
                         createdCount++;
                     }
                 }
@@ -605,7 +605,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "Multilateral";
+                        existingRecord.Name = "Multilateral.";
                         existingRecord.Description = "Multilateral";
                         existingRecord.Type = "Level_1";
                         existingRecord.Parent = null;
@@ -619,7 +619,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'MULTILATERAL' - Multilateral");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'MULTILATERAL' - Multilateral.");
                         updatedCount++;
                     }
                     else
@@ -627,7 +627,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "MULTILATERAL",
-                            Name = "Multilateral",
+                            Name = "Multilateral.",
                             Description = "Multilateral",
                             Type = "Level_1",
                             Parent = null,
@@ -645,7 +645,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'MULTILATERAL' - Multilateral");
+                        Console.WriteLine($"Created: PartnerTree with Code 'MULTILATERAL' - Multilateral.");
                         createdCount++;
                     }
                 }
@@ -657,7 +657,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "Regional & Other IGO";
+                        existingRecord.Name = "Regional & Other IGO.";
                         existingRecord.Description = "Regional and other Intergovernmental Organizations";
                         existingRecord.Type = "Level_2";
                         existingRecord.Parent = "MULTILATERAL";
@@ -671,7 +671,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'REG_OTH_INGO' - Regional & Other IGO");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'REG_OTH_INGO' - Regional & Other IGO.");
                         updatedCount++;
                     }
                     else
@@ -679,7 +679,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "REG_OTH_INGO",
-                            Name = "Regional & Other IGO",
+                            Name = "Regional & Other IGO.",
                             Description = "Regional and other Intergovernmental Organizations",
                             Type = "Level_2",
                             Parent = "MULTILATERAL",
@@ -697,7 +697,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'REG_OTH_INGO' - Regional & Other IGO");
+                        Console.WriteLine($"Created: PartnerTree with Code 'REG_OTH_INGO' - Regional & Other IGO.");
                         createdCount++;
                     }
                 }
@@ -709,7 +709,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "EU";
+                        existingRecord.Name = "EU.";
                         existingRecord.Description = "EU European Union";
                         existingRecord.Type = "Level_3";
                         existingRecord.Parent = "REG_OTH_INGO";
@@ -723,7 +723,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'EU' - EU");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'EU' - EU.");
                         updatedCount++;
                     }
                     else
@@ -731,7 +731,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "EU",
-                            Name = "EU",
+                            Name = "EU.",
                             Description = "EU European Union",
                             Type = "Level_3",
                             Parent = "REG_OTH_INGO",
@@ -749,7 +749,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'EU' - EU");
+                        Console.WriteLine($"Created: PartnerTree with Code 'EU' - EU.");
                         createdCount++;
                     }
                 }
@@ -761,7 +761,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "Hotel New Otani Tokyo";
+                        existingRecord.Name = "Hotel New Otani Tokyo.";
                         existingRecord.Description = "Hotel New Otani Tokyo";
                         existingRecord.Type = "Level_2";
                         existingRecord.Parent = "PRIVATE_SECTOR";
@@ -775,7 +775,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'HOTEL_NEW_OTANI_TOKYO' - Hotel New Otani Tokyo");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'HOTEL_NEW_OTANI_TOKYO' - Hotel New Otani Tokyo.");
                         updatedCount++;
                     }
                     else
@@ -783,7 +783,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "HOTEL_NEW_OTANI_TOKYO",
-                            Name = "Hotel New Otani Tokyo",
+                            Name = "Hotel New Otani Tokyo.",
                             Description = "Hotel New Otani Tokyo",
                             Type = "Level_2",
                             Parent = "PRIVATE_SECTOR",
@@ -801,7 +801,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'HOTEL_NEW_OTANI_TOKYO' - Hotel New Otani Tokyo");
+                        Console.WriteLine($"Created: PartnerTree with Code 'HOTEL_NEW_OTANI_TOKYO' - Hotel New Otani Tokyo.");
                         createdCount++;
                     }
                 }
@@ -813,7 +813,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "Human Practice Fdn";
+                        existingRecord.Name = "Human Practice Fdn.";
                         existingRecord.Description = "Human Practice Foundation";
                         existingRecord.Type = "Level_2";
                         existingRecord.Parent = "FOUNDATION";
@@ -827,7 +827,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'HUMAN_PRACTICE_FDN' - Human Practice Fdn");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'HUMAN_PRACTICE_FDN' - Human Practice Fdn.");
                         updatedCount++;
                     }
                     else
@@ -835,7 +835,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "HUMAN_PRACTICE_FDN",
-                            Name = "Human Practice Fdn",
+                            Name = "Human Practice Fdn.",
                             Description = "Human Practice Foundation",
                             Type = "Level_2",
                             Parent = "FOUNDATION",
@@ -853,7 +853,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'HUMAN_PRACTICE_FDN' - Human Practice Fdn");
+                        Console.WriteLine($"Created: PartnerTree with Code 'HUMAN_PRACTICE_FDN' - Human Practice Fdn.");
                         createdCount++;
                     }
                 }
@@ -865,7 +865,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "IFU";
+                        existingRecord.Name = "IFU.";
                         existingRecord.Description = "IFU - Impact Fund Denmark";
                         existingRecord.Type = "Level_2";
                         existingRecord.Parent = "PRIVATE_SECTOR";
@@ -879,7 +879,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'IFU' - IFU");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'IFU' - IFU.");
                         updatedCount++;
                     }
                     else
@@ -887,7 +887,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "IFU",
-                            Name = "IFU",
+                            Name = "IFU.",
                             Description = "IFU - Impact Fund Denmark",
                             Type = "Level_2",
                             Parent = "PRIVATE_SECTOR",
@@ -905,7 +905,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'IFU' - IFU");
+                        Console.WriteLine($"Created: PartnerTree with Code 'IFU' - IFU.");
                         createdCount++;
                     }
                 }
@@ -917,7 +917,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "Japan";
+                        existingRecord.Name = "Japan.";
                         existingRecord.Description = "Japan";
                         existingRecord.Type = "Level_3";
                         existingRecord.Parent = "OECD_DAC";
@@ -931,7 +931,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'JAPAN' - Japan");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'JAPAN' - Japan.");
                         updatedCount++;
                     }
                     else
@@ -939,7 +939,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "JAPAN",
-                            Name = "Japan",
+                            Name = "Japan.",
                             Description = "Japan",
                             Type = "Level_3",
                             Parent = "OECD_DAC",
@@ -957,7 +957,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'JAPAN' - Japan");
+                        Console.WriteLine($"Created: PartnerTree with Code 'JAPAN' - Japan.");
                         createdCount++;
                     }
                 }
@@ -969,7 +969,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "Denmark";
+                        existingRecord.Name = "Denmark.";
                         existingRecord.Description = "Denmark";
                         existingRecord.Type = "Level_3";
                         existingRecord.Parent = "OECD_DAC";
@@ -983,7 +983,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'DENMARK' - Denmark");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'DENMARK' - Denmark.");
                         updatedCount++;
                     }
                     else
@@ -991,7 +991,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "DENMARK",
-                            Name = "Denmark",
+                            Name = "Denmark.",
                             Description = "Denmark",
                             Type = "Level_3",
                             Parent = "OECD_DAC",
@@ -1009,7 +1009,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'DENMARK' - Denmark");
+                        Console.WriteLine($"Created: PartnerTree with Code 'DENMARK' - Denmark.");
                         createdCount++;
                     }
                 }
@@ -1021,7 +1021,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "Italiy";
+                        existingRecord.Name = "Italiy.";
                         existingRecord.Description = "Italy";
                         existingRecord.Type = "Level_3";
                         existingRecord.Parent = "OECD_DAC";
@@ -1035,7 +1035,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'ITA001' - Italiy");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'ITA001' - Italiy.");
                         updatedCount++;
                     }
                     else
@@ -1043,7 +1043,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "ITA001",
-                            Name = "Italiy",
+                            Name = "Italiy.",
                             Description = "Italy",
                             Type = "Level_3",
                             Parent = "OECD_DAC",
@@ -1061,7 +1061,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'ITA001' - Italiy");
+                        Console.WriteLine($"Created: PartnerTree with Code 'ITA001' - Italiy.");
                         createdCount++;
                     }
                 }
@@ -1073,7 +1073,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "NEC";
+                        existingRecord.Name = "NEC.";
                         existingRecord.Description = "NEC Corporation";
                         existingRecord.Type = "Level_2";
                         existingRecord.Parent = "PRIVATE_SECTOR";
@@ -1087,7 +1087,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'NEC' - NEC");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'NEC' - NEC.");
                         updatedCount++;
                     }
                     else
@@ -1095,7 +1095,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "NEC",
-                            Name = "NEC",
+                            Name = "NEC.",
                             Description = "NEC Corporation",
                             Type = "Level_2",
                             Parent = "PRIVATE_SECTOR",
@@ -1113,7 +1113,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'NEC' - NEC");
+                        Console.WriteLine($"Created: PartnerTree with Code 'NEC' - NEC.");
                         createdCount++;
                     }
                 }
@@ -1125,7 +1125,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "Academic, Training and Research";
+                        existingRecord.Name = "Academic, Training and Research.";
                         existingRecord.Description = "Academic, Training and Research";
                         existingRecord.Type = "Level_1";
                         existingRecord.Parent = null;
@@ -1139,7 +1139,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'ACADEMIC_TRAINING_RESEARC' - Academic, Training and Research");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'ACADEMIC_TRAINING_RESEARC' - Academic, Training and Research.");
                         updatedCount++;
                     }
                     else
@@ -1147,7 +1147,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "ACADEMIC_TRAINING_RESEARC",
-                            Name = "Academic, Training and Research",
+                            Name = "Academic, Training and Research.",
                             Description = "Academic, Training and Research",
                             Type = "Level_1",
                             Parent = null,
@@ -1165,7 +1165,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'ACADEMIC_TRAINING_RESEARC' - Academic, Training and Research");
+                        Console.WriteLine($"Created: PartnerTree with Code 'ACADEMIC_TRAINING_RESEARC' - Academic, Training and Research.");
                         createdCount++;
                     }
                 }
@@ -1177,7 +1177,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "NRI";
+                        existingRecord.Name = "NRI.";
                         existingRecord.Description = "Nomura Research Institute (NRI)";
                         existingRecord.Type = "Level_2";
                         existingRecord.Parent = "ACADEMIC_TRAINING_RESEARC";
@@ -1191,7 +1191,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'NRI' - NRI");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'NRI' - NRI.");
                         updatedCount++;
                     }
                     else
@@ -1199,7 +1199,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "NRI",
-                            Name = "NRI",
+                            Name = "NRI.",
                             Description = "Nomura Research Institute (NRI)",
                             Type = "Level_2",
                             Parent = "ACADEMIC_TRAINING_RESEARC",
@@ -1217,7 +1217,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'NRI' - NRI");
+                        Console.WriteLine($"Created: PartnerTree with Code 'NRI' - NRI.");
                         createdCount++;
                     }
                 }
@@ -1229,7 +1229,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "UN";
+                        existingRecord.Name = "UN.";
                         existingRecord.Description = "United Nations";
                         existingRecord.Type = "Level_2";
                         existingRecord.Parent = "MULTILATERAL";
@@ -1243,7 +1243,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'UNITED_NATIONS' - UN");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNITED_NATIONS' - UN.");
                         updatedCount++;
                     }
                     else
@@ -1251,7 +1251,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "UNITED_NATIONS",
-                            Name = "UN",
+                            Name = "UN.",
                             Description = "United Nations",
                             Type = "Level_2",
                             Parent = "MULTILATERAL",
@@ -1269,7 +1269,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'UNITED_NATIONS' - UN");
+                        Console.WriteLine($"Created: PartnerTree with Code 'UNITED_NATIONS' - UN.");
                         createdCount++;
                     }
                 }
@@ -1281,7 +1281,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "UN Departments and Offices";
+                        existingRecord.Name = "UN Departments and Offices.";
                         existingRecord.Description = "United Nations Departments and Offices";
                         existingRecord.Type = "Level_3";
                         existingRecord.Parent = "UNITED_NATIONS";
@@ -1295,7 +1295,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'DEPARTMENT_OFFICE' - UN Departments and Offices");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'DEPARTMENT_OFFICE' - UN Departments and Offices.");
                         updatedCount++;
                     }
                     else
@@ -1303,7 +1303,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "DEPARTMENT_OFFICE",
-                            Name = "UN Departments and Offices",
+                            Name = "UN Departments and Offices.",
                             Description = "United Nations Departments and Offices",
                             Type = "Level_3",
                             Parent = "UNITED_NATIONS",
@@ -1321,7 +1321,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'DEPARTMENT_OFFICE' - UN Departments and Offices");
+                        Console.WriteLine($"Created: PartnerTree with Code 'DEPARTMENT_OFFICE' - UN Departments and Offices.");
                         createdCount++;
                     }
                 }
@@ -1333,7 +1333,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "UN DCO";
+                        existingRecord.Name = "UN DCO.";
                         existingRecord.Description = "UN DCO United Nations Development Coordination Office";
                         existingRecord.Type = "Level_4";
                         existingRecord.Parent = "DEPARTMENT_OFFICE";
@@ -1347,7 +1347,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_DCO' - UN DCO");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_DCO' - UN DCO.");
                         updatedCount++;
                     }
                     else
@@ -1355,7 +1355,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "UN_DCO",
-                            Name = "UN DCO",
+                            Name = "UN DCO.",
                             Description = "UN DCO United Nations Development Coordination Office",
                             Type = "Level_4",
                             Parent = "DEPARTMENT_OFFICE",
@@ -1373,7 +1373,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'UN_DCO' - UN DCO");
+                        Console.WriteLine($"Created: PartnerTree with Code 'UN_DCO' - UN DCO.");
                         createdCount++;
                     }
                 }
@@ -1385,7 +1385,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "Gov: Non-OECD/DAC";
+                        existingRecord.Name = "Gov: Non-OECD/DAC.";
                         existingRecord.Description = "Non-OECD/DAC Government";
                         existingRecord.Type = "Level_2";
                         existingRecord.Parent = "GOVERNMENT";
@@ -1399,7 +1399,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'NON_OECD_DAC' - Gov: Non-OECD/DAC");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'NON_OECD_DAC' - Gov: Non-OECD/DAC.");
                         updatedCount++;
                     }
                     else
@@ -1407,7 +1407,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "NON_OECD_DAC",
-                            Name = "Gov: Non-OECD/DAC",
+                            Name = "Gov: Non-OECD/DAC.",
                             Description = "Non-OECD/DAC Government",
                             Type = "Level_2",
                             Parent = "GOVERNMENT",
@@ -1425,7 +1425,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'NON_OECD_DAC' - Gov: Non-OECD/DAC");
+                        Console.WriteLine($"Created: PartnerTree with Code 'NON_OECD_DAC' - Gov: Non-OECD/DAC.");
                         createdCount++;
                     }
                 }
@@ -1437,7 +1437,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "Honduras";
+                        existingRecord.Name = "Honduras.";
                         existingRecord.Description = "Honduras";
                         existingRecord.Type = "Level_3";
                         existingRecord.Parent = "NON_OECD_DAC";
@@ -1451,7 +1451,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'HONDURAS' - Honduras");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'HONDURAS' - Honduras.");
                         updatedCount++;
                     }
                     else
@@ -1459,7 +1459,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "HONDURAS",
-                            Name = "Honduras",
+                            Name = "Honduras.",
                             Description = "Honduras",
                             Type = "Level_3",
                             Parent = "NON_OECD_DAC",
@@ -1477,7 +1477,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'HONDURAS' - Honduras");
+                        Console.WriteLine($"Created: PartnerTree with Code 'HONDURAS' - Honduras.");
                         createdCount++;
                     }
                 }
@@ -1489,7 +1489,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "Twinbird";
+                        existingRecord.Name = "Twinbird.";
                         existingRecord.Description = "Twinbird Corporation";
                         existingRecord.Type = "Level_2";
                         existingRecord.Parent = "PRIVATE_SECTOR";
@@ -1503,7 +1503,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'TWINBIRD' - Twinbird");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'TWINBIRD' - Twinbird.");
                         updatedCount++;
                     }
                     else
@@ -1511,7 +1511,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "TWINBIRD",
-                            Name = "Twinbird",
+                            Name = "Twinbird.",
                             Description = "Twinbird Corporation",
                             Type = "Level_2",
                             Parent = "PRIVATE_SECTOR",
@@ -1529,7 +1529,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'TWINBIRD' - Twinbird");
+                        Console.WriteLine($"Created: PartnerTree with Code 'TWINBIRD' - Twinbird.");
                         createdCount++;
                     }
                 }
@@ -1541,7 +1541,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "UN - Rome";
+                        existingRecord.Name = "UN - Rome.";
                         existingRecord.Description = "UN in Rome";
                         existingRecord.Type = "Level_4";
                         existingRecord.Parent = "DEPARTMENT_OFFICE";
@@ -1555,7 +1555,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_-_ROME' - UN - Rome");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_-_ROME' - UN - Rome.");
                         updatedCount++;
                     }
                     else
@@ -1563,7 +1563,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "UN_-_ROME",
-                            Name = "UN - Rome",
+                            Name = "UN - Rome.",
                             Description = "UN in Rome",
                             Type = "Level_4",
                             Parent = "DEPARTMENT_OFFICE",
@@ -1581,7 +1581,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'UN_-_ROME' - UN - Rome");
+                        Console.WriteLine($"Created: PartnerTree with Code 'UN_-_ROME' - UN - Rome.");
                         createdCount++;
                     }
                 }
@@ -1593,7 +1593,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        existingRecord.Name = "Yamaha";
+                        existingRecord.Name = "Yamaha.";
                         existingRecord.Description = "Yamaha Motor Co., Ltd.";
                         existingRecord.Type = "Level_2";
                         existingRecord.Parent = "PRIVATE_SECTOR";
@@ -1607,7 +1607,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'YAMAHA' - Yamaha");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'YAMAHA' - Yamaha.");
                         updatedCount++;
                     }
                     else
@@ -1615,7 +1615,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         var newRecord = new UNOPSPartnerTree
                         {
                             Code = "YAMAHA",
-                            Name = "Yamaha",
+                            Name = "Yamaha.",
                             Description = "Yamaha Motor Co., Ltd.",
                             Type = "Level_2",
                             Parent = "PRIVATE_SECTOR",
@@ -1633,7 +1633,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Add(newRecord);
                         await context.SaveChangesAsync();
                         createdRecordIds.Add(newRecord.Id);
-                        Console.WriteLine($"Created: PartnerTree with Code 'YAMAHA' - Yamaha");
+                        Console.WriteLine($"Created: PartnerTree with Code 'YAMAHA' - Yamaha.");
                         createdCount++;
                     }
                 }
@@ -1641,7 +1641,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                 // Commit transaction
                 await transaction.CommitAsync();
                 
-                Console.WriteLine($"\nUnapproved PartnerTree seeding completed successfully.");
+                Console.WriteLine($"\nUnapproved PartnerTree DummyName seeding completed successfully.");
                 Console.WriteLine($"Total records processed: {updatedCount + createdCount}");
                 Console.WriteLine($"Records updated: {updatedCount}");
                 Console.WriteLine($"Records created: {createdCount}");
@@ -1659,7 +1659,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
             {
                 // Rollback transaction if any error occurred
                 await transaction.RollbackAsync();
-                Console.WriteLine($"Error during Unapproved PartnerTree seeding: {ex.Message}");
+                Console.WriteLine($"Error during Unapproved PartnerTree DummyName seeding: {ex.Message}");
                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 throw;
             }

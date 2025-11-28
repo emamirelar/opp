@@ -4,7 +4,8 @@ from datetime import datetime
 
 def process_csv_and_generate_seeder(csv_file_path, output_cs_file_path):
     """
-    Process the partner category/group CSV file and generate C# seeder code.
+    Process the unapproved partner category/group CSV file and generate C# seeder code
+    to create missing PartnerTree records with '.' added to Name for dummy name testing.
     """
     
     partner_tree_records = []
@@ -31,10 +32,10 @@ def process_csv_and_generate_seeder(csv_file_path, output_cs_file_path):
                 # Determine parent (previous level code)
                 parent_code = row.get(f'Partner_Level{level_num - 1}', '').strip() if level_num > 1 else ''
                 
-                # Create record dictionary
+                # Create record dictionary with '.' added to Name
                 record = {
                     'Code': level_code,
-                    'Name': level_desc_short,
+                    'Name': level_desc_short + '.',  # Add '.' to the end of Name
                     'Description': level_desc,
                     'Type': f'Level_{level_num}',
                     'Parent': parent_code if parent_code else 'null',
@@ -50,7 +51,7 @@ def process_csv_and_generate_seeder(csv_file_path, output_cs_file_path):
     generate_csharp_seeder(partner_tree_records, output_cs_file_path)
     
     print(f"\nProcessing complete!")
-    print(f"Total unique partner tree records to process: {len(partner_tree_records)}")
+    print(f"Total unique unapproved partner tree records to process: {len(partner_tree_records)}")
     print(f"C# seeder file generated: {output_cs_file_path}")
 
 
@@ -72,11 +73,11 @@ using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
 {
-    public static class PartnerTreeSeeder_v3
+    public static class UnapprovedPartnerTreeSeeder_DummyName_v3
     {
-        public static async Task SeedPartnerTreeAsync(UNOPSAppDbContext context)
+        public static async Task SeedUnapprovedPartnerTreeDummyNameAsync(UNOPSAppDbContext context)
         {
-            Console.WriteLine("Starting PartnerTree seeding process (v3)...");
+            Console.WriteLine("Starting Unapproved PartnerTree DummyName seeding process (v3)...");
             
             int updatedCount = 0;
             int createdCount = 0;
@@ -92,13 +93,13 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
     
     # Add seeding logic for each record
     for idx, record in enumerate(records):
-        code = record['Code'].replace("'", "\\'")  # Escape single quotes
-        name = record['Name'].replace("'", "\\'")
-        description = record['Description'].replace("'", "\\'")
+        code = record['Code'].replace("'", "\\'").replace('"', '\\"')
+        name = record['Name'].replace("'", "\\'").replace('"', '\\"')  # Name already has '.' added
+        description = record['Description'].replace("'", "\\'").replace('"', '\\"')
         type_value = record['Type']
-        parent = f'"{record["Parent"].replace("'", "\\'")}\"' if record['Parent'] != 'null' else 'null'
-        category_code = f'"{record["PartnerCategoryCode"].replace("'", "\\'")}\"' if record['PartnerCategoryCode'] != 'null' else 'null'
-        group_code = f'"{record["PartnerGroupCode"].replace("'", "\\'")}\"' if record['PartnerGroupCode'] != 'null' else 'null'
+        parent = f'"{record["Parent"].replace("'", "\\'").replace('"', '\\"')}"' if record['Parent'] != 'null' else 'null'
+        category_code = f'"{record["PartnerCategoryCode"].replace("'", "\\'").replace('"', '\\"')}"' if record['PartnerCategoryCode'] != 'null' else 'null'
+        group_code = f'"{record["PartnerGroupCode"].replace("'", "\\'").replace('"', '\\"')}"' if record['PartnerGroupCode'] != 'null' else 'null'
         
         cs_code += f"""                // Record {idx + 1}: {code}
                 {{
@@ -158,7 +159,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
     cs_code += """                // Commit transaction
                 await transaction.CommitAsync();
                 
-                Console.WriteLine($"\\nPartnerTree seeding completed successfully.");
+                Console.WriteLine($"\\nUnapproved PartnerTree DummyName seeding completed successfully.");
                 Console.WriteLine($"Total records processed: {updatedCount + createdCount}");
                 Console.WriteLine($"Records updated: {updatedCount}");
                 Console.WriteLine($"Records created: {createdCount}");
@@ -176,7 +177,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
             {
                 // Rollback transaction if any error occurred
                 await transaction.RollbackAsync();
-                Console.WriteLine($"Error during PartnerTree seeding: {ex.Message}");
+                Console.WriteLine($"Error during Unapproved PartnerTree DummyName seeding: {ex.Message}");
                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 throw;
             }
@@ -232,15 +233,17 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
 if __name__ == "__main__":
     # Define file paths
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    csv_file = os.path.join(script_dir, "Partner_Category_Group_Import_File_v3 - Sheet4.csv")
+    # CSV file is in the CSV subdirectory of the parent directory
+    csv_file = os.path.join(script_dir, "..", "CSV", "Unapproved_Partner_CategoryGroup_Seeder - Sheet1.csv")
     
-    # Navigate to project root and then to the seeder file location
-    project_root = os.path.abspath(os.path.join(script_dir, "..", "..", ".."))
-    output_file = os.path.join(project_root, "UNOPS.PAO.UNOPSDataAccess", "Seed", "Seeders", "PartnerTreeSeeder_v3.cs")
+    # Navigate to workspace root (4 levels up from script location) and then to Seeders folder
+    workspace_root = os.path.abspath(os.path.join(script_dir, "..", "..", "..", ".."))
+    output_file = os.path.join(workspace_root, "UNOPS.PAO.UNOPSDataAccess", "Seed", "Seeders", "UnapprovedPartnerTreeSeeder_DummyName_v3.cs")
     
     # Ensure output directory exists
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     
     # Process CSV and generate seeder
     process_csv_and_generate_seeder(csv_file, output_file)
+
 
