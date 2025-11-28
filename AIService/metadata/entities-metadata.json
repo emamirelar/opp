@@ -1053,6 +1053,840 @@
           "description": "Whether this is a category (true) or group (false)"
         }
       ]
+    },
+    "OpportunityRequest": {
+      "description": "Request model for creating/updating opportunities",
+      "fields": [
+        {
+          "name": "Name",
+          "dataType": "string",
+          "required": true,
+          "description": "Opportunity name (max 255 characters)"
+        },
+        {
+          "name": "Description",
+          "dataType": "string",
+          "required": true,
+          "description": "Detailed description of the opportunity"
+        },
+        {
+          "name": "PartnerReference",
+          "dataType": "string",
+          "required": false,
+          "description": "Partner reference number (max 255 characters)"
+        },
+        {
+          "name": "WorkflowStageId",
+          "dataType": "int",
+          "required": false,
+          "description": "Foreign key to workflow stage"
+        },
+        {
+          "name": "ResponsibleOrgUnitId",
+          "dataType": "int",
+          "required": false,
+          "description": "Foreign key to responsible organization unit"
+        },
+        {
+          "name": "PartnershipAgreementReference",
+          "dataType": "string",
+          "required": false,
+          "description": "Partnership agreement reference number"
+        },
+        {
+          "name": "InitiativeBudgetUSD",
+          "dataType": "decimal",
+          "required": false,
+          "description": "Initiative budget in USD"
+        },
+        {
+          "name": "TargetSigningDate",
+          "dataType": "datetime",
+          "required": false,
+          "description": "Target date for signing the agreement"
+        },
+        {
+          "name": "TargetDeliveryDate",
+          "dataType": "datetime",
+          "required": false,
+          "description": "Target date for delivery completion"
+        },
+        {
+          "name": "ProposedInitiativeTypeId",
+          "dataType": "int",
+          "required": false,
+          "description": "Foreign key to proposed initiative type"
+        },
+        {
+          "name": "StrategicAlignment",
+          "dataType": "string",
+          "required": false,
+          "description": "Strategic alignment description (max 1000 characters)"
+        },
+        {
+          "name": "ResultsFocus",
+          "dataType": "string",
+          "required": false,
+          "description": "Results focus description (max 2000 characters)"
+        },
+        {
+          "name": "IntendedImpactOutcomes",
+          "dataType": "string",
+          "required": false,
+          "description": "Intended impact and outcomes (max 2000 characters)"
+        },
+        {
+          "name": "ExpectedBeneficiaries",
+          "dataType": "string",
+          "required": false,
+          "description": "Expected beneficiaries description (max 1000 characters)"
+        },
+        {
+          "name": "Challenges",
+          "dataType": "string",
+          "required": false,
+          "description": "Challenges that the initiative will address (max 2000 characters)"
+        },
+        {
+          "name": "IsPooledFunding",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Whether funding is pooled across multiple partners"
+        },
+        {
+          "name": "FundingPartners",
+          "dataType": "OpportunityFundingPartnerRequest[]",
+          "required": false,
+          "description": "List of funding partners"
+        },
+        {
+          "name": "ClientPartners",
+          "dataType": "OpportunityClientPartnerRequest[]",
+          "required": false,
+          "description": "List of client partners"
+        },
+        {
+          "name": "Stakeholders",
+          "dataType": "OpportunityStakeholderRequest[]",
+          "required": false,
+          "description": "List of team members and stakeholders"
+        },
+        {
+          "name": "Deliverables",
+          "dataType": "OpportunityDeliverableRequest[]",
+          "required": false,
+          "description": "List of deliverables (products and services)"
+        },
+        {
+          "name": "Countries",
+          "dataType": "OpportunityCountryRequest[]",
+          "required": false,
+          "description": "List of implementation countries"
+        },
+        {
+          "name": "SDGs",
+          "dataType": "OpportunitySDGRequest[]",
+          "required": false,
+          "description": "List of SDG alignments"
+        }
+      ]
+    },
+    "OpportunityFilterRequest": {
+      "description": "Filter request for opportunity searches",
+      "inheritsFrom": "PaginationRequest",
+      "fields": [
+        {
+          "name": "SearchText",
+          "dataType": "string",
+          "required": false,
+          "description": "General search text to search across opportunity fields"
+        },
+        {
+          "name": "Id",
+          "dataType": "int",
+          "required": false,
+          "description": "Opportunity ID filter"
+        },
+        {
+          "name": "Name",
+          "dataType": "string",
+          "required": false,
+          "description": "Name filter"
+        },
+        {
+          "name": "Status",
+          "dataType": "string",
+          "required": false,
+          "description": "Status filter"
+        },
+        {
+          "name": "WorkflowStageId",
+          "dataType": "int",
+          "required": false,
+          "description": "Workflow stage ID filter"
+        },
+        {
+          "name": "ResponsibleOrgUnitId",
+          "dataType": "int",
+          "required": false,
+          "description": "Responsible organization unit ID filter"
+        },
+        {
+          "name": "ProposedInitiativeTypeId",
+          "dataType": "int",
+          "required": false,
+          "description": "Proposed initiative type ID filter"
+        },
+        {
+          "name": "OrgUnitId",
+          "dataType": "int",
+          "required": false,
+          "description": "Organization Unit filter - filters results by organizational unit (includes hierarchy)"
+        },
+        {
+          "name": "FilterActive",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Whether to filter only active opportunities (default: true)"
+        },
+        {
+          "name": "AdvancedSearch",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Indicates if advanced search is enabled"
+        },
+        {
+          "name": "SearchCriteria",
+          "dataType": "string",
+          "required": false,
+          "description": "JSON string containing the search criteria"
+        }
+      ]
+    },
+    "OpportunityFundingPartnerRequest": {
+      "description": "Request model for opportunity funding partner data",
+      "fields": [
+        {
+          "name": "PartnerId",
+          "dataType": "int",
+          "required": true,
+          "description": "Partner ID"
+        },
+        {
+          "name": "FundedAmount",
+          "dataType": "decimal",
+          "required": false,
+          "description": "Funded amount"
+        },
+        {
+          "name": "Amount",
+          "dataType": "decimal",
+          "required": false,
+          "description": "Amount (alias for FundedAmount)"
+        },
+        {
+          "name": "Percentage",
+          "dataType": "decimal",
+          "required": false,
+          "description": "Percentage of total funding"
+        },
+        {
+          "name": "CurrencyId",
+          "dataType": "int",
+          "required": false,
+          "description": "Currency ID for the amount"
+        },
+        {
+          "name": "FeePercentage",
+          "dataType": "decimal",
+          "required": false,
+          "description": "Fee percentage"
+        },
+        {
+          "name": "FeeAmount",
+          "dataType": "decimal",
+          "required": false,
+          "description": "Fee amount"
+        },
+        {
+          "name": "FeeAmountUSD",
+          "dataType": "decimal",
+          "required": false,
+          "description": "Fee amount in USD"
+        },
+        {
+          "name": "IsAmountBasedFee",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Whether fee is amount-based (true) or percentage-based (false)"
+        },
+        {
+          "name": "PartnershipAgreementReference",
+          "dataType": "string",
+          "required": false,
+          "description": "Partnership agreement reference"
+        },
+        {
+          "name": "DocumentId",
+          "dataType": "int",
+          "required": false,
+          "description": "Partner Results Framework document ID"
+        },
+        {
+          "name": "IsPooledContribution",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Whether this is a pooled contribution"
+        },
+        {
+          "name": "SelectedPartnerAgreementNumber",
+          "dataType": "string",
+          "required": false,
+          "description": "Selected partner agreement number"
+        }
+      ]
+    },
+    "OpportunityClientPartnerRequest": {
+      "description": "Request model for opportunity client partner data",
+      "fields": [
+        {
+          "name": "PartnerId",
+          "dataType": "int",
+          "required": true,
+          "description": "Partner ID"
+        },
+        {
+          "name": "DocumentId",
+          "dataType": "int",
+          "required": false,
+          "description": "Partner Results Framework document ID"
+        }
+      ]
+    },
+    "OpportunityStakeholderRequest": {
+      "description": "Request model for opportunity stakeholder/team member data",
+      "fields": [
+        {
+          "name": "EntityRoleId",
+          "dataType": "int",
+          "required": true,
+          "description": "Entity role ID defining the stakeholder's role"
+        },
+        {
+          "name": "UserId",
+          "dataType": "int",
+          "required": false,
+          "description": "User ID if stakeholder is an internal user"
+        }
+      ]
+    },
+    "OpportunityDeliverableRequest": {
+      "description": "Request model for opportunity deliverable (product/service) data",
+      "fields": [
+        {
+          "name": "OutputId",
+          "dataType": "int",
+          "required": true,
+          "description": "Output/deliverable type ID"
+        },
+        {
+          "name": "Quantity",
+          "dataType": "decimal",
+          "required": false,
+          "description": "Quantity of the deliverable"
+        },
+        {
+          "name": "Notes",
+          "dataType": "string",
+          "required": false,
+          "description": "Additional notes for the deliverable"
+        }
+      ]
+    },
+    "OpportunityCountryRequest": {
+      "description": "Request model for opportunity implementation country data",
+      "fields": [
+        {
+          "name": "CountryId",
+          "dataType": "int",
+          "required": true,
+          "description": "Country ID"
+        }
+      ]
+    },
+    "OpportunitySDGRequest": {
+      "description": "Request model for opportunity SDG alignment data",
+      "fields": [
+        {
+          "name": "SDGId",
+          "dataType": "int",
+          "required": true,
+          "description": "Sustainable Development Goal ID"
+        }
+      ]
+    },
+    "OverviewSectionRequest": {
+      "description": "Request model for updating the Overview section of an opportunity",
+      "fields": [
+        {
+          "name": "Name",
+          "dataType": "string",
+          "required": false,
+          "description": "Opportunity name"
+        },
+        {
+          "name": "Description",
+          "dataType": "string",
+          "required": false,
+          "description": "Opportunity description"
+        }
+      ]
+    },
+    "WhatSectionRequest": {
+      "description": "Request model for updating the WHAT section of an opportunity (org unit, initiative type, deliverables)",
+      "fields": [
+        {
+          "name": "Name",
+          "dataType": "string",
+          "required": false,
+          "description": "Opportunity name"
+        },
+        {
+          "name": "Description",
+          "dataType": "string",
+          "required": false,
+          "description": "Opportunity description"
+        },
+        {
+          "name": "ResponsibleOrgUnitId",
+          "dataType": "int",
+          "required": false,
+          "description": "Responsible organization unit ID"
+        },
+        {
+          "name": "ProposedInitiativeTypeId",
+          "dataType": "int",
+          "required": false,
+          "description": "Proposed initiative type ID"
+        },
+        {
+          "name": "DeliveryModality",
+          "dataType": "int",
+          "required": false,
+          "description": "Delivery modality (1=NotYetKnown, 2=AllDirect, 3=AllGrantSupport, 4=Mixed)"
+        },
+        {
+          "name": "Deliverables",
+          "dataType": "OpportunityDeliverableRequest[]",
+          "required": false,
+          "description": "List of deliverables"
+        }
+      ]
+    },
+    "WhySectionRequest": {
+      "description": "Request model for updating the WHY section of an opportunity (strategic alignment, beneficiaries, SDGs)",
+      "fields": [
+        {
+          "name": "StrategicAlignment",
+          "dataType": "string",
+          "required": false,
+          "description": "Strategic alignment description"
+        },
+        {
+          "name": "ResultsFocus",
+          "dataType": "string",
+          "required": false,
+          "description": "Results focus description"
+        },
+        {
+          "name": "IntendedImpactOutcomes",
+          "dataType": "string",
+          "required": false,
+          "description": "Intended impact and outcomes description"
+        },
+        {
+          "name": "ExpectedBeneficiaries",
+          "dataType": "string",
+          "required": false,
+          "description": "Expected beneficiaries description"
+        },
+        {
+          "name": "Challenges",
+          "dataType": "string",
+          "required": false,
+          "description": "Challenges that the initiative will address"
+        },
+        {
+          "name": "SdGs",
+          "dataType": "OpportunitySDGRequest[]",
+          "required": false,
+          "description": "List of SDG alignments"
+        }
+      ]
+    },
+    "WhoSectionRequest": {
+      "description": "Request model for updating the WHO section of an opportunity (partners, stakeholders)",
+      "fields": [
+        {
+          "name": "IsPooledFunding",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Whether funding is pooled across multiple partners"
+        },
+        {
+          "name": "FundingPartners",
+          "dataType": "OpportunityFundingPartnerRequest[]",
+          "required": false,
+          "description": "List of funding partners"
+        },
+        {
+          "name": "ClientPartners",
+          "dataType": "OpportunityClientPartnerRequest[]",
+          "required": false,
+          "description": "List of client partners"
+        },
+        {
+          "name": "Stakeholders",
+          "dataType": "OpportunityStakeholderRequest[]",
+          "required": false,
+          "description": "List of team members and stakeholders"
+        },
+        {
+          "name": "ExternalStakeholders",
+          "dataType": "OpportunityExternalStakeholderRequest[]",
+          "required": false,
+          "description": "List of external stakeholders (contacts)"
+        },
+        {
+          "name": "MiscExternalStakeholders",
+          "dataType": "string",
+          "required": false,
+          "description": "Free-text list of external stakeholders not in contact list"
+        },
+        {
+          "name": "ExternalStakeholderNotes",
+          "dataType": "string",
+          "required": false,
+          "description": "Additional notes about external stakeholders"
+        }
+      ]
+    },
+    "WhereSectionRequest": {
+      "description": "Request model for updating the WHERE section of an opportunity (countries)",
+      "fields": [
+        {
+          "name": "Countries",
+          "dataType": "OpportunityCountryRequest[]",
+          "required": false,
+          "description": "List of implementation countries"
+        }
+      ]
+    },
+    "WhenSectionRequest": {
+      "description": "Request model for updating the WHEN section of an opportunity (timeline)",
+      "fields": [
+        {
+          "name": "TargetSigningDate",
+          "dataType": "datetime",
+          "required": false,
+          "description": "Target signing date"
+        },
+        {
+          "name": "TargetDeliveryDate",
+          "dataType": "datetime",
+          "required": false,
+          "description": "Target delivery date"
+        },
+        {
+          "name": "Deliverables",
+          "dataType": "DeliverableDateUpdate[]",
+          "required": false,
+          "description": "Deliverables with updated planned dates"
+        }
+      ]
+    },
+    "DeliverableDateUpdate": {
+      "description": "DTO for updating deliverable planned dates in the WHEN section",
+      "fields": [
+        {
+          "name": "Id",
+          "dataType": "int",
+          "required": true,
+          "description": "Deliverable ID"
+        },
+        {
+          "name": "PlannedStartDate",
+          "dataType": "datetime",
+          "required": false,
+          "description": "Planned start date"
+        },
+        {
+          "name": "PlannedEndDate",
+          "dataType": "datetime",
+          "required": false,
+          "description": "Planned end date"
+        }
+      ]
+    },
+    "OpportunityProposalRequest": {
+      "description": "Request model for AI-powered opportunity proposal generation",
+      "fields": [
+        {
+          "name": "OpportunityName",
+          "dataType": "string",
+          "required": true,
+          "description": "Proposed opportunity name"
+        },
+        {
+          "name": "OpportunityDescription",
+          "dataType": "string",
+          "required": true,
+          "description": "Proposed opportunity description"
+        },
+        {
+          "name": "PartnerId",
+          "dataType": "int",
+          "required": false,
+          "description": "Context partner ID (from partner tabs)"
+        },
+        {
+          "name": "IsFundingPartner",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Whether context partner is a funding partner"
+        },
+        {
+          "name": "IsClientPartner",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Whether context partner is a client partner"
+        },
+        {
+          "name": "InteractionIds",
+          "dataType": "int[]",
+          "required": false,
+          "description": "List of interaction IDs to analyze"
+        },
+        {
+          "name": "NewDocumentStoragePaths",
+          "dataType": "string[]",
+          "required": false,
+          "description": "GCS paths of newly uploaded documents"
+        },
+        {
+          "name": "NewDocumentMimeTypes",
+          "dataType": "string[]",
+          "required": false,
+          "description": "MIME types for new documents"
+        },
+        {
+          "name": "ExistingDocumentIds",
+          "dataType": "int[]",
+          "required": false,
+          "description": "IDs of existing documents to analyze"
+        }
+      ]
+    },
+    "TagDocumentToPartnersRequest": {
+      "description": "Request model for tagging a document to partners as Partner Results Framework",
+      "fields": [
+        {
+          "name": "DocumentId",
+          "dataType": "int",
+          "required": true,
+          "description": "Document ID to tag"
+        },
+        {
+          "name": "FundingPartnerIds",
+          "dataType": "int[]",
+          "required": false,
+          "description": "List of funding partner IDs to tag"
+        },
+        {
+          "name": "ClientPartnerIds",
+          "dataType": "int[]",
+          "required": false,
+          "description": "List of client partner IDs to tag"
+        }
+      ]
+    },
+    "CreateOpportunityFromInteractionsRequest": {
+      "description": "Request model for creating an opportunity from an AI-generated proposal with user-accepted fields and resolved IDs",
+      "fields": [
+        {
+          "name": "Name",
+          "dataType": "string",
+          "required": true,
+          "description": "Opportunity name (user-provided)"
+        },
+        {
+          "name": "Description",
+          "dataType": "string",
+          "required": false,
+          "description": "Opportunity description (enhanced by AI)"
+        },
+        {
+          "name": "PartnerId",
+          "dataType": "int",
+          "required": false,
+          "description": "Partner ID associated with the interactions (only provided when creating from partner context)"
+        },
+        {
+          "name": "IsFundingPartner",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Whether partner is a funding partner (only required if PartnerId is provided)"
+        },
+        {
+          "name": "IsClientPartner",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Whether partner is a client partner (only required if PartnerId is provided)"
+        },
+        {
+          "name": "SourceInteractionIds",
+          "dataType": "int[]",
+          "required": false,
+          "description": "Source interaction IDs that were analyzed"
+        },
+        {
+          "name": "Documents",
+          "dataType": "NewDocumentRequest[]",
+          "required": false,
+          "description": "Newly uploaded documents to be persisted to database after opportunity creation"
+        },
+        {
+          "name": "PartnerReference",
+          "dataType": "string",
+          "required": false,
+          "description": "Partner reference number"
+        },
+        {
+          "name": "ResponsibleOrgUnitId",
+          "dataType": "int",
+          "required": false,
+          "description": "Responsible organization unit ID"
+        },
+        {
+          "name": "ProposedInitiativeTypeId",
+          "dataType": "int",
+          "required": false,
+          "description": "Proposed initiative type ID"
+        },
+        {
+          "name": "Deliverables",
+          "dataType": "OpportunityDeliverableRequest[]",
+          "required": false,
+          "description": "List of deliverables"
+        },
+        {
+          "name": "StrategicAlignment",
+          "dataType": "string",
+          "required": false,
+          "description": "Strategic alignment description"
+        },
+        {
+          "name": "ResultsFocus",
+          "dataType": "string",
+          "required": false,
+          "description": "Results focus description"
+        },
+        {
+          "name": "IntendedImpactOutcomes",
+          "dataType": "string",
+          "required": false,
+          "description": "Intended impact and outcomes"
+        },
+        {
+          "name": "ExpectedBeneficiaries",
+          "dataType": "string",
+          "required": false,
+          "description": "Expected beneficiaries"
+        },
+        {
+          "name": "Challenges",
+          "dataType": "string",
+          "required": false,
+          "description": "Challenges that the initiative will address"
+        },
+        {
+          "name": "SdGs",
+          "dataType": "int[]",
+          "required": false,
+          "description": "List of SDG IDs"
+        },
+        {
+          "name": "FundingPartners",
+          "dataType": "OpportunityFundingPartnerRequest[]",
+          "required": false,
+          "description": "List of funding partners (AI-proposed, user-accepted)"
+        },
+        {
+          "name": "ClientPartners",
+          "dataType": "OpportunityClientPartnerRequest[]",
+          "required": false,
+          "description": "List of client partners (AI-proposed, user-accepted)"
+        },
+        {
+          "name": "Stakeholders",
+          "dataType": "OpportunityStakeholderRequest[]",
+          "required": false,
+          "description": "List of stakeholders (AI-proposed, user-accepted)"
+        },
+        {
+          "name": "Countries",
+          "dataType": "int[]",
+          "required": false,
+          "description": "List of implementation country IDs"
+        },
+        {
+          "name": "TargetSigningDate",
+          "dataType": "datetime",
+          "required": false,
+          "description": "Target signing date"
+        },
+        {
+          "name": "TargetDeliveryDate",
+          "dataType": "datetime",
+          "required": false,
+          "description": "Target delivery date"
+        },
+        {
+          "name": "InitiativeBudgetUSD",
+          "dataType": "decimal",
+          "required": false,
+          "description": "Initiative budget in USD"
+        },
+        {
+          "name": "PartnershipAgreementReference",
+          "dataType": "string",
+          "required": false,
+          "description": "Partnership agreement reference"
+        }
+      ]
+    },
+    "NewDocumentRequest": {
+      "description": "Request model for a new document to be persisted after opportunity creation",
+      "fields": [
+        {
+          "name": "GcsPath",
+          "dataType": "string",
+          "required": true,
+          "description": "GCS storage path (gs://bucket/path/file.ext)"
+        },
+        {
+          "name": "MimeType",
+          "dataType": "string",
+          "required": true,
+          "description": "MIME type of the document"
+        },
+        {
+          "name": "DocumentTypeId",
+          "dataType": "int",
+          "required": false,
+          "description": "Document type ID"
+        }
+      ]
     }
   },
   "entities": {
@@ -3006,6 +3840,840 @@
               "dataType": "int",
               "required": true,
               "description": "Base engagement ID to get partner relationships for"
+            }
+          ]
+        }
+      ]
+    },
+    "Opportunity": {
+      "description": "Manages opportunities for partnerships, including funding partners, client partners, deliverables, and team stakeholders. Supports AI-powered proposal generation and insights.",
+      "dataModel": {
+        "fields": [
+          {
+            "name": "Id",
+            "dataType": "int",
+            "required": true,
+            "description": "Unique identifier for the opportunity"
+          },
+          {
+            "name": "Name",
+            "dataType": "string",
+            "required": true,
+            "description": "Opportunity name (max 255 characters)"
+          },
+          {
+            "name": "Description",
+            "dataType": "string",
+            "required": true,
+            "description": "Detailed description of the opportunity"
+          },
+          {
+            "name": "PartnerReference",
+            "dataType": "string",
+            "required": false,
+            "description": "Partner reference number (max 255 characters)"
+          },
+          {
+            "name": "Status",
+            "dataType": "string",
+            "required": false,
+            "description": "Opportunity status (Draft, Active, Closed, etc.)"
+          },
+          {
+            "name": "WorkflowStageId",
+            "dataType": "int",
+            "required": false,
+            "description": "Foreign key to workflow stage"
+          },
+          {
+            "name": "WorkflowStageName",
+            "dataType": "string",
+            "required": false,
+            "description": "Computed workflow stage name"
+          },
+          {
+            "name": "ResponsibleOrgUnitId",
+            "dataType": "int",
+            "required": false,
+            "description": "Foreign key to responsible organization unit"
+          },
+          {
+            "name": "ResponsibleOrgUnitName",
+            "dataType": "string",
+            "required": false,
+            "description": "Computed responsible organization unit name"
+          },
+          {
+            "name": "ProposedInitiativeTypeId",
+            "dataType": "int",
+            "required": false,
+            "description": "Foreign key to proposed initiative type"
+          },
+          {
+            "name": "ProposedInitiativeTypeName",
+            "dataType": "string",
+            "required": false,
+            "description": "Computed proposed initiative type name"
+          },
+          {
+            "name": "PartnershipAgreementReference",
+            "dataType": "string",
+            "required": false,
+            "description": "Partnership agreement reference number (max 255 characters)"
+          },
+          {
+            "name": "InitiativeBudgetUSD",
+            "dataType": "decimal",
+            "required": false,
+            "description": "Initiative budget in USD"
+          },
+          {
+            "name": "TargetSigningDate",
+            "dataType": "datetime",
+            "required": false,
+            "description": "Target date for signing the agreement"
+          },
+          {
+            "name": "TargetDeliveryDate",
+            "dataType": "datetime",
+            "required": false,
+            "description": "Target date for delivery completion"
+          },
+          {
+            "name": "StrategicAlignment",
+            "dataType": "string",
+            "required": false,
+            "description": "Strategic alignment description (max 1000 characters)"
+          },
+          {
+            "name": "ResultsFocus",
+            "dataType": "string",
+            "required": false,
+            "description": "Results focus description (max 2000 characters)"
+          },
+          {
+            "name": "IntendedImpactOutcomes",
+            "dataType": "string",
+            "required": false,
+            "description": "Intended impact and outcomes (max 2000 characters)"
+          },
+          {
+            "name": "ExpectedBeneficiaries",
+            "dataType": "string",
+            "required": false,
+            "description": "Expected beneficiaries description (max 1000 characters)"
+          },
+          {
+            "name": "Challenges",
+            "dataType": "string",
+            "required": false,
+            "description": "Challenges that the initiative will address (max 2000 characters)"
+          },
+          {
+            "name": "OpportunityStatementMarkdown",
+            "dataType": "string",
+            "required": false,
+            "description": "AI-generated opportunity statement in markdown format"
+          },
+          {
+            "name": "IsPooledFunding",
+            "dataType": "boolean",
+            "required": false,
+            "description": "Whether funding is pooled across multiple partners"
+          },
+          {
+            "name": "DeliveryModality",
+            "dataType": "int",
+            "required": false,
+            "description": "Delivery modality enum (1=NotYetKnown, 2=AllDirect, 3=AllGrantSupport, 4=Mixed)"
+          },
+          {
+            "name": "MiscExternalStakeholders",
+            "dataType": "string",
+            "required": false,
+            "description": "Free-text list of external stakeholders not found in the contact list"
+          },
+          {
+            "name": "ExternalStakeholderNotes",
+            "dataType": "string",
+            "required": false,
+            "description": "Additional notes about external stakeholders"
+          },
+          {
+            "name": "FundingPartners",
+            "dataType": "OpportunityFundingPartnerModel[]",
+            "required": false,
+            "description": "List of funding partners with amounts and details"
+          },
+          {
+            "name": "ClientPartners",
+            "dataType": "OpportunityClientPartnerModel[]",
+            "required": false,
+            "description": "List of client partners"
+          },
+          {
+            "name": "Stakeholders",
+            "dataType": "OpportunityStakeholderModel[]",
+            "required": false,
+            "description": "List of team members and internal stakeholders"
+          },
+          {
+            "name": "ExternalStakeholders",
+            "dataType": "OpportunityExternalStakeholderModel[]",
+            "required": false,
+            "description": "List of external stakeholders (contacts)"
+          },
+          {
+            "name": "Deliverables",
+            "dataType": "OpportunityDeliverableModel[]",
+            "required": false,
+            "description": "List of deliverables (products and services)"
+          },
+          {
+            "name": "Countries",
+            "dataType": "OpportunityCountryModel[]",
+            "required": false,
+            "description": "List of implementation countries"
+          },
+          {
+            "name": "SDGs",
+            "dataType": "OpportunitySDGModel[]",
+            "required": false,
+            "description": "List of SDG alignments"
+          },
+          {
+            "name": "CreatedDate",
+            "dataType": "datetime",
+            "required": false,
+            "description": "Date when the opportunity was created"
+          },
+          {
+            "name": "LastModifiedDate",
+            "dataType": "datetime",
+            "required": false,
+            "description": "Date when the opportunity was last modified"
+          },
+          {
+            "name": "CreatedBy",
+            "dataType": "int",
+            "required": false,
+            "description": "User ID of the creator"
+          },
+          {
+            "name": "CreatedByName",
+            "dataType": "string",
+            "required": false,
+            "description": "Computed creator user name"
+          },
+          {
+            "name": "LastModifiedBy",
+            "dataType": "int",
+            "required": false,
+            "description": "User ID of last modifier"
+          },
+          {
+            "name": "LastModifiedByName",
+            "dataType": "string",
+            "required": false,
+            "description": "Computed last modifier user name"
+          }
+        ]
+      },
+      "apiEndpoints": [
+        {
+          "endpoint": "/api/opportunity",
+          "method": "POST",
+          "description": "Creates a new opportunity with comprehensive details including partners, deliverables, and stakeholders",
+          "parameters": [
+            {
+              "name": "req",
+              "dataType": "OpportunityRequest",
+              "required": true,
+              "description": "Opportunity creation request with required fields",
+              "structure": "See OpportunityRequest in requestModels section"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity",
+          "method": "GET",
+          "description": "Lists all opportunities with pagination, sorting, and optional filtering",
+          "parameters": [
+            {
+              "name": "pageIndex",
+              "dataType": "int",
+              "required": false,
+              "description": "1-based page number (default: 1)"
+            },
+            {
+              "name": "pageSize",
+              "dataType": "int",
+              "required": false,
+              "description": "Items per page (default: 20)"
+            },
+            {
+              "name": "orderBy",
+              "dataType": "string",
+              "required": false,
+              "description": "Field name for sorting (default: name)"
+            },
+            {
+              "name": "ascending",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Sort direction (default: true)"
+            },
+            {
+              "name": "filterActive",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Whether to filter only active opportunities (default: true)"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/search",
+          "method": "GET",
+          "description": "Performs simple text search across multiple opportunity fields using PostgreSQL similarity search",
+          "parameters": [
+            {
+              "name": "query",
+              "dataType": "string",
+              "required": true,
+              "description": "Text to search for"
+            },
+            {
+              "name": "pageIndex",
+              "dataType": "int",
+              "required": false,
+              "description": "Page number (default: 1)"
+            },
+            {
+              "name": "pageSize",
+              "dataType": "int",
+              "required": false,
+              "description": "Number of items per page (default: 20)"
+            },
+            {
+              "name": "orderBy",
+              "dataType": "string",
+              "required": false,
+              "description": "Field to sort by"
+            },
+            {
+              "name": "ascending",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Sort direction (default: true)"
+            },
+            {
+              "name": "export",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Whether to export all results (default: false)"
+            },
+            {
+              "name": "filterActive",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Whether to filter only active opportunities (default: true)"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/advanced-search",
+          "method": "GET",
+          "description": "Performs advanced search with structured criteria including relationships and complex filters",
+          "parameters": [
+            {
+              "name": "filters",
+              "dataType": "string",
+              "required": true,
+              "description": "JSON array of search criteria objects with field, operator, value, and logicalOperator"
+            },
+            {
+              "name": "pageIndex",
+              "dataType": "int",
+              "required": false,
+              "description": "Page number (default: 1)"
+            },
+            {
+              "name": "pageSize",
+              "dataType": "int",
+              "required": false,
+              "description": "Number of items per page (default: 20)"
+            },
+            {
+              "name": "orderBy",
+              "dataType": "string",
+              "required": false,
+              "description": "Field to sort by (default: Name)"
+            },
+            {
+              "name": "ascending",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Sort direction (default: true)"
+            },
+            {
+              "name": "export",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Whether to export all results (default: false)"
+            },
+            {
+              "name": "filterActive",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Whether to filter only active opportunities (default: true)"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/search-fields",
+          "method": "GET",
+          "description": "Gets supported search fields for opportunities to help build dynamic search forms",
+          "parameters": []
+        },
+        {
+          "endpoint": "/api/opportunity/{id}",
+          "method": "GET",
+          "description": "Retrieves a specific opportunity by ID with complete details and user-specific permissions",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Opportunity ID"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/{id}",
+          "method": "PUT",
+          "description": "Updates an existing opportunity with complete replacement of data",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Opportunity ID"
+            },
+            {
+              "name": "req",
+              "dataType": "UpdateOpportunityRequest",
+              "required": true,
+              "description": "Opportunity update request containing modified fields"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/{id}",
+          "method": "DELETE",
+          "description": "Soft deletes an opportunity from the system",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Opportunity ID to delete"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/{id}/overview",
+          "method": "PATCH",
+          "description": "Updates the Overview section of an opportunity (name, description)",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Opportunity ID"
+            },
+            {
+              "name": "req",
+              "dataType": "OverviewSectionRequest",
+              "required": true,
+              "description": "Overview section update request",
+              "structure": "See OverviewSectionRequest in requestModels section"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/{id}/what",
+          "method": "PATCH",
+          "description": "Updates the WHAT section of an opportunity (org unit, initiative type, delivery modality, deliverables)",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Opportunity ID"
+            },
+            {
+              "name": "req",
+              "dataType": "WhatSectionRequest",
+              "required": true,
+              "description": "WHAT section update request",
+              "structure": "See WhatSectionRequest in requestModels section"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/{id}/why",
+          "method": "PATCH",
+          "description": "Updates the WHY section of an opportunity (strategic alignment, beneficiaries, outcomes, SDGs)",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Opportunity ID"
+            },
+            {
+              "name": "req",
+              "dataType": "WhySectionRequest",
+              "required": true,
+              "description": "WHY section update request",
+              "structure": "See WhySectionRequest in requestModels section"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/{id}/who",
+          "method": "PATCH",
+          "description": "Updates the WHO section of an opportunity (funding partners, client partners, stakeholders)",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Opportunity ID"
+            },
+            {
+              "name": "req",
+              "dataType": "WhoSectionRequest",
+              "required": true,
+              "description": "WHO section update request",
+              "structure": "See WhoSectionRequest in requestModels section"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/{id}/where",
+          "method": "PATCH",
+          "description": "Updates the WHERE section of an opportunity (implementation countries)",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Opportunity ID"
+            },
+            {
+              "name": "req",
+              "dataType": "WhereSectionRequest",
+              "required": true,
+              "description": "WHERE section update request",
+              "structure": "See WhereSectionRequest in requestModels section"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/{id}/when",
+          "method": "PATCH",
+          "description": "Updates the WHEN section of an opportunity (timeline dates, deliverable dates)",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Opportunity ID"
+            },
+            {
+              "name": "req",
+              "dataType": "WhenSectionRequest",
+              "required": true,
+              "description": "WHEN section update request",
+              "structure": "See WhenSectionRequest in requestModels section"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/{id}/related",
+          "method": "GET",
+          "description": "Gets related items (contacts, partners, interactions) for an opportunity",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Opportunity ID"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/{id}/apply-ai-changes",
+          "method": "PATCH",
+          "description": "Applies AI-extracted changes to an opportunity across multiple sections",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Opportunity ID"
+            },
+            {
+              "name": "req",
+              "dataType": "ApplyOpportunityAiChangesRequest",
+              "required": true,
+              "description": "AI changes to apply"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/{opportunityId}/tag-related-partner-to-doc",
+          "method": "POST",
+          "description": "Tags a document as Partner Results Framework for specific funding/client partners",
+          "parameters": [
+            {
+              "name": "opportunityId",
+              "dataType": "int",
+              "required": true,
+              "description": "Opportunity ID"
+            },
+            {
+              "name": "request",
+              "dataType": "TagDocumentToPartnersRequest",
+              "required": true,
+              "description": "Tag document request with document ID and partner IDs",
+              "structure": "See TagDocumentToPartnersRequest in requestModels section"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/retrieve-partner-document-association/{documentId}",
+          "method": "GET",
+          "description": "Retrieves partner-document associations for a specific document",
+          "parameters": [
+            {
+              "name": "documentId",
+              "dataType": "int",
+              "required": true,
+              "description": "Document ID to get associations for"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/{id}/similar-opportunities",
+          "method": "GET",
+          "description": "Gets similar opportunities using semantic search based on embeddings",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Opportunity ID"
+            },
+            {
+              "name": "maxResults",
+              "dataType": "int",
+              "required": false,
+              "description": "Maximum number of similar opportunities to return (default: 6, max: 50)"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/{id}/similar-projects",
+          "method": "GET",
+          "description": "Gets similar projects for an opportunity using AI-powered semantic search",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Opportunity ID"
+            },
+            {
+              "name": "maxResults",
+              "dataType": "int",
+              "required": false,
+              "description": "Maximum number of similar projects to return (default: 6, max: 50)"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/{id}/relevant-people",
+          "method": "GET",
+          "description": "Gets relevant people from corporate directory for an opportunity using AI-powered semantic search",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Opportunity ID"
+            },
+            {
+              "name": "maxResults",
+              "dataType": "int",
+              "required": false,
+              "description": "Maximum number of relevant people to return (default: 6, max: 50)"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/{id}/dst-recommendations",
+          "method": "GET",
+          "description": "Gets AI-powered DST risk recommendations for an opportunity",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Opportunity ID"
+            },
+            {
+              "name": "maxResults",
+              "dataType": "int",
+              "required": false,
+              "description": "Maximum number of recommendations (default: 10)"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/{id}/dst-risks",
+          "method": "GET",
+          "description": "Gets existing risks from the risk register for an opportunity",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Opportunity ID"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/{id}/dst-risks",
+          "method": "POST",
+          "description": "Adds a new risk to the risk register for an opportunity",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Opportunity ID"
+            },
+            {
+              "name": "request",
+              "dataType": "RiskCreateRequest",
+              "required": true,
+              "description": "Risk creation request"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/{id}/dst-risks/{riskId}",
+          "method": "PUT",
+          "description": "Updates an existing risk in the risk register",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Opportunity ID"
+            },
+            {
+              "name": "riskId",
+              "dataType": "int",
+              "required": true,
+              "description": "Risk ID to update"
+            },
+            {
+              "name": "request",
+              "dataType": "RiskCreateRequest",
+              "required": true,
+              "description": "Risk update request"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/{id}/insights",
+          "method": "GET",
+          "description": "Gets AI-generated insights and suggestions for an opportunity",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Opportunity ID"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/{id}/source-interactions",
+          "method": "GET",
+          "description": "Gets source interactions that led to opportunity creation",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Opportunity ID"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/generate-proposal",
+          "method": "POST",
+          "description": "Generates AI-powered opportunity proposal from multiple sources (interactions, documents)",
+          "parameters": [
+            {
+              "name": "request",
+              "dataType": "OpportunityProposalRequest",
+              "required": true,
+              "description": "Proposal request with source data and basic info",
+              "structure": "See OpportunityProposalRequest in requestModels section"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/create-from-proposal",
+          "method": "POST",
+          "description": "Creates an opportunity from AI-generated proposal with user-accepted fields",
+          "parameters": [
+            {
+              "name": "request",
+              "dataType": "CreateOpportunityFromInteractionsRequest",
+              "required": true,
+              "description": "Create request with accepted fields and resolved IDs"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/{id}/framework-status",
+          "method": "GET",
+          "description": "Gets Partner Results Framework status for an opportunity (tagged framework documents and total document count)",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Opportunity ID"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/{id}/extract-deliverables",
+          "method": "POST",
+          "description": "Extracts products and services from Partner Results Framework and other documents using AI",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Opportunity ID"
             }
           ]
         }
