@@ -74,6 +74,12 @@ a:hover i {
   p-divider .p-divider {
     margin: 0.75rem 0;
   }
+
+  // Panel content border radius
+  p-panel .p-panel-content {
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+  }
 }
 
 // Responsive adjustments
