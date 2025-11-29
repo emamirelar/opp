@@ -30,6 +30,11 @@ public class Opportunity : ModifiableDeletableEntity
     
     public DateTime? TargetSigningDate { get; set; }
     
+    /// <summary>
+    /// Implementation start date - defaults to TargetSigningDate if not specified
+    /// </summary>
+    public DateTime? ImplementationStartDate { get; set; }
+    
     public DateTime? TargetDeliveryDate { get; set; }
     
     public int? ProposedInitiativeTypeId { get; set; }

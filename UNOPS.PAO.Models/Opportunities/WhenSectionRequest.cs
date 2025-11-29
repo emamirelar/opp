@@ -3,6 +3,12 @@ namespace UNOPS.PAO.Models.Opportunities;
 public class WhenSectionRequest
 {
     public DateTime? TargetSigningDate { get; set; }
+    
+    /// <summary>
+    /// Implementation start date - defaults to TargetSigningDate if not specified
+    /// </summary>
+    public DateTime? ImplementationStartDate { get; set; }
+    
     public DateTime? TargetDeliveryDate { get; set; }
     
     /// <summary>
