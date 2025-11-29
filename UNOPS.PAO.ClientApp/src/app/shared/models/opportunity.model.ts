@@ -56,6 +56,7 @@ export interface Opportunity {
   initiativeBudgetUSD: number | null;
   partnershipAgreementReference: string | null;
   targetSigningDate: string | null;
+  implementationStartDate: string | null;
   targetDeliveryDate: string | null;
   strategicAlignment: string | null;
   resultsFocus: string | null;
@@ -357,6 +358,7 @@ export interface OpportunityRequest {
   partnershipAgreementReference?: string;
   initiativeBudgetUSD?: number;
   targetSigningDate?: string;
+  implementationStartDate?: string;
   targetDeliveryDate?: string;
   proposedInitiativeTypeId?: number;
   fundingPartners?: OpportunityFundingPartnerRequest[];
@@ -731,5 +733,14 @@ export interface ExtractedDeliverableInfo {
   matchedOutputName?: string | null; // Name of the matched output from the Outputs table
   matchScore?: number | null; // Similarity score for the matched output (0.0 to 1.0)
   matchedField?: string | null; // Field name that was matched in the Outputs table
+}
+
+/**
+ * Duration Option for Implementation Period
+ * Used in the WHEN section duration calculator
+ */
+export interface DurationOption {
+  label: string;
+  value: number; // Duration in months (-1 for custom)
 }
 

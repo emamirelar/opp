@@ -24,7 +24,14 @@ import { FloatLabelModule } from 'primeng/floatlabel';
 import { TooltipModule } from 'primeng/tooltip';
 import { ChipModule } from 'primeng/chip';
 import { TimelineModule } from 'primeng/timeline';
-import { Opportunity, OpportunityDeliverable } from '@shared/models/opportunity.model';
+import { SelectModule } from 'primeng/select';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { MessageModule } from 'primeng/message';
+import {
+  Opportunity,
+  OpportunityDeliverable,
+  DurationOption
+} from '@shared/models/opportunity.model';
 import { OpportunityService } from '@features/partnerships/opportunities/services/opportunity.service';
 import { FeedbackDialogService } from '@shared/services/ui';
 
@@ -56,7 +63,10 @@ import { FeedbackDialogService } from '@shared/services/ui';
     FloatLabelModule,
     TooltipModule,
     ChipModule,
-    TimelineModule
+    TimelineModule,
+    SelectModule,
+    InputNumberModule,
+    MessageModule
   ],
   templateUrl: './opportunity-when-section.component.html',
   styleUrls: ['./opportunity-when-section.component.scss'],
@@ -67,6 +77,9 @@ export class OpportunityWhenSectionComponent implements OnInit {
   private readonly translateService = inject(TranslateService);
   private readonly feedbackService = inject(FeedbackDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
+
+  // Expose Math for template use
+  readonly Math = Math;
 
   // Inputs
   readonly opportunity = input.required<Opportunity>();
@@ -83,11 +96,460 @@ export class OpportunityWhenSectionComponent implements OnInit {
   // State
   readonly isEditing = signal(false);
   readonly isSaving = signal(false);
+  readonly isTimelineCollapsed = signal(false);
 
   // Form controls
   targetSigningDateControl = new FormControl<Date | null>(null);
+  implementationStartDateControl = new FormControl<Date | null>(null);
   targetDeliveryDateControl = new FormControl<Date | null>(null);
-  
+
+  // Track if implementation start date has been explicitly set by user
+  readonly isImplementationStartDateExplicitlySet = signal<boolean>(false);
+
+  // Duration calculator state
+  readonly selectedDuration = signal<number | null>(null);
+  readonly customDurationMonths = signal<number | null>(null);
+  readonly showCustomDuration = signal<boolean>(false);
+
+  /**
+   * @description Predefined duration options for implementation period
+   */
+  readonly durationOptions: DurationOption[] = [
+    { label: '6 months', value: 6 },
+    { label: '12 months', value: 12 },
+    { label: '18 months', value: 18 },
+    { label: '24 months', value: 24 },
+    { label: '36 months', value: 36 },
+    { label: 'Custom', value: -1 }
+  ];
+
+  /**
+   * @description Get the effective implementation start date (uses signing date if not explicitly set)
+   * @returns {string | null} The effective implementation start date
+   */
+  readonly effectiveImplementationStartDate = computed(() => {
+    const opp = this.opportunity();
+    // Use implementation start date if set, otherwise fall back to signing date
+    return opp?.implementationStartDate || opp?.targetSigningDate || null;
+  });
+
+  /**
+   * @description Computed implementation duration in months (for view mode display)
+   * Uses implementation start date (or signing date as fallback) to delivery date
+   * @returns {number | null} Duration in months or null if dates not set
+   */
+  readonly implementationDurationMonths = computed(() => {
+    const opp = this.opportunity();
+    const startDate = this.effectiveImplementationStartDate();
+    if (!startDate || !opp?.targetDeliveryDate) return null;
+
+    const implStartDate = new Date(startDate);
+    const deliveryDate = new Date(opp.targetDeliveryDate);
+    return this.calculateMonthsDifference(implStartDate, deliveryDate);
+  });
+
+  /**
+   * @description Computed implementation duration display string
+   * @returns {string} Formatted duration string (e.g., "12 months" or "1 year 6 months")
+   */
+  readonly implementationDurationDisplay = computed(() => {
+    const months = this.implementationDurationMonths();
+    if (months === null) return null;
+    return this.formatDuration(months);
+  });
+
+  // ===== AC3: Timeline Gantt Bar Computed Signals =====
+
+  /**
+   * @description Days until target signing date
+   * @returns {number | null} Number of days (negative if past)
+   */
+  readonly daysUntilSigning = computed(() => {
+    const opp = this.opportunity();
+    if (!opp?.targetSigningDate) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const signing = new Date(opp.targetSigningDate);
+    signing.setHours(0, 0, 0, 0);
+    const diffTime = signing.getTime() - today.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  });
+
+  /**
+   * @description Days until implementation start date (or signing date as fallback)
+   * @returns {number | null} Number of days (negative if past)
+   */
+  readonly daysUntilImplementationStart = computed(() => {
+    const startDate = this.effectiveImplementationStartDate();
+    if (!startDate) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const implStart = new Date(startDate);
+    implStart.setHours(0, 0, 0, 0);
+    const diffTime = implStart.getTime() - today.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  });
+
+  /**
+   * @description Timeline phases for Gantt visualization
+   * @returns Timeline phase data including percentages for development and implementation
+   */
+  readonly timelinePhases = computed(() => {
+    const opp = this.opportunity();
+    const implStartDate = this.effectiveImplementationStartDate();
+    if (!implStartDate || !opp?.targetDeliveryDate) return null;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const implementationStart = new Date(implStartDate);
+    implementationStart.setHours(0, 0, 0, 0);
+    const deliveryDate = new Date(opp.targetDeliveryDate);
+    deliveryDate.setHours(0, 0, 0, 0);
+
+    // Calculate days
+    const developmentDays = Math.max(
+      0,
+      Math.ceil((implementationStart.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+    );
+    const implementationDays = Math.max(
+      0,
+      Math.ceil((deliveryDate.getTime() - implementationStart.getTime()) / (1000 * 60 * 60 * 24))
+    );
+    const totalDays = developmentDays + implementationDays;
+
+    // Calculate percentages
+    const developmentPercentage = totalDays > 0 ? (developmentDays / totalDays) * 100 : 0;
+    const implementationPercentage = totalDays > 0 ? (implementationDays / totalDays) * 100 : 0;
+
+    // Check if implementation has started (today is past implementation start)
+    const isImplementationStarted = today >= implementationStart;
+    const isSigningPast = opp.targetSigningDate ? today > new Date(opp.targetSigningDate) : false;
+
+    return {
+      developmentDays,
+      implementationDays,
+      totalDays,
+      developmentPercentage,
+      implementationPercentage,
+      isImplementationStarted,
+      isSigningPast
+    };
+  });
+
+  /**
+   * @description Check if timeline data is available for display
+   */
+  readonly hasTimelineData = computed(() => {
+    const opp = this.opportunity();
+    return !!(this.effectiveImplementationStartDate() && opp?.targetDeliveryDate);
+  });
+
+  // ===== Unified Gantt Chart Calculations =====
+
+  /**
+   * @description Calculate the timeline reference for the unified Gantt chart
+   * Uses Today → Delivery Date as the reference (same as main phases)
+   */
+  readonly ganttTimelineReference = computed(() => {
+    const opp = this.opportunity();
+    if (!opp?.targetDeliveryDate) return null;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const deliveryDate = new Date(opp.targetDeliveryDate);
+    deliveryDate.setHours(0, 0, 0, 0);
+
+    const totalDays = Math.max(1, (deliveryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+    return {
+      startDate: today,
+      endDate: deliveryDate,
+      totalDays
+    };
+  });
+
+  /**
+   * @description Calculate the implementation start marker position for the unified Gantt
+   * @returns Percentage position of implementation start on the timeline
+   */
+  readonly implementationStartMarkerPosition = computed(() => {
+    const timeline = this.ganttTimelineReference();
+    const implStartDate = this.effectiveImplementationStartDate();
+    if (!timeline || !implStartDate) return 0;
+
+    const implStart = new Date(implStartDate);
+    implStart.setHours(0, 0, 0, 0);
+
+    const daysFromStart = (implStart.getTime() - timeline.startDate.getTime()) / (1000 * 60 * 60 * 24);
+    return Math.max(0, Math.min((daysFromStart / timeline.totalDays) * 100, 100));
+  });
+
+  /**
+   * @description Calculate Gantt bar positions for all deliverables relative to unified timeline (Today → Delivery)
+   * @returns Map of deliverable ID to bar position data
+   */
+  readonly deliverableGanttBars = computed(() => {
+    const timeline = this.ganttTimelineReference();
+    const opp = this.opportunity();
+    if (!timeline || !opp) return new Map();
+
+    const barMap = new Map<number, { 
+      leftOffset: number; 
+      width: number; 
+      hasProcurement: boolean; 
+      durationDays: number;
+      name: string;
+      isBeforeToday: boolean;
+    }>();
+
+    (opp.deliverables || []).forEach(d => {
+      if (!d.plannedStartDate || !d.plannedEndDate) return;
+
+      const startDate = new Date(d.plannedStartDate);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(d.plannedEndDate);
+      endDate.setHours(0, 0, 0, 0);
+
+      // Calculate left offset (percentage from today)
+      const daysFromStart = (startDate.getTime() - timeline.startDate.getTime()) / (1000 * 60 * 60 * 24);
+      const leftOffset = (daysFromStart / timeline.totalDays) * 100;
+
+      // Calculate width (percentage of total timeline)
+      const durationDays = Math.max(1, (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      const width = (durationDays / timeline.totalDays) * 100;
+
+      // Check if requires procurement prerequisite
+      const hasProcurement = d.procurementComponent === true && d.serviceLine?.toLowerCase() !== 'procurement';
+
+      // Get deliverable name
+      const name = d.level4 || d.level3 || d.level2 || d.level1 || d.level0 || 'Unnamed';
+
+      // Check if deliverable starts before today
+      const isBeforeToday = startDate < timeline.startDate;
+
+      barMap.set(d.id, {
+        leftOffset: Math.max(0, Math.min(leftOffset, 100)),
+        width: Math.max(0.5, Math.min(width, 100 - Math.max(0, leftOffset))),
+        hasProcurement,
+        durationDays,
+        name,
+        isBeforeToday
+      });
+    });
+
+    return barMap;
+  });
+
+  /**
+   * @description Get sorted deliverables that have dates for the Gantt chart
+   */
+  readonly deliverablesWithDatesForGantt = computed(() => {
+    return this.sortedDeliverables().filter(d => d.plannedStartDate && d.plannedEndDate);
+  });
+
+  /**
+   * @description Check if any deliverable has dates set (for showing unified Gantt)
+   */
+  readonly hasDeliverablesWithDates = computed(() => {
+    const deliverables = this.opportunity()?.deliverables || [];
+    return deliverables.some(d => d.plannedStartDate && d.plannedEndDate);
+  });
+
+  /**
+   * @description Get Gantt bar data for a specific deliverable
+   */
+  getDeliverableGanttBar(deliverableId: number): { 
+    leftOffset: number; 
+    width: number; 
+    hasProcurement: boolean; 
+    durationDays: number;
+    name: string;
+    isBeforeToday: boolean;
+  } | null {
+    return this.deliverableGanttBars().get(deliverableId) || null;
+  }
+
+  // ===== Vertical Timeline Configuration =====
+
+  /**
+   * @description Timeline events for PrimeNG Timeline component
+   * Combines key project dates and deliverables into a vertical timeline
+   */
+  readonly timelineEvents = computed(() => {
+    const opp = this.opportunity();
+    if (!opp) return [];
+
+    const events: Array<{
+      id: string;
+      type: 'milestone' | 'deliverable';
+      title: string;
+      date: Date | null;
+      endDate?: Date | null;
+      icon: string;
+      color: string;
+      description?: string;
+      deliverable?: OpportunityDeliverable;
+      isPast: boolean;
+      isToday: boolean;
+    }> = [];
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Helper to check if date is past
+    const isPast = (date: Date | null) => date ? date < today : false;
+    const isToday = (date: Date | null) => {
+      if (!date) return false;
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+      return d.getTime() === today.getTime();
+    };
+
+    // Add "Today" marker
+    events.push({
+      id: 'today',
+      type: 'milestone',
+      title: this.translateService.instant('label.today'),
+      date: today,
+      icon: 'pi pi-calendar',
+      color: '#6366f1', // Indigo
+      isPast: false,
+      isToday: true
+    });
+
+    // Add Target Signing Date
+    if (opp.targetSigningDate) {
+      const signingDate = new Date(opp.targetSigningDate);
+      events.push({
+        id: 'signing',
+        type: 'milestone',
+        title: this.translateService.instant('label.opportunity.targetSigningDate'),
+        date: signingDate,
+        icon: 'pi pi-file-edit',
+        color: isPast(signingDate) ? '#9ca3af' : '#f59e0b', // Gray if past, amber otherwise
+        isPast: isPast(signingDate),
+        isToday: isToday(signingDate)
+      });
+    }
+
+    // Add Implementation Start Date (if different from signing)
+    const effectiveImplStart = this.effectiveImplementationStartDate();
+    if (effectiveImplStart && effectiveImplStart !== opp.targetSigningDate) {
+      const implDate = new Date(effectiveImplStart);
+      events.push({
+        id: 'impl-start',
+        type: 'milestone',
+        title: this.translateService.instant('label.opportunity.implementationStartDate'),
+        date: implDate,
+        icon: 'pi pi-play',
+        color: isPast(implDate) ? '#9ca3af' : '#10b981', // Gray if past, emerald otherwise
+        isPast: isPast(implDate),
+        isToday: isToday(implDate)
+      });
+    }
+
+    // Add Deliverables with dates
+    (opp.deliverables || []).forEach((d, idx) => {
+      if (d.plannedStartDate) {
+        const startDate = new Date(d.plannedStartDate);
+        const endDate = d.plannedEndDate ? new Date(d.plannedEndDate) : null;
+        const name = d.level4 || d.level3 || d.level2 || d.level1 || d.level0 || 'Unnamed';
+        const hasProcurement = d.procurementComponent === true && d.serviceLine?.toLowerCase() !== 'procurement';
+        
+        events.push({
+          id: `deliverable-${d.id}`,
+          type: 'deliverable',
+          title: name,
+          date: startDate,
+          endDate: endDate,
+          icon: hasProcurement ? 'pi pi-shopping-cart' : 'pi pi-box',
+          color: hasProcurement ? '#f97316' : '#3b82f6', // Orange for procurement, blue otherwise
+          description: d.serviceLine || undefined,
+          deliverable: d,
+          isPast: isPast(endDate || startDate),
+          isToday: isToday(startDate)
+        });
+      }
+    });
+
+    // Add Target Delivery Date
+    if (opp.targetDeliveryDate) {
+      const deliveryDate = new Date(opp.targetDeliveryDate);
+      events.push({
+        id: 'delivery',
+        type: 'milestone',
+        title: this.translateService.instant('label.opportunity.targetDeliveryDate'),
+        date: deliveryDate,
+        icon: 'pi pi-flag-fill',
+        color: isPast(deliveryDate) ? '#9ca3af' : '#22c55e', // Gray if past, green otherwise
+        isPast: isPast(deliveryDate),
+        isToday: isToday(deliveryDate)
+      });
+    }
+
+    // Sort by date
+    return events.sort((a, b) => {
+      if (!a.date) return 1;
+      if (!b.date) return -1;
+      return a.date.getTime() - b.date.getTime();
+    });
+  });
+
+  /**
+   * @description Format date for timeline display (shorter format)
+   */
+  formatTimelineDate(date: Date | null): string {
+    if (!date) return '-';
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  }
+
+  /**
+   * @description Calculate days from today to a date
+   */
+  daysFromToday(date: Date | null): number | null {
+    if (!date) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const targetDate = new Date(date);
+    targetDate.setHours(0, 0, 0, 0);
+    return Math.ceil((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  }
+
+  // Note: Signing date validation removed per requirements - date can be past or future
+
+
+  /**
+   * @description Computed validation for delivery date (must be after implementation start date)
+   * @returns {boolean} True if delivery date is invalid (before or equal to implementation start)
+   */
+  readonly isDeliveryDateBeforeImplementationStart = computed(() => {
+    const implStartDate = this.implementationStartDateControl.value;
+    const signingDate = this.targetSigningDateControl.value;
+    const deliveryDate = this.targetDeliveryDateControl.value;
+    // Use implementation start if set, otherwise use signing date
+    const effectiveStart = implStartDate || signingDate;
+    if (!effectiveStart || !deliveryDate) return false;
+    
+    // Normalize dates to midnight for comparison (ignore time component)
+    const startNormalized = new Date(effectiveStart);
+    startNormalized.setHours(0, 0, 0, 0);
+    const deliveryNormalized = new Date(deliveryDate);
+    deliveryNormalized.setHours(0, 0, 0, 0);
+    
+    return deliveryNormalized <= startNormalized;
+  });
+
+  /**
+   * @description Check if dates have validation errors
+   */
+  readonly hasDateValidationErrors = computed(() => {
+    return this.isDeliveryDateBeforeImplementationStart();
+  });
+
   // Local state for deliverable dates (to avoid signal reactivity issues)
   // Maps deliverableId -> { start: Date | null, end: Date | null }
   deliverableDates = signal<Map<number, { start: Date | null; end: Date | null }>>(new Map());
@@ -129,6 +591,9 @@ export class OpportunityWhenSectionComponent implements OnInit {
     if (opp.targetSigningDate) {
       this.targetSigningDateControl.setValue(new Date(opp.targetSigningDate));
     }
+    if (opp.implementationStartDate) {
+      this.implementationStartDateControl.setValue(new Date(opp.implementationStartDate));
+    }
     if (opp.targetDeliveryDate) {
       this.targetDeliveryDateControl.setValue(new Date(opp.targetDeliveryDate));
     }
@@ -139,18 +604,27 @@ export class OpportunityWhenSectionComponent implements OnInit {
    */
   startEditing(): void {
     const opp = this.opportunity();
-    
+
+    // Reset duration selection
+    this.resetDurationSelection();
+
     // Set form controls
     this.targetSigningDateControl.setValue(
       opp.targetSigningDate ? new Date(opp.targetSigningDate) : null
     );
+    this.implementationStartDateControl.setValue(
+      opp.implementationStartDate ? new Date(opp.implementationStartDate) : null
+    );
     this.targetDeliveryDateControl.setValue(
       opp.targetDeliveryDate ? new Date(opp.targetDeliveryDate) : null
     );
-    
+
+    // Track if implementation start date was explicitly set
+    this.isImplementationStartDateExplicitlySet.set(!!opp.implementationStartDate);
+
     // Initialize local date state for deliverables
     const dateMap = new Map<number, { start: Date | null; end: Date | null }>();
-    (opp.deliverables || []).forEach(d => {
+    (opp.deliverables || []).forEach((d) => {
       dateMap.set(d.id, {
         start: d.plannedStartDate ? new Date(d.plannedStartDate) : null,
         end: d.plannedEndDate ? new Date(d.plannedEndDate) : null
@@ -169,9 +643,20 @@ export class OpportunityWhenSectionComponent implements OnInit {
     const opp = this.opportunity();
     if (!opp || !opp.id) return;
 
+    // Validate dates before saving
+    if (this.hasDateValidationErrors()) {
+      if (this.isDeliveryDateBeforeImplementationStart()) {
+        this.feedbackService.showWarningToast({
+          detail: this.translateService.instant('message.opportunity.deliveryDateMustBeAfterImplementationStart'),
+          summary: this.translateService.instant('message.validation')
+        });
+      }
+      return;
+    }
+
     // Build updated deliverables with dates from local state
     const dateMap = this.deliverableDates();
-    const updatedDeliverables = (opp.deliverables || []).map(d => {
+    const updatedDeliverables = (opp.deliverables || []).map((d) => {
       const dates = dateMap.get(d.id);
       return {
         ...d,
@@ -182,6 +667,7 @@ export class OpportunityWhenSectionComponent implements OnInit {
 
     const whenData = {
       targetSigningDate: this.targetSigningDateControl.value,
+      implementationStartDate: this.implementationStartDateControl.value,
       targetDeliveryDate: this.targetDeliveryDateControl.value,
       deliverables: updatedDeliverables
     };
@@ -191,13 +677,14 @@ export class OpportunityWhenSectionComponent implements OnInit {
       next: (fullUpdatedOpportunity) => {
         this.isSaving.set(false);
         this.isEditing.set(false);
-        
-        // Clear local date state
+
+        // Clear local date state and reset duration selection
         this.deliverableDates.set(new Map());
-        
+        this.resetDurationSelection();
+
         // Emit full updated opportunity to parent
         this.opportunityUpdated.emit(fullUpdatedOpportunity);
-        
+
         this.feedbackService.showSuccessToast({
           detail: this.translateService.instant('message.opportunity.updatedSuccessfully'),
           summary: this.translateService.instant('message.success')
@@ -216,19 +703,25 @@ export class OpportunityWhenSectionComponent implements OnInit {
    */
   cancelEditing(): void {
     this.isEditing.set(false);
-    
+
+    // Reset duration selection
+    this.resetDurationSelection();
+
     // Reset form controls to original values
     const opp = this.opportunity();
     this.targetSigningDateControl.setValue(
       opp.targetSigningDate ? new Date(opp.targetSigningDate) : null
     );
+    this.implementationStartDateControl.setValue(
+      opp.implementationStartDate ? new Date(opp.implementationStartDate) : null
+    );
     this.targetDeliveryDateControl.setValue(
       opp.targetDeliveryDate ? new Date(opp.targetDeliveryDate) : null
     );
-    
+
     // Clear local date state
     this.deliverableDates.set(new Map());
-    
+
     this.cdr.detectChanges();
   }
 
@@ -313,6 +806,183 @@ export class OpportunityWhenSectionComponent implements OnInit {
     if (whatSection) {
       whatSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+  }
+
+  /**
+   * Handle duration selection change
+   * @description Auto-calculates Target Delivery Date based on selected duration
+   * @param {number} durationValue - Selected duration in months (-1 for custom)
+   */
+  onDurationChange(durationValue: number): void {
+    this.selectedDuration.set(durationValue);
+
+    if (durationValue === -1) {
+      // Custom duration selected - show custom input
+      this.showCustomDuration.set(true);
+      return;
+    }
+
+    // Hide custom input if selecting a preset
+    this.showCustomDuration.set(false);
+    this.customDurationMonths.set(null);
+
+    // Calculate delivery date based on signing date + duration
+    this.calculateDeliveryDateFromDuration(durationValue);
+  }
+
+  /**
+   * Handle custom duration input change
+   * @description Auto-calculates Target Delivery Date based on custom duration
+   * @param {number | null} months - Custom duration in months
+   */
+  onCustomDurationChange(months: number | null): void {
+    this.customDurationMonths.set(months);
+    if (months && months > 0) {
+      this.calculateDeliveryDateFromDuration(months);
+    }
+  }
+
+  /**
+   * Calculate delivery date from implementation start date + duration
+   * @description Sets the Target Delivery Date based on implementation start date (or signing date as fallback) and duration
+   * @param {number} durationMonths - Duration in months
+   */
+  private calculateDeliveryDateFromDuration(durationMonths: number): void {
+    // Use implementation start date if set, otherwise use signing date
+    const implStartDate = this.implementationStartDateControl.value;
+    const signingDate = this.targetSigningDateControl.value;
+    const baseDate = implStartDate || signingDate;
+
+    if (!baseDate || durationMonths <= 0) return;
+
+    const deliveryDate = new Date(baseDate);
+    deliveryDate.setMonth(deliveryDate.getMonth() + durationMonths);
+    this.targetDeliveryDateControl.setValue(deliveryDate);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Handle signing date change
+   * @description Auto-populates implementation start date if not explicitly set, and recalculates delivery date if a duration is selected
+   */
+  onSigningDateChange(): void {
+    const signingDate = this.targetSigningDateControl.value;
+
+    // Auto-populate implementation start date if not explicitly set
+    if (signingDate && !this.isImplementationStartDateExplicitlySet()) {
+      this.implementationStartDateControl.setValue(signingDate);
+    }
+
+    // Recalculate delivery date if a duration is selected
+    const duration = this.selectedDuration();
+    const customDuration = this.customDurationMonths();
+
+    if (duration && duration > 0) {
+      this.calculateDeliveryDateFromDuration(duration);
+    } else if (duration === -1 && customDuration && customDuration > 0) {
+      this.calculateDeliveryDateFromDuration(customDuration);
+    }
+
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Handle implementation start date change
+   * @description Marks the implementation start date as explicitly set and recalculates delivery date
+   */
+  onImplementationStartDateChange(): void {
+    // Mark as explicitly set when user changes it
+    this.isImplementationStartDateExplicitlySet.set(true);
+
+    // Recalculate delivery date if a duration is selected
+    const duration = this.selectedDuration();
+    const customDuration = this.customDurationMonths();
+
+    if (duration && duration > 0) {
+      this.calculateDeliveryDateFromDuration(duration);
+    } else if (duration === -1 && customDuration && customDuration > 0) {
+      this.calculateDeliveryDateFromDuration(customDuration);
+    }
+
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Reset implementation start date to signing date
+   * @description Clears implementation start date to use signing date as default
+   */
+  resetImplementationStartToSigningDate(): void {
+    const signingDate = this.targetSigningDateControl.value;
+    this.implementationStartDateControl.setValue(signingDate);
+    this.isImplementationStartDateExplicitlySet.set(false);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Calculate months difference between two dates
+   * @description Returns the number of months between two dates
+   * @param {Date} startDate - Start date
+   * @param {Date} endDate - End date
+   * @returns {number} Number of months
+   */
+  private calculateMonthsDifference(startDate: Date, endDate: Date): number {
+    const yearsDiff = endDate.getFullYear() - startDate.getFullYear();
+    const monthsDiff = endDate.getMonth() - startDate.getMonth();
+    const daysDiff = endDate.getDate() - startDate.getDate();
+
+    let totalMonths = yearsDiff * 12 + monthsDiff;
+
+    // Adjust for partial months
+    if (daysDiff < 0) {
+      totalMonths--;
+    }
+
+    return Math.max(0, totalMonths);
+  }
+
+  /**
+   * Format duration for display
+   * @description Formats months into a human-readable string
+   * @param {number} months - Duration in months
+   * @returns {string} Formatted duration string
+   */
+  private formatDuration(months: number): string {
+    if (months < 12) {
+      return `${months} ${months === 1 ? 'month' : 'months'}`;
+    }
+
+    const years = Math.floor(months / 12);
+    const remainingMonths = months % 12;
+
+    if (remainingMonths === 0) {
+      return `${years} ${years === 1 ? 'year' : 'years'}`;
+    }
+
+    return `${years} ${years === 1 ? 'year' : 'years'} ${remainingMonths} ${remainingMonths === 1 ? 'month' : 'months'}`;
+  }
+
+  /**
+   * Reset duration selection state
+   * @description Clears duration-related state when editing starts or cancels
+   */
+  private resetDurationSelection(): void {
+    this.selectedDuration.set(null);
+    this.customDurationMonths.set(null);
+    this.showCustomDuration.set(false);
+  }
+
+  /**
+   * Get minimum date for delivery (day after implementation start, or signing date as fallback)
+   * @description Returns the minimum allowed date for target delivery
+   */
+  getMinDeliveryDate(): Date | null {
+    const implStartDate = this.implementationStartDateControl.value;
+    const signingDate = this.targetSigningDateControl.value;
+    const baseDate = implStartDate || signingDate;
+    if (!baseDate) return null;
+    const minDate = new Date(baseDate);
+    minDate.setDate(minDate.getDate() + 1);
+    return minDate;
   }
 }
 
