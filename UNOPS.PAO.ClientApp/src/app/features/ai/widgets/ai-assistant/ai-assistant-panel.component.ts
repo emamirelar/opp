@@ -1344,6 +1344,8 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
       case 'partneragreement':
       case 'partnership':
         return `/partnerships/agreements/${entityId}`;
+      case 'opportunity':
+        return `/partnerships/opportunities/${entityId}`;
       default:
         const routeSegment = entityType.toLowerCase().replace(/\s+/g, '-');
         return `/${routeSegment}s/${entityId}`;

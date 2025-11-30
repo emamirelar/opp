@@ -395,7 +395,7 @@
                   <div class="grid grid-cols-2 gap-2 text-sm mt-2">
                     <div>
                       <span class="text-gray-600">{{ 'label.amount' | translate }}:</span>
-                      <span class="font-semibold ml-2">{{ formatCurrency(partner.amount) }} {{ partner.currencyCode }}</span>
+                      <span class="font-semibold ml-2">{{ partner.amount | number:'1.0-2' }} {{ partner.currencyCode }}</span>
                     </div>
                     @if (partner.feeAmount) {
                       <div>
@@ -411,7 +411,7 @@
                       <div class="text-xs text-blue-900">
                         <div class="flex items-center mb-1">
                           <span class="font-medium">{{ 'label.usdEquivalent' | translate }}:</span>
-                          <span class="font-semibold ml-2">{{ formatCurrency(partner.amountUSD) }} USD</span>
+                          <span class="font-semibold ml-2">${{ partner.amountUSD | number:'1.0-2' }}</span>
                         </div>
                         @if (partner.exchangeRateDisplay) {
                           <div class="text-xs text-blue-700">

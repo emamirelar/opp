@@ -18,7 +18,7 @@ import {
   effect,
   untracked,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
@@ -116,6 +116,7 @@ export class OpportunityViewComponent
   implements OnInit, AfterViewInit, OnDestroy
 {
   router = inject(Router);
+  private location = inject(Location);
   activatedRoute = inject(ActivatedRoute);
   opportunityService = inject(OpportunityService);
   valuesService = inject(ValuesService);
@@ -386,23 +387,20 @@ export class OpportunityViewComponent
         const newRecordId = paramMap.get('recordId') || '';
         const section = paramMap.get('section');
 
-        // Set the section FIRST before any other logic
-        // This prevents the "analysis" default from triggering navigation
-        if (section && this.isValidSection(section)) {
-          this.activeSection.set(section);
-          // Set manual navigation time to prevent scroll spy interference
-          this.lastManualNavigationTime = Date.now();
-          this.isScrolling = true;
-        } else if (!section && !this.activeSection()) {
-          // Only default to analysis if no section provided AND no section already set
-          this.activeSection.set('analysis');
-        }
-
         // Check for initial load FIRST (when recordId is empty or undefined)
         if (newRecordId && (!this.recordId || this.recordId === '')) {
-          // Initial load - allow scrolling to specified section after data loads
+          // Initial load - set section and allow scrolling to specified section after data loads
           this.recordId = newRecordId;
           this.shouldScrollAfterDataLoad = section ? true : false;
+          
+          if (section && this.isValidSection(section)) {
+            this.activeSection.set(section);
+            this.lastManualNavigationTime = Date.now();
+            this.isScrolling = true;
+          } else if (!section) {
+            this.activeSection.set('analysis');
+          }
+          
           // Load permissions for this specific opportunity instance
           this.permissionUtils.loadPermissions(this.recordId, this.cdr);
           this._loadRecordDetails(section || 'analysis');
@@ -410,26 +408,24 @@ export class OpportunityViewComponent
           // Record ID changed (navigating to different record) - don't auto-scroll
           this.recordId = newRecordId;
           this.shouldScrollAfterDataLoad = false;
+          
+          if (section && this.isValidSection(section)) {
+            this.activeSection.set(section);
+          } else if (!section) {
+            this.activeSection.set('analysis');
+          }
+          
           // Load permissions for the new opportunity instance
           this.permissionUtils.loadPermissions(this.recordId, this.cdr);
           this._loadRecordDetails(section || 'analysis');
         }
+        // IMPORTANT: If recordId hasn't changed, this is just a section change from scroll spy
+        // DO NOT update activeSection here - let scroll spy handle it to avoid double updates
 
         // NOTE: Section scrolling is handled in two places ONLY:
         // 1. Initial load with section in URL: _loadRecordDetails() with shouldScrollAfterDataLoad=true
         // 2. User clicking section chips: scrollToSection() method
-        // We do NOT scroll on URL changes from scroll spy to avoid infinite scroll loops
-
-        if (!section && !this.activeSection()) {
-          // Default to analysis if no section in URL and no section already set
-          const currentUrl = this.router.url.split('?')[0];
-          // Only navigate if we're not already at analysis
-          if (!currentUrl.endsWith('/analysis')) {
-            this.router.navigate([currentUrl, 'analysis'], {
-              replaceUrl: true,
-            });
-          }
-        }
+        // 3. User scrolling: scroll spy updates URL and activeSection - paramMap should NOT interfere
       },
     });
   }
@@ -452,7 +448,7 @@ export class OpportunityViewComponent
         const newHeaderScrolled = scrollTop > 20; // Shrink after 20px scroll
         if (this.headerScrolled() !== newHeaderScrolled) {
           this.headerScrolled.set(newHeaderScrolled);
-          this.cdr.detectChanges();
+          // Signal automatically triggers change detection - no manual call needed
         }
       });
 
@@ -492,7 +488,7 @@ export class OpportunityViewComponent
       next: (data: Opportunity) => {
         this.opportunity.set(data);
         this.loading.set(false);
-        this.cdr.detectChanges();
+        // Signal automatically triggers change detection - no manual call needed
 
         // Load AI suggestions for sections
         this._loadSuggestions();
@@ -623,9 +619,8 @@ export class OpportunityViewComponent
     // Note: Source interactions are only reloaded on specific actions (e.g., partner changes from WHO section)
     // Do NOT reload source interactions on every opportunity update to avoid unnecessary API calls
     
-    // Angular signals automatically notify ALL child components
+    // Angular signals automatically notify ALL child components - no manual detectChanges() needed
     // All sections will re-render with latest data
-    this.cdr.detectChanges();
   }
   
   /**
@@ -926,8 +921,8 @@ export class OpportunityViewComponent
     // Create an intersection observer to detect which section is in view
     const observerOptions = {
       root: this.contentScrollContainer?.nativeElement || null,
-      rootMargin: '-20% 0px -70% 0px', // Trigger when section enters top 30% of viewport
-      threshold: 0, // Trigger as soon as any part is visible
+      rootMargin: '-10% 0px -50% 0px', // Wider detection zone: triggers when section is in top 40% of viewport (10% to 50% from top)
+      threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0], // Multiple thresholds for better visibility tracking
     };
 
     this.intersectionObserver = new IntersectionObserver((entries) => {
@@ -943,22 +938,64 @@ export class OpportunityViewComponent
 
       // Small debounce to group rapid events
       this.scrollTimeout = window.setTimeout(() => {
-        // Find the section that's most visible
-        let mostVisibleEntry: IntersectionObserverEntry | undefined;
-        let maxVisibility = 0;
+        // Get all currently observed sections and calculate their visibility
+        const visibleSections: Array<{
+          id: string;
+          ratio: number;
+          visiblePixels: number;
+          element: Element;
+        }> = [];
 
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && entry.intersectionRatio > maxVisibility) {
-            maxVisibility = entry.intersectionRatio;
-            mostVisibleEntry = entry;
+        const containerRect = this.contentScrollContainer?.nativeElement.getBoundingClientRect();
+        if (!containerRect) return;
+
+        // Check all sections for visibility (always do comprehensive check)
+        this.sections.forEach((section) => {
+          const element = document.getElementById(`section-${section.id}`);
+          if (element) {
+            const rect = element.getBoundingClientRect();
+            
+            // Check if section is in viewport
+            const isVisible = rect.top < containerRect.bottom && rect.bottom > containerRect.top;
+            if (isVisible) {
+              // Calculate visible area
+              const visibleTop = Math.max(rect.top, containerRect.top);
+              const visibleBottom = Math.min(rect.bottom, containerRect.bottom);
+              const visibleHeight = visibleBottom - visibleTop;
+              const ratio = rect.height > 0 ? visibleHeight / rect.height : 0;
+              
+              if (visibleHeight > 0) {
+                visibleSections.push({
+                  id: section.id,
+                  ratio: ratio,
+                  visiblePixels: visibleHeight,
+                  element: element,
+                });
+              }
+            }
           }
         });
 
-        if (
-          mostVisibleEntry &&
-          mostVisibleEntry.target instanceof HTMLElement
-        ) {
-          const sectionId = mostVisibleEntry.target.id.replace('section-', '');
+        // Find the section with the best visibility score
+        // Prioritize sections that are in the upper portion of the viewport
+        // by combining ratio and position weighting
+        if (visibleSections.length > 0) {
+          const mostVisible = visibleSections.reduce((prev, current) => {
+            const prevRect = prev.element.getBoundingClientRect();
+            const currentRect = current.element.getBoundingClientRect();
+            
+            // Calculate position scores (sections closer to top get higher score)
+            const prevPosition = Math.max(0, containerRect.top - prevRect.top);
+            const currentPosition = Math.max(0, containerRect.top - currentRect.top);
+            
+            // Combined score: ratio (60% weight) + visible pixels (20% weight) + position preference (20% weight)
+            const prevScore = (prev.ratio * 0.6) + (Math.min(prev.visiblePixels / 500, 1) * 0.2) + (prevPosition > 0 ? 0.2 : 0);
+            const currentScore = (current.ratio * 0.6) + (Math.min(current.visiblePixels / 500, 1) * 0.2) + (currentPosition > 0 ? 0.2 : 0);
+            
+            return currentScore > prevScore ? current : prev;
+          });
+
+          const sectionId = mostVisible.id;
 
           // Only update if it's a different section
           if (
@@ -968,29 +1005,29 @@ export class OpportunityViewComponent
           ) {
             this.activeSection.set(sectionId);
 
-            // Update URL without causing a scroll
+            // Update URL using Location API to avoid triggering Angular router
             const currentUrl = this.router.url.split('?')[0];
             const urlSegments = currentUrl.split('/');
             const lastSegment = urlSegments[urlSegments.length - 1];
             const isSection = this.isValidSection(lastSegment);
 
+            let newUrl: string;
             if (isSection) {
               // Replace existing section in URL
-              this.router.navigate([...urlSegments.slice(0, -1), sectionId], {
-                replaceUrl: true,
-              });
+              newUrl = [...urlSegments.slice(0, -1), sectionId].join('/');
             } else {
               // Add section to URL
-              this.router.navigate([...urlSegments, sectionId], {
-                replaceUrl: true,
-              });
+              newUrl = [...urlSegments, sectionId].join('/');
             }
 
-            // Trigger change detection
-            this.cdr.detectChanges();
+            // Use Location.replaceState() instead of Router.navigate() to update URL
+            // without triggering Angular's routing mechanism
+            this.location.replaceState(newUrl);
+
+            // Signal automatically triggers change detection - no manual call needed
           }
         }
-      }, 150); // Reduced to 150ms for more responsive updates
+      }, 100); // Reduced to 100ms for more responsive updates
     }, observerOptions);
 
     // Observe all section elements

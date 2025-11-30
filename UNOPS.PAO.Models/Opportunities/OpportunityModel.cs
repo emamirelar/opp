@@ -18,6 +18,12 @@ public class OpportunityModel
     public decimal? InitiativeBudgetUSD { get; set; }
     public string? PartnershipAgreementReference { get; set; }
     public DateTime? TargetSigningDate { get; set; }
+    
+    /// <summary>
+    /// Implementation start date - defaults to TargetSigningDate if not specified
+    /// </summary>
+    public DateTime? ImplementationStartDate { get; set; }
+    
     public DateTime? TargetDeliveryDate { get; set; }
     
     public string? StrategicAlignment { get; set; }

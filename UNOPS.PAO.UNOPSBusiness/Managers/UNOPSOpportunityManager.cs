@@ -1354,6 +1354,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
         // Update target dates
         opportunity.TargetSigningDate = request.TargetSigningDate;
+        opportunity.ImplementationStartDate = request.ImplementationStartDate;
         opportunity.TargetDeliveryDate = request.TargetDeliveryDate;
 
         // Update deliverable planned dates (Work Breakdown Structure)
