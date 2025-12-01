@@ -178,7 +178,7 @@ export class OpportunityViewComponent
   // Section navigation configuration
   sections = [
     { id: 'analysis', label: 'Analysis', icon: 'pi-chart-bar' },
-    { id: 'overview', label: 'Overview', icon: 'pi-file' },
+    { id: 'overview', label: 'label.opportunity.overview', icon: 'pi-file' },
     { id: 'what', label: 'What', icon: 'pi-briefcase' },
     { id: 'why', label: 'Why', icon: 'pi-lightbulb' },
     { id: 'who', label: 'Who', icon: 'pi-users' },
