@@ -3,14 +3,16 @@
   [visible]="visible()"
   (visibleChange)="visibleChange.emit($event)"
   [modal]="true"
-  [closable]="true"
+  [appendTo]="'body'"
   [style]="{ width: '95vw', height: '90vh' }"
+  [contentStyle]="{ 'max-height': '85vh', 'overflow-y': 'auto' }"
+  [draggable]="false"
+  [resizable]="false"
   [maximizable]="true"
-  styleClass="ai-comparison-dialog"
 >
   <div class="h-full flex flex-col">
     <!-- Header Info -->
-    <div class="mb-4 p-4 bg-unops-surface-secondary rounded-unops-md">
+    <div class="mb-4 p-4 bg-unops-surface-secondary rounded-unops-md" style="background-color: red;">
       <div class="flex items-center gap-2 mb-2">
         <i class="pi pi-info-circle text-unops-primary"></i>
         <span class="font-semibold">{{ 'message.aiComparison.info' | translate }}</span>

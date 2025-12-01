@@ -17,6 +17,7 @@ import {
   AfterViewInit,
   effect,
   untracked,
+  HostListener,
 } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -129,12 +130,17 @@ export class OpportunityViewComponent
 
   // State
   loading = signal<boolean>(true);
+  isRegeneratingBanner = signal<boolean>(false);
   recordId: string = '';
   opportunity = signal<Opportunity | null>(null);
   showAIPanel = signal<boolean>(true); // AI Assistant panel toggle state
   documentsCollapsed = signal(true); // Document panel state
   activeSection = signal<string>(''); // Active section for navigation - will be set from route params
   headerScrolled = signal<boolean>(false); // Header shrunk state when scrolled
+  
+  // Unsaved changes tracking for sticky save bar (Option 2 UX)
+  sectionsWithUnsavedChanges = signal<Set<string>>(new Set());
+  readonly hasUnsavedChanges = computed(() => this.sectionsWithUnsavedChanges().size > 0);
 
   @ViewChild('contentScrollContainer', { read: ElementRef })
   contentScrollContainer?: ElementRef;
@@ -148,6 +154,16 @@ export class OpportunityViewComponent
   whySectionComponent?: OpportunityWhySectionComponent;
   @ViewChild(OpportunityDocumentsComponent)
   documentsComponent?: OpportunityDocumentsComponent;
+  @ViewChild(OpportunityOverviewSectionComponent)
+  overviewSectionComponent?: OpportunityOverviewSectionComponent;
+  @ViewChild(OpportunityWhatSectionComponent)
+  whatSectionComponent?: OpportunityWhatSectionComponent;
+  @ViewChild(OpportunityWhoSectionComponent)
+  whoSectionComponent?: OpportunityWhoSectionComponent;
+  @ViewChild(OpportunityWhereSectionComponent)
+  whereSectionComponent?: OpportunityWhereSectionComponent;
+  @ViewChild(OpportunityWhenSectionComponent)
+  whenSectionComponent?: OpportunityWhenSectionComponent;
 
   private intersectionObserver?: IntersectionObserver;
   private navigationInProgress = false;
@@ -162,7 +178,7 @@ export class OpportunityViewComponent
   // Section navigation configuration
   sections = [
     { id: 'analysis', label: 'Analysis', icon: 'pi-chart-bar' },
-    { id: 'overview', label: 'Overview', icon: 'pi-file' },
+    { id: 'overview', label: 'label.opportunity.overview', icon: 'pi-file' },
     { id: 'what', label: 'What', icon: 'pi-briefcase' },
     { id: 'why', label: 'Why', icon: 'pi-lightbulb' },
     { id: 'who', label: 'Who', icon: 'pi-users' },
@@ -445,10 +461,14 @@ export class OpportunityViewComponent
     if (scrollElement) {
       scrollElement.addEventListener('scroll', () => {
         const scrollTop = scrollElement.scrollTop;
-        const newHeaderScrolled = scrollTop > 20; // Shrink after 20px scroll
+        // Shrink header after scrolling past the banner (240px banner height, hide after scrolling ~100px)
+        const newHeaderScrolled = scrollTop > 100;
+        console.log(`[Scroll] scrollTop: ${scrollTop}, headerScrolled: ${this.headerScrolled()}, newHeaderScrolled: ${newHeaderScrolled}`);
         if (this.headerScrolled() !== newHeaderScrolled) {
           this.headerScrolled.set(newHeaderScrolled);
-          // Signal automatically triggers change detection - no manual call needed
+          console.log(`[Scroll] Header state changed to: ${newHeaderScrolled}`);
+          // Manually trigger change detection to ensure UI updates immediately
+          this.cdr.detectChanges();
         }
       });
 
@@ -490,6 +510,11 @@ export class OpportunityViewComponent
         this.loading.set(false);
         // Signal automatically triggers change detection - no manual call needed
 
+        // Generate banner images if name and description exist but no banner image yet
+        if (data.name && data.description && !data.opportunityBannerImage) {
+          this._generateBannerImages(data.id);
+        }
+
         // Load AI suggestions for sections
         this._loadSuggestions();
 
@@ -520,6 +545,57 @@ export class OpportunityViewComponent
           summary: this.translateService.instant('message.error'),
         });
       },
+    });
+  }
+
+  /**
+   * Generate banner and thumbnail images for the opportunity using AI
+   */
+  private _generateBannerImages(opportunityId: number): void {
+    console.log('[OpportunityView] Generating banner images for opportunity', opportunityId);
+    this.opportunityService.generateOpportunityImages(opportunityId).subscribe({
+      next: (updatedOpportunity) => {
+        console.log('[OpportunityView] Banner images generated successfully');
+        // Update opportunity with generated images
+        this.opportunity.set(updatedOpportunity);
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.warn('[OpportunityView] Failed to generate banner images:', error);
+        // Silently fail - don't show error to user as this is non-critical
+      }
+    });
+  }
+
+  /**
+   * Regenerate banner image (user-triggered action)
+   */
+  regenerateBannerImage(): void {
+    const currentOpportunity = this.opportunity();
+    if (!currentOpportunity) return;
+
+    this.isRegeneratingBanner.set(true);
+    
+    this.opportunityService.generateOpportunityImages(currentOpportunity.id).subscribe({
+      next: (updatedOpportunity) => {
+        this.opportunity.set(updatedOpportunity);
+        this.isRegeneratingBanner.set(false);
+        this.cdr.markForCheck();
+        
+        this.feedbackDialogService.showSuccessToast({
+          detail: this.translateService.instant('message.opportunity.bannerRegenerated'),
+          summary: this.translateService.instant('message.success'),
+        });
+      },
+      error: (error) => {
+        console.error('[OpportunityView] Error regenerating banner:', error);
+        this.isRegeneratingBanner.set(false);
+        
+        this.feedbackDialogService.showErrorToast({
+          detail: this.translateService.instant('message.opportunity.bannerRegenerationFailed'),
+          summary: this.translateService.instant('message.error'),
+        });
+      }
     });
   }
 
@@ -649,6 +725,243 @@ export class OpportunityViewComponent
   }
 
   /**
+   * @description Track when a section has unsaved changes
+   * @param {string} sectionId - The section identifier (e.g., 'what', 'why', 'who')
+   */
+  handleSectionChangesDetected(sectionId: string): void {
+    const currentSections = this.sectionsWithUnsavedChanges();
+    const updatedSections = new Set(currentSections);
+    updatedSections.add(sectionId);
+    this.sectionsWithUnsavedChanges.set(updatedSections);
+  }
+
+  /**
+   * @description Clear unsaved changes tracking for a section
+   * @param {string} sectionId - The section identifier
+   */
+  handleSectionChangesSaved(sectionId: string): void {
+    const currentSections = this.sectionsWithUnsavedChanges();
+    const updatedSections = new Set(currentSections);
+    updatedSections.delete(sectionId);
+    this.sectionsWithUnsavedChanges.set(updatedSections);
+  }
+
+  /**
+   * @description Save all sections with unsaved changes
+   */
+  saveAllSections(): void {
+    const sectionsToSave = Array.from(this.sectionsWithUnsavedChanges());
+    
+    if (sectionsToSave.length === 0) {
+      return;
+    }
+
+    // Trigger save on each section with unsaved changes
+    sectionsToSave.forEach(sectionId => {
+      switch (sectionId) {
+        case 'overview':
+          if (this.overviewSectionComponent) {
+            this.overviewSectionComponent.saveSection();
+          }
+          break;
+        case 'what':
+          if (this.whatSectionComponent) {
+            this.whatSectionComponent.saveSection();
+          }
+          break;
+        case 'why':
+          if (this.whySectionComponent) {
+            this.whySectionComponent.saveSection();
+          }
+          break;
+        case 'who':
+          if (this.whoSectionComponent) {
+            this.whoSectionComponent.saveSection();
+          }
+          break;
+        case 'where':
+          if (this.whereSectionComponent) {
+            this.whereSectionComponent.saveSection();
+          }
+          break;
+        case 'when':
+          if (this.whenSectionComponent) {
+            this.whenSectionComponent.saveSection();
+          }
+          break;
+      }
+    });
+  }
+
+  /**
+   * @description Discard all unsaved changes
+   */
+  discardAllChanges(): void {
+    const sectionsToDiscard = Array.from(this.sectionsWithUnsavedChanges());
+    
+    if (sectionsToDiscard.length === 0) {
+      return;
+    }
+
+    // Show confirmation dialog
+    this.feedbackDialogService.showConfirmDialog(
+      {
+        summary: this.translateService.instant('confirmation.discardChanges'),
+        detail: this.translateService.instant('message.confirmDiscardAllChanges')
+      },
+      () => {
+        // Trigger cancel/revert on each section with unsaved changes
+        sectionsToDiscard.forEach(sectionId => {
+          switch (sectionId) {
+            case 'overview':
+              if (this.overviewSectionComponent) {
+                this.overviewSectionComponent.cancelEditing();
+              }
+              break;
+            case 'what':
+              if (this.whatSectionComponent) {
+                this.whatSectionComponent.cancelEditing();
+              }
+              break;
+            case 'why':
+              if (this.whySectionComponent) {
+                this.whySectionComponent.cancelEditing();
+              }
+              break;
+            case 'who':
+              if (this.whoSectionComponent) {
+                this.whoSectionComponent.cancelEditing();
+              }
+              break;
+            case 'where':
+              if (this.whereSectionComponent) {
+                this.whereSectionComponent.cancelEditing();
+              }
+              break;
+            case 'when':
+              if (this.whenSectionComponent) {
+                this.whenSectionComponent.cancelEditing();
+              }
+              break;
+          }
+        });
+
+        // Clear all unsaved changes tracking
+        this.sectionsWithUnsavedChanges.set(new Set());
+        
+        this.feedbackDialogService.showInfoToast({
+          summary: this.translateService.instant('message.changesDiscarded'),
+          detail: this.translateService.instant('message.allChangesDiscarded')
+        });
+      }
+    );
+  }
+
+  /**
+   * @description Handle section click to enter edit mode when user clicks on a section
+   * @param {string} sectionId - The section identifier
+   * @param {Event} event - The click event
+   */
+  handleSectionClick(sectionId: string, event: Event): void {
+    // Get the target element
+    const target = event.target as HTMLElement;
+    
+    // Don't trigger edit mode if clicking on interactive elements
+    if (
+      target.closest('button') ||
+      target.closest('a') ||
+      target.closest('input') ||
+      target.closest('textarea') ||
+      target.closest('select') ||
+      target.closest('.p-button') ||
+      target.closest('.p-inputtext') ||
+      target.closest('.p-select') ||
+      target.closest('.p-dropdown') ||
+      target.closest('.p-calendar') ||
+      target.closest('[role="button"]')
+    ) {
+      return;
+    }
+
+    // Only allow section click if user has update permissions and section doesn't have unsaved changes
+    if (!this.canUpdate() || this.sectionsWithUnsavedChanges().has(sectionId)) {
+      return;
+    }
+
+    // Trigger edit mode for the clicked section
+    switch (sectionId) {
+      case 'overview':
+        this.overviewSectionComponent?.startEditing();
+        break;
+      case 'what':
+        this.whatSectionComponent?.startEditing();
+        break;
+      case 'why':
+        this.whySectionComponent?.startEditing();
+        break;
+      case 'who':
+        this.whoSectionComponent?.startEditing();
+        break;
+      case 'where':
+        this.whereSectionComponent?.startEditing();
+        break;
+      case 'when':
+        this.whenSectionComponent?.startEditing();
+        break;
+    }
+  }
+
+  /**
+   * @description Handle Escape key press to exit edit mode
+   * @param {KeyboardEvent} event - The keyboard event
+   */
+  @HostListener('document:keydown.escape', ['$event'])
+  handleEscapeKey(event: KeyboardEvent): void {
+    // Don't handle escape if user is in a dialog or modal
+    const target = event.target as HTMLElement;
+    if (target.closest('.p-dialog') || target.closest('[role="dialog"]')) {
+      return;
+    }
+
+    // Check each section component and cancel editing if in edit mode
+    if (this.overviewSectionComponent?.isEditing?.()) {
+      this.overviewSectionComponent.cancelEditing();
+      event.preventDefault();
+      return;
+    }
+
+    if (this.whatSectionComponent?.isEditing?.()) {
+      this.whatSectionComponent.cancelEditing();
+      event.preventDefault();
+      return;
+    }
+
+    if (this.whySectionComponent?.isEditing?.()) {
+      this.whySectionComponent.cancelEditing();
+      event.preventDefault();
+      return;
+    }
+
+    if (this.whoSectionComponent?.isEditing?.()) {
+      this.whoSectionComponent.cancelEditing();
+      event.preventDefault();
+      return;
+    }
+
+    if (this.whereSectionComponent?.isEditing?.()) {
+      this.whereSectionComponent.cancelEditing();
+      event.preventDefault();
+      return;
+    }
+
+    if (this.whenSectionComponent?.isEditing?.()) {
+      this.whenSectionComponent.cancelEditing();
+      event.preventDefault();
+      return;
+    }
+  }
+
+  /**
    * Toggle full content display
    */
   toggleFullContent() {
@@ -735,23 +1048,26 @@ export class OpportunityViewComponent
     this.lastManualNavigationTime = Date.now(); // Track when manual navigation occurred
     this.activeSection.set(sectionId);
 
-    // Update URL with the section parameter
-    const currentUrl = this.router.url;
+    // Update URL with the section parameter using Location API to avoid component reload
+    const currentUrl = this.router.url.split('?')[0]; // Remove query params
     const urlSegments = currentUrl.split('/');
 
     // Check if we already have a section in the URL
     const lastSegment = urlSegments[urlSegments.length - 1];
     const isSection = this.isValidSection(lastSegment);
 
+    let newUrl: string;
     if (isSection) {
-      // Replace existing section
-      this.router.navigate([...urlSegments.slice(0, -1), sectionId], {
-        replaceUrl: true,
-      });
+      // Replace existing section in URL
+      newUrl = [...urlSegments.slice(0, -1), sectionId].join('/');
     } else {
       // Add section to URL
-      this.router.navigate([...urlSegments, sectionId], { replaceUrl: true });
+      newUrl = [...urlSegments, sectionId].join('/');
     }
+
+    // Use Location.replaceState() instead of Router.navigate() to update URL
+    // without triggering Angular's routing mechanism and component reload
+    this.location.replaceState(newUrl);
 
     // Scroll to the section
     this.scrollToSectionInternal(sectionId);
@@ -770,6 +1086,14 @@ export class OpportunityViewComponent
    * Polls until all asynchronous content has finished loading
    */
   private waitForContentAndScroll(): void {
+    // Don't scroll if the window doesn't have focus (prevents stealing focus)
+    if (!document.hasFocus()) {
+      this.pendingScrollTarget = null;
+      this.isInitialLoad = false;
+      this.isScrolling = false;
+      return;
+    }
+
     // Wait 500ms for ViewChild components to initialize before starting polling
     setTimeout(() => {
       let checkCount = 0;

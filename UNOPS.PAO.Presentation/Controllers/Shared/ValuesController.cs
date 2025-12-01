@@ -164,6 +164,32 @@ public class ValuesController : BaseController
         return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetSDGIndicatorsByTargetId(targetId)));
     }
 
+    [HttpGet(APIDictionary.UNCFOutcomes)]
+    public async Task<ActionResult> GetUNCFOutcomes([FromQuery] string? countryCode = null)
+    {
+        if (string.IsNullOrEmpty(countryCode))
+        {
+            return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetUNCFOutcomes()));
+        }
+        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetUNCFOutcomesByCountry(countryCode)));
+    }
+
+    [HttpGet(APIDictionary.UNCFIndicators)]
+    public async Task<ActionResult> GetUNCFIndicators([FromQuery] int? outcomeId = null)
+    {
+        if (!outcomeId.HasValue)
+        {
+            return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetUNCFIndicators()));
+        }
+        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetUNCFIndicatorsByOutcomeId(outcomeId.Value)));
+    }
+
+    [HttpGet(APIDictionary.UNOPSMissions)]
+    public async Task<ActionResult> GetUNOPSMissions()
+    {
+        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetUNOPSMissions()));
+    }
+
     [HttpGet(APIDictionary.GeminiModels)]
     public async Task<ActionResult> GetGeminiModels()
     {

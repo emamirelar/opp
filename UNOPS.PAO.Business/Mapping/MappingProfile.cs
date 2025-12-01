@@ -13,6 +13,7 @@ using UNOPS.PAO.Models.Shared;
 using UNOPS.PAO.Models.Contacts;
 using UNOPS.PAO.Models.Notifications;
 using UNOPS.PAO.Models.Values;
+using UNOPS.PAO.Models.UNCF;
 
 public class MappingProfile : Profile
 {
@@ -51,6 +52,14 @@ public class MappingProfile : Profile
 
         // SDG mappings
         CreateMap<SDG, SDGModel>();
+
+        // UNCF mappings
+        CreateMap<UNCFOutcome,UNCFOutcomeModel>()
+            .ForMember(dest => dest.UNCFOutcomeExternalId, opt => opt.MapFrom(src => src.UNCFOutcomeId))
+            .ForMember(dest => dest.VersionNo, opt => opt.MapFrom(src => src.UNCooperationFrameworkVersionNo));
+        CreateMap<UNCFIndicator, UNCFIndicatorModel>()
+            .ForMember(dest => dest.UNCFIndicatorExternalId, opt => opt.MapFrom(src => src.UNCFIndicatorId))
+            .ForMember(dest => dest.VersionNo, opt => opt.MapFrom(src => src.UNCooperationFrameworkVersionNo));
 
         // OrganizationHierarchy mappings
         CreateMap<OrganizationHierarchy, OrganizationHierarchyModel>().ReverseMap();

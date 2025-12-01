@@ -17,6 +17,7 @@ public interface IManagerWrapper
     IPartnerManager PartnerManager { get; }
 
     IGeminiManager GeminiManager { get; }
+    IImageGenerationManager ImageGenerationManager { get; }
     IDocumentManager DocumentManager { get; }
     IDocumentTypeManager DocumentTypeManager { get; }
     UserManager<PAOIdentityUser> UserManager { get; }

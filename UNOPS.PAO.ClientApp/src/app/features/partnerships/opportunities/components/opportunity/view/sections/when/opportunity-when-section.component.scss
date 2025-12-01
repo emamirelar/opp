@@ -1,6 +1,30 @@
 // Opportunity WHEN Section Component Styles
 // Minimal styles - using Tailwind-first approach
 
+// Fix float label overlap with datepicker icon
+:host ::ng-deep {
+  .p-floatlabel {
+    // Ensure proper spacing for datepicker with icon
+    .p-datepicker {
+      &.p-inputwrapper-filled,
+      &.p-inputwrapper-focus {
+        ~ label {
+          // Ensure label doesn't overlap with calendar icon
+          max-width: calc(100% - 3rem);
+        }
+      }
+    }
+  }
+  
+  // Remove border radius from right top and bottom corners of all datepicker inputs
+  .p-datepicker {
+    input.p-inputtext {
+      border-top-right-radius: 0 !important;
+      border-bottom-right-radius: 0 !important;
+    }
+  }
+}
+
 // Custom Timeline Styles
 :host ::ng-deep {
   .custom-timeline {

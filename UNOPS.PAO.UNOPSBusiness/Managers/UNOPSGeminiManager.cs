@@ -2913,13 +2913,13 @@ public class UNOPSGeminiManager : IGeminiManager
         /// <param name="maxResults">Maximum number of similar projects to return (default: 10)</param>
         /// <param name="user">Current user context</param>
         /// <returns>Response containing similar projects and extracted keywords</returns>
-        public async Task<UNOPS.PAO.Models.SimilarProjectsResponse> GetSimilarProjectsAsync(int opportunityId, int maxResults = 6, ClaimsPrincipal user = null)
+        public async Task<UNOPS.PAO.Models.SimilarProjectsResponse> GetSimilarProjectsAsync(int opportunityId, int maxResults = 6, ClaimsPrincipal user = null, bool invalidateCache = false)
         {
             var startTime = DateTime.UtcNow;
             
             try
             {
-                _logger.LogInformation($"🔍 [SIMILAR-PROJECTS] Starting similar projects search for opportunity {opportunityId}");
+                _logger.LogInformation($"🔍 [SIMILAR-PROJECTS] Starting similar projects search for opportunity {opportunityId}, invalidateCache={invalidateCache}");
                 
                 // Step 1: Get opportunity data through manager wrapper
                 if (_managerWrapper == null)
@@ -2970,10 +2970,14 @@ public class UNOPSGeminiManager : IGeminiManager
                 // Step 3: Search vector store for similar projects
                 _logger.LogInformation($"🔎 [SIMILAR-PROJECTS] Searching vector store with query: \"{searchQuery.Substring(0, Math.Min(100, searchQuery.Length))}...\"");
                 
+                // Request 2x results to account for potential duplicates from vector store
+                var vectorStoreMaxResults = maxResults * 2;
+                _logger.LogInformation($"📊 [SIMILAR-PROJECTS] Requesting {vectorStoreMaxResults} results from vector store (2x {maxResults}) to filter duplicates");
+                
                 var vectorStoreRequest = new UNOPS.PAO.Models.AI.VectorStoreSearchRequest
                 {
                     Query = searchQuery,
-                    MaxResults = maxResults,
+                    MaxResults = vectorStoreMaxResults,
                     EntityTypeId = "PROJECT",  // Search for projects
                     EntityId = "",
                     ApplicationId = "",
@@ -2995,6 +2999,13 @@ public class UNOPSGeminiManager : IGeminiManager
                 var userEmail = user?.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
                 var vectorStoreResponse = await aiRetrieverManager.SearchVectorStoreAsync(vectorStoreRequest, userEmail);
                 
+                // Validate vector store response
+                if (vectorStoreResponse == null)
+                {
+                    _logger.LogError($"❌ [SIMILAR-PROJECTS] Vector store returned null response for opportunity {opportunityId}");
+                    throw new InvalidOperationException("Vector store search returned null response. This may indicate an authorization or connectivity issue.");
+                }
+                
                 _logger.LogInformation($"✅ [SIMILAR-PROJECTS] Vector store search returned {vectorStoreResponse.Documents?.Count ?? 0} results");
                 
                 // Step 4: Map vector store documents to similar project models
@@ -3002,9 +3013,18 @@ public class UNOPSGeminiManager : IGeminiManager
                 
                 if (vectorStoreResponse.Documents != null && vectorStoreResponse.Documents.Any())
                 {
+                    _logger.LogInformation($"📋 [SIMILAR-PROJECTS] Processing {vectorStoreResponse.Documents.Count} documents from vector store");
                     foreach (var doc in vectorStoreResponse.Documents)
                     {
                         var projectId = doc.EntityId ?? doc.DocumentId;
+                        
+                        // Validate that we have a valid project ID
+                        if (string.IsNullOrEmpty(projectId))
+                        {
+                            _logger.LogWarning($"⚠️ [SIMILAR-PROJECTS] Document without ID found, skipping. DocumentId={doc.DocumentId}, EntityId={doc.EntityId}");
+                            continue;
+                        }
+                        
                         var similarProject = new UNOPS.PAO.Models.SimilarProjectModel
                         {
                             ProjectId = projectId,
@@ -3019,14 +3039,44 @@ public class UNOPSGeminiManager : IGeminiManager
                             ProjectUrl = $"https://projects.unops.org/#b0/{projectId}/dashboard/overview"
                         };
                         
+                        _logger.LogDebug($"[SIMILAR-PROJECTS] Mapped project: ID={projectId}, Score={similarProject.RelevanceScore:F2}, Description={(similarProject.Description ?? "null").Substring(0, Math.Min(50, (similarProject.Description ?? "null").Length))}...");
                         similarProjects.Add(similarProject);
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning($"⚠️ [SIMILAR-PROJECTS] Vector store returned no documents for opportunity {opportunityId}. Query: {searchQuery.Substring(0, Math.Min(100, searchQuery.Length))}");
+                }
+                
+                // Step 4.5: Deduplicate projects and take top maxResults
+                if (similarProjects.Any())
+                {
+                    var originalCount = similarProjects.Count;
+                    
+                    // Deduplicate by ProjectId, keeping the first occurrence (highest relevance score)
+                    similarProjects = similarProjects
+                        .GroupBy(p => p.ProjectId)
+                        .Select(g => g.First())
+                        .OrderByDescending(p => p.RelevanceScore)
+                        .Take(maxResults)
+                        .ToList();
+                    
+                    if (originalCount > similarProjects.Count)
+                    {
+                        _logger.LogInformation($"🔄 [SIMILAR-PROJECTS] Deduplicated {originalCount} results to {similarProjects.Count} unique projects (requested {maxResults})");
+                    }
+                    else
+                    {
+                        _logger.LogInformation($"✅ [SIMILAR-PROJECTS] All {similarProjects.Count} projects are unique (no duplicates found)");
                     }
                 }
                 
                 // Step 5: Refine results with Gemini to add relevance explanations
-                if (similarProjects.Any())
+                // CRITICAL: Only refine if we have valid projects with IDs (prevent AI hallucination)
+                if (similarProjects.Any() && similarProjects.All(p => !string.IsNullOrEmpty(p.ProjectId)))
                 {
                     _logger.LogInformation($"🤖 [SIMILAR-PROJECTS] Refining {similarProjects.Count} projects with AI-generated relevance explanations");
+                    _logger.LogInformation($"📋 [SIMILAR-PROJECTS] Project IDs being sent to AI: {string.Join(", ", similarProjects.Select(p => p.ProjectId).Take(5))}{(similarProjects.Count > 5 ? "..." : "")}");
                     
                     try
                     {
@@ -3052,7 +3102,7 @@ public class UNOPSGeminiManager : IGeminiManager
                             var refinedPrompt = _aiService.ProcessPlaceholders(refinePrompt.UserPrompt, JsonConvert.SerializeObject(placeholders));
                             
                             // Call Gemini to refine the projects
-                            var refineResponse = await _aiService.FetchResultFromGemini(refinePrompt, refinedPrompt, opportunityId.ToString());
+                            var refineResponse = await _aiService.FetchResultFromGemini(refinePrompt, refinedPrompt, opportunityId.ToString(), bypassCache: invalidateCache);
                             
                             if (!string.IsNullOrEmpty(refineResponse))
                             {
@@ -3066,11 +3116,45 @@ public class UNOPSGeminiManager : IGeminiManager
                                         var refinedData = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(extractedJson);
                                         if (refinedData != null && refinedData.ContainsKey("projects"))
                                         {
-                                            var refinedProjects = JsonConvert.DeserializeObject<List<UNOPS.PAO.Models.SimilarProjectModel>>(refinedData["projects"].ToString());
-                                            if (refinedProjects != null)
+                                            // Use CamelCasePropertyNamesContractResolver to deserialize camelCase JSON from AI to PascalCase C# properties
+                                            var deserializationSettings = new JsonSerializerSettings
                                             {
-                                                similarProjects = refinedProjects;
-                                                _logger.LogInformation($"✅ [SIMILAR-PROJECTS] Successfully added relevance explanations to {similarProjects.Count} projects");
+                                                ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver()
+                                            };
+                                            var refinedProjects = JsonConvert.DeserializeObject<List<UNOPS.PAO.Models.SimilarProjectModel>>(refinedData["projects"].ToString(), deserializationSettings);
+                                            if (refinedProjects != null && refinedProjects.Count > 0)
+                                            {
+                                                // CRITICAL VALIDATION: Check if AI hallucinated new projects
+                                                if (refinedProjects.Count != similarProjects.Count)
+                                                {
+                                                    _logger.LogWarning($"⚠️ [SIMILAR-PROJECTS] AI returned {refinedProjects.Count} projects but we sent {similarProjects.Count}. Possible hallucination - skipping refinement.");
+                                                }
+                                                else
+                                                {
+                                                    // IMPORTANT: AI only returns relevanceExplanation - merge it with original data to preserve all fields
+                                                    // Match by index since order should be preserved
+                                                    for (int i = 0; i < Math.Min(similarProjects.Count, refinedProjects.Count); i++)
+                                                    {
+                                                        var originalProject = similarProjects[i];
+                                                        var refinedProject = refinedProjects[i];
+                                                        
+                                                        // Only update the relevanceExplanation field from AI response
+                                                        // Preserve ALL other original fields (ID, metadata, scores, etc.)
+                                                        if (!string.IsNullOrEmpty(refinedProject.RelevanceExplanation))
+                                                        {
+                                                            originalProject.RelevanceExplanation = refinedProject.RelevanceExplanation;
+                                                        }
+                                                        
+                                                        _logger.LogDebug($"[SIMILAR-PROJECTS] Project {i}: ID={originalProject.ProjectId}, HasExplanation={!string.IsNullOrEmpty(originalProject.RelevanceExplanation)}");
+                                                    }
+                                                    
+                                                    // Keep original list with updated explanations (don't replace with AI response)
+                                                    _logger.LogInformation($"✅ [SIMILAR-PROJECTS] Successfully added relevance explanations to {similarProjects.Count} projects");
+                                                }
+                                            }
+                                            else
+                                            {
+                                                _logger.LogWarning($"⚠️ [SIMILAR-PROJECTS] AI returned null or empty projects list - keeping original results");
                                             }
                                         }
                                     }
@@ -3129,13 +3213,13 @@ public class UNOPSGeminiManager : IGeminiManager
         /// <param name="maxResults">Maximum number of relevant people to return (default: 10)</param>
         /// <param name="user">Current user context</param>
         /// <returns>Response containing relevant people and extracted roles</returns>
-        public async Task<UNOPS.PAO.Models.RelevantPeopleResponse> GetRelevantPeopleAsync(int opportunityId, int maxResults = 10, ClaimsPrincipal user = null)
+        public async Task<UNOPS.PAO.Models.RelevantPeopleResponse> GetRelevantPeopleAsync(int opportunityId, int maxResults = 10, ClaimsPrincipal user = null, bool invalidateCache = false)
         {
             var startTime = DateTime.UtcNow;
             
             try
             {
-                _logger.LogInformation($"👥 [RELEVANT-PEOPLE] Starting relevant people search for opportunity {opportunityId}");
+                _logger.LogInformation($"👥 [RELEVANT-PEOPLE] Starting relevant people search for opportunity {opportunityId}, invalidateCache={invalidateCache}");
                 
                 // Step 1: Get opportunity data through manager wrapper
                 if (_managerWrapper == null)
@@ -3186,10 +3270,14 @@ public class UNOPSGeminiManager : IGeminiManager
                 // Step 3: Search vector store for PERSON entity
                 _logger.LogInformation($"🔎 [RELEVANT-PEOPLE] Searching vector store for PERSON entity with query: \"{searchQuery.Substring(0, Math.Min(100, searchQuery.Length))}...\"");
                 
+                // Request 2x results to account for potential duplicates from vector store
+                var vectorStoreMaxResults = maxResults * 2;
+                _logger.LogInformation($"📊 [RELEVANT-PEOPLE] Requesting {vectorStoreMaxResults} results from vector store (2x {maxResults}) to filter duplicates");
+                
                 var vectorStoreRequest = new UNOPS.PAO.Models.AI.VectorStoreSearchRequest
                 {
                     Query = searchQuery,
-                    MaxResults = maxResults,
+                    MaxResults = vectorStoreMaxResults,
                     EntityTypeId = "PERSON",  // Search for people
                     EntityId = "",
                     ApplicationId = "",
@@ -3211,6 +3299,13 @@ public class UNOPSGeminiManager : IGeminiManager
                 var userEmail = user?.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
                 var vectorStoreResponse = await aiRetrieverManager.SearchVectorStoreAsync(vectorStoreRequest, userEmail);
                 
+                // Validate vector store response
+                if (vectorStoreResponse == null)
+                {
+                    _logger.LogError($"❌ [RELEVANT-PEOPLE] Vector store returned null response for opportunity {opportunityId}");
+                    throw new InvalidOperationException("Vector store search returned null response. This may indicate an authorization or connectivity issue.");
+                }
+                
                 _logger.LogInformation($"✅ [RELEVANT-PEOPLE] Vector store search returned {vectorStoreResponse.Documents?.Count ?? 0} results");
                 
                 // Step 4: Map vector store documents to relevant person models
@@ -3218,9 +3313,17 @@ public class UNOPSGeminiManager : IGeminiManager
                 
                 if (vectorStoreResponse.Documents != null && vectorStoreResponse.Documents.Any())
                 {
+                    _logger.LogInformation($"📋 [RELEVANT-PEOPLE] Processing {vectorStoreResponse.Documents.Count} documents from vector store");
                     foreach (var doc in vectorStoreResponse.Documents)
                     {
                         var personId = doc.EntityId ?? doc.DocumentId;
+                        
+                        // Validate that we have a valid person ID
+                        if (string.IsNullOrEmpty(personId))
+                        {
+                            _logger.LogWarning($"⚠️ [RELEVANT-PEOPLE] Document without ID found, skipping. DocumentId={doc.DocumentId}, EntityId={doc.EntityId}");
+                            continue;
+                        }
                         
                         // Extract expertise from metadata if available (could be skills, areas of expertise, etc.)
                         var expertiseStr = ExtractFromMetadata(doc.Metadata, "Expertise") 
@@ -3255,14 +3358,44 @@ public class UNOPSGeminiManager : IGeminiManager
                             Metadata = doc.Metadata
                         };
                         
+                        _logger.LogDebug($"[RELEVANT-PEOPLE] Mapped person: ID={personId}, Name={relevantPerson.Name ?? "null"}, Score={relevantPerson.RelevanceScore:F2}");
                         relevantPeople.Add(relevantPerson);
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning($"⚠️ [RELEVANT-PEOPLE] Vector store returned no documents for opportunity {opportunityId}. Query: {searchQuery.Substring(0, Math.Min(100, searchQuery.Length))}");
+                }
+                
+                // Step 4.5: Deduplicate people and take top maxResults
+                if (relevantPeople.Any())
+                {
+                    var originalCount = relevantPeople.Count;
+                    
+                    // Deduplicate by PersonId, keeping the first occurrence (highest relevance score)
+                    relevantPeople = relevantPeople
+                        .GroupBy(p => p.PersonId)
+                        .Select(g => g.First())
+                        .OrderByDescending(p => p.RelevanceScore)
+                        .Take(maxResults)
+                        .ToList();
+                    
+                    if (originalCount > relevantPeople.Count)
+                    {
+                        _logger.LogInformation($"🔄 [RELEVANT-PEOPLE] Deduplicated {originalCount} results to {relevantPeople.Count} unique people (requested {maxResults})");
+                    }
+                    else
+                    {
+                        _logger.LogInformation($"✅ [RELEVANT-PEOPLE] All {relevantPeople.Count} people are unique (no duplicates found)");
                     }
                 }
                 
                 // Step 5: Refine results with Gemini to add relevance explanations
-                if (relevantPeople.Any())
+                // CRITICAL: Only refine if we have valid people with IDs (prevent AI hallucination)
+                if (relevantPeople.Any() && relevantPeople.All(p => !string.IsNullOrEmpty(p.PersonId)))
                 {
                     _logger.LogInformation($"🤖 [RELEVANT-PEOPLE] Refining {relevantPeople.Count} people with AI-generated relevance explanations");
+                    _logger.LogInformation($"📋 [RELEVANT-PEOPLE] Person IDs being sent to AI: {string.Join(", ", relevantPeople.Select(p => p.PersonId).Take(5))}{(relevantPeople.Count > 5 ? "..." : "")}");
                     
                     try
                     {
@@ -3289,7 +3422,7 @@ public class UNOPSGeminiManager : IGeminiManager
                             var refinedPrompt = _aiService.ProcessPlaceholders(refinePrompt.UserPrompt, JsonConvert.SerializeObject(placeholders));
                             
                             // Call Gemini to refine the people
-                            var refineResponse = await _aiService.FetchResultFromGemini(refinePrompt, refinedPrompt, opportunityId.ToString());
+                            var refineResponse = await _aiService.FetchResultFromGemini(refinePrompt, refinedPrompt, opportunityId.ToString(), bypassCache: invalidateCache);
                             
                             if (!string.IsNullOrEmpty(refineResponse))
                             {
@@ -3303,11 +3436,45 @@ public class UNOPSGeminiManager : IGeminiManager
                                         var refinedData = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(extractedJson);
                                         if (refinedData != null && refinedData.ContainsKey("people"))
                                         {
-                                            var refinedPeople = JsonConvert.DeserializeObject<List<UNOPS.PAO.Models.RelevantPersonModel>>(refinedData["people"].ToString());
-                                            if (refinedPeople != null)
+                                            // Use CamelCasePropertyNamesContractResolver to deserialize camelCase JSON from AI to PascalCase C# properties
+                                            var deserializationSettings = new JsonSerializerSettings
                                             {
-                                                relevantPeople = refinedPeople;
-                                                _logger.LogInformation($"✅ [RELEVANT-PEOPLE] Successfully added relevance explanations to {relevantPeople.Count} people");
+                                                ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver()
+                                            };
+                                            var refinedPeople = JsonConvert.DeserializeObject<List<UNOPS.PAO.Models.RelevantPersonModel>>(refinedData["people"].ToString(), deserializationSettings);
+                                            if (refinedPeople != null && refinedPeople.Count > 0)
+                                            {
+                                                // CRITICAL VALIDATION: Check if AI hallucinated new people
+                                                if (refinedPeople.Count != relevantPeople.Count)
+                                                {
+                                                    _logger.LogWarning($"⚠️ [RELEVANT-PEOPLE] AI returned {refinedPeople.Count} people but we sent {relevantPeople.Count}. Possible hallucination - skipping refinement.");
+                                                }
+                                                else
+                                                {
+                                                    // IMPORTANT: AI only returns relevanceExplanation - merge it with original data to preserve all fields
+                                                    // Match by index since AI returns in same order
+                                                    for (int i = 0; i < Math.Min(relevantPeople.Count, refinedPeople.Count); i++)
+                                                    {
+                                                        var originalPerson = relevantPeople[i];
+                                                        var refinedPerson = refinedPeople[i];
+                                                        
+                                                        // Only update the relevanceExplanation field from AI response
+                                                        // Preserve ALL other original fields (ID, name, email, title, etc.)
+                                                        if (!string.IsNullOrEmpty(refinedPerson.RelevanceExplanation))
+                                                        {
+                                                            originalPerson.RelevanceExplanation = refinedPerson.RelevanceExplanation;
+                                                        }
+                                                        
+                                                        _logger.LogDebug($"[RELEVANT-PEOPLE] Person {i}: ID={originalPerson.PersonId}, Name={originalPerson.Name}, HasExplanation={!string.IsNullOrEmpty(originalPerson.RelevanceExplanation)}");
+                                                    }
+                                                    
+                                                    // Keep original list with updated explanations (don't replace with AI response)
+                                                    _logger.LogInformation($"✅ [RELEVANT-PEOPLE] Successfully added relevance explanations to {relevantPeople.Count} people");
+                                                }
+                                            }
+                                            else
+                                            {
+                                                _logger.LogWarning($"⚠️ [RELEVANT-PEOPLE] AI returned null or empty people list - keeping original results");
                                             }
                                         }
                                     }

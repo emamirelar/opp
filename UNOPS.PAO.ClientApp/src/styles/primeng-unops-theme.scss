@@ -225,7 +225,7 @@
   }
   
   &::placeholder {
-    color: var(--unops-neutral-500) !important;
+    color: var(--unops-neutral-300) !important;
   }
 }
 
@@ -324,6 +324,11 @@
       color: var(--unops-primary) !important;
     }
   }
+}
+
+/* Placeholder styling for p-select and p-dropdown */
+.p-placeholder {
+  color: var(--unops-neutral-300) !important;
 }
 
 .p-dropdown-panel {
@@ -647,6 +652,28 @@ p-dynamicdialog {
     background: var(--unops-surface-secondary) !important;
     border-top: 1px solid var(--unops-neutral-200) !important;
     padding: var(--unops-spacing-md) var(--unops-spacing-lg) !important;
+  }
+}
+
+/* ===================================== */
+/* BADGE OVERRIDES */
+/* ===================================== */
+
+.p-badge {
+  font-family: var(--unops-font-body) !important;
+  font-size: var(--unops-font-size-body-small) !important;
+  font-weight: var(--unops-font-weight-semibold) !important;
+  border-radius: var(--unops-radius-full) !important;
+  padding: 0.25rem 0.5rem !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  
+  /* Warn severity - UNOPS warning color for opportunity workflow stages */
+  &.p-badge-warn {
+    background: #cc8400 !important;
+    color: #ffffff !important;
   }
 }
 

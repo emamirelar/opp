@@ -92,17 +92,17 @@ export class SidebarComponent implements OnInit, OnDestroy {
             routerLink: ['/partnerships/partnership-agreements']
           }
         ]
-      },
-      {
-        label: 'title.leads',
-        icon: 'trending_up',
-        routerLink: ['/leads']
-      },
-      {
-        label: 'title.initiatives',
-        icon: 'lightbulb',
-        routerLink: ['/initiatives']
       }
+      // {
+      //   label: 'title.leads',
+      //   icon: 'trending_up',
+      //   routerLink: ['/leads']
+      // },
+      // {
+      //   label: 'title.initiatives',
+      //   icon: 'lightbulb',
+      //   routerLink: ['/initiatives']
+      // }
     ];
 
     if (!isAdmin) {

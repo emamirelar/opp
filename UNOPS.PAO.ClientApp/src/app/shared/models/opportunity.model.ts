@@ -3,6 +3,8 @@
  * @author UNOPS Opportunity+ System Development Team
  */
 
+import { EntityTag } from './entity-tag.model';
+
 /**
  * Document detail model for display purposes
  */
@@ -39,6 +41,29 @@ export interface PartnerAgreementInfo {
 }
 
 /**
+ * UNOPS Strategic Mission model
+ */
+export interface UNOPSMission {
+  id: number;
+  code: string;
+  name: string;
+  description: string | null;
+  iconClass: string | null;
+  displayOrder: number;
+  status: string;
+}
+
+/**
+ * Opportunity UNOPS Mission alignment (junction model)
+ */
+export interface OpportunityUNOPSMission {
+  id: number;
+  opportunityId: number;
+  unopsMissionId: number;
+  unopsMission: UNOPSMission | null;
+}
+
+/**
  * Main Opportunity model matching backend OpportunityModel.cs
  */
 export interface Opportunity {
@@ -62,8 +87,13 @@ export interface Opportunity {
   resultsFocus: string | null;
   intendedImpactOutcomes: string | null;
   expectedBeneficiaries: string | null;
+  estimatedDirectBeneficiaries: number | null;
+  estimatedIndirectBeneficiaries: number | null;
+  beneficiariesToBeDetermined: boolean;
   challenges: string | null;
   opportunityStatementMarkdown: string | null;
+  opportunityBannerImage: string | null;
+  opportunityThumbnail: string | null;
   isPooledFunding: boolean;
   deliveryModality: number | null;
   fundingPartners: OpportunityFundingPartner[];
@@ -75,6 +105,8 @@ export interface Opportunity {
   deliverables: OpportunityDeliverable[];
   countries: OpportunityCountry[];
   sdGs: OpportunitySDG[];
+  uncfOutcomes?: OpportunityUNCFOutcome[];
+  unopsMissions?: OpportunityUNOPSMission[];
   stats: OpportunityStats | null;
   isNewValueRangeForOrgUnit: boolean | null;
   orgUnitHistoricalMaxValue: number | null;
@@ -87,6 +119,7 @@ export interface Opportunity {
   createdByName: string | null;
   lastModifiedBy: number;
   lastModifiedByName: string | null;
+  tags?: EntityTag[];
   permissions?: EntityPermissions;
 }
 
@@ -248,6 +281,21 @@ export interface OpportunityCountry {
   specificAreas: string | null;
   contextWarning: string | null;
   riskScore: number | null;
+  humanitarianFrameworkAlignment: boolean | null;
+  hasHumanitarianFramework: boolean;
+  ndcAlignment: boolean | null;
+  hasNdc: boolean;
+  napAlignment: boolean | null;
+  hasNap: boolean;
+  orgUnitStrategyAlignment: boolean | null;
+  hasOrgUnitStrategy: boolean;
+  orgUnitWithStrategyId: number | null;
+  orgUnitWithStrategyName: string | null;
+  orgUnitWithStrategyCode: string | null;
+  currentOrgUnitWithStrategyId: number | null;
+  currentOrgUnitWithStrategyName: string | null;
+  currentOrgUnitWithStrategyCode: string | null;
+  hasMoreLocalStrategyAvailable: boolean;
   country: {
     id: number;
     name: string;
@@ -267,7 +315,7 @@ export interface OpportunityCountry {
       tag: string;
       color: string;
     }>;
-    hasActiveUNSDCF?: boolean;
+    hasActiveUNCF?: boolean;
     organizationUnitHierarchy?: OrganizationUnitHierarchyNode[];
   } | null;
 }
@@ -327,6 +375,41 @@ export interface OpportunitySDGIndicator {
   sdgIndicatorId: string;  // String identifier like "1.1.1", "3.3.2"
   sdgIndicatorLongDescription: string | null;
   notes: string | null;
+}
+
+/**
+ * UNCF Outcome model for opportunity
+ * Linked through OpportunityCountry (country-specific)
+ */
+export interface OpportunityUNCFOutcome {
+  id: number;
+  opportunityId: number;
+  opportunityCountryId: number;
+  uncfOutcomeId: number;  // Database FK
+  uncfOutcomeExternalId: string | null;  // String identifier from external system
+  uncfOutcomeName: string | null;
+  versionNo: number | null;
+  country: string | null;  // ISO2 code
+  notes: string | null;
+  indicators?: OpportunityUNCFIndicator[];
+  isInactive?: boolean;  // Indicates if this outcome is outside its active date range
+  hasNewerVersion?: boolean;  // Indicates if a newer version is available
+}
+
+/**
+ * UNCF Indicator model for opportunity
+ * Child relationship of OpportunityUNCFOutcome
+ */
+export interface OpportunityUNCFIndicator {
+  id: number;
+  opportunityId: number;
+  opportunityUNCFOutcomeId: number;
+  uncfIndicatorId: number;  // Database FK
+  uncfIndicatorExternalId: string | null;  // String identifier from external system
+  uncfIndicatorName: string | null;
+  notes: string | null;
+  isInactive?: boolean;  // Indicates if this indicator is outside its active date range
+  hasNewerVersion?: boolean;  // Indicates if a newer version is available
 }
 
 /**

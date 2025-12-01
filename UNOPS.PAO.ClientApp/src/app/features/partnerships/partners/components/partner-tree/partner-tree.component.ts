@@ -524,7 +524,11 @@ export class PartnerTreeComponent implements OnInit, OnDestroy {
       sortable: column.sortable,
       width: column.width,
       ellipsis: column.ellipsis,
-      helperText: column.helperText
+      helperText: column.helperText,
+      thumbnailSize: column.thumbnailSize,
+      thumbnailShape: column.thumbnailShape,
+      thumbnailBorder: column.thumbnailBorder,
+      thumbnailFallback: column.thumbnailFallback,
     };
 
     // Handle nested field paths (fields with dots) by adding a template function

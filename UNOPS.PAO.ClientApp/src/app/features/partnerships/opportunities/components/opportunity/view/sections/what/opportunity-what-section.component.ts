@@ -4,7 +4,7 @@
  */
 
 import { Component, input, output, signal, computed, inject, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, effect } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, KeyValuePipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
@@ -52,6 +52,7 @@ import { FeedbackDialogService } from '@shared/services/ui';
     ChipModule,
     TooltipModule,
     DialogModule,
+    KeyValuePipe,
   ],
   templateUrl: './opportunity-what-section.component.html',
   styleUrls: ['./opportunity-what-section.component.scss'],
@@ -86,6 +87,16 @@ export class OpportunityWhatSectionComponent implements OnInit {
    */
   readonly sectionSaved = output<void>();
 
+  /**
+   * @description Output event when changes are detected (for unsaved changes tracking)
+   */
+  readonly changesDetected = output<void>();
+
+  /**
+   * @description Output event when changes are saved or discarded (clear unsaved state)
+   */
+  readonly changesSavedOrDiscarded = output<void>();
+
   // Edit mode state
   readonly isEditing = signal<boolean>(false);
   readonly isSaving = signal<boolean>(false);
@@ -95,6 +106,7 @@ export class OpportunityWhatSectionComponent implements OnInit {
     deliveryModality?: number | null;
     deliverables?: any[];
   } | null = null;
+  private hasUnsavedChanges = false;
 
   // Form controls for WHAT section
   orgUnitControl = new FormControl<number | null>(null);
@@ -142,8 +154,15 @@ export class OpportunityWhatSectionComponent implements OnInit {
   isEditingDeliverable = signal<boolean>(false);
   editingDeliverableIndex = signal<number | null>(null);
 
-  // Quick search toggle
-  showQuickSearch = signal<boolean>(false);
+  // Search mode toggle (search-first vs browse mode)
+  searchMode = signal<'search' | 'browse'>('search');
+  
+  // Search functionality
+  searchQuery = signal<string>('');
+  searchResults = signal<Output[]>([]);
+  
+  // Multi-selection support
+  selectedOutputsForDialog = signal<Output[]>([]);
   
   // Context from rejected AI recommendation
   rejectedItemContext = signal<string | null>(null);
@@ -255,6 +274,29 @@ export class OpportunityWhatSectionComponent implements OnInit {
       if (opp && opp.id) {
         // Re-check framework status whenever opportunity signal changes
         this.checkFrameworkStatus();
+        
+        // Auto-load AI recommendations (Option 2: load automatically)
+        if (!this.hasRunExtraction()) {
+          this.extractProductsAndServices();
+        }
+      }
+    });
+    
+    // Set up change detection on form controls
+    // Only mark as changed if we're in edit mode (to avoid triggering on initial setValue)
+    this.orgUnitControl.valueChanges.subscribe(() => {
+      if (this.isEditing()) {
+        this.markAsChanged();
+      }
+    });
+    this.initiativeTypeControl.valueChanges.subscribe(() => {
+      if (this.isEditing()) {
+        this.markAsChanged();
+      }
+    });
+    this.deliveryModalityControl.valueChanges.subscribe(() => {
+      if (this.isEditing()) {
+        this.markAsChanged();
       }
     });
   }
@@ -647,7 +689,26 @@ export class OpportunityWhatSectionComponent implements OnInit {
     );
 
     if (output) {
-      this.outputControl.setValue(output);
+      // Check if already selected
+      if (this.isOutputSelected(output)) {
+        this.feedbackService.showWarningToast({
+          summary: this.translateService.instant('message.warning'),
+          detail: this.translateService.instant('message.validation.outputAlreadySelected')
+        });
+        return;
+      }
+
+      // Add to selection (same as search mode)
+      this.selectedOutputsForDialog.set([...this.selectedOutputsForDialog(), output]);
+      
+      // Clear the form for next selection
+      this.level0Control.setValue(null);
+      this.level1Control.setValue(null);
+      this.level2Control.setValue(null);
+      this.level3Control.setValue(null);
+      this.level4Control.setValue(null);
+      this.outputControl.setValue(null);
+      
       this.cdr.detectChanges();
     }
   }
@@ -665,7 +726,26 @@ export class OpportunityWhatSectionComponent implements OnInit {
     );
 
     if (output) {
-      this.outputControl.setValue(output);
+      // Check if already selected
+      if (this.isOutputSelected(output)) {
+        this.feedbackService.showWarningToast({
+          summary: this.translateService.instant('message.warning'),
+          detail: this.translateService.instant('message.validation.outputAlreadySelected')
+        });
+        return;
+      }
+
+      // Add to selection (same as search mode)
+      this.selectedOutputsForDialog.set([...this.selectedOutputsForDialog(), output]);
+      
+      // Clear the form for next selection
+      this.level0Control.setValue(null);
+      this.level1Control.setValue(null);
+      this.level2Control.setValue(null);
+      this.level3Control.setValue(null);
+      this.level4Control.setValue(null);
+      this.outputControl.setValue(null);
+      
       this.cdr.detectChanges();
     }
   }
@@ -685,7 +765,26 @@ export class OpportunityWhatSectionComponent implements OnInit {
     );
 
     if (output) {
-      this.outputControl.setValue(output);
+      // Check if already selected
+      if (this.isOutputSelected(output)) {
+        this.feedbackService.showWarningToast({
+          summary: this.translateService.instant('message.warning'),
+          detail: this.translateService.instant('message.validation.outputAlreadySelected')
+        });
+        return;
+      }
+
+      // Add to selection (same as search mode)
+      this.selectedOutputsForDialog.set([...this.selectedOutputsForDialog(), output]);
+      
+      // Clear the form for next selection
+      this.level0Control.setValue(null);
+      this.level1Control.setValue(null);
+      this.level2Control.setValue(null);
+      this.level3Control.setValue(null);
+      this.level4Control.setValue(null);
+      this.outputControl.setValue(null);
+      
       this.cdr.detectChanges();
     }
   }
@@ -710,7 +809,26 @@ export class OpportunityWhatSectionComponent implements OnInit {
     );
 
     if (output) {
-      this.outputControl.setValue(output);
+      // Check if already selected
+      if (this.isOutputSelected(output)) {
+        this.feedbackService.showWarningToast({
+          summary: this.translateService.instant('message.warning'),
+          detail: this.translateService.instant('message.validation.outputAlreadySelected')
+        });
+        return;
+      }
+
+      // Add to selection (same as search mode)
+      this.selectedOutputsForDialog.set([...this.selectedOutputsForDialog(), output]);
+      
+      // Clear the form for next selection
+      this.level0Control.setValue(null);
+      this.level1Control.setValue(null);
+      this.level2Control.setValue(null);
+      this.level3Control.setValue(null);
+      this.level4Control.setValue(null);
+      this.outputControl.setValue(null);
+      
       this.cdr.detectChanges();
     }
   }
@@ -736,7 +854,26 @@ export class OpportunityWhatSectionComponent implements OnInit {
     );
 
     if (output) {
-      this.outputControl.setValue(output);
+      // Check if already selected
+      if (this.isOutputSelected(output)) {
+        this.feedbackService.showWarningToast({
+          summary: this.translateService.instant('message.warning'),
+          detail: this.translateService.instant('message.validation.outputAlreadySelected')
+        });
+        return;
+      }
+
+      // Add to selection (same as search mode)
+      this.selectedOutputsForDialog.set([...this.selectedOutputsForDialog(), output]);
+      
+      // Clear the form for next selection
+      this.level0Control.setValue(null);
+      this.level1Control.setValue(null);
+      this.level2Control.setValue(null);
+      this.level3Control.setValue(null);
+      this.level4Control.setValue(null);
+      this.outputControl.setValue(null);
+      
       this.cdr.detectChanges();
     }
   }
@@ -821,6 +958,195 @@ export class OpportunityWhatSectionComponent implements OnInit {
   }
 
   /**
+   * @description Get the deepest level name for an output
+   */
+  getDeepestLevel(output: Output): string {
+    if (output.level4) return output.level4;
+    if (output.level3) return output.level3;
+    if (output.level2) return output.level2;
+    if (output.level1) return output.level1;
+    if (output.level0) return output.level0;
+    return output.name || '';
+  }
+
+  /**
+   * @description Get level depth (0-4) for an output
+   */
+  getLevelDepth(output: Output): number {
+    if (output.level4) return 4;
+    if (output.level3) return 3;
+    if (output.level2) return 2;
+    if (output.level1) return 1;
+    if (output.level0) return 0;
+    return 0;
+  }
+
+  /**
+   * @description Get level label for display
+   */
+  getLevelLabel(depth: number): string {
+    const labels = [
+      'label.serviceCategory',
+      'label.primaryService',
+      'label.specificService',
+      'label.detailedService',
+      'label.mostSpecific'
+    ];
+    return this.translateService.instant(labels[depth] || labels[0]);
+  }
+
+  /**
+   * @description Perform unified search across all levels
+   */
+  performUnifiedSearch(query: string): void {
+    this.searchQuery.set(query);
+    
+    if (!query || query.trim().length < 2) {
+      this.searchResults.set([]);
+      return;
+    }
+
+    const lowerQuery = query.toLowerCase().trim();
+    const allOutputs = this.outputs();
+    
+    // Search across all fields
+    const results = allOutputs.filter(output => {
+      const searchableText = [
+        output.name,
+        output.level0,
+        output.level1,
+        output.level2,
+        output.level3,
+        output.level4,
+        output.serviceLine,
+        output.definitionLevel1,
+        output.definitionLevel2,
+        output.definitionLevel3,
+        output.definitionLevel4
+      ]
+        .filter(field => field)
+        .map(field => field!.toLowerCase())
+        .join(' ');
+      
+      return searchableText.includes(lowerQuery);
+    });
+
+    // Sort by relevance (exact matches first, then by level depth)
+    results.sort((a, b) => {
+      const aDeepest = this.getDeepestLevel(a).toLowerCase();
+      const bDeepest = this.getDeepestLevel(b).toLowerCase();
+      const aExact = aDeepest === lowerQuery ? 1 : 0;
+      const bExact = bDeepest === lowerQuery ? 1 : 0;
+      
+      if (aExact !== bExact) return bExact - aExact;
+      
+      // Prefer deeper (more specific) levels
+      return this.getLevelDepth(b) - this.getLevelDepth(a);
+    });
+
+    this.searchResults.set(results);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Group search results by level depth
+   */
+  getGroupedSearchResults(): Map<number, Output[]> {
+    const grouped = new Map<number, Output[]>();
+    
+    this.searchResults().forEach(output => {
+      const depth = this.getLevelDepth(output);
+      if (!grouped.has(depth)) {
+        grouped.set(depth, []);
+      }
+      grouped.get(depth)!.push(output);
+    });
+    
+    return grouped;
+  }
+
+  /**
+   * @description Toggle output selection from unified search (multi-select)
+   */
+  toggleOutputSelection(output: Output): void {
+    const currentSelections = this.selectedOutputsForDialog();
+    const index = currentSelections.findIndex(o => o.id === output.id);
+    
+    if (index >= 0) {
+      // Already selected, remove it
+      const updated = currentSelections.filter(o => o.id !== output.id);
+      this.selectedOutputsForDialog.set(updated);
+    } else {
+      // Not selected, add it
+      this.selectedOutputsForDialog.set([...currentSelections, output]);
+    }
+    
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Check if output is selected
+   */
+  isOutputSelected(output: Output): boolean {
+    return this.selectedOutputsForDialog().some(o => o.id === output.id);
+  }
+
+  /**
+   * @description Clear all selected outputs
+   */
+  clearSelectedOutputs(): void {
+    this.selectedOutputsForDialog.set([]);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Select output from unified search (deprecated - use toggleOutputSelection)
+   */
+  selectFromUnifiedSearch(output: Output): void {
+    // Toggle selection instead of single select
+    this.toggleOutputSelection(output);
+  }
+
+  /**
+   * @description Toggle between search and browse modes
+   */
+  toggleSearchMode(): void {
+    const newMode = this.searchMode() === 'search' ? 'browse' : 'search';
+    this.searchMode.set(newMode);
+    
+    // Clear search when switching modes
+    if (newMode === 'browse') {
+      this.searchQuery.set('');
+      this.searchResults.set([]);
+    }
+    
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Check if output has child levels
+   */
+  hasChildLevels(output: Output): boolean {
+    const depth = this.getLevelDepth(output);
+    
+    // Check if there are more specific outputs with the same parent path
+    const allOutputs = this.outputs();
+    
+    return allOutputs.some(o => {
+      if (depth === 0 && output.level0) {
+        return o.level0 === output.level0 && !!o.level1;
+      } else if (depth === 1 && output.level0 && output.level1) {
+        return o.level0 === output.level0 && o.level1 === output.level1 && !!o.level2;
+      } else if (depth === 2 && output.level0 && output.level1 && output.level2) {
+        return o.level0 === output.level0 && o.level1 === output.level1 && o.level2 === output.level2 && !!o.level3;
+      } else if (depth === 3 && output.level0 && output.level1 && output.level2 && output.level3) {
+        return o.level0 === output.level0 && o.level1 === output.level1 && o.level2 === output.level2 && o.level3 === output.level3 && !!o.level4;
+      }
+      return false;
+    });
+  }
+
+  /**
    * @description Handle quick search selection
    */
   selectFromQuickSearch(output: Output | null): void {
@@ -901,11 +1227,6 @@ export class OpportunityWhatSectionComponent implements OnInit {
     if (!opp || !opp.id) return;
 
     this.isExtracting.set(true);
-    this.feedbackService.showInfoToast({
-      summary: this.translateService.instant('message.extracting'),
-      detail: this.translateService.instant('message.extracting'),
-      life: 3000
-    });
 
     this.opportunityService.extractProductsAndServices(opp.id).subscribe({
       next: (extracted) => {
@@ -914,14 +1235,7 @@ export class OpportunityWhatSectionComponent implements OnInit {
         this.isExtracting.set(false);
         this.hasRunExtraction.set(true); // Mark that extraction has been run
         
-        if (extracted && extracted.length > 0) {
-          this.feedbackService.showSuccessToast({
-            summary: this.translateService.instant('message.extractionComplete'),
-            detail: this.translateService.instant('message.extractionComplete'),
-            life: 5000
-          });
-        }
-        // Note: Don't show warning toast - panel will display "no recommendations" message
+        // Note: No toast notifications - recommendations load silently in the background
         
         this.cdr.detectChanges();
       },
@@ -964,6 +1278,17 @@ export class OpportunityWhatSectionComponent implements OnInit {
   }
 
   /**
+   * @description Mark section as having unsaved changes
+   * @private
+   */
+  private markAsChanged(): void {
+    if (!this.hasUnsavedChanges) {
+      this.hasUnsavedChanges = true;
+      this.changesDetected.emit();
+    }
+  }
+
+  /**
    * @description Save section changes
    */
   saveSection(): void {
@@ -983,12 +1308,16 @@ export class OpportunityWhatSectionComponent implements OnInit {
         this.isSaving.set(false);
         this.isEditing.set(false);
         this.originalData = null;
+        this.hasUnsavedChanges = false;
         
         // Emit full updated opportunity to parent
         this.opportunityUpdated.emit(fullUpdatedOpportunity);
         
         // Emit that section was saved (for potential cross-section updates)
         this.sectionSaved.emit();
+        
+        // Clear unsaved changes tracking
+        this.changesSavedOrDiscarded.emit();
         
         this.feedbackService.showSuccessToast({
           detail: this.translateService.instant('message.opportunity.updatedSuccessfully'),
@@ -1007,15 +1336,42 @@ export class OpportunityWhatSectionComponent implements OnInit {
    * @description Cancel editing and revert changes
    */
   cancelEditing(): void {
-    // Revert is handled by parent refresh, just exit edit mode
+    const opp = this.opportunity();
+    
+    // Restore original data if available
+    if (this.originalData) {
+      // Reset form controls to original values
+      this.orgUnitControl.setValue(this.originalData.responsibleOrgUnitId ?? null);
+      this.initiativeTypeControl.setValue(this.originalData.proposedInitiativeTypeId ?? null);
+      this.deliveryModalityControl.setValue(this.originalData.deliveryModality ?? null);
+      
+      // Restore original deliverables (reverts any AI recommendations that were accepted)
+      const updatedOpportunity = {
+        ...opp,
+        responsibleOrgUnitId: this.originalData.responsibleOrgUnitId ?? null,
+        proposedInitiativeTypeId: this.originalData.proposedInitiativeTypeId ?? null,
+        deliveryModality: this.originalData.deliveryModality ?? null,
+        deliverables: this.originalData.deliverables ? [...this.originalData.deliverables] : []
+      };
+      
+      // Emit the reverted opportunity to parent
+      this.opportunityUpdated.emit(updatedOpportunity);
+    } else {
+      // Fallback: just reset form controls to current opportunity values
+      this.orgUnitControl.setValue(opp.responsibleOrgUnitId ?? null);
+      this.initiativeTypeControl.setValue(opp.proposedInitiativeTypeId ?? null);
+      this.deliveryModalityControl.setValue(opp.deliveryModality ?? null);
+    }
+    
+    // Clear accepted recommendations tracking (they're being discarded)
+    this.acceptedDeliverables.set([]);
+    
     this.isEditing.set(false);
     this.originalData = null;
+    this.hasUnsavedChanges = false;
     
-    // Reset form controls to original values
-    const opp = this.opportunity();
-    this.orgUnitControl.setValue(opp.responsibleOrgUnitId ?? null);
-    this.initiativeTypeControl.setValue(opp.proposedInitiativeTypeId ?? null);
-    this.deliveryModalityControl.setValue(opp.deliveryModality ?? null);
+    // Clear unsaved changes tracking
+    this.changesSavedOrDiscarded.emit();
     
     this.cdr.detectChanges();
   }
@@ -1039,6 +1395,9 @@ export class OpportunityWhatSectionComponent implements OnInit {
     // Reset edit mode
     this.isEditingDeliverable.set(false);
     this.editingDeliverableIndex.set(null);
+    
+    // Clear multi-selection
+    this.selectedOutputsForDialog.set([]);
     
     // Reset form controls
     this.level0Control.setValue(null);
@@ -1066,37 +1425,83 @@ export class OpportunityWhatSectionComponent implements OnInit {
   closeDeliverablesDialog(): void {
     this.showDeliverablesDialog.set(false);
     this.rejectedItemContext.set(null);
-    this.showQuickSearch.set(false);
+    this.searchQuery.set('');
+    this.searchResults.set([]);
+    this.selectedOutputsForDialog.set([]);
   }
 
   /**
-   * @description Add or update deliverable
+   * @description Add to selection from browse mode
    */
-  addDeliverable(): void {
+  addOutputToSelection(): void {
     const output = this.outputControl.value;
-    const opp = this.opportunity();
-    if (!output || !opp) return;
+    if (!output) return;
 
-    // Check for duplicate output (both when adding and editing)
-    const currentEditingIndex = this.editingDeliverableIndex();
-    const isDuplicate = opp.deliverables?.some((d, index) => {
-      // Skip the deliverable we're currently editing
-      if (this.isEditingDeliverable() && index === currentEditingIndex) {
-        return false;
-      }
-      return d.outputId === output.id;
-    });
-
-    if (isDuplicate) {
+    // Check if already selected
+    if (this.isOutputSelected(output)) {
       this.feedbackService.showWarningToast({
         summary: this.translateService.instant('message.warning'),
-        detail: this.translateService.instant('message.validation.outputAlreadyAdded')
+        detail: this.translateService.instant('message.validation.outputAlreadySelected')
       });
       return;
     }
 
-    // Create deliverable object
-    const deliverableData: OpportunityDeliverable = {
+    // Add to selection
+    this.selectedOutputsForDialog.set([...this.selectedOutputsForDialog(), output]);
+    
+    // Clear the form for next selection
+    this.level0Control.setValue(null);
+    this.level1Control.setValue(null);
+    this.level2Control.setValue(null);
+    this.level3Control.setValue(null);
+    this.level4Control.setValue(null);
+    this.outputControl.setValue(null);
+    
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Remove output from selection
+   */
+  removeFromSelection(output: Output): void {
+    const updated = this.selectedOutputsForDialog().filter(o => o.id !== output.id);
+    this.selectedOutputsForDialog.set(updated);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Add all selected deliverables
+   */
+  addDeliverable(): void {
+    const opp = this.opportunity();
+    if (!opp) return;
+
+    // Use selected outputs from dialog
+    const outputsToAdd = this.selectedOutputsForDialog();
+    
+    if (outputsToAdd.length === 0) {
+      this.feedbackService.showWarningToast({
+        summary: this.translateService.instant('message.warning'),
+        detail: this.translateService.instant('message.validation.noOutputsSelected')
+      });
+      return;
+    }
+
+    // Check for duplicates
+    const duplicates = outputsToAdd.filter(output => 
+      opp.deliverables?.some(d => d.outputId === output.id)
+    );
+
+    if (duplicates.length > 0) {
+      this.feedbackService.showWarningToast({
+        summary: this.translateService.instant('message.warning'),
+        detail: this.translateService.instant('message.validation.someOutputsAlreadyAdded', { count: duplicates.length })
+      });
+      return;
+    }
+
+    // Create deliverable objects for all selected outputs
+    const newDeliverables: OpportunityDeliverable[] = outputsToAdd.map(output => ({
       id: 0,
       opportunityId: opp.id,
       outputId: output.id ?? null,
@@ -1121,22 +1526,11 @@ export class OpportunityWhatSectionComponent implements OnInit {
       plannedEndDate: null,
       quantity: null,
       notes: null
-    };
+    }));
 
-    let updatedDeliverables: OpportunityDeliverable[];
-    
-    if (this.isEditingDeliverable() && this.editingDeliverableIndex() !== null) {
-      // Update existing deliverable
-      const index = this.editingDeliverableIndex()!;
-      updatedDeliverables = [...(opp.deliverables || [])];
-      // Preserve the original ID if editing
-      deliverableData.id = updatedDeliverables[index].id;
-      updatedDeliverables[index] = deliverableData;
-    } else {
-      // Add new deliverable
-      const currentDeliverables = opp.deliverables || [];
-      updatedDeliverables = [...currentDeliverables, deliverableData];
-    }
+    // Add all new deliverables
+    const currentDeliverables = opp.deliverables || [];
+    const updatedDeliverables = [...currentDeliverables, ...newDeliverables];
 
     // Update opportunity with modified deliverables
     const updatedOpportunity: Opportunity = {
@@ -1147,10 +1541,18 @@ export class OpportunityWhatSectionComponent implements OnInit {
     // Emit updated opportunity to parent
     this.opportunityUpdated.emit(updatedOpportunity);
 
+    // Mark as changed (deliverables added)
+    this.markAsChanged();
+
+    // Show success message
+    this.feedbackService.showSuccessToast({
+      summary: this.translateService.instant('message.success'),
+      detail: this.translateService.instant('message.productsServicesAdded', { count: outputsToAdd.length })
+    });
+
     // Reset dialog state
     this.showDeliverablesDialog.set(false);
-    this.isEditingDeliverable.set(false);
-    this.editingDeliverableIndex.set(null);
+    this.selectedOutputsForDialog.set([]);
     this.level0Control.setValue(null);
     this.level1Control.setValue(null);
     this.level2Control.setValue(null);
@@ -1236,16 +1638,22 @@ export class OpportunityWhatSectionComponent implements OnInit {
 
     // Emit updated opportunity to parent
     this.opportunityUpdated.emit(updatedOpportunity);
+    
+    // Mark as changed (deliverable removed)
+    this.markAsChanged();
+    
     this.cdr.detectChanges();
   }
 
   /**
    * Reject AI match and open manual search for alternative
    * @description Allows user to reject the AI-suggested match and manually search for a more appropriate one
+   * @note Option 2: Can find different match WITHOUT edit mode (auto-enters edit mode)
    */
   findDifferentMatch(item: ExtractedDeliverableInfo): void {
+    // If not in edit mode, enter it first (Option 2: seamless acceptance)
     if (!this.isEditing()) {
-      return;
+      this.startEditing();
     }
     
     // Store partner language for context display
@@ -1256,8 +1664,8 @@ export class OpportunityWhatSectionComponent implements OnInit {
     const filtered = currentExtracted.filter(e => e.partnerLanguage !== item.partnerLanguage);
     this.extractedDeliverables.set(filtered);
     
-    // Open deliverables dialog with quick search enabled for manual selection
-    this.showQuickSearch.set(true);
+    // Open deliverables dialog in search mode for manual selection
+    this.searchMode.set('search');
     this.openDeliverablesDialog();
     
     this.feedbackService.showInfoToast({
@@ -1272,10 +1680,16 @@ export class OpportunityWhatSectionComponent implements OnInit {
   /**
    * @description Accept extracted deliverable and add it to the opportunity
    * @description Moves an extracted item from recommendations to accepted list
+   * @note Option 2: Can accept recommendations WITHOUT edit mode
    */
   acceptExtractedDeliverable(item: ExtractedDeliverableInfo, index: number): void {
-    if (!item.matchedOutputId || !this.isEditing()) {
+    if (!item.matchedOutputId) {
       return;
+    }
+    
+    // If not in edit mode, enter it first (Option 2: seamless acceptance)
+    if (!this.isEditing()) {
+      this.startEditing();
     }
 
     const opp = this.opportunity();
@@ -1342,6 +1756,9 @@ export class OpportunityWhatSectionComponent implements OnInit {
     // Move item from recommendations to accepted list (for tracking)
     const currentAccepted = this.acceptedDeliverables();
     this.acceptedDeliverables.set([...currentAccepted, item]);
+    
+    // Mark as changed (AI recommendation accepted)
+    this.markAsChanged();
 
     // Show success message
     this.feedbackService.showSuccessToast({

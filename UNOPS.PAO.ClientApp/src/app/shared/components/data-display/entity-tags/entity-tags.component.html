@@ -1,6 +1,10 @@
 @if (tags && tags.length > 0) {
   @for (tag of tags; track tag.tag) {
-    <span class="px-2 py-1 text-xs rounded-full {{ tag.color }} whitespace-nowrap">{{ tag.tag }}</span>
+    @if (tag.tag === 'HCA Not Present') {
+      <span class="px-2 py-1 text-xs rounded bg-unops-surface-cream border border-unops-warning-light text-unops-neutral-800 whitespace-nowrap">{{ tag.tag }}</span>
+    } @else {
+      <span class="px-2 py-1 text-xs rounded-full {{ tag.color }} whitespace-nowrap">{{ tag.tag }}</span>
+    }
   }
 }
 

@@ -52,6 +52,24 @@ public class Opportunity : ModifiableDeletableEntity
     [MaxLength(1000)]
     public string? ExpectedBeneficiaries { get; set; }
     
+    /// <summary>
+    /// Estimated number of direct beneficiaries (positive integer)
+    /// Null if this information will be sought during development
+    /// </summary>
+    public int? EstimatedDirectBeneficiaries { get; set; }
+    
+    /// <summary>
+    /// Estimated number of indirect beneficiaries (positive integer)
+    /// Null if this information will be sought during development
+    /// </summary>
+    public int? EstimatedIndirectBeneficiaries { get; set; }
+    
+    /// <summary>
+    /// Indicates whether beneficiary numbers will be determined during development
+    /// True if user opts to provide this information later
+    /// </summary>
+    public bool BeneficiariesToBeDetermined { get; set; } = false;
+    
     [MaxLength(2000)]
     public string? Challenges { get; set; }
     
@@ -59,6 +77,16 @@ public class Opportunity : ModifiableDeletableEntity
     /// AI-generated opportunity statement in markdown format
     /// </summary>
     public string? OpportunityStatementMarkdown { get; set; }
+    
+    /// <summary>
+    /// AI-generated banner image for the opportunity (base64 encoded)
+    /// </summary>
+    public string? OpportunityBannerImage { get; set; }
+    
+    /// <summary>
+    /// AI-generated thumbnail image for the opportunity (base64 encoded)
+    /// </summary>
+    public string? OpportunityThumbnail { get; set; }
     
     /// <summary>
     /// Whether funding is pooled across multiple partners
@@ -99,6 +127,12 @@ public class Opportunity : ModifiableDeletableEntity
     public virtual ICollection<OpportunitySDGTarget> SDGTargets { get; set; } = new HashSet<OpportunitySDGTarget>();
     
     public virtual ICollection<OpportunitySDGIndicator> SDGIndicators { get; set; } = new HashSet<OpportunitySDGIndicator>();
+    
+    public virtual ICollection<OpportunityUNCFOutcome> UNCFOutcomes { get; set; } = new HashSet<OpportunityUNCFOutcome>();
+    
+    public virtual ICollection<OpportunityUNCFIndicator> UNCFIndicators { get; set; } = new HashSet<OpportunityUNCFIndicator>();
+    
+    public virtual ICollection<OpportunityUNOPSMission> UNOPSMissions { get; set; } = new HashSet<OpportunityUNOPSMission>();
     
     public virtual List<Document>? Documents { get; set; }
     

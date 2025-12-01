@@ -161,6 +161,17 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 .ThenInclude(s => s.Targets)
                     .ThenInclude(t => t.Indicators)
                         .ThenInclude(i => i.SDGIndicator)
+            .Include(o => o.UNCFOutcomes)
+                .ThenInclude(uo => uo.UNCFOutcome)
+            .Include(o => o.UNCFOutcomes)
+                .ThenInclude(uo => uo.OpportunityCountry)
+                    .ThenInclude(oc => oc.Country)
+            .Include(o => o.UNCFOutcomes)
+                .ThenInclude(uo => uo.Indicators)
+                    .ThenInclude(ui => ui.UNCFIndicator)
+            .Include(o => o.UNOPSMissions)
+                .ThenInclude(om => om.UNOPSMission)
+            .AsSplitQuery() // Split into multiple queries to avoid Cartesian explosion
             .FirstOrDefaultAsync(o => o.Id == id && !o.IsDeleted);
 
         if (entity == null)
@@ -273,11 +284,27 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }
         }
         
-        // Enrich country models with organization unit hierarchy
+        // Enrich country models with organization unit hierarchy and UNCF status
         if (model.Countries != null && model.Countries.Any())
         {
             await EnrichCountriesWithOrgUnitHierarchyAsync(model.Countries);
+            await EnrichCountriesWithActiveUNCFAsync(model.Countries);
+            
+            // Check which countries have Humanitarian, Peace & Security Framework
+            await EnrichCountriesWithHumanitarianFrameworkAsync(model.Countries);
+            
+            // Check which countries have NDC (Nationally Determined Contributions)
+            await EnrichCountriesWithNdcAsync(model.Countries);
+            
+            // Check which countries have NAP (National Adaptation Plan)
+            await EnrichCountriesWithNapAsync(model.Countries);
+            
+            // Check which countries have Organization Unit Strategy (traverse hierarchy)
+            await EnrichCountriesWithOrgUnitStrategyAsync(model.Countries);
         }
+        
+        // Enrich UNCF data with activity status and newer version checks
+        EnrichUNCFDataWithActivityStatus(model);
 
         // Compute statistics
         model.Stats = ComputeOpportunityStats(entity);
@@ -533,6 +560,416 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         
         return hierarchyChain.Any() ? hierarchyChain : null;
     }
+    
+    /// <summary>
+    /// Enriches country models with active UNCF status based on UNCFMetadatas table
+    /// Checks if there's at least one active UNCF metadata record for each country
+    /// </summary>
+    private async Task EnrichCountriesWithActiveUNCFAsync(IEnumerable<OpportunityCountryModel> opportunityCountries)
+    {
+        // Get all country ISO2 codes from the opportunity countries
+        var iso2Codes = opportunityCountries
+            .Where(oc => oc.Country != null && !string.IsNullOrEmpty(oc.Country.Iso2Code))
+            .Select(oc => oc.Country!.Iso2Code)
+            .Distinct()
+            .ToList();
+        
+        if (!iso2Codes.Any())
+        {
+            return;
+        }
+        
+        // Check which countries have active UNCF metadata
+        var countriesWithActiveUNCF = await context.UNCFMetadatas
+            .Where(m => m.Status == EntityStatus.Active 
+                && iso2Codes.Contains(m.Country!))
+            .Select(m => m.Country!)
+            .Distinct()
+            .ToListAsync();
+        
+        var countriesWithActiveUNCFSet = new HashSet<string>(
+            countriesWithActiveUNCF, 
+            StringComparer.OrdinalIgnoreCase
+        );
+        
+        // Set HasActiveUNCF flag for each country
+        foreach (var oppCountry in opportunityCountries)
+        {
+            if (oppCountry.Country != null && !string.IsNullOrEmpty(oppCountry.Country.Iso2Code))
+            {
+                oppCountry.Country.HasActiveUNCF = 
+                    countriesWithActiveUNCFSet.Contains(oppCountry.Country.Iso2Code);
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Enriches country models with Humanitarian, Peace & Security Framework availability
+    /// Sets HasHumanitarianFramework flag for each country that has an active framework
+    /// </summary>
+    private async Task EnrichCountriesWithHumanitarianFrameworkAsync(IEnumerable<OpportunityCountryModel> opportunityCountries)
+    {
+        // Get all country IDs from the opportunity countries
+        var countryIds = opportunityCountries
+            .Select(oc => oc.CountryId)
+            .Distinct()
+            .ToList();
+        
+        if (!countryIds.Any())
+        {
+            return;
+        }
+        
+        // Check which countries have the Humanitarian_Peace_Security_Framework artifact
+        var countriesWithFramework = await context.EntityArtifacts
+            .Where(ea => 
+                ea.EntityType == "Country" 
+                && countryIds.Contains(ea.EntityId)
+                && ea.ArtifactType!.ArtifactTypeCode == "Humanitarian_Peace_Security_Framework"
+                && ea.Status == EntityStatus.Active
+                && !ea.IsDeleted
+                && (ea.ExpiryDate == null || ea.ExpiryDate > DateTime.UtcNow))
+            .Select(ea => ea.EntityId)
+            .Distinct()
+            .ToListAsync();
+        
+        var countriesWithFrameworkSet = new HashSet<int>(countriesWithFramework);
+        
+        // Set HasHumanitarianFramework flag for each country
+        foreach (var oppCountry in opportunityCountries)
+        {
+            oppCountry.HasHumanitarianFramework = countriesWithFrameworkSet.Contains(oppCountry.CountryId);
+        }
+    }
+    
+    /// <summary>
+    /// Enriches country models with NDC (Nationally Determined Contributions) availability
+    /// Sets HasNdc flag for each country that has active NDC
+    /// </summary>
+    private async Task EnrichCountriesWithNdcAsync(IEnumerable<OpportunityCountryModel> opportunityCountries)
+    {
+        var countryIds = opportunityCountries
+            .Select(oc => oc.CountryId)
+            .Distinct()
+            .ToList();
+        
+        if (!countryIds.Any())
+        {
+            return;
+        }
+        
+        // Check which countries have the NDC artifact
+        var countriesWithNdc = await context.EntityArtifacts
+            .Where(ea => 
+                ea.EntityType == "Country" 
+                && countryIds.Contains(ea.EntityId)
+                && ea.ArtifactType!.ArtifactTypeCode == "NDC"
+                && ea.Status == EntityStatus.Active
+                && !ea.IsDeleted
+                && (ea.ExpiryDate == null || ea.ExpiryDate > DateTime.UtcNow))
+            .Select(ea => ea.EntityId)
+            .Distinct()
+            .ToListAsync();
+        
+        var countriesWithNdcSet = new HashSet<int>(countriesWithNdc);
+        
+        // Set HasNdc flag for each country
+        foreach (var oppCountry in opportunityCountries)
+        {
+            oppCountry.HasNdc = countriesWithNdcSet.Contains(oppCountry.CountryId);
+        }
+    }
+    
+    /// <summary>
+    /// Enriches country models with NAP (National Adaptation Plan) availability
+    /// Sets HasNap flag for each country that has active NAP
+    /// </summary>
+    private async Task EnrichCountriesWithNapAsync(IEnumerable<OpportunityCountryModel> opportunityCountries)
+    {
+        var countryIds = opportunityCountries
+            .Select(oc => oc.CountryId)
+            .Distinct()
+            .ToList();
+        
+        if (!countryIds.Any())
+        {
+            return;
+        }
+        
+        // Check which countries have the NAP artifact
+        var countriesWithNap = await context.EntityArtifacts
+            .Where(ea => 
+                ea.EntityType == "Country" 
+                && countryIds.Contains(ea.EntityId)
+                && ea.ArtifactType!.ArtifactTypeCode == "NAP"
+                && ea.Status == EntityStatus.Active
+                && !ea.IsDeleted
+                && (ea.ExpiryDate == null || ea.ExpiryDate > DateTime.UtcNow))
+            .Select(ea => ea.EntityId)
+            .Distinct()
+            .ToListAsync();
+        
+        var countriesWithNapSet = new HashSet<int>(countriesWithNap);
+        
+        // Set HasNap flag for each country
+        foreach (var oppCountry in opportunityCountries)
+        {
+            oppCountry.HasNap = countriesWithNapSet.Contains(oppCountry.CountryId);
+        }
+    }
+    
+    /// <summary>
+    /// Enriches country models with Organization Unit Strategy information
+    /// Traverses up the org hierarchy to find the most local org unit with a Strategy artifact
+    /// Sets HasOrgUnitStrategy flag, OrgUnitWithStrategyId, and OrgUnitWithStrategyName
+    /// Also detects if a more local strategy is now available compared to the stored one
+    /// </summary>
+    private async Task EnrichCountriesWithOrgUnitStrategyAsync(IEnumerable<OpportunityCountryModel> opportunityCountries)
+    {
+        var countryIds = opportunityCountries
+            .Select(oc => oc.CountryId)
+            .Distinct()
+            .ToList();
+        
+        if (!countryIds.Any())
+        {
+            return;
+        }
+        
+        // Get all org unit relationships for these countries
+        var countryOrgRelationships = await context.Set<OrganizationUnitRelationship>()
+            .Where(r => 
+                r.EntityType == "Country" 
+                && countryIds.Contains(r.EntityId)
+                && !r.IsDeleted)
+            .Include(r => r.OrganizationHierarchy)
+            .ToListAsync();
+        
+        // Get all org units with Strategy artifacts
+        var orgUnitsWithStrategy = await context.EntityArtifacts
+            .Where(ea => 
+                ea.EntityType == "OrganizationHierarchy"
+                && ea.ArtifactType!.ArtifactTypeCode == "Strategy"
+                && ea.Status == EntityStatus.Active
+                && !ea.IsDeleted)
+            .Select(ea => ea.EntityId)
+            .Distinct()
+            .ToListAsync();
+        
+        var orgUnitsWithStrategySet = new HashSet<int>(orgUnitsWithStrategy);
+        
+        // Get all unique current (stored) org unit IDs to load their details
+        var currentOrgUnitIds = opportunityCountries
+            .Where(oc => oc.CurrentOrgUnitWithStrategyId.HasValue)
+            .Select(oc => oc.CurrentOrgUnitWithStrategyId!.Value)
+            .Distinct()
+            .ToList();
+        
+        // Load current org units details
+        var currentOrgUnits = currentOrgUnitIds.Any()
+            ? await context.Set<OrganizationHierarchy>()
+                .Where(o => currentOrgUnitIds.Contains(o.Id) && !o.IsDeleted)
+                .ToListAsync()
+            : new List<OrganizationHierarchy>();
+        
+        var currentOrgUnitsDict = currentOrgUnits.ToDictionary(o => o.Id);
+        
+        // For each country, find the most local org unit with a Strategy
+        foreach (var oppCountry in opportunityCountries)
+        {
+            var countryOrgRelationship = countryOrgRelationships
+                .FirstOrDefault(r => r.EntityId == oppCountry.CountryId);
+            
+            if (countryOrgRelationship?.OrganizationHierarchy != null)
+            {
+                // Traverse up the hierarchy to find a Strategy
+                var orgUnitWithStrategy = await FindOrgUnitWithStrategyAsync(
+                    countryOrgRelationship.OrganizationHierarchyId, 
+                    orgUnitsWithStrategySet);
+                
+                if (orgUnitWithStrategy != null)
+                {
+                    oppCountry.HasOrgUnitStrategy = true;
+                    oppCountry.OrgUnitWithStrategyId = orgUnitWithStrategy.Id;
+                    oppCountry.OrgUnitWithStrategyName = orgUnitWithStrategy.Name;
+                    oppCountry.OrgUnitWithStrategyCode = orgUnitWithStrategy.Code;
+                    
+                    // Check if current stored org unit is different (indicating a more local strategy is available)
+                    if (oppCountry.CurrentOrgUnitWithStrategyId.HasValue)
+                    {
+                        // Populate current org unit details
+                        if (currentOrgUnitsDict.TryGetValue(oppCountry.CurrentOrgUnitWithStrategyId.Value, out var currentOrgUnit))
+                        {
+                            oppCountry.CurrentOrgUnitWithStrategyName = currentOrgUnit.Name;
+                            oppCountry.CurrentOrgUnitWithStrategyCode = currentOrgUnit.Code;
+                        }
+                        
+                        // Check if the new org unit is different (more local)
+                        if (oppCountry.CurrentOrgUnitWithStrategyId.Value != orgUnitWithStrategy.Id)
+                        {
+                            oppCountry.HasMoreLocalStrategyAvailable = true;
+                        }
+                    }
+                }
+                else
+                {
+                    oppCountry.HasOrgUnitStrategy = false;
+                    oppCountry.OrgUnitWithStrategyId = null;
+                    oppCountry.OrgUnitWithStrategyName = null;
+                    oppCountry.OrgUnitWithStrategyCode = null;
+                }
+            }
+            else
+            {
+                oppCountry.HasOrgUnitStrategy = false;
+                oppCountry.OrgUnitWithStrategyId = null;
+                oppCountry.OrgUnitWithStrategyName = null;
+                oppCountry.OrgUnitWithStrategyCode = null;
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Recursively traverses up the OrganizationHierarchy to find the most local org unit with a Strategy artifact
+    /// </summary>
+    /// <param name="orgUnitId">Starting org unit ID</param>
+    /// <param name="orgUnitsWithStrategy">Set of org unit IDs that have Strategy artifacts</param>
+    /// <returns>The most local OrganizationHierarchy with a Strategy, or null if none found</returns>
+    private async Task<OrganizationHierarchy?> FindOrgUnitWithStrategyAsync(int orgUnitId, HashSet<int> orgUnitsWithStrategy)
+    {
+        // Check if current org unit has a Strategy
+        if (orgUnitsWithStrategy.Contains(orgUnitId))
+        {
+            // Load and return this org unit
+            var orgUnit = await context.Set<OrganizationHierarchy>()
+                .FirstOrDefaultAsync(o => o.Id == orgUnitId && !o.IsDeleted);
+            return orgUnit;
+        }
+        
+        // If not, check parent
+        var currentOrgUnit = await context.Set<OrganizationHierarchy>()
+            .FirstOrDefaultAsync(o => o.Id == orgUnitId && !o.IsDeleted);
+        
+        if (currentOrgUnit?.ParentId != null)
+        {
+            // Recursively check parent
+            return await FindOrgUnitWithStrategyAsync(currentOrgUnit.ParentId.Value, orgUnitsWithStrategy);
+        }
+        
+        // No strategy found in hierarchy
+        return null;
+    }
+    
+    /// <summary>
+    /// Computes the OrgUnitWithStrategyId for a list of countries
+    /// Returns a dictionary mapping CountryId to OrgUnitId (the most local org unit with a Strategy)
+    /// </summary>
+    private async Task<Dictionary<int, int>> ComputeOrgUnitWithStrategyForCountriesAsync(List<int> countryIds)
+    {
+        var result = new Dictionary<int, int>();
+        
+        if (!countryIds.Any())
+        {
+            return result;
+        }
+        
+        // Get all org unit relationships for these countries
+        var countryOrgRelationships = await context.Set<OrganizationUnitRelationship>()
+            .Where(r => 
+                r.EntityType == "Country" 
+                && countryIds.Contains(r.EntityId)
+                && !r.IsDeleted)
+            .ToListAsync();
+        
+        // Get all org units with Strategy artifacts
+        var orgUnitsWithStrategy = await context.EntityArtifacts
+            .Where(ea => 
+                ea.EntityType == "OrganizationHierarchy"
+                && ea.ArtifactType!.ArtifactTypeCode == "Strategy"
+                && ea.Status == EntityStatus.Active
+                && !ea.IsDeleted
+                && (ea.ExpiryDate == null || ea.ExpiryDate > DateTime.UtcNow))
+            .Select(ea => ea.EntityId)
+            .Distinct()
+            .ToListAsync();
+        
+        var orgUnitsWithStrategySet = new HashSet<int>(orgUnitsWithStrategy);
+        
+        // For each country, find the most local org unit with a Strategy
+        foreach (var countryId in countryIds)
+        {
+            var countryOrgRelationship = countryOrgRelationships
+                .FirstOrDefault(r => r.EntityId == countryId);
+            
+            if (countryOrgRelationship != null)
+            {
+                // Traverse up the hierarchy to find a Strategy
+                var orgUnitWithStrategy = await FindOrgUnitWithStrategyAsync(
+                    countryOrgRelationship.OrganizationHierarchyId, 
+                    orgUnitsWithStrategySet);
+                
+                if (orgUnitWithStrategy != null)
+                {
+                    result[countryId] = orgUnitWithStrategy.Id;
+                }
+            }
+        }
+        
+        return result;
+    }
+    
+    /// <summary>
+    /// Enriches UNCF outcome and indicator models with activity status and newer version availability
+    /// </summary>
+    private void EnrichUNCFDataWithActivityStatus(OpportunityModel model)
+    {
+        if (model.UNCFOutcomes == null || !model.UNCFOutcomes.Any())
+        {
+            return;
+        }
+        
+        var valuesRepo = new Business.Repositories.ValuesRepository(context);
+        
+        foreach (var uncfOutcome in model.UNCFOutcomes)
+        {
+            // Check if this outcome is currently active
+            bool isOutcomeActive = valuesRepo.IsUNCFOutcomeActive(uncfOutcome.UNCFOutcomeId);
+            uncfOutcome.IsInactive = !isOutcomeActive;
+            
+            // If inactive, check for newer versions
+            if (uncfOutcome.IsInactive && 
+                !string.IsNullOrEmpty(uncfOutcome.Country) &&
+                uncfOutcome.VersionNo.HasValue)
+            {
+                uncfOutcome.HasNewerVersion = valuesRepo.HasNewerUNCFOutcomeVersion(
+                    uncfOutcome.Country,
+                    uncfOutcome.VersionNo.Value
+                );
+            }
+            
+            // Check indicators for this outcome
+            if (uncfOutcome.Indicators != null && uncfOutcome.Indicators.Any())
+            {
+                foreach (var indicator in uncfOutcome.Indicators)
+                {
+                    // Check if this indicator is currently active
+                    bool isIndicatorActive = valuesRepo.IsUNCFIndicatorActive(indicator.UNCFIndicatorId);
+                    indicator.IsInactive = !isIndicatorActive;
+                    
+                    // If inactive, check for newer versions
+                    if (indicator.IsInactive &&
+                        !string.IsNullOrEmpty(uncfOutcome.Country) &&
+                        uncfOutcome.VersionNo.HasValue)
+                    {
+                        indicator.HasNewerVersion = valuesRepo.HasNewerUNCFIndicatorVersion(
+                            uncfOutcome.Country,
+                            uncfOutcome.VersionNo.Value
+                        );
+                    }
+                }
+            }
+        }
+    }
 
     public async Task<IEnumerable<OpportunityModel>> GetAllOpportunitiesAsync()
     {
@@ -747,7 +1184,10 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     {
         var entity = await opportunityRepository.GetByIdAsync(id, new[]
         {
-            nameof(Opportunity.SDGs)
+            nameof(Opportunity.SDGs),
+            nameof(Opportunity.UNCFOutcomes),
+            nameof(Opportunity.UNCFIndicators),
+            nameof(Opportunity.UNOPSMissions)
         });
 
         if (entity == null)
@@ -765,6 +1205,11 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         {
             entity.ExpectedBeneficiaries = request.ExpectedBeneficiaries;
         }
+        
+        // Update beneficiary numbers
+        entity.EstimatedDirectBeneficiaries = request.EstimatedDirectBeneficiaries;
+        entity.EstimatedIndirectBeneficiaries = request.EstimatedIndirectBeneficiaries;
+        entity.BeneficiariesToBeDetermined = request.BeneficiariesToBeDetermined;
 
         if (request.IntendedImpactOutcomes != null)
         {
@@ -959,6 +1404,147 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                         }
                     }  // End of else block for differential target update
                 }
+            }
+        }
+
+        // Update UNCF Outcome alignments with differential update strategy
+        if (request.UncfOutcomes != null)
+        {
+            // Load existing UNCF outcomes with their indicators for comparison
+            var existingUNCFOutcomes = await context.OpportunityUNCFOutcomes
+                .Where(uo => uo.OpportunityId == id)
+                .Include(uo => uo.Indicators)
+                .ToListAsync();
+
+            // Create composite keys for comparison (OpportunityCountryId + UNCFOutcomeId)
+            var requestedOutcomeKeys = request.UncfOutcomes
+                .Select(uo => new { uo.OpportunityCountryId, uo.UNCFOutcomeId })
+                .ToHashSet();
+            
+            var existingOutcomeKeys = existingUNCFOutcomes
+                .Select(uo => new { uo.OpportunityCountryId, uo.UNCFOutcomeId })
+                .ToHashSet();
+
+            // Remove UNCF outcomes that are no longer in the request
+            var outcomesToRemove = existingUNCFOutcomes
+                .Where(uo => !requestedOutcomeKeys.Contains(new { uo.OpportunityCountryId, uo.UNCFOutcomeId }))
+                .ToList();
+            
+            if (outcomesToRemove.Any())
+            {
+                context.OpportunityUNCFOutcomes.RemoveRange(outcomesToRemove);
+            }
+
+            // Process each requested UNCF outcome
+            foreach (var outcomeRequest in request.UncfOutcomes)
+            {
+                var existingOutcome = existingUNCFOutcomes.FirstOrDefault(uo => 
+                    uo.OpportunityCountryId == outcomeRequest.OpportunityCountryId && 
+                    uo.UNCFOutcomeId == outcomeRequest.UNCFOutcomeId);
+
+                if (existingOutcome == null)
+                {
+                    // Add new UNCF outcome with its indicators
+                    var newOutcome = new OpportunityUNCFOutcome
+                    {
+                        OpportunityId = id,
+                        OpportunityCountryId = outcomeRequest.OpportunityCountryId,
+                        UNCFOutcomeId = outcomeRequest.UNCFOutcomeId,
+                        Notes = outcomeRequest.Notes
+                    };
+
+                    // Add indicators if provided
+                    if (outcomeRequest.UNCFIndicatorIds != null && outcomeRequest.UNCFIndicatorIds.Any())
+                    {
+                        foreach (var indicatorId in outcomeRequest.UNCFIndicatorIds)
+                        {
+                            newOutcome.Indicators.Add(new OpportunityUNCFIndicator
+                            {
+                                OpportunityId = id,
+                                UNCFIndicatorId = indicatorId
+                            });
+                        }
+                    }
+
+                    context.OpportunityUNCFOutcomes.Add(newOutcome);
+                }
+                else
+                {
+                    // Update existing UNCF outcome properties
+                    existingOutcome.Notes = outcomeRequest.Notes;
+
+                    // Update indicators with differential strategy
+                    var requestedIndicatorIds = outcomeRequest.UNCFIndicatorIds?.ToHashSet() ?? new HashSet<int>();
+                    var existingIndicatorIds = existingOutcome.Indicators.Select(i => i.UNCFIndicatorId).ToHashSet();
+
+                    // Remove indicators that are no longer in the request
+                    var indicatorsToRemove = existingOutcome.Indicators
+                        .Where(i => !requestedIndicatorIds.Contains(i.UNCFIndicatorId))
+                        .ToList();
+                    
+                    if (indicatorsToRemove.Any())
+                    {
+                        foreach (var indicator in indicatorsToRemove)
+                        {
+                            existingOutcome.Indicators.Remove(indicator);
+                            context.OpportunityUNCFIndicators.Remove(indicator);
+                        }
+                    }
+
+                    // Add new indicators
+                    if (outcomeRequest.UNCFIndicatorIds != null)
+                    {
+                        foreach (var indicatorId in outcomeRequest.UNCFIndicatorIds)
+                        {
+                            if (!existingIndicatorIds.Contains(indicatorId))
+                            {
+                                existingOutcome.Indicators.Add(new OpportunityUNCFIndicator
+                                {
+                                    OpportunityId = id,
+                                    OpportunityUNCFOutcomeId = existingOutcome.Id,
+                                    UNCFIndicatorId = indicatorId
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Update UNOPS Mission alignments with differential update strategy
+        if (request.UNOPSMissions != null)
+        {
+            // Load existing UNOPS mission alignments
+            var existingMissions = await context.Set<OpportunityUNOPSMission>()
+                .Where(m => m.OpportunityId == id)
+                .ToListAsync();
+
+            var requestedMissionIds = request.UNOPSMissions.Select(m => m.UNOPSMissionId).ToHashSet();
+            var existingMissionIds = existingMissions.Select(m => m.UNOPSMissionId).ToHashSet();
+
+            // Remove missions that are no longer in the request
+            var missionsToRemove = existingMissions.Where(m => !requestedMissionIds.Contains(m.UNOPSMissionId)).ToList();
+            if (missionsToRemove.Any())
+            {
+                context.Set<OpportunityUNOPSMission>().RemoveRange(missionsToRemove);
+            }
+
+            // Process each requested mission
+            foreach (var missionRequest in request.UNOPSMissions)
+            {
+                var existingMission = existingMissions.FirstOrDefault(m => m.UNOPSMissionId == missionRequest.UNOPSMissionId);
+
+                if (existingMission == null)
+                {
+                    // Add new mission alignment
+                    var newMission = new OpportunityUNOPSMission
+                    {
+                        OpportunityId = id,
+                        UNOPSMissionId = missionRequest.UNOPSMissionId
+                    };
+                    context.Set<OpportunityUNOPSMission>().Add(newMission);
+                }
+                // No update needed for existing missions - junction table only has IDs
             }
         }
 
@@ -1217,24 +1803,68 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
 
-        // Update Countries
+        // Update Countries with differential update strategy
+        // CRITICAL: Do NOT remove and re-add countries as this will CASCADE DELETE all related
+        // OpportunityUNCFOutcomes and OpportunityUNCFIndicators due to the foreign key relationship
         if (request.Countries != null)
         {
-            // Remove existing countries
-            if (opportunity.Countries != null && opportunity.Countries.Any())
+            // Initialize Countries collection if null
+            if (opportunity.Countries == null)
             {
-                context.OpportunityCountries.RemoveRange(opportunity.Countries);
+                opportunity.Countries = new List<OpportunityCountry>();
+            }
+            
+            var existingCountries = opportunity.Countries.ToList();
+            var requestedCountryIds = request.Countries.Select(c => c.CountryId).ToHashSet();
+            var existingCountryIds = existingCountries.Select(c => c.CountryId).ToHashSet();
+
+            // Compute OrgUnitWithStrategyId for each country
+            var countryOrgUnitStrategyMap = await ComputeOrgUnitWithStrategyForCountriesAsync(
+                request.Countries.Select(c => c.CountryId).ToList());
+
+            // Remove countries that are no longer in the request
+            var countriesToRemove = existingCountries.Where(c => !requestedCountryIds.Contains(c.CountryId)).ToList();
+            if (countriesToRemove.Any())
+            {
+                context.OpportunityCountries.RemoveRange(countriesToRemove);
             }
 
-            // Add new countries
-            opportunity.Countries = request.Countries
-                .Select(c => new OpportunityCountry
+            // Process each requested country
+            foreach (var countryRequest in request.Countries)
+            {
+                var existingCountry = existingCountries.FirstOrDefault(c => c.CountryId == countryRequest.CountryId);
+
+                if (existingCountry == null)
                 {
-                    OpportunityId = id,
-                    CountryId = c.CountryId,
-                    SpecificAreas = c.SpecificAreas
-                })
-                .ToList();
+                    // Add new country
+                    var newCountry = new OpportunityCountry
+                    {
+                        OpportunityId = id,
+                        CountryId = countryRequest.CountryId,
+                        SpecificAreas = countryRequest.SpecificAreas,
+                        HumanitarianFrameworkAlignment = countryRequest.HumanitarianFrameworkAlignment,
+                        NdcAlignment = countryRequest.NdcAlignment,
+                        NapAlignment = countryRequest.NapAlignment,
+                        OrgUnitStrategyAlignment = countryRequest.OrgUnitStrategyAlignment,
+                        OrgUnitWithStrategyId = countryOrgUnitStrategyMap.ContainsKey(countryRequest.CountryId) 
+                            ? countryOrgUnitStrategyMap[countryRequest.CountryId] 
+                            : null
+                    };
+                    opportunity.Countries.Add(newCountry);
+                }
+                else
+                {
+                    // Update existing country properties
+                    existingCountry.SpecificAreas = countryRequest.SpecificAreas;
+                    existingCountry.HumanitarianFrameworkAlignment = countryRequest.HumanitarianFrameworkAlignment;
+                    existingCountry.NdcAlignment = countryRequest.NdcAlignment;
+                    existingCountry.NapAlignment = countryRequest.NapAlignment;
+                    existingCountry.OrgUnitStrategyAlignment = countryRequest.OrgUnitStrategyAlignment;
+                    existingCountry.OrgUnitWithStrategyId = countryOrgUnitStrategyMap.ContainsKey(countryRequest.CountryId) 
+                        ? countryOrgUnitStrategyMap[countryRequest.CountryId] 
+                        : null;
+                }
+            }
         }
 
         await context.SaveChangesAsync();
