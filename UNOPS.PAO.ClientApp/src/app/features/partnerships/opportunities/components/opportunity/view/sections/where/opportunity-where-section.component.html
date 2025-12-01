@@ -157,7 +157,7 @@
                 
                 <!-- UNSDCF Notification - Only show for saved countries (not newly added) -->
                 @if (country.id !== 0 && country.country) {
-                  @if (country.country.hasActiveUNSDCF) {
+                  @if (country.country.hasActiveUNCF) {
                     <div class="mt-2">
                       <p-message severity="success" [style.fontSize]="'0.7rem'">
                         <ng-template pTemplate="icon">

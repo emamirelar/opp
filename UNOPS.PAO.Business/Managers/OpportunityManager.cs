@@ -111,10 +111,11 @@ public class OpportunityManager : IOpportunityManager
 
         var model = mapper.Map<OpportunityModel>(entity);
         
-        // Enrich country models with organization unit hierarchy
+        // Enrich country models with organization unit hierarchy and UNCF outcome counts
         if (model.Countries != null && model.Countries.Any())
         {
             await EnrichCountriesWithOrgUnitHierarchyAsync(model.Countries);
+            await EnrichCountriesWithActiveUNCFAsync(model.Countries);
         }
 
         return model;
@@ -204,6 +205,48 @@ public class OpportunityManager : IOpportunityManager
         }
         
         return hierarchyChain.Any() ? hierarchyChain : null;
+    }
+    
+    /// <summary>
+    /// Enriches country models with active UNCF status based on UNCFMetadatas table
+    /// Checks if there's at least one active UNCF metadata record for each country
+    /// </summary>
+    private async Task EnrichCountriesWithActiveUNCFAsync(IEnumerable<OpportunityCountryModel> opportunityCountries)
+    {
+        // Get all country ISO2 codes from the opportunity countries
+        var iso2Codes = opportunityCountries
+            .Where(oc => oc.Country != null && !string.IsNullOrEmpty(oc.Country.Iso2Code))
+            .Select(oc => oc.Country!.Iso2Code)
+            .Distinct()
+            .ToList();
+        
+        if (!iso2Codes.Any())
+        {
+            return;
+        }
+        
+        // Check which countries have active UNCF metadata
+        var countriesWithActiveUNCF = await context.UNCFMetadatas
+            .Where(m => m.Status == EntityStatus.Active 
+                && iso2Codes.Contains(m.Country!))
+            .Select(m => m.Country!)
+            .Distinct()
+            .ToListAsync();
+        
+        var countriesWithActiveUNCFSet = new HashSet<string>(
+            countriesWithActiveUNCF, 
+            StringComparer.OrdinalIgnoreCase
+        );
+        
+        // Set HasActiveUNCF flag for each country
+        foreach (var oppCountry in opportunityCountries)
+        {
+            if (oppCountry.Country != null && !string.IsNullOrEmpty(oppCountry.Country.Iso2Code))
+            {
+                oppCountry.Country.HasActiveUNCF = 
+                    countriesWithActiveUNCFSet.Contains(oppCountry.Country.Iso2Code);
+            }
+        }
     }
 
     public async Task<IEnumerable<OpportunityModel>> GetAllOpportunitiesAsync()
@@ -605,12 +648,110 @@ public class OpportunityManager : IOpportunityManager
             }
         }
 
+        // Update UNCF Outcome alignments with differential update strategy
+        if (request.UncfOutcomes != null)
+        {
+            // Load existing UNCF outcomes with their indicators for comparison
+            var existingUNCFOutcomes = await context.Set<OpportunityUNCFOutcome>()
+                .Where(uo => uo.OpportunityId == id)
+                .Include(uo => uo.Indicators)
+                .ToListAsync();
+
+            // Group request by (OpportunityCountryId, UNCFOutcomeId) composite key
+            var requestedKeys = request.UncfOutcomes
+                .Select(u => (u.OpportunityCountryId, u.UNCFOutcomeId))
+                .ToHashSet();
+
+            // Remove UNCF outcomes that are no longer in the request
+            var uncfOutcomesToRemove = existingUNCFOutcomes
+                .Where(uo => !requestedKeys.Contains((uo.OpportunityCountryId, uo.UNCFOutcomeId)))
+                .ToList();
+            if (uncfOutcomesToRemove.Any())
+            {
+                context.Set<OpportunityUNCFOutcome>().RemoveRange(uncfOutcomesToRemove);
+            }
+
+            // Process each requested UNCF outcome
+            foreach (var uncfOutcomeRequest in request.UncfOutcomes)
+            {
+                var existingUNCFOutcome = existingUNCFOutcomes.FirstOrDefault(uo => 
+                    uo.OpportunityCountryId == uncfOutcomeRequest.OpportunityCountryId && 
+                    uo.UNCFOutcomeId == uncfOutcomeRequest.UNCFOutcomeId);
+
+                if (existingUNCFOutcome == null)
+                {
+                    // Add new UNCF outcome with its indicators
+                    var newUNCFOutcome = new OpportunityUNCFOutcome
+                    {
+                        OpportunityId = id,
+                        OpportunityCountryId = uncfOutcomeRequest.OpportunityCountryId,
+                        UNCFOutcomeId = uncfOutcomeRequest.UNCFOutcomeId,
+                        Notes = uncfOutcomeRequest.Notes
+                    };
+
+                    // Add indicators
+                    if (uncfOutcomeRequest.UNCFIndicatorIds != null && uncfOutcomeRequest.UNCFIndicatorIds.Any())
+                    {
+                        foreach (var indicatorId in uncfOutcomeRequest.UNCFIndicatorIds)
+                        {
+                            newUNCFOutcome.Indicators.Add(new OpportunityUNCFIndicator
+                            {
+                                OpportunityId = id,
+                                UNCFIndicatorId = indicatorId
+                            });
+                        }
+                    }
+
+                    context.Set<OpportunityUNCFOutcome>().Add(newUNCFOutcome);
+                }
+                else
+                {
+                    // Update existing UNCF outcome properties
+                    existingUNCFOutcome.Notes = uncfOutcomeRequest.Notes;
+
+                    // Update indicators with differential strategy
+                    var requestedIndicatorIds = uncfOutcomeRequest.UNCFIndicatorIds?.ToHashSet() ?? new HashSet<int>();
+
+                    // Remove indicators that are no longer in the request
+                    var indicatorsToRemove = existingUNCFOutcome.Indicators
+                        .Where(i => !requestedIndicatorIds.Contains(i.UNCFIndicatorId))
+                        .ToList();
+                    if (indicatorsToRemove.Any())
+                    {
+                        foreach (var indicator in indicatorsToRemove)
+                        {
+                            existingUNCFOutcome.Indicators.Remove(indicator);
+                            context.Set<OpportunityUNCFIndicator>().Remove(indicator);
+                        }
+                    }
+
+                    // Add new indicators
+                    if (uncfOutcomeRequest.UNCFIndicatorIds != null)
+                    {
+                        foreach (var indicatorId in uncfOutcomeRequest.UNCFIndicatorIds)
+                        {
+                            if (!existingUNCFOutcome.Indicators.Any(i => i.UNCFIndicatorId == indicatorId))
+                            {
+                                existingUNCFOutcome.Indicators.Add(new OpportunityUNCFIndicator
+                                {
+                                    OpportunityId = id,
+                                    OpportunityUNCFOutcomeId = existingUNCFOutcome.Id,
+                                    UNCFIndicatorId = indicatorId
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         await opportunityRepository.UpdateAsync(entity);
 
         // Reload with all includes for complete response  
         var reloadedEntity = await opportunityRepository.GetByIdAsync(entity.Id, new[]
         {
             $"{nameof(Opportunity.SDGs)}.{nameof(OpportunitySDG.Targets)}.{nameof(OpportunitySDGTarget.Indicators)}",
+            $"{nameof(Opportunity.UNCFOutcomes)}.{nameof(OpportunityUNCFOutcome.Indicators)}",
             nameof(Opportunity.FundingPartners),
             nameof(Opportunity.ClientPartners),
             nameof(Opportunity.Stakeholders),
@@ -778,7 +919,11 @@ public class OpportunityManager : IOpportunityManager
                 {
                     OpportunityId = id,
                     CountryId = c.CountryId,
-                    SpecificAreas = c.SpecificAreas
+                    SpecificAreas = c.SpecificAreas,
+                    HumanitarianFrameworkAlignment = c.HumanitarianFrameworkAlignment,
+                    NdcAlignment = c.NdcAlignment,
+                    NapAlignment = c.NapAlignment,
+                    OrgUnitStrategyAlignment = c.OrgUnitStrategyAlignment
                 })
                 .ToList();
         }

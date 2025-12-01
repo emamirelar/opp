@@ -900,6 +900,60 @@ public static class ArtifactTypeSeeder_Country
                 Order = 1040,
                 Status = EntityStatus.Active,
                 IsDeleted = false
+            },
+
+            new ArtifactType
+            {
+                Name = "Humanitarian Peace Security Framework",
+                ArtifactTypeCode = "Humanitarian_Peace_Security_Framework",
+                ArtifactDataTypeId = documentDataTypeId,
+                Description = "Humanitarian Peace Security Framework",
+                Category = null,
+                ApplicableEntityTypes = "Country",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
+                IsUsedForCalculations = false,
+                IsUsedForAI = false,
+                Order = 1041,
+                Status = EntityStatus.Active,
+                IsDeleted = false
+            },
+
+            new ArtifactType
+            {
+                Name = "Nationally Determined Contributions (NDCs)",
+                ArtifactTypeCode = "NDC",
+                ArtifactDataTypeId = documentDataTypeId,
+                Description = "Nationally Determined Contributions (NDCs)",
+                Category = null,
+                ApplicableEntityTypes = "Country",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
+                IsUsedForCalculations = false,
+                IsUsedForAI = false,
+                Order = 1042,
+                Status = EntityStatus.Active,
+                IsDeleted = false
+            },
+
+            new ArtifactType
+            {
+                Name = "National Adaptation Plan (NAP)",
+                ArtifactTypeCode = "NAP",
+                ArtifactDataTypeId = documentDataTypeId,
+                Description = "National Adaptation Plan (NAP)",
+                Category = null,
+                ApplicableEntityTypes = "Country",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
+                IsUsedForCalculations = false,
+                IsUsedForAI = false,
+                Order = 1043,
+                Status = EntityStatus.Active,
+                IsDeleted = false
             }
         };
     }

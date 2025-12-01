@@ -1691,6 +1691,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("BeneficiariesToBeDetermined")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Challenges")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
@@ -1713,6 +1716,12 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int?>("EstimatedDirectBeneficiaries")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("EstimatedIndirectBeneficiaries")
+                        .HasColumnType("integer");
 
                     b.Property<string>("ExpectedBeneficiaries")
                         .HasMaxLength(1000)
@@ -1858,7 +1867,22 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<int>("CountryId")
                         .HasColumnType("integer");
 
+                    b.Property<bool?>("HumanitarianFrameworkAlignment")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool?>("NapAlignment")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool?>("NdcAlignment")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("OpportunityId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool?>("OrgUnitStrategyAlignment")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("OrgUnitWithStrategyId")
                         .HasColumnType("integer");
 
                     b.Property<decimal?>("RiskScore")
@@ -1873,6 +1897,8 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.HasIndex("CountryId");
 
                     b.HasIndex("OpportunityId");
+
+                    b.HasIndex("OrgUnitWithStrategyId");
 
                     b.ToTable("OpportunityCountries", "public");
                 });
@@ -2180,6 +2206,96 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("OpportunityStakeholders", "public");
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunityUNCFIndicator", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<int>("OpportunityId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OpportunityUNCFOutcomeId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UNCFIndicatorId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OpportunityId");
+
+                    b.HasIndex("OpportunityUNCFOutcomeId");
+
+                    b.HasIndex("UNCFIndicatorId");
+
+                    b.ToTable("OpportunityUNCFIndicators", "public");
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunityUNCFOutcome", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<int>("OpportunityCountryId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OpportunityId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UNCFOutcomeId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OpportunityCountryId");
+
+                    b.HasIndex("OpportunityId");
+
+                    b.HasIndex("UNCFOutcomeId");
+
+                    b.ToTable("OpportunityUNCFOutcomes", "public");
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunityUNOPSMission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("OpportunityId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UNOPSMissionId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OpportunityId");
+
+                    b.HasIndex("UNOPSMissionId");
+
+                    b.HasIndex("OpportunityId", "UNOPSMissionId")
+                        .IsUnique();
+
+                    b.ToTable("OpportunityUNOPSMissions", "public");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OrganizationHierarchy", b =>
@@ -3136,6 +3252,148 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.ToTable("SavedFilters", "public");
                 });
 
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.UNCFIndicator", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Baseline")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Country")
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)");
+
+                    b.Property<string>("Indicators")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Narrative")
+                        .HasMaxLength(7000)
+                        .HasColumnType("character varying(7000)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UNCFIndicatorEndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UNCFIndicatorId")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTime?>("UNCFIndicatorLastUpdatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("UNCFIndicatorStartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UNCFOutcomeExternalId")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<int?>("UNCooperationFrameworkVersionNo")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Unit")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Country");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("UNCFIndicatorEndDate");
+
+                    b.HasIndex("UNCFIndicatorId");
+
+                    b.HasIndex("UNCFIndicatorStartDate");
+
+                    b.HasIndex("UNCFOutcomeExternalId");
+
+                    b.HasIndex("UNCooperationFrameworkVersionNo");
+
+                    b.HasIndex("UNCFOutcomeExternalId", "UNCooperationFrameworkVersionNo");
+
+                    b.ToTable("UNCFIndicators", "public");
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.UNCFMetadata", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Country")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UNCFFileName")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("UNCFFileURL")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime?>("UNCFLastUpdatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UNCFMetadataId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("UNCooperationFrameworkVersionNo")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Country");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("UNCFLastUpdatedDate");
+
+                    b.HasIndex("UNCFMetadataId");
+
+                    b.HasIndex("UNCooperationFrameworkVersionNo");
+
+                    b.HasIndex("Country", "UNCooperationFrameworkVersionNo")
+                        .IsUnique();
+
+                    b.ToTable("UNCFMetadatas", "public");
+                });
+
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.UNCFOutcome", b =>
                 {
                     b.Property<int>("Id")
@@ -3153,20 +3411,17 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
-
-                    b.Property<DateTime?>("UNCFOutcomeEndDate")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("UNCFOutcomeId")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<DateTime?>("UNCFOutcomeStartDate")
+                    b.Property<DateTime?>("UNCFOutcomeLastUpdatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int?>("UNCooperationFrameworkVersionNo")
@@ -3178,15 +3433,60 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     b.HasIndex("Status");
 
-                    b.HasIndex("UNCFOutcomeEndDate");
-
                     b.HasIndex("UNCFOutcomeId");
-
-                    b.HasIndex("UNCFOutcomeStartDate");
 
                     b.HasIndex("UNCooperationFrameworkVersionNo");
 
                     b.ToTable("UNCFOutcomes", "public");
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.UNOPSMission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("IconClass")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("DisplayOrder");
+
+                    b.HasIndex("Name");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("UNOPSMissions", "public");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Unit", b =>
@@ -4286,9 +4586,15 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("UNOPS.PAO.Domain.Entities.OrganizationHierarchy", "OrgUnitWithStrategy")
+                        .WithMany()
+                        .HasForeignKey("OrgUnitWithStrategyId");
+
                     b.Navigation("Country");
 
                     b.Navigation("Opportunity");
+
+                    b.Navigation("OrgUnitWithStrategy");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunityDeliverable", b =>
@@ -4481,6 +4787,79 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunityUNCFIndicator", b =>
+                {
+                    b.HasOne("UNOPS.PAO.Domain.Entities.Opportunity", "Opportunity")
+                        .WithMany("UNCFIndicators")
+                        .HasForeignKey("OpportunityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("UNOPS.PAO.Domain.Entities.OpportunityUNCFOutcome", "OpportunityUNCFOutcome")
+                        .WithMany("Indicators")
+                        .HasForeignKey("OpportunityUNCFOutcomeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("UNOPS.PAO.Domain.Entities.UNCFIndicator", "UNCFIndicator")
+                        .WithMany()
+                        .HasForeignKey("UNCFIndicatorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Opportunity");
+
+                    b.Navigation("OpportunityUNCFOutcome");
+
+                    b.Navigation("UNCFIndicator");
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunityUNCFOutcome", b =>
+                {
+                    b.HasOne("UNOPS.PAO.Domain.Entities.OpportunityCountry", "OpportunityCountry")
+                        .WithMany("UNCFOutcomes")
+                        .HasForeignKey("OpportunityCountryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("UNOPS.PAO.Domain.Entities.Opportunity", "Opportunity")
+                        .WithMany("UNCFOutcomes")
+                        .HasForeignKey("OpportunityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("UNOPS.PAO.Domain.Entities.UNCFOutcome", "UNCFOutcome")
+                        .WithMany()
+                        .HasForeignKey("UNCFOutcomeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Opportunity");
+
+                    b.Navigation("OpportunityCountry");
+
+                    b.Navigation("UNCFOutcome");
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunityUNOPSMission", b =>
+                {
+                    b.HasOne("UNOPS.PAO.Domain.Entities.Opportunity", "Opportunity")
+                        .WithMany("UNOPSMissions")
+                        .HasForeignKey("OpportunityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("UNOPS.PAO.Domain.Entities.UNOPSMission", "UNOPSMission")
+                        .WithMany("Opportunities")
+                        .HasForeignKey("UNOPSMissionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Opportunity");
+
+                    b.Navigation("UNOPSMission");
+                });
+
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OrganizationHierarchy", b =>
                 {
                     b.HasOne("UNOPS.PAO.Domain.Entities.OrganizationHierarchy", "Parent")
@@ -4644,6 +5023,17 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Navigation("SDGs");
 
                     b.Navigation("Stakeholders");
+
+                    b.Navigation("UNCFIndicators");
+
+                    b.Navigation("UNCFOutcomes");
+
+                    b.Navigation("UNOPSMissions");
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunityCountry", b =>
+                {
+                    b.Navigation("UNCFOutcomes");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunitySDG", b =>
@@ -4652,6 +5042,11 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunitySDGTarget", b =>
+                {
+                    b.Navigation("Indicators");
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunityUNCFOutcome", b =>
                 {
                     b.Navigation("Indicators");
                 });
@@ -4678,6 +5073,11 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.PartnerTree", b =>
                 {
                     b.Navigation("Partners");
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.UNOPSMission", b =>
+                {
+                    b.Navigation("Opportunities");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.UserProfile", b =>

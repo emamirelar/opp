@@ -16,8 +16,9 @@ public class UNCFOutcome : IBaseBusinessEntity<int>
     /// <summary>
     /// UNCF Outcome Name (computed or descriptive name)
     /// Maps to IBaseBusinessEntity.Name requirement
+    /// Note: Some outcome names can be very long (up to 716 chars in source data)
     /// </summary>
-    [MaxLength(500)]
+    [MaxLength(1000)]
     public string Name { get; set; } = string.Empty;
     
     /// <summary>
@@ -44,15 +45,10 @@ public class UNCFOutcome : IBaseBusinessEntity<int>
     /// </summary>
     [MaxLength(255)]
     public string? UNCFOutcomeId { get; set; }
-    
+
     /// <summary>
-    /// UNCF Outcome Start Date - When this outcome period begins
+    /// UNCF Outcome Last Updated Date - When this outcome was last updated
     /// </summary>
-    public DateTime? UNCFOutcomeStartDate { get; set; }
-    
-    /// <summary>
-    /// UNCF Outcome End Date - When this outcome period ends
-    /// </summary>
-    public DateTime? UNCFOutcomeEndDate { get; set; }
+    public DateTime? UNCFOutcomeLastUpdatedDate { get; set; }
 }
 

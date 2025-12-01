@@ -30,6 +30,9 @@ public class OpportunityModel
     public string? ResultsFocus { get; set; }
     public string? IntendedImpactOutcomes { get; set; }
     public string? ExpectedBeneficiaries { get; set; }
+    public int? EstimatedDirectBeneficiaries { get; set; }
+    public int? EstimatedIndirectBeneficiaries { get; set; }
+    public bool BeneficiariesToBeDetermined { get; set; }
     public string? Challenges { get; set; }
     
     /// <summary>
@@ -63,6 +66,8 @@ public class OpportunityModel
     public List<OpportunityDeliverableModel>? Deliverables { get; set; }
     public List<OpportunityCountryModel>? Countries { get; set; }
     public List<OpportunitySDGModel>? SDGs { get; set; }
+    public List<OpportunityUNCFOutcomeModel>? UNCFOutcomes { get; set; }
+    public List<OpportunityUNOPSMissionModel>? UNOPSMissions { get; set; }
     
     public OpportunityStats? Stats { get; set; }
     
