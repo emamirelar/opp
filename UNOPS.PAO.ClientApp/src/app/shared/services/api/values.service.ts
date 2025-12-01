@@ -249,6 +249,14 @@ export class ValuesService {
   getSDGs(): Observable<SDG[]> {
     return this.http.get<SDG[]>(`${this.baseUrl}/sdgs`);
   }
+  
+  /**
+   * @description Get all UNOPS Strategic Missions
+   * @returns Observable<UNOPSMission[]>
+   */
+  getUNOPSMissions(): Observable<import('../../models/opportunity.model').UNOPSMission[]> {
+    return this.http.get<import('../../models/opportunity.model').UNOPSMission[]>(`${this.baseUrl}/unops-missions`);
+  }
 
   /**
    * @description Get all SDG Targets, optionally filtered by SDG ID

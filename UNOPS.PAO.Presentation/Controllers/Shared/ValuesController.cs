@@ -184,6 +184,12 @@ public class ValuesController : BaseController
         return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetUNCFIndicatorsByOutcomeId(outcomeId.Value)));
     }
 
+    [HttpGet(APIDictionary.UNOPSMissions)]
+    public async Task<ActionResult> GetUNOPSMissions()
+    {
+        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetUNOPSMissions()));
+    }
+
     [HttpGet(APIDictionary.GeminiModels)]
     public async Task<ActionResult> GetGeminiModels()
     {

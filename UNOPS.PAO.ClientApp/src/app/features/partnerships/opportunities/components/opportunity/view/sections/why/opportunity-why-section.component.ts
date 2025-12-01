@@ -19,11 +19,13 @@ import { SelectModule } from 'primeng/select';
 import { MessageModule } from 'primeng/message';
 import { CheckboxModule } from 'primeng/checkbox';
 import { AccordionModule } from 'primeng/accordion';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { FloatLabelModule } from 'primeng/floatlabel';
 
 // Services and Models
 import { ValuesService, SDG, SDGTarget, SDGIndicator, UNCFOutcome, UNCFIndicator } from '@shared/services/api/values.service';
 import { OpportunityService } from '../../../../../services/opportunity.service';
-import { Opportunity, OpportunitySDG, OpportunitySDGTarget, OpportunitySDGIndicator, OpportunityUNCFOutcome, OpportunityUNCFIndicator, OpportunityCountry } from '@shared/models/opportunity.model';
+import { Opportunity, OpportunitySDG, OpportunitySDGTarget, OpportunitySDGIndicator, OpportunityUNCFOutcome, OpportunityUNCFIndicator, OpportunityCountry, UNOPSMission, OpportunityUNOPSMission } from '@shared/models/opportunity.model';
 import { FeedbackDialogService } from '@shared/services/ui';
 
 /**
@@ -59,6 +61,8 @@ import { FeedbackDialogService } from '@shared/services/ui';
     MessageModule,
     CheckboxModule,
     AccordionModule,
+    InputNumberModule,
+    FloatLabelModule,
   ],
   templateUrl: './opportunity-why-section.component.html',
   styleUrls: ['./opportunity-why-section.component.scss'],
@@ -90,8 +94,17 @@ export class OpportunityWhySectionComponent implements OnInit {
   // Form controls for WHY section
   strategicAlignmentControl = new FormControl<string | null>(null);
   expectedBeneficiariesControl = new FormControl<string | null>(null);
+  estimatedDirectBeneficiariesControl = new FormControl<number | null>(null);
+  estimatedIndirectBeneficiariesControl = new FormControl<number | null>(null);
+  beneficiariesToBeDeterminedControl = new FormControl<boolean>(false);
   expectedOutcomesControl = new FormControl<string | null>(null);
   challengesControl = new FormControl<string | null>(null);
+  
+  // Climate and framework alignments by country (map of countryId -> alignment status)
+  humanitarianFrameworkAlignments = signal<Map<number, boolean | null>>(new Map());
+  ndcAlignments = signal<Map<number, boolean | null>>(new Map());
+  napAlignments = signal<Map<number, boolean | null>>(new Map());
+  orgUnitStrategyAlignments = signal<Map<number, boolean | null>>(new Map());
 
   // SDG data
   sdgs = signal<SDG[]>([]);
@@ -113,6 +126,11 @@ export class OpportunityWhySectionComponent implements OnInit {
   // Track which targets are currently loading indicators
   loadingIndicatorsForTargets = signal<Set<number>>(new Set());
   showValidationError = signal<boolean>(false);
+  
+  // UNOPS Missions data
+  unopsMissions = signal<UNOPSMission[]>([]);
+  selectedUNOPSMissions = signal<Set<number>>(new Set());
+  showUNOPSMissionsDialog = signal<boolean>(false);
 
   // Computed properties
   readonly sdgCount = computed(() => this.opportunity().sdGs?.length || 0);
@@ -129,7 +147,7 @@ export class OpportunityWhySectionComponent implements OnInit {
     
     return countries.filter(c => {
       // Show country if it has active UNCF Metadata
-      if (c.country?.hasActiveUNSDCF) {
+      if (c.country?.hasActiveUNCF) {
         return true;
       }
       
@@ -169,13 +187,80 @@ export class OpportunityWhySectionComponent implements OnInit {
     const opp = this.opportunity();
     return opp.uncfOutcomes?.length || 0;
   });
+  
+  // Computed property for countries with humanitarian framework
+  readonly countriesWithFramework = computed(() => {
+    const countries = this.opportunity().countries || [];
+    return countries.filter(c => c.hasHumanitarianFramework);
+  });
+  
+  // Computed property for countries without humanitarian framework
+  readonly countriesWithoutFramework = computed(() => {
+    const countries = this.opportunity().countries || [];
+    return countries.filter(c => !c.hasHumanitarianFramework && c.country);
+  });
+  
+  // Computed property for countries with NDC
+  readonly countriesWithNdc = computed(() => {
+    const countries = this.opportunity().countries || [];
+    return countries.filter(c => c.hasNdc);
+  });
+  
+  // Computed property for countries without NDC
+  readonly countriesWithoutNdc = computed(() => {
+    const countries = this.opportunity().countries || [];
+    return countries.filter(c => !c.hasNdc && c.country);
+  });
+  
+  // Computed property for countries with NAP
+  readonly countriesWithNap = computed(() => {
+    const countries = this.opportunity().countries || [];
+    return countries.filter(c => c.hasNap);
+  });
+  
+  // Computed property for countries without NAP
+  readonly countriesWithoutNap = computed(() => {
+    const countries = this.opportunity().countries || [];
+    return countries.filter(c => !c.hasNap && c.country);
+  });
+  
+  // Computed property for countries with Organization Unit Strategy
+  readonly countriesWithOrgUnitStrategy = computed(() => {
+    const countries = this.opportunity().countries || [];
+    return countries.filter(c => c.hasOrgUnitStrategy);
+  });
+  
+  // Computed property for countries without Organization Unit Strategy
+  readonly countriesWithoutOrgUnitStrategy = computed(() => {
+    const countries = this.opportunity().countries || [];
+    return countries.filter(c => !c.hasOrgUnitStrategy && c.country);
+  });
 
   ngOnInit(): void {
     // Load SDGs on initialization
     this.loadSDGs();
     
+    // Load UNOPS Missions
+    this.loadUNOPSMissions();
+    
     // Load UNCF outcomes for countries with active UNSDCF
     this.loadUNCFOutcomesForCountries();
+    
+    // Watch for changes to beneficiariesToBeDetermined checkbox
+    this.beneficiariesToBeDeterminedControl.valueChanges.subscribe((toBeDetermined) => {
+      if (toBeDetermined) {
+        // Clear and disable the number fields when "to be determined" is checked
+        this.estimatedDirectBeneficiariesControl.setValue(null);
+        this.estimatedIndirectBeneficiariesControl.setValue(null);
+        this.estimatedDirectBeneficiariesControl.disable();
+        this.estimatedIndirectBeneficiariesControl.disable();
+      } else {
+        // Enable the number fields when "to be determined" is unchecked
+        this.estimatedDirectBeneficiariesControl.enable();
+        this.estimatedIndirectBeneficiariesControl.enable();
+      }
+      this.cdr.detectChanges();
+    });
     
     // Watch for changes to skipTargetsControl
     this.skipTargetsControl.valueChanges.subscribe((skipValue) => {
@@ -266,6 +351,107 @@ export class OpportunityWhySectionComponent implements OnInit {
   }
 
   /**
+   * @description Load UNOPS Missions from values service
+   */
+  private loadUNOPSMissions(): void {
+    this.valuesService.getUNOPSMissions().subscribe({
+      next: (data) => {
+        this.unopsMissions.set(data);
+        
+        // Initialize selected missions from opportunity
+        const opp = this.opportunity();
+        if (opp.unopsMissions) {
+          const selectedIds = new Set(opp.unopsMissions.map(m => m.unopsMissionId));
+          this.selectedUNOPSMissions.set(selectedIds);
+        }
+        
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  /**
+   * @description Toggle UNOPS Mission selection
+   */
+  toggleUNOPSMission(missionId: number): void {
+    const selected = new Set(this.selectedUNOPSMissions());
+    if (selected.has(missionId)) {
+      selected.delete(missionId);
+    } else {
+      selected.add(missionId);
+    }
+    this.selectedUNOPSMissions.set(selected);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Check if UNOPS Mission is selected
+   */
+  isUNOPSMissionSelected(missionId: number): boolean {
+    return this.selectedUNOPSMissions().has(missionId);
+  }
+
+  /**
+   * @description Get count of selected UNOPS Missions
+   */
+  unopsMissionCount = computed(() => {
+    return this.selectedUNOPSMissions().size;
+  });
+
+  /**
+   * @description Get selected UNOPS Missions for display (in view and edit modes)
+   */
+  displayedUNOPSMissions = computed(() => {
+    const selectedIds = this.selectedUNOPSMissions();
+    const allMissions = this.unopsMissions();
+    
+    return allMissions.filter(mission => selectedIds.has(mission.id));
+  });
+
+  /**
+   * @description Toggle "Not Applicable" for UNOPS Missions
+   */
+  toggleUNOPSNotApplicable(checked: boolean): void {
+    if (checked && this.unopsMissionCount() > 0) {
+      this.selectedUNOPSMissions.set(new Set());
+      this.cdr.detectChanges();
+    }
+  }
+
+  /**
+   * @description Open UNOPS Missions dialog
+   */
+  openUNOPSMissionsDialog(): void {
+    this.showUNOPSMissionsDialog.set(true);
+  }
+
+  /**
+   * @description Confirm UNOPS Missions dialog selections (doesn't save to database, just closes dialog)
+   */
+  saveUNOPSMissionsDialog(): void {
+    // Selections are already tracked in selectedUNOPSMissions signal
+    // Just close the dialog - actual save happens when user saves the WHY section
+    this.showUNOPSMissionsDialog.set(false);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Cancel UNOPS Missions dialog
+   */
+  cancelUNOPSMissionsDialog(): void {
+    // Reset selections to current opportunity's missions
+    const opp = this.opportunity();
+    if (opp.unopsMissions) {
+      const selectedIds = new Set(opp.unopsMissions.map(m => m.unopsMissionId));
+      this.selectedUNOPSMissions.set(selectedIds);
+    } else {
+      this.selectedUNOPSMissions.set(new Set());
+    }
+    this.showUNOPSMissionsDialog.set(false);
+    this.cdr.detectChanges();
+  }
+
+  /**
    * @description Start editing the section
    */
   startEditing(): void {
@@ -274,8 +460,45 @@ export class OpportunityWhySectionComponent implements OnInit {
     // Set form controls
     this.strategicAlignmentControl.setValue(opp.strategicAlignment ?? null);
     this.expectedBeneficiariesControl.setValue(opp.expectedBeneficiaries ?? null);
+    this.estimatedDirectBeneficiariesControl.setValue(opp.estimatedDirectBeneficiaries ?? null);
+    this.estimatedIndirectBeneficiariesControl.setValue(opp.estimatedIndirectBeneficiaries ?? null);
+    this.beneficiariesToBeDeterminedControl.setValue(opp.beneficiariesToBeDetermined ?? false);
+    
+    // If beneficiariesToBeDetermined is true, disable the number fields
+    if (opp.beneficiariesToBeDetermined) {
+      this.estimatedDirectBeneficiariesControl.disable();
+      this.estimatedIndirectBeneficiariesControl.disable();
+    } else {
+      this.estimatedDirectBeneficiariesControl.enable();
+      this.estimatedIndirectBeneficiariesControl.enable();
+    }
+    
     this.expectedOutcomesControl.setValue(opp.intendedImpactOutcomes ?? null);
     this.challengesControl.setValue(opp.challenges ?? null);
+    
+    // Initialize climate and framework alignments from countries
+    const frameworkAlignments = new Map<number, boolean | null>();
+    const ndcAlignments = new Map<number, boolean | null>();
+    const napAlignments = new Map<number, boolean | null>();
+    const orgUnitStrategyAlignments = new Map<number, boolean | null>();
+    
+    opp.countries?.forEach(country => {
+      frameworkAlignments.set(country.countryId, country.humanitarianFrameworkAlignment ?? null);
+      ndcAlignments.set(country.countryId, country.ndcAlignment ?? null);
+      napAlignments.set(country.countryId, country.napAlignment ?? null);
+      orgUnitStrategyAlignments.set(country.countryId, country.orgUnitStrategyAlignment ?? null);
+    });
+    
+    this.humanitarianFrameworkAlignments.set(frameworkAlignments);
+    this.ndcAlignments.set(ndcAlignments);
+    this.napAlignments.set(napAlignments);
+    this.orgUnitStrategyAlignments.set(orgUnitStrategyAlignments);
+    
+    // Initialize selected UNOPS Missions
+    if (opp.unopsMissions) {
+      const selectedIds = new Set(opp.unopsMissions.map(m => m.unopsMissionId));
+      this.selectedUNOPSMissions.set(selectedIds);
+    }
 
     this.isEditing.set(true);
     this.cdr.detectChanges();
@@ -291,6 +514,9 @@ export class OpportunityWhySectionComponent implements OnInit {
     const whyData = {
       strategicAlignment: this.strategicAlignmentControl.value ?? undefined,
       expectedBeneficiaries: this.expectedBeneficiariesControl.value ?? undefined,
+      estimatedDirectBeneficiaries: this.estimatedDirectBeneficiariesControl.value ?? undefined,
+      estimatedIndirectBeneficiaries: this.estimatedIndirectBeneficiariesControl.value ?? undefined,
+      beneficiariesToBeDetermined: this.beneficiariesToBeDeterminedControl.value ?? false,
       intendedImpactOutcomes: this.expectedOutcomesControl.value ?? undefined,
       challenges: this.challengesControl.value ?? undefined,
       sdGs: opp.sdGs?.map(sdg => ({
@@ -309,23 +535,49 @@ export class OpportunityWhySectionComponent implements OnInit {
         uncfOutcomeId: uncfOutcome.uncfOutcomeId,  // Use the integer database ID
         notes: uncfOutcome.notes,
         uncfIndicatorIds: uncfOutcome.indicators?.map(indicator => indicator.uncfIndicatorId) || []  // Flat array of indicator IDs
+      })),
+      unopsMissions: Array.from(this.selectedUNOPSMissions()).map(missionId => ({
+        unopsMissionId: missionId
       }))
+    };
+    
+    // Prepare WHERE data with updated climate and framework alignments
+    const whereData = {
+      countries: opp.countries?.map(country => ({
+        countryId: country.countryId,
+        specificAreas: country.specificAreas,
+        humanitarianFrameworkAlignment: this.humanitarianFrameworkAlignments().get(country.countryId) ?? null,
+        ndcAlignment: this.ndcAlignments().get(country.countryId) ?? null,
+        napAlignment: this.napAlignments().get(country.countryId) ?? null,
+        orgUnitStrategyAlignment: this.orgUnitStrategyAlignments().get(country.countryId) ?? null
+      })) || []
     };
 
     this.isSaving.set(true);
+    
+    // Update WHY section first, then WHERE section for humanitarian framework alignments
     this.opportunityService.updateOpportunityWhy(opp.id, whyData).subscribe({
-      next: (fullUpdatedOpportunity: Opportunity) => {
-        this.isSaving.set(false);
-        this.isEditing.set(false);
-        
-        // Emit full updated opportunity to parent
-        this.opportunityUpdated.emit(fullUpdatedOpportunity);
-        
-        this.feedbackService.showSuccessToast({
-          detail: this.translateService.instant('message.opportunity.updatedSuccessfully'),
-          summary: this.translateService.instant('message.success')
+      next: () => {
+        // Now update WHERE section with humanitarian framework alignments
+        this.opportunityService.updateOpportunityWhere(opp.id, whereData).subscribe({
+          next: (fullUpdatedOpportunity: Opportunity) => {
+            this.isSaving.set(false);
+            this.isEditing.set(false);
+            
+            // Emit full updated opportunity to parent
+            this.opportunityUpdated.emit(fullUpdatedOpportunity);
+            
+            this.feedbackService.showSuccessToast({
+              detail: this.translateService.instant('message.opportunity.updatedSuccessfully'),
+              summary: this.translateService.instant('message.success')
+            });
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            this.isSaving.set(false);
+            this.cdr.detectChanges();
+          }
         });
-        this.cdr.detectChanges();
       },
       error: () => {
         this.isSaving.set(false);
@@ -344,8 +596,39 @@ export class OpportunityWhySectionComponent implements OnInit {
     const opp = this.opportunity();
     this.strategicAlignmentControl.setValue(opp.strategicAlignment ?? null);
     this.expectedBeneficiariesControl.setValue(opp.expectedBeneficiaries ?? null);
+    this.estimatedDirectBeneficiariesControl.setValue(opp.estimatedDirectBeneficiaries ?? null);
+    this.estimatedIndirectBeneficiariesControl.setValue(opp.estimatedIndirectBeneficiaries ?? null);
+    this.beneficiariesToBeDeterminedControl.setValue(opp.beneficiariesToBeDetermined ?? false);
+    
+    // Reset disabled state based on original value
+    if (opp.beneficiariesToBeDetermined) {
+      this.estimatedDirectBeneficiariesControl.disable();
+      this.estimatedIndirectBeneficiariesControl.disable();
+    } else {
+      this.estimatedDirectBeneficiariesControl.enable();
+      this.estimatedIndirectBeneficiariesControl.enable();
+    }
+    
     this.expectedOutcomesControl.setValue(opp.intendedImpactOutcomes ?? null);
     this.challengesControl.setValue(opp.challenges ?? null);
+    
+    // Reset climate and framework alignments to original values
+    const frameworkAlignments = new Map<number, boolean | null>();
+    const ndcAlignments = new Map<number, boolean | null>();
+    const napAlignments = new Map<number, boolean | null>();
+    const orgUnitStrategyAlignments = new Map<number, boolean | null>();
+    
+    opp.countries?.forEach(country => {
+      frameworkAlignments.set(country.countryId, country.humanitarianFrameworkAlignment ?? null);
+      ndcAlignments.set(country.countryId, country.ndcAlignment ?? null);
+      napAlignments.set(country.countryId, country.napAlignment ?? null);
+      orgUnitStrategyAlignments.set(country.countryId, country.orgUnitStrategyAlignment ?? null);
+    });
+    
+    this.humanitarianFrameworkAlignments.set(frameworkAlignments);
+    this.ndcAlignments.set(ndcAlignments);
+    this.napAlignments.set(napAlignments);
+    this.orgUnitStrategyAlignments.set(orgUnitStrategyAlignments);
     
     this.cdr.detectChanges();
   }
@@ -1243,25 +1526,6 @@ export class OpportunityWhySectionComponent implements OnInit {
   /**
    * @description Remove UNCF outcomes for a country
    */
-  removeUNCFForCountry(oppCountry: OpportunityCountry): void {
-    const opp = this.opportunity();
-    const currentUNCFOutcomes = [...(opp.uncfOutcomes || [])];
-
-    // Remove outcomes for this country
-    const updatedUNCFOutcomes = currentUNCFOutcomes.filter(
-      uo => uo.opportunityCountryId !== oppCountry.id
-    );
-
-    const updatedOpportunity = {
-      ...opp,
-      uncfOutcomes: updatedUNCFOutcomes
-    };
-
-    // Emit updated opportunity to parent
-    this.opportunityUpdated.emit(updatedOpportunity);
-    this.cdr.detectChanges();
-  }
-
   /**
    * @description Get UNCF outcomes for a specific opportunity country
    */
@@ -1423,6 +1687,74 @@ export class OpportunityWhySectionComponent implements OnInit {
   getCountryNameById(countryId: number): string {
     const country = this.opportunity().countries?.find(c => c.country?.id === countryId);
     return country?.country?.name || 'Unknown Country';
+  }
+  
+  /**
+   * @description Set humanitarian framework alignment for a country
+   */
+  setFrameworkAlignment(countryId: number, value: boolean | null): void {
+    const alignments = new Map(this.humanitarianFrameworkAlignments());
+    alignments.set(countryId, value);
+    this.humanitarianFrameworkAlignments.set(alignments);
+    this.cdr.detectChanges();
+  }
+  
+  /**
+   * @description Get humanitarian framework alignment for a country
+   */
+  getFrameworkAlignment(countryId: number): boolean | null {
+    return this.humanitarianFrameworkAlignments().get(countryId) ?? null;
+  }
+  
+  /**
+   * @description Set NDC alignment for a country
+   */
+  setNdcAlignment(countryId: number, value: boolean | null): void {
+    const alignments = new Map(this.ndcAlignments());
+    alignments.set(countryId, value);
+    this.ndcAlignments.set(alignments);
+    this.cdr.detectChanges();
+  }
+  
+  /**
+   * @description Get NDC alignment for a country
+   */
+  getNdcAlignment(countryId: number): boolean | null {
+    return this.ndcAlignments().get(countryId) ?? null;
+  }
+  
+  /**
+   * @description Set NAP alignment for a country
+   */
+  setNapAlignment(countryId: number, value: boolean | null): void {
+    const alignments = new Map(this.napAlignments());
+    alignments.set(countryId, value);
+    this.napAlignments.set(alignments);
+    this.cdr.detectChanges();
+  }
+  
+  /**
+   * @description Get NAP alignment for a country
+   */
+  getNapAlignment(countryId: number): boolean | null {
+    return this.napAlignments().get(countryId) ?? null;
+  }
+  
+  /**
+   * @description Set Organization Unit Strategy alignment for a country
+   */
+  setOrgUnitStrategyAlignment(countryId: number, value: boolean | null): void {
+    const alignments = new Map(this.orgUnitStrategyAlignments());
+    alignments.set(countryId, value);
+    this.orgUnitStrategyAlignments.set(alignments);
+    this.cdr.detectChanges();
+  }
+  
+  /**
+   * @description Get Organization Unit Strategy alignment for a country
+   */
+  getOrgUnitStrategyAlignment(countryId: number): boolean | null {
+    return this.orgUnitStrategyAlignments().get(countryId) ?? null;
   }
 }
 

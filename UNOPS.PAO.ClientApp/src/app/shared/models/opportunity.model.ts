@@ -39,6 +39,29 @@ export interface PartnerAgreementInfo {
 }
 
 /**
+ * UNOPS Strategic Mission model
+ */
+export interface UNOPSMission {
+  id: number;
+  code: string;
+  name: string;
+  description: string | null;
+  iconClass: string | null;
+  displayOrder: number;
+  status: string;
+}
+
+/**
+ * Opportunity UNOPS Mission alignment (junction model)
+ */
+export interface OpportunityUNOPSMission {
+  id: number;
+  opportunityId: number;
+  unopsMissionId: number;
+  unopsMission: UNOPSMission | null;
+}
+
+/**
  * Main Opportunity model matching backend OpportunityModel.cs
  */
 export interface Opportunity {
@@ -61,6 +84,9 @@ export interface Opportunity {
   resultsFocus: string | null;
   intendedImpactOutcomes: string | null;
   expectedBeneficiaries: string | null;
+  estimatedDirectBeneficiaries: number | null;
+  estimatedIndirectBeneficiaries: number | null;
+  beneficiariesToBeDetermined: boolean;
   challenges: string | null;
   opportunityStatementMarkdown: string | null;
   isPooledFunding: boolean;
@@ -74,6 +100,7 @@ export interface Opportunity {
   countries: OpportunityCountry[];
   sdGs: OpportunitySDG[];
   uncfOutcomes?: OpportunityUNCFOutcome[];
+  unopsMissions?: OpportunityUNOPSMission[];
   stats: OpportunityStats | null;
   isNewValueRangeForOrgUnit: boolean | null;
   orgUnitHistoricalMaxValue: number | null;
@@ -209,6 +236,21 @@ export interface OpportunityCountry {
   specificAreas: string | null;
   contextWarning: string | null;
   riskScore: number | null;
+  humanitarianFrameworkAlignment: boolean | null;
+  hasHumanitarianFramework: boolean;
+  ndcAlignment: boolean | null;
+  hasNdc: boolean;
+  napAlignment: boolean | null;
+  hasNap: boolean;
+  orgUnitStrategyAlignment: boolean | null;
+  hasOrgUnitStrategy: boolean;
+  orgUnitWithStrategyId: number | null;
+  orgUnitWithStrategyName: string | null;
+  orgUnitWithStrategyCode: string | null;
+  currentOrgUnitWithStrategyId: number | null;
+  currentOrgUnitWithStrategyName: string | null;
+  currentOrgUnitWithStrategyCode: string | null;
+  hasMoreLocalStrategyAvailable: boolean;
   country: {
     id: number;
     name: string;
@@ -228,7 +270,7 @@ export interface OpportunityCountry {
       tag: string;
       color: string;
     }>;
-    hasActiveUNSDCF?: boolean;
+    hasActiveUNCF?: boolean;
     organizationUnitHierarchy?: OrganizationUnitHierarchyNode[];
   } | null;
 }

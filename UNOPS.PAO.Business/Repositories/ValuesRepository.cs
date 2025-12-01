@@ -380,6 +380,14 @@ public class ValuesRepository
         return query;
     }
 
+    public IEnumerable<UNOPSMission> GetUNOPSMissions(bool includeInactive = false)
+    {
+        return context.Set<UNOPSMission>()
+            .Where(m => includeInactive || m.Status == EntityStatus.Active)
+            .OrderBy(m => m.DisplayOrder)
+            .ToList();
+    }
+
     public IEnumerable<UNCFIndicator> GetUNCFIndicatorsByOutcomeId(int outcomeId, bool includeInactive = false)
     {
         // Get the outcome first to determine its external ID and version

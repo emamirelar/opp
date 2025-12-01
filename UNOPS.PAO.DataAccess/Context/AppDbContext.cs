@@ -66,6 +66,7 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<OpportunitySDGIndicator> OpportunitySDGIndicators { get; set; }
     public DbSet<OpportunityUNCFOutcome> OpportunityUNCFOutcomes { get; set; }
     public DbSet<OpportunityUNCFIndicator> OpportunityUNCFIndicators { get; set; }
+    public DbSet<OpportunityUNOPSMission> OpportunityUNOPSMissions { get; set; }
     public DbSet<OpportunityInteraction> OpportunityInteractions { get; set; }
 
     // Infrastructure entities
@@ -89,6 +90,7 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<UNCFOutcome> UNCFOutcomes { get; set; }
     public DbSet<UNCFIndicator> UNCFIndicators { get; set; }
     public DbSet<UNCFMetadata> UNCFMetadatas { get; set; }
+    public DbSet<UNOPSMission> UNOPSMissions { get; set; }
     public DbSet<ExchangeRate> ExchangeRates { get; set; }
     
     // Output catalog entities
@@ -735,6 +737,35 @@ public class AppDbContext : AuditableDbContext<int, int>
             
             // Composite unique index for Country + Version combination
             entity.HasIndex(x => new { x.Country, x.UNCooperationFrameworkVersionNo }).IsUnique();
+        });
+
+        // UNOPSMission configuration (reference data - follows SDG/UNCFOutcome pattern)
+        modelBuilder.Entity<UNOPSMission>(entity =>
+        {
+            entity.HasIndex(x => x.Code).IsUnique();
+            entity.HasIndex(x => x.Name);
+            entity.HasIndex(x => x.DisplayOrder);
+            entity.HasIndex(x => x.Status);
+        });
+
+        // OpportunityUNOPSMission configuration (junction table - follows OpportunitySDG pattern)
+        modelBuilder.Entity<OpportunityUNOPSMission>(entity =>
+        {
+            entity.HasOne(x => x.Opportunity)
+                .WithMany(x => x.UNOPSMissions)
+                .HasForeignKey(x => x.OpportunityId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasOne(x => x.UNOPSMission)
+                .WithMany(x => x.Opportunities)
+                .HasForeignKey(x => x.UNOPSMissionId)
+                .OnDelete(DeleteBehavior.Restrict);
+                
+            entity.HasIndex(x => x.OpportunityId);
+            entity.HasIndex(x => x.UNOPSMissionId);
+            
+            // Unique constraint to prevent duplicate mission assignments
+            entity.HasIndex(x => new { x.OpportunityId, x.UNOPSMissionId }).IsUnique();
         });
 
         // Country configuration (External Data Service - Read Only)

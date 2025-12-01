@@ -20,6 +20,15 @@
         },
         {
             "order": 2,
+            "name": "ArtifactTypeSeeder_OrganizationHierarchy",
+            "type": "seeder",
+            "className": "ArtifactTypeSeeder_OrganizationHierarchy",
+            "methodName": "SeedOrganizationHierarchyArtifactTypesAsync",
+            "filePath": "Seeders/ArtifactTypeSeeder_OrganizationHierarchy.cs",
+            "description": "Artifact types for OrganizationHierarchy entity"
+        },
+        {
+            "order": 3,
             "name": "CountryAndOrgUnitRelationshipSeeder",
             "type": "seeder",
             "className": "CountryAndOrgUnitRelationshipSeeder",
@@ -28,7 +37,7 @@
             "description": "Country and OrgUnit relationship"
         },
         {
-            "order": 3,
+            "order": 4,
             "name": "Entities",
             "type": "seeder",
             "className": "EntitySeeder",
@@ -37,7 +46,7 @@
             "description": "Base entity types configuration"
         },
         {
-            "order": 4,
+            "order": 5,
             "name": "EntityManagers",
             "type": "sql",
             "path": "EntityManager.sql",
@@ -149,6 +158,15 @@
         },
         {
             "order": 17,
+            "name": "UNOPSMissions",
+            "type": "seeder",
+            "className": "UNOPSMissionSeeder",
+            "methodName": "SeedUNOPSMissionsAsync",
+            "filePath": "Seeders/UNOPSMissionSeeder.cs",
+            "description": "UNOPS Strategic Missions"
+        },
+        {
+            "order": 18,
             "name": "Units",
             "type": "seeder",
             "className": "UnitSeeder",
@@ -157,7 +175,7 @@
             "description": "Units of measurement (Days, Number, Litres, etc.)"
         },
         {
-            "order": 18,
+            "order": 19,
             "name": "ProjectCategories",
             "type": "seeder",
             "className": "ProjectCategorySeeder",
@@ -166,7 +184,7 @@
             "description": "Project categories (Category 1, 2, 3)"
         },
         {
-            "order": 19,
+            "order": 20,
             "name": "Outputs",
             "type": "seeder",
             "className": "OutputSeeder",
@@ -175,7 +193,7 @@
             "description": "UNOPS Output catalog"
         },
         {
-            "order": 20,
+            "order": 21,
             "name": "SequenceResync",
             "type": "seeder",
             "className": "SequenceResyncSeeder",

@@ -98,7 +98,8 @@ public class OpportunityMappingProfile : Profile
 
         // Map OpportunityCountry to OpportunityCountryModel
         CreateMap<OpportunityCountry, OpportunityCountryModel>()
-            .ForMember(dest => dest.Country, opt => opt.MapFrom(src => src.Country));
+            .ForMember(dest => dest.Country, opt => opt.MapFrom(src => src.Country))
+            .ForMember(dest => dest.CurrentOrgUnitWithStrategyId, opt => opt.MapFrom(src => src.OrgUnitWithStrategyId));
 
         CreateMap<OpportunityCountryRequest, OpportunityCountry>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
@@ -162,6 +163,25 @@ public class OpportunityMappingProfile : Profile
         // =================================================================
         CreateMap<SDGTarget, SDGTargetModel>();
         CreateMap<SDGIndicator, SDGIndicatorModel>();
+        
+        // =================================================================
+        // UNOPSMission mappings
+        // =================================================================
+        CreateMap<UNOPSMission, UNOPSMissionModel>()
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
+            
+        // =================================================================
+        // OpportunityUNOPSMission mappings
+        // =================================================================
+        CreateMap<OpportunityUNOPSMission, OpportunityUNOPSMissionModel>()
+            .ForMember(dest => dest.UNOPSMission, opt => opt.MapFrom(src => src.UNOPSMission));
+            
+        CreateMap<OpportunityUNOPSMissionRequest, OpportunityUNOPSMission>()
+            .ForMember(dest => dest.Id, opt => opt.Ignore())
+            .ForMember(dest => dest.OpportunityId, opt => opt.Ignore())
+            .ForMember(dest => dest.Opportunity, opt => opt.Ignore())
+            .ForMember(dest => dest.UNOPSMission, opt => opt.Ignore())
+            .ForMember(dest => dest.UNOPSMissionId, opt => opt.MapFrom(src => src.UNOPSMissionId));
     }
 }
 
