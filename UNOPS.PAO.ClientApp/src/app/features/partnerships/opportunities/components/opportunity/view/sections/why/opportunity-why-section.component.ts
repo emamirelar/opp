@@ -307,7 +307,26 @@ export class OpportunityWhySectionComponent implements OnInit {
         this.estimatedDirectBeneficiariesControl.enable();
         this.estimatedIndirectBeneficiariesControl.enable();
       }
+      // Only mark as changed if we're in edit mode (prevents false positives during initialization)
+      if (this.isEditing()) {
+        this.markAsChanged();
+      }
       this.cdr.detectChanges();
+    });
+
+    // Watch for changes to beneficiary number controls
+    this.estimatedDirectBeneficiariesControl.valueChanges.subscribe(() => {
+      // Only mark as changed if we're in edit mode (prevents false positives during initialization)
+      if (this.isEditing()) {
+        this.markAsChanged();
+      }
+    });
+
+    this.estimatedIndirectBeneficiariesControl.valueChanges.subscribe(() => {
+      // Only mark as changed if we're in edit mode (prevents false positives during initialization)
+      if (this.isEditing()) {
+        this.markAsChanged();
+      }
     });
     
     // Watch for changes to skipTargetsControl
@@ -429,6 +448,7 @@ export class OpportunityWhySectionComponent implements OnInit {
       selected.add(missionId);
     }
     this.selectedUNOPSMissions.set(selected);
+    this.markAsChanged();
     this.cdr.detectChanges();
   }
 
@@ -573,7 +593,7 @@ export class OpportunityWhySectionComponent implements OnInit {
   }
 
   /**
-   * @description Save section changes
+   * @description Save section changes (WHY data and framework alignments)
    */
   saveSection(): void {
     const opp = this.opportunity();
@@ -609,7 +629,8 @@ export class OpportunityWhySectionComponent implements OnInit {
       }))
     };
     
-    // Prepare WHERE data with updated climate and framework alignments
+    // Prepare WHERE data with updated framework alignments
+    // Framework alignments are displayed in WHY section but are properties of OpportunityCountry
     const whereData = {
       countries: opp.countries?.map(country => ({
         countryId: country.countryId,
@@ -623,25 +644,34 @@ export class OpportunityWhySectionComponent implements OnInit {
 
     this.isSaving.set(true);
     
-    // Update WHY section first, then WHERE section for humanitarian framework alignments
+    // Update WHY section first, then WHERE section for framework alignments
     this.opportunityService.updateOpportunityWhy(opp.id, whyData).subscribe({
-      next: (fullUpdatedOpportunity: Opportunity) => {
-        this.isSaving.set(false);
-        this.isEditing.set(false);
-        this.hasUnsavedChanges = false;
-        this.originalData = null;
-        
-        // Emit full updated opportunity to parent
-        this.opportunityUpdated.emit(fullUpdatedOpportunity);
-        
-        // Clear unsaved changes tracking
-        this.changesSavedOrDiscarded.emit();
-        
-        this.feedbackService.showSuccessToast({
-          detail: this.translateService.instant('message.opportunity.updatedSuccessfully'),
-          summary: this.translateService.instant('message.success')
+      next: (updatedAfterWhy: Opportunity) => {
+        // Now update WHERE section with framework alignments
+        this.opportunityService.updateOpportunityWhere(opp.id, whereData).subscribe({
+          next: (fullUpdatedOpportunity: Opportunity) => {
+            this.isSaving.set(false);
+            this.isEditing.set(false);
+            this.hasUnsavedChanges = false;
+            this.originalData = null;
+            
+            // Emit full updated opportunity to parent
+            this.opportunityUpdated.emit(fullUpdatedOpportunity);
+            
+            // Clear unsaved changes tracking
+            this.changesSavedOrDiscarded.emit();
+            
+            this.feedbackService.showSuccessToast({
+              detail: this.translateService.instant('message.opportunity.updatedSuccessfully'),
+              summary: this.translateService.instant('message.success')
+            });
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            this.isSaving.set(false);
+            this.cdr.detectChanges();
+          }
         });
-        this.cdr.detectChanges();
       },
       error: () => {
         this.isSaving.set(false);
@@ -721,6 +751,14 @@ export class OpportunityWhySectionComponent implements OnInit {
     this.ndcAlignments.set(ndcAlignments);
     this.napAlignments.set(napAlignments);
     this.orgUnitStrategyAlignments.set(orgUnitStrategyAlignments);
+    
+    // Reset UNOPS Missions to original values
+    if (opp.unopsMissions) {
+      const selectedIds = new Set(opp.unopsMissions.map(m => m.unopsMissionId));
+      this.selectedUNOPSMissions.set(selectedIds);
+    } else {
+      this.selectedUNOPSMissions.set(new Set());
+    }
     
     this.cdr.detectChanges();
   }
@@ -1795,6 +1833,7 @@ export class OpportunityWhySectionComponent implements OnInit {
     const alignments = new Map(this.humanitarianFrameworkAlignments());
     alignments.set(countryId, value);
     this.humanitarianFrameworkAlignments.set(alignments);
+    this.markAsChanged();
     this.cdr.detectChanges();
   }
   
@@ -1812,6 +1851,7 @@ export class OpportunityWhySectionComponent implements OnInit {
     const alignments = new Map(this.ndcAlignments());
     alignments.set(countryId, value);
     this.ndcAlignments.set(alignments);
+    this.markAsChanged();
     this.cdr.detectChanges();
   }
   
@@ -1829,6 +1869,7 @@ export class OpportunityWhySectionComponent implements OnInit {
     const alignments = new Map(this.napAlignments());
     alignments.set(countryId, value);
     this.napAlignments.set(alignments);
+    this.markAsChanged();
     this.cdr.detectChanges();
   }
   
@@ -1846,6 +1887,7 @@ export class OpportunityWhySectionComponent implements OnInit {
     const alignments = new Map(this.orgUnitStrategyAlignments());
     alignments.set(countryId, value);
     this.orgUnitStrategyAlignments.set(alignments);
+    this.markAsChanged();
     this.cdr.detectChanges();
   }
   
