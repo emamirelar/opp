@@ -1,4 +1,10 @@
 // Opportunity WHAT Section Styles
 // Use Tailwind classes in template - only add custom styles if absolutely necessary
 
+// Override focus state for search input to match standard inputs without dark border
+.search-input-no-focus-border:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: var(--p-inputtext-border-color) !important;
+}
 
