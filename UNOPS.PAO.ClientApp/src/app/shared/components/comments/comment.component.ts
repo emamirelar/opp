@@ -60,7 +60,7 @@ export class CommentComponent implements OnInit {
   // Inputs
   readonly entityType = input.required<string>();
   readonly entityId = input.required<number>();
-  readonly panelHeader = input<string>('💬 Collaboration & Comments');
+  readonly panelHeader = input<string>('Collaboration & Comments');
 
   // Services
   private readonly commentService = inject(CommentService);

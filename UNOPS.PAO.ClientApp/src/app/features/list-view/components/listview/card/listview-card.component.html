@@ -83,6 +83,45 @@
         }
       </div>
     }
+    @case ('thumbnail') {
+      @if (getFieldValue(item, column.field)) {
+        <div class="flex items-center gap-2">
+          <img 
+            [src]="getFieldValue(item, column.field)" 
+            [alt]="column.label || 'Thumbnail'"
+            [title]="getFieldTooltip(item, column)"
+            [class]="getThumbnailClasses(column)"
+            class="flex-shrink-0 object-cover"
+          />
+          @if (context !== 'thumbnail-only') {
+            <span [class]="getFieldClasses(column, context) + ' truncate'"
+                  [title]="getFieldTooltip(item, column)">
+              {{ getEntityNameFromAvatarField(item, column) }}
+            </span>
+          }
+        </div>
+      } @else if (column.thumbnailFallback) {
+        <div class="flex items-center gap-2">
+          <img 
+            [src]="column.thumbnailFallback" 
+            [alt]="column.label || 'Thumbnail'"
+            [title]="getFieldTooltip(item, column)"
+            [class]="getThumbnailClasses(column)"
+            class="flex-shrink-0 object-cover"
+          />
+          @if (context !== 'thumbnail-only') {
+            <span [class]="getFieldClasses(column, context) + ' truncate'"
+                  [title]="getFieldTooltip(item, column)">
+              {{ getEntityNameFromAvatarField(item, column) }}
+            </span>
+          }
+        </div>
+      } @else {
+        @if (context !== 'field5') {
+          <span [class]="getFieldClasses(column, context)" [title]="getFieldTooltip(item, column)">--</span>
+        }
+      }
+    }
     @default {
       @if (hasFieldValue(item, column)) {
         <span [class]="getFieldClasses(column, context) + (context === 'field2' || context === 'field3' ? ' truncate' : '')" [title]="getFieldTooltip(item, column)">{{ formatValue(item, column) }}</span>
@@ -169,8 +208,26 @@
 
               <!-- Card content -->
               <div [class]="'relative z-10 flex ' + contentGapClasses()">
-                <!-- Avatar/Icon section with enhanced styling - conditionally shown based on card size -->
-                @if (shouldShowAvatar() && avatarColumn()) {
+                <!-- Avatar/Thumbnail/Icon section with enhanced styling - conditionally shown based on card size -->
+                @if (shouldShowAvatar() && thumbnailColumn()) {
+                  <div class="flex-shrink-0">
+                    @if (getFieldValue(item, thumbnailColumn()!.field)) {
+                      <img 
+                        [src]="getFieldValue(item, thumbnailColumn()!.field)" 
+                        [alt]="'Thumbnail'"
+                        [class]="getThumbnailClasses(thumbnailColumn()!)"
+                        class="object-cover"
+                      />
+                    } @else if (thumbnailColumn()!.thumbnailFallback) {
+                      <img 
+                        [src]="thumbnailColumn()!.thumbnailFallback" 
+                        [alt]="'Thumbnail'"
+                        [class]="getThumbnailClasses(thumbnailColumn()!)"
+                        class="object-cover"
+                      />
+                    }
+                  </div>
+                } @else if (shouldShowAvatar() && avatarColumn()) {
                   <div class="flex-shrink-0">
                     <div class="relative">
                       <p-avatar [image]="getAvatarUrl(item, avatarColumn()!.field)"
@@ -213,8 +270,11 @@
                         @if (cardFields().field1!.type === 'avatar') {
                           <!-- For avatar fields, show the text content as title, not the avatar -->
                           <span [title]="getFieldTooltip(item, cardFields().field1!)">{{ getEntityNameFromAvatarField(item, cardFields().field1!) }}</span>
+                        } @else if (cardFields().field1!.type === 'thumbnail') {
+                          <!-- For thumbnail fields, show the text content as title, not the thumbnail -->
+                          <span [title]="getFieldTooltip(item, cardFields().field1!)">{{ getEntityNameFromAvatarField(item, cardFields().field1!) }}</span>
                         } @else {
-                          <!-- For non-avatar fields, use the normal template -->
+                          <!-- For non-avatar/thumbnail fields, use the normal template -->
                           <ng-container [ngTemplateOutlet]="fieldTemplate"
                                         [ngTemplateOutletContext]="{ item: item, column: cardFields().field1!, context: 'field1' }">
                           </ng-container>

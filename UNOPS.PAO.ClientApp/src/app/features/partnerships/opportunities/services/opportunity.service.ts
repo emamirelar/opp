@@ -51,6 +51,13 @@ export class OpportunityService {
   }
 
   /**
+   * Generate AI banner and thumbnail images for an opportunity
+   */
+  generateOpportunityImages(id: number): Observable<Opportunity> {
+    return this.http.post<Opportunity>(`${this.apiUrl}/${id}/generate-images`, {});
+  }
+
+  /**
    * Create a new opportunity
    */
   createOpportunity(request: OpportunityRequest): Observable<Opportunity> {
@@ -253,12 +260,14 @@ export class OpportunityService {
   getSimilarProjects(
     id: number,
     maxResults: number = 10,
+    invalidateCache: boolean = false,
   ): Observable<SimilarProjectsResponse> {
     return this.http.get<SimilarProjectsResponse>(
       `${this.apiUrl}/${id}/similar-projects`,
       {
         params: {
           maxResults: maxResults.toString(),
+          invalidateCache: invalidateCache.toString(),
         },
       },
     );
@@ -290,12 +299,14 @@ export class OpportunityService {
   getRelevantPeople(
     id: number,
     maxResults: number = 10,
+    invalidateCache: boolean = false,
   ): Observable<RelevantPeopleResponse> {
     return this.http.get<RelevantPeopleResponse>(
       `${this.apiUrl}/${id}/relevant-people`,
       {
         params: {
           maxResults: maxResults.toString(),
+          invalidateCache: invalidateCache.toString(),
         },
       },
     );

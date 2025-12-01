@@ -23,13 +23,17 @@ import { FeedbackDialogService } from '@shared/services/ui';
 /**
  * @class OpportunityOverviewSectionComponent
  * @description Manages the Overview section of opportunity with independent edit/save/cancel functionality.
- * Contains the opportunity name and description fields.
+ * Contains the opportunity name and description fields. Updates are handled via local state management
+ * without requiring full component refresh.
  * 
  * @example
  * ```html
  * <app-opportunity-overview-section
  *   [opportunity]="opportunity()"
+ *   [canUpdate]="canUpdate()"
  *   (opportunityUpdated)="handleOpportunityUpdate($event)"
+ *   (changesDetected)="handleChangesDetected()"
+ *   (changesSavedOrDiscarded)="handleChangesSaved()"
  * />
  * ```
  * 
@@ -75,9 +79,14 @@ export class OpportunityOverviewSectionComponent {
   readonly opportunityUpdated = output<Opportunity>();
 
   /**
-   * @description Output event when section is saved - for cross-section refresh triggers
+   * @description Output event when changes are detected (for unsaved changes tracking)
    */
-  readonly sectionSaved = output<void>();
+  readonly changesDetected = output<void>();
+
+  /**
+   * @description Output event when changes are saved or discarded (clear unsaved state)
+   */
+  readonly changesSavedOrDiscarded = output<void>();
 
   // Edit mode state
   readonly isEditing = signal<boolean>(false);
@@ -86,10 +95,26 @@ export class OpportunityOverviewSectionComponent {
     name?: string;
     description?: string;
   } | null = null;
+  private hasUnsavedChanges = false;
 
   // Form controls for Overview section
   nameControl = new FormControl<string | null>(null);
   descriptionControl = new FormControl<string | null>(null);
+
+  constructor() {
+    // Set up change detection on form controls
+    // Only mark as changed if we're in edit mode (to avoid triggering on initial setValue)
+    this.nameControl.valueChanges.subscribe(() => {
+      if (this.isEditing()) {
+        this.markAsChanged();
+      }
+    });
+    this.descriptionControl.valueChanges.subscribe(() => {
+      if (this.isEditing()) {
+        this.markAsChanged();
+      }
+    });
+  }
 
   /**
    * @description Enter edit mode for this section
@@ -112,6 +137,17 @@ export class OpportunityOverviewSectionComponent {
   }
 
   /**
+   * @description Mark section as having unsaved changes
+   * @private
+   */
+  private markAsChanged(): void {
+    if (!this.hasUnsavedChanges) {
+      this.hasUnsavedChanges = true;
+      this.changesDetected.emit();
+    }
+  }
+
+  /**
    * @description Save section changes
    */
   saveSection(): void {
@@ -129,12 +165,13 @@ export class OpportunityOverviewSectionComponent {
         this.isSaving.set(false);
         this.isEditing.set(false);
         this.originalData = null;
+        this.hasUnsavedChanges = false;
         
         // Emit full updated opportunity to parent
         this.opportunityUpdated.emit(fullUpdatedOpportunity);
         
-        // Emit that section was saved (for potential cross-section updates)
-        this.sectionSaved.emit();
+        // Clear unsaved changes tracking
+        this.changesSavedOrDiscarded.emit();
         
         this.feedbackService.showSuccessToast({
           detail: this.translateService.instant('message.opportunity.updatedSuccessfully'),
@@ -160,6 +197,11 @@ export class OpportunityOverviewSectionComponent {
     
     this.isEditing.set(false);
     this.originalData = null;
+    this.hasUnsavedChanges = false;
+    
+    // Clear unsaved changes tracking
+    this.changesSavedOrDiscarded.emit();
+    
     this.cdr.detectChanges();
   }
 }

@@ -16,7 +16,8 @@ export interface ListViewColumn {
    * - 'number': Format as number using the DecimalPipe
    * - 'currency': Format as currency using the CurrencyPipe
    * - 'translate': Use the translation pipe to translate the value
-   * - 'avatar': Display an image URL as an avatar using p-avatar component
+   * - 'avatar': Display an image URL as an avatar using p-avatar component (circular)
+   * - 'thumbnail': Display a square/rectangular image (for logos, banners, etc.)
    * - 'email': Display as clickable email with mailto link
    * - 'url': Display as clickable URL link
    * - 'html': Render raw HTML content (sanitized)
@@ -28,7 +29,7 @@ export interface ListViewColumn {
    * - 'link': Display as a clickable internal router link
    * - 'interactionIcon': Display interaction type with appropriate icon and styling
    */
-  type: 'text' | 'date' | 'number' | 'currency' | 'translate' | 'avatar' | 'email' | 'url' | 'html' | 'image' | 'badge' | 'icon' | 'conditionalIcon' | 'multiple-avatars' | 'template' | 'link' | 'interactionIcon';
+  type: 'text' | 'date' | 'number' | 'currency' | 'translate' | 'avatar' | 'thumbnail' | 'email' | 'url' | 'html' | 'image' | 'badge' | 'icon' | 'conditionalIcon' | 'multiple-avatars' | 'template' | 'link' | 'interactionIcon';
   sortable: boolean;
   width?: string;
   /**
@@ -83,6 +84,18 @@ export interface ListViewColumn {
   
   /** For 'image' type: Whether clicking enlarges the image */
   enlargeOnClick?: boolean;
+  
+  /** For 'thumbnail' type: Thumbnail size (width and height) */
+  thumbnailSize?: '32px' | '40px' | '48px' | '56px' | '64px' | '80px' | '96px' | '128px';
+  
+  /** For 'thumbnail' type: Border radius style */
+  thumbnailShape?: 'square' | 'rounded' | 'rounded-lg' | 'rounded-xl';
+  
+  /** For 'thumbnail' type: Whether to show a border */
+  thumbnailBorder?: boolean;
+  
+  /** For 'thumbnail' type: Fallback image URL when thumbnail is missing */
+  thumbnailFallback?: string;
   
   /** For 'badge' type: Badge color mapping function */
   badgeColorFn?: (value: any) => "success" | "info" | "warn" | "secondary" | "contrast" | "danger";

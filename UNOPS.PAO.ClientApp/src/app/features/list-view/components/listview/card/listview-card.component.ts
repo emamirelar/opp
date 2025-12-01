@@ -383,6 +383,15 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
     return columns.find(col => col.type === 'avatar') || null;
   });
 
+  // Computed property to get thumbnail column
+  thumbnailColumn = computed(() => {
+    const columns = this.columns();
+    if (!columns || columns.length === 0) {
+      return null;
+    }
+    return columns.find(col => col.type === 'thumbnail') || null;
+  });
+
   // Computed property to get interaction icon column (for avatar display)
   interactionIconColumn = computed(() => {
     const columns = this.columns();
@@ -395,8 +404,9 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
   // Computed property to determine if we should show interaction icon in avatar position
   shouldShowInteractionAvatar = computed(() => {
     const interactionIconColumn = this.interactionIconColumn();
-    const avatarColumn = this.avatarColumn()
-    return interactionIconColumn && !avatarColumn;
+    const avatarColumn = this.avatarColumn();
+    const thumbnailColumn = this.thumbnailColumn();
+    return interactionIconColumn && !avatarColumn && !thumbnailColumn;
   });
 
   // Computed property to get ordered card fields (including all columns for content)
@@ -815,6 +825,70 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
     }
 
     return '';
+  }
+
+  /**
+   * Get CSS classes for thumbnail based on column configuration
+   */
+  getThumbnailClasses(column: ListViewColumn): string {
+    const classes: string[] = [];
+    
+    // Size classes
+    const size = column.thumbnailSize || '48px';
+    switch (size) {
+      case '32px':
+        classes.push('w-8', 'h-8');
+        break;
+      case '40px':
+        classes.push('w-10', 'h-10');
+        break;
+      case '48px':
+        classes.push('w-12', 'h-12');
+        break;
+      case '56px':
+        classes.push('w-14', 'h-14');
+        break;
+      case '64px':
+        classes.push('w-16', 'h-16');
+        break;
+      case '80px':
+        classes.push('w-20', 'h-20');
+        break;
+      case '96px':
+        classes.push('w-24', 'h-24');
+        break;
+      case '128px':
+        classes.push('w-32', 'h-32');
+        break;
+      default:
+        classes.push('w-12', 'h-12'); // Default 48px
+    }
+    
+    // Shape/border-radius classes
+    const shape = column.thumbnailShape || 'rounded-lg';
+    switch (shape) {
+      case 'square':
+        // No border radius
+        break;
+      case 'rounded':
+        classes.push('rounded');
+        break;
+      case 'rounded-lg':
+        classes.push('rounded-lg');
+        break;
+      case 'rounded-xl':
+        classes.push('rounded-xl');
+        break;
+      default:
+        classes.push('rounded-lg');
+    }
+    
+    // Border
+    if (column.thumbnailBorder !== false) { // Default to true if not specified
+      classes.push('border', 'border-unops-neutral-300');
+    }
+    
+    return classes.join(' ');
   }
 
   /**

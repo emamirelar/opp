@@ -88,9 +88,27 @@ export class OpportunityWhySectionComponent implements OnInit {
    */
   readonly opportunityUpdated = output<Opportunity>();
 
+  /**
+   * @description Output event when changes are detected (for unsaved changes tracking)
+   */
+  readonly changesDetected = output<void>();
+
+  /**
+   * @description Output event when changes are saved or discarded (clear unsaved state)
+   */
+  readonly changesSavedOrDiscarded = output<void>();
+
   // Edit mode state
   readonly isEditing = signal<boolean>(false);
   readonly isSaving = signal<boolean>(false);
+  private hasUnsavedChanges = false;
+  private originalData: {
+    strategicAlignment?: string | null;
+    expectedBeneficiaries?: string | null;
+    intendedImpactOutcomes?: string | null;
+    challenges?: string | null;
+    sdGs?: any[];
+  } | null = null;
 
   // Form controls for WHY section
   strategicAlignmentControl = new FormControl<string | null>(null);
@@ -124,6 +142,31 @@ export class OpportunityWhySectionComponent implements OnInit {
   readonly primarySDG = computed(() => 
     this.opportunity().sdGs?.find(sdg => sdg.isPrimary) || null
   );
+
+  constructor() {
+    // Set up change detection on form controls
+    // Only mark as changed if we're in edit mode (to avoid triggering on initial setValue)
+    this.strategicAlignmentControl.valueChanges.subscribe(() => {
+      if (this.isEditing()) {
+        this.markAsChanged();
+      }
+    });
+    this.expectedBeneficiariesControl.valueChanges.subscribe(() => {
+      if (this.isEditing()) {
+        this.markAsChanged();
+      }
+    });
+    this.expectedOutcomesControl.valueChanges.subscribe(() => {
+      if (this.isEditing()) {
+        this.markAsChanged();
+      }
+    });
+    this.challengesControl.valueChanges.subscribe(() => {
+      if (this.isEditing()) {
+        this.markAsChanged();
+      }
+    });
+  }
 
   ngOnInit(): void {
     // Load SDGs on initialization
@@ -223,6 +266,15 @@ export class OpportunityWhySectionComponent implements OnInit {
   startEditing(): void {
     const opp = this.opportunity();
     
+    // Backup original data for cancel
+    this.originalData = {
+      strategicAlignment: opp.strategicAlignment ?? null,
+      expectedBeneficiaries: opp.expectedBeneficiaries ?? null,
+      intendedImpactOutcomes: opp.intendedImpactOutcomes ?? null,
+      challenges: opp.challenges ?? null,
+      sdGs: opp.sdGs ? [...opp.sdGs] : []
+    };
+    
     // Set form controls
     this.strategicAlignmentControl.setValue(opp.strategicAlignment ?? null);
     this.expectedBeneficiariesControl.setValue(opp.expectedBeneficiaries ?? null);
@@ -231,6 +283,17 @@ export class OpportunityWhySectionComponent implements OnInit {
 
     this.isEditing.set(true);
     this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Mark section as having unsaved changes
+   * @private
+   */
+  private markAsChanged(): void {
+    if (!this.hasUnsavedChanges) {
+      this.hasUnsavedChanges = true;
+      this.changesDetected.emit();
+    }
   }
 
   /**
@@ -263,9 +326,14 @@ export class OpportunityWhySectionComponent implements OnInit {
       next: (fullUpdatedOpportunity: Opportunity) => {
         this.isSaving.set(false);
         this.isEditing.set(false);
+        this.hasUnsavedChanges = false;
+        this.originalData = null;
         
         // Emit full updated opportunity to parent
         this.opportunityUpdated.emit(fullUpdatedOpportunity);
+        
+        // Clear unsaved changes tracking
+        this.changesSavedOrDiscarded.emit();
         
         this.feedbackService.showSuccessToast({
           detail: this.translateService.instant('message.opportunity.updatedSuccessfully'),
@@ -284,14 +352,42 @@ export class OpportunityWhySectionComponent implements OnInit {
    * @description Cancel editing and revert changes
    */
   cancelEditing(): void {
-    this.isEditing.set(false);
-    
-    // Reset form controls to original values
     const opp = this.opportunity();
-    this.strategicAlignmentControl.setValue(opp.strategicAlignment ?? null);
-    this.expectedBeneficiariesControl.setValue(opp.expectedBeneficiaries ?? null);
-    this.expectedOutcomesControl.setValue(opp.intendedImpactOutcomes ?? null);
-    this.challengesControl.setValue(opp.challenges ?? null);
+    
+    // Restore original data if available
+    if (this.originalData) {
+      // Reset form controls to original values
+      this.strategicAlignmentControl.setValue(this.originalData.strategicAlignment ?? null);
+      this.expectedBeneficiariesControl.setValue(this.originalData.expectedBeneficiaries ?? null);
+      this.expectedOutcomesControl.setValue(this.originalData.intendedImpactOutcomes ?? null);
+      this.challengesControl.setValue(this.originalData.challenges ?? null);
+      
+      // Restore original SDGs (reverts any SDGs that were added but not saved)
+      const updatedOpportunity = {
+        ...opp,
+        strategicAlignment: this.originalData.strategicAlignment ?? null,
+        expectedBeneficiaries: this.originalData.expectedBeneficiaries ?? null,
+        intendedImpactOutcomes: this.originalData.intendedImpactOutcomes ?? null,
+        challenges: this.originalData.challenges ?? null,
+        sdGs: this.originalData.sdGs ? [...this.originalData.sdGs] : []
+      };
+      
+      // Emit the reverted opportunity to parent
+      this.opportunityUpdated.emit(updatedOpportunity);
+    } else {
+      // Fallback: just reset form controls to current opportunity values
+      this.strategicAlignmentControl.setValue(opp.strategicAlignment ?? null);
+      this.expectedBeneficiariesControl.setValue(opp.expectedBeneficiaries ?? null);
+      this.expectedOutcomesControl.setValue(opp.intendedImpactOutcomes ?? null);
+      this.challengesControl.setValue(opp.challenges ?? null);
+    }
+    
+    this.isEditing.set(false);
+    this.originalData = null;
+    this.hasUnsavedChanges = false;
+    
+    // Clear unsaved changes tracking
+    this.changesSavedOrDiscarded.emit();
     
     this.cdr.detectChanges();
   }
@@ -589,6 +685,9 @@ export class OpportunityWhySectionComponent implements OnInit {
 
     // Emit updated opportunity to parent
     this.opportunityUpdated.emit(updatedOpportunity);
+    
+    // Mark as changed (SDG added)
+    this.markAsChanged();
 
     // Reset dialog state
     this.showSDGDialog.set(false);
@@ -804,6 +903,10 @@ export class OpportunityWhySectionComponent implements OnInit {
 
     // Emit updated opportunity to parent
     this.opportunityUpdated.emit(updatedOpportunity);
+    
+    // Mark as changed (SDG removed)
+    this.markAsChanged();
+    
     this.cdr.detectChanges();
   }
 
@@ -812,9 +915,9 @@ export class OpportunityWhySectionComponent implements OnInit {
    */
   getSDGChipStyle(isPrimary: boolean): any {
     if (isPrimary) {
-      return { 'background-color': '#22c55e', 'color': 'white' };
+      return { 'background-color': 'var(--p-badge-success-background)', 'color': 'var(--p-badge-success-color)', 'border-radius': '8px' };
     }
-    return { 'background-color': '#0ea5e9', 'color': 'white' };
+    return { 'background-color': 'var(--p-badge-info-background)', 'color': 'var(--p-badge-info-color)', 'border-radius': '8px' };
   }
 
   /**

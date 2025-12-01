@@ -61,6 +61,16 @@ public class Opportunity : ModifiableDeletableEntity
     public string? OpportunityStatementMarkdown { get; set; }
     
     /// <summary>
+    /// AI-generated banner image for the opportunity (base64 encoded)
+    /// </summary>
+    public string? OpportunityBannerImage { get; set; }
+    
+    /// <summary>
+    /// AI-generated thumbnail image for the opportunity (base64 encoded)
+    /// </summary>
+    public string? OpportunityThumbnail { get; set; }
+    
+    /// <summary>
     /// Whether funding is pooled across multiple partners
     /// </summary>
     public bool IsPooledFunding { get; set; }

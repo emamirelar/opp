@@ -2,20 +2,20 @@
 <div
   [class]="
     collapsed()
-      ? 'w-12 bg-white border-r border-gray-200 flex-shrink-0 flex flex-col h-full transition-all duration-300'
-      : 'w-full sm:w-80 md:w-96 bg-white border-r border-gray-200 flex-shrink-0 flex flex-col h-full transition-all duration-300'
+      ? 'w-12 bg-unops-surface-primary border-r border-unops-neutral-300 flex-shrink-0 flex flex-col h-full transition-all duration-300'
+      : 'w-full sm:w-80 md:w-96 bg-unops-surface-primary border-r border-unops-neutral-300 flex-shrink-0 flex flex-col h-full transition-all duration-300'
   "
 >
   @if (!collapsed()) {
     <!-- Expanded View -->
     <div
-      class="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0 cursor-pointer hover:bg-gray-50 transition-colors"
+      class="flex items-center justify-between p-4 border-b border-unops-neutral-300 flex-shrink-0 cursor-pointer hover:bg-unops-surface-secondary transition-colors"
       style="background: var(--p-content-background)"
       (click)="onTogglePanel()"
     >
       <div class="flex items-center gap-2">
-        <i class="pi pi-file text-blue-600"></i>
-        <span class="font-medium text-gray-900">{{
+        <i class="pi pi-file text-unops-primary"></i>
+        <span class="font-medium text-unops-secondary">{{
           "title.docs" | translate
         }}</span>
         <p-badge [value]="documentCount().toString()" severity="info" />
@@ -50,10 +50,10 @@
           </div>
           <!-- Help Text -->
           <div
-          class="mt-3 p-2 bg-blue-50 border border-blue-100 rounded text-xs text-blue-900"
+          class="mt-3 p-2 bg-unops-primary-container-soft border border-unops-primary-200 rounded text-xs text-unops-primary-dark"
         >
             <div class="flex items-start gap-2">
-              <i class="pi pi-info-circle text-blue-600 mt-0.5 flex-shrink-0"></i>
+              <i class="pi pi-info-circle text-unops-primary-dark mt-0.5 flex-shrink-0"></i>
               <span>{{ "helpText.document.uploadForAutoFill" | translate }}</span>
             </div>
           </div>
@@ -63,16 +63,16 @@
       @if (loading()) {
         <!-- Loading State -->
         <div class="flex items-center justify-center py-8">
-          <i class="pi pi-spin pi-spinner text-2xl text-blue-600"></i>
+          <i class="pi pi-spin pi-spinner text-2xl text-unops-primary"></i>
         </div>
       } @else if (documents().length === 0) {
         <!-- Empty State -->
         <div class="p-4">
           <div
-            class="border-2 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50 text-center"
+            class="border-2 border-dashed border-unops-neutral-400 rounded-unops-lg p-6 bg-unops-surface-secondary text-center"
           >
-            <i class="pi pi-file text-4xl text-gray-400 mb-2"></i>
-            <p class="text-sm text-gray-600">
+            <i class="pi pi-file text-4xl text-unops-neutral-500 mb-2"></i>
+            <p class="text-sm text-unops-neutral-700">
               {{ "message.noDocuments" | translate }}
             </p>
           </div>
@@ -83,12 +83,12 @@
           <div class="space-y-4">
             @for (doc of documents(); track doc.id) {
               <div
-                class="relative bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-lg shadow-sm hover:shadow-md hover:border-blue-400 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer overflow-hidden group"
+                class="relative bg-gradient-to-br from-unops-surface-primary to-unops-surface-secondary border border-unops-neutral-300 rounded-unops-lg shadow-unops-sm hover:shadow-unops-md hover:border-unops-primary hover:-translate-y-0.5 transition-all duration-200 cursor-pointer overflow-hidden group"
                 (click)="viewDocument(doc)"
               >
                 <!-- Accent Bar -->
                 <div
-                  class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-unops-primary to-unops-primary-dark opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                 ></div>
 
                 <!-- Main Content Area -->
@@ -105,7 +105,7 @@
                     ></i>
                     <div class="flex-1 min-w-0">
                       <p
-                        class="text-sm font-semibold text-gray-900 leading-snug break-words"
+                        class="text-sm font-semibold text-unops-secondary leading-snug break-words"
                       >
                         {{ doc.name }}
                       </p>
@@ -115,11 +115,11 @@
                   <!-- Metadata Row -->
                   <div class="flex flex-wrap items-center gap-2 ml-9 mb-2">
                     @if (doc.size) {
-                      <span class="text-xs text-gray-500">{{ doc.size }}</span>
+                      <span class="text-xs text-unops-neutral-600">{{ doc.size }}</span>
                     }
                     @if (doc.documentTypeName) {
                       <span
-                        class="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 rounded"
+                        class="text-xs px-2 py-0.5 bg-unops-neutral-100 text-unops-neutral-800 rounded"
                       >
                         {{ doc.documentTypeName }}
                       </span>
@@ -136,7 +136,7 @@
                     }
                     @if (doc.aiTranscribed) {
                       <span
-                        class="inline-flex items-center gap-1 text-xs px-2 py-0.5 bg-blue-50 text-blue-700 rounded border border-blue-200"
+                        class="inline-flex items-center gap-1 text-xs px-2 py-0.5 bg-unops-primary-container-soft text-unops-primary-dark rounded border border-unops-primary-200"
                       >
                         <i class="pi pi-check-circle text-[0.7rem]"></i>
                         <span>{{ "label.aiTranscribed" | translate }}</span>
@@ -233,8 +233,8 @@
             white-space: nowrap;
           "
         >
-          <i class="pi pi-file text-blue-600"></i>
-          <span class="font-medium text-gray-900 text-sm">{{
+          <i class="pi pi-file text-unops-primary"></i>
+          <span class="font-medium text-unops-secondary text-sm">{{
             "title.docs" | translate
           }}</span>
           <p-badge [value]="documentCount().toString()" severity="info" />

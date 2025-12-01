@@ -33,6 +33,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
     private readonly UNOPSPartnerTreeManager partnerTreeManager;
     private readonly UNOPSPartnerManager partnerManager;
     private readonly UNOPSGeminiManager geminiManager;
+    private readonly ImageGenerationManager imageGenerationManager;
     private readonly LinkManager linkManager;
     private readonly UNOPSUserManagementManager userManagementManager;
     private readonly UNOPSAiPromptManager aiPromptManager;
@@ -59,6 +60,9 @@ public class UNOPSManagerWrapper : ManagerWrapper
         // Create logger for UNOPSGeminiManager
         var geminiManagerLogger = loggerFactory.CreateLogger<UNOPSGeminiManager>();
         
+        // Create logger for ImageGenerationManager
+        var imageGenerationManagerLogger = loggerFactory.CreateLogger<ImageGenerationManager>();
+        
         // Create logger for UNOPSUserManagementManager
         var userManagementManagerLogger = loggerFactory.CreateLogger<UNOPSUserManagementManager>();
         
@@ -74,6 +78,10 @@ public class UNOPSManagerWrapper : ManagerWrapper
         partnerTreeManager = new UNOPSPartnerTreeManager(mapper, opsContext, configuration, partnerTreeService, permissionService);
         partnerManager = new UNOPSPartnerManager(mapper, opsContext, configuration, partnerTreeService, partnerManagerLogger, permissionService, globalFilterService, httpContextAccessor, serviceProvider);
         linkManager = new LinkManager(mapper, opsContext);
+        
+        // Create ImageGenerationManager for AI-based image generation (uses same auth pattern as AiContextualService)
+        imageGenerationManager = new ImageGenerationManager(configuration, imageGenerationManagerLogger);
+        
         // Create GeminiManager first (without userManagementManager dependency)
         geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration, geminiManagerLogger, null, userInfoService, userManager, roleManager, userPreferenceService, userProfileCacheService, screenContextCacheService, geoTimeCacheService, aiPromptCacheService, memoryCache, httpClient);
         
@@ -111,6 +119,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
     public override IPartnerTreeManager PartnerTreeManager => partnerTreeManager;
     public override IPartnerManager PartnerManager => partnerManager;
     public override IGeminiManager GeminiManager => geminiManager;
+    public override IImageGenerationManager ImageGenerationManager => imageGenerationManager;
     public override ILinkManager LinkManager => linkManager;
     public override IUserManagementManager UserManagementManager => userManagementManager;
     public override IAiPromptManager AiPromptManager => aiPromptManager;

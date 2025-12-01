@@ -3,6 +3,8 @@
  * @author UNOPS Opportunity+ System Development Team
  */
 
+import { EntityTag } from './entity-tag.model';
+
 /**
  * Document detail model for display purposes
  */
@@ -64,6 +66,8 @@ export interface Opportunity {
   expectedBeneficiaries: string | null;
   challenges: string | null;
   opportunityStatementMarkdown: string | null;
+  opportunityBannerImage: string | null;
+  opportunityThumbnail: string | null;
   isPooledFunding: boolean;
   deliveryModality: number | null;
   fundingPartners: OpportunityFundingPartner[];
@@ -87,6 +91,7 @@ export interface Opportunity {
   createdByName: string | null;
   lastModifiedBy: number;
   lastModifiedByName: string | null;
+  tags?: EntityTag[];
   permissions?: EntityPermissions;
 }
 

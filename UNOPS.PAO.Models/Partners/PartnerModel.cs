@@ -131,11 +131,11 @@ public class PartnerModel
         {
             var statusColor = Status switch
             {
-                "Draft" => "bg-gray-100 text-gray-800",
-                "Active" => "bg-blue-100 text-blue-800", 
-                "Closed" => "bg-red-100 text-red-800",
-                "Archived" => "bg-yellow-100 text-yellow-800",
-                _ => "bg-gray-100 text-gray-800"
+                "Draft" => "bg-badge-secondary text-badge-secondary",      // Gray - matches p-badge severity="secondary"
+                "Active" => "bg-badge-info text-badge-info",                // Blue - matches p-badge severity="info"
+                "Closed" => "bg-badge-danger text-badge-danger",            // Red - matches p-badge severity="danger"
+                "Archived" => "bg-yellow-100 text-yellow-800",              // Yellow - archived state
+                _ => "bg-badge-secondary text-badge-secondary"
             };
             tags.Add(new EntityTagModel { Tag = Status, Color = statusColor });
         }
@@ -151,9 +151,9 @@ public class PartnerModel
             };
             var approvalColor = PartnerApprovalStatus switch
             {
-                "Approved" => "bg-green-100 text-green-800",
-                "NotApproved" => "bg-yellow-100 text-yellow-800",
-                _ => "bg-gray-100 text-gray-800"
+                "Approved" => "bg-badge-success text-badge-success",       // Green - matches p-badge severity="success"
+                "NotApproved" => "bg-badge-warn text-badge-warn",           // Orange - matches p-badge severity="warn"
+                _ => "bg-badge-secondary text-badge-secondary"
             };
             tags.Add(new EntityTagModel { Tag = approvalTag, Color = approvalColor });
         }
@@ -167,12 +167,12 @@ public class PartnerModel
             if (expiryDate < now)
             {
                 // Already expired
-                tags.Add(new EntityTagModel { Tag = "DD Expired", Color = "bg-red-100 text-red-800" });
+                tags.Add(new EntityTagModel { Tag = "DD Expired", Color = "bg-badge-danger text-badge-danger" });
             }
             else if (expiryDate <= now.AddMonths(6))
             {
                 // Expiring within 6 months
-                tags.Add(new EntityTagModel { Tag = "DD Expiring", Color = "bg-yellow-100 text-yellow-800" });
+                tags.Add(new EntityTagModel { Tag = "DD Expiring", Color = "bg-badge-warn text-badge-warn" });
             }
         }
         

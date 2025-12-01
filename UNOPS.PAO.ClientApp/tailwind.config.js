@@ -3,6 +3,15 @@ const primeui = require("tailwindcss-primeui");
 
 module.exports = {
   content: ["./src/**/*.{html,ts,scss,css}", "./index.html"],
+  safelist: [
+    // Badge color classes - must be safelisted for dynamic template usage
+    'bg-badge-success', 'text-badge-success',
+    'bg-badge-info', 'text-badge-info',
+    'bg-badge-warn', 'text-badge-warn',
+    'bg-badge-danger', 'text-badge-danger',
+    'bg-badge-secondary', 'text-badge-secondary',
+    'bg-badge-teal', 'text-badge-teal',
+  ],
   plugins: [primeui],
   theme: {
     screens: {
@@ -256,6 +265,23 @@ module.exports = {
       animation: {
         'scale': 'scale 1s ease-in-out infinite',
         'fade-in': 'fadeIn 0.3s ease-out forwards'
+      },
+      // Badge color utilities matching PrimeNG severities EXACTLY
+      backgroundColor: {
+        'badge-success': '#d1fae5',
+        'badge-info': '#dbeafe',
+        'badge-warn': '#fff7ed',     // UNOPS warning lighter - soft orange background for opportunity LIST view
+        'badge-danger': '#fee2e2',
+        'badge-secondary': '#f3f4f6',
+        'badge-teal': '#e8f7f5',     // UNOPS teal accent soft (kept for other entities if needed)
+      },
+      textColor: {
+        'badge-success': '#059669',
+        'badge-info': '#2563eb',
+        'badge-warn': '#cc8400',     // UNOPS warning DEFAULT - dark orange text for opportunity LIST view
+        'badge-danger': '#dc2626',
+        'badge-secondary': '#4b5563',
+        'badge-teal': '#00a997',     // UNOPS teal accent (kept for other entities if needed)
       }
     }
   }
