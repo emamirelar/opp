@@ -1,10 +1,17 @@
 <!-- WHY - Impact & Alignment -->
-<p-panel [toggleable]="true" [collapsed]="false" class="{{isSaving() ? 'opacity-50 pointer-events-none' : ''}}">
+<p-panel
+  [toggleable]="true"
+  [collapsed]="false"
+  class="{{ isSaving() ? 'opacity-50 pointer-events-none' : '' }}"
+>
   <ng-template pTemplate="header">
     <div class="flex items-center justify-between w-full pr-4">
       <div class="flex items-center gap-2">
         <i class="pi pi-lightbulb text-unops-secondary"></i>
-        <span class="font-semibold">{{ 'label.opportunity.why' | translate }} - {{ 'label.opportunity.impactAlignment' | translate }}</span>
+        <span class="font-semibold"
+          >{{ "label.opportunity.why" | translate }} -
+          {{ "label.opportunity.impactAlignment" | translate }}</span
+        >
       </div>
       <div class="flex items-center gap-2">
         @if (isSaving()) {
@@ -52,16 +59,28 @@
   <div class="space-y-6">
     <!-- AI Suggestions -->
     @if (suggestions() && suggestions().length > 0) {
-      <div class="bg-unops-accent-yellow-soft rounded-unops-lg p-3 border border-unops-warning-light">
+      <div
+        class="bg-unops-accent-yellow-soft rounded-unops-lg p-3 border border-unops-warning-light"
+      >
         <div class="flex items-start gap-2 mb-2">
-          <i class="pi pi-lightbulb text-unops-warning-darker text-sm mt-0.5"></i>
-          <h4 class="text-xs font-semibold text-unops-secondary">{{ 'label.aiSuggestions' | translate }}</h4>
+          <i
+            class="pi pi-lightbulb text-unops-warning-darker text-sm mt-0.5"
+          ></i>
+          <h4 class="text-xs font-semibold text-unops-secondary">
+            {{ "label.aiSuggestions" | translate }}
+          </h4>
         </div>
         <div class="space-y-2 pl-5">
           @for (suggestion of suggestions(); track $index) {
-            <div class="bg-unops-surface-primary rounded p-2 border border-unops-warning-light shadow-unops-sm">
-              <div class="font-semibold text-xs text-unops-secondary mb-1">{{ suggestion.title }}</div>
-              <p class="text-xs text-unops-neutral-700">{{ suggestion.description }}</p>
+            <div
+              class="bg-unops-surface-primary rounded p-2 border border-unops-warning-light shadow-unops-sm"
+            >
+              <div class="font-semibold text-xs text-unops-secondary mb-1">
+                {{ suggestion.title }}
+              </div>
+              <p class="text-xs text-unops-neutral-700">
+                {{ suggestion.description }}
+              </p>
             </div>
           }
         </div>
@@ -70,9 +89,11 @@
 
     <!-- Strategic Alignment -->
     <div>
-      <h3 class="text-sm font-semibold text-unops-neutral-700 mb-2 flex items-center gap-2">
+      <h3
+        class="text-sm font-semibold text-unops-neutral-700 mb-2 flex items-center gap-2"
+      >
         <i class="pi pi-sitemap text-unops-primary"></i>
-        {{ 'label.opportunity.strategicAlignment' | translate }}
+        {{ "label.opportunity.strategicAlignment" | translate }}
       </h3>
       @if (isEditing()) {
         <textarea
@@ -80,20 +101,24 @@
           [formControl]="strategicAlignmentControl"
           rows="4"
           class="w-full"
-          [placeholder]="'label.opportunity.strategicAlignmentPlaceholder' | translate"
+          [placeholder]="
+            'label.opportunity.strategicAlignmentPlaceholder' | translate
+          "
         ></textarea>
       } @else {
         <p class="text-unops-neutral-800 leading-relaxed">
-          {{ opportunity().strategicAlignment || '-' }}
+          {{ opportunity().strategicAlignment || "-" }}
         </p>
       }
     </div>
 
     <!-- Context and Challenge(s) -->
     <div>
-      <h3 class="text-sm font-semibold text-unops-neutral-700 mb-2 flex items-center gap-2">
+      <h3
+        class="text-sm font-semibold text-unops-neutral-700 mb-2 flex items-center gap-2"
+      >
         <i class="pi pi-exclamation-triangle text-unops-warning"></i>
-        {{ 'label.opportunity.contextAndChallenges' | translate }}
+        {{ "label.opportunity.contextAndChallenges" | translate }}
       </h3>
       @if (isEditing()) {
         <textarea
@@ -105,16 +130,18 @@
         ></textarea>
       } @else {
         <p class="text-unops-neutral-800 leading-relaxed">
-          {{ opportunity().challenges || '-' }}
+          {{ opportunity().challenges || "-" }}
         </p>
       }
     </div>
 
     <!-- Expected Outcomes -->
     <div>
-      <h3 class="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
+      <h3
+        class="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2"
+      >
         <i class="pi pi-chart-line text-blue-600"></i>
-        {{ 'label.opportunity.expectedOutcomes' | translate }}
+        {{ "label.opportunity.expectedOutcomes" | translate }}
       </h3>
       @if (isEditing()) {
         <textarea
@@ -122,11 +149,13 @@
           [formControl]="expectedOutcomesControl"
           rows="4"
           class="w-full"
-          [placeholder]="'label.opportunity.expectedOutcomesPlaceholder' | translate"
+          [placeholder]="
+            'label.opportunity.expectedOutcomesPlaceholder' | translate
+          "
         ></textarea>
       } @else {
         <p class="text-gray-700 leading-relaxed">
-          {{ opportunity().intendedImpactOutcomes || '-' }}
+          {{ opportunity().intendedImpactOutcomes || "-" }}
         </p>
       }
     </div>
@@ -134,9 +163,11 @@
     <!-- SDG Alignment -->
     <div>
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold text-unops-secondary flex items-center gap-2">
+        <h3
+          class="text-lg font-semibold text-unops-secondary flex items-center gap-2"
+        >
           <i class="pi pi-globe text-unops-success"></i>
-          {{ 'label.opportunity.sdgAlignment' | translate }} ({{ sdgCount() }})
+          {{ "label.opportunity.sdgAlignment" | translate }} ({{ sdgCount() }})
         </h3>
         @if (isEditing()) {
           <p-button
@@ -152,52 +183,84 @@
       <div class="space-y-3">
         @if (opportunity().sdGs && opportunity().sdGs!.length > 0) {
           @for (sdg of opportunity().sdGs; track sdg.sdgId; let idx = $index) {
-            <div class="bg-unops-surface-primary border border-unops-neutral-300 rounded-unops-lg p-4 hover:shadow-unops-md transition-shadow">
+            <div
+              class="bg-unops-surface-primary border border-unops-neutral-300 rounded-unops-lg p-4 hover:shadow-unops-md transition-shadow"
+            >
               <div class="flex items-start justify-between gap-4">
                 <div class="flex items-center gap-4 flex-1">
                   <!-- SDG Logo -->
                   @if (getSDGLogo(sdg.sdgId)) {
-                    <img 
-                      [src]="getSDGLogo(sdg.sdgId)" 
+                    <img
+                      [src]="getSDGLogo(sdg.sdgId)"
                       [alt]="'SDG ' + sdg.sdgNumber"
                       class="w-16 h-16 object-contain rounded"
                     />
                   } @else {
-                    <div class="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-teal-600 text-white font-bold text-2xl rounded shadow-sm">
+                    <div
+                      class="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-teal-600 text-white font-bold text-2xl rounded shadow-sm"
+                    >
                       {{ sdg.sdgNumber }}
                     </div>
                   }
                   <div class="flex-1">
                     <h4 class="font-semibold text-unops-secondary mb-1">
-                      {{ 'label.opportunity.sdg' | translate }} {{ sdg.sdgNumber }}: {{ sdg.sdgName }}
+                      {{ "label.opportunity.sdg" | translate }}
+                      {{ sdg.sdgNumber }}: {{ sdg.sdgName }}
                     </h4>
                     <div class="flex items-center gap-2 mb-2">
-                      <p-chip 
-                        [label]="getSDGChipLabel(sdg.isPrimary)" 
-                        styleClass="text-xs font-bold"
-                        [style]="getSDGChipStyle(sdg.isPrimary)"
-                      />
+                      <div
+                        class="text-xs font-bold px-2 py-1 rounded-lg text-center"
+                        [style]="{
+                          'background-color': sdg.isPrimary
+                            ? 'rgb(76, 175, 80)'
+                            : 'var(--p-badge-info-background)',
+                          color: sdg.isPrimary
+                            ? 'white'
+                            : 'var(--p-badge-info-color)',
+                          'min-width': '76px',
+                        }"
+                      >
+                        {{ sdg.isPrimary ? "Primary" : "Secondary" }}
+                      </div>
                     </div>
-                    
+
                     <!-- Display Targets and Indicators -->
                     @if (sdg.targets && sdg.targets.length > 0) {
-                      <div class="mt-3 pl-4 border-l-2 border-unops-primary-200 space-y-2">
+                      <div
+                        class="mt-3 pl-4 border-l-2 border-unops-primary-200 space-y-2"
+                      >
                         @for (target of sdg.targets; track target.id) {
                           <div class="text-sm">
-                            <div class="font-medium text-unops-primary flex items-center gap-2">
+                            <div
+                              class="font-medium text-unops-primary flex items-center gap-2"
+                            >
                               <i class="pi pi-check-circle text-xs"></i>
-                              {{ 'label.target' | translate }} {{ target.sdgTargetId }}
+                              {{ "label.target" | translate }}
+                              {{ target.sdgTargetId }}
                             </div>
-                            <div class="text-unops-neutral-700 ml-5 text-xs mt-1">{{ target.targetDescription }}</div>
-                            
+                            <div
+                              class="text-unops-neutral-700 ml-5 text-xs mt-1"
+                            >
+                              {{ target.targetDescription }}
+                            </div>
+
                             <!-- Display Indicators for this target -->
-                            @if (target.indicators && target.indicators.length > 0) {
+                            @if (
+                              target.indicators && target.indicators.length > 0
+                            ) {
                               <div class="ml-5 mt-2 space-y-1">
-                                @for (indicator of target.indicators; track indicator.id) {
+                                @for (
+                                  indicator of target.indicators;
+                                  track indicator.id
+                                ) {
                                   <div class="flex items-start gap-1.5">
-                                    <i class="pi pi-angle-right text-xs text-unops-neutral-500 mt-0.5"></i>
+                                    <i
+                                      class="pi pi-angle-right text-xs text-unops-neutral-500 mt-0.5"
+                                    ></i>
                                     <div class="text-xs text-unops-neutral-700">
-                                      {{ indicator.sdgIndicatorLongDescription }}
+                                      {{
+                                        indicator.sdgIndicatorLongDescription
+                                      }}
                                     </div>
                                   </div>
                                 }
@@ -237,7 +300,7 @@
         } @else {
           <div class="text-center py-8 text-unops-neutral-500">
             <i class="pi pi-globe text-4xl mb-3 text-unops-neutral-400"></i>
-            <p>{{ 'message.opportunity.noSDGs' | translate }}</p>
+            <p>{{ "message.opportunity.noSDGs" | translate }}</p>
           </div>
         }
       </div>
@@ -246,28 +309,37 @@
     <!-- UNCF Alignment (Country-specific UN Cooperation Framework) -->
     @if (countriesWithUNCF().length > 0) {
       <div>
-        <div class="flex items-center justify-between mb-2">
-          <h3 class="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
-            <i class="pi pi-flag text-blue-600"></i>
-            {{ 'label.opportunity.uncfAlignment' | translate }} ({{ uncfCount() }})
+        <div class="flex items-center justify-between mb-4">
+          <h3
+            class="text-lg font-semibold text-unops-secondary flex items-center gap-2"
+          >
+            <i class="pi pi-flag text-unops-primary"></i>
+            {{ "label.opportunity.uncfAlignment" | translate }} ({{
+              uncfCount()
+            }})
           </h3>
         </div>
 
         <div class="space-y-3">
           <!-- Always show all countries with HasActiveUNSDCF = true -->
           @for (oppCountry of countriesWithUNCF(); track oppCountry.id) {
-            @let outcomesForCountry = getUNCFOutcomesForOpportunityCountry(oppCountry.id);
-            <div class="border border-gray-200 rounded-lg p-2 bg-white shadow-sm hover:shadow-md transition-shadow">
+            @let outcomesForCountry =
+              getUNCFOutcomesForOpportunityCountry(oppCountry.id);
+            <div
+              class="border border-gray-200 rounded-lg p-2 bg-white shadow-sm hover:shadow-md transition-shadow"
+            >
               <div class="flex items-start justify-between gap-4">
                 <!-- Country Info and Outcomes -->
                 <div class="flex-1">
                   <!-- Country Header with Edit/Delete buttons (like SDG) -->
-                    <div class="flex items-center justify-between mb-3">
-                      <h4 class="text-sm font-semibold text-gray-500 flex items-center gap-2">
-                        <i class="pi pi-map-marker text-blue-600"></i>
-                        {{ oppCountry.country?.name }}
-                      </h4>
-                    
+                  <div class="flex items-center justify-between mb-3">
+                    <h4
+                      class="text-sm font-semibold text-gray-500 flex items-center gap-2"
+                    >
+                      <i class="pi pi-map-marker text-blue-600"></i>
+                      {{ oppCountry.country?.name }}
+                    </h4>
+
                     <!-- Edit Action next to country name (only in edit mode) -->
                     @if (isEditing()) {
                       <div class="flex gap-2">
@@ -287,12 +359,16 @@
                   <!-- Warning banners for inactive UNCF data (per country) -->
                   @if (hasInactiveUNCFWithUpdatesForCountry(oppCountry.id)) {
                     <p-message severity="warn" styleClass="mb-3 w-full">
-                      {{ 'message.opportunity.uncfUpdatesAvailable' | translate }}
+                      {{
+                        "message.opportunity.uncfUpdatesAvailable" | translate
+                      }}
                     </p-message>
                   }
                   @if (hasInactiveUNCFWithoutUpdatesForCountry(oppCountry.id)) {
                     <p-message severity="warn" styleClass="mb-3 w-full">
-                      {{ 'message.opportunity.uncfInactiveNoUpdates' | translate }}
+                      {{
+                        "message.opportunity.uncfInactiveNoUpdates" | translate
+                      }}
                     </p-message>
                   }
 
@@ -301,24 +377,39 @@
                     @let firstOutcome = outcomesForCountry[0];
                     @if (firstOutcome.versionNo) {
                       <div class="text-xs font-semibold text-gray-600 mb-2">
-                        {{ 'label.outcomes' | translate }} ({{ 'label.version' | translate }}: {{ firstOutcome.versionNo }})
+                        {{ "label.outcomes" | translate }} ({{
+                          "label.version" | translate
+                        }}: {{ firstOutcome.versionNo }})
                       </div>
                     }
                     <div class="mt-3 pl-4 border-l-2 border-blue-200 space-y-2">
-                      @for (uncfOutcome of outcomesForCountry; track uncfOutcome.id) {
+                      @for (
+                        uncfOutcome of outcomesForCountry;
+                        track uncfOutcome.id
+                      ) {
                         <div class="text-sm">
                           <!-- Outcome -->
-                          <div class="font-medium text-gray-700 flex items-center gap-2">
+                          <div
+                            class="font-medium text-gray-700 flex items-center gap-2"
+                          >
                             <i class="pi pi-check-circle text-xs"></i>
                             {{ uncfOutcome.uncfOutcomeName }}
                           </div>
 
                           <!-- Indicators for this outcome -->
-                          @if (uncfOutcome.indicators && uncfOutcome.indicators.length > 0) {
+                          @if (
+                            uncfOutcome.indicators &&
+                            uncfOutcome.indicators.length > 0
+                          ) {
                             <div class="ml-5 mt-2 space-y-1">
-                              @for (indicator of uncfOutcome.indicators; track indicator.id) {
+                              @for (
+                                indicator of uncfOutcome.indicators;
+                                track indicator.id
+                              ) {
                                 <div class="flex items-start gap-1.5">
-                                  <i class="pi pi-angle-right text-xs text-gray-400 mt-0.5"></i>
+                                  <i
+                                    class="pi pi-angle-right text-xs text-gray-400 mt-0.5"
+                                  ></i>
                                   <div class="text-xs text-gray-600">
                                     {{ indicator.uncfIndicatorName }}
                                   </div>
@@ -332,7 +423,7 @@
                   } @else {
                     <!-- No outcomes selected for this country -->
                     <div class="text-sm text-gray-500 italic">
-                      {{ 'label.noOutcomesSelected' | translate }}
+                      {{ "label.noOutcomesSelected" | translate }}
                     </div>
                   }
                 </div>
@@ -343,24 +434,32 @@
       </div>
     } @else {
       <div>
-        <div class="flex items-center justify-between mb-2">
-          <h3 class="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
-            <i class="pi pi-flag text-blue-600"></i>
-            {{ 'label.opportunity.uncfAlignment' | translate }}
+        <div class="flex items-center justify-between mb-4">
+          <h3
+            class="text-lg font-semibold text-unops-secondary flex items-center gap-2"
+          >
+            <i class="pi pi-flag text-unops-primary"></i>
+            {{ "label.opportunity.uncfAlignment" | translate }}
           </h3>
         </div>
-        <p-message severity="warn" styleClass="w-full">
-          {{ 'message.opportunity.uncfNotAvailable' | translate }}
-        </p-message>
+        <div class="bg-unops-primary-container-soft rounded-unops-sm p-4">
+          <p class="text-sm text-gray-500 italic">
+            {{ "message.opportunity.uncfNotAvailable" | translate }}
+          </p>
+        </div>
       </div>
     }
 
     <!-- Alignment to UNOPS Strategy -->
     <div>
-      <div class="flex items-center justify-between mb-2">
-        <h3 class="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
-          <i class="pi pi-building text-blue-600"></i>
-          {{ 'label.opportunity.alignmentToUNOPSStrategy' | translate }} ({{ unopsMissionCount() }})
+      <div class="flex items-center justify-between mb-4">
+        <h3
+          class="text-lg font-semibold text-unops-secondary flex items-center gap-2"
+        >
+          <i class="pi pi-building text-unops-primary"></i>
+          {{ "label.opportunity.alignmentToUNOPSStrategy" | translate }} ({{
+            unopsMissionCount()
+          }})
         </h3>
         @if (isEditing()) {
           <p-button
@@ -372,26 +471,34 @@
           />
         }
       </div>
-      
+
       <p class="text-xs text-gray-600 mb-3">
-        {{ 'helpText.opportunity.unopsMissions' | translate }}
+        {{ "helpText.opportunity.unopsMissions" | translate }}
       </p>
-      
+
       <!-- Display selected missions (both view and edit modes) -->
       @if (displayedUNOPSMissions().length > 0) {
         <div class="space-y-2">
           @for (mission of displayedUNOPSMissions(); track mission.id) {
-            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3">
+            <div
+              class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3"
+            >
               <div class="flex items-start gap-3">
                 @if (mission.iconClass) {
-                  <i [class]="mission.iconClass + ' text-2xl text-blue-600'"></i>
+                  <i
+                    [class]="mission.iconClass + ' text-2xl text-blue-600'"
+                  ></i>
                 } @else {
                   <i class="pi pi-check-circle text-2xl text-blue-600"></i>
                 }
                 <div class="flex-1">
-                  <h4 class="font-medium text-gray-900 text-sm">{{ mission.name }}</h4>
+                  <h4 class="font-medium text-gray-900 text-sm">
+                    {{ mission.name }}
+                  </h4>
                   @if (mission.description) {
-                    <p class="text-xs text-gray-600 mt-1">{{ mission.description }}</p>
+                    <p class="text-xs text-gray-600 mt-1">
+                      {{ mission.description }}
+                    </p>
                   }
                 </div>
               </div>
@@ -399,76 +506,119 @@
           }
         </div>
       } @else {
-        <p class="text-sm text-gray-400 italic">{{ 'message.opportunity.noUNOPSMissionsSelected' | translate }}</p>
+        <p class="text-sm text-gray-400 italic">
+          {{ "message.opportunity.noUNOPSMissionsSelected" | translate }}
+        </p>
       }
     </div>
 
     <!-- Humanitarian, Peace & Security Framework Alignment -->
-    @if (countriesWithFramework().length > 0 || countriesWithoutFramework().length > 0) {
+    @if (
+      countriesWithFramework().length > 0 ||
+      countriesWithoutFramework().length > 0
+    ) {
       <div>
-        <h3 class="text-sm font-semibold text-gray-600 mb-3 flex items-center gap-2">
-          <i class="pi pi-shield text-green-600"></i>
-          {{ 'label.opportunity.humanitarianFramework' | translate }}
+        <h3
+          class="text-lg font-semibold text-unops-secondary mb-4 flex items-center gap-2"
+        >
+          <i class="pi pi-shield text-unops-primary"></i>
+          {{ "label.opportunity.humanitarianFramework" | translate }}
         </h3>
-        
+
         <!-- Countries WITH framework -->
         @if (countriesWithFramework().length > 0) {
           <div class="space-y-3">
             @for (country of countriesWithFramework(); track country.id) {
               <div class="bg-green-50 border border-green-200 rounded-lg p-4">
                 <div class="flex items-start gap-3">
-                  <div class="w-10 h-10 bg-white rounded flex items-center justify-center flex-shrink-0 border border-green-300">
-                    <span class="text-sm font-bold text-green-700">{{ country.country?.iso2Code || 'XX' }}</span>
+                  <div
+                    class="w-10 h-10 bg-white rounded flex items-center justify-center flex-shrink-0 border border-green-300"
+                  >
+                    <span class="text-sm font-bold text-green-700">{{
+                      country.country?.iso2Code || "XX"
+                    }}</span>
                   </div>
-                  
+
                   <div class="flex-1">
                     <h4 class="text-sm font-semibold text-gray-900 mb-2">
                       {{ country.country?.name }}
                     </h4>
                     <p class="text-xs text-gray-600 mb-3">
-                      {{ 'message.opportunity.humanitarianFrameworkAvailable' | translate }}
+                      {{
+                        "message.opportunity.humanitarianFrameworkAvailable"
+                          | translate
+                      }}
                     </p>
-                    
+
                     @if (isEditing()) {
                       <div class="space-y-2">
-                        <label class="block text-xs font-medium text-gray-700 mb-2">
-                          {{ 'label.opportunity.frameworkAlignmentStatus' | translate }}
+                        <label
+                          class="block text-xs font-medium text-gray-700 mb-2"
+                        >
+                          {{
+                            "label.opportunity.frameworkAlignmentStatus"
+                              | translate
+                          }}
                         </label>
                         <div class="flex flex-col gap-2">
                           <label class="flex items-center gap-2 cursor-pointer">
-                            <input 
-                              type="radio" 
+                            <input
+                              type="radio"
                               [name]="'framework-' + country.countryId"
-                              [checked]="getFrameworkAlignment(country.countryId) === true"
-                              (change)="setFrameworkAlignment(country.countryId, true)"
+                              [checked]="
+                                getFrameworkAlignment(country.countryId) ===
+                                true
+                              "
+                              (change)="
+                                setFrameworkAlignment(country.countryId, true)
+                              "
                               class="w-4 h-4 text-green-600"
                             />
                             <span class="text-xs text-gray-700">
-                              {{ 'label.opportunity.frameworkWillAlign' | translate }}
+                              {{
+                                "label.opportunity.frameworkWillAlign"
+                                  | translate
+                              }}
                             </span>
                           </label>
                           <label class="flex items-center gap-2 cursor-pointer">
-                            <input 
-                              type="radio" 
+                            <input
+                              type="radio"
                               [name]="'framework-' + country.countryId"
-                              [checked]="getFrameworkAlignment(country.countryId) === false"
-                              (change)="setFrameworkAlignment(country.countryId, false)"
+                              [checked]="
+                                getFrameworkAlignment(country.countryId) ===
+                                false
+                              "
+                              (change)="
+                                setFrameworkAlignment(country.countryId, false)
+                              "
                               class="w-4 h-4 text-green-600"
                             />
                             <span class="text-xs text-gray-700">
-                              {{ 'label.opportunity.frameworkNotAtThisTime' | translate }}
+                              {{
+                                "label.opportunity.frameworkNotAtThisTime"
+                                  | translate
+                              }}
                             </span>
                           </label>
                           <label class="flex items-center gap-2 cursor-pointer">
-                            <input 
-                              type="radio" 
+                            <input
+                              type="radio"
                               [name]="'framework-' + country.countryId"
-                              [checked]="getFrameworkAlignment(country.countryId) === null"
-                              (change)="setFrameworkAlignment(country.countryId, null)"
+                              [checked]="
+                                getFrameworkAlignment(country.countryId) ===
+                                null
+                              "
+                              (change)="
+                                setFrameworkAlignment(country.countryId, null)
+                              "
                               class="w-4 h-4 text-green-600"
                             />
                             <span class="text-xs text-gray-700">
-                              {{ 'label.opportunity.frameworkNotSpecified' | translate }}
+                              {{
+                                "label.opportunity.frameworkNotSpecified"
+                                  | translate
+                              }}
                             </span>
                           </label>
                         </div>
@@ -478,17 +628,27 @@
                         @if (country.humanitarianFrameworkAlignment === true) {
                           <i class="pi pi-check-circle text-green-600"></i>
                           <span class="text-xs font-medium text-green-700">
-                            {{ 'label.opportunity.frameworkWillAlign' | translate }}
+                            {{
+                              "label.opportunity.frameworkWillAlign" | translate
+                            }}
                           </span>
-                        } @else if (country.humanitarianFrameworkAlignment === false) {
+                        } @else if (
+                          country.humanitarianFrameworkAlignment === false
+                        ) {
                           <i class="pi pi-times-circle text-amber-600"></i>
                           <span class="text-xs font-medium text-amber-700">
-                            {{ 'label.opportunity.frameworkNotAtThisTime' | translate }}
+                            {{
+                              "label.opportunity.frameworkNotAtThisTime"
+                                | translate
+                            }}
                           </span>
                         } @else {
                           <i class="pi pi-info-circle text-gray-400"></i>
                           <span class="text-xs text-gray-500 italic">
-                            {{ 'label.opportunity.frameworkNotSpecified' | translate }}
+                            {{
+                              "label.opportunity.frameworkNotSpecified"
+                                | translate
+                            }}
                           </span>
                         }
                       </div>
@@ -499,7 +659,7 @@
             }
           </div>
         }
-        
+
         <!-- Countries WITHOUT framework - Show banner -->
         @if (countriesWithoutFramework().length > 0) {
           <div class="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-4">
@@ -507,12 +667,21 @@
               <i class="pi pi-info-circle text-amber-600 mt-0.5"></i>
               <div class="flex-1">
                 <p class="text-xs font-medium text-amber-900 mb-2">
-                  {{ 'message.opportunity.countriesWithoutFramework' | translate }}
+                  {{
+                    "message.opportunity.countriesWithoutFramework" | translate
+                  }}
                 </p>
                 <div class="flex flex-wrap gap-2">
-                  @for (country of countriesWithoutFramework(); track country.id) {
-                    <span class="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs text-gray-700 border border-amber-300">
-                      <span class="font-semibold">{{ country.country?.iso2Code }}</span>
+                  @for (
+                    country of countriesWithoutFramework();
+                    track country.id
+                  ) {
+                    <span
+                      class="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs text-gray-700 border border-amber-300"
+                    >
+                      <span class="font-semibold">{{
+                        country.country?.iso2Code
+                      }}</span>
                       <span>{{ country.country?.name }}</span>
                     </span>
                   }
@@ -527,69 +696,95 @@
     <!-- NDC (Nationally Determined Contributions) Alignment -->
     @if (countriesWithNdc().length > 0 || countriesWithoutNdc().length > 0) {
       <div>
-        <h3 class="text-sm font-semibold text-gray-600 mb-3 flex items-center gap-2">
-          <i class="pi pi-sun text-green-600"></i>
-          {{ 'label.opportunity.ndc' | translate }}
+        <h3
+          class="text-lg font-semibold text-unops-secondary mb-4 flex items-center gap-2"
+        >
+          <i class="pi pi-sun text-unops-primary"></i>
+          {{ "label.opportunity.ndc" | translate }}
         </h3>
-        
+
         <!-- Countries WITH NDC -->
         @if (countriesWithNdc().length > 0) {
           <div class="space-y-3">
             @for (country of countriesWithNdc(); track country.id) {
               <div class="bg-green-50 border border-green-200 rounded-lg p-4">
                 <div class="flex items-start gap-3">
-                  <div class="w-10 h-10 bg-white rounded flex items-center justify-center flex-shrink-0 border border-green-300">
-                    <span class="text-sm font-bold text-green-700">{{ country.country?.iso2Code || 'XX' }}</span>
+                  <div
+                    class="w-10 h-10 bg-white rounded flex items-center justify-center flex-shrink-0 border border-green-300"
+                  >
+                    <span class="text-sm font-bold text-green-700">{{
+                      country.country?.iso2Code || "XX"
+                    }}</span>
                   </div>
-                  
+
                   <div class="flex-1">
                     <h4 class="text-sm font-semibold text-gray-900 mb-2">
                       {{ country.country?.name }}
                     </h4>
                     <p class="text-xs text-gray-600 mb-3">
-                      {{ 'message.opportunity.ndcAvailable' | translate }}
+                      {{ "message.opportunity.ndcAvailable" | translate }}
                     </p>
-                    
+
                     @if (isEditing()) {
                       <div class="space-y-2">
-                        <label class="block text-xs font-medium text-gray-700 mb-2">
-                          {{ 'label.opportunity.ndcAlignmentStatus' | translate }}
+                        <label
+                          class="block text-xs font-medium text-gray-700 mb-2"
+                        >
+                          {{
+                            "label.opportunity.ndcAlignmentStatus" | translate
+                          }}
                         </label>
                         <div class="flex flex-col gap-2">
                           <label class="flex items-center gap-2 cursor-pointer">
-                            <input 
-                              type="radio" 
+                            <input
+                              type="radio"
                               [name]="'ndc-' + country.countryId"
-                              [checked]="getNdcAlignment(country.countryId) === true"
-                              (change)="setNdcAlignment(country.countryId, true)"
+                              [checked]="
+                                getNdcAlignment(country.countryId) === true
+                              "
+                              (change)="
+                                setNdcAlignment(country.countryId, true)
+                              "
                               class="w-4 h-4 text-green-600"
                             />
                             <span class="text-xs text-gray-700">
-                              {{ 'label.opportunity.ndcWillAlign' | translate }}
+                              {{ "label.opportunity.ndcWillAlign" | translate }}
                             </span>
                           </label>
                           <label class="flex items-center gap-2 cursor-pointer">
-                            <input 
-                              type="radio" 
+                            <input
+                              type="radio"
                               [name]="'ndc-' + country.countryId"
-                              [checked]="getNdcAlignment(country.countryId) === false"
-                              (change)="setNdcAlignment(country.countryId, false)"
+                              [checked]="
+                                getNdcAlignment(country.countryId) === false
+                              "
+                              (change)="
+                                setNdcAlignment(country.countryId, false)
+                              "
                               class="w-4 h-4 text-green-600"
                             />
                             <span class="text-xs text-gray-700">
-                              {{ 'label.opportunity.ndcNotAtThisTime' | translate }}
+                              {{
+                                "label.opportunity.ndcNotAtThisTime" | translate
+                              }}
                             </span>
                           </label>
                           <label class="flex items-center gap-2 cursor-pointer">
-                            <input 
-                              type="radio" 
+                            <input
+                              type="radio"
                               [name]="'ndc-' + country.countryId"
-                              [checked]="getNdcAlignment(country.countryId) === null"
-                              (change)="setNdcAlignment(country.countryId, null)"
+                              [checked]="
+                                getNdcAlignment(country.countryId) === null
+                              "
+                              (change)="
+                                setNdcAlignment(country.countryId, null)
+                              "
                               class="w-4 h-4 text-green-600"
                             />
                             <span class="text-xs text-gray-700">
-                              {{ 'label.opportunity.ndcNotSpecified' | translate }}
+                              {{
+                                "label.opportunity.ndcNotSpecified" | translate
+                              }}
                             </span>
                           </label>
                         </div>
@@ -599,17 +794,21 @@
                         @if (country.ndcAlignment === true) {
                           <i class="pi pi-check-circle text-green-600"></i>
                           <span class="text-xs font-medium text-green-700">
-                            {{ 'label.opportunity.ndcWillAlign' | translate }}
+                            {{ "label.opportunity.ndcWillAlign" | translate }}
                           </span>
                         } @else if (country.ndcAlignment === false) {
                           <i class="pi pi-times-circle text-amber-600"></i>
                           <span class="text-xs font-medium text-amber-700">
-                            {{ 'label.opportunity.ndcNotAtThisTime' | translate }}
+                            {{
+                              "label.opportunity.ndcNotAtThisTime" | translate
+                            }}
                           </span>
                         } @else {
                           <i class="pi pi-info-circle text-gray-400"></i>
                           <span class="text-xs text-gray-500 italic">
-                            {{ 'label.opportunity.ndcNotSpecified' | translate }}
+                            {{
+                              "label.opportunity.ndcNotSpecified" | translate
+                            }}
                           </span>
                         }
                       </div>
@@ -620,7 +819,7 @@
             }
           </div>
         }
-        
+
         <!-- Countries WITHOUT NDC - Show banner -->
         @if (countriesWithoutNdc().length > 0) {
           <div class="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-4">
@@ -628,12 +827,16 @@
               <i class="pi pi-info-circle text-amber-600 mt-0.5"></i>
               <div class="flex-1">
                 <p class="text-xs font-medium text-amber-900 mb-2">
-                  {{ 'message.opportunity.countriesWithoutNdc' | translate }}
+                  {{ "message.opportunity.countriesWithoutNdc" | translate }}
                 </p>
                 <div class="flex flex-wrap gap-2">
                   @for (country of countriesWithoutNdc(); track country.id) {
-                    <span class="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs text-gray-700 border border-amber-300">
-                      <span class="font-semibold">{{ country.country?.iso2Code }}</span>
+                    <span
+                      class="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs text-gray-700 border border-amber-300"
+                    >
+                      <span class="font-semibold">{{
+                        country.country?.iso2Code
+                      }}</span>
                       <span>{{ country.country?.name }}</span>
                     </span>
                   }
@@ -648,69 +851,95 @@
     <!-- NAP (National Adaptation Plan) Alignment -->
     @if (countriesWithNap().length > 0 || countriesWithoutNap().length > 0) {
       <div>
-        <h3 class="text-sm font-semibold text-gray-600 mb-3 flex items-center gap-2">
-          <i class="pi pi-cloud text-teal-600"></i>
-          {{ 'label.opportunity.nap' | translate }}
+        <h3
+          class="text-lg font-semibold text-unops-secondary mb-4 flex items-center gap-2"
+        >
+          <i class="pi pi-cloud text-unops-primary"></i>
+          {{ "label.opportunity.nap" | translate }}
         </h3>
-        
+
         <!-- Countries WITH NAP -->
         @if (countriesWithNap().length > 0) {
           <div class="space-y-3">
             @for (country of countriesWithNap(); track country.id) {
               <div class="bg-teal-50 border border-teal-200 rounded-lg p-4">
                 <div class="flex items-start gap-3">
-                  <div class="w-10 h-10 bg-white rounded flex items-center justify-center flex-shrink-0 border border-teal-300">
-                    <span class="text-sm font-bold text-teal-700">{{ country.country?.iso2Code || 'XX' }}</span>
+                  <div
+                    class="w-10 h-10 bg-white rounded flex items-center justify-center flex-shrink-0 border border-teal-300"
+                  >
+                    <span class="text-sm font-bold text-teal-700">{{
+                      country.country?.iso2Code || "XX"
+                    }}</span>
                   </div>
-                  
+
                   <div class="flex-1">
                     <h4 class="text-sm font-semibold text-gray-900 mb-2">
                       {{ country.country?.name }}
                     </h4>
                     <p class="text-xs text-gray-600 mb-3">
-                      {{ 'message.opportunity.napAvailable' | translate }}
+                      {{ "message.opportunity.napAvailable" | translate }}
                     </p>
-                    
+
                     @if (isEditing()) {
                       <div class="space-y-2">
-                        <label class="block text-xs font-medium text-gray-700 mb-2">
-                          {{ 'label.opportunity.napAlignmentStatus' | translate }}
+                        <label
+                          class="block text-xs font-medium text-gray-700 mb-2"
+                        >
+                          {{
+                            "label.opportunity.napAlignmentStatus" | translate
+                          }}
                         </label>
                         <div class="flex flex-col gap-2">
                           <label class="flex items-center gap-2 cursor-pointer">
-                            <input 
-                              type="radio" 
+                            <input
+                              type="radio"
                               [name]="'nap-' + country.countryId"
-                              [checked]="getNapAlignment(country.countryId) === true"
-                              (change)="setNapAlignment(country.countryId, true)"
+                              [checked]="
+                                getNapAlignment(country.countryId) === true
+                              "
+                              (change)="
+                                setNapAlignment(country.countryId, true)
+                              "
                               class="w-4 h-4 text-teal-600"
                             />
                             <span class="text-xs text-gray-700">
-                              {{ 'label.opportunity.napWillAlign' | translate }}
+                              {{ "label.opportunity.napWillAlign" | translate }}
                             </span>
                           </label>
                           <label class="flex items-center gap-2 cursor-pointer">
-                            <input 
-                              type="radio" 
+                            <input
+                              type="radio"
                               [name]="'nap-' + country.countryId"
-                              [checked]="getNapAlignment(country.countryId) === false"
-                              (change)="setNapAlignment(country.countryId, false)"
+                              [checked]="
+                                getNapAlignment(country.countryId) === false
+                              "
+                              (change)="
+                                setNapAlignment(country.countryId, false)
+                              "
                               class="w-4 h-4 text-teal-600"
                             />
                             <span class="text-xs text-gray-700">
-                              {{ 'label.opportunity.napNotAtThisTime' | translate }}
+                              {{
+                                "label.opportunity.napNotAtThisTime" | translate
+                              }}
                             </span>
                           </label>
                           <label class="flex items-center gap-2 cursor-pointer">
-                            <input 
-                              type="radio" 
+                            <input
+                              type="radio"
                               [name]="'nap-' + country.countryId"
-                              [checked]="getNapAlignment(country.countryId) === null"
-                              (change)="setNapAlignment(country.countryId, null)"
+                              [checked]="
+                                getNapAlignment(country.countryId) === null
+                              "
+                              (change)="
+                                setNapAlignment(country.countryId, null)
+                              "
                               class="w-4 h-4 text-teal-600"
                             />
                             <span class="text-xs text-gray-700">
-                              {{ 'label.opportunity.napNotSpecified' | translate }}
+                              {{
+                                "label.opportunity.napNotSpecified" | translate
+                              }}
                             </span>
                           </label>
                         </div>
@@ -720,17 +949,21 @@
                         @if (country.napAlignment === true) {
                           <i class="pi pi-check-circle text-green-600"></i>
                           <span class="text-xs font-medium text-green-700">
-                            {{ 'label.opportunity.napWillAlign' | translate }}
+                            {{ "label.opportunity.napWillAlign" | translate }}
                           </span>
                         } @else if (country.napAlignment === false) {
                           <i class="pi pi-times-circle text-amber-600"></i>
                           <span class="text-xs font-medium text-amber-700">
-                            {{ 'label.opportunity.napNotAtThisTime' | translate }}
+                            {{
+                              "label.opportunity.napNotAtThisTime" | translate
+                            }}
                           </span>
                         } @else {
                           <i class="pi pi-info-circle text-gray-400"></i>
                           <span class="text-xs text-gray-500 italic">
-                            {{ 'label.opportunity.napNotSpecified' | translate }}
+                            {{
+                              "label.opportunity.napNotSpecified" | translate
+                            }}
                           </span>
                         }
                       </div>
@@ -741,7 +974,7 @@
             }
           </div>
         }
-        
+
         <!-- Countries WITHOUT NAP - Show banner -->
         @if (countriesWithoutNap().length > 0) {
           <div class="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-4">
@@ -749,12 +982,16 @@
               <i class="pi pi-info-circle text-amber-600 mt-0.5"></i>
               <div class="flex-1">
                 <p class="text-xs font-medium text-amber-900 mb-2">
-                  {{ 'message.opportunity.countriesWithoutNap' | translate }}
+                  {{ "message.opportunity.countriesWithoutNap" | translate }}
                 </p>
                 <div class="flex flex-wrap gap-2">
                   @for (country of countriesWithoutNap(); track country.id) {
-                    <span class="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs text-gray-700 border border-amber-300">
-                      <span class="font-semibold">{{ country.country?.iso2Code }}</span>
+                    <span
+                      class="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs text-gray-700 border border-amber-300"
+                    >
+                      <span class="font-semibold">{{
+                        country.country?.iso2Code
+                      }}</span>
                       <span>{{ country.country?.name }}</span>
                     </span>
                   }
@@ -769,119 +1006,203 @@
     <!-- Organization Unit Strategy Alignment -->
     @if (opportunity().countries && opportunity().countries!.length > 0) {
       <div>
-        <h3 class="text-sm font-semibold text-gray-600 mb-3 flex items-center gap-2">
-          <i class="pi pi-building text-purple-600"></i>
-          {{ 'label.opportunity.orgUnitStrategy' | translate }}
+        <h3
+          class="text-lg font-semibold text-unops-secondary mb-4 flex items-center gap-2"
+        >
+          <i class="pi pi-building text-unops-primary"></i>
+          {{ "label.opportunity.orgUnitStrategy" | translate }}
         </h3>
-        
+
         <!-- Countries WITH Organization Unit Strategy -->
         @if (countriesWithOrgUnitStrategy().length > 0) {
           <div class="space-y-3">
             @for (country of countriesWithOrgUnitStrategy(); track country.id) {
               <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
                 <div class="flex items-start gap-3">
-                  <div class="w-10 h-10 bg-white rounded flex items-center justify-center flex-shrink-0 border border-purple-300">
-                    <span class="text-sm font-bold text-purple-700">{{ country.country?.iso2Code || 'XX' }}</span>
+                  <div
+                    class="w-10 h-10 bg-white rounded flex items-center justify-center flex-shrink-0 border border-purple-300"
+                  >
+                    <span class="text-sm font-bold text-purple-700">{{
+                      country.country?.iso2Code || "XX"
+                    }}</span>
                   </div>
-                  
+
                   <div class="flex-1">
                     <div class="flex items-center gap-2 mb-1">
-                      <span class="text-sm font-medium text-gray-900">{{ country.country?.name }}</span>
+                      <span class="text-sm font-medium text-gray-900">{{
+                        country.country?.name
+                      }}</span>
                       @if (country.orgUnitWithStrategyName) {
-                        <span class="inline-flex items-center gap-1 text-xs text-purple-700 bg-white px-2 py-0.5 rounded-full border border-purple-300">
+                        <span
+                          class="inline-flex items-center gap-1 text-xs text-purple-700 bg-white px-2 py-0.5 rounded-full border border-purple-300"
+                        >
                           <i class="pi pi-building text-xs"></i>
                           {{ country.orgUnitWithStrategyName }}
                         </span>
                       }
                     </div>
-                    
+
                     <!-- Alert: More Local Strategy Available -->
                     @if (country.hasMoreLocalStrategyAvailable) {
-                      <div class="mt-2 mb-3 bg-blue-50 border border-blue-300 rounded-md p-3">
+                      <div
+                        class="mt-2 mb-3 bg-blue-50 border border-blue-300 rounded-md p-3"
+                      >
                         <div class="flex items-start gap-2">
-                          <i class="pi pi-info-circle text-blue-600 mt-0.5 flex-shrink-0"></i>
+                          <i
+                            class="pi pi-info-circle text-blue-600 mt-0.5 flex-shrink-0"
+                          ></i>
                           <div class="flex-1">
                             <p class="text-xs font-semibold text-blue-900 mb-1">
-                              {{ 'message.opportunity.moreLocalStrategyAvailable' | translate }}
+                              {{
+                                "message.opportunity.moreLocalStrategyAvailable"
+                                  | translate
+                              }}
                             </p>
                             <div class="text-xs text-blue-800 space-y-1">
                               <div class="flex items-center gap-2">
-                                <span class="font-medium">{{ 'label.opportunity.previousOrgUnit' | translate }}:</span>
-                                <span class="inline-flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-blue-200">
-                                  <span class="font-mono text-blue-700">{{ country.currentOrgUnitWithStrategyCode }}</span>
-                                  <span class="text-gray-600">{{ country.currentOrgUnitWithStrategyName }}</span>
+                                <span class="font-medium"
+                                  >{{
+                                    "label.opportunity.previousOrgUnit"
+                                      | translate
+                                  }}:</span
+                                >
+                                <span
+                                  class="inline-flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-blue-200"
+                                >
+                                  <span class="font-mono text-blue-700">{{
+                                    country.currentOrgUnitWithStrategyCode
+                                  }}</span>
+                                  <span class="text-gray-600">{{
+                                    country.currentOrgUnitWithStrategyName
+                                  }}</span>
                                 </span>
                               </div>
                               <div class="flex items-center gap-2">
-                                <span class="font-medium">{{ 'label.opportunity.newLocalOrgUnit' | translate }}:</span>
-                                <span class="inline-flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-blue-200">
-                                  <span class="font-mono text-purple-700 font-semibold">{{ country.orgUnitWithStrategyCode }}</span>
-                                  <span class="text-gray-900 font-medium">{{ country.orgUnitWithStrategyName }}</span>
+                                <span class="font-medium"
+                                  >{{
+                                    "label.opportunity.newLocalOrgUnit"
+                                      | translate
+                                  }}:</span
+                                >
+                                <span
+                                  class="inline-flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-blue-200"
+                                >
+                                  <span
+                                    class="font-mono text-purple-700 font-semibold"
+                                    >{{ country.orgUnitWithStrategyCode }}</span
+                                  >
+                                  <span class="text-gray-900 font-medium">{{
+                                    country.orgUnitWithStrategyName
+                                  }}</span>
                                 </span>
                               </div>
                             </div>
                             <p class="text-xs text-blue-700 mt-2 italic">
-                              {{ 'message.opportunity.reviewNewStrategy' | translate }}
+                              {{
+                                "message.opportunity.reviewNewStrategy"
+                                  | translate
+                              }}
                             </p>
                           </div>
                         </div>
                       </div>
                     }
-                    
+
                     <!-- View mode -->
                     @if (!isEditing()) {
                       <div class="text-xs text-gray-600 mt-2">
                         @if (country.orgUnitStrategyAlignment === true) {
                           <div class="flex items-center gap-1.5 text-green-700">
                             <i class="pi pi-check-circle"></i>
-                            <span>{{ 'message.opportunity.willAlignToStrategy' | translate }}</span>
+                            <span>{{
+                              "message.opportunity.willAlignToStrategy"
+                                | translate
+                            }}</span>
                           </div>
-                        } @else if (country.orgUnitStrategyAlignment === false) {
+                        } @else if (
+                          country.orgUnitStrategyAlignment === false
+                        ) {
                           <div class="flex items-center gap-1.5 text-amber-700">
                             <i class="pi pi-clock"></i>
-                            <span>{{ 'message.opportunity.notAlignedAtThisTime' | translate }}</span>
+                            <span>{{
+                              "message.opportunity.notAlignedAtThisTime"
+                                | translate
+                            }}</span>
                           </div>
                         } @else {
                           <div class="flex items-center gap-1.5 text-gray-500">
                             <i class="pi pi-minus-circle"></i>
-                            <span>{{ 'message.opportunity.notSpecified' | translate }}</span>
+                            <span>{{
+                              "message.opportunity.notSpecified" | translate
+                            }}</span>
                           </div>
                         }
                       </div>
                     }
-                    
+
                     <!-- Edit mode -->
                     @if (isEditing()) {
                       <div class="mt-2 flex flex-col gap-1.5">
                         <label class="flex items-center gap-2 cursor-pointer">
-                          <input 
-                            type="radio" 
+                          <input
+                            type="radio"
                             [name]="'orgStrategy-' + country.countryId"
-                            [checked]="getOrgUnitStrategyAlignment(country.countryId) === true"
-                            (change)="setOrgUnitStrategyAlignment(country.countryId, true)"
+                            [checked]="
+                              getOrgUnitStrategyAlignment(country.countryId) ===
+                              true
+                            "
+                            (change)="
+                              setOrgUnitStrategyAlignment(
+                                country.countryId,
+                                true
+                              )
+                            "
                             class="w-4 h-4 text-purple-600"
                           />
-                          <span class="text-xs text-gray-700">{{ 'label.opportunity.willAlignToStrategyPriorities' | translate }}</span>
+                          <span class="text-xs text-gray-700">{{
+                            "label.opportunity.willAlignToStrategyPriorities"
+                              | translate
+                          }}</span>
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer">
-                          <input 
-                            type="radio" 
+                          <input
+                            type="radio"
                             [name]="'orgStrategy-' + country.countryId"
-                            [checked]="getOrgUnitStrategyAlignment(country.countryId) === false"
-                            (change)="setOrgUnitStrategyAlignment(country.countryId, false)"
+                            [checked]="
+                              getOrgUnitStrategyAlignment(country.countryId) ===
+                              false
+                            "
+                            (change)="
+                              setOrgUnitStrategyAlignment(
+                                country.countryId,
+                                false
+                              )
+                            "
                             class="w-4 h-4 text-purple-600"
                           />
-                          <span class="text-xs text-gray-700">{{ 'label.opportunity.notAlignedAtThisTime' | translate }}</span>
+                          <span class="text-xs text-gray-700">{{
+                            "label.opportunity.notAlignedAtThisTime" | translate
+                          }}</span>
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer">
-                          <input 
-                            type="radio" 
+                          <input
+                            type="radio"
                             [name]="'orgStrategy-' + country.countryId"
-                            [checked]="getOrgUnitStrategyAlignment(country.countryId) === null"
-                            (change)="setOrgUnitStrategyAlignment(country.countryId, null)"
+                            [checked]="
+                              getOrgUnitStrategyAlignment(country.countryId) ===
+                              null
+                            "
+                            (change)="
+                              setOrgUnitStrategyAlignment(
+                                country.countryId,
+                                null
+                              )
+                            "
                             class="w-4 h-4 text-purple-600"
                           />
-                          <span class="text-xs text-gray-700">{{ 'message.opportunity.notSpecified' | translate }}</span>
+                          <span class="text-xs text-gray-700">{{
+                            "message.opportunity.notSpecified" | translate
+                          }}</span>
                         </label>
                       </div>
                     }
@@ -891,7 +1212,7 @@
             }
           </div>
         }
-        
+
         <!-- Countries WITHOUT Organization Unit Strategy - Show banner -->
         @if (countriesWithoutOrgUnitStrategy().length > 0) {
           <div class="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-4">
@@ -899,12 +1220,22 @@
               <i class="pi pi-info-circle text-amber-600 mt-0.5"></i>
               <div class="flex-1">
                 <p class="text-xs font-medium text-amber-900 mb-2">
-                  {{ 'message.opportunity.countriesWithoutOrgUnitStrategy' | translate }}
+                  {{
+                    "message.opportunity.countriesWithoutOrgUnitStrategy"
+                      | translate
+                  }}
                 </p>
                 <div class="flex flex-wrap gap-2">
-                  @for (country of countriesWithoutOrgUnitStrategy(); track country.id) {
-                    <span class="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs text-gray-700 border border-amber-300">
-                      <span class="font-semibold">{{ country.country?.iso2Code }}</span>
+                  @for (
+                    country of countriesWithoutOrgUnitStrategy();
+                    track country.id
+                  ) {
+                    <span
+                      class="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs text-gray-700 border border-amber-300"
+                    >
+                      <span class="font-semibold">{{
+                        country.country?.iso2Code
+                      }}</span>
                       <span>{{ country.country?.name }}</span>
                     </span>
                   }
@@ -918,11 +1249,13 @@
 
     <!-- Beneficiaries -->
     <div>
-      <h3 class="text-sm font-semibold text-gray-600 mb-3 flex items-center gap-2">
-        <i class="pi pi-users text-indigo-600"></i>
-        {{ 'label.opportunity.beneficiaries' | translate }}
+      <h3
+        class="text-lg font-semibold text-unops-secondary mb-4 flex items-center gap-2"
+      >
+        <i class="pi pi-users text-unops-primary"></i>
+        {{ "label.opportunity.beneficiaries" | translate }}
       </h3>
-      
+
       <!-- "To Be Determined" Option (Edit Mode - Shown First) -->
       @if (isEditing()) {
         <div class="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
@@ -932,12 +1265,14 @@
               [binary]="true"
             />
             <span class="text-sm text-gray-700">
-              {{ 'label.opportunity.beneficiaryNumbersToBeDetermined' | translate }}
+              {{
+                "label.opportunity.beneficiaryNumbersToBeDetermined" | translate
+              }}
             </span>
           </label>
         </div>
       }
-      
+
       <!-- View Mode -->
       @if (!isEditing()) {
         <div class="space-y-3">
@@ -945,54 +1280,86 @@
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <div class="flex items-center gap-2 text-blue-800 text-sm">
                 <i class="pi pi-info-circle"></i>
-                <span>{{ 'message.opportunity.beneficiariesToBeDetermined' | translate }}</span>
+                <span>{{
+                  "message.opportunity.beneficiariesToBeDetermined" | translate
+                }}</span>
               </div>
             </div>
           } @else {
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <!-- Direct Beneficiaries -->
-              <div class="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-200 rounded-lg p-4">
+              <div
+                class="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-200 rounded-lg p-4"
+              >
                 <div class="flex items-start gap-3">
-                  <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center flex-shrink-0 border-2 border-indigo-300">
+                  <div
+                    class="w-10 h-10 bg-white rounded-full flex items-center justify-center flex-shrink-0 border-2 border-indigo-300"
+                  >
                     <i class="pi pi-user text-indigo-600"></i>
                   </div>
                   <div class="flex-1">
                     <p class="text-xs font-medium text-gray-600 mb-1">
-                      {{ 'label.opportunity.directBeneficiaries' | translate }}
+                      {{ "label.opportunity.directBeneficiaries" | translate }}
                     </p>
                     <p class="text-2xl font-bold text-indigo-700">
-                      {{ opportunity().estimatedDirectBeneficiaries != null ? (opportunity().estimatedDirectBeneficiaries! | number) : '—' }}
+                      {{
+                        opportunity().estimatedDirectBeneficiaries != null
+                          ? (opportunity().estimatedDirectBeneficiaries!
+                            | number)
+                          : "—"
+                      }}
                     </p>
                   </div>
                 </div>
               </div>
-              
+
               <!-- Indirect Beneficiaries -->
-              <div class="bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-4">
+              <div
+                class="bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-4"
+              >
                 <div class="flex items-start gap-3">
-                  <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center flex-shrink-0 border-2 border-purple-300">
+                  <div
+                    class="w-10 h-10 bg-white rounded-full flex items-center justify-center flex-shrink-0 border-2 border-purple-300"
+                  >
                     <i class="pi pi-users text-purple-600"></i>
                   </div>
                   <div class="flex-1">
                     <p class="text-xs font-medium text-gray-600 mb-1">
-                      {{ 'label.opportunity.indirectBeneficiaries' | translate }}
+                      {{
+                        "label.opportunity.indirectBeneficiaries" | translate
+                      }}
                     </p>
                     <p class="text-2xl font-bold text-purple-700">
-                      {{ opportunity().estimatedIndirectBeneficiaries != null ? (opportunity().estimatedIndirectBeneficiaries! | number) : '—' }}
+                      {{
+                        opportunity().estimatedIndirectBeneficiaries != null
+                          ? (opportunity().estimatedIndirectBeneficiaries!
+                            | number)
+                          : "—"
+                      }}
                     </p>
                   </div>
                 </div>
               </div>
             </div>
-            
+
             <!-- Total Beneficiaries (if both are provided) -->
-            @if (opportunity().estimatedDirectBeneficiaries != null && opportunity().estimatedIndirectBeneficiaries != null) {
-              <div class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg p-4">
+            @if (
+              opportunity().estimatedDirectBeneficiaries != null &&
+              opportunity().estimatedIndirectBeneficiaries != null
+            ) {
+              <div
+                class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg p-4"
+              >
                 <div class="flex items-center justify-between">
                   <div>
-                    <p class="text-sm font-medium opacity-90">{{ 'label.opportunity.totalBeneficiaries' | translate }}</p>
+                    <p class="text-sm font-medium opacity-90">
+                      {{ "label.opportunity.totalBeneficiaries" | translate }}
+                    </p>
                     <p class="text-3xl font-bold">
-                      {{ (opportunity().estimatedDirectBeneficiaries! + opportunity().estimatedIndirectBeneficiaries!) | number }}
+                      {{
+                        opportunity().estimatedDirectBeneficiaries! +
+                          opportunity().estimatedIndirectBeneficiaries! | number
+                      }}
                     </p>
                   </div>
                   <i class="pi pi-chart-bar text-4xl opacity-20"></i>
@@ -1002,7 +1369,7 @@
           }
         </div>
       }
-      
+
       <!-- Edit Mode -->
       @if (isEditing()) {
         <div class="space-y-4">
@@ -1020,10 +1387,12 @@
                     [useGrouping]="false"
                     class="w-full"
                   />
-                  <label for="directBeneficiaries">{{ 'label.opportunity.directBeneficiaries' | translate }}</label>
+                  <label for="directBeneficiaries">{{
+                    "label.opportunity.directBeneficiaries" | translate
+                  }}</label>
                 </p-floatlabel>
               </div>
-              
+
               <!-- Indirect Beneficiaries Input -->
               <div>
                 <p-floatlabel variant="on">
@@ -1035,7 +1404,9 @@
                     [useGrouping]="false"
                     class="w-full"
                   />
-                  <label for="indirectBeneficiaries">{{ 'label.opportunity.indirectBeneficiaries' | translate }}</label>
+                  <label for="indirectBeneficiaries">{{
+                    "label.opportunity.indirectBeneficiaries" | translate
+                  }}</label>
                 </p-floatlabel>
               </div>
             </div>
@@ -1043,12 +1414,13 @@
         </div>
       }
 
-      
       <!-- Expected Beneficiaries -->
       <div class="mt-6">
-        <h3 class="text-sm font-semibold text-unops-neutral-700 mb-2 flex items-center gap-2">
+        <h3
+          class="text-sm font-semibold text-unops-neutral-700 mb-2 flex items-center gap-2"
+        >
           <i class="pi pi-users text-unops-accent-orange"></i>
-          {{ 'label.opportunity.expectedBeneficiaries' | translate }}
+          {{ "label.opportunity.expectedBeneficiaries" | translate }}
         </h3>
         @if (isEditing()) {
           <textarea
@@ -1056,293 +1428,584 @@
             [formControl]="expectedBeneficiariesControl"
             rows="4"
             class="w-full"
-            [placeholder]="'label.opportunity.expectedBeneficiariesPlaceholder' | translate"
+            [placeholder]="
+              'label.opportunity.expectedBeneficiariesPlaceholder' | translate
+            "
           ></textarea>
         } @else {
           <p class="text-unops-neutral-800 leading-relaxed">
-            {{ opportunity().expectedBeneficiaries || '-' }}
+            {{ opportunity().expectedBeneficiaries || "-" }}
           </p>
         }
-      </div>      
+      </div>
     </div>
   </div>
 </p-panel>
 
 <!-- SDG Dialog -->
 <p-dialog
-  [header]="isEditingSDG() ? ('label.opportunity.editSDG' | translate) : ('label.opportunity.addSDG' | translate)"
+  [header]="'label.opportunity.addSDG' | translate"
   [(visible)]="showSDGDialog"
   [modal]="true"
-  [style]="{ width: '50rem', 'max-height': '90vh' }"
-  [contentStyle]="{ overflow: 'visible' }"
+  [appendTo]="'body'"
+  [style]="{ width: '55rem', 'max-height': '90vh' }"
+  [contentStyle]="{ 'max-height': '75vh', 'overflow-y': 'auto' }"
 >
-  <!-- Validation Error Message -->
-  @if (showValidationError()) {
-    <p-message severity="error" icon="pi pi-info-circle" styleClass="mb-4 w-full">
-      {{ 'message.validation.sdgRequired' | translate }}
-    </p-message>
-  }
+  <div class="space-y-6">
+    <!-- TOP SECTION: SDG Selection & Configuration -->
+    <div
+      class="bg-unops-surface-secondary border-2 border-unops-primary-200 rounded-unops-lg p-5"
+    >
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-bold text-unops-secondary">
+          {{ "label.configureAndSelectSDG" | translate }}
+        </h3>
+        @if (editingFromPending()) {
+          <div
+            class="text-xs font-bold px-3 py-1 rounded-lg flex items-center gap-2"
+            style="background-color: #fef3c7; color: #92400e"
+          >
+            <i class="pi pi-pencil"></i>
+            <span>{{ "label.editing" | translate }}</span>
+          </div>
+        }
+      </div>
 
-  <div class="space-y-4">
-    <!-- SDG Dropdown -->
-    <div>
-      <label class="block text-sm font-semibold text-gray-600 mb-2">
-        {{ 'label.opportunity.sdg' | translate }} *
-      </label>
-      <p-select
-        [formControl]="sdgControl"
-        [options]="sdgs()"
-        optionLabel="name"
-        [placeholder]="'label.opportunity.selectSDG' | translate"
-        styleClass="w-full"
-        [appendTo]="'body'"
-        [showClear]="true"
-        [filter]="true"
-        filterBy="name,sdgNumber"
-        (onChange)="onSDGChange($event.value)"
-      >
-        <ng-template let-sdg pTemplate="item">
-          <div class="flex items-center gap-3">
-            @if (sdg.sdgLogo) {
-              <img 
-                [src]="sdg.sdgLogo" 
-                [alt]="'SDG ' + sdg.sdgNumber"
-                class="w-12 h-12 object-contain"
-              />
-            } @else {
-              <div class="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-green-500 to-teal-600 text-white font-bold text-lg rounded">
-                {{ sdg.sdgNumber }}
+      <!-- Validation Error Message -->
+      @if (showValidationError()) {
+        <p-message
+          severity="error"
+          icon="pi pi-info-circle"
+          styleClass="mb-4 w-full"
+        >
+          {{ "message.validation.sdgRequired" | translate }}
+        </p-message>
+      }
+
+      <div class="space-y-4">
+        <!-- SDG Dropdown -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-600 mb-2">
+            {{ "label.opportunity.sdg" | translate }} *
+          </label>
+          <p-select
+            [formControl]="sdgControl"
+            [options]="availableSDGs()"
+            optionLabel="name"
+            [placeholder]="'label.opportunity.selectSDG' | translate"
+            styleClass="w-full"
+            [appendTo]="'body'"
+            [showClear]="true"
+            [filter]="true"
+            filterBy="name,sdgNumber"
+            (onChange)="onSDGChange($event.value)"
+          >
+            <ng-template let-sdg pTemplate="item">
+              <div class="flex items-center gap-3">
+                @if (sdg.sdgLogo) {
+                  <img
+                    [src]="sdg.sdgLogo"
+                    [alt]="'SDG ' + sdg.sdgNumber"
+                    class="w-12 h-12 object-contain"
+                  />
+                } @else {
+                  <div
+                    class="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-green-500 to-teal-600 text-white font-bold text-lg rounded"
+                  >
+                    {{ sdg.sdgNumber }}
+                  </div>
+                }
+                <div>
+                  <div class="font-semibold">
+                    SDG {{ sdg.sdgNumber }}: {{ sdg.name }}
+                  </div>
+                  @if (sdg.sdgDescription) {
+                    <div class="text-sm text-gray-600">
+                      {{ sdg.sdgDescription }}
+                    </div>
+                  }
+                </div>
               </div>
-            }
-            <div>
-              <div class="font-semibold">SDG {{ sdg.sdgNumber }}: {{ sdg.name }}</div>
-              @if (sdg.sdgDescription) {
-                <div class="text-sm text-gray-600">{{ sdg.sdgDescription }}</div>
+            </ng-template>
+          </p-select>
+          @if (!sdgControl.value && showValidationError()) {
+            <p-message severity="error" variant="simple" styleClass="mt-2">
+              {{ "message.validation.sdgRequired" | translate }}
+            </p-message>
+          }
+          @if (availableSDGs().length === 0 && !editingFromPending()) {
+            <p-message severity="info" variant="simple" styleClass="mt-2">
+              {{ "message.opportunity.allSDGsSelected" | translate }}
+            </p-message>
+          }
+        </div>
+
+        <!-- SDG Details Section (Blue Info Box) -->
+        @if (sdgControl.value) {
+          <div
+            class="bg-blue-50 border border-blue-200 rounded-lg p-5 space-y-4"
+          >
+            <div class="flex items-start gap-4">
+              <!-- SDG Logo -->
+              @if (sdgControl.value.sdgLogo) {
+                <img
+                  [src]="sdgControl.value.sdgLogo"
+                  [alt]="'SDG ' + sdgControl.value.sdgNumber"
+                  class="w-20 h-20 object-contain rounded"
+                />
+              } @else {
+                <div
+                  class="flex items-center justify-center w-20 h-20 bg-gradient-to-br from-green-500 to-teal-600 text-white font-bold text-2xl rounded shadow-sm"
+                >
+                  {{ sdgControl.value.sdgNumber }}
+                </div>
+              }
+              <div class="flex-1">
+                <h4 class="text-base font-bold text-gray-900 mb-2">
+                  SDG {{ sdgControl.value.sdgNumber }}:
+                  {{ sdgControl.value.name }}
+                </h4>
+                @if (sdgControl.value.sdgDescription) {
+                  <p class="text-sm text-gray-700 leading-relaxed mb-3">
+                    {{ sdgControl.value.sdgDescription }}
+                  </p>
+                }
+                @if (sdgControl.value.sdgLongDescription) {
+                  <p class="text-xs text-gray-600 leading-relaxed">
+                    {{ sdgControl.value.sdgLongDescription }}
+                  </p>
+                }
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Primary/Secondary Selection with Add Button -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-600 mb-2">
+            {{ "label.opportunity.alignmentType" | translate }} *
+          </label>
+          <div class="flex items-center justify-between gap-4">
+            <!-- Radio Buttons -->
+            <div class="flex items-center gap-4">
+              <div class="flex items-center gap-2">
+                <input
+                  type="radio"
+                  id="primary"
+                  [formControl]="isPrimaryControl"
+                  [value]="true"
+                  class="w-4 h-4 text-green-600"
+                />
+                <label
+                  for="primary"
+                  class="text-sm font-medium text-gray-700 cursor-pointer"
+                >
+                  <span class="inline-flex items-center gap-2">
+                    <div
+                      class="text-xs font-bold px-2 py-1 rounded-lg text-center"
+                      style="
+                        background-color: rgb(76, 175, 80);
+                        color: white;
+                        min-width: 76px;
+                      "
+                    >
+                      Primary
+                    </div>
+                  </span>
+                </label>
+              </div>
+              <div class="flex items-center gap-2">
+                <input
+                  type="radio"
+                  id="secondary"
+                  [formControl]="isPrimaryControl"
+                  [value]="false"
+                  class="w-4 h-4 text-blue-600"
+                />
+                <label
+                  for="secondary"
+                  class="text-sm font-medium text-gray-700 cursor-pointer"
+                >
+                  <span class="inline-flex items-center gap-2">
+                    <div
+                      class="text-xs font-bold px-2 py-1 rounded-lg text-center"
+                      style="
+                        background-color: #0ea5e9;
+                        color: white;
+                        min-width: 76px;
+                      "
+                    >
+                      Secondary
+                    </div>
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Add SDG to Selection Button (Always Visible) -->
+            <div class="flex-shrink-0">
+              @if (editingFromPending()) {
+                <p-button
+                  [label]="'button.updateSDGConfig' | translate"
+                  icon="pi pi-check"
+                  severity="primary"
+                  size="small"
+                  (onClick)="updatePendingSDG()"
+                  [disabled]="!isSDGConfigurationComplete()"
+                />
+              } @else {
+                <p-button
+                  [label]="'button.addSDGToSelection' | translate"
+                  icon="pi pi-plus"
+                  severity="primary"
+                  size="small"
+                  (onClick)="addSDGToPendingSelection()"
+                  [disabled]="!isSDGConfigurationComplete()"
+                />
               }
             </div>
           </div>
-        </ng-template>
-      </p-select>
-      @if (!sdgControl.value && showValidationError()) {
-        <p-message severity="error" variant="simple" styleClass="mt-2">
-          {{ 'message.validation.sdgRequired' | translate }}
-        </p-message>
-      }
-    </div>
-
-    <!-- SDG Details Section (Blue Info Box) -->
-    @if (sdgControl.value) {
-      <div class="bg-blue-50 border border-blue-200 rounded-lg p-5 space-y-4">
-        <div class="flex items-start gap-4">
-          <!-- SDG Logo -->
-          @if (sdgControl.value.sdgLogo) {
-            <img 
-              [src]="sdgControl.value.sdgLogo" 
-              [alt]="'SDG ' + sdgControl.value.sdgNumber"
-              class="w-20 h-20 object-contain rounded"
-            />
-          } @else {
-            <div class="flex items-center justify-center w-20 h-20 bg-gradient-to-br from-green-500 to-teal-600 text-white font-bold text-2xl rounded shadow-sm">
-              {{ sdgControl.value.sdgNumber }}
-            </div>
-          }
-          <div class="flex-1">
-            <h4 class="text-base font-bold text-gray-900 mb-2">
-              SDG {{ sdgControl.value.sdgNumber }}: {{ sdgControl.value.name }}
-            </h4>
-            @if (sdgControl.value.sdgDescription) {
-              <p class="text-sm text-gray-700 leading-relaxed mb-3">
-                {{ sdgControl.value.sdgDescription }}
-              </p>
-            }
-            @if (sdgControl.value.sdgLongDescription) {
-              <p class="text-xs text-gray-600 leading-relaxed">
-                {{ sdgControl.value.sdgLongDescription }}
-              </p>
-            }
-          </div>
+          <p class="text-xs text-gray-500 mt-2">
+            <i class="pi pi-info-circle"></i> You can only have one Primary SDG,
+            but multiple Secondary SDGs
+          </p>
         </div>
-      </div>
-    }
 
-    <!-- Primary/Secondary Selection -->
-    <div>
-      <label class="block text-sm font-semibold text-gray-600 mb-2">
-        {{ 'label.opportunity.alignmentType' | translate }} *
-      </label>
-      <div class="flex items-center gap-4">
-        <div class="flex items-center gap-2">
-          <input
-            type="radio"
-            id="primary"
-            [formControl]="isPrimaryControl"
-            [value]="true"
-            class="w-4 h-4 text-green-600"
-          />
-          <label for="primary" class="text-sm font-medium text-gray-700 cursor-pointer">
-            <span class="inline-flex items-center gap-2">
-              <p-chip 
-                label="Primary" 
-                styleClass="text-xs font-bold"
-                [style]="{ 'background-color': '#22c55e', 'color': 'white', 'border-radius': '8px' }"
-              />
-            </span>
-          </label>
-        </div>
-        <div class="flex items-center gap-2">
-          <input
-            type="radio"
-            id="secondary"
-            [formControl]="isPrimaryControl"
-            [value]="false"
-            class="w-4 h-4 text-blue-600"
-          />
-          <label for="secondary" class="text-sm font-medium text-gray-700 cursor-pointer">
-            <span class="inline-flex items-center gap-2">
-              <p-chip 
-                label="Secondary" 
-                styleClass="text-xs font-bold"
-                [style]="{ 'background-color': '#0ea5e9', 'color': 'white', 'border-radius': '8px' }"
-              />
-            </span>
-          </label>
-        </div>
-      </div>
-      <p class="text-xs text-gray-500 mt-2">
-        <i class="pi pi-info-circle"></i> You can only have one Primary SDG, but multiple Secondary SDGs
-      </p>
-    </div>
-
-    <!-- SDG Targets Section -->
-    @if (sdgControl.value) {
-      <div class="border-t border-gray-200 pt-4 mt-4">
-        <label class="block text-sm font-semibold text-gray-700 mb-3">
-          {{ 'label.opportunity.sdgTargets' | translate }}
-        </label>
-        <p class="text-xs text-gray-600 mb-3">
-          <i class="pi pi-info-circle"></i> {{ 'message.opportunity.sdgTargetsInfo' | translate }}
-        </p>
-
-        <!-- Option to skip targets and indicators -->
-        <div class="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
-          <p-checkbox
-            [binary]="true"
-            [formControl]="skipTargetsControl"
-            inputId="skipTargets"
-          />
-          <div class="flex-1">
-            <label for="skipTargets" class="text-sm font-medium text-gray-900 cursor-pointer block mb-1">
-              {{ 'label.opportunity.skipTargetsAndIndicators' | translate }}
+        <!-- SDG Targets Section -->
+        @if (sdgControl.value) {
+          <div class="border-t border-gray-200 pt-4 mt-4">
+            <label class="block text-sm font-semibold text-gray-700 mb-3">
+              {{ "label.opportunity.sdgTargets" | translate }}
             </label>
-            <p class="text-xs text-gray-600">
-              {{ 'message.opportunity.skipTargetsAndIndicatorsInfo' | translate }}
+            <p class="text-xs text-gray-600 mb-3">
+              <i class="pi pi-info-circle"></i>
+              {{ "message.opportunity.sdgTargetsInfo" | translate }}
             </p>
-          </div>
-        </div>
-        
-        @if (!skipTargetsControl.value) {
-          @if (loadingTargets()) {
-            <!-- Loading state for targets -->
-            <div class="flex items-center gap-2 text-sm text-blue-600 py-4">
-              <i class="pi pi-spin pi-spinner"></i>
-              <span>{{ 'message.loading' | translate }}...</span>
-            </div>
-          } @else if (availableTargets().length > 0) {
-            <div class="space-y-2 max-h-96 overflow-y-auto">
-              @for (target of availableTargets(); track target.id) {
-                <div class="border border-gray-200 rounded-lg">
-                  <!-- Target Checkbox -->
-                  <div class="p-3 bg-gray-50 hover:bg-gray-100 transition-colors">
-                    <div class="flex items-start gap-3">
-                      <p-checkbox
-                        [binary]="true"
-                        [ngModel]="isTargetSelected(target.id)"
-                        (ngModelChange)="toggleTarget(target)"
-                        [inputId]="'target-' + target.id"
-                      />
-                      <label [for]="'target-' + target.id" class="flex-1 cursor-pointer">
-                        <div class="font-semibold text-gray-900">
-                          {{ 'label.target' | translate }} {{ target.sdgTargetId }}
-                        </div>
-                        <div class="text-sm text-gray-600 mt-1">{{ target.targetDescription }}</div>
-                      </label>
-                    </div>
-                  </div>
 
-                  <!-- Indicators for selected target -->
-                  @if (isTargetSelected(target.id)) {
-                    <div class="p-3 bg-white border-t border-gray-200">
-                      <div class="text-xs font-semibold text-gray-700 mb-2 uppercase">
-                        {{ 'label.opportunity.sdgIndicators' | translate }}
-                      </div>
-                      
-                      @if (isLoadingIndicators(target.id)) {
-                        <!-- Loading state -->
-                        <div class="flex items-center gap-2 text-xs text-blue-600 pl-4 py-2">
-                          <i class="pi pi-spin pi-spinner"></i>
-                          <span>{{ 'message.loading' | translate }}...</span>
+            <!-- Option to skip targets and indicators -->
+            <div
+              class="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4"
+            >
+              <p-checkbox
+                [binary]="true"
+                [formControl]="skipTargetsControl"
+                inputId="skipTargets"
+              />
+              <div class="flex-1">
+                <label
+                  for="skipTargets"
+                  class="text-sm font-medium text-gray-900 cursor-pointer block mb-1"
+                >
+                  {{ "label.opportunity.skipTargetsAndIndicators" | translate }}
+                </label>
+                <p class="text-xs text-gray-600">
+                  {{
+                    "message.opportunity.skipTargetsAndIndicatorsInfo"
+                      | translate
+                  }}
+                </p>
+              </div>
+            </div>
+
+            @if (!skipTargetsControl.value) {
+              @if (loadingTargets()) {
+                <!-- Loading state for targets -->
+                <div class="flex items-center gap-2 text-sm text-blue-600 py-4">
+                  <i class="pi pi-spin pi-spinner"></i>
+                  <span>{{ "message.loading" | translate }}...</span>
+                </div>
+              } @else if (availableTargets().length > 0) {
+                <div class="space-y-2 max-h-96 overflow-y-auto">
+                  @for (target of availableTargets(); track target.id) {
+                    <div class="border border-gray-200 rounded-lg">
+                      <!-- Target Checkbox -->
+                      <div
+                        class="p-3 bg-gray-50 hover:bg-gray-100 transition-colors"
+                      >
+                        <div class="flex items-start gap-3">
+                          <p-checkbox
+                            [binary]="true"
+                            [ngModel]="isTargetSelected(target.id)"
+                            (ngModelChange)="toggleTarget(target)"
+                            [inputId]="'target-' + target.id"
+                          />
+                          <label
+                            [for]="'target-' + target.id"
+                            class="flex-1 cursor-pointer"
+                          >
+                            <div class="font-semibold text-gray-900">
+                              {{ "label.target" | translate }}
+                              {{ target.sdgTargetId }}
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1">
+                              {{ target.targetDescription }}
+                            </div>
+                          </label>
                         </div>
-                      } @else if (getIndicatorsForTarget(target.sdgTargetId).length > 0) {
-                        <!-- Indicators loaded and available -->
-                        <div class="space-y-2 pl-4">
-                          @for (indicator of getIndicatorsForTarget(target.sdgTargetId); track indicator.id) {
-                            <div class="flex items-start gap-2">
-                              <p-checkbox
-                                [binary]="true"
-                                [ngModel]="isIndicatorSelected(target.id, indicator.id)"
-                                (ngModelChange)="toggleIndicator(target.id, indicator.id)"
-                                [inputId]="'indicator-' + indicator.id"
-                              />
-                              <label [for]="'indicator-' + indicator.id" class="flex-1 cursor-pointer text-sm text-gray-700">
-                                {{ indicator.sdgIndicatorLongDescription }}
-                              </label>
+                      </div>
+
+                      <!-- Indicators for selected target -->
+                      @if (isTargetSelected(target.id)) {
+                        <div class="p-3 bg-white border-t border-gray-200">
+                          <div
+                            class="text-xs font-semibold text-gray-700 mb-2 uppercase"
+                          >
+                            {{ "label.opportunity.sdgIndicators" | translate }}
+                          </div>
+
+                          @if (isLoadingIndicators(target.id)) {
+                            <!-- Loading state -->
+                            <div
+                              class="flex items-center gap-2 text-xs text-blue-600 pl-4 py-2"
+                            >
+                              <i class="pi pi-spin pi-spinner"></i>
+                              <span
+                                >{{ "message.loading" | translate }}...</span
+                              >
+                            </div>
+                          } @else if (
+                            getIndicatorsForTarget(target.sdgTargetId).length >
+                            0
+                          ) {
+                            <!-- Indicators loaded and available -->
+                            <div class="space-y-2 pl-4">
+                              @for (
+                                indicator of getIndicatorsForTarget(
+                                  target.sdgTargetId
+                                );
+                                track indicator.id
+                              ) {
+                                <div class="flex items-start gap-2">
+                                  <p-checkbox
+                                    [binary]="true"
+                                    [ngModel]="
+                                      isIndicatorSelected(
+                                        target.id,
+                                        indicator.id
+                                      )
+                                    "
+                                    (ngModelChange)="
+                                      toggleIndicator(target.id, indicator.id)
+                                    "
+                                    [inputId]="'indicator-' + indicator.id"
+                                  />
+                                  <label
+                                    [for]="'indicator-' + indicator.id"
+                                    class="flex-1 cursor-pointer text-sm text-gray-700"
+                                  >
+                                    {{ indicator.sdgIndicatorLongDescription }}
+                                  </label>
+                                </div>
+                              }
+                            </div>
+                          } @else {
+                            <!-- No indicators found -->
+                            <div class="text-xs text-amber-600 pl-4 py-2">
+                              <div class="flex items-center gap-2 mb-1">
+                                <i class="pi pi-info-circle"></i>
+                                <span class="font-medium"
+                                  >No indicators available for this target</span
+                                >
+                              </div>
+                              <div class="text-gray-600 text-xs ml-5">
+                                Please ensure the database has been seeded with
+                                SDG Indicators data.
+                              </div>
                             </div>
                           }
-                        </div>
-                      } @else {
-                        <!-- No indicators found -->
-                        <div class="text-xs text-amber-600 pl-4 py-2">
-                          <div class="flex items-center gap-2 mb-1">
-                            <i class="pi pi-info-circle"></i>
-                            <span class="font-medium">No indicators available for this target</span>
-                          </div>
-                          <div class="text-gray-600 text-xs ml-5">
-                            Please ensure the database has been seeded with SDG Indicators data.
-                          </div>
                         </div>
                       }
                     </div>
                   }
                 </div>
               }
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- BOTTOM SECTION: Selected SDGs -->
+    @if (pendingSDGSelections().length > 0) {
+      <div class="border-t-2 border-gray-200 pt-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3
+            class="text-base font-bold text-unops-secondary flex items-center gap-2"
+          >
+            <i class="pi pi-check-circle text-unops-success"></i>
+            {{ "label.selectedSDGs" | translate }} ({{ pendingSDGCount() }})
+          </h3>
+          <p-button
+            [label]="'button.clearAll' | translate"
+            icon="pi pi-times"
+            [text]="true"
+            size="small"
+            severity="secondary"
+            (onClick)="clearPendingSDGs()"
+          />
+        </div>
+
+        <!-- Selected SDGs Cards -->
+        <div class="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+          @for (sdg of pendingSDGSelections(); track $index) {
+            <div
+              class="bg-white border-2 border-unops-primary-200 rounded-unops-lg p-4 shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div class="flex items-start justify-between gap-4">
+                <div class="flex items-center gap-4 flex-1">
+                  <!-- SDG Logo -->
+                  @if (getSDGLogo(sdg.sdgId)) {
+                    <img
+                      [src]="getSDGLogo(sdg.sdgId)"
+                      [alt]="'SDG ' + sdg.sdgNumber"
+                      class="w-16 h-16 object-contain rounded flex-shrink-0"
+                    />
+                  } @else {
+                    <div
+                      class="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-teal-600 text-white font-bold text-2xl rounded shadow-sm flex-shrink-0"
+                    >
+                      {{ sdg.sdgNumber }}
+                    </div>
+                  }
+                  <div class="flex-1 min-w-0">
+                    <h4 class="font-semibold text-unops-secondary mb-2">
+                      {{ "label.opportunity.sdg" | translate }}
+                      {{ sdg.sdgNumber }}: {{ sdg.sdgName }}
+                    </h4>
+                    <div class="flex items-center gap-2 mb-2 flex-wrap">
+                      <div
+                        class="text-xs font-bold px-2 py-1 rounded-lg text-center"
+                        [style]="{
+                          'background-color': sdg.isPrimary
+                            ? 'rgb(76, 175, 80)'
+                            : '#0ea5e9',
+                          color: 'white',
+                          'min-width': '76px',
+                        }"
+                      >
+                        {{ sdg.isPrimary ? "Primary" : "Secondary" }}
+                      </div>
+                    </div>
+
+                    <!-- Display Targets and Indicators (condensed) -->
+                    @if (sdg.skipTargetsAndIndicators) {
+                      <div class="text-xs text-gray-500 italic">
+                        ({{
+                          "label.opportunity.skipTargetsAndIndicators"
+                            | translate
+                        }})
+                      </div>
+                    } @else if (sdg.targets && sdg.targets.length > 0) {
+                      <div
+                        class="mt-2 pl-3 border-l-2 border-unops-primary-200 space-y-1"
+                      >
+                        @for (target of sdg.targets; track target.id) {
+                          <div class="text-xs">
+                            <div
+                              class="font-medium text-unops-primary flex items-center gap-1"
+                            >
+                              <i class="pi pi-check-circle text-[10px]"></i>
+                              {{ "label.target" | translate }}
+                              {{ target.sdgTargetId }}
+                            </div>
+
+                            <!-- Indicators for this target -->
+                            @if (
+                              target.indicators && target.indicators.length > 0
+                            ) {
+                              <div class="ml-4 mt-1 space-y-0.5">
+                                @for (
+                                  indicator of target.indicators;
+                                  track indicator.id
+                                ) {
+                                  <div class="flex items-start gap-1">
+                                    <i
+                                      class="pi pi-angle-right text-[10px] text-unops-neutral-500 mt-0.5"
+                                    ></i>
+                                    <div
+                                      class="text-[11px] text-unops-neutral-700 line-clamp-1"
+                                    >
+                                      {{
+                                        indicator.sdgIndicatorLongDescription
+                                      }}
+                                    </div>
+                                  </div>
+                                }
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+                <div class="flex gap-2 flex-shrink-0">
+                  <p-button
+                    icon="pi pi-pencil"
+                    [text]="true"
+                    [rounded]="true"
+                    severity="secondary"
+                    size="small"
+                    (onClick)="editPendingSDG($index)"
+                    pTooltip="{{ 'button.edit' | translate }}"
+                  />
+                  <p-button
+                    icon="pi pi-trash"
+                    [text]="true"
+                    [rounded]="true"
+                    severity="danger"
+                    size="small"
+                    (onClick)="removePendingSDG($index)"
+                    pTooltip="{{ 'button.delete' | translate }}"
+                  />
+                </div>
+              </div>
             </div>
           }
-        }
+        </div>
+      </div>
+    } @else {
+      <!-- Empty State -->
+      <div class="border-t-2 border-gray-200 pt-6">
+        <div
+          class="text-center py-8 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-300"
+        >
+          <i class="pi pi-globe text-4xl mb-3"></i>
+          <p class="text-sm">
+            {{ "message.opportunity.noPendingSDGs" | translate }}
+          </p>
+        </div>
       </div>
     }
   </div>
 
   <ng-template pTemplate="footer">
-    <p-button
-      [label]="'button.cancel' | translate"
-      severity="secondary"
-      (onClick)="cancelSDGDialog()"
-    />
-    @if (isEditingSDG()) {
-      <p-button
-        [label]="'button.confirm' | translate"
-        severity="primary"
-        (onClick)="updateSDG()"
-        [disabled]="!sdgControl.value"
-      />
-    } @else {
-      <p-button
-        [label]="'button.add' | translate"
-        severity="primary"
-        (onClick)="addSDG()"
-        [disabled]="!sdgControl.value"
-      />
-    }
+    <div class="flex items-center justify-between w-full">
+      <span class="text-sm text-gray-600">
+        @if (pendingSDGCount() > 0) {
+          {{ pendingSDGCount() }} {{ "label.sdgsSelected" | translate }}
+        }
+      </span>
+      <div class="flex gap-2">
+        <p-button
+          [label]="'button.cancel' | translate"
+          severity="secondary"
+          (onClick)="cancelSDGDialog()"
+        />
+        <p-button
+          [label]="
+            pendingSDGCount() === 1
+              ? ('button.add1SDG' | translate)
+              : ('button.addMultipleSDGs'
+                | translate: { count: pendingSDGCount() })
+          "
+          severity="primary"
+          icon="pi pi-check"
+          (onClick)="commitPendingSDGs()"
+          [disabled]="pendingSDGCount() === 0"
+        />
+      </div>
+    </div>
   </ng-template>
 </p-dialog>
 
@@ -1351,13 +2014,18 @@
   [header]="'label.opportunity.selectUNCFOutcomes' | translate"
   [(visible)]="showUNCFDialog"
   [modal]="true"
+  [appendTo]="'body'"
   [style]="{ width: '50rem', 'max-height': '90vh' }"
   [contentStyle]="{ overflow: 'visible' }"
 >
   <!-- Validation Error Message -->
   @if (showUNCFValidationError()) {
-    <p-message severity="error" icon="pi pi-info-circle" styleClass="mb-4 w-full">
-      {{ 'message.opportunity.uncfValidation' | translate }}
+    <p-message
+      severity="error"
+      icon="pi pi-info-circle"
+      styleClass="mb-4 w-full"
+    >
+      {{ "message.opportunity.uncfValidation" | translate }}
     </p-message>
   }
 
@@ -1367,7 +2035,9 @@
       <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div class="flex items-center gap-2">
           <i class="pi pi-map-marker text-blue-600"></i>
-          <h4 class="font-semibold text-gray-900">{{ selectedCountryForUNCF()!.country?.name }}</h4>
+          <h4 class="font-semibold text-gray-900">
+            {{ selectedCountryForUNCF()!.country?.name }}
+          </h4>
         </div>
       </div>
     }
@@ -1376,20 +2046,26 @@
     @if (loadingUNCFOutcomesForDialog()) {
       <div class="text-center py-8">
         <i class="pi pi-spin pi-spinner text-2xl text-blue-600"></i>
-        <p class="text-sm text-gray-600 mt-2">{{ 'message.loadingUNCFOutcomes' | translate }}</p>
+        <p class="text-sm text-gray-600 mt-2">
+          {{ "message.loadingUNCFOutcomes" | translate }}
+        </p>
       </div>
     }
 
     <!-- UNCF Outcomes Section -->
-    @if (!loadingUNCFOutcomesForDialog() && availableUNCFOutcomes().length > 0) {
+    @if (
+      !loadingUNCFOutcomesForDialog() && availableUNCFOutcomes().length > 0
+    ) {
       <div class="border-t border-gray-200 pt-4 mt-4">
         <label class="block text-sm font-semibold text-gray-700 mb-3">
-          {{ 'label.opportunity.selectUNCFOutcomes' | translate }}
+          {{ "label.opportunity.selectUNCFOutcomes" | translate }}
         </label>
-        
+
         <div class="space-y-3 max-h-[400px] overflow-y-auto pr-2">
           @for (outcome of availableUNCFOutcomes(); track outcome.id) {
-            <div class="border rounded-lg p-3 hover:bg-gray-50 transition-colors">
+            <div
+              class="border rounded-lg p-3 hover:bg-gray-50 transition-colors"
+            >
               <!-- Outcome Checkbox -->
               <div class="flex items-start gap-3">
                 <p-checkbox
@@ -1398,10 +2074,17 @@
                   (ngModelChange)="toggleUNCFOutcome(outcome)"
                   [inputId]="'outcome-' + outcome.id"
                 />
-                <label [for]="'outcome-' + outcome.id" class="flex-1 cursor-pointer">
-                  <div class="font-medium text-gray-900">{{ outcome.name }}</div>
+                <label
+                  [for]="'outcome-' + outcome.id"
+                  class="flex-1 cursor-pointer"
+                >
+                  <div class="font-medium text-gray-900">
+                    {{ outcome.name }}
+                  </div>
                   @if (outcome.versionNo) {
-                    <div class="text-xs text-gray-500 mt-1">{{ 'label.version' | translate }}: {{ outcome.versionNo }}</div>
+                    <div class="text-xs text-gray-500 mt-1">
+                      {{ "label.version" | translate }}: {{ outcome.versionNo }}
+                    </div>
                   }
                 </label>
               </div>
@@ -1412,21 +2095,40 @@
                   @if (isLoadingUNCFIndicators(outcome.id)) {
                     <div class="text-center py-4">
                       <i class="pi pi-spin pi-spinner text-blue-600"></i>
-                      <p class="text-xs text-gray-600 mt-2">{{ 'message.loadingIndicators' | translate }}</p>
+                      <p class="text-xs text-gray-600 mt-2">
+                        {{ "message.loadingIndicators" | translate }}
+                      </p>
                     </div>
-                  } @else if (getIndicatorsForUNCFOutcome(outcome.id).length > 0) {
+                  } @else if (
+                    getIndicatorsForUNCFOutcome(outcome.id).length > 0
+                  ) {
                     <div>
-                      <p class="text-sm font-semibold text-gray-700 mb-2">{{ 'label.indicators' | translate }}:</p>
+                      <p class="text-sm font-semibold text-gray-700 mb-2">
+                        {{ "label.indicators" | translate }}:
+                      </p>
                       <div class="space-y-2">
-                        @for (indicator of getIndicatorsForUNCFOutcome(outcome.id); track indicator.id) {
+                        @for (
+                          indicator of getIndicatorsForUNCFOutcome(outcome.id);
+                          track indicator.id
+                        ) {
                           <div class="flex items-start gap-2">
                             <p-checkbox
                               [binary]="true"
-                              [ngModel]="isUNCFIndicatorSelected(outcome.id, indicator.id)"
-                              (ngModelChange)="toggleUNCFIndicator(outcome.id, indicator.id)"
+                              [ngModel]="
+                                isUNCFIndicatorSelected(
+                                  outcome.id,
+                                  indicator.id
+                                )
+                              "
+                              (ngModelChange)="
+                                toggleUNCFIndicator(outcome.id, indicator.id)
+                              "
                               [inputId]="'indicator-' + indicator.id"
                             />
-                            <label [for]="'indicator-' + indicator.id" class="flex-1 text-sm text-gray-700 cursor-pointer">
+                            <label
+                              [for]="'indicator-' + indicator.id"
+                              class="flex-1 text-sm text-gray-700 cursor-pointer"
+                            >
                               {{ indicator.name }}
                             </label>
                           </div>
@@ -1436,7 +2138,8 @@
                   } @else {
                     <div class="text-center py-4">
                       <p class="text-sm text-gray-500">
-                        <i class="pi pi-info-circle"></i> {{ 'message.noIndicatorsAvailable' | translate }}
+                        <i class="pi pi-info-circle"></i>
+                        {{ "message.noIndicatorsAvailable" | translate }}
                       </p>
                     </div>
                   }
@@ -1448,10 +2151,12 @@
       </div>
     }
 
-    @if (!loadingUNCFOutcomesForDialog() && availableUNCFOutcomes().length === 0) {
+    @if (
+      !loadingUNCFOutcomesForDialog() && availableUNCFOutcomes().length === 0
+    ) {
       <div class="text-center py-8 text-gray-400">
         <i class="pi pi-flag text-4xl mb-3"></i>
-        <p>{{ 'message.opportunity.noUNCFOutcomesForCountry' | translate }}</p>
+        <p>{{ "message.opportunity.noUNCFOutcomesForCountry" | translate }}</p>
       </div>
     }
   </div>
@@ -1465,7 +2170,9 @@
     <p-button
       [label]="'button.confirm' | translate"
       severity="primary"
-      (onClick)="isEditingUNCFCountry() ? updateUNCFOutcomes() : addUNCFOutcomes()"
+      (onClick)="
+        isEditingUNCFCountry() ? updateUNCFOutcomes() : addUNCFOutcomes()
+      "
     />
   </ng-template>
 </p-dialog>
@@ -1475,18 +2182,19 @@
   [header]="'title.selectUNOPSMissions' | translate"
   [(visible)]="showUNOPSMissionsDialog"
   [modal]="true"
+  [appendTo]="'body'"
   [style]="{ width: '45rem', maxHeight: '80vh' }"
   [contentStyle]="{ overflow: 'auto' }"
 >
   <div class="space-y-3">
     <p class="text-sm text-gray-600 mb-4">
-      {{ 'helpText.opportunity.unopsMissions' | translate }}
+      {{ "helpText.opportunity.unopsMissions" | translate }}
     </p>
-    
+
     <!-- Mission Selection List -->
     <div class="space-y-2 max-h-96 overflow-y-auto pr-2">
       @for (mission of unopsMissions(); track mission.id) {
-        <div 
+        <div
           class="border rounded-lg p-3 cursor-pointer transition-all hover:shadow-md"
           [class.bg-gradient-to-r]="isUNOPSMissionSelected(mission.id)"
           [class.from-blue-50]="isUNOPSMissionSelected(mission.id)"
@@ -1511,7 +2219,7 @@
               <i class="pi pi-circle text-xl text-blue-600"></i>
             }
             <div class="flex-1">
-              <h4 
+              <h4
                 class="font-medium text-sm"
                 [class.text-gray-900]="isUNOPSMissionSelected(mission.id)"
                 [class.text-gray-700]="!isUNOPSMissionSelected(mission.id)"
@@ -1519,7 +2227,7 @@
                 {{ mission.name }}
               </h4>
               @if (mission.description) {
-                <p 
+                <p
                   class="text-xs mt-1"
                   [class.text-gray-700]="isUNOPSMissionSelected(mission.id)"
                   [class.text-gray-600]="!isUNOPSMissionSelected(mission.id)"
@@ -1531,12 +2239,14 @@
           </div>
         </div>
       }
-      
+
       @if (unopsMissions().length === 0) {
-        <p class="text-sm text-gray-400 italic">{{ 'message.opportunity.loadingUNOPSMissions' | translate }}</p>
+        <p class="text-sm text-gray-400 italic">
+          {{ "message.opportunity.loadingUNOPSMissions" | translate }}
+        </p>
       }
     </div>
-    
+
     <!-- Not Applicable Option -->
     <div class="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
       <label class="flex items-start gap-2 cursor-pointer">
@@ -1548,18 +2258,20 @@
           />
         </div>
         <span class="text-sm text-gray-700">
-          {{ 'label.opportunity.unopsMissionsNotApplicable' | translate }}
+          {{ "label.opportunity.unopsMissionsNotApplicable" | translate }}
         </span>
       </label>
     </div>
-    
+
     <!-- Selected Count -->
-    <div class="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
+    <div
+      class="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800"
+    >
       <i class="pi pi-info-circle mr-2"></i>
       @if (unopsMissionCount() > 0) {
-        {{ unopsMissionCount() }} {{ 'label.missionsSelected' | translate }}
+        {{ unopsMissionCount() }} {{ "label.missionsSelected" | translate }}
       } @else {
-        {{ 'message.opportunity.noUNOPSMissionsSelected' | translate }}
+        {{ "message.opportunity.noUNOPSMissionsSelected" | translate }}
       }
     </div>
   </div>
@@ -1577,4 +2289,3 @@
     />
   </ng-template>
 </p-dialog>
-

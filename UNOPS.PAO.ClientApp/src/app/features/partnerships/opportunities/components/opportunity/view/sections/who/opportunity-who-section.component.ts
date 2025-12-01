@@ -288,9 +288,9 @@ export class OpportunityWhoSectionComponent implements OnInit {
   }
 
   /**
-   * @description Enable edit mode
+   * @description Start editing mode - backs up original data for cancel operation
    */
-  enableEdit(): void {
+  startEditing(): void {
     const opp = this.opportunity();
     
     // Backup original data for cancel
@@ -308,9 +308,9 @@ export class OpportunityWhoSectionComponent implements OnInit {
   }
 
   /**
-   * @description Cancel edit mode
+   * @description Cancel editing mode - restores original data and exits edit mode
    */
-  cancelEdit(): void {
+  cancelEditing(): void {
     const opp = this.opportunity();
     
     // Restore original data if available
@@ -450,7 +450,9 @@ export class OpportunityWhoSectionComponent implements OnInit {
    */
   openAddFundingPartnerDialog(): void {
     this.partnerControl.setValue(null);
-    this.currencyControl.setValue(141); // Default to USD (id: 141)
+    // Find USD currency from available currencies (code 'USD')
+    const usdCurrency = this.availableCurrencies().find(c => c.code === 'USD');
+    this.currencyControl.setValue(usdCurrency?.id || 141); // Default to USD
     this.amountControl.setValue(null);
     this.feeAmountControl.setValue(null);
     this.partnershipAgreementControl.setValue(null);
@@ -473,10 +475,13 @@ export class OpportunityWhoSectionComponent implements OnInit {
     // Find the partner in the master list
     const masterPartner = this.availablePartners().find(p => p.id === partner.partnerId);
     
+    // Find USD currency as default fallback
+    const usdCurrency = this.availableCurrencies().find(c => c.code === 'USD');
+    
     this.isEditingFundingPartner.set(true);
     this.editingFundingPartnerIndex.set(index);
     this.partnerControl.setValue(masterPartner || null);
-    this.currencyControl.setValue(partner.currencyId || 141); // Set currency or default to USD
+    this.currencyControl.setValue(partner.currencyId || usdCurrency?.id || 141); // Set currency or default to USD
     this.amountControl.setValue(partner.amount);
     this.feeAmountControl.setValue(partner.feeAmount);
     this.partnershipAgreementControl.setValue(partner.partnershipAgreementReference || null);
@@ -547,7 +552,9 @@ export class OpportunityWhoSectionComponent implements OnInit {
     const opp = this.opportunity();
     const currentPartners = [...(opp.fundingPartners || [])];
 
-    const currencyId = this.currencyControl.value || 141; // Default to USD (id: 141)
+    // Get currency ID from control, or find USD as default
+    const usdCurrency = this.availableCurrencies().find(c => c.code === 'USD');
+    const currencyId = this.currencyControl.value || usdCurrency?.id || 141; // Default to USD
     const currencyCode = this.getSelectedCurrencyCode() || 'USD';
 
     const newPartner: OpportunityFundingPartner = {
@@ -610,7 +617,9 @@ export class OpportunityWhoSectionComponent implements OnInit {
       return;
     }
 
-    const currencyId = this.currencyControl.value || 141; // Default to USD
+    // Get currency ID from control, or find USD as default
+    const usdCurrency = this.availableCurrencies().find(c => c.code === 'USD');
+    const currencyId = this.currencyControl.value || usdCurrency?.id || 141; // Default to USD
     const currencyCode = this.getSelectedCurrencyCode() || 'USD';
 
     currentPartners[index] = {

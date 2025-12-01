@@ -76,11 +76,11 @@
           pInputTextarea
           [formControl]="descriptionControl"
           rows="5"
-          class="w-full"
+          class="w-full leading-relaxed"
           [placeholder]="'label.opportunity.descriptionPlaceholder' | translate"
         ></textarea>
       } @else {
-        <p class="text-unops-neutral-800 text-base leading-loose whitespace-pre-wrap max-w-4xl tracking-normal">{{ opportunity().description || '-' }}</p>
+        <p class="text-unops-neutral-800 text-base leading-loose whitespace-pre-wrap w-full tracking-normal">{{ opportunity().description || '-' }}</p>
       }
     </div>
   </div>

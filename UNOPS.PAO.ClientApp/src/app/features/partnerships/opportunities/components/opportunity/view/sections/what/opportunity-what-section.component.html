@@ -536,6 +536,7 @@
   [header]="isEditingDeliverable() ? ('label.opportunity.editDeliverable' | translate) : ('label.opportunity.addDeliverable' | translate)"
   [(visible)]="showDeliverablesDialog"
   [modal]="true"
+  [appendTo]="'body'"
   [style]="{ width: '55rem' }"
   [contentStyle]="{ 'max-height': '75vh', 'overflow-y': 'auto' }"
   [draggable]="false"
@@ -561,124 +562,255 @@
     }
     
     <!-- Encouragement to Select at Lowest Level -->
-    <div class="bg-unops-info-lighter border border-unops-info rounded-unops-lg p-3">
+    <div class="bg-unops-primary-container-soft border border-unops-primary-200 rounded-unops-lg p-3">
       <div class="flex items-start gap-2">
-        <i class="pi pi-lightbulb text-unops-info text-sm mt-0.5"></i>
+        <i class="pi pi-lightbulb text-sm mt-0.5" style="color: var(--p-panel-color);"></i>
         <div class="flex-1">
-          <p class="text-xs font-semibold text-unops-info-dark mb-1">
+          <p class="text-xs font-semibold mb-1" style="color: var(--p-panel-color);">
             {{ 'message.encourageLowestLevelSelection' | translate }}
           </p>
-          <p class="text-xs text-unops-info-darker">
+          <p class="text-xs" style="color: var(--p-panel-color);">
             {{ 'message.encourageLowestLevelDetails' | translate }}
           </p>
         </div>
       </div>
     </div>
     
-    <!-- Quick Search Toggle -->
+    <!-- Search/Browse Mode Toggle -->
     <div class="flex items-center justify-between border-b border-gray-200 pb-3">
-      <p class="text-sm text-gray-600">
-        {{ 'message.selectProductService' | translate }}
+      <p class="text-sm font-semibold text-gray-900">
+        {{ searchMode() === 'search' ? ('title.searchProductsServices' | translate) : ('title.browseProductsServices' | translate) }}
       </p>
       <p-button
-        [label]="showQuickSearch() ? ('button.hideQuickSearch' | translate) : ('button.showQuickSearch' | translate)"
-        icon="pi pi-search"
+        [label]="searchMode() === 'search' ? ('button.switchToBrowse' | translate) : ('button.switchToSearch' | translate)"
+        [icon]="searchMode() === 'search' ? 'pi pi-list' : 'pi pi-search'"
         [text]="true"
         size="small"
-        (onClick)="showQuickSearch.set(!showQuickSearch())"
+        severity="secondary"
+        (onClick)="toggleSearchMode()"
       />
     </div>
 
-    <!-- Quick Search -->
-    @if (showQuickSearch()) {
-      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <label class="block text-sm font-semibold text-gray-900 mb-2">
-          🔍 {{ 'label.quickSearch' | translate }}
-        </label>
-        <p-select
-          [options]="outputs()"
-          optionLabel="name"
-          [filter]="true"
-          filterBy="name,level0,level1,level2,level3,level4,serviceLine"
-          [placeholder]="'placeholder.searchAllProducts' | translate"
-          class="w-full"
-          [appendTo]="'body'"
-          [showClear]="true"
-          (onChange)="selectFromQuickSearch($event.value)"
-        >
-          <ng-template let-output pTemplate="item">
-            <div class="py-1">
-              <div class="font-medium text-sm text-gray-900">{{ output.name }}</div>
-              <div class="text-xs text-gray-500 mt-0.5">
-                {{ getHierarchicalPath(output) }}
+    <!-- SEARCH MODE (Primary Interface) -->
+    @if (searchMode() === 'search') {
+      <div class="space-y-4">
+        <!-- Search Bar -->
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-lg p-5 shadow-sm">
+          <label class="block text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+            <i class="pi pi-search text-blue-600 text-lg"></i>
+            {{ 'label.search' | translate }}
+          </label>
+          
+          <div class="relative flex items-center">
+            <input
+              pInputText
+              [(ngModel)]="searchQuery"
+              [placeholder]="'placeholder.searchAnyLevel' | translate"
+              class="w-full search-input-no-focus-border"
+              style="padding-left: 2.75rem; padding-right: 2.75rem; font-size: 1rem; height: 3rem;"
+              (input)="performUnifiedSearch($any($event.target).value)"
+            />
+            <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" style="font-size: 1rem;"></i>
+            @if (searchQuery()) {
+              <button
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                (click)="searchQuery.set(''); searchResults.set([])"
+              >
+                <i class="pi pi-times" style="font-size: 1rem;"></i>
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Search Results -->
+        @if (searchResults().length > 0) {
+          <div class="bg-white border border-gray-200 rounded-lg overflow-hidden max-h-96 overflow-y-auto">
+            <div class="sticky top-0 bg-gray-50 border-b border-gray-200 px-4 py-2 flex items-center justify-between z-10">
+              <span class="text-xs font-semibold text-gray-700">
+                {{ 'label.searchResults' | translate }}: {{ searchResults().length }}
+              </span>
+              <span class="text-xs text-gray-500">
+                {{ 'message.clickToSelect' | translate }}
+              </span>
+            </div>
+
+            <!-- Grouped Results by Level -->
+            @for (entry of getGroupedSearchResults() | keyvalue; track entry.key) {
+              <div class="border-b border-gray-100 last:border-b-0">
+                <!-- Level Group Header -->
+                <div class="bg-gray-50 px-4 py-2 flex items-center gap-2">
+                  <i class="pi pi-angle-right text-xs text-gray-400"></i>
+                  <span class="text-xs font-semibold text-gray-700">
+                    {{ 'label.level' | translate }} {{ entry.key }}: {{ getLevelLabel(entry.key) }}
+                  </span>
+                  <span class="text-xs text-gray-500">({{ entry.value.length }})</span>
+                </div>
+
+                <!-- Results in this level -->
+                @for (output of entry.value; track output.id) {
+                  <div 
+                    class="px-4 py-3 cursor-pointer border-l-4 transition-all"
+                    [ngClass]="{
+                      'bg-blue-50 border-blue-500': isOutputSelected(output),
+                      'hover:bg-blue-50 border-transparent hover:border-blue-500': !isOutputSelected(output)
+                    }"
+                    (click)="toggleOutputSelection(output)"
+                  >
+                    <div class="flex items-start gap-3">
+                      <!-- Level Indicator -->
+                      <div 
+                        class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
+                        [ngClass]="{
+                          'bg-blue-100 text-blue-700': getLevelDepth(output) === 0,
+                          'bg-purple-100 text-purple-700': getLevelDepth(output) === 1,
+                          'bg-pink-100 text-pink-700': getLevelDepth(output) === 2,
+                          'bg-orange-100 text-orange-700': getLevelDepth(output) === 3,
+                          'bg-green-100 text-green-700': getLevelDepth(output) === 4
+                        }"
+                      >
+                        L{{ getLevelDepth(output) }}
+                      </div>
+
+                      <!-- Content -->
+                      <div class="flex-1 min-w-0">
+                        <!-- Output Name -->
+                        <div class="font-medium text-sm text-gray-900 mb-1">
+                          {{ getDeepestLevel(output) }}
+                        </div>
+
+                        <!-- Hierarchical Path (Breadcrumb) -->
+                        <div class="flex items-center gap-1 flex-wrap text-xs text-gray-500 mb-2">
+                          @if (output.level0) {
+                            <span class="bg-blue-50 px-2 py-0.5 rounded">{{ output.level0 }}</span>
+                          }
+                          @if (output.level1) {
+                            <i class="pi pi-angle-right text-[10px] text-gray-400"></i>
+                            <span class="bg-purple-50 px-2 py-0.5 rounded">{{ output.level1 }}</span>
+                          }
+                          @if (output.level2) {
+                            <i class="pi pi-angle-right text-[10px] text-gray-400"></i>
+                            <span class="bg-pink-50 px-2 py-0.5 rounded">{{ output.level2 }}</span>
+                          }
+                          @if (output.level3) {
+                            <i class="pi pi-angle-right text-[10px] text-gray-400"></i>
+                            <span class="bg-orange-50 px-2 py-0.5 rounded">{{ output.level3 }}</span>
+                          }
+                          @if (output.level4) {
+                            <i class="pi pi-angle-right text-[10px] text-gray-400"></i>
+                            <span class="bg-green-50 px-2 py-0.5 rounded">{{ output.level4 }}</span>
+                          }
+                        </div>
+
+                        <!-- Service Line & Child Indicator -->
+                        <div class="flex items-center gap-2 flex-wrap">
+                          @if (output.serviceLine) {
+                            <p-chip 
+                              [label]="output.serviceLine" 
+                              styleClass="text-xs"
+                              [style]="{ 'background-color': '#dbeafe', 'color': '#1e40af', 'height': '20px', 'font-size': '11px' }"
+                            />
+                          }
+                          @if (hasChildLevels(output)) {
+                            <span class="inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                              <i class="pi pi-sitemap text-[10px]"></i>
+                              {{ 'label.hasSublevels' | translate }}
+                            </span>
+                          } @else {
+                            <span class="inline-flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded">
+                              <i class="pi pi-check-circle text-[10px]"></i>
+                              {{ 'label.mostSpecificLevel' | translate }}
+                            </span>
+                          }
+                        </div>
+                      </div>
+
+                      <!-- Select Indicator -->
+                      <div class="flex-shrink-0">
+                        @if (isOutputSelected(output)) {
+                          <i class="pi pi-check-circle text-blue-600 text-xl"></i>
+                        } @else {
+                          <i class="pi pi-circle text-gray-300 text-xl"></i>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                }
               </div>
-              @if (output.serviceLine) {
+            }
+          </div>
+        } @else if (searchQuery() && searchQuery().length >= 2) {
+          <!-- No Results -->
+          <div class="text-center py-8 text-gray-500">
+            <i class="pi pi-search text-4xl mb-3 text-gray-300"></i>
+            <p class="text-sm font-medium">{{ 'message.noProductsServicesFound' | translate }}</p>
+            <p class="text-xs mt-1">{{ 'message.tryDifferentKeywordsOrBrowse' | translate }}</p>
+          </div>
+        } @else if (!searchQuery() || searchQuery().length < 2) {
+          <!-- Search Prompt -->
+          <div class="text-center py-8 text-gray-400">
+            <i class="pi pi-search text-4xl mb-3"></i>
+            <p class="text-sm">{{ 'message.startTypingToSearch' | translate }}</p>
+            <p class="text-xs mt-1">{{ 'message.searchMinimum2Chars' | translate }}</p>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- BROWSE MODE (Cascading Dropdowns) -->
+    @if (searchMode() === 'browse') {
+
+      <div class="space-y-4">
+        <!-- Breadcrumb Trail -->
+        @if (hasAnyLevelSelected()) {
+          <div class="bg-unops-success-lighter border border-unops-success-light rounded-unops-lg p-3">
+            <div class="text-xs font-semibold text-unops-neutral-700 mb-2">
+              📍 {{ 'label.currentPath' | translate }}:
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              @if (level0Control.value) {
                 <p-chip 
-                  [label]="output.serviceLine" 
-                  styleClass="text-xs mt-1"
-                  [style]="{ 'background-color': '#dbeafe', 'color': '#1e40af' }"
+                  [label]="level0Control.value" 
+                  styleClass="text-xs"
+                  [style]="{ 'background-color': '#e0f2fe', 'color': '#075985' }"
+                />
+              }
+              @if (level1Control.value) {
+                <i class="pi pi-angle-right text-gray-400 text-xs"></i>
+                <p-chip 
+                  [label]="level1Control.value" 
+                  styleClass="text-xs"
+                  [style]="{ 'background-color': '#ddd6fe', 'color': '#5b21b6' }"
+                />
+              }
+              @if (level2Control.value) {
+                <i class="pi pi-angle-right text-gray-400 text-xs"></i>
+                <p-chip 
+                  [label]="level2Control.value" 
+                  styleClass="text-xs"
+                  [style]="{ 'background-color': '#fce7f3', 'color': '#9f1239' }"
+                />
+              }
+              @if (level3Control.value) {
+                <i class="pi pi-angle-right text-gray-400 text-xs"></i>
+                <p-chip 
+                  [label]="level3Control.value" 
+                  styleClass="text-xs"
+                  [style]="{ 'background-color': '#fed7aa', 'color': '#92400e' }"
+                />
+              }
+              @if (level4Control.value) {
+                <i class="pi pi-angle-right text-gray-400 text-xs"></i>
+                <p-chip 
+                  [label]="level4Control.value" 
+                  styleClass="text-xs"
+                  [style]="{ 'background-color': '#d1fae5', 'color': '#065f46' }"
                 />
               }
             </div>
-          </ng-template>
-        </p-select>
-        <p class="text-xs text-gray-600 mt-2">
-          💡 {{ 'message.quickSearchHint' | translate }}
-        </p>
-      </div>
-    }
+          </div>
+        }
 
-    <!-- Breadcrumb Trail -->
-    @if (hasAnyLevelSelected()) {
-      <div class="bg-unops-success-lighter border border-unops-success-light rounded-unops-lg p-3">
-        <div class="text-xs font-semibold text-unops-neutral-700 mb-2">
-          📍 {{ 'label.currentPath' | translate }}:
-        </div>
-        <div class="flex items-center gap-2 flex-wrap">
-          @if (level0Control.value) {
-            <p-chip 
-              [label]="level0Control.value" 
-              styleClass="text-xs"
-              [style]="{ 'background-color': '#e0f2fe', 'color': '#075985' }"
-            />
-          }
-          @if (level1Control.value) {
-            <i class="pi pi-angle-right text-gray-400 text-xs"></i>
-            <p-chip 
-              [label]="level1Control.value" 
-              styleClass="text-xs"
-              [style]="{ 'background-color': '#ddd6fe', 'color': '#5b21b6' }"
-            />
-          }
-          @if (level2Control.value) {
-            <i class="pi pi-angle-right text-gray-400 text-xs"></i>
-            <p-chip 
-              [label]="level2Control.value" 
-              styleClass="text-xs"
-              [style]="{ 'background-color': '#fce7f3', 'color': '#9f1239' }"
-            />
-          }
-          @if (level3Control.value) {
-            <i class="pi pi-angle-right text-gray-400 text-xs"></i>
-            <p-chip 
-              [label]="level3Control.value" 
-              styleClass="text-xs"
-              [style]="{ 'background-color': '#fed7aa', 'color': '#92400e' }"
-            />
-          }
-          @if (level4Control.value) {
-            <i class="pi pi-angle-right text-gray-400 text-xs"></i>
-            <p-chip 
-              [label]="level4Control.value" 
-              styleClass="text-xs"
-              [style]="{ 'background-color': '#d1fae5', 'color': '#065f46' }"
-            />
-          }
-        </div>
-      </div>
-    }
-
-    <!-- Level 0 Dropdown -->
+        <!-- Level 0 Dropdown -->
     @if (level0Options().length > 0) {
       <div>
         <label class="block text-sm font-semibold text-gray-600 mb-2">
@@ -971,63 +1103,84 @@
         }
       </div>
     }
+      </div>
+    }
 
-      <!-- Selected Output Display -->
-      @if (outputControl.value) {
-        <div class="bg-unops-success-lighter border-2 border-unops-success rounded-unops-lg p-4 shadow-unops-md">
-          <div class="flex items-start gap-3">
-            <i class="pi pi-check-circle text-unops-success text-2xl"></i>
-            <div class="flex-1">
-              <div class="text-xs font-semibold text-unops-success-dark mb-1">
-                ✅ {{ 'label.selectedProductService' | translate }}
-              </div>
-              <div class="text-base font-bold text-unops-secondary mb-2">
-                {{ outputControl.value.name }}
-              </div>
-            
-            <!-- Service Line -->
-            @if (outputControl.value.serviceLine) {
-              <div class="flex items-center gap-2 mb-2">
-                <span class="text-xs font-semibold text-gray-600">{{ 'label.opportunity.serviceLine' | translate }}:</span>
-                <p-chip 
-                  [label]="outputControl.value.serviceLine" 
-                  styleClass="text-xs"
-                  [style]="{ 'background-color': '#dbeafe', 'color': '#1e40af' }"
-                />
-              </div>
-            }
-            
-            <!-- Procurement Expert Required Warning -->
-            @if (selectedOutputRequiresProcurement()) {
-              <div class="bg-unops-accent-orange-soft border border-unops-warning-light rounded-unops-lg p-3 mb-2">
-                <div class="flex items-start gap-2">
-                  <i class="pi pi-exclamation-triangle text-unops-warning-darker text-sm mt-0.5"></i>
-                  <div class="flex-1">
-                    <p class="text-xs font-semibold text-unops-secondary">
-                      {{ 'label.procurementExpertRequired' | translate }}
-                    </p>
-                    <p class="text-xs text-unops-neutral-800 mt-1">
-                      {{ 'message.procurementExpertNeeded' | translate }}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            }
-            
-            <!-- Hierarchical Path -->
-            <div class="text-xs text-unops-neutral-700">
-              <span class="font-semibold">{{ 'label.fullPath' | translate }}:</span> {{ getHierarchicalPath(outputControl.value) }}
+    <!-- Browse Mode: Current Selection (for adding to list) -->
+    @if (searchMode() === 'browse' && outputControl.value) {
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="flex items-start gap-3">
+          <i class="pi pi-info-circle text-blue-600 text-lg"></i>
+          <div class="flex-1">
+            <div class="text-xs font-semibold text-blue-900 mb-1">
+              {{ 'label.readyToAdd' | translate }}
+            </div>
+            <div class="text-sm font-medium text-gray-900 mb-1">
+              {{ outputControl.value.name }}
+            </div>
+            <div class="text-xs text-gray-600">
+              {{ getHierarchicalPath(outputControl.value) }}
             </div>
           </div>
           <p-button
+            [label]="'button.addToSelection' | translate"
+            icon="pi pi-plus"
+            size="small"
+            severity="primary"
+            (onClick)="addOutputToSelection()"
+          />
+        </div>
+      </div>
+    }
+
+    <!-- Selected Items Summary (Shown in both modes) -->
+    @if (selectedOutputsForDialog().length > 0) {
+      <div class="bg-unops-primary-container-soft border-2 border-unops-primary rounded-unops-lg p-4 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-check-circle text-unops-primary text-lg"></i>
+            <span class="text-sm font-bold text-unops-secondary">
+              {{ 'label.selectedItems' | translate }}: {{ selectedOutputsForDialog().length }}
+            </span>
+          </div>
+          <p-button
+            [label]="'button.clearAll' | translate"
             icon="pi pi-times"
             [text]="true"
-            [rounded]="true"
-            severity="danger"
             size="small"
-            (onClick)="outputControl.setValue(null)"
-            pTooltip="{{ 'button.clearSelection' | translate }}"
+            severity="secondary"
+            (onClick)="clearSelectedOutputs()"
           />
+        </div>
+
+        <!-- Selected Items List -->
+        <div class="space-y-2 max-h-60 overflow-y-auto">
+          @for (output of selectedOutputsForDialog(); track output.id) {
+            <div class="bg-white border border-blue-200 rounded-lg p-3 flex items-start gap-3">
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-medium text-gray-900 mb-1">
+                  {{ getDeepestLevel(output) }}
+                </div>
+                <div class="text-xs text-gray-600">
+                  {{ getHierarchicalPath(output) }}
+                </div>
+                @if (output.serviceLine) {
+                  <p-chip 
+                    [label]="output.serviceLine" 
+                    styleClass="text-xs mt-1"
+                    [style]="{ 'background-color': '#dbeafe', 'color': '#1e40af', 'height': '18px', 'font-size': '11px' }"
+                  />
+                }
+              </div>
+              <button
+                class="flex-shrink-0 text-gray-400 hover:text-red-600 transition-colors"
+                (click)="removeFromSelection(output)"
+                [attr.aria-label]="'button.remove' | translate"
+              >
+                <i class="pi pi-times"></i>
+              </button>
+            </div>
+          }
         </div>
       </div>
     }
@@ -1035,17 +1188,26 @@
   </div>
 
   <ng-template pTemplate="footer">
-    <p-button
-      [label]="'button.cancel' | translate"
-      severity="secondary"
-      (onClick)="showDeliverablesDialog.set(false)"
-    />
-    <p-button
-      [label]="'button.add' | translate"
-      severity="primary"
-      (onClick)="addDeliverable()"
-      [disabled]="!outputControl.value"
-    />
+    <div class="flex items-center justify-between w-full">
+      <span class="text-sm text-gray-600">
+        @if (selectedOutputsForDialog().length > 0) {
+          {{ selectedOutputsForDialog().length }} {{ 'label.itemsSelected' | translate }}
+        }
+      </span>
+      <div class="flex gap-2">
+        <p-button
+          [label]="'button.cancel' | translate"
+          severity="secondary"
+          (onClick)="closeDeliverablesDialog()"
+        />
+        <p-button
+          [label]="selectedOutputsForDialog().length === 1 ? ('button.addItem' | translate) : ('button.addItems' | translate: { count: selectedOutputsForDialog().length })"
+          severity="primary"
+          (onClick)="addDeliverable()"
+          [disabled]="selectedOutputsForDialog().length === 0"
+        />
+      </div>
+    </div>
   </ng-template>
 </p-dialog>
 

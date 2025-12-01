@@ -3,7 +3,18 @@
  * @author UNOPS Opportunity+ System Development Team
  */
 
-import { Component, input, output, signal, computed, inject, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import {
+  Component,
+  input,
+  output,
+  signal,
+  computed,
+  inject,
+  OnInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+} from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -12,7 +23,6 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { PanelModule } from 'primeng/panel';
 import { ButtonModule } from 'primeng/button';
 import { InputTextarea } from 'primeng/inputtextarea';
-import { ChipModule } from 'primeng/chip';
 import { TooltipModule } from 'primeng/tooltip';
 import { DialogModule } from 'primeng/dialog';
 import { SelectModule } from 'primeng/select';
@@ -23,16 +33,33 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { FloatLabelModule } from 'primeng/floatlabel';
 
 // Services and Models
-import { ValuesService, SDG, SDGTarget, SDGIndicator, UNCFOutcome, UNCFIndicator } from '@shared/services/api/values.service';
+import {
+  ValuesService,
+  SDG,
+  SDGTarget,
+  SDGIndicator,
+  UNCFOutcome,
+  UNCFIndicator,
+} from '@shared/services/api/values.service';
 import { OpportunityService } from '../../../../../services/opportunity.service';
-import { Opportunity, OpportunitySDG, OpportunitySDGTarget, OpportunitySDGIndicator, OpportunityUNCFOutcome, OpportunityUNCFIndicator, OpportunityCountry, UNOPSMission, OpportunityUNOPSMission } from '@shared/models/opportunity.model';
+import {
+  Opportunity,
+  OpportunitySDG,
+  OpportunitySDGTarget,
+  OpportunitySDGIndicator,
+  OpportunityUNCFOutcome,
+  OpportunityUNCFIndicator,
+  OpportunityCountry,
+  UNOPSMission,
+  OpportunityUNOPSMission,
+} from '@shared/models/opportunity.model';
 import { FeedbackDialogService } from '@shared/services/ui';
 
 /**
  * @class OpportunityWhySectionComponent
  * @description Manages the WHY section of opportunity with independent edit/save/cancel functionality.
  * Handles strategic alignment, expected beneficiaries, expected outcomes, and SDG alignments.
- * 
+ *
  * @example
  * ```html
  * <app-opportunity-why-section
@@ -40,7 +67,7 @@ import { FeedbackDialogService } from '@shared/services/ui';
  *   (opportunityUpdated)="handleOpportunityUpdate($event)"
  * />
  * ```
- * 
+ *
  * @since 1.0.0
  */
 @Component({
@@ -54,7 +81,6 @@ import { FeedbackDialogService } from '@shared/services/ui';
     PanelModule,
     ButtonModule,
     InputTextarea,
-    ChipModule,
     TooltipModule,
     DialogModule,
     SelectModule,
@@ -66,7 +92,7 @@ import { FeedbackDialogService } from '@shared/services/ui';
   ],
   templateUrl: './opportunity-why-section.component.html',
   styleUrls: ['./opportunity-why-section.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OpportunityWhySectionComponent implements OnInit {
   // Services
@@ -81,7 +107,7 @@ export class OpportunityWhySectionComponent implements OnInit {
    */
   readonly opportunity = input.required<Opportunity>();
   readonly suggestions = input<any[]>([]);
-  
+
   /**
    * @description Input signal for update permission - controls visibility of edit button
    */
@@ -122,9 +148,11 @@ export class OpportunityWhySectionComponent implements OnInit {
   beneficiariesToBeDeterminedControl = new FormControl<boolean>(false);
   expectedOutcomesControl = new FormControl<string | null>(null);
   challengesControl = new FormControl<string | null>(null);
-  
+
   // Climate and framework alignments by country (map of countryId -> alignment status)
-  humanitarianFrameworkAlignments = signal<Map<number, boolean | null>>(new Map());
+  humanitarianFrameworkAlignments = signal<Map<number, boolean | null>>(
+    new Map(),
+  );
   ndcAlignments = signal<Map<number, boolean | null>>(new Map());
   napAlignments = signal<Map<number, boolean | null>>(new Map());
   orgUnitStrategyAlignments = signal<Map<number, boolean | null>>(new Map());
@@ -134,7 +162,7 @@ export class OpportunityWhySectionComponent implements OnInit {
   availableTargets = signal<SDGTarget[]>([]);
   availableIndicators = signal<SDGIndicator[]>([]);
   loadingTargets = signal<boolean>(false);
-  
+
   // SDG dialog
   showSDGDialog = signal<boolean>(false);
   sdgControl = new FormControl<SDG | null>(null);
@@ -142,14 +170,29 @@ export class OpportunityWhySectionComponent implements OnInit {
   skipTargetsControl = new FormControl<boolean>(false);
   isEditingSDG = signal<boolean>(false);
   editingSDGIndex = signal<number | null>(null);
-  
+
+  // Convert FormControl values to signals for reactivity
+  sdgControlValue = toSignal(this.sdgControl.valueChanges, {
+    initialValue: null,
+  });
+  skipTargetsControlValue = toSignal(this.skipTargetsControl.valueChanges, {
+    initialValue: false,
+  });
+
   // Selected targets and indicators for the current SDG being added/edited
-  selectedTargets = signal<Map<number, Set<number>>>(new Map());  // Map<targetId, Set<indicatorIds>>
-  
+  selectedTargets = signal<Map<number, Set<number>>>(new Map()); // Map<targetId, Set<indicatorIds>>
+
   // Track which targets are currently loading indicators
   loadingIndicatorsForTargets = signal<Set<number>>(new Set());
+
+  // Pending SDG selections (for batch add functionality)
+  pendingSDGSelections = signal<OpportunitySDG[]>([]);
+
+  // Track if editing from pending selections
+  editingFromPending = signal<boolean>(false);
+  editingPendingIndex = signal<number | null>(null);
   showValidationError = signal<boolean>(false);
-  
+
   // UNOPS Missions data
   unopsMissions = signal<UNOPSMission[]>([]);
   selectedUNOPSMissions = signal<Set<number>>(new Set());
@@ -157,9 +200,47 @@ export class OpportunityWhySectionComponent implements OnInit {
 
   // Computed properties
   readonly sdgCount = computed(() => this.opportunity().sdGs?.length || 0);
-  readonly primarySDG = computed(() => 
-    this.opportunity().sdGs?.find(sdg => sdg.isPrimary) || null
+  readonly primarySDG = computed(
+    () => this.opportunity().sdGs?.find((sdg) => sdg.isPrimary) || null,
   );
+  readonly pendingSDGCount = computed(() => this.pendingSDGSelections().length);
+  readonly hasPrimaryInPending = computed(() =>
+    this.pendingSDGSelections().some((sdg) => sdg.isPrimary),
+  );
+
+  // Available SDGs (excluding those already in pending selections, except when editing)
+  readonly availableSDGs = computed(() => {
+    const allSDGs = this.sdgs();
+    const pending = this.pendingSDGSelections();
+    const editingIndex = this.editingPendingIndex();
+
+    // If editing, allow the SDG being edited to appear in the dropdown
+    const pendingSDGIds = new Set(
+      pending.filter((_, index) => index !== editingIndex).map((s) => s.sdgId),
+    );
+
+    return allSDGs.filter((sdg) => sdg.sdgId && !pendingSDGIds.has(sdg.sdgId));
+  });
+
+  // Check if SDG configuration is complete and ready to add
+  readonly isSDGConfigurationComplete = computed(() => {
+    // Must have an SDG selected (use signal or current value)
+    const currentSdg = this.sdgControlValue() || this.sdgControl.value;
+    if (!currentSdg) {
+      return false;
+    }
+
+    // If skip targets is checked, configuration is complete (use signal or current value)
+    const skipTargets =
+      this.skipTargetsControlValue() || this.skipTargetsControl.value;
+    if (skipTargets) {
+      return true;
+    }
+
+    // Otherwise, at least one target must be selected
+    const selectedTargetsMap = this.selectedTargets();
+    return selectedTargetsMap.size > 0;
+  });
 
   constructor() {
     // Set up change detection on form controls
@@ -192,25 +273,27 @@ export class OpportunityWhySectionComponent implements OnInit {
     const countries = this.opportunity().countries || [];
     const opp = this.opportunity();
     const existingUNCFOutcomes = opp.uncfOutcomes || [];
-    
-    return countries.filter(c => {
+
+    return countries.filter((c) => {
       // Show country if it has active UNCF Metadata
       if (c.country?.hasActiveUNCF) {
         return true;
       }
-      
+
       // Also show country if it has existing OpportunityUNCFOutcomes
-      const hasExistingOutcomes = existingUNCFOutcomes.some(uo => uo.opportunityCountryId === c.id);
+      const hasExistingOutcomes = existingUNCFOutcomes.some(
+        (uo) => uo.opportunityCountryId === c.id,
+      );
       return hasExistingOutcomes;
     });
   });
-  
+
   // UNCF outcomes grouped by country
   uncfOutcomesByCountry = signal<Map<number, UNCFOutcome[]>>(new Map());
-  
+
   // Available UNCF indicators for selected outcomes
   availableUNCFIndicators = signal<Map<number, UNCFIndicator[]>>(new Map());
-  
+
   // Loading states for UNCF
   loadingUNCFOutcomes = signal<boolean>(false);
   loadingUNCFIndicatorsForOutcome = signal<Set<number>>(new Set());
@@ -222,10 +305,10 @@ export class OpportunityWhySectionComponent implements OnInit {
   loadingUNCFOutcomesForDialog = signal<boolean>(false);
   isEditingUNCFCountry = signal<boolean>(false);
   editingUNCFCountryIndex = signal<number | null>(null);
-  
+
   // Selected outcomes and indicators for the current country being added/edited
-  selectedUNCFOutcomes = signal<Map<number, Set<number>>>(new Map());  // Map<outcomeId, Set<indicatorIds>>
-  
+  selectedUNCFOutcomes = signal<Map<number, Set<number>>>(new Map()); // Map<outcomeId, Set<indicatorIds>>
+
   // Track which outcomes are currently loading indicators
   loadingIndicatorsForUNCFOutcomes = signal<Set<number>>(new Set());
   showUNCFValidationError = signal<boolean>(false);
@@ -235,84 +318,86 @@ export class OpportunityWhySectionComponent implements OnInit {
     const opp = this.opportunity();
     return opp.uncfOutcomes?.length || 0;
   });
-  
+
   // Computed property for countries with humanitarian framework
   readonly countriesWithFramework = computed(() => {
     const countries = this.opportunity().countries || [];
-    return countries.filter(c => c.hasHumanitarianFramework);
+    return countries.filter((c) => c.hasHumanitarianFramework);
   });
-  
+
   // Computed property for countries without humanitarian framework
   readonly countriesWithoutFramework = computed(() => {
     const countries = this.opportunity().countries || [];
-    return countries.filter(c => !c.hasHumanitarianFramework && c.country);
+    return countries.filter((c) => !c.hasHumanitarianFramework && c.country);
   });
-  
+
   // Computed property for countries with NDC
   readonly countriesWithNdc = computed(() => {
     const countries = this.opportunity().countries || [];
-    return countries.filter(c => c.hasNdc);
+    return countries.filter((c) => c.hasNdc);
   });
-  
+
   // Computed property for countries without NDC
   readonly countriesWithoutNdc = computed(() => {
     const countries = this.opportunity().countries || [];
-    return countries.filter(c => !c.hasNdc && c.country);
+    return countries.filter((c) => !c.hasNdc && c.country);
   });
-  
+
   // Computed property for countries with NAP
   readonly countriesWithNap = computed(() => {
     const countries = this.opportunity().countries || [];
-    return countries.filter(c => c.hasNap);
+    return countries.filter((c) => c.hasNap);
   });
-  
+
   // Computed property for countries without NAP
   readonly countriesWithoutNap = computed(() => {
     const countries = this.opportunity().countries || [];
-    return countries.filter(c => !c.hasNap && c.country);
+    return countries.filter((c) => !c.hasNap && c.country);
   });
-  
+
   // Computed property for countries with Organization Unit Strategy
   readonly countriesWithOrgUnitStrategy = computed(() => {
     const countries = this.opportunity().countries || [];
-    return countries.filter(c => c.hasOrgUnitStrategy);
+    return countries.filter((c) => c.hasOrgUnitStrategy);
   });
-  
+
   // Computed property for countries without Organization Unit Strategy
   readonly countriesWithoutOrgUnitStrategy = computed(() => {
     const countries = this.opportunity().countries || [];
-    return countries.filter(c => !c.hasOrgUnitStrategy && c.country);
+    return countries.filter((c) => !c.hasOrgUnitStrategy && c.country);
   });
 
   ngOnInit(): void {
     // Load SDGs on initialization
     this.loadSDGs();
-    
+
     // Load UNOPS Missions
     this.loadUNOPSMissions();
-    
+
     // Load UNCF outcomes for countries with active UNSDCF
     this.loadUNCFOutcomesForCountries();
-    
+
     // Watch for changes to beneficiariesToBeDetermined checkbox
-    this.beneficiariesToBeDeterminedControl.valueChanges.subscribe((toBeDetermined) => {
-      if (toBeDetermined) {
-        // Clear and disable the number fields when "to be determined" is checked
-        this.estimatedDirectBeneficiariesControl.setValue(null);
-        this.estimatedIndirectBeneficiariesControl.setValue(null);
-        this.estimatedDirectBeneficiariesControl.disable();
-        this.estimatedIndirectBeneficiariesControl.disable();
-      } else {
-        // Enable the number fields when "to be determined" is unchecked
-        this.estimatedDirectBeneficiariesControl.enable();
-        this.estimatedIndirectBeneficiariesControl.enable();
-      }
-      // Only mark as changed if we're in edit mode (prevents false positives during initialization)
-      if (this.isEditing()) {
-        this.markAsChanged();
-      }
-      this.cdr.detectChanges();
-    });
+    this.beneficiariesToBeDeterminedControl.valueChanges.subscribe(
+      (toBeDetermined) => {
+        if (toBeDetermined) {
+          // Clear and disable the number fields when "to be determined" is checked
+          this.estimatedDirectBeneficiariesControl.setValue(null);
+          this.estimatedIndirectBeneficiariesControl.setValue(null);
+          this.estimatedDirectBeneficiariesControl.disable();
+          this.estimatedIndirectBeneficiariesControl.disable();
+        } else {
+          // Enable the number fields when "to be determined" is unchecked
+          this.estimatedDirectBeneficiariesControl.enable();
+          this.estimatedIndirectBeneficiariesControl.enable();
+        }
+        // Only mark as changed if we're in edit mode (prevents false positives during initialization)
+        if (this.isEditing()) {
+          this.markAsChanged();
+        }
+        this.cdr.detectChanges();
+      },
+    );
 
     // Watch for changes to beneficiary number controls
     this.estimatedDirectBeneficiariesControl.valueChanges.subscribe(() => {
@@ -328,72 +413,80 @@ export class OpportunityWhySectionComponent implements OnInit {
         this.markAsChanged();
       }
     });
-    
+
     // Watch for changes to skipTargetsControl
     this.skipTargetsControl.valueChanges.subscribe((skipValue) => {
       // If user unchecks the skip option, load targets for the current SDG
       if (!skipValue && this.sdgControl.value) {
         const currentSDG = this.sdgControl.value;
         if (currentSDG.sdgId) {
-          console.log('Skip checkbox unchecked, loading targets for SDG:', currentSDG.sdgId);
+          console.log(
+            'Skip checkbox unchecked, loading targets for SDG:',
+            currentSDG.sdgId,
+          );
           this.loadingTargets.set(true);
           this.valuesService.getSDGTargets(currentSDG.sdgId).subscribe({
             next: (targets) => {
               console.log('Loaded targets for SDG:', currentSDG.sdgId, targets);
               this.loadingTargets.set(false);
               this.availableTargets.set(targets);
-              
+
               // If editing an existing SDG with targets, pre-select them
               if (this.isEditingSDG()) {
                 const index = this.editingSDGIndex();
                 if (index !== null) {
                   const opp = this.opportunity();
                   const sdg = opp.sdGs?.[index];
-                  
+
                   if (sdg?.targets && sdg.targets.length > 0) {
                     const selectedTargetsMap = new Map<number, Set<number>>();
-                    
+
                     // Load all indicators for the targets
-                    const indicatorRequests = sdg.targets.map(target => 
-                      this.valuesService.getSDGIndicators(target.sdgTargetId)
+                    const indicatorRequests = sdg.targets.map((target) =>
+                      this.valuesService.getSDGIndicators(target.sdgTargetId),
                     );
-                    
+
                     if (indicatorRequests.length > 0) {
-                      import('rxjs').then(rxjs => {
+                      import('rxjs').then((rxjs) => {
                         rxjs.forkJoin(indicatorRequests).subscribe({
                           next: (allIndicators) => {
                             const flatIndicators = allIndicators.flat();
                             this.availableIndicators.set(flatIndicators);
-                            
+
                             // Pre-select targets and indicators
-                            sdg.targets!.forEach(target => {
+                            sdg.targets!.forEach((target) => {
                               const indicatorIds = new Set<number>();
-                              target.indicators?.forEach(indicator => {
-                                indicatorIds.add(indicator.sdgIndicatorDatabaseId);
+                              target.indicators?.forEach((indicator) => {
+                                indicatorIds.add(
+                                  indicator.sdgIndicatorDatabaseId,
+                                );
                               });
-                              selectedTargetsMap.set(target.sdgTargetDatabaseId, indicatorIds);
+                              selectedTargetsMap.set(
+                                target.sdgTargetDatabaseId,
+                                indicatorIds,
+                              );
                             });
-                            
+
                             this.selectedTargets.set(selectedTargetsMap);
                             this.cdr.detectChanges();
                           },
                           error: (error) => {
                             console.error('Error loading indicators:', error);
-                          }
+                          },
                         });
                       });
                     }
                   }
                 }
               }
-              
+
               this.cdr.detectChanges();
             },
             error: (error) => {
               console.error('Error loading SDG targets:', error);
               this.loadingTargets.set(false);
               this.availableTargets.set([]);
-            }
+            },
           });
         }
       } else if (skipValue) {
@@ -413,7 +506,7 @@ export class OpportunityWhySectionComponent implements OnInit {
       next: (data) => {
         this.sdgs.set(data);
         this.cdr.detectChanges();
-      }
+      },
     });
   }
 
@@ -424,16 +517,18 @@ export class OpportunityWhySectionComponent implements OnInit {
     this.valuesService.getUNOPSMissions().subscribe({
       next: (data) => {
         this.unopsMissions.set(data);
-        
+
         // Initialize selected missions from opportunity
         const opp = this.opportunity();
         if (opp.unopsMissions) {
-          const selectedIds = new Set(opp.unopsMissions.map(m => m.unopsMissionId));
+          const selectedIds = new Set(
+            opp.unopsMissions.map((m) => m.unopsMissionId),
+          );
           this.selectedUNOPSMissions.set(selectedIds);
         }
-        
+
         this.cdr.detectChanges();
-      }
+      },
     });
   }
 
@@ -472,8 +567,8 @@ export class OpportunityWhySectionComponent implements OnInit {
   displayedUNOPSMissions = computed(() => {
     const selectedIds = this.selectedUNOPSMissions();
     const allMissions = this.unopsMissions();
-    
-    return allMissions.filter(mission => selectedIds.has(mission.id));
+
+    return allMissions.filter((mission) => selectedIds.has(mission.id));
   });
 
   /**
@@ -510,7 +605,9 @@ export class OpportunityWhySectionComponent implements OnInit {
     // Reset selections to current opportunity's missions
     const opp = this.opportunity();
     if (opp.unopsMissions) {
-      const selectedIds = new Set(opp.unopsMissions.map(m => m.unopsMissionId));
+      const selectedIds = new Set(
+        opp.unopsMissions.map((m) => m.unopsMissionId),
+      );
       this.selectedUNOPSMissions.set(selectedIds);
     } else {
       this.selectedUNOPSMissions.set(new Set());
@@ -524,23 +621,31 @@ export class OpportunityWhySectionComponent implements OnInit {
    */
   startEditing(): void {
     const opp = this.opportunity();
-    
+
     // Backup original data for cancel
     this.originalData = {
       strategicAlignment: opp.strategicAlignment ?? null,
       expectedBeneficiaries: opp.expectedBeneficiaries ?? null,
       intendedImpactOutcomes: opp.intendedImpactOutcomes ?? null,
       challenges: opp.challenges ?? null,
-      sdGs: opp.sdGs ? [...opp.sdGs] : []
+      sdGs: opp.sdGs ? [...opp.sdGs] : [],
     };
-    
+
     // Set form controls
     this.strategicAlignmentControl.setValue(opp.strategicAlignment ?? null);
-    this.expectedBeneficiariesControl.setValue(opp.expectedBeneficiaries ?? null);
-    this.estimatedDirectBeneficiariesControl.setValue(opp.estimatedDirectBeneficiaries ?? null);
-    this.estimatedIndirectBeneficiariesControl.setValue(opp.estimatedIndirectBeneficiaries ?? null);
-    this.beneficiariesToBeDeterminedControl.setValue(opp.beneficiariesToBeDetermined ?? false);
-    
+    this.expectedBeneficiariesControl.setValue(
+      opp.expectedBeneficiaries ?? null,
+    );
+    this.estimatedDirectBeneficiariesControl.setValue(
+      opp.estimatedDirectBeneficiaries ?? null,
+    );
+    this.estimatedIndirectBeneficiariesControl.setValue(
+      opp.estimatedIndirectBeneficiaries ?? null,
+    );
+    this.beneficiariesToBeDeterminedControl.setValue(
+      opp.beneficiariesToBeDetermined ?? false,
+    );
+
     // If beneficiariesToBeDetermined is true, disable the number fields
     if (opp.beneficiariesToBeDetermined) {
       this.estimatedDirectBeneficiariesControl.disable();
@@ -549,31 +654,39 @@ export class OpportunityWhySectionComponent implements OnInit {
       this.estimatedDirectBeneficiariesControl.enable();
       this.estimatedIndirectBeneficiariesControl.enable();
     }
-    
+
     this.expectedOutcomesControl.setValue(opp.intendedImpactOutcomes ?? null);
     this.challengesControl.setValue(opp.challenges ?? null);
-    
+
     // Initialize climate and framework alignments from countries
     const frameworkAlignments = new Map<number, boolean | null>();
     const ndcAlignments = new Map<number, boolean | null>();
     const napAlignments = new Map<number, boolean | null>();
     const orgUnitStrategyAlignments = new Map<number, boolean | null>();
-    
-    opp.countries?.forEach(country => {
-      frameworkAlignments.set(country.countryId, country.humanitarianFrameworkAlignment ?? null);
+
+    opp.countries?.forEach((country) => {
+      frameworkAlignments.set(
+        country.countryId,
+        country.humanitarianFrameworkAlignment ?? null,
+      );
       ndcAlignments.set(country.countryId, country.ndcAlignment ?? null);
       napAlignments.set(country.countryId, country.napAlignment ?? null);
-      orgUnitStrategyAlignments.set(country.countryId, country.orgUnitStrategyAlignment ?? null);
+      orgUnitStrategyAlignments.set(
+        country.countryId,
+        country.orgUnitStrategyAlignment ?? null,
+      );
     });
-    
+
     this.humanitarianFrameworkAlignments.set(frameworkAlignments);
     this.ndcAlignments.set(ndcAlignments);
     this.napAlignments.set(napAlignments);
     this.orgUnitStrategyAlignments.set(orgUnitStrategyAlignments);
-    
+
     // Initialize selected UNOPS Missions
     if (opp.unopsMissions) {
-      const selectedIds = new Set(opp.unopsMissions.map(m => m.unopsMissionId));
+      const selectedIds = new Set(
+        opp.unopsMissions.map((m) => m.unopsMissionId),
+      );
       this.selectedUNOPSMissions.set(selectedIds);
     }
 
@@ -601,82 +714,104 @@ export class OpportunityWhySectionComponent implements OnInit {
 
     const whyData = {
       strategicAlignment: this.strategicAlignmentControl.value ?? undefined,
-      expectedBeneficiaries: this.expectedBeneficiariesControl.value ?? undefined,
-      estimatedDirectBeneficiaries: this.estimatedDirectBeneficiariesControl.value ?? undefined,
-      estimatedIndirectBeneficiaries: this.estimatedIndirectBeneficiariesControl.value ?? undefined,
-      beneficiariesToBeDetermined: this.beneficiariesToBeDeterminedControl.value ?? false,
+      expectedBeneficiaries:
+        this.expectedBeneficiariesControl.value ?? undefined,
+      estimatedDirectBeneficiaries:
+        this.estimatedDirectBeneficiariesControl.value ?? undefined,
+      estimatedIndirectBeneficiaries:
+        this.estimatedIndirectBeneficiariesControl.value ?? undefined,
+      beneficiariesToBeDetermined:
+        this.beneficiariesToBeDeterminedControl.value ?? false,
       intendedImpactOutcomes: this.expectedOutcomesControl.value ?? undefined,
       challenges: this.challengesControl.value ?? undefined,
-      sdGs: opp.sdGs?.map(sdg => ({
-        sdgId: sdg.sdgDatabaseId || 0,  // Use the integer database ID
+      sdGs: opp.sdGs?.map((sdg) => ({
+        sdgId: sdg.sdgDatabaseId || 0, // Use the integer database ID
         isPrimary: sdg.isPrimary,
         skipTargetsAndIndicators: sdg.skipTargetsAndIndicators,
         notes: sdg.notes,
-        targets: sdg.skipTargetsAndIndicators ? [] : (sdg.targets?.map(target => ({
-          sdgTargetDatabaseId: target.sdgTargetDatabaseId,  // Correct property name for backend
-          notes: target.notes,
-          sdgIndicatorDatabaseIds: target.indicators?.map(indicator => indicator.sdgIndicatorDatabaseId) || []  // Flat array of indicator IDs
-        })) || [])
+        targets: sdg.skipTargetsAndIndicators
+          ? []
+          : sdg.targets?.map((target) => ({
+              sdgTargetDatabaseId: target.sdgTargetDatabaseId, // Correct property name for backend
+              notes: target.notes,
+              sdgIndicatorDatabaseIds:
+                target.indicators?.map(
+                  (indicator) => indicator.sdgIndicatorDatabaseId,
+                ) || [], // Flat array of indicator IDs
+            })) || [],
       })),
-      uncfOutcomes: opp.uncfOutcomes?.map(uncfOutcome => ({
+      uncfOutcomes: opp.uncfOutcomes?.map((uncfOutcome) => ({
         opportunityCountryId: uncfOutcome.opportunityCountryId,
-        uncfOutcomeId: uncfOutcome.uncfOutcomeId,  // Use the integer database ID
+        uncfOutcomeId: uncfOutcome.uncfOutcomeId, // Use the integer database ID
         notes: uncfOutcome.notes,
-        uncfIndicatorIds: uncfOutcome.indicators?.map(indicator => indicator.uncfIndicatorId) || []  // Flat array of indicator IDs
+        uncfIndicatorIds:
+          uncfOutcome.indicators?.map(
+            (indicator) => indicator.uncfIndicatorId,
+          ) || [], // Flat array of indicator IDs
       })),
-      unopsMissions: Array.from(this.selectedUNOPSMissions()).map(missionId => ({
-        unopsMissionId: missionId
-      }))
+      unopsMissions: Array.from(this.selectedUNOPSMissions()).map(
+        (missionId) => ({
+          unopsMissionId: missionId,
+        }),
+      ),
     };
-    
+
     // Prepare WHERE data with updated framework alignments
     // Framework alignments are displayed in WHY section but are properties of OpportunityCountry
     const whereData = {
-      countries: opp.countries?.map(country => ({
-        countryId: country.countryId,
-        specificAreas: country.specificAreas,
-        humanitarianFrameworkAlignment: this.humanitarianFrameworkAlignments().get(country.countryId) ?? null,
-        ndcAlignment: this.ndcAlignments().get(country.countryId) ?? null,
-        napAlignment: this.napAlignments().get(country.countryId) ?? null,
-        orgUnitStrategyAlignment: this.orgUnitStrategyAlignments().get(country.countryId) ?? null
-      })) || []
+      countries:
+        opp.countries?.map((country) => ({
+          countryId: country.countryId,
+          specificAreas: country.specificAreas,
+          humanitarianFrameworkAlignment:
+            this.humanitarianFrameworkAlignments().get(country.countryId) ??
+            null,
+          ndcAlignment: this.ndcAlignments().get(country.countryId) ?? null,
+          napAlignment: this.napAlignments().get(country.countryId) ?? null,
+          orgUnitStrategyAlignment:
+            this.orgUnitStrategyAlignments().get(country.countryId) ?? null,
+        })) || [],
     };
 
     this.isSaving.set(true);
-    
+
     // Update WHY section first, then WHERE section for framework alignments
     this.opportunityService.updateOpportunityWhy(opp.id, whyData).subscribe({
       next: (updatedAfterWhy: Opportunity) => {
         // Now update WHERE section with framework alignments
-        this.opportunityService.updateOpportunityWhere(opp.id, whereData).subscribe({
-          next: (fullUpdatedOpportunity: Opportunity) => {
-            this.isSaving.set(false);
-            this.isEditing.set(false);
-            this.hasUnsavedChanges = false;
-            this.originalData = null;
-            
-            // Emit full updated opportunity to parent
-            this.opportunityUpdated.emit(fullUpdatedOpportunity);
-            
-            // Clear unsaved changes tracking
-            this.changesSavedOrDiscarded.emit();
-            
-            this.feedbackService.showSuccessToast({
-              detail: this.translateService.instant('message.opportunity.updatedSuccessfully'),
-              summary: this.translateService.instant('message.success')
-            });
-            this.cdr.detectChanges();
-          },
-          error: () => {
-            this.isSaving.set(false);
-            this.cdr.detectChanges();
-          }
-        });
+        this.opportunityService
+          .updateOpportunityWhere(opp.id, whereData)
+          .subscribe({
+            next: (fullUpdatedOpportunity: Opportunity) => {
+              this.isSaving.set(false);
+              this.isEditing.set(false);
+              this.hasUnsavedChanges = false;
+              this.originalData = null;
+
+              // Emit full updated opportunity to parent
+              this.opportunityUpdated.emit(fullUpdatedOpportunity);
+
+              // Clear unsaved changes tracking
+              this.changesSavedOrDiscarded.emit();
+
+              this.feedbackService.showSuccessToast({
+                detail: this.translateService.instant(
+                  'message.opportunity.updatedSuccessfully',
+                ),
+                summary: this.translateService.instant('message.success'),
+              });
+              this.cdr.detectChanges();
+            },
+            error: () => {
+              this.isSaving.set(false);
+              this.cdr.detectChanges();
+            },
+          });
       },
       error: () => {
         this.isSaving.set(false);
         this.cdr.detectChanges();
-      }
+      },
     });
   }
 
@@ -685,93 +820,130 @@ export class OpportunityWhySectionComponent implements OnInit {
    */
   cancelEditing(): void {
     const opp = this.opportunity();
-    
+
     // Restore original data if available
     if (this.originalData) {
       // Reset form controls to original values
-      this.strategicAlignmentControl.setValue(this.originalData.strategicAlignment ?? null);
-      this.expectedBeneficiariesControl.setValue(this.originalData.expectedBeneficiaries ?? null);
-      this.expectedOutcomesControl.setValue(this.originalData.intendedImpactOutcomes ?? null);
+      this.strategicAlignmentControl.setValue(
+        this.originalData.strategicAlignment ?? null,
+      );
+      this.expectedBeneficiariesControl.setValue(
+        this.originalData.expectedBeneficiaries ?? null,
+      );
+      this.expectedOutcomesControl.setValue(
+        this.originalData.intendedImpactOutcomes ?? null,
+      );
       this.challengesControl.setValue(this.originalData.challenges ?? null);
-      
+
       // Restore original SDGs (reverts any SDGs that were added but not saved)
       const updatedOpportunity = {
         ...opp,
         strategicAlignment: this.originalData.strategicAlignment ?? null,
         expectedBeneficiaries: this.originalData.expectedBeneficiaries ?? null,
-        intendedImpactOutcomes: this.originalData.intendedImpactOutcomes ?? null,
+        intendedImpactOutcomes:
+          this.originalData.intendedImpactOutcomes ?? null,
         challenges: this.originalData.challenges ?? null,
-        sdGs: this.originalData.sdGs ? [...this.originalData.sdGs] : []
+        sdGs: this.originalData.sdGs ? [...this.originalData.sdGs] : [],
       };
-      
+
       // Emit the reverted opportunity to parent
       this.opportunityUpdated.emit(updatedOpportunity);
     } else {
       // Fallback: just reset form controls to current opportunity values
       this.strategicAlignmentControl.setValue(opp.strategicAlignment ?? null);
-      this.expectedBeneficiariesControl.setValue(opp.expectedBeneficiaries ?? null);
+      this.expectedBeneficiariesControl.setValue(
+        opp.expectedBeneficiaries ?? null,
+      );
       this.expectedOutcomesControl.setValue(opp.intendedImpactOutcomes ?? null);
       this.challengesControl.setValue(opp.challenges ?? null);
     }
 
-    this.estimatedDirectBeneficiariesControl.setValue(opp.estimatedDirectBeneficiaries ?? null);
-    this.estimatedIndirectBeneficiariesControl.setValue(opp.estimatedIndirectBeneficiaries ?? null);
-    this.beneficiariesToBeDeterminedControl.setValue(opp.beneficiariesToBeDetermined ?? false);
+    this.estimatedDirectBeneficiariesControl.setValue(
+      opp.estimatedDirectBeneficiaries ?? null,
+    );
+    this.estimatedIndirectBeneficiariesControl.setValue(
+      opp.estimatedIndirectBeneficiaries ?? null,
+    );
+    this.beneficiariesToBeDeterminedControl.setValue(
+      opp.beneficiariesToBeDetermined ?? false,
+    );
 
     // Reset disabled state based on original value
     if (opp.beneficiariesToBeDetermined) {
-        this.estimatedDirectBeneficiariesControl.disable();
-        this.estimatedIndirectBeneficiariesControl.disable();
+      this.estimatedDirectBeneficiariesControl.disable();
+      this.estimatedIndirectBeneficiariesControl.disable();
     } else {
-        this.estimatedDirectBeneficiariesControl.enable();
-        this.estimatedIndirectBeneficiariesControl.enable();
+      this.estimatedDirectBeneficiariesControl.enable();
+      this.estimatedIndirectBeneficiariesControl.enable();
     }
-    
+
     this.isEditing.set(false);
     this.originalData = null;
     this.hasUnsavedChanges = false;
-    
+
     // Clear unsaved changes tracking
     this.changesSavedOrDiscarded.emit();
-    
+
     // Reset climate and framework alignments to original values
     const frameworkAlignments = new Map<number, boolean | null>();
     const ndcAlignments = new Map<number, boolean | null>();
     const napAlignments = new Map<number, boolean | null>();
     const orgUnitStrategyAlignments = new Map<number, boolean | null>();
-    
-    opp.countries?.forEach(country => {
-      frameworkAlignments.set(country.countryId, country.humanitarianFrameworkAlignment ?? null);
+
+    opp.countries?.forEach((country) => {
+      frameworkAlignments.set(
+        country.countryId,
+        country.humanitarianFrameworkAlignment ?? null,
+      );
       ndcAlignments.set(country.countryId, country.ndcAlignment ?? null);
       napAlignments.set(country.countryId, country.napAlignment ?? null);
-      orgUnitStrategyAlignments.set(country.countryId, country.orgUnitStrategyAlignment ?? null);
+      orgUnitStrategyAlignments.set(
+        country.countryId,
+        country.orgUnitStrategyAlignment ?? null,
+      );
     });
-    
+
     this.humanitarianFrameworkAlignments.set(frameworkAlignments);
     this.ndcAlignments.set(ndcAlignments);
     this.napAlignments.set(napAlignments);
     this.orgUnitStrategyAlignments.set(orgUnitStrategyAlignments);
-    
+
     // Reset UNOPS Missions to original values
     if (opp.unopsMissions) {
-      const selectedIds = new Set(opp.unopsMissions.map(m => m.unopsMissionId));
+      const selectedIds = new Set(
+        opp.unopsMissions.map((m) => m.unopsMissionId),
+      );
       this.selectedUNOPSMissions.set(selectedIds);
     } else {
       this.selectedUNOPSMissions.set(new Set());
     }
-    
+
     this.cdr.detectChanges();
   }
 
   /**
-   * @description Open SDG dialog for adding new SDG
+   * @description Open SDG dialog for adding new SDG(s)
+   * Pre-loads existing SDGs into pending selections for editing
    */
   openSDGDialog(): void {
     this.isEditingSDG.set(false);
     this.editingSDGIndex.set(null);
+    this.editingFromPending.set(false);
+    this.editingPendingIndex.set(null);
     this.sdgControl.setValue(null);
     this.isPrimaryControl.setValue(false);
+    this.skipTargetsControl.setValue(false);
     this.showValidationError.set(false);
+
+    // Pre-load existing SDGs from opportunity into pending selections
+    const opp = this.opportunity();
+    const existingSDGs = opp.sdGs ? [...opp.sdGs] : [];
+    this.pendingSDGSelections.set(existingSDGs);
+
+    this.selectedTargets.set(new Map());
+    this.availableTargets.set([]);
+    this.availableIndicators.set([]);
+    this.loadingIndicatorsForTargets.set(new Set());
     this.showSDGDialog.set(true);
     this.cdr.detectChanges();
   }
@@ -793,7 +965,7 @@ export class OpportunityWhySectionComponent implements OnInit {
           console.error('Error loading SDG targets:', error);
           this.loadingTargets.set(false);
           this.availableTargets.set([]);
-        }
+        },
       });
     } else {
       this.availableTargets.set([]);
@@ -813,6 +985,9 @@ export class OpportunityWhySectionComponent implements OnInit {
     this.showValidationError.set(false);
     this.isEditingSDG.set(false);
     this.editingSDGIndex.set(null);
+    this.editingFromPending.set(false);
+    this.editingPendingIndex.set(null);
+    this.pendingSDGSelections.set([]);
     this.availableTargets.set([]);
     this.availableIndicators.set([]);
     this.selectedTargets.set(new Map());
@@ -824,7 +999,7 @@ export class OpportunityWhySectionComponent implements OnInit {
    * @description Get SDG logo URL by SDG ID
    */
   getSDGLogo(sdgId: string): string | null {
-    const sdg = this.sdgs().find(s => s.sdgId === sdgId);
+    const sdg = this.sdgs().find((s) => s.sdgId === sdgId);
     return sdg?.sdgLogo || null;
   }
 
@@ -833,7 +1008,7 @@ export class OpportunityWhySectionComponent implements OnInit {
    */
   toggleTarget(target: SDGTarget): void {
     const currentSelection = new Map(this.selectedTargets());
-    
+
     if (currentSelection.has(target.id)) {
       // Remove target and its indicators
       currentSelection.delete(target.id);
@@ -843,42 +1018,61 @@ export class OpportunityWhySectionComponent implements OnInit {
       // Add target with empty indicator set
       currentSelection.set(target.id, new Set());
       this.selectedTargets.set(currentSelection);
-      
+
       // Mark this target as loading
       const loadingSet = new Set(this.loadingIndicatorsForTargets());
       loadingSet.add(target.id);
       this.loadingIndicatorsForTargets.set(loadingSet);
-      
+
       // Load indicators for this target
       console.log('🔍 Loading indicators for target:', target.sdgTargetId);
-      console.log('📡 API URL:', `/api/values/sdg-indicators?targetId=${target.sdgTargetId}`);
-      
+      console.log(
+        '📡 API URL:',
+        `/api/values/sdg-indicators?targetId=${target.sdgTargetId}`,
+      );
+
       this.valuesService.getSDGIndicators(target.sdgTargetId).subscribe({
         next: (indicators) => {
           // Remove from loading set
           const loadingSet = new Set(this.loadingIndicatorsForTargets());
           loadingSet.delete(target.id);
           this.loadingIndicatorsForTargets.set(loadingSet);
-          
+
           console.log('✅ Loaded indicators:', indicators);
-          console.log('📊 Indicator count:', indicators.length, 'for target:', target.sdgTargetId);
-          
+          console.log(
+            '📊 Indicator count:',
+            indicators.length,
+            'for target:',
+            target.sdgTargetId,
+          );
+
           if (indicators.length === 0) {
-            console.warn('⚠️ No indicators found for target:', target.sdgTargetId);
+            console.warn(
+              '⚠️ No indicators found for target:',
+              target.sdgTargetId,
+            );
             console.warn('⚠️ This could mean:');
-            console.warn('   1. The SDGIndicators table does not exist (migration not run)');
+            console.warn(
+              '   1. The SDGIndicators table does not exist (migration not run)',
+            );
             console.warn('   2. The SDGIndicatorSeeder has not been run');
-            console.warn('   3. No indicators exist for this target in the database');
+            console.warn(
+              '   3. No indicators exist for this target in the database',
+            );
           }
-          
+
           // Store or update available indicators (append to existing)
           const current = this.availableIndicators();
           const combined = [...current, ...indicators];
           // Remove duplicates
-          const unique = combined.filter((indicator, index, self) => 
-            index === self.findIndex(i => i.id === indicator.id)
+          const unique = combined.filter(
+            (indicator, index, self) =>
+              index === self.findIndex((i) => i.id === indicator.id),
           );
-          console.log('📈 Total available indicators after loading:', unique.length);
+          console.log(
+            '📈 Total available indicators after loading:',
+            unique.length,
+          );
           this.availableIndicators.set(unique);
           this.cdr.detectChanges();
         },
@@ -887,28 +1081,37 @@ export class OpportunityWhySectionComponent implements OnInit {
           const loadingSet = new Set(this.loadingIndicatorsForTargets());
           loadingSet.delete(target.id);
           this.loadingIndicatorsForTargets.set(loadingSet);
-          
-          console.error('❌ Error loading SDG indicators for target', target.sdgTargetId);
+
+          console.error(
+            '❌ Error loading SDG indicators for target',
+            target.sdgTargetId,
+          );
           console.error('Error details:', error);
           console.error('Status:', error.status);
           console.error('Message:', error.message);
-          
+
           if (error.status === 404) {
-            console.error('🔴 404 Error - API endpoint not found. Check if the backend is running.');
+            console.error(
+              '🔴 404 Error - API endpoint not found. Check if the backend is running.',
+            );
           } else if (error.status === 500) {
-            console.error('🔴 500 Error - Server error. Check if the SDGIndicators table exists in the database.');
+            console.error(
+              '🔴 500 Error - Server error. Check if the SDGIndicators table exists in the database.',
+            );
           } else if (error.status === 0) {
-            console.error('🔴 Network Error - Cannot reach the backend. Check if the backend is running.');
+            console.error(
+              '🔴 Network Error - Cannot reach the backend. Check if the backend is running.',
+            );
           }
-          
+
           // Show error feedback to user
           this.feedbackService.showErrorToast({
             summary: 'Error Loading Indicators',
-            detail: `Failed to load indicators for target ${target.sdgTargetId}. Please check the console for details.`
+            detail: `Failed to load indicators for target ${target.sdgTargetId}. Please check the console for details.`,
           });
-          
+
           this.cdr.detectChanges();
-        }
+        },
       });
     }
   }
@@ -918,7 +1121,7 @@ export class OpportunityWhySectionComponent implements OnInit {
    */
   toggleIndicator(targetId: number, indicatorId: number): void {
     const currentSelection = new Map(this.selectedTargets());
-    
+
     if (currentSelection.has(targetId)) {
       const indicators = currentSelection.get(targetId)!;
       if (indicators.has(indicatorId)) {
@@ -928,7 +1131,7 @@ export class OpportunityWhySectionComponent implements OnInit {
       }
       currentSelection.set(targetId, indicators);
     }
-    
+
     this.selectedTargets.set(currentSelection);
     this.cdr.detectChanges();
   }
@@ -959,13 +1162,13 @@ export class OpportunityWhySectionComponent implements OnInit {
    * @description Get indicators for a specific target
    */
   getIndicatorsForTarget(targetId: string): SDGIndicator[] {
-    return this.availableIndicators().filter(i => i.sdgTargetId === targetId);
+    return this.availableIndicators().filter((i) => i.sdgTargetId === targetId);
   }
 
   /**
-   * @description Add SDG to the list
+   * @description Add configured SDG to pending selections
    */
-  addSDG(): void {
+  addSDGToPendingSelection(): void {
     const sdg = this.sdgControl.value;
     const isPrimary = this.isPrimaryControl.value || false;
     const skipTargets = this.skipTargetsControl.value || false;
@@ -976,96 +1179,113 @@ export class OpportunityWhySectionComponent implements OnInit {
       return;
     }
 
+    const currentPending = [...this.pendingSDGSelections()];
     const opp = this.opportunity();
-    const currentSDGs = [...(opp.sdGs || [])];
 
-    // Check if already exists
-    if (currentSDGs.some(s => s.sdgId === sdg.sdgId)) {
+    // Check if already in pending selections (includes both existing and newly added)
+    if (currentPending.some((s) => s.sdgId === sdg.sdgId)) {
       this.feedbackService.showErrorToast({
-        detail: this.translateService.instant('message.opportunity.sdgAlreadyAdded'),
-        summary: this.translateService.instant('message.error')
+        detail: this.translateService.instant(
+          'message.opportunity.sdgAlreadyInSelection',
+        ),
+        summary: this.translateService.instant('message.error'),
       });
       return;
     }
 
-    // If setting as primary, remove primary from others
+    // If setting as primary, remove primary from others in pending
     if (isPrimary) {
-      currentSDGs.forEach(s => s.isPrimary = false);
+      currentPending.forEach((s) => (s.isPrimary = false));
     }
 
     // Build targets array from selected targets and indicators (only if not skipped)
     const targets: OpportunitySDGTarget[] = [];
     const selectedTargetsMap = skipTargets ? new Map() : this.selectedTargets();
-    
-    for (const [targetDatabaseId, indicatorIds] of selectedTargetsMap.entries()) {
-      const targetInfo = this.availableTargets().find(t => t.id === targetDatabaseId);
+
+    for (const [
+      targetDatabaseId,
+      indicatorIds,
+    ] of selectedTargetsMap.entries()) {
+      const targetInfo = this.availableTargets().find(
+        (t) => t.id === targetDatabaseId,
+      );
       if (targetInfo) {
         const indicators: OpportunitySDGIndicator[] = [];
-        
+
         // Add selected indicators for this target
         for (const indicatorId of indicatorIds) {
-          const indicatorInfo = this.availableIndicators().find(i => i.id === indicatorId);
+          const indicatorInfo = this.availableIndicators().find(
+            (i) => i.id === indicatorId,
+          );
           if (indicatorInfo) {
             indicators.push({
               id: 0,
               opportunityId: opp.id!,
-              opportunitySDGTargetId: 0,  // Will be set by backend
+              opportunitySDGTargetId: 0,
               sdgIndicatorDatabaseId: indicatorInfo.id,
               sdgIndicatorId: indicatorInfo.sdgIndicatorId,
-              sdgIndicatorLongDescription: indicatorInfo.sdgIndicatorLongDescription,
-              notes: null
+              sdgIndicatorLongDescription:
+                indicatorInfo.sdgIndicatorLongDescription,
+              notes: null,
             });
           }
         }
-        
+
         targets.push({
           id: 0,
           opportunityId: opp.id!,
-          opportunitySDGId: 0,  // Will be set by backend
+          opportunitySDGId: 0,
           sdgTargetDatabaseId: targetInfo.id,
           sdgTargetId: targetInfo.sdgTargetId,
           targetDescription: targetInfo.targetDescription,
           targetType: targetInfo.targetType,
           notes: null,
-          indicators: indicators
+          indicators: indicators,
         });
       }
     }
-    
+
     // Add new SDG with targets and indicators
     const newSDG: OpportunitySDG = {
       id: 0,
       opportunityId: opp.id!,
       sdgId: sdg.sdgId || '',
-      sdgDatabaseId: sdg.id,  // Store the integer database ID for saving
+      sdgDatabaseId: sdg.id,
       sdgNumber: sdg.sdgNumber || '',
       sdgName: sdg.name,
       isPrimary: isPrimary,
       skipTargetsAndIndicators: skipTargets || null,
       notes: null,
-      targets: targets
+      targets: targets,
     };
 
-    currentSDGs.push(newSDG);
+    currentPending.push(newSDG);
+    this.pendingSDGSelections.set(currentPending);
 
-    // Update opportunity
-    const updatedOpportunity = {
-      ...opp,
-      sdGs: currentSDGs
-    };
+    // Reset configuration section for next SDG
+    this.resetSDGConfiguration();
 
-    // Emit updated opportunity to parent
-    this.opportunityUpdated.emit(updatedOpportunity);
-    
-    // Mark as changed (SDG added)
-    this.markAsChanged();
+    // Show success feedback
+    this.feedbackService.showSuccessToast({
+      detail: this.translateService.instant(
+        'message.opportunity.sdgAddedToSelection',
+      ),
+      summary: this.translateService.instant('message.success'),
+    });
 
-    // Reset dialog state
-    this.showSDGDialog.set(false);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Reset SDG configuration section (top part of dialog)
+   */
+  resetSDGConfiguration(): void {
     this.sdgControl.setValue(null);
     this.isPrimaryControl.setValue(false);
     this.skipTargetsControl.setValue(false);
     this.showValidationError.set(false);
+    this.editingFromPending.set(false);
+    this.editingPendingIndex.set(null);
     this.availableTargets.set([]);
     this.availableIndicators.set([]);
     this.selectedTargets.set(new Map());
@@ -1074,30 +1294,30 @@ export class OpportunityWhySectionComponent implements OnInit {
   }
 
   /**
-   * @description Edit existing SDG
+   * @description Edit SDG from pending selections
    */
-  editSDG(index: number): void {
-    const opp = this.opportunity();
-    const sdg = opp.sdGs?.[index];
-    
+  editPendingSDG(index: number): void {
+    const pending = this.pendingSDGSelections();
+    const sdg = pending[index];
+
     if (!sdg) return;
 
-    // Find the SDG in the master list by matching sdgId string
-    const masterSDG = this.sdgs().find(s => s.sdgId === sdg.sdgId);
-    
-    this.isEditingSDG.set(true);
-    this.editingSDGIndex.set(index);
+    // Find the SDG in the master list
+    const masterSDG = this.sdgs().find((s) => s.sdgId === sdg.sdgId);
+
+    this.editingFromPending.set(true);
+    this.editingPendingIndex.set(index);
     this.sdgControl.setValue(masterSDG || null);
     this.isPrimaryControl.setValue(sdg.isPrimary);
     this.skipTargetsControl.setValue(sdg.skipTargetsAndIndicators || false);
     this.showValidationError.set(false);
-    
+
     // Clear previous targets and indicators
     this.availableTargets.set([]);
     this.availableIndicators.set([]);
     this.selectedTargets.set(new Map());
     this.loadingIndicatorsForTargets.set(new Set());
-    
+
     // Load targets for this SDG (only if not skipped)
     if (masterSDG && masterSDG.sdgId && !sdg.skipTargetsAndIndicators) {
       this.loadingTargets.set(true);
@@ -1105,59 +1325,361 @@ export class OpportunityWhySectionComponent implements OnInit {
         next: (targets) => {
           this.loadingTargets.set(false);
           this.availableTargets.set(targets);
-          
+
           // Pre-select existing targets and indicators
           const selectedTargetsMap = new Map<number, Set<number>>();
-          
+
           if (sdg.targets && sdg.targets.length > 0) {
             // Load all indicators for the targets
-            const indicatorRequests = sdg.targets.map(target => 
-              this.valuesService.getSDGIndicators(target.sdgTargetId)
+            const indicatorRequests = sdg.targets.map((target) =>
+              this.valuesService.getSDGIndicators(target.sdgTargetId),
             );
-            
-            // Combine all indicator requests
+
             if (indicatorRequests.length > 0) {
-              // Use forkJoin to load all indicators
-              import('rxjs').then(rxjs => {
+              import('rxjs').then((rxjs) => {
                 rxjs.forkJoin(indicatorRequests).subscribe({
                   next: (allIndicators) => {
-                    // Flatten all indicators
                     const flatIndicators = allIndicators.flat();
                     this.availableIndicators.set(flatIndicators);
-                    
-                    // Now pre-select the targets and indicators
-                    sdg.targets!.forEach(target => {
+
+                    sdg.targets!.forEach((target) => {
                       const indicatorIds = new Set<number>();
                       if (target.indicators && target.indicators.length > 0) {
-                        target.indicators.forEach(ind => indicatorIds.add(ind.sdgIndicatorDatabaseId));
+                        target.indicators.forEach((ind) =>
+                          indicatorIds.add(ind.sdgIndicatorDatabaseId),
+                        );
                       }
-                      selectedTargetsMap.set(target.sdgTargetDatabaseId, indicatorIds);
+                      selectedTargetsMap.set(
+                        target.sdgTargetDatabaseId,
+                        indicatorIds,
+                      );
                     });
-                    
+
                     this.selectedTargets.set(selectedTargetsMap);
                     this.cdr.detectChanges();
-                  }
+                  },
                 });
               });
             } else {
-              // No indicators to load, just select targets
-              sdg.targets.forEach(target => {
+              sdg.targets.forEach((target) => {
                 selectedTargetsMap.set(target.sdgTargetDatabaseId, new Set());
               });
               this.selectedTargets.set(selectedTargetsMap);
             }
           }
-          
+
           this.cdr.detectChanges();
         },
         error: (error) => {
           console.error('Error loading SDG targets:', error);
           this.loadingTargets.set(false);
           this.availableTargets.set([]);
-        }
+        },
       });
     }
-    
+
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Update SDG in pending selections after editing
+   */
+  updatePendingSDG(): void {
+    const sdg = this.sdgControl.value;
+    const isPrimary = this.isPrimaryControl.value || false;
+    const skipTargets = this.skipTargetsControl.value || false;
+    const index = this.editingPendingIndex();
+
+    if (!sdg || index === null) return;
+
+    const currentPending = [...this.pendingSDGSelections()];
+    const opp = this.opportunity();
+
+    // If setting as primary, remove primary from others
+    if (isPrimary) {
+      currentPending.forEach((s, i) => {
+        if (i !== index) s.isPrimary = false;
+      });
+    }
+
+    // Build targets array - preserve existing IDs when updating
+    const originalSDG = currentPending[index];
+    const targets: OpportunitySDGTarget[] = [];
+    const selectedTargetsMap = skipTargets ? new Map() : this.selectedTargets();
+
+    for (const [
+      targetDatabaseId,
+      indicatorIds,
+    ] of selectedTargetsMap.entries()) {
+      const targetInfo = this.availableTargets().find(
+        (t) => t.id === targetDatabaseId,
+      );
+      if (targetInfo) {
+        // Find existing target to preserve its ID
+        const existingTarget = originalSDG.targets?.find(
+          (t) => t.sdgTargetDatabaseId === targetDatabaseId,
+        );
+
+        const indicators: OpportunitySDGIndicator[] = [];
+
+        for (const indicatorId of indicatorIds) {
+          const indicatorInfo = this.availableIndicators().find(
+            (i) => i.id === indicatorId,
+          );
+          if (indicatorInfo) {
+            // Find existing indicator to preserve its ID
+            const existingIndicator = existingTarget?.indicators?.find(
+              (ind) => ind.sdgIndicatorDatabaseId === indicatorId,
+            );
+
+            indicators.push({
+              id: existingIndicator?.id || 0, // Preserve existing ID
+              opportunityId: opp.id!,
+              opportunitySDGTargetId: existingTarget?.id || 0,
+              sdgIndicatorDatabaseId: indicatorInfo.id,
+              sdgIndicatorId: indicatorInfo.sdgIndicatorId,
+              sdgIndicatorLongDescription:
+                indicatorInfo.sdgIndicatorLongDescription,
+              notes: existingIndicator?.notes || null,
+            });
+          }
+        }
+
+        targets.push({
+          id: existingTarget?.id || 0, // Preserve existing ID
+          opportunityId: opp.id!,
+          opportunitySDGId: originalSDG.id,
+          sdgTargetDatabaseId: targetInfo.id,
+          sdgTargetId: targetInfo.sdgTargetId,
+          targetDescription: targetInfo.targetDescription,
+          targetType: targetInfo.targetType,
+          notes: existingTarget?.notes || null,
+          indicators: indicators,
+        });
+      }
+    }
+
+    // Update the SDG at the specified index
+    // Preserve the original id if it exists (for existing SDGs)
+    currentPending[index] = {
+      id: originalSDG.id, // Preserve existing id
+      opportunityId: opp.id!,
+      sdgId: sdg.sdgId || '',
+      sdgDatabaseId: sdg.id,
+      sdgNumber: sdg.sdgNumber || '',
+      sdgName: sdg.name,
+      isPrimary: isPrimary,
+      skipTargetsAndIndicators: skipTargets || null,
+      notes: originalSDG.notes, // Preserve notes if any
+      targets: targets,
+    };
+
+    this.pendingSDGSelections.set(currentPending);
+
+    // Reset configuration section
+    this.resetSDGConfiguration();
+
+    this.feedbackService.showSuccessToast({
+      detail: this.translateService.instant('message.opportunity.sdgUpdated'),
+      summary: this.translateService.instant('message.success'),
+    });
+
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Remove SDG from pending selections
+   */
+  removePendingSDG(index: number): void {
+    const currentPending = [...this.pendingSDGSelections()];
+    currentPending.splice(index, 1);
+    this.pendingSDGSelections.set(currentPending);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Clear all pending SDG selections
+   */
+  clearPendingSDGs(): void {
+    this.pendingSDGSelections.set([]);
+    this.resetSDGConfiguration();
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Commit all pending SDGs to the opportunity
+   * Replaces entire SDG list since pending contains both existing and new SDGs
+   */
+  commitPendingSDGs(): void {
+    const pending = this.pendingSDGSelections();
+
+    if (pending.length === 0) {
+      return;
+    }
+
+    const opp = this.opportunity();
+    const originalSDGCount = opp.sdGs?.length || 0;
+
+    // Count new SDGs (those with id === 0)
+    const newSDGsCount = pending.filter((s) => s.id === 0).length;
+
+    // Pending selections now contain both existing and new SDGs
+    // Simply replace the entire SDG array with pending selections
+    const updatedOpportunity = {
+      ...opp,
+      sdGs: [...pending],
+    };
+
+    // Emit updated opportunity to parent
+    this.opportunityUpdated.emit(updatedOpportunity);
+
+    // Mark as changed
+    this.markAsChanged();
+
+    // Show success message based on what was done
+    if (newSDGsCount === 0) {
+      // Only edits, no new SDGs
+      this.feedbackService.showSuccessToast({
+        detail: this.translateService.instant(
+          'message.opportunity.sdgsUpdated',
+        ),
+        summary: this.translateService.instant('message.success'),
+      });
+    } else if (originalSDGCount === 0) {
+      // All new SDGs
+      this.feedbackService.showSuccessToast({
+        detail: this.translateService.instant(
+          newSDGsCount === 1
+            ? 'message.opportunity.sdgAdded'
+            : 'message.opportunity.sdgsAdded',
+          { count: newSDGsCount },
+        ),
+        summary: this.translateService.instant('message.success'),
+      });
+    } else {
+      // Mixed: some new, some existing
+      this.feedbackService.showSuccessToast({
+        detail: this.translateService.instant(
+          'message.opportunity.sdgsAddedAndUpdated',
+          {
+            added: newSDGsCount,
+            total: pending.length,
+          },
+        ),
+        summary: this.translateService.instant('message.success'),
+      });
+    }
+
+    // Reset dialog state and close
+    this.showSDGDialog.set(false);
+    this.pendingSDGSelections.set([]);
+    this.resetSDGConfiguration();
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Legacy method - kept for backward compatibility
+   * @deprecated Use commitPendingSDGs instead
+   */
+  addSDG(): void {
+    // If we're in the new mode with pending selections, use the new flow
+    if (this.editingFromPending()) {
+      this.updatePendingSDG();
+    } else {
+      this.addSDGToPendingSelection();
+    }
+  }
+
+  /**
+   * @description Edit existing SDG
+   */
+  editSDG(index: number): void {
+    const opp = this.opportunity();
+    const sdg = opp.sdGs?.[index];
+
+    if (!sdg) return;
+
+    // Find the SDG in the master list by matching sdgId string
+    const masterSDG = this.sdgs().find((s) => s.sdgId === sdg.sdgId);
+
+    this.isEditingSDG.set(true);
+    this.editingSDGIndex.set(index);
+    this.sdgControl.setValue(masterSDG || null);
+    this.isPrimaryControl.setValue(sdg.isPrimary);
+    this.skipTargetsControl.setValue(sdg.skipTargetsAndIndicators || false);
+    this.showValidationError.set(false);
+
+    // Clear previous targets and indicators
+    this.availableTargets.set([]);
+    this.availableIndicators.set([]);
+    this.selectedTargets.set(new Map());
+    this.loadingIndicatorsForTargets.set(new Set());
+
+    // Load targets for this SDG (only if not skipped)
+    if (masterSDG && masterSDG.sdgId && !sdg.skipTargetsAndIndicators) {
+      this.loadingTargets.set(true);
+      this.valuesService.getSDGTargets(masterSDG.sdgId).subscribe({
+        next: (targets) => {
+          this.loadingTargets.set(false);
+          this.availableTargets.set(targets);
+
+          // Pre-select existing targets and indicators
+          const selectedTargetsMap = new Map<number, Set<number>>();
+
+          if (sdg.targets && sdg.targets.length > 0) {
+            // Load all indicators for the targets
+            const indicatorRequests = sdg.targets.map((target) =>
+              this.valuesService.getSDGIndicators(target.sdgTargetId),
+            );
+
+            // Combine all indicator requests
+            if (indicatorRequests.length > 0) {
+              // Use forkJoin to load all indicators
+              import('rxjs').then((rxjs) => {
+                rxjs.forkJoin(indicatorRequests).subscribe({
+                  next: (allIndicators) => {
+                    // Flatten all indicators
+                    const flatIndicators = allIndicators.flat();
+                    this.availableIndicators.set(flatIndicators);
+
+                    // Now pre-select the targets and indicators
+                    sdg.targets!.forEach((target) => {
+                      const indicatorIds = new Set<number>();
+                      if (target.indicators && target.indicators.length > 0) {
+                        target.indicators.forEach((ind) =>
+                          indicatorIds.add(ind.sdgIndicatorDatabaseId),
+                        );
+                      }
+                      selectedTargetsMap.set(
+                        target.sdgTargetDatabaseId,
+                        indicatorIds,
+                      );
+                    });
+
+                    this.selectedTargets.set(selectedTargetsMap);
+                    this.cdr.detectChanges();
+                  },
+                });
+              });
+            } else {
+              // No indicators to load, just select targets
+              sdg.targets.forEach((target) => {
+                selectedTargetsMap.set(target.sdgTargetDatabaseId, new Set());
+              });
+              this.selectedTargets.set(selectedTargetsMap);
+            }
+          }
+
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('Error loading SDG targets:', error);
+          this.loadingTargets.set(false);
+          this.availableTargets.set([]);
+        },
+      });
+    }
+
     this.showSDGDialog.set(true);
     this.cdr.detectChanges();
   }
@@ -1186,38 +1708,46 @@ export class OpportunityWhySectionComponent implements OnInit {
     // Build targets array from selected targets and indicators (only if not skipped)
     const targets: OpportunitySDGTarget[] = [];
     const selectedTargetsMap = skipTargets ? new Map() : this.selectedTargets();
-    
-    for (const [targetDatabaseId, indicatorIds] of selectedTargetsMap.entries()) {
-      const targetInfo = this.availableTargets().find(t => t.id === targetDatabaseId);
+
+    for (const [
+      targetDatabaseId,
+      indicatorIds,
+    ] of selectedTargetsMap.entries()) {
+      const targetInfo = this.availableTargets().find(
+        (t) => t.id === targetDatabaseId,
+      );
       if (targetInfo) {
         const indicators: OpportunitySDGIndicator[] = [];
-        
+
         // Add selected indicators for this target
         for (const indicatorId of indicatorIds) {
-          const indicatorInfo = this.availableIndicators().find(i => i.id === indicatorId);
+          const indicatorInfo = this.availableIndicators().find(
+            (i) => i.id === indicatorId,
+          );
           if (indicatorInfo) {
             indicators.push({
               id: 0,
               opportunityId: opp.id!,
-              opportunitySDGTargetId: 0,  // Will be set by backend
+              opportunitySDGTargetId: 0, // Will be set by backend
               sdgIndicatorDatabaseId: indicatorInfo.id,
               sdgIndicatorId: indicatorInfo.sdgIndicatorId,
-              sdgIndicatorLongDescription: indicatorInfo.sdgIndicatorLongDescription,
-              notes: null
+              sdgIndicatorLongDescription:
+                indicatorInfo.sdgIndicatorLongDescription,
+              notes: null,
             });
           }
         }
-        
+
         targets.push({
           id: 0,
           opportunityId: opp.id!,
-          opportunitySDGId: 0,  // Will be set by backend
+          opportunitySDGId: 0, // Will be set by backend
           sdgTargetDatabaseId: targetInfo.id,
           sdgTargetId: targetInfo.sdgTargetId,
           targetDescription: targetInfo.targetDescription,
           targetType: targetInfo.targetType,
           notes: null,
-          indicators: indicators
+          indicators: indicators,
         });
       }
     }
@@ -1226,18 +1756,18 @@ export class OpportunityWhySectionComponent implements OnInit {
     currentSDGs[index] = {
       ...currentSDGs[index],
       sdgId: sdg.sdgId || '',
-      sdgDatabaseId: sdg.id,  // Store the integer database ID for saving
+      sdgDatabaseId: sdg.id, // Store the integer database ID for saving
       sdgNumber: sdg.sdgNumber || '',
       sdgName: sdg.name,
       isPrimary: isPrimary,
       skipTargetsAndIndicators: skipTargets || null,
-      targets: targets
+      targets: targets,
     };
 
     // Update opportunity
     const updatedOpportunity = {
       ...opp,
-      sdGs: currentSDGs
+      sdGs: currentSDGs,
     };
 
     // Emit updated opportunity to parent
@@ -1264,38 +1794,21 @@ export class OpportunityWhySectionComponent implements OnInit {
   removeSDG(index: number): void {
     const opp = this.opportunity();
     const currentSDGs = [...(opp.sdGs || [])];
-    
+
     currentSDGs.splice(index, 1);
 
     const updatedOpportunity = {
       ...opp,
-      sdGs: currentSDGs
+      sdGs: currentSDGs,
     };
 
     // Emit updated opportunity to parent
     this.opportunityUpdated.emit(updatedOpportunity);
-    
+
     // Mark as changed (SDG removed)
     this.markAsChanged();
-    
+
     this.cdr.detectChanges();
-  }
-
-  /**
-   * @description Get chip style based on primary/secondary status
-   */
-  getSDGChipStyle(isPrimary: boolean): any {
-    if (isPrimary) {
-      return { 'background-color': 'var(--p-badge-success-background)', 'color': 'var(--p-badge-success-color)', 'border-radius': '8px' };
-    }
-    return { 'background-color': 'var(--p-badge-info-background)', 'color': 'var(--p-badge-info-color)', 'border-radius': '8px' };
-  }
-
-  /**
-   * @description Get chip label for primary/secondary
-   */
-  getSDGChipLabel(isPrimary: boolean): string {
-    return isPrimary ? 'Primary' : 'Secondary';
   }
 
   /**
@@ -1306,24 +1819,26 @@ export class OpportunityWhySectionComponent implements OnInit {
     this.isEditingUNCFCountry.set(false);
     this.editingUNCFCountryIndex.set(null);
     this.showUNCFValidationError.set(false);
-    
+
     // Load available outcomes for this country
     if (oppCountry.country?.iso2Code) {
       this.loadingUNCFOutcomesForDialog.set(true);
-      this.valuesService.getUNCFOutcomes(oppCountry.country.iso2Code).subscribe({
-        next: (outcomes) => {
-          this.availableUNCFOutcomes.set(outcomes);
-          this.loadingUNCFOutcomesForDialog.set(false);
-          this.cdr.detectChanges();
-        },
-        error: (error) => {
-          console.error('Error loading UNCF outcomes:', error);
-          this.loadingUNCFOutcomesForDialog.set(false);
-          this.availableUNCFOutcomes.set([]);
-        }
-      });
+      this.valuesService
+        .getUNCFOutcomes(oppCountry.country.iso2Code)
+        .subscribe({
+          next: (outcomes) => {
+            this.availableUNCFOutcomes.set(outcomes);
+            this.loadingUNCFOutcomesForDialog.set(false);
+            this.cdr.detectChanges();
+          },
+          error: (error) => {
+            console.error('Error loading UNCF outcomes:', error);
+            this.loadingUNCFOutcomesForDialog.set(false);
+            this.availableUNCFOutcomes.set([]);
+          },
+        });
     }
-    
+
     this.selectedUNCFOutcomes.set(new Map());
     this.loadingIndicatorsForUNCFOutcomes.set(new Set());
     this.showUNCFDialog.set(true);
@@ -1338,68 +1853,73 @@ export class OpportunityWhySectionComponent implements OnInit {
     this.isEditingUNCFCountry.set(true);
     this.editingUNCFCountryIndex.set(index);
     this.showUNCFValidationError.set(false);
-    
+
     // Load available outcomes for this country
     if (oppCountry.country?.iso2Code) {
       this.loadingUNCFOutcomesForDialog.set(true);
-      this.valuesService.getUNCFOutcomes(oppCountry.country.iso2Code).subscribe({
-        next: (outcomes) => {
-          this.availableUNCFOutcomes.set(outcomes);
-          this.loadingUNCFOutcomesForDialog.set(false);
-          
-          // Pre-select existing outcomes and indicators
-          const opp = this.opportunity();
-          const existingUNCFOutcomes = opp.uncfOutcomes?.filter(
-            uo => uo.opportunityCountryId === oppCountry.id
-          ) || [];
-          
-          if (existingUNCFOutcomes.length > 0) {
-            const selectedMap = new Map<number, Set<number>>();
-            
-            // Load indicators for all existing outcomes
-            const indicatorRequests = existingUNCFOutcomes.map(uo => 
-              this.valuesService.getUNCFIndicators(uo.uncfOutcomeId)
-            );
-            
-            if (indicatorRequests.length > 0) {
-              import('rxjs').then(rxjs => {
-                rxjs.forkJoin(indicatorRequests).subscribe({
-                  next: (allIndicators) => {
-                    const flatIndicators = allIndicators.flat();
-                    
-                    // Store indicators for each outcome
-                    existingUNCFOutcomes.forEach((uo, idx) => {
-                      const outcomeIndicators = allIndicators[idx];
-                      const indicatorMap = new Map(this.availableUNCFIndicators());
-                      indicatorMap.set(uo.uncfOutcomeId, outcomeIndicators);
-                      this.availableUNCFIndicators.set(indicatorMap);
-                      
-                      // Pre-select indicators
-                      const indicatorIds = new Set<number>();
-                      uo.indicators?.forEach(ind => {
-                        indicatorIds.add(ind.uncfIndicatorId);
+      this.valuesService
+        .getUNCFOutcomes(oppCountry.country.iso2Code)
+        .subscribe({
+          next: (outcomes) => {
+            this.availableUNCFOutcomes.set(outcomes);
+            this.loadingUNCFOutcomesForDialog.set(false);
+
+            // Pre-select existing outcomes and indicators
+            const opp = this.opportunity();
+            const existingUNCFOutcomes =
+              opp.uncfOutcomes?.filter(
+                (uo) => uo.opportunityCountryId === oppCountry.id,
+              ) || [];
+
+            if (existingUNCFOutcomes.length > 0) {
+              const selectedMap = new Map<number, Set<number>>();
+
+              // Load indicators for all existing outcomes
+              const indicatorRequests = existingUNCFOutcomes.map((uo) =>
+                this.valuesService.getUNCFIndicators(uo.uncfOutcomeId),
+              );
+
+              if (indicatorRequests.length > 0) {
+                import('rxjs').then((rxjs) => {
+                  rxjs.forkJoin(indicatorRequests).subscribe({
+                    next: (allIndicators) => {
+                      const flatIndicators = allIndicators.flat();
+
+                      // Store indicators for each outcome
+                      existingUNCFOutcomes.forEach((uo, idx) => {
+                        const outcomeIndicators = allIndicators[idx];
+                        const indicatorMap = new Map(
+                          this.availableUNCFIndicators(),
+                        );
+                        indicatorMap.set(uo.uncfOutcomeId, outcomeIndicators);
+                        this.availableUNCFIndicators.set(indicatorMap);
+
+                        // Pre-select indicators
+                        const indicatorIds = new Set<number>();
+                        uo.indicators?.forEach((ind) => {
+                          indicatorIds.add(ind.uncfIndicatorId);
+                        });
+                        selectedMap.set(uo.uncfOutcomeId, indicatorIds);
                       });
-                      selectedMap.set(uo.uncfOutcomeId, indicatorIds);
-                    });
-                    
-                    this.selectedUNCFOutcomes.set(selectedMap);
-                    this.cdr.detectChanges();
-                  }
+
+                      this.selectedUNCFOutcomes.set(selectedMap);
+                      this.cdr.detectChanges();
+                    },
+                  });
                 });
-              });
+              }
             }
-          }
-          
-          this.cdr.detectChanges();
-        },
-        error: (error) => {
-          console.error('Error loading UNCF outcomes:', error);
-          this.loadingUNCFOutcomesForDialog.set(false);
-          this.availableUNCFOutcomes.set([]);
-        }
-      });
+
+            this.cdr.detectChanges();
+          },
+          error: (error) => {
+            console.error('Error loading UNCF outcomes:', error);
+            this.loadingUNCFOutcomesForDialog.set(false);
+            this.availableUNCFOutcomes.set([]);
+          },
+        });
     }
-    
+
     this.showUNCFDialog.set(true);
     this.cdr.detectChanges();
   }
@@ -1424,7 +1944,7 @@ export class OpportunityWhySectionComponent implements OnInit {
    */
   toggleUNCFOutcome(outcome: UNCFOutcome): void {
     const currentSelection = new Map(this.selectedUNCFOutcomes());
-    
+
     if (currentSelection.has(outcome.id)) {
       // Remove outcome and its indicators
       currentSelection.delete(outcome.id);
@@ -1434,12 +1954,12 @@ export class OpportunityWhySectionComponent implements OnInit {
       // Add outcome with empty indicator set
       currentSelection.set(outcome.id, new Set());
       this.selectedUNCFOutcomes.set(currentSelection);
-      
+
       // Mark this outcome as loading
       const loadingSet = new Set(this.loadingIndicatorsForUNCFOutcomes());
       loadingSet.add(outcome.id);
       this.loadingIndicatorsForUNCFOutcomes.set(loadingSet);
-      
+
       // Load indicators for this outcome
       this.valuesService.getUNCFIndicators(outcome.id).subscribe({
         next: (indicators) => {
@@ -1447,21 +1967,25 @@ export class OpportunityWhySectionComponent implements OnInit {
           const loadingSet = new Set(this.loadingIndicatorsForUNCFOutcomes());
           loadingSet.delete(outcome.id);
           this.loadingIndicatorsForUNCFOutcomes.set(loadingSet);
-          
+
           // Store available indicators
           const indicatorMap = new Map(this.availableUNCFIndicators());
           indicatorMap.set(outcome.id, indicators);
           this.availableUNCFIndicators.set(indicatorMap);
-          
+
           this.cdr.detectChanges();
         },
         error: (error) => {
-          console.error('Error loading UNCF indicators for outcome:', outcome.id, error);
+          console.error(
+            'Error loading UNCF indicators for outcome:',
+            outcome.id,
+            error,
+          );
           const loadingSet = new Set(this.loadingIndicatorsForUNCFOutcomes());
           loadingSet.delete(outcome.id);
           this.loadingIndicatorsForUNCFOutcomes.set(loadingSet);
           this.cdr.detectChanges();
-        }
+        },
       });
     }
   }
@@ -1471,7 +1995,7 @@ export class OpportunityWhySectionComponent implements OnInit {
    */
   toggleUNCFIndicator(outcomeId: number, indicatorId: number): void {
     const currentSelection = new Map(this.selectedUNCFOutcomes());
-    
+
     if (currentSelection.has(outcomeId)) {
       const indicators = currentSelection.get(outcomeId)!;
       if (indicators.has(indicatorId)) {
@@ -1481,7 +2005,7 @@ export class OpportunityWhySectionComponent implements OnInit {
       }
       currentSelection.set(outcomeId, indicators);
     }
-    
+
     this.selectedUNCFOutcomes.set(currentSelection);
     this.cdr.detectChanges();
   }
@@ -1533,28 +2057,32 @@ export class OpportunityWhySectionComponent implements OnInit {
 
     // Build outcomes array from selected outcomes and indicators
     const outcomes: OpportunityUNCFOutcome[] = [];
-    
+
     for (const [outcomeId, indicatorIds] of selectedOutcomes.entries()) {
-      const outcomeInfo = this.availableUNCFOutcomes().find(o => o.id === outcomeId);
+      const outcomeInfo = this.availableUNCFOutcomes().find(
+        (o) => o.id === outcomeId,
+      );
       if (outcomeInfo) {
         const indicators: OpportunityUNCFIndicator[] = [];
-        
+
         // Add selected indicators for this outcome
         for (const indicatorId of indicatorIds) {
-          const indicatorInfo = this.getIndicatorsForUNCFOutcome(outcomeId).find(i => i.id === indicatorId);
+          const indicatorInfo = this.getIndicatorsForUNCFOutcome(
+            outcomeId,
+          ).find((i) => i.id === indicatorId);
           if (indicatorInfo) {
             indicators.push({
               id: 0,
               opportunityId: opp.id!,
-              opportunityUNCFOutcomeId: 0,  // Will be set by backend
+              opportunityUNCFOutcomeId: 0, // Will be set by backend
               uncfIndicatorId: indicatorInfo.id,
               uncfIndicatorExternalId: indicatorInfo.uncfIndicatorExternalId,
               uncfIndicatorName: indicatorInfo.name,
-              notes: null
+              notes: null,
             });
           }
         }
-        
+
         outcomes.push({
           id: 0,
           opportunityId: opp.id!,
@@ -1565,18 +2093,18 @@ export class OpportunityWhySectionComponent implements OnInit {
           versionNo: outcomeInfo.versionNo,
           country: outcomeInfo.country,
           notes: null,
-          indicators: indicators
+          indicators: indicators,
         });
       }
     }
-    
+
     // Add new UNCF outcomes
     currentUNCFOutcomes.push(...outcomes);
 
     // Update opportunity
     const updatedOpportunity = {
       ...opp,
-      uncfOutcomes: currentUNCFOutcomes
+      uncfOutcomes: currentUNCFOutcomes,
     };
 
     // Emit updated opportunity to parent
@@ -1603,19 +2131,23 @@ export class OpportunityWhySectionComponent implements OnInit {
 
     // Remove existing outcomes for this country
     currentUNCFOutcomes = currentUNCFOutcomes.filter(
-      uo => uo.opportunityCountryId !== selectedCountry.id
+      (uo) => uo.opportunityCountryId !== selectedCountry.id,
     );
 
     // Build new outcomes array
     const outcomes: OpportunityUNCFOutcome[] = [];
-    
+
     for (const [outcomeId, indicatorIds] of selectedOutcomes.entries()) {
-      const outcomeInfo = this.availableUNCFOutcomes().find(o => o.id === outcomeId);
+      const outcomeInfo = this.availableUNCFOutcomes().find(
+        (o) => o.id === outcomeId,
+      );
       if (outcomeInfo) {
         const indicators: OpportunityUNCFIndicator[] = [];
-        
+
         for (const indicatorId of indicatorIds) {
-          const indicatorInfo = this.getIndicatorsForUNCFOutcome(outcomeId).find(i => i.id === indicatorId);
+          const indicatorInfo = this.getIndicatorsForUNCFOutcome(
+            outcomeId,
+          ).find((i) => i.id === indicatorId);
           if (indicatorInfo) {
             indicators.push({
               id: 0,
@@ -1624,11 +2156,11 @@ export class OpportunityWhySectionComponent implements OnInit {
               uncfIndicatorId: indicatorInfo.id,
               uncfIndicatorExternalId: indicatorInfo.uncfIndicatorExternalId,
               uncfIndicatorName: indicatorInfo.name,
-              notes: null
+              notes: null,
             });
           }
         }
-        
+
         outcomes.push({
           id: 0,
           opportunityId: opp.id!,
@@ -1639,18 +2171,18 @@ export class OpportunityWhySectionComponent implements OnInit {
           versionNo: outcomeInfo.versionNo,
           country: outcomeInfo.country,
           notes: null,
-          indicators: indicators
+          indicators: indicators,
         });
       }
     }
-    
+
     // Add updated outcomes
     currentUNCFOutcomes.push(...outcomes);
 
     // Update opportunity
     const updatedOpportunity = {
       ...opp,
-      uncfOutcomes: currentUNCFOutcomes
+      uncfOutcomes: currentUNCFOutcomes,
     };
 
     // Emit updated opportunity to parent
@@ -1666,32 +2198,37 @@ export class OpportunityWhySectionComponent implements OnInit {
   /**
    * @description Get UNCF outcomes for a specific opportunity country
    */
-  getUNCFOutcomesForOpportunityCountry(oppCountryId: number): OpportunityUNCFOutcome[] {
-    return this.opportunity().uncfOutcomes?.filter(
-      uo => uo.opportunityCountryId === oppCountryId
-    ) || [];
+  getUNCFOutcomesForOpportunityCountry(
+    oppCountryId: number,
+  ): OpportunityUNCFOutcome[] {
+    return (
+      this.opportunity().uncfOutcomes?.filter(
+        (uo) => uo.opportunityCountryId === oppCountryId,
+      ) || []
+    );
   }
 
   /**
    * @description Check if a specific country has inactive UNCF data with newer versions available
    */
   hasInactiveUNCFWithUpdatesForCountry(oppCountryId: number): boolean {
-    const outcomesForCountry = this.getUNCFOutcomesForOpportunityCountry(oppCountryId);
-    
+    const outcomesForCountry =
+      this.getUNCFOutcomesForOpportunityCountry(oppCountryId);
+
     // Check if any outcome for this country is inactive with newer version
-    const hasOutcomeWithUpdates = outcomesForCountry.some(outcome => 
-      outcome.isInactive && outcome.hasNewerVersion
+    const hasOutcomeWithUpdates = outcomesForCountry.some(
+      (outcome) => outcome.isInactive && outcome.hasNewerVersion,
     );
-    
+
     if (hasOutcomeWithUpdates) return true;
-    
+
     // Check if any indicator for this country is inactive with newer version
-    const hasIndicatorWithUpdates = outcomesForCountry.some(outcome =>
-      outcome.indicators?.some(indicator => 
-        indicator.isInactive && indicator.hasNewerVersion
-      )
+    const hasIndicatorWithUpdates = outcomesForCountry.some((outcome) =>
+      outcome.indicators?.some(
+        (indicator) => indicator.isInactive && indicator.hasNewerVersion,
+      ),
     );
-    
+
     return hasIndicatorWithUpdates;
   }
 
@@ -1699,22 +2236,23 @@ export class OpportunityWhySectionComponent implements OnInit {
    * @description Check if a specific country has inactive UNCF data without newer versions available
    */
   hasInactiveUNCFWithoutUpdatesForCountry(oppCountryId: number): boolean {
-    const outcomesForCountry = this.getUNCFOutcomesForOpportunityCountry(oppCountryId);
-    
+    const outcomesForCountry =
+      this.getUNCFOutcomesForOpportunityCountry(oppCountryId);
+
     // Check if any outcome for this country is inactive without newer version
-    const hasOutcomeWithoutUpdates = outcomesForCountry.some(outcome => 
-      outcome.isInactive && !outcome.hasNewerVersion
+    const hasOutcomeWithoutUpdates = outcomesForCountry.some(
+      (outcome) => outcome.isInactive && !outcome.hasNewerVersion,
     );
-    
+
     if (hasOutcomeWithoutUpdates) return true;
-    
+
     // Check if any indicator for this country is inactive without newer version
-    const hasIndicatorWithoutUpdates = outcomesForCountry.some(outcome =>
-      outcome.indicators?.some(indicator => 
-        indicator.isInactive && !indicator.hasNewerVersion
-      )
+    const hasIndicatorWithoutUpdates = outcomesForCountry.some((outcome) =>
+      outcome.indicators?.some(
+        (indicator) => indicator.isInactive && !indicator.hasNewerVersion,
+      ),
     );
-    
+
     return hasIndicatorWithoutUpdates;
   }
 
@@ -1723,7 +2261,7 @@ export class OpportunityWhySectionComponent implements OnInit {
    */
   loadUNCFOutcomesForCountries(): void {
     const countries = this.countriesWithUNCF();
-    
+
     if (countries.length === 0) {
       return;
     }
@@ -1732,32 +2270,38 @@ export class OpportunityWhySectionComponent implements OnInit {
     const outcomeMap = new Map<number, UNCFOutcome[]>();
     let loadedCount = 0;
 
-    countries.forEach(oppCountry => {
+    countries.forEach((oppCountry) => {
       if (!oppCountry.country?.iso2Code) return;
-      
-      this.valuesService.getUNCFOutcomes(oppCountry.country.iso2Code).subscribe({
-        next: (outcomes) => {
-          if (outcomes.length > 0) {
-            outcomeMap.set(oppCountry.country!.id, outcomes);
-          }
-          
-          loadedCount++;
-          if (loadedCount === countries.length) {
-            this.uncfOutcomesByCountry.set(outcomeMap);
-            this.loadingUNCFOutcomes.set(false);
-            this.cdr.detectChanges();
-          }
-        },
-        error: (error) => {
-          console.error('Error loading UNCF outcomes for country:', oppCountry.country?.name, error);
-          loadedCount++;
-          if (loadedCount === countries.length) {
-            this.uncfOutcomesByCountry.set(outcomeMap);
-            this.loadingUNCFOutcomes.set(false);
-            this.cdr.detectChanges();
-          }
-        }
-      });
+
+      this.valuesService
+        .getUNCFOutcomes(oppCountry.country.iso2Code)
+        .subscribe({
+          next: (outcomes) => {
+            if (outcomes.length > 0) {
+              outcomeMap.set(oppCountry.country!.id, outcomes);
+            }
+
+            loadedCount++;
+            if (loadedCount === countries.length) {
+              this.uncfOutcomesByCountry.set(outcomeMap);
+              this.loadingUNCFOutcomes.set(false);
+              this.cdr.detectChanges();
+            }
+          },
+          error: (error) => {
+            console.error(
+              'Error loading UNCF outcomes for country:',
+              oppCountry.country?.name,
+              error,
+            );
+            loadedCount++;
+            if (loadedCount === countries.length) {
+              this.uncfOutcomesByCountry.set(outcomeMap);
+              this.loadingUNCFOutcomes.set(false);
+              this.cdr.detectChanges();
+            }
+          },
+        });
     });
   }
 
@@ -1795,12 +2339,16 @@ export class OpportunityWhySectionComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: (error) => {
-        console.error('Error loading UNCF indicators for outcome:', outcomeId, error);
+        console.error(
+          'Error loading UNCF indicators for outcome:',
+          outcomeId,
+          error,
+        );
         const loadingSet = new Set(this.loadingUNCFIndicatorsForOutcome());
         loadingSet.delete(outcomeId);
         this.loadingUNCFIndicatorsForOutcome.set(loadingSet);
         this.cdr.detectChanges();
-      }
+      },
     });
   }
 
@@ -1822,10 +2370,12 @@ export class OpportunityWhySectionComponent implements OnInit {
    * @description Get country name by ID
    */
   getCountryNameById(countryId: number): string {
-    const country = this.opportunity().countries?.find(c => c.country?.id === countryId);
+    const country = this.opportunity().countries?.find(
+      (c) => c.country?.id === countryId,
+    );
     return country?.country?.name || 'Unknown Country';
   }
-  
+
   /**
    * @description Set humanitarian framework alignment for a country
    */
@@ -1836,14 +2386,14 @@ export class OpportunityWhySectionComponent implements OnInit {
     this.markAsChanged();
     this.cdr.detectChanges();
   }
-  
+
   /**
    * @description Get humanitarian framework alignment for a country
    */
   getFrameworkAlignment(countryId: number): boolean | null {
     return this.humanitarianFrameworkAlignments().get(countryId) ?? null;
   }
-  
+
   /**
    * @description Set NDC alignment for a country
    */
@@ -1854,14 +2404,14 @@ export class OpportunityWhySectionComponent implements OnInit {
     this.markAsChanged();
     this.cdr.detectChanges();
   }
-  
+
   /**
    * @description Get NDC alignment for a country
    */
   getNdcAlignment(countryId: number): boolean | null {
     return this.ndcAlignments().get(countryId) ?? null;
   }
-  
+
   /**
    * @description Set NAP alignment for a country
    */
@@ -1872,14 +2422,14 @@ export class OpportunityWhySectionComponent implements OnInit {
     this.markAsChanged();
     this.cdr.detectChanges();
   }
-  
+
   /**
    * @description Get NAP alignment for a country
    */
   getNapAlignment(countryId: number): boolean | null {
     return this.napAlignments().get(countryId) ?? null;
   }
-  
+
   /**
    * @description Set Organization Unit Strategy alignment for a country
    */
@@ -1890,7 +2440,7 @@ export class OpportunityWhySectionComponent implements OnInit {
     this.markAsChanged();
     this.cdr.detectChanges();
   }
-  
+
   /**
    * @description Get Organization Unit Strategy alignment for a country
    */
@@ -1898,4 +2448,3 @@ export class OpportunityWhySectionComponent implements OnInit {
     return this.orgUnitStrategyAlignments().get(countryId) ?? null;
   }
 }
-

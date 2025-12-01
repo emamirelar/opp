@@ -17,7 +17,7 @@
               [rounded]="true"
               severity="secondary"
               size="small"
-              (onClick)="enableEdit()"
+              (onClick)="startEditing()"
               pTooltip="{{ 'button.edit' | translate }}"
             />
           } @else {
@@ -37,7 +37,7 @@
               [rounded]="true"
               severity="danger"
               size="small"
-              (onClick)="cancelEdit()"
+              (onClick)="cancelEditing()"
               [disabled]="isSaving()"
               pTooltip="{{ 'button.cancel' | translate }}"
             />
@@ -1001,6 +1001,7 @@
   [header]="(isEditingFundingPartner() ? 'title.editFundingPartner' : 'title.addFundingPartner') | translate"
   [(visible)]="showFundingPartnerDialog"
   [modal]="true"
+  [appendTo]="'body'"
   [style]="{ width: '35rem' }"
 >
   @if (showFundingValidationError()) {
@@ -1082,7 +1083,8 @@
     </div>
 
     <!-- Fee Amount -->
-    <div>
+    <!-- TAD: Hiding for now instead of removing it completely - @Anusha will need to check if this is needed-->
+    <div class="hidden">
       <p-floatlabel variant="on">
         <p-inputnumber
           id="feeAmount"
@@ -1097,7 +1099,8 @@
     </div>
 
     <!-- Partnership Agreement Reference -->
-    <div>
+    <!-- TAD: Hiding for now instead of removing it completely - @Anusha will need to check if this is needed-->
+    <div class="hidden">
       <p-floatlabel variant="on">
         <input
           pInputText
@@ -1129,6 +1132,7 @@
   [header]="(isEditingClientPartner() ? 'title.editClientPartner' : 'title.addClientPartner') | translate"
   [(visible)]="showClientPartnerDialog"
   [modal]="true"
+  [appendTo]="'body'"
   [style]="{ width: '35rem' }"
 >
   @if (showClientValidationError()) {
@@ -1183,6 +1187,7 @@
   [header]="isEditingStakeholder() ? ('title.editStakeholder' | translate) : ('title.addStakeholder' | translate)"
   [(visible)]="showStakeholderDialog"
   [modal]="true"
+  [appendTo]="'body'"
   [style]="{ width: '35rem' }"
 >
   @if (showStakeholderValidationError()) {
@@ -1262,6 +1267,7 @@
   [header]="'title.addExternalStakeholder' | translate"
   [(visible)]="showExternalStakeholderDialog"
   [modal]="true"
+  [appendTo]="'body'"
   [style]="{ width: '35rem' }"
 >
   @if (showExternalStakeholderValidationError()) {
