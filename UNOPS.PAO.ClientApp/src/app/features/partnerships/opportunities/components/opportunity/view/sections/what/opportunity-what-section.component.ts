@@ -689,7 +689,26 @@ export class OpportunityWhatSectionComponent implements OnInit {
     );
 
     if (output) {
-      this.outputControl.setValue(output);
+      // Check if already selected
+      if (this.isOutputSelected(output)) {
+        this.feedbackService.showWarningToast({
+          summary: this.translateService.instant('message.warning'),
+          detail: this.translateService.instant('message.validation.outputAlreadySelected')
+        });
+        return;
+      }
+
+      // Add to selection (same as search mode)
+      this.selectedOutputsForDialog.set([...this.selectedOutputsForDialog(), output]);
+      
+      // Clear the form for next selection
+      this.level0Control.setValue(null);
+      this.level1Control.setValue(null);
+      this.level2Control.setValue(null);
+      this.level3Control.setValue(null);
+      this.level4Control.setValue(null);
+      this.outputControl.setValue(null);
+      
       this.cdr.detectChanges();
     }
   }
@@ -707,7 +726,26 @@ export class OpportunityWhatSectionComponent implements OnInit {
     );
 
     if (output) {
-      this.outputControl.setValue(output);
+      // Check if already selected
+      if (this.isOutputSelected(output)) {
+        this.feedbackService.showWarningToast({
+          summary: this.translateService.instant('message.warning'),
+          detail: this.translateService.instant('message.validation.outputAlreadySelected')
+        });
+        return;
+      }
+
+      // Add to selection (same as search mode)
+      this.selectedOutputsForDialog.set([...this.selectedOutputsForDialog(), output]);
+      
+      // Clear the form for next selection
+      this.level0Control.setValue(null);
+      this.level1Control.setValue(null);
+      this.level2Control.setValue(null);
+      this.level3Control.setValue(null);
+      this.level4Control.setValue(null);
+      this.outputControl.setValue(null);
+      
       this.cdr.detectChanges();
     }
   }
@@ -727,7 +765,26 @@ export class OpportunityWhatSectionComponent implements OnInit {
     );
 
     if (output) {
-      this.outputControl.setValue(output);
+      // Check if already selected
+      if (this.isOutputSelected(output)) {
+        this.feedbackService.showWarningToast({
+          summary: this.translateService.instant('message.warning'),
+          detail: this.translateService.instant('message.validation.outputAlreadySelected')
+        });
+        return;
+      }
+
+      // Add to selection (same as search mode)
+      this.selectedOutputsForDialog.set([...this.selectedOutputsForDialog(), output]);
+      
+      // Clear the form for next selection
+      this.level0Control.setValue(null);
+      this.level1Control.setValue(null);
+      this.level2Control.setValue(null);
+      this.level3Control.setValue(null);
+      this.level4Control.setValue(null);
+      this.outputControl.setValue(null);
+      
       this.cdr.detectChanges();
     }
   }
@@ -752,7 +809,26 @@ export class OpportunityWhatSectionComponent implements OnInit {
     );
 
     if (output) {
-      this.outputControl.setValue(output);
+      // Check if already selected
+      if (this.isOutputSelected(output)) {
+        this.feedbackService.showWarningToast({
+          summary: this.translateService.instant('message.warning'),
+          detail: this.translateService.instant('message.validation.outputAlreadySelected')
+        });
+        return;
+      }
+
+      // Add to selection (same as search mode)
+      this.selectedOutputsForDialog.set([...this.selectedOutputsForDialog(), output]);
+      
+      // Clear the form for next selection
+      this.level0Control.setValue(null);
+      this.level1Control.setValue(null);
+      this.level2Control.setValue(null);
+      this.level3Control.setValue(null);
+      this.level4Control.setValue(null);
+      this.outputControl.setValue(null);
+      
       this.cdr.detectChanges();
     }
   }
@@ -778,7 +854,26 @@ export class OpportunityWhatSectionComponent implements OnInit {
     );
 
     if (output) {
-      this.outputControl.setValue(output);
+      // Check if already selected
+      if (this.isOutputSelected(output)) {
+        this.feedbackService.showWarningToast({
+          summary: this.translateService.instant('message.warning'),
+          detail: this.translateService.instant('message.validation.outputAlreadySelected')
+        });
+        return;
+      }
+
+      // Add to selection (same as search mode)
+      this.selectedOutputsForDialog.set([...this.selectedOutputsForDialog(), output]);
+      
+      // Clear the form for next selection
+      this.level0Control.setValue(null);
+      this.level1Control.setValue(null);
+      this.level2Control.setValue(null);
+      this.level3Control.setValue(null);
+      this.level4Control.setValue(null);
+      this.outputControl.setValue(null);
+      
       this.cdr.detectChanges();
     }
   }
