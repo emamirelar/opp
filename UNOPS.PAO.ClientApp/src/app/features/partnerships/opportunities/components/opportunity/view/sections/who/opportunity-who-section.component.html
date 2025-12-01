@@ -17,7 +17,7 @@
               [rounded]="true"
               severity="secondary"
               size="small"
-              (onClick)="enableEdit()"
+              (onClick)="startEditing()"
               pTooltip="{{ 'button.edit' | translate }}"
             />
           } @else {
@@ -37,7 +37,7 @@
               [rounded]="true"
               severity="danger"
               size="small"
-              (onClick)="cancelEdit()"
+              (onClick)="cancelEditing()"
               [disabled]="isSaving()"
               pTooltip="{{ 'button.cancel' | translate }}"
             />

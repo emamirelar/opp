@@ -246,9 +246,9 @@
     <!-- UNCF Alignment (Country-specific UN Cooperation Framework) -->
     @if (countriesWithUNCF().length > 0) {
       <div>
-        <div class="flex items-center justify-between mb-2">
-          <h3 class="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
-            <i class="pi pi-flag text-blue-600"></i>
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-unops-secondary flex items-center gap-2">
+            <i class="pi pi-flag text-unops-primary"></i>
             {{ 'label.opportunity.uncfAlignment' | translate }} ({{ uncfCount() }})
           </h3>
         </div>
@@ -343,23 +343,25 @@
       </div>
     } @else {
       <div>
-        <div class="flex items-center justify-between mb-2">
-          <h3 class="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
-            <i class="pi pi-flag text-blue-600"></i>
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-unops-secondary flex items-center gap-2">
+            <i class="pi pi-flag text-unops-primary"></i>
             {{ 'label.opportunity.uncfAlignment' | translate }}
           </h3>
         </div>
-        <p-message severity="warn" styleClass="w-full">
-          {{ 'message.opportunity.uncfNotAvailable' | translate }}
-        </p-message>
+        <div class="bg-unops-primary-container-soft rounded-unops-sm p-4">
+          <p class="text-sm text-gray-500 italic">
+            {{ 'message.opportunity.uncfNotAvailable' | translate }}
+          </p>
+        </div>
       </div>
     }
 
     <!-- Alignment to UNOPS Strategy -->
     <div>
-      <div class="flex items-center justify-between mb-2">
-        <h3 class="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
-          <i class="pi pi-building text-blue-600"></i>
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-unops-secondary flex items-center gap-2">
+          <i class="pi pi-building text-unops-primary"></i>
           {{ 'label.opportunity.alignmentToUNOPSStrategy' | translate }} ({{ unopsMissionCount() }})
         </h3>
         @if (isEditing()) {
@@ -406,8 +408,8 @@
     <!-- Humanitarian, Peace & Security Framework Alignment -->
     @if (countriesWithFramework().length > 0 || countriesWithoutFramework().length > 0) {
       <div>
-        <h3 class="text-sm font-semibold text-gray-600 mb-3 flex items-center gap-2">
-          <i class="pi pi-shield text-green-600"></i>
+        <h3 class="text-lg font-semibold text-unops-secondary mb-4 flex items-center gap-2">
+          <i class="pi pi-shield text-unops-primary"></i>
           {{ 'label.opportunity.humanitarianFramework' | translate }}
         </h3>
         
@@ -527,8 +529,8 @@
     <!-- NDC (Nationally Determined Contributions) Alignment -->
     @if (countriesWithNdc().length > 0 || countriesWithoutNdc().length > 0) {
       <div>
-        <h3 class="text-sm font-semibold text-gray-600 mb-3 flex items-center gap-2">
-          <i class="pi pi-sun text-green-600"></i>
+        <h3 class="text-lg font-semibold text-unops-secondary mb-4 flex items-center gap-2">
+          <i class="pi pi-sun text-unops-primary"></i>
           {{ 'label.opportunity.ndc' | translate }}
         </h3>
         
@@ -648,8 +650,8 @@
     <!-- NAP (National Adaptation Plan) Alignment -->
     @if (countriesWithNap().length > 0 || countriesWithoutNap().length > 0) {
       <div>
-        <h3 class="text-sm font-semibold text-gray-600 mb-3 flex items-center gap-2">
-          <i class="pi pi-cloud text-teal-600"></i>
+        <h3 class="text-lg font-semibold text-unops-secondary mb-4 flex items-center gap-2">
+          <i class="pi pi-cloud text-unops-primary"></i>
           {{ 'label.opportunity.nap' | translate }}
         </h3>
         
@@ -769,8 +771,8 @@
     <!-- Organization Unit Strategy Alignment -->
     @if (opportunity().countries && opportunity().countries!.length > 0) {
       <div>
-        <h3 class="text-sm font-semibold text-gray-600 mb-3 flex items-center gap-2">
-          <i class="pi pi-building text-purple-600"></i>
+        <h3 class="text-lg font-semibold text-unops-secondary mb-4 flex items-center gap-2">
+          <i class="pi pi-building text-unops-primary"></i>
           {{ 'label.opportunity.orgUnitStrategy' | translate }}
         </h3>
         
@@ -918,8 +920,8 @@
 
     <!-- Beneficiaries -->
     <div>
-      <h3 class="text-sm font-semibold text-gray-600 mb-3 flex items-center gap-2">
-        <i class="pi pi-users text-indigo-600"></i>
+      <h3 class="text-lg font-semibold text-unops-secondary mb-4 flex items-center gap-2">
+        <i class="pi pi-users text-unops-primary"></i>
         {{ 'label.opportunity.beneficiaries' | translate }}
       </h3>
       
@@ -1073,6 +1075,7 @@
   [header]="isEditingSDG() ? ('label.opportunity.editSDG' | translate) : ('label.opportunity.addSDG' | translate)"
   [(visible)]="showSDGDialog"
   [modal]="true"
+  [appendTo]="'body'"
   [style]="{ width: '50rem', 'max-height': '90vh' }"
   [contentStyle]="{ overflow: 'visible' }"
 >
@@ -1351,6 +1354,7 @@
   [header]="'label.opportunity.selectUNCFOutcomes' | translate"
   [(visible)]="showUNCFDialog"
   [modal]="true"
+  [appendTo]="'body'"
   [style]="{ width: '50rem', 'max-height': '90vh' }"
   [contentStyle]="{ overflow: 'visible' }"
 >
@@ -1475,6 +1479,7 @@
   [header]="'title.selectUNOPSMissions' | translate"
   [(visible)]="showUNOPSMissionsDialog"
   [modal]="true"
+  [appendTo]="'body'"
   [style]="{ width: '45rem', maxHeight: '80vh' }"
   [contentStyle]="{ overflow: 'auto' }"
 >

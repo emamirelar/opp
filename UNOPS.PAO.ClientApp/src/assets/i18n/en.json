@@ -1331,7 +1331,7 @@
   "label.opportunity.editUNCFOutcomes": "Edit UNCF Outcomes",
   "label.opportunity.selectUNCFOutcomes": "Select UNCF Outcomes",
   "label.opportunity.uncfValidation": "Please select at least one UNCF outcome",
-  "message.opportunity.uncfNotAvailable": "This section will be available once at least one country with active UN Cooperation Framework (UNSDCF) Alignment is added to the Opportunity.",
+  "message.opportunity.uncfNotAvailable": "This section will appear when you add a country with an active UN Cooperation Framework (UNSDCF) to the Opportunity.",
   "message.opportunity.uncfUpdatesAvailable": "UN Cooperation Framework Outcomes have been updated for this country since your previous selection. Please review to select from new outcomes or proceed to continue with the previous selection.",
   "message.opportunity.uncfInactiveNoUpdates": "Some UN Cooperation Framework Outcomes or Indicators are no longer active from your previous selection and a newer version is not yet available.",
   "message.opportunity.humanitarianFrameworkAvailable": "This country has an active Humanitarian, Peace & Security Framework. Please indicate whether this opportunity will seek to align with this framework.",
