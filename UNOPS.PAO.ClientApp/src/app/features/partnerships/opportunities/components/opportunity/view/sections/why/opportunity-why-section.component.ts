@@ -133,7 +133,6 @@ export class OpportunityWhySectionComponent implements OnInit {
   readonly isSaving = signal<boolean>(false);
   private hasUnsavedChanges = false;
   private originalData: {
-    strategicAlignment?: string | null;
     expectedBeneficiaries?: string | null;
     intendedImpactOutcomes?: string | null;
     challenges?: string | null;
@@ -141,7 +140,6 @@ export class OpportunityWhySectionComponent implements OnInit {
   } | null = null;
 
   // Form controls for WHY section
-  strategicAlignmentControl = new FormControl<string | null>(null);
   expectedBeneficiariesControl = new FormControl<string | null>(null);
   estimatedDirectBeneficiariesControl = new FormControl<number | null>(null);
   estimatedIndirectBeneficiariesControl = new FormControl<number | null>(null);
@@ -196,6 +194,7 @@ export class OpportunityWhySectionComponent implements OnInit {
   // UNOPS Missions data
   unopsMissions = signal<UNOPSMission[]>([]);
   selectedUNOPSMissions = signal<Set<number>>(new Set());
+  unopsMissionsNotApplicable = signal<boolean>(false);
   showUNOPSMissionsDialog = signal<boolean>(false);
 
   // Computed properties
@@ -245,11 +244,6 @@ export class OpportunityWhySectionComponent implements OnInit {
   constructor() {
     // Set up change detection on form controls
     // Only mark as changed if we're in edit mode (to avoid triggering on initial setValue)
-    this.strategicAlignmentControl.valueChanges.subscribe(() => {
-      if (this.isEditing()) {
-        this.markAsChanged();
-      }
-    });
     this.expectedBeneficiariesControl.valueChanges.subscribe(() => {
       if (this.isEditing()) {
         this.markAsChanged();
@@ -541,6 +535,8 @@ export class OpportunityWhySectionComponent implements OnInit {
       selected.delete(missionId);
     } else {
       selected.add(missionId);
+      // If adding a mission, uncheck "not applicable"
+      this.unopsMissionsNotApplicable.set(false);
     }
     this.selectedUNOPSMissions.set(selected);
     this.markAsChanged();
@@ -572,13 +568,23 @@ export class OpportunityWhySectionComponent implements OnInit {
   });
 
   /**
+   * @description Check if UNOPS Missions dialog is valid (at least one mission selected OR not applicable checked)
+   */
+  isUNOPSMissionsDialogValid = computed(() => {
+    return this.unopsMissionCount() > 0 || this.unopsMissionsNotApplicable();
+  });
+
+  /**
    * @description Toggle "Not Applicable" for UNOPS Missions
    */
   toggleUNOPSNotApplicable(checked: boolean): void {
-    if (checked && this.unopsMissionCount() > 0) {
+    this.unopsMissionsNotApplicable.set(checked);
+    if (checked) {
+      // Clear all selected missions when "not applicable" is checked
       this.selectedUNOPSMissions.set(new Set());
-      this.cdr.detectChanges();
     }
+    this.markAsChanged();
+    this.cdr.detectChanges();
   }
 
   /**
@@ -612,6 +618,10 @@ export class OpportunityWhySectionComponent implements OnInit {
     } else {
       this.selectedUNOPSMissions.set(new Set());
     }
+    
+    // Reset "not applicable" flag - don't auto-check
+    this.unopsMissionsNotApplicable.set(false);
+    
     this.showUNOPSMissionsDialog.set(false);
     this.cdr.detectChanges();
   }
@@ -624,7 +634,6 @@ export class OpportunityWhySectionComponent implements OnInit {
 
     // Backup original data for cancel
     this.originalData = {
-      strategicAlignment: opp.strategicAlignment ?? null,
       expectedBeneficiaries: opp.expectedBeneficiaries ?? null,
       intendedImpactOutcomes: opp.intendedImpactOutcomes ?? null,
       challenges: opp.challenges ?? null,
@@ -632,7 +641,6 @@ export class OpportunityWhySectionComponent implements OnInit {
     };
 
     // Set form controls
-    this.strategicAlignmentControl.setValue(opp.strategicAlignment ?? null);
     this.expectedBeneficiariesControl.setValue(
       opp.expectedBeneficiaries ?? null,
     );
@@ -689,6 +697,9 @@ export class OpportunityWhySectionComponent implements OnInit {
       );
       this.selectedUNOPSMissions.set(selectedIds);
     }
+    
+    // Initialize "not applicable" state - always false so checkbox is not auto-selected
+    this.unopsMissionsNotApplicable.set(false);
 
     this.isEditing.set(true);
     this.cdr.detectChanges();
@@ -713,7 +724,6 @@ export class OpportunityWhySectionComponent implements OnInit {
     if (!opp || !opp.id) return;
 
     const whyData = {
-      strategicAlignment: this.strategicAlignmentControl.value ?? undefined,
       expectedBeneficiaries:
         this.expectedBeneficiariesControl.value ?? undefined,
       estimatedDirectBeneficiaries:
@@ -824,9 +834,6 @@ export class OpportunityWhySectionComponent implements OnInit {
     // Restore original data if available
     if (this.originalData) {
       // Reset form controls to original values
-      this.strategicAlignmentControl.setValue(
-        this.originalData.strategicAlignment ?? null,
-      );
       this.expectedBeneficiariesControl.setValue(
         this.originalData.expectedBeneficiaries ?? null,
       );
@@ -838,7 +845,6 @@ export class OpportunityWhySectionComponent implements OnInit {
       // Restore original SDGs (reverts any SDGs that were added but not saved)
       const updatedOpportunity = {
         ...opp,
-        strategicAlignment: this.originalData.strategicAlignment ?? null,
         expectedBeneficiaries: this.originalData.expectedBeneficiaries ?? null,
         intendedImpactOutcomes:
           this.originalData.intendedImpactOutcomes ?? null,
@@ -850,7 +856,6 @@ export class OpportunityWhySectionComponent implements OnInit {
       this.opportunityUpdated.emit(updatedOpportunity);
     } else {
       // Fallback: just reset form controls to current opportunity values
-      this.strategicAlignmentControl.setValue(opp.strategicAlignment ?? null);
       this.expectedBeneficiariesControl.setValue(
         opp.expectedBeneficiaries ?? null,
       );
@@ -917,6 +922,9 @@ export class OpportunityWhySectionComponent implements OnInit {
     } else {
       this.selectedUNOPSMissions.set(new Set());
     }
+    
+    // Reset "not applicable" flag
+    this.unopsMissionsNotApplicable.set(false);
 
     this.cdr.detectChanges();
   }

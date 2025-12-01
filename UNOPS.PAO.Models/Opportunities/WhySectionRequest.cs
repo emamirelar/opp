@@ -6,10 +6,7 @@ namespace UNOPS.PAO.Models.Opportunities;
 /// </summary>
 public class WhySectionRequest
 {
-    /// <summary>
-    /// Strategic alignment description
-    /// </summary>
-    public string? StrategicAlignment { get; set; }
+    
     
     /// <summary>
     /// Results focus description

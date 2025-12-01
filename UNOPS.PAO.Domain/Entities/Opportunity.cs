@@ -39,10 +39,7 @@ public class Opportunity : ModifiableDeletableEntity
     
     public int? ProposedInitiativeTypeId { get; set; }
     public virtual ProposedInitiativeType? ProposedInitiativeType { get; set; }
-    
-    [MaxLength(1000)]
-    public string? StrategicAlignment { get; set; }
-    
+        
     [MaxLength(2000)]
     public string? ResultsFocus { get; set; }
     

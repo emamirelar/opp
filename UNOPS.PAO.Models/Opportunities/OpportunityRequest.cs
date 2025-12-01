@@ -13,7 +13,6 @@ public class OpportunityRequest
     public DateTime? TargetDeliveryDate { get; set; }
     public int? ProposedInitiativeTypeId { get; set; }
     
-    public string? StrategicAlignment { get; set; }
     public string? ResultsFocus { get; set; }
     public string? IntendedImpactOutcomes { get; set; }
     public string? ExpectedBeneficiaries { get; set; }

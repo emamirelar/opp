@@ -1187,7 +1187,6 @@ public class AdvancedSearchService
                     AddFieldIfNotNull(fields, "Name", opportunity.Name);
                     AddFieldIfNotNull(fields, "Description", opportunity.Description);
                     AddFieldIfNotNull(fields, "PartnerReference", opportunity.PartnerReference);
-                    AddFieldIfNotNull(fields, "StrategicAlignment", opportunity.StrategicAlignment);
                     AddFieldIfNotNull(fields, "ResultsFocus", opportunity.ResultsFocus);
                     AddFieldIfNotNull(fields, "IntendedImpactOutcomes", opportunity.IntendedImpactOutcomes);
                     AddFieldIfNotNull(fields, "ExpectedBeneficiaries", opportunity.ExpectedBeneficiaries);
