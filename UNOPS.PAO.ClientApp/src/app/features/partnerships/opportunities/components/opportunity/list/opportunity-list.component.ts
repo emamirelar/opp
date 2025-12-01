@@ -236,6 +236,28 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
           const processedColumns = columns.map((col: any) =>
             this.processColumn(col),
           );
+          
+          // Always add tags column if not already present
+          const hasTagsColumn = processedColumns.some((col: ListViewColumn) => col.field === 'tags');
+          if (!hasTagsColumn) {
+            processedColumns.push({
+              field: 'tags',
+              label: this.translateService.instant('label.column.status'),
+              sortable: false,
+              type: 'template',
+              width: '15%',
+              templateFn: (rowData: any) => {
+                if (!rowData?.tags || !Array.isArray(rowData.tags) || rowData.tags.length === 0) {
+                  return '';
+                }
+                
+                return rowData.tags.map((tag: any) => 
+                  `<span class="px-2 py-1 text-xs rounded-full ${tag.color} whitespace-nowrap">${tag.tag}</span>`
+                ).join(' ');
+              }
+            });
+          }
+          
           this.opportunityColumns.set(processedColumns);
           this.columnsLoading.set(false);
           this.cdr.detectChanges();
@@ -259,6 +281,10 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
       width: column.width,
       ellipsis: column.ellipsis,
       helperText: column.helperText,
+      thumbnailSize: column.thumbnailSize,
+      thumbnailShape: column.thumbnailShape,
+      thumbnailBorder: column.thumbnailBorder,
+      thumbnailFallback: column.thumbnailFallback,
     };
 
     // Handle nested field paths (fields with dots) by adding a template function

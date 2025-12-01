@@ -895,8 +895,54 @@ public class OpportunityManager : IOpportunityManager
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
 
+        // Validate date logic
+        if (request.ImplementationStartDate.HasValue && request.TargetSigningDate.HasValue)
+        {
+            if (request.ImplementationStartDate.Value < request.TargetSigningDate.Value)
+            {
+                throw new BusinessException("Implementation Start Date cannot be before the Target Signing Date");
+            }
+        }
+
+        if (request.TargetDeliveryDate.HasValue)
+        {
+            var effectiveStartDate = request.ImplementationStartDate ?? request.TargetSigningDate;
+            if (effectiveStartDate.HasValue && request.TargetDeliveryDate.Value < effectiveStartDate.Value)
+            {
+                throw new BusinessException("Target Delivery Date must be after the Implementation Start Date (or Target Signing Date if no Implementation Start Date is set)");
+            }
+        }
+
+        // Validate deliverable dates
+        if (request.Deliverables != null && request.Deliverables.Any())
+        {
+            var effectiveImplementationStart = request.ImplementationStartDate ?? request.TargetSigningDate;
+            
+            foreach (var deliverable in request.Deliverables)
+            {
+                // Validate that deliverable start is not before implementation start
+                if (deliverable.PlannedStartDate.HasValue && effectiveImplementationStart.HasValue)
+                {
+                    if (deliverable.PlannedStartDate.Value < effectiveImplementationStart.Value)
+                    {
+                        throw new BusinessException($"Deliverable Planned Start Date cannot be before the Implementation Start Date for deliverable ID: {deliverable.Id}");
+                    }
+                }
+                
+                // Validate that deliverable end is not before deliverable start
+                if (deliverable.PlannedStartDate.HasValue && deliverable.PlannedEndDate.HasValue)
+                {
+                    if (deliverable.PlannedEndDate.Value < deliverable.PlannedStartDate.Value)
+                    {
+                        throw new BusinessException($"Deliverable Planned End Date cannot be before the Planned Start Date for deliverable ID: {deliverable.Id}");
+                    }
+                }
+            }
+        }
+
         // Update dates
         entity.TargetSigningDate = request.TargetSigningDate;
+        entity.ImplementationStartDate = request.ImplementationStartDate;
         entity.TargetDeliveryDate = request.TargetDeliveryDate;
 
         await context.SaveChangesAsync();

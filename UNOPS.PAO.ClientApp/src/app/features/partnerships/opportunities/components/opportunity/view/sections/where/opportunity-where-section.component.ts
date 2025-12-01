@@ -102,10 +102,16 @@ export class OpportunityWhereSectionComponent implements OnInit {
 
   // Outputs
   readonly opportunityUpdated = output<Opportunity>();
+  readonly changesDetected = output<void>();
+  readonly changesSavedOrDiscarded = output<void>();
 
   // State signals
   readonly isEditing = signal(false);
   readonly isSaving = signal(false);
+  private hasUnsavedChanges = false;
+  private originalData: {
+    countries?: any[];
+  } | null = null;
   
   // Country dialog state
   readonly showCountryDialog = signal(false);
@@ -250,6 +256,13 @@ export class OpportunityWhereSectionComponent implements OnInit {
    * @description Enable edit mode
    */
   startEditing(): void {
+    const opp = this.opportunity();
+    
+    // Backup original data for cancel
+    this.originalData = {
+      countries: opp.countries ? [...opp.countries] : []
+    };
+    
     this.isEditing.set(true);
     this.cdr.detectChanges();
   }
@@ -258,8 +271,36 @@ export class OpportunityWhereSectionComponent implements OnInit {
    * @description Cancel edit mode
    */
   cancelEditing(): void {
+    const opp = this.opportunity();
+    
+    // Restore original data if available
+    if (this.originalData) {
+      // Restore original countries (reverts any countries that were added but not saved)
+      const updatedOpportunity = {
+        ...opp,
+        countries: this.originalData.countries ? [...this.originalData.countries] : []
+      };
+      
+      // Emit the reverted opportunity to parent
+      this.opportunityUpdated.emit(updatedOpportunity);
+    }
+    
     this.isEditing.set(false);
+    this.originalData = null;
+    this.hasUnsavedChanges = false;
+    this.changesSavedOrDiscarded.emit();
     this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Mark section as having unsaved changes
+   * @private
+   */
+  private markAsChanged(): void {
+    if (!this.hasUnsavedChanges) {
+      this.hasUnsavedChanges = true;
+      this.changesDetected.emit();
+    }
   }
 
   /**
@@ -282,7 +323,10 @@ export class OpportunityWhereSectionComponent implements OnInit {
       next: (updated) => {
         this.isSaving.set(false);
         this.isEditing.set(false);
+        this.hasUnsavedChanges = false;
+        this.originalData = null;
         this.opportunityUpdated.emit(updated);
+        this.changesSavedOrDiscarded.emit();
         this.feedbackService.showSuccessToast({
           summary: this.translateService.instant('message.success'),
           detail: this.translateService.instant('message.opportunity.whereSectionUpdated')
@@ -409,6 +453,7 @@ export class OpportunityWhereSectionComponent implements OnInit {
     };
 
     this.opportunityUpdated.emit(updatedOpportunity);
+    this.markAsChanged();
     this.feedbackService.showSuccessToast({
       summary: this.translateService.instant('message.success'),
       detail: this.translateService.instant('message.countriesAdded', { count: countries.length })
@@ -443,6 +488,7 @@ export class OpportunityWhereSectionComponent implements OnInit {
         };
 
         this.opportunityUpdated.emit(updatedOpportunity);
+        this.markAsChanged();
         this.cdr.detectChanges();
       }
     );

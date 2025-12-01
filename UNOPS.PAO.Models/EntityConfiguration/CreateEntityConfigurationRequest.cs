@@ -282,4 +282,10 @@ public class ListViewColumnDto
     public string? DisplayFieldPath { get; set; }
     public string? FirstLetterFallbackField { get; set; }
     public string? HelperText { get; set; }
+    
+    // Thumbnail configuration properties
+    public string? ThumbnailSize { get; set; }
+    public string? ThumbnailShape { get; set; }
+    public bool? ThumbnailBorder { get; set; }
+    public string? ThumbnailFallback { get; set; }
 } 

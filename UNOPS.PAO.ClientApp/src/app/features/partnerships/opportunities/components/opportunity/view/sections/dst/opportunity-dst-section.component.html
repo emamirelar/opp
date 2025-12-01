@@ -13,7 +13,7 @@
       <!-- Risks from Register (Left Panel) -->
         <div>
           <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <h3 class="text-lg font-semibold text-unops-secondary flex items-center gap-2">
               <i class="pi pi-exclamation-triangle text-unops-warning"></i>
               <span>
                 {{ 'title.dst.risksIdentified' | translate }}
@@ -31,18 +31,18 @@
 
         @if (loadingRisks()) {
           <div class="text-center py-4">
-            <i class="pi pi-spin pi-spinner text-2xl text-gray-400"></i>
+            <i class="pi pi-spin pi-spinner text-2xl text-unops-neutral-500"></i>
           </div>
         } @else if (risks().length === 0) {
-            <div class="bg-white rounded-lg p-4 border border-gray-200 text-center text-gray-500">
+            <div class="bg-unops-surface-primary rounded-unops-lg p-4 border border-unops-neutral-300 text-center text-unops-neutral-600">
             {{ 'message.dst.noRisksInRegister' | translate }}
             </div>
           } @else {
           <div class="max-h-[600px] overflow-y-auto pr-2">
             @for (risk of risks(); track risk.id) {
-              <div class="bg-white rounded-lg p-4 mb-3 border border-gray-200">
+              <div class="bg-unops-surface-primary rounded-unops-lg p-4 mb-3 border border-unops-neutral-300 shadow-unops-sm">
                 <div class="flex items-start justify-between mb-2">
-                  <h4 class="font-semibold text-gray-900">
+                  <h4 class="font-semibold text-unops-secondary">
                     {{ risk.title }}
                   </h4>
                   <p-tag
@@ -50,10 +50,10 @@
                     [severity]="getImpactSeverity(risk.impact)"
                   />
                 </div>
-                <p class="text-sm text-gray-600 mb-2">
+                <p class="text-sm text-unops-neutral-700 mb-2">
                   {{ risk.description }}
                 </p>
-                <div class="text-xs text-gray-500">
+                <div class="text-xs text-unops-neutral-600">
                   <strong>{{ 'label.dst.recommendation' | translate }}:</strong>
                   {{ risk.recommendation }}
                 </div>
@@ -65,8 +65,8 @@
 
       <!-- AI Recommendations (Right Panel) -->
         <div>
-          <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <i class="pi pi-lightbulb text-unops-info"></i>
+          <h3 class="text-lg font-semibold text-unops-secondary mb-4 flex items-center gap-2">
+            <i class="pi pi-lightbulb text-unops-info-dark"></i>
             <span>
               {{ 'title.dst.recommendations' | translate }}
             ({{ visibleRecommendations().length }})
@@ -75,23 +75,23 @@
 
         @if (loadingRecommendations()) {
           <div class="text-center py-4">
-            <i class="pi pi-spin pi-spinner text-2xl text-gray-400"></i>
+            <i class="pi pi-spin pi-spinner text-2xl text-unops-neutral-500"></i>
           </div>
         } @else if (visibleRecommendations().length === 0) {
-            <div class="bg-blue-50 rounded-lg p-4 border border-blue-100 text-center text-gray-600">
+            <div class="bg-unops-info-lighter rounded-unops-lg p-4 border border-unops-info-light text-center text-unops-neutral-700">
               {{ 'message.dst.noRecommendations' | translate }}
             </div>
           } @else {
           <div class="max-h-[600px] overflow-y-auto pr-2">
             @for (rec of visibleRecommendations(); track $index) {
-              <div class="bg-blue-50 rounded-lg p-4 mb-3 border border-blue-100">
-                <h4 class="font-semibold text-gray-900 mb-2">
+              <div class="bg-unops-primary-container-soft rounded-unops-lg p-4 mb-3 border border-unops-primary-200 shadow-unops-sm">
+                <h4 class="font-semibold text-unops-secondary mb-2">
                   {{ rec.title }}
                 </h4>
-                <p class="text-sm text-gray-600 mb-2">
+                <p class="text-sm text-unops-neutral-700 mb-2">
                   {{ rec.description }}
                 </p>
-                <div class="text-xs text-gray-500 mb-3">
+                <div class="text-xs text-unops-neutral-600 mb-3">
                   <strong>{{ 'label.dst.recommendation' | translate }}:</strong>
                   {{ rec.recommendation }}
                 </div>
@@ -125,7 +125,7 @@
     <!-- Similar Opportunities Section -->
       <div>
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+        <h3 class="text-lg font-semibold text-unops-secondary flex items-center gap-2">
           <i class="pi pi-search text-unops-primary"></i>
           <span>
             {{ 'title.dst.similarOpportunities' | translate }}
@@ -147,32 +147,32 @@
       </div>
       
       <!-- Help Text -->
-      <div class="mb-4 p-2 bg-blue-50 border border-blue-100 rounded text-xs text-blue-900">
+      <div class="mb-4 p-2 bg-unops-primary-container-soft border border-unops-primary-200 rounded text-xs text-unops-neutral-800">
         <div class="flex items-start gap-2">
-          <i class="pi pi-info-circle text-blue-600 mt-0.5 flex-shrink-0"></i>
+          <i class="pi pi-info-circle text-unops-primary-dark mt-0.5 flex-shrink-0"></i>
           <span>{{ 'helpText.dst.similarOpportunities' | translate }}</span>
         </div>
       </div>
 
         @if (loadingSimilarOpportunities()) {
           <div class="text-center py-8">
-            <i class="pi pi-spin pi-spinner text-3xl text-gray-400"></i>
-            <p class="text-sm text-gray-500 mt-2">{{ 'message.dst.loadingSimilarOpportunities' | translate }}</p>
+            <i class="pi pi-spin pi-spinner text-3xl text-unops-neutral-500"></i>
+            <p class="text-sm text-unops-neutral-600 mt-2">{{ 'message.dst.loadingSimilarOpportunities' | translate }}</p>
           </div>
         } @else if (similarOpportunitiesError()) {
-          <div class="bg-red-50 rounded-lg p-4 border border-red-200">
+          <div class="bg-unops-error-lighter rounded-unops-lg p-4 border border-unops-error-light">
             <div class="flex items-start gap-2">
-              <i class="pi pi-exclamation-circle text-red-500 mt-1"></i>
+              <i class="pi pi-exclamation-circle text-unops-error mt-1"></i>
               <div>
-                <h4 class="font-semibold text-red-900 mb-1">{{ 'message.dst.errorLoadingSimilarOpportunities' | translate }}</h4>
-                <p class="text-sm text-red-700">{{ similarOpportunitiesError() }}</p>
+                <h4 class="font-semibold text-unops-error-darker mb-1">{{ 'message.dst.errorLoadingSimilarOpportunities' | translate }}</h4>
+                <p class="text-sm text-unops-error-dark">{{ similarOpportunitiesError() }}</p>
               </div>
             </div>
           </div>
         } @else if (!similarOpportunities() || similarOpportunities()!.length === 0) {
-          <div class="bg-white rounded-lg p-6 border border-gray-200 text-center">
-            <i class="pi pi-inbox text-4xl text-gray-300 mb-3"></i>
-            <p class="text-gray-500">{{ 'message.dst.noSimilarOpportunities' | translate }}</p>
+          <div class="bg-unops-surface-primary rounded-unops-lg p-6 border border-unops-neutral-300 text-center">
+            <i class="pi pi-inbox text-4xl text-unops-neutral-400 mb-3"></i>
+            <p class="text-unops-neutral-600">{{ 'message.dst.noSimilarOpportunities' | translate }}</p>
             <p-button
               [label]="'button.dst.findSimilarOpportunities' | translate"
               icon="pi pi-search"
@@ -186,7 +186,7 @@
           <!-- Similar Opportunities Grid -->
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
             @for (opp of similarOpportunities(); track opp.opportunityId) {
-              <div class="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+              <div class="bg-unops-surface-primary rounded-unops-lg p-4 border border-unops-neutral-300 hover:shadow-unops-md transition-shadow cursor-pointer"
                    (click)="navigateToOpportunity(opp.opportunityId)">
                 <!-- Workflow Stage Badge -->
                 @if (opp.workflowStage) {
@@ -201,23 +201,23 @@
                 }
 
                 <!-- Opportunity Name -->
-                <h4 class="text-sm font-semibold text-gray-900 mb-2 line-clamp-2">
+                <h4 class="text-sm font-semibold text-unops-secondary mb-2 line-clamp-2">
                   {{ opp.name }}
                 </h4>
 
                 <!-- Description -->
                 @if (opp.description) {
-                  <p class="text-xs text-gray-600 mb-3 line-clamp-2">
+                  <p class="text-xs text-unops-neutral-700 mb-3 line-clamp-2">
                     {{ opp.description }}
                   </p>
                 }
 
                 <!-- Opportunity Details -->
-                <div class="text-xs text-gray-600 space-y-1.5">
+                <div class="text-xs text-unops-neutral-700 space-y-1.5">
                   <!-- Budget -->
                   @if (opp.budget) {
                     <div class="flex items-center gap-2">
-                      <i class="pi pi-dollar text-gray-400 flex-shrink-0"></i>
+                      <i class="pi pi-dollar text-unops-neutral-500 flex-shrink-0"></i>
                       <span class="font-medium">{{ formatBudget(opp.budget) }}</span>
                     </div>
                   }
@@ -225,7 +225,7 @@
                   <!-- Duration -->
                   @if (opp.durationMonths) {
                     <div class="flex items-center gap-2">
-                      <i class="pi pi-clock text-gray-400 flex-shrink-0"></i>
+                      <i class="pi pi-clock text-unops-neutral-500 flex-shrink-0"></i>
                       <span>{{ opp.durationMonths }} {{ opp.durationMonths === 1 ? 'month' : 'months' }}</span>
                     </div>
                   }
@@ -240,7 +240,7 @@
     
     <div>
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+        <h3 class="text-lg font-semibold text-unops-secondary flex items-center gap-2">
           <i class="pi pi-box text-unops-primary"></i>
           <span>
             {{ 'title.dst.relevantUnopsExperience' | translate }}
@@ -262,32 +262,32 @@
       </div>
       
       <!-- Help Text -->
-      <div class="mb-4 p-2 bg-blue-50 border border-blue-100 rounded text-xs text-blue-900">
+      <div class="mb-4 p-2 bg-unops-primary-container-soft border border-unops-primary-200 rounded text-xs text-unops-neutral-800">
         <div class="flex items-start gap-2">
-          <i class="pi pi-info-circle text-blue-600 mt-0.5 flex-shrink-0"></i>
+          <i class="pi pi-info-circle text-unops-primary-dark mt-0.5 flex-shrink-0"></i>
           <span>{{ 'helpText.dst.similarProjects' | translate }}</span>
         </div>
       </div>
 
         @if (loadingSimilarProjects()) {
           <div class="text-center py-8">
-            <i class="pi pi-spin pi-spinner text-3xl text-gray-400"></i>
-            <p class="text-sm text-gray-500 mt-2">{{ 'message.dst.loadingRelevantExperience' | translate }}</p>
+            <i class="pi pi-spin pi-spinner text-3xl text-unops-neutral-500"></i>
+            <p class="text-sm text-unops-neutral-600 mt-2">{{ 'message.dst.loadingRelevantExperience' | translate }}</p>
           </div>
         } @else if (similarProjectsError()) {
-          <div class="bg-red-50 rounded-lg p-4 border border-red-200">
+          <div class="bg-unops-error-lighter rounded-unops-lg p-4 border border-unops-error-light">
             <div class="flex items-start gap-2">
-              <i class="pi pi-exclamation-circle text-red-500 mt-1"></i>
+              <i class="pi pi-exclamation-circle text-unops-error mt-1"></i>
                   <div>
-                <h4 class="font-semibold text-red-900 mb-1">{{ 'message.dst.errorLoadingRelevantExperience' | translate }}</h4>
-                <p class="text-sm text-red-700">{{ similarProjectsError() }}</p>
+                <h4 class="font-semibold text-unops-error-darker mb-1">{{ 'message.dst.errorLoadingRelevantExperience' | translate }}</h4>
+                <p class="text-sm text-unops-error-dark">{{ similarProjectsError() }}</p>
               </div>
             </div>
           </div>
         } @else if (!similarProjects() || similarProjects()!.length === 0) {
-          <div class="bg-white rounded-lg p-6 border border-gray-200 text-center">
-            <i class="pi pi-inbox text-4xl text-gray-300 mb-3"></i>
-            <p class="text-gray-500">{{ 'message.dst.noRelevantExperience' | translate }}</p>
+          <div class="bg-unops-surface-primary rounded-unops-lg p-6 border border-unops-neutral-300 text-center">
+            <i class="pi pi-inbox text-4xl text-unops-neutral-400 mb-3"></i>
+            <p class="text-unops-neutral-600">{{ 'message.dst.noRelevantExperience' | translate }}</p>
             <p-button
               [label]="'button.dst.findRelevantExperience' | translate"
               icon="pi pi-search"
@@ -300,32 +300,32 @@
 
           <!-- Similar Projects Grid -->
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            @for (project of similarProjects(); track project.projectId) {
-              <div class="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+            @for (project of similarProjects(); track project.projectId || $index) {
+              <div class="bg-unops-surface-primary rounded-unops-lg p-4 border border-unops-neutral-300 hover:shadow-unops-md transition-shadow cursor-pointer"
                    (click)="openProjectUrl(project.projectUrl)">
                 <!-- Description -->
                 @if (project.description) {
-                  <p class="text-sm text-gray-700 mb-2 line-clamp-2 font-medium">
-                    {{ project.description }}
+                  <p class="text-sm text-unops-neutral-800 mb-2 line-clamp-2 font-medium">
+                    <span class="font-bold text-unops-primary">{{ project.projectId }}:</span> {{ project.description }}
                   </p>
                 }
                 
                 <!-- Relevance Explanation (AI-generated) -->
                 @if (project.relevanceExplanation) {
-                  <div class="bg-blue-50 border border-blue-200 rounded px-3 py-2 mb-3 flex items-start gap-2">
-                    <i class="pi pi-info-circle text-blue-600 text-xs mt-0.5 flex-shrink-0"></i>
-                    <p class="text-xs text-blue-800 italic">
+                  <div class="bg-unops-info-lighter border border-unops-info-light rounded px-3 py-2 mb-3 flex items-start gap-2">
+                    <i class="pi pi-info-circle text-unops-info text-xs mt-0.5 flex-shrink-0"></i>
+                    <p class="text-xs text-unops-info-dark italic">
                       {{ project.relevanceExplanation }}
                     </p>
                   </div>
                 }
 
                 <!-- Project Details -->
-                <div class="text-xs text-gray-600 space-y-2 mb-3">
+                <div class="text-xs text-unops-neutral-700 space-y-2 mb-3">
                   <!-- Dates -->
                   @if (project.startDate && project.endDate) {
                     <div class="flex items-start gap-2">
-                      <i class="pi pi-calendar text-gray-400 mt-0.5 flex-shrink-0"></i>
+                      <i class="pi pi-calendar text-unops-neutral-500 mt-0.5 flex-shrink-0"></i>
                       <span>{{ project.startDate }} to {{ project.endDate }}</span>
                     </div>
                   }
@@ -333,7 +333,7 @@
                   <!-- Partners -->
                   @if (project.partners) {
                     <div class="flex items-start gap-2">
-                      <i class="pi pi-building text-gray-400 mt-0.5 flex-shrink-0"></i>
+                      <i class="pi pi-building text-unops-neutral-500 mt-0.5 flex-shrink-0"></i>
                       <span class="line-clamp-1">{{ formatPartners(project.partners) }}</span>
                     </div>
                   }
@@ -341,7 +341,7 @@
                   <!-- Countries -->
                   @if (project.countries) {
                     <div class="flex items-start gap-2">
-                      <i class="pi pi-map-marker text-gray-400 mt-0.5 flex-shrink-0"></i>
+                      <i class="pi pi-map-marker text-unops-neutral-500 mt-0.5 flex-shrink-0"></i>
                       <span class="line-clamp-1">{{ formatCountries(project.countries) }}</span>
                   </div>
                   }
@@ -349,9 +349,9 @@
                   <!-- Project Manager -->
                   @if (project.projectManagerName && project.projectManagerEmail) {
                     <div class="flex items-start gap-2">
-                      <i class="pi pi-user text-gray-400 mt-0.5 flex-shrink-0"></i>
+                      <i class="pi pi-user text-unops-neutral-500 mt-0.5 flex-shrink-0"></i>
                       <a [href]="'mailto:' + project.projectManagerEmail" 
-                         class="text-blue-600 hover:text-blue-800 hover:underline"
+                         class="text-unops-primary hover:text-unops-primary-dark hover:underline"
                          (click)="$event.stopPropagation()">
                         {{ project.projectManagerName }}
                       </a>
@@ -370,7 +370,7 @@
       <!-- Relevant People Section -->
       <div class="mb-8">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+        <h3 class="text-lg font-semibold text-unops-secondary flex items-center gap-2">
           <i class="pi pi-users text-unops-primary"></i>
           <span>
             {{ 'title.dst.relevantPeopleWithSkills' | translate }}
@@ -389,23 +389,23 @@
       </div>
       
       <!-- Help Text -->
-      <div class="mb-4 p-2 bg-blue-50 border border-blue-100 rounded text-xs text-blue-900">
+      <div class="mb-4 p-2 bg-unops-primary-container-soft border border-unops-primary-200 rounded text-xs text-unops-neutral-800">
         <div class="flex items-start gap-2">
-          <i class="pi pi-info-circle text-blue-600 mt-0.5 flex-shrink-0"></i>
+          <i class="pi pi-info-circle text-unops-primary-dark mt-0.5 flex-shrink-0"></i>
           <span>{{ 'helpText.dst.relevantPeople' | translate }}</span>
         </div>
       </div>
 
         @if (loadingRelevantPeople()) {
           <div class="text-center py-8">
-            <i class="pi pi-spin pi-spinner text-4xl text-gray-400"></i>
-            <p class="text-gray-600 mt-2">{{ 'message.dst.loadingRelevantPeople' | translate }}</p>
+            <i class="pi pi-spin pi-spinner text-4xl text-unops-neutral-500"></i>
+            <p class="text-unops-neutral-700 mt-2">{{ 'message.dst.loadingRelevantPeople' | translate }}</p>
           </div>
         } @else if (relevantPeopleError()) {
-          <div class="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
+          <div class="bg-unops-error-lighter border border-unops-error-light rounded-unops-lg p-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <i class="pi pi-exclamation-triangle text-red-600 text-xl"></i>
-              <span class="text-red-800">{{ relevantPeopleError() }}</span>
+              <i class="pi pi-exclamation-triangle text-unops-error text-xl"></i>
+              <span class="text-unops-error-darker">{{ relevantPeopleError() }}</span>
                 </div>
                 <p-button
               [label]="'button.retry' | translate"
@@ -420,8 +420,8 @@
 
           <!-- Relevant People Grid -->
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            @for (person of relevantPeople(); track person.personId) {
-              <div class="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow">
+            @for (person of relevantPeople(); track person.personId || $index) {
+              <div class="bg-unops-surface-primary rounded-unops-lg p-4 border border-unops-neutral-300 hover:shadow-unops-md transition-shadow">
                 <!-- Profile Photo and Name -->
                 <div class="flex items-start gap-3 mb-3">
                   <!-- Profile Photo or Initials Avatar -->
@@ -444,11 +444,11 @@
                   <!-- Name -->
                   @if (person.name) {
                     <div class="flex-1 min-w-0">
-                      <h3 class="text-sm font-semibold text-gray-900 mb-1">
+                      <h3 class="text-sm font-semibold text-unops-secondary mb-1">
                         {{ person.name }}
                       </h3>
                       @if (person.title) {
-                        <p class="text-xs text-gray-600 line-clamp-1">
+                        <p class="text-xs text-unops-neutral-700 line-clamp-1">
                           {{ person.title }}
                         </p>
                       }
@@ -458,21 +458,21 @@
                 
                 <!-- Relevance Explanation (AI-generated) -->
                 @if (person.relevanceExplanation) {
-                  <div class="bg-green-50 border border-green-200 rounded px-3 py-2 mb-3 flex items-start gap-2">
-                    <i class="pi pi-info-circle text-green-600 text-xs mt-0.5 flex-shrink-0"></i>
-                    <p class="text-xs text-green-800 italic">
+                  <div class="bg-unops-success-lighter border border-unops-success-light rounded px-3 py-2 mb-3 flex items-start gap-2">
+                    <i class="pi pi-info-circle text-unops-success text-xs mt-0.5 flex-shrink-0"></i>
+                    <p class="text-xs text-unops-success-darker italic">
                       {{ person.relevanceExplanation }}
                     </p>
                   </div>
                 }
 
                 <!-- Person Details -->
-                <div class="text-xs text-gray-600 space-y-2">
+                <div class="text-xs text-unops-neutral-700 space-y-2">
 
                   <!-- Department -->
                   @if (person.department) {
                     <div class="flex items-start gap-2">
-                      <i class="pi pi-building text-gray-400 mt-0.5 flex-shrink-0"></i>
+                      <i class="pi pi-building text-unops-neutral-500 mt-0.5 flex-shrink-0"></i>
                       <span class="line-clamp-1">{{ person.department }}</span>
                     </div>
                   }
@@ -480,7 +480,7 @@
                   <!-- Location -->
                   @if (person.location) {
                     <div class="flex items-start gap-2">
-                      <i class="pi pi-map-marker text-gray-400 mt-0.5 flex-shrink-0"></i>
+                      <i class="pi pi-map-marker text-unops-neutral-500 mt-0.5 flex-shrink-0"></i>
                       <span class="line-clamp-1">{{ person.location }}</span>
                     </div>
                   }
@@ -488,9 +488,9 @@
                   <!-- Email -->
                   @if (person.email) {
                     <div class="flex items-start gap-2">
-                      <i class="pi pi-envelope text-gray-400 mt-0.5 flex-shrink-0"></i>
+                      <i class="pi pi-envelope text-unops-neutral-500 mt-0.5 flex-shrink-0"></i>
                       <a [href]="'mailto:' + person.email" 
-                         class="text-blue-600 hover:text-blue-800 hover:underline line-clamp-1">
+                         class="text-unops-primary hover:text-unops-primary-dark hover:underline line-clamp-1">
                         {{ person.email }}
                       </a>
                     </div>
@@ -499,7 +499,7 @@
                   <!-- Expertise Tags -->
                   @if (person.expertise && person.expertise.length > 0) {
                     <div class="flex items-start gap-2 pt-2">
-                      <i class="pi pi-star text-gray-400 mt-0.5 flex-shrink-0"></i>
+                      <i class="pi pi-star text-unops-neutral-500 mt-0.5 flex-shrink-0"></i>
                       <div class="flex flex-wrap gap-1">
                         @for (skill of person.expertise.slice(0, 3); track skill) {
                           <p-tag [value]="skill" severity="secondary" styleClass="text-xs" />

@@ -342,7 +342,11 @@ export class PartnerViewInteractionsComponent implements OnInit {
       sortable: column.sortable,
       width: column.width,
       ellipsis: column.ellipsis,
-      helperText: column.helperText
+      helperText: column.helperText,
+      thumbnailSize: column.thumbnailSize,
+      thumbnailShape: column.thumbnailShape,
+      thumbnailBorder: column.thumbnailBorder,
+      thumbnailFallback: column.thumbnailFallback,
     };
 
     // Detect interaction type columns and convert them to interactionIcon type

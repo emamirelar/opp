@@ -86,6 +86,16 @@ export class OpportunityWhatSectionComponent implements OnInit {
    */
   readonly sectionSaved = output<void>();
 
+  /**
+   * @description Output event when changes are detected (for unsaved changes tracking)
+   */
+  readonly changesDetected = output<void>();
+
+  /**
+   * @description Output event when changes are saved or discarded (clear unsaved state)
+   */
+  readonly changesSavedOrDiscarded = output<void>();
+
   // Edit mode state
   readonly isEditing = signal<boolean>(false);
   readonly isSaving = signal<boolean>(false);
@@ -95,6 +105,7 @@ export class OpportunityWhatSectionComponent implements OnInit {
     deliveryModality?: number | null;
     deliverables?: any[];
   } | null = null;
+  private hasUnsavedChanges = false;
 
   // Form controls for WHAT section
   orgUnitControl = new FormControl<number | null>(null);
@@ -255,6 +266,29 @@ export class OpportunityWhatSectionComponent implements OnInit {
       if (opp && opp.id) {
         // Re-check framework status whenever opportunity signal changes
         this.checkFrameworkStatus();
+        
+        // Auto-load AI recommendations (Option 2: load automatically)
+        if (!this.hasRunExtraction()) {
+          this.extractProductsAndServices();
+        }
+      }
+    });
+    
+    // Set up change detection on form controls
+    // Only mark as changed if we're in edit mode (to avoid triggering on initial setValue)
+    this.orgUnitControl.valueChanges.subscribe(() => {
+      if (this.isEditing()) {
+        this.markAsChanged();
+      }
+    });
+    this.initiativeTypeControl.valueChanges.subscribe(() => {
+      if (this.isEditing()) {
+        this.markAsChanged();
+      }
+    });
+    this.deliveryModalityControl.valueChanges.subscribe(() => {
+      if (this.isEditing()) {
+        this.markAsChanged();
       }
     });
   }
@@ -901,11 +935,6 @@ export class OpportunityWhatSectionComponent implements OnInit {
     if (!opp || !opp.id) return;
 
     this.isExtracting.set(true);
-    this.feedbackService.showInfoToast({
-      summary: this.translateService.instant('message.extracting'),
-      detail: this.translateService.instant('message.extracting'),
-      life: 3000
-    });
 
     this.opportunityService.extractProductsAndServices(opp.id).subscribe({
       next: (extracted) => {
@@ -914,14 +943,7 @@ export class OpportunityWhatSectionComponent implements OnInit {
         this.isExtracting.set(false);
         this.hasRunExtraction.set(true); // Mark that extraction has been run
         
-        if (extracted && extracted.length > 0) {
-          this.feedbackService.showSuccessToast({
-            summary: this.translateService.instant('message.extractionComplete'),
-            detail: this.translateService.instant('message.extractionComplete'),
-            life: 5000
-          });
-        }
-        // Note: Don't show warning toast - panel will display "no recommendations" message
+        // Note: No toast notifications - recommendations load silently in the background
         
         this.cdr.detectChanges();
       },
@@ -964,6 +986,17 @@ export class OpportunityWhatSectionComponent implements OnInit {
   }
 
   /**
+   * @description Mark section as having unsaved changes
+   * @private
+   */
+  private markAsChanged(): void {
+    if (!this.hasUnsavedChanges) {
+      this.hasUnsavedChanges = true;
+      this.changesDetected.emit();
+    }
+  }
+
+  /**
    * @description Save section changes
    */
   saveSection(): void {
@@ -983,12 +1016,16 @@ export class OpportunityWhatSectionComponent implements OnInit {
         this.isSaving.set(false);
         this.isEditing.set(false);
         this.originalData = null;
+        this.hasUnsavedChanges = false;
         
         // Emit full updated opportunity to parent
         this.opportunityUpdated.emit(fullUpdatedOpportunity);
         
         // Emit that section was saved (for potential cross-section updates)
         this.sectionSaved.emit();
+        
+        // Clear unsaved changes tracking
+        this.changesSavedOrDiscarded.emit();
         
         this.feedbackService.showSuccessToast({
           detail: this.translateService.instant('message.opportunity.updatedSuccessfully'),
@@ -1007,15 +1044,42 @@ export class OpportunityWhatSectionComponent implements OnInit {
    * @description Cancel editing and revert changes
    */
   cancelEditing(): void {
-    // Revert is handled by parent refresh, just exit edit mode
+    const opp = this.opportunity();
+    
+    // Restore original data if available
+    if (this.originalData) {
+      // Reset form controls to original values
+      this.orgUnitControl.setValue(this.originalData.responsibleOrgUnitId ?? null);
+      this.initiativeTypeControl.setValue(this.originalData.proposedInitiativeTypeId ?? null);
+      this.deliveryModalityControl.setValue(this.originalData.deliveryModality ?? null);
+      
+      // Restore original deliverables (reverts any AI recommendations that were accepted)
+      const updatedOpportunity = {
+        ...opp,
+        responsibleOrgUnitId: this.originalData.responsibleOrgUnitId ?? null,
+        proposedInitiativeTypeId: this.originalData.proposedInitiativeTypeId ?? null,
+        deliveryModality: this.originalData.deliveryModality ?? null,
+        deliverables: this.originalData.deliverables ? [...this.originalData.deliverables] : []
+      };
+      
+      // Emit the reverted opportunity to parent
+      this.opportunityUpdated.emit(updatedOpportunity);
+    } else {
+      // Fallback: just reset form controls to current opportunity values
+      this.orgUnitControl.setValue(opp.responsibleOrgUnitId ?? null);
+      this.initiativeTypeControl.setValue(opp.proposedInitiativeTypeId ?? null);
+      this.deliveryModalityControl.setValue(opp.deliveryModality ?? null);
+    }
+    
+    // Clear accepted recommendations tracking (they're being discarded)
+    this.acceptedDeliverables.set([]);
+    
     this.isEditing.set(false);
     this.originalData = null;
+    this.hasUnsavedChanges = false;
     
-    // Reset form controls to original values
-    const opp = this.opportunity();
-    this.orgUnitControl.setValue(opp.responsibleOrgUnitId ?? null);
-    this.initiativeTypeControl.setValue(opp.proposedInitiativeTypeId ?? null);
-    this.deliveryModalityControl.setValue(opp.deliveryModality ?? null);
+    // Clear unsaved changes tracking
+    this.changesSavedOrDiscarded.emit();
     
     this.cdr.detectChanges();
   }
@@ -1147,6 +1211,9 @@ export class OpportunityWhatSectionComponent implements OnInit {
     // Emit updated opportunity to parent
     this.opportunityUpdated.emit(updatedOpportunity);
 
+    // Mark as changed (deliverable added/modified)
+    this.markAsChanged();
+
     // Reset dialog state
     this.showDeliverablesDialog.set(false);
     this.isEditingDeliverable.set(false);
@@ -1236,16 +1303,22 @@ export class OpportunityWhatSectionComponent implements OnInit {
 
     // Emit updated opportunity to parent
     this.opportunityUpdated.emit(updatedOpportunity);
+    
+    // Mark as changed (deliverable removed)
+    this.markAsChanged();
+    
     this.cdr.detectChanges();
   }
 
   /**
    * Reject AI match and open manual search for alternative
    * @description Allows user to reject the AI-suggested match and manually search for a more appropriate one
+   * @note Option 2: Can find different match WITHOUT edit mode (auto-enters edit mode)
    */
   findDifferentMatch(item: ExtractedDeliverableInfo): void {
+    // If not in edit mode, enter it first (Option 2: seamless acceptance)
     if (!this.isEditing()) {
-      return;
+      this.startEditing();
     }
     
     // Store partner language for context display
@@ -1272,10 +1345,16 @@ export class OpportunityWhatSectionComponent implements OnInit {
   /**
    * @description Accept extracted deliverable and add it to the opportunity
    * @description Moves an extracted item from recommendations to accepted list
+   * @note Option 2: Can accept recommendations WITHOUT edit mode
    */
   acceptExtractedDeliverable(item: ExtractedDeliverableInfo, index: number): void {
-    if (!item.matchedOutputId || !this.isEditing()) {
+    if (!item.matchedOutputId) {
       return;
+    }
+    
+    // If not in edit mode, enter it first (Option 2: seamless acceptance)
+    if (!this.isEditing()) {
+      this.startEditing();
     }
 
     const opp = this.opportunity();
@@ -1342,6 +1421,9 @@ export class OpportunityWhatSectionComponent implements OnInit {
     // Move item from recommendations to accepted list (for tracking)
     const currentAccepted = this.acceptedDeliverables();
     this.acceptedDeliverables.set([...currentAccepted, item]);
+    
+    // Mark as changed (AI recommendation accepted)
+    this.markAsChanged();
 
     // Show success message
     this.feedbackService.showSuccessToast({

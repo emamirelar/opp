@@ -1753,7 +1753,13 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
+                    b.Property<string>("OpportunityBannerImage")
+                        .HasColumnType("text");
+
                     b.Property<string>("OpportunityStatementMarkdown")
+                        .HasColumnType("text");
+
+                    b.Property<string>("OpportunityThumbnail")
                         .HasColumnType("text");
 
                     b.Property<string>("PartnerReference")
@@ -3825,6 +3831,21 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
+
+                    b.Property<bool?>("ThumbnailBorder")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ThumbnailFallback")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("ThumbnailShape")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("ThumbnailSize")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
 

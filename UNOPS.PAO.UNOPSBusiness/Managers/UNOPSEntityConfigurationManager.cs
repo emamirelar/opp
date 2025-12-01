@@ -675,7 +675,11 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
                 TemplatePattern = f.DisplayTemplate,
                 DisplayFieldPath = f.DisplayFieldPath,
                 FirstLetterFallbackField = f.FirstLetterFallbackField,
-                HelperText = f.HelperText
+                HelperText = f.HelperText,
+                ThumbnailSize = f.ThumbnailSize,
+                ThumbnailShape = f.ThumbnailShape,
+                ThumbnailBorder = f.ThumbnailBorder,
+                ThumbnailFallback = f.ThumbnailFallback
             })
             .ToList();
     }

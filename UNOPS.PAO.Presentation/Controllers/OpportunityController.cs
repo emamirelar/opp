@@ -34,6 +34,7 @@ public class OpportunityController : BaseController
     private readonly IOpportunityManager _manager;
     private readonly IAuditLogManager _auditLogManager;
     private readonly IGeminiManager _geminiManager;
+    private readonly IImageGenerationManager _imageGenerationManager;
     private readonly IRiskManager _riskManager;
     private readonly int _currentUserId;
     private readonly AppDbContext _context;
@@ -58,6 +59,7 @@ public class OpportunityController : BaseController
         _manager = manager.OpportunityManager;
         _auditLogManager = manager.AuditLogManager;
         _geminiManager = manager.GeminiManager;
+        _imageGenerationManager = manager.ImageGenerationManager;
         _riskManager = manager.RiskManager;
         _currentUserId = userResolverService.GetCurrentUserId();
         _context = context;
@@ -131,6 +133,76 @@ public class OpportunityController : BaseController
         }
 
         return Ok(result);
+    }
+
+    /// <summary>
+    /// Generates AI banner and thumbnail images for an opportunity
+    /// </summary>
+    [HttpPost(APIDictionary.Opportunity + "/{id}/generate-images")]
+    [AccessControlled(EntityTypes.Opportunity, "update")]
+    public async Task<ActionResult> GenerateOpportunityImages(int id)
+    {
+        try
+        {
+            // Get the opportunity with related data for context
+            var opportunity = await _context.Opportunities
+                .Include(o => o.Countries)
+                    .ThenInclude(oc => oc.Country)
+                .Include(o => o.ProposedInitiativeType)
+                .FirstOrDefaultAsync(o => o.Id == id);
+
+            if (opportunity == null)
+            {
+                return NotFound(new { error = $"Opportunity with ID {id} not found" });
+            }
+
+            // Validate that name and description are available
+            if (string.IsNullOrWhiteSpace(opportunity.Name) || string.IsNullOrWhiteSpace(opportunity.Description))
+            {
+                return BadRequest(new { error = "Opportunity must have both name and description to generate images" });
+            }
+
+            // Gather contextual information for image generation
+            var countries = opportunity.Countries != null && opportunity.Countries.Any()
+                ? string.Join(", ", opportunity.Countries.Select(oc => oc.Country?.Name).Where(n => !string.IsNullOrWhiteSpace(n)))
+                : null;
+
+            var intendedImpact = opportunity.IntendedImpactOutcomes;
+            var initiativeType = opportunity.ProposedInitiativeType?.Name;
+
+            _logger.LogInformation("Generating images for opportunity {OpportunityId}: {OpportunityName} in {Countries}", 
+                id, opportunity.Name, countries ?? "unspecified location");
+
+            // Generate images using Gemini with full context
+            var (bannerBase64, thumbnailBase64) = await _imageGenerationManager.GenerateOpportunityImagesAsync(
+                opportunity.Name,
+                opportunity.Description,
+                countries,
+                intendedImpact,
+                initiativeType);
+
+            if (string.IsNullOrWhiteSpace(bannerBase64) || string.IsNullOrWhiteSpace(thumbnailBase64))
+            {
+                _logger.LogWarning("Image generation returned null or empty images for opportunity {OpportunityId}", id);
+                return StatusCode(500, new { error = "Failed to generate images" });
+            }
+
+            // Save images to database
+            opportunity.OpportunityBannerImage = bannerBase64;
+            opportunity.OpportunityThumbnail = thumbnailBase64;
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Successfully generated and saved images for opportunity {OpportunityId}", id);
+
+            // Return updated opportunity with images
+            var result = await _manager.GetOpportunityAsync(User, id);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating images for opportunity {OpportunityId}", id);
+            return StatusCode(500, new { error = "An error occurred while generating images" });
+        }
     }
 
     /// <summary>
@@ -834,12 +906,12 @@ public class OpportunityController : BaseController
     /// </summary>
     [HttpGet(APIDictionary.Opportunity + "/{id}/similar-projects")]
     [AccessControlled(EntityTypes.Opportunity, "read")]
-    public async Task<ActionResult> GetSimilarProjects(int id, [FromQuery] int maxResults = 6)
+    public async Task<ActionResult> GetSimilarProjects(int id, [FromQuery] int maxResults = 6, [FromQuery] bool invalidateCache = false)
     {
         try
         {
-            _logger.LogInformation("Getting similar projects for opportunity {OpportunityId} with maxResults={MaxResults}", 
-                id, maxResults);
+            _logger.LogInformation("Getting similar projects for opportunity {OpportunityId} with maxResults={MaxResults}, invalidateCache={InvalidateCache}", 
+                id, maxResults, invalidateCache);
 
             // Validate maxResults
             if (maxResults < 1 || maxResults > 50)
@@ -859,7 +931,7 @@ public class OpportunityController : BaseController
             var user = User;
 
             // Call the GeminiManager to get similar projects
-            var response = await _geminiManager.GetSimilarProjectsAsync(id, maxResults, user);
+            var response = await _geminiManager.GetSimilarProjectsAsync(id, maxResults, user, invalidateCache);
 
             _logger.LogInformation("Found {Count} similar projects for opportunity {OpportunityId}", 
                 response.SimilarProjects?.Count ?? 0, id);
@@ -883,12 +955,12 @@ public class OpportunityController : BaseController
     /// </summary>
     [HttpGet(APIDictionary.Opportunity + "/{id}/relevant-people")]
     [AccessControlled(EntityTypes.Opportunity, "read")]
-    public async Task<ActionResult> GetRelevantPeople(int id, [FromQuery] int maxResults = 6)
+    public async Task<ActionResult> GetRelevantPeople(int id, [FromQuery] int maxResults = 6, [FromQuery] bool invalidateCache = false)
     {
         try
         {
-            _logger.LogInformation("Getting relevant people for opportunity {OpportunityId} with maxResults={MaxResults}", 
-                id, maxResults);
+            _logger.LogInformation("Getting relevant people for opportunity {OpportunityId} with maxResults={MaxResults}, invalidateCache={InvalidateCache}", 
+                id, maxResults, invalidateCache);
 
             // Validate maxResults
             if (maxResults < 1 || maxResults > 50)
@@ -908,7 +980,7 @@ public class OpportunityController : BaseController
             var user = User;
 
             // Call the GeminiManager to get relevant people
-            var response = await _geminiManager.GetRelevantPeopleAsync(id, maxResults, user);
+            var response = await _geminiManager.GetRelevantPeopleAsync(id, maxResults, user, invalidateCache);
 
             _logger.LogInformation("Found {Count} relevant people for opportunity {OpportunityId}", 
                 response.RelevantPeople?.Count ?? 0, id);
