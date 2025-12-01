@@ -265,6 +265,35 @@ export class AiComparisonComponent {
   }
 
   /**
+   * @description Check if a value is considered blank/empty
+   * @param {any} value - Value to check
+   * @returns {boolean} Whether value is blank
+   */
+  private isBlankValue(value: any): boolean {
+    // Check for null or undefined
+    if (value === null || value === undefined) {
+      return true;
+    }
+    
+    // Check for empty string (including whitespace-only strings)
+    if (typeof value === 'string' && value.trim() === '') {
+      return true;
+    }
+    
+    // Check for empty array
+    if (Array.isArray(value) && value.length === 0) {
+      return true;
+    }
+    
+    // Check for empty object (but not dates)
+    if (typeof value === 'object' && !(value instanceof Date) && Object.keys(value).length === 0) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  /**
    * @description Calculate differences between current and AI-extracted data
    * @param {any} current - Current entity data
    * @param {any} aiData - AI-extracted entity data
@@ -287,8 +316,8 @@ export class AiComparisonComponent {
       const aiValue = aiData[key];
       const fieldPath = path ? `${path}.${key}` : key;
 
-      // Handle null/undefined values
-      if (aiValue === null || aiValue === undefined) {
+      // Skip if AI value is blank (null, undefined, empty string, empty array, empty object)
+      if (this.isBlankValue(aiValue)) {
         continue;
       }
 

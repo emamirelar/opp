@@ -1001,6 +1001,7 @@
   [header]="(isEditingFundingPartner() ? 'title.editFundingPartner' : 'title.addFundingPartner') | translate"
   [(visible)]="showFundingPartnerDialog"
   [modal]="true"
+  [appendTo]="'body'"
   [style]="{ width: '35rem' }"
 >
   @if (showFundingValidationError()) {
@@ -1129,6 +1130,7 @@
   [header]="(isEditingClientPartner() ? 'title.editClientPartner' : 'title.addClientPartner') | translate"
   [(visible)]="showClientPartnerDialog"
   [modal]="true"
+  [appendTo]="'body'"
   [style]="{ width: '35rem' }"
 >
   @if (showClientValidationError()) {
@@ -1183,6 +1185,7 @@
   [header]="isEditingStakeholder() ? ('title.editStakeholder' | translate) : ('title.addStakeholder' | translate)"
   [(visible)]="showStakeholderDialog"
   [modal]="true"
+  [appendTo]="'body'"
   [style]="{ width: '35rem' }"
 >
   @if (showStakeholderValidationError()) {
@@ -1262,6 +1265,7 @@
   [header]="'title.addExternalStakeholder' | translate"
   [(visible)]="showExternalStakeholderDialog"
   [modal]="true"
+  [appendTo]="'body'"
   [style]="{ width: '35rem' }"
 >
   @if (showExternalStakeholderValidationError()) {
