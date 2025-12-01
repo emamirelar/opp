@@ -919,7 +919,11 @@ public class OpportunityManager : IOpportunityManager
                 {
                     OpportunityId = id,
                     CountryId = c.CountryId,
-                    SpecificAreas = c.SpecificAreas
+                    SpecificAreas = c.SpecificAreas,
+                    HumanitarianFrameworkAlignment = c.HumanitarianFrameworkAlignment,
+                    NdcAlignment = c.NdcAlignment,
+                    NapAlignment = c.NapAlignment,
+                    OrgUnitStrategyAlignment = c.OrgUnitStrategyAlignment
                 })
                 .ToList();
         }

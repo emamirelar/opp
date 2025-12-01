@@ -336,8 +336,8 @@ public class ValuesRepository
                     join metadata in context.UNCFMetadatas
                         on new { outcome.Country, outcome.UNCooperationFrameworkVersionNo }
                         equals new { metadata.Country, metadata.UNCooperationFrameworkVersionNo }
-                    where outcome.Status == EntityStatus.Active
-                        && metadata.Status == EntityStatus.Active
+                    where (includeInactive || outcome.Status == EntityStatus.Active)
+                        && (includeInactive || metadata.Status == EntityStatus.Active)
                     select outcome;
         
         // Return only latest version for each outcome-country combination
@@ -354,8 +354,8 @@ public class ValuesRepository
                         on new { outcome.Country, outcome.UNCooperationFrameworkVersionNo }
                         equals new { metadata.Country, metadata.UNCooperationFrameworkVersionNo }
                     where outcome.Country == countryCode
-                        && outcome.Status == EntityStatus.Active
-                        && metadata.Status == EntityStatus.Active
+                        && (includeInactive || outcome.Status == EntityStatus.Active)
+                        && (includeInactive || metadata.Status == EntityStatus.Active)
                     select outcome;
         
         // Return only latest version for each outcome-country combination
@@ -371,8 +371,8 @@ public class ValuesRepository
                     join metadata in context.UNCFMetadatas
                         on new { indicator.Country, indicator.UNCooperationFrameworkVersionNo }
                         equals new { metadata.Country, metadata.UNCooperationFrameworkVersionNo }
-                    where indicator.Status == EntityStatus.Active
-                        && metadata.Status == EntityStatus.Active
+                    where (includeInactive || indicator.Status == EntityStatus.Active)
+                        && (includeInactive || metadata.Status == EntityStatus.Active)
                     select indicator;
         
         return query;
@@ -399,8 +399,8 @@ public class ValuesRepository
                         equals new { metadata.Country, metadata.UNCooperationFrameworkVersionNo }
                     where indicator.UNCFOutcomeExternalId == outcome.UNCFOutcomeId 
                         && indicator.UNCooperationFrameworkVersionNo == outcome.UNCooperationFrameworkVersionNo
-                        && indicator.Status == EntityStatus.Active
-                        && metadata.Status == EntityStatus.Active
+                        && (includeInactive || indicator.Status == EntityStatus.Active)
+                        && (includeInactive || metadata.Status == EntityStatus.Active)
                     select indicator;
         
         return query;
