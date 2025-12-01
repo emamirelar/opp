@@ -536,6 +536,7 @@
   [header]="isEditingDeliverable() ? ('label.opportunity.editDeliverable' | translate) : ('label.opportunity.addDeliverable' | translate)"
   [(visible)]="showDeliverablesDialog"
   [modal]="true"
+  [appendTo]="'body'"
   [style]="{ width: '55rem' }"
   [contentStyle]="{ 'max-height': '75vh', 'overflow-y': 'auto' }"
   [draggable]="false"
@@ -561,14 +562,14 @@
     }
     
     <!-- Encouragement to Select at Lowest Level -->
-    <div class="bg-unops-info-lighter border border-unops-info rounded-unops-lg p-3">
+    <div class="bg-unops-primary-container-soft border border-unops-primary-200 rounded-unops-lg p-3">
       <div class="flex items-start gap-2">
-        <i class="pi pi-lightbulb text-unops-info text-sm mt-0.5"></i>
+        <i class="pi pi-lightbulb text-sm mt-0.5" style="color: var(--p-panel-color);"></i>
         <div class="flex-1">
-          <p class="text-xs font-semibold text-unops-info-dark mb-1">
+          <p class="text-xs font-semibold mb-1" style="color: var(--p-panel-color);">
             {{ 'message.encourageLowestLevelSelection' | translate }}
           </p>
-          <p class="text-xs text-unops-info-darker">
+          <p class="text-xs" style="color: var(--p-panel-color);">
             {{ 'message.encourageLowestLevelDetails' | translate }}
           </p>
         </div>
