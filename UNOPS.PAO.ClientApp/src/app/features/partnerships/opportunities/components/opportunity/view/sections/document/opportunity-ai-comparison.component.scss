@@ -1,20 +1,18 @@
 // OpportunityAiComparisonComponent styles
 // Most styling is done via Tailwind classes in the template
 
-.ai-comparison-dialog {
-  ::ng-deep {
-    .p-dialog-content {
-      display: flex;
-      flex-direction: column;
-      padding: 1.5rem;
-      height: 100%;
-      overflow: hidden;
-    }
+:host ::ng-deep {
+  .p-dialog-content {
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    height: 100%;
+    overflow: hidden;
+  }
 
-    .p-dialog-footer {
-      padding: 1rem 1.5rem;
-      border-top: 1px solid var(--unops-neutral-light);
-    }
+  .p-dialog-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--unops-neutral-light);
   }
 }
 
