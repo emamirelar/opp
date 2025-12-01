@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Models.Artifacts;
 
 namespace UNOPS.PAO.Business.Mapping;
@@ -34,6 +35,7 @@ public class EntityArtifactValueResolver : IValueResolver<object, object, List<E
 
         // Query EntityArtifacts for this entity
         // Filter by effective date: artifact must be effective (EffectiveDate is null or in the past)
+        // Filter by status: only include active artifacts
         var now = DateTime.UtcNow;
         var artifacts = _context.EntityArtifacts
             .Include(a => a.ArtifactType)
@@ -42,6 +44,7 @@ public class EntityArtifactValueResolver : IValueResolver<object, object, List<E
             .Where(a => a.EntityType == entityType 
                 && a.EntityId == entityId 
                 && !a.IsDeleted
+                && a.Status == EntityStatus.Active
                 && (a.EffectiveDate == null || a.EffectiveDate <= now))
             .OrderBy(a => a.ArtifactType!.Order)
             .ToList();

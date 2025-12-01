@@ -139,7 +139,7 @@ public static class UNOPSMissionSeeder
                 Name = "Sustainable Food Systems",
                 Description = "Support the transition to sustainable food systems",
                 DisplayOrder = 4,
-                IconClass = "pi pi-leaf",
+                IconClass = "pi pi-sun",
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
