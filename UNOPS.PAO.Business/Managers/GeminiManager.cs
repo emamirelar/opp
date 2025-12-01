@@ -177,12 +177,12 @@ public class GeminiManager : IGeminiManager
         throw new NotImplementedException();
     }
 
-    public Task<SimilarProjectsResponse> GetSimilarProjectsAsync(int opportunityId, int maxResults = 10, ClaimsPrincipal user = null)
+    public Task<SimilarProjectsResponse> GetSimilarProjectsAsync(int opportunityId, int maxResults = 10, ClaimsPrincipal user = null, bool invalidateCache = false)
     {
         throw new NotImplementedException();
     }
     
-    public Task<RelevantPeopleResponse> GetRelevantPeopleAsync(int opportunityId, int maxResults = 10, ClaimsPrincipal user = null)
+    public Task<RelevantPeopleResponse> GetRelevantPeopleAsync(int opportunityId, int maxResults = 10, ClaimsPrincipal user = null, bool invalidateCache = false)
     {
         throw new NotImplementedException();
     }
@@ -201,6 +201,17 @@ public class GeminiManager : IGeminiManager
     {
         throw new NotImplementedException();
     }
+
+    //Default stub implementations (overridden in UNOPSGeminiManager)
+    public virtual Task<List<ExtractedDeliverableInfo>> ExtractDeliverablesWithFrameworkPriorityAsync(int opportunityId)
+    {
+        throw new NotImplementedException("This method should be implemented in UNOPSGeminiManager");
+    }
+
+    public virtual Task<FrameworkStatusResponse> GetFrameworkStatusAsync(int opportunityId)
+    {
+        throw new NotImplementedException("This method should be implemented in UNOPSGeminiManager");
+    }
     
     public Task<string> GenerateOpportunityStatementAsync(int opportunityId, ClaimsPrincipal user = null)
     {
@@ -210,5 +221,15 @@ public class GeminiManager : IGeminiManager
     public Task<OpportunityStatementValidationResponse> ValidateOpportunityStatementAsync(int opportunityId, ClaimsPrincipal user = null)
     {
         throw new NotImplementedException();
+    }
+    
+    public Task<List<string>> CreateBatchEmbeddingsAsync(List<string> texts)
+    {
+        throw new NotImplementedException("This method is only implemented in UNOPSGeminiManager");
+    }
+    
+    public Task<Dictionary<string, string>> GenerateKeywordsAsync(List<string> texts)
+    {
+        throw new NotImplementedException("This method is only implemented in UNOPSGeminiManager");
     }
 }

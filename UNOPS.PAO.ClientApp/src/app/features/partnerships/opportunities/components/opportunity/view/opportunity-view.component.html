@@ -1,21 +1,21 @@
 <p-confirmDialog></p-confirmDialog>
 
-<!-- Main Container - Fixed height with flexbox layout -->
-<div
-  class="flex flex-col bg-gray-50 -m-unops-md overflow-hidden"
-  style="height: calc(100vh - 64px)"
->
-  @if (loading()) {
-    <div class="flex items-center justify-center py-12">
-      <i class="pi pi-spin pi-spinner text-4xl text-unops-primary"></i>
-    </div>
-  }
+  <!-- Main Container - Fixed height with flexbox layout -->
+  <div
+    class="flex flex-col bg-unops-surface-secondary -m-unops-md overflow-hidden"
+    style="height: calc(100vh - 64px)"
+  >
+    @if (loading()) {
+      <div class="flex items-center justify-center py-12">
+        <i class="pi pi-spin pi-spinner text-4xl text-unops-primary"></i>
+      </div>
+    }
 
-  @if (!loading() && opportunity()) {
-    <!-- Header and Chips - Fixed at top, not absolute -->
-    <div
-      class="flex-shrink-0 bg-gray-50 border-b border-gray-200 z-20 transition-all duration-300"
-    >
+    @if (!loading() && opportunity()) {
+      <!-- Header and Chips - Fixed at top, not absolute -->
+      <div
+        class="flex-shrink-0 bg-unops-surface-secondary border-b border-unops-neutral-300 z-20 transition-all duration-300"
+      >
       <div class="flex">
         <!-- Left Spacer for documents panel -->
         <div
@@ -25,19 +25,63 @@
         <!-- Header content (inner sections have their own px padding) -->
         <div class="flex-1 min-w-0">
           <!-- Header Section -->
-          <div
-            [class]="
-              headerScrolled()
-                ? 'px-unops-md md:px-unops-2xl py-3 bg-gray-50'
-                : 'px-unops-md md:px-unops-2xl py-6 bg-gray-50'
-            "
-            class="transition-all duration-300"
-          >
+          <div class="bg-unops-surface-secondary transition-all duration-300">
+            <!-- Banner Image (hidden on scroll) -->
+            @if (opportunity()?.opportunityBannerImage && !headerScrolled()) {
+              <div 
+                [class]="headerScrolled() ? 'px-unops-md md:px-unops-2xl' : 'px-unops-md md:px-unops-2xl'"
+                class="transition-all duration-300"
+              >
+                <div class="relative w-full overflow-hidden transition-all duration-300 group cursor-pointer h-60 rounded-b-unops-lg">
+                  <img 
+                    [src]="opportunity()!.opportunityBannerImage" 
+                    [alt]="opportunity()!.name + ' banner'"
+                    class="w-full h-full object-cover"
+                  />
+                  <!-- Gradient fade overlay for blending edges -->
+                  <div 
+                    class="absolute inset-0 pointer-events-none"
+                    style="background: linear-gradient(to right, rgba(248, 250, 252, 0.4) 0%, transparent 15%, transparent 85%, rgba(248, 250, 252, 0.4) 100%), 
+                           linear-gradient(to bottom, transparent 0%, transparent 70%, rgba(248, 250, 252, 0.6) 100%);"
+                  ></div>
+                  <!-- Hover Overlay with Refresh Icon / Loading Spinner -->
+                  <div 
+                    [class]="isRegeneratingBanner() ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
+                    class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center transition-opacity duration-200"
+                    [class.cursor-wait]="isRegeneratingBanner()"
+                    [class.cursor-pointer]="!isRegeneratingBanner()"
+                    (click)="!isRegeneratingBanner() && regenerateBannerImage()"
+                  >
+                    @if (isRegeneratingBanner()) {
+                      <div class="flex flex-col items-center gap-3">
+                        <i class="pi pi-spin pi-spinner text-white text-5xl"></i>
+                        <span class="text-white text-sm font-medium">{{ 'message.generatingBanner' | translate }}</span>
+                      </div>
+                    } @else {
+                      <div class="flex flex-col items-center gap-2">
+                        <i class="pi pi-refresh text-white text-4xl"></i>
+                        <span class="text-white text-sm font-medium">{{ 'button.regenerateBanner' | translate }}</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+            
+            <!-- Header Content -->
+            <div
+              [class]="
+                headerScrolled()
+                  ? 'px-unops-md md:px-unops-2xl py-3'
+                  : 'px-unops-md md:px-unops-2xl py-6'
+              "
+              class="transition-all duration-300"
+            >
             <div class="flex items-start justify-between gap-4 flex-wrap">
               <div class="flex items-center gap-4 flex-1 min-w-0">
                 <a
                   routerLink="/partnerships/opportunities"
-                  class="text-gray-600 hover:text-gray-900 flex-shrink-0"
+                  class="text-unops-neutral-600 hover:text-unops-secondary flex-shrink-0"
                 >
                   <i class="pi pi-arrow-left text-xl"></i>
                 </a>
@@ -45,8 +89,8 @@
                   <h1
                     [class]="
                       headerScrolled()
-                        ? 'text-lg sm:text-xl font-bold text-gray-900 truncate'
-                        : 'text-2xl sm:text-3xl font-bold text-gray-900 break-words'
+                        ? 'text-lg sm:text-xl font-bold text-unops-neutral-900 truncate'
+                        : 'text-2xl sm:text-3xl font-bold text-unops-secondary break-words'
                     "
                     class="transition-all duration-300"
                   >
@@ -70,7 +114,7 @@
 
             @if (!headerScrolled()) {
               <div
-                class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-600 mt-4 transition-all duration-300"
+                class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-unops-neutral-600 mt-4 transition-all duration-300"
               >
                 <span class="whitespace-nowrap"
                   ><strong
@@ -78,14 +122,14 @@
                   >
                   {{ opportunity()!.partnerReference || "-" }}</span
                 >
-                <span class="text-gray-300 hidden sm:inline">|</span>
+                <span class="text-unops-neutral-300 hidden sm:inline">|</span>
                 <span class="whitespace-nowrap"
                   ><strong
                     >{{ "label.opportunity.manager" | translate }}:</strong
                   >
                   {{ opportunityManager() || "-" }}</span
                 >
-                <span class="text-gray-300 hidden sm:inline">|</span>
+                <span class="text-unops-neutral-300 hidden sm:inline">|</span>
                 <span class="whitespace-nowrap"
                   ><strong
                     >{{ "label.opportunity.orgUnit" | translate }}:</strong
@@ -96,7 +140,7 @@
                   opportunity()!.stats?.totalFundingUSD &&
                   opportunity()!.stats?.totalFundingUSD! > 0
                 ) {
-                  <span class="text-gray-300 hidden sm:inline">|</span>
+                  <span class="text-unops-neutral-300 hidden sm:inline">|</span>
                   <span class="flex items-center gap-1 whitespace-nowrap">
                     <strong>{{ "label.totalBudget" | translate }}:</strong>
                     <span class="text-unops-primary font-semibold"
@@ -108,11 +152,12 @@
                 }
               </div>
             }
+            </div>
           </div>
 
           <!-- Section Chips Navigation -->
           <div
-            class="px-unops-md md:px-unops-2xl py-3 border-t border-gray-200 bg-gray-50"
+            class="px-unops-md md:px-unops-2xl py-3 border-t border-unops-neutral-300 bg-unops-surface-secondary"
           >
             <div class="flex items-center gap-2 flex-wrap">
               @for (section of sections; track section.id) {
@@ -120,8 +165,8 @@
                   (click)="scrollToSection(section.id)"
                   [class]="
                     activeSection() === section.id
-                      ? 'flex items-center gap-2 px-4 py-2 rounded-full bg-unops-primary text-white font-medium text-sm transition-all duration-200 whitespace-nowrap'
-                      : 'flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 font-medium text-sm transition-all duration-200 whitespace-nowrap'
+                      ? 'flex items-center gap-2 px-4 py-2 rounded-full bg-unops-primary text-unops-primary-on font-medium text-sm transition-all duration-200 whitespace-nowrap shadow-unops-sm'
+                      : 'flex items-center gap-2 px-4 py-2 rounded-full bg-unops-surface-primary text-unops-neutral-700 hover:bg-unops-neutral-200 font-medium text-sm transition-all duration-200 whitespace-nowrap'
                   "
                 >
                   <i [class]="'pi ' + section.icon + ' text-sm'"></i>
@@ -140,41 +185,79 @@
     <div #contentScrollContainer class="flex flex-1 min-h-0 overflow-y-auto">
       <!-- LEFT: Documents Panel -->
       <div
-        class="flex-shrink-0 border-r border-gray-200 bg-white sticky top-0 mt-6"
+        class="flex-shrink-0 border-r border-unops-neutral-300 bg-unops-surface-primary sticky top-0 mt-6"
         style="height: fit-content; max-height: 100%; align-self: flex-start"
       >
         <app-opportunity-documents
           [opportunityId]="opportunity()!.id!"
           [opportunity]="opportunity()"
           [collapsed]="documentsCollapsed()"
+          [canUpdate]="canUpdate()"
           (togglePanel)="toggleDocumentsPanel()"
           (opportunityUpdated)="reloadOpportunity()"
         />
       </div>
 
       <!-- RIGHT: Content Sections -->
-      <div class="flex-1 min-w-0 px-unops-md md:px-unops-2xl py-6 bg-gray-50">
+      <div class="flex-1 min-w-0 px-unops-md md:px-unops-2xl py-6 bg-unops-surface-secondary">
         <div class="flex flex-col gap-6">
           <!-- ANALYSIS - Quick Stats & Insights -->
           <div id="section-analysis">
-            <app-opportunity-analysis-section [opportunity]="opportunity()!" />
+            <app-opportunity-analysis-section 
+              [opportunity]="opportunity()!" />
+          </div>
+
+          <!-- OVERVIEW Section - Name & Description -->
+          <div 
+            id="section-overview" 
+            style="scroll-margin-top: 72px"
+            class="group relative section-hover-container"
+            [class.section-editable]="canUpdate() && !sectionsWithUnsavedChanges().has('overview')"
+            (click)="handleSectionClick('overview', $event)"
+          >
+            <app-opportunity-overview-section
+              #overviewSection
+              [opportunity]="opportunity()!"
+              [canUpdate]="canUpdate()"
+              (opportunityUpdated)="handleOpportunityUpdate($event)"
+              (changesDetected)="handleSectionChangesDetected('overview')"
+              (changesSavedOrDiscarded)="handleSectionChangesSaved('overview')"
+            />
           </div>
 
           <!-- WHAT Section -->
-          <div id="section-what">
+          <div 
+            id="section-what"
+            class="group relative section-hover-container"
+            [class.section-editable]="canUpdate() && !sectionsWithUnsavedChanges().has('what')"
+            (click)="handleSectionClick('what', $event)"
+          >
             <app-opportunity-what-section
+              #whatSection
               [opportunity]="opportunity()!"
+              [canUpdate]="canUpdate()"
               [suggestions]="whatSuggestions()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
+              (changesDetected)="handleSectionChangesDetected('what')"
+              (changesSavedOrDiscarded)="handleSectionChangesSaved('what')"
             />
           </div>
 
           <!-- WHY Section -->
-          <div id="section-why">
+          <div 
+            id="section-why"
+            class="group relative section-hover-container"
+            [class.section-editable]="canUpdate() && !sectionsWithUnsavedChanges().has('why')"
+            (click)="handleSectionClick('why', $event)"
+          >
             <app-opportunity-why-section
+              #whySection
               [opportunity]="opportunity()!"
+              [canUpdate]="canUpdate()"
               [suggestions]="whySuggestions()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
+              (changesDetected)="handleSectionChangesDetected('why')"
+              (changesSavedOrDiscarded)="handleSectionChangesSaved('why')"
             />
           </div>
 
@@ -182,26 +265,47 @@
           <div id="section-who">
             <app-opportunity-who-section
               [opportunity]="opportunity()!"
+              [canUpdate]="canUpdate()"
               [suggestions]="whoSuggestions()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
+              (changesDetected)="handleSectionChangesDetected('who')"
+              (changesSavedOrDiscarded)="handleSectionChangesSaved('who')"
             />
           </div>
 
           <!-- WHERE Section - Geography -->
-          <div id="section-where">
+          <div 
+            id="section-where"
+            class="group relative section-hover-container"
+            [class.section-editable]="canUpdate() && !sectionsWithUnsavedChanges().has('where')"
+            (click)="handleSectionClick('where', $event)"
+          >
             <app-opportunity-where-section
+              #whereSection
               [opportunity]="opportunity()!"
+              [canUpdate]="canUpdate()"
               [suggestions]="whereSuggestions()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
+              (changesDetected)="handleSectionChangesDetected('where')"
+              (changesSavedOrDiscarded)="handleSectionChangesSaved('where')"
             />
           </div>
 
           <!-- WHEN Section - Timeline -->
-          <div id="section-when">
+          <div 
+            id="section-when"
+            class="group relative section-hover-container"
+            [class.section-editable]="canUpdate() && !sectionsWithUnsavedChanges().has('when')"
+            (click)="handleSectionClick('when', $event)"
+          >
             <app-opportunity-when-section
+              #whenSection
               [opportunity]="opportunity()!"
+              [canUpdate]="canUpdate()"
               [suggestions]="whenSuggestions()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
+              (changesDetected)="handleSectionChangesDetected('when')"
+              (changesSavedOrDiscarded)="handleSectionChangesSaved('when')"
             />
           </div>
 
@@ -229,20 +333,21 @@
           <div id="section-statement">
             <app-opportunity-statement-section
               [opportunity]="opportunity()!"
+              [canUpdate]="canUpdate()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
             />
           </div>
 
           <!-- Action Bar -->
           <div
-            class="bg-white rounded-lg shadow-lg p-4 border border-gray-200 mt-6"
+            class="bg-unops-surface-primary rounded-unops-lg shadow-unops-lg p-4 border border-unops-neutral-300 mt-6"
           >
             <div
               class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
             >
               <div class="flex items-center gap-2">
-                <i class="pi pi-info-circle text-blue-600 flex-shrink-0"></i>
-                <span class="text-xs sm:text-sm text-gray-600">
+                <i class="pi pi-info-circle text-unops-info flex-shrink-0"></i>
+                <span class="text-xs sm:text-sm text-unops-neutral-600">
                   {{ "label.opportunity.lastModified" | translate }}:
                   {{ formatDate(opportunity()!.lastModifiedDate) }}
                 </span>
@@ -268,6 +373,55 @@
         </div>
       </div>
     </div>
+
+    <!-- Sticky Save Bar - Appears when sections have unsaved changes -->
+    @if (hasUnsavedChanges() && !loading()) {
+      <!-- Floating Save Bar (matches content sections structure exactly) -->
+      <div class="flex-shrink-0 z-30 flex">
+        <!-- Left Spacer for documents panel (matches content layout) -->
+        <div
+          [class]="documentsCollapsed() ? 'w-12' : 'w-80 md:w-96'"
+          class="flex-shrink-0"
+        ></div>
+        
+        <!-- Outer container with padding (transparent) -->
+        <div class="flex-1 min-w-0 px-unops-md md:px-unops-2xl py-4">
+           <!-- Inner content with background (matches actual content area) -->
+           <div class="bg-amber-100 border-t-4 border-amber-500 shadow-unops-lg px-6 py-4 rounded-lg mr-5">
+            <div class="flex items-center justify-between gap-4 flex-wrap">
+              <div class="flex items-center gap-3">
+                <i class="pi pi-exclamation-triangle text-amber-600 text-2xl flex-shrink-0"></i>
+                <div class="flex flex-col">
+                  <span class="text-sm font-bold text-amber-900">
+                    {{ 'message.unsavedChanges' | translate }}
+                  </span>
+                  <span class="text-xs font-medium text-amber-800">
+                    {{ 'message.unsavedChangesDetail' | translate: { count: sectionsWithUnsavedChanges().size } }}
+                  </span>
+                </div>
+              </div>
+              <div class="flex gap-3">
+                <p-button
+                  [label]="'button.discardChanges' | translate"
+                  icon="pi pi-times"
+                  severity="danger"
+                  [outlined]="true"
+                  (onClick)="discardAllChanges()"
+                  styleClass="font-semibold"
+                />
+                <p-button
+                  [label]="'button.saveAll' | translate"
+                  icon="pi pi-check"
+                  severity="success"
+                  (onClick)="saveAllSections()"
+                  styleClass="font-semibold"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
   }
 </div>
 <!-- End Main Container -->

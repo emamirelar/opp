@@ -122,6 +122,16 @@ public class OpportunityManager : IOpportunityManager
     }
     
     /// <summary>
+    /// Gets an opportunity by ID with user-specific permissions
+    /// NOTE: This is a stub implementation. Use UNOPSOpportunityManager for full permission support.
+    /// </summary>
+    public virtual async Task<OpportunityModel?> GetOpportunityAsync(System.Security.Claims.ClaimsPrincipal user, int id)
+    {
+        // Base implementation just returns the opportunity without permissions
+        return await GetOpportunityAsync(id);
+    }
+    
+    /// <summary>
     /// Enriches country models with their organization unit hierarchy chains
     /// </summary>
     private async Task EnrichCountriesWithOrgUnitHierarchyAsync(IEnumerable<OpportunityCountryModel> countries)
@@ -357,6 +367,32 @@ public class OpportunityManager : IOpportunityManager
         return mapper.Map<OpportunityModel>(entity);
     }
 
+    public async Task<OpportunityModel> UpdateOverviewSectionAsync(int id, OverviewSectionRequest request)
+    {
+        var entity = await opportunityRepository.GetByIdAsync(id);
+
+        if (entity == null)
+        {
+            throw new KeyNotFoundException($"Opportunity with ID {id} not found");
+        }
+
+        // Update Overview section fields
+        if (request.Name != null)
+        {
+            entity.Name = request.Name;
+        }
+
+        if (request.Description != null)
+        {
+            entity.Description = request.Description;
+        }
+
+        await opportunityRepository.UpdateAsync(entity);
+
+        // Reload with all includes for complete response
+        return await GetOpportunityAsync(entity.Id) ?? throw new InvalidOperationException("Failed to reload opportunity after update");
+    }
+
     public async Task<OpportunityModel> UpdateWhatSectionAsync(int id, WhatSectionRequest request)
     {
         var entity = await opportunityRepository.GetByIdAsync(id, new[]
@@ -383,6 +419,12 @@ public class OpportunityManager : IOpportunityManager
         if (request.ProposedInitiativeTypeId.HasValue)
         {
             entity.ProposedInitiativeTypeId = request.ProposedInitiativeTypeId.Value;
+        }
+        
+        // Update delivery modality (always update if provided, including null to clear)
+        if (request.DeliveryModality.HasValue)
+        {
+            entity.DeliveryModality = (DeliveryModality)request.DeliveryModality.Value;
         }
 
         // Update deliverables
@@ -994,8 +1036,54 @@ public class OpportunityManager : IOpportunityManager
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
 
+        // Validate date logic
+        if (request.ImplementationStartDate.HasValue && request.TargetSigningDate.HasValue)
+        {
+            if (request.ImplementationStartDate.Value < request.TargetSigningDate.Value)
+            {
+                throw new BusinessException("Implementation Start Date cannot be before the Target Signing Date");
+            }
+        }
+
+        if (request.TargetDeliveryDate.HasValue)
+        {
+            var effectiveStartDate = request.ImplementationStartDate ?? request.TargetSigningDate;
+            if (effectiveStartDate.HasValue && request.TargetDeliveryDate.Value < effectiveStartDate.Value)
+            {
+                throw new BusinessException("Target Delivery Date must be after the Implementation Start Date (or Target Signing Date if no Implementation Start Date is set)");
+            }
+        }
+
+        // Validate deliverable dates
+        if (request.Deliverables != null && request.Deliverables.Any())
+        {
+            var effectiveImplementationStart = request.ImplementationStartDate ?? request.TargetSigningDate;
+            
+            foreach (var deliverable in request.Deliverables)
+            {
+                // Validate that deliverable start is not before implementation start
+                if (deliverable.PlannedStartDate.HasValue && effectiveImplementationStart.HasValue)
+                {
+                    if (deliverable.PlannedStartDate.Value < effectiveImplementationStart.Value)
+                    {
+                        throw new BusinessException($"Deliverable Planned Start Date cannot be before the Implementation Start Date for deliverable ID: {deliverable.Id}");
+                    }
+                }
+                
+                // Validate that deliverable end is not before deliverable start
+                if (deliverable.PlannedStartDate.HasValue && deliverable.PlannedEndDate.HasValue)
+                {
+                    if (deliverable.PlannedEndDate.Value < deliverable.PlannedStartDate.Value)
+                    {
+                        throw new BusinessException($"Deliverable Planned End Date cannot be before the Planned Start Date for deliverable ID: {deliverable.Id}");
+                    }
+                }
+            }
+        }
+
         // Update dates
         entity.TargetSigningDate = request.TargetSigningDate;
+        entity.ImplementationStartDate = request.ImplementationStartDate;
         entity.TargetDeliveryDate = request.TargetDeliveryDate;
 
         await context.SaveChangesAsync();

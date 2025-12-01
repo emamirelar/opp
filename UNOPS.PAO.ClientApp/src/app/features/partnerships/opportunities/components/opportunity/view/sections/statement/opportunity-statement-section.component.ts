@@ -80,6 +80,11 @@ export class OpportunityStatementSectionComponent implements OnInit {
   readonly opportunity = input.required<Opportunity>();
 
   /**
+   * @description Input signal for update permission - controls visibility of generate/export buttons
+   */
+  readonly canUpdate = input<boolean>(false);
+
+  /**
    * @description Output event when opportunity statement is generated/regenerated
    * @type {OutputEmitterRef<Opportunity>}
    * @param {Opportunity} opportunity - The updated opportunity with new statement

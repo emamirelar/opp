@@ -34,8 +34,8 @@ public interface IGeminiManager
     Task<string> ChatWithGemini(GeminiAssistantRequest req, ClaimsPrincipal user, IHeaderDictionary headers = null);
     IAsyncEnumerable<string> ChatWithGeminiStreaming(GeminiAssistantRequest req, ClaimsPrincipal user, IHeaderDictionary headers = null);
     Task<SessionConfiguration> GetSessionConfigurationAsync();
-    Task<SimilarProjectsResponse> GetSimilarProjectsAsync(int opportunityId, int maxResults = 10, ClaimsPrincipal user = null);
-    Task<RelevantPeopleResponse> GetRelevantPeopleAsync(int opportunityId, int maxResults = 10, ClaimsPrincipal user = null);
+    Task<SimilarProjectsResponse> GetSimilarProjectsAsync(int opportunityId, int maxResults = 10, ClaimsPrincipal user = null, bool invalidateCache = false);
+    Task<RelevantPeopleResponse> GetRelevantPeopleAsync(int opportunityId, int maxResults = 10, ClaimsPrincipal user = null, bool invalidateCache = false);
     Task<DSTRecommendationsResponse> GetDSTRecommendationsAsync(int opportunityId, ClaimsPrincipal user = null, int maxResults = 10);
     
     /// <summary>
@@ -49,6 +49,16 @@ public interface IGeminiManager
     Task<OpportunityProposalResponse> GenerateOpportunityProposalAsync(OpportunityProposalRequest request, ClaimsPrincipal user = null);
     
     /// <summary>
+    /// Priority: Tagged framework docs first, then fallback to all other documents if needed.
+    /// Returns temporary extraction data for user verification (not saved to database).
+    /// </summary>
+    Task<List<ExtractedDeliverableInfo>> ExtractDeliverablesWithFrameworkPriorityAsync(int opportunityId);
+    
+    /// <summary>
+    /// </summary>
+    Task<FrameworkStatusResponse> GetFrameworkStatusAsync(int opportunityId);
+    
+    /// <summary>
     /// Generates a comprehensive opportunity statement in markdown format following the UNOPS template
     /// </summary>
     Task<string> GenerateOpportunityStatementAsync(int opportunityId, ClaimsPrincipal user = null);
@@ -57,6 +67,16 @@ public interface IGeminiManager
     /// Validates whether the opportunity statement is aligned with the structured data in the opportunity record
     /// </summary>
     Task<OpportunityStatementValidationResponse> ValidateOpportunityStatementAsync(int opportunityId, ClaimsPrincipal user = null);
+    
+    /// <summary>
+    /// Creates batch embeddings for a list of texts (delegates to AiContextualService)
+    /// </summary>
+    Task<List<string>> CreateBatchEmbeddingsAsync(List<string> texts);
+    
+    /// <summary>
+    /// Generates keywords for a list of texts for hybrid search (delegates to AiContextualService)
+    /// </summary>
+    Task<Dictionary<string, string>> GenerateKeywordsAsync(List<string> texts);
 }
 
 /// <summary>

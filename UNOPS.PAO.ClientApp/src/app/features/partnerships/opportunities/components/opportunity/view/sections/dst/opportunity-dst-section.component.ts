@@ -592,17 +592,27 @@ export class OpportunityDstSectionComponent {
    * Extracts keywords from opportunity context and searches vector store for similar projects
    * @since 1.0.0
    */
-  loadSimilarProjects(): void {
+  loadSimilarProjects(invalidateCache: boolean = false): void {
     const opportunityId = this.opportunity().id;
 
     this.loadingSimilarProjects.set(true);
     this.similarProjectsError.set(null);
 
-    this.opportunityService.getSimilarProjects(opportunityId, 6).subscribe({
+    this.opportunityService.getSimilarProjects(opportunityId, 6, invalidateCache).subscribe({
       next: (response: SimilarProjectsResponse) => {
         this.loadingSimilarProjects.set(false);
         this.similarProjectsResponse.set(response);
         this.similarProjects.set(response.similarProjects);
+        
+        // Debug logging to verify IDs are being received
+        console.log('📊 [SIMILAR-PROJECTS] Received response:', {
+          count: response.similarProjects.length,
+          projects: response.similarProjects.map(p => ({
+            projectId: p.projectId,
+            hasId: !!p.projectId,
+            description: p.description?.substring(0, 50)
+          }))
+        });
       },
       error: (error: any) => {
         this.loadingSimilarProjects.set(false);
@@ -621,10 +631,10 @@ export class OpportunityDstSectionComponent {
    * @since 1.0.0
    */
   refreshSimilarProjects(): void {
-    // Clear existing data and reload
+    // Clear existing data and reload with cache invalidation
     this.similarProjects.set(null);
     this.similarProjectsResponse.set(null);
-    this.loadSimilarProjects();
+    this.loadSimilarProjects(true); // Force cache invalidation
   }
 
   /**
@@ -632,17 +642,27 @@ export class OpportunityDstSectionComponent {
    * Extracts role keywords from opportunity context and searches vector store for relevant people
    * @since 1.0.0
    */
-  loadRelevantPeople(): void {
+  loadRelevantPeople(invalidateCache: boolean = false): void {
     const opportunityId = this.opportunity().id;
 
     this.loadingRelevantPeople.set(true);
     this.relevantPeopleError.set(null);
 
-    this.opportunityService.getRelevantPeople(opportunityId, 6).subscribe({
+    this.opportunityService.getRelevantPeople(opportunityId, 6, invalidateCache).subscribe({
       next: (response: RelevantPeopleResponse) => {
         this.loadingRelevantPeople.set(false);
         this.relevantPeopleResponse.set(response);
         this.relevantPeople.set(response.relevantPeople);
+        
+        // Debug logging to verify IDs are being received
+        console.log('👥 [RELEVANT-PEOPLE] Received response:', {
+          count: response.relevantPeople.length,
+          people: response.relevantPeople.map(p => ({
+            personId: p.personId,
+            hasId: !!p.personId,
+            name: p.name
+          }))
+        });
       },
       error: (error: any) => {
         this.loadingRelevantPeople.set(false);
@@ -661,10 +681,10 @@ export class OpportunityDstSectionComponent {
    * @since 1.0.0
    */
   refreshRelevantPeople(): void {
-    // Clear existing data and reload
+    // Clear existing data and reload with cache invalidation
     this.relevantPeople.set(null);
     this.relevantPeopleResponse.set(null);
-    this.loadRelevantPeople();
+    this.loadRelevantPeople(true); // Force cache invalidation
   }
 
   /**

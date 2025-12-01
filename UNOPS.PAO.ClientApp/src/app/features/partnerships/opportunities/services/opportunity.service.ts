@@ -19,6 +19,8 @@ import {
   RiskCreateRequest,
   Risk,
   OpportunityInsightsResponse,
+  FrameworkStatusResponse,
+  ExtractedDeliverableInfo,
   OpportunityStatementValidationResponse,
 } from '@shared/models/opportunity.model';
 
@@ -49,6 +51,13 @@ export class OpportunityService {
   }
 
   /**
+   * Generate AI banner and thumbnail images for an opportunity
+   */
+  generateOpportunityImages(id: number): Observable<Opportunity> {
+    return this.http.post<Opportunity>(`${this.apiUrl}/${id}/generate-images`, {});
+  }
+
+  /**
    * Create a new opportunity
    */
   createOpportunity(request: OpportunityRequest): Observable<Opportunity> {
@@ -66,7 +75,14 @@ export class OpportunityService {
   }
 
   /**
-   * Update WHAT section of opportunity (description, org unit, initiative type, deliverables)
+   * Update Overview section of opportunity (name, description)
+   */
+  updateOpportunityOverview(id: number, data: { name?: string; description?: string }): Observable<Opportunity> {
+    return this.http.patch<Opportunity>(`${this.apiUrl}/${id}/overview`, data);
+  }
+
+  /**
+   * Update WHAT section of opportunity (org unit, initiative type, delivery modality, deliverables)
    */
   updateOpportunityWhat(
     id: number,
@@ -244,12 +260,14 @@ export class OpportunityService {
   getSimilarProjects(
     id: number,
     maxResults: number = 10,
+    invalidateCache: boolean = false,
   ): Observable<SimilarProjectsResponse> {
     return this.http.get<SimilarProjectsResponse>(
       `${this.apiUrl}/${id}/similar-projects`,
       {
         params: {
           maxResults: maxResults.toString(),
+          invalidateCache: invalidateCache.toString(),
         },
       },
     );
@@ -281,12 +299,14 @@ export class OpportunityService {
   getRelevantPeople(
     id: number,
     maxResults: number = 10,
+    invalidateCache: boolean = false,
   ): Observable<RelevantPeopleResponse> {
     return this.http.get<RelevantPeopleResponse>(
       `${this.apiUrl}/${id}/relevant-people`,
       {
         params: {
           maxResults: maxResults.toString(),
+          invalidateCache: invalidateCache.toString(),
         },
       },
     );
@@ -348,7 +368,27 @@ export class OpportunityService {
     return this.http.put<Risk>(
       `${this.apiUrl}/${id}/dst-risks/${riskId}`,
       request,
-    );
+    ); 
+  }
+
+  /**
+   * Get Partner Results Framework status for an opportunity
+   * Checks if Partner Results Framework documents are tagged to funding/client partners
+   * @param id - Opportunity ID
+   * @returns Observable with framework status information
+   */
+  getFrameworkStatus(id: number): Observable<FrameworkStatusResponse> {
+    return this.http.get<FrameworkStatusResponse>(`${this.apiUrl}/${id}/framework-status`);
+  }
+
+  /**
+   * Trigger AI extraction of products and services from documents
+   * Extracts deliverables from documents, prioritizing tagged Partner Results Framework documents
+   * @param id - Opportunity ID
+   * @returns Observable with array of extracted deliverable information
+   */
+  extractProductsAndServices(id: number): Observable<ExtractedDeliverableInfo[]> {
+    return this.http.post<ExtractedDeliverableInfo[]>(`${this.apiUrl}/${id}/extract-deliverables`, {});
   }
 
   /**

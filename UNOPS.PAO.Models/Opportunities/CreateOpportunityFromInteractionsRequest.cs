@@ -12,9 +12,9 @@ public class CreateOpportunityFromInteractionsRequest
     public required string Name { get; set; }
     
     /// <summary>
-    /// Opportunity description (enhanced by AI, required)
+    /// Opportunity description (enhanced by AI, optional)
     /// </summary>
-    public required string Description { get; set; }
+    public string? Description { get; set; }
     
     /// <summary>
     /// Partner ID associated with the interactions (optional - only provided when creating from partner context)

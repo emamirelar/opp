@@ -91,13 +91,30 @@ export class OpportunityWhoSectionComponent implements OnInit {
   // Inputs
   readonly opportunity = input.required<Opportunity>();
   readonly suggestions = input<any[]>([]);
+  
+  /**
+   * @description Input signal for update permission - controls visibility of edit button
+   */
+  readonly canUpdate = input<boolean>(false);
 
   // Outputs
   readonly opportunityUpdated = output<Opportunity>();
+  readonly changesDetected = output<void>();
+  readonly changesSavedOrDiscarded = output<void>();
 
   // State signals
   readonly isEditing = signal(false);
   readonly isSaving = signal(false);
+  private hasUnsavedChanges = false;
+  private originalData: {
+    fundingPartners?: any[];
+    clientPartners?: any[];
+    stakeholders?: any[];
+    externalStakeholders?: any[];
+    miscExternalStakeholders?: string | null;
+    externalStakeholderNotes?: string | null;
+    isPooledFunding?: boolean;
+  } | null = null;
   
   // Funding Partner dialog state
   readonly showFundingPartnerDialog = signal(false);
@@ -274,6 +291,19 @@ export class OpportunityWhoSectionComponent implements OnInit {
    * @description Enable edit mode
    */
   enableEdit(): void {
+    const opp = this.opportunity();
+    
+    // Backup original data for cancel
+    this.originalData = {
+      fundingPartners: opp.fundingPartners ? [...opp.fundingPartners] : [],
+      clientPartners: opp.clientPartners ? [...opp.clientPartners] : [],
+      stakeholders: opp.stakeholders ? [...opp.stakeholders] : [],
+      externalStakeholders: opp.externalStakeholders ? [...opp.externalStakeholders] : [],
+      miscExternalStakeholders: opp.miscExternalStakeholders ?? null,
+      externalStakeholderNotes: opp.externalStakeholderNotes ?? null,
+      isPooledFunding: opp.isPooledFunding ?? false
+    };
+    
     this.isEditing.set(true);
   }
 
@@ -281,7 +311,58 @@ export class OpportunityWhoSectionComponent implements OnInit {
    * @description Cancel edit mode
    */
   cancelEdit(): void {
+    const opp = this.opportunity();
+    
+    // Restore original data if available
+    if (this.originalData) {
+      const updatedOpportunity = {
+        ...opp,
+        fundingPartners: this.originalData.fundingPartners ? [...this.originalData.fundingPartners] : [],
+        clientPartners: this.originalData.clientPartners ? [...this.originalData.clientPartners] : [],
+        stakeholders: this.originalData.stakeholders ? [...this.originalData.stakeholders] : [],
+        externalStakeholders: this.originalData.externalStakeholders ? [...this.originalData.externalStakeholders] : [],
+        miscExternalStakeholders: this.originalData.miscExternalStakeholders ?? null,
+        externalStakeholderNotes: this.originalData.externalStakeholderNotes ?? null,
+        isPooledFunding: this.originalData.isPooledFunding ?? false
+      };
+      
+      // Emit the reverted opportunity to parent
+      this.opportunityUpdated.emit(updatedOpportunity);
+    }
+    
     this.isEditing.set(false);
+    this.originalData = null;
+    this.hasUnsavedChanges = false;
+    this.changesSavedOrDiscarded.emit();
+  }
+
+  /**
+   * @description Mark section as having unsaved changes
+   * @private
+   */
+  private markAsChanged(): void {
+    if (!this.hasUnsavedChanges) {
+      this.hasUnsavedChanges = true;
+      this.changesDetected.emit();
+    }
+  }
+
+  /**
+   * @description Handle pooled funding checkbox change
+   */
+  onPooledFundingChange(): void {
+    if (this.isEditing()) {
+      this.markAsChanged();
+    }
+  }
+
+  /**
+   * @description Handle individual partner pooled contribution checkbox change
+   */
+  onPooledContributionChange(): void {
+    if (this.isEditing()) {
+      this.markAsChanged();
+    }
   }
 
   /**
@@ -292,7 +373,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
     if (!opp || !opp.id) return;
 
     const whoData = {
-      isPooledFunding: this.isPooledFunding, // AC8
+      isPooledFunding: this.isPooledFunding,
       fundingPartners: opp.fundingPartners?.map(fp => ({
         partnerId: fp.partnerId,
         amount: fp.amount,
@@ -305,12 +386,12 @@ export class OpportunityWhoSectionComponent implements OnInit {
         partnershipAgreementReference: fp.partnershipAgreementReference,
         documentId: fp.documentId, // Include document ID if set
         isPooledContribution: fp.isPooledContribution || false,
-        selectedPartnerAgreementNumber: fp.selectedPartnerAgreementNumber // AC9
+        selectedPartnerAgreementNumber: fp.selectedPartnerAgreementNumber 
       })),
       clientPartners: opp.clientPartners?.map(cp => ({
         partnerId: cp.partnerId,
         documentId: cp.documentId, // Include document ID if set
-        selectedPartnerAgreementNumber: cp.selectedPartnerAgreementNumber // AC9
+        selectedPartnerAgreementNumber: cp.selectedPartnerAgreementNumber 
       })),
       stakeholders: opp.stakeholders?.map(s => ({
         userId: s.userId!,
@@ -329,8 +410,11 @@ export class OpportunityWhoSectionComponent implements OnInit {
       next: (fullUpdatedOpportunity: Opportunity) => {
         this.isSaving.set(false);
         this.isEditing.set(false);
+        this.hasUnsavedChanges = false;
+        this.originalData = null;
         
         this.opportunityUpdated.emit(fullUpdatedOpportunity);
+        this.changesSavedOrDiscarded.emit();
         
         this.feedbackService.showSuccessToast({
           detail: this.translateService.instant('message.opportunity.updatedSuccessfully'),
@@ -498,8 +582,8 @@ export class OpportunityWhoSectionComponent implements OnInit {
       exchangeRateDate: null,
       exchangeRateDisplay: null, // Backend will calculate
       isPooledContribution: false,
-      selectedPartnerAgreementNumber: null, // AC9
-      availableAgreements: null // AC9
+      selectedPartnerAgreementNumber: null, 
+      availableAgreements: null 
     };
 
     currentPartners.push(newPartner);
@@ -510,6 +594,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
     };
 
     this.opportunityUpdated.emit(updatedOpportunity);
+    this.markAsChanged();
     this.cancelFundingPartnerDialog();
   }
 
@@ -555,6 +640,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
     };
 
     this.opportunityUpdated.emit(updatedOpportunity);
+    this.markAsChanged();
     this.cancelFundingPartnerDialog();
   }
 
@@ -578,6 +664,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
         };
 
         this.opportunityUpdated.emit(updatedOpportunity);
+        this.markAsChanged();
       }
     );
   }
@@ -689,8 +776,8 @@ export class OpportunityWhoSectionComponent implements OnInit {
       ddExpiryDate: null,
       ddStatus: null,
       ddExpiresBeforeOpportunityEnd: null,
-      selectedPartnerAgreementNumber: null, // AC9
-      availableAgreements: null // AC9
+      selectedPartnerAgreementNumber: null, 
+      availableAgreements: null 
     };
 
     currentClients.push(newClient);
@@ -701,6 +788,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
     };
 
     this.opportunityUpdated.emit(updatedOpportunity);
+    this.markAsChanged();
     this.cancelClientPartnerDialog();
   }
 
@@ -729,6 +817,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
     };
 
     this.opportunityUpdated.emit(updatedOpportunity);
+    this.markAsChanged();
     this.cancelClientPartnerDialog();
   }
 
@@ -752,6 +841,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
         };
 
         this.opportunityUpdated.emit(updatedOpportunity);
+        this.markAsChanged();
       }
     );
   }
@@ -823,7 +913,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
   }
   
   /**
-   * @description Open Partnership Agreement document in new tab (AC9)
+   * @description Open Partnership Agreement document in new tab
    */
   openAgreementDocument(agreement: PartnerAgreementInfo): void {
     if (!agreement.documentId) return;
@@ -997,6 +1087,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
     };
 
     this.opportunityUpdated.emit(updatedOpportunity);
+    this.markAsChanged();
     this.cancelStakeholderDialog();
   }
 
@@ -1027,6 +1118,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
     };
 
     this.opportunityUpdated.emit(updatedOpportunity);
+    this.markAsChanged();
     this.cancelStakeholderDialog();
   }
 
@@ -1050,13 +1142,14 @@ export class OpportunityWhoSectionComponent implements OnInit {
         };
 
         this.opportunityUpdated.emit(updatedOpportunity);
+        this.markAsChanged();
         this.cdr.detectChanges();
       }
     );
   }
   
   // ==================================================================
-  // External Stakeholder Management Methods (AC10)
+  // External Stakeholder Management Methods
   // ==================================================================
   
   /**
@@ -1125,6 +1218,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
     };
     
     this.opportunityUpdated.emit(updatedOpportunity);
+    this.markAsChanged();
     this.cancelExternalStakeholderDialog();
   }
   
@@ -1148,6 +1242,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
         };
 
         this.opportunityUpdated.emit(updatedOpportunity);
+        this.markAsChanged();
         this.cdr.detectChanges();
       }
     );

@@ -1,4 +1,10 @@
-<p-panel [header]="panelHeader()" [toggleable]="true">
+<p-panel [toggleable]="true">
+  <ng-template pTemplate="header">
+    <div class="flex items-center gap-2">
+      <i class="pi pi-comments text-unops-secondary"></i>
+      <span class="font-semibold">{{ panelHeader() }}</span>
+    </div>
+  </ng-template>
   <div class="space-y-4">
     @if (loading()) {
       <div class="flex items-center justify-center py-8">

@@ -19,38 +19,38 @@
   </ng-template>
   <div class="space-y-4">
     <!-- Quick Stats -->
-    <div class="bg-blue-50 rounded-lg p-4 border border-blue-100">
-      <h3 class="text-sm font-semibold text-gray-900 mb-3">
+    <div class="bg-unops-primary-container-soft rounded-unops-lg p-4 border border-unops-primary-200">
+      <h3 class="text-sm font-semibold text-unops-secondary mb-3">
         {{ 'label.opportunity.quickStats' | translate }}
       </h3>
       <div class="space-y-3">
         <div class="flex items-center gap-2">
           <i class="pi pi-dollar text-unops-success"></i>
           <div>
-            <div class="text-lg font-bold text-gray-900">
+            <div class="text-lg font-bold text-unops-secondary">
               {{ formatCurrency(opportunity().stats?.totalFundingUSD) }}
             </div>
-            <div class="text-xs text-gray-500">{{ 'label.opportunity.totalBudget' | translate }}</div>
+            <div class="text-xs text-unops-neutral-600">{{ 'label.opportunity.totalBudget' | translate }}</div>
           </div>
         </div>
         <p-divider styleClass="my-2" />
         <div class="flex items-center gap-2">
-          <i class="pi pi-calendar text-blue-600"></i>
+          <i class="pi pi-calendar text-unops-primary"></i>
           <div>
-            <div class="text-sm font-semibold text-gray-900">
+            <div class="text-sm font-semibold text-unops-secondary">
               {{ formatDate(opportunity().targetSigningDate) }}
             </div>
-            <div class="text-xs text-gray-500">{{ 'label.opportunity.targetSigning' | translate }}</div>
+            <div class="text-xs text-unops-neutral-600">{{ 'label.opportunity.targetSigning' | translate }}</div>
           </div>
         </div>
         <p-divider styleClass="my-2" />
         <div class="flex items-center gap-2">
-          <i class="pi pi-map-marker text-red-600"></i>
+          <i class="pi pi-map-marker text-unops-accent-cherry"></i>
           <div>
-            <div class="text-sm font-semibold text-gray-900">
+            <div class="text-sm font-semibold text-unops-secondary">
               {{ opportunity().stats?.countryCount || 0 }} {{ 'label.opportunity.countries' | translate }}
             </div>
-            <div class="text-xs text-gray-500">{{ 'label.opportunity.implementation' | translate }}</div>
+            <div class="text-xs text-unops-neutral-600">{{ 'label.opportunity.implementation' | translate }}</div>
           </div>
         </div>
       </div>
@@ -60,17 +60,17 @@
     <div class="space-y-4">
       <!-- Loading State -->
       @if (loadingInsights()) {
-        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 text-center">
-          <i class="pi pi-spinner pi-spin text-2xl text-gray-400 mb-2"></i>
-          <p class="text-xs text-gray-500">{{ 'message.opportunity.loadingInsights' | translate }}</p>
+        <div class="bg-unops-surface-secondary rounded-unops-lg p-4 border border-unops-neutral-300 text-center">
+          <i class="pi pi-spinner pi-spin text-2xl text-unops-neutral-400 mb-2"></i>
+          <p class="text-xs text-unops-neutral-600">{{ 'message.opportunity.loadingInsights' | translate }}</p>
         </div>
       }
       
       <!-- Error State -->
       @else if (insightsError()) {
-        <div class="bg-red-50 rounded-lg p-4 border border-red-200 text-center">
-          <i class="pi pi-exclamation-triangle text-2xl text-red-500 mb-2"></i>
-          <p class="text-xs text-red-600">{{ insightsError() }}</p>
+        <div class="bg-unops-error-lighter rounded-unops-lg p-4 border border-unops-error-light text-center">
+          <i class="pi pi-exclamation-triangle text-2xl text-unops-error mb-2"></i>
+          <p class="text-xs text-unops-error-dark">{{ insightsError() }}</p>
           <p-button
             [label]="'button.retry' | translate"
             icon="pi pi-refresh"
@@ -89,32 +89,32 @@
         @if (insights() && insights().length > 0) {
           <div>
             <div class="flex items-center justify-between mb-2">
-              <h4 class="text-sm font-semibold text-gray-900">{{ 'label.insights' | translate }}</h4>
+              <h4 class="text-sm font-semibold text-unops-secondary">{{ 'label.insights' | translate }}</h4>
             </div>
             <div class="space-y-2 pr-2">
               @for (insight of insights(); track insight.id) {
-                <div class="bg-white rounded-lg p-3 border border-blue-100">
+                <div class="bg-unops-surface-primary rounded-unops-lg p-3 border border-unops-primary-200 shadow-unops-sm">
                   <div class="flex items-start gap-2">
                     <i 
                       [class]="getInsightIcon(insight.type) + ' text-sm mt-0.5'"
                     ></i>
                     <div class="flex-1">
                       <div class="flex items-center gap-2 flex-wrap">
-                        <span class="font-semibold text-xs text-gray-900">{{ insight.title }}</span>
+                        <span class="font-semibold text-xs text-unops-secondary">{{ insight.title }}</span>
                         @if (insight.priority) {
                           <span 
                             class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
                             [ngClass]="{
-                              'bg-red-100 text-red-800': insight.priority === 'high',
-                              'bg-yellow-100 text-yellow-800': insight.priority === 'medium',
-                              'bg-blue-100 text-blue-800': insight.priority === 'low'
+                              'bg-unops-error text-unops-error-on': insight.priority === 'high',
+                              'bg-unops-warning text-unops-warning-on': insight.priority === 'medium',
+                              'bg-unops-info text-unops-info-on': insight.priority === 'low'
                             }"
                           >
                             {{ insight.priority | titlecase }}
                           </span>
                         }
                       </div>
-                      <p class="text-xs text-gray-700 mt-1">{{ insight.description }}</p>
+                      <p class="text-xs text-unops-neutral-700 mt-1">{{ insight.description }}</p>
                     </div>
                   </div>
                 </div>
@@ -127,16 +127,16 @@
         @if (suggestions() && suggestions().length > 0) {
           <div>
             <div class="flex items-center justify-between mb-2">
-              <h4 class="text-sm font-semibold text-gray-900">{{ 'label.suggestions' | translate }}</h4>
+              <h4 class="text-sm font-semibold text-unops-secondary">{{ 'label.suggestions' | translate }}</h4>
             </div>
             <div class="space-y-2 pr-2">
               @for (suggestion of suggestions(); track suggestion.id) {
-                <div class="bg-white rounded-lg p-3 border border-blue-100">
+                <div class="bg-unops-surface-primary rounded-unops-lg p-3 border border-unops-primary-200 shadow-unops-sm">
                   <div class="flex items-start gap-2">
-                    <i class="pi pi-lightbulb text-yellow-600 text-sm mt-0.5"></i>
+                    <i class="pi pi-lightbulb text-unops-warning-darker text-sm mt-0.5"></i>
                     <div class="flex-1">
-                      <div class="font-semibold text-xs text-gray-900">{{ suggestion.title }}</div>
-                      <p class="text-xs text-gray-700 mb-1">{{ suggestion.description }}</p>
+                      <div class="font-semibold text-xs text-unops-secondary">{{ suggestion.title }}</div>
+                      <p class="text-xs text-unops-neutral-700 mb-1">{{ suggestion.description }}</p>
                       @if (suggestion.actionTarget) {
                         <p-button
                           [label]="getActionLabel(suggestion.actionTarget)"
@@ -157,9 +157,9 @@
         
         @if ((!insights() || insights().length === 0) && 
              (!suggestions() || suggestions().length === 0)) {
-          <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 text-center">
-            <i class="pi pi-lightbulb text-2xl text-gray-400 mb-2"></i>
-            <p class="text-xs text-gray-500">{{ 'message.opportunity.noInsights' | translate }}</p>
+          <div class="bg-unops-surface-secondary rounded-unops-lg p-4 border border-unops-neutral-300 text-center">
+            <i class="pi pi-lightbulb text-2xl text-unops-neutral-400 mb-2"></i>
+            <p class="text-xs text-unops-neutral-600">{{ 'message.opportunity.noInsights' | translate }}</p>
           </div>
         }
       }
@@ -173,13 +173,6 @@
         size="small"
         [outlined]="true"
         (onClick)="onViewDSTAnalysis()"
-      />
-      <p-button
-        [label]="'button.generateBudgetDraft' | translate"
-        icon="pi pi-calculator"
-        size="small"
-        [outlined]="true"
-        (onClick)="onGenerateBudgetDraft()"
       />
     </div>
   </div>

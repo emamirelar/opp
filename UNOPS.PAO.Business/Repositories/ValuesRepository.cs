@@ -312,8 +312,6 @@ public class ValuesRepository
 
     public IEnumerable<Output> GetOutputs()
         => context.Outputs
-            .Include(x => x.Unit)
-            .Include(x => x.ProjectCategory)
             .Where(x => x.Status == EntityStatus.Active);
 
     public IEnumerable<SDG> GetSDGs()

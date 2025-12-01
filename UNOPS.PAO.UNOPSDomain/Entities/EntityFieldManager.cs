@@ -100,6 +100,29 @@ public class EntityFieldManager : ModifiableDeletableEntity
     [StringLength(1000)]
     public string? HelperText { get; set; }
     
+    /// <summary>
+    /// Thumbnail size for 'thumbnail' type columns (e.g., '32px', '48px', '64px', '80px', '96px', '128px')
+    /// </summary>
+    [StringLength(20)]
+    public string? ThumbnailSize { get; set; }
+    
+    /// <summary>
+    /// Thumbnail shape/border-radius for 'thumbnail' type columns ('square', 'rounded', 'rounded-lg', 'rounded-xl')
+    /// </summary>
+    [StringLength(20)]
+    public string? ThumbnailShape { get; set; }
+    
+    /// <summary>
+    /// Whether to show a border around thumbnails (default: true)
+    /// </summary>
+    public bool? ThumbnailBorder { get; set; }
+    
+    /// <summary>
+    /// Fallback image URL for 'thumbnail' type columns when field value is empty
+    /// </summary>
+    [StringLength(500)]
+    public string? ThumbnailFallback { get; set; }
+    
     // Foreign key to EntityManager
     public int EntityManagerId { get; set; }
     

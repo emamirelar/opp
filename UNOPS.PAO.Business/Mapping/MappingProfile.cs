@@ -48,10 +48,7 @@ public class MappingProfile : Profile
         // Proposed Initiative Type and Output mappings
         CreateMap<ProposedInitiativeType, SimpleValueModel>()
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name));
-        CreateMap<Output, OutputModel>()
-            .ForMember(dest => dest.OutputName, opt => opt.MapFrom(src => src.OutputName))
-            .ForMember(dest => dest.UnitName, opt => opt.MapFrom(src => src.Unit != null ? src.Unit.Name : null))
-            .ForMember(dest => dest.ProjectCategoryName, opt => opt.MapFrom(src => src.ProjectCategory != null ? src.ProjectCategory.Name : null));
+        CreateMap<Output, OutputModel>();
 
         // SDG mappings
         CreateMap<SDG, SDGModel>();

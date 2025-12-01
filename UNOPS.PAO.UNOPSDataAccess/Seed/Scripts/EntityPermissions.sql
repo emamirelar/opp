@@ -1433,6 +1433,9 @@ INSERT INTO public."EntityPermissions" (
 );
 
 -- Opportunity Entity Permissions
+-- Any user on the Team (OpportunityStakeholder) can edit - this is handled in code via PermissionService
+-- UNOPS General User: Read only (no create/update/delete)
+-- Edit access can be granted via Team membership (handled in code)
 INSERT INTO public."EntityPermissions" (
     "Entity", 
     "Role", 
@@ -1446,13 +1449,14 @@ INSERT INTO public."EntityPermissions" (
     'Opportunity',
     'UNOPS_GEN_USER',
     true,
-    true,
-    true,
-    true,
+    false,
+    false,
+    false,
     null,
     '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
 );
 
+-- Partnership Global Admin: Full access
 INSERT INTO public."EntityPermissions" (
     "Entity", 
     "Role", 
@@ -1473,6 +1477,7 @@ INSERT INTO public."EntityPermissions" (
     '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
 );
 
+-- Partnerships User: Full access
 INSERT INTO public."EntityPermissions" (
     "Entity", 
     "Role", 
@@ -1493,6 +1498,8 @@ INSERT INTO public."EntityPermissions" (
     '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
 );
 
+-- Org Unit Admin: Read only (no create/update/delete)
+-- Edit access can be granted via Team membership (handled in code)
 INSERT INTO public."EntityPermissions" (
     "Entity", 
     "Role", 
@@ -1506,9 +1513,9 @@ INSERT INTO public."EntityPermissions" (
     'Opportunity',
     'ORG_UNIT_ADMIN',
     true,
-    true,
-    true,
-    true,
+    false,
+    false,
+    false,
     null,
     '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
 );

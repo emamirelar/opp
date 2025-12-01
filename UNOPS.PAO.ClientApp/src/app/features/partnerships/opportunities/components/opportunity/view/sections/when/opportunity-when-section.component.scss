@@ -1,3 +1,75 @@
 // Opportunity WHEN Section Component Styles
 // Minimal styles - using Tailwind-first approach
 
+// Fix float label overlap with datepicker icon
+:host ::ng-deep {
+  .p-floatlabel {
+    // Ensure proper spacing for datepicker with icon
+    .p-datepicker {
+      &.p-inputwrapper-filled,
+      &.p-inputwrapper-focus {
+        ~ label {
+          // Ensure label doesn't overlap with calendar icon
+          max-width: calc(100% - 3rem);
+        }
+      }
+    }
+  }
+  
+  // Remove border radius from right top and bottom corners of all datepicker inputs
+  .p-datepicker {
+    input.p-inputtext {
+      border-top-right-radius: 0 !important;
+      border-bottom-right-radius: 0 !important;
+    }
+  }
+}
+
+// Custom Timeline Styles
+:host ::ng-deep {
+  .custom-timeline {
+    // Timeline line
+    .p-timeline-event-connector {
+      background-color: #cbd5e1; // slate-300
+      width: 2px;
+    }
+
+    // Event spacing
+    .p-timeline-event {
+      min-height: 80px;
+    }
+
+    // Separator alignment
+    .p-timeline-event-separator {
+      flex: 0 1 auto;
+      padding: 0 1rem;
+    }
+
+    // Content and opposite widths
+    .p-timeline-event-content,
+    .p-timeline-event-opposite {
+      flex: 1;
+      padding: 0.5rem 0;
+    }
+
+    // Alternate alignment tweaks
+    &.p-timeline-alternate {
+      .p-timeline-event:nth-child(even) {
+        .p-timeline-event-content {
+          text-align: left;
+        }
+        .p-timeline-event-opposite {
+          text-align: right;
+        }
+      }
+      .p-timeline-event:nth-child(odd) {
+        .p-timeline-event-content {
+          text-align: right;
+        }
+        .p-timeline-event-opposite {
+          text-align: left;
+        }
+      }
+    }
+  }
+}

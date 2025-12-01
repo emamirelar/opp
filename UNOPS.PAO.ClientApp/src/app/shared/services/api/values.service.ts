@@ -39,20 +39,32 @@ export interface OrganizationUnit {
 
 /**
  * @interface Output
- * @description Output model for deliverables
+ * @description Output model for deliverables with hierarchical UNOPS Products and Services List structure
  */
 export interface Output {
   id: number;
   name?: string;
-  outputGroup?: string;
-  outputSubGroup?: string;
-  outputName?: string;
-  description?: string;
-  unitId?: number;
-  unitName?: string;
-  projectCategoryId?: number;
-  projectCategoryName?: string;
-  outputServiceLine?: string;
+  
+  // Hierarchical structure (Level 0-4)
+  level0?: string;
+  level1?: string;
+  definitionLevel1?: string;
+  level2?: string;
+  definitionLevel2?: string;
+  level3?: string;
+  definitionLevel3?: string;
+  level4?: string;
+  definitionLevel4?: string;
+  
+  // Service Line
+  serviceLine?: string;
+  
+  // Component flags for specialist requirement indicators
+  grantSupportImplementingModality?: boolean | null;
+  grantSupportComponent?: boolean | null;
+  procurementComponent?: boolean | null;
+  procurementInstallationComponent?: boolean | null;
+  infrastructureComponent?: boolean | null;
 }
 
 /**
@@ -285,6 +297,54 @@ export class ValuesService {
   }
 
   /**
+   * @description Get distinct Level0 values for cascading dropdown
+   * @param {Output[]} outputs - Array of all outputs
+   * @returns {string[]} Array of distinct Level0 values
+   * @since 1.0.0
+   */
+  getDistinctLevel0(outputs: Output[]): string[] {
+    const level0Values = outputs
+      .map(o => o.level0)
+      .filter((value, index, self) => value && self.indexOf(value) === index) as string[];
+    return level0Values.sort();
+  }
+
+  /**
+   * @description Get distinct Level1 values for a specific Level0
+   * @param {Output[]} outputs - Array of all outputs
+   * @param {string} level0 - Selected Level0 value (empty returns all Level1)
+   * @returns {string[]} Array of distinct Level1 values
+   * @since 1.0.0
+   */
+  getDistinctLevel1(outputs: Output[], level0: string): string[] {
+    const filtered = level0 ? outputs.filter(o => o.level0 === level0) : outputs;
+    const level1Values = filtered
+      .map(o => o.level1)
+      .filter((value, index, self) => value && self.indexOf(value) === index) as string[];
+    return level1Values.sort();
+  }
+
+  /**
+   * @description Get distinct Level2 values for a specific Level0 and/or Level1
+   * @param {Output[]} outputs - Array of all outputs
+   * @param {string} [level0] - Selected Level0 value
+   * @param {string} [level1] - Selected Level1 value
+   * @returns {string[]} Array of distinct Level2 values
+   * @since 1.0.0
+   */
+  getDistinctLevel2(outputs: Output[], level0?: string, level1?: string): string[] {
+    let filtered = outputs;
+    if (level0) filtered = filtered.filter(o => o.level0 === level0);
+    if (level1) filtered = filtered.filter(o => o.level1 === level1);
+    
+    const level2Values = filtered
+      .map(o => o.level2)
+      .filter((value, index, self) => value && self.indexOf(value) === index) as string[];
+    return level2Values.sort();
+  }
+
+  /**
+   * @description Get distinct Level3 values for a specific Level0, Level1, and/or Level2
    * @description Get all UNCF Outcomes (latest version only), optionally filtered by country
    * @param {string} countryCode - Optional ISO2 country code to filter outcomes
    * @returns {Observable<UNCFOutcome[]>}
@@ -313,45 +373,74 @@ export class ValuesService {
   /**
    * @description Get distinct output groups for cascading dropdown
    * @param {Output[]} outputs - Array of all outputs
-   * @returns {string[]} Array of distinct output group names
+   * @param {string} [level0] - Selected Level0 value
+   * @param {string} [level1] - Selected Level1 value
+   * @param {string} [level2] - Selected Level2 value
+   * @returns {string[]} Array of distinct Level3 values
    * @since 1.0.0
    */
-  getDistinctOutputGroups(outputs: Output[]): string[] {
-    const groups = outputs
-      .map(o => o.outputGroup)
-      .filter((group, index, self) => group && self.indexOf(group) === index) as string[];
-    return groups.sort();
+  getDistinctLevel3(outputs: Output[], level0?: string, level1?: string, level2?: string): string[] {
+    let filtered = outputs;
+    if (level0) filtered = filtered.filter(o => o.level0 === level0);
+    if (level1) filtered = filtered.filter(o => o.level1 === level1);
+    if (level2) filtered = filtered.filter(o => o.level2 === level2);
+    
+    const level3Values = filtered
+      .map(o => o.level3)
+      .filter((value, index, self) => value && self.indexOf(value) === index) as string[];
+    return level3Values.sort();
   }
 
   /**
-   * @description Get distinct output sub-groups for a specific output group, or all sub-groups if no group specified
+   * @description Get distinct Level4 values for a specific Level0, Level1, Level2, and/or Level3
    * @param {Output[]} outputs - Array of all outputs
-   * @param {string} outputGroup - Selected output group (empty string returns all sub-groups)
-   * @returns {string[]} Array of distinct output sub-group names
+   * @param {string} [level0] - Selected Level0 value
+   * @param {string} [level1] - Selected Level1 value
+   * @param {string} [level2] - Selected Level2 value
+   * @param {string} [level3] - Selected Level3 value
+   * @returns {string[]} Array of distinct Level4 values
    * @since 1.0.0
    */
-  getDistinctOutputSubGroups(outputs: Output[], outputGroup: string): string[] {
-    const filtered = outputGroup ? outputs.filter(o => o.outputGroup === outputGroup) : outputs;
-    const subGroups = filtered
-      .map(o => o.outputSubGroup)
-      .filter((subGroup, index, self) => subGroup && self.indexOf(subGroup) === index) as string[];
-    return subGroups.sort();
+  getDistinctLevel4(outputs: Output[], level0?: string, level1?: string, level2?: string, level3?: string): string[] {
+    let filtered = outputs;
+    if (level0) filtered = filtered.filter(o => o.level0 === level0);
+    if (level1) filtered = filtered.filter(o => o.level1 === level1);
+    if (level2) filtered = filtered.filter(o => o.level2 === level2);
+    if (level3) filtered = filtered.filter(o => o.level3 === level3);
+    
+    const level4Values = filtered
+      .map(o => o.level4)
+      .filter((value, index, self) => value && self.indexOf(value) === index) as string[];
+    return level4Values.sort();
   }
 
   /**
-   * @description Get outputs filtered by group and/or sub-group (both optional)
+   * @description Get outputs filtered by any combination of levels
    * @param {Output[]} outputs - Array of all outputs
-   * @param {string} [outputGroup] - Optional selected output group
-   * @param {string} [outputSubGroup] - Optional selected output sub-group
+   * @param {string} [level0] - Selected Level0 value
+   * @param {string} [level1] - Selected Level1 value
+   * @param {string} [level2] - Selected Level2 value
+   * @param {string} [level3] - Selected Level3 value
+   * @param {string} [level4] - Selected Level4 value
    * @returns {Output[]} Filtered array of outputs
    * @since 1.0.0
    */
-  getFilteredOutputs(outputs: Output[], outputGroup?: string, outputSubGroup?: string): Output[] {
+  getFilteredOutputsByLevels(
+    outputs: Output[], 
+    level0?: string, 
+    level1?: string, 
+    level2?: string, 
+    level3?: string, 
+    level4?: string
+  ): Output[] {
     return outputs.filter(o => {
-      const matchesGroup = !outputGroup || o.outputGroup === outputGroup;
-      const matchesSubGroup = !outputSubGroup || o.outputSubGroup === outputSubGroup;
-      return matchesGroup && matchesSubGroup;
-    }).sort((a, b) => (a.outputName || '').localeCompare(b.outputName || ''));
+      const matchesLevel0 = !level0 || o.level0 === level0;
+      const matchesLevel1 = !level1 || o.level1 === level1;
+      const matchesLevel2 = !level2 || o.level2 === level2;
+      const matchesLevel3 = !level3 || o.level3 === level3;
+      const matchesLevel4 = !level4 || o.level4 === level4;
+      return matchesLevel0 && matchesLevel1 && matchesLevel2 && matchesLevel3 && matchesLevel4;
+    }).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   }
 
   /**

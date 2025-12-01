@@ -74,6 +74,39 @@ a:hover i {
   p-divider .p-divider {
     margin: 0.75rem 0;
   }
+
+  // Panel content border radius
+  p-panel .p-panel-content {
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+  }
+}
+
+// Placeholder styling for all inputs and textareas
+::ng-deep {
+  input::placeholder,
+  textarea::placeholder,
+  .p-inputtext::placeholder,
+  .p-inputtextarea::placeholder {
+    color: var(--unops-neutral-300) !important;
+  }
+  
+  // Ensure consistent placeholder styling across all form controls
+  input::-webkit-input-placeholder,
+  textarea::-webkit-input-placeholder {
+    color: var(--unops-neutral-300) !important;
+  }
+  
+  input::-moz-placeholder,
+  textarea::-moz-placeholder {
+    color: var(--unops-neutral-300) !important;
+    opacity: 1;
+  }
+  
+  input:-ms-input-placeholder,
+  textarea:-ms-input-placeholder {
+    color: var(--unops-neutral-300) !important;
+  }
 }
 
 // Responsive adjustments
@@ -85,5 +118,46 @@ a:hover i {
   h1 {
     font-size: 1.5rem !important;
   }
+}
+
+// Hover-to-edit section affordances
+.section-hover-container {
+  position: relative;
+  border-radius: 12px;
+  transition: all 0.2s ease-in-out;
+
+  // Show hover effects only when section is editable
+  &.section-editable {
+    cursor: pointer;
+
+    &:hover {
+      background-color: rgba(0, 95, 136, 0.02);
+
+      // Add subtle border glow effect
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border: 2px solid rgba(0, 95, 136, 0.2);
+        border-radius: 12px;
+        pointer-events: none;
+        z-index: 1;
+      }
+    }
+  }
+
+  // Don't show hover effects if section has unsaved changes
+  &:not(.section-editable) {
+    cursor: default;
+  }
+}
+
+// Ensure child components don't interfere with hover effect
+.section-hover-container > * {
+  position: relative;
+  z-index: 2;
 }
 

@@ -25,6 +25,7 @@ public class ManagerWrapper : IManagerWrapper
     private IDocumentTypeManager documentTypeManager;
 
     private IGeminiManager geminiManager;
+    private IImageGenerationManager imageGenerationManager;
     private ILinkManager linkManager;
     private IUserDataManager userDataManager;
     private IUserManagementManager userManagementManager;
@@ -92,6 +93,7 @@ public class ManagerWrapper : IManagerWrapper
     public virtual IPartnerManager PartnerManager => partnerManager;
 
     public virtual IGeminiManager GeminiManager => geminiManager;
+    public virtual IImageGenerationManager ImageGenerationManager => imageGenerationManager;
     public virtual IDocumentManager DocumentManager => documentManager;
     public virtual IDocumentTypeManager DocumentTypeManager => documentTypeManager;
 

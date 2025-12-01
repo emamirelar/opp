@@ -81,12 +81,22 @@ public class OpportunityMappingProfile : Profile
         // OpportunityDeliverable mappings
         // =================================================================
         CreateMap<OpportunityDeliverable, OpportunityDeliverableModel>()
-            .ForMember(dest => dest.OutputName, opt => opt.MapFrom(src => src.Output != null ? src.Output.OutputName : null))
-            .ForMember(dest => dest.OutputGroup, opt => opt.MapFrom(src => src.Output != null ? src.Output.OutputGroup : null))
-            .ForMember(dest => dest.OutputSubGroup, opt => opt.MapFrom(src => src.Output != null ? src.Output.OutputSubGroup : null))
-            .ForMember(dest => dest.OutputServiceLine, opt => opt.MapFrom(src => src.Output != null ? src.Output.OutputServiceLine : null))
-            .ForMember(dest => dest.UnitCode, opt => opt.MapFrom(src => src.Output != null && src.Output.Unit != null ? src.Output.Unit.Code : null))
-            .ForMember(dest => dest.ProjectCategoryCode, opt => opt.MapFrom(src => src.Output != null && src.Output.ProjectCategory != null ? src.Output.ProjectCategory.Code : null));
+            .ForMember(dest => dest.OutputName, opt => opt.MapFrom(src => src.Output != null ? src.Output.Name : null))
+            .ForMember(dest => dest.Level0, opt => opt.MapFrom(src => src.Output != null ? src.Output.Level0 : null))
+            .ForMember(dest => dest.DefinitionLevel1, opt => opt.MapFrom(src => src.Output != null ? src.Output.DefinitionLevel1 : null))
+            .ForMember(dest => dest.Level1, opt => opt.MapFrom(src => src.Output != null ? src.Output.Level1 : null))
+            .ForMember(dest => dest.DefinitionLevel2, opt => opt.MapFrom(src => src.Output != null ? src.Output.DefinitionLevel2 : null))
+            .ForMember(dest => dest.Level2, opt => opt.MapFrom(src => src.Output != null ? src.Output.Level2 : null))
+            .ForMember(dest => dest.DefinitionLevel3, opt => opt.MapFrom(src => src.Output != null ? src.Output.DefinitionLevel3 : null))
+            .ForMember(dest => dest.Level3, opt => opt.MapFrom(src => src.Output != null ? src.Output.Level3 : null))
+            .ForMember(dest => dest.DefinitionLevel4, opt => opt.MapFrom(src => src.Output != null ? src.Output.DefinitionLevel4 : null))
+            .ForMember(dest => dest.Level4, opt => opt.MapFrom(src => src.Output != null ? src.Output.Level4 : null))
+            .ForMember(dest => dest.ServiceLine, opt => opt.MapFrom(src => src.Output != null ? src.Output.ServiceLine : null))
+            .ForMember(dest => dest.GrantSupportImplementingModality, opt => opt.MapFrom(src => src.Output != null ? src.Output.GrantSupportImplementingModality : null))
+            .ForMember(dest => dest.GrantSupportComponent, opt => opt.MapFrom(src => src.Output != null ? src.Output.GrantSupportComponent : null))
+            .ForMember(dest => dest.ProcurementComponent, opt => opt.MapFrom(src => src.Output != null ? src.Output.ProcurementComponent : null))
+            .ForMember(dest => dest.ProcurementInstallationComponent, opt => opt.MapFrom(src => src.Output != null ? src.Output.ProcurementInstallationComponent : null))
+            .ForMember(dest => dest.InfrastructureComponent, opt => opt.MapFrom(src => src.Output != null ? src.Output.InfrastructureComponent : null));
         
         CreateMap<OpportunityDeliverableRequest, OpportunityDeliverable>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())

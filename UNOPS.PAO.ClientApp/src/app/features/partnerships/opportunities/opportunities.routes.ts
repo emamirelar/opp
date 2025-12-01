@@ -14,41 +14,41 @@ export const OPPORTUNITIES_ROUTES: Routes = [
   {
     path: 'demo/option1',
     component: OpportunityOption1Component,
-    canActivate: [authGuard],
-    runGuardsAndResolvers: 'paramsChange'
+    canActivate: [authGuard]
+    // Note: runGuardsAndResolvers removed - don't re-run guards on section changes
   },
   {
     path: 'demo/option1/:section',
     component: OpportunityOption1Component,
-    canActivate: [authGuard],
-    runGuardsAndResolvers: 'paramsChange'
+    canActivate: [authGuard]
+    // Note: runGuardsAndResolvers removed - don't re-run guards on section changes
   },
   // View existing opportunity with Option 1
   {
     path: ':recordId/view-option1',
     component: OpportunityOption1Component,
     canActivate: [authGuard],
-    title: 'Opportunity Dashboard',
-    runGuardsAndResolvers: 'paramsChange'
+    title: 'Opportunity Dashboard'
+    // Note: runGuardsAndResolvers removed - don't re-run guards on section changes
   },
   {
     path: ':recordId/view-option1/:section',
     component: OpportunityOption1Component,
     canActivate: [authGuard],
-    title: 'Opportunity Dashboard',
-    runGuardsAndResolvers: 'paramsChange'
+    title: 'Opportunity Dashboard'
+    // Note: runGuardsAndResolvers removed - don't re-run guards on section changes
   },
   // Regular view
   {
     path: ':recordId',
     component: OpportunityViewComponent,
-    canActivate: [authGuard, routePermissionGuard],
-    runGuardsAndResolvers: 'paramsChange'
+    canActivate: [authGuard, routePermissionGuard]
+    // Note: runGuardsAndResolvers removed - don't re-run guards on section changes
   },
   {
     path: ':recordId/:section',
     component: OpportunityViewComponent,
-    canActivate: [authGuard, routePermissionGuard],
-    runGuardsAndResolvers: 'paramsChange'
+    canActivate: [authGuard, routePermissionGuard]
+    // Note: runGuardsAndResolvers removed - don't re-run guards on section changes
   },
 ];

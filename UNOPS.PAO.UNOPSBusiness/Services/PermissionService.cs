@@ -388,10 +388,42 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
 
         /// <summary>
         /// Checks if user can perform the specified action on the entity
+        /// For Opportunity entities with "update" action, also checks if user is a team member (stakeholder)
         /// </summary>
         public async Task<bool> CanPerformActionAsync(string entityName, string action, ClaimsPrincipal user, object entity = null)
         {
-            return await HasPermissionAsync(user, entityName, action);
+            // First check entity-level permissions
+            var hasEntityPermission = await HasPermissionAsync(user, entityName, action);
+            
+            if (hasEntityPermission)
+            {
+                return true;
+            }
+            
+            // For Opportunity entities with "update" action, also check if user is a team member (stakeholder)
+            // Team members can update the opportunity even if their role doesn't have global update permission
+            if (entityName.Equals("Opportunity", StringComparison.OrdinalIgnoreCase) && action.ToLower() == "update")
+            {
+                // Try to get the opportunity ID from the HTTP context route values
+                var httpContext = _httpContextAccessor.HttpContext;
+                if (httpContext != null)
+                {
+                    // Get the opportunity ID from the route
+                    if (httpContext.Request.RouteValues.TryGetValue("id", out var idValue) && 
+                        int.TryParse(idValue?.ToString(), out int opportunityId) && 
+                        opportunityId > 0)
+                    {
+                        // Check if user is a team member (stakeholder) on this opportunity
+                        var isTeamMember = await IsOpportunityTeamMemberAsync(opportunityId);
+                        if (isTeamMember)
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+            
+            return false;
         }
         
         /// <summary>
@@ -425,6 +457,102 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                 CanExport = CanExport(user),
                 CanImport = CanImport(user)
             };
+        }
+
+        /// <summary>
+        /// Gets entity permissions for a specific instance, including team-based permissions for Opportunity
+        /// For Opportunity entities, also checks if user is a team member (stakeholder)
+        /// </summary>
+        public async Task<object> GetEntityInstancePermissionsAsync(string entityName, int entityId)
+        {
+            // Get the current user from HttpContext
+            var httpContext = _httpContextAccessor.HttpContext;
+            var user = httpContext?.User;
+            
+            if (user == null)
+            {
+                return new
+                {
+                    CanRead = false,
+                    CanCreate = false,
+                    CanUpdate = false,
+                    CanDelete = false,
+                    CanExport = false,
+                    CanImport = false,
+                    IsTeamMember = false
+                };
+            }
+            
+            // Get base permissions from role
+            var canRead = await HasPermissionAsync(user, entityName, "read");
+            var canCreate = await HasPermissionAsync(user, entityName, "create");
+            var canUpdate = await HasPermissionAsync(user, entityName, "update");
+            var canDelete = await HasPermissionAsync(user, entityName, "delete");
+            var isTeamMember = false;
+            
+            // For Opportunity, check if user is a team member (stakeholder)
+            // Team members get edit access even if their role doesn't have update permission
+            if (entityName.Equals("Opportunity", StringComparison.OrdinalIgnoreCase) && entityId > 0)
+            {
+                isTeamMember = await IsOpportunityTeamMemberAsync(entityId);
+                
+                // If user is a team member, grant update permission
+                if (isTeamMember && !canUpdate)
+                {
+                    canUpdate = true;
+                }
+            }
+            
+            return new
+            {
+                CanRead = canRead,
+                CanCreate = canCreate,
+                CanUpdate = canUpdate,
+                CanDelete = canDelete,
+                CanExport = CanExport(user),
+                CanImport = CanImport(user),
+                IsTeamMember = isTeamMember
+            };
+        }
+        
+        /// <summary>
+        /// Checks if the current user is a stakeholder (team member) of an Opportunity
+        /// </summary>
+        /// <param name="opportunityId">The opportunity ID to check</param>
+        /// <returns>True if the user is a team member</returns>
+        public async Task<bool> IsOpportunityTeamMemberAsync(int opportunityId)
+        {
+            // Get the current user from HttpContext
+            var httpContext = _httpContextAccessor.HttpContext;
+            var user = httpContext?.User;
+            
+            if (user == null || !user.Identity.IsAuthenticated)
+            {
+                return false;
+            }
+            
+            // Get current user ID from claims
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                             user.FindFirst("sub")?.Value;
+            
+            if (!int.TryParse(userIdClaim, out var currentUserId) || currentUserId <= 0)
+            {
+                return false;
+            }
+            
+            try
+            {
+                // Check if user is listed as a stakeholder (team member) for this opportunity
+                var isStakeholder = await _context.Set<UNOPS.PAO.Domain.Entities.OpportunityStakeholder>()
+                    .AnyAsync(os => os.OpportunityId == opportunityId && os.UserId == currentUserId);
+                
+                return isStakeholder;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error checking opportunity team membership: {ex.Message}");
+                return false;
+            }
         }
 
         /// <summary>
@@ -468,6 +596,27 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                 "delete" => highestPriorityPermission.CanDelete,
                 _ => false
             };
+
+            // For Opportunity entities with "update" action, also check if user is a stakeholder (team member)
+            // Team members can update the opportunity even if their role doesn't have global update permission
+            if (!hasBasicPermission && entityName.Equals("Opportunity", StringComparison.OrdinalIgnoreCase) && action.ToLower() == "update")
+            {
+                // Try to get the opportunity ID from the entity
+                var idProperty = entity.GetType().GetProperty("Id");
+                if (idProperty != null)
+                {
+                    var idValue = idProperty.GetValue(entity);
+                    if (idValue != null && int.TryParse(idValue.ToString(), out int opportunityId) && opportunityId > 0)
+                    {
+                        // Check if user is a team member (stakeholder) on this opportunity
+                        var isTeamMember = await IsOpportunityTeamMemberAsync(opportunityId);
+                        if (isTeamMember)
+                        {
+                            hasBasicPermission = true;
+                        }
+                    }
+                }
+            }
 
             if (!hasBasicPermission)
                 return false;

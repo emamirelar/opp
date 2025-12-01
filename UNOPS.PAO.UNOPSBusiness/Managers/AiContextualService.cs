@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UNOPS.PAO.Models;
@@ -57,8 +58,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         protected readonly PubSubPublisher _pubSubPublisher;
         private readonly string _connectionString;
         private readonly IAiPromptCacheService _aiPromptCacheService;
+        private readonly ILogger _logger;
 
-        public AiContextualService(IConfiguration configuration, UNOPSAppDbContext context, GoogleCredential credentials, IAiPromptCacheService aiPromptCacheService = null)
+        public AiContextualService(IConfiguration configuration, UNOPSAppDbContext context, GoogleCredential credentials, IAiPromptCacheService aiPromptCacheService = null, ILogger logger = null)
         {
             _configuration = configuration;
             _context = context;
@@ -67,6 +69,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             _promptRepository = new DataRepository<AiPrompt>(context);
             _pubSubPublisher = new PubSubPublisher(configuration);
             _aiPromptCacheService = aiPromptCacheService; // Optional dependency for backward compatibility
+            _logger = logger; // Optional logger for keyword generation
             var projectId = _configuration.GetValue<string>("AISettings:ProjectId");
             var location = _configuration.GetValue<string>("AISettings:Location");
             var model = _configuration.GetValue<string>("AISettings:EmbeddingModelName");
@@ -611,6 +614,93 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         catch (Exception ex)
         {
             throw new Exception($"Error in FetchResultFromGeminiWithDocument: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Fetches AI result from Gemini with MULTIPLE documents attached as file URIs.
+    /// Used for extracting products/services from multiple Partner Results Framework documents.
+    /// </summary>
+    public async Task<string> FetchResultFromGeminiWithMultipleDocuments(
+        AiPrompt promptData, 
+        string relatedJsonData, 
+        List<(string storagePath, string mimeType)> documents,
+        string entityId = null, 
+        bool bypassCache = false)
+    {
+        try
+        {
+            // Step 1: Process placeholders to create fully formed instructions/prompts
+            var systemInstructionsTemplate = promptData.SystemInstructions ?? string.Empty;
+            var fullyFormedSystemInstructions = ProcessPlaceholders(systemInstructionsTemplate, relatedJsonData);
+            
+            var fullyFormedUserPrompt = !string.IsNullOrEmpty(promptData.UserPrompt) 
+                ? ProcessPlaceholders(promptData.UserPrompt, relatedJsonData)
+                : "Please analyze these documents and extract the requested information.";
+            
+            // Step 2: Check cache if enabled and not bypassed
+            if (!bypassCache && promptData.UseCache && !string.IsNullOrEmpty(entityId) && !string.IsNullOrEmpty(promptData.Type) && _aiPromptCacheService != null)
+            {
+                var cachedEntry = await _aiPromptCacheService.GetCachedEntryAsync(promptData.Type, entityId);
+                if (cachedEntry != null)
+                {
+                    Console.WriteLine($"[CACHE HIT] Returning cached result for multi-document prompt {promptData.Type}, entity {entityId}");
+                    return cachedEntry.Result;
+                }
+            }
+            
+            // Step 3: Build parts array with text prompt and ALL document URIs
+            var parts = new List<object>
+            {
+                new { text = fullyFormedUserPrompt }
+            };
+
+            // Add ALL documents as fileData objects
+            int validDocCount = 0;
+            foreach (var (storagePath, mimeType) in documents)
+            {
+                if (!string.IsNullOrEmpty(storagePath) && storagePath.StartsWith("gs://"))
+                {
+                    parts.Add(new 
+                    { 
+                        fileData = new
+                        {
+                            fileUri = storagePath,
+                            mimeType = mimeType
+                        }
+                    });
+                    validDocCount++;
+                }
+            }
+
+            Console.WriteLine($"[AI CALL] Calling Gemini with {validDocCount} documents attached");
+
+            var userContent = new
+            {
+                role = "user",
+                parts = parts.ToArray()
+            };
+            
+            var result = await CallGeminiApi(userContent, promptData, fullyFormedSystemInstructions);
+            
+            // Step 4: Cache the result if caching is enabled and not bypassed
+            if (!bypassCache && promptData.UseCache && !string.IsNullOrEmpty(entityId) && !string.IsNullOrEmpty(promptData.Type) && _aiPromptCacheService != null)
+            {
+                var documentList = string.Join(", ", documents.Select(d => d.storagePath));
+                await _aiPromptCacheService.SetCachedResultAsync(
+                    promptData.Type, 
+                    entityId, 
+                    fullyFormedSystemInstructions,
+                    fullyFormedUserPrompt + $" [with {validDocCount} documents]", 
+                    result, 
+                    promptData.CacheInvalidationMinutes);
+            }
+            
+            return result;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error in FetchResultFromGeminiWithMultipleDocuments: {ex.Message}", ex);
         }
     }
 
@@ -2016,16 +2106,135 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 return new List<string>();
 
             var embeddings = new List<string>();
-            var batchSize = 30; // Process in batches of 30
+            var batchSize = 100; // Gemini Embedding API supports up to 100 requests per batch
 
             for (int i = 0; i < texts.Count; i += batchSize)
             {
                 var batch = texts.Skip(i).Take(batchSize).ToList();
                 var batchEmbeddings = await CreateEmbeddingsBatchAsync(batch);
                 embeddings.AddRange(batchEmbeddings);
+                
+                _logger?.LogInformation("📊 Generated embeddings for batch {Current}/{Total} texts", 
+                    Math.Min(i + batchSize, texts.Count), texts.Count);
             }
 
             return embeddings;
+        }
+
+        /// <summary>
+        /// Generates keywords for a list of texts using Gemini AI for hybrid search
+        /// </summary>
+        /// <param name="texts">List of texts to generate keywords for</param>
+        /// <returns>Dictionary mapping text to comma-separated keywords</returns>
+        public async Task<Dictionary<string, string>> GenerateKeywordsAsync(List<string> texts)
+        {
+            if (texts == null || !texts.Any())
+                return new Dictionary<string, string>();
+
+            var keywords = new Dictionary<string, string>();
+            var batchSize = 10; // Process 10 at a time for keyword generation
+
+            for (int i = 0; i < texts.Count; i += batchSize)
+            {
+                var batch = texts.Skip(i).Take(batchSize).ToList();
+                
+                foreach (var text in batch)
+                {
+                    try
+                    {
+                        var generatedKeywords = await GenerateKeywordsForTextAsync(text);
+                        keywords[text] = generatedKeywords;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger?.LogWarning("⚠️ Failed to generate keywords for text: {Text}. Error: {Error}", 
+                            text.Substring(0, Math.Min(50, text.Length)), ex.Message);
+                        keywords[text] = string.Empty;
+                    }
+                }
+                
+                _logger?.LogInformation("🔑 Generated keywords for {Current}/{Total} texts", 
+                    Math.Min(i + batchSize, texts.Count), texts.Count);
+                
+                // Rate limiting: avoid overwhelming the API
+                await Task.Delay(100);
+            }
+
+            return keywords;
+        }
+
+        /// <summary>
+        /// Generates keywords for a single text using Gemini AI
+        /// </summary>
+        private async Task<string> GenerateKeywordsForTextAsync(string text)
+        {
+            var projectId = _configuration.GetValue<string>("AISettings:ProjectId");
+            var location = _configuration.GetValue<string>("AISettings:Location");
+            var model = _configuration.GetValue<string>("AISettings:Model") ?? "gemini-2.0-flash-exp";
+
+            if (string.IsNullOrEmpty(projectId) || string.IsNullOrEmpty(location))
+            {
+                throw new InvalidOperationException("Project ID or Location not configured in AISettings");
+            }
+
+            var accessToken = await GetAccessTokenAsync();
+
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            var prompt = $@"Generate 5-10 relevant keywords for the following service/product description. 
+Return ONLY the keywords as a comma-separated list, no explanations.
+
+Text: {text}
+
+Keywords:";
+
+            var requestBody = new
+            {
+                contents = new[]
+                {
+                    new
+                    {
+                        role = "user",
+                        parts = new[]
+                        {
+                            new { text = prompt }
+                        }
+                    }
+                },
+                generationConfig = new
+                {
+                    temperature = 0.3,
+                    maxOutputTokens = 100,
+                    topP = 0.8
+                }
+            };
+
+            var jsonContent = JsonConvert.SerializeObject(requestBody);
+            var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+            var url = $"https://{location}-aiplatform.googleapis.com/v1/projects/{projectId}/locations/{location}/publishers/google/models/{model}:generateContent";
+
+            var response = await httpClient.PostAsync(url, content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Gemini API error: {response.StatusCode} - {errorContent}");
+            }
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var responseObject = JsonConvert.DeserializeObject<dynamic>(responseContent);
+
+            if (responseObject?.candidates?[0]?.content?.parts?[0]?.text != null)
+            {
+                var keywordsText = responseObject.candidates[0].content.parts[0].text.ToString();
+                // Clean up the response (remove "Keywords:", newlines, extra spaces)
+                keywordsText = keywordsText.Replace("Keywords:", "").Replace("\n", "").Trim();
+                return keywordsText;
+            }
+
+            return string.Empty;
         }
 
         /// <summary>
@@ -3043,7 +3252,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 // Get full output details from database
                 var output = await _context.Outputs
                     .Where(o => o.Id == outputIdInt)
-                    .Select(o => new { o.Id, o.Name, o.Description })
+                    .Select(o => new { o.Id, o.Name, o.DefinitionLevel1, o.DefinitionLevel2, o.DefinitionLevel3, o.DefinitionLevel4 })
                     .FirstOrDefaultAsync();
                 
                 if (output == null)
@@ -3056,9 +3265,11 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 {
                     ["outputId"] = output.Id,
                     ["outputName"] = output.Name,
-                    ["outputDescription"] = output.Description,
-                    ["quantity"] = null,
-                    ["unitCode"] = null
+                    ["level0"] = output.DefinitionLevel1 ?? "",
+                    ["level1"] = output.DefinitionLevel2 ?? "",
+                    ["level2"] = output.DefinitionLevel3 ?? "",
+                    ["level3"] = output.DefinitionLevel4 ?? "",
+                    ["quantity"] = null
                 };
             }
             catch (Exception ex)

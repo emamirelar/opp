@@ -124,6 +124,13 @@ export class OpportunityDocumentsComponent implements OnInit {
   readonly collapsed = input<boolean>(false);
 
   /**
+   * @description Whether the user can update the opportunity (and thus manage documents)
+   * @type {Signal<boolean>}
+   * @default false
+   */
+  readonly canUpdate = input<boolean>(false);
+
+  /**
    * @description Output event emitted when the collapse/expand button is clicked
    * @type {OutputEmitterRef<void>}
    */
@@ -248,12 +255,30 @@ export class OpportunityDocumentsComponent implements OnInit {
    * @type {number[]}
    */
   selectedClientPartners: number[] = [];
-
+  
+  /**
+   * @description Original funding partners (before changes)
+   * @type {number[]}
+   */
+  private originalFundingPartners: number[] = [];
+  
+  /**
+   * @description Original client partners (before changes)
+   * @type {number[]}
+   */
+  private originalClientPartners: number[] = [];
+  
   /**
    * @description Show partner tag validation error
    * @type {Signal<boolean>}
    */
   showPartnerTagValidationError = signal<boolean>(false);
+  
+  /**
+   * @description Check if partner selection has changed
+   * @type {Signal<boolean>}
+   */
+  readonly hasPartnerSelectionChanged = signal<boolean>(false);
 
   /**
    * @description Field mappings for opportunity comparison display
@@ -1268,7 +1293,8 @@ export class OpportunityDocumentsComponent implements OnInit {
     this.selectedFundingPartners = [];
     this.selectedClientPartners = [];
     this.showPartnerTagValidationError.set(false);
-
+    this.hasPartnerSelectionChanged.set(false);
+    
     // Call API to retrieve existing partner-document associations
     if (doc.id) {
       this.documentService.getPartnerDocumentAssociation(doc.id).subscribe({
@@ -1289,20 +1315,29 @@ export class OpportunityDocumentsComponent implements OnInit {
               }
             });
           }
+          
+          // Store original selections for comparison
+          this.originalFundingPartners = [...this.selectedFundingPartners];
+          this.originalClientPartners = [...this.selectedClientPartners];
+          
           // Open dialog after loading associations
           this.showPartnerTagDialog.set(true);
         },
         error: (error) => {
-          console.error(
-            'Error retrieving partner-document associations:',
-            error,
-          );
+          console.error('Error retrieving partner-document associations:', error);
+          
+          // Store empty original selections
+          this.originalFundingPartners = [];
+          this.originalClientPartners = [];
+          
           // Open dialog anyway even if API call fails
           this.showPartnerTagDialog.set(true);
         },
       });
     } else {
-      // If no document ID, just open the dialog
+      // If no document ID, just open the dialog with empty original selections
+      this.originalFundingPartners = [];
+      this.originalClientPartners = [];
       this.showPartnerTagDialog.set(true);
     }
   }
@@ -1316,7 +1351,10 @@ export class OpportunityDocumentsComponent implements OnInit {
     this.documentBeingTagged = null;
     this.selectedFundingPartners = [];
     this.selectedClientPartners = [];
+    this.originalFundingPartners = [];
+    this.originalClientPartners = [];
     this.showPartnerTagValidationError.set(false);
+    this.hasPartnerSelectionChanged.set(false);
   }
 
   /**
@@ -1324,11 +1362,11 @@ export class OpportunityDocumentsComponent implements OnInit {
    * @returns {void}
    */
   confirmPartnerTagging(): void {
-    // Validate - at least one partner must be selected
-    if (
-      this.selectedFundingPartners.length === 0 &&
-      this.selectedClientPartners.length === 0
-    ) {
+    // Check if there has been any change from original selection
+    const hasChange = this.checkIfPartnerSelectionChanged();
+    
+    // If no change, show validation error
+    if (!hasChange) {
       this.showPartnerTagValidationError.set(true);
       return;
     }
@@ -1337,37 +1375,56 @@ export class OpportunityDocumentsComponent implements OnInit {
     if (!opp || !this.documentBeingTagged) return;
 
     // Call the new API endpoint to tag the document with partners
-    this.opportunityService
-      .tagDocumentToPartners(
-        opp.id!,
-        this.documentBeingTagged.id,
-        this.selectedFundingPartners,
-        this.selectedClientPartners,
-      )
-      .subscribe({
-        next: () => {
-          this.feedbackService.showSuccessToast({
-            summary: this.translateService.instant('message.success'),
-            detail: this.translateService.instant(
-              'message.document.partnerTaggedSuccessfully',
-            ),
-          });
-
-          this.showPartnerTagDialog.set(false);
-          this.documentBeingTagged = null;
-          this.selectedFundingPartners = [];
-          this.selectedClientPartners = [];
-          this.showPartnerTagValidationError.set(false);
-
-          // Emit event to reload opportunity
-          this.opportunityUpdated.emit();
-        },
-        error: (error) => {
-          console.error('Error tagging document with partners:', error);
-        },
-      });
+    this.opportunityService.tagDocumentToPartners(
+      opp.id!,
+      this.documentBeingTagged.id,
+      this.selectedFundingPartners,
+      this.selectedClientPartners
+    ).subscribe({
+      next: () => {
+        this.feedbackService.showSuccessToast({
+          summary: this.translateService.instant('message.success'),
+          detail: this.translateService.instant('message.document.partnerTaggedSuccessfully')
+        });
+        
+        this.showPartnerTagDialog.set(false);
+        this.documentBeingTagged = null;
+        this.selectedFundingPartners = [];
+        this.selectedClientPartners = [];
+        this.originalFundingPartners = [];
+        this.originalClientPartners = [];
+        this.showPartnerTagValidationError.set(false);
+        this.hasPartnerSelectionChanged.set(false);
+        
+        // Emit event to reload opportunity
+        this.opportunityUpdated.emit();
+      },
+      error: (error) => {
+        console.error('Error tagging document with partners:', error);
+      }
+    });
   }
-
+  
+  /**
+   * @description Check if partner selection has changed from original
+   * @returns {boolean} True if there's been any change
+   * @private
+   */
+  private checkIfPartnerSelectionChanged(): boolean {
+    // Compare current selection with original
+    const fundingChanged = 
+      this.selectedFundingPartners.length !== this.originalFundingPartners.length ||
+      !this.selectedFundingPartners.every(id => this.originalFundingPartners.includes(id)) ||
+      !this.originalFundingPartners.every(id => this.selectedFundingPartners.includes(id));
+    
+    const clientChanged = 
+      this.selectedClientPartners.length !== this.originalClientPartners.length ||
+      !this.selectedClientPartners.every(id => this.originalClientPartners.includes(id)) ||
+      !this.originalClientPartners.every(id => this.selectedClientPartners.includes(id));
+    
+    return fundingChanged || clientChanged;
+  }
+  
   /**
    * @description Toggle funding partner selection
    * @param {number} partnerId - Partner ID to toggle
@@ -1381,6 +1438,9 @@ export class OpportunityDocumentsComponent implements OnInit {
       this.selectedFundingPartners.push(partnerId);
     }
     this.showPartnerTagValidationError.set(false);
+    
+    // Update change detection signal
+    this.hasPartnerSelectionChanged.set(this.checkIfPartnerSelectionChanged());
   }
 
   /**
@@ -1396,6 +1456,9 @@ export class OpportunityDocumentsComponent implements OnInit {
       this.selectedClientPartners.push(partnerId);
     }
     this.showPartnerTagValidationError.set(false);
+    
+    // Update change detection signal
+    this.hasPartnerSelectionChanged.set(this.checkIfPartnerSelectionChanged());
   }
 
   /**

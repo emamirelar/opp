@@ -150,10 +150,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                     .ThenInclude(c => c!.Partner)
             .Include(o => o.Deliverables)
                 .ThenInclude(d => d.Output)
-                    .ThenInclude(o => o.Unit)
-            .Include(o => o.Deliverables)
-                .ThenInclude(d => d.Output)
-                    .ThenInclude(o => o.ProjectCategory)
             .Include(o => o.Countries)
                 .ThenInclude(c => c.Country)
             .Include(o => o.SDGs)
@@ -175,6 +171,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                     .ThenInclude(ui => ui.UNCFIndicator)
             .Include(o => o.UNOPSMissions)
                 .ThenInclude(om => om.UNOPSMission)
+            .AsSplitQuery() // Split into multiple queries to avoid Cartesian explosion
             .FirstOrDefaultAsync(o => o.Id == id && !o.IsDeleted);
 
         if (entity == null)
@@ -228,7 +225,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                             $"{fundingPartnerEntity.ExchangeRate:F4} on {fundingPartnerEntity.ExchangeRateDate:MMM dd, yyyy}";
                     }
                     
-                    // AC9: Load partner agreements
+                    // Load partner agreements
                     fundingPartner.AvailableAgreements = await LoadPartnerAgreementsAsync(
                         fundingPartner.PartnerId,
                         entity.CreatedDate, // Use created date as start
@@ -276,7 +273,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                             partner.DueDiligenceExpiryDate < entity.TargetDeliveryDate;
                     }
                     
-                    // AC9: Load partner agreements
+                    // Load partner agreements
                     clientPartner.AvailableAgreements = await LoadPartnerAgreementsAsync(
                         clientPartner.PartnerId,
                         entity.CreatedDate, // Use created date as start
@@ -344,6 +341,78 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         }
 
         return model;
+    }
+    
+    /// <summary>
+    /// Gets an opportunity by ID with user-specific permissions
+    /// Stakeholders (team members) on the opportunity can update it even if they don't have global update permission
+    /// </summary>
+    /// <param name="user">Current user context</param>
+    /// <param name="id">Opportunity ID</param>
+    /// <returns>Opportunity model with permissions, or null if not found</returns>
+    public async Task<OpportunityModel?> GetOpportunityAsync(ClaimsPrincipal user, int id)
+    {
+        // Get the base opportunity model
+        var model = await GetOpportunityAsync(id);
+        if (model == null)
+        {
+            return null;
+        }
+        
+        // Get entity for permission checking
+        var entity = await context.Opportunities
+            .Include(o => o.Stakeholders)
+            .FirstOrDefaultAsync(o => o.Id == id && !o.IsDeleted);
+        
+        if (entity == null)
+        {
+            return null;
+        }
+        
+        // Check if user is a stakeholder on this opportunity
+        var isStakeholder = await IsUserStakeholderOnOpportunityAsync(user, id);
+        
+        // Add permissions with stakeholder check
+        model = await MapEntityToModelWithPermissionsAsync(model, user, entity);
+        
+        // If user is a stakeholder, they should be able to update the opportunity
+        // even if they don't have global update permission
+        if (isStakeholder && model.Permissions != null)
+        {
+            model.Permissions.CanUpdate = true;
+            model.Permissions.Notes = "Stakeholder on this opportunity";
+        }
+        
+        return model;
+    }
+    
+    /// <summary>
+    /// Checks if the current user is a stakeholder (team member) on the given opportunity
+    /// </summary>
+    /// <param name="user">Current user context</param>
+    /// <param name="opportunityId">Opportunity ID</param>
+    /// <returns>True if user is a stakeholder, false otherwise</returns>
+    private async Task<bool> IsUserStakeholderOnOpportunityAsync(ClaimsPrincipal user, int opportunityId)
+    {
+        if (user == null)
+        {
+            return false;
+        }
+        
+        // Get user ID from claims
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+        {
+            return false;
+        }
+        
+        // Check if this user is an internal stakeholder on the opportunity
+        var isStakeholder = await context.OpportunityStakeholders
+            .AnyAsync(s => s.OpportunityId == opportunityId 
+                        && s.UserId == userId 
+                        && s.IsInternal);
+        
+        return isStakeholder;
     }
     
     /// <summary>
@@ -1019,6 +1088,32 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         return await GetOpportunityAsync(entity.Id);
     }
 
+    public async Task<OpportunityModel> UpdateOverviewSectionAsync(int id, OverviewSectionRequest request)
+    {
+        var entity = await opportunityRepository.GetByIdAsync(id);
+
+        if (entity == null)
+        {
+            throw new KeyNotFoundException($"Opportunity with ID {id} not found");
+        }
+
+        // Update Overview section fields
+        if (request.Name != null)
+        {
+            entity.Name = request.Name;
+        }
+
+        if (request.Description != null)
+        {
+            entity.Description = request.Description;
+        }
+
+        await opportunityRepository.UpdateAsync(entity);
+
+        // Reload with all includes for complete response
+        return await GetOpportunityAsync(entity.Id);
+    }
+
     public async Task<OpportunityModel> UpdateWhatSectionAsync(int id, WhatSectionRequest request)
     {
         var entity = await opportunityRepository.GetByIdAsync(id, new[]
@@ -1050,6 +1145,12 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         if (request.ProposedInitiativeTypeId.HasValue)
         {
             entity.ProposedInitiativeTypeId = request.ProposedInitiativeTypeId.Value;
+        }
+        
+        // Update delivery modality (always update if provided, including null to clear)
+        if (request.DeliveryModality.HasValue)
+        {
+            entity.DeliveryModality = (DeliveryModality)request.DeliveryModality.Value;
         }
 
         // Update deliverables
@@ -1467,7 +1568,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
 
-        // AC8: Update pooled funding flag
+        // Update pooled funding flag
         opportunity.IsPooledFunding = request.IsPooledFunding;
 
         // Update Funding Partners
@@ -1515,8 +1616,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                     IsAmountBasedFee = fp.IsAmountBasedFee,
                     PartnershipAgreementReference = fp.PartnershipAgreementReference,
                     DocumentId = fp.DocumentId,
-                    IsPooledContribution = fp.IsPooledContribution, // AC8
-                    SelectedPartnerAgreementNumber = fp.SelectedPartnerAgreementNumber // AC9
+                    IsPooledContribution = fp.IsPooledContribution,
+                    SelectedPartnerAgreementNumber = fp.SelectedPartnerAgreementNumber
                     // PartnerPreferredCurrency will remain null until Partner entity gets this field
                 };
                 
@@ -1567,7 +1668,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 {
                     OpportunityId = id,
                     PartnerId = cp.PartnerId,
-                    SelectedPartnerAgreementNumber = cp.SelectedPartnerAgreementNumber // AC9
+                    SelectedPartnerAgreementNumber = cp.SelectedPartnerAgreementNumber
                 })
                 .ToList();
         }
@@ -1873,6 +1974,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     public async Task<OpportunityModel> UpdateWhenSectionAsync(int id, WhenSectionRequest request)
     {
         var opportunity = await context.Opportunities
+            .Include(o => o.Deliverables)
             .FirstOrDefaultAsync(o => o.Id == id);
 
         if (opportunity == null)
@@ -1880,9 +1982,24 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
 
-        // Update dates
+        // Update target dates
         opportunity.TargetSigningDate = request.TargetSigningDate;
+        opportunity.ImplementationStartDate = request.ImplementationStartDate;
         opportunity.TargetDeliveryDate = request.TargetDeliveryDate;
+
+        // Update deliverable planned dates (Work Breakdown Structure)
+        if (request.Deliverables != null && request.Deliverables.Any())
+        {
+            foreach (var deliverableUpdate in request.Deliverables)
+            {
+                var deliverable = opportunity.Deliverables?.FirstOrDefault(d => d.Id == deliverableUpdate.Id);
+                if (deliverable != null)
+                {
+                    deliverable.PlannedStartDate = deliverableUpdate.PlannedStartDate;
+                    deliverable.PlannedEndDate = deliverableUpdate.PlannedEndDate;
+                }
+            }
+        }
 
         await context.SaveChangesAsync();
 
@@ -2332,10 +2449,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                     .ThenInclude(u => u!.UserProfile)
             .Include(o => o.Deliverables)
                 .ThenInclude(d => d.Output)
-                    .ThenInclude(o => o.Unit)
-            .Include(o => o.Deliverables)
-                .ThenInclude(d => d.Output)
-                    .ThenInclude(o => o.ProjectCategory)
             .Include(o => o.Countries)
                 .ThenInclude(c => c.Country)
             .Include(o => o.SDGs)
@@ -2672,7 +2785,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     }
     
     /// <summary>
-    /// Load partner agreements for a specific partner (AC9)
+    /// Load partner agreements for a specific partner
     /// </summary>
     private async Task<List<PartnerAgreementInfo>> LoadPartnerAgreementsAsync(
         int partnerId, 

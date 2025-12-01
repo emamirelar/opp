@@ -34,6 +34,7 @@ public class OpportunityController : BaseController
     private readonly IOpportunityManager _manager;
     private readonly IAuditLogManager _auditLogManager;
     private readonly IGeminiManager _geminiManager;
+    private readonly IImageGenerationManager _imageGenerationManager;
     private readonly IRiskManager _riskManager;
     private readonly int _currentUserId;
     private readonly AppDbContext _context;
@@ -58,6 +59,7 @@ public class OpportunityController : BaseController
         _manager = manager.OpportunityManager;
         _auditLogManager = manager.AuditLogManager;
         _geminiManager = manager.GeminiManager;
+        _imageGenerationManager = manager.ImageGenerationManager;
         _riskManager = manager.RiskManager;
         _currentUserId = userResolverService.GetCurrentUserId();
         _context = context;
@@ -115,13 +117,15 @@ public class OpportunityController : BaseController
     }
 
     /// <summary>
-    /// Gets a specific opportunity by ID
+    /// Gets a specific opportunity by ID with user-specific permissions
+    /// Stakeholders (team members) on the opportunity can update it even if they don't have global update permission
     /// </summary>
     [HttpGet(APIDictionary.Opportunity + "/{id}")]
     [AccessControlled(EntityTypes.Opportunity, "read")]
     public async Task<ActionResult> Get(int id)
     {
-        var result = await _manager.GetOpportunityAsync(id);
+        // Pass User context to get opportunity with record-level permissions
+        var result = await _manager.GetOpportunityAsync(User, id);
 
         if (result == null)
         {
@@ -129,6 +133,76 @@ public class OpportunityController : BaseController
         }
 
         return Ok(result);
+    }
+
+    /// <summary>
+    /// Generates AI banner and thumbnail images for an opportunity
+    /// </summary>
+    [HttpPost(APIDictionary.Opportunity + "/{id}/generate-images")]
+    [AccessControlled(EntityTypes.Opportunity, "update")]
+    public async Task<ActionResult> GenerateOpportunityImages(int id)
+    {
+        try
+        {
+            // Get the opportunity with related data for context
+            var opportunity = await _context.Opportunities
+                .Include(o => o.Countries)
+                    .ThenInclude(oc => oc.Country)
+                .Include(o => o.ProposedInitiativeType)
+                .FirstOrDefaultAsync(o => o.Id == id);
+
+            if (opportunity == null)
+            {
+                return NotFound(new { error = $"Opportunity with ID {id} not found" });
+            }
+
+            // Validate that name and description are available
+            if (string.IsNullOrWhiteSpace(opportunity.Name) || string.IsNullOrWhiteSpace(opportunity.Description))
+            {
+                return BadRequest(new { error = "Opportunity must have both name and description to generate images" });
+            }
+
+            // Gather contextual information for image generation
+            var countries = opportunity.Countries != null && opportunity.Countries.Any()
+                ? string.Join(", ", opportunity.Countries.Select(oc => oc.Country?.Name).Where(n => !string.IsNullOrWhiteSpace(n)))
+                : null;
+
+            var intendedImpact = opportunity.IntendedImpactOutcomes;
+            var initiativeType = opportunity.ProposedInitiativeType?.Name;
+
+            _logger.LogInformation("Generating images for opportunity {OpportunityId}: {OpportunityName} in {Countries}", 
+                id, opportunity.Name, countries ?? "unspecified location");
+
+            // Generate images using Gemini with full context
+            var (bannerBase64, thumbnailBase64) = await _imageGenerationManager.GenerateOpportunityImagesAsync(
+                opportunity.Name,
+                opportunity.Description,
+                countries,
+                intendedImpact,
+                initiativeType);
+
+            if (string.IsNullOrWhiteSpace(bannerBase64) || string.IsNullOrWhiteSpace(thumbnailBase64))
+            {
+                _logger.LogWarning("Image generation returned null or empty images for opportunity {OpportunityId}", id);
+                return StatusCode(500, new { error = "Failed to generate images" });
+            }
+
+            // Save images to database
+            opportunity.OpportunityBannerImage = bannerBase64;
+            opportunity.OpportunityThumbnail = thumbnailBase64;
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Successfully generated and saved images for opportunity {OpportunityId}", id);
+
+            // Return updated opportunity with images
+            var result = await _manager.GetOpportunityAsync(User, id);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating images for opportunity {OpportunityId}", id);
+            return StatusCode(500, new { error = "An error occurred while generating images" });
+        }
     }
 
     /// <summary>
@@ -383,7 +457,34 @@ public class OpportunityController : BaseController
     }
 
     /// <summary>
-    /// Updates the WHAT section of an opportunity (description, org unit, initiative type, deliverables)
+    /// Updates the Overview section of an opportunity (name, description)
+    /// </summary>
+    [HttpPatch(APIDictionary.OpportunityOverview)]
+    [AccessControlled(EntityTypes.Opportunity, "update")]
+    public async Task<ActionResult> UpdateOverviewSection(int id, [FromBody] OverviewSectionRequest req)
+    {
+        try
+        {
+            var result = await _manager.UpdateOverviewSectionAsync(id, req);
+            
+            // Create audit log
+            await CreateAuditLogAsync(id, "update_overview_section", result);
+            
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating Overview section for opportunity {OpportunityId}", id);
+            return StatusCode(500, new { error = "Internal server error while updating Overview section", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Updates the WHAT section of an opportunity (org unit, initiative type, delivery modality, deliverables)
     /// </summary>
     [HttpPatch(APIDictionary.OpportunityWhat)]
     [AccessControlled(EntityTypes.Opportunity, "update")]
@@ -548,6 +649,7 @@ public class OpportunityController : BaseController
     /// <summary>
     /// Tags a document as Partner Results Framework for specific funding/client partners
     /// Updates OpportunityFundingPartner and OpportunityClientPartner records with the document ID
+    /// Supports clearing associations by passing empty arrays
     /// </summary>
     [HttpPost(APIDictionary.Opportunity + "/{opportunityId}/tag-related-partner-to-doc")]
     [AccessControlled(EntityTypes.Opportunity, "update")]
@@ -558,13 +660,6 @@ public class OpportunityController : BaseController
             _logger.LogInformation("📎 [API] Tagging document {DocumentId} to partners for opportunity {OpportunityId}", 
                 request.DocumentId, opportunityId);
 
-            // Validate request
-            if ((request.FundingPartnerIds == null || !request.FundingPartnerIds.Any()) &&
-                (request.ClientPartnerIds == null || !request.ClientPartnerIds.Any()))
-            {
-                return BadRequest(new { error = "At least one funding or client partner must be selected" });
-            }
-
             // Get the document to verify it exists and get its name
             var document = await _context.Documents.FindAsync(request.DocumentId);
             if (document == null)
@@ -572,12 +667,37 @@ public class OpportunityController : BaseController
                 return NotFound(new { error = $"Document with ID {request.DocumentId} not found" });
             }
 
-            // Update funding partners with document ID
+            // Get all funding partners for this opportunity
+            var allFundingPartners = await _context.OpportunityFundingPartners
+                .Where(fp => fp.OpportunityId == opportunityId)
+                .ToListAsync();
+
+            // Get all client partners for this opportunity
+            var allClientPartners = await _context.OpportunityClientPartners
+                .Where(cp => cp.OpportunityId == opportunityId)
+                .ToListAsync();
+
+            // Clear document ID from ALL partners first (for this specific document)
+            foreach (var fp in allFundingPartners.Where(fp => fp.DocumentId == request.DocumentId))
+            {
+                fp.DocumentId = null;
+                _logger.LogInformation("🧹 [API] Cleared document {DocumentId} from funding partner {PartnerId}", 
+                    request.DocumentId, fp.PartnerId);
+            }
+
+            foreach (var cp in allClientPartners.Where(cp => cp.DocumentId == request.DocumentId))
+            {
+                cp.DocumentId = null;
+                _logger.LogInformation("🧹 [API] Cleared document {DocumentId} from client partner {PartnerId}", 
+                    request.DocumentId, cp.PartnerId);
+            }
+
+            // Now set document ID for selected partners (if any)
             if (request.FundingPartnerIds != null && request.FundingPartnerIds.Any())
             {
-                var fundingPartnersToUpdate = await _context.OpportunityFundingPartners
-                    .Where(fp => fp.OpportunityId == opportunityId && request.FundingPartnerIds.Contains(fp.PartnerId))
-                    .ToListAsync();
+                var fundingPartnersToUpdate = allFundingPartners
+                    .Where(fp => request.FundingPartnerIds.Contains(fp.PartnerId))
+                    .ToList();
 
                 foreach (var fundingPartner in fundingPartnersToUpdate)
                 {
@@ -587,12 +707,11 @@ public class OpportunityController : BaseController
                 }
             }
 
-            // Update client partners with document ID
             if (request.ClientPartnerIds != null && request.ClientPartnerIds.Any())
             {
-                var clientPartnersToUpdate = await _context.OpportunityClientPartners
-                    .Where(cp => cp.OpportunityId == opportunityId && request.ClientPartnerIds.Contains(cp.PartnerId))
-                    .ToListAsync();
+                var clientPartnersToUpdate = allClientPartners
+                    .Where(cp => request.ClientPartnerIds.Contains(cp.PartnerId))
+                    .ToList();
 
                 foreach (var clientPartner in clientPartnersToUpdate)
                 {
@@ -605,15 +724,20 @@ public class OpportunityController : BaseController
             // Save all changes
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("✅ [API] Successfully tagged document {DocumentId} to partners for opportunity {OpportunityId}", 
-                request.DocumentId, opportunityId);
+            var message = (request.FundingPartnerIds?.Count ?? 0) + (request.ClientPartnerIds?.Count ?? 0) == 0
+                ? "Document associations cleared successfully"
+                : "Document successfully tagged to partners";
+
+            _logger.LogInformation("✅ [API] {Message} - Document {DocumentId} for opportunity {OpportunityId}", 
+                message, request.DocumentId, opportunityId);
 
             return Ok(new
             {
-                message = "Document successfully tagged to partners",
+                message = message,
                 documentId = request.DocumentId,
                 fundingPartnersUpdated = request.FundingPartnerIds?.Count ?? 0,
-                clientPartnersUpdated = request.ClientPartnerIds?.Count ?? 0
+                clientPartnersUpdated = request.ClientPartnerIds?.Count ?? 0,
+                cleared = (request.FundingPartnerIds?.Count ?? 0) + (request.ClientPartnerIds?.Count ?? 0) == 0
             });
         }
         catch (Exception ex)
@@ -782,12 +906,12 @@ public class OpportunityController : BaseController
     /// </summary>
     [HttpGet(APIDictionary.Opportunity + "/{id}/similar-projects")]
     [AccessControlled(EntityTypes.Opportunity, "read")]
-    public async Task<ActionResult> GetSimilarProjects(int id, [FromQuery] int maxResults = 6)
+    public async Task<ActionResult> GetSimilarProjects(int id, [FromQuery] int maxResults = 6, [FromQuery] bool invalidateCache = false)
     {
         try
         {
-            _logger.LogInformation("Getting similar projects for opportunity {OpportunityId} with maxResults={MaxResults}", 
-                id, maxResults);
+            _logger.LogInformation("Getting similar projects for opportunity {OpportunityId} with maxResults={MaxResults}, invalidateCache={InvalidateCache}", 
+                id, maxResults, invalidateCache);
 
             // Validate maxResults
             if (maxResults < 1 || maxResults > 50)
@@ -807,7 +931,7 @@ public class OpportunityController : BaseController
             var user = User;
 
             // Call the GeminiManager to get similar projects
-            var response = await _geminiManager.GetSimilarProjectsAsync(id, maxResults, user);
+            var response = await _geminiManager.GetSimilarProjectsAsync(id, maxResults, user, invalidateCache);
 
             _logger.LogInformation("Found {Count} similar projects for opportunity {OpportunityId}", 
                 response.SimilarProjects?.Count ?? 0, id);
@@ -831,12 +955,12 @@ public class OpportunityController : BaseController
     /// </summary>
     [HttpGet(APIDictionary.Opportunity + "/{id}/relevant-people")]
     [AccessControlled(EntityTypes.Opportunity, "read")]
-    public async Task<ActionResult> GetRelevantPeople(int id, [FromQuery] int maxResults = 6)
+    public async Task<ActionResult> GetRelevantPeople(int id, [FromQuery] int maxResults = 6, [FromQuery] bool invalidateCache = false)
     {
         try
         {
-            _logger.LogInformation("Getting relevant people for opportunity {OpportunityId} with maxResults={MaxResults}", 
-                id, maxResults);
+            _logger.LogInformation("Getting relevant people for opportunity {OpportunityId} with maxResults={MaxResults}, invalidateCache={InvalidateCache}", 
+                id, maxResults, invalidateCache);
 
             // Validate maxResults
             if (maxResults < 1 || maxResults > 50)
@@ -856,7 +980,7 @@ public class OpportunityController : BaseController
             var user = User;
 
             // Call the GeminiManager to get relevant people
-            var response = await _geminiManager.GetRelevantPeopleAsync(id, maxResults, user);
+            var response = await _geminiManager.GetRelevantPeopleAsync(id, maxResults, user, invalidateCache);
 
             _logger.LogInformation("Found {Count} relevant people for opportunity {OpportunityId}", 
                 response.RelevantPeople?.Count ?? 0, id);
@@ -1111,6 +1235,26 @@ public class OpportunityController : BaseController
                 request.NewDocumentStoragePaths?.Count ?? 0,
                 request.ExistingDocumentIds?.Count ?? 0);
 
+            // Log detailed document information
+            if (request.NewDocumentStoragePaths != null && request.NewDocumentStoragePaths.Any())
+            {
+                _logger.LogInformation("📄 [API] New document storage paths received:");
+                for (int i = 0; i < request.NewDocumentStoragePaths.Count; i++)
+                {
+                    var mimeType = request.NewDocumentMimeTypes != null && i < request.NewDocumentMimeTypes.Count 
+                        ? request.NewDocumentMimeTypes[i] 
+                        : "unknown";
+                    _logger.LogInformation("  [{Index}] Path: {Path}, MimeType: {MimeType}", 
+                        i + 1, 
+                        request.NewDocumentStoragePaths[i], 
+                        mimeType);
+                }
+            }
+            else
+            {
+                _logger.LogInformation("ℹ️ [API] No new document storage paths in request");
+            }
+
             // Validate request - at least one source is required
             if ((request.InteractionIds == null || !request.InteractionIds.Any()) &&
                 (request.NewDocumentStoragePaths == null || !request.NewDocumentStoragePaths.Any()) &&
@@ -1198,10 +1342,7 @@ public class OpportunityController : BaseController
                 return BadRequest(new { error = "Opportunity name is required" });
             }
 
-            if (string.IsNullOrWhiteSpace(request.Description))
-            {
-                return BadRequest(new { error = "Opportunity description is required" });
-            }
+            // Description is optional - no validation required
 
             // Partner validation: only required if partnerId is provided (creating from partner context)
             if (request.PartnerId.HasValue && request.PartnerId > 0)
@@ -1383,6 +1524,133 @@ public class OpportunityController : BaseController
         {
             _logger.LogError(ex, "Error creating opportunity from interactions");
             return StatusCode(500, new { error = "Internal server error while creating opportunity", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// AC2: Gets Partner Results Framework status for an opportunity
+    /// Returns tagged framework documents and total document count
+    /// </summary>
+    [HttpGet(APIDictionary.Opportunity + "/{id}/framework-status")]
+    [AccessControlled(EntityTypes.Opportunity, "read")]
+    public async Task<ActionResult> GetFrameworkStatus(int id)
+    {
+        try
+        {
+            _logger.LogInformation("Getting framework status for opportunity {OpportunityId}", id);
+
+            // Get opportunity with partners
+            var opportunity = await _context.Opportunities
+                .Include(o => o.FundingPartners).ThenInclude(fp => fp.Partner)
+                .Include(o => o.ClientPartners).ThenInclude(cp => cp.Partner)
+                .FirstOrDefaultAsync(o => o.Id == id);
+
+            if (opportunity == null)
+            {
+                return NotFound(new { error = $"Opportunity with ID {id} not found" });
+            }
+
+            var taggedFrameworks = new List<TaggedFrameworkInfo>();
+
+            // Get framework docs from funding partners (using existing DocumentId)
+            foreach (var fp in opportunity.FundingPartners.Where(fp => fp.DocumentId.HasValue))
+            {
+                var doc = await _context.Documents.FirstOrDefaultAsync(d => d.Id == fp.DocumentId.Value);
+                if (doc != null)
+                {
+                    taggedFrameworks.Add(new TaggedFrameworkInfo
+                    {
+                        PartnerId = fp.PartnerId,
+                        PartnerName = fp.Partner?.Name ?? "Unknown Partner",
+                        DocumentId = doc.Id,
+                        DocumentName = doc.Name,
+                        DocumentStoragePath = doc.StoragePath,
+                        PartnerType = "Funding"
+                    });
+                }
+            }
+
+            // Get framework docs from client partners (using existing DocumentId)
+            foreach (var cp in opportunity.ClientPartners.Where(cp => cp.DocumentId.HasValue))
+            {
+                var doc = await _context.Documents.FirstOrDefaultAsync(d => d.Id == cp.DocumentId.Value);
+                if (doc != null)
+                {
+                    taggedFrameworks.Add(new TaggedFrameworkInfo
+                    {
+                        PartnerId = cp.PartnerId,
+                        PartnerName = cp.Partner?.Name ?? "Unknown Partner",
+                        DocumentId = doc.Id,
+                        DocumentName = doc.Name,
+                        DocumentStoragePath = doc.StoragePath,
+                        PartnerType = "Client"
+                    });
+                }
+            }
+
+            // Get total document count
+            var totalDocs = await _context.DocumentRelationships
+                .CountAsync(dr => dr.EntityType == "Opportunity" && dr.EntityId == id && !dr.Document.IsDeleted);
+
+            var response = new FrameworkStatusResponse
+            {
+                HasTaggedFrameworks = taggedFrameworks.Any(),
+                TaggedFrameworks = taggedFrameworks,
+                AllDocumentsCount = totalDocs
+            };
+
+            _logger.LogInformation("✅ Framework status - {Count} tagged frameworks, {TotalDocs} total docs",
+                taggedFrameworks.Count, totalDocs);
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting framework status for opportunity {OpportunityId}", id);
+            return StatusCode(500, new { error = "Internal server error while getting framework status", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Extracts products and services from Partner Results Framework and other documents using AI
+    /// Returns temporary extraction data for user verification (not saved to database)
+    /// </summary>
+    [HttpPost(APIDictionary.Opportunity + "/{id}/extract-deliverables")]
+    [AccessControlled(EntityTypes.Opportunity, "update")]
+    public async Task<ActionResult> ExtractDeliverablesFromSources(int id)
+    {
+        try
+        {
+            _logger.LogInformation("🤖 Starting AI extraction for opportunity {OpportunityId}", id);
+
+            // Verify opportunity exists
+            var opportunity = await _manager.GetOpportunityAsync(id);
+            if (opportunity == null)
+            {
+                return NotFound(new { error = $"Opportunity with ID {id} not found" });
+            }
+
+            // Call Gemini manager for extraction
+            var extracted = await _geminiManager.ExtractDeliverablesWithFrameworkPriorityAsync(id);
+
+            _logger.LogInformation("✅ Extracted {Count} deliverables for opportunity {OpportunityId}", 
+                extracted.Count, id);
+
+            return Ok(extracted);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogError(ex, "AI extraction error for opportunity {OpportunityId}", id);
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error extracting deliverables for opportunity {OpportunityId}", id);
+            return StatusCode(500, new { error = "Internal server error while extracting deliverables", details = ex.Message });
         }
     }
 
