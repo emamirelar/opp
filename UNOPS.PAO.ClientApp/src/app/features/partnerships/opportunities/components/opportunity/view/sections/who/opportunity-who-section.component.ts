@@ -288,9 +288,9 @@ export class OpportunityWhoSectionComponent implements OnInit {
   }
 
   /**
-   * @description Enable edit mode
+   * @description Start editing mode - backs up original data for cancel operation
    */
-  enableEdit(): void {
+  startEditing(): void {
     const opp = this.opportunity();
     
     // Backup original data for cancel
@@ -308,9 +308,9 @@ export class OpportunityWhoSectionComponent implements OnInit {
   }
 
   /**
-   * @description Cancel edit mode
+   * @description Cancel editing mode - restores original data and exits edit mode
    */
-  cancelEdit(): void {
+  cancelEditing(): void {
     const opp = this.opportunity();
     
     // Restore original data if available

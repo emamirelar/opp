@@ -2649,7 +2649,7 @@
   "label.opportunity.editUNCFOutcomes": "Editar Resultados UNCF",
   "label.opportunity.selectUNCFOutcomes": "Selecionar Resultados UNCF",
   "label.opportunity.uncfValidation": "Selecione pelo menos um resultado UNCF",
-  "message.opportunity.uncfNotAvailable": "Esta seção estará disponível assim que pelo menos um país com Quadro de Cooperação das Nações Unidas (UNSDCF) ativo for adicionado à Oportunidade.",
+  "message.opportunity.uncfNotAvailable": "Esta seção aparecerá quando você adicionar um país com Quadro de Cooperação das Nações Unidas (UNSDCF) ativo à Oportunidade.",
   "message.opportunity.uncfUpdatesAvailable": "Os Resultados do Quadro de Cooperação das Nações Unidas foram atualizados para este país desde a sua seleção anterior. Por favor, revise para selecionar dos novos resultados ou prossiga para continuar com a seleção anterior.",
   "message.opportunity.uncfInactiveNoUpdates": "Alguns Resultados ou Indicadores do Quadro de Cooperação das Nações Unidas não estão mais ativos desde a sua seleção anterior e uma nova versão ainda não está disponível.",
   "message.opportunity.humanitarianFrameworkAvailable": "Este país tem um Quadro de Paz e Segurança Humanitária ativo. Por favor, indique se esta oportunidade buscará alinhar-se com este quadro.",

@@ -830,7 +830,7 @@ export class OpportunityViewComponent
               break;
             case 'who':
               if (this.whoSectionComponent) {
-                this.whoSectionComponent.cancelEdit();
+                this.whoSectionComponent.cancelEditing();
               }
               break;
             case 'where':
@@ -899,6 +899,9 @@ export class OpportunityViewComponent
       case 'why':
         this.whySectionComponent?.startEditing();
         break;
+      case 'who':
+        this.whoSectionComponent?.startEditing();
+        break;
       case 'where':
         this.whereSectionComponent?.startEditing();
         break;
@@ -935,6 +938,12 @@ export class OpportunityViewComponent
 
     if (this.whySectionComponent?.isEditing?.()) {
       this.whySectionComponent.cancelEditing();
+      event.preventDefault();
+      return;
+    }
+
+    if (this.whoSectionComponent?.isEditing?.()) {
+      this.whoSectionComponent.cancelEditing();
       event.preventDefault();
       return;
     }
@@ -1039,23 +1048,26 @@ export class OpportunityViewComponent
     this.lastManualNavigationTime = Date.now(); // Track when manual navigation occurred
     this.activeSection.set(sectionId);
 
-    // Update URL with the section parameter
-    const currentUrl = this.router.url;
+    // Update URL with the section parameter using Location API to avoid component reload
+    const currentUrl = this.router.url.split('?')[0]; // Remove query params
     const urlSegments = currentUrl.split('/');
 
     // Check if we already have a section in the URL
     const lastSegment = urlSegments[urlSegments.length - 1];
     const isSection = this.isValidSection(lastSegment);
 
+    let newUrl: string;
     if (isSection) {
-      // Replace existing section
-      this.router.navigate([...urlSegments.slice(0, -1), sectionId], {
-        replaceUrl: true,
-      });
+      // Replace existing section in URL
+      newUrl = [...urlSegments.slice(0, -1), sectionId].join('/');
     } else {
       // Add section to URL
-      this.router.navigate([...urlSegments, sectionId], { replaceUrl: true });
+      newUrl = [...urlSegments, sectionId].join('/');
     }
+
+    // Use Location.replaceState() instead of Router.navigate() to update URL
+    // without triggering Angular's routing mechanism and component reload
+    this.location.replaceState(newUrl);
 
     // Scroll to the section
     this.scrollToSectionInternal(sectionId);
