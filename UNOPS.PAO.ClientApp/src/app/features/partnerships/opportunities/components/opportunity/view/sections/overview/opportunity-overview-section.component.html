@@ -49,6 +49,14 @@
   </ng-template>
 
   <div class="space-y-6">
+    <!-- ID (Read Only) -->
+    <div>
+      <h3 class="text-sm font-semibold text-unops-neutral-700 mb-2">{{ 'label.opportunity.id' | translate }}</h3>
+      <p class="text-unops-neutral-800 font-medium text-base">
+        {{ opportunity().id || '-' }}
+      </p>
+    </div>
+
     <!-- Name -->
     <div>
       <h3 class="text-sm font-semibold text-unops-neutral-700 mb-2">{{ 'label.opportunity.name' | translate }} *</h3>
@@ -82,6 +90,18 @@
       } @else {
         <p class="text-unops-neutral-800 text-base leading-loose whitespace-pre-wrap w-full tracking-normal">{{ opportunity().description || '-' }}</p>
       }
+    </div>
+
+    <!-- Total Budget (Read Only) -->
+    <div>
+      <h3 class="text-sm font-semibold text-unops-neutral-700 mb-2">{{ 'label.totalBudget' | translate }}</h3>
+      <p class="text-unops-primary font-semibold text-lg">
+        @if (opportunity()?.stats?.totalFundingUSD && opportunity()!.stats!.totalFundingUSD! > 0) {
+          ${{ opportunity()!.stats!.totalFundingUSD | number: '1.2-2' }}
+        } @else {
+          -
+        }
+      </p>
     </div>
   </div>
 </p-panel>
