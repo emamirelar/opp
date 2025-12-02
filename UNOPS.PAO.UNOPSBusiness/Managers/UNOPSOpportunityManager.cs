@@ -1162,8 +1162,14 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 context.Set<OpportunityDeliverable>().RemoveRange(entity.Deliverables);
             }
 
+            // Deduplicate deliverables by OutputId (keep first occurrence)
+            var uniqueDeliverables = request.Deliverables
+                .GroupBy(d => d.OutputId)
+                .Select(g => g.First())
+                .ToList();
+
             // Add new deliverables
-            entity.Deliverables = request.Deliverables
+            entity.Deliverables = uniqueDeliverables
                 .Select(d => new OpportunityDeliverable
                 {
                     OpportunityId = id,
@@ -1576,6 +1582,12 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 context.OpportunityFundingPartners.RemoveRange(opportunity.FundingPartners);
             }
 
+            // Deduplicate funding partners by PartnerId (keep first occurrence)
+            var uniqueFundingPartners = request.FundingPartners
+                .GroupBy(fp => fp.PartnerId)
+                .Select(g => g.First())
+                .ToList();
+
             // Get a valid currency ID (preferably USD, or the first available)
             var defaultCurrencyId = context.Currencies
                 .Where(c => c.Code == "USD")
@@ -1594,7 +1606,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             var exchangeRateService = new ExchangeRateService(context);
             var fundingPartners = new List<OpportunityFundingPartner>();
             
-            foreach (var fp in request.FundingPartners)
+            foreach (var fp in uniqueFundingPartners)
             {
                 var partner = await context.Partners.FindAsync(fp.PartnerId);
                 var currency = await context.Currencies.FindAsync(fp.CurrencyId ?? defaultCurrencyId);
@@ -1658,8 +1670,14 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 context.OpportunityClientPartners.RemoveRange(opportunity.ClientPartners);
             }
 
+            // Deduplicate client partners by PartnerId (keep first occurrence)
+            var uniqueClientPartners = request.ClientPartners
+                .GroupBy(cp => cp.PartnerId)
+                .Select(g => g.First())
+                .ToList();
+
             // Add new client partners
-            opportunity.ClientPartners = request.ClientPartners
+            opportunity.ClientPartners = uniqueClientPartners
                 .Select(cp => new OpportunityClientPartner
                 {
                     OpportunityId = id,
@@ -1672,14 +1690,20 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         // Update Stakeholders
         if (request.Stakeholders != null)
         {
+            // Deduplicate stakeholders by UserId + EntityRoleId combination (keep first occurrence)
+            var uniqueStakeholders = request.Stakeholders
+                .GroupBy(s => new { s.UserId, s.EntityRoleId })
+                .Select(g => g.First())
+                .ToList();
+
             // Get entity roles to check AllowsMultiple property
-            var entityRoleIds = request.Stakeholders.Select(s => s.EntityRoleId).Distinct().ToList();
+            var entityRoleIds = uniqueStakeholders.Select(s => s.EntityRoleId).Distinct().ToList();
             var entityRoles = await context.Set<EntityRole>()
                 .Where(er => entityRoleIds.Contains(er.Id))
                 .ToDictionaryAsync(er => er.Id);
 
             // Validate that single-assignment roles don't have duplicates
-            var roleGroups = request.Stakeholders
+            var roleGroups = uniqueStakeholders
                 .GroupBy(s => s.EntityRoleId)
                 .ToList();
 
@@ -1701,7 +1725,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }
 
             // Add new stakeholders
-            opportunity.Stakeholders = request.Stakeholders
+            opportunity.Stakeholders = uniqueStakeholders
                 .Select(s => new OpportunityStakeholder
                 {
                     OpportunityId = id,
@@ -1738,8 +1762,14 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 }
             }
             
+            // Deduplicate external stakeholders by ContactId (keep first occurrence)
+            var uniqueExternalStakeholders = request.ExternalStakeholders
+                .GroupBy(es => es.ContactId)
+                .Select(g => g.First())
+                .ToList();
+
             // Validate that all contacts belong to the opportunity's partners
-            var contactIds = request.ExternalStakeholders.Select(es => es.ContactId).Distinct().ToList();
+            var contactIds = uniqueExternalStakeholders.Select(es => es.ContactId).Distinct().ToList();
             var contacts = await context.Contacts
                 .Where(c => contactIds.Contains(c.Id))
                 .ToListAsync();
@@ -1759,7 +1789,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }
 
             // Add new external stakeholders
-            opportunity.ExternalStakeholders = request.ExternalStakeholders
+            opportunity.ExternalStakeholders = uniqueExternalStakeholders
                 .Select(es => new OpportunityExternalStakeholder
                 {
                     OpportunityId = id,
@@ -2269,8 +2299,27 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             CountryCount = opportunity.Countries?.Count ?? 0,
             SDGCount = opportunity.SDGs?.Count ?? 0,
             InternalStakeholderCount = opportunity.Stakeholders?.Count(s => s.IsInternal) ?? 0,
-            ExternalStakeholderCount = opportunity.Stakeholders?.Count(s => !s.IsInternal) ?? 0
+            ExternalStakeholderCount = opportunity.Stakeholders?.Count(s => !s.IsInternal) ?? 0,
+            ServiceLines = new List<string>() // Initialize empty list
         };
+
+        // Calculate total partner count (unique partners from both funding and client)
+        var allPartnerIds = new HashSet<int>();
+        if (opportunity.FundingPartners != null)
+        {
+            foreach (var fp in opportunity.FundingPartners)
+            {
+                allPartnerIds.Add(fp.PartnerId);
+            }
+        }
+        if (opportunity.ClientPartners != null)
+        {
+            foreach (var cp in opportunity.ClientPartners)
+            {
+                allPartnerIds.Add(cp.PartnerId);
+            }
+        }
+        stats.TotalPartnerCount = allPartnerIds.Count;
 
         // Calculate total funding from all funding partners
         if (opportunity.FundingPartners != null && opportunity.FundingPartners.Any())
@@ -2287,6 +2336,31 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
         // Primary SDG
         stats.PrimarySDGId = opportunity.SDGs?.FirstOrDefault(s => s.IsPrimary)?.SDGId;
+
+        // Calculate days to target signing date
+        if (opportunity.TargetSigningDate.HasValue)
+        {
+            var today = DateTime.UtcNow.Date;
+            var signingDate = opportunity.TargetSigningDate.Value.Date;
+            stats.DaysToTargetSigningDate = (int)(signingDate - today).TotalDays;
+        }
+
+        // Extract unique service lines from deliverables
+        if (opportunity.Deliverables != null && opportunity.Deliverables.Any())
+        {
+            var serviceLines = opportunity.Deliverables
+                .Where(d => d.Output != null && !string.IsNullOrEmpty(d.Output.ServiceLine))
+                .Select(d => d.Output!.ServiceLine)
+                .Distinct()
+                .OrderBy(sl => sl)
+                .ToList();
+            
+            // Only update if we found any service lines
+            if (serviceLines.Any())
+            {
+                stats.ServiceLines = serviceLines!;
+            }
+        }
 
         return stats;
     }

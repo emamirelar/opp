@@ -250,5 +250,16 @@ export class OpportunityAnalysisSectionComponent {
     };
     return labelMap[actionTarget] || this.translateService.instant('button.viewDetails');
   }
+
+  /**
+   * @description Scroll to a specific section on the page
+   * @param {string} sectionId - The ID of the section to scroll to
+   */
+  scrollToSection(sectionId: string): void {
+    const section = document.getElementById(sectionId);
+    if (section) {
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
 }
 

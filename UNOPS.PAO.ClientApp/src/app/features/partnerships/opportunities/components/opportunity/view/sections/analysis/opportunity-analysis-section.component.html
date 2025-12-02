@@ -23,8 +23,13 @@
       <h3 class="text-sm font-semibold text-unops-secondary mb-3">
         {{ 'label.opportunity.quickStats' | translate }}
       </h3>
-      <div class="space-y-3">
-        <div class="flex items-center gap-2">
+      <div class="grid grid-cols-2 gap-3">
+        <!-- Total Budget -->
+        <div 
+          class="flex items-center gap-2 p-2 rounded-unops-md hover:bg-unops-primary-100 cursor-pointer transition-colors"
+          (click)="scrollToSection('section-who')"
+          pTooltip="{{ 'tooltip.clickToView' | translate }}"
+        >
           <i class="pi pi-dollar text-unops-success"></i>
           <div>
             <div class="text-lg font-bold text-unops-secondary">
@@ -33,24 +38,89 @@
             <div class="text-xs text-unops-neutral-600">{{ 'label.opportunity.totalBudget' | translate }}</div>
           </div>
         </div>
-        <p-divider styleClass="my-2" />
-        <div class="flex items-center gap-2">
-          <i class="pi pi-calendar text-unops-primary"></i>
+
+        <!-- Days to Target Signing -->
+        <div 
+          class="flex items-center gap-2 p-2 rounded-unops-md hover:bg-unops-primary-100 cursor-pointer transition-colors"
+          (click)="scrollToSection('section-when')"
+          pTooltip="{{ 'tooltip.clickToView' | translate }}"
+        >
+          <i class="pi pi-clock text-unops-primary"></i>
           <div>
-            <div class="text-sm font-semibold text-unops-secondary">
-              {{ formatDate(opportunity().targetSigningDate) }}
+            <div 
+              class="text-lg font-bold"
+              [ngClass]="{
+                'text-red-600': (opportunity().stats?.daysToTargetSigningDate ?? 0) < 0,
+                'text-unops-secondary': (opportunity().stats?.daysToTargetSigningDate ?? 0) >= 0
+              }"
+            >
+              @if (opportunity().stats?.daysToTargetSigningDate !== null && opportunity().stats?.daysToTargetSigningDate !== undefined) {
+                {{ opportunity().stats!.daysToTargetSigningDate }}
+              } @else {
+                -
+              }
             </div>
-            <div class="text-xs text-unops-neutral-600">{{ 'label.opportunity.targetSigning' | translate }}</div>
+            <div class="text-xs text-unops-neutral-600">{{ 'label.opportunity.daysToSigning' | translate }}</div>
           </div>
         </div>
-        <p-divider styleClass="my-2" />
-        <div class="flex items-center gap-2">
+
+        <!-- Countries -->
+        <div 
+          class="flex items-center gap-2 p-2 rounded-unops-md hover:bg-unops-primary-100 cursor-pointer transition-colors"
+          (click)="scrollToSection('section-where')"
+          pTooltip="{{ 'tooltip.clickToView' | translate }}"
+        >
           <i class="pi pi-map-marker text-unops-accent-cherry"></i>
           <div>
-            <div class="text-sm font-semibold text-unops-secondary">
-              {{ opportunity().stats?.countryCount || 0 }} {{ 'label.opportunity.countries' | translate }}
+            <div class="text-lg font-bold text-unops-secondary">
+              {{ opportunity().stats?.countryCount || 0 }}
             </div>
-            <div class="text-xs text-unops-neutral-600">{{ 'label.opportunity.implementation' | translate }}</div>
+            <div class="text-xs text-unops-neutral-600">{{ 'label.opportunity.countries' | translate }}</div>
+          </div>
+        </div>
+
+        <!-- Partners -->
+        <div 
+          class="flex items-center gap-2 p-2 rounded-unops-md hover:bg-unops-primary-100 cursor-pointer transition-colors"
+          (click)="scrollToSection('section-who')"
+          pTooltip="{{ 'tooltip.clickToView' | translate }}"
+        >
+          <i class="pi pi-users text-unops-info"></i>
+          <div>
+            <div class="text-lg font-bold text-unops-secondary">
+              {{ opportunity().stats?.totalPartnerCount || 0 }}
+            </div>
+            <div class="text-xs text-unops-neutral-600">{{ 'label.opportunity.partners' | translate }}</div>
+          </div>
+        </div>
+
+        <!-- SDGs -->
+        <div 
+          class="flex items-center gap-2 p-2 rounded-unops-md hover:bg-unops-primary-100 cursor-pointer transition-colors"
+          (click)="scrollToSection('section-why')"
+          pTooltip="{{ 'tooltip.clickToView' | translate }}"
+        >
+          <i class="pi pi-heart text-unops-error"></i>
+          <div>
+            <div class="text-lg font-bold text-unops-secondary">
+              {{ opportunity().stats?.sdgCount || 0 }}
+            </div>
+            <div class="text-xs text-unops-neutral-600">{{ 'label.opportunity.sdgs' | translate }}</div>
+          </div>
+        </div>
+
+        <!-- Products and Services -->
+        <div 
+          class="flex items-center gap-2 p-2 rounded-unops-md hover:bg-unops-primary-100 cursor-pointer transition-colors"
+          (click)="scrollToSection('section-what')"
+          pTooltip="{{ 'tooltip.clickToView' | translate }}"
+        >
+          <i class="pi pi-wrench text-unops-warning"></i>
+          <div>
+            <div class="text-lg font-bold text-unops-secondary">
+              {{ opportunity().stats?.deliverableCount || 0 }}
+            </div>
+            <div class="text-xs text-unops-neutral-600">{{ 'label.opportunity.serviceLines' | translate }}</div>
           </div>
         </div>
       </div>
