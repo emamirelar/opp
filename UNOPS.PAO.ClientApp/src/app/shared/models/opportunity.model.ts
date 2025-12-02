@@ -423,6 +423,7 @@ export interface OpportunityStats {
   totalFeeAmountUSD: number;
   fundingPartnerCount: number;
   clientPartnerCount: number;
+  totalPartnerCount: number;
   stakeholderCount: number;
   internalStakeholderCount: number;
   externalStakeholderCount: number;
@@ -430,6 +431,8 @@ export interface OpportunityStats {
   countryCount: number;
   sdgCount: number;
   primarySDGId: number | null;
+  daysToTargetSigningDate?: number | null;
+  serviceLines: string[];
 }
 
 /**

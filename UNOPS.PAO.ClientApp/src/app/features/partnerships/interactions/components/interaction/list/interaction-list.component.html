@@ -34,7 +34,7 @@
       }
       @if(!permissionsLoading() && permissionUtilityService.canCreate(entityPermissions())) {
         <p-button
-          [label]="'button.createOpportunityFromInteractions' | translate"
+          [label]="'button.newOpportunity' | translate"
           icon="pi pi-briefcase"
           (click)="openCreateOpportunityDialog()"
           severity="secondary"

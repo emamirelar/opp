@@ -238,6 +238,27 @@ export class OpportunityViewComponent
     return manager ? manager.userName || manager.userEmail || '-' : '-';
   });
 
+  // Check if target signing date is overdue (in the past) and opportunity is still in Identify & Profile or Decide stage
+  isTargetSigningDateOverdue = computed(() => {
+    const opp = this.opportunity();
+    if (!opp || !opp.targetSigningDate) return false;
+
+    const targetDate = new Date(opp.targetSigningDate);
+    const now = new Date();
+    
+    // Check if date is in the past
+    if (targetDate >= now) return false;
+
+    // Check if opportunity is in Identify & Profile or Decide stage
+    const stageName = opp.workflowStageName?.toLowerCase() || '';
+    const isInEarlyStage = 
+      stageName.includes('identify') || 
+      stageName.includes('profile') || 
+      stageName.includes('decide');
+
+    return isInEarlyStage;
+  });
+
   showFullContent = signal<boolean>(false);
 
   shouldShowSeeMoreButton = computed(() => {

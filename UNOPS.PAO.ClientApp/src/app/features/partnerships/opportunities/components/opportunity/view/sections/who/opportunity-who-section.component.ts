@@ -124,8 +124,6 @@ export class OpportunityWhoSectionComponent implements OnInit {
   readonly partnerControl = new FormControl<SimpleValue | null>(null);
   readonly currencyControl = new FormControl<number | null>(null); // Currency ID
   readonly amountControl = new FormControl<number | null>(null);
-  readonly feeAmountControl = new FormControl<number | null>(null);
-  readonly partnershipAgreementControl = new FormControl<string | null>(null);
 
   // Client Partner dialog state
   readonly showClientPartnerDialog = signal(false);
@@ -383,7 +381,6 @@ export class OpportunityWhoSectionComponent implements OnInit {
         feeAmount: fp.feeAmount,
         feeAmountUSD: fp.feeAmountUSD,
         isAmountBasedFee: fp.isAmountBasedFee,
-        partnershipAgreementReference: fp.partnershipAgreementReference,
         documentId: fp.documentId, // Include document ID if set
         isPooledContribution: fp.isPooledContribution || false,
         selectedPartnerAgreementNumber: fp.selectedPartnerAgreementNumber 
@@ -454,8 +451,6 @@ export class OpportunityWhoSectionComponent implements OnInit {
     const usdCurrency = this.availableCurrencies().find(c => c.code === 'USD');
     this.currencyControl.setValue(usdCurrency?.id || 141); // Default to USD
     this.amountControl.setValue(null);
-    this.feeAmountControl.setValue(null);
-    this.partnershipAgreementControl.setValue(null);
     this.isEditingFundingPartner.set(false);
     this.editingFundingPartnerIndex.set(-1);
     this.showFundingValidationError.set(false);
@@ -483,8 +478,6 @@ export class OpportunityWhoSectionComponent implements OnInit {
     this.partnerControl.setValue(masterPartner || null);
     this.currencyControl.setValue(partner.currencyId || usdCurrency?.id || 141); // Set currency or default to USD
     this.amountControl.setValue(partner.amount);
-    this.feeAmountControl.setValue(partner.feeAmount);
-    this.partnershipAgreementControl.setValue(partner.partnershipAgreementReference || null);
     this.showFundingValidationError.set(false);
     this.showFundingPartnerDialog.set(true);
     this.cdr.detectChanges();
@@ -498,8 +491,6 @@ export class OpportunityWhoSectionComponent implements OnInit {
     this.partnerControl.setValue(null);
     this.currencyControl.setValue(null);
     this.amountControl.setValue(null);
-    this.feeAmountControl.setValue(null);
-    this.partnershipAgreementControl.setValue(null);
     this.isEditingFundingPartner.set(false);
     this.editingFundingPartnerIndex.set(-1);
     this.showFundingValidationError.set(false);
@@ -568,10 +559,10 @@ export class OpportunityWhoSectionComponent implements OnInit {
       currencyCode: currencyCode,
       percentage: null,
       feePercentage: null,
-      feeAmount: this.feeAmountControl.value,
-      feeAmountUSD: this.feeAmountControl.value, // Same as feeAmount for USD
-      isAmountBasedFee: true, // We're collecting amount-based fees
-      partnershipAgreementReference: this.partnershipAgreementControl.value || null,
+      feeAmount: null,
+      feeAmountUSD: null,
+      isAmountBasedFee: true,
+      partnershipAgreementReference: null,
       commitmentStatus: null,
       documentId: null,
       documentName: null,
@@ -632,10 +623,10 @@ export class OpportunityWhoSectionComponent implements OnInit {
       currencyCode: currencyCode,
       percentage: null,
       feePercentage: null,
-      feeAmount: this.feeAmountControl.value,
-      feeAmountUSD: this.feeAmountControl.value,
+      feeAmount: null,
+      feeAmountUSD: null,
       isAmountBasedFee: true,
-      partnershipAgreementReference: this.partnershipAgreementControl.value || null,
+      partnershipAgreementReference: null,
       // Reset USD conversion fields - backend will recalculate
       amountUSD: null,
       exchangeRate: null,

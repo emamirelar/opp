@@ -1551,10 +1551,6 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         createRequest.targetDeliveryDate = proposal.opportunity.targetDeliveryDate;
       }
       
-      if (this.isFieldSelected('partnershipAgreementReference') && proposal.opportunity.partnershipAgreementReference) {
-        createRequest.partnershipAgreementReference = proposal.opportunity.partnershipAgreementReference;
-      }
-      
       // Collection fields
       if (this.isFieldSelected('deliverables') && proposal.opportunity.deliverables && proposal.opportunity.deliverables.length > 0) {
         createRequest.deliverables = proposal.opportunity.deliverables;
@@ -1583,8 +1579,7 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
               feePercentage: partner.feePercentage || null,
               feeAmount: partner.feeAmount || null,
               feeAmountUSD: partner.feeAmountUSD || null,
-              isAmountBasedFee: partner.isAmountBasedFee || false,
-              partnershipAgreementReference: partner.partnershipAgreementReference || null
+              isAmountBasedFee: partner.isAmountBasedFee || false
             });
           }
           if (roleSelection.isClient) {

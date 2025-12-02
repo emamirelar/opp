@@ -1370,6 +1370,18 @@ public class OpportunityController : BaseController
                 _logger.LogInformation("📊 [API] No context partner - will use AI-proposed partners from interactions");
             }
 
+            // Deduplicate SDGs by SDGId
+            var uniqueSdGs = request.SdGs?.Distinct().ToList() ?? new List<int>();
+            
+            // Deduplicate Countries by CountryId
+            var uniqueCountries = request.Countries?.Distinct().ToList() ?? new List<int>();
+            
+            // Deduplicate Stakeholders by UserId + EntityRoleId combination
+            var uniqueStakeholders = request.Stakeholders?
+                .GroupBy(s => new { s.UserId, s.EntityRoleId })
+                .Select(g => g.First())
+                .ToList() ?? new List<OpportunityStakeholderRequest>();
+            
             // Build opportunity request from accepted proposal
             var opportunityRequest = new OpportunityRequest
             {
@@ -1379,24 +1391,35 @@ public class OpportunityController : BaseController
                 ResponsibleOrgUnitId = request.ResponsibleOrgUnitId,
                 ProposedInitiativeTypeId = request.ProposedInitiativeTypeId,
                 InitiativeBudgetUSD = request.InitiativeBudgetUSD,
-                PartnershipAgreementReference = request.PartnershipAgreementReference,
                 TargetSigningDate = request.TargetSigningDate,
                 TargetDeliveryDate = request.TargetDeliveryDate,
-                SDGs = request.SdGs?.Select(sdgId => new OpportunitySDGRequest { SDGId = sdgId }).ToList() ?? new List<OpportunitySDGRequest>(),
-                Countries = request.Countries?.Select(countryId => new OpportunityCountryRequest { CountryId = countryId }).ToList() ?? new List<OpportunityCountryRequest>(),
+                SDGs = uniqueSdGs.Select(sdgId => new OpportunitySDGRequest { SDGId = sdgId }).ToList(),
+                Countries = uniqueCountries.Select(countryId => new OpportunityCountryRequest { CountryId = countryId }).ToList(),
                 Deliverables = request.Deliverables ?? new List<OpportunityDeliverableRequest>(),
-                Stakeholders = request.Stakeholders ?? new List<OpportunityStakeholderRequest>(),
+                Stakeholders = uniqueStakeholders,
                 FundingPartners = new List<OpportunityFundingPartnerRequest>(),
                 ClientPartners = new List<OpportunityClientPartnerRequest>()
             };
+
+            // Deduplicate funding partners by PartnerId (keep first occurrence with all its properties)
+            var uniqueFundingPartners = request.FundingPartners?
+                .GroupBy(fp => fp.PartnerId)
+                .Select(g => g.First())
+                .ToList() ?? new List<OpportunityFundingPartnerRequest>();
+            
+            // Deduplicate client partners by PartnerId (keep first occurrence)
+            var uniqueClientPartners = request.ClientPartners?
+                .GroupBy(cp => cp.PartnerId)
+                .Select(g => g.First())
+                .ToList() ?? new List<OpportunityClientPartnerRequest>();
 
             // Add the context partner as funding/client based on user selection (only if partnerId provided)
             // This ensures the context partner is included even if not in the AI-proposed arrays
             if (request.PartnerId.HasValue && request.PartnerId > 0)
             {
-                // Check if context partner is already in the AI-proposed arrays
-                var contextPartnerInFunding = request.FundingPartners?.Any(fp => fp.PartnerId == request.PartnerId.Value) ?? false;
-                var contextPartnerInClient = request.ClientPartners?.Any(cp => cp.PartnerId == request.PartnerId.Value) ?? false;
+                // Check if context partner is already in the deduplicated AI-proposed arrays
+                var contextPartnerInFunding = uniqueFundingPartners.Any(fp => fp.PartnerId == request.PartnerId.Value);
+                var contextPartnerInClient = uniqueClientPartners.Any(cp => cp.PartnerId == request.PartnerId.Value);
                 
                 // Add to funding partners if user selected funding role and not already in array
                 if (request.IsFundingPartner && !contextPartnerInFunding)
@@ -1420,18 +1443,18 @@ public class OpportunityController : BaseController
                 }
             }
 
-            // Add all AI-proposed funding partners
-            if (request.FundingPartners != null && request.FundingPartners.Any())
+            // Add all deduplicated AI-proposed funding partners
+            if (uniqueFundingPartners.Any())
             {
-                _logger.LogInformation("➕ [API] Adding {Count} AI-proposed funding partners", request.FundingPartners.Count);
-                opportunityRequest.FundingPartners.AddRange(request.FundingPartners);
+                _logger.LogInformation("➕ [API] Adding {Count} deduplicated AI-proposed funding partners", uniqueFundingPartners.Count);
+                opportunityRequest.FundingPartners.AddRange(uniqueFundingPartners);
             }
 
-            // Add all AI-proposed client partners  
-            if (request.ClientPartners != null && request.ClientPartners.Any())
+            // Add all deduplicated AI-proposed client partners  
+            if (uniqueClientPartners.Any())
             {
-                _logger.LogInformation("➕ [API] Adding {Count} AI-proposed client partners", request.ClientPartners.Count);
-                opportunityRequest.ClientPartners.AddRange(request.ClientPartners);
+                _logger.LogInformation("➕ [API] Adding {Count} deduplicated AI-proposed client partners", uniqueClientPartners.Count);
+                opportunityRequest.ClientPartners.AddRange(uniqueClientPartners);
             }
 
             // Create the opportunity

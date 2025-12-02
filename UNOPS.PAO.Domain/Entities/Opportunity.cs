@@ -22,9 +22,6 @@ public class Opportunity : ModifiableDeletableEntity
     public int? ResponsibleOrgUnitId { get; set; }
     public virtual OrganizationHierarchy? ResponsibleOrgUnit { get; set; }
     
-    [MaxLength(255)]
-    public string? PartnershipAgreementReference { get; set; }
-    
     [Column(TypeName = "decimal(18, 2)")]
     public decimal? InitiativeBudgetUSD { get; set; }
     
