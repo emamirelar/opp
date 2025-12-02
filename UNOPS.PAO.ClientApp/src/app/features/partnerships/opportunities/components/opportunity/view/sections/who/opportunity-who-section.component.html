@@ -1082,35 +1082,6 @@
       }
     </div>
 
-    <!-- Fee Amount -->
-    <!-- TAD: Hiding for now instead of removing it completely - @Anusha will need to check if this is needed-->
-    <div class="hidden">
-      <p-floatlabel variant="on">
-        <p-inputnumber
-          id="feeAmount"
-          [formControl]="feeAmountControl"
-          mode="currency"
-          currency="USD"
-          [minFractionDigits]="0"
-          class="w-full"
-        />
-        <label for="feeAmount">{{ 'label.feeAmount' | translate }}</label>
-      </p-floatlabel>
-    </div>
-
-    <!-- Partnership Agreement Reference -->
-    <!-- TAD: Hiding for now instead of removing it completely - @Anusha will need to check if this is needed-->
-    <div class="hidden">
-      <p-floatlabel variant="on">
-        <input
-          pInputText
-          id="agreementRef"
-          [formControl]="partnershipAgreementControl"
-          class="w-full"
-        />
-        <label for="agreementRef">{{ 'label.partnershipAgreementReference' | translate }}</label>
-      </p-floatlabel>
-    </div>
   </div>
 
   <ng-template pTemplate="footer">

@@ -16,7 +16,6 @@ public class OpportunityModel
     public int? ProposedInitiativeTypeId { get; set; }
     public string? ProposedInitiativeTypeName { get; set; }
     public decimal? InitiativeBudgetUSD { get; set; }
-    public string? PartnershipAgreementReference { get; set; }
     public DateTime? TargetSigningDate { get; set; }
     
     /// <summary>

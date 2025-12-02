@@ -80,9 +80,11 @@ export class WelcomeTourService {
 
     // Show fancy welcome overlay first after scroll completes
     setTimeout(() => {
+      let tourCompleted = false;
+
       const welcomeDriver = driver({
         showProgress: false,
-        allowClose: false,
+        allowClose: true, // Allow users to close the welcome step without starting the tour
         popoverOffset: 20,
         stagePadding: 5,
         smoothScroll: false,
@@ -93,20 +95,32 @@ export class WelcomeTourService {
               description: welcomeMessages.description,
               side: 'over',
               align: 'center',
-              showButtons: ['next'],
               nextBtnText: welcomeMessages.startTourButton,
               showProgress: false
             }
           }
         ],
+        onNextClick: () => {
+          // User clicked "Next" - mark that they want to start the tour
+          tourCompleted = true;
+          welcomeDriver.destroy();
+        },
+        onCloseClick: () => {
+          // User clicked close button - just close without starting tour
+          welcomeDriver.destroy();
+        },
         onDestroyed: () => {
-          // Mark welcome as seen
+          // Mark welcome as seen regardless of whether they started the tour
           this.markWelcomeAsSeen();
 
-          // Start homepage tour after a brief pause
-          setTimeout(() => {
-            this.startHomepageTour();
-          }, 500);
+          // Only start homepage tour if user clicked "Next"
+          if (tourCompleted) {
+            // User clicked "Next" - start the homepage tour
+            setTimeout(() => {
+              this.startHomepageTour();
+            }, 500);
+          }
+          // If user closed via X button, just mark as seen and don't start the tour
         }
       });
 

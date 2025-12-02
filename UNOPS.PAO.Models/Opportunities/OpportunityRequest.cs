@@ -7,7 +7,6 @@ public class OpportunityRequest
     public string? PartnerReference { get; set; }
     public int? WorkflowStageId { get; set; }
     public int? ResponsibleOrgUnitId { get; set; }
-    public string? PartnershipAgreementReference { get; set; }
     public decimal? InitiativeBudgetUSD { get; set; }
     public DateTime? TargetSigningDate { get; set; }
     public DateTime? TargetDeliveryDate { get; set; }

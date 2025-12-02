@@ -2238,11 +2238,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             entity.InitiativeBudgetUSD = request.InitiativeBudgetUSD.Value;
         }
 
-        if (request.PartnershipAgreementReference != null)
-        {
-            entity.PartnershipAgreementReference = request.PartnershipAgreementReference;
-        }
-
         // Save changes
         await opportunityRepository.UpdateAsync(entity);
 

@@ -1379,7 +1379,6 @@ public class OpportunityController : BaseController
                 ResponsibleOrgUnitId = request.ResponsibleOrgUnitId,
                 ProposedInitiativeTypeId = request.ProposedInitiativeTypeId,
                 InitiativeBudgetUSD = request.InitiativeBudgetUSD,
-                PartnershipAgreementReference = request.PartnershipAgreementReference,
                 TargetSigningDate = request.TargetSigningDate,
                 TargetDeliveryDate = request.TargetDeliveryDate,
                 SDGs = request.SdGs?.Select(sdgId => new OpportunitySDGRequest { SDGId = sdgId }).ToList() ?? new List<OpportunitySDGRequest>(),
