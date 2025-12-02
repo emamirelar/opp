@@ -1982,6 +1982,14 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         opportunity.TargetSigningDate = request.TargetSigningDate;
         opportunity.ImplementationStartDate = request.ImplementationStartDate;
         opportunity.TargetDeliveryDate = request.TargetDeliveryDate;
+        
+        // Update signing date details (AC5)
+        if (request.IsTargetSigningDateFirm.HasValue)
+        {
+            opportunity.IsTargetSigningDateFirm = request.IsTargetSigningDateFirm.Value;
+        }
+        opportunity.SigningDateNotes = request.SigningDateNotes;
+        opportunity.SubmissionDeadline = request.SubmissionDeadline;
 
         // Update deliverable planned dates (Work Breakdown Structure)
         if (request.Deliverables != null && request.Deliverables.Any())

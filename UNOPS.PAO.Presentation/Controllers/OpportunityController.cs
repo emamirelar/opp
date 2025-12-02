@@ -206,52 +206,48 @@ public class OpportunityController : BaseController
     }
 
     /// <summary>
-    /// Gets all opportunities with pagination support
+    /// Gets all opportunities with pagination support and global filters
     /// </summary>
     [HttpGet(APIDictionary.Opportunity)]
     [AccessControlled(EntityTypes.Opportunity, "read")]
     public async Task<ActionResult> GetAllOpportunities(
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 20,
-        [FromQuery] string? orderBy = "name",
-        [FromQuery] bool ascending = true,
+        [FromQuery] string? orderBy = "lastModifiedDate",
+        [FromQuery] bool ascending = false,
+        [FromQuery] bool export = false,
         [FromQuery] bool filterActive = true)
     {
+        // Validate pagination parameters
+        var validationResult = ValidatePaginationParameters(pageIndex, pageSize);
+        if (validationResult != null) return validationResult;
+        
         try
         {
             _logger.LogInformation("=== GET ALL OPPORTUNITIES ENDPOINT ===");
-            _logger.LogInformation("Page: {PageIndex}, Size: {PageSize}, OrderBy: {OrderBy}", pageIndex, pageSize, orderBy);
+            _logger.LogInformation("Page: {PageIndex}, Size: {PageSize}, OrderBy: {OrderBy}, FilterActive: {FilterActive}", 
+                pageIndex, pageSize, orderBy, filterActive);
 
-            // Get all opportunities from manager
-            var opportunities = await _manager.GetAllOpportunitiesAsync();
-
-            // Apply ordering
-            var orderedOpportunities = orderBy?.ToLower() switch
+            // Create pagination request with filterActive to enable global filters
+            var paginationRequest = new PaginationRequest
             {
-                "name" => ascending ? opportunities.OrderBy(o => o.Name) : opportunities.OrderByDescending(o => o.Name),
-                "createddate" => ascending ? opportunities.OrderBy(o => o.CreatedDate) : opportunities.OrderByDescending(o => o.CreatedDate),
-                "lastmodifieddate" => ascending ? opportunities.OrderBy(o => o.LastModifiedDate) : opportunities.OrderByDescending(o => o.LastModifiedDate),
-                _ => ascending ? opportunities.OrderBy(o => o.Name) : opportunities.OrderByDescending(o => o.Name)
-            };
-
-            // Apply pagination
-            var totalCount = orderedOpportunities.Count();
-            var paginatedOpportunities = orderedOpportunities
-                .Skip((pageIndex - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            var response = new PaginationResponse<OpportunityModel>
-            {
-                Records = paginatedOpportunities,
-                TotalCount = totalCount,
                 PageIndex = pageIndex,
-                PageSize = pageSize,
-                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+                PageSize = export ? int.MaxValue : pageSize,
+                OrderBy = orderBy ?? "lastModifiedDate",
+                Ascending = ascending,
+                FilterActive = filterActive
             };
 
-            _logger.LogInformation("Returned {Count} opportunities out of {TotalCount}", paginatedOpportunities.Count, totalCount);
-            return Ok(response);
+            // Use AdvancedSearchService to get opportunities with global filters applied
+            var result = await _advancedSearchService.SearchWithFiltersAsync<Opportunity, OpportunityModel>(
+                new List<UNOPS.PAO.UNOPSBusiness.Services.SearchFilter>(), // Empty filters = get all
+                paginationRequest,
+                User);
+
+            _logger.LogInformation("Returned {Count} opportunities out of {TotalCount} (filterActive: {FilterActive})", 
+                result.Records.Count, result.TotalCount, filterActive);
+            
+            return Ok(result);
         }
         catch (Exception ex)
         {
@@ -289,8 +285,8 @@ public class OpportunityController : BaseController
         {
             PageIndex = request.PageIndex,
             PageSize = export ? int.MaxValue : request.PageSize,
-            OrderBy = request.OrderBy ?? "Name",
-            Ascending = request.Ascending ?? true,
+            OrderBy = request.OrderBy ?? "lastModifiedDate",
+            Ascending = request.Ascending ?? false,
             FilterActive = filterActive
         };
 
@@ -320,8 +316,8 @@ public class OpportunityController : BaseController
         [FromQuery] string filters,
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 20,
-        [FromQuery] string? orderBy = "Name",
-        [FromQuery] bool ascending = true,
+        [FromQuery] string? orderBy = "lastModifiedDate",
+        [FromQuery] bool ascending = false,
         [FromQuery] bool export = false,
         [FromQuery] bool filterActive = true)
     {
@@ -352,7 +348,7 @@ public class OpportunityController : BaseController
             {
                 PageIndex = pageIndex,
                 PageSize = export ? int.MaxValue : pageSize,
-                OrderBy = orderBy ?? "Name",
+                OrderBy = orderBy ?? "lastModifiedDate",
                 Ascending = ascending,
                 FilterActive = filterActive
             };
@@ -1268,10 +1264,7 @@ public class OpportunityController : BaseController
                 return BadRequest(new { error = "Opportunity name is required" });
             }
 
-            if (string.IsNullOrWhiteSpace(request.OpportunityDescription))
-            {
-                return BadRequest(new { error = "Opportunity description is required" });
-            }
+            // Description is optional for proposal generation - AI can generate it
 
             // Partner validation: if partnerId provided, require role selection
             if (request.PartnerId.HasValue && request.PartnerId > 0)

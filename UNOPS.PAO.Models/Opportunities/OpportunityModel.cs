@@ -26,6 +26,21 @@ public class OpportunityModel
     
     public DateTime? TargetDeliveryDate { get; set; }
     
+    /// <summary>
+    /// Indicates if the target signing date is a firm deadline defined by the partner
+    /// </summary>
+    public bool IsTargetSigningDateFirm { get; set; }
+    
+    /// <summary>
+    /// Notes about the target signing date (e.g., partner deadline, submission closing date)
+    /// </summary>
+    public string? SigningDateNotes { get; set; }
+    
+    /// <summary>
+    /// Partner submission deadline (if applicable)
+    /// </summary>
+    public DateTime? SubmissionDeadline { get; set; }
+    
     public string? ResultsFocus { get; set; }
     public string? IntendedImpactOutcomes { get; set; }
     public string? ExpectedBeneficiaries { get; set; }
