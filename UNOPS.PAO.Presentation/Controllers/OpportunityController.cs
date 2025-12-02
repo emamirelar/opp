@@ -1330,21 +1330,36 @@ public class OpportunityController : BaseController
                 request.Name, request.SourceInteractionIds?.Count ?? 0, request.PartnerId);
 
             // Validate request
+            var validationErrors = new List<string>();
+
             if (string.IsNullOrWhiteSpace(request.Name))
             {
-                return BadRequest(new { error = "Opportunity name is required" });
+                validationErrors.Add("Opportunity name is required");
             }
-
-            // Description is optional - no validation required
 
             // Partner validation: only required if partnerId is provided (creating from partner context)
             if (request.PartnerId.HasValue && request.PartnerId > 0)
             {
                 if (!request.IsFundingPartner && !request.IsClientPartner)
                 {
-                    return BadRequest(new { error = "When creating from a partner context, the partner must be marked as funding partner, client partner, or both" });
+                    validationErrors.Add("When creating from a partner context, the partner must be marked as funding partner, client partner, or both");
                 }
-                
+            }
+
+            if (validationErrors.Any())
+            {
+                var errorMessage = string.Join("; ", validationErrors);
+                return BadRequest(new
+                {
+                    error = errorMessage,
+                    validationErrors = validationErrors
+                });
+            }
+
+            // Description is optional - no validation required
+
+            if (request.PartnerId.HasValue && request.PartnerId > 0)
+            {
                 _logger.LogInformation("📊 [API] Context partner {PartnerId} will be added as {Role}", 
                     request.PartnerId, 
                     request.IsFundingPartner && request.IsClientPartner ? "both funding and client" :

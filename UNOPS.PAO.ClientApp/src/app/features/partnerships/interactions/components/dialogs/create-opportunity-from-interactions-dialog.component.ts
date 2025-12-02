@@ -1308,11 +1308,29 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         detail: this.translateService.instant('message.proposalGenerated')
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating proposal:', error);
+      
+      // Extract error message from backend response
+      let errorDetail = this.translateService.instant('message.error.generatingProposal');
+      
+      if (error?.error) {
+        if (typeof error.error === 'string') {
+          errorDetail = error.error;
+        } else if (error.error.error) {
+          // Backend returns { error: "message", validationErrors: [...] }
+          errorDetail = error.error.error;
+        } else if (error.error.validationErrors && Array.isArray(error.error.validationErrors)) {
+          // If we have individual validation errors, show them as a list
+          errorDetail = error.error.validationErrors.join('; ');
+        }
+      } else if (error?.message) {
+        errorDetail = error.message;
+      }
+      
       this.feedbackDialogService.showErrorToast({
         summary: this.translateService.instant('common.error.title'),
-        detail: this.translateService.instant('message.error.generatingProposal')
+        detail: errorDetail
       });
     } finally {
       this.generating.set(false);
@@ -1618,11 +1636,29 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
       this.reset();
       this.visible.set(false);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error creating opportunity:', error);
+      
+      // Extract error message from backend response
+      let errorDetail = this.translateService.instant('message.error.creatingOpportunity');
+      
+      if (error?.error) {
+        if (typeof error.error === 'string') {
+          errorDetail = error.error;
+        } else if (error.error.error) {
+          // Backend returns { error: "message", validationErrors: [...] }
+          errorDetail = error.error.error;
+        } else if (error.error.validationErrors && Array.isArray(error.error.validationErrors)) {
+          // If we have individual validation errors, show them as a list
+          errorDetail = error.error.validationErrors.join('; ');
+        }
+      } else if (error?.message) {
+        errorDetail = error.message;
+      }
+      
       this.feedbackDialogService.showErrorToast({
         summary: this.translateService.instant('common.error.title'),
-        detail: this.translateService.instant('message.error.creatingOpportunity')
+        detail: errorDetail
       });
     } finally {
       this.generating.set(false);
