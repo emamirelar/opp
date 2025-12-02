@@ -87,31 +87,6 @@
       </div>
     }
 
-    <!-- Strategic Alignment -->
-    <div>
-      <h3
-        class="text-sm font-semibold text-unops-neutral-700 mb-2 flex items-center gap-2"
-      >
-        <i class="pi pi-sitemap text-unops-primary"></i>
-        {{ "label.opportunity.strategicAlignment" | translate }}
-      </h3>
-      @if (isEditing()) {
-        <textarea
-          pInputTextarea
-          [formControl]="strategicAlignmentControl"
-          rows="4"
-          class="w-full"
-          [placeholder]="
-            'label.opportunity.strategicAlignmentPlaceholder' | translate
-          "
-        ></textarea>
-      } @else {
-        <p class="text-unops-neutral-800 leading-relaxed">
-          {{ opportunity().strategicAlignment || "-" }}
-        </p>
-      }
-    </div>
-
     <!-- Context and Challenge(s) -->
     <div>
       <h3
@@ -224,8 +199,20 @@
                       </div>
                     </div>
 
-                    <!-- Display Targets and Indicators -->
-                    @if (sdg.targets && sdg.targets.length > 0) {
+                    <!-- Display Targets and Indicators or Opt-Out Status -->
+                    @if (sdg.skipTargetsAndIndicators) {
+                      <div class="mt-3">
+                        <div class="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                          <i class="pi pi-info-circle text-amber-600 text-sm mt-0.5"></i>
+                          <div class="text-sm text-amber-800">
+                            <span class="font-medium">{{ "label.opportunity.skipTargetsAndIndicators" | translate }}</span>
+                            <p class="text-xs text-amber-700 mt-1">
+                              {{ "message.opportunity.skipTargetsAndIndicatorsInfo" | translate }}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    } @else if (sdg.targets && sdg.targets.length > 0) {
                       <div
                         class="mt-3 pl-4 border-l-2 border-unops-primary-200 space-y-2"
                       >
@@ -1599,6 +1586,8 @@
                 <label
                   for="primary"
                   class="text-sm font-medium text-gray-700 cursor-pointer"
+                  [class.opacity-50]="sdgControl.value?.sdgId === 'N/A'"
+                  [class.cursor-not-allowed]="sdgControl.value?.sdgId === 'N/A'"
                 >
                   <span class="inline-flex items-center gap-2">
                     <div
@@ -1625,6 +1614,8 @@
                 <label
                   for="secondary"
                   class="text-sm font-medium text-gray-700 cursor-pointer"
+                  [class.opacity-50]="sdgControl.value?.sdgId === 'N/A'"
+                  [class.cursor-not-allowed]="sdgControl.value?.sdgId === 'N/A'"
                 >
                   <span class="inline-flex items-center gap-2">
                     <div
@@ -1671,8 +1662,8 @@
           </p>
         </div>
 
-        <!-- SDG Targets Section -->
-        @if (sdgControl.value) {
+        <!-- SDG Targets Section (Hidden for N/A SDG) -->
+        @if (sdgControl.value && sdgControl.value.sdgId !== 'N/A') {
           <div class="border-t border-gray-200 pt-4 mt-4">
             <label class="block text-sm font-semibold text-gray-700 mb-3">
               {{ "label.opportunity.sdgTargets" | translate }}
@@ -1935,6 +1926,19 @@
                             }
                           </div>
                         }
+                      </div>
+                    }
+                    
+                    <!-- Validation Error Message -->
+                    @if (hasValidationError($index)) {
+                      <div class="mt-3">
+                        <p-message 
+                          severity="error" 
+                          variant="simple"
+                          styleClass="w-full"
+                        >
+                          {{ "message.validation.sdgTargetsOrOptOutRequired" | translate }}
+                        </p-message>
                       </div>
                     }
                   </div>
@@ -2253,7 +2257,7 @@
         <div class="flex-shrink-0 mt-0.5">
           <p-checkbox
             [binary]="true"
-            [ngModel]="unopsMissionCount() === 0"
+            [ngModel]="unopsMissionsNotApplicable()"
             (ngModelChange)="toggleUNOPSNotApplicable($event)"
           />
         </div>
@@ -2285,6 +2289,7 @@
     <p-button
       [label]="'button.confirm' | translate"
       severity="primary"
+      [disabled]="!isUNOPSMissionsDialogValid()"
       (onClick)="saveUNOPSMissionsDialog()"
     />
   </ng-template>

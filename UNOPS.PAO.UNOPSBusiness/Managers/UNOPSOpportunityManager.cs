@@ -1196,10 +1196,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         }
 
         // Update WHY section fields
-        if (request.StrategicAlignment != null)
-        {
-            entity.StrategicAlignment = request.StrategicAlignment;
-        }
 
         if (request.ExpectedBeneficiaries != null)
         {
@@ -2075,10 +2071,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         }
 
         // WHY Section - Update strategic properties
-        if (request.StrategicAlignment != null)
-        {
-            entity.StrategicAlignment = request.StrategicAlignment;
-        }
 
         if (request.ResultsFocus != null)
         {
@@ -2390,7 +2382,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             ["initiativeBudgetUSD"] = opportunity.InitiativeBudgetUSD?.ToString("N2") ?? "",
             ["targetSigningDate"] = opportunity.TargetSigningDate?.ToString("yyyy-MM-dd") ?? "",
             ["targetDeliveryDate"] = opportunity.TargetDeliveryDate?.ToString("yyyy-MM-dd") ?? "",
-            ["strategicAlignment"] = opportunity.StrategicAlignment ?? "",
             ["resultsFocus"] = opportunity.ResultsFocus ?? "",
             ["intendedImpactOutcomes"] = opportunity.IntendedImpactOutcomes ?? "",
             ["expectedBeneficiaries"] = opportunity.ExpectedBeneficiaries ?? "",
@@ -2755,7 +2746,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 },
 
                 // Strategic Information fields
-                new() { Field = "strategicAlignment", DisplayName = "label.opportunity.strategicAlignment", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
                 new() { Field = "resultsFocus", DisplayName = "label.opportunity.resultsFocus", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
                 new() { Field = "intendedImpactOutcomes", DisplayName = "label.opportunity.intendedImpactOutcomes", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
                 new() { Field = "expectedBeneficiaries", DisplayName = "label.opportunity.expectedBeneficiaries", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },

@@ -7,6 +7,7 @@ using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models.Artifacts;
+using UNOPS.PAO.Domain.Enums;
 
 namespace UNOPS.PAO.Business.Managers;
 
@@ -228,7 +229,8 @@ public class EntityArtifactManager : IEntityArtifactManager
             .Where(ea => ea.EntityType == entityType && 
                         ea.EntityId == entityId && 
                         ea.ArtifactTypeId == artifactTypeId &&
-                        !ea.IsDeleted)
+                        !ea.IsDeleted &&
+                        ea.Status == EntityStatus.Active)
             .OrderByDescending(ea => ea.CreatedDate)
             .FirstOrDefaultAsync();
 
@@ -297,6 +299,7 @@ public class EntityArtifactManager : IEntityArtifactManager
             existingArtifact.ExpiryDate = request.ExpiryDate;
             existingArtifact.Source = request.Source ?? "User Input";
             existingArtifact.Metadata = request.Metadata;
+            existingArtifact.Status = EntityStatus.Active;
 
             await entityArtifactRepository.UpdateAsync(existingArtifact);
             artifact = existingArtifact;
@@ -320,7 +323,8 @@ public class EntityArtifactManager : IEntityArtifactManager
                 ExpiryDate = request.ExpiryDate,
                 Source = request.Source ?? "User Input",
                 Metadata = request.Metadata,
-                IsExtracted = false
+                IsExtracted = false,
+                Status = EntityStatus.Active
             };
 
             await entityArtifactRepository.AddAsync(artifact);
@@ -381,7 +385,8 @@ public class EntityArtifactManager : IEntityArtifactManager
             .Include(ea => ea.Document)
             .Where(ea => ea.EntityType == entityType && 
                         ea.EntityId == entityId &&
-                        !ea.IsDeleted)
+                        !ea.IsDeleted &&
+                        ea.Status == EntityStatus.Active)
             .OrderBy(ea => ea.ArtifactType!.Order)
             .ThenBy(ea => ea.CreatedDate)
             .ToListAsync();

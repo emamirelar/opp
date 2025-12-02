@@ -4231,7 +4231,6 @@ public class UNOPSGeminiManager : IGeminiManager
                     PartnershipAgreementReference = parsedResponse["partnershipAgreementReference"]?.ToString(),
                     TargetSigningDate = parsedResponse["targetSigningDate"]?.ToObject<DateTime?>(),
                     TargetDeliveryDate = parsedResponse["targetDeliveryDate"]?.ToObject<DateTime?>(),
-                    StrategicAlignment = parsedResponse["strategicAlignment"]?.ToString(),
                     ResultsFocus = parsedResponse["resultsFocus"]?.ToString(),
                     IntendedImpactOutcomes = parsedResponse["intendedImpactOutcomes"]?.ToString(),
                     ExpectedBeneficiaries = parsedResponse["expectedBeneficiaries"]?.ToString(),
