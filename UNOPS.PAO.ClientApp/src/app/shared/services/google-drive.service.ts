@@ -455,9 +455,27 @@ export class GoogleDriveService {
    * @returns {Promise<{id: string, name: string}>}
    */
   private async uploadFileToDrive(file: File): Promise<{id: string, name: string}> {
+    // For Office files, convert to Google Workspace format so export API will work
+    let targetMimeType = file.type;
+    
+    // Map Office MIME types to Google Workspace MIME types for conversion
+    const conversionMap: {[key: string]: string} = {
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'application/vnd.google-apps.document', // .docx -> Google Doc
+      'application/msword': 'application/vnd.google-apps.document', // .doc -> Google Doc
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'application/vnd.google-apps.spreadsheet', // .xlsx -> Google Sheet
+      'application/vnd.ms-excel': 'application/vnd.google-apps.spreadsheet', // .xls -> Google Sheet
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'application/vnd.google-apps.presentation', // .pptx -> Google Slides
+      'application/vnd.ms-powerpoint': 'application/vnd.google-apps.presentation' // .ppt -> Google Slides
+    };
+    
+    if (conversionMap[file.type]) {
+      targetMimeType = conversionMap[file.type];
+      console.log(`Converting ${file.type} to ${targetMimeType} for PDF export`);
+    }
+
     const metadata = {
       name: file.name,
-      mimeType: file.type
+      mimeType: targetMimeType // Use Google Workspace MIME type for conversion
     };
 
     const form = new FormData();
@@ -473,7 +491,8 @@ export class GoogleDriveService {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to upload file to Google Drive: ${response.statusText}`);
+      const errorText = await response.text();
+      throw new Error(`Failed to upload file to Google Drive: ${response.statusText}. ${errorText}`);
     }
 
     const result = await response.json();

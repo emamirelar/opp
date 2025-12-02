@@ -206,52 +206,48 @@ public class OpportunityController : BaseController
     }
 
     /// <summary>
-    /// Gets all opportunities with pagination support
+    /// Gets all opportunities with pagination support and global filters
     /// </summary>
     [HttpGet(APIDictionary.Opportunity)]
     [AccessControlled(EntityTypes.Opportunity, "read")]
     public async Task<ActionResult> GetAllOpportunities(
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 20,
-        [FromQuery] string? orderBy = "name",
-        [FromQuery] bool ascending = true,
+        [FromQuery] string? orderBy = "lastModifiedDate",
+        [FromQuery] bool ascending = false,
+        [FromQuery] bool export = false,
         [FromQuery] bool filterActive = true)
     {
+        // Validate pagination parameters
+        var validationResult = ValidatePaginationParameters(pageIndex, pageSize);
+        if (validationResult != null) return validationResult;
+        
         try
         {
             _logger.LogInformation("=== GET ALL OPPORTUNITIES ENDPOINT ===");
-            _logger.LogInformation("Page: {PageIndex}, Size: {PageSize}, OrderBy: {OrderBy}", pageIndex, pageSize, orderBy);
+            _logger.LogInformation("Page: {PageIndex}, Size: {PageSize}, OrderBy: {OrderBy}, FilterActive: {FilterActive}", 
+                pageIndex, pageSize, orderBy, filterActive);
 
-            // Get all opportunities from manager
-            var opportunities = await _manager.GetAllOpportunitiesAsync();
-
-            // Apply ordering
-            var orderedOpportunities = orderBy?.ToLower() switch
+            // Create pagination request with filterActive to enable global filters
+            var paginationRequest = new PaginationRequest
             {
-                "name" => ascending ? opportunities.OrderBy(o => o.Name) : opportunities.OrderByDescending(o => o.Name),
-                "createddate" => ascending ? opportunities.OrderBy(o => o.CreatedDate) : opportunities.OrderByDescending(o => o.CreatedDate),
-                "lastmodifieddate" => ascending ? opportunities.OrderBy(o => o.LastModifiedDate) : opportunities.OrderByDescending(o => o.LastModifiedDate),
-                _ => ascending ? opportunities.OrderBy(o => o.Name) : opportunities.OrderByDescending(o => o.Name)
-            };
-
-            // Apply pagination
-            var totalCount = orderedOpportunities.Count();
-            var paginatedOpportunities = orderedOpportunities
-                .Skip((pageIndex - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            var response = new PaginationResponse<OpportunityModel>
-            {
-                Records = paginatedOpportunities,
-                TotalCount = totalCount,
                 PageIndex = pageIndex,
-                PageSize = pageSize,
-                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+                PageSize = export ? int.MaxValue : pageSize,
+                OrderBy = orderBy ?? "lastModifiedDate",
+                Ascending = ascending,
+                FilterActive = filterActive
             };
 
-            _logger.LogInformation("Returned {Count} opportunities out of {TotalCount}", paginatedOpportunities.Count, totalCount);
-            return Ok(response);
+            // Use AdvancedSearchService to get opportunities with global filters applied
+            var result = await _advancedSearchService.SearchWithFiltersAsync<Opportunity, OpportunityModel>(
+                new List<UNOPS.PAO.UNOPSBusiness.Services.SearchFilter>(), // Empty filters = get all
+                paginationRequest,
+                User);
+
+            _logger.LogInformation("Returned {Count} opportunities out of {TotalCount} (filterActive: {FilterActive})", 
+                result.Records.Count, result.TotalCount, filterActive);
+            
+            return Ok(result);
         }
         catch (Exception ex)
         {
@@ -289,8 +285,8 @@ public class OpportunityController : BaseController
         {
             PageIndex = request.PageIndex,
             PageSize = export ? int.MaxValue : request.PageSize,
-            OrderBy = request.OrderBy ?? "Name",
-            Ascending = request.Ascending ?? true,
+            OrderBy = request.OrderBy ?? "lastModifiedDate",
+            Ascending = request.Ascending ?? false,
             FilterActive = filterActive
         };
 
@@ -320,8 +316,8 @@ public class OpportunityController : BaseController
         [FromQuery] string filters,
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 20,
-        [FromQuery] string? orderBy = "Name",
-        [FromQuery] bool ascending = true,
+        [FromQuery] string? orderBy = "lastModifiedDate",
+        [FromQuery] bool ascending = false,
         [FromQuery] bool export = false,
         [FromQuery] bool filterActive = true)
     {
@@ -352,7 +348,7 @@ public class OpportunityController : BaseController
             {
                 PageIndex = pageIndex,
                 PageSize = export ? int.MaxValue : pageSize,
-                OrderBy = orderBy ?? "Name",
+                OrderBy = orderBy ?? "lastModifiedDate",
                 Ascending = ascending,
                 FilterActive = filterActive
             };
@@ -1268,10 +1264,7 @@ public class OpportunityController : BaseController
                 return BadRequest(new { error = "Opportunity name is required" });
             }
 
-            if (string.IsNullOrWhiteSpace(request.OpportunityDescription))
-            {
-                return BadRequest(new { error = "Opportunity description is required" });
-            }
+            // Description is optional for proposal generation - AI can generate it
 
             // Partner validation: if partnerId provided, require role selection
             if (request.PartnerId.HasValue && request.PartnerId > 0)
@@ -1337,21 +1330,36 @@ public class OpportunityController : BaseController
                 request.Name, request.SourceInteractionIds?.Count ?? 0, request.PartnerId);
 
             // Validate request
+            var validationErrors = new List<string>();
+
             if (string.IsNullOrWhiteSpace(request.Name))
             {
-                return BadRequest(new { error = "Opportunity name is required" });
+                validationErrors.Add("Opportunity name is required");
             }
-
-            // Description is optional - no validation required
 
             // Partner validation: only required if partnerId is provided (creating from partner context)
             if (request.PartnerId.HasValue && request.PartnerId > 0)
             {
                 if (!request.IsFundingPartner && !request.IsClientPartner)
                 {
-                    return BadRequest(new { error = "When creating from a partner context, the partner must be marked as funding partner, client partner, or both" });
+                    validationErrors.Add("When creating from a partner context, the partner must be marked as funding partner, client partner, or both");
                 }
-                
+            }
+
+            if (validationErrors.Any())
+            {
+                var errorMessage = string.Join("; ", validationErrors);
+                return BadRequest(new
+                {
+                    error = errorMessage,
+                    validationErrors = validationErrors
+                });
+            }
+
+            // Description is optional - no validation required
+
+            if (request.PartnerId.HasValue && request.PartnerId > 0)
+            {
                 _logger.LogInformation("📊 [API] Context partner {PartnerId} will be added as {Role}", 
                     request.PartnerId, 
                     request.IsFundingPartner && request.IsClientPartner ? "both funding and client" :
@@ -1362,6 +1370,18 @@ public class OpportunityController : BaseController
                 _logger.LogInformation("📊 [API] No context partner - will use AI-proposed partners from interactions");
             }
 
+            // Deduplicate SDGs by SDGId
+            var uniqueSdGs = request.SdGs?.Distinct().ToList() ?? new List<int>();
+            
+            // Deduplicate Countries by CountryId
+            var uniqueCountries = request.Countries?.Distinct().ToList() ?? new List<int>();
+            
+            // Deduplicate Stakeholders by UserId + EntityRoleId combination
+            var uniqueStakeholders = request.Stakeholders?
+                .GroupBy(s => new { s.UserId, s.EntityRoleId })
+                .Select(g => g.First())
+                .ToList() ?? new List<OpportunityStakeholderRequest>();
+            
             // Build opportunity request from accepted proposal
             var opportunityRequest = new OpportunityRequest
             {
@@ -1371,24 +1391,35 @@ public class OpportunityController : BaseController
                 ResponsibleOrgUnitId = request.ResponsibleOrgUnitId,
                 ProposedInitiativeTypeId = request.ProposedInitiativeTypeId,
                 InitiativeBudgetUSD = request.InitiativeBudgetUSD,
-                PartnershipAgreementReference = request.PartnershipAgreementReference,
                 TargetSigningDate = request.TargetSigningDate,
                 TargetDeliveryDate = request.TargetDeliveryDate,
-                SDGs = request.SdGs?.Select(sdgId => new OpportunitySDGRequest { SDGId = sdgId }).ToList() ?? new List<OpportunitySDGRequest>(),
-                Countries = request.Countries?.Select(countryId => new OpportunityCountryRequest { CountryId = countryId }).ToList() ?? new List<OpportunityCountryRequest>(),
+                SDGs = uniqueSdGs.Select(sdgId => new OpportunitySDGRequest { SDGId = sdgId }).ToList(),
+                Countries = uniqueCountries.Select(countryId => new OpportunityCountryRequest { CountryId = countryId }).ToList(),
                 Deliverables = request.Deliverables ?? new List<OpportunityDeliverableRequest>(),
-                Stakeholders = request.Stakeholders ?? new List<OpportunityStakeholderRequest>(),
+                Stakeholders = uniqueStakeholders,
                 FundingPartners = new List<OpportunityFundingPartnerRequest>(),
                 ClientPartners = new List<OpportunityClientPartnerRequest>()
             };
+
+            // Deduplicate funding partners by PartnerId (keep first occurrence with all its properties)
+            var uniqueFundingPartners = request.FundingPartners?
+                .GroupBy(fp => fp.PartnerId)
+                .Select(g => g.First())
+                .ToList() ?? new List<OpportunityFundingPartnerRequest>();
+            
+            // Deduplicate client partners by PartnerId (keep first occurrence)
+            var uniqueClientPartners = request.ClientPartners?
+                .GroupBy(cp => cp.PartnerId)
+                .Select(g => g.First())
+                .ToList() ?? new List<OpportunityClientPartnerRequest>();
 
             // Add the context partner as funding/client based on user selection (only if partnerId provided)
             // This ensures the context partner is included even if not in the AI-proposed arrays
             if (request.PartnerId.HasValue && request.PartnerId > 0)
             {
-                // Check if context partner is already in the AI-proposed arrays
-                var contextPartnerInFunding = request.FundingPartners?.Any(fp => fp.PartnerId == request.PartnerId.Value) ?? false;
-                var contextPartnerInClient = request.ClientPartners?.Any(cp => cp.PartnerId == request.PartnerId.Value) ?? false;
+                // Check if context partner is already in the deduplicated AI-proposed arrays
+                var contextPartnerInFunding = uniqueFundingPartners.Any(fp => fp.PartnerId == request.PartnerId.Value);
+                var contextPartnerInClient = uniqueClientPartners.Any(cp => cp.PartnerId == request.PartnerId.Value);
                 
                 // Add to funding partners if user selected funding role and not already in array
                 if (request.IsFundingPartner && !contextPartnerInFunding)
@@ -1412,18 +1443,18 @@ public class OpportunityController : BaseController
                 }
             }
 
-            // Add all AI-proposed funding partners
-            if (request.FundingPartners != null && request.FundingPartners.Any())
+            // Add all deduplicated AI-proposed funding partners
+            if (uniqueFundingPartners.Any())
             {
-                _logger.LogInformation("➕ [API] Adding {Count} AI-proposed funding partners", request.FundingPartners.Count);
-                opportunityRequest.FundingPartners.AddRange(request.FundingPartners);
+                _logger.LogInformation("➕ [API] Adding {Count} deduplicated AI-proposed funding partners", uniqueFundingPartners.Count);
+                opportunityRequest.FundingPartners.AddRange(uniqueFundingPartners);
             }
 
-            // Add all AI-proposed client partners  
-            if (request.ClientPartners != null && request.ClientPartners.Any())
+            // Add all deduplicated AI-proposed client partners  
+            if (uniqueClientPartners.Any())
             {
-                _logger.LogInformation("➕ [API] Adding {Count} AI-proposed client partners", request.ClientPartners.Count);
-                opportunityRequest.ClientPartners.AddRange(request.ClientPartners);
+                _logger.LogInformation("➕ [API] Adding {Count} deduplicated AI-proposed client partners", uniqueClientPartners.Count);
+                opportunityRequest.ClientPartners.AddRange(uniqueClientPartners);
             }
 
             // Create the opportunity

@@ -22,9 +22,6 @@ public class Opportunity : ModifiableDeletableEntity
     public int? ResponsibleOrgUnitId { get; set; }
     public virtual OrganizationHierarchy? ResponsibleOrgUnit { get; set; }
     
-    [MaxLength(255)]
-    public string? PartnershipAgreementReference { get; set; }
-    
     [Column(TypeName = "decimal(18, 2)")]
     public decimal? InitiativeBudgetUSD { get; set; }
     
@@ -36,6 +33,22 @@ public class Opportunity : ModifiableDeletableEntity
     public DateTime? ImplementationStartDate { get; set; }
     
     public DateTime? TargetDeliveryDate { get; set; }
+    
+    /// <summary>
+    /// Indicates if the target signing date is a firm deadline defined by the partner
+    /// </summary>
+    public bool IsTargetSigningDateFirm { get; set; }
+    
+    /// <summary>
+    /// Notes about the target signing date (e.g., partner deadline, submission closing date)
+    /// </summary>
+    [MaxLength(1000)]
+    public string? SigningDateNotes { get; set; }
+    
+    /// <summary>
+    /// Partner submission deadline (if applicable)
+    /// </summary>
+    public DateTime? SubmissionDeadline { get; set; }
     
     public int? ProposedInitiativeTypeId { get; set; }
     public virtual ProposedInitiativeType? ProposedInitiativeType { get; set; }

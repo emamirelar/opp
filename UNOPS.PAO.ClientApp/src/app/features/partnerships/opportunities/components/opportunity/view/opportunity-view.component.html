@@ -77,7 +77,7 @@
               "
               class="transition-all duration-300"
             >
-            <div class="flex items-start justify-between gap-4 flex-wrap">
+            <div class="flex items-start justify-between gap-4">
               <div class="flex items-center gap-4 flex-1 min-w-0">
                 <a
                   routerLink="/partnerships/opportunities"
@@ -89,8 +89,8 @@
                   <h1
                     [class]="
                       headerScrolled()
-                        ? 'text-lg sm:text-xl font-bold text-unops-neutral-900 truncate'
-                        : 'text-2xl sm:text-3xl font-bold text-unops-secondary break-words'
+                        ? 'text-lg sm:text-xl font-bold text-unops-neutral-900'
+                        : 'text-2xl sm:text-3xl font-bold text-unops-secondary'
                     "
                     class="transition-all duration-300"
                   >
@@ -98,15 +98,17 @@
                   </h1>
                 </div>
               </div>
-              <div class="flex items-center gap-3 flex-shrink-0">
+              <div class="flex items-center gap-3 flex-shrink-0 flex-wrap justify-end">
                 <p-badge
                   [value]="opportunity()?.status || ''"
                   [severity]="getStatusSeverity(opportunity()?.status)"
+                  styleClass="whitespace-nowrap"
                 />
                 @if (opportunity()?.workflowStageName) {
                   <p-badge
                     [value]="opportunity()?.workflowStageName || ''"
                     severity="warn"
+                    styleClass="whitespace-nowrap"
                   />
                 }
               </div>
@@ -118,9 +120,9 @@
               >
                 <span class="whitespace-nowrap"
                   ><strong
-                    >{{ "label.opportunity.partnerRef" | translate }}:</strong
+                    >{{ "label.opportunity.id" | translate }}:</strong
                   >
-                  {{ opportunity()!.partnerReference || "-" }}</span
+                  {{ opportunity()!.id || "-" }}</span
                 >
                 <span class="text-unops-neutral-300 hidden sm:inline">|</span>
                 <span class="whitespace-nowrap"
@@ -136,18 +138,23 @@
                   >
                   {{ opportunity()!.responsibleOrgUnitName || "-" }}</span
                 >
-                @if (
-                  opportunity()!.stats?.totalFundingUSD &&
-                  opportunity()!.stats?.totalFundingUSD! > 0
-                ) {
+                <span class="text-unops-neutral-300 hidden sm:inline">|</span>
+                <span class="whitespace-nowrap"
+                  ><strong
+                    >{{ "label.opportunity.stage" | translate }}:</strong
+                  >
+                  {{ opportunity()!.workflowStageName || "-" }}</span
+                >
+                @if (opportunity()!.targetSigningDate) {
                   <span class="text-unops-neutral-300 hidden sm:inline">|</span>
-                  <span class="flex items-center gap-1 whitespace-nowrap">
-                    <strong>{{ "label.totalBudget" | translate }}:</strong>
-                    <span class="text-unops-primary font-semibold"
-                      >${{
-                        opportunity()!.stats!.totalFundingUSD | number: "1.2-2"
-                      }}</span
-                    >
+                  <span 
+                    class="flex items-center gap-1 whitespace-nowrap"
+                    [class.text-red-600]="isTargetSigningDateOverdue()"
+                  >
+                    <strong>{{ "label.opportunity.targetSigningDate" | translate }}:</strong>
+                    <span [class.font-semibold]="isTargetSigningDateOverdue()">
+                      {{ opportunity()!.targetSigningDate | date: 'mediumDate' }}
+                    </span>
                   </span>
                 }
               </div>

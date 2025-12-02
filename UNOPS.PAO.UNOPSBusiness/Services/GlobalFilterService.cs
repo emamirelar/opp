@@ -95,7 +95,8 @@ public class GlobalFilterService
     #region Filter Implementation Methods
 
     /// <summary>
-    /// Apply RelatedToMe filter - checks both CreatedBy and LastModifiedBy
+    /// Apply RelatedToMe filter - checks both CreatedBy and LastModifiedBy, plus entity-specific relationships
+    /// For Opportunities: Also checks if user is a stakeholder
     /// </summary>
     private Expression? ApplyRelatedToMeFilter(ParameterExpression parameter, Type entityType, int userId, Expression? existingExpression)
     {
@@ -128,6 +129,48 @@ public class GlobalFilterService
             else
             {
                 userExpression = lastModifiedByEquals;
+            }
+        }
+
+        // For Opportunity entity, also check if user is a stakeholder
+        if (entityType.Name == "Opportunity")
+        {
+            try
+            {
+                // Get opportunity IDs where user is a stakeholder
+                var opportunityIdsWithUser = _context.Set<OpportunityStakeholder>()
+                    .Where(s => s.UserId == userId)
+                    .Select(s => s.OpportunityId)
+                    .ToList();
+
+                if (opportunityIdsWithUser.Any())
+                {
+                    var idProperty = GetIdProperty(entityType);
+                    if (idProperty != null)
+                    {
+                        var idAccess = Expression.Property(parameter, idProperty);
+                        var idsConstant = Expression.Constant(opportunityIdsWithUser);
+                        var containsMethod = typeof(List<int>).GetMethod("Contains");
+                        var stakeholderCheck = Expression.Call(idsConstant, containsMethod, idAccess);
+                        
+                        if (userExpression != null)
+                        {
+                            // Combine with OR: (CreatedBy/LastModifiedBy check) OR (Is Stakeholder)
+                            userExpression = Expression.OrElse(userExpression, stakeholderCheck);
+                        }
+                        else
+                        {
+                            userExpression = stakeholderCheck;
+                        }
+                        
+                        _logger.LogDebug("Applied stakeholder filter for Opportunity - found {Count} opportunities", opportunityIdsWithUser.Count);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to apply stakeholder filter for Opportunity entity");
+                // Continue with just CreatedBy/LastModifiedBy filtering
             }
         }
         

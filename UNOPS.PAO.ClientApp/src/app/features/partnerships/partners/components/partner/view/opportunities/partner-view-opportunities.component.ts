@@ -115,6 +115,12 @@ export class PartnerViewOpportunitiesComponent implements OnInit {
   // Unified opportunity creation dialog
   showCreateOpportunityDialog = signal<boolean>(false);
   
+  // Computed property to check if user can create opportunities
+  canCreateOpportunity = computed(() => {
+    // Check if user has permission to create opportunities
+    return this.permissionUtilityService.canCreate(this.entityPermissions());
+  });
+
   // Dialog configuration for unified dialog
   dialogConfig = computed<CreateOpportunityFromInteractionsConfig>(() => {
     const partnerId = this.partnerId() || this.getCurrentPartnerIdFromRoute();
@@ -443,6 +449,15 @@ export class PartnerViewOpportunitiesComponent implements OnInit {
    * Opens the unified create opportunity dialog
    */
   openCreateOpportunityDialog(): void {
+    // Check if user has create permission
+    if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: 'message.noPermissionToCreate',
+        summary: 'message.permissionDenied',
+      });
+      return;
+    }
+
     // Check if partner is active
     if (this.partnerStatus !== 'Active') {
       this.feedbackDialogService.showErrorToast({

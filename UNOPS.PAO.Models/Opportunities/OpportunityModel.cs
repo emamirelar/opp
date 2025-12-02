@@ -16,7 +16,6 @@ public class OpportunityModel
     public int? ProposedInitiativeTypeId { get; set; }
     public string? ProposedInitiativeTypeName { get; set; }
     public decimal? InitiativeBudgetUSD { get; set; }
-    public string? PartnershipAgreementReference { get; set; }
     public DateTime? TargetSigningDate { get; set; }
     
     /// <summary>
@@ -25,6 +24,21 @@ public class OpportunityModel
     public DateTime? ImplementationStartDate { get; set; }
     
     public DateTime? TargetDeliveryDate { get; set; }
+    
+    /// <summary>
+    /// Indicates if the target signing date is a firm deadline defined by the partner
+    /// </summary>
+    public bool IsTargetSigningDateFirm { get; set; }
+    
+    /// <summary>
+    /// Notes about the target signing date (e.g., partner deadline, submission closing date)
+    /// </summary>
+    public string? SigningDateNotes { get; set; }
+    
+    /// <summary>
+    /// Partner submission deadline (if applicable)
+    /// </summary>
+    public DateTime? SubmissionDeadline { get; set; }
     
     public string? ResultsFocus { get; set; }
     public string? IntendedImpactOutcomes { get; set; }

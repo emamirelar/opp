@@ -12,6 +12,21 @@ public class WhenSectionRequest
     public DateTime? TargetDeliveryDate { get; set; }
     
     /// <summary>
+    /// Indicates if the target signing date is a firm deadline defined by the partner
+    /// </summary>
+    public bool? IsTargetSigningDateFirm { get; set; }
+    
+    /// <summary>
+    /// Notes about the target signing date (e.g., partner deadline, submission closing date)
+    /// </summary>
+    public string? SigningDateNotes { get; set; }
+    
+    /// <summary>
+    /// Partner submission deadline (if applicable)
+    /// </summary>
+    public DateTime? SubmissionDeadline { get; set; }
+    
+    /// <summary>
     /// Deliverables with updated planned dates for the Work Breakdown Structure
     /// </summary>
     public List<DeliverableDateUpdate>? Deliverables { get; set; }
