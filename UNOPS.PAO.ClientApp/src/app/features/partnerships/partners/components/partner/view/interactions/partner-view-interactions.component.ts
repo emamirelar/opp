@@ -62,8 +62,8 @@ interface DropdownOption {
       @if(!permissionsLoading() && permissionUtilityService.canCreate(entityPermissions())) {
         <div class="flex items-center justify-end gap-4 flex-wrap">
             <p-button
-              [label]="'button.createOpportunityFromInteractions' | translate"
-              icon="pi pi-briefcase"
+              [label]="'button.newOpportunity' | translate"
+              icon="pi pi-plus"
               severity="secondary"
               rounded
               (click)="openCreateOpportunityDialog()"
