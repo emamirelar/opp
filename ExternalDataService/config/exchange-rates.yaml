@@ -21,7 +21,7 @@ source:
     FROM
       `unopsreporting.General_Ledger.Exchange_Rates`
     WHERE
-      Currency_Type = 'UNORE'
+      Currency_Type = 'USD'
       AND Effective_Date <= CURRENT_DATE()
       QUALIFY ROW_NUMBER() OVER (
               PARTITION BY Currency, Exchange_Rate
