@@ -188,6 +188,7 @@ public class APIDictionary
     public const string OpportunityWhat = Opportunity + "/{id}/what";
     public const string OpportunityWhy = Opportunity + "/{id}/why";
     public const string OpportunityWho = Opportunity + "/{id}/who";
+    public const string OpportunityTeam = Opportunity + "/{id}/team";
     public const string OpportunityWhere = Opportunity + "/{id}/where";
     public const string OpportunityWhen = Opportunity + "/{id}/when";
     public const string OpportunityRelated = Opportunity + "/{id}/related";

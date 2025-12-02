@@ -888,6 +888,33 @@ public class OpportunityManager : IOpportunityManager
         return await GetOpportunityAsync(entity.Id) ?? throw new InvalidOperationException("Failed to reload opportunity after update");
     }
 
+    public async Task<OpportunityModel> UpdateTeamSectionAsync(int id, TeamSectionRequest request)
+    {
+        var entity = await opportunityRepository.GetByIdAsync(id);
+
+        if (entity == null)
+        {
+            throw new KeyNotFoundException($"Opportunity with ID {id} not found");
+        }
+
+        // Update Responsible Org Unit
+        if (request.ResponsibleOrgUnitId.HasValue)
+        {
+            entity.ResponsibleOrgUnitId = request.ResponsibleOrgUnitId.Value;
+        }
+
+        // Update Initiative Type
+        if (request.ProposedInitiativeTypeId.HasValue)
+        {
+            entity.ProposedInitiativeTypeId = request.ProposedInitiativeTypeId.Value;
+        }
+
+        await opportunityRepository.UpdateAsync(entity);
+
+        // Reload with all includes for complete response
+        return await GetOpportunityAsync(entity.Id) ?? throw new InvalidOperationException("Failed to reload opportunity after update");
+    }
+
     public async Task<OpportunityModel> UpdateWhereSectionAsync(int id, WhereSectionRequest request)
     {
         var entity = await opportunityRepository.GetByIdAsync(id, new[]

@@ -1430,6 +1430,8 @@
   "label.opportunity.whenTimeline": "WHEN - Timeline & Dates",
   "label.opportunity.whereGeographicImplementation": "WHERE - Geographic Implementation",
   "label.opportunity.whoPartnersAndPeople": "WHO - Partners & External Stakeholders",
+  "label.opportunity.team": "Team",
+  "label.opportunity.teamUnopsStakeholders": "TEAM - UNOPS Team & Internal Stakeholders",
   "label.opportunity.why": "Why",
   "label.opportunity.workflowStage": "Workflow Stage",
   "label.opportunityDescription": "Opportunity Description",
