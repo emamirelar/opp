@@ -27,6 +27,7 @@ import { TimelineModule } from 'primeng/timeline';
 import { SelectModule } from 'primeng/select';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { MessageModule } from 'primeng/message';
+import { CheckboxModule } from 'primeng/checkbox';
 import {
   Opportunity,
   OpportunityDeliverable,
@@ -66,7 +67,8 @@ import { FeedbackDialogService } from '@shared/services/ui';
     TimelineModule,
     SelectModule,
     InputNumberModule,
-    MessageModule
+    MessageModule,
+    CheckboxModule
   ],
   templateUrl: './opportunity-when-section.component.html',
   styleUrls: ['./opportunity-when-section.component.scss'],
@@ -105,6 +107,11 @@ export class OpportunityWhenSectionComponent implements OnInit {
   targetSigningDateControl = new FormControl<Date | null>(null);
   implementationStartDateControl = new FormControl<Date | null>(null);
   targetDeliveryDateControl = new FormControl<Date | null>(null);
+  
+  // AC5: Signing date deadline notes controls
+  isSigningDateFirmControl = new FormControl<boolean>(false);
+  signingDateNotesControl = new FormControl<string | null>(null);
+  submissionDeadlineControl = new FormControl<Date | null>(null);
   
   // Signals for reactive validation
   targetSigningDateSignal = signal<Date | null>(null);
@@ -768,6 +775,13 @@ export class OpportunityWhenSectionComponent implements OnInit {
       this.targetDeliveryDateControl.setValue(deliveryDate);
       this.targetDeliveryDateSignal.set(deliveryDate);
     }
+    
+    // AC5: Initialize signing date details
+    this.isSigningDateFirmControl.setValue(opp.isTargetSigningDateFirm || false);
+    this.signingDateNotesControl.setValue(opp.signingDateNotes || null);
+    if (opp.submissionDeadline) {
+      this.submissionDeadlineControl.setValue(new Date(opp.submissionDeadline));
+    }
   }
 
   /**
@@ -792,6 +806,12 @@ export class OpportunityWhenSectionComponent implements OnInit {
     
     this.targetDeliveryDateControl.setValue(deliveryDate);
     this.targetDeliveryDateSignal.set(deliveryDate);
+
+    // AC5: Initialize signing date details
+    this.isSigningDateFirmControl.setValue(opp.isTargetSigningDateFirm || false);
+    this.signingDateNotesControl.setValue(opp.signingDateNotes || null);
+    const submissionDate = opp.submissionDeadline ? new Date(opp.submissionDeadline) : null;
+    this.submissionDeadlineControl.setValue(submissionDate);
 
     // Track if implementation start date was explicitly set
     this.isImplementationStartDateExplicitlySet.set(!!opp.implementationStartDate);
@@ -886,6 +906,9 @@ export class OpportunityWhenSectionComponent implements OnInit {
       targetSigningDate: this.targetSigningDateControl.value,
       implementationStartDate: this.implementationStartDateControl.value,
       targetDeliveryDate: this.targetDeliveryDateControl.value,
+      isTargetSigningDateFirm: this.isSigningDateFirmControl.value,
+      signingDateNotes: this.signingDateNotesControl.value,
+      submissionDeadline: this.submissionDeadlineControl.value,
       deliverables: updatedDeliverables
     };
 
@@ -946,6 +969,12 @@ export class OpportunityWhenSectionComponent implements OnInit {
     
     this.targetDeliveryDateControl.setValue(deliveryDate);
     this.targetDeliveryDateSignal.set(deliveryDate);
+
+    // AC5: Reset signing date details
+    this.isSigningDateFirmControl.setValue(opp.isTargetSigningDateFirm || false);
+    this.signingDateNotesControl.setValue(opp.signingDateNotes || null);
+    const submissionDate = opp.submissionDeadline ? new Date(opp.submissionDeadline) : null;
+    this.submissionDeadlineControl.setValue(submissionDate);
 
     // Clear local date state
     this.deliverableDates.set(new Map());

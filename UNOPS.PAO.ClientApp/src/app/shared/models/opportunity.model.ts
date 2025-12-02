@@ -83,6 +83,9 @@ export interface Opportunity {
   targetSigningDate: string | null;
   implementationStartDate: string | null;
   targetDeliveryDate: string | null;
+  isTargetSigningDateFirm: boolean;
+  signingDateNotes: string | null;
+  submissionDeadline: string | null;
   strategicAlignment: string | null;
   resultsFocus: string | null;
   intendedImpactOutcomes: string | null;

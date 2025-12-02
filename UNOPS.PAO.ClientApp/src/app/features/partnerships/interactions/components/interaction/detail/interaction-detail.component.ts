@@ -160,11 +160,8 @@ export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDest
   });
 
   canCreateOpportunity = computed(() => {
-    // TODO: Add permission check when permissions are implemented
-    // For now, always show the button
-    return true;
-    // Original logic (will be re-enabled with permissions):
-    // return this.primaryPartner() !== null;
+    // Check if user has permission to create opportunities
+    return this.permissionUtilityService.canCreate(this.entityPermissions());
   });
 
   // Dialog configuration
@@ -352,6 +349,15 @@ export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDest
       this.feedbackDialogService.showWarningToast({
         summary: this.translateService.instant('common.warning.title'),
         detail: this.translateService.instant('message.interactionRequired')
+      });
+      return;
+    }
+
+    // Check if user has create permission
+    if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: 'message.noPermissionToCreate',
+        summary: 'message.permissionDenied',
       });
       return;
     }

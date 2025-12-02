@@ -37,6 +37,22 @@ public class Opportunity : ModifiableDeletableEntity
     
     public DateTime? TargetDeliveryDate { get; set; }
     
+    /// <summary>
+    /// Indicates if the target signing date is a firm deadline defined by the partner
+    /// </summary>
+    public bool IsTargetSigningDateFirm { get; set; }
+    
+    /// <summary>
+    /// Notes about the target signing date (e.g., partner deadline, submission closing date)
+    /// </summary>
+    [MaxLength(1000)]
+    public string? SigningDateNotes { get; set; }
+    
+    /// <summary>
+    /// Partner submission deadline (if applicable)
+    /// </summary>
+    public DateTime? SubmissionDeadline { get; set; }
+    
     public int? ProposedInitiativeTypeId { get; set; }
     public virtual ProposedInitiativeType? ProposedInitiativeType { get; set; }
         

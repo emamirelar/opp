@@ -10,13 +10,15 @@
       </p>
     </div>
     <div class="ml-auto flex gap-2 flex-wrap">
-      <p-button
-        icon="pi pi-plus"
-        [label]="'button.new' | translate"
-        (onClick)="openCreateOpportunityDialog()"
-        rounded
-        class="opportunity-new-button"
-      />
+      @if (canCreateOpportunity()) {
+        <p-button
+          icon="pi pi-plus"
+          [label]="'button.new' | translate"
+          (onClick)="openCreateOpportunityDialog()"
+          rounded
+          class="opportunity-new-button"
+        />
+      }
     </div>
   </div>
 

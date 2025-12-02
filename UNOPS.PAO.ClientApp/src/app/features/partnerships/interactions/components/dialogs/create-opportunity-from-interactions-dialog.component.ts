@@ -990,22 +990,27 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         const file = fileWithType.file;
         this.uploadProgress.set(`Processing file ${fileIndex} of ${totalFiles}: ${file.name}...`);
         
-        // Check if Office file needs conversion
+        // Check if Office file needs conversion to PDF (backend only accepts PDF/images)
         let fileToUpload = file;
         if (this.googleDriveService.isMicrosoftOfficeFile(file.type)) {
           if (!this.googleDriveAuthAvailable) {
             throw new Error('Google Drive auth not available for Office file conversion');
           }
           
-          this.uploadProgress.set(`Converting ${file.name} to PDF...`);
-          const result = await firstValueFrom(this.googleDriveService.convertLocalOfficeFileToPdf(file));
-          
-          // Convert base64 to File
-          const blob = this.base64ToBlob(result.data, result.mimeType);
-          fileToUpload = new File([blob], result.name, { type: result.mimeType });
+          try {
+            this.uploadProgress.set(`Converting ${file.name} to PDF...`);
+            const result = await firstValueFrom(this.googleDriveService.convertLocalOfficeFileToPdf(file));
+            
+            // Convert base64 to File
+            const blob = this.base64ToBlob(result.data, result.mimeType);
+            fileToUpload = new File([blob], result.name, { type: result.mimeType });
+          } catch (conversionError: any) {
+            console.error('Error converting Office file to PDF:', conversionError);
+            throw new Error(`Failed to convert "${file.name}" to PDF. ${conversionError.message || 'Conversion failed'}`);
+          }
         }
         
-        // Upload to GCS via backend
+        // Upload to GCS via backend (only PDF/images accepted)
         this.uploadProgress.set(`Uploading ${fileToUpload.name} to cloud storage...`);
         const formData = new FormData();
         formData.append('File', fileToUpload);
@@ -1073,37 +1078,44 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
             });
           }
         } else {
-          // File is already PDF - just link it (same as opportunity-documents component)
-          // This avoids downloading and re-uploading, uses direct Google Drive reference
-          this.uploadProgress.set(`Linking ${driveFile.name} from Drive...`);
+          // File is already PDF - download and upload to GCS to get storagePath
+          this.uploadProgress.set(`Downloading ${driveFile.name} from Drive...`);
           
           try {
-            const linkModel = {
-              link: `https://drive.google.com/file/d/${driveFile.id}/view`,
-              googleId: driveFile.id,
-              name: driveFile.name,
-              type: driveFile.mimeType,
-              parentEntityName: 'Opportunity',
-              parentEntityId: 0, // Temporary - not saved to database yet
-              documentTypeId: driveFileWithType.documentTypeId,
-              skipDatabaseSave: true // Custom flag to indicate we're only getting the GCS path
-            };
-
+            // Download the PDF from Google Drive
+            const downloadResult = await firstValueFrom(
+              this.googleDriveService.downloadDriveFile(driveFile.id, driveFile.name, driveFile.mimeType)
+            );
+            
+            // Convert base64 to File object
+            const blob = this.base64ToBlob(downloadResult.data, downloadResult.mimeType);
+            const pdfFile = new File([blob], downloadResult.name, { type: downloadResult.mimeType });
+            
+            // Upload to GCS via backend
+            this.uploadProgress.set(`Uploading ${pdfFile.name} to cloud storage...`);
+            const formData = new FormData();
+            formData.append('File', pdfFile);
+            formData.append('Name', pdfFile.name);
+            formData.append('UploadToGCS', 'true');
+            formData.append('SkipDatabaseSave', 'true'); // Don't save to database yet
+            formData.append('GoogleId', driveFile.id); // Keep Google Drive ID
+            
             const response = await this.http
-              .post<any>('/api/document/link', linkModel)
+              .post<any>('/api/document/upload', formData)
+              
               .toPromise();
-
+            
             if (response && response.storagePath) {
               uploadedDocs.push({
                 gcsPath: response.storagePath,
-                mimeType: driveFile.mimeType,
-                name: driveFile.name,
+                mimeType: pdfFile.type,
+                name: pdfFile.name,
                 documentTypeId: driveFileWithType.documentTypeId
               });
             }
           } catch (error: any) {
-            console.error('Error linking PDF from Drive:', error);
-            throw new Error(`Failed to link "${driveFile.name}": ${error.message || 'Unknown error'}`);
+            console.error('Error uploading PDF from Drive:', error);
+            throw new Error(`Failed to upload "${driveFile.name}": ${error.message || 'Unknown error'}`);
           }
         }
       }
@@ -1296,11 +1308,29 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         detail: this.translateService.instant('message.proposalGenerated')
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating proposal:', error);
+      
+      // Extract error message from backend response
+      let errorDetail = this.translateService.instant('message.error.generatingProposal');
+      
+      if (error?.error) {
+        if (typeof error.error === 'string') {
+          errorDetail = error.error;
+        } else if (error.error.error) {
+          // Backend returns { error: "message", validationErrors: [...] }
+          errorDetail = error.error.error;
+        } else if (error.error.validationErrors && Array.isArray(error.error.validationErrors)) {
+          // If we have individual validation errors, show them as a list
+          errorDetail = error.error.validationErrors.join('; ');
+        }
+      } else if (error?.message) {
+        errorDetail = error.message;
+      }
+      
       this.feedbackDialogService.showErrorToast({
         summary: this.translateService.instant('common.error.title'),
-        detail: this.translateService.instant('message.error.generatingProposal')
+        detail: errorDetail
       });
     } finally {
       this.generating.set(false);
@@ -1606,11 +1636,29 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
       this.reset();
       this.visible.set(false);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error creating opportunity:', error);
+      
+      // Extract error message from backend response
+      let errorDetail = this.translateService.instant('message.error.creatingOpportunity');
+      
+      if (error?.error) {
+        if (typeof error.error === 'string') {
+          errorDetail = error.error;
+        } else if (error.error.error) {
+          // Backend returns { error: "message", validationErrors: [...] }
+          errorDetail = error.error.error;
+        } else if (error.error.validationErrors && Array.isArray(error.error.validationErrors)) {
+          // If we have individual validation errors, show them as a list
+          errorDetail = error.error.validationErrors.join('; ');
+        }
+      } else if (error?.message) {
+        errorDetail = error.message;
+      }
+      
       this.feedbackDialogService.showErrorToast({
         summary: this.translateService.instant('common.error.title'),
-        detail: this.translateService.instant('message.error.creatingOpportunity')
+        detail: errorDetail
       });
     } finally {
       this.generating.set(false);

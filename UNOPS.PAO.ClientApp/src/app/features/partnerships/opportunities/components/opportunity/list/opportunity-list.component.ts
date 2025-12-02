@@ -114,8 +114,8 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
     entityName: 'Opportunity',
     scrollable: true,
     scrollHeight: 'flex',
-    defaultSortField: 'name',
-    defaultSortOrder: 'asc',
+    defaultSortField: 'lastModifiedDate',
+    defaultSortOrder: 'desc',
     sortableFields: [
       { field: 'name', label: 'Name' },
       { field: 'createdDate', label: 'Created Date' },
