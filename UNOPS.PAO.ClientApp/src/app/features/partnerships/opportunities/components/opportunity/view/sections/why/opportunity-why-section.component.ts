@@ -133,7 +133,6 @@ export class OpportunityWhySectionComponent implements OnInit {
   readonly isSaving = signal<boolean>(false);
   private hasUnsavedChanges = false;
   private originalData: {
-    strategicAlignment?: string | null;
     expectedBeneficiaries?: string | null;
     intendedImpactOutcomes?: string | null;
     challenges?: string | null;
@@ -141,7 +140,6 @@ export class OpportunityWhySectionComponent implements OnInit {
   } | null = null;
 
   // Form controls for WHY section
-  strategicAlignmentControl = new FormControl<string | null>(null);
   expectedBeneficiariesControl = new FormControl<string | null>(null);
   estimatedDirectBeneficiariesControl = new FormControl<number | null>(null);
   estimatedIndirectBeneficiariesControl = new FormControl<number | null>(null);
@@ -192,10 +190,14 @@ export class OpportunityWhySectionComponent implements OnInit {
   editingFromPending = signal<boolean>(false);
   editingPendingIndex = signal<number | null>(null);
   showValidationError = signal<boolean>(false);
+  
+  // Track validation errors for pending SDGs (by index)
+  sdgValidationErrors = signal<Set<number>>(new Set());
 
   // UNOPS Missions data
   unopsMissions = signal<UNOPSMission[]>([]);
   selectedUNOPSMissions = signal<Set<number>>(new Set());
+  unopsMissionsNotApplicable = signal<boolean>(false);
   showUNOPSMissionsDialog = signal<boolean>(false);
 
   // Computed properties
@@ -223,33 +225,16 @@ export class OpportunityWhySectionComponent implements OnInit {
   });
 
   // Check if SDG configuration is complete and ready to add
+  // NOTE: Changed to only check if SDG is selected - targets/opt-out validation now happens at commit time
   readonly isSDGConfigurationComplete = computed(() => {
     // Must have an SDG selected (use signal or current value)
     const currentSdg = this.sdgControlValue() || this.sdgControl.value;
-    if (!currentSdg) {
-      return false;
-    }
-
-    // If skip targets is checked, configuration is complete (use signal or current value)
-    const skipTargets =
-      this.skipTargetsControlValue() || this.skipTargetsControl.value;
-    if (skipTargets) {
-      return true;
-    }
-
-    // Otherwise, at least one target must be selected
-    const selectedTargetsMap = this.selectedTargets();
-    return selectedTargetsMap.size > 0;
+    return !!currentSdg;
   });
 
   constructor() {
     // Set up change detection on form controls
     // Only mark as changed if we're in edit mode (to avoid triggering on initial setValue)
-    this.strategicAlignmentControl.valueChanges.subscribe(() => {
-      if (this.isEditing()) {
-        this.markAsChanged();
-      }
-    });
     this.expectedBeneficiariesControl.valueChanges.subscribe(() => {
       if (this.isEditing()) {
         this.markAsChanged();
@@ -541,6 +526,8 @@ export class OpportunityWhySectionComponent implements OnInit {
       selected.delete(missionId);
     } else {
       selected.add(missionId);
+      // If adding a mission, uncheck "not applicable"
+      this.unopsMissionsNotApplicable.set(false);
     }
     this.selectedUNOPSMissions.set(selected);
     this.markAsChanged();
@@ -572,13 +559,23 @@ export class OpportunityWhySectionComponent implements OnInit {
   });
 
   /**
+   * @description Check if UNOPS Missions dialog is valid (at least one mission selected OR not applicable checked)
+   */
+  isUNOPSMissionsDialogValid = computed(() => {
+    return this.unopsMissionCount() > 0 || this.unopsMissionsNotApplicable();
+  });
+
+  /**
    * @description Toggle "Not Applicable" for UNOPS Missions
    */
   toggleUNOPSNotApplicable(checked: boolean): void {
-    if (checked && this.unopsMissionCount() > 0) {
+    this.unopsMissionsNotApplicable.set(checked);
+    if (checked) {
+      // Clear all selected missions when "not applicable" is checked
       this.selectedUNOPSMissions.set(new Set());
-      this.cdr.detectChanges();
     }
+    this.markAsChanged();
+    this.cdr.detectChanges();
   }
 
   /**
@@ -612,6 +609,10 @@ export class OpportunityWhySectionComponent implements OnInit {
     } else {
       this.selectedUNOPSMissions.set(new Set());
     }
+    
+    // Reset "not applicable" flag - don't auto-check
+    this.unopsMissionsNotApplicable.set(false);
+    
     this.showUNOPSMissionsDialog.set(false);
     this.cdr.detectChanges();
   }
@@ -624,7 +625,6 @@ export class OpportunityWhySectionComponent implements OnInit {
 
     // Backup original data for cancel
     this.originalData = {
-      strategicAlignment: opp.strategicAlignment ?? null,
       expectedBeneficiaries: opp.expectedBeneficiaries ?? null,
       intendedImpactOutcomes: opp.intendedImpactOutcomes ?? null,
       challenges: opp.challenges ?? null,
@@ -632,7 +632,6 @@ export class OpportunityWhySectionComponent implements OnInit {
     };
 
     // Set form controls
-    this.strategicAlignmentControl.setValue(opp.strategicAlignment ?? null);
     this.expectedBeneficiariesControl.setValue(
       opp.expectedBeneficiaries ?? null,
     );
@@ -689,6 +688,9 @@ export class OpportunityWhySectionComponent implements OnInit {
       );
       this.selectedUNOPSMissions.set(selectedIds);
     }
+    
+    // Initialize "not applicable" state - always false so checkbox is not auto-selected
+    this.unopsMissionsNotApplicable.set(false);
 
     this.isEditing.set(true);
     this.cdr.detectChanges();
@@ -713,7 +715,6 @@ export class OpportunityWhySectionComponent implements OnInit {
     if (!opp || !opp.id) return;
 
     const whyData = {
-      strategicAlignment: this.strategicAlignmentControl.value ?? undefined,
       expectedBeneficiaries:
         this.expectedBeneficiariesControl.value ?? undefined,
       estimatedDirectBeneficiaries:
@@ -824,9 +825,6 @@ export class OpportunityWhySectionComponent implements OnInit {
     // Restore original data if available
     if (this.originalData) {
       // Reset form controls to original values
-      this.strategicAlignmentControl.setValue(
-        this.originalData.strategicAlignment ?? null,
-      );
       this.expectedBeneficiariesControl.setValue(
         this.originalData.expectedBeneficiaries ?? null,
       );
@@ -838,7 +836,6 @@ export class OpportunityWhySectionComponent implements OnInit {
       // Restore original SDGs (reverts any SDGs that were added but not saved)
       const updatedOpportunity = {
         ...opp,
-        strategicAlignment: this.originalData.strategicAlignment ?? null,
         expectedBeneficiaries: this.originalData.expectedBeneficiaries ?? null,
         intendedImpactOutcomes:
           this.originalData.intendedImpactOutcomes ?? null,
@@ -850,7 +847,6 @@ export class OpportunityWhySectionComponent implements OnInit {
       this.opportunityUpdated.emit(updatedOpportunity);
     } else {
       // Fallback: just reset form controls to current opportunity values
-      this.strategicAlignmentControl.setValue(opp.strategicAlignment ?? null);
       this.expectedBeneficiariesControl.setValue(
         opp.expectedBeneficiaries ?? null,
       );
@@ -917,6 +913,9 @@ export class OpportunityWhySectionComponent implements OnInit {
     } else {
       this.selectedUNOPSMissions.set(new Set());
     }
+    
+    // Reset "not applicable" flag
+    this.unopsMissionsNotApplicable.set(false);
 
     this.cdr.detectChanges();
   }
@@ -953,6 +952,36 @@ export class OpportunityWhySectionComponent implements OnInit {
    */
   onSDGChange(sdg: SDG | null): void {
     if (sdg && sdg.sdgId) {
+      // If "N/A" SDG is selected, automatically set as Primary and disable control
+      if (sdg.sdgId === 'N/A') {
+        this.isPrimaryControl.setValue(true);
+        this.isPrimaryControl.disable(); // Disable the control to prevent changes
+        // No need to load targets for N/A
+        this.availableTargets.set([]);
+        this.availableIndicators.set([]);
+        this.cdr.detectChanges();
+        return;
+      } else {
+        // For regular SDGs, ensure the control is enabled
+        this.isPrimaryControl.enable();
+        
+        // Check if there's already a Primary SDG in pending selections
+        const hasPrimary = this.hasPrimaryInPending();
+        
+        // If switching from N/A (which was Primary) to a regular SDG,
+        // and there's already a Primary in pending, set to Secondary
+        if (this.isPrimaryControl.value === true && hasPrimary) {
+          // Check if the current Primary is N/A (which will be removed)
+          const currentPending = this.pendingSDGSelections();
+          const primarySDG = currentPending.find(s => s.isPrimary);
+          
+          // If the current Primary is NOT N/A, then we need to set this new SDG to Secondary
+          if (primarySDG && primarySDG.sdgId !== 'N/A') {
+            this.isPrimaryControl.setValue(false);
+          }
+        }
+      }
+      
       // Load available targets for the selected SDG
       this.loadingTargets.set(true);
       this.valuesService.getSDGTargets(sdg.sdgId).subscribe({
@@ -968,6 +997,8 @@ export class OpportunityWhySectionComponent implements OnInit {
         },
       });
     } else {
+      // No SDG selected, enable the control
+      this.isPrimaryControl.enable();
       this.availableTargets.set([]);
       this.availableIndicators.set([]);
     }
@@ -1179,8 +1210,9 @@ export class OpportunityWhySectionComponent implements OnInit {
       return;
     }
 
-    const currentPending = [...this.pendingSDGSelections()];
+    let currentPending = [...this.pendingSDGSelections()];
     const opp = this.opportunity();
+    const isNASDG = sdg.sdgId === 'N/A';
 
     // Check if already in pending selections (includes both existing and newly added)
     if (currentPending.some((s) => s.sdgId === sdg.sdgId)) {
@@ -1191,6 +1223,39 @@ export class OpportunityWhySectionComponent implements OnInit {
         summary: this.translateService.instant('message.error'),
       });
       return;
+    }
+
+    // SPECIAL HANDLING FOR "N/A" SDG
+    if (isNASDG) {
+      // If there are other SDGs in pending, show confirmation
+      if (currentPending.length > 0) {
+        this.feedbackService.showConfirmDialog(
+          {
+            summary: this.translateService.instant('confirmation.clearAllSDGs'),
+            detail: this.translateService.instant('message.opportunity.addingNASDGWillClearOthers'),
+          },
+          () => {
+            // User confirmed - clear all SDGs and add N/A as Primary
+            this.addNASDG(sdg, opp);
+          }
+        );
+        return;
+      } else {
+        // No other SDGs, just add N/A as Primary
+        this.addNASDG(sdg, opp);
+        return;
+      }
+    }
+
+    // REGULAR SDG: Remove N/A if it exists
+    const naIndex = currentPending.findIndex((s) => s.sdgId === 'N/A');
+    if (naIndex !== -1) {
+      currentPending.splice(naIndex, 1);
+      // Show info message that N/A was removed
+      this.feedbackService.showInfoToast({
+        detail: this.translateService.instant('message.opportunity.naSDGRemovedWhenAddingOthers'),
+        summary: this.translateService.instant('message.info'),
+      });
     }
 
     // If setting as primary, remove primary from others in pending
@@ -1277,11 +1342,52 @@ export class OpportunityWhySectionComponent implements OnInit {
   }
 
   /**
+   * @description Add "N/A" SDG as Primary and clear all other SDGs
+   * @param sdg - The N/A SDG object
+   * @param opp - Current opportunity
+   */
+  private addNASDG(sdg: SDG, opp: Opportunity): void {
+    // Create N/A SDG - always Primary, no targets/indicators needed
+    const naSDG: OpportunitySDG = {
+      id: 0,
+      opportunityId: opp.id!,
+      sdgId: sdg.sdgId || '',
+      sdgDatabaseId: sdg.id,
+      sdgNumber: sdg.sdgNumber || '',
+      sdgName: sdg.name,
+      isPrimary: true, // N/A is always Primary
+      skipTargetsAndIndicators: true, // N/A doesn't need targets
+      notes: null,
+      targets: [],
+    };
+
+    // Clear all pending selections and add only N/A
+    this.pendingSDGSelections.set([naSDG]);
+
+    // Clear validation errors
+    this.sdgValidationErrors.set(new Set());
+
+    // Reset configuration section for next SDG
+    this.resetSDGConfiguration();
+
+    // Show success feedback
+    this.feedbackService.showSuccessToast({
+      detail: this.translateService.instant(
+        'message.opportunity.naSDGAdded',
+      ),
+      summary: this.translateService.instant('message.success'),
+    });
+
+    this.cdr.detectChanges();
+  }
+
+  /**
    * @description Reset SDG configuration section (top part of dialog)
    */
   resetSDGConfiguration(): void {
     this.sdgControl.setValue(null);
     this.isPrimaryControl.setValue(false);
+    this.isPrimaryControl.enable(); // Re-enable the control when resetting
     this.skipTargetsControl.setValue(false);
     this.showValidationError.set(false);
     this.editingFromPending.set(false);
@@ -1309,8 +1415,24 @@ export class OpportunityWhySectionComponent implements OnInit {
     this.editingPendingIndex.set(index);
     this.sdgControl.setValue(masterSDG || null);
     this.isPrimaryControl.setValue(sdg.isPrimary);
+    
+    // Disable alignment type control for N/A SDG, enable for others
+    if (sdg.sdgId === 'N/A') {
+      this.isPrimaryControl.disable();
+    } else {
+      this.isPrimaryControl.enable();
+    }
+    
     this.skipTargetsControl.setValue(sdg.skipTargetsAndIndicators || false);
     this.showValidationError.set(false);
+    
+    // Clear validation error for this SDG when entering edit mode
+    const currentErrors = this.sdgValidationErrors();
+    if (currentErrors.has(index)) {
+      const newErrors = new Set(currentErrors);
+      newErrors.delete(index);
+      this.sdgValidationErrors.set(newErrors);
+    }
 
     // Clear previous targets and indicators
     this.availableTargets.set([]);
@@ -1392,8 +1514,41 @@ export class OpportunityWhySectionComponent implements OnInit {
 
     if (!sdg || index === null) return;
 
-    const currentPending = [...this.pendingSDGSelections()];
+    let currentPending = [...this.pendingSDGSelections()];
     const opp = this.opportunity();
+    const isNASDG = sdg.sdgId === 'N/A';
+
+    // SPECIAL HANDLING: Changing TO "N/A" SDG
+    if (isNASDG) {
+      // If there are other SDGs besides the one being edited, show confirmation
+      if (currentPending.length > 1) {
+        this.feedbackService.showConfirmDialog(
+          {
+            summary: this.translateService.instant('confirmation.clearAllSDGs'),
+            detail: this.translateService.instant('message.opportunity.changingToNASDGWillClearOthers'),
+          },
+          () => {
+            // User confirmed - clear all SDGs and add only N/A as Primary
+            this.addNASDG(sdg, opp);
+          }
+        );
+        return;
+      } else {
+        // Only this SDG exists, replace it with N/A
+        this.addNASDG(sdg, opp);
+        return;
+      }
+    }
+
+    // SPECIAL HANDLING: Changing FROM "N/A" to a regular SDG
+    const originalSDG = currentPending[index];
+    if (originalSDG.sdgId === 'N/A' && !isNASDG) {
+      // Replacing N/A with a regular SDG - just show info message
+      this.feedbackService.showInfoToast({
+        detail: this.translateService.instant('message.opportunity.replacingNASDG'),
+        summary: this.translateService.instant('message.info'),
+      });
+    }
 
     // If setting as primary, remove primary from others
     if (isPrimary) {
@@ -1403,7 +1558,7 @@ export class OpportunityWhySectionComponent implements OnInit {
     }
 
     // Build targets array - preserve existing IDs when updating
-    const originalSDG = currentPending[index];
+    // Note: originalSDG already declared above for N/A handling
     const targets: OpportunitySDGTarget[] = [];
     const selectedTargetsMap = skipTargets ? new Map() : this.selectedTargets();
 
@@ -1475,6 +1630,14 @@ export class OpportunityWhySectionComponent implements OnInit {
     };
 
     this.pendingSDGSelections.set(currentPending);
+    
+    // Clear validation error for this SDG since it's been updated
+    const currentErrors = this.sdgValidationErrors();
+    if (currentErrors.has(index)) {
+      const newErrors = new Set(currentErrors);
+      newErrors.delete(index);
+      this.sdgValidationErrors.set(newErrors);
+    }
 
     // Reset configuration section
     this.resetSDGConfiguration();
@@ -1494,6 +1657,22 @@ export class OpportunityWhySectionComponent implements OnInit {
     const currentPending = [...this.pendingSDGSelections()];
     currentPending.splice(index, 1);
     this.pendingSDGSelections.set(currentPending);
+    
+    // Clear validation errors and recalculate for remaining SDGs
+    const currentErrors = this.sdgValidationErrors();
+    const newErrors = new Set<number>();
+    
+    // Adjust indices for remaining errors
+    currentErrors.forEach(errorIndex => {
+      if (errorIndex < index) {
+        newErrors.add(errorIndex);
+      } else if (errorIndex > index) {
+        newErrors.add(errorIndex - 1);
+      }
+      // Skip errorIndex === index (the removed SDG)
+    });
+    
+    this.sdgValidationErrors.set(newErrors);
     this.cdr.detectChanges();
   }
 
@@ -1502,8 +1681,55 @@ export class OpportunityWhySectionComponent implements OnInit {
    */
   clearPendingSDGs(): void {
     this.pendingSDGSelections.set([]);
+    this.sdgValidationErrors.set(new Set());
     this.resetSDGConfiguration();
     this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Validate if an SDG has either targets selected OR opt-out is checked
+   * @param sdg - The SDG to validate
+   * @returns true if valid, false otherwise
+   */
+  private validateSDG(sdg: OpportunitySDG): boolean {
+    // "N/A" SDG is always valid (doesn't need targets or opt-out)
+    if (sdg.sdgId === 'N/A') {
+      return true;
+    }
+    
+    // Valid if skip targets is checked
+    if (sdg.skipTargetsAndIndicators) {
+      return true;
+    }
+    
+    // Valid if at least one target is selected
+    return !!(sdg.targets && sdg.targets.length > 0);
+  }
+  
+  /**
+   * @description Check if a specific SDG has a validation error
+   * @param index - Index of the SDG in pending selections
+   * @returns true if the SDG has a validation error
+   */
+  hasValidationError(index: number): boolean {
+    return this.sdgValidationErrors().has(index);
+  }
+
+  /**
+   * @description Validate all pending SDGs
+   * @returns Array of invalid SDG indices
+   */
+  private validateAllPendingSDGs(): number[] {
+    const pending = this.pendingSDGSelections();
+    const invalidIndices: number[] = [];
+    
+    pending.forEach((sdg, index) => {
+      if (!this.validateSDG(sdg)) {
+        invalidIndices.push(index);
+      }
+    });
+    
+    return invalidIndices;
   }
 
   /**
@@ -1514,6 +1740,28 @@ export class OpportunityWhySectionComponent implements OnInit {
     const pending = this.pendingSDGSelections();
 
     if (pending.length === 0) {
+      return;
+    }
+
+    // Validate all pending SDGs
+    const invalidIndices = this.validateAllPendingSDGs();
+    
+    if (invalidIndices.length > 0) {
+      // Show validation errors for invalid SDGs
+      this.sdgValidationErrors.set(new Set(invalidIndices));
+      
+      // Show error toast
+      this.feedbackService.showErrorToast({
+        detail: this.translateService.instant(
+          invalidIndices.length === 1
+            ? 'message.validation.sdgTargetsRequired'
+            : 'message.validation.multipleSDGsTargetsRequired',
+          { count: invalidIndices.length }
+        ),
+        summary: this.translateService.instant('message.validation.validationFailed'),
+      });
+      
+      this.cdr.detectChanges();
       return;
     }
 
@@ -1570,7 +1818,8 @@ export class OpportunityWhySectionComponent implements OnInit {
       });
     }
 
-    // Reset dialog state and close
+    // Clear validation errors and reset dialog state
+    this.sdgValidationErrors.set(new Set());
     this.showSDGDialog.set(false);
     this.pendingSDGSelections.set([]);
     this.resetSDGConfiguration();
@@ -1591,9 +1840,36 @@ export class OpportunityWhySectionComponent implements OnInit {
   }
 
   /**
-   * @description Edit existing SDG
+   * @description Edit existing SDG from read-only view
+   * Pre-loads all existing SDGs into pending selections, then edits the specific one
    */
   editSDG(index: number): void {
+    const opp = this.opportunity();
+    const sdg = opp.sdGs?.[index];
+
+    if (!sdg) return;
+
+    // Pre-load all existing SDGs from opportunity into pending selections
+    const existingSDGs = opp.sdGs ? [...opp.sdGs] : [];
+    this.pendingSDGSelections.set(existingSDGs);
+
+    // Clear validation errors
+    this.sdgValidationErrors.set(new Set());
+
+    // Now use the pending edit flow instead of direct edit
+    // This ensures all SDGs are preserved in the pending selections
+    this.editPendingSDG(index);
+
+    // Show the dialog (editPendingSDG will have already set this up)
+    this.showSDGDialog.set(true);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description LEGACY: Old direct edit flow - kept for reference but should use editSDG -> editPendingSDG flow
+   * @deprecated Use editSDG which loads pending selections first
+   */
+  editSDGLegacy(index: number): void {
     const opp = this.opportunity();
     const sdg = opp.sdGs?.[index];
 
@@ -1683,6 +1959,9 @@ export class OpportunityWhySectionComponent implements OnInit {
     this.showSDGDialog.set(true);
     this.cdr.detectChanges();
   }
+
+  // Note: editSDGLegacy is kept for reference but not used. 
+  // The new flow uses editSDG -> editPendingSDG which properly maintains all SDGs in pending selections.
 
   /**
    * @description Update existing SDG

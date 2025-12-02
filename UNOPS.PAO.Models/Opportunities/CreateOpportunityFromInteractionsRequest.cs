@@ -48,7 +48,6 @@ public class CreateOpportunityFromInteractionsRequest
     public List<OpportunityDeliverableRequest>? Deliverables { get; set; }
 
     // WHY Section Properties (AI-proposed, user-accepted)
-    public string? StrategicAlignment { get; set; }
     public string? ResultsFocus { get; set; }
     public string? IntendedImpactOutcomes { get; set; }
     public string? ExpectedBeneficiaries { get; set; }

@@ -467,10 +467,6 @@ public class OpportunityManager : IOpportunityManager
         }
 
         // Update WHY section fields
-        if (request.StrategicAlignment != null)
-        {
-            entity.StrategicAlignment = request.StrategicAlignment;
-        }
 
         if (request.ExpectedBeneficiaries != null)
         {
