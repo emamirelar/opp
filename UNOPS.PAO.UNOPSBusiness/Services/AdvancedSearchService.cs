@@ -2242,8 +2242,8 @@ public class AdvancedSearchService
                 {
                     mappedModel = await MapInteractionToModel(entity);
                 }
-                // Handle Opportunity entities
-                else if (entityTypeName == "Opportunity" && modelTypeName == "OpportunityModel")
+                // Handle Opportunity entities - supports both OpportunityModel and OpportunityListModel
+                else if (entityTypeName == "Opportunity" && (modelTypeName == "OpportunityModel" || modelTypeName == "OpportunityListModel"))
                 {
                     mappedModel = await MapOpportunityToModel(entity);
                 }
@@ -2340,14 +2340,16 @@ public class AdvancedSearchService
         {
             if (entity is Opportunity opportunity)
             {
-                // Use AutoMapper for OpportunityModel mapping
-                var result = _mapper.Map<Opportunity, OpportunityModel>(opportunity);
+                // Use lightweight OpportunityListModel for list/search views
+                // This excludes: banner image, nested collections, markdown statements
+                // Returns only: counts, preview text, thumbnail, core fields
+                var result = _mapper.Map<Opportunity, OpportunityListModel>(opportunity);
                 return result;
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error mapping Opportunity to OpportunityModel");
+            _logger.LogError(ex, "Error mapping Opportunity to OpportunityListModel");
         }
         return null;
     }
