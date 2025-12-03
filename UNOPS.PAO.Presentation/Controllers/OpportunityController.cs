@@ -239,7 +239,8 @@ public class OpportunityController : BaseController
             };
 
             // Use AdvancedSearchService to get opportunities with global filters applied
-            var result = await _advancedSearchService.SearchWithFiltersAsync<Opportunity, OpportunityModel>(
+            // Returns OpportunityListModel (lightweight) instead of OpportunityModel for better performance
+            var result = await _advancedSearchService.SearchWithFiltersAsync<Opportunity, OpportunityListModel>(
                 new List<UNOPS.PAO.UNOPSBusiness.Services.SearchFilter>(), // Empty filters = get all
                 paginationRequest,
                 User);
@@ -291,7 +292,8 @@ public class OpportunityController : BaseController
         };
 
         // Use AdvancedSearchService for unified text search with PostgreSQL similarity and metadata
-        var result = await _advancedSearchService.SearchWithQueryAndMetadataAsync<Opportunity, OpportunityModel>(
+        // Returns OpportunityListModel (lightweight) instead of OpportunityModel for better performance
+        var result = await _advancedSearchService.SearchWithQueryAndMetadataAsync<Opportunity, OpportunityListModel>(
             query, 
             paginationRequest, 
             User);
@@ -353,7 +355,8 @@ public class OpportunityController : BaseController
                 FilterActive = filterActive
             };
 
-            var result = await _advancedSearchService.SearchWithFiltersAsync<Opportunity, OpportunityModel>(
+            // Returns OpportunityListModel (lightweight) instead of OpportunityModel for better performance
+            var result = await _advancedSearchService.SearchWithFiltersAsync<Opportunity, OpportunityListModel>(
                 searchFilters,
                 paginationRequest,
                 User);
