@@ -99,6 +99,13 @@ export class OpportunityService {
   }
 
   /**
+   * Update Team section of opportunity (org unit, initiative type)
+   */
+  updateOpportunityTeam(id: number, data: any): Observable<Opportunity> {
+    return this.http.patch<Opportunity>(`${this.apiUrl}/${id}/team`, data);
+  }
+
+  /**
    * Update WHERE section of opportunity (implementation countries)
    */
   updateOpportunityWhere(id: number, data: any): Observable<Opportunity> {

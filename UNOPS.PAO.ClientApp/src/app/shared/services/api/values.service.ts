@@ -38,6 +38,16 @@ export interface OrganizationUnit {
 }
 
 /**
+ * @interface SuggestedOrgUnitsResponse
+ * @description Response model for suggested organization units based on countries
+ */
+export interface SuggestedOrgUnitsResponse {
+  suggestedOrgUnitIds: number[];
+  primarySuggestionId: number | null;
+  suggestionReason: string | null;
+}
+
+/**
  * @interface Output
  * @description Output model for deliverables with hierarchical UNOPS Products and Services List structure
  */
@@ -227,12 +237,21 @@ export class ValuesService {
   private readonly baseUrl = '/api/values';
 
   /**
-   * @description Get all organization units
+   * @description Get all organization units (OrgUnit type only)
    * @returns {Observable<OrganizationUnit[]>}
    * @since 1.0.0
    */
   getOrganizationUnits(): Observable<OrganizationUnit[]> {
     return this.http.get<OrganizationUnit[]>(`${this.baseUrl}/organization-units`);
+  }
+
+  /**
+   * @description Get organization units for Opportunity dropdown (includes OrgUnit, Hub, and Region types)
+   * @returns {Observable<OrganizationUnit[]>}
+   * @since 1.0.0
+   */
+  getOpportunityOrganizationUnits(): Observable<OrganizationUnit[]> {
+    return this.http.get<OrganizationUnit[]>(`${this.baseUrl}/opportunity-organization-units`);
   }
 
   /**
@@ -524,6 +543,17 @@ export class ValuesService {
       '/api/country/dynamic-search',
       request
     );
+  }
+
+  /**
+   * @description Get suggested organization units based on countries of implementation
+   * @param {number[]} countryIds - Array of country IDs
+   * @returns {Observable<SuggestedOrgUnitsResponse>}
+   * @since 1.0.0
+   */
+  getSuggestedOrgUnits(countryIds: number[]): Observable<SuggestedOrgUnitsResponse> {
+    const params = countryIds.map(id => `countryIds=${id}`).join('&');
+    return this.http.get<SuggestedOrgUnitsResponse>(`${this.baseUrl}/suggested-org-units?${params}`);
   }
 }
 

@@ -1817,6 +1817,35 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         return result ?? throw new KeyNotFoundException($"Failed to reload opportunity {id}");
     }
 
+    public async Task<OpportunityModel> UpdateTeamSectionAsync(int id, TeamSectionRequest request)
+    {
+        var opportunity = await context.Opportunities
+            .FirstOrDefaultAsync(o => o.Id == id);
+
+        if (opportunity == null)
+        {
+            throw new KeyNotFoundException($"Opportunity with ID {id} not found");
+        }
+
+        // Update Responsible Org Unit
+        if (request.ResponsibleOrgUnitId.HasValue)
+        {
+            opportunity.ResponsibleOrgUnitId = request.ResponsibleOrgUnitId.Value;
+        }
+
+        // Update Initiative Type
+        if (request.ProposedInitiativeTypeId.HasValue)
+        {
+            opportunity.ProposedInitiativeTypeId = request.ProposedInitiativeTypeId.Value;
+        }
+
+        await context.SaveChangesAsync();
+
+        // Reload with all includes
+        var reloadedResult = await GetOpportunityAsync(id);
+        return reloadedResult ?? throw new KeyNotFoundException($"Failed to reload opportunity {id}");
+    }
+
     public async Task<OpportunityModel> UpdateWhereSectionAsync(int id, WhereSectionRequest request)
     {
         var opportunity = await context.Opportunities
