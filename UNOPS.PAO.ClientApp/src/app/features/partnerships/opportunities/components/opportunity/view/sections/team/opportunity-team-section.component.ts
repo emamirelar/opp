@@ -33,6 +33,7 @@ import {
   ValuesService,
   SimpleValue,
   OrganizationUnit,
+  SuggestedOrgUnitsResponse,
 } from '@shared/services/api/values.service';
 import { OpportunityService } from '../../../../../services/opportunity.service';
 import {
@@ -136,6 +137,14 @@ export class OpportunityTeamSectionComponent implements OnInit {
   organizationUnits = signal<OrganizationUnit[]>([]);
   initiativeTypes = signal<SimpleValue[]>([]);
 
+  // Suggested org units based on implementation countries
+  suggestedOrgUnitIds = signal<number[]>([]);
+  primarySuggestedOrgUnitId = signal<number | null>(null);
+  suggestionReason = signal<string | null>(null);
+
+  // Warning banner for Hub/Region/GPO org units
+  showOrgUnitWarningBanner = signal<boolean>(false);
+
   // Relevant People signals
   private lastLoadedOpportunityId: number | null = null;
   readonly relevantPeople = signal<RelevantPerson[] | null>(null);
@@ -175,9 +184,12 @@ export class OpportunityTeamSectionComponent implements OnInit {
    * @description Load dropdown data for form fields
    */
   private loadDropdownData(): void {
-    this.valuesService.getOrganizationUnits().subscribe({
+    // Use opportunity-specific endpoint that includes OrgUnit, Hub, and Region types
+    this.valuesService.getOpportunityOrganizationUnits().subscribe({
       next: (data) => {
         this.organizationUnits.set(data);
+        // Check if current org unit requires warning banner
+        this.updateOrgUnitWarningBanner();
         this.cdr.detectChanges();
       },
     });
@@ -188,6 +200,60 @@ export class OpportunityTeamSectionComponent implements OnInit {
         this.cdr.detectChanges();
       },
     });
+  }
+
+  /**
+   * @description Load suggested org units based on implementation countries
+   * @param prepopulateIfEmpty - If true, prepopulate the org unit control with the primary suggestion if no value is set
+   */
+  private loadSuggestedOrgUnits(prepopulateIfEmpty: boolean = false): void {
+    const opp = this.opportunity();
+    if (!opp?.countries || opp.countries.length === 0) {
+      this.suggestedOrgUnitIds.set([]);
+      this.primarySuggestedOrgUnitId.set(null);
+      this.suggestionReason.set(null);
+      return;
+    }
+
+    const countryIds = opp.countries.map((c) => c.countryId);
+    this.valuesService.getSuggestedOrgUnits(countryIds).subscribe({
+      next: (response: SuggestedOrgUnitsResponse) => {
+        this.suggestedOrgUnitIds.set(response.suggestedOrgUnitIds);
+        this.primarySuggestedOrgUnitId.set(response.primarySuggestionId);
+        this.suggestionReason.set(response.suggestionReason);
+
+        // Prepopulate with primary suggestion if no value is currently set
+        if (
+          prepopulateIfEmpty &&
+          response.primarySuggestionId &&
+          !this.orgUnitControl.value
+        ) {
+          this.orgUnitControl.setValue(response.primarySuggestionId);
+        }
+
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        // Silently fail - suggestions are not critical
+        this.suggestedOrgUnitIds.set([]);
+        this.primarySuggestedOrgUnitId.set(null);
+        this.suggestionReason.set(null);
+      },
+    });
+  }
+
+  /**
+   * @description Check if an org unit is suggested based on implementation countries
+   */
+  isOrgUnitSuggested(orgUnitId: number): boolean {
+    return this.suggestedOrgUnitIds().includes(orgUnitId);
+  }
+
+  /**
+   * @description Check if an org unit is the primary suggestion
+   */
+  isPrimarySuggestion(orgUnitId: number): boolean {
+    return this.primarySuggestedOrgUnitId() === orgUnitId;
   }
 
   /**
@@ -262,8 +328,39 @@ export class OpportunityTeamSectionComponent implements OnInit {
     this.orgUnitControl.setValue(opp.responsibleOrgUnitId ?? null);
     this.initiativeTypeControl.setValue(opp.proposedInitiativeTypeId ?? null);
 
+    // Load suggested org units and prepopulate if no value is currently set
+    const shouldPrepopulate = !opp.responsibleOrgUnitId;
+    this.loadSuggestedOrgUnits(shouldPrepopulate);
+
     this.isEditing.set(true);
     this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Get sorted organization units with suggestions first
+   */
+  getSortedOrgUnits(): OrganizationUnit[] {
+    const units = this.organizationUnits();
+    const suggestedIds = this.suggestedOrgUnitIds();
+    const primaryId = this.primarySuggestedOrgUnitId();
+
+    if (suggestedIds.length === 0) {
+      return units;
+    }
+
+    // Sort: primary suggestion first, then other suggestions, then rest alphabetically
+    return [...units].sort((a, b) => {
+      const aIsPrimary = a.id === primaryId;
+      const bIsPrimary = b.id === primaryId;
+      const aIsSuggested = suggestedIds.includes(a.id);
+      const bIsSuggested = suggestedIds.includes(b.id);
+
+      if (aIsPrimary && !bIsPrimary) return -1;
+      if (!aIsPrimary && bIsPrimary) return 1;
+      if (aIsSuggested && !bIsSuggested) return -1;
+      if (!aIsSuggested && bIsSuggested) return 1;
+      return a.name.localeCompare(b.name);
+    });
   }
 
   /**
@@ -308,6 +405,11 @@ export class OpportunityTeamSectionComponent implements OnInit {
             ),
             summary: this.translateService.instant('message.success'),
           });
+
+          // Update warning banner visibility based on the newly saved org unit
+          // Use the value from the response since the input signal hasn't been updated yet
+          this.updateOrgUnitWarningBanner(fullUpdatedOpportunity.responsibleOrgUnitId ?? null);
+
           this.cdr.detectChanges();
         },
         error: () => {
@@ -315,6 +417,38 @@ export class OpportunityTeamSectionComponent implements OnInit {
           this.cdr.detectChanges();
         },
       });
+  }
+
+  /**
+   * @description Check if the selected/saved org unit requires a warning banner
+   * @returns true if the org unit is Hub, Region, or contains GPO in name
+   */
+  private isOrgUnitRequiringWarning(orgUnitId: number | null | undefined): boolean {
+    if (!orgUnitId) return false;
+
+    const selectedUnit = this.organizationUnits().find((u) => u.id === orgUnitId);
+    if (!selectedUnit) return false;
+
+    // Check if the type is Hub or Region (case-insensitive string comparison)
+    const unitType = String(selectedUnit.type || '').toLowerCase();
+    const isHubOrRegion = unitType === 'hub' || unitType === 'region';
+
+    // Check if the name contains GPO (case-sensitive - must be uppercase)
+    const unitName = selectedUnit.name || '';
+    const isGpo = unitName.includes('GPO');
+
+    return isHubOrRegion || isGpo;
+  }
+
+  /**
+   * @description Update the warning banner visibility based on the current org unit
+   * @param orgUnitIdOverride - Optional org unit ID to use instead of reading from opportunity
+   */
+  private updateOrgUnitWarningBanner(orgUnitIdOverride?: number | null): void {
+    const orgUnitId = orgUnitIdOverride !== undefined 
+      ? orgUnitIdOverride 
+      : this.opportunity().responsibleOrgUnitId;
+    this.showOrgUnitWarningBanner.set(this.isOrgUnitRequiringWarning(orgUnitId));
   }
 
   /**

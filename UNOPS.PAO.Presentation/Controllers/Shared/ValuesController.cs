@@ -96,6 +96,15 @@ public class ValuesController : BaseController
         return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetOrganizationUnits()));
     }
 
+    /// <summary>
+    /// Gets organization units for Opportunity dropdown (includes OrgUnit, Hub, and Region types)
+    /// </summary>
+    [HttpGet(APIDictionary.OpportunityOrganizationUnits)]
+    public async Task<ActionResult> GetOpportunityOrganizationUnits()
+    {
+        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetOpportunityOrganizationUnits()));
+    }
+
     [HttpGet(APIDictionary.LiaisonOffices)]
     public async Task<ActionResult> GetLiaisonOffices()
     {
@@ -232,6 +241,19 @@ public class ValuesController : BaseController
         {
             var users = await _manager.GetInternalUsersAsync();
             return users;
+        });
+    }
+
+    /// <summary>
+    /// Gets suggested organization units based on countries of implementation
+    /// </summary>
+    [HttpGet(APIDictionary.SuggestedOrgUnits)]
+    public async Task<ActionResult> GetSuggestedOrgUnits([FromQuery] int[] countryIds)
+    {
+        return await HandleOperationAsync(async () =>
+        {
+            var suggestions = await _manager.GetSuggestedOrgUnitsForCountriesAsync(countryIds);
+            return suggestions;
         });
     }
 

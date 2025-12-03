@@ -49,6 +49,16 @@
   </ng-template>
 
   <div class="space-y-6">
+    <!-- Warning Banner for Hub/Region/GPO Org Units -->
+    @if (showOrgUnitWarningBanner()) {
+      <div class="p-3 bg-amber-50 border border-amber-300 rounded-lg flex items-start gap-3">
+        <i class="pi pi-exclamation-triangle text-amber-600 text-lg mt-0.5 flex-shrink-0"></i>
+        <div class="text-sm text-amber-800">
+          {{ 'message.opportunity.hubRegionOrgUnitWarning' | translate }}
+        </div>
+      </div>
+    }
+
     <!-- Responsible Org Unit and Initiative Type -->
     <div class="grid grid-cols-2 gap-4">
       <div>
@@ -56,9 +66,23 @@
           {{ 'label.opportunity.responsibleOrgUnit' | translate }}
         </h4>
         @if (isEditing()) {
+          @if (suggestedOrgUnitIds().length > 0) {
+            <div class="mb-2 p-2 bg-emerald-50 border border-emerald-200 rounded text-xs text-emerald-700 flex items-start gap-2">
+              <i class="pi pi-lightbulb text-emerald-500 mt-0.5 flex-shrink-0"></i>
+              <span>
+                @if (suggestionReason() === 'responsible_for_all_countries') {
+                  {{ 'hint.orgUnit.responsibleForAllCountries' | translate }}
+                } @else if (suggestionReason() === 'common_parent_for_multiple_countries') {
+                  {{ 'hint.orgUnit.commonParentForCountries' | translate }}
+                } @else {
+                  {{ 'hint.orgUnit.suggestedBasedOnCountries' | translate }}
+                }
+              </span>
+            </div>
+          }
           <p-select
             [formControl]="orgUnitControl"
-            [options]="organizationUnits()"
+            [options]="getSortedOrgUnits()"
             optionLabel="name"
             optionValue="id"
             [filter]="true"
@@ -66,7 +90,31 @@
             [placeholder]="'label.opportunity.selectOrgUnit' | translate"
             class="w-full"
             [showClear]="true"
-          />
+          >
+            <ng-template let-item pTemplate="item">
+              <div class="flex items-center gap-2">
+                @if (isPrimarySuggestion(item.id)) {
+                  <i class="pi pi-star-fill text-unops-warning text-xs" pTooltip="{{ 'tooltip.orgUnit.primarySuggestion' | translate }}" tooltipPosition="left"></i>
+                } @else if (isOrgUnitSuggested(item.id)) {
+                  <i class="pi pi-star text-unops-warning text-xs" pTooltip="{{ 'tooltip.orgUnit.suggested' | translate }}" tooltipPosition="left"></i>
+                }
+                <span [class.font-semibold]="isOrgUnitSuggested(item.id)">{{ item.name }}</span>
+                @if (isOrgUnitSuggested(item.id)) {
+                  <span class="text-xs text-unops-success ml-auto">{{ 'label.suggested' | translate }}</span>
+                }
+              </div>
+            </ng-template>
+            <ng-template let-item pTemplate="selectedItem">
+              <div class="flex items-center gap-2">
+                @if (isPrimarySuggestion(item.id)) {
+                  <i class="pi pi-star-fill text-unops-warning text-xs"></i>
+                } @else if (isOrgUnitSuggested(item.id)) {
+                  <i class="pi pi-star text-unops-warning text-xs"></i>
+                }
+                <span>{{ item.name }}</span>
+              </div>
+            </ng-template>
+          </p-select>
         } @else {
           <p class="text-unops-secondary">{{ opportunity().responsibleOrgUnitName || '-' }}</p>
         }
