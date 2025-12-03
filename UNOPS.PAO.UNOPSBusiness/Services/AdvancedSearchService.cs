@@ -74,11 +74,14 @@ public class AdvancedSearchService
         try
         {
             _logger.LogInformation("=== ADVANCED SEARCH SERVICE ===");
-            _logger.LogInformation("Entity: {EntityType}, Query: '{Query}', Filters: {FilterCount}, FilterActive: {FilterActive}", 
-                typeof(TEntity).Name, request.Query, request.Filters?.Count ?? 0, request.FilterActive);
+            _logger.LogInformation("Entity: {EntityType}, Model: {ModelType}, Query: '{Query}', Filters: {FilterCount}, FilterActive: {FilterActive}", 
+                typeof(TEntity).Name, typeof(TModel).Name, request.Query, request.Filters?.Count ?? 0, request.FilterActive);
 
+            // Use lightweight query for OpportunityListModel (doesn't need full collection data)
+            var isLightweightQuery = typeof(TModel).Name == "OpportunityListModel";
+            
             // Build base query with proper includes
-            var query = BuildBaseQueryWithIncludes<TEntity>();
+            var query = BuildBaseQueryWithIncludes<TEntity>(lightweight: isLightweightQuery);
 
             // Apply structured filters first (more efficient)
             if (request.Filters?.Any() == true)
@@ -195,7 +198,10 @@ public class AdvancedSearchService
         try
         {
             _logger.LogInformation("=== SEARCH WITH METADATA ===");
-            _logger.LogInformation("Entity: {EntityType}, Query: '{Query}'", typeof(TEntity).Name, query);
+            _logger.LogInformation("Entity: {EntityType}, Model: {ModelType}, Query: '{Query}'", typeof(TEntity).Name, typeof(TModel).Name, query);
+
+            // Use lightweight query for OpportunityListModel (doesn't need full collection data)
+            var isLightweightQuery = typeof(TModel).Name == "OpportunityListModel";
 
             // Get entity type name for PostgreSQL function
             var entityType = typeof(TEntity).Name.Replace("UNOPS", ""); // UNOPSPartner -> Partner
@@ -225,7 +231,8 @@ public class AdvancedSearchService
             var allEntityIds = searchResults.Select(r => r.EntityId).ToList();
             
             // Get the actual entity records for all search results
-            var allEntities = await GetEntitiesByIds<TEntity>(allEntityIds);
+            // Use lightweight includes for list models to improve performance
+            var allEntities = await GetEntitiesByIds<TEntity>(allEntityIds, lightweight: isLightweightQuery);
             
             // Apply user's requested ordering to the entities
             // If orderBy is "relevance" or not specified, maintain PostgreSQL score order (relevance)
@@ -314,9 +321,11 @@ public class AdvancedSearchService
     /// <summary>
     /// Helper method to get entities by their IDs
     /// </summary>
-    private async Task<List<TEntity>> GetEntitiesByIds<TEntity>(List<int> ids) where TEntity : class
+    /// <param name="ids">List of entity IDs to retrieve</param>
+    /// <param name="lightweight">If true, use minimal includes for better performance in list views</param>
+    private async Task<List<TEntity>> GetEntitiesByIds<TEntity>(List<int> ids, bool lightweight = false) where TEntity : class
     {
-        var query = BuildBaseQueryWithIncludes<TEntity>();
+        var query = BuildBaseQueryWithIncludes<TEntity>(lightweight);
         
         // Add ID filter based on entity type
         if (typeof(TEntity).Name.Contains("Partner"))
@@ -725,7 +734,8 @@ public class AdvancedSearchService
     /// <summary>
     /// Build base query with appropriate includes based on entity type
     /// </summary>
-    private IQueryable<TEntity> BuildBaseQueryWithIncludes<TEntity>() where TEntity : class
+    /// <param name="lightweight">If true, only include minimal navigation properties for list views (faster queries)</param>
+    private IQueryable<TEntity> BuildBaseQueryWithIncludes<TEntity>(bool lightweight = false) where TEntity : class
     {
         var entityType = typeof(TEntity).Name;
         var query = _context.Set<TEntity>().AsQueryable();
@@ -756,16 +766,31 @@ public class AdvancedSearchService
                 break;
 
             case "Opportunity":
-                query = query
-                    .Include("WorkflowStage")
-                    .Include("ResponsibleOrgUnit")
-                    .Include("ProposedInitiativeType")
-                    .Include("FundingPartners.Partner")
-                    .Include("ClientPartners.Partner")
-                    .Include("Stakeholders.EntityRole")
-                    .Include("Deliverables")
-                    .Include("Countries.Country")
-                    .Include("SDGs.SDG");
+                if (lightweight)
+                {
+                    // PERFORMANCE: Lightweight mode for list views - only include essential navigation properties
+                    // This dramatically reduces query time by NOT loading: FundingPartners, ClientPartners,
+                    // Stakeholders, Deliverables, Countries, SDGs and their nested relationships
+                    _logger.LogInformation("Using LIGHTWEIGHT includes for Opportunity list query");
+                    query = query
+                        .Include("WorkflowStage")
+                        .Include("ResponsibleOrgUnit")
+                        .Include("ProposedInitiativeType");
+                }
+                else
+                {
+                    // Full includes for detail views
+                    query = query
+                        .Include("WorkflowStage")
+                        .Include("ResponsibleOrgUnit")
+                        .Include("ProposedInitiativeType")
+                        .Include("FundingPartners.Partner")
+                        .Include("ClientPartners.Partner")
+                        .Include("Stakeholders.EntityRole")
+                        .Include("Deliverables")
+                        .Include("Countries.Country")
+                        .Include("SDGs.SDG");
+                }
                 break;
 
             default:
@@ -784,7 +809,7 @@ public class AdvancedSearchService
             query = query.Where(lambda);
         }
 
-        _logger.LogDebug("Built base query for {EntityType} with includes", entityType);
+        _logger.LogDebug("Built base query for {EntityType} with includes (lightweight={Lightweight})", entityType, lightweight);
         return query;
     }
 

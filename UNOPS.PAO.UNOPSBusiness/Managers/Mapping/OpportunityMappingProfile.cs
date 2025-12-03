@@ -28,7 +28,9 @@ public class OpportunityMappingProfile : Profile
         
         // =================================================================
         // OpportunityListModel - Lightweight mapping for list/search views
-        // Excludes heavy data: banner image, nested collections, markdown
+        // PERFORMANCE OPTIMIZED: Only maps essential fields for list display
+        // Excludes: banner image, all collections (FundingPartners, Countries, etc.)
+        // This allows the query to skip loading heavy related entities
         // =================================================================
         CreateMap<Opportunity, OpportunityListModel>()
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
@@ -42,34 +44,7 @@ public class OpportunityMappingProfile : Profile
                 src.ResponsibleOrgUnit != null ? src.ResponsibleOrgUnit.Name : null))
             .ForMember(dest => dest.ProposedInitiativeTypeName, opt => opt.MapFrom(src => 
                 src.ProposedInitiativeType != null ? src.ProposedInitiativeType.Name : null))
-            // Summary counts instead of full collections
-            .ForMember(dest => dest.FundingPartnersCount, opt => opt.MapFrom(src => 
-                src.FundingPartners != null ? src.FundingPartners.Count : 0))
-            .ForMember(dest => dest.ClientPartnersCount, opt => opt.MapFrom(src => 
-                src.ClientPartners != null ? src.ClientPartners.Count : 0))
-            .ForMember(dest => dest.CountriesCount, opt => opt.MapFrom(src => 
-                src.Countries != null ? src.Countries.Count : 0))
-            .ForMember(dest => dest.SDGsCount, opt => opt.MapFrom(src => 
-                src.SDGs != null ? src.SDGs.Count : 0))
-            .ForMember(dest => dest.DeliverablesCount, opt => opt.MapFrom(src => 
-                src.Deliverables != null ? src.Deliverables.Count : 0))
-            .ForMember(dest => dest.StakeholdersCount, opt => opt.MapFrom(src => 
-                src.Stakeholders != null ? src.Stakeholders.Count : 0))
-            // Primary items for display preview
-            .ForMember(dest => dest.PrimaryCountries, opt => opt.MapFrom(src => 
-                src.Countries != null && src.Countries.Any() 
-                    ? string.Join(", ", src.Countries
-                        .Where(c => c.Country != null)
-                        .Take(3)
-                        .Select(c => c.Country!.Name))
-                    : null))
-            .ForMember(dest => dest.PrimaryFundingPartner, opt => opt.MapFrom(src => 
-                src.FundingPartners != null && src.FundingPartners.Any() 
-                    ? src.FundingPartners.First().Partner != null 
-                        ? src.FundingPartners.First().Partner!.Name 
-                        : null
-                    : null))
-            .ForMember(dest => dest.CreatedByName, opt => opt.Ignore()); // Will be populated separately if needed
+            .ForMember(dest => dest.CreatedByName, opt => opt.Ignore());
             
         CreateMap<OpportunityRequest, Opportunity>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
