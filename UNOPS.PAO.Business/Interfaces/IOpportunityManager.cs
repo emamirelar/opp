@@ -16,6 +16,7 @@ public interface IOpportunityManager
     Task<OpportunityModel> UpdateWhatSectionAsync(int id, WhatSectionRequest request);
     Task<OpportunityModel> UpdateWhySectionAsync(int id, WhySectionRequest request);
     Task<OpportunityModel> UpdateWhoSectionAsync(int id, WhoSectionRequest request);
+    Task<OpportunityModel> UpdateTeamSectionAsync(int id, TeamSectionRequest request);
     Task<OpportunityModel> UpdateWhereSectionAsync(int id, WhereSectionRequest request);
     Task<OpportunityModel> UpdateWhenSectionAsync(int id, WhenSectionRequest request);
     Task<OpportunityModel> ApplyAiChangesAsync(int id, ApplyOpportunityAiChangesRequest request);

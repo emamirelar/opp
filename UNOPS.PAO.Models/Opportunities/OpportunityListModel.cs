@@ -4,8 +4,13 @@ namespace UNOPS.PAO.Models;
 
 /// <summary>
 /// Lightweight model for opportunity list views (search, list, dashboard).
-/// Excludes heavy data like images, nested collections, and detailed relationships.
+/// Excludes heavy data like banner images, nested collections, and detailed relationships.
 /// Use OpportunityModel for detail views that need complete data.
+/// 
+/// PERFORMANCE: This model is designed to minimize database load by:
+/// - Excluding banner image (large base64 string)
+/// - Excluding all collection data (FundingPartners, ClientPartners, Countries, SDGs, etc.)
+/// - Only including fields needed for list display
 /// </summary>
 public class OpportunityListModel
 {
@@ -45,47 +50,6 @@ public class OpportunityListModel
     /// Banner image is excluded - only available on detail view
     /// </summary>
     public string? OpportunityThumbnail { get; set; }
-    
-    // ========== SUMMARY COUNTS (instead of full collections) ==========
-    /// <summary>
-    /// Number of funding partners (instead of full FundingPartners list)
-    /// </summary>
-    public int FundingPartnersCount { get; set; }
-    
-    /// <summary>
-    /// Number of client partners (instead of full ClientPartners list)
-    /// </summary>
-    public int ClientPartnersCount { get; set; }
-    
-    /// <summary>
-    /// Number of implementation countries (instead of full Countries list)
-    /// </summary>
-    public int CountriesCount { get; set; }
-    
-    /// <summary>
-    /// Number of SDGs (instead of full SDGs list with nested targets/indicators)
-    /// </summary>
-    public int SDGsCount { get; set; }
-    
-    /// <summary>
-    /// Number of deliverables (instead of full Deliverables list with Output details)
-    /// </summary>
-    public int DeliverablesCount { get; set; }
-    
-    /// <summary>
-    /// Number of stakeholders (instead of full Stakeholders list)
-    /// </summary>
-    public int StakeholdersCount { get; set; }
-    
-    /// <summary>
-    /// Primary country names for display (comma-separated, max 3)
-    /// </summary>
-    public string? PrimaryCountries { get; set; }
-    
-    /// <summary>
-    /// Primary funding partner name for display
-    /// </summary>
-    public string? PrimaryFundingPartner { get; set; }
     
     // ========== AUDIT INFO ==========
     public DateTime? CreatedDate { get; set; }
