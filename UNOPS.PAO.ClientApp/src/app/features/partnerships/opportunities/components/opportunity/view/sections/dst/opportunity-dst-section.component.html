@@ -691,7 +691,7 @@
             [style]="{ width: '100%' }"
             (onNodeSelect)="onCategorySelect($event)"
           />
-          <label for="riskCategory">{{ 'label.dst.category' | translate }}</label>
+          <label for="riskCategory">{{ 'label.dst.category' | translate }} *</label>
         </p-floatlabel>
         @if (!newRisk.riskCategoryId && showDialogValidationError()) {
           <p-message severity="error" variant="simple" styleClass="mt-2">
