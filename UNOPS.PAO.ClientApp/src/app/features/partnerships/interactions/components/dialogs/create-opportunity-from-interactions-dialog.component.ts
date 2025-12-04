@@ -1208,12 +1208,17 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
       console.log('📋 [GenerateProposal] Selected interactions:', interactionIds);
       
       // Step 3: Prepare request with all sources
+      // Note: For detail-view mode (from interaction detail), we don't send partnerId
+      // as the user hasn't explicitly selected partner roles
+      const isFromInteractionDetail = this.mode() === 'detail-view';
+      
       const request: ProposeOpportunityRequest = {
         opportunityName: this.opportunityName(),
         opportunityDescription: this.opportunityDescription(),
-        partnerId: this.partnerId(),
-        isFundingPartner: this.isFundingPartner(),
-        isClientPartner: this.isClientPartner(),
+        // Only include partnerId when in list-view mode (from partner context with role selection)
+        partnerId: isFromInteractionDetail ? 0 : (this.partnerId() || 0),
+        isFundingPartner: isFromInteractionDetail ? false : this.isFundingPartner(),
+        isClientPartner: isFromInteractionDetail ? false : this.isClientPartner(),
         interactionIds: interactionIds.length > 0 ? interactionIds : undefined,
         newDocumentStoragePaths: uploadedDocs.length > 0 ? uploadedDocs.map(d => d.gcsPath) : undefined,
         newDocumentMimeTypes: uploadedDocs.length > 0 ? uploadedDocs.map(d => d.mimeType) : undefined,
@@ -1488,13 +1493,18 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
       }
       
       // Build create request with only user-selected fields
+      // Note: For detail-view mode (from interaction detail), we don't send partnerId
+      // as the user hasn't explicitly selected partner roles
+      const isFromInteractionDetail = this.mode() === 'detail-view';
+      
       const createRequest: any = {
         // Required fields (always included)
         name: proposal.opportunity.name,
         description: proposal.opportunity.description,
-        partnerId: this.partnerId() || 0,
-        isFundingPartner: this.isFundingPartner(),
-        isClientPartner: this.isClientPartner(),
+        // Only include partnerId when in list-view mode (from partner context with role selection)
+        partnerId: isFromInteractionDetail ? 0 : (this.partnerId() || 0),
+        isFundingPartner: isFromInteractionDetail ? false : this.isFundingPartner(),
+        isClientPartner: isFromInteractionDetail ? false : this.isClientPartner(),
         sourceInteractionIds: proposal.sourceInteractionIds || [],
         
         // Include uploaded documents as structured array
