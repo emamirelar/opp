@@ -332,19 +332,21 @@ export class OpportunityService {
    * Uses POST to pass dismissed recommendation IDs for filtering
    * @param id - Opportunity ID
    * @param dismissedOupQuestionIds - List of oupQuestionIds that user has dismissed
+   * @param forceRefresh - If true, bypasses cache to get fresh recommendations
    * @returns Observable with recommendations response
    */
   getDSTRecommendations(
     id: number,
-    dismissedOupQuestionIds: number[] = []
+    dismissedOupQuestionIds: number[] = [],
+    forceRefresh: boolean = false
   ): Observable<DSTRecommendationsResponse> {
     const request: DSTRecommendationsRequest = {
       dismissedOupQuestionIds,
     };
-    return this.http.post<DSTRecommendationsResponse>(
-      `${this.apiUrl}/${id}/dst-recommendations`,
-      request
-    );
+    const url = forceRefresh
+      ? `${this.apiUrl}/${id}/dst-recommendations?forceRefresh=true`
+      : `${this.apiUrl}/${id}/dst-recommendations`;
+    return this.http.post<DSTRecommendationsResponse>(url, request);
   }
 
   /**

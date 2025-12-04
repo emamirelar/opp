@@ -2206,7 +2206,7 @@ Return ONLY a valid JSON array.',
         true,
         'Opportunity',
         true,
-        60
+        1440
     );
 
     -- Insert opportunity_generate_insights prompt

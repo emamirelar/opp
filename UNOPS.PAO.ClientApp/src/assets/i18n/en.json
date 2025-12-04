@@ -1141,6 +1141,8 @@
   "label.dst.searchQuery": "Search Query",
   "label.dst.organizationalHighRisk": "Organizational High Risk",
   "label.dst.highRiskAcknowledgement": "High Risk Acknowledgement",
+  "label.dst.selectHighRisk": "Select Predefined High Risk (Optional)",
+  "helpText.dst.selectHighRiskOrManual": "Select a predefined organizational high risk to auto-fill the form, or enter risk details manually below.",
   "label.edited": "edited",
   "label.eligibilityCriteria": "Eligibility Criteria",
   "label.eligibleEntities": "Eligible Entities",

@@ -1007,14 +1007,15 @@ public class OpportunityController : BaseController
     public async Task<ActionResult<DSTRecommendationsResponse>> GetDSTRecommendations(
         int id, 
         [FromQuery] int maxResults = 10,
+        [FromQuery] bool forceRefresh = false,
         [FromBody] DSTRecommendationsRequest? request = null)
     {
         try
         {
             var dismissedIds = request?.DismissedOupQuestionIds ?? new List<int>();
-            _logger.LogInformation("🎯 [API] Getting DST recommendations for opportunity {OpportunityId} (dismissed: {DismissedCount})", id, dismissedIds.Count);
+            _logger.LogInformation("🎯 [API] Getting DST recommendations for opportunity {OpportunityId} (dismissed: {DismissedCount}, forceRefresh: {ForceRefresh})", id, dismissedIds.Count, forceRefresh);
 
-            var response = await _geminiManager.GetDSTRecommendationsAsync(id, User, maxResults, dismissedIds);
+            var response = await _geminiManager.GetDSTRecommendationsAsync(id, User, maxResults, dismissedIds, forceRefresh);
 
             _logger.LogInformation("✅ [API] Successfully retrieved {Count} DST recommendations for opportunity {OpportunityId}",
                 response.Recommendations?.Count ?? 0, id);

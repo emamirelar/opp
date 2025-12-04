@@ -44,7 +44,8 @@ public interface IGeminiManager
     /// <param name="user">Current user claims</param>
     /// <param name="maxResults">Max vector store results</param>
     /// <param name="dismissedOupQuestionIds">OupQuestionIds that user has dismissed (from localStorage)</param>
-    Task<DSTRecommendationsResponse> GetDSTRecommendationsAsync(int opportunityId, ClaimsPrincipal user = null, int maxResults = 10, List<int> dismissedOupQuestionIds = null);
+    /// <param name="forceRefresh">If true, bypasses cache to get fresh recommendations</param>
+    Task<DSTRecommendationsResponse> GetDSTRecommendationsAsync(int opportunityId, ClaimsPrincipal user = null, int maxResults = 10, List<int>? dismissedOupQuestionIds = null, bool forceRefresh = false);
     
     /// <summary>
     /// Generates AI-powered insights and suggestions for an opportunity

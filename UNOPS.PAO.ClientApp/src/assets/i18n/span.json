@@ -1107,6 +1107,8 @@
   "label.dst.searchQuery": "Consulta de Búsqueda",
   "label.dst.organizationalHighRisk": "Riesgo Organizacional Alto",
   "label.dst.highRiskAcknowledgement": "Reconocimiento de Riesgos Altos",
+  "label.dst.selectHighRisk": "Seleccionar Riesgo Alto Predefinido (Opcional)",
+  "helpText.dst.selectHighRiskOrManual": "Seleccione un riesgo organizacional alto predefinido para completar automáticamente el formulario, o ingrese los detalles del riesgo manualmente a continuación.",
   "label.edited": "editado",
   "label.eligibilityCriteria": "Criterios de Elegibilidad",
   "label.eligibleEntities": "Entidades Elegibles",

@@ -3546,14 +3546,16 @@ public class UNOPSGeminiManager : IGeminiManager
         /// <param name="user">Current user claims</param>
         /// <param name="maxResults">Max vector store results</param>
         /// <param name="dismissedOupQuestionIds">List of oupQuestionIds user has dismissed (from frontend localStorage)</param>
+        /// <param name="forceRefresh">If true, bypasses cache to get fresh recommendations</param>
         public async Task<UNOPS.PAO.Models.DSTRecommendationsResponse> GetDSTRecommendationsAsync(
             int opportunityId, 
             ClaimsPrincipal? user = null, 
             int maxResults = 10,
-            List<int>? dismissedOupQuestionIds = null)
+            List<int>? dismissedOupQuestionIds = null,
+            bool forceRefresh = false)
         {
             var startTime = DateTime.UtcNow;
-            _logger.LogInformation($"🎯 [DST-RECOMMENDATIONS] Starting DST recommendations for opportunity {opportunityId}");
+            _logger.LogInformation($"🎯 [DST-RECOMMENDATIONS] Starting DST recommendations for opportunity {opportunityId} (forceRefresh: {forceRefresh})");
             
             try
             {
@@ -3666,7 +3668,7 @@ public class UNOPSGeminiManager : IGeminiManager
                 _logger.LogInformation($"✅ [DST-RECOMMENDATIONS] Vector store search returned {vectorStoreResponse.Documents?.Count ?? 0} risk results");
                 
                 // Step 4: Refine and rank risks using LLM (with predefined high risks and deduplication)
-                _logger.LogInformation($"🤖 [DST-RECOMMENDATIONS] Step 4: Refining and ranking top risks with LLM");
+                _logger.LogInformation($"🤖 [DST-RECOMMENDATIONS] Step 4: Refining and ranking top risks with LLM (forceRefresh: {forceRefresh})");
                 var refinedRecommendations = await RefineAndRankRisksAsync(
                     opportunityDetailsDict, 
                     vectorStoreResponse, 
@@ -3675,7 +3677,8 @@ public class UNOPSGeminiManager : IGeminiManager
                     existingRiskTitles,
                     dismissedOupQuestionIds ?? new List<int>(),
                     opportunityId,
-                    user);
+                    user,
+                    forceRefresh);
                 
                 var executionTime = DateTime.UtcNow - startTime;
                 
@@ -3754,11 +3757,12 @@ public class UNOPSGeminiManager : IGeminiManager
             List<string> existingRiskTitles,
             List<int> dismissedOupQuestionIds,
             int opportunityId,
-            ClaimsPrincipal? user)
+            ClaimsPrincipal? user,
+            bool forceRefresh = false)
         {
             try
             {
-                _logger.LogInformation($"🤖 [REFINE-RISKS] Calling LLM to refine and rank risks (vector: {vectorStoreResponse.Documents?.Count ?? 0}, existing: {existingRiskTitles.Count}, dismissed: {dismissedOupQuestionIds.Count})");
+                _logger.LogInformation($"🤖 [REFINE-RISKS] Calling LLM to refine and rank risks (vector: {vectorStoreResponse.Documents?.Count ?? 0}, existing: {existingRiskTitles.Count}, dismissed: {dismissedOupQuestionIds.Count}, forceRefresh: {forceRefresh})");
                 
                 // Get the refine risks prompt
                 var promptData = await _aiService.GetPromptData("refine_opportunity_risks");
@@ -3790,12 +3794,12 @@ public class UNOPSGeminiManager : IGeminiManager
                     ""dismissedOupQuestionIds"": {dismissedOupQuestionIdsJson}
                 }}";
                 
-                // Call Gemini to refine and rank risks (with caching using opportunityId)
+                // Call Gemini to refine and rank risks (with caching using opportunityId, unless forceRefresh)
                 var refinedRisksJson = await _aiService.FetchResultFromGemini(
                     refineRisksPrompt, 
                     promptDataJson, 
                     entityId: opportunityId.ToString(),
-                    bypassCache: false);
+                    bypassCache: forceRefresh);
                 
                 _logger.LogInformation($"📝 [REFINE-RISKS] Raw Gemini response length: {refinedRisksJson?.Length ?? 0}");
                 
