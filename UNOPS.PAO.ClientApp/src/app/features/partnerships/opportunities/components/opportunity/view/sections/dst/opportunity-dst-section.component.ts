@@ -48,6 +48,7 @@ import {
   RiskProximityModel,
   RiskImpactLevelModel,
   RiskResponseTypeModel,
+  PreDefinedHighRiskModel,
 } from '@shared/models/opportunity.model';
 import { OpportunityService } from '../../../../../services/opportunity.service';
 import { FeedbackDialogService } from '@shared/services/ui/feedback-dialog.service';
@@ -352,6 +353,18 @@ export class OpportunityDstSectionComponent {
   readonly loadingRiskLookups = signal<boolean>(false);
 
   /**
+   * @description Available predefined high risks for selection
+   * @since 2.0.0
+   */
+  readonly preDefinedHighRisks = signal<PreDefinedHighRiskModel[]>([]);
+
+  /**
+   * @description Selected predefined high risk ID for dropdown
+   * @since 2.0.0
+   */
+  selectedPreDefinedHighRiskId: number | null = null;
+
+  /**
    * @description Computed: filtered response types based on selected risk type
    * @since 2.0.0
    */
@@ -497,9 +510,10 @@ export class OpportunityDstSectionComponent {
     // Load dismissed recommendations from localStorage
     this.loadDismissedFromStorage();
 
-    // Load risk lookups and categories once (they don't change per opportunity)
+    // Load risk lookups, categories, and predefined high risks once (they don't change per opportunity)
     this.loadRiskLookups();
     this.loadRiskCategories();
+    this.loadPreDefinedHighRisks();
 
     // Effect to load data when opportunity ID changes
     effect(() => {
@@ -585,6 +599,75 @@ export class OpportunityDstSectionComponent {
         console.error('Error loading risk categories:', error);
       }
     });
+  }
+
+  /**
+   * @description Load predefined high risks for dropdown selection
+   * @since 2.0.0
+   */
+  loadPreDefinedHighRisks(): void {
+    this.opportunityService.getHighRiskChecklist().subscribe({
+      next: (response: PreDefinedHighRiskModel[]) => {
+        this.preDefinedHighRisks.set(response);
+        console.log('⚠️ PreDefined high risks loaded:', response.length);
+      },
+      error: (error: Error) => {
+        console.error('Error loading predefined high risks:', error);
+      }
+    });
+  }
+
+  /**
+   * @description Handle predefined high risk selection from dropdown
+   * Pre-fills the form with defaults for the selected high risk
+   * @param event Selection event containing the selected high risk ID
+   * @since 2.0.0
+   */
+  onPreDefinedHighRiskSelect(event: { value: number | null }): void {
+    if (!event.value) {
+      // Cleared selection - reset to manual entry mode
+      this.resetNewRiskForm();
+      return;
+    }
+
+    const selectedRisk = this.preDefinedHighRisks().find(r => r.id === event.value);
+    if (!selectedRisk) return;
+
+    const lookups = this.riskLookups();
+    if (!lookups) return;
+
+    // Apply predefined high risk defaults
+    const threatType = lookups.riskTypes.find((t: RiskTypeModel) => t.code === 'THREAT');
+    const highProbability = lookups.probabilities.find((p: RiskProbabilityModel) => p.code === 'HIGH');
+    const highImpact = lookups.impactLevels.find((i: RiskImpactLevelModel) => i.code === 'HIGH');
+    const withinOneMonth = lookups.proximities.find((p: RiskProximityModel) => p.code === 'WITHIN_ONE_MONTH');
+    const reduceResponse = lookups.responseTypes.find((r: RiskResponseTypeModel) => r.code === 'REDUCE');
+
+    this.newRisk = {
+      title: selectedRisk.shortTitle || selectedRisk.name,
+      description: selectedRisk.description,
+      recommendation: '',
+      riskTypeId: threatType?.id ?? null,
+      riskCategoryId: selectedRisk.riskCategoryId ?? null,
+      riskProbabilityId: highProbability?.id ?? null,
+      riskProximityId: withinOneMonth?.id ?? null,
+      riskImpactLevelId: highImpact?.id ?? null,
+      riskResponseTypeId: reduceResponse?.id ?? null,
+      preDefinedHighRiskId: selectedRisk.id,
+      impact: 3 // HIGH for legacy field
+    };
+
+    // Update signal for reactive filtering
+    this.selectedRiskTypeId.set(threatType?.id ?? null);
+
+    // Set the category tree node for the TreeSelect
+    if (selectedRisk.riskCategoryId) {
+      const foundNode = this.findCategoryNodeById(selectedRisk.riskCategoryId);
+      this.selectedCategoryNode = foundNode;
+      console.log('📁 [DST] Category node found for predefined risk:', foundNode);
+    }
+
+    console.log('✅ [DST] Applied predefined high risk:', selectedRisk.shortTitle);
   }
 
   /**
@@ -743,6 +826,7 @@ export class OpportunityDstSectionComponent {
     };
     this.selectedCategoryNode = null;
     this.selectedRiskTypeId.set(null);
+    this.selectedPreDefinedHighRiskId = null;
   }
 
   /**
@@ -810,6 +894,11 @@ export class OpportunityDstSectionComponent {
 
         // Reset form
         this.resetNewRiskForm();
+
+        // Refresh recommendations since existing risks have changed
+        // The cache will auto-invalidate because existing risk titles are part of the prompt
+        console.log('🔄 [DST] Refreshing recommendations after adding risk...');
+        this.loadDSTRecommendations();
       }
     });
   }
@@ -895,26 +984,36 @@ export class OpportunityDstSectionComponent {
    * @description Load AI-generated DST recommendations
    * Sends dismissed oupQuestionIds to backend for server-side filtering
    * Uses caching - backend won't call LLM if prompt data hasn't changed
+   * @param forceRefresh - If true, bypasses cache to get fresh recommendations
    * @since 2.0.0
    */
-  loadDSTRecommendations(): void {
+  loadDSTRecommendations(forceRefresh: boolean = false): void {
     this.loadingRecommendations.set(true);
     
     // Get dismissed oupQuestionIds to pass to backend
     const dismissedIds = this.dismissedOupQuestionIds();
-    console.log('📋 [DST] Loading recommendations with dismissed IDs:', dismissedIds);
+    console.log('📋 [DST] Loading recommendations with dismissed IDs:', dismissedIds, 'forceRefresh:', forceRefresh);
     
-    this.opportunityService.getDSTRecommendations(this.opportunity().id, dismissedIds).subscribe({
+    this.opportunityService.getDSTRecommendations(this.opportunity().id, dismissedIds, forceRefresh).subscribe({
       next: (response) => {
         this.loadingRecommendations.set(false);
         this.recommendations.set(response.recommendations);
-        console.log(`✅ [DST] Loaded ${response.recommendations.length} recommendations`);
+        console.log(`✅ [DST] Loaded ${response.recommendations.length} recommendations${forceRefresh ? ' (refreshed)' : ' (cached)'}`);
       },
       error: (error: any) => {
         this.loadingRecommendations.set(false);
         console.error('Error loading DST recommendations:', error);
       }
     });
+  }
+
+  /**
+   * @description Refresh recommendations by forcing a new LLM call
+   * @since 2.0.0
+   */
+  refreshRecommendations(): void {
+    console.log('🔄 [DST] Refreshing recommendations...');
+    this.loadDSTRecommendations(true);
   }
 
   /**

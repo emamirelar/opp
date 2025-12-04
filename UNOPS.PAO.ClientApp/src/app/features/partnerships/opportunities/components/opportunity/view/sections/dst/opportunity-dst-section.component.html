@@ -128,13 +128,25 @@
 
       <!-- AI Recommendations (Right Panel) -->
         <div>
-          <h3 class="text-lg font-semibold text-unops-secondary mb-4 flex items-center gap-2">
-            <i class="pi pi-lightbulb text-unops-info-dark"></i>
-            <span>
-              {{ 'title.dst.recommendations' | translate }}
-            ({{ visibleRecommendations().length }})
-            </span>
-          </h3>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-unops-secondary flex items-center gap-2">
+              <i class="pi pi-lightbulb text-unops-info-dark"></i>
+              <span>
+                {{ 'title.dst.recommendations' | translate }}
+              ({{ visibleRecommendations().length }})
+              </span>
+            </h3>
+            <p-button
+              icon="pi pi-refresh"
+              [pTooltip]="'button.refresh' | translate"
+              tooltipPosition="top"
+              [rounded]="true"
+              [text]="true"
+              size="small"
+              (onClick)="refreshRecommendations()"
+              [disabled]="loadingRecommendations()"
+            />
+          </div>
 
         @if (loadingRecommendations()) {
           <div class="text-center py-4">
@@ -478,6 +490,31 @@
         {{ 'message.validation.allFieldsRequired' | translate }}
       </p-message>
     }
+
+    <!-- Pre-Defined High Risk Selection (Optional) -->
+    <div class="mb-6">
+      <p-floatlabel variant="on">
+        <p-select
+          id="preDefinedHighRisk"
+          [(ngModel)]="selectedPreDefinedHighRiskId"
+          [options]="preDefinedHighRisks()"
+          optionLabel="shortTitle"
+          optionValue="id"
+          [filter]="true"
+          filterBy="shortTitle,name,description"
+          [showClear]="true"
+          appendTo="body"
+          class="w-full"
+          (onChange)="onPreDefinedHighRiskSelect($event)"
+        />
+        <label for="preDefinedHighRisk">{{ 'label.dst.selectHighRisk' | translate }}</label>
+      </p-floatlabel>
+      <small class="text-gray-500 mt-1 block">
+        {{ 'helpText.dst.selectHighRiskOrManual' | translate }}
+      </small>
+    </div>
+
+    <p-divider />
 
     <!-- Risk Title -->
     <div class="mb-6">
