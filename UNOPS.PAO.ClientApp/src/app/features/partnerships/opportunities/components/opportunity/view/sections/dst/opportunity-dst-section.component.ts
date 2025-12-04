@@ -22,10 +22,33 @@ import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
 import { MessageModule } from 'primeng/message';
 import { TooltipModule } from 'primeng/tooltip';
+import { TreeSelectModule } from 'primeng/treeselect';
+import { CheckboxModule } from 'primeng/checkbox';
 import { FormsModule } from '@angular/forms';
+import { TreeNode } from 'primeng/api';
 
 // Models
-import { Opportunity, DSTSeverity, SimilarProject, SimilarProjectsResponse, SimilarOpportunity, SimilarOpportunitiesResponse, RelevantPerson, RelevantPeopleResponse, Risk, AIRiskRecommendation, RiskCreateRequest } from '@shared/models/opportunity.model';
+import {
+  Opportunity,
+  DSTSeverity,
+  SimilarProject,
+  SimilarProjectsResponse,
+  SimilarOpportunity,
+  SimilarOpportunitiesResponse,
+  RelevantPerson,
+  RelevantPeopleResponse,
+  Risk,
+  AIRiskRecommendation,
+  RiskCreateRequest,
+  RiskLookupsResponse,
+  RiskCategoryHierarchyResponse,
+  RiskCategoryModel,
+  RiskTypeModel,
+  RiskProbabilityModel,
+  RiskProximityModel,
+  RiskImpactLevelModel,
+  RiskResponseTypeModel,
+} from '@shared/models/opportunity.model';
 import { OpportunityService } from '../../../../../services/opportunity.service';
 import { FeedbackDialogService } from '@shared/services/ui/feedback-dialog.service';
 
@@ -63,7 +86,9 @@ import { FeedbackDialogService } from '@shared/services/ui/feedback-dialog.servi
     TextareaModule,
     SelectModule,
     MessageModule,
-    TooltipModule
+    TooltipModule,
+    TreeSelectModule,
+    CheckboxModule,
   ],
   templateUrl: './opportunity-dst-section.component.html',
   styleUrls: ['./opportunity-dst-section.component.scss'],
@@ -209,6 +234,23 @@ export class OpportunityDstSectionComponent {
   showAddRiskDialog = false;
 
   /**
+   * @description Acknowledgement that user has reviewed all organizational high risks
+   * AC1: User must acknowledge they've reviewed all applicable high risks
+   * Loaded from and persisted to the Opportunity entity
+   * @type {boolean}
+   * @since 2.0.0
+   */
+  get highRiskAcknowledged(): boolean {
+    return this.opportunity()?.highRisksAcknowledged ?? false;
+  }
+
+  set highRiskAcknowledged(value: boolean) {
+    this.updateHighRiskAcknowledgement(value);
+  }
+
+  private isUpdatingAcknowledgement = false;
+
+  /**
    * @description Show validation errors in dialog
    * @type {WritableSignal<boolean>}
    * @since 1.0.0
@@ -223,18 +265,43 @@ export class OpportunityDstSectionComponent {
   readonly isProcessingRisk = signal<boolean>(false);
 
   /**
-   * @description New risk form data
-   * @since 1.0.0
+   * @description Processing state for risk deletion
+   * @type {WritableSignal<boolean>}
+   * @since 2.0.0
    */
-  newRisk = {
+  readonly isDeletingRisk = signal<boolean>(false);
+
+  /**
+   * @description New risk form data (oUP aligned mandatory fields)
+   * @since 2.0.0
+   */
+  newRisk: {
+    title: string;
+    description: string;
+    recommendation: string;
+    riskTypeId: number | null;
+    riskCategoryId: number | null;
+    riskProbabilityId: number | null;
+    riskProximityId: number | null;
+    riskImpactLevelId: number | null;
+    riskResponseTypeId: number | null;
+    preDefinedHighRiskId?: number | null; // Link to PreDefinedHighRisk if from checklist
+    impact: number;
+  } = {
     title: '',
     description: '',
     recommendation: '',
-    impact: 2 // Default to Medium
+    riskTypeId: null,
+    riskCategoryId: null,
+    riskProbabilityId: null,
+    riskProximityId: null,
+    riskImpactLevelId: null,
+    riskResponseTypeId: null,
+    impact: 2
   };
 
   /**
-   * @description Impact options for dropdown
+   * @description Legacy impact options for dropdown (backward compatibility)
    * @since 1.0.0
    */
   readonly impactOptions = [
@@ -244,25 +311,167 @@ export class OpportunityDstSectionComponent {
   ];
 
   /**
-   * @description Signal for tracking dismissed recommendation indexes
-   * @type {WritableSignal<Set<number>>}
-   * @since 1.0.0
+   * @description Risk lookups data (types, probabilities, proximities, impact levels, response types)
+   * @since 2.0.0
    */
-  readonly dismissedRecommendations = signal<Set<number>>(new Set());
+  readonly riskLookups = signal<RiskLookupsResponse | null>(null);
 
   /**
-   * @description Filtered recommendations (excluding dismissed ones)
+   * @description Risk categories hierarchical data
+   * @since 2.0.0
+   */
+  readonly riskCategories = signal<RiskCategoryHierarchyResponse | null>(null);
+
+  /**
+   * @description Risk categories as TreeNode array for p-treeselect
+   * Only Level 3 categories are selectable
+   * @since 2.0.0
+   */
+  readonly categoryTreeNodes = computed<TreeNode[]>(() => {
+    const categories = this.riskCategories();
+    if (!categories?.categories) return [];
+    return this.convertCategoriesToTreeNodes(categories.categories);
+  });
+
+  /**
+   * @description Selected category node for TreeSelect binding
+   * @since 2.0.0
+   */
+  selectedCategoryNode: TreeNode | null = null;
+
+  /**
+   * @description Loading state for risk lookups
+   * @since 2.0.0
+   */
+  readonly loadingRiskLookups = signal<boolean>(false);
+
+  /**
+   * @description Computed: filtered response types based on selected risk type
+   * @since 2.0.0
+   */
+  readonly filteredResponseTypes = computed(() => {
+    const lookups = this.riskLookups();
+    const selectedTypeId = this.newRisk.riskTypeId;
+
+    if (!lookups || !selectedTypeId) {
+      return lookups?.responseTypes || [];
+    }
+
+    const selectedType = lookups.riskTypes.find(t => t.id === selectedTypeId);
+    if (!selectedType) {
+      return lookups.responseTypes;
+    }
+
+    // Filter response types based on risk type (Threat vs Opportunity)
+    if (selectedType.code === 'THREAT') {
+      return lookups.responseTypes.filter(rt => rt.validForThreat);
+    } else if (selectedType.code === 'OPPORTUNITY') {
+      return lookups.responseTypes.filter(rt => rt.validForOpportunity);
+    }
+
+    return lookups.responseTypes;
+  });
+
+  /**
+   * @description Computed: check if response type is mandatory based on selected risk type
+   * @since 2.0.0
+   */
+  readonly isResponseTypeMandatory = computed(() => {
+    const lookups = this.riskLookups();
+    const selectedTypeId = this.newRisk.riskTypeId;
+
+    if (!lookups || !selectedTypeId) {
+      return false;
+    }
+
+    const selectedType = lookups.riskTypes.find(t => t.id === selectedTypeId);
+    return selectedType?.isResponseTypeMandatory || false;
+  });
+
+  /**
+   * @description LocalStorage key for dismissed recommendations (per opportunity)
+   * @since 2.0.0
+   */
+  private readonly DISMISSED_RECOMMENDATIONS_KEY = 'opportunity_dismissed_recommendations';
+
+  /**
+   * @description Signal for tracking dismissed recommendation stable identifiers (persisted to localStorage)
+   * Uses oupQuestionId for predefined risks, stableIdentifier for others
+   * @type {WritableSignal<Set<string>>}
+   * @since 2.0.0
+   */
+  readonly dismissedRecommendations = signal<Set<string>>(new Set());
+
+  /**
+   * @description Get dismissed oupQuestionIds for sending to backend
+   * @type {Signal<number[]>}
+   * @since 2.0.0
+   */
+  readonly dismissedOupQuestionIds = computed(() => {
+    const dismissed = this.dismissedRecommendations();
+    return Array.from(dismissed)
+      .filter(id => id.startsWith('oup_'))
+      .map(id => parseInt(id.replace('oup_', ''), 10))
+      .filter(id => !isNaN(id));
+  });
+
+  /**
+   * @description Filtered recommendations (excluding dismissed ones and existing risks)
+   * Note: Backend already filters, this is a safety net for client-side filtering
    * @type {Signal<AIRiskRecommendation[]>}
-   * @since 1.0.0
+   * @since 2.0.0
    */
   readonly visibleRecommendations = computed(() => {
     const recommendations = this.recommendations();
     const dismissed = this.dismissedRecommendations();
-    
+    const existingRisks = this.risks();
+
     if (!recommendations) return [];
-    
-    return recommendations.filter((_: AIRiskRecommendation, index: number) => !dismissed.has(index));
+
+    // Get existing risk titles for deduplication (safety net)
+    const existingTitles = new Set(
+      existingRisks.map(r => r.title.toLowerCase().trim())
+    );
+
+    return recommendations.filter((rec: AIRiskRecommendation) => {
+      // Exclude dismissed recommendations (by stable identifier)
+      const stableId = this.getStableIdentifier(rec);
+      if (dismissed.has(stableId)) {
+        return false;
+      }
+
+      // Exclude recommendations that match existing risk titles (safety net)
+      if (existingTitles.has(rec.title.toLowerCase().trim())) {
+        return false;
+      }
+
+      return true;
+    });
   });
+
+  /**
+   * @description Get stable identifier for a recommendation
+   * Uses oupQuestionId for predefined risks, sourceRiskId for vector store, fallback to title hash
+   * @param rec - The recommendation
+   * @returns Stable identifier string
+   * @since 2.0.0
+   */
+  private getStableIdentifier(rec: AIRiskRecommendation): string {
+    // Use server-provided stable identifier if available
+    if (rec.stableIdentifier) {
+      return rec.stableIdentifier;
+    }
+    // Fallback: construct it ourselves
+    if (rec.oupQuestionId) {
+      return `oup_${rec.oupQuestionId}`;
+    }
+    if (rec.sourceRiskId) {
+      return `vs_${rec.sourceRiskId}`;
+    }
+    // Last resort: hash the title
+    const normalizedTitle = rec.title.toLowerCase().trim().substring(0, 50);
+    return `hash_${btoa(normalizedTitle).replace(/[^a-zA-Z0-9]/g, '')}`;
+  }
 
   /**
    * @description Check if DST analysis data is available
@@ -279,15 +488,22 @@ export class OpportunityDstSectionComponent {
    * @since 1.0.0
    */
   constructor() {
+    // Load dismissed recommendations from localStorage
+    this.loadDismissedFromStorage();
+
+    // Load risk lookups and categories once (they don't change per opportunity)
+    this.loadRiskLookups();
+    this.loadRiskCategories();
+
     // Effect to load data when opportunity ID changes
     effect(() => {
       const opp = this.opportunity();
-      
+
       // Only load if we have a valid opportunity and it's different from the last loaded one
       if (opp && opp.id && opp.id !== this.lastLoadedOpportunityId) {
         console.log('🔄 DST Section: Opportunity changed, loading DST data for ID:', opp.id);
         this.lastLoadedOpportunityId = opp.id;
-        
+
         // Load all DST data for the new opportunity
         this.loadDSTRisks();
         this.loadDSTRecommendations();
@@ -296,6 +512,146 @@ export class OpportunityDstSectionComponent {
         this.loadRelevantPeople();
       }
     });
+  }
+
+  /**
+   * @description Load dismissed recommendations from localStorage
+   * @since 2.0.0
+   */
+  private loadDismissedFromStorage(): void {
+    try {
+      const stored = localStorage.getItem(this.DISMISSED_RECOMMENDATIONS_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          this.dismissedRecommendations.set(new Set(parsed));
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load dismissed recommendations from storage:', e);
+    }
+  }
+
+  /**
+   * @description Save dismissed recommendations to localStorage
+   * @since 2.0.0
+   */
+  private saveDismissedToStorage(): void {
+    try {
+      const dismissed = Array.from(this.dismissedRecommendations());
+      localStorage.setItem(this.DISMISSED_RECOMMENDATIONS_KEY, JSON.stringify(dismissed));
+    } catch (e) {
+      console.warn('Failed to save dismissed recommendations to storage:', e);
+    }
+  }
+
+  /**
+   * @description Load risk lookups (types, probabilities, proximities, impact levels, response types)
+   * @since 2.0.0
+   */
+  loadRiskLookups(): void {
+    this.loadingRiskLookups.set(true);
+
+    this.opportunityService.getRiskLookups().subscribe({
+      next: (response: RiskLookupsResponse) => {
+        this.loadingRiskLookups.set(false);
+        this.riskLookups.set(response);
+        console.log('📚 Risk lookups loaded:', response);
+      },
+      error: (error: Error) => {
+        this.loadingRiskLookups.set(false);
+        console.error('Error loading risk lookups:', error);
+      }
+    });
+  }
+
+  /**
+   * @description Load risk categories (hierarchical)
+   * @since 2.0.0
+   */
+  loadRiskCategories(): void {
+    this.opportunityService.getRiskCategories().subscribe({
+      next: (response: RiskCategoryHierarchyResponse) => {
+        this.riskCategories.set(response);
+        console.log('📁 Risk categories loaded:', response);
+      },
+      error: (error: Error) => {
+        console.error('Error loading risk categories:', error);
+      }
+    });
+  }
+
+  /**
+   * @description Convert risk categories to TreeNode format for p-treeselect
+   * Only Level 3 (leaf) categories are selectable
+   * @param categories The hierarchical category models
+   * @returns TreeNode array compatible with PrimeNG TreeSelect
+   * @since 2.0.0
+   */
+  private convertCategoriesToTreeNodes(categories: RiskCategoryModel[]): TreeNode[] {
+    return categories.map(category => this.categoryToTreeNode(category));
+  }
+
+  /**
+   * @description Convert a single category to TreeNode recursively
+   * @param category The category model
+   * @returns TreeNode for PrimeNG TreeSelect
+   * @since 2.0.0
+   */
+  private categoryToTreeNode(category: RiskCategoryModel): TreeNode {
+    const node: TreeNode = {
+      key: category.id.toString(),
+      label: category.name,
+      data: category,
+      selectable: category.isSelectable, // Only Level 3 is selectable
+      children: category.children?.length
+        ? category.children.map(child => this.categoryToTreeNode(child))
+        : undefined
+    };
+    return node;
+  }
+
+  /**
+   * @description Handle category selection from TreeSelect
+   * @param event The selection event containing the selected node
+   * @since 2.0.0
+   */
+  onCategorySelect(event: { node: TreeNode }): void {
+    if (event.node?.data?.id) {
+      this.newRisk.riskCategoryId = event.node.data.id;
+      console.log('📁 Category selected:', event.node.data);
+    }
+  }
+
+  /**
+   * @description Find a TreeNode by category ID in the tree hierarchy
+   * @param categoryId The category ID to find
+   * @returns TreeNode or null if not found
+   * @since 2.0.0
+   */
+  private findCategoryNodeById(categoryId: number): TreeNode | null {
+    const nodes = this.categoryTreeNodes();
+    return this.searchTreeNodes(nodes, categoryId);
+  }
+
+  /**
+   * @description Recursively search tree nodes for a category ID
+   * @param nodes The nodes to search
+   * @param categoryId The category ID to find
+   * @returns TreeNode or null if not found
+   * @since 2.0.0
+   */
+  private searchTreeNodes(nodes: TreeNode[], categoryId: number): TreeNode | null {
+    for (const node of nodes) {
+      if (node.data?.id === categoryId) {
+        return node;
+      }
+      if (node.children?.length) {
+        const found = this.searchTreeNodes(node.children, categoryId);
+        if (found) return found;
+      }
+    }
+    return null;
   }
 
   /**
@@ -347,12 +703,7 @@ export class OpportunityDstSectionComponent {
    * @since 1.0.0
    */
   addToRiskRegister(): void {
-    this.newRisk = {
-      title: '',
-      description: '',
-      recommendation: '',
-      impact: 2
-    };
+    this.resetNewRiskForm();
     this.showDialogValidationError.set(false);
     this.showAddRiskDialog = true;
   }
@@ -363,13 +714,50 @@ export class OpportunityDstSectionComponent {
    */
   cancelAddRisk(): void {
     this.showAddRiskDialog = false;
+    this.resetNewRiskForm();
+    this.showDialogValidationError.set(false);
+  }
+
+  /**
+   * @description Reset new risk form to defaults
+   * @since 2.0.0
+   */
+  private resetNewRiskForm(): void {
     this.newRisk = {
       title: '',
       description: '',
       recommendation: '',
+      riskTypeId: null,
+      riskCategoryId: null,
+      riskProbabilityId: null,
+      riskProximityId: null,
+      riskImpactLevelId: null,
+      riskResponseTypeId: null,
       impact: 2
     };
-    this.showDialogValidationError.set(false);
+    this.selectedCategoryNode = null;
+  }
+
+  /**
+   * @description Validate new risk form fields
+   * @returns {boolean} True if form is valid
+   * @since 2.0.0
+   */
+  private validateNewRiskForm(): boolean {
+    // Check mandatory fields
+    if (!this.newRisk.title) return false;
+    if (!this.newRisk.riskTypeId) return false;
+    if (!this.newRisk.riskCategoryId) return false;
+    if (!this.newRisk.riskProbabilityId) return false;
+    if (!this.newRisk.riskProximityId) return false;
+    if (!this.newRisk.riskImpactLevelId) return false;
+
+    // Check conditional mandatory field (response type)
+    if (this.isResponseTypeMandatory() && !this.newRisk.riskResponseTypeId) {
+      return false;
+    }
+
+    return true;
   }
 
   /**
@@ -378,7 +766,7 @@ export class OpportunityDstSectionComponent {
    */
   confirmAddRisk(): void {
     // Validate required fields
-    if (!this.newRisk.title || !this.newRisk.description || !this.newRisk.recommendation) {
+    if (!this.validateNewRiskForm()) {
       this.showDialogValidationError.set(true);
       return;
     }
@@ -388,8 +776,14 @@ export class OpportunityDstSectionComponent {
     const request: RiskCreateRequest = {
       entityId: this.opportunity().id,
       title: this.newRisk.title,
-      description: this.newRisk.description,
-      recommendation: this.newRisk.recommendation,
+      riskTypeId: this.newRisk.riskTypeId!,
+      riskCategoryId: this.newRisk.riskCategoryId!,
+      riskProbabilityId: this.newRisk.riskProbabilityId!,
+      riskProximityId: this.newRisk.riskProximityId!,
+      riskImpactLevelId: this.newRisk.riskImpactLevelId!,
+      riskResponseTypeId: this.newRisk.riskResponseTypeId,
+      description: this.newRisk.description || undefined,
+      recommendation: this.newRisk.recommendation || undefined,
       impact: this.newRisk.impact
     };
 
@@ -398,31 +792,75 @@ export class OpportunityDstSectionComponent {
         this.isProcessingRisk.set(false);
         this.showAddRiskDialog = false;
         this.showDialogValidationError.set(false);
-        
+
         // Add the new risk to the list
         this.risks.update(risks => [...risks, createdRisk]);
-        
+
         this.feedbackService.showSuccessToast({
           summary: 'Success',
           detail: 'Risk added to register successfully'
         });
 
         // Reset form
-        this.newRisk = {
-          title: '',
-          description: '',
-          recommendation: '',
-          impact: 2
-        };
-      },
-      error: (error: any) => {
-        this.isProcessingRisk.set(false);
-        this.feedbackService.showErrorToast({
-          summary: 'Error',
-          detail: error.error?.error || error.message || 'Failed to add risk'
-        });
+        this.resetNewRiskForm();
       }
     });
+  }
+
+  /**
+   * @description Show confirmation dialog before deleting a risk
+   * @param {Risk} risk - The risk to delete
+   * @since 2.0.0
+   */
+  confirmDeleteRisk(risk: Risk): void {
+    this.feedbackService.showConfirmDialog(
+      {
+        summary: 'Delete Risk',
+        detail: `Are you sure you want to delete the risk "${risk.title}"? This action cannot be undone.`
+      },
+      () => {
+        this.deleteRisk(risk);
+      }
+    );
+  }
+
+  /**
+   * @description Delete a risk from the risk register
+   * @param {Risk} risk - The risk to delete
+   * @since 2.0.0
+   */
+  private deleteRisk(risk: Risk): void {
+    this.isDeletingRisk.set(true);
+
+    this.opportunityService.deleteDSTRisk(this.opportunity().id, risk.id).subscribe({
+      next: () => {
+        this.isDeletingRisk.set(false);
+
+        // Remove the risk from the list
+        this.risks.update(risks => risks.filter(r => r.id !== risk.id));
+
+        this.feedbackService.showSuccessToast({
+          summary: 'Success',
+          detail: 'Risk deleted successfully'
+        });
+
+        console.log(`🗑️ [DST] Deleted risk: ${risk.title} (ID: ${risk.id})`);
+      },
+      error: (error: Error) => {
+        this.isDeletingRisk.set(false);
+        console.error('❌ [DST] Failed to delete risk:', error);
+        // Global error handler will show toast
+      }
+    });
+  }
+
+  /**
+   * @description Handle risk type change - clear response type if switching types
+   * @since 2.0.0
+   */
+  onRiskTypeChange(): void {
+    // Clear response type when changing risk type (different options available)
+    this.newRisk.riskResponseTypeId = null;
   }
 
   /**
@@ -446,15 +884,22 @@ export class OpportunityDstSectionComponent {
 
   /**
    * @description Load AI-generated DST recommendations
-   * @since 1.0.0
+   * Sends dismissed oupQuestionIds to backend for server-side filtering
+   * Uses caching - backend won't call LLM if prompt data hasn't changed
+   * @since 2.0.0
    */
   loadDSTRecommendations(): void {
     this.loadingRecommendations.set(true);
     
-    this.opportunityService.getDSTRecommendations(this.opportunity().id).subscribe({
+    // Get dismissed oupQuestionIds to pass to backend
+    const dismissedIds = this.dismissedOupQuestionIds();
+    console.log('📋 [DST] Loading recommendations with dismissed IDs:', dismissedIds);
+    
+    this.opportunityService.getDSTRecommendations(this.opportunity().id, dismissedIds).subscribe({
       next: (response) => {
         this.loadingRecommendations.set(false);
         this.recommendations.set(response.recommendations);
+        console.log(`✅ [DST] Loaded ${response.recommendations.length} recommendations`);
       },
       error: (error: any) => {
         this.loadingRecommendations.set(false);
@@ -497,43 +942,216 @@ export class OpportunityDstSectionComponent {
       title: recommendation.title,
       description: recommendation.description,
       recommendation: recommendation.recommendation,
-      impact: 2 // Default to Medium, user can change
+      riskTypeId: null,
+      riskCategoryId: null,
+      riskProbabilityId: null,
+      riskProximityId: null,
+      riskImpactLevelId: null,
+      riskResponseTypeId: null,
+      impact: 2
     };
     this.showDialogValidationError.set(false);
     this.showAddRiskDialog = true;
+  }
+
+  /**
+   * @description Get display label for risk impact level
+   * @param {Risk} risk - The risk to get impact label for
+   * @returns {string} Impact level display name
+   * @since 2.0.0
+   */
+  getRiskImpactDisplay(risk: Risk): string {
+    return risk.riskImpactLevelName || this.getImpactLabel(risk.impact);
+  }
+
+  /**
+   * @description Get display label for risk type
+   * @param {Risk} risk - The risk to get type label for
+   * @returns {string} Risk type display name
+   * @since 2.0.0
+   */
+  getRiskTypeDisplay(risk: Risk): string {
+    return risk.riskTypeName || 'Unknown';
+  }
+
+  /**
+   * @description Get display label for risk probability
+   * @param {Risk} risk - The risk to get probability label for
+   * @returns {string} Probability display name
+   * @since 2.0.0
+   */
+  getRiskProbabilityDisplay(risk: Risk): string {
+    return risk.riskProbabilityName || 'N/A';
+  }
+
+  /**
+   * @description Get display label for risk proximity
+   * @param {Risk} risk - The risk to get proximity label for
+   * @returns {string} Proximity display name
+   * @since 2.0.0
+   */
+  getRiskProximityDisplay(risk: Risk): string {
+    return risk.riskProximityName || 'N/A';
+  }
+
+  /**
+   * @description Get display label for risk category (full path)
+   * @param {Risk} risk - The risk to get category label for
+   * @returns {string} Category full path
+   * @since 2.0.0
+   */
+  getRiskCategoryDisplay(risk: Risk): string {
+    return risk.riskCategoryFullPath || risk.riskCategoryName || 'N/A';
+  }
+
+  /**
+   * @description Get severity class based on impact level ID or legacy impact
+   * @param {Risk} risk - The risk to get severity for
+   * @returns {string} PrimeNG severity class
+   * @since 2.0.0
+   */
+  getRiskSeverity(risk: Risk): 'success' | 'warn' | 'danger' {
+    // Use new impact level if available
+    if (risk.riskImpactLevelName) {
+      const name = risk.riskImpactLevelName.toLowerCase();
+      if (name.includes('very high') || name.includes('high')) return 'danger';
+      if (name.includes('medium')) return 'warn';
+      return 'success'; // Low or Very Low
+    }
+
+    // Fallback to legacy impact
+    return this.getImpactSeverity(risk.impact);
   }
 
   /**
    * @description Accept a recommendation and add it to the risk register
+   * For predefined high risks, applies defaults: THREAT, HIGH probability/impact, WITHIN_ONE_MONTH, REDUCE
    * @param {AIRiskRecommendation} recommendation - The recommendation to accept
-   * @param {number} index - The index of the recommendation in the list
-   * @since 1.0.0
+   * @since 2.0.0
    */
-  acceptRecommendation(recommendation: AIRiskRecommendation, index: number): void {
-    // Pre-fill the dialog with recommendation data
-    this.newRisk = {
-      title: recommendation.title,
-      description: recommendation.description,
-      recommendation: recommendation.recommendation,
-      impact: 2 // Default to Medium, user can change
-    };
+  acceptRecommendation(recommendation: AIRiskRecommendation): void {
+    const lookups = this.riskLookups();
+    
+    // Check if this is a predefined high risk (has oupQuestionId)
+    const isPredefinedHighRisk = recommendation.sourceType === 'PREDEFINED_HIGH_RISK' && recommendation.oupQuestionId;
+    
+    if (isPredefinedHighRisk && lookups) {
+      // Apply defaults for predefined high risks
+      const threatType = lookups.riskTypes.find((t: RiskTypeModel) => t.code === 'THREAT');
+      const highProbability = lookups.probabilities.find((p: RiskProbabilityModel) => p.code === 'HIGH');
+      const highImpact = lookups.impactLevels.find((i: RiskImpactLevelModel) => i.code === 'HIGH');
+      const withinOneMonth = lookups.proximities.find((p: RiskProximityModel) => p.code === 'WITHIN_ONE_MONTH');
+      const reduceResponse = lookups.responseTypes.find((r: RiskResponseTypeModel) => r.code === 'REDUCE');
+      
+      this.newRisk = {
+        title: recommendation.title,
+        description: recommendation.description,
+        recommendation: recommendation.recommendation,
+        riskTypeId: threatType?.id ?? null,
+        riskCategoryId: recommendation.riskCategoryId ?? null, // From PreDefinedHighRisk
+        riskProbabilityId: highProbability?.id ?? null,
+        riskProximityId: withinOneMonth?.id ?? null,
+        riskImpactLevelId: highImpact?.id ?? null,
+        riskResponseTypeId: reduceResponse?.id ?? null,
+        preDefinedHighRiskId: recommendation.preDefinedHighRiskId ?? null,
+        impact: 3 // HIGH for legacy field
+      };
+      
+      console.log('✅ [DST] Applying predefined high risk defaults:', this.newRisk);
+      
+      // Set the category tree node for the TreeSelect
+      if (recommendation.riskCategoryId) {
+        const foundNode = this.findCategoryNodeById(recommendation.riskCategoryId);
+        this.selectedCategoryNode = foundNode;
+      }
+    } else {
+      // For non-predefined risks, let user select all fields
+      this.newRisk = {
+        title: recommendation.title,
+        description: recommendation.description,
+        recommendation: recommendation.recommendation,
+        riskTypeId: null,
+        riskCategoryId: null,
+        riskProbabilityId: null,
+        riskProximityId: null,
+        riskImpactLevelId: null,
+        riskResponseTypeId: null,
+        impact: 2 // Default to Medium for legacy
+      };
+      this.selectedCategoryNode = null;
+    }
+    
     this.showDialogValidationError.set(false);
     this.showAddRiskDialog = true;
     
-    // Also dismiss this recommendation from the list after opening the dialog
-    this.dismissRecommendation(index);
+    // NOTE: We intentionally do NOT dismiss the recommendation here.
+    // Once the risk is added, it will be filtered out because it matches an existing risk title.
+    // If the user later deletes the risk, the recommendation will naturally reappear.
+    // This is the expected UX: "Dismiss" = permanent hide, "Accept" = add to register (can reappear if deleted)
   }
 
   /**
-   * @description Dismiss a recommendation from the view
-   * @param {number} index - The index of the recommendation to dismiss
-   * @since 1.0.0
+   * @description Dismiss a recommendation from the view (persists to localStorage)
+   * Uses stable identifiers (oupQuestionId for predefined, sourceRiskId for vector store)
+   * @param {AIRiskRecommendation} recommendation - The recommendation to dismiss
+   * @since 2.0.0
    */
-  dismissRecommendation(index: number): void {
+  dismissRecommendation(recommendation: AIRiskRecommendation): void {
+    const stableId = this.getStableIdentifier(recommendation);
     const dismissed = this.dismissedRecommendations();
     const newDismissed = new Set(dismissed);
-    newDismissed.add(index);
+    newDismissed.add(stableId);
     this.dismissedRecommendations.set(newDismissed);
+
+    console.log(`🚫 [DST] Dismissed recommendation: ${stableId} (${recommendation.title})`);
+
+    // Persist to localStorage
+    this.saveDismissedToStorage();
+  }
+
+  /**
+   * @description Update the high risk acknowledgement status
+   * Persists to the backend when changed
+   * @param {boolean} acknowledged - Whether the user has acknowledged the high risks
+   * @since 2.0.0
+   */
+  private updateHighRiskAcknowledgement(acknowledged: boolean): void {
+    if (this.isUpdatingAcknowledgement) return;
+
+    const opportunityId = this.opportunity()?.id;
+    if (!opportunityId) return;
+
+    this.isUpdatingAcknowledgement = true;
+
+    this.opportunityService.acknowledgeHighRisks(opportunityId, acknowledged).subscribe({
+      next: () => {
+        console.log(`✅ [DST] High risk acknowledgement updated: ${acknowledged}`);
+        // Update the local opportunity object
+        const opp = this.opportunity();
+        if (opp) {
+          opp.highRisksAcknowledged = acknowledged;
+        }
+        this.isUpdatingAcknowledgement = false;
+      },
+      error: (error: Error) => {
+        console.error('❌ [DST] Failed to update high risk acknowledgement:', error);
+        this.feedbackService.showErrorToast({
+          summary: 'Error',
+          detail: 'Failed to save acknowledgement. Please try again.'
+        });
+        this.isUpdatingAcknowledgement = false;
+      }
+    });
+  }
+
+  /**
+   * @description Clear all dismissed recommendations (for testing/debugging)
+   * @since 2.0.0
+   */
+  clearDismissedRecommendations(): void {
+    this.dismissedRecommendations.set(new Set());
+    localStorage.removeItem(this.DISMISSED_RECOMMENDATIONS_KEY);
+    console.log('🗑️ [DST] Cleared all dismissed recommendations');
   }
 
   /**

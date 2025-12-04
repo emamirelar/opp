@@ -16,12 +16,17 @@ import {
   RelevantPeopleResponse,
   DSTRisksResponse,
   DSTRecommendationsResponse,
+  DSTRecommendationsRequest,
   RiskCreateRequest,
   Risk,
   OpportunityInsightsResponse,
   FrameworkStatusResponse,
   ExtractedDeliverableInfo,
   OpportunityStatementValidationResponse,
+  RiskLookupsResponse,
+  RiskCategoryHierarchyResponse,
+  PreDefinedHighRiskModel,
+  HighRiskAnalysisResponse,
 } from '@shared/models/opportunity.model';
 
 /**
@@ -35,6 +40,7 @@ import {
 export class OpportunityService {
   private http = inject(HttpClient);
   private apiUrl = `/api/opportunity`;
+  private riskApiUrl = `/api/risk`;
 
   /**
    * Get the base URL for opportunities API (used by listview component)
@@ -330,12 +336,21 @@ export class OpportunityService {
 
   /**
    * Get AI-generated risk recommendations for an opportunity
+   * Uses POST to pass dismissed recommendation IDs for filtering
    * @param id - Opportunity ID
+   * @param dismissedOupQuestionIds - List of oupQuestionIds that user has dismissed
    * @returns Observable with recommendations response
    */
-  getDSTRecommendations(id: number): Observable<DSTRecommendationsResponse> {
-    return this.http.get<DSTRecommendationsResponse>(
+  getDSTRecommendations(
+    id: number,
+    dismissedOupQuestionIds: number[] = []
+  ): Observable<DSTRecommendationsResponse> {
+    const request: DSTRecommendationsRequest = {
+      dismissedOupQuestionIds,
+    };
+    return this.http.post<DSTRecommendationsResponse>(
       `${this.apiUrl}/${id}/dst-recommendations`,
+      request
     );
   }
 
@@ -375,7 +390,67 @@ export class OpportunityService {
     return this.http.put<Risk>(
       `${this.apiUrl}/${id}/dst-risks/${riskId}`,
       request,
-    ); 
+    );
+  }
+
+  /**
+   * Delete a risk from the risk register
+   * @param id - Opportunity ID
+   * @param riskId - Risk ID to delete
+   * @returns Observable with void
+   */
+  deleteDSTRisk(id: number, riskId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}/dst-risks/${riskId}`);
+  }
+
+  /**
+   * Update the high risk acknowledgement status for an opportunity
+   * AC1: User must acknowledge they've reviewed all applicable organizational high risks
+   * @param id - Opportunity ID
+   * @param acknowledged - Whether the user has acknowledged the high risks
+   * @returns Observable with acknowledgement response
+   */
+  acknowledgeHighRisks(id: number, acknowledged: boolean): Observable<{ acknowledged: boolean }> {
+    return this.http.put<{ acknowledged: boolean }>(`${this.apiUrl}/${id}/acknowledge-high-risks`, acknowledged);
+  }
+
+  /**
+   * Get all risk lookup data (types, probabilities, proximities, impact levels, response types)
+   * @returns Observable with all lookup data for risk forms
+   */
+  getRiskLookups(): Observable<RiskLookupsResponse> {
+    return this.http.get<RiskLookupsResponse>(`${this.riskApiUrl}/lookups`);
+  }
+
+  /**
+   * Get risk categories in hierarchical format (3 levels)
+   * @returns Observable with category hierarchy
+   */
+  getRiskCategories(): Observable<RiskCategoryHierarchyResponse> {
+    return this.http.get<RiskCategoryHierarchyResponse>(
+      `${this.riskApiUrl}/categories`,
+    );
+  }
+
+  /**
+   * Get all predefined high risks (EAC checklist items)
+   * @returns Observable with list of high risk checklist items
+   */
+  getHighRiskChecklist(): Observable<PreDefinedHighRiskModel[]> {
+    return this.http.get<PreDefinedHighRiskModel[]>(
+      `${this.riskApiUrl}/high-risk-checklist`,
+    );
+  }
+
+  /**
+   * Get high risk analysis for an opportunity with auto-detected recommendations
+   * @param id - Opportunity ID
+   * @returns Observable with high risk analysis response
+   */
+  getHighRiskAnalysis(id: number): Observable<HighRiskAnalysisResponse> {
+    return this.http.get<HighRiskAnalysisResponse>(
+      `${this.apiUrl}/${id}/high-risk-analysis`,
+    );
   }
 
   /**
