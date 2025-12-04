@@ -386,6 +386,10 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 column: "Code",
                 unique: true);
 
+            // Truncate existing Risks to avoid FK constraint violations
+            // Existing risks don't have the new required FK values
+            migrationBuilder.Sql("TRUNCATE TABLE public.\"Risks\" CASCADE;");
+
             migrationBuilder.AddForeignKey(
                 name: "FK_Risks_PreDefinedHighRisks_PreDefinedHighRiskId",
                 schema: "public",

@@ -1105,6 +1105,11 @@ public class OpportunityController : BaseController
 
             return CreatedAtAction(nameof(GetDSTRisks), new { id }, risk);
         }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Validation error adding DST risk for opportunity {OpportunityId}: {Message}", id, ex.Message);
+            return BadRequest(new { error = ex.Message });
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error adding DST risk for opportunity {OpportunityId}", id);

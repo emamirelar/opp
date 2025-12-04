@@ -317,6 +317,12 @@ export class OpportunityDstSectionComponent {
   readonly riskLookups = signal<RiskLookupsResponse | null>(null);
 
   /**
+   * @description Selected risk type ID signal for reactive filtering of response types
+   * @since 2.0.0
+   */
+  readonly selectedRiskTypeId = signal<number | null>(null);
+
+  /**
    * @description Risk categories hierarchical data
    * @since 2.0.0
    */
@@ -351,7 +357,7 @@ export class OpportunityDstSectionComponent {
    */
   readonly filteredResponseTypes = computed(() => {
     const lookups = this.riskLookups();
-    const selectedTypeId = this.newRisk.riskTypeId;
+    const selectedTypeId = this.selectedRiskTypeId();
 
     if (!lookups || !selectedTypeId) {
       return lookups?.responseTypes || [];
@@ -378,7 +384,7 @@ export class OpportunityDstSectionComponent {
    */
   readonly isResponseTypeMandatory = computed(() => {
     const lookups = this.riskLookups();
-    const selectedTypeId = this.newRisk.riskTypeId;
+    const selectedTypeId = this.selectedRiskTypeId();
 
     if (!lookups || !selectedTypeId) {
       return false;
@@ -736,6 +742,7 @@ export class OpportunityDstSectionComponent {
       impact: 2
     };
     this.selectedCategoryNode = null;
+    this.selectedRiskTypeId.set(null);
   }
 
   /**
@@ -859,6 +866,8 @@ export class OpportunityDstSectionComponent {
    * @since 2.0.0
    */
   onRiskTypeChange(): void {
+    // Update the signal for reactive filtering
+    this.selectedRiskTypeId.set(this.newRisk.riskTypeId);
     // Clear response type when changing risk type (different options available)
     this.newRisk.riskResponseTypeId = null;
   }
@@ -1057,6 +1066,9 @@ export class OpportunityDstSectionComponent {
         impact: 3 // HIGH for legacy field
       };
       
+      // Update signal for reactive filtering
+      this.selectedRiskTypeId.set(threatType?.id ?? null);
+      
       console.log('✅ [DST] Applying predefined high risk defaults:', this.newRisk);
       
       // Set the category tree node for the TreeSelect
@@ -1079,6 +1091,7 @@ export class OpportunityDstSectionComponent {
         impact: 2 // Default to Medium for legacy
       };
       this.selectedCategoryNode = null;
+      this.selectedRiskTypeId.set(null);
     }
     
     this.showDialogValidationError.set(false);
