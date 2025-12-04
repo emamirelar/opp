@@ -1061,7 +1061,8 @@ export class OpportunityDstSectionComponent {
       
       // Set the category tree node for the TreeSelect
       if (recommendation.riskCategoryId) {
-        this.selectedCategoryNode = this.findCategoryNodeById(recommendation.riskCategoryId);
+        const foundNode = this.findCategoryNodeById(recommendation.riskCategoryId);
+        this.selectedCategoryNode = foundNode;
       }
     } else {
       // For non-predefined risks, let user select all fields
@@ -1082,9 +1083,11 @@ export class OpportunityDstSectionComponent {
     
     this.showDialogValidationError.set(false);
     this.showAddRiskDialog = true;
-
-    // Also dismiss this recommendation from the list after opening the dialog
-    this.dismissRecommendation(recommendation);
+    
+    // NOTE: We intentionally do NOT dismiss the recommendation here.
+    // Once the risk is added, it will be filtered out because it matches an existing risk title.
+    // If the user later deletes the risk, the recommendation will naturally reappear.
+    // This is the expected UX: "Dismiss" = permanent hide, "Accept" = add to register (can reappear if deleted)
   }
 
   /**

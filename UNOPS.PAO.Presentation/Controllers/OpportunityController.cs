@@ -1814,7 +1814,7 @@ public class OpportunityController : BaseController
     /// Returns temporary extraction data for user verification (not saved to database)
     /// </summary>
     [HttpPost(APIDictionary.Opportunity + "/{id}/extract-deliverables")]
-    [AccessControlled(EntityTypes.Opportunity, "update")]
+    [AccessControlled(EntityTypes.Opportunity, "read")]
     public async Task<ActionResult> ExtractDeliverablesFromSources(int id)
     {
         try

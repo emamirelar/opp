@@ -347,10 +347,12 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
 
         /// <summary>
         /// Gets all predefined high risks
+        /// Includes fallback lookup for RiskCategoryId using CategoryCode if not set
         /// </summary>
         public async Task<List<PreDefinedHighRiskModel>> GetPreDefinedHighRisksAsync()
         {
-            return await _context.PreDefinedHighRisks
+            // First, get the raw data from PreDefinedHighRisks
+            var highRisks = await _context.PreDefinedHighRisks
                 .Include(r => r.RiskCategory)
                 .Where(r => !r.IsDeleted && r.Status == EntityStatus.Active)
                 .OrderBy(r => r.DisplayOrder)
@@ -369,9 +371,31 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                     DetectionRuleType = r.DetectionRuleType,
                     DisplayOrder = r.DisplayOrder,
                     RiskCategoryId = r.RiskCategoryId,
-                    RiskCategoryName = r.RiskCategory != null ? r.RiskCategory.Name : null
+                    RiskCategoryName = r.RiskCategory != null ? r.RiskCategory.Name : null,
+                    OupQuestionId = r.OupQuestionId
                 })
                 .ToListAsync();
+
+            // Fallback: If any RiskCategoryId is null or 0, try to lookup by CategoryCode (ShortCode)
+            var missingCategoryHighRisks = highRisks.Where(hr => !hr.RiskCategoryId.HasValue || hr.RiskCategoryId == 0).ToList();
+            if (missingCategoryHighRisks.Any())
+            {
+                // Get category lookup by ShortCode (Level 3 categories only)
+                var categoryLookup = await _context.RiskCategories
+                    .Where(c => c.Level == 3 && !c.IsDeleted)
+                    .ToDictionaryAsync(c => c.ShortCode, c => new { c.Id, c.Name });
+
+                foreach (var hr in missingCategoryHighRisks)
+                {
+                    if (!string.IsNullOrEmpty(hr.CategoryCode) && categoryLookup.TryGetValue(hr.CategoryCode, out var category))
+                    {
+                        hr.RiskCategoryId = category.Id;
+                        hr.RiskCategoryName = category.Name;
+                    }
+                }
+            }
+
+            return highRisks;
         }
 
         #endregion
