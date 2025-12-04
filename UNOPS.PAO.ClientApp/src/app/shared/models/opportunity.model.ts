@@ -98,6 +98,7 @@ export interface Opportunity {
   opportunityBannerImage: string | null;
   opportunityThumbnail: string | null;
   isPooledFunding: boolean;
+  highRisksAcknowledged: boolean;
   deliveryModality: number | null;
   fundingPartners: OpportunityFundingPartner[];
   clientPartners: OpportunityClientPartner[];
@@ -713,20 +714,48 @@ export interface OpportunityInsightsResponse {
 
 /**
  * Risk Register Models - for DST Risks & Recommendations section
+ * Aligned with oUP risk management system
  */
 
 /**
- * Risk model matching backend RiskModel.cs
+ * Risk model matching backend RiskModel.cs (oUP aligned)
  */
 export interface Risk {
   id: number;
   entityType: string;
   entityId: number;
+  
+  // Mandatory fields
   title: string;
+  riskTypeId: number;
+  riskTypeName: string | null;
+  riskTypeCode: string | null;
+  riskCategoryId: number;
+  riskCategoryName: string | null;
+  riskCategoryFullPath: string | null;
+  riskProbabilityId: number;
+  riskProbabilityName: string | null;
+  riskProximityId: number;
+  riskProximityName: string | null;
+  riskImpactLevelId: number;
+  riskImpactLevelName: string | null;
+  riskResponseTypeId: number | null; // Mandatory for Opportunity type
+  riskResponseTypeName: string | null;
+  
+  // Optional fields
   description: string;
   recommendation: string;
+  
+  // Legacy fields (backward compatibility)
   impact: number; // 1=Low, 2=Medium, 3=High
   status: string;
+  
+  // PreDefined High Risk reference
+  preDefinedHighRiskId: number | null;
+  preDefinedHighRiskCode: string | null;
+  preDefinedHighRiskTitle: string | null;
+  
+  // Audit fields
   identifiedDate: string | null;
   identifiedBy: string | null;
   createdDate: string;
@@ -734,14 +763,167 @@ export interface Risk {
 }
 
 /**
- * Request model for creating/updating a risk
+ * Request model for creating/updating a risk (oUP aligned mandatory fields)
  */
 export interface RiskCreateRequest {
   entityId: number;
+  
+  // Mandatory fields
   title: string;
+  riskTypeId: number;
+  riskCategoryId: number; // Must be Level 3 (leaf) category
+  riskProbabilityId: number;
+  riskProximityId: number;
+  riskImpactLevelId: number;
+  riskResponseTypeId?: number | null; // Required if riskType = Opportunity
+  
+  // Optional fields
+  description?: string;
+  recommendation?: string;
+  preDefinedHighRiskId?: number | null;
+  
+  // Legacy field (backward compatibility)
+  impact?: number; // 1=Low, 2=Medium, 3=High
+}
+
+/**
+ * Risk Type lookup (Threat or Opportunity)
+ */
+export interface RiskTypeModel {
+  id: number;
+  name: string;
+  code: string;
+  description: string | null;
+  isResponseTypeMandatory: boolean;
+  displayOrder: number;
+}
+
+/**
+ * Risk Probability lookup
+ */
+export interface RiskProbabilityModel {
+  id: number;
+  name: string;
+  code: string;
+  displayLabel: string | null;
+  numericValue: number;
+  displayOrder: number;
+}
+
+/**
+ * Risk Proximity lookup
+ */
+export interface RiskProximityModel {
+  id: number;
+  name: string;
+  code: string;
+  monthsValue: number | null;
+  displayOrder: number;
+}
+
+/**
+ * Risk Impact Level lookup
+ */
+export interface RiskImpactLevelModel {
+  id: number;
+  name: string;
+  code: string;
+  displayLabel: string | null;
+  numericValue: number;
+  displayOrder: number;
+}
+
+/**
+ * Risk Response Type lookup
+ */
+export interface RiskResponseTypeModel {
+  id: number;
+  name: string;
+  code: string;
+  description: string | null;
+  validForThreat: boolean;
+  validForOpportunity: boolean;
+  displayOrder: number;
+}
+
+/**
+ * Combined response for all risk lookups
+ */
+export interface RiskLookupsResponse {
+  riskTypes: RiskTypeModel[];
+  probabilities: RiskProbabilityModel[];
+  proximities: RiskProximityModel[];
+  impactLevels: RiskImpactLevelModel[];
+  responseTypes: RiskResponseTypeModel[];
+}
+
+/**
+ * Risk Category model (3-level hierarchy)
+ */
+export interface RiskCategoryModel {
+  id: number;
+  code: string;
+  shortCode: string;
+  name: string;
+  level: number; // 1, 2, or 3
+  parentCategoryId: number | null;
+  parentCategoryName: string | null;
+  displayOrder: number;
+  isSelectable: boolean; // Only Level 3 are selectable
+  children: RiskCategoryModel[];
+}
+
+/**
+ * Response for Risk Category hierarchy
+ */
+export interface RiskCategoryHierarchyResponse {
+  categories: RiskCategoryModel[]; // Hierarchical (Level 1 with nested children)
+  selectableCategories: RiskCategoryModel[]; // Flat list of Level 3 only
+  totalLevel1: number;
+  totalLevel2: number;
+  totalLevel3: number;
+}
+
+/**
+ * PreDefined High Risk model (EAC checklist item)
+ */
+export interface PreDefinedHighRiskModel {
+  id: number;
+  code: string;
+  displayCode: string;
+  name: string;
+  shortTitle: string;
   description: string;
-  recommendation: string;
-  impact: number; // 1=Low, 2=Medium, 3=High
+  categoryCode: string;
+  level1: number;
+  level2Code: string;
+  isAutoDetectable: boolean;
+  detectionRuleType: string | null;
+  displayOrder: number;
+  riskCategoryId: number | null;
+  riskCategoryName: string | null;
+}
+
+/**
+ * AI-detected high risk recommendation
+ */
+export interface HighRiskRecommendation {
+  preDefinedHighRisk: PreDefinedHighRiskModel;
+  confidenceLevel: number; // 0-100
+  detectionReason: string;
+  triggerData: string;
+  isStronglyRecommended: boolean; // confidence >= 80
+}
+
+/**
+ * Response for High Risk Analysis
+ */
+export interface HighRiskAnalysisResponse {
+  availableHighRisks: PreDefinedHighRiskModel[];
+  recommendations: HighRiskRecommendation[];
+  alreadyAddedHighRiskIds: number[];
+  totalHighRisks: number;
+  stronglyRecommendedCount: number;
 }
 
 /**
@@ -754,6 +936,7 @@ export interface DSTRisksResponse {
 
 /**
  * AI-generated recommendation model matching backend DSTRecommendation
+ * Enhanced to support predefined high risks from oUP EAC checklist
  */
 export interface AIRiskRecommendation {
   title: string;
@@ -761,10 +944,48 @@ export interface AIRiskRecommendation {
   recommendation: string;
   relevanceScore: number;
   sourceRiskId: string | null;
+  /**
+   * oUP Question ID if this is a predefined high risk from EAC checklist
+   * Used as stable identifier for dismiss persistence and oUP mapping
+   */
+  oupQuestionId: number | null;
+  /**
+   * PreDefined High Risk entity ID (for linking when creating risk)
+   */
+  preDefinedHighRiskId: number | null;
+  /**
+   * Risk Category ID from the predefined high risk (Level 3 category)
+   */
+  riskCategoryId: number | null;
+  /**
+   * Confidence level (0-100) indicating how strongly this risk applies
+   * >= 80 means strongly recommended
+   */
+  confidenceLevel: number;
+  /**
+   * Source type: "PREDEFINED_HIGH_RISK" or "SIMILAR_PROJECT"
+   */
+  sourceType: 'PREDEFINED_HIGH_RISK' | 'SIMILAR_PROJECT';
+  /**
+   * Whether this is strongly recommended (confidence >= 80)
+   */
+  isStronglyRecommended: boolean;
+  /**
+   * Unique stable identifier for dismiss persistence
+   * Uses oupQuestionId for predefined risks, sourceRiskId for vector store risks
+   */
+  stableIdentifier: string;
 }
 
 /**
- * Response from GET dst-recommendations endpoint
+ * Request for POST dst-recommendations endpoint
+ */
+export interface DSTRecommendationsRequest {
+  dismissedOupQuestionIds: number[];
+}
+
+/**
+ * Response from POST dst-recommendations endpoint
  */
 export interface DSTRecommendationsResponse {
   recommendations: AIRiskRecommendation[];

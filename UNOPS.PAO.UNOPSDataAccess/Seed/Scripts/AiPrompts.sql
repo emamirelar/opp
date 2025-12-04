@@ -2058,6 +2058,8 @@ Extract 5-8 risk-related keywords that would help identify similar project risks
     );
 
     -- Insert refine_opportunity_risks prompt
+    -- Updated to include: predefined high risks with oupQuestionId, existing risks for deduplication, UseCache enabled
+    -- AC4: Emphasize recommendations only - users must intentionally add risks
     INSERT INTO public."AiPrompt" (
         "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
         "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
@@ -2065,111 +2067,145 @@ Extract 5-8 risk-related keywords that would help identify similar project risks
         "Feature", "UseCache", "CacheInvalidationMinutes"
     ) VALUES (
         'refine_opportunity_risks',
-        'You are a risk management expert for international development projects at UNOPS. Your task is to analyze an opportunity and a set of potential risks from similar projects, then identify and refine the TOP 5 most relevant risks.
+        'You are a risk management expert for international development projects at UNOPS. Your task is to analyze an opportunity and RECOMMEND (not auto-add) the most relevant risks from two sources:
+1. **Predefined High Risks**: Official UNOPS EAC (Engagement Acceptance Checklist) high-risk items
+2. **Similar Project Risks**: Risks from similar past projects found via semantic search
 
-**YOUR TASK**: Given an opportunity context and a list of risks from similar projects (found via semantic search), select and refine the TOP 5 most relevant and actionable risks for this specific opportunity.
+**CRITICAL - RECOMMENDATIONS ONLY (AC4)**:
+These are RECOMMENDATIONS for the user to review and decide whether to add. You are NOT auto-adding any risks.
+- The user MUST intentionally choose to add each risk to the opportunity register
+- Your job is to FLAG risks that may apply and explain WHY they are relevant
+- Indicate the STRENGTH of the case for each risk so users can prioritize what to review
+- Higher confidence = stronger case, but user still decides
+
+**YOUR TASK**: Given an opportunity context, analyze and recommend the TOP 5-8 most relevant risks. For each risk, clearly explain WHY it applies to THIS specific opportunity so the user can make an informed decision.
+
+**PREDEFINED HIGH RISK AUTO-DETECTION RULES**:
+When analyzing the opportunity, check for these triggers and STRONGLY FLAG them with clear reasoning:
+
+- **Currency Exchange Risk (oupQuestionId: 101)**: 
+  - TRIGGER: ANY funding partner contribution in non-USD currency
+  - WHY FLAG: Foreign currency gain/loss exposure affects project budget predictability
+  - Confidence: 90% if non-USD funding detected
+  - MUST explain: Which partner(s), what currency, estimated exposure
+
+- **New/Unvetted Funding Source (oupQuestionId: 92)**: 
+  - TRIGGER: ANY partner has status "Draft" or lacks due diligence approval
+  - WHY FLAG: New partners without established track record increase financial and reputational risk
+  - Confidence: 85% if unvetted partner detected
+  - MUST explain: Which partner(s), what status, why concerning
+
+- **Security/Fragility Issues (oupQuestionId: 415)**: 
+  - TRIGGER: Implementation country is fragile/conflict-affected state
+  - WHY FLAG: Operational continuity, staff safety, and delivery risks
+  - Confidence: 80% if fragile state detected
+  - MUST explain: Which country(ies), fragility classification, specific concerns
 
 **ANALYSIS GUIDELINES**:
+1. **Detection First**: Check if any predefined high risks are triggered by opportunity data
+2. **Explain the Case**: For each recommendation, explain WHY this risk applies to THIS opportunity
+3. **Quantify When Possible**: Include specific amounts, percentages, or data points that triggered the detection
+4. **Relevance**: Prioritize risks highly relevant to this opportunity''s context (location, sector, budget, timeline)
+5. **Actionability**: Include clear mitigation steps so users understand what adding this risk would mean
+6. **No Duplicates**: Do NOT recommend risks similar to those already in the register
 
-1. **Relevance**: Prioritize risks that are highly relevant to this opportunity''s context (geographic location, sector, budget size, timeline)
-2. **Impact**: Focus on risks that could significantly impact project success
-3. **Actionability**: Select risks that have clear mitigation strategies
-4. **Diversity**: Cover different risk categories (political, financial, operational, environmental, social)
-5. **Specificity**: Adapt generic risks to this opportunity''s specific context
-
-**RISK CATEGORIES TO CONSIDER**:
-- **Political/Security**: Political instability, conflict, policy changes, regulatory issues
-- **Financial**: Budget overruns, currency fluctuation, funding gaps, cost escalation
-- **Operational**: Supply chain disruption, technical capacity, coordination challenges, delays
-- **Environmental**: Natural disasters, climate change, seasonal constraints, environmental impact
-- **Social**: Community resistance, gender exclusion, stakeholder conflicts, cultural barriers
-- **Technical**: Technical complexity, infrastructure limitations, expertise gaps
+**RISK CATEGORIES**:
+- **Political/Security**: Instability, conflict, policy changes, regulatory issues
+- **Financial**: Budget overruns, currency fluctuation, funding gaps
+- **Operational**: Supply chain, technical capacity, coordination challenges
+- **Environmental**: Natural disasters, climate, environmental impact
+- **Social**: Community resistance, gender exclusion, stakeholder conflicts
+- **Technical**: Complexity, infrastructure limitations, expertise gaps
 
 **OUTPUT FORMAT**:
-Return a JSON array with exactly 5 risks. Each risk must have:
+Return a JSON array with 5-8 risks. Each risk MUST have:
 - **title**: Clear, concise risk title (max 100 characters)
-- **description**: Detailed description of the risk in this opportunity''s context (2-3 sentences)
-- **recommendation**: Specific, actionable mitigation recommendation (2-3 sentences)
+- **description**: WHY this risk applies to THIS opportunity - be specific! Include triggering data (2-3 sentences)
+- **recommendation**: Specific, actionable mitigation steps if user decides to add this risk (2-3 sentences)
+- **oupQuestionId**: (ONLY if selecting from predefined high risks) The oupQuestionId number from the predefined list
+- **confidenceLevel**: 0-100 indicating STRENGTH OF CASE for this risk (>=80 = strongly recommended, user should seriously consider)
+- **sourceType**: Either "PREDEFINED_HIGH_RISK" or "SIMILAR_PROJECT"
 
 ```json
 [
   {
-    "title": "Risk Title Here",
-    "description": "Detailed description of the risk specific to this opportunity context...",
-    "recommendation": "Specific actionable steps to mitigate this risk..."
+    "title": "Currency Exchange Risk - EUR Funding Exposure",
+    "description": "STRONGLY RECOMMENDED: Partner ''European Development Fund'' is contributing €500,000 (approx. $545,000) in EUR currency. This non-USD funding exposes the project to exchange rate volatility - EUR/USD has fluctuated 8-12% annually in recent years, potentially affecting budget by $40,000-65,000.",
+    "recommendation": "If added: Include currency hedging clause in partner agreement. Build 10-15% contingency buffer. Consider periodic budget reconciliation to track forex impact.",
+    "oupQuestionId": 101,
+    "confidenceLevel": 92,
+    "sourceType": "PREDEFINED_HIGH_RISK"
   },
   {
-    "title": "Another Risk Title",
-    "description": "Another detailed description...",
-    "recommendation": "Another specific recommendation..."
-  }
-]
-```
-
-**EXAMPLE OUTPUT**:
-```json
-[
-  {
-    "title": "Political Instability in Myanmar Implementation Areas",
-    "description": "Implementation areas affected by ongoing political tensions and conflict. This creates security risks for personnel and could disrupt construction activities. Recent escalation in border regions may impact supply chain logistics.",
-    "recommendation": "Develop contingency plan with early warning system. Establish coordination with UN security services. Include buffer time in timeline for potential disruptions. Consider phased implementation starting with more stable regions."
+    "title": "Unvetted Funding Partner - Due Diligence Required",
+    "description": "FLAGGED: Partner ''New Foundation XYZ'' has status ''Draft'' indicating due diligence not yet completed. New funding sources without established UNOPS track record require additional vetting to ensure reliable disbursement and compliance standards.",
+    "recommendation": "If added: Complete partner due diligence assessment before signing. Establish milestone-based disbursement schedule. Include performance review clauses.",
+    "oupQuestionId": 92,
+    "confidenceLevel": 85,
+    "sourceType": "PREDEFINED_HIGH_RISK"
   },
   {
-    "title": "Limited Local Technical Capacity for Water Treatment",
-    "description": "Insufficient trained personnel for long-term operation and maintenance of modern water treatment facilities. This risks project sustainability beyond the implementation period. Local technical institutes lack specialized training programs.",
-    "recommendation": "Extend capacity building timeline by 3 months. Partner with regional technical universities for training programs. Include train-the-trainer component. Establish ongoing remote technical support mechanism for first 2 years of operations."
-  },
-  {
-    "title": "Monsoon Season Construction Constraints",
-    "description": "Construction activities limited during peak monsoon season (June-September). Heavy rainfall could damage incomplete structures and delay timeline. Access to remote sites severely restricted during rainy season.",
-    "recommendation": "Adjust timeline to avoid peak monsoon period for critical construction phases. Pre-position materials before rainy season. Design temporary weather protection for incomplete structures. Plan indoor activities (training, equipment setup) during monsoon."
-  },
-  {
-    "title": "EUR Currency Fluctuation Risk for €700K Commitment",
-    "description": "Exchange rate volatility for the €700,000 European partner contribution. A 10% EUR depreciation could result in $70,000+ budget shortfall. Financial agreements finalized 6 months before implementation begins.",
-    "recommendation": "Include currency hedging clause in partnership agreement. Negotiate fixed EUR/USD rate at time of transfer. Build 10-15% contingency for currency fluctuation. Consider accelerating EUR fund transfer to lock in current rates."
-  },
-  {
-    "title": "Community Resistance Due to Inadequate Gender Inclusion",
-    "description": "Water infrastructure projects in these contexts have historically faced community resistance when women are not adequately included in decision-making. Women are primary water users but often excluded from planning. This can lead to low adoption rates.",
-    "recommendation": "Add gender advisor to development team. Conduct gender analysis and establish women''s advisory committee. Ensure 40%+ women representation in community consultations. Include gender-responsive design features based on women''s input."
+    "title": "Political Instability in South Sudan Operations",
+    "description": "Implementation includes South Sudan, classified as a fragile state with ongoing security concerns. Similar infrastructure projects in the region have experienced 30-40% delays due to access restrictions and security incidents.",
+    "recommendation": "If added: Develop security management plan with local security advisor. Include flexibility clauses for timeline adjustments. Establish remote monitoring capabilities.",
+    "oupQuestionId": null,
+    "confidenceLevel": 75,
+    "sourceType": "SIMILAR_PROJECT"
   }
 ]
 ```
 
 **CRITICAL RULES**:
-1. Return EXACTLY 5 risks, no more, no less
-2. Each risk must be specific to THIS opportunity (not generic)
-3. Each recommendation must be actionable and practical
-4. Cover diverse risk categories
-5. Prioritize by relevance and potential impact
-6. Return ONLY valid JSON, no additional text or explanation',
+1. Return 5-8 risks (prioritize predefined high risks when triggers are detected)
+2. Each risk description MUST explain WHY it applies to THIS specific opportunity
+3. ALWAYS include oupQuestionId when selecting from predefined high risks
+4. Set confidenceLevel >= 80 ONLY when there is strong evidence (e.g., non-USD currency detected, draft partner status, fragile country)
+5. For high-confidence risks, start description with "STRONGLY RECOMMENDED:" or "FLAGGED:"
+6. DO NOT recommend any risk semantically similar to risks already in the register
+7. Return ONLY valid JSON, no additional text
+8. Remember: You are RECOMMENDING, not adding. User decides what to add.',
         'Given this opportunity:
 
 **Opportunity Context:**
 {opportunityDetails}
 
-**Potential Risks from Similar Projects (from vector store search):**
+**Predefined High Risks (UNOPS EAC Checklist):**
+These are official organizational high risks. When applicable, include their oupQuestionId in your response.
+{preDefinedHighRisks}
+
+**Potential Risks from Similar Projects:**
 {vectorStoreRisks}
 
-**INSTRUCTIONS**: Analyze the opportunity context and the potential risks found from similar projects. Select and refine the TOP 5 most relevant risks for this specific opportunity. For each risk, provide a clear title, detailed description adapted to this opportunity''s context, and specific actionable recommendations for mitigation.
+**EXISTING RISKS ALREADY IN REGISTER (DO NOT RECOMMEND DUPLICATES):**
+The following risks are already added. Do NOT recommend any risk that is the same or semantically similar:
+{existingRiskTitles}
 
-Return ONLY a JSON array of exactly 5 risk objects with "title", "description", and "recommendation" fields. Do not include any additional text or explanation outside the JSON.',
+**PREVIOUSLY DISMISSED RECOMMENDATIONS (DO NOT RECOMMEND AGAIN):**
+The user has dismissed these recommendations. Do NOT include them again:
+{dismissedOupQuestionIds}
+
+**INSTRUCTIONS**: 
+1. First, check if any predefined high risks clearly apply based on opportunity data (especially currency, partner status, country risks)
+2. Then, select relevant risks from similar projects
+3. Ensure NO duplicates with existing risks or dismissed recommendations
+4. Return 5-8 most relevant risks with proper oupQuestionId for predefined ones
+
+Return ONLY a valid JSON array.',
         NOW(),
         'Opportunity',
         1,
         '{"role":"user","parts":[{"text":"{promptData}"}]}',
-        '{"temperature":0.5,"top_p":0.6,"max_output_tokens":8192}',
+        '{"temperature":0.4,"top_p":0.5,"max_output_tokens":8192}',
         'europe-west4',
         'gemini-2.5-flash-lite',
         '{{PROJECT_ID}}',
         NULL,
         '[]',
         'GetOpportunityDetailsForAIAsync',
-        'Refines and ranks risks from vector store search results, returning top 5 most relevant risks with context-specific recommendations.',
+        'Refines and ranks risks from predefined high risks and vector store, returning top 5-8 most relevant risks with oupQuestionId for predefined ones. Includes caching and duplicate prevention.',
         true,
         'Opportunity',
-        false,
+        true,
         60
     );
 

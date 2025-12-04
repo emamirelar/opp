@@ -2,6 +2,8 @@ namespace UNOPS.PAO.Domain.Enums
 {
     /// <summary>
     /// Defines the impact levels for risks
+    /// NOTE: This enum is deprecated. Use RiskImpactLevel entity instead for oUP alignment.
+    /// Kept for backward compatibility with existing code.
     /// </summary>
     public enum RiskImpact
     {

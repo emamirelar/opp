@@ -269,23 +269,159 @@ public class UNOPSAppDbContext : AppDbContext
 
             entity.Property(e => e.Title)
                   .IsRequired()
-                  .HasMaxLength(255);
+                  .HasMaxLength(500);
 
-            entity.Property(e => e.Description)
-                  .IsRequired();
+            entity.Property(e => e.Description);
 
-            entity.Property(e => e.Recommendation)
-                  .IsRequired();
+            entity.Property(e => e.Recommendation);
 
+            // Legacy enum fields (kept for backward compatibility)
             entity.Property(e => e.Impact)
-                  .IsRequired()
                   .HasConversion<int>();
 
             entity.Property(e => e.RiskStatus)
                   .IsRequired()
                   .HasConversion<int>()
                   .HasDefaultValue(RiskStatus.Open);
+
+            // FK to RiskType (mandatory)
+            entity.HasOne(e => e.RiskTypeEntity)
+                  .WithMany()
+                  .HasForeignKey(e => e.RiskTypeId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            // FK to RiskCategory (mandatory - Level 3 leaf)
+            entity.HasOne(e => e.RiskCategory)
+                  .WithMany()
+                  .HasForeignKey(e => e.RiskCategoryId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            // FK to RiskProbability (mandatory)
+            entity.HasOne(e => e.RiskProbabilityEntity)
+                  .WithMany()
+                  .HasForeignKey(e => e.RiskProbabilityId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            // FK to RiskProximity (mandatory)
+            entity.HasOne(e => e.RiskProximityEntity)
+                  .WithMany()
+                  .HasForeignKey(e => e.RiskProximityId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            // FK to RiskImpactLevel (mandatory)
+            entity.HasOne(e => e.RiskImpactLevelEntity)
+                  .WithMany()
+                  .HasForeignKey(e => e.RiskImpactLevelId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            // FK to RiskResponseType (optional - mandatory only for Opportunity type)
+            entity.HasOne(e => e.RiskResponseTypeEntity)
+                  .WithMany()
+                  .HasForeignKey(e => e.RiskResponseTypeId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            // FK to PreDefinedHighRisk (optional - when created from checklist)
+            entity.HasOne(e => e.PreDefinedHighRisk)
+                  .WithMany()
+                  .HasForeignKey(e => e.PreDefinedHighRiskId)
+                  .OnDelete(DeleteBehavior.SetNull);
         });
+
+        #region Risk Lookup Tables Configuration
+
+        // Configure RiskType entity
+        modelBuilder.Entity<RiskType>(entity =>
+        {
+            entity.ToTable("RiskTypes");
+            entity.HasIndex(e => e.Code).IsUnique();
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Code).IsRequired().HasMaxLength(20);
+        });
+
+        // Configure RiskProbability entity
+        modelBuilder.Entity<RiskProbability>(entity =>
+        {
+            entity.ToTable("RiskProbabilities");
+            entity.HasIndex(e => e.Code).IsUnique();
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Code).IsRequired().HasMaxLength(20);
+        });
+
+        // Configure RiskProximity entity
+        modelBuilder.Entity<RiskProximity>(entity =>
+        {
+            entity.ToTable("RiskProximities");
+            entity.HasIndex(e => e.Code).IsUnique();
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Code).IsRequired().HasMaxLength(30);
+        });
+
+        // Configure RiskImpactLevel entity
+        modelBuilder.Entity<RiskImpactLevel>(entity =>
+        {
+            entity.ToTable("RiskImpactLevels");
+            entity.HasIndex(e => e.Code).IsUnique();
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Code).IsRequired().HasMaxLength(20);
+        });
+
+        // Configure RiskResponseType entity
+        modelBuilder.Entity<RiskResponseType>(entity =>
+        {
+            entity.ToTable("RiskResponseTypes");
+            entity.HasIndex(e => e.Code).IsUnique();
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Code).IsRequired().HasMaxLength(20);
+        });
+
+        #endregion
+
+        #region Risk Category and PreDefined High Risk Configuration
+
+        // Configure RiskCategory entity (3-level hierarchy)
+        modelBuilder.Entity<RiskCategory>(entity =>
+        {
+            entity.ToTable("RiskCategories");
+            entity.HasIndex(e => e.Code).IsUnique();
+            entity.HasIndex(e => e.ShortCode);
+            entity.HasIndex(e => e.Level);
+
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.Code).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.ShortCode).IsRequired().HasMaxLength(50);
+
+            // Self-referential FK for hierarchy
+            entity.HasOne(e => e.ParentCategory)
+                  .WithMany(e => e.ChildCategories)
+                  .HasForeignKey(e => e.ParentCategoryId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Configure PreDefinedHighRisk entity
+        modelBuilder.Entity<PreDefinedHighRisk>(entity =>
+        {
+            entity.ToTable("PreDefinedHighRisks");
+            entity.HasIndex(e => e.Code).IsUnique();
+            entity.HasIndex(e => e.OupQuestionId);
+            entity.HasIndex(e => e.IsAutoDetectable);
+            entity.HasIndex(e => e.CategoryCode);
+
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.Code).IsRequired().HasMaxLength(20);
+            entity.Property(e => e.DisplayCode).HasMaxLength(20);
+            entity.Property(e => e.ShortTitle).HasMaxLength(255);
+            entity.Property(e => e.CategoryCode).HasMaxLength(50);
+            entity.Property(e => e.Level2Code).HasMaxLength(10);
+            entity.Property(e => e.DetectionRuleType).HasMaxLength(50);
+
+            // FK to RiskCategory (Level 3)
+            entity.HasOne(e => e.RiskCategory)
+                  .WithMany()
+                  .HasForeignKey(e => e.RiskCategoryId)
+                  .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        #endregion
     }
 
     public new DbSet<UNOPSContact> Contacts { get; set; }
@@ -325,6 +461,19 @@ public class UNOPSAppDbContext : AppDbContext
 
     // Risk register
     public DbSet<Risk> Risks { get; set; }
+    
+    // Risk lookup tables (oUP aligned)
+    public DbSet<RiskType> RiskTypes { get; set; }
+    public DbSet<RiskProbability> RiskProbabilities { get; set; }
+    public DbSet<RiskProximity> RiskProximities { get; set; }
+    public DbSet<RiskImpactLevel> RiskImpactLevels { get; set; }
+    public DbSet<RiskResponseType> RiskResponseTypes { get; set; }
+    
+    // Risk categories (3-level hierarchy)
+    public DbSet<RiskCategory> RiskCategories { get; set; }
+    
+    // PreDefined High Risks (EAC checklist items)
+    public DbSet<PreDefinedHighRisk> PreDefinedHighRisks { get; set; }
     
     // Base Engagement entities (externally managed, read-only)
     public DbSet<BaseEngagement> BaseEngagements { get; set; }

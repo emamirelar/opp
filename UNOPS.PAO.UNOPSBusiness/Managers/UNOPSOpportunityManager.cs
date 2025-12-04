@@ -3025,5 +3025,27 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         
         return agreements;
     }
+
+    /// <summary>
+    /// Updates the high risk acknowledgement status for an opportunity
+    /// AC1: User must acknowledge they've reviewed all applicable organizational high risks
+    /// </summary>
+    /// <param name="opportunityId">The opportunity ID</param>
+    /// <param name="acknowledged">Whether the high risks have been acknowledged</param>
+    /// <returns>True if updated successfully</returns>
+    public async Task<bool> UpdateHighRiskAcknowledgementAsync(int opportunityId, bool acknowledged)
+    {
+        var opportunity = await context.Opportunities.FindAsync(opportunityId);
+        if (opportunity == null)
+        {
+            return false;
+        }
+
+        opportunity.HighRisksAcknowledged = acknowledged;
+        // LastModifiedDate and LastModifiedBy are handled automatically by AuditableDbContext
+
+        await context.SaveChangesAsync();
+        return true;
+    }
 }
 

@@ -1136,5 +1136,10 @@ public class OpportunityManager : IOpportunityManager
     {
         throw new NotImplementedException("GetOpportunitySearchFields is only implemented in UNOPSOpportunityManager");
     }
+
+    public Task<bool> UpdateHighRiskAcknowledgementAsync(int opportunityId, bool acknowledged)
+    {
+        throw new NotImplementedException("UpdateHighRiskAcknowledgementAsync is only implemented in UNOPSOpportunityManager");
+    }
 }
 

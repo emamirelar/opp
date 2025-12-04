@@ -1000,16 +1000,21 @@ public class OpportunityController : BaseController
 
     /// <summary>
     /// Gets AI-powered DST risk recommendations for an opportunity
+    /// Supports POST to pass dismissed recommendation IDs for filtering
     /// </summary>
-    [HttpGet(APIDictionary.Opportunity + "/{id}/dst-recommendations")]
+    [HttpPost(APIDictionary.Opportunity + "/{id}/dst-recommendations")]
     [AccessControlled(EntityTypes.Opportunity, "read")]
-    public async Task<ActionResult<DSTRecommendationsResponse>> GetDSTRecommendations(int id, [FromQuery] int maxResults = 10)
+    public async Task<ActionResult<DSTRecommendationsResponse>> GetDSTRecommendations(
+        int id, 
+        [FromQuery] int maxResults = 10,
+        [FromBody] DSTRecommendationsRequest? request = null)
     {
         try
         {
-            _logger.LogInformation("🎯 [API] Getting DST recommendations for opportunity {OpportunityId}", id);
+            var dismissedIds = request?.DismissedOupQuestionIds ?? new List<int>();
+            _logger.LogInformation("🎯 [API] Getting DST recommendations for opportunity {OpportunityId} (dismissed: {DismissedCount})", id, dismissedIds.Count);
 
-            var response = await _geminiManager.GetDSTRecommendationsAsync(id, User, maxResults);
+            var response = await _geminiManager.GetDSTRecommendationsAsync(id, User, maxResults, dismissedIds);
 
             _logger.LogInformation("✅ [API] Successfully retrieved {Count} DST recommendations for opportunity {OpportunityId}",
                 response.Recommendations?.Count ?? 0, id);
@@ -1116,6 +1121,165 @@ public class OpportunityController : BaseController
             return StatusCode(500, new { error = "Internal server error while updating DST risk", details = ex.Message });
         }
     }
+
+    /// <summary>
+    /// Deletes a risk from the risk register (soft delete)
+    /// </summary>
+    [HttpDelete(APIDictionary.Opportunity + "/{id}/dst-risks/{riskId}")]
+    [AccessControlled(EntityTypes.Opportunity, "update")]
+    public async Task<ActionResult> DeleteDSTRisk(int id, int riskId)
+    {
+        try
+        {
+            _logger.LogInformation("🗑️ [API] Deleting DST risk {RiskId} for opportunity {OpportunityId}", riskId, id);
+
+            var deleted = await _riskManager.DeleteRiskAsync(riskId, User);
+
+            if (!deleted)
+            {
+                return NotFound(new { error = $"Risk with ID {riskId} not found" });
+            }
+
+            _logger.LogInformation("✅ [API] Successfully deleted DST risk {RiskId} for opportunity {OpportunityId}", riskId, id);
+
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting DST risk {RiskId} for opportunity {OpportunityId}", riskId, id);
+            return StatusCode(500, new { error = "Internal server error while deleting DST risk", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Updates the high risk acknowledgement status for an opportunity
+    /// AC1: User must acknowledge they've reviewed all applicable organizational high risks
+    /// </summary>
+    [HttpPut(APIDictionary.Opportunity + "/{id}/acknowledge-high-risks")]
+    [AccessControlled(EntityTypes.Opportunity, "update")]
+    public async Task<ActionResult> AcknowledgeHighRisks(int id, [FromBody] bool acknowledged)
+    {
+        try
+        {
+            _logger.LogInformation("📋 [API] Updating high risk acknowledgement for opportunity {OpportunityId}: {Acknowledged}", id, acknowledged);
+
+            var result = await _manager.UpdateHighRiskAcknowledgementAsync(id, acknowledged);
+            if (!result)
+            {
+                return NotFound(new { error = $"Opportunity with ID {id} not found" });
+            }
+
+            _logger.LogInformation("✅ [API] Successfully updated high risk acknowledgement for opportunity {OpportunityId}", id);
+
+            return Ok(new { acknowledged = acknowledged });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating high risk acknowledgement for opportunity {OpportunityId}", id);
+            return StatusCode(500, new { error = "Internal server error while updating high risk acknowledgement", details = ex.Message });
+        }
+    }
+
+    #region Risk Lookups & Categories
+
+    /// <summary>
+    /// Gets all risk lookup data (types, probabilities, proximities, impact levels, response types)
+    /// </summary>
+    [HttpGet(APIDictionary.Risk + "/lookups")]
+    [AccessControlled(EntityTypes.Opportunity, "read")]
+    public async Task<ActionResult<RiskLookupsResponse>> GetRiskLookups()
+    {
+        try
+        {
+            _logger.LogInformation("📚 [API] Getting risk lookup data");
+
+            var lookups = await _riskManager.GetRiskLookupsAsync();
+
+            _logger.LogInformation("✅ [API] Successfully retrieved risk lookups");
+
+            return Ok(lookups);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting risk lookups");
+            return StatusCode(500, new { error = "Internal server error while getting risk lookups", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Gets risk categories in hierarchical format (3 levels)
+    /// </summary>
+    [HttpGet(APIDictionary.Risk + "/categories")]
+    [AccessControlled(EntityTypes.Opportunity, "read")]
+    public async Task<ActionResult<RiskCategoryHierarchyResponse>> GetRiskCategories()
+    {
+        try
+        {
+            _logger.LogInformation("📁 [API] Getting risk categories");
+
+            var categories = await _riskManager.GetRiskCategoriesAsync();
+
+            _logger.LogInformation("✅ [API] Successfully retrieved {Count} selectable risk categories", categories.TotalLevel3);
+
+            return Ok(categories);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting risk categories");
+            return StatusCode(500, new { error = "Internal server error while getting risk categories", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Gets all predefined high risks (EAC checklist items)
+    /// </summary>
+    [HttpGet(APIDictionary.Risk + "/high-risk-checklist")]
+    [AccessControlled(EntityTypes.Opportunity, "read")]
+    public async Task<ActionResult<List<PreDefinedHighRiskModel>>> GetHighRiskChecklist()
+    {
+        try
+        {
+            _logger.LogInformation("📋 [API] Getting high risk checklist");
+
+            var highRisks = await _riskManager.GetPreDefinedHighRisksAsync();
+
+            _logger.LogInformation("✅ [API] Successfully retrieved {Count} high risk checklist items", highRisks.Count);
+
+            return Ok(highRisks);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting high risk checklist");
+            return StatusCode(500, new { error = "Internal server error while getting high risk checklist", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Gets high risk analysis for an opportunity with auto-detected recommendations
+    /// </summary>
+    [HttpGet(APIDictionary.Opportunity + "/{id}/high-risk-analysis")]
+    [AccessControlled(EntityTypes.Opportunity, "read")]
+    public async Task<ActionResult<HighRiskAnalysisResponse>> GetHighRiskAnalysis(int id)
+    {
+        try
+        {
+            _logger.LogInformation("🔍 [API] Getting high risk analysis for opportunity {OpportunityId}", id);
+
+            var analysis = await _riskManager.GetHighRiskAnalysisAsync(id, User);
+
+            _logger.LogInformation("✅ [API] Successfully retrieved high risk analysis for opportunity {OpportunityId}: {StronglyRecommended} strongly recommended", 
+                id, analysis.StronglyRecommendedCount);
+
+            return Ok(analysis);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting high risk analysis for opportunity {OpportunityId}", id);
+            return StatusCode(500, new { error = "Internal server error while getting high risk analysis", details = ex.Message });
+        }
+    }
+
+    #endregion
 
     /// <summary>
     /// Gets AI-generated insights and suggestions for an opportunity
