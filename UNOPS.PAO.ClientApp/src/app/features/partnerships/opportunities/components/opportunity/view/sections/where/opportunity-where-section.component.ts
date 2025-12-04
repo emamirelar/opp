@@ -329,7 +329,7 @@ export class OpportunityWhereSectionComponent implements OnInit {
         this.changesSavedOrDiscarded.emit();
         this.feedbackService.showSuccessToast({
           summary: this.translateService.instant('message.success'),
-          detail: this.translateService.instant('message.opportunity.whereSectionUpdated')
+          detail: this.translateService.instant('message.opportunity.updatedSuccessfully')
         });
         this.cdr.detectChanges();
       },
