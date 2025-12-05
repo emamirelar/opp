@@ -188,6 +188,46 @@ export class EntityArtifactService {
   }
 
   /**
+   * Upload a document artifact to Google Cloud Storage
+   * Documents are stored with folder path: EntityArtifacts/{ArtifactCode}/{Entity}/{EntityId}/
+   * The GCS URL is stored in ValueText instead of base64 in ValueJson
+   */
+  uploadDocumentArtifact(
+    entityType: string,
+    entityId: number,
+    artifactTypeId: number,
+    artifactTypeCode: string,
+    file: File,
+    name?: string,
+    source?: string
+  ): Observable<EntityArtifactResponse> {
+    const formData = new FormData();
+    formData.append('EntityType', entityType);
+    formData.append('EntityId', entityId.toString());
+    formData.append('ArtifactTypeId', artifactTypeId.toString());
+    formData.append('ArtifactTypeCode', artifactTypeCode);
+    formData.append('File', file);
+    if (name) {
+      formData.append('Name', name);
+    }
+    if (source) {
+      formData.append('Source', source);
+    }
+    return this.http.post<EntityArtifactResponse>(`${this.baseUrl}/upload-document`, formData);
+  }
+
+  /**
+   * Get a signed URL for viewing/downloading a document artifact
+   */
+  getDocumentUrl(entityType: string, entityId: number, artifactTypeId: number): Observable<{ url: string; fileName: string }> {
+    const params = new HttpParams()
+      .set('entityType', entityType)
+      .set('entityId', entityId.toString())
+      .set('artifactTypeId', artifactTypeId.toString());
+    return this.http.get<{ url: string; fileName: string }>(`${this.baseUrl}/document-url`, { params });
+  }
+
+  /**
    * Get all artifacts for a specific entity
    */
   getEntityArtifacts(entityType: string, entityId: number): Observable<EntityArtifactResponse[]> {

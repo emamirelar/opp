@@ -170,6 +170,23 @@ public static class ArtifactTypeSeeder_OrganizationHierarchy
                 Order = 2000,
                 Status = EntityStatus.Active,
                 IsDeleted = false
+            },
+            new ArtifactType
+            {
+                Name = "Guidance",
+                ArtifactTypeCode = "Guidance",
+                ArtifactDataTypeId = documentDataTypeId,
+                Description = "Entity Guidance Document",
+                Category = null,
+                ApplicableEntityTypes = "OrganizationHierarchy",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
+                IsUsedForCalculations = false,
+                IsUsedForAI = true,
+                Order = 2001,
+                Status = EntityStatus.Active,
+                IsDeleted = false
             }
         };
     }
