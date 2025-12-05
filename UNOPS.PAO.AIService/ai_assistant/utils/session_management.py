@@ -162,13 +162,13 @@ async def update_session_state_in_database(
         logger.info(f"💾 Updating session state for {app_name}/{user_id}/{session_id}")
         logger.info(f"💾 State updates: {list(state_updates.keys())}")
         
-        # Access the database session factory from the service
-        with session_service.database_session_factory() as db_session:
+        # Access the database session factory from the service (async in ADK 1.3.0+)
+        async with session_service.database_session_factory() as db_session:
             # Import the StorageSession model from the session service module
             from google.adk.sessions.database_session_service import StorageSession
             
-            # Get the existing session
-            storage_session = db_session.get(StorageSession, (app_name, user_id, session_id))
+            # Get the existing session (use await for async session)
+            storage_session = await db_session.get(StorageSession, (app_name, user_id, session_id))
             
             if storage_session:
                 # Update the state with new data
@@ -184,8 +184,8 @@ async def update_session_state_in_database(
                 
                 logger.info(f"💾 State update summary: +{len(added_keys)} new, ~{len(updated_keys)} updated")
                 
-                # Commit the changes
-                db_session.commit()
+                # Commit the changes (use await for async session)
+                await db_session.commit()
                 logger.info("✅ Successfully updated session state in database")
             else:
                 logger.error(f"❌ Session {session_id} not found in database for state update")

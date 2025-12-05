@@ -214,6 +214,8 @@ public class APIDictionary
     public const string EntityArtifactRecords = EntityArtifacts + "/entity-records";
     public const string EntityArtifactGet = EntityArtifacts + "/get";
     public const string EntityArtifactUpsert = EntityArtifacts + "/upsert";
+    public const string EntityArtifactUploadDocument = EntityArtifacts + "/upload-document";
+    public const string EntityArtifactDocumentUrl = EntityArtifacts + "/document-url";
     public const string EntityArtifactList = EntityArtifacts + "/list";
     
     // Bulk Entity Artifacts

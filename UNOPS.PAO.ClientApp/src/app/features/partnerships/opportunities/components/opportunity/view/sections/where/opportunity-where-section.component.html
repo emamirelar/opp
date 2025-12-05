@@ -218,6 +218,46 @@
     </p-message>
   }
 
+  <!-- Selected Countries Panel - Always visible when countries are selected -->
+  @if (selectedCountriesData().size > 0) {
+    <div class="mb-4 bg-unops-primary-container-soft border border-unops-primary-200 rounded-unops-lg p-4">
+      <div class="flex items-center justify-between mb-3">
+        <h4 class="text-sm font-semibold text-unops-secondary flex items-center gap-2">
+          <i class="pi pi-check-circle text-unops-primary"></i>
+          {{ 'label.selectedCountries' | translate }} ({{ selectedCountriesData().size }})
+        </h4>
+        <p-button
+          [label]="'button.clear' | translate"
+          icon="pi pi-times"
+          size="small"
+          severity="secondary"
+          [text]="true"
+          (onClick)="clearSearchSelections()"
+        />
+      </div>
+      <div class="flex flex-wrap gap-2">
+        @for (country of selectedCountriesData() | keyvalue; track country.key) {
+          <div
+            class="inline-flex items-center gap-2 bg-unops-surface-primary border border-unops-primary-300 rounded-full px-3 py-1.5 text-sm"
+          >
+            <span class="font-medium text-unops-secondary">{{ country.value.name }}</span>
+            @if (country.value.code) {
+              <span class="text-xs text-unops-neutral-600">({{ country.value.code }})</span>
+            }
+            <button
+              type="button"
+              class="ml-1 text-unops-neutral-500 hover:text-unops-error transition-colors"
+              (click)="removeSelectedCountry(country.value.id)"
+              [title]="'button.remove' | translate"
+            >
+              <i class="pi pi-times text-xs"></i>
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
   <!-- Dynamic Search Mode -->
   <div>
     <div class="space-y-4">
@@ -460,22 +500,6 @@
           </p-tabs>
         </div>
 
-        <!-- Selected count and clear button -->
-        @if (selectedSearchResults().size > 0) {
-          <div class="flex items-center justify-between bg-unops-primary-container-soft p-3 rounded-unops-lg">
-            <span class="text-sm font-semibold text-unops-secondary">
-              {{ 'message.countriesSelected' | translate:{ count: selectedSearchResults().size } }}
-            </span>
-            <p-button
-              [label]="'button.clearSelection' | translate"
-              icon="pi pi-times"
-              size="small"
-              severity="secondary"
-              [text]="true"
-              (onClick)="clearSearchSelections()"
-            />
-          </div>
-        }
       } @else if (searchTerm.value && searchTerm.value.trim().length >= 2 && !isSearching()) {
         <div class="text-center py-8 text-unops-neutral-500">
           <i class="pi pi-search text-4xl mb-3 text-unops-neutral-400"></i>
