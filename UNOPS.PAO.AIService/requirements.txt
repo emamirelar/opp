@@ -21,6 +21,7 @@ python-multipart>=0.0.6,<1.0.0
 
 # Database - PostgreSQL support
 psycopg2-binary>=2.9.7,<3.0.0
+asyncpg>=0.29.0,<1.0.0  # Async PostgreSQL driver required by ADK for database sessions
 
 # Core utilities with constraints
 requests>=2.31.0,<3.0.0
