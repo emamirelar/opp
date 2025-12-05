@@ -194,10 +194,10 @@ def _parse_connection_string_to_url(connection_string: str) -> str:
         import urllib.parse
         encoded_password = urllib.parse.quote(password, safe='')
         
-        # Construct PostgreSQL URL
-        postgresql_url = f"postgresql://{username}:{encoded_password}@{host}:{port}/{database}"
+        # Construct PostgreSQL URL with asyncpg driver (required for ADK 1.3.0+)
+        postgresql_url = f"postgresql+asyncpg://{username}:{encoded_password}@{host}:{port}/{database}"
         
-        logger.info(f"Successfully converted connection string to PostgreSQL URL format")
+        logger.info(f"Successfully converted connection string to PostgreSQL URL format (asyncpg)")
         return postgresql_url
         
     except Exception as e:
