@@ -104,6 +104,12 @@ public class Opportunity : ModifiableDeletableEntity
     public bool IsPooledFunding { get; set; }
     
     /// <summary>
+    /// Indicates that the user has acknowledged reviewing all organizational high risks
+    /// Part of AC1 requirement for high risk checklist acknowledgement
+    /// </summary>
+    public bool HighRisksAcknowledged { get; set; }
+    
+    /// <summary>
     /// Indicates how UNOPS will deliver the Products & Services (nullable - not set by default)
     /// </summary>
     public DeliveryModality? DeliveryModality { get; set; }

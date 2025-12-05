@@ -66,6 +66,11 @@ public class OpportunityModel
     public bool IsPooledFunding { get; set; }
     
     /// <summary>
+    /// Indicates that the user has acknowledged reviewing all organizational high risks
+    /// </summary>
+    public bool HighRisksAcknowledged { get; set; }
+    
+    /// <summary>
     /// Indicates how UNOPS will deliver the Products & Services (nullable - not set by default)
     /// </summary>
     public int? DeliveryModality { get; set; }

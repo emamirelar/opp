@@ -24,7 +24,7 @@ import { InteractionService } from '@partnerships/interactions/services/interact
 import { InteractionModalComponent } from '../modal/interaction-modal.component';
 import { InteractionType } from '../../../models/interaction-type.enum';
 import { CreateOpportunityFromInteractionsConfig } from '../../../models/interaction-selection.model';
-import { PermissionUtilityService } from '@core/services/auth';
+import { PermissionUtilityService, PermissionService, EntityPermissions } from '@core/services/auth';
 import { FeedbackDialogService } from '@shared/services/ui';
 import { InteractionIconService } from '@shared/services/domain';
 import { CachedDataService } from '@shared/services/utils';
@@ -63,6 +63,7 @@ export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDest
   private interactionService = inject(InteractionService);
   private dialogService = inject(DialogService);
   private permissionUtilityService = inject(PermissionUtilityService);
+  private permissionService = inject(PermissionService);
   private feedbackDialogService = inject(FeedbackDialogService);
   private translateService = inject(TranslateService);
   private confirmationService = inject(ConfirmationService);
@@ -129,10 +130,25 @@ export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDest
   allPartners = this.cachedDataService.allPartners;
   allUsers = this.cachedDataService.allUsers;
 
-  // Permission handling
+  // Permission handling for Interaction
   private permissionUtils = this.permissionUtilityService.createEntityPermissions('Interaction');
   entityPermissions = this.permissionUtils.entityPermissions;
   permissionsLoading = this.permissionUtils.permissionsLoading;
+
+  // Permission handling for Opportunity (needed for Create Opportunity action)
+  // Uses PermissionService directly with entity name to avoid route-based lookup
+  opportunityEntityPermissions = signal<EntityPermissions>({
+    entity: 'Opportunity',
+    hasAccess: false,
+    permissions: {
+      canRead: false,
+      canCreate: false,
+      canUpdate: false,
+      canDelete: false,
+      canExport: false,
+      canImport: false
+    }
+  });
 
   // Computed properties for display
   interactionTypeLabel = computed(() => {
@@ -160,8 +176,8 @@ export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDest
   });
 
   canCreateOpportunity = computed(() => {
-    // Check if user has permission to create opportunities
-    return this.permissionUtilityService.canCreate(this.entityPermissions());
+    // Check if user has permission to create opportunities (uses Opportunity permissions, not Interaction)
+    return this.permissionUtilityService.canCreate(this.opportunityEntityPermissions());
   });
 
   // Dialog configuration
@@ -204,7 +220,19 @@ export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDest
     // Register component data for AI Assistant
     this.pageContextService.setComponentData(this);
     
+    // Load permissions for Interaction entity (uses current route)
     this.permissionUtils.loadPermissions(this.router);
+    
+    // Load permissions for Opportunity entity directly by entity name
+    // This bypasses route-based lookup since we're on the Interaction page
+    this.permissionService.getEntityPermissions('Opportunity').subscribe({
+      next: (permissions) => {
+        this.opportunityEntityPermissions.set(permissions);
+      },
+      error: (error) => {
+        console.error('Error loading Opportunity permissions:', error);
+      }
+    });
     
     // Subscribe to route parameter changes to reload interaction when navigating
     // This fixes the issue where navigating back doesn't refresh the page data
@@ -353,8 +381,8 @@ export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDest
       return;
     }
 
-    // Check if user has create permission
-    if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
+    // Check if user has create permission for Opportunity
+    if (!this.permissionUtilityService.canCreate(this.opportunityEntityPermissions())) {
       this.feedbackDialogService.showErrorToast({
         detail: 'message.noPermissionToCreate',
         summary: 'message.permissionDenied',

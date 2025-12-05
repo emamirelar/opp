@@ -36,7 +36,16 @@ public interface IGeminiManager
     Task<SessionConfiguration> GetSessionConfigurationAsync();
     Task<SimilarProjectsResponse> GetSimilarProjectsAsync(int opportunityId, int maxResults = 10, ClaimsPrincipal user = null, bool invalidateCache = false);
     Task<RelevantPeopleResponse> GetRelevantPeopleAsync(int opportunityId, int maxResults = 10, ClaimsPrincipal user = null, bool invalidateCache = false);
-    Task<DSTRecommendationsResponse> GetDSTRecommendationsAsync(int opportunityId, ClaimsPrincipal user = null, int maxResults = 10);
+    /// <summary>
+    /// Gets AI-powered DST risk recommendations for an opportunity
+    /// Includes predefined high risks with oupQuestionId for oUP mapping
+    /// </summary>
+    /// <param name="opportunityId">Opportunity ID</param>
+    /// <param name="user">Current user claims</param>
+    /// <param name="maxResults">Max vector store results</param>
+    /// <param name="dismissedOupQuestionIds">OupQuestionIds that user has dismissed (from localStorage)</param>
+    /// <param name="forceRefresh">If true, bypasses cache to get fresh recommendations</param>
+    Task<DSTRecommendationsResponse> GetDSTRecommendationsAsync(int opportunityId, ClaimsPrincipal user = null, int maxResults = 10, List<int>? dismissedOupQuestionIds = null, bool forceRefresh = false);
     
     /// <summary>
     /// Generates AI-powered insights and suggestions for an opportunity

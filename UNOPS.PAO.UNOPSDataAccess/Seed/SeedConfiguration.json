@@ -264,6 +264,33 @@
             "filePath": "Seeders/SequenceResyncSeeder.cs",
             "description": "Resynchronize all PostgreSQL sequences to prevent duplicate key errors",
             "forceExecuteIfAnyChanged": true
+        },
+        {
+            "order": 23,
+            "name": "RiskLookups",
+            "type": "seeder",
+            "className": "RiskLookupSeeder",
+            "methodName": "SeedRiskLookupsAsync",
+            "filePath": "Seeders/RiskLookupSeeder.cs",
+            "description": "Risk lookup tables (RiskType, RiskProbability, RiskProximity, RiskImpactLevel, RiskResponseType)"
+        },
+        {
+            "order": 24,
+            "name": "RiskCategories",
+            "type": "seeder",
+            "className": "RiskCategorySeeder",
+            "methodName": "SeedRiskCategoriesAsync",
+            "filePath": "Seeders/RiskCategorySeeder.cs",
+            "description": "Risk category hierarchy (3 levels) from oUP"
+        },
+        {
+            "order": 25,
+            "name": "PreDefinedHighRisks",
+            "type": "seeder",
+            "className": "PreDefinedHighRiskSeeder",
+            "methodName": "SeedPreDefinedHighRisksAsync",
+            "filePath": "Seeders/PreDefinedHighRiskSeeder.cs",
+            "description": "PreDefined High Risk Checklist items from oUP (EAC questions)"
         }
     ]
 }

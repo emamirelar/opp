@@ -3536,15 +3536,26 @@ public class UNOPSGeminiManager : IGeminiManager
         }
         
         /// <summary>
-        /// Gets AI-powered DST risk recommendations for an opportunity (3-step process)
+        /// Gets AI-powered DST risk recommendations for an opportunity (enhanced 4-step process)
         /// Step 1: Extract risk keywords from opportunity context
         /// Step 2: Search vector store for similar risks
-        /// Step 3: Refine and rank top 5 risks with LLM
+        /// Step 3: Fetch predefined high risks and existing risks for deduplication
+        /// Step 4: Refine and rank top risks with LLM (includes predefined high risks)
         /// </summary>
-        public async Task<UNOPS.PAO.Models.DSTRecommendationsResponse> GetDSTRecommendationsAsync(int opportunityId, ClaimsPrincipal? user = null, int maxResults = 10)
+        /// <param name="opportunityId">Opportunity ID</param>
+        /// <param name="user">Current user claims</param>
+        /// <param name="maxResults">Max vector store results</param>
+        /// <param name="dismissedOupQuestionIds">List of oupQuestionIds user has dismissed (from frontend localStorage)</param>
+        /// <param name="forceRefresh">If true, bypasses cache to get fresh recommendations</param>
+        public async Task<UNOPS.PAO.Models.DSTRecommendationsResponse> GetDSTRecommendationsAsync(
+            int opportunityId, 
+            ClaimsPrincipal? user = null, 
+            int maxResults = 10,
+            List<int>? dismissedOupQuestionIds = null,
+            bool forceRefresh = false)
         {
             var startTime = DateTime.UtcNow;
-            _logger.LogInformation($"🎯 [DST-RECOMMENDATIONS] Starting DST recommendations for opportunity {opportunityId}");
+            _logger.LogInformation($"🎯 [DST-RECOMMENDATIONS] Starting DST recommendations for opportunity {opportunityId} (forceRefresh: {forceRefresh})");
             
             try
             {
@@ -3568,6 +3579,42 @@ public class UNOPSGeminiManager : IGeminiManager
                 {
                     throw new InvalidOperationException("Unable to convert opportunity details to dictionary");
                 }
+                
+                // Step 1.5: Fetch existing risks and predefined high risks for deduplication
+                _logger.LogInformation($"📋 [DST-RECOMMENDATIONS] Step 1.5: Fetching existing risks and predefined high risks");
+                
+                var riskManager = _managerWrapper.RiskManager;
+                var existingRisksResponse = await riskManager.GetRisksByEntityAsync("Opportunity", opportunityId, user);
+                var existingRiskTitles = existingRisksResponse.Risks.Select(r => r.Title).ToList();
+                var existingPreDefinedHighRiskIds = existingRisksResponse.Risks
+                    .Where(r => r.PreDefinedHighRiskId.HasValue)
+                    .Select(r => r.PreDefinedHighRiskId!.Value)
+                    .ToList();
+                
+                _logger.LogInformation($"📋 [DST-RECOMMENDATIONS] Found {existingRiskTitles.Count} existing risks, {existingPreDefinedHighRiskIds.Count} from predefined list");
+                
+                // Fetch predefined high risks (with oupQuestionId for LLM to return)
+                var preDefinedHighRisks = await riskManager.GetPreDefinedHighRisksAsync();
+                var availableHighRisks = preDefinedHighRisks
+                    .Where(r => !existingPreDefinedHighRiskIds.Contains(r.Id)) // Exclude already added
+                    .ToList();
+                
+                // Create anonymous object for LLM prompt (doesn't need all fields)
+                var preDefinedHighRisksForPrompt = availableHighRisks
+                    .Select(r => new 
+                    { 
+                        r.Id,
+                        OupQuestionId = r.OupQuestionId,
+                        r.Code,
+                        r.DisplayCode,
+                        r.ShortTitle,
+                        r.Description,
+                        r.IsAutoDetectable,
+                        r.DetectionRuleType
+                    })
+                    .ToList();
+                
+                _logger.LogInformation($"📋 [DST-RECOMMENDATIONS] {preDefinedHighRisksForPrompt.Count} predefined high risks available for recommendation");
                 
                 // Step 2: Extract risk-related keywords using LLM
                 _logger.LogInformation($"🔍 [DST-RECOMMENDATIONS] Step 2: Extracting risk keywords from opportunity context");
@@ -3620,9 +3667,18 @@ public class UNOPSGeminiManager : IGeminiManager
                 
                 _logger.LogInformation($"✅ [DST-RECOMMENDATIONS] Vector store search returned {vectorStoreResponse.Documents?.Count ?? 0} risk results");
                 
-                // Step 4: Refine and rank risks using LLM
-                _logger.LogInformation($"🤖 [DST-RECOMMENDATIONS] Step 4: Refining and ranking top risks with LLM");
-                var refinedRecommendations = await RefineAndRankRisksAsync(opportunityDetailsDict, vectorStoreResponse, user);
+                // Step 4: Refine and rank risks using LLM (with predefined high risks and deduplication)
+                _logger.LogInformation($"🤖 [DST-RECOMMENDATIONS] Step 4: Refining and ranking top risks with LLM (forceRefresh: {forceRefresh})");
+                var refinedRecommendations = await RefineAndRankRisksAsync(
+                    opportunityDetailsDict, 
+                    vectorStoreResponse, 
+                    preDefinedHighRisksForPrompt,
+                    availableHighRisks, // Full list for enrichment
+                    existingRiskTitles,
+                    dismissedOupQuestionIds ?? new List<int>(),
+                    opportunityId,
+                    user,
+                    forceRefresh);
                 
                 var executionTime = DateTime.UtcNow - startTime;
                 
@@ -3689,17 +3745,24 @@ public class UNOPSGeminiManager : IGeminiManager
         }
         
         /// <summary>
-        /// Refine and rank risks from vector store using LLM
-        /// Uses the refine_opportunity_risks AI prompt to select top 5 most relevant risks
+        /// Refine and rank risks from vector store and predefined high risks using LLM
+        /// Uses the refine_opportunity_risks AI prompt to select top 5-8 most relevant risks
+        /// Now includes predefined high risks with oupQuestionId and deduplication
         /// </summary>
         private async Task<List<UNOPS.PAO.Models.DSTRecommendation>> RefineAndRankRisksAsync(
             Dictionary<string, object> opportunityDetails,
             UNOPS.PAO.Models.AI.VectorStoreSearchResponse vectorStoreResponse,
-            ClaimsPrincipal? user)
+            object preDefinedHighRisksForPrompt,
+            List<UNOPS.PAO.Models.PreDefinedHighRiskModel> availableHighRisks,
+            List<string> existingRiskTitles,
+            List<int> dismissedOupQuestionIds,
+            int opportunityId,
+            ClaimsPrincipal? user,
+            bool forceRefresh = false)
         {
             try
             {
-                _logger.LogInformation($"🤖 [REFINE-RISKS] Calling LLM to refine and rank {vectorStoreResponse.Documents?.Count ?? 0} risks");
+                _logger.LogInformation($"🤖 [REFINE-RISKS] Calling LLM to refine and rank risks (vector: {vectorStoreResponse.Documents?.Count ?? 0}, existing: {existingRiskTitles.Count}, dismissed: {dismissedOupQuestionIds.Count}, forceRefresh: {forceRefresh})");
                 
                 // Get the refine risks prompt
                 var promptData = await _aiService.GetPromptData("refine_opportunity_risks");
@@ -3710,17 +3773,35 @@ public class UNOPSGeminiManager : IGeminiManager
                     throw new InvalidOperationException("Risk refinement prompt 'refine_opportunity_risks' not found in database");
                 }
                 
-                // Prepare vector store risks as JSON string for the prompt
+                // Prepare data for the prompt
                 var vectorStoreRisks = JsonConvert.SerializeObject(vectorStoreResponse.Documents ?? new List<UNOPS.PAO.Models.AI.VectorStoreDocument>());
-                
-                // Create prompt data combining opportunity details and vector store risks
                 var opportunityContextJson = JsonConvert.SerializeObject(opportunityDetails);
-                var promptDataJson = $"{{\"opportunityDetails\": {opportunityContextJson}, \"vectorStoreRisks\": {vectorStoreRisks}}}";
+                var preDefinedHighRisksJson = JsonConvert.SerializeObject(preDefinedHighRisksForPrompt);
+                var existingRiskTitlesJson = JsonConvert.SerializeObject(existingRiskTitles);
+                var dismissedOupQuestionIdsJson = JsonConvert.SerializeObject(dismissedOupQuestionIds);
                 
-                // Call Gemini to refine and rank risks
-                var refinedRisksJson = await _aiService.FetchResultFromGemini(refineRisksPrompt, promptDataJson, entityId: null, bypassCache: false);
+                // Create lookup dictionary for enriching recommendations (only include items with valid OupQuestionId)
+                var highRiskLookup = availableHighRisks
+                    .Where(r => r.OupQuestionId.HasValue && r.OupQuestionId.Value > 0)
+                    .ToDictionary(r => r.OupQuestionId!.Value, r => r);
                 
-                _logger.LogInformation($"📝 [REFINE-RISKS] Raw Gemini response: {refinedRisksJson}");
+                // Create comprehensive prompt data with all deduplication information
+                var promptDataJson = $@"{{
+                    ""opportunityDetails"": {opportunityContextJson},
+                    ""preDefinedHighRisks"": {preDefinedHighRisksJson},
+                    ""vectorStoreRisks"": {vectorStoreRisks},
+                    ""existingRiskTitles"": {existingRiskTitlesJson},
+                    ""dismissedOupQuestionIds"": {dismissedOupQuestionIdsJson}
+                }}";
+                
+                // Call Gemini to refine and rank risks (with caching using opportunityId, unless forceRefresh)
+                var refinedRisksJson = await _aiService.FetchResultFromGemini(
+                    refineRisksPrompt, 
+                    promptDataJson, 
+                    entityId: opportunityId.ToString(),
+                    bypassCache: forceRefresh);
+                
+                _logger.LogInformation($"📝 [REFINE-RISKS] Raw Gemini response length: {refinedRisksJson?.Length ?? 0}");
                 
                 // Parse the Gemini response to extract the text content
                 var geminiResponse = JObject.Parse(refinedRisksJson);
@@ -3732,7 +3813,7 @@ public class UNOPSGeminiManager : IGeminiManager
                     return new List<UNOPS.PAO.Models.DSTRecommendation>();
                 }
                 
-                _logger.LogInformation($"📝 [REFINE-RISKS] Extracted text content: {textContent}");
+                _logger.LogInformation($"📝 [REFINE-RISKS] Extracted text content length: {textContent.Length}");
                 
                 // Try to extract JSON array from the response
                 List<UNOPS.PAO.Models.DSTRecommendation>? refinedRisks = null;
@@ -3748,7 +3829,7 @@ public class UNOPSGeminiManager : IGeminiManager
                 if (arrayStart >= 0 && arrayEnd > arrayStart)
                 {
                     var jsonArray = textContent.Substring(arrayStart, arrayEnd - arrayStart + 1);
-                    _logger.LogInformation($"📝 [REFINE-RISKS] Extracted JSON array: {jsonArray}");
+                    _logger.LogInformation($"📝 [REFINE-RISKS] Extracted JSON array length: {jsonArray.Length}");
                     
                     try
                     {
@@ -3761,21 +3842,59 @@ public class UNOPSGeminiManager : IGeminiManager
                 }
                 else
                 {
-                    _logger.LogWarning($"⚠️ [REFINE-RISKS] Could not find JSON array in response: {textContent}");
+                    _logger.LogWarning($"⚠️ [REFINE-RISKS] Could not find JSON array in response");
                 }
                 
                 if (refinedRisks != null && refinedRisks.Any())
                 {
-                    _logger.LogInformation($"✅ [REFINE-RISKS] Successfully refined and ranked {refinedRisks.Count} risks");
+                    _logger.LogInformation($"✅ [REFINE-RISKS] Successfully parsed {refinedRisks.Count} risks from LLM");
                     
-                    // Add relevance scores from vector store if available
-                    for (int i = 0; i < refinedRisks.Count && i < (vectorStoreResponse.Documents?.Count ?? 0); i++)
+                    // Post-process: Enrich recommendations with PreDefinedHighRisk data
+                    foreach (var risk in refinedRisks)
                     {
-                        refinedRisks[i].RelevanceScore = vectorStoreResponse.Documents![i].Score * 100;
-                        refinedRisks[i].SourceRiskId = vectorStoreResponse.Documents[i].DocumentId;
+                        // If OupQuestionId is set, it's a predefined high risk - enrich with entity data
+                        if (risk.OupQuestionId.HasValue && highRiskLookup.TryGetValue(risk.OupQuestionId.Value, out var highRisk))
+                        {
+                            risk.SourceType = "PREDEFINED_HIGH_RISK";
+                            risk.RelevanceScore = risk.ConfidenceLevel;
+                            
+                            // Enrich with entity IDs for frontend to use when creating risk
+                            risk.PreDefinedHighRiskId = highRisk.Id;
+                            risk.RiskCategoryId = highRisk.RiskCategoryId;
+                            
+                            _logger.LogInformation($"🔗 [REFINE-RISKS] Enriched recommendation with PreDefinedHighRiskId={highRisk.Id}, RiskCategoryId={highRisk.RiskCategoryId}");
+                        }
+                        else
+                        {
+                            risk.SourceType = string.IsNullOrEmpty(risk.SourceType) ? "SIMILAR_PROJECT" : risk.SourceType;
+                            // Try to match with vector store document for sourceRiskId
+                            if (string.IsNullOrEmpty(risk.SourceRiskId) && vectorStoreResponse.Documents != null)
+                            {
+                                var matchingDoc = vectorStoreResponse.Documents
+                                    .FirstOrDefault(d => d.Content?.Contains(risk.Title, StringComparison.OrdinalIgnoreCase) == true);
+                                if (matchingDoc != null)
+                                {
+                                    risk.SourceRiskId = matchingDoc.DocumentId;
+                                    risk.RelevanceScore = matchingDoc.Score * 100;
+                                }
+                            }
+                        }
                     }
                     
-                    return refinedRisks;
+                    // Safety net: Post-filter to remove any duplicates that slipped through
+                    var filteredRisks = refinedRisks
+                        .Where(r => !IsDuplicateRisk(r.Title, existingRiskTitles))
+                        .Where(r => !r.OupQuestionId.HasValue || !dismissedOupQuestionIds.Contains(r.OupQuestionId.Value))
+                        .ToList();
+                    
+                    if (filteredRisks.Count < refinedRisks.Count)
+                    {
+                        _logger.LogInformation($"🔄 [REFINE-RISKS] Post-filter removed {refinedRisks.Count - filteredRisks.Count} duplicate/dismissed risks");
+                    }
+                    
+                    _logger.LogInformation($"✅ [REFINE-RISKS] Returning {filteredRisks.Count} risks ({filteredRisks.Count(r => r.OupQuestionId.HasValue)} predefined, {filteredRisks.Count(r => !r.OupQuestionId.HasValue)} from vector store)");
+                    
+                    return filteredRisks;
                 }
                 
                 _logger.LogWarning($"⚠️ [REFINE-RISKS] No refined risks returned from LLM");
@@ -3786,6 +3905,46 @@ public class UNOPSGeminiManager : IGeminiManager
                 _logger.LogError(ex, $"❌ [REFINE-RISKS] Error refining and ranking risks: {ex.Message}");
                 return new List<UNOPS.PAO.Models.DSTRecommendation>();
             }
+        }
+
+        /// <summary>
+        /// Check if a risk title is a duplicate of an existing risk (semantic similarity)
+        /// Used as a safety net for post-filtering LLM recommendations
+        /// </summary>
+        private bool IsDuplicateRisk(string newTitle, List<string> existingTitles)
+        {
+            if (string.IsNullOrEmpty(newTitle) || existingTitles == null || !existingTitles.Any())
+                return false;
+
+            var normalizedNew = newTitle.ToLowerInvariant().Trim();
+            
+            foreach (var existingTitle in existingTitles)
+            {
+                var normalizedExisting = existingTitle.ToLowerInvariant().Trim();
+                
+                // Exact match
+                if (normalizedNew == normalizedExisting) return true;
+                
+                // Contains match (one contains the other)
+                if (normalizedNew.Contains(normalizedExisting) || normalizedExisting.Contains(normalizedNew)) return true;
+                
+                // Word overlap check (>70% overlap)
+                var newWords = normalizedNew.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                    .Where(w => w.Length > 3).ToHashSet();
+                var existingWords = normalizedExisting.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                    .Where(w => w.Length > 3).ToHashSet();
+                
+                if (newWords.Count > 0 && existingWords.Count > 0)
+                {
+                    var intersection = newWords.Intersect(existingWords).Count();
+                    var minCount = Math.Min(newWords.Count, existingWords.Count);
+                    var overlapRatio = (double)intersection / minCount;
+                    
+                    if (overlapRatio > 0.7) return true;
+                }
+            }
+            
+            return false;
         }
         
         /// <summary>

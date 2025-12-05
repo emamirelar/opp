@@ -42,21 +42,84 @@
             @for (risk of risks(); track risk.id) {
               <div class="bg-unops-surface-primary rounded-unops-lg p-4 mb-3 border border-unops-neutral-300 shadow-unops-sm">
                 <div class="flex items-start justify-between mb-2">
-                  <h4 class="font-semibold text-unops-secondary">
-                    {{ risk.title }}
-                  </h4>
-                  <p-tag
-                    [value]="getImpactLabel(risk.impact)"
-                    [severity]="getImpactSeverity(risk.impact)"
-                  />
+                  <div class="flex items-center gap-2">
+                    <h4 class="font-semibold text-unops-secondary">
+                      {{ risk.title }}
+                    </h4>
+                    @if (risk.preDefinedHighRiskId) {
+                      <p-tag
+                        [value]="'label.dst.organizationalHighRisk' | translate"
+                        severity="warn"
+                        icon="pi pi-exclamation-circle"
+                        styleClass="text-xs font-bold"
+                      />
+                    }
+                  </div>
+                  <div class="flex items-center gap-2">
+                    @if (risk.riskTypeName) {
+                      <p-tag
+                        [value]="risk.riskTypeName"
+                        [severity]="risk.riskTypeCode === 'THREAT' ? 'danger' : 'success'"
+                        styleClass="text-xs"
+                      />
+                    }
+                    <p-tag
+                      [value]="getRiskImpactDisplay(risk)"
+                      [severity]="getRiskSeverity(risk)"
+                    />
+                    <p-button
+                      icon="pi pi-trash"
+                      [rounded]="true"
+                      [text]="true"
+                      severity="danger"
+                      size="small"
+                      [pTooltip]="'button.delete' | translate"
+                      tooltipPosition="top"
+                      (onClick)="confirmDeleteRisk(risk)"
+                      [disabled]="isDeletingRisk()"
+                    />
+                  </div>
                 </div>
-                <p class="text-sm text-unops-neutral-700 mb-2">
-                  {{ risk.description }}
-                </p>
-                <div class="text-xs text-unops-neutral-600">
-                  <strong>{{ 'label.dst.recommendation' | translate }}:</strong>
-                  {{ risk.recommendation }}
+
+                <!-- Risk Details Grid -->
+                <div class="grid grid-cols-2 gap-2 text-xs text-unops-neutral-600 mb-2">
+                  @if (risk.riskCategoryFullPath || risk.riskCategoryName) {
+                    <div>
+                      <span class="font-medium">{{ 'label.dst.category' | translate }}:</span>
+                      {{ risk.riskCategoryName }}
+                    </div>
+                  }
+                  @if (risk.riskProbabilityName) {
+                    <div>
+                      <span class="font-medium">{{ 'label.dst.probability' | translate }}:</span>
+                      {{ risk.riskProbabilityName }}
+                    </div>
+                  }
+                  @if (risk.riskProximityName) {
+                    <div>
+                      <span class="font-medium">{{ 'label.dst.proximity' | translate }}:</span>
+                      {{ risk.riskProximityName }}
+                    </div>
+                  }
+                  @if (risk.riskResponseTypeName) {
+                    <div>
+                      <span class="font-medium">{{ 'label.dst.responseType' | translate }}:</span>
+                      {{ risk.riskResponseTypeName }}
+                    </div>
+                  }
                 </div>
+
+                @if (risk.description) {
+                  <p class="text-sm text-unops-neutral-700 mb-2">
+                    {{ risk.description }}
+                  </p>
+                }
+                @if (risk.recommendation) {
+                  <div class="text-xs text-unops-neutral-600">
+                    <strong>{{ 'label.dst.recommendation' | translate }}:</strong>
+                    {{ risk.recommendation }}
+                  </div>
+                }
               </div>
             }
           </div>
@@ -65,13 +128,25 @@
 
       <!-- AI Recommendations (Right Panel) -->
         <div>
-          <h3 class="text-lg font-semibold text-unops-secondary mb-4 flex items-center gap-2">
-            <i class="pi pi-lightbulb text-unops-info-dark"></i>
-            <span>
-              {{ 'title.dst.recommendations' | translate }}
-            ({{ visibleRecommendations().length }})
-            </span>
-          </h3>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-unops-secondary flex items-center gap-2">
+              <i class="pi pi-lightbulb text-unops-info-dark"></i>
+              <span>
+                {{ 'title.dst.recommendations' | translate }}
+              ({{ visibleRecommendations().length }})
+              </span>
+            </h3>
+            <p-button
+              icon="pi pi-refresh"
+              [pTooltip]="'button.refresh' | translate"
+              tooltipPosition="top"
+              [rounded]="true"
+              [text]="true"
+              size="small"
+              (onClick)="refreshRecommendations()"
+              [disabled]="loadingRecommendations()"
+            />
+          </div>
 
         @if (loadingRecommendations()) {
           <div class="text-center py-4">
@@ -83,11 +158,22 @@
             </div>
           } @else {
           <div class="max-h-[600px] overflow-y-auto pr-2">
-            @for (rec of visibleRecommendations(); track $index) {
-              <div class="bg-unops-primary-container-soft rounded-unops-lg p-4 mb-3 border border-unops-primary-200 shadow-unops-sm">
-                <h4 class="font-semibold text-unops-secondary mb-2">
-                  {{ rec.title }}
-                </h4>
+            @for (rec of visibleRecommendations(); track rec.title) {
+              <div class="bg-unops-primary-container-soft rounded-unops-lg p-4 mb-3 border border-unops-primary-200 shadow-unops-sm"
+                   [ngClass]="{'border-l-4 border-l-orange-500': rec.sourceType === 'PREDEFINED_HIGH_RISK'}">
+                <div class="flex items-center gap-2 mb-2">
+                  <h4 class="font-semibold text-unops-secondary">
+                    {{ rec.title }}
+                  </h4>
+                  @if (rec.sourceType === 'PREDEFINED_HIGH_RISK') {
+                    <p-tag
+                      [value]="'label.dst.organizationalHighRisk' | translate"
+                      severity="warn"
+                      icon="pi pi-exclamation-circle"
+                      styleClass="text-xs font-bold"
+                    />
+                  }
+                </div>
                 <p class="text-sm text-unops-neutral-700 mb-2">
                   {{ rec.description }}
                 </p>
@@ -102,7 +188,7 @@
                     size="small"
                     severity="success"
                     [outlined]="true"
-                    (onClick)="acceptRecommendation(rec, $index)"
+                    (onClick)="acceptRecommendation(rec)"
                   />
                   <p-button
                     [label]="'button.dst.dismiss' | translate"
@@ -110,13 +196,30 @@
                     size="small"
                     severity="secondary"
                     [outlined]="true"
-                    (onClick)="dismissRecommendation($index)"
+                    (onClick)="dismissRecommendation(rec)"
                   />
                 </div>
               </div>
             }
           </div>
           }
+        </div>
+      </div>
+
+      <!-- High Risk Acknowledgement Section -->
+      <div class="bg-slate-50 border border-slate-200 rounded-unops-lg p-4 mt-4">
+        <div class="flex items-start gap-3">
+          <p-checkbox
+            [(ngModel)]="highRiskAcknowledged"
+            [binary]="true"
+            inputId="highRiskAcknowledge"
+          />
+          <label for="highRiskAcknowledge" class="text-sm text-slate-700 cursor-pointer">
+            <span class="font-semibold text-slate-800">{{ 'label.dst.highRiskAcknowledgement' | translate }}</span>
+            <p class="text-slate-500 mt-1">
+              {{ 'message.dst.highRiskAcknowledgementDetail' | translate }}
+            </p>
+          </label>
         </div>
       </div>
 
@@ -372,86 +475,237 @@
   [header]="'title.dst.addRisk' | translate"
   [(visible)]="showAddRiskDialog"
   [modal]="true"
-  [style]="{ width: '35rem' }"
+  [style]="{ width: '60rem' }"
 >
-  <!-- Validation error message -->
-  @if (showDialogValidationError()) {
-    <p-message severity="error" icon="pi pi-info-circle" styleClass="mb-4 w-full">
-      {{ 'message.validation.allFieldsRequired' | translate }}
-    </p-message>
+  <!-- Loading state for lookups -->
+  @if (loadingRiskLookups()) {
+    <div class="text-center py-8">
+      <i class="pi pi-spin pi-spinner text-3xl text-unops-neutral-500"></i>
+      <p class="text-sm text-unops-neutral-600 mt-2">{{ 'message.dst.loadingRiskOptions' | translate }}</p>
+    </div>
+  } @else {
+    <!-- Validation error message -->
+    @if (showDialogValidationError()) {
+      <p-message severity="error" icon="pi pi-info-circle" styleClass="mb-4 w-full">
+        {{ 'message.validation.allFieldsRequired' | translate }}
+      </p-message>
+    }
+
+    <!-- Pre-Defined High Risk Selection (Optional) -->
+    <div class="mb-6">
+      <p-floatlabel variant="on">
+        <p-select
+          id="preDefinedHighRisk"
+          [(ngModel)]="selectedPreDefinedHighRiskId"
+          [options]="preDefinedHighRisks()"
+          optionLabel="shortTitle"
+          optionValue="id"
+          [filter]="true"
+          filterBy="shortTitle,name,description"
+          [showClear]="true"
+          appendTo="body"
+          class="w-full"
+          (onChange)="onPreDefinedHighRiskSelect($event)"
+        />
+        <label for="preDefinedHighRisk">{{ 'label.dst.selectHighRisk' | translate }}</label>
+      </p-floatlabel>
+      <small class="text-gray-500 mt-1 block">
+        {{ 'helpText.dst.selectHighRiskOrManual' | translate }}
+      </small>
+    </div>
+
+    <p-divider />
+
+    <!-- Risk Title -->
+    <div class="mb-6">
+      <p-floatlabel variant="on">
+        <input
+          pInputText
+          id="riskTitle"
+          [(ngModel)]="newRisk.title"
+          class="w-full"
+        />
+        <label for="riskTitle">{{ 'label.dst.riskTitle' | translate }} *</label>
+      </p-floatlabel>
+      @if (!newRisk.title && showDialogValidationError()) {
+        <p-message severity="error" variant="simple" styleClass="mt-2">
+          {{ 'message.validation.titleRequired' | translate }}
+        </p-message>
+      }
+    </div>
+
+    <!-- Two-column grid for mandatory dropdowns -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <!-- Risk Type -->
+      <div>
+        <p-floatlabel variant="on">
+          <p-select
+            id="riskType"
+            [(ngModel)]="newRisk.riskTypeId"
+            [options]="riskLookups()?.riskTypes || []"
+            optionLabel="name"
+            optionValue="id"
+            appendTo="body"
+            class="w-full"
+            (onChange)="onRiskTypeChange()"
+          />
+          <label for="riskType">{{ 'label.dst.riskType' | translate }} *</label>
+        </p-floatlabel>
+        @if (!newRisk.riskTypeId && showDialogValidationError()) {
+          <p-message severity="error" variant="simple" styleClass="mt-2">
+            {{ 'message.validation.required' | translate }}
+          </p-message>
+        }
+      </div>
+
+      <!-- Risk Category (Hierarchical - Only Level 3 selectable) -->
+      <div>
+        <p-floatlabel variant="on" class="w-full">
+          <p-treeselect
+            id="riskCategory"
+            [(ngModel)]="selectedCategoryNode"
+            [options]="categoryTreeNodes()"
+            [filter]="true"
+            [filterInputAutoFocus]="true"
+            filterPlaceholder="Search categories..."
+            appendTo="body"
+            class="w-full"
+            styleClass="w-full"
+            selectionMode="single"
+            [panelStyle]="{ minWidth: '500px' }"
+            [style]="{ width: '100%' }"
+            (onNodeSelect)="onCategorySelect($event)"
+          />
+          <label for="riskCategory">{{ 'label.dst.category' | translate }} *</label>
+        </p-floatlabel>
+        @if (!newRisk.riskCategoryId && showDialogValidationError()) {
+          <p-message severity="error" variant="simple" styleClass="mt-2">
+            {{ 'message.validation.required' | translate }}
+          </p-message>
+        }
+      </div>
+    </div>
+
+    <!-- Two-column grid for remaining mandatory dropdowns -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+
+      <!-- Probability -->
+      <div>
+        <p-floatlabel variant="on">
+          <p-select
+            id="riskProbability"
+            [(ngModel)]="newRisk.riskProbabilityId"
+            [options]="riskLookups()?.probabilities || []"
+            optionLabel="name"
+            optionValue="id"
+            appendTo="body"
+            class="w-full"
+          />
+          <label for="riskProbability">{{ 'label.dst.probability' | translate }} *</label>
+        </p-floatlabel>
+        @if (!newRisk.riskProbabilityId && showDialogValidationError()) {
+          <p-message severity="error" variant="simple" styleClass="mt-2">
+            {{ 'message.validation.required' | translate }}
+          </p-message>
+        }
+      </div>
+
+      <!-- Proximity -->
+      <div>
+        <p-floatlabel variant="on">
+          <p-select
+            id="riskProximity"
+            [(ngModel)]="newRisk.riskProximityId"
+            [options]="riskLookups()?.proximities || []"
+            optionLabel="name"
+            optionValue="id"
+            appendTo="body"
+            class="w-full"
+          />
+          <label for="riskProximity">{{ 'label.dst.proximity' | translate }} *</label>
+        </p-floatlabel>
+        @if (!newRisk.riskProximityId && showDialogValidationError()) {
+          <p-message severity="error" variant="simple" styleClass="mt-2">
+            {{ 'message.validation.required' | translate }}
+          </p-message>
+        }
+      </div>
+
+      <!-- Impact Level -->
+      <div>
+        <p-floatlabel variant="on">
+          <p-select
+            id="riskImpactLevel"
+            [(ngModel)]="newRisk.riskImpactLevelId"
+            [options]="riskLookups()?.impactLevels || []"
+            optionLabel="name"
+            optionValue="id"
+            appendTo="body"
+            class="w-full"
+          />
+          <label for="riskImpactLevel">{{ 'label.dst.impactLevel' | translate }} *</label>
+        </p-floatlabel>
+        @if (!newRisk.riskImpactLevelId && showDialogValidationError()) {
+          <p-message severity="error" variant="simple" styleClass="mt-2">
+            {{ 'message.validation.required' | translate }}
+          </p-message>
+        }
+      </div>
+
+      <!-- Response Type (conditional mandatory based on risk type) -->
+      <div>
+        <p-floatlabel variant="on">
+          <p-select
+            id="riskResponseType"
+            [(ngModel)]="newRisk.riskResponseTypeId"
+            [options]="filteredResponseTypes()"
+            optionLabel="name"
+            optionValue="id"
+            appendTo="body"
+            class="w-full"
+            [disabled]="!newRisk.riskTypeId"
+          />
+          <label for="riskResponseType">
+            {{ 'label.dst.responseType' | translate }}
+            @if (isResponseTypeMandatory()) { * }
+          </label>
+        </p-floatlabel>
+        @if (isResponseTypeMandatory() && !newRisk.riskResponseTypeId && showDialogValidationError()) {
+          <p-message severity="error" variant="simple" styleClass="mt-2">
+            {{ 'message.validation.required' | translate }}
+          </p-message>
+        }
+      </div>
+    </div>
+
+    <!-- Risk Description (optional) -->
+    <div class="mb-6">
+      <p-floatlabel variant="on">
+        <textarea
+          pTextarea
+          id="riskDescription"
+          [(ngModel)]="newRisk.description"
+          rows="3"
+          class="w-full"
+        ></textarea>
+        <label for="riskDescription">{{ 'label.dst.riskDescription' | translate }}</label>
+      </p-floatlabel>
+    </div>
+
+    <!-- Risk Recommendation (optional) -->
+    <div class="mb-6">
+      <p-floatlabel variant="on">
+        <textarea
+          pTextarea
+          id="riskRecommendation"
+          [(ngModel)]="newRisk.recommendation"
+          rows="3"
+          class="w-full"
+        ></textarea>
+        <label for="riskRecommendation">{{ 'label.dst.riskRecommendation' | translate }}</label>
+      </p-floatlabel>
+    </div>
   }
-
-  <!-- Risk Title -->
-  <div class="mb-6">
-    <p-floatlabel variant="on">
-      <input
-        pInputText
-        id="riskTitle"
-        [(ngModel)]="newRisk.title"
-        class="w-full"
-      />
-      <label for="riskTitle">{{ 'label.dst.riskTitle' | translate }} *</label>
-    </p-floatlabel>
-    @if (!newRisk.title && showDialogValidationError()) {
-      <p-message severity="error" variant="simple" styleClass="mt-2">
-        {{ 'message.validation.titleRequired' | translate }}
-      </p-message>
-    }
-  </div>
-
-  <!-- Risk Description -->
-  <div class="mb-6">
-    <p-floatlabel variant="on">
-      <textarea
-        pTextarea
-        id="riskDescription"
-        [(ngModel)]="newRisk.description"
-        rows="4"
-        class="w-full"
-      ></textarea>
-      <label for="riskDescription">{{ 'label.dst.riskDescription' | translate }} *</label>
-    </p-floatlabel>
-    @if (!newRisk.description && showDialogValidationError()) {
-      <p-message severity="error" variant="simple" styleClass="mt-2">
-        {{ 'message.validation.descriptionRequired' | translate }}
-      </p-message>
-    }
-  </div>
-
-  <!-- Risk Recommendation -->
-  <div class="mb-6">
-    <p-floatlabel variant="on">
-      <textarea
-        pTextarea
-        id="riskRecommendation"
-        [(ngModel)]="newRisk.recommendation"
-        rows="3"
-        class="w-full"
-      ></textarea>
-      <label for="riskRecommendation">{{ 'label.dst.riskRecommendation' | translate }} *</label>
-    </p-floatlabel>
-    @if (!newRisk.recommendation && showDialogValidationError()) {
-      <p-message severity="error" variant="simple" styleClass="mt-2">
-        {{ 'message.validation.recommendationRequired' | translate }}
-      </p-message>
-    }
-  </div>
-
-  <!-- Impact Level -->
-  <div class="mb-6">
-    <p-floatlabel variant="on">
-      <p-select
-        id="riskImpact"
-        [(ngModel)]="newRisk.impact"
-        [options]="impactOptions"
-        optionLabel="label"
-        optionValue="value"
-        appendTo="body"
-        class="w-full"
-      />
-      <label for="riskImpact">{{ 'label.dst.impact' | translate}} *</label>
-    </p-floatlabel>
-  </div>
 
   <!-- Dialog footer -->
   <ng-template pTemplate="footer">
@@ -466,6 +720,7 @@
       severity="primary"
       (onClick)="confirmAddRisk()"
       [loading]="isProcessingRisk()"
+      [disabled]="loadingRiskLookups()"
     />
   </ng-template>
 </p-dialog>

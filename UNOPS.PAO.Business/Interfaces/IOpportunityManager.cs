@@ -26,6 +26,15 @@ public interface IOpportunityManager
     Task AssignCreatorAsOpportunityManagerAsync(int opportunityId, int userId);
     Task<IEnumerable<OpportunityModel>> GetOpportunitiesByPartnerIdAsync(int partnerId);
     List<SearchFieldInfo> GetOpportunitySearchFields();
+    
+    /// <summary>
+    /// Updates the high risk acknowledgement status for an opportunity
+    /// AC1: User must acknowledge they've reviewed all applicable organizational high risks
+    /// </summary>
+    /// <param name="opportunityId">The opportunity ID</param>
+    /// <param name="acknowledged">Whether the high risks have been acknowledged</param>
+    /// <returns>True if updated successfully</returns>
+    Task<bool> UpdateHighRiskAcknowledgementAsync(int opportunityId, bool acknowledged);
 }
 
 
