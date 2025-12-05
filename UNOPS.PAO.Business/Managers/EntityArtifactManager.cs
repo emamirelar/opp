@@ -376,6 +376,134 @@ public class EntityArtifactManager : IEntityArtifactManager
         };
     }
 
+    public async Task<EntityArtifactResponse> UpsertDocumentArtifactAsync(
+        EntityArtifactRequest request, 
+        string documentUrl, 
+        string fileName, 
+        string mimeType, 
+        long fileSize)
+    {
+        // Check if artifact already exists
+        var existingArtifact = await entityArtifactRepository
+            .GetAll()
+            .Where(ea => ea.EntityType == request.EntityType && 
+                        ea.EntityId == request.EntityId && 
+                        ea.ArtifactTypeId == request.ArtifactTypeId &&
+                        !ea.IsDeleted)
+            .FirstOrDefaultAsync();
+
+        EntityArtifact artifact;
+
+        // Create metadata JSON with file info
+        var documentMetadata = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            fileName = fileName,
+            mimeType = mimeType,
+            fileSize = fileSize,
+            uploadedAt = DateTime.UtcNow.ToString("o")
+        });
+
+        if (existingArtifact != null)
+        {
+            // Update existing artifact - store URL in ValueText
+            existingArtifact.Name = request.Name ?? fileName;
+            existingArtifact.ValueText = documentUrl; // GCS URL stored in ValueText
+            existingArtifact.ValueJson = documentMetadata; // File metadata in ValueJson
+            existingArtifact.ValueNumber = null;
+            existingArtifact.ValueBoolean = null;
+            existingArtifact.ValueDate = null;
+            existingArtifact.DocumentId = request.DocumentId;
+            existingArtifact.EffectiveDate = request.EffectiveDate;
+            existingArtifact.ExpiryDate = request.ExpiryDate;
+            existingArtifact.Source = request.Source ?? "User Input";
+            existingArtifact.Metadata = request.Metadata;
+            existingArtifact.Status = EntityStatus.Active;
+
+            await entityArtifactRepository.UpdateAsync(existingArtifact);
+            artifact = existingArtifact;
+        }
+        else
+        {
+            // Create new artifact - store URL in ValueText
+            artifact = new EntityArtifact
+            {
+                EntityType = request.EntityType,
+                EntityId = request.EntityId,
+                ArtifactTypeId = request.ArtifactTypeId,
+                Name = request.Name ?? fileName,
+                ValueText = documentUrl, // GCS URL stored in ValueText
+                ValueJson = documentMetadata, // File metadata in ValueJson
+                ValueNumber = null,
+                ValueBoolean = null,
+                ValueDate = null,
+                DocumentId = request.DocumentId,
+                EffectiveDate = request.EffectiveDate,
+                ExpiryDate = request.ExpiryDate,
+                Source = request.Source ?? "User Input",
+                Metadata = request.Metadata,
+                IsExtracted = false,
+                Status = EntityStatus.Active
+            };
+
+            await entityArtifactRepository.AddAsync(artifact);
+        }
+
+        // Reload with includes for response
+        var savedArtifact = await entityArtifactRepository
+            .GetAll()
+            .Include(ea => ea.ArtifactType)
+            .ThenInclude(at => at!.ArtifactDataType)
+            .Include(ea => ea.Document)
+            .FirstOrDefaultAsync(ea => ea.Id == artifact.Id);
+
+        if (savedArtifact == null)
+        {
+            throw new Exception("Failed to save artifact");
+        }
+
+        return new EntityArtifactResponse
+        {
+            Id = savedArtifact.Id,
+            EntityType = savedArtifact.EntityType,
+            EntityId = savedArtifact.EntityId,
+            ArtifactTypeId = savedArtifact.ArtifactTypeId,
+            ArtifactTypeName = savedArtifact.ArtifactType?.Name,
+            ArtifactTypeCode = savedArtifact.ArtifactType?.ArtifactTypeCode,
+            DataTypeName = savedArtifact.ArtifactType?.ArtifactDataType?.Name,
+            Name = savedArtifact.Name,
+            ValueText = savedArtifact.ValueText,
+            ValueNumber = savedArtifact.ValueNumber,
+            ValueBoolean = savedArtifact.ValueBoolean,
+            ValueDate = savedArtifact.ValueDate,
+            ValueJson = savedArtifact.ValueJson,
+            DocumentId = savedArtifact.DocumentId,
+            DocumentName = savedArtifact.Document?.Name,
+            EffectiveDate = savedArtifact.EffectiveDate,
+            ExpiryDate = savedArtifact.ExpiryDate,
+            Source = savedArtifact.Source,
+            IsExtracted = savedArtifact.IsExtracted,
+            SourceArtifactId = savedArtifact.SourceArtifactId,
+            Metadata = savedArtifact.Metadata,
+            ConfidenceScore = savedArtifact.ConfidenceScore,
+            CreatedDate = savedArtifact.CreatedDate,
+            CreatedBy = savedArtifact.CreatedBy,
+            CreatedByName = null,
+            LastModifiedDate = savedArtifact.LastModifiedDate,
+            LastModifiedBy = savedArtifact.LastModifiedBy,
+            LastModifiedByName = null
+        };
+    }
+
+    public async Task<string?> GetArtifactTypeCodeAsync(int artifactTypeId)
+    {
+        var artifactType = await artifactTypeRepository
+            .GetAll()
+            .Where(at => at.Id == artifactTypeId)
+            .FirstOrDefaultAsync();
+
+        return artifactType?.ArtifactTypeCode;
+    }
+
     public async Task<IEnumerable<EntityArtifactResponse>> GetEntityArtifactsAsync(string entityType, int entityId)
     {
         var artifacts = await entityArtifactRepository
