@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.Models.Artifacts;
 using UNOPS.PAO.Models.Shared;
 
 namespace UNOPS.PAO.Models.OrganizationUnits;
@@ -22,6 +24,12 @@ public class OrganizationHierarchyModel
     
     // RBAC permissions
     public EntityPermissionsModel? Permissions { get; set; }
+    
+    /// <summary>
+    /// Collection of artifacts associated with this organization unit
+    /// Automatically loaded via AutoMapper when OrganizationHierarchy entity is mapped
+    /// </summary>
+    public List<EntityArtifactModel> Artifacts { get; set; } = new List<EntityArtifactModel>();
 }
 
 public class OrganizationHierarchyTreeModel

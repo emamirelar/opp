@@ -16,6 +16,8 @@ using UNOPS.PAO.Models.Search;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSBusiness.Repositories;
+using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.Business.Mapping;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -180,6 +182,24 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         }
 
         var model = mapper.Map<OpportunityModel>(entity, opt => opt.Items["Opportunity"] = entity);
+        
+        // Populate EntityArtifacts for ResponsibleOrgUnit (resolver doesn't work for nested mappings)
+        if (model.ResponsibleOrgUnit != null && entity.ResponsibleOrgUnit != null)
+        {
+            var now = DateTime.UtcNow;
+            var orgUnitArtifacts = await context.EntityArtifacts
+                .Where(a => a.EntityType == "OrganizationHierarchy"
+                    && a.EntityId == entity.ResponsibleOrgUnit.Id
+                    && !a.IsDeleted
+                    && a.Status == EntityStatus.Active
+                    && (a.EffectiveDate == null || a.EffectiveDate <= now))
+                .Include(a => a.ArtifactType)
+                    .ThenInclude(at => at!.ArtifactDataType)
+                .OrderBy(a => a.ArtifactType!.Order)
+                .ToListAsync();
+
+            model.ResponsibleOrgUnit.Artifacts = EntityArtifactValueResolver.MapToModels(orgUnitArtifacts);
+        }
         
         // Populate associated documents and DD fields for funding partners
         if (model.FundingPartners != null && model.FundingPartners.Any())
