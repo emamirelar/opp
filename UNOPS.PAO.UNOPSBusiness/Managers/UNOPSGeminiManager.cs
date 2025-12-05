@@ -5162,32 +5162,18 @@ public class UNOPSGeminiManager : IGeminiManager
                 // Step 2: Get comprehensive opportunity data
                 var opportunityDetails = await opportunityManager.GetOpportunityDetailsForAIAsync(opportunityId);
 
+                // Specifically remove the statementMarkdown field from the opportunity details
+                opportunityDetails["statementMarkdown"] = null;
+
                 if (opportunityDetails == null || !opportunityDetails.Any())
                 {
                     throw new KeyNotFoundException($"Opportunity with ID {opportunityId} not found");
                 }
 
                 _logger.LogInformation($"📊 [OPPORTUNITY-STATEMENT] Retrieved opportunity details with {opportunityDetails.Count} fields");
-
-                // Step 3: Get attached document GCS URIs through DocumentRelationships
-                var documents = await _context.DocumentRelationships
-                    .Where(dr => dr.EntityType == "Opportunity" && 
-                                dr.EntityId == opportunityId)
-                    .Include(dr => dr.Document)
-                    .Where(dr => dr.Document != null &&
-                                !string.IsNullOrEmpty(dr.Document.StoragePath) && 
-                                dr.Document.StoragePath.StartsWith("gs://"))
-                    .Select(dr => new 
-                    { 
-                        storagePath = dr.Document!.StoragePath, 
-                        mimeType = dr.Document.Type ?? "application/pdf",
-                        name = dr.Document.Name
-                    })
-                    .ToListAsync();
-
-                var documentCount = documents.Count;
-                _logger.LogInformation($"📄 [OPPORTUNITY-STATEMENT] Found {documentCount} attached documents");
-
+                
+                // STEP 3: We are specifically NOT using the documents metadata in the statement generation prompt
+                
                 // Step 4: Get the statement generation prompt
                 var promptData = await _aiService.GetPromptData("opportunity_generate_statement");
                 var statementPrompt = promptData.FirstOrDefault();
@@ -5199,22 +5185,11 @@ public class UNOPSGeminiManager : IGeminiManager
 
                 // Step 5: Prepare opportunity context and document metadata for the prompt
                 var opportunityContextJson = JsonConvert.SerializeObject(opportunityDetails, Formatting.Indented);
-                var documentsMetadata = documents.Select((doc, index) => new
-                {
-                    index = index + 1,
-                    name = doc.name,
-                    storagePath = doc.storagePath,
-                    mimeType = doc.mimeType
-                }).ToList();
-                var documentsJson = JsonConvert.SerializeObject(documentsMetadata, Formatting.Indented);
 
                 // Build prompt context
                 var promptContext = new Dictionary<string, object>
                 {
-                    { "opportunityDetails", opportunityContextJson },
-                    { "documents", documentsJson },
-                    { "hasDocuments", documents.Any() },
-                    { "documentCount", documentCount }
+                    { "opportunityDetails", opportunityContextJson }
                 };
 
                 var promptJson = JsonConvert.SerializeObject(promptContext);
@@ -5227,26 +5202,13 @@ public class UNOPSGeminiManager : IGeminiManager
                 var userPromptTemplate = statementPrompt.UserPrompt ?? string.Empty;
                 var fullyFormedUserPrompt = _aiService.ProcessPlaceholders(userPromptTemplate, promptJson);
 
-                _logger.LogInformation($"📝 [OPPORTUNITY-STATEMENT] Calling Gemini AI with {documentCount} document(s)");
+                // _logger.LogInformation($"📝 [OPPORTUNITY-STATEMENT] Calling Gemini AI with {documentCount} document(s)");
 
                 // Step 6: Build parts array for Gemini API (text + document URIs)
                 var parts = new List<object>
                 {
                     new { text = fullyFormedUserPrompt }
                 };
-
-                // Add each document as a fileData part
-                foreach (var doc in documents)
-                {
-                    parts.Add(new 
-                    { 
-                        fileData = new
-                        {
-                            fileUri = doc.storagePath,
-                            mimeType = doc.mimeType
-                        }
-                    });
-                }
 
                 // Build user content with parts array
                 var userContent = new
