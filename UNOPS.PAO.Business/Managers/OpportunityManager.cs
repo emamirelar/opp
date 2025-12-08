@@ -99,7 +99,9 @@ public class OpportunityManager : IOpportunityManager
             "Countries.Country",
             "SDGs.SDG",
             "SDGs.Targets.SDGTarget",
-            "SDGs.Targets.Indicators.SDGIndicator"
+            "SDGs.Targets.Indicators.SDGIndicator",
+            "CreatedByUser.UserProfile",
+            "LastModifiedByUser.UserProfile"
         };
 
         var entity = await opportunityRepository.GetByIdAsync(id, includes);

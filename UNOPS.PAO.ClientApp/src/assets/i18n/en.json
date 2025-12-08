@@ -1967,6 +1967,7 @@
   "message.opportunity.bannerRegenerationFailed": "Failed to regenerate banner image. Please try again.",
   "message.generatingBanner": "Generating banner image...",
   "message.validation": "Validation",
+  "message.validationError": "Validation Error",
   "message.loading": "Loading",
   "message.toBeImplemented": "Feature to be implemented",
   "message.uniqueRecord": "Unique record",

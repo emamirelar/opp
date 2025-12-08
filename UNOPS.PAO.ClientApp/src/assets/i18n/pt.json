@@ -1792,6 +1792,7 @@
   "message.opportunity.bannerRegenerationFailed": "Falha ao regenerar a imagem do banner. Por favor, tente novamente.",
   "message.generatingBanner": "Gerando imagem de banner...",
   "message.validation": "Validação",
+  "message.validationError": "Erro de Validação",
   "message.loading": "Carregando",
   "message.toBeImplemented": "Funcionalidade a ser implementada na próxima fase",
   "message.uniqueRecord": "Registro único",

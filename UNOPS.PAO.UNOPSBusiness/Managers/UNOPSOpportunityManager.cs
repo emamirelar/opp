@@ -45,6 +45,34 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         this.opportunityRepository = new BaseRepository<Opportunity>(this.uNOPSAppDbContext, configuration, serviceProvider);
     }
 
+    /// <summary>
+    /// Gets the user name by user ID from UserProfile or falls back to PAOUser email
+    /// </summary>
+    private async Task<string> GetUserNameByIdAsync(int userId)
+    {
+        try
+        {
+            var userProfile = await uNOPSAppDbContext.UserProfile.FirstOrDefaultAsync(up => up.UserId == userId);
+            if (userProfile != null && !string.IsNullOrEmpty(userProfile.Name))
+            {
+                return userProfile.Name;
+            }
+            
+            // Fallback to PAOUser email if UserProfile not found or Name is empty
+            var user = await uNOPSAppDbContext.PAOUsers.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user != null && !string.IsNullOrEmpty(user.Email))
+            {
+                return user.Email;
+            }
+        }
+        catch (Exception)
+        {
+            // Log error if needed, but don't fail the entire operation
+        }
+        
+        return $"User #{userId}";
+    }
+
     public async Task<OpportunityModel> CreateOpportunityAsync(OpportunityRequest model)
     {
         var entity = mapper.Map<Opportunity>(model);
@@ -173,6 +201,10 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                     .ThenInclude(ui => ui.UNCFIndicator)
             .Include(o => o.UNOPSMissions)
                 .ThenInclude(om => om.UNOPSMission)
+            .Include(o => o.CreatedByUser)
+                .ThenInclude(u => u!.UserProfile)
+            .Include(o => o.LastModifiedByUser)
+                .ThenInclude(u => u!.UserProfile)
             .AsSplitQuery() // Split into multiple queries to avoid Cartesian explosion
             .FirstOrDefaultAsync(o => o.Id == id && !o.IsDeleted);
 
@@ -182,6 +214,16 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         }
 
         var model = mapper.Map<OpportunityModel>(entity, opt => opt.Items["Opportunity"] = entity);
+        
+        // Resolve user names for audit fields
+        if (entity.CreatedBy != 0)
+        {
+            model.CreatedByName = await GetUserNameByIdAsync(entity.CreatedBy);
+        }
+        if (entity.LastModifiedBy != 0)
+        {
+            model.LastModifiedByName = await GetUserNameByIdAsync(entity.LastModifiedBy);
+        }
         
         // Populate EntityArtifacts for ResponsibleOrgUnit (resolver doesn't work for nested mappings)
         if (model.ResponsibleOrgUnit != null && entity.ResponsibleOrgUnit != null)

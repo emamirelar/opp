@@ -1797,6 +1797,7 @@
   "message.opportunity.bannerRegenerationFailed": "Échec de la régénération de l'image de bannière. Veuillez réessayer.",
   "message.generatingBanner": "Génération de l'image de bannière...",
   "message.validation": "Validation",
+  "message.validationError": "Erreur de Validation",
   "message.loading": "Chargement",
   "message.toBeImplemented": "Fonctionnalité à implémenter dans la prochaine phase",
   "message.uniqueRecord": "Enregistrement unique",
