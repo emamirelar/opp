@@ -3383,7 +3383,7 @@ CRITICAL: misalignmentItems must be array of strings NOT objects. Empty array if
 
 ## 1. Context and Challenge(s)
 
-- **(a) Unit and Opportunity Developer:** [Name, Position from opportunity details. DO NOT ASSUME ANYTHING. ONLY LIST THE UNIT AND OPPORTUNITY DEVELOPER THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
+- **(a) Unit and Opportunity Manager:** [Responsible Organizational Unit, Opportunity Manager Name from opportunity details. DO NOT ASSUME ANYTHING. ONLY LIST THE UNIT AND OPPORTUNITY DEVELOPER THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
 - **(b) Location:** [Country(ies), Region(s), District(s) from opportunity details. Describe the context (e.g., socio-economic situation, environmental factors). DO NOT ASSUME ANYTHING. ONLY LIST THE LOCATION THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
 - **(c) Context and Challenge(s):** [Describe the key challenges from the Challenges field. Be specific and quantify the problem where possible. DO NOT ASSUME ANYTHING. ONLY LIST THE CHALLENGES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
 

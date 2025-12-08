@@ -489,10 +489,8 @@ export class OpportunityViewComponent
         const scrollTop = scrollElement.scrollTop;
         // Shrink header after scrolling past the banner (240px banner height, hide after scrolling ~100px)
         const newHeaderScrolled = scrollTop > 100;
-        console.log(`[Scroll] scrollTop: ${scrollTop}, headerScrolled: ${this.headerScrolled()}, newHeaderScrolled: ${newHeaderScrolled}`);
         if (this.headerScrolled() !== newHeaderScrolled) {
           this.headerScrolled.set(newHeaderScrolled);
-          console.log(`[Scroll] Header state changed to: ${newHeaderScrolled}`);
           // Manually trigger change detection to ensure UI updates immediately
           this.cdr.detectChanges();
         }
