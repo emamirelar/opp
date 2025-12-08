@@ -6,7 +6,7 @@ import { Button } from 'primeng/button';
 import { HttpClient } from '@angular/common/http';
 import { ListviewComponent } from '@features/list-view/components/listview/listview.component';
 import { ListViewColumn, ListViewConfig, SearchParams } from '@features/list-view/components/listview/listview.model';
-import { PermissionUtilityService } from '@core/services/auth';
+import { PermissionUtilityService, PermissionService, EntityPermissions } from '@core/services/auth';
 import { FeedbackDialogService } from '@shared/services/ui';
 import { EntityConfigurationService } from '@shared/services/api/entity-configuration.service';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -62,17 +62,21 @@ interface DropdownOption {
       @if(!permissionsLoading() && permissionUtilityService.canCreate(entityPermissions())) {
         <div class="flex items-center justify-end gap-4 flex-wrap">
             <p-button
+              [label]="'title.newInteraction' | translate"
+              icon="pi pi-plus"
+              rounded
+              (click)="openNewInteractionModal()"
+            />
+        </div>
+      }
+      @if(!permissionsLoading() && permissionUtilityService.canCreate(opportunityEntityPermissions())) {
+        <div class="flex items-center justify-end gap-4 flex-wrap">
+            <p-button
               [label]="'button.newOpportunity' | translate"
               icon="pi pi-plus"
               severity="secondary"
               rounded
               (click)="openCreateOpportunityDialog()"
-            />
-            <p-button
-              [label]="'title.newInteraction' | translate"
-              icon="pi pi-plus"
-              rounded
-              (click)="openNewInteractionModal()"
             />
         </div>
       }
@@ -105,6 +109,7 @@ export class PartnerViewInteractionsComponent implements OnInit {
   private entityConfigurationService = inject(EntityConfigurationService);
   private feedbackDialogService = inject(FeedbackDialogService);
   public permissionUtilityService = inject(PermissionUtilityService);
+  private permissionService = inject(PermissionService);
   private interactionIconService = inject(InteractionIconService);
   private translateService = inject(TranslateService);
 
@@ -128,6 +133,20 @@ export class PartnerViewInteractionsComponent implements OnInit {
   private permissionUtils = this.permissionUtilityService.createEntityPermissions('Interaction');
   entityPermissions = this.permissionUtils.entityPermissions;
   permissionsLoading = this.permissionUtils.permissionsLoading;
+
+  // Permission handling for Opportunity (needed for Create Opportunity action)
+  opportunityEntityPermissions = signal<EntityPermissions>({
+    entity: 'Opportunity',
+    hasAccess: false,
+    permissions: {
+      canRead: false,
+      canCreate: false,
+      canUpdate: false,
+      canDelete: false,
+      canExport: false,
+      canImport: false
+    }
+  });
 
   // Dynamic interaction columns loaded from API
   columns = signal<ListViewColumn[]>([]);
@@ -272,8 +291,18 @@ export class PartnerViewInteractionsComponent implements OnInit {
       }
     });
 
-    // Load permissions
+    // Load permissions for Interaction
     this.permissionUtils.loadPermissions(this.router);
+
+    // Load permissions for Opportunity entity directly by entity name
+    this.permissionService.getEntityPermissions('Opportunity').subscribe({
+      next: (permissions) => {
+        this.opportunityEntityPermissions.set(permissions);
+      },
+      error: (error) => {
+        console.error('Error loading Opportunity permissions:', error);
+      }
+    });
 
     // Load dynamic columns from API
     this.loadInteractionColumns();
@@ -505,6 +534,15 @@ export class PartnerViewInteractionsComponent implements OnInit {
    * Open the Create Opportunity from Interactions dialog
    */
   openCreateOpportunityDialog(): void {
+    // Check if user has permission to create opportunities
+    if (!this.permissionUtilityService.canCreate(this.opportunityEntityPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: this.translateService.instant('message.noPermissionToCreate'),
+        summary: this.translateService.instant('message.permissionDenied'),
+      });
+      return;
+    }
+    
     if (this.createOpportunityDialog) {
       this.createOpportunityDialog.visible.set(true);
     }
@@ -519,7 +557,12 @@ export class PartnerViewInteractionsComponent implements OnInit {
       detail: this.translateService.instant('message.opportunityCreatedFromInteractions', { count: 1 })
     });
 
-    // Navigate to the new opportunity
-    this.router.navigate(['/partnerships/opportunities', opportunity.id]);
+    // Open the new opportunity in a new tab
+    if (opportunity && opportunity.id) {
+      const url = this.router.serializeUrl(
+        this.router.createUrlTree(['/partnerships/opportunities', opportunity.id])
+      );
+      window.open(`/#${url}`, '_blank');
+    }
   }
 }

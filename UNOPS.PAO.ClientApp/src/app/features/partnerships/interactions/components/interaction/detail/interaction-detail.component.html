@@ -91,8 +91,8 @@
     </div>
 
     <!-- Desktop Layout -->
-    <div class="hidden sm:flex sm:justify-between sm:items-center w-full">
-      <div class="flex items-center gap-4">
+    <div class="hidden sm:flex sm:flex-col md:flex-row md:justify-between md:items-center w-full gap-4">
+      <div class="flex items-center gap-4 min-w-0 flex-1">
         <button
           pButton
           pRipple
@@ -122,12 +122,12 @@
               <p-skeleton width="20rem" height="2rem" class="mb-2"></p-skeleton>
               <p-skeleton width="10rem" height="1rem"></p-skeleton>
             } @else if (interaction()) {
-              <div class="flex items-center gap-2">
-                <span class="text-xl font-semibold">{{ interaction()!.subject }}</span>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-xl font-semibold truncate">{{ interaction()!.subject }}</span>
                 <p-tag
                   [value]="interaction()!.status"
                   [severity]="interaction()!.status === 'Active' ? 'success' : 'secondary'"
-                  class="capitalize">
+                  class="capitalize flex-shrink-0">
                 </p-tag>
               </div>
               <p class="text-sm text-gray-600 m-0">{{ formatInteractionType(interaction()!.type) }}</p>
@@ -137,7 +137,7 @@
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
         @if (!loading() && interaction() && canCreateOpportunity()) {
           <button
             pButton
@@ -146,7 +146,7 @@
             [label]="'button.newOpportunity' | translate"
             [rounded]="true"
             [size]="'small'"
-            class="create-opportunity-button"
+            class="create-opportunity-button flex-shrink-0"
             (click)="openCreateOpportunityDialog()">
           </button>
         }
@@ -158,7 +158,7 @@
             [rounded]="true"
             [text]="true"
             [size]="'small'"
-            class="edit-button"
+            class="edit-button flex-shrink-0"
             (click)="openEditModal()"
             [pTooltip]="'tooltip.editInteraction' | translate">
           </button>
@@ -172,7 +172,7 @@
             [text]="true"
             [size]="'small'"
             severity="danger"
-            class="delete-button"
+            class="delete-button flex-shrink-0"
             (click)="deleteInteraction()"
             [pTooltip]="'tooltip.deleteInteraction' | translate">
           </button>

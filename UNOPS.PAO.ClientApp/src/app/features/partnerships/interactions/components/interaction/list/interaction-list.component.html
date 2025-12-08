@@ -34,19 +34,21 @@
       }
       @if(!permissionsLoading() && permissionUtilityService.canCreate(entityPermissions())) {
         <p-button
+          [label]="'title.newInteraction' | translate"
+          icon="pi pi-plus"
+          (click)="openNewInteractionModal()"
+          rounded
+          class="interaction-new-button"
+        ></p-button>
+      }
+      @if(!permissionsLoading() && permissionUtilityService.canCreate(opportunityEntityPermissions())) {
+        <p-button
           [label]="'button.newOpportunity' | translate"
           icon="pi pi-briefcase"
           (click)="openCreateOpportunityDialog()"
           severity="secondary"
           rounded
           class="interaction-create-opportunity-button"
-        ></p-button>
-        <p-button
-          [label]="'title.newInteraction' | translate"
-          icon="pi pi-plus"
-          (click)="openNewInteractionModal()"
-          rounded
-          class="interaction-new-button"
         ></p-button>
       }
     </div>
