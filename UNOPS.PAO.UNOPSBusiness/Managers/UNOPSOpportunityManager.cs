@@ -52,6 +52,18 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     {
         try
         {
+            // Handle special case for Opportunity+ system user
+            if (userId == -1)
+            {
+                return "Opportunity+ System";
+            }
+            
+            // Handle unassigned/system default
+            if (userId == 0)
+            {
+                return "System";
+            }
+            
             var userProfile = await uNOPSAppDbContext.UserProfile.FirstOrDefaultAsync(up => up.UserId == userId);
             if (userProfile != null && !string.IsNullOrEmpty(userProfile.Name))
             {
@@ -215,15 +227,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
         var model = mapper.Map<OpportunityModel>(entity, opt => opt.Items["Opportunity"] = entity);
         
-        // Resolve user names for audit fields
-        if (entity.CreatedBy != 0)
-        {
-            model.CreatedByName = await GetUserNameByIdAsync(entity.CreatedBy);
-        }
-        if (entity.LastModifiedBy != 0)
-        {
-            model.LastModifiedByName = await GetUserNameByIdAsync(entity.LastModifiedBy);
-        }
+        // Resolve user names for audit fields (handles -1 for Opportunity+ System, 0 for System)
+        model.CreatedByName = await GetUserNameByIdAsync(entity.CreatedBy);
+        model.LastModifiedByName = await GetUserNameByIdAsync(entity.LastModifiedBy);
         
         // Populate EntityArtifacts for ResponsibleOrgUnit (resolver doesn't work for nested mappings)
         if (model.ResponsibleOrgUnit != null && entity.ResponsibleOrgUnit != null)
