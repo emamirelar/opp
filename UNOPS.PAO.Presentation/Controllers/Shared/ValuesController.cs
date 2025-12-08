@@ -257,6 +257,20 @@ public class ValuesController : BaseController
         });
     }
 
+    /// <summary>
+    /// Gets entity user roles for multiple organization hierarchies.
+    /// Used to auto-populate internal stakeholders when selecting OrgUnits.
+    /// </summary>
+    [HttpPost(APIDictionary.EntityUserRolesByOrgUnit)]
+    public async Task<ActionResult> GetEntityUserRolesByOrgUnits([FromBody] int[] organizationHierarchyIds)
+    {
+        return await HandleOperationAsync(async () =>
+        {
+            var result = await _manager.GetEntityUserRolesByOrgUnitsAsync(organizationHierarchyIds);
+            return result;
+        });
+    }
+
     private static string GetGeminiModelValue(GeminiModel model)
     {
         return model switch

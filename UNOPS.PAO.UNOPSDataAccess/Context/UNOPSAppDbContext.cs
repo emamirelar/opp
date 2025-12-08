@@ -432,12 +432,8 @@ public class UNOPSAppDbContext : AppDbContext
 
     public new DbSet<AiChatSession> AiChatSession { get; set; }
     public new DbSet<UNOPSDocument> Documents { get; set; }
-    public DbSet<OrganizationHierarchy> OrganizationHierarchies { get; set; }
+    //Removed OrganizationHierarchies and OrganizationUnitRelationships from UNOPSAppDbContext to avoid shadowing issue as they are already present in AppDbContext
     public new DbSet<UNOPSPartnerTree> PartnerTrees { get; set; }
-
-    // Add DbSet for OrganizationUnitRelationship
-    public DbSet<OrganizationUnitRelationship> OrganizationUnitRelationships { get; set; }
-
     public new DbSet<EntityEmbeddings> EntityEmbeddings { get; set; }
     public new DbSet<InteractionContact> InteractionContacts { get; set; }
     public new DbSet<InteractionUser> InteractionUsers { get; set; }

@@ -42,6 +42,7 @@ public class APIDictionary
     public const string OrganizationUnits = APIPrefix + "values/organization-units";
     public const string OpportunityOrganizationUnits = APIPrefix + "values/opportunity-organization-units";
     public const string SuggestedOrgUnits = APIPrefix + "values/suggested-org-units";
+    public const string EntityUserRolesByOrgUnit = APIPrefix + "values/entity-user-roles-by-org-unit";
     public const string PartnerCategories = APIPrefix + "values/partner-categories";
     public const string LiaisonOffices = APIPrefix + "values/liaison-offices";
     public const string Contacts = APIPrefix + "values/contacts";

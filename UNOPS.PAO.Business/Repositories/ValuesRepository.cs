@@ -657,4 +657,67 @@ public class ValuesRepository
 
         return chain;
     }
+
+    /// <summary>
+    /// Gets EntityUserRoles for multiple OrganizationHierarchies, grouped by EntityRole.
+    /// Used to auto-populate internal stakeholders when selecting OrgUnits.
+    /// </summary>
+    public async Task<List<Models.OrganizationUnits.EntityUserRolesByOrgUnitResponse>> GetEntityUserRolesByOrgUnitsAsync(int[] organizationHierarchyIds)
+    {
+        if (organizationHierarchyIds == null || organizationHierarchyIds.Length == 0)
+            return new List<Models.OrganizationUnits.EntityUserRolesByOrgUnitResponse>();
+
+        // Get all org units in a single query
+        var orgUnits = await context.OrganizationHierarchies
+            .Where(oh => organizationHierarchyIds.Contains(oh.Id) && !oh.IsDeleted)
+            .Select(oh => new { oh.Id, oh.Name, oh.Type })
+            .ToListAsync();
+
+        if (!orgUnits.Any())
+            return new List<Models.OrganizationUnits.EntityUserRolesByOrgUnitResponse>();
+
+        // Get all EntityUserRoles for these OrganizationHierarchies in a single query
+        var entityUserRoles = await context.EntityUserRoles
+            .Include(eur => eur.EntityRole)
+            .Include(eur => eur.User)
+                .ThenInclude(u => u!.UserProfile)
+            .Where(eur => eur.EntityType == "OrganizationHierarchy" 
+                       && organizationHierarchyIds.Contains(eur.EntityId)
+                       && eur.EntityRoleId.HasValue
+                       && !eur.IsDeleted)
+            .ToListAsync();
+
+        // Build response for each org unit
+        var results = new List<Models.OrganizationUnits.EntityUserRolesByOrgUnitResponse>();
+        
+        foreach (var orgUnit in orgUnits)
+        {
+            // Group by EntityRole for this specific org unit
+            var roleGroups = entityUserRoles
+                .Where(eur => eur.EntityId == orgUnit.Id)
+                .GroupBy(eur => new { eur.EntityRoleId, RoleName = eur.EntityRole?.Name })
+                .Select(g => new Models.OrganizationUnits.EntityUserRoleGroupModel
+                {
+                    EntityRoleId = g.Key.EntityRoleId ?? 0,
+                    EntityRoleName = g.Key.RoleName,
+                    Users = g.Select(eur => new Models.OrganizationUnits.UserBasicModel
+                    {
+                        UserId = eur.UserId,
+                        Name = eur.User?.UserProfile?.Name ?? eur.User?.Email,
+                        Email = eur.User?.Email
+                    }).ToList()
+                })
+                .ToList();
+
+            results.Add(new Models.OrganizationUnits.EntityUserRolesByOrgUnitResponse
+            {
+                OrganizationHierarchyId = orgUnit.Id,
+                OrganizationHierarchyName = orgUnit.Name,
+                OrganizationHierarchyType = orgUnit.Type.ToString(),
+                RoleGroups = roleGroups
+            });
+        }
+
+        return results;
+    }
 }

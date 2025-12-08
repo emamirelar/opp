@@ -163,45 +163,98 @@
           />
         }
       </div>
-      @if (stakeholderCount() > 0) {
-        @for (stakeholder of opportunity().stakeholders; track stakeholder.id; let i = $index) {
-          <div class="bg-unops-surface-secondary rounded-unops-lg p-3 mb-2 border border-unops-neutral-300 shadow-unops-sm">
-            <div class="flex items-start justify-between">
-              <div class="flex items-center gap-3 flex-1">
-                <p-avatar
-                  [label]="stakeholder.userName?.charAt(0) || '?'"
-                  shape="circle"
-                  styleClass="bg-blue-100 text-blue-600"
-                />
-                <div class="flex-1">
-                  <div class="font-semibold text-unops-secondary">{{ stakeholder.userName }}</div>
-                  <div class="text-sm text-unops-primary">{{ stakeholder.entityRoleName }}</div>
+
+      <!-- User-added stakeholders (editable) -->
+      @if (userAddedStakeholders().length > 0) {
+        <div class="mb-4">
+          @if (autoPopulatedStakeholders().length > 0 || loadingAutoPopulatedStakeholders()) {
+            <div class="text-xs text-unops-neutral-600 mb-2">{{ 'label.opportunity.manuallyAddedStakeholders' | translate }}</div>
+          }
+          @for (stakeholder of userAddedStakeholders(); track stakeholder.id; let i = $index) {
+            <div class="bg-unops-surface-secondary rounded-unops-lg p-3 mb-2 border border-unops-neutral-300 shadow-unops-sm">
+              <div class="flex items-start justify-between">
+                <div class="flex items-center gap-3 flex-1">
+                  <p-avatar
+                    [label]="stakeholder.userName?.charAt(0) || '?'"
+                    shape="circle"
+                    styleClass="bg-blue-100 text-blue-600"
+                  />
+                  <div class="flex-1">
+                    <div class="font-semibold text-unops-secondary">{{ stakeholder.userName }}</div>
+                    <div class="text-sm text-unops-primary">{{ stakeholder.entityRoleName }}</div>
+                  </div>
                 </div>
+                @if (isEditing()) {
+                  <div class="flex items-center gap-2">
+                    <p-button
+                      icon="pi pi-pencil"
+                      size="small"
+                      [text]="true"
+                      [rounded]="true"
+                      severity="secondary"
+                      (onClick)="editStakeholder(i)"
+                    />
+                    <p-button
+                      icon="pi pi-trash"
+                      size="small"
+                      [text]="true"
+                      [rounded]="true"
+                      severity="danger"
+                      (onClick)="removeStakeholder(i)"
+                    />
+                  </div>
+                }
               </div>
-              @if (isEditing()) {
-                <div class="flex items-center gap-2">
-                  <p-button
-                    icon="pi pi-pencil"
-                    size="small"
-                    [text]="true"
-                    [rounded]="true"
-                    severity="secondary"
-                    (onClick)="editStakeholder(i)"
-                  />
-                  <p-button
-                    icon="pi pi-trash"
-                    size="small"
-                    [text]="true"
-                    [rounded]="true"
-                    severity="danger"
-                    (onClick)="removeStakeholder(i)"
-                  />
-                </div>
-              }
             </div>
+          }
+        </div>
+      }
+
+      <!-- Auto-populated stakeholders from OrgUnit (read-only) -->
+      @if (autoPopulatedStakeholders().length > 0) {
+        <div class="mb-4">
+          <div class="text-xs text-unops-neutral-600 mb-2 flex items-center gap-1">
+            <i class="pi pi-lock text-unops-neutral-500"></i>
+            <span>{{ 'label.opportunity.autoPopulatedFromOrgUnit' | translate }}</span>
           </div>
-        }
-      } @else {
+          @for (stakeholder of autoPopulatedStakeholders(); track stakeholder.entityRoleId) {
+            <div class="bg-unops-surface-secondary rounded-unops-lg p-3 mb-2 border border-unops-neutral-300 shadow-unops-sm opacity-80">
+              <div class="flex items-start justify-between">
+                <div class="flex items-center gap-3 flex-1">
+                  <p-avatar
+                    label="A"
+                    shape="circle"
+                    styleClass="bg-emerald-100 text-emerald-600"
+                  />
+                  <div class="flex-1">
+                    <div class="font-semibold text-unops-secondary flex items-center gap-2">
+                      {{ stakeholder.entityRoleName }}
+                      <p-tag value="Auto" severity="info" styleClass="text-xs" />
+                    </div>
+                    @if (stakeholder.userName) {
+                      <div class="text-sm text-unops-neutral-600">{{ stakeholder.userName }}</div>
+                    }
+                  </div>
+                </div>
+                <!-- No edit/remove buttons for auto-populated stakeholders -->
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Loading indicator for auto-populated stakeholders -->
+      @if (loadingAutoPopulatedStakeholders()) {
+        <div class="mb-4 p-3 bg-unops-surface-secondary rounded-unops-lg border border-unops-neutral-300">
+          <div class="flex items-center gap-2 text-unops-neutral-600">
+            <i class="pi pi-spin pi-spinner"></i>
+            <span>{{ 'message.loadingAutoPopulatedStakeholders' | translate }}</span>
+          </div>
+        </div>
+      }
+
+      <!-- Empty state -->
+      @if (stakeholderCount() === 0 && !loadingAutoPopulatedStakeholders()) {
         <div class="text-center py-8 text-unops-neutral-500">
           <i class="pi pi-users text-4xl mb-3 text-unops-neutral-400"></i>
           <p>{{ 'message.noStakeholders' | translate }}</p>

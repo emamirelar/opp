@@ -135,4 +135,7 @@ public class ValuesManager : IApplicationService
 
     public async Task<SuggestedOrgUnitsResponse> GetSuggestedOrgUnitsForCountriesAsync(int[] countryIds)
          => await repository.GetSuggestedOrgUnitsForCountriesAsync(countryIds);
+
+    public async Task<List<EntityUserRolesByOrgUnitResponse>> GetEntityUserRolesByOrgUnitsAsync(int[] organizationHierarchyIds)
+         => await repository.GetEntityUserRolesByOrgUnitsAsync(organizationHierarchyIds);
 }
