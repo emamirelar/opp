@@ -1687,56 +1687,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 .ToList();
         }
 
-        // Update Stakeholders
-        if (request.Stakeholders != null)
-        {
-            // Deduplicate stakeholders by UserId + EntityRoleId combination (keep first occurrence)
-            var uniqueStakeholders = request.Stakeholders
-                .GroupBy(s => new { s.UserId, s.EntityRoleId })
-                .Select(g => g.First())
-                .ToList();
-
-            // Get entity roles to check AllowsMultiple property
-            var entityRoleIds = uniqueStakeholders.Select(s => s.EntityRoleId).Distinct().ToList();
-            var entityRoles = await context.Set<EntityRole>()
-                .Where(er => entityRoleIds.Contains(er.Id))
-                .ToDictionaryAsync(er => er.Id);
-
-            // Validate that single-assignment roles don't have duplicates
-            var roleGroups = uniqueStakeholders
-                .GroupBy(s => s.EntityRoleId)
-                .ToList();
-
-            foreach (var roleGroup in roleGroups)
-            {
-                if (entityRoles.TryGetValue(roleGroup.Key, out var entityRole))
-                {
-                    if (!entityRole.AllowsMultiple && roleGroup.Count() > 1)
-                    {
-                        throw new BusinessException($"The role '{entityRole.Name}' does not allow multiple assignments. Only one person can be assigned to this role.");
-                    }
-                }
-            }
-
-            // Remove existing stakeholders
-            if (opportunity.Stakeholders != null && opportunity.Stakeholders.Any())
-            {
-                context.Set<OpportunityStakeholder>().RemoveRange(opportunity.Stakeholders);
-            }
-
-            // Add new stakeholders
-            opportunity.Stakeholders = uniqueStakeholders
-                .Select(s => new OpportunityStakeholder
-                {
-                    OpportunityId = id,
-                    UserId = s.UserId,
-                    EntityRoleId = s.EntityRoleId,
-                    IsInternal = true, // Internal stakeholders only for now
-                    StakeholderType = "Internal",
-                    Notes = s.Notes
-                })
-                .ToList();
-        }
+        // Note: Internal stakeholders are now managed in the Team section (UpdateTeamSectionAsync)
         
         // Update External Stakeholders
         if (request.ExternalStakeholders != null && request.ExternalStakeholders.Any())
@@ -1820,6 +1771,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     public async Task<OpportunityModel> UpdateTeamSectionAsync(int id, TeamSectionRequest request)
     {
         var opportunity = await context.Opportunities
+            .Include(o => o.Stakeholders)
             .FirstOrDefaultAsync(o => o.Id == id);
 
         if (opportunity == null)
@@ -1837,6 +1789,57 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         if (request.ProposedInitiativeTypeId.HasValue)
         {
             opportunity.ProposedInitiativeTypeId = request.ProposedInitiativeTypeId.Value;
+        }
+
+        // Update Internal Stakeholders (Team & Stakeholders)
+        if (request.Stakeholders != null)
+        {
+            // Deduplicate stakeholders by UserId + EntityRoleId combination (keep first occurrence)
+            var uniqueStakeholders = request.Stakeholders
+                .GroupBy(s => new { s.UserId, s.EntityRoleId })
+                .Select(g => g.First())
+                .ToList();
+
+            // Get entity roles to check AllowsMultiple property
+            var entityRoleIds = uniqueStakeholders.Select(s => s.EntityRoleId).Distinct().ToList();
+            var entityRoles = await context.Set<EntityRole>()
+                .Where(er => entityRoleIds.Contains(er.Id))
+                .ToDictionaryAsync(er => er.Id);
+
+            // Validate that single-assignment roles don't have duplicates
+            var roleGroups = uniqueStakeholders
+                .GroupBy(s => s.EntityRoleId)
+                .ToList();
+
+            foreach (var roleGroup in roleGroups)
+            {
+                if (entityRoles.TryGetValue(roleGroup.Key, out var entityRole))
+                {
+                    if (!entityRole.AllowsMultiple && roleGroup.Count() > 1)
+                    {
+                        throw new BusinessException($"The role '{entityRole.Name}' does not allow multiple assignments. Only one person can be assigned to this role.");
+                    }
+                }
+            }
+
+            // Remove existing stakeholders
+            if (opportunity.Stakeholders != null && opportunity.Stakeholders.Any())
+            {
+                context.Set<OpportunityStakeholder>().RemoveRange(opportunity.Stakeholders);
+            }
+
+            // Add new stakeholders
+            opportunity.Stakeholders = uniqueStakeholders
+                .Select(s => new OpportunityStakeholder
+                {
+                    OpportunityId = id,
+                    UserId = s.UserId,
+                    EntityRoleId = s.EntityRoleId,
+                    IsInternal = true, // Internal stakeholders only
+                    StakeholderType = "Internal",
+                    Notes = s.Notes
+                })
+                .ToList();
         }
 
         await context.SaveChangesAsync();

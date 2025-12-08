@@ -32,7 +32,7 @@ import { FloatLabelModule } from 'primeng/floatlabel';
 import { TooltipModule } from 'primeng/tooltip';
 import { TextareaModule } from 'primeng/textarea';
 import { CheckboxModule } from 'primeng/checkbox';
-import { Opportunity, OpportunityFundingPartner, OpportunityClientPartner, OpportunityStakeholder, OpportunityExternalStakeholder, DocumentDetail, PartnerAgreementInfo } from '@shared/models/opportunity.model';
+import { Opportunity, OpportunityFundingPartner, OpportunityClientPartner, OpportunityExternalStakeholder, DocumentDetail, PartnerAgreementInfo } from '@shared/models/opportunity.model';
 import { OpportunityService } from '@features/partnerships/opportunities/services/opportunity.service';
 import { FeedbackDialogService } from '@shared/services/ui/feedback-dialog.service';
 import { Router } from '@angular/router';
@@ -109,7 +109,6 @@ export class OpportunityWhoSectionComponent implements OnInit {
   private originalData: {
     fundingPartners?: any[];
     clientPartners?: any[];
-    stakeholders?: any[];
     externalStakeholders?: any[];
     miscExternalStakeholders?: string | null;
     externalStakeholderNotes?: string | null;
@@ -131,14 +130,6 @@ export class OpportunityWhoSectionComponent implements OnInit {
   readonly isEditingClientPartner = signal(false);
   readonly editingClientPartnerIndex = signal(-1);
   readonly clientPartnerControl = new FormControl<SimpleValue | null>(null);
-
-  // Stakeholder dialog state
-  readonly showStakeholderDialog = signal(false);
-  readonly showStakeholderValidationError = signal(false);
-  readonly isEditingStakeholder = signal(false);
-  readonly editingStakeholderIndex = signal(-1);
-  readonly userControl = new FormControl<SimpleValue | null>(null);
-  readonly roleControl = new FormControl<SimpleValue | null>(null);
   
   // External Stakeholder dialog state
   readonly showExternalStakeholderDialog = signal(false);
@@ -151,8 +142,6 @@ export class OpportunityWhoSectionComponent implements OnInit {
   readonly availablePartners = signal<SimpleValue[]>([]);
   readonly availableCurrencies = signal<SimpleValue[]>([]);
   readonly availableContacts = signal<SimpleValue[]>([]);
-  readonly entityRoles = signal<SimpleValue[]>([]);
-  readonly internalUsers = signal<SimpleValue[]>([]);
 
   // Pooled funding state
   isPooledFunding = false;
@@ -165,10 +154,6 @@ export class OpportunityWhoSectionComponent implements OnInit {
   readonly clientPartnerCount = computed(() => {
     return this.opportunity().clientPartners?.length || 0;
   });
-
-  readonly stakeholderCount = computed(() => {
-    return this.opportunity().stakeholders?.length || 0;
-  });
   
   readonly externalStakeholderCount = computed(() => {
     return this.opportunity().externalStakeholders?.length || 0;
@@ -176,8 +161,6 @@ export class OpportunityWhoSectionComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadPartners();
-    this.loadEntityRoles();
-    this.loadInternalUsers();
     this.loadCurrencies();
     this.loadContacts();
     
@@ -262,40 +245,16 @@ export class OpportunityWhoSectionComponent implements OnInit {
   }
 
   /**
-   * @description Load entity roles for Opportunity
-   */
-  loadEntityRoles(): void {
-    this.valuesService.getEntityRoles('Opportunity').subscribe({
-      next: (roles) => {
-        this.entityRoles.set(roles);
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
-  /**
-   * @description Load internal users
-   */
-  loadInternalUsers(): void {
-    this.valuesService.getInternalUsers().subscribe({
-      next: (users) => {
-        this.internalUsers.set(users);
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
-  /**
    * @description Start editing mode - backs up original data for cancel operation
    */
   startEditing(): void {
     const opp = this.opportunity();
     
     // Backup original data for cancel
+    // Note: Internal stakeholders are now managed in the Team section
     this.originalData = {
       fundingPartners: opp.fundingPartners ? [...opp.fundingPartners] : [],
       clientPartners: opp.clientPartners ? [...opp.clientPartners] : [],
-      stakeholders: opp.stakeholders ? [...opp.stakeholders] : [],
       externalStakeholders: opp.externalStakeholders ? [...opp.externalStakeholders] : [],
       miscExternalStakeholders: opp.miscExternalStakeholders ?? null,
       externalStakeholderNotes: opp.externalStakeholderNotes ?? null,
@@ -312,12 +271,12 @@ export class OpportunityWhoSectionComponent implements OnInit {
     const opp = this.opportunity();
     
     // Restore original data if available
+    // Note: Internal stakeholders are now managed in the Team section
     if (this.originalData) {
       const updatedOpportunity = {
         ...opp,
         fundingPartners: this.originalData.fundingPartners ? [...this.originalData.fundingPartners] : [],
         clientPartners: this.originalData.clientPartners ? [...this.originalData.clientPartners] : [],
-        stakeholders: this.originalData.stakeholders ? [...this.originalData.stakeholders] : [],
         externalStakeholders: this.originalData.externalStakeholders ? [...this.originalData.externalStakeholders] : [],
         miscExternalStakeholders: this.originalData.miscExternalStakeholders ?? null,
         externalStakeholderNotes: this.originalData.externalStakeholderNotes ?? null,
@@ -370,6 +329,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
     const opp = this.opportunity();
     if (!opp || !opp.id) return;
 
+    // Note: Internal stakeholders are now managed in the Team section
     const whoData = {
       isPooledFunding: this.isPooledFunding,
       fundingPartners: opp.fundingPartners?.map(fp => ({
@@ -389,11 +349,6 @@ export class OpportunityWhoSectionComponent implements OnInit {
         partnerId: cp.partnerId,
         documentId: cp.documentId, // Include document ID if set
         selectedPartnerAgreementNumber: cp.selectedPartnerAgreementNumber 
-      })),
-      stakeholders: opp.stakeholders?.map(s => ({
-        userId: s.userId!,
-        entityRoleId: s.entityRoleId,
-        notes: s.notes
       })),
       externalStakeholders: opp.externalStakeholders?.map(es => ({
         contactId: es.contactId
@@ -968,185 +923,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
     });
   }
 
-  // ========================================================================
-  // STAKEHOLDER MANAGEMENT
-  // ========================================================================
-
-  /**
-   * @description Open dialog to add stakeholder
-   */
-  openAddStakeholderDialog(): void {
-    this.userControl.setValue(null);
-    this.roleControl.setValue(null);
-    this.isEditingStakeholder.set(false);
-    this.editingStakeholderIndex.set(-1);
-    this.showStakeholderValidationError.set(false);
-    this.showStakeholderDialog.set(true);
-    this.cdr.detectChanges();
-  }
-
-  /**
-   * @description Edit existing stakeholder
-   */
-  editStakeholder(index: number): void {
-    const opp = this.opportunity();
-    const stakeholder = opp.stakeholders?.[index];
-    
-    if (!stakeholder) return;
-
-    const user = this.internalUsers().find(u => u.id === stakeholder.userId);
-    const role = this.entityRoles().find(r => r.id === stakeholder.entityRoleId);
-    
-    this.isEditingStakeholder.set(true);
-    this.editingStakeholderIndex.set(index);
-    this.userControl.setValue(user || null);
-    this.roleControl.setValue(role || null);
-    this.showStakeholderValidationError.set(false);
-    this.showStakeholderDialog.set(true);
-    this.cdr.detectChanges();
-  }
-
-  /**
-   * @description Cancel stakeholder dialog
-   */
-  cancelStakeholderDialog(): void {
-    this.showStakeholderDialog.set(false);
-    this.userControl.setValue(null);
-    this.roleControl.setValue(null);
-    this.isEditingStakeholder.set(false);
-    this.editingStakeholderIndex.set(-1);
-    this.showStakeholderValidationError.set(false);
-    this.cdr.detectChanges();
-  }
-
-  /**
-   * @description Confirm stakeholder dialog (add or update)
-   */
-  confirmStakeholderDialog(): void {
-    const user = this.userControl.value;
-    const role = this.roleControl.value;
-
-    if (!user || !role) {
-      this.showStakeholderValidationError.set(true);
-      this.cdr.detectChanges();
-      return;
-    }
-
-    // Check for duplicate stakeholder (both when adding and editing)
-    // A stakeholder is considered duplicate if the same user-role combination exists
-    const opp = this.opportunity();
-    const currentEditingIndex = this.editingStakeholderIndex();
-    const isDuplicate = opp.stakeholders?.some((s, index) => {
-      // Skip the stakeholder we're currently editing
-      if (this.isEditingStakeholder() && index === currentEditingIndex) {
-        return false;
-      }
-      return s.userId === user.id && s.entityRoleId === role.id;
-    });
-
-    if (isDuplicate) {
-      this.feedbackService.showWarningToast({
-        summary: this.translateService.instant('message.warning'),
-        detail: this.translateService.instant('message.validation.stakeholderAlreadyAdded')
-      });
-      return;
-    }
-
-    if (this.isEditingStakeholder()) {
-      this.updateStakeholder(user, role);
-    } else {
-      this.addStakeholder(user, role);
-    }
-  }
-
-  /**
-   * @description Add new stakeholder
-   */
-  addStakeholder(user: SimpleValue, role: SimpleValue): void {
-    const opp = this.opportunity();
-    const currentStakeholders = [...(opp.stakeholders || [])];
-
-    const newStakeholder: OpportunityStakeholder = {
-      id: 0,
-      opportunityId: opp.id!,
-      userId: user.id,
-      userName: user.name,
-      userEmail: null,
-      entityRoleId: role.id,
-      entityRoleName: role.name,
-      isInternal: true,
-      stakeholderType: 'Internal',
-      notes: null
-    };
-
-    currentStakeholders.push(newStakeholder);
-
-    const updatedOpportunity = {
-      ...opp,
-      stakeholders: currentStakeholders
-    };
-
-    this.opportunityUpdated.emit(updatedOpportunity);
-    this.markAsChanged();
-    this.cancelStakeholderDialog();
-  }
-
-  /**
-   * @description Update existing stakeholder
-   */
-  updateStakeholder(user: SimpleValue, role: SimpleValue): void {
-    const opp = this.opportunity();
-    const currentStakeholders = [...(opp.stakeholders || [])];
-    const index = this.editingStakeholderIndex();
-
-    if (index < 0 || index >= currentStakeholders.length) {
-      return;
-    }
-
-    currentStakeholders[index] = {
-      ...currentStakeholders[index],
-      userId: user.id,
-      userName: user.name,
-      entityRoleId: role.id,
-      entityRoleName: role.name,
-      notes: null
-    };
-
-    const updatedOpportunity = {
-      ...opp,
-      stakeholders: currentStakeholders
-    };
-
-    this.opportunityUpdated.emit(updatedOpportunity);
-    this.markAsChanged();
-    this.cancelStakeholderDialog();
-  }
-
-  /**
-   * @description Remove stakeholder
-   */
-  removeStakeholder(index: number): void {
-    this.feedbackService.showConfirmDialog(
-      {
-        summary: this.translateService.instant('confirmation.removeStakeholder'),
-        detail: this.translateService.instant('message.confirmRemoveStakeholder')
-      },
-      () => {
-        const opp = this.opportunity();
-        const currentStakeholders = [...(opp.stakeholders || [])];
-        currentStakeholders.splice(index, 1);
-
-        const updatedOpportunity = {
-          ...opp,
-          stakeholders: currentStakeholders
-        };
-
-        this.opportunityUpdated.emit(updatedOpportunity);
-        this.markAsChanged();
-        this.cdr.detectChanges();
-      }
-    );
-  }
+  // Note: Internal stakeholder management has been moved to the Team section
   
   // ==================================================================
   // External Stakeholder Management Methods
