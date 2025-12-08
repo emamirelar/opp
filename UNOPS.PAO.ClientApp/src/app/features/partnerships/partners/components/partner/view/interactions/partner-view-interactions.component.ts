@@ -557,7 +557,12 @@ export class PartnerViewInteractionsComponent implements OnInit {
       detail: this.translateService.instant('message.opportunityCreatedFromInteractions', { count: 1 })
     });
 
-    // Navigate to the new opportunity
-    this.router.navigate(['/partnerships/opportunities', opportunity.id]);
+    // Open the new opportunity in a new tab
+    if (opportunity && opportunity.id) {
+      const url = this.router.serializeUrl(
+        this.router.createUrlTree(['/partnerships/opportunities', opportunity.id])
+      );
+      window.open(`/#${url}`, '_blank');
+    }
   }
 }
