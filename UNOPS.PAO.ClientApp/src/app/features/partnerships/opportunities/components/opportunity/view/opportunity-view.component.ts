@@ -39,6 +39,7 @@ import { AvatarModule } from 'primeng/avatar';
 import { FileUploadModule } from 'primeng/fileupload';
 import { TooltipModule } from 'primeng/tooltip';
 import { DropdownModule } from 'primeng/dropdown';
+import { SelectModule } from 'primeng/select';
 import { MarkdownModule } from 'ngx-markdown';
 
 // Services
@@ -95,6 +96,7 @@ import { ValuesService } from '@app/shared/services/api/values.service';
     FileUploadModule,
     TooltipModule,
     DropdownModule,
+    SelectModule,
     MarkdownModule,
     OpportunityCollaborationComponent,
     OpportunityAnalysisSectionComponent,
@@ -139,6 +141,7 @@ export class OpportunityViewComponent
   documentsCollapsed = signal(true); // Document panel state
   activeSection = signal<string>(''); // Active section for navigation - will be set from route params
   headerScrolled = signal<boolean>(false); // Header shrunk state when scrolled
+  innerWidth = signal<number>(window.innerWidth); // Track window width for responsive behavior
   
   // Unsaved changes tracking for sticky save bar (Option 2 UX)
   sectionsWithUnsavedChanges = signal<Set<string>>(new Set());
@@ -1002,6 +1005,15 @@ export class OpportunityViewComponent
       event.preventDefault();
       return;
     }
+  }
+
+  /**
+   * @description Handle window resize to update innerWidth signal
+   * @param {Event} event - The resize event
+   */
+  @HostListener('window:resize', ['$event'])
+  onResize(event: Event): void {
+    this.innerWidth.set((event.target as Window).innerWidth);
   }
 
   /**

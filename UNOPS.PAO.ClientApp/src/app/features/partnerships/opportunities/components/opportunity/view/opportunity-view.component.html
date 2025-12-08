@@ -26,13 +26,16 @@
         <div class="flex-1 min-w-0">
           <!-- Header Section -->
           <div class="bg-unops-surface-secondary transition-all duration-300">
-            <!-- Banner Image (hidden on scroll) -->
+            <!-- Banner Image (hidden on scroll and responsive height) -->
             @if (opportunity()?.opportunityBannerImage && !headerScrolled()) {
               <div 
                 [class]="headerScrolled() ? 'px-unops-md md:px-unops-2xl' : 'px-unops-md md:px-unops-2xl'"
                 class="transition-all duration-300"
               >
-                <div class="relative w-full overflow-hidden transition-all duration-300 group cursor-pointer h-60 rounded-b-unops-lg">
+                <!-- Responsive banner: hidden on mobile, shorter on tablet, full height on desktop -->
+                <div class="relative w-full overflow-hidden transition-all duration-300 group cursor-pointer rounded-b-unops-lg
+                            hidden sm:block
+                            sm:h-32 md:h-40 lg:h-48 xl:h-60">
                   <img 
                     [src]="opportunity()!.opportunityBannerImage" 
                     [alt]="opportunity()!.name + ' banner'"
@@ -54,13 +57,13 @@
                   >
                     @if (isRegeneratingBanner()) {
                       <div class="flex flex-col items-center gap-3">
-                        <i class="pi pi-spin pi-spinner text-white text-5xl"></i>
-                        <span class="text-white text-sm font-medium">{{ 'message.generatingBanner' | translate }}</span>
+                        <i class="pi pi-spin pi-spinner text-white text-3xl sm:text-4xl lg:text-5xl"></i>
+                        <span class="text-white text-xs sm:text-sm font-medium">{{ 'message.generatingBanner' | translate }}</span>
                       </div>
                     } @else {
                       <div class="flex flex-col items-center gap-2">
-                        <i class="pi pi-refresh text-white text-4xl"></i>
-                        <span class="text-white text-sm font-medium">{{ 'button.regenerateBanner' | translate }}</span>
+                        <i class="pi pi-refresh text-white text-2xl sm:text-3xl lg:text-4xl"></i>
+                        <span class="text-white text-xs sm:text-sm font-medium">{{ 'button.regenerateBanner' | translate }}</span>
                       </div>
                     }
                   </div>
@@ -162,11 +165,40 @@
             </div>
           </div>
 
-          <!-- Section Chips Navigation -->
+          <!-- Section Navigation - Dropdown on mobile, Chips on desktop -->
           <div
             class="px-unops-md md:px-unops-2xl py-3 border-t border-unops-neutral-300 bg-unops-surface-secondary"
           >
-            <div class="flex items-center gap-2 flex-wrap">
+            <!-- Mobile/Tablet: Dropdown (hidden on lg and above) -->
+            <div class="lg:hidden">
+              <p-select
+                [options]="sections"
+                [(ngModel)]="activeSection"
+                optionLabel="label"
+                optionValue="id"
+                (onChange)="scrollToSection($event.value)"
+                [style]="{ width: '100%' }"
+                appendTo="body"
+              >
+                <ng-template pTemplate="selectedItem" let-selectedOption>
+                  @if (selectedOption) {
+                    <div class="flex items-center gap-2">
+                      <i [class]="'pi ' + selectedOption.icon"></i>
+                      <span>{{ selectedOption.label | translate }}</span>
+                    </div>
+                  }
+                </ng-template>
+                <ng-template pTemplate="item" let-option>
+                  <div class="flex items-center gap-2">
+                    <i [class]="'pi ' + option.icon"></i>
+                    <span>{{ option.label | translate }}</span>
+                  </div>
+                </ng-template>
+              </p-select>
+            </div>
+
+            <!-- Desktop: Chips (hidden on mobile/tablet) -->
+            <div class="hidden lg:flex items-center gap-2 flex-wrap">
               @for (section of sections; track section.id) {
                 <button
                   (click)="scrollToSection(section.id)"
@@ -190,9 +222,10 @@
 
     <!-- Content Layout - Documents Panel + Content (scrollable area, flex-1 takes remaining space) -->
     <div #contentScrollContainer class="flex flex-1 min-h-0 overflow-y-auto">
-      <!-- LEFT: Documents Panel -->
+      <!-- LEFT: Documents Panel (hidden on mobile by default) -->
       <div
-        class="flex-shrink-0 border-r border-unops-neutral-300 bg-unops-surface-primary sticky top-0 mt-6"
+        class="flex-shrink-0 border-r border-unops-neutral-300 bg-unops-surface-primary sticky top-0 mt-6 transition-all duration-300"
+        [class.hidden]="documentsCollapsed() && innerWidth() < 768"
         style="height: fit-content; max-height: 100%; align-self: flex-start"
       >
         <app-opportunity-documents
@@ -206,7 +239,7 @@
       </div>
 
       <!-- RIGHT: Content Sections -->
-      <div class="flex-1 min-w-0 px-unops-md md:px-unops-2xl py-6 bg-unops-surface-secondary">
+      <div class="flex-1 min-w-0 px-4 sm:px-unops-md md:px-unops-2xl py-4 sm:py-6 bg-unops-surface-secondary">
         <div class="flex flex-col gap-6">
           <!-- ANALYSIS - Quick Stats & Insights -->
           <div id="section-analysis">
@@ -411,16 +444,16 @@
         <!-- Left Spacer for documents panel (matches content layout) -->
         <div
           [class]="documentsCollapsed() ? 'w-12' : 'w-80 md:w-96'"
-          class="flex-shrink-0"
+          class="flex-shrink-0 hidden md:block"
         ></div>
         
         <!-- Outer container with padding (transparent) -->
-        <div class="flex-1 min-w-0 px-unops-md md:px-unops-2xl py-4">
+        <div class="flex-1 min-w-0 px-4 sm:px-unops-md md:px-unops-2xl py-4">
            <!-- Inner content with background (matches actual content area) -->
-           <div class="bg-amber-100 border-t-4 border-amber-500 shadow-unops-lg px-6 py-4 rounded-lg mr-5">
-            <div class="flex items-center justify-between gap-4 flex-wrap">
-              <div class="flex items-center gap-3">
-                <i class="pi pi-exclamation-triangle text-amber-600 text-2xl flex-shrink-0"></i>
+           <div class="bg-amber-100 border-t-4 border-amber-500 shadow-unops-lg px-4 sm:px-6 py-4 rounded-lg">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 flex-wrap">
+              <div class="flex items-start gap-3 flex-1">
+                <i class="pi pi-exclamation-triangle text-amber-600 text-xl sm:text-2xl flex-shrink-0 mt-0.5"></i>
                 <div class="flex flex-col">
                   <span class="text-sm font-bold text-amber-900">
                     {{ 'message.unsavedChanges' | translate }}
@@ -430,21 +463,23 @@
                   </span>
                 </div>
               </div>
-              <div class="flex gap-3">
+              <div class="flex gap-2 sm:gap-3 w-full sm:w-auto">
                 <p-button
-                  [label]="'button.discardChanges' | translate"
+                  [label]="innerWidth() >= 640 ? ('button.discardChanges' | translate) : ('button.discard' | translate)"
                   icon="pi pi-times"
                   severity="danger"
                   [outlined]="true"
                   (onClick)="discardAllChanges()"
-                  styleClass="font-semibold"
+                  styleClass="font-semibold flex-1 sm:flex-none"
+                  size="small"
                 />
                 <p-button
-                  [label]="'button.saveAll' | translate"
+                  [label]="innerWidth() >= 640 ? ('button.saveAll' | translate) : ('button.save' | translate)"
                   icon="pi pi-check"
                   severity="success"
                   (onClick)="saveAllSections()"
-                  styleClass="font-semibold"
+                  styleClass="font-semibold flex-1 sm:flex-none"
+                  size="small"
                 />
               </div>
             </div>

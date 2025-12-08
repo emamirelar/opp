@@ -3,7 +3,7 @@
     <div class="flex items-center justify-between w-full pr-4">
       <div class="flex items-center gap-2">
         <i class="pi pi-calendar text-unops-secondary"></i>
-        <span class="font-semibold">{{ 'label.opportunity.whenTimeline' | translate }}</span>
+        <span class="font-semibold">{{ 'label.opportunity.whenTimelineAndKeyDates' | translate }}</span>
       </div>
       <div class="flex items-center gap-2">
         @if (isSaving()) {
@@ -79,7 +79,7 @@
               dateFormat="yy-mm-dd"
               [showIcon]="true"
               class="w-full"
-              (onSelect)="onSigningDateChange()"
+              (onSelect)="onSigningDateManualChange()"
             />
             <label for="targetSigningDate">{{ 'label.opportunity.targetSigningDate' | translate }} *</label>
           </p-floatlabel>
@@ -98,7 +98,7 @@
               [showIcon]="true"
               [minDate]="getMinImplementationStartDate()"
               class="w-full"
-              (onSelect)="onImplementationStartDateChange()"
+              (onSelect)="onImplementationStartDateManualChange()"
             />
             <label for="implementationStartDate">{{ 'label.opportunity.implementationStartDate' | translate }}</label>
           </p-floatlabel>
@@ -132,6 +132,7 @@
               [showIcon]="true"
               [minDate]="getMinDeliveryDate()"
               class="w-full"
+              (onSelect)="onDeliveryDateManualChange()"
             />
             <label for="targetDeliveryDate">{{ 'label.opportunity.targetDeliveryDate' | translate }} *</label>
           </p-floatlabel>
@@ -243,10 +244,19 @@
                   [formControl]="submissionDeadlineControl"
                   dateFormat="yy-mm-dd"
                   [showIcon]="true"
+                  [maxDate]="targetSigningDateControl.value"
                   class="w-full"
                 />
                 <label for="submissionDeadline">{{ 'label.submissionDeadline' | translate }}</label>
               </p-floatlabel>
+              @if (isSubmissionDeadlineAfterSigningDate()) {
+                <p-message severity="error" variant="simple" styleClass="mt-2 text-xs text-unops-error">
+                  {{ 'message.opportunity.submissionDeadlineMustBeBeforeSigningDate' | translate }}
+                </p-message>
+              }
+              <p class="text-xs text-gray-500 mt-1">
+                {{ 'placeholder.submissionDeadlineHint' | translate }}
+              </p>
             </div>
           }
           
