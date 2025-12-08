@@ -203,7 +203,8 @@ public class GoogleCloudStorageService
             throw new ArgumentException("Invalid Google Cloud Storage URI format", nameof(gsUri));
         }
 
-        var objectName = parts[1]; // Extract object path (skip bucket name)
+        // Decode URL-encoded characters in the object name to match actual GCS object name
+        var objectName = Uri.UnescapeDataString(parts[1]);
 
         // Generate signed URL using existing method
         return await GenerateSignedUrlAsync(objectName, TimeSpan.FromMinutes(expirationMinutes));
@@ -286,7 +287,9 @@ public class GoogleCloudStorageService
             
             if (uri.Host == "storage.cloud.google.com" || uri.Host == "storage.googleapis.com")
             {
-                var pathSegments = uri.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+                // Use Uri.UnescapeDataString to decode URL-encoded characters
+                var decodedPath = Uri.UnescapeDataString(uri.AbsolutePath);
+                var pathSegments = decodedPath.Split('/', StringSplitOptions.RemoveEmptyEntries);
                 if (pathSegments.Length >= 2)
                 {
                     // Skip the bucket name (first segment) and return the rest as object path

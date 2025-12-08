@@ -18,6 +18,7 @@ using UNOPS.PAO.Models.Values;
 using UNOPS.PAO.Models.SDG;
 using UNOPS.PAO.Models.UNCF;
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.OrganizationUnits;
 
 public class ValuesManager : IApplicationService
 {
@@ -44,6 +45,13 @@ public class ValuesManager : IApplicationService
 
     public IEnumerable<OrganizationHierarchyModel> GetOrganizationUnits()
         => repository.GetOrganizationsByType(OrganizationUnitType.OrgUnit).Select(mapper.Map<OrganizationHierarchyModel>);
+
+    /// <summary>
+    /// Gets organization units for Opportunity dropdown (includes OrgUnit, Hub, and Region types)
+    /// </summary>
+    public IEnumerable<OrganizationHierarchyModel> GetOpportunityOrganizationUnits()
+        => repository.GetOrganizationsByTypes(OrganizationUnitType.OrgUnit, OrganizationUnitType.Hub, OrganizationUnitType.Region)
+            .Select(mapper.Map<OrganizationHierarchyModel>);
 
     public IEnumerable<ContactValueModel> GetContacts()
          => repository.GetContacts().Select(mapper.Map<ContactValueModel>);
@@ -124,4 +132,7 @@ public class ValuesManager : IApplicationService
 
     public async Task<IEnumerable<SimpleValueModel>> GetInternalUsersAsync()
          => await repository.GetInternalUsersAsync();
+
+    public async Task<SuggestedOrgUnitsResponse> GetSuggestedOrgUnitsForCountriesAsync(int[] countryIds)
+         => await repository.GetSuggestedOrgUnitsForCountriesAsync(countryIds);
 }

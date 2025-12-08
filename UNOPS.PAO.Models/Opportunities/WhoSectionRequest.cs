@@ -2,7 +2,8 @@ namespace UNOPS.PAO.Models.Opportunities;
 
 /// <summary>
 /// Request model for updating the WHO section of an opportunity
-/// Includes funding partners, client partners, and stakeholders
+/// Includes funding partners, client partners, and external stakeholders
+/// Note: Internal team stakeholders are now managed in the Team section
 /// </summary>
 public class WhoSectionRequest
 {
@@ -20,11 +21,6 @@ public class WhoSectionRequest
     /// List of client partners
     /// </summary>
     public List<OpportunityClientPartnerRequest>? ClientPartners { get; set; }
-
-    /// <summary>
-    /// List of team members and stakeholders
-    /// </summary>
-    public List<OpportunityStakeholderRequest>? Stakeholders { get; set; }
     
     /// <summary>
     /// List of external stakeholders (contacts)

@@ -4,7 +4,7 @@
     <div class="flex items-center justify-between w-full pr-4">
       <div class="flex items-center gap-2">
         <i class="pi pi-briefcase text-unops-secondary"></i>
-        <span class="font-semibold">{{ 'label.opportunity.what' | translate }} - {{ 'label.opportunity.productsServicesTitle' | translate }}</span>
+        <span class="font-semibold">{{ 'label.opportunity.whatProductsServices' | translate }}</span>
       </div>
       <div class="flex items-center gap-2">
         @if (isSaving()) {
@@ -66,52 +66,6 @@
         </div>
       </div>
     }
-
-    <!-- Responsible Org Unit and Initiative Type -->
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <h4 class="text-sm font-semibold text-unops-neutral-700 mb-2">
-          {{ 'label.opportunity.responsibleOrgUnit' | translate }}
-        </h4>
-        @if (isEditing()) {
-          <p-select
-            [formControl]="orgUnitControl"
-            [options]="organizationUnits()"
-            optionLabel="name"
-            optionValue="id"
-            [filter]="true"
-            filterBy="name,code"
-            [placeholder]="'label.opportunity.selectOrgUnit' | translate"
-            class="w-full"
-            [showClear]="true"
-          />
-        } @else {
-          <p class="text-unops-secondary">{{ opportunity().responsibleOrgUnitName || '-' }}</p>
-        }
-      </div>
-      <div>
-        <h4 class="text-sm font-semibold text-unops-neutral-700 mb-2">
-          {{ 'label.opportunity.initiativeType' | translate }}
-        </h4>
-        @if (isEditing()) {
-          <p-select
-            [formControl]="initiativeTypeControl"
-            [options]="initiativeTypes()"
-            optionLabel="name"
-            optionValue="id"
-            [filter]="true"
-            filterBy="name"
-            [placeholder]="'label.opportunity.selectInitiativeType' | translate"
-            class="w-full"
-            [showClear]="true"
-          />
-        } @else {
-          <p class="text-unops-secondary">
-            {{ opportunity().proposedInitiativeTypeName || '-' }}
-          </p>
-        }
-      </div>
-    </div>
 
     <!-- Delivery Modality Section -->
     <div class="border-t border-unops-neutral-300 pt-6">

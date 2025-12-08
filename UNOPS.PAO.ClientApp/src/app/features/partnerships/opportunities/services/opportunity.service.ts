@@ -98,10 +98,17 @@ export class OpportunityService {
   }
 
   /**
-   * Update WHO section of opportunity (partners, stakeholders)
+   * Update WHO section of opportunity (funding partners, client partners, external stakeholders)
    */
   updateOpportunityWho(id: number, data: any): Observable<Opportunity> {
     return this.http.patch<Opportunity>(`${this.apiUrl}/${id}/who`, data);
+  }
+
+  /**
+   * Update Team section of opportunity (org unit, initiative type, internal stakeholders)
+   */
+  updateOpportunityTeam(id: number, data: any): Observable<Opportunity> {
+    return this.http.patch<Opportunity>(`${this.apiUrl}/${id}/team`, data);
   }
 
   /**

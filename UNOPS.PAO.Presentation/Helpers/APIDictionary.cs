@@ -40,6 +40,8 @@ public class APIDictionary
     public const string EntityRoles = APIPrefix + "values/entity-roles";
     public const string InternalUsers = APIPrefix + "values/internal-users";
     public const string OrganizationUnits = APIPrefix + "values/organization-units";
+    public const string OpportunityOrganizationUnits = APIPrefix + "values/opportunity-organization-units";
+    public const string SuggestedOrgUnits = APIPrefix + "values/suggested-org-units";
     public const string PartnerCategories = APIPrefix + "values/partner-categories";
     public const string LiaisonOffices = APIPrefix + "values/liaison-offices";
     public const string Contacts = APIPrefix + "values/contacts";
@@ -191,6 +193,7 @@ public class APIDictionary
     public const string OpportunityWhat = Opportunity + "/{id}/what";
     public const string OpportunityWhy = Opportunity + "/{id}/why";
     public const string OpportunityWho = Opportunity + "/{id}/who";
+    public const string OpportunityTeam = Opportunity + "/{id}/team";
     public const string OpportunityWhere = Opportunity + "/{id}/where";
     public const string OpportunityWhen = Opportunity + "/{id}/when";
     public const string OpportunityRelated = Opportunity + "/{id}/related";
@@ -211,6 +214,8 @@ public class APIDictionary
     public const string EntityArtifactRecords = EntityArtifacts + "/entity-records";
     public const string EntityArtifactGet = EntityArtifacts + "/get";
     public const string EntityArtifactUpsert = EntityArtifacts + "/upsert";
+    public const string EntityArtifactUploadDocument = EntityArtifacts + "/upload-document";
+    public const string EntityArtifactDocumentUrl = EntityArtifacts + "/document-url";
     public const string EntityArtifactList = EntityArtifacts + "/list";
     
     // Bulk Entity Artifacts

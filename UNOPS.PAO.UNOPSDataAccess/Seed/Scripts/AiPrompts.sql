@@ -3371,7 +3371,6 @@ CRITICAL: misalignmentItems must be array of strings NOT objects. Empty array if
 - Follow the exact markdown structure specified in the user prompt
 - Keep the Summary section to 50 words maximum
 - Be specific and quantify where possible
-- Ensure alignment with UN/UNOPS goals and SDGs
 - DO NOT include markdown code fences (```) in your response
 - Return only the formatted markdown content
 - Do not invent or hallucinate information
@@ -3384,44 +3383,39 @@ CRITICAL: misalignmentItems must be array of strings NOT objects. Empty array if
 
 ## 1. Context and Challenge(s)
 
-- **(a) Unit and Opportunity Developer:** [Name, Position from opportunity details]
-- **(b) Location:** [Country(ies), Region(s), District(s) from opportunity details. Describe the context (e.g., socio-economic situation, environmental factors).]
-- **(c) Context and Challenge(s):** [Describe the key challenges from the Challenges field. Be specific and quantify the problem where possible.]
+- **(a) Unit and Opportunity Manager:** [Responsible Organizational Unit, Opportunity Manager Name from opportunity details. DO NOT ASSUME ANYTHING. ONLY LIST THE UNIT AND OPPORTUNITY DEVELOPER THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
+- **(b) Location:** [Country(ies), Region(s), District(s) from opportunity details. Describe the context (e.g., socio-economic situation, environmental factors). DO NOT ASSUME ANYTHING. ONLY LIST THE LOCATION THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
+- **(c) Context and Challenge(s):** [Describe the key challenges from the Challenges field. Be specific and quantify the problem where possible. DO NOT ASSUME ANYTHING. ONLY LIST THE CHALLENGES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
 
 ## 2. Alignment with UN, Global, and National Goals and Priorities
 
-- **(a) UN Cooperation Framework:** [Extract from StrategicAlignment field. Align with specific UNSDCF outcome(s) and other relevant UN frameworks.]
-- **(b) SDGs:** [List SDGs from the opportunity data with specific targets and indicators where available.]
-- **(c) UNOPS Strategy:** [Describe how this aligns with UNOPS mission based on the opportunity type and description.]
-- **(d) UNOPS Regional Priorities:** [Link with relevant priorities from the regional strategy based on location.]
+- **(a) UN Cooperation Framework:** [Extract from StrategicAlignment field. Align with specific UNSDCF outcome(s) and other relevant UN frameworks. DO NOT ASSUME ANYTHING. ONLY LIST THE UNSDCF OUTCOMES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
+- **(b) SDGs:** [List SDGs from the opportunity data with specific targets and indicators where available. DO NOT ASSUME ANYTHING. ONLY LIST THE SDGS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
+- **(c) UNOPS Strategy:** [Describe how this aligns with UNOPS mission based on the opportunity type and description. DO NOT ASSUME ANYTHING. ONLY LIST THE UNOPS MISSIONS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
+- **(d) UNOPS Regional Priorities:** [Link with relevant priorities from the regional strategy based on location. DO NOT ASSUME ANYTHING. ONLY LIST THE REGIONAL PRIORITIES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
 
 ## 3. Partner Objective(s)
 
-- **(a) Client:** [List client partners from the opportunity data]
-- **(b) Funding Partner:** [List funding partners from the opportunity data]
-- **(c) Impact:** [Extract from IntendedImpactOutcomes and ExpectedBeneficiaries fields]
-- **(d) Expected Outcomes:** [Extract from ResultsFocus field]
+- **(a) Client:** [List client partners from the opportunity data. DO NOT ASSUME ANYTHING. ONLY LIST THE CLIENT PARTNERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
+- **(b) Funding Partner:** [List funding partners from the opportunity data. DO NOT ASSUME ANYTHING. ONLY LIST THE FUNDING PARTNERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
+- **(c) Impact:** [Extract from IntendedImpactOutcomes and ExpectedBeneficiaries fields. DO NOT ASSUME ANYTHING. ONLY LIST THE IMPACT THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
+- **(d) Expected Outcomes:** [Extract from ResultsFocus field. DO NOT ASSUME ANYTHING. ONLY LIST THE EXPECTED OUTCOMES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
 
 ## 4. UNOPS Value Proposition
 
-- **(a) Services:** [Describe UNOPS services based on opportunity type and description]
-- **(b) Implementation Approach:** [Describe approach based on opportunity details]
-- **(c) Timeline:** [Extract from opportunity dates - TargetSigningDate, TargetDeliveryDate]
-- **(d) Budget:** [Extract from InitiativeBudgetUSD if available]
+- **(a) Services:** [Describe UNOPS services based on opportunity type and description. DO NOT ASSUME ANYTHING. ONLY LIST THE SERVICES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
+- **(b) Implementation Approach:** [Describe approach based on opportunity details. DO NOT ASSUME ANYTHING. ONLY LIST THE IMPLEMENTATION APPROACH THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
+- **(c) Timeline:** [Extract from opportunity dates - TargetSigningDate, TargetDeliveryDate. DO NOT ASSUME ANYTHING. ONLY LIST THE TIMELINE THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
+- **(d) Budget:** [Extract from InitiativeBudgetUSD if available. DO NOT ASSUME ANYTHING. ONLY LIST THE BUDGET THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
 
 ## 5. Risk Analysis
 
-- **(a) Key Risks:** [Extract from any risk-related fields in the opportunity data]
-- **(b) Mitigation Strategies:** [Suggest based on opportunity context]',
+- **(a) Key Risks:** [Extract from any risk-related fields in the opportunity data. DO NOT ASSUME ANYTHING. ONLY LIST THE KEY RISKS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
+- **(b) Mitigation Strategies:** [Suggest based on opportunity context. DO NOT ASSUME ANYTHING. ONLY LIST THE MITIGATION STRATEGIES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]',
         'I am providing you with complete opportunity details and attached document information. Please generate a comprehensive opportunity statement following the format specified in the system instructions.
 
 **Opportunity Details (JSON):**
 {opportunityDetails}
-
-**Documents Information:**
-- Documents Available: {hasDocuments}
-- Document Count: {documentCount}
-- Documents Metadata: {documents}
 
 Please analyze this information and generate the opportunity statement now, strictly following the output format in the system instructions.',
         NOW(),

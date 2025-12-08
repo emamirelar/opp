@@ -215,8 +215,10 @@ export class OpportunityStatementSectionComponent implements OnInit {
     const opportunityId = this.opportunity()?.id;
     if (!opportunityId) return;
 
-    const statement = this.opportunity()?.opportunityStatementMarkdown;
-    if (!statement) return;
+    // Note: We don't check for statement existence here because the backend
+    // validates against the statement stored in the database, not the frontend state.
+    // This allows validation to work immediately after generating a statement,
+    // even before the parent component updates the opportunity input signal.
 
     this.isValidating.set(true);
     this.validationResult.set(null);

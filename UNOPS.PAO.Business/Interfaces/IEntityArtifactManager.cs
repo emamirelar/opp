@@ -35,6 +35,27 @@ public interface IEntityArtifactManager
     Task<EntityArtifactResponse> UpsertEntityArtifactAsync(EntityArtifactRequest request);
 
     /// <summary>
+    /// Upsert (create or update) a document type entity artifact
+    /// Document URL is stored in ValueText instead of base64 in ValueJson
+    /// </summary>
+    /// <param name="request">The artifact request with document metadata</param>
+    /// <param name="documentUrl">The GCS URL where the document is stored</param>
+    /// <param name="fileName">Original filename</param>
+    /// <param name="mimeType">MIME type of the file</param>
+    /// <param name="fileSize">Size of the file in bytes</param>
+    Task<EntityArtifactResponse> UpsertDocumentArtifactAsync(
+        EntityArtifactRequest request, 
+        string documentUrl, 
+        string fileName, 
+        string mimeType, 
+        long fileSize);
+
+    /// <summary>
+    /// Get the artifact type code for an artifact type ID
+    /// </summary>
+    Task<string?> GetArtifactTypeCodeAsync(int artifactTypeId);
+
+    /// <summary>
     /// Get all artifacts for a specific entity
     /// </summary>
     Task<IEnumerable<EntityArtifactResponse>> GetEntityArtifactsAsync(string entityType, int entityId);

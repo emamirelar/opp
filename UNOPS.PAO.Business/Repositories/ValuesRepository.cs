@@ -45,6 +45,12 @@ public class ValuesRepository
             .Where(x => !x.IsDeleted && x.Type == type && x.Status == EntityStatus.Active)
             .OrderBy(x => x.Name);
 
+    // Get flat list of organization units by multiple types (for Opportunity dropdown)
+    public IEnumerable<OrganizationHierarchy> GetOrganizationsByTypes(params OrganizationUnitType[] types)
+        => context.OrganizationHierarchies
+            .Where(x => !x.IsDeleted && types.Contains(x.Type) && x.Status == EntityStatus.Active)
+            .OrderBy(x => x.Name);
+
     // Get complete hierarchy starting from root (where ParentId is null)
     public async Task<IEnumerable<OrganizationHierarchyTreeModel>> GetOrganizationHierarchy()
     {
@@ -493,5 +499,162 @@ public class ValuesRepository
         
         // Indicator is active only if the metadata is active
         return matchingMetadata != null && matchingMetadata.Status == EntityStatus.Active;
+    }
+
+    /// <summary>
+    /// Gets suggested organization units based on the countries of implementation.
+    /// Returns the org units that are directly responsible for the countries,
+    /// and if there are multiple countries with different org units, returns the common parent org unit.
+    /// </summary>
+    public async Task<Models.OrganizationUnits.SuggestedOrgUnitsResponse> GetSuggestedOrgUnitsForCountriesAsync(int[] countryIds)
+    {
+        if (countryIds == null || countryIds.Length == 0)
+        {
+            return new Models.OrganizationUnits.SuggestedOrgUnitsResponse
+            {
+                SuggestedOrgUnitIds = new List<int>(),
+                PrimarySuggestionId = null,
+                SuggestionReason = null
+            };
+        }
+
+        // Get org unit relationships for all the countries
+        var orgUnitRelationships = await context.OrganizationUnitRelationships
+            .Include(r => r.OrganizationHierarchy)
+            .Where(r => r.EntityType == "Country" && countryIds.Contains(r.EntityId) && !r.IsDeleted)
+            .ToListAsync();
+
+        if (!orgUnitRelationships.Any())
+        {
+            return new Models.OrganizationUnits.SuggestedOrgUnitsResponse
+            {
+                SuggestedOrgUnitIds = new List<int>(),
+                PrimarySuggestionId = null,
+                SuggestionReason = null
+            };
+        }
+
+        // Get distinct org unit IDs responsible for these countries
+        var distinctOrgUnitIds = orgUnitRelationships
+            .Where(r => r.OrganizationHierarchy != null)
+            .Select(r => r.OrganizationHierarchyId)
+            .Distinct()
+            .ToList();
+
+        var suggestedIds = new List<int>(distinctOrgUnitIds);
+        int? primarySuggestionId = null;
+        string? suggestionReason = null;
+
+        if (distinctOrgUnitIds.Count == 1)
+        {
+            // Single org unit is responsible for all countries
+            primarySuggestionId = distinctOrgUnitIds.First();
+            suggestionReason = "responsible_for_all_countries";
+        }
+        else if (distinctOrgUnitIds.Count > 1)
+        {
+            // Multiple org units - find the common parent
+            var commonParentId = await FindCommonParentOrgUnitAsync(distinctOrgUnitIds);
+            if (commonParentId.HasValue)
+            {
+                // Add common parent to suggestions and make it primary
+                if (!suggestedIds.Contains(commonParentId.Value))
+                {
+                    suggestedIds.Insert(0, commonParentId.Value);
+                }
+                primarySuggestionId = commonParentId.Value;
+                suggestionReason = "common_parent_for_multiple_countries";
+            }
+            else
+            {
+                // No common parent found, use the first org unit
+                primarySuggestionId = distinctOrgUnitIds.First();
+                suggestionReason = "multiple_responsible_units";
+            }
+        }
+
+        return new Models.OrganizationUnits.SuggestedOrgUnitsResponse
+        {
+            SuggestedOrgUnitIds = suggestedIds,
+            PrimarySuggestionId = primarySuggestionId,
+            SuggestionReason = suggestionReason
+        };
+    }
+
+    /// <summary>
+    /// Finds the lowest common ancestor (parent) org unit for a set of org unit IDs
+    /// </summary>
+    private async Task<int?> FindCommonParentOrgUnitAsync(List<int> orgUnitIds)
+    {
+        if (orgUnitIds == null || orgUnitIds.Count == 0)
+            return null;
+
+        if (orgUnitIds.Count == 1)
+            return orgUnitIds.First();
+
+        // Build hierarchy chains for each org unit (from child to root)
+        var hierarchyChains = new List<List<int>>();
+        
+        foreach (var orgUnitId in orgUnitIds)
+        {
+            var chain = await BuildHierarchyChainAsync(orgUnitId);
+            if (chain.Any())
+            {
+                hierarchyChains.Add(chain);
+            }
+        }
+
+        if (hierarchyChains.Count < 2)
+            return orgUnitIds.First();
+
+        // Find the first common ancestor by comparing chains from root to leaf
+        // Reverse chains so we start from root
+        foreach (var chain in hierarchyChains)
+        {
+            chain.Reverse();
+        }
+
+        int? commonParent = null;
+        var minLength = hierarchyChains.Min(c => c.Count);
+        
+        for (int i = 0; i < minLength; i++)
+        {
+            var currentLevelId = hierarchyChains[0][i];
+            if (hierarchyChains.All(c => c[i] == currentLevelId))
+            {
+                commonParent = currentLevelId;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        return commonParent;
+    }
+
+    /// <summary>
+    /// Builds the hierarchy chain from a given org unit to the root
+    /// </summary>
+    private async Task<List<int>> BuildHierarchyChainAsync(int orgUnitId)
+    {
+        var chain = new List<int>();
+        int? currentId = orgUnitId;
+
+        while (currentId.HasValue)
+        {
+            chain.Add(currentId.Value);
+            var orgUnit = await context.OrganizationHierarchies
+                .Where(oh => oh.Id == currentId.Value && !oh.IsDeleted)
+                .Select(oh => new { oh.Id, oh.ParentId })
+                .FirstOrDefaultAsync();
+
+            if (orgUnit == null)
+                break;
+
+            currentId = orgUnit.ParentId;
+        }
+
+        return chain;
     }
 }

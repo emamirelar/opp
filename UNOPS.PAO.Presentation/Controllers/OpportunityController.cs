@@ -601,6 +601,33 @@ public class OpportunityController : BaseController
     }
 
     /// <summary>
+    /// Updates the Team section of an opportunity (org unit, initiative type)
+    /// </summary>
+    [HttpPatch(APIDictionary.OpportunityTeam)]
+    [AccessControlled(EntityTypes.Opportunity, "update")]
+    public async Task<ActionResult> UpdateTeamSection(int id, [FromBody] TeamSectionRequest req)
+    {
+        try
+        {
+            var result = await _manager.UpdateTeamSectionAsync(id, req);
+            
+            // Create audit log
+            await CreateAuditLogAsync(id, "update_team_section", result);
+            
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating Team section for opportunity {OpportunityId}", id);
+            return StatusCode(500, new { error = "Internal server error while updating Team section", details = ex.Message });
+        }
+    }
+
+    /// <summary>
     /// Retrieves partner-document associations for a specific document
     /// </summary>
     [HttpGet(APIDictionary.Opportunity + "/retrieve-partner-document-association/{documentId}")]

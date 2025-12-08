@@ -394,29 +394,60 @@ export class EntityArtifactManagerComponent implements OnInit {
    * @since 1.0.0
    */
   private populateFormFromArtifact(artifact: EntityArtifactResponse) {
-    this.valueText.set(artifact.valueText || '');
+    // For non-document types, populate form fields normally
+    if (this.selectedDataType() !== 'document') {
+      this.valueText.set(artifact.valueText || '');
+    }
     this.valueNumber.set(artifact.valueNumber);
     this.valueBoolean.set(artifact.valueBoolean);
     this.valueDate.set(artifact.valueDate ? new Date(artifact.valueDate) : null);
     this.documentId.set(artifact.documentId);
     
-    // Parse existing document from ValueJson if present
-    if (artifact.valueJson) {
-      try {
-        const documentData = JSON.parse(artifact.valueJson) as Base64FileData;
-        if (documentData && documentData.base64Content) {
-          this.existingDocumentData.set(documentData);
-          this.showDocumentUploadPanel.set(false); // Hide upload panel initially
-          console.log('Existing document loaded:', documentData.fileName);
+    // For document type artifacts, check for GCS URL in ValueText (new format)
+    // or base64 in ValueJson (legacy format)
+    if (this.selectedDataType() === 'document') {
+      // Check for new GCS format: URL in ValueText, metadata in ValueJson
+      if (artifact.valueText && (artifact.valueText.startsWith('gs://') || artifact.valueText.startsWith('https://storage.'))) {
+        // New GCS format - parse metadata from ValueJson
+        let documentMetadata: { fileName?: string; mimeType?: string; fileSize?: number } = {};
+        if (artifact.valueJson) {
+          try {
+            documentMetadata = JSON.parse(artifact.valueJson);
+          } catch (error) {
+            console.error('Error parsing document metadata from ValueJson:', error);
+          }
         }
-      } catch (error) {
-        console.error('Error parsing document data from ValueJson:', error);
-        this.existingDocumentData.set(null);
-        this.showDocumentUploadPanel.set(true); // Show upload panel if parsing fails
+        
+        // Create a placeholder document data object for display
+        const gcsDocumentData: Base64FileData = {
+          fileName: documentMetadata.fileName || artifact.name || 'Document',
+          fileType: documentMetadata.mimeType || 'application/octet-stream',
+          fileSize: documentMetadata.fileSize || 0,
+          base64Content: '' // Empty because document is stored in GCS
+        };
+        
+        this.existingDocumentData.set(gcsDocumentData);
+        this.showDocumentUploadPanel.set(false); // Hide upload panel initially
+        console.log('Existing GCS document loaded:', gcsDocumentData.fileName);
       }
-    } else {
-      this.existingDocumentData.set(null);
-      this.showDocumentUploadPanel.set(true); // Show upload panel if no existing document
+      // Check for legacy base64 format in ValueJson
+      else if (artifact.valueJson) {
+        try {
+          const documentData = JSON.parse(artifact.valueJson) as Base64FileData;
+          if (documentData && documentData.base64Content) {
+            this.existingDocumentData.set(documentData);
+            this.showDocumentUploadPanel.set(false); // Hide upload panel initially
+            console.log('Existing legacy document loaded:', documentData.fileName);
+          }
+        } catch (error) {
+          console.error('Error parsing document data from ValueJson:', error);
+          this.existingDocumentData.set(null);
+          this.showDocumentUploadPanel.set(true); // Show upload panel if parsing fails
+        }
+      } else {
+        this.existingDocumentData.set(null);
+        this.showDocumentUploadPanel.set(true); // Show upload panel if no existing document
+      }
     }
   }
 
@@ -488,10 +519,49 @@ export class EntityArtifactManagerComponent implements OnInit {
    */
   onDownloadDocument(): void {
     const docData = this.existingDocumentData();
+    const artifact = this.currentArtifact();
+    
     if (!docData) {
       return;
     }
 
+    // Check if this is a GCS document (no base64 content)
+    if (!docData.base64Content && artifact) {
+      // Get signed URL from backend and download
+      const entityType = this.selectedEntityType();
+      const entityRecord = this.selectedEntityRecord();
+      const artifactType = this.selectedArtifactType();
+      
+      if (entityType && entityRecord && artifactType) {
+        this.entityArtifactService.getDocumentUrl(entityType, entityRecord.id, artifactType.id)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: (response) => {
+              if (response && response.url) {
+                // Create a temporary link and trigger download
+                const link = document.createElement('a');
+                link.href = response.url;
+                link.download = response.fileName || docData.fileName;
+                link.target = '_blank';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                console.log('GCS Document download triggered:', response.fileName);
+              }
+            },
+            error: (error) => {
+              console.error('Error getting document URL:', error);
+              this.feedbackService.showErrorToast({
+                summary: this.translateService.instant('entityArtifact.errors.error'),
+                detail: this.translateService.instant('entityArtifact.errors.downloadFailed')
+              });
+            }
+          });
+      }
+      return;
+    }
+
+    // Legacy base64 download
     try {
       // Create a data URL from the base64 content
       const dataUrl = `data:${docData.fileType};base64,${docData.base64Content}`;
@@ -523,10 +593,43 @@ export class EntityArtifactManagerComponent implements OnInit {
    */
   onPreviewDocument(): void {
     const docData = this.existingDocumentData();
+    const artifact = this.currentArtifact();
+    
     if (!docData) {
       return;
     }
 
+    // Check if this is a GCS document (no base64 content)
+    if (!docData.base64Content && artifact) {
+      // Get signed URL from backend and open in new tab
+      const entityType = this.selectedEntityType();
+      const entityRecord = this.selectedEntityRecord();
+      const artifactType = this.selectedArtifactType();
+      
+      if (entityType && entityRecord && artifactType) {
+        this.entityArtifactService.getDocumentUrl(entityType, entityRecord.id, artifactType.id)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: (response) => {
+              if (response && response.url) {
+                // Open signed URL in new tab
+                window.open(response.url, '_blank');
+                console.log('GCS Document preview opened:', response.fileName);
+              }
+            },
+            error: (error) => {
+              console.error('Error getting document URL:', error);
+              this.feedbackService.showErrorToast({
+                summary: this.translateService.instant('entityArtifact.errors.error'),
+                detail: this.translateService.instant('entityArtifact.errors.previewFailed')
+              });
+            }
+          });
+      }
+      return;
+    }
+
+    // Legacy base64 preview
     try {
       // Create a data URL from the base64 content
       const dataUrl = `data:${docData.fileType};base64,${docData.base64Content}`;
@@ -664,32 +767,72 @@ export class EntityArtifactManagerComponent implements OnInit {
 
     this.saving.set(true);
 
-    // Prepare the request based on data type
-    let valueJson: string | null = null;
-
-    // For document type, store the base64 file data in ValueJson
-    if (this.selectedDataType() === 'document') {
-      // Use newly uploaded file if available, otherwise keep existing document
-      const fileData = this.uploadedFile() || this.existingDocumentData();
-      if (fileData) {
-        valueJson = JSON.stringify({
-          fileName: fileData.fileName,
-          fileType: fileData.fileType,
-          fileSize: fileData.fileSize,
-          base64Content: fileData.base64Content
-        });
+    // For document type with a newly uploaded file, use the GCS upload endpoint
+    if (this.selectedDataType() === 'document' && this.uploadedFile()) {
+      const fileData = this.uploadedFile()!;
+      
+      // Convert base64 to File object
+      const byteString = atob(fileData.base64Content);
+      const arrayBuffer = new ArrayBuffer(byteString.length);
+      const uint8Array = new Uint8Array(arrayBuffer);
+      for (let i = 0; i < byteString.length; i++) {
+        uint8Array[i] = byteString.charCodeAt(i);
       }
+      const blob = new Blob([uint8Array], { type: fileData.fileType });
+      const file = new File([blob], fileData.fileName, { type: fileData.fileType });
+
+      this.entityArtifactService.uploadDocumentArtifact(
+        entityType,
+        entityRecord.id,
+        artifactType.id,
+        artifactType.artifactTypeCode,
+        file,
+        fileData.fileName,
+        'User Input'
+      )
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (artifact) => {
+            this.currentArtifact.set(artifact);
+            this.saving.set(false);
+            this.showValidationError.set(false);
+            
+            // Update existing document data with new GCS info
+            this.existingDocumentData.set({
+              fileName: fileData.fileName,
+              fileType: fileData.fileType,
+              fileSize: fileData.fileSize,
+              base64Content: '' // Empty because document is stored in GCS
+            });
+            this.uploadedFile.set(null);
+            
+            // Hide the upload panel and show the existing document card
+            this.showDocumentUploadPanel.set(false);
+            
+            this.feedbackService.showSuccessToast({
+              summary: this.translateService.instant('entityArtifact.success.saved'),
+              detail: this.translateService.instant('entityArtifact.success.savedDetail')
+            });
+          },
+          error: (error) => {
+            console.error('Error uploading document artifact:', error);
+            this.saving.set(false);
+            // Error handled by global interceptor
+          }
+        });
+      return;
     }
 
+    // For non-document types or document type without new file (keeping existing)
     const request: EntityArtifactRequest = {
       entityType: entityType,
       entityId: entityRecord.id,
       artifactTypeId: artifactType.id,
-      valueText: this.valueText() || null,
+      valueText: this.selectedDataType() !== 'document' ? (this.valueText() || null) : null,
       valueNumber: this.valueNumber(),
       valueBoolean: this.valueBoolean(),
       valueDate: this.valueDate()?.toISOString() || null,
-      valueJson: valueJson,
+      valueJson: null, // No longer storing base64 in valueJson
       documentId: this.documentId(),
       source: 'User Input'
     };
@@ -701,12 +844,6 @@ export class EntityArtifactManagerComponent implements OnInit {
           this.currentArtifact.set(artifact);
           this.saving.set(false);
           this.showValidationError.set(false);
-          
-          // If a new file was uploaded, move it to existing document data
-          if (this.uploadedFile()) {
-            this.existingDocumentData.set(this.uploadedFile());
-            this.uploadedFile.set(null);
-          }
           
           // Hide the upload panel and show the existing document card
           this.showDocumentUploadPanel.set(false);

@@ -14,7 +14,7 @@ import {
   ChangeDetectorRef,
   OnInit
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, KeyValuePipe } from '@angular/common';
 import { FormsModule, FormControl, ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { PanelModule } from 'primeng/panel';
@@ -125,6 +125,8 @@ export class OpportunityWhereSectionComponent implements OnInit {
   readonly searchResults = signal<CountryDynamicSearchResponse | null>(null);
   readonly isSearching = signal(false);
   readonly selectedSearchResults = signal<Set<number>>(new Set());
+  // Store full country data for selected countries to persist across searches
+  readonly selectedCountriesData = signal<Map<number, SimpleValue>>(new Map());
   private searchTerms$ = new Subject<string>();
 
   // Computed count
@@ -213,14 +215,32 @@ export class OpportunityWhereSectionComponent implements OnInit {
   toggleCountrySelection(countryId: number): void {
     const selected = this.selectedSearchResults();
     const newSelected = new Set(selected);
-    
+    const countryData = this.selectedCountriesData();
+    const newCountryData = new Map(countryData);
+
     if (newSelected.has(countryId)) {
       newSelected.delete(countryId);
+      newCountryData.delete(countryId);
     } else {
       newSelected.add(countryId);
+      // Store the country data from search results
+      const results = this.searchResults();
+      if (results) {
+        const country = results.allResults.find((r) => r.country.id === countryId);
+        if (country) {
+          newCountryData.set(countryId, {
+            id: country.country.id,
+            name: country.country.name,
+            code: country.country.iso2Code,
+            continent: country.country.continent,
+            region: country.country.region
+          });
+        }
+      }
     }
-    
+
     this.selectedSearchResults.set(newSelected);
+    this.selectedCountriesData.set(newCountryData);
   }
 
   /**
@@ -229,12 +249,23 @@ export class OpportunityWhereSectionComponent implements OnInit {
   selectArtifactGroup(matches: CountrySearchResult[]): void {
     const selected = this.selectedSearchResults();
     const newSelected = new Set(selected);
-    
-    matches.forEach(match => {
+    const countryData = this.selectedCountriesData();
+    const newCountryData = new Map(countryData);
+
+    matches.forEach((match) => {
       newSelected.add(match.country.id);
+      // Store country data for each selected country
+      newCountryData.set(match.country.id, {
+        id: match.country.id,
+        name: match.country.name,
+        code: match.country.iso2Code,
+        continent: match.country.continent,
+        region: match.country.region
+      });
     });
-    
+
     this.selectedSearchResults.set(newSelected);
+    this.selectedCountriesData.set(newCountryData);
     this.feedbackService.showInfoToast({
       summary: this.translateService.instant('message.info'),
       detail: this.translateService.instant('message.countriesSelected', { count: matches.length })
@@ -246,6 +277,23 @@ export class OpportunityWhereSectionComponent implements OnInit {
    */
   clearSearchSelections(): void {
     this.selectedSearchResults.set(new Set());
+    this.selectedCountriesData.set(new Map());
+  }
+
+  /**
+   * @description Remove a single country from the selection
+   */
+  removeSelectedCountry(countryId: number): void {
+    const selected = this.selectedSearchResults();
+    const newSelected = new Set(selected);
+    const countryData = this.selectedCountriesData();
+    const newCountryData = new Map(countryData);
+
+    newSelected.delete(countryId);
+    newCountryData.delete(countryId);
+
+    this.selectedSearchResults.set(newSelected);
+    this.selectedCountriesData.set(newCountryData);
   }
 
   // ========================================================================
@@ -329,7 +377,7 @@ export class OpportunityWhereSectionComponent implements OnInit {
         this.changesSavedOrDiscarded.emit();
         this.feedbackService.showSuccessToast({
           summary: this.translateService.instant('message.success'),
-          detail: this.translateService.instant('message.opportunity.whereSectionUpdated')
+          detail: this.translateService.instant('message.opportunity.updatedSuccessfully')
         });
         this.cdr.detectChanges();
       },
@@ -350,6 +398,7 @@ export class OpportunityWhereSectionComponent implements OnInit {
    */
   openAddCountryDialog(): void {
     this.selectedSearchResults.set(new Set());
+    this.selectedCountriesData.set(new Map());
     this.searchTerm.setValue('');
     this.searchResults.set(null);
     this.showValidationError.set(false);
@@ -363,6 +412,7 @@ export class OpportunityWhereSectionComponent implements OnInit {
   cancelCountryDialog(): void {
     this.showCountryDialog.set(false);
     this.selectedSearchResults.set(new Set());
+    this.selectedCountriesData.set(new Map());
     this.searchTerm.setValue('');
     this.searchResults.set(null);
     this.showValidationError.set(false);
@@ -373,23 +423,9 @@ export class OpportunityWhereSectionComponent implements OnInit {
    * @description Confirm country dialog (add multiple countries)
    */
   confirmCountryDialog(): void {
-    // Get selected countries from dynamic search
-    const selectedIds = this.selectedSearchResults();
-    const results = this.searchResults();
-    
-    let countriesToAdd: SimpleValue[] = [];
-    
-    if (results) {
-      countriesToAdd = results.allResults
-        .filter(r => selectedIds.has(r.country.id))
-        .map(r => ({
-          id: r.country.id,
-          name: r.country.name,
-          code: r.country.iso2Code,
-          continent: r.country.continent,
-          region: r.country.region
-        }));
-    }
+    // Get selected countries from the stored data (persists across searches)
+    const countryData = this.selectedCountriesData();
+    const countriesToAdd: SimpleValue[] = Array.from(countryData.values());
 
     // Validation
     if (countriesToAdd.length === 0) {

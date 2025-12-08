@@ -137,6 +137,8 @@ export class OpportunityWhySectionComponent implements OnInit {
     intendedImpactOutcomes?: string | null;
     challenges?: string | null;
     sdGs?: any[];
+    uncfOutcomes?: any[];
+    unopsMissions?: any[];
   } | null = null;
 
   // Form controls for WHY section
@@ -199,6 +201,8 @@ export class OpportunityWhySectionComponent implements OnInit {
   selectedUNOPSMissions = signal<Set<number>>(new Set());
   unopsMissionsNotApplicable = signal<boolean>(false);
   showUNOPSMissionsDialog = signal<boolean>(false);
+  // Store selections before dialog opens for restore on cancel
+  private preDialogUNOPSMissions: Set<number> | null = null;
 
   // Computed properties
   readonly sdgCount = computed(() => this.opportunity().sdGs?.length || 0);
@@ -582,6 +586,8 @@ export class OpportunityWhySectionComponent implements OnInit {
    * @description Open UNOPS Missions dialog
    */
   openUNOPSMissionsDialog(): void {
+    // Store current selections before opening dialog (for restore on cancel)
+    this.preDialogUNOPSMissions = new Set(this.selectedUNOPSMissions());
     this.showUNOPSMissionsDialog.set(true);
   }
 
@@ -592,6 +598,7 @@ export class OpportunityWhySectionComponent implements OnInit {
     // Selections are already tracked in selectedUNOPSMissions signal
     // Just close the dialog - actual save happens when user saves the WHY section
     this.showUNOPSMissionsDialog.set(false);
+    this.preDialogUNOPSMissions = null;
     this.cdr.detectChanges();
   }
 
@@ -599,21 +606,16 @@ export class OpportunityWhySectionComponent implements OnInit {
    * @description Cancel UNOPS Missions dialog
    */
   cancelUNOPSMissionsDialog(): void {
-    // Reset selections to current opportunity's missions
-    const opp = this.opportunity();
-    if (opp.unopsMissions) {
-      const selectedIds = new Set(
-        opp.unopsMissions.map((m) => m.unopsMissionId),
-      );
-      this.selectedUNOPSMissions.set(selectedIds);
-    } else {
-      this.selectedUNOPSMissions.set(new Set());
+    // Restore selections to what they were before the dialog was opened
+    if (this.preDialogUNOPSMissions !== null) {
+      this.selectedUNOPSMissions.set(new Set(this.preDialogUNOPSMissions));
     }
-    
+
     // Reset "not applicable" flag - don't auto-check
     this.unopsMissionsNotApplicable.set(false);
-    
+
     this.showUNOPSMissionsDialog.set(false);
+    this.preDialogUNOPSMissions = null;
     this.cdr.detectChanges();
   }
 
@@ -629,6 +631,8 @@ export class OpportunityWhySectionComponent implements OnInit {
       intendedImpactOutcomes: opp.intendedImpactOutcomes ?? null,
       challenges: opp.challenges ?? null,
       sdGs: opp.sdGs ? [...opp.sdGs] : [],
+      uncfOutcomes: opp.uncfOutcomes ? [...opp.uncfOutcomes] : [],
+      unopsMissions: opp.unopsMissions ? [...opp.unopsMissions] : [],
     };
 
     // Set form controls
@@ -833,7 +837,7 @@ export class OpportunityWhySectionComponent implements OnInit {
       );
       this.challengesControl.setValue(this.originalData.challenges ?? null);
 
-      // Restore original SDGs (reverts any SDGs that were added but not saved)
+      // Restore original SDGs, UNCF Outcomes, and UNOPS Missions (reverts any that were added but not saved)
       const updatedOpportunity = {
         ...opp,
         expectedBeneficiaries: this.originalData.expectedBeneficiaries ?? null,
@@ -841,6 +845,12 @@ export class OpportunityWhySectionComponent implements OnInit {
           this.originalData.intendedImpactOutcomes ?? null,
         challenges: this.originalData.challenges ?? null,
         sdGs: this.originalData.sdGs ? [...this.originalData.sdGs] : [],
+        uncfOutcomes: this.originalData.uncfOutcomes
+          ? [...this.originalData.uncfOutcomes]
+          : [],
+        unopsMissions: this.originalData.unopsMissions
+          ? [...this.originalData.unopsMissions]
+          : [],
       };
 
       // Emit the reverted opportunity to parent
@@ -2389,6 +2399,9 @@ export class OpportunityWhySectionComponent implements OnInit {
     // Emit updated opportunity to parent
     this.opportunityUpdated.emit(updatedOpportunity);
 
+    // Mark as changed (UNCF outcomes added)
+    this.markAsChanged();
+
     // Reset dialog state
     this.cancelUNCFDialog();
   }
@@ -2466,6 +2479,9 @@ export class OpportunityWhySectionComponent implements OnInit {
 
     // Emit updated opportunity to parent
     this.opportunityUpdated.emit(updatedOpportunity);
+
+    // Mark as changed (UNCF outcomes updated)
+    this.markAsChanged();
 
     // Reset dialog state
     this.cancelUNCFDialog();

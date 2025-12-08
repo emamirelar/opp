@@ -56,6 +56,7 @@ import { OpportunityWhoSectionComponent } from './sections/who/opportunity-who-s
 import { OpportunityWhereSectionComponent } from './sections/where/opportunity-where-section.component';
 import { OpportunityWhenSectionComponent } from './sections/when/opportunity-when-section.component';
 import { OpportunityDstSectionComponent } from './sections/dst/opportunity-dst-section.component';
+import { OpportunityTeamSectionComponent } from './sections/team/opportunity-team-section.component';
 import { OpportunityRelatedItemsComponent } from './sections/related/opportunity-related-items.component';
 import { OpportunityDocumentsComponent } from './sections/document/opportunity-documents.component';
 import { OpportunityStatementSectionComponent } from './sections/statement/opportunity-statement-section.component';
@@ -104,6 +105,7 @@ import { ValuesService } from '@app/shared/services/api/values.service';
     OpportunityWhereSectionComponent,
     OpportunityWhenSectionComponent,
     OpportunityDstSectionComponent,
+    OpportunityTeamSectionComponent,
     OpportunityRelatedItemsComponent,
     OpportunityDocumentsComponent,
     OpportunityStatementSectionComponent,
@@ -160,6 +162,8 @@ export class OpportunityViewComponent
   whatSectionComponent?: OpportunityWhatSectionComponent;
   @ViewChild(OpportunityWhoSectionComponent)
   whoSectionComponent?: OpportunityWhoSectionComponent;
+  @ViewChild(OpportunityTeamSectionComponent)
+  teamSectionComponent?: OpportunityTeamSectionComponent;
   @ViewChild(OpportunityWhereSectionComponent)
   whereSectionComponent?: OpportunityWhereSectionComponent;
   @ViewChild(OpportunityWhenSectionComponent)
@@ -182,6 +186,7 @@ export class OpportunityViewComponent
     { id: 'what', label: 'What', icon: 'pi-briefcase' },
     { id: 'why', label: 'Why', icon: 'pi-lightbulb' },
     { id: 'who', label: 'Who', icon: 'pi-users' },
+    { id: 'team', label: 'label.opportunity.team', icon: 'pi-building' },
     { id: 'where', label: 'Where', icon: 'pi-globe' },
     { id: 'when', label: 'When', icon: 'pi-calendar' },
     { id: 'dst', label: 'DST', icon: 'pi-chart-line' },
@@ -484,10 +489,8 @@ export class OpportunityViewComponent
         const scrollTop = scrollElement.scrollTop;
         // Shrink header after scrolling past the banner (240px banner height, hide after scrolling ~100px)
         const newHeaderScrolled = scrollTop > 100;
-        console.log(`[Scroll] scrollTop: ${scrollTop}, headerScrolled: ${this.headerScrolled()}, newHeaderScrolled: ${newHeaderScrolled}`);
         if (this.headerScrolled() !== newHeaderScrolled) {
           this.headerScrolled.set(newHeaderScrolled);
-          console.log(`[Scroll] Header state changed to: ${newHeaderScrolled}`);
           // Manually trigger change detection to ensure UI updates immediately
           this.cdr.detectChanges();
         }
@@ -800,6 +803,11 @@ export class OpportunityViewComponent
             this.whoSectionComponent.saveSection();
           }
           break;
+        case 'team':
+          if (this.teamSectionComponent) {
+            this.teamSectionComponent.saveSection();
+          }
+          break;
         case 'where':
           if (this.whereSectionComponent) {
             this.whereSectionComponent.saveSection();
@@ -852,6 +860,11 @@ export class OpportunityViewComponent
             case 'who':
               if (this.whoSectionComponent) {
                 this.whoSectionComponent.cancelEditing();
+              }
+              break;
+            case 'team':
+              if (this.teamSectionComponent) {
+                this.teamSectionComponent.cancelEditing();
               }
               break;
             case 'where':
@@ -923,6 +936,9 @@ export class OpportunityViewComponent
       case 'who':
         this.whoSectionComponent?.startEditing();
         break;
+      case 'team':
+        this.teamSectionComponent?.startEditing();
+        break;
       case 'where':
         this.whereSectionComponent?.startEditing();
         break;
@@ -965,6 +981,12 @@ export class OpportunityViewComponent
 
     if (this.whoSectionComponent?.isEditing?.()) {
       this.whoSectionComponent.cancelEditing();
+      event.preventDefault();
+      return;
+    }
+
+    if (this.teamSectionComponent?.isEditing?.()) {
+      this.teamSectionComponent.cancelEditing();
       event.preventDefault();
       return;
     }
