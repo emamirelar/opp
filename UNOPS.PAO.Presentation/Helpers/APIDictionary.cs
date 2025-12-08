@@ -43,6 +43,8 @@ public class APIDictionary
     public const string OpportunityOrganizationUnits = APIPrefix + "values/opportunity-organization-units";
     public const string SuggestedOrgUnits = APIPrefix + "values/suggested-org-units";
     public const string EntityUserRolesByOrgUnit = APIPrefix + "values/entity-user-roles-by-org-unit";
+    public const string OrgUnitIdsForCountries = APIPrefix + "values/org-unit-ids-for-countries";
+    public const string ChildOrgUnitIdsForHubRegion = APIPrefix + "values/child-org-unit-ids-for-hub-region";
     public const string PartnerCategories = APIPrefix + "values/partner-categories";
     public const string LiaisonOffices = APIPrefix + "values/liaison-offices";
     public const string Contacts = APIPrefix + "values/contacts";

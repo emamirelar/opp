@@ -229,6 +229,9 @@
                   <div class="flex-1">
                     <div class="font-semibold text-unops-secondary flex items-center gap-2">
                       {{ stakeholder.entityRoleName }}
+                      @if (stakeholder.organizationHierarchyName) {
+                        <span class="text-unops-neutral-600 font-normal">({{ stakeholder.organizationHierarchyName }})</span>
+                      }
                       <p-tag value="Auto" severity="info" styleClass="text-xs" />
                     </div>
                     @if (stakeholder.userName) {

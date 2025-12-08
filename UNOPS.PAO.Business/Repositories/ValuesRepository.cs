@@ -720,4 +720,123 @@ public class ValuesRepository
 
         return results;
     }
+
+    /// <summary>
+    /// Gets org unit IDs for the given country IDs, including their parent and grandparent org units.
+    /// Used when a GPO is selected as the responsible org unit to auto-populate stakeholders
+    /// from the normally responsible org units for each implementation country.
+    /// </summary>
+    public async Task<List<int>> GetOrgUnitIdsForCountriesWithHierarchyAsync(int[] countryIds)
+    {
+        if (countryIds == null || countryIds.Length == 0)
+            return new List<int>();
+
+        // Get org unit relationships for these countries
+        var orgUnitRelationships = await context.OrganizationUnitRelationships
+            .Where(r => 
+                r.EntityType == "Country" 
+                && countryIds.Contains(r.EntityId)
+                && !r.IsDeleted)
+            .Select(r => r.OrganizationHierarchyId)
+            .Distinct()
+            .ToListAsync();
+
+        if (!orgUnitRelationships.Any())
+            return new List<int>();
+
+        // For each org unit, get itself plus parent and grandparent
+        var allOrgUnitIds = new HashSet<int>();
+
+        foreach (var orgUnitId in orgUnitRelationships)
+        {
+            // Get the org unit and its ancestors (up to 2 levels)
+            var currentId = orgUnitId;
+            var levelsToGet = 3; // Current + parent + grandparent
+
+            for (int i = 0; i < levelsToGet && currentId != 0; i++)
+            {
+                var orgUnit = await context.OrganizationHierarchies
+                    .Where(oh => oh.Id == currentId && !oh.IsDeleted)
+                    .Select(oh => new { oh.Id, oh.ParentId, oh.Type })
+                    .FirstOrDefaultAsync();
+
+                if (orgUnit == null)
+                    break;
+
+                // Only add OrgUnit type (not Hub, Region, GPO)
+                if (orgUnit.Type.ToString() == "OrgUnit")
+                {
+                    allOrgUnitIds.Add(orgUnit.Id);
+                }
+
+                currentId = orgUnit.ParentId ?? 0;
+            }
+        }
+
+        return allOrgUnitIds.ToList();
+    }
+
+    /// <summary>
+    /// Gets child org unit IDs under a Hub/Region that directly relate to at least one of the given country IDs.
+    /// Used when a Hub or Region is selected as the responsible org unit to auto-populate stakeholders
+    /// from the child org units that are responsible for the implementation countries.
+    /// </summary>
+    public async Task<List<int>> GetChildOrgUnitIdsForHubRegionAsync(int parentOrgUnitId, int[] countryIds)
+    {
+        if (countryIds == null || countryIds.Length == 0)
+            return new List<int>();
+
+        // Get org unit IDs that are directly responsible for these countries
+        var countryOrgUnitIds = await context.OrganizationUnitRelationships
+            .Where(r => 
+                r.EntityType == "Country" 
+                && countryIds.Contains(r.EntityId)
+                && !r.IsDeleted)
+            .Select(r => r.OrganizationHierarchyId)
+            .Distinct()
+            .ToListAsync();
+
+        if (!countryOrgUnitIds.Any())
+            return new List<int>();
+
+        // Get all descendants of the parent Hub/Region
+        var descendantIds = await GetAllDescendantOrgUnitIdsAsync(parentOrgUnitId);
+
+        // Filter to only include descendants that directly relate to the countries
+        var relevantOrgUnitIds = countryOrgUnitIds
+            .Where(id => descendantIds.Contains(id))
+            .ToList();
+
+        return relevantOrgUnitIds;
+    }
+
+    /// <summary>
+    /// Gets all descendant org unit IDs under a given parent org unit (recursive).
+    /// </summary>
+    private async Task<HashSet<int>> GetAllDescendantOrgUnitIdsAsync(int parentOrgUnitId)
+    {
+        var descendants = new HashSet<int>();
+        var toProcess = new Queue<int>();
+        toProcess.Enqueue(parentOrgUnitId);
+
+        while (toProcess.Count > 0)
+        {
+            var currentParentId = toProcess.Dequeue();
+
+            var children = await context.OrganizationHierarchies
+                .Where(oh => oh.ParentId == currentParentId && !oh.IsDeleted)
+                .Select(oh => oh.Id)
+                .ToListAsync();
+
+            foreach (var childId in children)
+            {
+                if (descendants.Add(childId))
+                {
+                    toProcess.Enqueue(childId);
+                }
+            }
+        }
+
+        return descendants;
+    }
 }

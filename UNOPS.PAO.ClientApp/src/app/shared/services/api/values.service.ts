@@ -600,6 +600,32 @@ export class ValuesService {
       organizationHierarchyIds
     );
   }
+
+  /**
+   * @description Get org unit IDs for countries including their parent and grandparent org units.
+   * Used when a GPO is selected to auto-populate stakeholders from country-responsible org units.
+   * @param {number[]} countryIds - Array of country IDs
+   * @returns {Observable<number[]>}
+   * @since 1.0.0
+   */
+  getOrgUnitIdsForCountries(countryIds: number[]): Observable<number[]> {
+    return this.http.post<number[]>(`${this.baseUrl}/org-unit-ids-for-countries`, countryIds);
+  }
+
+  /**
+   * @description Get child org unit IDs under a Hub/Region that relate to the given country IDs.
+   * Used when a Hub or Region is selected to auto-populate stakeholders from child org units.
+   * @param {number} parentOrgUnitId - The Hub/Region org unit ID
+   * @param {number[]} countryIds - Array of country IDs
+   * @returns {Observable<number[]>}
+   * @since 1.0.0
+   */
+  getChildOrgUnitIdsForHubRegion(parentOrgUnitId: number, countryIds: number[]): Observable<number[]> {
+    return this.http.post<number[]>(
+      `${this.baseUrl}/child-org-unit-ids-for-hub-region/${parentOrgUnitId}`,
+      countryIds
+    );
+  }
 }
 
 
