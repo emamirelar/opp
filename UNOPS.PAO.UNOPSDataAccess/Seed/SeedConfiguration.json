@@ -203,16 +203,6 @@
         },
         {
             "order": 22,
-            "name": "SequenceResync",
-            "type": "seeder",
-            "className": "SequenceResyncSeeder",
-            "methodName": "ResyncAllSequencesAsync",
-            "filePath": "Seeders/SequenceResyncSeeder.cs",
-            "description": "Resynchronize all PostgreSQL sequences to prevent duplicate key errors",
-            "forceExecuteIfAnyChanged": true
-        },
-        {
-            "order": 23,
             "name": "RiskLookups",
             "type": "seeder",
             "className": "RiskLookupSeeder",
@@ -221,7 +211,7 @@
             "description": "Risk lookup tables (RiskType, RiskProbability, RiskProximity, RiskImpactLevel, RiskResponseType)"
         },
         {
-            "order": 24,
+            "order": 23,
             "name": "RiskCategories",
             "type": "seeder",
             "className": "RiskCategorySeeder",
@@ -230,13 +220,41 @@
             "description": "Risk category hierarchy (3 levels) from oUP"
         },
         {
-            "order": 25,
+            "order": 24,
             "name": "PreDefinedHighRisks",
             "type": "seeder",
             "className": "PreDefinedHighRiskSeeder",
             "methodName": "SeedPreDefinedHighRisksAsync",
             "filePath": "Seeders/PreDefinedHighRiskSeeder.cs",
             "description": "PreDefined High Risk Checklist items from oUP (EAC questions)"
+        },
+        {
+            "order": 25,
+            "name": "OrgUnitDirectorRolesSeeder",
+            "type": "seeder",
+            "className": "OrgUnitDirectorRolesSeeder",
+            "methodName": "SeedOrgUnitDirectorRolesAsync",
+            "filePath": "Seeders/OrgUnitDirectorRolesSeeder.cs",
+            "description": "Seeds OrgUnit Director Roles"
+        },
+        {
+            "order": 26,
+            "name": "OrgUnitDOARolesSeeder",
+            "type": "seeder",
+            "className": "OrgUnitDOARolesSeeder",
+            "methodName": "SeedOrgUnitDOARolesAsync",
+            "filePath": "Seeders/OrgUnitDOARolesSeeder.cs",
+            "description": "Seeds OrgUnit DOA Roles"
+        },
+        {
+            "order": 27,
+            "name": "SequenceResync",
+            "type": "seeder",
+            "className": "SequenceResyncSeeder",
+            "methodName": "ResyncAllSequencesAsync",
+            "filePath": "Seeders/SequenceResyncSeeder.cs",
+            "description": "Resynchronize all PostgreSQL sequences to prevent duplicate key errors",
+            "forceExecuteIfAnyChanged": true
         }
     ]
 }
