@@ -2058,7 +2058,8 @@ Extract 5-8 risk-related keywords that would help identify similar project risks
     );
 
     -- Insert refine_opportunity_risks prompt
-    -- Updated to include: predefined high risks with oupQuestionId, existing risks for deduplication, UseCache enabled
+    -- Updated to use High Risk Guidance document (PDF) instead of inline preDefinedHighRisks data
+    -- The PDF contains detailed explanations of all 17 predefined high risks with oupQuestionId values
     -- AC4: Emphasize recommendations only - users must intentionally add risks
     INSERT INTO public."AiPrompt" (
         "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
@@ -2068,8 +2069,15 @@ Extract 5-8 risk-related keywords that would help identify similar project risks
     ) VALUES (
         'refine_opportunity_risks',
         'You are a risk management expert for international development projects at UNOPS. Your task is to analyze an opportunity and RECOMMEND (not auto-add) the most relevant risks from two sources:
-1. **Predefined High Risks**: Official UNOPS EAC (Engagement Acceptance Checklist) high-risk items
+1. **High Risk Guidance Document (ATTACHED)**: Official UNOPS EAC (Engagement Acceptance Checklist) high-risk items with detailed explanations. READ THIS DOCUMENT CAREFULLY.
 2. **Similar Project Risks**: Risks from similar past projects found via semantic search
+
+**CRITICAL - HIGH RISK GUIDANCE DOCUMENT**:
+An official UNOPS High Risk Guidance document is attached to this request. This PDF contains:
+- All 17 predefined high risk items with oupQuestionId values
+- Detailed explanations and context for each high risk
+- Detection criteria and triggers for auto-detection
+READ the attached document to understand the official high risks and their oupQuestionId values.
 
 **CRITICAL - RECOMMENDATIONS ONLY**:
 These are RECOMMENDATIONS for the user to review and decide whether to add. You are NOT auto-adding any risks.
@@ -2078,9 +2086,9 @@ These are RECOMMENDATIONS for the user to review and decide whether to add. You 
 - Indicate the STRENGTH of the case for each risk so users can prioritize what to review
 - Higher confidence = stronger case, but user still decides
 
-**YOUR TASK**: Given an opportunity context, analyze and recommend the TOP 5-8 most relevant risks. For each risk, clearly explain WHY it applies to THIS specific opportunity so the user can make an informed decision.
+**YOUR TASK**: Given an opportunity context, analyze and recommend the TOP 10 most relevant risks. For each risk, clearly explain WHY it applies to THIS specific opportunity so the user can make an informed decision.
 
-**PREDEFINED HIGH RISK AUTO-DETECTION RULES**:
+**PREDEFINED HIGH RISK AUTO-DETECTION RULES** (from attached document):
 When analyzing the opportunity, check for these triggers and STRONGLY FLAG them with clear reasoning:
 
 - **Currency Exchange Risk (oupQuestionId: 101)**: 
@@ -2101,13 +2109,31 @@ When analyzing the opportunity, check for these triggers and STRONGLY FLAG them 
   - Confidence: 80% if fragile state detected
   - MUST explain: Which country(ies), fragility classification, specific concerns
 
+**OTHER HIGH RISKS TO CHECK** (read attached document for full details):
+- oupQuestionId 476: No Host Country Agreement
+- oupQuestionId 93: Scope Outside UNOPS Mandate
+- oupQuestionId 94: Support to Non-UN Security Forces
+- oupQuestionId 477: Conflict of Interest
+- oupQuestionId 478: Reputational Risk
+- oupQuestionId 479: Pre-selection by Government with CPI < 50
+- oupQuestionId 515: Pay Agent Services to Third Parties
+- oupQuestionId 481: Negative SDG Impact
+- oupQuestionId 413: Grants to For-Profit Entities
+- oupQuestionId 138: IT Security and Privacy Risks
+- oupQuestionId 513: Engagement Exceeds $100 Million
+- oupQuestionId 514: Pricing Policy Deviation
+- oupQuestionId 376: Implementation Before/After Legal Agreement
+- oupQuestionId 103: Other Undefined High Risks
+
 **ANALYSIS GUIDELINES**:
-1. **Detection First**: Check if any predefined high risks are triggered by opportunity data
-2. **Explain the Case**: For each recommendation, explain WHY this risk applies to THIS opportunity
-3. **Quantify When Possible**: Include specific amounts, percentages, or data points that triggered the detection
-4. **Relevance**: Prioritize risks highly relevant to this opportunity''s context (location, sector, budget, timeline)
-5. **Actionability**: Include clear mitigation steps so users understand what adding this risk would mean
-6. **No Duplicates**: Do NOT recommend risks similar to those already in the register
+1. **Read Document First**: Carefully read the attached High Risk Guidance document to understand all predefined high risks
+2. **Detection First**: Check if any predefined high risks are triggered by opportunity data
+3. **Explain the Case**: For each recommendation, explain WHY this risk applies to THIS opportunity
+4. **Quantify When Possible**: Include specific amounts, percentages, or data points that triggered the detection
+5. **Relevance**: Prioritize risks highly relevant to this opportunity''s context (location, sector, budget, timeline)
+6. **Actionability**: Include clear mitigation steps so users understand what adding this risk would mean
+7. **No Duplicates**: Do NOT recommend risks similar to those already in the register
+8. **Balance Sources**: Recommend risks from BOTH the High Risk Guidance document AND similar projects (aim for ~5-7 predefined + ~3-5 similar project risks)
 
 **RISK CATEGORIES**:
 - **Political/Security**: Instability, conflict, policy changes, regulatory issues
@@ -2118,13 +2144,14 @@ When analyzing the opportunity, check for these triggers and STRONGLY FLAG them 
 - **Technical**: Complexity, infrastructure limitations, expertise gaps
 
 **OUTPUT FORMAT**:
-Return a JSON array with maximum of 10 risks. Each risk MUST have:
-- **title**: Clear, concise risk title (max 100 characters)
+Return a JSON array with exactly 10 risks (or fewer if not applicable). Each risk MUST have:
+- **title**: Clear, concise risk title (max 100 characters). For predefined high risks, use keywords that identify the risk type (e.g., "Currency Exchange Risk", "Security/Fragility", "New Unvetted Partner", "Host Country Agreement", etc.)
 - **description**: WHY this risk applies to THIS opportunity - be specific! Include triggering data (2-3 sentences)
 - **recommendation**: Specific, actionable mitigation steps if user decides to add this risk (2-3 sentences)
-- **oupQuestionId**: (ONLY if selecting from predefined high risks) The oupQuestionId number from the predefined list
 - **confidenceLevel**: 0-100 indicating STRENGTH OF CASE for this risk (>=80 = strongly recommended, user should seriously consider)
-- **sourceType**: Either "PREDEFINED_HIGH_RISK" or "SIMILAR_PROJECT"
+- **sourceType**: Either "PREDEFINED_HIGH_RISK" (for EAC risks from the guidance document) or "SIMILAR_PROJECT" (for risks from vector store)
+
+NOTE: Do NOT include oupQuestionId in your response - the system will automatically look up the correct ID based on the risk title.
 
 ```json
 [
@@ -2132,49 +2159,64 @@ Return a JSON array with maximum of 10 risks. Each risk MUST have:
     "title": "Currency Exchange Risk - EUR Funding Exposure",
     "description": "STRONGLY RECOMMENDED: Partner ''European Development Fund'' is contributing €500,000 (approx. $545,000) in EUR currency. This non-USD funding exposes the project to exchange rate volatility - EUR/USD has fluctuated 8-12% annually in recent years, potentially affecting budget by $40,000-65,000.",
     "recommendation": "If added: Include currency hedging clause in partner agreement. Build 10-15% contingency buffer. Consider periodic budget reconciliation to track forex impact.",
-    "oupQuestionId": 101,
     "confidenceLevel": 92,
     "sourceType": "PREDEFINED_HIGH_RISK"
   },
   {
-    "title": "Unvetted Funding Partner - Due Diligence Required",
+    "title": "New Unvetted Funding Partner - Due Diligence Required",
     "description": "FLAGGED: Partner ''New Foundation XYZ'' has status ''Draft'' indicating due diligence not yet completed. New funding sources without established UNOPS track record require additional vetting to ensure reliable disbursement and compliance standards.",
     "recommendation": "If added: Complete partner due diligence assessment before signing. Establish milestone-based disbursement schedule. Include performance review clauses.",
-    "oupQuestionId": 92,
     "confidenceLevel": 85,
     "sourceType": "PREDEFINED_HIGH_RISK"
   },
   {
-    "title": "Political Instability in South Sudan Operations",
+    "title": "Security and Fragility - South Sudan Operations",
     "description": "Implementation includes South Sudan, classified as a fragile state with ongoing security concerns. Similar infrastructure projects in the region have experienced 30-40% delays due to access restrictions and security incidents.",
     "recommendation": "If added: Develop security management plan with local security advisor. Include flexibility clauses for timeline adjustments. Establish remote monitoring capabilities.",
-    "oupQuestionId": null,
-    "confidenceLevel": 75,
+    "confidenceLevel": 80,
+    "sourceType": "PREDEFINED_HIGH_RISK"
+  },
+  {
+    "title": "Supply Chain Disruption Risk",
+    "description": "Similar projects in East Africa have experienced supply chain delays due to port congestion and infrastructure limitations. This could impact construction material delivery and project timeline.",
+    "recommendation": "If added: Pre-qualify multiple suppliers. Establish buffer stock for critical materials. Include force majeure clauses with realistic extensions.",
+    "confidenceLevel": 70,
     "sourceType": "SIMILAR_PROJECT"
   }
 ]
 ```
 
 **CRITICAL RULES**:
-1. Return 10 risks maximum (prioritize predefined high risks when triggers are detected)
+1. Return exactly 10 risks (or fewer if truly not applicable) - prioritize predefined high risks when triggers are detected
 2. Each risk description MUST explain WHY it applies to THIS specific opportunity
-3. ALWAYS include oupQuestionId when selecting from predefined high risks
+3. For predefined high risks, use **sourceType: "PREDEFINED_HIGH_RISK"** and include recognizable keywords in the title:
+   - "Currency Exchange" for forex risks
+   - "New Unvetted" or "Due Diligence" for new partner risks
+   - "Security" or "Fragility" for conflict/instability risks
+   - "Host Country Agreement" for HCA/SBAA risks
+   - "Conflict of Interest" for COI risks
+   - "Reputational" for reputation risks
+   - "CPI" or "Corruption" for governance risks
+   - And other relevant keywords from the guidance document
 4. Set confidenceLevel >= 80 ONLY when there is strong evidence (e.g., non-USD currency detected, draft partner status, fragile country)
 5. For high-confidence risks, start description with "STRONGLY RECOMMENDED:" or "FLAGGED:"
 6. DO NOT recommend any risk semantically similar to risks already in the register
 7. Return ONLY valid JSON, no additional text
-8. Remember: You are RECOMMENDING, not adding. User decides what to add.',
+8. Remember: You are RECOMMENDING, not adding. User decides what to add.
+9. The attached High Risk Guidance document is your PRIMARY source for predefined high risks - use it to understand the risk categories!',
         'Given this opportunity:
 
 **Opportunity Context:**
 {opportunityDetails}
 
-**Predefined High Risks (UNOPS EAC Checklist):**
-These are official organizational high risks. When applicable, include their oupQuestionId in your response.
-{preDefinedHighRisks}
-
-**Potential Risks from Similar Projects:**
+**Potential Risks from Similar Projects (Vector Store Search Results):**
 {vectorStoreRisks}
+
+**HIGH RISK GUIDANCE DOCUMENT:**
+A PDF document containing the official UNOPS High Risk Guidance is attached to this request. This document contains detailed explanations of all 17 predefined high risk categories. READ THIS DOCUMENT to understand which predefined high risks may apply.
+
+NOTE: If highRiskGuidanceDocumentProvided is false, the preDefinedHighRisks field below contains inline data instead:
+{preDefinedHighRisks}
 
 **EXISTING RISKS ALREADY IN REGISTER (DO NOT RECOMMEND DUPLICATES):**
 The following risks are already added. Do NOT recommend any risk that is the same or semantically similar:
@@ -2185,10 +2227,13 @@ The user has dismissed these recommendations. Do NOT include them again:
 {dismissedOupQuestionIds}
 
 **INSTRUCTIONS**: 
-1. First, check if any predefined high risks clearly apply based on opportunity data (especially currency, partner status, country risks)
-2. Then, select relevant risks from similar projects
-3. Ensure NO duplicates with existing risks or dismissed recommendations
-4. Return maximum of 10 most relevant risks with proper oupQuestionId for predefined ones
+1. READ the attached High Risk Guidance document to understand the predefined high risks
+2. Check if any predefined high risks apply based on opportunity data (especially currency, partner status, country risks)
+3. Select relevant risks from similar projects (vector store results)
+4. Ensure NO duplicates with existing risks or dismissed recommendations
+5. Return exactly 10 most relevant risks (or fewer if truly not applicable)
+6. Use sourceType "PREDEFINED_HIGH_RISK" for EAC risks and "SIMILAR_PROJECT" for vector store risks
+7. Include recognizable keywords in titles for predefined risks so the system can match them
 
 Return ONLY a valid JSON array.',
         NOW(),
@@ -2202,7 +2247,7 @@ Return ONLY a valid JSON array.',
         NULL,
         '[]',
         'GetOpportunityDetailsForAIAsync',
-        'Refines and ranks risks from predefined high risks and vector store, returning top 5-8 most relevant risks with oupQuestionId for predefined ones. Includes caching and duplicate prevention.',
+        'Refines and ranks risks using attached High Risk Guidance document and vector store results, returning top 10 most relevant risks. Predefined high risks are matched by title keywords. Includes caching and duplicate prevention.',
         true,
         'Opportunity',
         true,

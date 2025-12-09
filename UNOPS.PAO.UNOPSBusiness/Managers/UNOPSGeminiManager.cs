@@ -3616,6 +3616,30 @@ public class UNOPSGeminiManager : IGeminiManager
                 
                 _logger.LogInformation($"📋 [DST-RECOMMENDATIONS] {preDefinedHighRisksForPrompt.Count} predefined high risks available for recommendation");
                 
+                // Step 1.6: Get the High Risk Guidance document from EntityArtifact (global document)
+                _logger.LogInformation($"📄 [DST-RECOMMENDATIONS] Step 1.6: Fetching High Risk Guidance document");
+                string? highRiskGuidanceGcsPath = null;
+                string? highRiskGuidanceMimeType = null;
+                
+                try
+                {
+                    var guidanceDocument = await opportunityManager.GetHighRiskGuidanceDocumentAsync();
+                    if (guidanceDocument.HasValue)
+                    {
+                        highRiskGuidanceGcsPath = guidanceDocument.Value.GcsPath;
+                        highRiskGuidanceMimeType = guidanceDocument.Value.MimeType ?? "application/pdf";
+                        _logger.LogInformation($"✅ [DST-RECOMMENDATIONS] Found High Risk Guidance document: {highRiskGuidanceGcsPath}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"⚠️ [DST-RECOMMENDATIONS] No High Risk Guidance document found");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, $"⚠️ [DST-RECOMMENDATIONS] Error fetching High Risk Guidance document: {ex.Message}");
+                }
+                
                 // Step 2: Extract risk-related keywords using LLM
                 _logger.LogInformation($"🔍 [DST-RECOMMENDATIONS] Step 2: Extracting risk keywords from opportunity context");
                 var keywords = await ExtractRiskKeywordsAsync(opportunityDetailsDict, user);
@@ -3667,8 +3691,8 @@ public class UNOPSGeminiManager : IGeminiManager
                 
                 _logger.LogInformation($"✅ [DST-RECOMMENDATIONS] Vector store search returned {vectorStoreResponse.Documents?.Count ?? 0} risk results");
                 
-                // Step 4: Refine and rank risks using LLM (with predefined high risks and deduplication)
-                _logger.LogInformation($"🤖 [DST-RECOMMENDATIONS] Step 4: Refining and ranking top risks with LLM (forceRefresh: {forceRefresh})");
+                // Step 4: Refine and rank risks using LLM (with High Risk Guidance document and deduplication)
+                _logger.LogInformation($"🤖 [DST-RECOMMENDATIONS] Step 4: Refining and ranking top risks with LLM (forceRefresh: {forceRefresh}, hasGuidanceDoc: {!string.IsNullOrEmpty(highRiskGuidanceGcsPath)})");
                 var refinedRecommendations = await RefineAndRankRisksAsync(
                     opportunityDetailsDict, 
                     vectorStoreResponse, 
@@ -3678,7 +3702,9 @@ public class UNOPSGeminiManager : IGeminiManager
                     dismissedOupQuestionIds ?? new List<int>(),
                     opportunityId,
                     user,
-                    forceRefresh);
+                    forceRefresh,
+                    highRiskGuidanceGcsPath,
+                    highRiskGuidanceMimeType);
                 
                 var executionTime = DateTime.UtcNow - startTime;
                 
@@ -3745,9 +3771,9 @@ public class UNOPSGeminiManager : IGeminiManager
         }
         
         /// <summary>
-        /// Refine and rank risks from vector store and predefined high risks using LLM
-        /// Uses the refine_opportunity_risks AI prompt to select top 5-8 most relevant risks
-        /// Now includes predefined high risks with oupQuestionId and deduplication
+        /// Refine and rank risks from vector store and High Risk Guidance document using LLM
+        /// Uses the refine_opportunity_risks AI prompt to select top 10 most relevant risks
+        /// Now includes High Risk Guidance document (PDF) with detailed explanations of predefined high risks
         /// </summary>
         private async Task<List<UNOPS.PAO.Models.DSTRecommendation>> RefineAndRankRisksAsync(
             Dictionary<string, object> opportunityDetails,
@@ -3758,11 +3784,14 @@ public class UNOPSGeminiManager : IGeminiManager
             List<int> dismissedOupQuestionIds,
             int opportunityId,
             ClaimsPrincipal? user,
-            bool forceRefresh = false)
+            bool forceRefresh = false,
+            string? highRiskGuidanceGcsPath = null,
+            string? highRiskGuidanceMimeType = null)
         {
             try
             {
-                _logger.LogInformation($"🤖 [REFINE-RISKS] Calling LLM to refine and rank risks (vector: {vectorStoreResponse.Documents?.Count ?? 0}, existing: {existingRiskTitles.Count}, dismissed: {dismissedOupQuestionIds.Count}, forceRefresh: {forceRefresh})");
+                bool hasGuidanceDocument = !string.IsNullOrEmpty(highRiskGuidanceGcsPath);
+                _logger.LogInformation($"🤖 [REFINE-RISKS] Calling LLM to refine and rank risks (vector: {vectorStoreResponse.Documents?.Count ?? 0}, existing: {existingRiskTitles.Count}, dismissed: {dismissedOupQuestionIds.Count}, forceRefresh: {forceRefresh}, hasGuidanceDoc: {hasGuidanceDocument})");
                 
                 // Get the refine risks prompt
                 var promptData = await _aiService.GetPromptData("refine_opportunity_risks");
@@ -3776,30 +3805,72 @@ public class UNOPSGeminiManager : IGeminiManager
                 // Prepare data for the prompt
                 var vectorStoreRisks = JsonConvert.SerializeObject(vectorStoreResponse.Documents ?? new List<UNOPS.PAO.Models.AI.VectorStoreDocument>());
                 var opportunityContextJson = JsonConvert.SerializeObject(opportunityDetails);
-                var preDefinedHighRisksJson = JsonConvert.SerializeObject(preDefinedHighRisksForPrompt);
                 var existingRiskTitlesJson = JsonConvert.SerializeObject(existingRiskTitles);
                 var dismissedOupQuestionIdsJson = JsonConvert.SerializeObject(dismissedOupQuestionIds);
                 
-                // Create lookup dictionary for enriching recommendations (only include items with valid OupQuestionId)
-                var highRiskLookup = availableHighRisks
+                // Create lookup dictionaries for enriching recommendations
+                // 1. By OupQuestionId (for backward compatibility if LLM returns it)
+                var highRiskLookupByOupId = availableHighRisks
                     .Where(r => r.OupQuestionId.HasValue && r.OupQuestionId.Value > 0)
                     .ToDictionary(r => r.OupQuestionId!.Value, r => r);
                 
-                // Create comprehensive prompt data with all deduplication information
-                var promptDataJson = $@"{{
-                    ""opportunityDetails"": {opportunityContextJson},
-                    ""preDefinedHighRisks"": {preDefinedHighRisksJson},
-                    ""vectorStoreRisks"": {vectorStoreRisks},
-                    ""existingRiskTitles"": {existingRiskTitlesJson},
-                    ""dismissedOupQuestionIds"": {dismissedOupQuestionIdsJson}
-                }}";
+                // 2. By ShortTitle for title-based matching (LLM returns title, we look up the ID)
+                var highRiskLookupByTitle = availableHighRisks
+                    .Where(r => !string.IsNullOrEmpty(r.ShortTitle))
+                    .ToDictionary(r => r.ShortTitle!.ToLowerInvariant(), r => r, StringComparer.OrdinalIgnoreCase);
+                
+                // Create prompt data - include preDefinedHighRisks only if guidance document is NOT available
+                // When guidance document is available, the LLM reads high risk definitions from the PDF instead
+                string promptDataJson;
+                if (hasGuidanceDocument)
+                {
+                    // Guidance document available - don't send preDefinedHighRisks data (document has it)
+                    _logger.LogInformation($"📄 [REFINE-RISKS] Using High Risk Guidance document: {highRiskGuidanceGcsPath}");
+                    promptDataJson = $@"{{
+                        ""opportunityDetails"": {opportunityContextJson},
+                        ""vectorStoreRisks"": {vectorStoreRisks},
+                        ""existingRiskTitles"": {existingRiskTitlesJson},
+                        ""dismissedOupQuestionIds"": {dismissedOupQuestionIdsJson},
+                        ""highRiskGuidanceDocumentProvided"": true
+                    }}";
+                }
+                else
+                {
+                    // No guidance document - send preDefinedHighRisks data as fallback
+                    var preDefinedHighRisksJson = JsonConvert.SerializeObject(preDefinedHighRisksForPrompt);
+                    _logger.LogInformation($"⚠️ [REFINE-RISKS] No guidance document available, using inline preDefinedHighRisks data");
+                    promptDataJson = $@"{{
+                        ""opportunityDetails"": {opportunityContextJson},
+                        ""preDefinedHighRisks"": {preDefinedHighRisksJson},
+                        ""vectorStoreRisks"": {vectorStoreRisks},
+                        ""existingRiskTitles"": {existingRiskTitlesJson},
+                        ""dismissedOupQuestionIds"": {dismissedOupQuestionIdsJson},
+                        ""highRiskGuidanceDocumentProvided"": false
+                    }}";
+                }
                 
                 // Call Gemini to refine and rank risks (with caching using opportunityId, unless forceRefresh)
-                var refinedRisksJson = await _aiService.FetchResultFromGemini(
-                    refineRisksPrompt, 
-                    promptDataJson, 
-                    entityId: opportunityId.ToString(),
-                    bypassCache: forceRefresh);
+                string refinedRisksJson;
+                if (hasGuidanceDocument)
+                {
+                    // Use method that includes document URI for LLM to read the PDF
+                    refinedRisksJson = await _aiService.FetchResultFromGeminiWithDocument(
+                        refineRisksPrompt, 
+                        promptDataJson,
+                        highRiskGuidanceGcsPath,
+                        highRiskGuidanceMimeType ?? "application/pdf",
+                        entityId: opportunityId.ToString(),
+                        bypassCache: forceRefresh);
+                }
+                else
+                {
+                    // Fallback to standard method without document
+                    refinedRisksJson = await _aiService.FetchResultFromGemini(
+                        refineRisksPrompt, 
+                        promptDataJson, 
+                        entityId: opportunityId.ToString(),
+                        bypassCache: forceRefresh);
+                }
                 
                 _logger.LogInformation($"📝 [REFINE-RISKS] Raw Gemini response length: {refinedRisksJson?.Length ?? 0}");
                 
@@ -3852,20 +3923,42 @@ public class UNOPSGeminiManager : IGeminiManager
                     // Post-process: Enrich recommendations with PreDefinedHighRisk data
                     foreach (var risk in refinedRisks)
                     {
-                        // If OupQuestionId is set, it's a predefined high risk - enrich with entity data
-                        if (risk.OupQuestionId.HasValue && highRiskLookup.TryGetValue(risk.OupQuestionId.Value, out var highRisk))
+                        UNOPS.PAO.Models.PreDefinedHighRiskModel? matchedHighRisk = null;
+                        
+                        // Strategy 1: If OupQuestionId is set by LLM, use direct lookup
+                        if (risk.OupQuestionId.HasValue && highRiskLookupByOupId.TryGetValue(risk.OupQuestionId.Value, out var highRiskByOupId))
+                        {
+                            matchedHighRisk = highRiskByOupId;
+                            _logger.LogInformation($"🔗 [REFINE-RISKS] Matched by oupQuestionId={risk.OupQuestionId.Value}");
+                        }
+                        // Strategy 2: If sourceType is PREDEFINED_HIGH_RISK but no oupQuestionId, match by title
+                        else if (risk.SourceType == "PREDEFINED_HIGH_RISK" && !string.IsNullOrEmpty(risk.Title))
+                        {
+                            // Try to find matching high risk by title (fuzzy matching)
+                            matchedHighRisk = FindMatchingHighRiskByTitle(risk.Title, availableHighRisks);
+                            if (matchedHighRisk != null)
+                            {
+                                risk.OupQuestionId = matchedHighRisk.OupQuestionId;
+                                _logger.LogInformation($"🔗 [REFINE-RISKS] Matched by title '{risk.Title}' -> oupQuestionId={matchedHighRisk.OupQuestionId}");
+                            }
+                        }
+                        
+                        // Enrich with PreDefinedHighRisk data if matched
+                        if (matchedHighRisk != null)
                         {
                             risk.SourceType = "PREDEFINED_HIGH_RISK";
                             risk.RelevanceScore = risk.ConfidenceLevel;
                             
                             // Enrich with entity IDs for frontend to use when creating risk
-                            risk.PreDefinedHighRiskId = highRisk.Id;
-                            risk.RiskCategoryId = highRisk.RiskCategoryId;
+                            risk.PreDefinedHighRiskId = matchedHighRisk.Id;
+                            risk.RiskCategoryId = matchedHighRisk.RiskCategoryId;
+                            risk.OupQuestionId = matchedHighRisk.OupQuestionId;
                             
-                            _logger.LogInformation($"🔗 [REFINE-RISKS] Enriched recommendation with PreDefinedHighRiskId={highRisk.Id}, RiskCategoryId={highRisk.RiskCategoryId}");
+                            _logger.LogInformation($"🔗 [REFINE-RISKS] Enriched recommendation '{risk.Title}' with PreDefinedHighRiskId={matchedHighRisk.Id}, OupQuestionId={matchedHighRisk.OupQuestionId}, RiskCategoryId={matchedHighRisk.RiskCategoryId}");
                         }
                         else
                         {
+                            // Not a predefined risk, treat as similar project risk
                             risk.SourceType = string.IsNullOrEmpty(risk.SourceType) ? "SIMILAR_PROJECT" : risk.SourceType;
                             // Try to match with vector store document for sourceRiskId
                             if (string.IsNullOrEmpty(risk.SourceRiskId) && vectorStoreResponse.Documents != null)
@@ -3907,6 +4000,149 @@ public class UNOPSGeminiManager : IGeminiManager
             }
         }
 
+        /// <summary>
+        /// Find a matching PreDefinedHighRisk by title using fuzzy matching
+        /// The LLM returns a title like "Currency Exchange Risk" and we need to find the matching predefined high risk
+        /// </summary>
+        private UNOPS.PAO.Models.PreDefinedHighRiskModel? FindMatchingHighRiskByTitle(
+            string riskTitle, 
+            List<UNOPS.PAO.Models.PreDefinedHighRiskModel> availableHighRisks)
+        {
+            if (string.IsNullOrEmpty(riskTitle) || availableHighRisks == null || !availableHighRisks.Any())
+                return null;
+            
+            var normalizedTitle = riskTitle.ToLowerInvariant().Trim();
+            
+            // Keywords that indicate specific high risks
+            var keywordMappings = new Dictionary<string[], int>(new ArrayEqualityComparer())
+            {
+                // Currency Exchange Risk (oupQuestionId: 101)
+                { new[] { "currency", "exchange", "forex", "foreign currency", "non-usd", "eur", "gbp" }, 101 },
+                
+                // New/Unvetted Funding Source (oupQuestionId: 92)
+                { new[] { "new funding", "unvetted", "draft partner", "due diligence", "new partner", "new client" }, 92 },
+                
+                // Security/Fragility Issues (oupQuestionId: 415)
+                { new[] { "security", "fragile", "conflict", "instability", "armed conflict", "political instability" }, 415 },
+                
+                // No Host Country Agreement (oupQuestionId: 476)
+                { new[] { "host country agreement", "hca", "sbaa", "sofa", "soma" }, 476 },
+                
+                // Scope Outside UNOPS Mandate (oupQuestionId: 93)
+                { new[] { "mandate", "scope outside", "not aligned", "outside mandate" }, 93 },
+                
+                // Support to Non-UN Security Forces (oupQuestionId: 94)
+                { new[] { "non-un security", "security forces", "military" }, 94 },
+                
+                // Conflict of Interest (oupQuestionId: 477)
+                { new[] { "conflict of interest" }, 477 },
+                
+                // Reputational Risk (oupQuestionId: 478)
+                { new[] { "reputational risk", "reputation" }, 478 },
+                
+                // Pre-selection by Government with CPI < 50 (oupQuestionId: 479)
+                { new[] { "cpi", "corruption perception", "pre-selection", "government selection" }, 479 },
+                
+                // Pay Agent Services (oupQuestionId: 515)
+                { new[] { "pay agent", "payment services", "third party payments" }, 515 },
+                
+                // Negative SDG Impact (oupQuestionId: 481)
+                { new[] { "sdg impact", "negative impact", "environmental impact", "social impact" }, 481 },
+                
+                // Grants to For-Profit Entities (oupQuestionId: 413)
+                { new[] { "grants", "for-profit", "for profit" }, 413 },
+                
+                // IT Security and Privacy Risks (oupQuestionId: 138)
+                { new[] { "it security", "privacy", "cyber", "data protection", "information security" }, 138 },
+                
+                // Engagement Exceeds $100 Million (oupQuestionId: 513)
+                { new[] { "100 million", "$100m", "exceeds 100", "large budget" }, 513 },
+                
+                // Pricing Policy Deviation (oupQuestionId: 514)
+                { new[] { "pricing policy", "fee deviation", "pricing deviation" }, 514 },
+                
+                // Implementation Before/After Legal Agreement (oupQuestionId: 376)
+                { new[] { "before signing", "after end date", "legal agreement", "implementation timing" }, 376 },
+                
+                // Other Undefined High Risks (oupQuestionId: 103)
+                { new[] { "other high risk", "undefined risk", "other risk" }, 103 }
+            };
+            
+            // Check each keyword mapping
+            foreach (var mapping in keywordMappings)
+            {
+                var keywords = mapping.Key;
+                var oupQuestionId = mapping.Value;
+                
+                // Check if the title contains any of the keywords
+                if (keywords.Any(keyword => normalizedTitle.Contains(keyword.ToLowerInvariant())))
+                {
+                    // Find the matching high risk by oupQuestionId
+                    var matchedRisk = availableHighRisks.FirstOrDefault(r => r.OupQuestionId == oupQuestionId);
+                    if (matchedRisk != null)
+                    {
+                        _logger.LogInformation($"🎯 [REFINE-RISKS] Title '{riskTitle}' matched to oupQuestionId={oupQuestionId} via keyword");
+                        return matchedRisk;
+                    }
+                }
+            }
+            
+            // Fallback: Try direct match with ShortTitle
+            foreach (var highRisk in availableHighRisks)
+            {
+                if (string.IsNullOrEmpty(highRisk.ShortTitle)) continue;
+                
+                var normalizedShortTitle = highRisk.ShortTitle.ToLowerInvariant().Trim();
+                
+                // Check for contains match
+                if (normalizedTitle.Contains(normalizedShortTitle) || normalizedShortTitle.Contains(normalizedTitle))
+                {
+                    _logger.LogInformation($"🎯 [REFINE-RISKS] Title '{riskTitle}' matched to ShortTitle '{highRisk.ShortTitle}' (oupQuestionId={highRisk.OupQuestionId})");
+                    return highRisk;
+                }
+                
+                // Check word overlap
+                var titleWords = normalizedTitle.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                    .Where(w => w.Length > 3).ToHashSet();
+                var shortTitleWords = normalizedShortTitle.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                    .Where(w => w.Length > 3).ToHashSet();
+                
+                if (titleWords.Count > 0 && shortTitleWords.Count > 0)
+                {
+                    var intersection = titleWords.Intersect(shortTitleWords).Count();
+                    var minCount = Math.Min(titleWords.Count, shortTitleWords.Count);
+                    var overlapRatio = (double)intersection / minCount;
+                    
+                    if (overlapRatio > 0.5) // 50% word overlap
+                    {
+                        _logger.LogInformation($"🎯 [REFINE-RISKS] Title '{riskTitle}' matched to ShortTitle '{highRisk.ShortTitle}' via word overlap (oupQuestionId={highRisk.OupQuestionId})");
+                        return highRisk;
+                    }
+                }
+            }
+            
+            _logger.LogWarning($"⚠️ [REFINE-RISKS] No matching predefined high risk found for title: {riskTitle}");
+            return null;
+        }
+        
+        /// <summary>
+        /// Helper class for array key comparison in dictionary
+        /// </summary>
+        private class ArrayEqualityComparer : IEqualityComparer<string[]>
+        {
+            public bool Equals(string[]? x, string[]? y)
+            {
+                if (x == null && y == null) return true;
+                if (x == null || y == null) return false;
+                return x.SequenceEqual(y);
+            }
+
+            public int GetHashCode(string[] obj)
+            {
+                return obj.Aggregate(0, (hash, item) => hash ^ item.GetHashCode());
+            }
+        }
+        
         /// <summary>
         /// Check if a risk title is a duplicate of an existing risk (semantic similarity)
         /// Used as a safety net for post-filtering LLM recommendations

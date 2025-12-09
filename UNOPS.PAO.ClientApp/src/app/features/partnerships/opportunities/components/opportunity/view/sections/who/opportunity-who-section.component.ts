@@ -123,6 +123,8 @@ export class OpportunityWhoSectionComponent implements OnInit {
   readonly partnerControl = new FormControl<SimpleValue | null>(null);
   readonly currencyControl = new FormControl<number | null>(null); // Currency ID
   readonly amountControl = new FormControl<number | null>(null);
+  readonly agreementControl = new FormControl<string | null>(null); // Partner Agreement Number
+  readonly availableAgreementsForDialog = signal<PartnerAgreementInfo[]>([]);
 
   // Client Partner dialog state
   readonly showClientPartnerDialog = signal(false);
@@ -433,6 +435,16 @@ export class OpportunityWhoSectionComponent implements OnInit {
     this.partnerControl.setValue(masterPartner || null);
     this.currencyControl.setValue(partner.currencyId || usdCurrency?.id || 141); // Set currency or default to USD
     this.amountControl.setValue(partner.amount);
+    
+    // Load available agreements for this partner
+    if (partner.availableAgreements && partner.availableAgreements.length > 0) {
+      this.availableAgreementsForDialog.set(partner.availableAgreements);
+      this.agreementControl.setValue(partner.selectedPartnerAgreementNumber || null);
+    } else {
+      this.availableAgreementsForDialog.set([]);
+      this.agreementControl.setValue(null);
+    }
+    
     this.showFundingValidationError.set(false);
     this.showFundingPartnerDialog.set(true);
     this.cdr.detectChanges();
@@ -446,6 +458,8 @@ export class OpportunityWhoSectionComponent implements OnInit {
     this.partnerControl.setValue(null);
     this.currencyControl.setValue(null);
     this.amountControl.setValue(null);
+    this.agreementControl.setValue(null);
+    this.availableAgreementsForDialog.set([]);
     this.isEditingFundingPartner.set(false);
     this.editingFundingPartnerIndex.set(-1);
     this.showFundingValidationError.set(false);
@@ -586,7 +600,9 @@ export class OpportunityWhoSectionComponent implements OnInit {
       amountUSD: null,
       exchangeRate: null,
       exchangeRateDate: null,
-      exchangeRateDisplay: null
+      exchangeRateDisplay: null,
+      // Save selected agreement
+      selectedPartnerAgreementNumber: this.agreementControl.value || null
     };
 
     const updatedOpportunity = {
@@ -829,6 +845,15 @@ export class OpportunityWhoSectionComponent implements OnInit {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(value);
+  }
+  
+  /**
+   * @description Handle partner image load error by replacing with default Partner placeholder
+   * @param event - The error event from the image element
+   */
+  onPartnerImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    img.src = 'assets/images/Partner.png';
   }
   
   /**

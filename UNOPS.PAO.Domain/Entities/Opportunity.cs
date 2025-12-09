@@ -80,7 +80,6 @@ public class Opportunity : ModifiableDeletableEntity
     /// </summary>
     public bool BeneficiariesToBeDetermined { get; set; } = false;
     
-    [MaxLength(2000)]
     public string? Challenges { get; set; }
     
     /// <summary>
