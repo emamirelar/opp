@@ -210,36 +210,48 @@
         </div>
       }
 
-      <!-- Auto-populated stakeholders from OrgUnit (read-only) -->
+      <!-- Auto-populated stakeholders from OrgUnit (read-only) - Grouped by OrgUnit -->
       @if (autoPopulatedStakeholders().length > 0) {
         <div class="mb-4">
-          <div class="text-xs text-unops-neutral-600 mb-2 flex items-center gap-1">
+          <div class="text-xs text-unops-neutral-600 mb-3 flex items-center gap-1">
             <i class="pi pi-lock text-unops-neutral-500"></i>
             <span>{{ 'label.opportunity.autoPopulatedFromOrgUnit' | translate }}</span>
           </div>
-          @for (stakeholder of autoPopulatedStakeholders(); track stakeholder.entityRoleId) {
-            <div class="bg-unops-surface-secondary rounded-unops-lg p-3 mb-2 border border-unops-neutral-300 shadow-unops-sm opacity-80">
-              <div class="flex items-start justify-between">
-                <div class="flex items-center gap-3 flex-1">
-                  <p-avatar
-                    label="A"
-                    shape="circle"
-                    styleClass="bg-emerald-100 text-emerald-600"
-                  />
-                  <div class="flex-1">
-                    <div class="font-semibold text-unops-secondary flex items-center gap-2">
-                      {{ stakeholder.entityRoleName }}
-                      @if (stakeholder.organizationHierarchyName) {
-                        <span class="text-unops-neutral-600 font-normal">({{ stakeholder.organizationHierarchyName }})</span>
-                      }
-                      <p-tag value="Auto" severity="info" styleClass="text-xs" />
+
+          @for (group of groupedAutoPopulatedStakeholders(); track group.orgUnitName) {
+            <div class="mb-4">
+              <!-- OrgUnit Group Header -->
+              <div class="text-sm font-semibold text-unops-primary mb-2 flex items-center gap-2">
+                <i class="pi pi-building text-unops-primary"></i>
+                <span>{{ group.orgUnitName }}</span>
+                <span class="text-unops-neutral-500 font-normal text-xs">({{ group.stakeholders.length }})</span>
+              </div>
+
+              <!-- Roles Grid - 2 columns on medium screens, 3 on large -->
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                @for (stakeholder of group.stakeholders; track stakeholder.entityRoleId) {
+                  <div class="bg-unops-surface-secondary rounded-unops-md p-2.5 border border-unops-neutral-300 opacity-90">
+                    <div class="flex items-center gap-2">
+                      <p-avatar
+                        label="A"
+                        shape="circle"
+                        size="normal"
+                        styleClass="bg-emerald-100 text-emerald-600 flex-shrink-0"
+                      />
+                      <div class="min-w-0 flex-1">
+                        <div class="font-semibold text-unops-secondary text-sm flex items-center gap-1.5 flex-wrap">
+                          <span class="truncate">{{ stakeholder.entityRoleName }}</span>
+                          <p-tag value="Auto" severity="info" styleClass="text-xs" />
+                        </div>
+                        @if (stakeholder.userName) {
+                          <div class="text-xs text-unops-neutral-600 truncate" [title]="stakeholder.userName">
+                            {{ stakeholder.userName }}
+                          </div>
+                        }
+                      </div>
                     </div>
-                    @if (stakeholder.userName) {
-                      <div class="text-sm text-unops-neutral-600">{{ stakeholder.userName }}</div>
-                    }
                   </div>
-                </div>
-                <!-- No edit/remove buttons for auto-populated stakeholders -->
+                }
               </div>
             </div>
           }

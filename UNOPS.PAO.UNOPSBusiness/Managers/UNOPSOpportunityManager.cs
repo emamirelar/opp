@@ -1902,16 +1902,18 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     }
 
     /// <summary>
-    /// Auto-populates stakeholders from EntityUserRoles when the org unit is of type "OrgUnit".
+    /// Auto-populates stakeholders from EntityUserRoles based on the org unit type.
+    /// - OrgUnit: Uses EntityUserRoles directly from the selected org unit
+    /// - GPO (name contains "GPO"): Gets org units for implementation countries (with parent/grandparent)
+    /// - Hub/Region: Gets child org units that relate to implementation countries
     /// Uses differential update - only adds/removes what's necessary.
-    /// Also removes old auto-populated stakeholders when switching to a non-OrgUnit type.
     /// </summary>
     private async Task AutoPopulateStakeholdersFromOrgUnitAsync(Opportunity entity, int orgUnitId)
     {
-        // Get the org unit to check its type
+        // Get the org unit to check its type and name
         var orgUnit = await context.OrganizationHierarchies
             .Where(oh => oh.Id == orgUnitId && !oh.IsDeleted)
-            .Select(oh => new { oh.Id, oh.Type })
+            .Select(oh => new { oh.Id, oh.Type, oh.Name })
             .FirstOrDefaultAsync();
 
         entity.Stakeholders ??= new List<OpportunityStakeholder>();
@@ -1921,9 +1923,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             .Where(s => s.OrganizationHierarchyId.HasValue)
             .ToList();
 
-        // If the new org unit is not of type "OrgUnit", remove all auto-populated stakeholders
-        if (orgUnit == null || orgUnit.Type != Domain.Enums.OrganizationUnitType.OrgUnit)
+        if (orgUnit == null)
         {
+            // Remove all auto-populated stakeholders if org unit not found
             foreach (var stakeholder in existingAutoPopulated)
             {
                 entity.Stakeholders.Remove(stakeholder);
@@ -1932,33 +1934,81 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             return;
         }
 
-        // Get EntityUserRoles for this org unit
+        // Determine which org units to get EntityUserRoles from
+        var orgUnitIdsForRoles = new List<int>();
+        var isGpo = orgUnit.Name?.Contains("GPO") ?? false;
+        var isHubOrRegion = orgUnit.Type == Domain.Enums.OrganizationUnitType.Hub || 
+                           orgUnit.Type == Domain.Enums.OrganizationUnitType.Region;
+
+        if (isGpo)
+        {
+            // GPO: Get org units for implementation countries (with parent/grandparent)
+            orgUnitIdsForRoles = await GetOrgUnitIdsForCountriesWithHierarchyAsync(entity.Id);
+        }
+        else if (isHubOrRegion)
+        {
+            // Hub/Region: Get child org units that relate to implementation countries
+            orgUnitIdsForRoles = await GetChildOrgUnitIdsForHubRegionAsync(orgUnitId, entity.Id);
+        }
+        else if (orgUnit.Type == Domain.Enums.OrganizationUnitType.OrgUnit)
+        {
+            // OrgUnit: Use the selected org unit directly
+            orgUnitIdsForRoles.Add(orgUnitId);
+        }
+        else
+        {
+            // Other types: Remove all auto-populated stakeholders
+            foreach (var stakeholder in existingAutoPopulated)
+            {
+                entity.Stakeholders.Remove(stakeholder);
+                context.Set<OpportunityStakeholder>().Remove(stakeholder);
+            }
+            return;
+        }
+
+        if (!orgUnitIdsForRoles.Any())
+        {
+            // No org units to populate from - remove existing auto-populated
+            foreach (var stakeholder in existingAutoPopulated)
+            {
+                entity.Stakeholders.Remove(stakeholder);
+                context.Set<OpportunityStakeholder>().Remove(stakeholder);
+            }
+            return;
+        }
+
+        // Get EntityUserRoles for all relevant org units
+        // Returns tuples of (OrgUnitId, EntityRoleId)
         var entityUserRoles = await context.EntityUserRoles
             .Where(eur => eur.EntityType == "OrganizationHierarchy" 
-                       && eur.EntityId == orgUnitId
+                       && orgUnitIdsForRoles.Contains(eur.EntityId)
                        && eur.EntityRoleId.HasValue
                        && !eur.IsDeleted)
-            .Select(eur => eur.EntityRoleId!.Value)
+            .Select(eur => new { eur.EntityId, EntityRoleId = eur.EntityRoleId!.Value })
             .Distinct()
             .ToListAsync();
 
+        // Create a set of valid (OrgUnitId, RoleId) combinations
+        var validCombinations = entityUserRoles
+            .Select(e => (e.EntityId, e.EntityRoleId))
+            .ToHashSet();
+
         // Find auto-populated stakeholders to remove:
-        // - Those from a different org unit (org unit changed)
-        // - Those with roles no longer in EntityUserRoles
+        // - Those not in the valid combinations
         var autoPopulatedToRemove = existingAutoPopulated
             .Where(existing => 
-                existing.OrganizationHierarchyId != orgUnitId || 
-                !entityUserRoles.Contains(existing.EntityRoleId))
+                !existing.OrganizationHierarchyId.HasValue ||
+                !validCombinations.Contains((existing.OrganizationHierarchyId.Value, existing.EntityRoleId)))
             .ToList();
 
-        // Find roles to add (exist in EntityUserRoles but not in existing auto-populated for this org unit)
-        var existingRolesForOrgUnit = existingAutoPopulated
-            .Where(s => s.OrganizationHierarchyId == orgUnitId)
-            .Select(s => s.EntityRoleId)
-            .ToList();
+        // Find combinations to add (exist in EntityUserRoles but not in existing auto-populated)
+        var existingCombinations = existingAutoPopulated
+            .Where(s => s.OrganizationHierarchyId.HasValue)
+            .Select(s => (s.OrganizationHierarchyId!.Value, s.EntityRoleId))
+            .ToHashSet();
 
-        var rolesToAdd = entityUserRoles
-            .Where(roleId => !existingRolesForOrgUnit.Contains(roleId))
+        var combinationsToAdd = validCombinations
+            .Where(combo => !existingCombinations.Contains(combo))
             .ToList();
 
         // Remove stakeholders that are no longer needed
@@ -1969,19 +2019,145 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         }
 
         // Add new auto-populated stakeholders
-        foreach (var roleId in rolesToAdd)
+        foreach (var (targetOrgUnitId, roleId) in combinationsToAdd)
         {
             entity.Stakeholders.Add(new OpportunityStakeholder
             {
                 OpportunityId = entity.Id,
                 EntityRoleId = roleId,
-                OrganizationHierarchyId = orgUnitId,
+                OrganizationHierarchyId = targetOrgUnitId,
                 UserId = null, // No specific user - auto-populated
                 IsInternal = true,
                 StakeholderType = "Internal",
                 Notes = null
             });
         }
+    }
+
+    /// <summary>
+    /// Gets org unit IDs for the opportunity's implementation countries, including parent and grandparent org units.
+    /// Used when a GPO is selected as the responsible org unit.
+    /// </summary>
+    private async Task<List<int>> GetOrgUnitIdsForCountriesWithHierarchyAsync(int opportunityId)
+    {
+        // Get implementation country IDs for this opportunity
+        var countryIds = await context.Set<OpportunityCountry>()
+            .Where(oc => oc.OpportunityId == opportunityId)
+            .Select(oc => oc.CountryId)
+            .ToListAsync();
+
+        if (!countryIds.Any())
+            return new List<int>();
+
+        // Get org unit relationships for these countries
+        var orgUnitRelationships = await context.OrganizationUnitRelationships
+            .Where(r => 
+                r.EntityType == "Country" 
+                && countryIds.Contains(r.EntityId)
+                && !r.IsDeleted)
+            .Select(r => r.OrganizationHierarchyId)
+            .Distinct()
+            .ToListAsync();
+
+        if (!orgUnitRelationships.Any())
+            return new List<int>();
+
+        // For each org unit, get itself plus parent and grandparent (only OrgUnit types)
+        var allOrgUnitIds = new HashSet<int>();
+
+        foreach (var orgUnitIdItem in orgUnitRelationships)
+        {
+            var currentId = orgUnitIdItem;
+            var levelsToGet = 3; // Current + parent + grandparent
+
+            for (int i = 0; i < levelsToGet && currentId != 0; i++)
+            {
+                var unit = await context.OrganizationHierarchies
+                    .Where(oh => oh.Id == currentId && !oh.IsDeleted)
+                    .Select(oh => new { oh.Id, oh.ParentId, oh.Type })
+                    .FirstOrDefaultAsync();
+
+                if (unit == null)
+                    break;
+
+                // Only add OrgUnit type
+                if (unit.Type == Domain.Enums.OrganizationUnitType.OrgUnit)
+                {
+                    allOrgUnitIds.Add(unit.Id);
+                }
+
+                currentId = unit.ParentId ?? 0;
+            }
+        }
+
+        return allOrgUnitIds.ToList();
+    }
+
+    /// <summary>
+    /// Gets child org unit IDs under a Hub/Region that directly relate to the opportunity's implementation countries.
+    /// Used when a Hub or Region is selected as the responsible org unit.
+    /// </summary>
+    private async Task<List<int>> GetChildOrgUnitIdsForHubRegionAsync(int parentOrgUnitId, int opportunityId)
+    {
+        // Get implementation country IDs for this opportunity
+        var countryIds = await context.Set<OpportunityCountry>()
+            .Where(oc => oc.OpportunityId == opportunityId)
+            .Select(oc => oc.CountryId)
+            .ToListAsync();
+
+        if (!countryIds.Any())
+            return new List<int>();
+
+        // Get org unit IDs that are directly responsible for these countries
+        var countryOrgUnitIds = await context.OrganizationUnitRelationships
+            .Where(r => 
+                r.EntityType == "Country" 
+                && countryIds.Contains(r.EntityId)
+                && !r.IsDeleted)
+            .Select(r => r.OrganizationHierarchyId)
+            .Distinct()
+            .ToListAsync();
+
+        if (!countryOrgUnitIds.Any())
+            return new List<int>();
+
+        // Get all descendants of the parent Hub/Region
+        var descendantIds = await GetAllDescendantOrgUnitIdsAsync(parentOrgUnitId);
+
+        // Filter to only include descendants that directly relate to the countries
+        return countryOrgUnitIds
+            .Where(id => descendantIds.Contains(id))
+            .ToList();
+    }
+
+    /// <summary>
+    /// Gets all descendant org unit IDs under a given parent org unit (recursive).
+    /// </summary>
+    private async Task<HashSet<int>> GetAllDescendantOrgUnitIdsAsync(int parentOrgUnitId)
+    {
+        var descendants = new HashSet<int>();
+        var toProcess = new Queue<int>();
+        toProcess.Enqueue(parentOrgUnitId);
+
+        while (toProcess.Count > 0)
+        {
+            var currentParentId = toProcess.Dequeue();
+
+            var children = await context.OrganizationHierarchies
+                .Where(oh => oh.ParentId == currentParentId && !oh.IsDeleted)
+                .Select(oh => oh.Id)
+                .ToListAsync();
+
+            foreach (var childId in children)
+            {
+                if (descendants.Add(childId))
+                {
+                    toProcess.Enqueue(childId);
+                }
+            }
+        }
+
+        return descendants;
     }
 
     public async Task<OpportunityModel> UpdateWhereSectionAsync(int id, WhereSectionRequest request)

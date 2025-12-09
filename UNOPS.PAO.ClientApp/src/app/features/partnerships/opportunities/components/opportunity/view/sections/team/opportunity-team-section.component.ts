@@ -200,6 +200,50 @@ export class OpportunityTeamSectionComponent implements OnInit {
     return enriched.length > 0 ? enriched : this.rawAutoPopulatedStakeholders();
   });
 
+  // Role display order for auto-populated stakeholders
+  private readonly roleDisplayOrder: string[] = [
+    'Region Director',
+    'Region Deputy Director',
+    'Hub Director',
+    'Hub Deputy Director',
+    'OrgUnit Director',
+    'OrgUnit Deputy Director',
+    'DoA1',
+    'DoA2',
+    'DoA3',
+    'DoA4',
+  ];
+
+  // Grouped auto-populated stakeholders by OrgUnit for compact display
+  readonly groupedAutoPopulatedStakeholders = computed(() => {
+    const stakeholders = this.autoPopulatedStakeholders();
+    const groups = new Map<string, OpportunityStakeholder[]>();
+
+    for (const stakeholder of stakeholders) {
+      const key = stakeholder.organizationHierarchyName || 'Unknown';
+      if (!groups.has(key)) {
+        groups.set(key, []);
+      }
+      groups.get(key)!.push(stakeholder);
+    }
+
+    // Sort stakeholders within each group by role display order
+    const getRoleOrder = (roleName: string): number => {
+      const index = this.roleDisplayOrder.indexOf(roleName);
+      return index === -1 ? 999 : index; // Unknown roles go to the end
+    };
+
+    // Convert to array of groups sorted by org unit name, with stakeholders sorted by role order
+    return Array.from(groups.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([orgUnitName, groupStakeholders]) => ({
+        orgUnitName,
+        stakeholders: groupStakeholders.sort(
+          (a, b) => getRoleOrder(a.entityRoleName) - getRoleOrder(b.entityRoleName)
+        ),
+      }));
+  });
+
   // Computed stakeholder count (user-added + auto-populated)
   readonly stakeholderCount = computed(() => {
     const userAdded = this.userAddedStakeholders().length;
