@@ -18,6 +18,7 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSBusiness.Repositories;
 using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Business.Mapping;
+using UNOPS.PAO.UNOPSBusiness.Services;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -28,6 +29,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     private readonly UNOPSAppDbContext uNOPSAppDbContext;
     private readonly BaseRepository<Opportunity> opportunityRepository;
     private readonly IServiceProvider _serviceProvider;
+    private readonly IConfiguration configuration;
 
     public UNOPSOpportunityManager(
         IMapper mapper,
@@ -42,6 +44,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         this.context = context;
         this.uNOPSAppDbContext = context as UNOPSAppDbContext;
         this._serviceProvider = serviceProvider;
+        this.configuration = configuration;
         this.opportunityRepository = new BaseRepository<Opportunity>(this.uNOPSAppDbContext, configuration, serviceProvider);
     }
 
@@ -255,6 +258,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             // Get opportunity country IDs for agreement matching
             var opportunityCountryIds = entity.Countries?.Select(c => c.CountryId).ToList() ?? new List<int>();
             
+            // Initialize GoogleCloudStorageService for logo URL signing
+            var googleCloudStorageService = new GoogleCloudStorageService(configuration);
+            
             foreach (var fundingPartner in model.FundingPartners)
             {
                 fundingPartner.AssociatedDocuments = await GetDocumentsForPartner(
@@ -270,6 +276,12 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 if (fundingPartnerEntity?.Partner != null)
                 {
                     var partner = fundingPartnerEntity.Partner;
+                    
+                    // Partner Logo URL - convert to signed URL
+                    if (!string.IsNullOrEmpty(partner.LogoUrl))
+                    {
+                        fundingPartner.PartnerLogoUrl = await googleCloudStorageService.GenerateSignedUrlFromStorageUrl(partner.LogoUrl);
+                    }
                     
                     // DD Approval
                     fundingPartner.DDApproval = partner.DueDiligenceApproval?.ToString();
@@ -310,6 +322,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             // Get opportunity country IDs for agreement matching
             var opportunityCountryIds = entity.Countries?.Select(c => c.CountryId).ToList() ?? new List<int>();
             
+            // Initialize GoogleCloudStorageService for logo URL signing (reuse if already created)
+            var googleCloudStorageService = new GoogleCloudStorageService(configuration);
+            
             foreach (var clientPartner in model.ClientPartners)
             {
                 clientPartner.AssociatedDocuments = await GetDocumentsForPartner(
@@ -325,6 +340,12 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 if (clientPartnerEntity?.Partner != null)
                 {
                     var partner = clientPartnerEntity.Partner;
+                    
+                    // Partner Logo URL - convert to signed URL
+                    if (!string.IsNullOrEmpty(partner.LogoUrl))
+                    {
+                        clientPartner.PartnerLogoUrl = await googleCloudStorageService.GenerateSignedUrlFromStorageUrl(partner.LogoUrl);
+                    }
                     
                     // DD Approval
                     clientPartner.DDApproval = partner.DueDiligenceApproval?.ToString();
