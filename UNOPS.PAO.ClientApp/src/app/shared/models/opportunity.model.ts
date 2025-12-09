@@ -64,6 +64,28 @@ export interface OpportunityUNOPSMission {
 }
 
 /**
+ * SME (Subject Matter Expert) selection for an opportunity
+ * Loaded from EntityUserRoles table where EntityType = "Opportunity"
+ */
+export interface SMESelection {
+  entityRoleId: number;
+  entityRoleName: string | null;
+  isSelected: boolean;
+  userId: number | null;
+  userName: string | null;
+  userEmail: string | null;
+}
+
+/**
+ * SME (Subject Matter Expert) selection request for saving
+ */
+export interface SMESelectionRequest {
+  entityRoleId: number;
+  isSelected: boolean;
+  userId: number | null;
+}
+
+/**
  * Main Opportunity model matching backend OpportunityModel.cs
  */
 export interface Opportunity {
@@ -111,6 +133,7 @@ export interface Opportunity {
   sdGs: OpportunitySDG[];
   uncfOutcomes?: OpportunityUNCFOutcome[];
   unopsMissions?: OpportunityUNOPSMission[];
+  smeSelections?: SMESelection[];
   stats: OpportunityStats | null;
   isNewValueRangeForOrgUnit: boolean | null;
   orgUnitHistoricalMaxValue: number | null;
@@ -223,6 +246,12 @@ export interface OpportunityStakeholder {
   userId: number | null;
   userName: string | null;
   userEmail: string | null;
+  /** Organization Hierarchy ID - used for auto-populated stakeholders from EntityUserRoles */
+  organizationHierarchyId: number | null;
+  /** Organization Hierarchy Name - the name of the org unit for auto-populated stakeholders */
+  organizationHierarchyName: string | null;
+  /** Indicates if this stakeholder was auto-populated from EntityUserRoles. Cannot be edited/removed. */
+  isAutoPopulated: boolean;
   notes: string | null;
 }
 

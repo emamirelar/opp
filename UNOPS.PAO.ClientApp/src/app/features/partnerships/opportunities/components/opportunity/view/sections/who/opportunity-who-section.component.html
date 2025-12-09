@@ -157,6 +157,7 @@
                   [src]="partner.partnerLogoUrl || 'assets/images/Partner.png'"
                   [alt]="partner.partnerName"
                   class="w-12 h-12 object-contain rounded"
+                  (error)="onPartnerImageError($event)"
                 />
                 <div class="flex-1">
                   <a
@@ -199,16 +200,16 @@
                       />
                       @if (partner.ddExpiryDate) {
                         <span class="text-xs text-gray-600">
-                          {{ 'label.expires' | translate }}: {{ partner.ddExpiryDate | date:'mediumDate' }}
+                          {{ 'label.expiryDate' | translate }}: {{ partner.ddExpiryDate | date:'mediumDate' }}
                         </span>
                       }
                     </div>
                     
                     <!-- DD Expiry Warning -->
                     @if (partner.ddStatus === 'Expired' || partner.ddStatus === 'Expiring Soon') {
-                      <div class="mt-2 p-2 bg-unops-error-lighter border border-unops-error-light rounded flex items-start gap-2">
-                        <i class="pi pi-exclamation-triangle text-unops-error-darker text-sm mt-0.5"></i>
-                        <span class="text-xs text-unops-error-darker">
+                      <div class="mt-2 p-2 bg-unops-surface-cream border border-unops-warning-light rounded flex items-start gap-2">
+                        <i class="pi pi-exclamation-triangle text-unops-warning-darker text-sm mt-0.5"></i>
+                        <span class="text-xs text-unops-neutral-800">
                           @if (partner.ddStatus === 'Expired') {
                             {{ 'message.warning.ddExpired' | translate }}
                           } @else {
@@ -239,16 +240,16 @@
                         {{ 'label.partnerAgreements' | translate }}:
                       </span>
                       @if (partner.availableAgreements.length === 1) {
-                        <div class="mt-1 p-2 bg-unops-primary-container-soft border border-unops-primary-200 rounded">
+                        <div class="mt-1 p-2 bg-gray-50 border border-gray-200 rounded">
                           <div class="flex items-start gap-2">
-                            <i class="pi pi-check-circle text-unops-primary-dark text-sm mt-0.5"></i>
+                            <i class="pi pi-file-check text-unops-success text-sm mt-0.5"></i>
                             <div class="flex-1 text-xs">
-                              <div class="flex items-center justify-between">
-                                <div class="font-medium text-unops-primary-darker">{{ partner.availableAgreements[0].name }}</div>
+                              <div class="flex items-center justify-between mb-1">
+                                <div class="font-semibold text-gray-900">{{ partner.availableAgreements[0].name }}</div>
                                 @if (partner.availableAgreements[0].source === 'Document' && partner.availableAgreements[0].documentId) {
                                   <button
                                     type="button"
-                                    class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded hover:bg-blue-200 transition-colors flex items-center gap-1"
+                                    class="text-xs bg-unops-primary text-white px-2 py-0.5 rounded hover:bg-unops-primary-light transition-colors flex items-center gap-1"
                                     (click)="openAgreementDocument(partner.availableAgreements[0])"
                                     pTooltip="Open document in new tab"
                                     tooltipPosition="top"
@@ -258,36 +259,37 @@
                                   </button>
                                 }
                               </div>
-                              <div class="text-unops-primary-dark flex items-center gap-2">
-                                <span>{{ 'label.agreement' | translate }}: {{ partner.availableAgreements[0].partnerAgreementNumber }}</span>
-                                @if (partner.availableAgreements[0].source) {
-                                  <span class="text-[0.65rem] px-1.5 py-0.5 rounded" 
-                                        [ngClass]="{
-                                          'bg-unops-primary-100 text-unops-primary-800': partner.availableAgreements[0].source === 'ERP',
-                                          'bg-purple-100 text-purple-700': partner.availableAgreements[0].source === 'Document'
-                                        }">
-                                    {{ partner.availableAgreements[0].source }}
-                                  </span>
-                                }
-                              </div>
-                              @if (partner.availableAgreements[0].startDate && partner.availableAgreements[0].endDate) {
-                                <div class="text-unops-primary-dark">
-                                  {{ partner.availableAgreements[0].startDate | date:'mediumDate' }} - 
-                                  {{ partner.availableAgreements[0].endDate | date:'mediumDate' }}
+                              <div class="flex items-center justify-between gap-4 text-gray-700 flex-wrap">
+                                <div class="flex items-center gap-2 flex-shrink-0">
+                                  <span>{{ 'label.agreement' | translate }}: {{ partner.availableAgreements[0].partnerAgreementNumber }}</span>
+                                  @if (partner.availableAgreements[0].source) {
+                                    <span class="text-[0.65rem] px-1.5 py-0.5 rounded" 
+                                          [ngClass]="{
+                                            'bg-unops-primary-100 text-unops-primary-800': partner.availableAgreements[0].source === 'ERP',
+                                            'bg-purple-100 text-purple-700': partner.availableAgreements[0].source === 'Document'
+                                          }">
+                                      {{ partner.availableAgreements[0].source }}
+                                    </span>
+                                  }
                                 </div>
-                              }
+                                <div class="text-gray-600 text-right flex-shrink-0">
+                                  @if (partner.availableAgreements[0].startDate && partner.availableAgreements[0].endDate) {
+                                    <span>{{ partner.availableAgreements[0].startDate | date:'mediumDate' }} - {{ partner.availableAgreements[0].endDate | date:'mediumDate' }}</span>
+                                  }
+                                </div>
+                              </div>
                               @if (partner.availableAgreements[0].serviceLinesDescription) {
-                                <div class="text-unops-primary-dark mt-1">
-                                  {{ 'label.serviceLines' | translate }}: {{ partner.availableAgreements[0].serviceLinesDescription }}
+                                <div class="text-gray-600 mt-1">
+                                  <span class="font-medium">{{ 'label.serviceLines' | translate }}:</span> {{ partner.availableAgreements[0].serviceLinesDescription }}
                                 </div>
                               }
                               @if (partner.availableAgreements[0].geographicRestrictions) {
-                                <div class="text-unops-primary-dark mt-1">
-                                  {{ 'label.geography' | translate }}: {{ partner.availableAgreements[0].geographicRestrictions }}
+                                <div class="text-gray-600 mt-1">
+                                  <span class="font-medium">{{ 'label.geography' | translate }}:</span> {{ partner.availableAgreements[0].geographicRestrictions }}
                                 </div>
                               }
                               @if (partner.availableAgreements[0].warningMessage) {
-                                <div class="mt-2 p-1.5 bg-yellow-50 border border-yellow-200 rounded text-yellow-800">
+                                <div class="mt-2 p-1.5 bg-unops-surface-cream border border-unops-warning-light rounded text-unops-warning-darker">
                                   <i class="pi pi-exclamation-triangle mr-1"></i>
                                   {{ partner.availableAgreements[0].warningMessage }}
                                 </div>
@@ -296,94 +298,74 @@
                           </div>
                         </div>
                       } @else {
-                        <!-- Multiple agreements - show selection -->
-                        @if (isEditing()) {
-                          <div class="mt-1">
-                            <p-select
-                              [(ngModel)]="partner.selectedPartnerAgreementNumber"
-                              [options]="partner.availableAgreements"
-                              optionLabel="name"
-                              optionValue="partnerAgreementNumber"
-                              [placeholder]="'label.selectAgreement' | translate"
-                              class="w-full"
-                            />
-                            @if (partner.selectedPartnerAgreementNumber) {
-                              @for (agreement of partner.availableAgreements; track agreement.partnerAgreementNumber) {
-                                @if (agreement.partnerAgreementNumber === partner.selectedPartnerAgreementNumber) {
-                                  <div class="mt-2 p-2 bg-unops-primary-container-soft border border-unops-primary-200 rounded text-xs">
-                                    <div class="text-unops-primary-darker">
-                                      {{ 'label.agreement' | translate }}: {{ agreement.partnerAgreementNumber }}
+                        <!-- Multiple agreements - show selected or info message -->
+                        @if (partner.selectedPartnerAgreementNumber) {
+                          @for (agreement of partner.availableAgreements; track agreement.partnerAgreementNumber) {
+                            @if (agreement.partnerAgreementNumber === partner.selectedPartnerAgreementNumber) {
+                              <div class="mt-1 p-2 bg-gray-50 border border-gray-200 rounded">
+                                <div class="flex items-start gap-2">
+                                  <i class="pi pi-file-check text-unops-success text-sm mt-0.5"></i>
+                                  <div class="flex-1 text-xs">
+                                    <div class="flex items-center justify-between mb-1">
+                                      <div class="font-semibold text-gray-900">{{ agreement.name }}</div>
+                                      @if (agreement.source === 'Document' && agreement.documentId) {
+                                        <button
+                                          type="button"
+                                          class="text-xs bg-unops-primary text-white px-2 py-0.5 rounded hover:bg-unops-primary-light transition-colors flex items-center gap-1"
+                                          (click)="openAgreementDocument(agreement)"
+                                          pTooltip="Open document in new tab"
+                                          tooltipPosition="top"
+                                        >
+                                          <i class="pi pi-external-link text-[0.6rem]"></i>
+                                          <span>{{ 'button.open' | translate }}</span>
+                                        </button>
+                                      }
                                     </div>
-                                    @if (agreement.startDate && agreement.endDate) {
-                                      <div class="text-unops-primary-dark">
-                                        {{ agreement.startDate | date:'mediumDate' }} - {{ agreement.endDate | date:'mediumDate' }}
+                                    <div class="flex items-center justify-between gap-4 text-gray-700 flex-wrap">
+                                      <div class="flex items-center gap-2 flex-shrink-0">
+                                        <span>{{ 'label.agreement' | translate }}: {{ agreement.partnerAgreementNumber }}</span>
+                                        @if (agreement.source) {
+                                          <span class="text-[0.65rem] px-1.5 py-0.5 rounded" 
+                                                [ngClass]="{
+                                                  'bg-unops-primary-100 text-unops-primary-800': agreement.source === 'ERP',
+                                                  'bg-purple-100 text-purple-700': agreement.source === 'Document'
+                                                }">
+                                            {{ agreement.source }}
+                                          </span>
+                                        }
                                       </div>
-                                    }
+                                      <div class="text-gray-600 text-right flex-shrink-0">
+                                        @if (agreement.startDate && agreement.endDate) {
+                                          <span>{{ agreement.startDate | date:'mediumDate' }} - {{ agreement.endDate | date:'mediumDate' }}</span>
+                                        }
+                                      </div>
+                                    </div>
                                     @if (agreement.serviceLinesDescription) {
-                                      <div class="text-unops-primary-dark mt-1">
-                                        {{ 'label.serviceLines' | translate }}: {{ agreement.serviceLinesDescription }}
+                                      <div class="text-gray-600 mt-1">
+                                        <span class="font-medium">{{ 'label.serviceLines' | translate }}:</span> {{ agreement.serviceLinesDescription }}
                                       </div>
                                     }
                                     @if (agreement.geographicRestrictions) {
-                                      <div class="text-unops-primary-dark mt-1">
-                                        {{ 'label.geography' | translate }}: {{ agreement.geographicRestrictions }}
+                                      <div class="text-gray-600 mt-1">
+                                        <span class="font-medium">{{ 'label.geography' | translate }}:</span> {{ agreement.geographicRestrictions }}
                                       </div>
                                     }
                                     @if (agreement.warningMessage) {
-                                      <div class="mt-2 p-1.5 bg-yellow-50 border border-yellow-200 rounded text-yellow-800">
+                                      <div class="mt-2 p-1.5 bg-unops-surface-cream border border-unops-warning-light rounded text-unops-warning-darker">
                                         <i class="pi pi-exclamation-triangle mr-1"></i>
                                         {{ agreement.warningMessage }}
                                       </div>
                                     }
                                   </div>
-                                }
-                              }
-                            }
-                          </div>
-                        } @else {
-                          @if (partner.selectedPartnerAgreementNumber) {
-                            @for (agreement of partner.availableAgreements; track agreement.partnerAgreementNumber) {
-                              @if (agreement.partnerAgreementNumber === partner.selectedPartnerAgreementNumber) {
-                                <div class="mt-1 p-2 bg-unops-primary-container-soft border border-unops-primary-200 rounded">
-                                  <div class="flex items-start gap-2">
-                                    <i class="pi pi-check-circle text-unops-primary-dark text-sm mt-0.5"></i>
-                                    <div class="flex-1 text-xs">
-                                      <div class="font-medium text-unops-primary-darker">{{ agreement.name }}</div>
-                                      <div class="text-unops-primary-dark">
-                                        {{ 'label.agreement' | translate }}: {{ agreement.partnerAgreementNumber }}
-                                      </div>
-                                      @if (agreement.startDate && agreement.endDate) {
-                                        <div class="text-unops-primary-dark">
-                                          {{ agreement.startDate | date:'mediumDate' }} - {{ agreement.endDate | date:'mediumDate' }}
-                                        </div>
-                                      }
-                                      @if (agreement.serviceLinesDescription) {
-                                        <div class="text-unops-primary-dark mt-1">
-                                          {{ 'label.serviceLines' | translate }}: {{ agreement.serviceLinesDescription }}
-                                        </div>
-                                      }
-                                      @if (agreement.geographicRestrictions) {
-                                        <div class="text-unops-primary-dark mt-1">
-                                          {{ 'label.geography' | translate }}: {{ agreement.geographicRestrictions }}
-                                        </div>
-                                      }
-                                      @if (agreement.warningMessage) {
-                                        <div class="mt-2 p-1.5 bg-yellow-50 border border-yellow-200 rounded text-yellow-800">
-                                          <i class="pi pi-exclamation-triangle mr-1"></i>
-                                          {{ agreement.warningMessage }}
-                                        </div>
-                                      }
-                                    </div>
-                                  </div>
                                 </div>
-                              }
+                              </div>
                             }
-                          } @else {
-                            <div class="mt-1 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
-                              <i class="pi pi-info-circle mr-1"></i>
-                              {{ 'message.info.multipleAgreementsAvailable' | translate: {count: partner.availableAgreements.length} }}
-                            </div>
                           }
+                        } @else {
+                          <div class="mt-1 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+                            <i class="pi pi-info-circle mr-1"></i>
+                            {{ 'message.info.multipleAgreementsAvailable' | translate: {count: partner.availableAgreements.length} }}
+                          </div>
                         }
                       }
                     </div>
@@ -541,6 +523,7 @@
                 [src]="client.partnerLogoUrl || 'assets/images/Partner.png'"
                 [alt]="client.partnerName"
                 class="w-10 h-10 object-contain rounded"
+                (error)="onPartnerImageError($event)"
               />
               <div class="flex-1">
                 <a
@@ -563,9 +546,9 @@
                 
                 <!-- Draft Warning -->
                 @if (client.partnerStatus === 'Draft') {
-                  <div class="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded flex items-start gap-2">
-                    <i class="pi pi-exclamation-triangle text-yellow-600 text-sm mt-0.5"></i>
-                    <span class="text-xs text-yellow-800">
+                  <div class="mt-2 p-2 bg-unops-surface-cream border border-unops-warning-light rounded flex items-start gap-2">
+                    <i class="pi pi-exclamation-triangle text-unops-warning-darker text-sm mt-0.5"></i>
+                    <span class="text-xs text-unops-neutral-800">
                       {{ 'message.warning.partnerDraftStatus' | translate }}
                     </span>
                   </div>
@@ -583,16 +566,16 @@
                     />
                     @if (client.ddExpiryDate) {
                       <span class="text-xs text-gray-600">
-                        {{ 'label.expires' | translate }}: {{ client.ddExpiryDate | date:'mediumDate' }}
+                        {{ 'label.expiryDate' | translate }}: {{ client.ddExpiryDate | date:'mediumDate' }}
                       </span>
                     }
                   </div>
                   
                   <!-- DD Expiry Warning -->
                   @if (client.ddStatus === 'Expired' || client.ddStatus === 'Expiring Soon') {
-                    <div class="mt-2 p-2 bg-red-50 border border-red-200 rounded flex items-start gap-2">
-                      <i class="pi pi-exclamation-triangle text-red-600 text-sm mt-0.5"></i>
-                      <span class="text-xs text-red-800">
+                    <div class="mt-2 p-2 bg-unops-surface-cream border border-unops-warning-light rounded flex items-start gap-2">
+                      <i class="pi pi-exclamation-triangle text-unops-warning-darker text-sm mt-0.5"></i>
+                      <span class="text-xs text-unops-neutral-800">
                         @if (client.ddStatus === 'Expired') {
                           {{ 'message.warning.ddExpired' | translate }}
                         } @else {
@@ -604,9 +587,9 @@
                   
                   <!-- DD Expires Before Opportunity End Warning -->
                   @if (client.ddExpiresBeforeOpportunityEnd && client.ddExpiryDate) {
-                    <div class="mt-2 p-2 bg-orange-50 border border-orange-200 rounded flex items-start gap-2">
-                      <i class="pi pi-exclamation-circle text-orange-600 text-sm mt-0.5"></i>
-                      <span class="text-xs text-orange-800">
+                    <div class="mt-2 p-2 bg-unops-surface-cream border border-unops-warning-light rounded flex items-start gap-2">
+                      <i class="pi pi-exclamation-circle text-unops-warning-darker text-sm mt-0.5"></i>
+                      <span class="text-xs text-unops-neutral-800">
                         {{ 'message.warning.ddExpiresBeforeOpportunityEnd' | translate: {
                           expiryDate: (client.ddExpiryDate | date:'mediumDate'),
                           opportunityEndDate: (opportunity().targetDeliveryDate | date:'mediumDate')
@@ -623,16 +606,16 @@
                       {{ 'label.partnerAgreements' | translate }}:
                     </span>
                     @if (client.availableAgreements.length === 1) {
-                      <div class="mt-1 p-2 bg-unops-primary-container-soft border border-unops-primary-200 rounded">
+                      <div class="mt-1 p-2 bg-gray-50 border border-gray-200 rounded">
                         <div class="flex items-start gap-2">
-                          <i class="pi pi-check-circle text-unops-primary-dark text-sm mt-0.5"></i>
+                          <i class="pi pi-file-check text-unops-success text-sm mt-0.5"></i>
                           <div class="flex-1 text-xs">
-                            <div class="flex items-center justify-between">
-                              <div class="font-medium text-unops-primary-darker">{{ client.availableAgreements[0].name }}</div>
+                            <div class="flex items-center justify-between mb-1">
+                              <div class="font-semibold text-gray-900">{{ client.availableAgreements[0].name }}</div>
                               @if (client.availableAgreements[0].source === 'Document' && client.availableAgreements[0].documentId) {
                                 <button
                                   type="button"
-                                  class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded hover:bg-blue-200 transition-colors flex items-center gap-1"
+                                  class="text-xs bg-unops-primary text-white px-2 py-0.5 rounded hover:bg-unops-primary-light transition-colors flex items-center gap-1"
                                   (click)="openAgreementDocument(client.availableAgreements[0])"
                                   pTooltip="Open document in new tab"
                                   tooltipPosition="top"
@@ -642,36 +625,37 @@
                                 </button>
                               }
                             </div>
-                            <div class="text-unops-primary-dark flex items-center gap-2">
-                              <span>{{ 'label.agreement' | translate }}: {{ client.availableAgreements[0].partnerAgreementNumber }}</span>
-                              @if (client.availableAgreements[0].source) {
-                                <span class="text-[0.65rem] px-1.5 py-0.5 rounded" 
-                                      [ngClass]="{
-                                        'bg-unops-primary-100 text-unops-primary-800': client.availableAgreements[0].source === 'ERP',
-                                        'bg-purple-100 text-purple-700': client.availableAgreements[0].source === 'Document'
-                                      }">
-                                  {{ client.availableAgreements[0].source }}
-                                </span>
-                              }
-                            </div>
-                            @if (client.availableAgreements[0].startDate && client.availableAgreements[0].endDate) {
-                              <div class="text-unops-primary-dark">
-                                {{ client.availableAgreements[0].startDate | date:'mediumDate' }} - 
-                                {{ client.availableAgreements[0].endDate | date:'mediumDate' }}
+                            <div class="flex items-center justify-between gap-4 text-gray-700 flex-wrap">
+                              <div class="flex items-center gap-2 flex-shrink-0">
+                                <span>{{ 'label.agreement' | translate }}: {{ client.availableAgreements[0].partnerAgreementNumber }}</span>
+                                @if (client.availableAgreements[0].source) {
+                                  <span class="text-[0.65rem] px-1.5 py-0.5 rounded" 
+                                        [ngClass]="{
+                                          'bg-unops-primary-100 text-unops-primary-800': client.availableAgreements[0].source === 'ERP',
+                                          'bg-purple-100 text-purple-700': client.availableAgreements[0].source === 'Document'
+                                        }">
+                                    {{ client.availableAgreements[0].source }}
+                                  </span>
+                                }
                               </div>
-                            }
+                              <div class="text-gray-600 text-right flex-shrink-0">
+                                @if (client.availableAgreements[0].startDate && client.availableAgreements[0].endDate) {
+                                  <span>{{ client.availableAgreements[0].startDate | date:'mediumDate' }} - {{ client.availableAgreements[0].endDate | date:'mediumDate' }}</span>
+                                }
+                              </div>
+                            </div>
                             @if (client.availableAgreements[0].serviceLinesDescription) {
-                              <div class="text-unops-primary-dark mt-1">
-                                {{ 'label.serviceLines' | translate }}: {{ client.availableAgreements[0].serviceLinesDescription }}
+                              <div class="text-gray-600 mt-1">
+                                <span class="font-medium">{{ 'label.serviceLines' | translate }}:</span> {{ client.availableAgreements[0].serviceLinesDescription }}
                               </div>
                             }
                             @if (client.availableAgreements[0].geographicRestrictions) {
-                              <div class="text-unops-primary-dark mt-1">
-                                {{ 'label.geography' | translate }}: {{ client.availableAgreements[0].geographicRestrictions }}
+                              <div class="text-gray-600 mt-1">
+                                <span class="font-medium">{{ 'label.geography' | translate }}:</span> {{ client.availableAgreements[0].geographicRestrictions }}
                               </div>
                             }
                             @if (client.availableAgreements[0].warningMessage) {
-                              <div class="mt-2 p-1.5 bg-yellow-50 border border-yellow-200 rounded text-yellow-800">
+                              <div class="mt-2 p-1.5 bg-unops-surface-cream border border-unops-warning-light rounded text-unops-warning-darker">
                                 <i class="pi pi-exclamation-triangle mr-1"></i>
                                 {{ client.availableAgreements[0].warningMessage }}
                               </div>
@@ -680,94 +664,74 @@
                         </div>
                       </div>
                     } @else {
-                      <!-- Multiple agreements - show selection -->
-                      @if (isEditing()) {
-                        <div class="mt-1">
-                          <p-select
-                            [(ngModel)]="client.selectedPartnerAgreementNumber"
-                            [options]="client.availableAgreements"
-                            optionLabel="name"
-                            optionValue="partnerAgreementNumber"
-                            [placeholder]="'label.selectAgreement' | translate"
-                            class="w-full"
-                          />
-                          @if (client.selectedPartnerAgreementNumber) {
-                            @for (agreement of client.availableAgreements; track agreement.partnerAgreementNumber) {
-                              @if (agreement.partnerAgreementNumber === client.selectedPartnerAgreementNumber) {
-                                <div class="mt-2 p-2 bg-unops-primary-container-soft border border-unops-primary-200 rounded text-xs">
-                                  <div class="text-unops-primary-darker">
-                                    {{ 'label.agreement' | translate }}: {{ agreement.partnerAgreementNumber }}
+                      <!-- Multiple agreements - show selected or info message (readonly in view mode) -->
+                      @if (client.selectedPartnerAgreementNumber) {
+                        @for (agreement of client.availableAgreements; track agreement.partnerAgreementNumber) {
+                          @if (agreement.partnerAgreementNumber === client.selectedPartnerAgreementNumber) {
+                            <div class="mt-1 p-2 bg-gray-50 border border-gray-200 rounded">
+                              <div class="flex items-start gap-2">
+                                <i class="pi pi-file-check text-unops-success text-sm mt-0.5"></i>
+                                <div class="flex-1 text-xs">
+                                  <div class="flex items-center justify-between mb-1">
+                                    <div class="font-semibold text-gray-900">{{ agreement.name }}</div>
+                                    @if (agreement.source === 'Document' && agreement.documentId) {
+                                      <button
+                                        type="button"
+                                        class="text-xs bg-unops-primary text-white px-2 py-0.5 rounded hover:bg-unops-primary-light transition-colors flex items-center gap-1"
+                                        (click)="openAgreementDocument(agreement)"
+                                        pTooltip="Open document in new tab"
+                                        tooltipPosition="top"
+                                      >
+                                        <i class="pi pi-external-link text-[0.6rem]"></i>
+                                        <span>{{ 'button.open' | translate }}</span>
+                                      </button>
+                                    }
                                   </div>
-                                  @if (agreement.startDate && agreement.endDate) {
-                                    <div class="text-unops-primary-dark">
-                                      {{ agreement.startDate | date:'mediumDate' }} - {{ agreement.endDate | date:'mediumDate' }}
+                                  <div class="flex items-center justify-between gap-4 text-gray-700 flex-wrap">
+                                    <div class="flex items-center gap-2 flex-shrink-0">
+                                      <span>{{ 'label.agreement' | translate }}: {{ agreement.partnerAgreementNumber }}</span>
+                                      @if (agreement.source) {
+                                        <span class="text-[0.65rem] px-1.5 py-0.5 rounded" 
+                                              [ngClass]="{
+                                                'bg-unops-primary-100 text-unops-primary-800': agreement.source === 'ERP',
+                                                'bg-purple-100 text-purple-700': agreement.source === 'Document'
+                                              }">
+                                          {{ agreement.source }}
+                                        </span>
+                                      }
                                     </div>
-                                  }
+                                    <div class="text-gray-600 text-right flex-shrink-0">
+                                      @if (agreement.startDate && agreement.endDate) {
+                                        <span>{{ agreement.startDate | date:'mediumDate' }} - {{ agreement.endDate | date:'mediumDate' }}</span>
+                                      }
+                                    </div>
+                                  </div>
                                   @if (agreement.serviceLinesDescription) {
-                                    <div class="text-unops-primary-dark mt-1">
-                                      {{ 'label.serviceLines' | translate }}: {{ agreement.serviceLinesDescription }}
+                                    <div class="text-gray-600 mt-1">
+                                      <span class="font-medium">{{ 'label.serviceLines' | translate }}:</span> {{ agreement.serviceLinesDescription }}
                                     </div>
                                   }
                                   @if (agreement.geographicRestrictions) {
-                                    <div class="text-unops-primary-dark mt-1">
-                                      {{ 'label.geography' | translate }}: {{ agreement.geographicRestrictions }}
+                                    <div class="text-gray-600 mt-1">
+                                      <span class="font-medium">{{ 'label.geography' | translate }}:</span> {{ agreement.geographicRestrictions }}
                                     </div>
                                   }
                                   @if (agreement.warningMessage) {
-                                    <div class="mt-2 p-1.5 bg-yellow-50 border border-yellow-200 rounded text-yellow-800">
+                                    <div class="mt-2 p-1.5 bg-unops-surface-cream border border-unops-warning-light rounded text-unops-warning-darker">
                                       <i class="pi pi-exclamation-triangle mr-1"></i>
                                       {{ agreement.warningMessage }}
                                     </div>
                                   }
                                 </div>
-                              }
-                            }
-                          }
-                        </div>
-                      } @else {
-                        @if (client.selectedPartnerAgreementNumber) {
-                          @for (agreement of client.availableAgreements; track agreement.partnerAgreementNumber) {
-                            @if (agreement.partnerAgreementNumber === client.selectedPartnerAgreementNumber) {
-                              <div class="mt-1 p-2 bg-unops-primary-container-soft border border-unops-primary-200 rounded">
-                                <div class="flex items-start gap-2">
-                                  <i class="pi pi-check-circle text-unops-primary-dark text-sm mt-0.5"></i>
-                                  <div class="flex-1 text-xs">
-                                    <div class="font-medium text-unops-primary-darker">{{ agreement.name }}</div>
-                                    <div class="text-unops-primary-dark">
-                                      {{ 'label.agreement' | translate }}: {{ agreement.partnerAgreementNumber }}
-                                    </div>
-                                    @if (agreement.startDate && agreement.endDate) {
-                                      <div class="text-unops-primary-dark">
-                                        {{ agreement.startDate | date:'mediumDate' }} - {{ agreement.endDate | date:'mediumDate' }}
-                                      </div>
-                                    }
-                                    @if (agreement.serviceLinesDescription) {
-                                      <div class="text-unops-primary-dark mt-1">
-                                        {{ 'label.serviceLines' | translate }}: {{ agreement.serviceLinesDescription }}
-                                      </div>
-                                    }
-                                    @if (agreement.geographicRestrictions) {
-                                      <div class="text-unops-primary-dark mt-1">
-                                        {{ 'label.geography' | translate }}: {{ agreement.geographicRestrictions }}
-                                      </div>
-                                    }
-                                    @if (agreement.warningMessage) {
-                                      <div class="mt-2 p-1.5 bg-yellow-50 border border-yellow-200 rounded text-yellow-800">
-                                        <i class="pi pi-exclamation-triangle mr-1"></i>
-                                        {{ agreement.warningMessage }}
-                                      </div>
-                                    }
-                                  </div>
-                                </div>
                               </div>
-                            }
+                            </div>
                           }
-                        } @else {
-                          <div class="mt-1 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
-                            <i class="pi pi-info-circle mr-1"></i>
-                            {{ 'message.info.multipleAgreementsAvailable' | translate: {count: client.availableAgreements.length} }}
-                          </div>
                         }
+                      } @else {
+                        <div class="mt-1 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+                          <i class="pi pi-info-circle mr-1"></i>
+                          {{ 'message.info.multipleAgreementsAvailable' | translate: {count: client.availableAgreements.length} }}
+                        </div>
                       }
                     }
                   </div>
@@ -1021,6 +985,61 @@
         </p-message>
       }
     </div>
+
+    <!-- Partner Agreement Selection (Only show when editing and agreements available) -->
+    @if (isEditingFundingPartner() && availableAgreementsForDialog().length > 0) {
+      <div>
+        <p-floatlabel variant="on">
+          <p-select
+            id="partnerAgreement"
+            [formControl]="agreementControl"
+            [options]="availableAgreementsForDialog()"
+            optionLabel="name"
+            optionValue="partnerAgreementNumber"
+            [showClear]="true"
+            [appendTo]="'body'"
+            class="w-full"
+          />
+          <label for="partnerAgreement">{{ 'label.partnerAgreements' | translate }}</label>
+        </p-floatlabel>
+        <div class="text-xs text-gray-600 mt-1">
+          <i class="pi pi-info-circle mr-1"></i>
+          {{ 'helpText.opportunity.partnerAgreementSelection' | translate }}
+        </div>
+        
+        <!-- Show selected agreement details -->
+        @if (agreementControl.value) {
+          @for (agreement of availableAgreementsForDialog(); track agreement.partnerAgreementNumber) {
+            @if (agreement.partnerAgreementNumber === agreementControl.value) {
+              <div class="mt-2 p-2 bg-gray-50 border border-gray-200 rounded text-xs">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="font-medium text-gray-900">{{ agreement.name }}</span>
+                  @if (agreement.source) {
+                    <span class="text-[0.65rem] px-1.5 py-0.5 rounded" 
+                          [ngClass]="{
+                            'bg-unops-primary-100 text-unops-primary-800': agreement.source === 'ERP',
+                            'bg-purple-100 text-purple-700': agreement.source === 'Document'
+                          }">
+                      {{ agreement.source }}
+                    </span>
+                  }
+                </div>
+                @if (agreement.startDate && agreement.endDate) {
+                  <div class="text-gray-600">
+                    {{ agreement.startDate | date:'mediumDate' }} - {{ agreement.endDate | date:'mediumDate' }}
+                  </div>
+                }
+                @if (agreement.geographicRestrictions) {
+                  <div class="text-gray-600 mt-1">
+                    <span class="font-medium">{{ 'label.geography' | translate }}:</span> {{ agreement.geographicRestrictions }}
+                  </div>
+                }
+              </div>
+            }
+          }
+        }
+      </div>
+    }
 
   </div>
 

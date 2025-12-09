@@ -257,6 +257,48 @@ public class ValuesController : BaseController
         });
     }
 
+    /// <summary>
+    /// Gets entity user roles for multiple organization hierarchies.
+    /// Used to auto-populate internal stakeholders when selecting OrgUnits.
+    /// </summary>
+    [HttpPost(APIDictionary.EntityUserRolesByOrgUnit)]
+    public async Task<ActionResult> GetEntityUserRolesByOrgUnits([FromBody] int[] organizationHierarchyIds)
+    {
+        return await HandleOperationAsync(async () =>
+        {
+            var result = await _manager.GetEntityUserRolesByOrgUnitsAsync(organizationHierarchyIds);
+            return result;
+        });
+    }
+
+    /// <summary>
+    /// Gets org unit IDs for countries including their parent and grandparent org units.
+    /// Used when a GPO is selected to auto-populate stakeholders from country-responsible org units.
+    /// </summary>
+    [HttpPost(APIDictionary.OrgUnitIdsForCountries)]
+    public async Task<ActionResult> GetOrgUnitIdsForCountries([FromBody] int[] countryIds)
+    {
+        return await HandleOperationAsync(async () =>
+        {
+            var result = await _manager.GetOrgUnitIdsForCountriesWithHierarchyAsync(countryIds);
+            return result;
+        });
+    }
+
+    /// <summary>
+    /// Gets child org unit IDs under a Hub/Region that relate to the given country IDs.
+    /// Used when a Hub or Region is selected to auto-populate stakeholders from child org units.
+    /// </summary>
+    [HttpPost(APIDictionary.ChildOrgUnitIdsForHubRegion + "/{parentOrgUnitId}")]
+    public async Task<ActionResult> GetChildOrgUnitIdsForHubRegion(int parentOrgUnitId, [FromBody] int[] countryIds)
+    {
+        return await HandleOperationAsync(async () =>
+        {
+            var result = await _manager.GetChildOrgUnitIdsForHubRegionAsync(parentOrgUnitId, countryIds);
+            return result;
+        });
+    }
+
     private static string GetGeminiModelValue(GeminiModel model)
     {
         return model switch

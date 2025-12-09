@@ -18,6 +18,7 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSBusiness.Repositories;
 using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Business.Mapping;
+using UNOPS.PAO.UNOPSBusiness.Services;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -28,6 +29,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     private readonly UNOPSAppDbContext uNOPSAppDbContext;
     private readonly BaseRepository<Opportunity> opportunityRepository;
     private readonly IServiceProvider _serviceProvider;
+    private readonly IConfiguration configuration;
 
     public UNOPSOpportunityManager(
         IMapper mapper,
@@ -42,6 +44,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         this.context = context;
         this.uNOPSAppDbContext = context as UNOPSAppDbContext;
         this._serviceProvider = serviceProvider;
+        this.configuration = configuration;
         this.opportunityRepository = new BaseRepository<Opportunity>(this.uNOPSAppDbContext, configuration, serviceProvider);
     }
 
@@ -187,6 +190,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             .Include(o => o.Stakeholders)
                 .ThenInclude(s => s.User)
                     .ThenInclude(u => u!.UserProfile)
+            .Include(o => o.Stakeholders)
+                .ThenInclude(s => s.OrganizationHierarchy)
             .Include(o => o.ExternalStakeholders)
                 .ThenInclude(es => es.Contact)
                     .ThenInclude(c => c!.Partner)
@@ -255,6 +260,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             // Get opportunity country IDs for agreement matching
             var opportunityCountryIds = entity.Countries?.Select(c => c.CountryId).ToList() ?? new List<int>();
             
+            // Initialize GoogleCloudStorageService for logo URL signing
+            var googleCloudStorageService = new GoogleCloudStorageService(configuration);
+            
             foreach (var fundingPartner in model.FundingPartners)
             {
                 fundingPartner.AssociatedDocuments = await GetDocumentsForPartner(
@@ -270,6 +278,12 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 if (fundingPartnerEntity?.Partner != null)
                 {
                     var partner = fundingPartnerEntity.Partner;
+                    
+                    // Partner Logo URL - convert to signed URL
+                    if (!string.IsNullOrEmpty(partner.LogoUrl))
+                    {
+                        fundingPartner.PartnerLogoUrl = await googleCloudStorageService.GenerateSignedUrlFromStorageUrl(partner.LogoUrl);
+                    }
                     
                     // DD Approval
                     fundingPartner.DDApproval = partner.DueDiligenceApproval?.ToString();
@@ -310,6 +324,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             // Get opportunity country IDs for agreement matching
             var opportunityCountryIds = entity.Countries?.Select(c => c.CountryId).ToList() ?? new List<int>();
             
+            // Initialize GoogleCloudStorageService for logo URL signing (reuse if already created)
+            var googleCloudStorageService = new GoogleCloudStorageService(configuration);
+            
             foreach (var clientPartner in model.ClientPartners)
             {
                 clientPartner.AssociatedDocuments = await GetDocumentsForPartner(
@@ -325,6 +342,12 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 if (clientPartnerEntity?.Partner != null)
                 {
                     var partner = clientPartnerEntity.Partner;
+                    
+                    // Partner Logo URL - convert to signed URL
+                    if (!string.IsNullOrEmpty(partner.LogoUrl))
+                    {
+                        clientPartner.PartnerLogoUrl = await googleCloudStorageService.GenerateSignedUrlFromStorageUrl(partner.LogoUrl);
+                    }
                     
                     // DD Approval
                     clientPartner.DDApproval = partner.DueDiligenceApproval?.ToString();
@@ -407,6 +430,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 model.OrgUnitHistoricalMaxValue = null;
             }
         }
+
+        // Load SME (Subject Matter Expert) selections from EntityUserRoles table
+        model.SMESelections = await GetSMESelectionsAsync(id);
 
         return model;
     }
@@ -1847,6 +1873,10 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
 
+        // Track if org unit changed
+        var orgUnitChanged = request.ResponsibleOrgUnitId.HasValue && 
+                            request.ResponsibleOrgUnitId.Value != opportunity.ResponsibleOrgUnitId;
+
         // Update Responsible Org Unit
         if (request.ResponsibleOrgUnitId.HasValue)
         {
@@ -1859,23 +1889,24 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             opportunity.ProposedInitiativeTypeId = request.ProposedInitiativeTypeId.Value;
         }
 
-        // Update Internal Stakeholders (Team & Stakeholders)
+        // Update Internal Stakeholders (Team & Stakeholders) using differential update
         if (request.Stakeholders != null)
         {
-            // Deduplicate stakeholders by UserId + EntityRoleId combination (keep first occurrence)
-            var uniqueStakeholders = request.Stakeholders
+            // Deduplicate user-based stakeholders by UserId + EntityRoleId combination (keep first occurrence)
+            var requestedUserStakeholders = request.Stakeholders
+                .Where(s => s.UserId.HasValue && !s.OrganizationHierarchyId.HasValue)
                 .GroupBy(s => new { s.UserId, s.EntityRoleId })
                 .Select(g => g.First())
                 .ToList();
 
             // Get entity roles to check AllowsMultiple property
-            var entityRoleIds = uniqueStakeholders.Select(s => s.EntityRoleId).Distinct().ToList();
+            var entityRoleIds = requestedUserStakeholders.Select(s => s.EntityRoleId).Distinct().ToList();
             var entityRoles = await context.Set<EntityRole>()
                 .Where(er => entityRoleIds.Contains(er.Id))
                 .ToDictionaryAsync(er => er.Id);
 
-            // Validate that single-assignment roles don't have duplicates
-            var roleGroups = uniqueStakeholders
+            // Validate that single-assignment roles don't have duplicates for user-based stakeholders
+            var roleGroups = requestedUserStakeholders
                 .GroupBy(s => s.EntityRoleId)
                 .ToList();
 
@@ -1890,24 +1921,75 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 }
             }
 
-            // Remove existing stakeholders
-            if (opportunity.Stakeholders != null && opportunity.Stakeholders.Any())
+            opportunity.Stakeholders ??= new List<OpportunityStakeholder>();
+
+            // Get existing user-based stakeholders (not auto-populated)
+            var existingUserStakeholders = opportunity.Stakeholders
+                .Where(s => s.UserId.HasValue && !s.OrganizationHierarchyId.HasValue)
+                .ToList();
+
+            // Find stakeholders to remove (exist in DB but not in request)
+            var stakeholdersToRemove = existingUserStakeholders
+                .Where(existing => !requestedUserStakeholders.Any(req => 
+                    req.UserId == existing.UserId && req.EntityRoleId == existing.EntityRoleId))
+                .ToList();
+
+            // Find stakeholders to add (exist in request but not in DB)
+            var stakeholdersToAdd = requestedUserStakeholders
+                .Where(req => !existingUserStakeholders.Any(existing => 
+                    existing.UserId == req.UserId && existing.EntityRoleId == req.EntityRoleId))
+                .ToList();
+
+            // Find stakeholders to update (exist in both - update notes if changed)
+            var stakeholdersToUpdate = existingUserStakeholders
+                .Where(existing => requestedUserStakeholders.Any(req => 
+                    req.UserId == existing.UserId && req.EntityRoleId == existing.EntityRoleId))
+                .ToList();
+
+            // Remove stakeholders that are no longer in the request
+            foreach (var stakeholder in stakeholdersToRemove)
             {
-                context.Set<OpportunityStakeholder>().RemoveRange(opportunity.Stakeholders);
+                opportunity.Stakeholders.Remove(stakeholder);
+                context.Set<OpportunityStakeholder>().Remove(stakeholder);
             }
 
             // Add new stakeholders
-            opportunity.Stakeholders = uniqueStakeholders
-                .Select(s => new OpportunityStakeholder
+            foreach (var req in stakeholdersToAdd)
+            {
+                opportunity.Stakeholders.Add(new OpportunityStakeholder
                 {
                     OpportunityId = id,
-                    UserId = s.UserId,
-                    EntityRoleId = s.EntityRoleId,
-                    IsInternal = true, // Internal stakeholders only
+                    UserId = req.UserId,
+                    EntityRoleId = req.EntityRoleId,
+                    OrganizationHierarchyId = null,
+                    IsInternal = true,
                     StakeholderType = "Internal",
-                    Notes = s.Notes
-                })
-                .ToList();
+                    Notes = req.Notes
+                });
+            }
+
+            // Update existing stakeholders (notes field)
+            foreach (var existing in stakeholdersToUpdate)
+            {
+                var req = requestedUserStakeholders.First(r => 
+                    r.UserId == existing.UserId && r.EntityRoleId == existing.EntityRoleId);
+                if (existing.Notes != req.Notes)
+                {
+                    existing.Notes = req.Notes;
+                }
+            }
+        }
+
+        // Update SME (Subject Matter Expert) selections in EntityUserRoles table
+        if (request.SMESelections != null)
+        {
+            await UpdateSMESelectionsAsync(id, request.SMESelections);
+        }
+
+        // Auto-populate stakeholders from EntityUserRoles if org unit changed
+        if (orgUnitChanged && request.ResponsibleOrgUnitId.HasValue)
+        {
+            await AutoPopulateStakeholdersFromOrgUnitAsync(opportunity, request.ResponsibleOrgUnitId.Value);
         }
 
         await context.SaveChangesAsync();
@@ -1915,6 +1997,396 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         // Reload with all includes
         var reloadedResult = await GetOpportunityAsync(id);
         return reloadedResult ?? throw new KeyNotFoundException($"Failed to reload opportunity {id}");
+    }
+
+    /// <summary>
+    /// Auto-populates stakeholders from EntityUserRoles based on the org unit type.
+    /// - OrgUnit: Uses EntityUserRoles directly from the selected org unit
+    /// - GPO (name contains "GPO"): Gets org units for implementation countries (with parent/grandparent)
+    /// - Hub/Region: Gets child org units that relate to implementation countries
+    /// Uses differential update - only adds/removes what's necessary.
+    /// </summary>
+    private async Task AutoPopulateStakeholdersFromOrgUnitAsync(Opportunity entity, int orgUnitId)
+    {
+        // Get the org unit to check its type and name
+        var orgUnit = await context.OrganizationHierarchies
+            .Where(oh => oh.Id == orgUnitId && !oh.IsDeleted)
+            .Select(oh => new { oh.Id, oh.Type, oh.Name })
+            .FirstOrDefaultAsync();
+
+        entity.Stakeholders ??= new List<OpportunityStakeholder>();
+
+        // Get existing auto-populated stakeholders
+        var existingAutoPopulated = entity.Stakeholders
+            .Where(s => s.OrganizationHierarchyId.HasValue)
+            .ToList();
+
+        if (orgUnit == null)
+        {
+            // Remove all auto-populated stakeholders if org unit not found
+            foreach (var stakeholder in existingAutoPopulated)
+            {
+                entity.Stakeholders.Remove(stakeholder);
+                context.Set<OpportunityStakeholder>().Remove(stakeholder);
+            }
+            return;
+        }
+
+        // Determine which org units to get EntityUserRoles from
+        var orgUnitIdsForRoles = new List<int>();
+        var isGpo = orgUnit.Name?.Contains("GPO") ?? false;
+        var isHubOrRegion = orgUnit.Type == Domain.Enums.OrganizationUnitType.Hub || 
+                           orgUnit.Type == Domain.Enums.OrganizationUnitType.Region;
+
+        if (isGpo)
+        {
+            // GPO: Get org units for implementation countries (with parent/grandparent)
+            orgUnitIdsForRoles = await GetOrgUnitIdsForCountriesWithHierarchyAsync(entity.Id);
+        }
+        else if (isHubOrRegion)
+        {
+            // Hub/Region: Get child org units that relate to implementation countries
+            orgUnitIdsForRoles = await GetChildOrgUnitIdsForHubRegionAsync(orgUnitId, entity.Id);
+        }
+        else if (orgUnit.Type == Domain.Enums.OrganizationUnitType.OrgUnit)
+        {
+            // OrgUnit: Use the selected org unit directly
+            orgUnitIdsForRoles.Add(orgUnitId);
+        }
+        else
+        {
+            // Other types: Remove all auto-populated stakeholders
+            foreach (var stakeholder in existingAutoPopulated)
+            {
+                entity.Stakeholders.Remove(stakeholder);
+                context.Set<OpportunityStakeholder>().Remove(stakeholder);
+            }
+            return;
+        }
+
+        if (!orgUnitIdsForRoles.Any())
+        {
+            // No org units to populate from - remove existing auto-populated
+            foreach (var stakeholder in existingAutoPopulated)
+            {
+                entity.Stakeholders.Remove(stakeholder);
+                context.Set<OpportunityStakeholder>().Remove(stakeholder);
+            }
+            return;
+        }
+
+        // Get EntityUserRoles for all relevant org units
+        // Returns tuples of (OrgUnitId, EntityRoleId)
+        var entityUserRoles = await context.EntityUserRoles
+            .Where(eur => eur.EntityType == "OrganizationHierarchy" 
+                       && orgUnitIdsForRoles.Contains(eur.EntityId)
+                       && eur.EntityRoleId.HasValue
+                       && !eur.IsDeleted)
+            .Select(eur => new { eur.EntityId, EntityRoleId = eur.EntityRoleId!.Value })
+            .Distinct()
+            .ToListAsync();
+
+        // Create a set of valid (OrgUnitId, RoleId) combinations
+        var validCombinations = entityUserRoles
+            .Select(e => (e.EntityId, e.EntityRoleId))
+            .ToHashSet();
+
+        // Find auto-populated stakeholders to remove:
+        // - Those not in the valid combinations
+        var autoPopulatedToRemove = existingAutoPopulated
+            .Where(existing => 
+                !existing.OrganizationHierarchyId.HasValue ||
+                !validCombinations.Contains((existing.OrganizationHierarchyId.Value, existing.EntityRoleId)))
+            .ToList();
+
+        // Find combinations to add (exist in EntityUserRoles but not in existing auto-populated)
+        var existingCombinations = existingAutoPopulated
+            .Where(s => s.OrganizationHierarchyId.HasValue)
+            .Select(s => (s.OrganizationHierarchyId!.Value, s.EntityRoleId))
+            .ToHashSet();
+
+        var combinationsToAdd = validCombinations
+            .Where(combo => !existingCombinations.Contains(combo))
+            .ToList();
+
+        // Remove stakeholders that are no longer needed
+        foreach (var stakeholder in autoPopulatedToRemove)
+        {
+            entity.Stakeholders.Remove(stakeholder);
+            context.Set<OpportunityStakeholder>().Remove(stakeholder);
+        }
+
+        // Add new auto-populated stakeholders
+        foreach (var (targetOrgUnitId, roleId) in combinationsToAdd)
+        {
+            entity.Stakeholders.Add(new OpportunityStakeholder
+            {
+                OpportunityId = entity.Id,
+                EntityRoleId = roleId,
+                OrganizationHierarchyId = targetOrgUnitId,
+                UserId = null, // No specific user - auto-populated
+                IsInternal = true,
+                StakeholderType = "Internal",
+                Notes = null
+            });
+        }
+    }
+
+    /// <summary>
+    /// Updates SME (Subject Matter Expert) selections for an opportunity in the EntityUserRoles table.
+    /// Uses differential update - only adds/removes what's necessary.
+    /// </summary>
+    /// <param name="opportunityId">The opportunity ID</param>
+    /// <param name="smeSelections">List of SME selection requests</param>
+    private async Task UpdateSMESelectionsAsync(int opportunityId, List<SMESelectionRequest> smeSelections)
+    {
+        // Get all SME roles (roles with Type = "SME")
+        var smeRoleIds = await context.Set<EntityRole>()
+            .Where(er => er.EntityType == "Opportunity" && er.Type == "SME" && !er.IsDeleted)
+            .Select(er => er.Id)
+            .ToListAsync();
+
+        if (!smeRoleIds.Any())
+            return;
+
+        // Get existing SME EntityUserRoles for this opportunity
+        var existingSmeRoles = await context.Set<EntityUserRole>()
+            .Where(eur => 
+                eur.EntityType == "Opportunity" 
+                && eur.EntityId == opportunityId 
+                && eur.EntityRoleId.HasValue 
+                && smeRoleIds.Contains(eur.EntityRoleId.Value)
+                && !eur.IsDeleted)
+            .ToListAsync();
+
+        // Get selected SME entries (IsSelected = true and UserId is provided)
+        var selectedSmes = smeSelections
+            .Where(s => s.IsSelected && s.UserId.HasValue && smeRoleIds.Contains(s.EntityRoleId))
+            .ToList();
+
+        // Find EntityUserRoles to remove (exist in DB but not in selected SMEs or deselected)
+        var rolesToRemove = existingSmeRoles
+            .Where(existing => !selectedSmes.Any(req => 
+                req.EntityRoleId == existing.EntityRoleId && req.UserId == existing.UserId))
+            .ToList();
+
+        // Find EntityUserRoles to add (exist in selected SMEs but not in DB)
+        var rolesToAdd = selectedSmes
+            .Where(req => !existingSmeRoles.Any(existing => 
+                existing.EntityRoleId == req.EntityRoleId && existing.UserId == req.UserId))
+            .ToList();
+
+        // Get EntityRole names for all roles being added (to populate Name field)
+        var entityRoles = new Dictionary<int, string>();
+        if (rolesToAdd.Any())
+        {
+            var roleIdsToAdd = rolesToAdd.Select(r => r.EntityRoleId).Distinct().ToList();
+            entityRoles = await context.Set<EntityRole>()
+                .Where(er => roleIdsToAdd.Contains(er.Id))
+                .ToDictionaryAsync(er => er.Id, er => er.Name);
+        }
+
+        // Remove EntityUserRoles that are no longer selected
+        foreach (var roleToRemove in rolesToRemove)
+        {
+            context.Set<EntityUserRole>().Remove(roleToRemove);
+        }
+
+        // Add new EntityUserRoles
+        foreach (var req in rolesToAdd)
+        {
+            var roleName = entityRoles.ContainsKey(req.EntityRoleId) ? entityRoles[req.EntityRoleId] : "Unknown Role";
+            var name = $"{roleName} - Opportunity - {opportunityId} - {req.UserId!.Value}";
+            
+            context.Set<EntityUserRole>().Add(new EntityUserRole
+            {
+                Name = name,
+                UserId = req.UserId!.Value,
+                EntityRoleId = req.EntityRoleId,
+                EntityId = opportunityId,
+                EntityType = "Opportunity",
+                Status = EntityStatus.Active
+            });
+        }
+    }
+
+    /// <summary>
+    /// Gets SME (Subject Matter Expert) selections for an opportunity from the EntityUserRoles table.
+    /// Returns all SME roles with their selection status and assigned user.
+    /// </summary>
+    /// <param name="opportunityId">The opportunity ID</param>
+    /// <returns>List of SME selection models</returns>
+    private async Task<List<SMESelectionModel>> GetSMESelectionsAsync(int opportunityId)
+    {
+        // Get all SME roles (roles with Type = "SME")
+        var smeRoles = await context.Set<EntityRole>()
+            .Where(er => er.EntityType == "Opportunity" && er.Type == "SME" && !er.IsDeleted)
+            .OrderBy(er => er.SubType)
+            .ThenBy(er => er.Name)
+            .Select(er => new { er.Id, er.Name, er.SubType })
+            .ToListAsync();
+
+        if (!smeRoles.Any())
+            return new List<SMESelectionModel>();
+
+        var smeRoleIds = smeRoles.Select(r => r.Id).ToList();
+
+        // Get existing SME EntityUserRoles for this opportunity
+        var existingSmeRoles = await context.Set<EntityUserRole>()
+            .Include(eur => eur.User)
+                .ThenInclude(u => u!.UserProfile)
+            .Where(eur => 
+                eur.EntityType == "Opportunity" 
+                && eur.EntityId == opportunityId 
+                && eur.EntityRoleId.HasValue 
+                && smeRoleIds.Contains(eur.EntityRoleId.Value)
+                && !eur.IsDeleted)
+            .ToListAsync();
+
+        // Build the result - all SME roles with their selection status
+        var result = new List<SMESelectionModel>();
+        foreach (var role in smeRoles)
+        {
+            var existingAssignment = existingSmeRoles.FirstOrDefault(e => e.EntityRoleId == role.Id);
+            
+            result.Add(new SMESelectionModel
+            {
+                EntityRoleId = role.Id,
+                EntityRoleName = role.Name,
+                IsSelected = existingAssignment != null,
+                UserId = existingAssignment?.UserId,
+                UserName = existingAssignment?.User?.UserProfile?.Name ?? existingAssignment?.User?.Email,
+                UserEmail = existingAssignment?.User?.Email
+            });
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Gets org unit IDs for the opportunity's implementation countries, including parent and grandparent org units.
+    /// Used when a GPO is selected as the responsible org unit.
+    /// </summary>
+    private async Task<List<int>> GetOrgUnitIdsForCountriesWithHierarchyAsync(int opportunityId)
+    {
+        // Get implementation country IDs for this opportunity
+        var countryIds = await context.Set<OpportunityCountry>()
+            .Where(oc => oc.OpportunityId == opportunityId)
+            .Select(oc => oc.CountryId)
+            .ToListAsync();
+
+        if (!countryIds.Any())
+            return new List<int>();
+
+        // Get org unit relationships for these countries
+        var orgUnitRelationships = await context.OrganizationUnitRelationships
+            .Where(r => 
+                r.EntityType == "Country" 
+                && countryIds.Contains(r.EntityId)
+                && !r.IsDeleted)
+            .Select(r => r.OrganizationHierarchyId)
+            .Distinct()
+            .ToListAsync();
+
+        if (!orgUnitRelationships.Any())
+            return new List<int>();
+
+        // For each org unit, get itself plus parent and grandparent (only OrgUnit types)
+        var allOrgUnitIds = new HashSet<int>();
+
+        foreach (var orgUnitIdItem in orgUnitRelationships)
+        {
+            var currentId = orgUnitIdItem;
+            var levelsToGet = 3; // Current + parent + grandparent
+
+            for (int i = 0; i < levelsToGet && currentId != 0; i++)
+            {
+                var unit = await context.OrganizationHierarchies
+                    .Where(oh => oh.Id == currentId && !oh.IsDeleted)
+                    .Select(oh => new { oh.Id, oh.ParentId, oh.Type })
+                    .FirstOrDefaultAsync();
+
+                if (unit == null)
+                    break;
+
+                // Only add OrgUnit type
+                if (unit.Type == Domain.Enums.OrganizationUnitType.OrgUnit)
+                {
+                    allOrgUnitIds.Add(unit.Id);
+                }
+
+                currentId = unit.ParentId ?? 0;
+            }
+        }
+
+        return allOrgUnitIds.ToList();
+    }
+
+    /// <summary>
+    /// Gets child org unit IDs under a Hub/Region that directly relate to the opportunity's implementation countries.
+    /// Used when a Hub or Region is selected as the responsible org unit.
+    /// </summary>
+    private async Task<List<int>> GetChildOrgUnitIdsForHubRegionAsync(int parentOrgUnitId, int opportunityId)
+    {
+        // Get implementation country IDs for this opportunity
+        var countryIds = await context.Set<OpportunityCountry>()
+            .Where(oc => oc.OpportunityId == opportunityId)
+            .Select(oc => oc.CountryId)
+            .ToListAsync();
+
+        if (!countryIds.Any())
+            return new List<int>();
+
+        // Get org unit IDs that are directly responsible for these countries
+        var countryOrgUnitIds = await context.OrganizationUnitRelationships
+            .Where(r => 
+                r.EntityType == "Country" 
+                && countryIds.Contains(r.EntityId)
+                && !r.IsDeleted)
+            .Select(r => r.OrganizationHierarchyId)
+            .Distinct()
+            .ToListAsync();
+
+        if (!countryOrgUnitIds.Any())
+            return new List<int>();
+
+        // Get all descendants of the parent Hub/Region
+        var descendantIds = await GetAllDescendantOrgUnitIdsAsync(parentOrgUnitId);
+
+        // Filter to only include descendants that directly relate to the countries
+        return countryOrgUnitIds
+            .Where(id => descendantIds.Contains(id))
+            .ToList();
+    }
+
+    /// <summary>
+    /// Gets all descendant org unit IDs under a given parent org unit (recursive).
+    /// </summary>
+    private async Task<HashSet<int>> GetAllDescendantOrgUnitIdsAsync(int parentOrgUnitId)
+    {
+        var descendants = new HashSet<int>();
+        var toProcess = new Queue<int>();
+        toProcess.Enqueue(parentOrgUnitId);
+
+        while (toProcess.Count > 0)
+        {
+            var currentParentId = toProcess.Dequeue();
+
+            var children = await context.OrganizationHierarchies
+                .Where(oh => oh.ParentId == currentParentId && !oh.IsDeleted)
+                .Select(oh => oh.Id)
+                .ToListAsync();
+
+            foreach (var childId in children)
+            {
+                if (descendants.Add(childId))
+                {
+                    toProcess.Enqueue(childId);
+                }
+            }
+        }
+
+        return descendants;
     }
 
     public async Task<OpportunityModel> UpdateWhereSectionAsync(int id, WhereSectionRequest request)
@@ -2819,6 +3291,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 .Include(o => o.FundingPartners).ThenInclude(fp => fp.Partner)
                 .Include(o => o.ClientPartners).ThenInclude(cp => cp.Partner)
                 .Include(o => o.Stakeholders).ThenInclude(s => s.EntityRole)
+                .Include(o => o.Stakeholders).ThenInclude(s => s.OrganizationHierarchy)
                 .Include(o => o.Deliverables)
                 .Include(o => o.Countries).ThenInclude(c => c.Country)
                 .Include(o => o.SDGs).ThenInclude(s => s.SDG)
@@ -2860,6 +3333,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 "Stakeholders",
                 "Stakeholders.EntityRole",
                 "Stakeholders.User",
+                "Stakeholders.OrganizationHierarchy",
                 "Deliverables",
                 "Countries",
                 "Countries.Country",
@@ -3146,6 +3620,168 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
         await context.SaveChangesAsync();
         return true;
+    }
+
+    /// <summary>
+    /// Gets the entity artifact document by artifact type code
+    /// Generic method that can be used for any entity type and artifact type code
+    /// Returns the GCS path (ValueText) and metadata (ValueJson) if found
+    /// </summary>
+    /// <param name="entityType">Entity type (e.g., "OrganizationHierarchy", "Country", "Partner")</param>
+    /// <param name="entityId">Entity ID</param>
+    /// <param name="artifactTypeCode">Artifact type code (e.g., "High_Risk_Guidance", "Strategy", "NDC")</param>
+    /// <returns>Tuple with GCS path (ValueText) and metadata (ValueJson), or null if not found</returns>
+    public async Task<(string? GcsPath, string? MimeType, string? FileName)?> GetEntityArtifactDocumentAsync(
+        string entityType, 
+        int entityId, 
+        string artifactTypeCode)
+    {
+        try
+        {
+            // Get the artifact type by code
+            var artifactType = await context.Set<ArtifactType>()
+                .Where(at => at.ArtifactTypeCode == artifactTypeCode && !at.IsDeleted)
+                .Select(at => at.Id)
+                .FirstOrDefaultAsync();
+
+            if (artifactType == 0)
+            {
+                Console.WriteLine($"[WARNING] Artifact type with code '{artifactTypeCode}' not found");
+                return null;
+            }
+
+            // Get the entity artifact
+            var entityArtifact = await context.EntityArtifacts
+                .Where(ea => 
+                    ea.EntityType == entityType 
+                    && ea.EntityId == entityId 
+                    && ea.ArtifactTypeId == artifactType
+                    && !ea.IsDeleted
+                    && ea.Status == Domain.Entities.EntityStatus.Active
+                    && !string.IsNullOrEmpty(ea.ValueText)
+                    && ea.ValueText.StartsWith("gs://"))
+                .OrderByDescending(ea => ea.CreatedDate) // Get most recent
+                .Select(ea => new { ea.ValueText, ea.ValueJson })
+                .FirstOrDefaultAsync();
+
+            if (entityArtifact == null)
+            {
+                Console.WriteLine($"[INFO] No artifact found for EntityType='{entityType}', EntityId={entityId}, ArtifactTypeCode='{artifactTypeCode}'");
+                return null;
+            }
+
+            // Extract MIME type and file name from ValueJson
+            string? mimeType = null;
+            string? fileName = null;
+
+            if (!string.IsNullOrEmpty(entityArtifact.ValueJson))
+            {
+                try
+                {
+                    var metadata = System.Text.Json.JsonDocument.Parse(entityArtifact.ValueJson);
+                    var root = metadata.RootElement;
+
+                    if (root.TryGetProperty("mimeType", out var mimeTypeElement))
+                    {
+                        mimeType = mimeTypeElement.GetString();
+                    }
+
+                    if (root.TryGetProperty("fileName", out var fileNameElement))
+                    {
+                        fileName = fileNameElement.GetString();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[WARNING] Failed to parse ValueJson for artifact: {ex.Message}");
+                    mimeType = "application/pdf"; // Default fallback
+                }
+            }
+
+            // Default to PDF if no MIME type found
+            mimeType ??= "application/pdf";
+
+            Console.WriteLine($"[SUCCESS] Found artifact document: {fileName ?? entityArtifact.ValueText}");
+            return (entityArtifact.ValueText, mimeType, fileName);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] Error getting entity artifact document: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Gets the High Risk Guidance document from EntityArtifact table
+    /// This is a global document with ArtifactTypeCode "High_Risk_Guidance"
+    /// </summary>
+    /// <returns>Tuple with GCS path, MIME type, and file name, or null if not found</returns>
+    public async Task<(string? GcsPath, string? MimeType, string? FileName)?> GetHighRiskGuidanceDocumentAsync()
+    {
+        try
+        {
+            // Get the ArtifactType ID for "High_Risk_Guidance" (case-insensitive)
+            var artifactType = await uNOPSAppDbContext.ArtifactTypes
+                .Where(at => at.ArtifactTypeCode.ToLower() == "high_risk_guidance" && !at.IsDeleted)
+                .FirstOrDefaultAsync();
+
+            if (artifactType == null)
+            {
+                Console.WriteLine($"[WARNING] ArtifactType 'High_Risk_Guidance' not found");
+                return null;
+            }
+
+            // Get the EntityArtifact with this type that has a GCS path (gs:// or https://storage.cloud.google.com/)
+            var artifact = await uNOPSAppDbContext.EntityArtifacts
+                .Where(ea => ea.ArtifactTypeId == artifactType.Id
+                          && !ea.IsDeleted
+                          && ea.Status == Domain.Entities.EntityStatus.Active
+                          && !string.IsNullOrEmpty(ea.ValueText)
+                          && (ea.ValueText.StartsWith("gs://") || ea.ValueText.StartsWith("https://storage.cloud.google.com/")))
+                .OrderByDescending(ea => ea.CreatedDate) // Get most recent
+                .FirstOrDefaultAsync();
+
+            if (artifact == null)
+            {
+                Console.WriteLine($"[INFO] No High Risk Guidance document found in EntityArtifacts");
+                return null;
+            }
+
+            // Convert HTTPS URL to gs:// format if needed (Gemini expects gs:// URI)
+            var gcsPath = artifact.ValueText;
+            if (gcsPath.StartsWith("https://storage.cloud.google.com/"))
+            {
+                // Convert: https://storage.cloud.google.com/bucket/path → gs://bucket/path
+                gcsPath = "gs://" + gcsPath.Replace("https://storage.cloud.google.com/", "");
+                Console.WriteLine($"[INFO] Converted HTTPS URL to gs:// format: {gcsPath}");
+            }
+
+            // Extract mime type and file name from ValueJson if available
+            string? mimeType = "application/pdf";
+            string? fileName = null;
+
+            if (!string.IsNullOrEmpty(artifact.ValueJson))
+            {
+                try
+                {
+                    var metadata = Newtonsoft.Json.Linq.JObject.Parse(artifact.ValueJson);
+                    mimeType = metadata["mimeType"]?.ToString() ?? "application/pdf";
+                    fileName = metadata["fileName"]?.ToString();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[WARNING] Failed to parse ValueJson: {ex.Message}");
+                }
+            }
+
+            Console.WriteLine($"[SUCCESS] Found High Risk Guidance document: {gcsPath}");
+            return (gcsPath, mimeType, fileName);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] Error getting High Risk Guidance document: {ex.Message}");
+            return null;
+        }
     }
 }
 

@@ -203,70 +203,6 @@
         },
         {
             "order": 22,
-            "name": "PartnerTree_Bulk_Update_Level2",
-            "type": "seeder",
-            "className": "PartnerTree_Bulk_Update_Level2",
-            "methodName": "UpdatePartnerTreesForIntegrationAsync",
-            "filePath": "Seeders/PartnerTree_Bulk_Update_Level2.cs",
-            "description": "Partner Tree Level 2 Bulk Update For Integration"
-        },
-        {
-            "order": 23,
-            "name": "PartnerTree_Bulk_Update_Level3",
-            "type": "seeder",
-            "className": "PartnerTree_Bulk_Update_Level3",
-            "methodName": "UpdatePartnerTreesForIntegrationAsync",
-            "filePath": "Seeders/PartnerTree_Bulk_Update_Level3.cs",
-            "description": "Partner Tree Level 3 Bulk Update For Integration"
-        },
-        {
-            "order": 24,
-            "name": "PartnerTree_Bulk_Update_Level4",
-            "type": "seeder",
-            "className": "PartnerTree_Bulk_Update_Level4",
-            "methodName": "UpdatePartnerTreesForIntegrationAsync",
-            "filePath": "Seeders/PartnerTree_Bulk_Update_Level4.cs",
-            "description": "Partner Tree Level 4 Bulk Update For Integration"
-        },
-        {
-            "order": 25,
-            "name": "Partners_Related_To_Level2_Bulk_Update",
-            "type": "seeder",
-            "className": "Partners_Related_To_Level2_Bulk_Update",
-            "methodName": "UpdatePartnersForIntegrationAsync",
-            "filePath": "Seeders/Partners_Related_To_Level2_Bulk_Update.cs",
-            "description": "Partners Related To Level 2 Bulk Update For Integration"
-        },
-        {
-            "order": 26,
-            "name": "Partners_Related_To_Level3_Bulk_Update",
-            "type": "seeder",
-            "className": "Partners_Related_To_Level3_Bulk_Update",
-            "methodName": "UpdatePartnersForIntegrationAsync",
-            "filePath": "Seeders/Partners_Related_To_Level3_Bulk_Update.cs",
-            "description": "Partners Related To Level 3 Bulk Update For Integration"
-        },
-        {
-            "order": 27,
-            "name": "Partners_Related_To_Level4_Bulk_Update",
-            "type": "seeder",
-            "className": "Partners_Related_To_Level4_Bulk_Update",
-            "methodName": "UpdatePartnersForIntegrationAsync",
-            "filePath": "Seeders/Partners_Related_To_Level4_Bulk_Update.cs",
-            "description": "Partners Related To Level 4 Bulk Update For Integration"
-        },
-        {
-            "order": 28,
-            "name": "SequenceResync",
-            "type": "seeder",
-            "className": "SequenceResyncSeeder",
-            "methodName": "ResyncAllSequencesAsync",
-            "filePath": "Seeders/SequenceResyncSeeder.cs",
-            "description": "Resynchronize all PostgreSQL sequences to prevent duplicate key errors",
-            "forceExecuteIfAnyChanged": true
-        },
-        {
-            "order": 23,
             "name": "RiskLookups",
             "type": "seeder",
             "className": "RiskLookupSeeder",
@@ -275,7 +211,7 @@
             "description": "Risk lookup tables (RiskType, RiskProbability, RiskProximity, RiskImpactLevel, RiskResponseType)"
         },
         {
-            "order": 24,
+            "order": 23,
             "name": "RiskCategories",
             "type": "seeder",
             "className": "RiskCategorySeeder",
@@ -284,13 +220,41 @@
             "description": "Risk category hierarchy (3 levels) from oUP"
         },
         {
-            "order": 25,
+            "order": 24,
             "name": "PreDefinedHighRisks",
             "type": "seeder",
             "className": "PreDefinedHighRiskSeeder",
             "methodName": "SeedPreDefinedHighRisksAsync",
             "filePath": "Seeders/PreDefinedHighRiskSeeder.cs",
             "description": "PreDefined High Risk Checklist items from oUP (EAC questions)"
+        },
+        {
+            "order": 25,
+            "name": "OrgUnitDirectorRolesSeeder",
+            "type": "seeder",
+            "className": "OrgUnitDirectorRolesSeeder",
+            "methodName": "SeedOrgUnitDirectorRolesAsync",
+            "filePath": "Seeders/OrgUnitDirectorRolesSeeder.cs",
+            "description": "Seeds OrgUnit Director Roles"
+        },
+        {
+            "order": 26,
+            "name": "OrgUnitDOARolesSeeder",
+            "type": "seeder",
+            "className": "OrgUnitDOARolesSeeder",
+            "methodName": "SeedOrgUnitDOARolesAsync",
+            "filePath": "Seeders/OrgUnitDOARolesSeeder.cs",
+            "description": "Seeds OrgUnit DOA Roles"
+        },
+        {
+            "order": 27,
+            "name": "SequenceResync",
+            "type": "seeder",
+            "className": "SequenceResyncSeeder",
+            "methodName": "ResyncAllSequencesAsync",
+            "filePath": "Seeders/SequenceResyncSeeder.cs",
+            "description": "Resynchronize all PostgreSQL sequences to prevent duplicate key errors",
+            "forceExecuteIfAnyChanged": true
         }
     ]
 }

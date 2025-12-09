@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UNOPS.PAO.UNOPSDataAccess.Context;
@@ -11,9 +12,11 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 {
     [DbContext(typeof(UNOPSAppDbContext))]
-    partial class UNOPSAppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251209105921_UpdateOpportunityModel")]
+    partial class UpdateOpportunityModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1209,12 +1212,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<string>("SubType")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Type")
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
 
                     b.HasIndex("EntityType", "Name");
@@ -1316,9 +1313,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<int>("EntityId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("EntityRoleId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("EntityType")
                         .IsRequired()
                         .HasColumnType("text");
@@ -1336,7 +1330,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int?>("RoleId")
+                    b.Property<int>("RoleId")
                         .HasColumnType("integer");
 
                     b.Property<int>("Status")
@@ -1346,8 +1340,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("EntityRoleId");
 
                     b.HasIndex("UserId", "RoleId");
 
@@ -2209,9 +2201,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<int>("OpportunityId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("OrganizationHierarchyId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("StakeholderType")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
@@ -2224,8 +2213,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.HasIndex("EntityRoleId");
 
                     b.HasIndex("OpportunityId");
-
-                    b.HasIndex("OrganizationHierarchyId");
 
                     b.HasIndex("UserId");
 
@@ -4896,23 +4883,11 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.EntityUserRole", b =>
                 {
-                    b.HasOne("UNOPS.PAO.Domain.Entities.EntityRole", "EntityRole")
-                        .WithMany()
-                        .HasForeignKey("EntityRoleId");
-
-                    b.HasOne("UNOPS.PAO.Domain.Entities.PAOUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUserRole<int>", "UserRole")
                         .WithMany()
-                        .HasForeignKey("UserId", "RoleId");
-
-                    b.Navigation("EntityRole");
-
-                    b.Navigation("User");
+                        .HasForeignKey("UserId", "RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("UserRole");
                 });
@@ -5247,10 +5222,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("UNOPS.PAO.Domain.Entities.OrganizationHierarchy", "OrganizationHierarchy")
-                        .WithMany()
-                        .HasForeignKey("OrganizationHierarchyId");
-
                     b.HasOne("UNOPS.PAO.Domain.Entities.PAOUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId");
@@ -5258,8 +5229,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Navigation("EntityRole");
 
                     b.Navigation("Opportunity");
-
-                    b.Navigation("OrganizationHierarchy");
 
                     b.Navigation("User");
                 });
