@@ -30,5 +30,15 @@ public class EntityRole : ModifiableDeletableEntity
     /// Whether multiple people can be assigned to this role for the same entity
     /// </summary>
     public bool AllowsMultiple { get; set; }
+    
+    /// <summary>
+    /// Optional type classification for the role
+    /// </summary>
+    public string? Type { get; set; }
+    
+    /// <summary>
+    /// Optional subtype classification for the role
+    /// </summary>
+    public string? SubType { get; set; }
 }
 

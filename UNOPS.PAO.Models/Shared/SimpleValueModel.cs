@@ -8,6 +8,8 @@ public class SimpleValueModel
     public string? Description { get; set; }
     public string? Region { get; set; }  // For countries
     public string? Continent { get; set; }  // For countries
+    public string? Type { get; set; }  // For entity roles - role type classification
+    public string? SubType { get; set; }  // For entity roles - role subtype classification
 }
 
 

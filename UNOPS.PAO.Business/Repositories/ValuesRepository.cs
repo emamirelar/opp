@@ -422,7 +422,9 @@ public class ValuesRepository
                 Id = x.Id,
                 Name = x.Name,
                 Code = x.Name,
-                Description = x.Description
+                Description = x.Description,
+                Type = x.Type,
+                SubType = x.SubType
             })
             .ToListAsync();
     }

@@ -1,3 +1,4 @@
+using UNOPS.PAO.Models.Opportunities;
 using UNOPS.PAO.Models.OrganizationUnits;
 using UNOPS.PAO.Models.Shared;
 
@@ -93,6 +94,12 @@ public class OpportunityModel
     public List<OpportunitySDGModel>? SDGs { get; set; }
     public List<OpportunityUNCFOutcomeModel>? UNCFOutcomes { get; set; }
     public List<OpportunityUNOPSMissionModel>? UNOPSMissions { get; set; }
+    
+    /// <summary>
+    /// SME (Subject Matter Expert) selections for the opportunity.
+    /// Loaded from EntityUserRoles table where EntityType = "Opportunity".
+    /// </summary>
+    public List<SMESelectionModel>? SMESelections { get; set; }
     
     public OpportunityStats? Stats { get; set; }
     
