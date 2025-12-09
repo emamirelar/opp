@@ -18,6 +18,7 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSBusiness.Repositories;
 using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Business.Mapping;
+using UNOPS.PAO.UNOPSBusiness.Services;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -28,6 +29,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     private readonly UNOPSAppDbContext uNOPSAppDbContext;
     private readonly BaseRepository<Opportunity> opportunityRepository;
     private readonly IServiceProvider _serviceProvider;
+    private readonly IConfiguration configuration;
 
     public UNOPSOpportunityManager(
         IMapper mapper,
@@ -42,6 +44,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         this.context = context;
         this.uNOPSAppDbContext = context as UNOPSAppDbContext;
         this._serviceProvider = serviceProvider;
+        this.configuration = configuration;
         this.opportunityRepository = new BaseRepository<Opportunity>(this.uNOPSAppDbContext, configuration, serviceProvider);
     }
 
@@ -257,6 +260,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             // Get opportunity country IDs for agreement matching
             var opportunityCountryIds = entity.Countries?.Select(c => c.CountryId).ToList() ?? new List<int>();
             
+            // Initialize GoogleCloudStorageService for logo URL signing
+            var googleCloudStorageService = new GoogleCloudStorageService(configuration);
+            
             foreach (var fundingPartner in model.FundingPartners)
             {
                 fundingPartner.AssociatedDocuments = await GetDocumentsForPartner(
@@ -272,6 +278,12 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 if (fundingPartnerEntity?.Partner != null)
                 {
                     var partner = fundingPartnerEntity.Partner;
+                    
+                    // Partner Logo URL - convert to signed URL
+                    if (!string.IsNullOrEmpty(partner.LogoUrl))
+                    {
+                        fundingPartner.PartnerLogoUrl = await googleCloudStorageService.GenerateSignedUrlFromStorageUrl(partner.LogoUrl);
+                    }
                     
                     // DD Approval
                     fundingPartner.DDApproval = partner.DueDiligenceApproval?.ToString();
@@ -312,6 +324,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             // Get opportunity country IDs for agreement matching
             var opportunityCountryIds = entity.Countries?.Select(c => c.CountryId).ToList() ?? new List<int>();
             
+            // Initialize GoogleCloudStorageService for logo URL signing (reuse if already created)
+            var googleCloudStorageService = new GoogleCloudStorageService(configuration);
+            
             foreach (var clientPartner in model.ClientPartners)
             {
                 clientPartner.AssociatedDocuments = await GetDocumentsForPartner(
@@ -327,6 +342,12 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 if (clientPartnerEntity?.Partner != null)
                 {
                     var partner = clientPartnerEntity.Partner;
+                    
+                    // Partner Logo URL - convert to signed URL
+                    if (!string.IsNullOrEmpty(partner.LogoUrl))
+                    {
+                        clientPartner.PartnerLogoUrl = await googleCloudStorageService.GenerateSignedUrlFromStorageUrl(partner.LogoUrl);
+                    }
                     
                     // DD Approval
                     clientPartner.DDApproval = partner.DueDiligenceApproval?.ToString();
@@ -3599,6 +3620,168 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
         await context.SaveChangesAsync();
         return true;
+    }
+
+    /// <summary>
+    /// Gets the entity artifact document by artifact type code
+    /// Generic method that can be used for any entity type and artifact type code
+    /// Returns the GCS path (ValueText) and metadata (ValueJson) if found
+    /// </summary>
+    /// <param name="entityType">Entity type (e.g., "OrganizationHierarchy", "Country", "Partner")</param>
+    /// <param name="entityId">Entity ID</param>
+    /// <param name="artifactTypeCode">Artifact type code (e.g., "High_Risk_Guidance", "Strategy", "NDC")</param>
+    /// <returns>Tuple with GCS path (ValueText) and metadata (ValueJson), or null if not found</returns>
+    public async Task<(string? GcsPath, string? MimeType, string? FileName)?> GetEntityArtifactDocumentAsync(
+        string entityType, 
+        int entityId, 
+        string artifactTypeCode)
+    {
+        try
+        {
+            // Get the artifact type by code
+            var artifactType = await context.Set<ArtifactType>()
+                .Where(at => at.ArtifactTypeCode == artifactTypeCode && !at.IsDeleted)
+                .Select(at => at.Id)
+                .FirstOrDefaultAsync();
+
+            if (artifactType == 0)
+            {
+                Console.WriteLine($"[WARNING] Artifact type with code '{artifactTypeCode}' not found");
+                return null;
+            }
+
+            // Get the entity artifact
+            var entityArtifact = await context.EntityArtifacts
+                .Where(ea => 
+                    ea.EntityType == entityType 
+                    && ea.EntityId == entityId 
+                    && ea.ArtifactTypeId == artifactType
+                    && !ea.IsDeleted
+                    && ea.Status == Domain.Entities.EntityStatus.Active
+                    && !string.IsNullOrEmpty(ea.ValueText)
+                    && ea.ValueText.StartsWith("gs://"))
+                .OrderByDescending(ea => ea.CreatedDate) // Get most recent
+                .Select(ea => new { ea.ValueText, ea.ValueJson })
+                .FirstOrDefaultAsync();
+
+            if (entityArtifact == null)
+            {
+                Console.WriteLine($"[INFO] No artifact found for EntityType='{entityType}', EntityId={entityId}, ArtifactTypeCode='{artifactTypeCode}'");
+                return null;
+            }
+
+            // Extract MIME type and file name from ValueJson
+            string? mimeType = null;
+            string? fileName = null;
+
+            if (!string.IsNullOrEmpty(entityArtifact.ValueJson))
+            {
+                try
+                {
+                    var metadata = System.Text.Json.JsonDocument.Parse(entityArtifact.ValueJson);
+                    var root = metadata.RootElement;
+
+                    if (root.TryGetProperty("mimeType", out var mimeTypeElement))
+                    {
+                        mimeType = mimeTypeElement.GetString();
+                    }
+
+                    if (root.TryGetProperty("fileName", out var fileNameElement))
+                    {
+                        fileName = fileNameElement.GetString();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[WARNING] Failed to parse ValueJson for artifact: {ex.Message}");
+                    mimeType = "application/pdf"; // Default fallback
+                }
+            }
+
+            // Default to PDF if no MIME type found
+            mimeType ??= "application/pdf";
+
+            Console.WriteLine($"[SUCCESS] Found artifact document: {fileName ?? entityArtifact.ValueText}");
+            return (entityArtifact.ValueText, mimeType, fileName);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] Error getting entity artifact document: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Gets the High Risk Guidance document from EntityArtifact table
+    /// This is a global document with ArtifactTypeCode "High_Risk_Guidance"
+    /// </summary>
+    /// <returns>Tuple with GCS path, MIME type, and file name, or null if not found</returns>
+    public async Task<(string? GcsPath, string? MimeType, string? FileName)?> GetHighRiskGuidanceDocumentAsync()
+    {
+        try
+        {
+            // Get the ArtifactType ID for "High_Risk_Guidance" (case-insensitive)
+            var artifactType = await uNOPSAppDbContext.ArtifactTypes
+                .Where(at => at.ArtifactTypeCode.ToLower() == "high_risk_guidance" && !at.IsDeleted)
+                .FirstOrDefaultAsync();
+
+            if (artifactType == null)
+            {
+                Console.WriteLine($"[WARNING] ArtifactType 'High_Risk_Guidance' not found");
+                return null;
+            }
+
+            // Get the EntityArtifact with this type that has a GCS path (gs:// or https://storage.cloud.google.com/)
+            var artifact = await uNOPSAppDbContext.EntityArtifacts
+                .Where(ea => ea.ArtifactTypeId == artifactType.Id
+                          && !ea.IsDeleted
+                          && ea.Status == Domain.Entities.EntityStatus.Active
+                          && !string.IsNullOrEmpty(ea.ValueText)
+                          && (ea.ValueText.StartsWith("gs://") || ea.ValueText.StartsWith("https://storage.cloud.google.com/")))
+                .OrderByDescending(ea => ea.CreatedDate) // Get most recent
+                .FirstOrDefaultAsync();
+
+            if (artifact == null)
+            {
+                Console.WriteLine($"[INFO] No High Risk Guidance document found in EntityArtifacts");
+                return null;
+            }
+
+            // Convert HTTPS URL to gs:// format if needed (Gemini expects gs:// URI)
+            var gcsPath = artifact.ValueText;
+            if (gcsPath.StartsWith("https://storage.cloud.google.com/"))
+            {
+                // Convert: https://storage.cloud.google.com/bucket/path → gs://bucket/path
+                gcsPath = "gs://" + gcsPath.Replace("https://storage.cloud.google.com/", "");
+                Console.WriteLine($"[INFO] Converted HTTPS URL to gs:// format: {gcsPath}");
+            }
+
+            // Extract mime type and file name from ValueJson if available
+            string? mimeType = "application/pdf";
+            string? fileName = null;
+
+            if (!string.IsNullOrEmpty(artifact.ValueJson))
+            {
+                try
+                {
+                    var metadata = Newtonsoft.Json.Linq.JObject.Parse(artifact.ValueJson);
+                    mimeType = metadata["mimeType"]?.ToString() ?? "application/pdf";
+                    fileName = metadata["fileName"]?.ToString();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[WARNING] Failed to parse ValueJson: {ex.Message}");
+                }
+            }
+
+            Console.WriteLine($"[SUCCESS] Found High Risk Guidance document: {gcsPath}");
+            return (gcsPath, mimeType, fileName);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] Error getting High Risk Guidance document: {ex.Message}");
+            return null;
+        }
     }
 }
 
