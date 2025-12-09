@@ -280,6 +280,181 @@
     <!-- Divider -->
     <div class="border-t border-unops-neutral-300 pt-6"></div>
 
+    <!-- Subject Matter Experts Section -->
+    <div>
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-semibold text-unops-secondary flex items-center gap-2">
+          <i class="pi pi-user-edit text-unops-primary text-base"></i>
+          <span>{{ 'label.opportunity.subjectMatterExperts' | translate }}</span>
+        </h3>
+      </div>
+
+      <!-- Help text for SME section -->
+      <div class="mb-4 p-2 bg-unops-primary-container-soft border border-unops-primary-200 rounded text-xs text-unops-neutral-800">
+        <div class="flex items-start gap-2">
+          <i class="pi pi-info-circle text-unops-primary-dark mt-0.5 flex-shrink-0"></i>
+          <span>{{ 'helpText.opportunity.subjectMatterExperts' | translate }}</span>
+        </div>
+      </div>
+
+      @if (smeRoles().length > 0) {
+        <div class="space-y-6">
+          @for (group of smeRolesBySubType(); track group.subType) {
+            <div>
+              <!-- SubType Header -->
+              <h4 class="text-sm font-semibold text-unops-primary mb-3 flex items-center gap-2">
+                <i class="pi pi-tag text-unops-primary"></i>
+                <span>{{ getSubTypeDisplayName(group.subType) }}</span>
+              </h4>
+
+              <!-- Roles Grid for this SubType -->
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                @for (role of group.roles; track role.id) {
+                  @if (isEditing()) {
+                    <!-- Edit Mode: Full card with checkbox and dropdown -->
+                    @if (isSmeRoleSelected(role.id) && getSmeSelectedUser(role.id)) {
+                      <!-- Selected SME Card - Enhanced visual distinction in edit mode -->
+                      <div class="bg-unops-primary-container-soft rounded-unops-lg p-3 border-2 border-unops-primary-light shadow-unops-sm">
+                        <div class="flex flex-col gap-3">
+                          <!-- Checkbox and Role Name Row -->
+                          <div class="flex items-center gap-3">
+                            <p-checkbox
+                              [binary]="true"
+                              [ngModel]="isSmeRoleSelected(role.id)"
+                              (ngModelChange)="onSmeCheckboxChange(role.id, $event)"
+                              inputId="sme-{{ role.id }}"
+                            />
+                            <label
+                              for="sme-{{ role.id }}"
+                              class="font-medium text-unops-secondary cursor-pointer flex-1"
+                            >
+                              {{ role.name }}
+                            </label>
+                          </div>
+
+                          <!-- User Selection Dropdown -->
+                          <div>
+                            <p-select
+                              [options]="internalUsers()"
+                              optionLabel="name"
+                              [ngModel]="getSmeSelectedUser(role.id)"
+                              (ngModelChange)="onSmeUserChange(role.id, $event)"
+                              [disabled]="!isSmeRoleSelected(role.id)"
+                              [placeholder]="'label.opportunity.selectSME' | translate"
+                              [filter]="true"
+                              filterBy="name"
+                              [showClear]="true"
+                              [virtualScroll]="true"
+                              [virtualScrollItemSize]="38"
+                              class="w-full"
+                              styleClass="w-full"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    } @else {
+                      <!-- Unselected SME Card in edit mode -->
+                      <div class="bg-unops-surface-secondary rounded-unops-lg p-3 border border-unops-neutral-300">
+                        <div class="flex flex-col gap-3">
+                          <!-- Checkbox and Role Name Row -->
+                          <div class="flex items-center gap-3">
+                            <p-checkbox
+                              [binary]="true"
+                              [ngModel]="isSmeRoleSelected(role.id)"
+                              (ngModelChange)="onSmeCheckboxChange(role.id, $event)"
+                              inputId="sme-{{ role.id }}"
+                            />
+                            <label
+                              for="sme-{{ role.id }}"
+                              class="font-medium text-unops-secondary cursor-pointer flex-1"
+                            >
+                              {{ role.name }}
+                            </label>
+                          </div>
+
+                          <!-- User Selection Dropdown -->
+                          <div>
+                            <p-select
+                              [options]="internalUsers()"
+                              optionLabel="name"
+                              [ngModel]="getSmeSelectedUser(role.id)"
+                              (ngModelChange)="onSmeUserChange(role.id, $event)"
+                              [disabled]="!isSmeRoleSelected(role.id)"
+                              [placeholder]="'label.opportunity.selectSME' | translate"
+                              [filter]="true"
+                              filterBy="name"
+                              [showClear]="true"
+                              [virtualScroll]="true"
+                              [virtualScrollItemSize]="38"
+                              class="w-full"
+                              styleClass="w-full"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  } @else {
+                    <!-- View Mode: Compact card similar to auto-populated stakeholders -->
+                    @if (isSmeRoleSelected(role.id) && getSmeSelectedUser(role.id)) {
+                      <!-- Selected SME Card in view mode - similar to auto-populated stakeholders -->
+                      <div class="bg-unops-surface-secondary rounded-unops-md p-2.5 border border-unops-neutral-300 opacity-90">
+                        <div class="flex items-center gap-2">
+                          <p-avatar
+                            label="S"
+                            shape="circle"
+                            size="normal"
+                            styleClass="bg-blue-100 text-blue-600 flex-shrink-0"
+                          />
+                          <div class="min-w-0 flex-1">
+                            <div class="font-semibold text-unops-secondary text-sm flex items-center gap-1.5 flex-wrap">
+                              <span class="truncate">{{ role.name }}</span>
+                            </div>
+                            @if (getSmeSelectedUser(role.id)) {
+                              <div class="text-xs text-unops-neutral-600 truncate" [title]="getSmeSelectedUser(role.id)?.name || ''">
+                                {{ getSmeSelectedUser(role.id)?.name }}
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    } @else {
+                      <!-- Unselected SME Card in view mode - similar to auto-populated stakeholders -->
+                      <div class="bg-unops-surface-secondary rounded-unops-md p-2.5 border border-unops-neutral-300 opacity-90">
+                        <div class="flex items-center gap-2">
+                          <p-avatar
+                            label="S"
+                            shape="circle"
+                            size="normal"
+                            styleClass="bg-unops-neutral-200 text-unops-neutral-500 flex-shrink-0"
+                          />
+                          <div class="min-w-0 flex-1">
+                            <div class="font-semibold text-unops-secondary text-sm opacity-60">
+                              <span class="truncate">{{ role.name }}</span>
+                            </div>
+                            <div class="text-xs text-unops-neutral-500 italic">
+                              {{ 'label.opportunity.notAssigned' | translate }}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  }
+                }
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="text-center py-6 text-unops-neutral-500">
+          <i class="pi pi-user-edit text-3xl mb-2 text-unops-neutral-400"></i>
+          <p>{{ 'message.noSmeRolesAvailable' | translate }}</p>
+        </div>
+      }
+    </div>
+
+    <!-- Divider -->
+    <div class="border-t border-unops-neutral-300 pt-6"></div>
+
     <!-- Relevant People Section -->
     <div>
       <div class="flex items-center justify-between mb-4">
@@ -478,7 +653,7 @@
         <p-select
           id="stakeholderRole"
           [formControl]="roleControl"
-          [options]="entityRoles()"
+          [options]="nonSmeRoles()"
           optionLabel="name"
           [filter]="true"
           filterBy="name"

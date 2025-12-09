@@ -22,6 +22,8 @@ export interface SimpleValue {
   email?: string;  // For users
   pooledFund?: boolean;  // For partners - indicates if this is a pooled funding programme
   partnerId?: number;  // For contacts - the partner they belong to
+  type?: string;  // For entity roles - role type classification
+  subType?: string;  // For entity roles - role subtype classification
 }
 
 /**

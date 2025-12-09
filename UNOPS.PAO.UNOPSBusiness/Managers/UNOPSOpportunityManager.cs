@@ -431,6 +431,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }
         }
 
+        // Load SME (Subject Matter Expert) selections from EntityUserRoles table
+        model.SMESelections = await GetSMESelectionsAsync(id);
+
         return model;
     }
     
@@ -1977,6 +1980,12 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }
         }
 
+        // Update SME (Subject Matter Expert) selections in EntityUserRoles table
+        if (request.SMESelections != null)
+        {
+            await UpdateSMESelectionsAsync(id, request.SMESelections);
+        }
+
         // Auto-populate stakeholders from EntityUserRoles if org unit changed
         if (orgUnitChanged && request.ResponsibleOrgUnitId.HasValue)
         {
@@ -2121,6 +2130,137 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 Notes = null
             });
         }
+    }
+
+    /// <summary>
+    /// Updates SME (Subject Matter Expert) selections for an opportunity in the EntityUserRoles table.
+    /// Uses differential update - only adds/removes what's necessary.
+    /// </summary>
+    /// <param name="opportunityId">The opportunity ID</param>
+    /// <param name="smeSelections">List of SME selection requests</param>
+    private async Task UpdateSMESelectionsAsync(int opportunityId, List<SMESelectionRequest> smeSelections)
+    {
+        // Get all SME roles (roles with Type = "SME")
+        var smeRoleIds = await context.Set<EntityRole>()
+            .Where(er => er.EntityType == "Opportunity" && er.Type == "SME" && !er.IsDeleted)
+            .Select(er => er.Id)
+            .ToListAsync();
+
+        if (!smeRoleIds.Any())
+            return;
+
+        // Get existing SME EntityUserRoles for this opportunity
+        var existingSmeRoles = await context.Set<EntityUserRole>()
+            .Where(eur => 
+                eur.EntityType == "Opportunity" 
+                && eur.EntityId == opportunityId 
+                && eur.EntityRoleId.HasValue 
+                && smeRoleIds.Contains(eur.EntityRoleId.Value)
+                && !eur.IsDeleted)
+            .ToListAsync();
+
+        // Get selected SME entries (IsSelected = true and UserId is provided)
+        var selectedSmes = smeSelections
+            .Where(s => s.IsSelected && s.UserId.HasValue && smeRoleIds.Contains(s.EntityRoleId))
+            .ToList();
+
+        // Find EntityUserRoles to remove (exist in DB but not in selected SMEs or deselected)
+        var rolesToRemove = existingSmeRoles
+            .Where(existing => !selectedSmes.Any(req => 
+                req.EntityRoleId == existing.EntityRoleId && req.UserId == existing.UserId))
+            .ToList();
+
+        // Find EntityUserRoles to add (exist in selected SMEs but not in DB)
+        var rolesToAdd = selectedSmes
+            .Where(req => !existingSmeRoles.Any(existing => 
+                existing.EntityRoleId == req.EntityRoleId && existing.UserId == req.UserId))
+            .ToList();
+
+        // Get EntityRole names for all roles being added (to populate Name field)
+        var entityRoles = new Dictionary<int, string>();
+        if (rolesToAdd.Any())
+        {
+            var roleIdsToAdd = rolesToAdd.Select(r => r.EntityRoleId).Distinct().ToList();
+            entityRoles = await context.Set<EntityRole>()
+                .Where(er => roleIdsToAdd.Contains(er.Id))
+                .ToDictionaryAsync(er => er.Id, er => er.Name);
+        }
+
+        // Remove EntityUserRoles that are no longer selected
+        foreach (var roleToRemove in rolesToRemove)
+        {
+            context.Set<EntityUserRole>().Remove(roleToRemove);
+        }
+
+        // Add new EntityUserRoles
+        foreach (var req in rolesToAdd)
+        {
+            var roleName = entityRoles.ContainsKey(req.EntityRoleId) ? entityRoles[req.EntityRoleId] : "Unknown Role";
+            var name = $"{roleName} - Opportunity - {opportunityId} - {req.UserId!.Value}";
+            
+            context.Set<EntityUserRole>().Add(new EntityUserRole
+            {
+                Name = name,
+                UserId = req.UserId!.Value,
+                EntityRoleId = req.EntityRoleId,
+                EntityId = opportunityId,
+                EntityType = "Opportunity",
+                Status = EntityStatus.Active
+            });
+        }
+    }
+
+    /// <summary>
+    /// Gets SME (Subject Matter Expert) selections for an opportunity from the EntityUserRoles table.
+    /// Returns all SME roles with their selection status and assigned user.
+    /// </summary>
+    /// <param name="opportunityId">The opportunity ID</param>
+    /// <returns>List of SME selection models</returns>
+    private async Task<List<SMESelectionModel>> GetSMESelectionsAsync(int opportunityId)
+    {
+        // Get all SME roles (roles with Type = "SME")
+        var smeRoles = await context.Set<EntityRole>()
+            .Where(er => er.EntityType == "Opportunity" && er.Type == "SME" && !er.IsDeleted)
+            .OrderBy(er => er.SubType)
+            .ThenBy(er => er.Name)
+            .Select(er => new { er.Id, er.Name, er.SubType })
+            .ToListAsync();
+
+        if (!smeRoles.Any())
+            return new List<SMESelectionModel>();
+
+        var smeRoleIds = smeRoles.Select(r => r.Id).ToList();
+
+        // Get existing SME EntityUserRoles for this opportunity
+        var existingSmeRoles = await context.Set<EntityUserRole>()
+            .Include(eur => eur.User)
+                .ThenInclude(u => u!.UserProfile)
+            .Where(eur => 
+                eur.EntityType == "Opportunity" 
+                && eur.EntityId == opportunityId 
+                && eur.EntityRoleId.HasValue 
+                && smeRoleIds.Contains(eur.EntityRoleId.Value)
+                && !eur.IsDeleted)
+            .ToListAsync();
+
+        // Build the result - all SME roles with their selection status
+        var result = new List<SMESelectionModel>();
+        foreach (var role in smeRoles)
+        {
+            var existingAssignment = existingSmeRoles.FirstOrDefault(e => e.EntityRoleId == role.Id);
+            
+            result.Add(new SMESelectionModel
+            {
+                EntityRoleId = role.Id,
+                EntityRoleName = role.Name,
+                IsSelected = existingAssignment != null,
+                UserId = existingAssignment?.UserId,
+                UserName = existingAssignment?.User?.UserProfile?.Name ?? existingAssignment?.User?.Email,
+                UserEmail = existingAssignment?.User?.Email
+            });
+        }
+
+        return result;
     }
 
     /// <summary>

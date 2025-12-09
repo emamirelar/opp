@@ -20,5 +20,11 @@ public class TeamSectionRequest
     /// List of internal team members and stakeholders
     /// </summary>
     public List<OpportunityStakeholderRequest>? Stakeholders { get; set; }
+    
+    /// <summary>
+    /// List of SME (Subject Matter Expert) selections for the opportunity.
+    /// These are saved to EntityUserRoles table.
+    /// </summary>
+    public List<SMESelectionRequest>? SMESelections { get; set; }
 }
 

@@ -14,20 +14,32 @@ public class EntityRoleSeeder
     }
 
     /// <summary>
-    /// Adds a role only if it doesn't already exist (by EntityType and Name)
+    /// Adds a role if it doesn't exist, or updates it if it does exist (by EntityType and Name)
+    /// Returns true if role was added, false if it was updated
     /// </summary>
-    private static async Task<bool> AddRoleIfNotExistsAsync(UNOPSAppDbContext context, EntityRole role)
+    private static async Task<bool> AddOrUpdateRoleAsync(UNOPSAppDbContext context, EntityRole role)
     {
-        var exists = await context.EntityRoles
-            .AnyAsync(er => er.EntityType == role.EntityType && er.Name == role.Name);
+        var existingRole = await context.EntityRoles
+            .FirstOrDefaultAsync(er => er.EntityType == role.EntityType && er.Name == role.Name);
 
-        if (exists)
+        if (existingRole != null)
         {
-            return false;
+            // Update existing role properties (preserve Id, CreatedDate, CreatedBy)
+            existingRole.Description = role.Description;
+            existingRole.Type = role.Type;
+            existingRole.SubType = role.SubType;
+            existingRole.IsInternal = role.IsInternal;
+            existingRole.AllowsMultiple = role.AllowsMultiple;
+            existingRole.Status = role.Status;
+            existingRole.LastModifiedDate = DateTime.UtcNow;
+            existingRole.LastModifiedBy = 1; // System user
+            
+            context.EntityRoles.Update(existingRole);
+            return false; // Updated, not added
         }
 
         await context.EntityRoles.AddAsync(role);
-        return true;
+        return true; // Added
     }
 
     private static async Task SeedOpportunityRolesAsync(UNOPSAppDbContext context)
@@ -88,26 +100,159 @@ public class EntityRoleSeeder
                 Status = EntityStatus.Active,
                 CreatedDate = DateTime.UtcNow,
                 CreatedBy = 1 // System user
+            },
+            new EntityRole
+            {
+                EntityType = "Opportunity",
+                Name = "SME - Infrastructure",
+                Description = "Subject Matter Expert providing infrastructure expertise and guidance",
+                Type = "SME",
+                SubType = "Service Line",
+                IsInternal = true,
+                AllowsMultiple = true,
+                Status = EntityStatus.Active,
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = 1 // System user
+            },
+            new EntityRole
+            {
+                EntityType = "Opportunity",
+                Name = "SME - Project Management",
+                Description = "Subject Matter Expert providing project management expertise and guidance",
+                Type = "SME",
+                SubType = "Service Line",
+                IsInternal = true,
+                AllowsMultiple = true,
+                Status = EntityStatus.Active,
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = 1 // System user
+            },
+            new EntityRole
+            {
+                EntityType = "Opportunity",
+                Name = "SME - Human Resources",
+                Description = "Subject Matter Expert providing human resources expertise and guidance",
+                Type = "SME",
+                SubType = "Service Line",
+                IsInternal = true,
+                AllowsMultiple = true,
+                Status = EntityStatus.Active,
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = 1 // System user
+            },
+            new EntityRole
+            {
+                EntityType = "Opportunity",
+                Name = "SME - Financial Management",
+                Description = "Subject Matter Expert providing financial management expertise and guidance",
+                Type = "SME",
+                SubType = "Service Line",
+                IsInternal = true,
+                AllowsMultiple = true,
+                Status = EntityStatus.Active,
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = 1 // System user
+            },
+            new EntityRole
+            {
+                EntityType = "Opportunity",
+                Name = "SME - Procurement",
+                Description = "Subject Matter Expert providing procurement expertise and guidance",
+                Type = "SME",
+                SubType = "Service Line",
+                IsInternal = true,
+                AllowsMultiple = true,
+                Status = EntityStatus.Active,
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = 1 // System user
+            },
+            new EntityRole
+            {
+                EntityType = "Opportunity",
+                Name = "SME - GESI",
+                Description = "Subject Matter Expert providing Gender Equality and Social Inclusion expertise and guidance",
+                Type = "SME",
+                SubType = "Other",
+                IsInternal = true,
+                AllowsMultiple = true,
+                Status = EntityStatus.Active,
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = 1 // System user
+            },
+            new EntityRole
+            {
+                EntityType = "Opportunity",
+                Name = "SME - HSSE",
+                Description = "Subject Matter Expert providing Health, Safety, Social and Environmental expertise and guidance",
+                Type = "SME",
+                SubType = "Other",
+                IsInternal = true,
+                AllowsMultiple = true,
+                Status = EntityStatus.Active,
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = 1 // System user
+            },
+            new EntityRole
+            {
+                EntityType = "Opportunity",
+                Name = "SME - Results Management",
+                Description = "Subject Matter Expert providing results management expertise and guidance",
+                Type = "SME",
+                SubType = "Other",
+                IsInternal = true,
+                AllowsMultiple = true,
+                Status = EntityStatus.Active,
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = 1 // System user
+            },
+            new EntityRole
+            {
+                EntityType = "Opportunity",
+                Name = "SME - Risk Management",
+                Description = "Subject Matter Expert providing risk management expertise and guidance",
+                Type = "SME",
+                SubType = "Other",
+                IsInternal = true,
+                AllowsMultiple = true,
+                Status = EntityStatus.Active,
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = 1 // System user
             }
         };
 
         var addedCount = 0;
+        var updatedCount = 0;
         foreach (var role in rolesToSeed)
         {
-            if (await AddRoleIfNotExistsAsync(context, role))
+            if (await AddOrUpdateRoleAsync(context, role))
             {
                 addedCount++;
             }
+            else
+            {
+                updatedCount++;
+            }
         }
 
-        if (addedCount > 0)
+        if (addedCount > 0 || updatedCount > 0)
         {
             await context.SaveChangesAsync();
-            Console.WriteLine($"Seeded {addedCount} new EntityRoles for Opportunity entity.");
+            if (addedCount > 0 && updatedCount > 0)
+            {
+                Console.WriteLine($"Seeded {addedCount} new and updated {updatedCount} existing EntityRoles for Opportunity entity.");
+            }
+            else if (addedCount > 0)
+            {
+                Console.WriteLine($"Seeded {addedCount} new EntityRoles for Opportunity entity.");
+            }
+            else
+            {
+                Console.WriteLine($"Updated {updatedCount} existing EntityRoles for Opportunity entity.");
+            }
         }
         else
         {
-            Console.WriteLine("All EntityRoles for Opportunity already exist. Skipping seed.");
+            Console.WriteLine("No EntityRoles for Opportunity were added or updated.");
         }
     }
 
@@ -228,22 +373,38 @@ public class EntityRoleSeeder
         };
 
         var addedCount = 0;
+        var updatedCount = 0;
         foreach (var role in rolesToSeed)
         {
-            if (await AddRoleIfNotExistsAsync(context, role))
+            if (await AddOrUpdateRoleAsync(context, role))
             {
                 addedCount++;
             }
+            else
+            {
+                updatedCount++;
+            }
         }
 
-        if (addedCount > 0)
+        if (addedCount > 0 || updatedCount > 0)
         {
             await context.SaveChangesAsync();
-            Console.WriteLine($"Seeded {addedCount} new EntityRoles for OrganizationHierarchy entity.");
+            if (addedCount > 0 && updatedCount > 0)
+            {
+                Console.WriteLine($"Seeded {addedCount} new and updated {updatedCount} existing EntityRoles for OrganizationHierarchy entity.");
+            }
+            else if (addedCount > 0)
+            {
+                Console.WriteLine($"Seeded {addedCount} new EntityRoles for OrganizationHierarchy entity.");
+            }
+            else
+            {
+                Console.WriteLine($"Updated {updatedCount} existing EntityRoles for OrganizationHierarchy entity.");
+            }
         }
         else
         {
-            Console.WriteLine("All EntityRoles for OrganizationHierarchy already exist. Skipping seed.");
+            Console.WriteLine("No EntityRoles for OrganizationHierarchy were added or updated.");
         }
     }
 }
