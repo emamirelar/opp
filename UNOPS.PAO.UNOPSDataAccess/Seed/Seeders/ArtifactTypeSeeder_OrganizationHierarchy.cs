@@ -173,10 +173,10 @@ public static class ArtifactTypeSeeder_OrganizationHierarchy
             },
             new ArtifactType
             {
-                Name = "Guidance",
-                ArtifactTypeCode = "Guidance",
+                Name = "High Risk Guidance",
+                ArtifactTypeCode = "High_Risk_Guidance",
                 ArtifactDataTypeId = documentDataTypeId,
-                Description = "Entity Guidance Document",
+                Description = "Entity High Risk Guidance Document",
                 Category = null,
                 ApplicableEntityTypes = "OrganizationHierarchy",
                 Source = null,
@@ -187,8 +187,24 @@ public static class ArtifactTypeSeeder_OrganizationHierarchy
                 Order = 2001,
                 Status = EntityStatus.Active,
                 IsDeleted = false
+            },
+            new ArtifactType
+            {
+                Name = "Products & Services Guidance",
+                ArtifactTypeCode = "Products_Services_Guidance",
+                ArtifactDataTypeId = documentDataTypeId,
+                Description = "Entity Products & Services Guidance Document",
+                Category = null,
+                ApplicableEntityTypes = "OrganizationHierarchy",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
+                IsUsedForCalculations = false,
+                IsUsedForAI = true,
+                Order = 2002,
+                Status = EntityStatus.Active,
+                IsDeleted = false
             }
         };
     }
 }
-

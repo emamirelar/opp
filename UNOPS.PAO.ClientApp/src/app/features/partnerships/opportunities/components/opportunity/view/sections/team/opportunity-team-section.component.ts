@@ -38,6 +38,8 @@ import {
   SimpleValue,
   OrganizationUnit,
   SuggestedOrgUnitsResponse,
+  EntityUserRolesByOrgUnitResponse,
+  EntityUserRoleGroupModel,
 } from '@shared/services/api/values.service';
 import { OpportunityService } from '../../../../../services/opportunity.service';
 import {
@@ -157,10 +159,18 @@ export class OpportunityTeamSectionComponent implements OnInit {
   readonly entityRoles = signal<SimpleValue[]>([]);
   readonly internalUsers = signal<SimpleValue[]>([]);
 
-  // Computed stakeholder count
-  readonly stakeholderCount = computed(() => {
-    return this.opportunity().stakeholders?.length || 0;
+  // Computed user-added stakeholders (non-auto-populated)
+  readonly userAddedStakeholders = computed(() => {
+    return this.opportunity().stakeholders?.filter((s) => !s.organizationHierarchyId) || [];
   });
+
+  // Raw auto-populated stakeholders from opportunity data (without user names)
+  private readonly rawAutoPopulatedStakeholders = computed(() => {
+    return this.opportunity().stakeholders?.filter((s) => !!s.organizationHierarchyId) || [];
+  });
+
+  // Enriched auto-populated stakeholders with user names (for viewing mode)
+  private readonly enrichedAutoPopulatedStakeholders = signal<OpportunityStakeholder[]>([]);
 
   // Suggested org units based on implementation countries
   suggestedOrgUnitIds = signal<number[]>([]);
@@ -169,6 +179,77 @@ export class OpportunityTeamSectionComponent implements OnInit {
 
   // Warning banner for Hub/Region/GPO org units
   showOrgUnitWarningBanner = signal<boolean>(false);
+
+  // Dynamically loaded auto-populated stakeholders from EntityUserRoles (when editing)
+  private readonly dynamicAutoPopulatedStakeholders = signal<OpportunityStakeholder[]>([]);
+  readonly loadingAutoPopulatedStakeholders = signal<boolean>(false);
+
+  // Displayed auto-populated stakeholders: uses dynamic when editing, enriched when viewing
+  readonly autoPopulatedStakeholders = computed(() => {
+    if (this.isEditing()) {
+      return this.dynamicAutoPopulatedStakeholders();
+    }
+    // Use enriched data if available, otherwise fall back to raw data
+    const enriched = this.enrichedAutoPopulatedStakeholders();
+    return enriched.length > 0 ? enriched : this.rawAutoPopulatedStakeholders();
+  });
+
+  // Getter for existing auto-populated stakeholders (used by startEditing)
+  readonly existingAutoPopulatedStakeholders = computed(() => {
+    const enriched = this.enrichedAutoPopulatedStakeholders();
+    return enriched.length > 0 ? enriched : this.rawAutoPopulatedStakeholders();
+  });
+
+  // Role display order for auto-populated stakeholders
+  private readonly roleDisplayOrder: string[] = [
+    'Region Director',
+    'Region Deputy Director',
+    'Hub Director',
+    'Hub Deputy Director',
+    'OrgUnit Director',
+    'OrgUnit Deputy Director',
+    'DoA1',
+    'DoA2',
+    'DoA3',
+    'DoA4',
+  ];
+
+  // Grouped auto-populated stakeholders by OrgUnit for compact display
+  readonly groupedAutoPopulatedStakeholders = computed(() => {
+    const stakeholders = this.autoPopulatedStakeholders();
+    const groups = new Map<string, OpportunityStakeholder[]>();
+
+    for (const stakeholder of stakeholders) {
+      const key = stakeholder.organizationHierarchyName || 'Unknown';
+      if (!groups.has(key)) {
+        groups.set(key, []);
+      }
+      groups.get(key)!.push(stakeholder);
+    }
+
+    // Sort stakeholders within each group by role display order
+    const getRoleOrder = (roleName: string): number => {
+      const index = this.roleDisplayOrder.indexOf(roleName);
+      return index === -1 ? 999 : index; // Unknown roles go to the end
+    };
+
+    // Convert to array of groups sorted by org unit name, with stakeholders sorted by role order
+    return Array.from(groups.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([orgUnitName, groupStakeholders]) => ({
+        orgUnitName,
+        stakeholders: groupStakeholders.sort(
+          (a, b) => getRoleOrder(a.entityRoleName) - getRoleOrder(b.entityRoleName)
+        ),
+      }));
+  });
+
+  // Computed stakeholder count (user-added + auto-populated)
+  readonly stakeholderCount = computed(() => {
+    const userAdded = this.userAddedStakeholders().length;
+    const autoPopulated = this.autoPopulatedStakeholders().length;
+    return userAdded + autoPopulated;
+  });
 
   // Relevant People signals
   private lastLoadedOpportunityId: number | null = null;
@@ -179,9 +260,15 @@ export class OpportunityTeamSectionComponent implements OnInit {
 
   constructor() {
     // Set up change detection on form controls
-    this.orgUnitControl.valueChanges.subscribe(() => {
+    this.orgUnitControl.valueChanges.subscribe((orgUnitId) => {
       if (this.isEditing()) {
         this.markAsChanged();
+        // Load auto-populated stakeholders when org unit changes
+        if (orgUnitId) {
+          this.loadAutoPopulatedStakeholders(orgUnitId);
+        } else {
+          this.dynamicAutoPopulatedStakeholders.set([]);
+        }
       }
     });
     this.initiativeTypeControl.valueChanges.subscribe(() => {
@@ -197,6 +284,56 @@ export class OpportunityTeamSectionComponent implements OnInit {
       if (opp && opp.id && opp.id !== this.lastLoadedOpportunityId) {
         this.lastLoadedOpportunityId = opp.id;
         this.loadRelevantPeople();
+      }
+    });
+
+    // Effect to enrich auto-populated stakeholders with user names when viewing
+    effect(() => {
+      const rawStakeholders = this.rawAutoPopulatedStakeholders();
+      const isEditing = this.isEditing();
+
+      // Only fetch user names when not editing and there are auto-populated stakeholders
+      if (!isEditing && rawStakeholders.length > 0) {
+        // Get unique org unit IDs
+        const orgUnitIds = [...new Set(rawStakeholders.map((s) => s.organizationHierarchyId).filter((id): id is number => id !== null))];
+
+        if (orgUnitIds.length > 0) {
+          this.loadingAutoPopulatedStakeholders.set(true);
+          this.valuesService.getEntityUserRolesByOrgUnits(orgUnitIds).subscribe({
+            next: (responses: EntityUserRolesByOrgUnitResponse[]) => {
+              this.loadingAutoPopulatedStakeholders.set(false);
+
+              // Create a map of orgUnitId -> roleId -> user names
+              const userNameMap = new Map<string, string>();
+              for (const response of responses) {
+                for (const group of response.roleGroups) {
+                  const key = `${response.organizationHierarchyId}-${group.entityRoleId}`;
+                  const userNames = group.users.map((u) => u.name).join(', ');
+                  userNameMap.set(key, userNames);
+                }
+              }
+
+              // Enrich stakeholders with user names
+              const enriched = rawStakeholders.map((s) => {
+                const key = `${s.organizationHierarchyId}-${s.entityRoleId}`;
+                const userName = userNameMap.get(key) || null;
+                return { ...s, userName };
+              });
+
+              this.enrichedAutoPopulatedStakeholders.set(enriched);
+              this.cdr.detectChanges();
+            },
+            error: () => {
+              this.loadingAutoPopulatedStakeholders.set(false);
+              // Fall back to raw stakeholders without user names
+              this.enrichedAutoPopulatedStakeholders.set([]);
+              this.cdr.detectChanges();
+            },
+          });
+        }
+      } else if (rawStakeholders.length === 0) {
+        // Clear enriched stakeholders when there are no raw stakeholders
+        this.enrichedAutoPopulatedStakeholders.set([]);
       }
     });
   }
@@ -226,6 +363,246 @@ export class OpportunityTeamSectionComponent implements OnInit {
     this.valuesService.getInternalUsers().subscribe({
       next: (users) => {
         this.internalUsers.set(users);
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  /**
+   * @description Load auto-populated stakeholders from EntityUserRoles.
+   * If the org unit is a GPO (name contains "GPO"), loads stakeholders from the
+   * normally responsible org units for each implementation country and their parent/grandparent.
+   * Otherwise, loads stakeholders from the selected OrgUnit type directly.
+   */
+  private loadAutoPopulatedStakeholders(orgUnitId: number): void {
+    const selectedUnit = this.organizationUnits().find((u) => u.id === orgUnitId);
+    if (!selectedUnit) {
+      this.dynamicAutoPopulatedStakeholders.set([]);
+      return;
+    }
+
+    // Check if the selected org unit is a GPO (name contains "GPO" in uppercase)
+    const isGpo = selectedUnit.name?.includes('GPO') ?? false;
+    const isHubOrRegion = selectedUnit.type === 'Hub' || selectedUnit.type === 'Region';
+
+    // Clear previous stakeholders and show loading indicator
+    this.dynamicAutoPopulatedStakeholders.set([]);
+    this.loadingAutoPopulatedStakeholders.set(true);
+
+    if (isGpo) {
+      // For GPO: Get stakeholders from the responsible org units for each implementation country
+      this.loadAutoPopulatedStakeholdersForGpo();
+    } else if (isHubOrRegion) {
+      // For Hub/Region (non-GPO): Get stakeholders from child org units that relate to implementation countries
+      this.loadAutoPopulatedStakeholdersForHubRegion(orgUnitId);
+    } else if (selectedUnit.type === 'OrgUnit') {
+      // For regular OrgUnit: Load stakeholders from the selected org unit
+      this.loadAutoPopulatedStakeholdersForOrgUnit(orgUnitId);
+    } else {
+      // For other types: No auto-population
+      this.loadingAutoPopulatedStakeholders.set(false);
+      this.dynamicAutoPopulatedStakeholders.set([]);
+    }
+  }
+
+  /**
+   * @description Load auto-populated stakeholders for GPO - gets stakeholders from
+   * the responsible org units for each implementation country and their parent/grandparent.
+   */
+  private loadAutoPopulatedStakeholdersForGpo(): void {
+    // Get implementation country IDs from the opportunity
+    const countryIds = this.opportunity().countries?.map((c) => c.countryId) ?? [];
+
+    if (countryIds.length === 0) {
+      this.loadingAutoPopulatedStakeholders.set(false);
+      this.dynamicAutoPopulatedStakeholders.set([]);
+      this.cdr.detectChanges();
+      return;
+    }
+
+    // First, get the org unit IDs for these countries (including parent/grandparent)
+    this.valuesService.getOrgUnitIdsForCountries(countryIds).subscribe({
+      next: (orgUnitIds: number[]) => {
+        if (!orgUnitIds || orgUnitIds.length === 0) {
+          this.loadingAutoPopulatedStakeholders.set(false);
+          this.dynamicAutoPopulatedStakeholders.set([]);
+          this.cdr.detectChanges();
+          return;
+        }
+
+        // Now get EntityUserRoles for all these org units
+        this.valuesService.getEntityUserRolesByOrgUnits(orgUnitIds).subscribe({
+          next: (responses: EntityUserRolesByOrgUnitResponse[]) => {
+            this.loadingAutoPopulatedStakeholders.set(false);
+
+            if (!responses || responses.length === 0) {
+              this.dynamicAutoPopulatedStakeholders.set([]);
+              this.cdr.detectChanges();
+              return;
+            }
+
+            // Create auto-populated stakeholders for each role group from each org unit
+            const autoStakeholders: OpportunityStakeholder[] = [];
+            for (const response of responses) {
+              if (!response.roleGroups || response.roleGroups.length === 0) continue;
+
+              for (const group of response.roleGroups) {
+                autoStakeholders.push({
+                  id: 0,
+                  opportunityId: this.opportunity().id!,
+                  entityRoleId: group.entityRoleId,
+                  entityRoleName: group.entityRoleName || '',
+                  isInternal: true,
+                  stakeholderType: 'Internal',
+                  userId: null,
+                  userName: group.users.map((u) => u.name).join(', ') || null,
+                  userEmail: null,
+                  organizationHierarchyId: response.organizationHierarchyId,
+                  organizationHierarchyName: response.organizationHierarchyName,
+                  isAutoPopulated: true,
+                  notes: null,
+                });
+              }
+            }
+
+            this.dynamicAutoPopulatedStakeholders.set(autoStakeholders);
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            this.loadingAutoPopulatedStakeholders.set(false);
+            this.dynamicAutoPopulatedStakeholders.set([]);
+            this.cdr.detectChanges();
+          },
+        });
+      },
+      error: () => {
+        this.loadingAutoPopulatedStakeholders.set(false);
+        this.dynamicAutoPopulatedStakeholders.set([]);
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  /**
+   * @description Load auto-populated stakeholders for Hub/Region - gets stakeholders from
+   * child org units that relate to at least one implementation country.
+   */
+  private loadAutoPopulatedStakeholdersForHubRegion(parentOrgUnitId: number): void {
+    // Get implementation country IDs from the opportunity
+    const countryIds = this.opportunity().countries?.map((c) => c.countryId) ?? [];
+
+    if (countryIds.length === 0) {
+      this.loadingAutoPopulatedStakeholders.set(false);
+      this.dynamicAutoPopulatedStakeholders.set([]);
+      this.cdr.detectChanges();
+      return;
+    }
+
+    // First, get the child org unit IDs that relate to these countries
+    this.valuesService.getChildOrgUnitIdsForHubRegion(parentOrgUnitId, countryIds).subscribe({
+      next: (orgUnitIds: number[]) => {
+        if (!orgUnitIds || orgUnitIds.length === 0) {
+          this.loadingAutoPopulatedStakeholders.set(false);
+          this.dynamicAutoPopulatedStakeholders.set([]);
+          this.cdr.detectChanges();
+          return;
+        }
+
+        // Now get EntityUserRoles for all these org units
+        this.valuesService.getEntityUserRolesByOrgUnits(orgUnitIds).subscribe({
+          next: (responses: EntityUserRolesByOrgUnitResponse[]) => {
+            this.loadingAutoPopulatedStakeholders.set(false);
+
+            if (!responses || responses.length === 0) {
+              this.dynamicAutoPopulatedStakeholders.set([]);
+              this.cdr.detectChanges();
+              return;
+            }
+
+            // Create auto-populated stakeholders for each role group from each org unit
+            const autoStakeholders: OpportunityStakeholder[] = [];
+            for (const response of responses) {
+              if (!response.roleGroups || response.roleGroups.length === 0) continue;
+
+              for (const group of response.roleGroups) {
+                autoStakeholders.push({
+                  id: 0,
+                  opportunityId: this.opportunity().id!,
+                  entityRoleId: group.entityRoleId,
+                  entityRoleName: group.entityRoleName || '',
+                  isInternal: true,
+                  stakeholderType: 'Internal',
+                  userId: null,
+                  userName: group.users.map((u) => u.name).join(', ') || null,
+                  userEmail: null,
+                  organizationHierarchyId: response.organizationHierarchyId,
+                  organizationHierarchyName: response.organizationHierarchyName,
+                  isAutoPopulated: true,
+                  notes: null,
+                });
+              }
+            }
+
+            this.dynamicAutoPopulatedStakeholders.set(autoStakeholders);
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            this.loadingAutoPopulatedStakeholders.set(false);
+            this.dynamicAutoPopulatedStakeholders.set([]);
+            this.cdr.detectChanges();
+          },
+        });
+      },
+      error: () => {
+        this.loadingAutoPopulatedStakeholders.set(false);
+        this.dynamicAutoPopulatedStakeholders.set([]);
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  /**
+   * @description Load auto-populated stakeholders for a specific OrgUnit type.
+   */
+  private loadAutoPopulatedStakeholdersForOrgUnit(orgUnitId: number): void {
+    this.valuesService.getEntityUserRolesByOrgUnits([orgUnitId]).subscribe({
+      next: (responses: EntityUserRolesByOrgUnitResponse[]) => {
+        this.loadingAutoPopulatedStakeholders.set(false);
+
+        // Get the first response (since we're only querying one org unit)
+        const response = responses && responses.length > 0 ? responses[0] : null;
+
+        if (!response || !response.roleGroups || response.roleGroups.length === 0) {
+          this.dynamicAutoPopulatedStakeholders.set([]);
+          this.cdr.detectChanges();
+          return;
+        }
+
+        // Create auto-populated stakeholders for each role group
+        const autoStakeholders: OpportunityStakeholder[] = response.roleGroups.map(
+          (group: EntityUserRoleGroupModel) => ({
+            id: 0,
+            opportunityId: this.opportunity().id!,
+            entityRoleId: group.entityRoleId,
+            entityRoleName: group.entityRoleName || '',
+            isInternal: true,
+            stakeholderType: 'Internal',
+            userId: null, // No specific user - auto-populated
+            userName: group.users.map((u) => u.name).join(', ') || null,
+            userEmail: null,
+            organizationHierarchyId: orgUnitId,
+            organizationHierarchyName: response.organizationHierarchyName,
+            isAutoPopulated: true,
+            notes: null,
+          })
+        );
+
+        this.dynamicAutoPopulatedStakeholders.set(autoStakeholders);
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.loadingAutoPopulatedStakeholders.set(false);
+        this.dynamicAutoPopulatedStakeholders.set([]);
         this.cdr.detectChanges();
       },
     });
@@ -376,6 +753,9 @@ export class OpportunityTeamSectionComponent implements OnInit {
       stakeholders: opp.stakeholders ? [...opp.stakeholders] : [],
     };
 
+    // Initialize dynamic auto-populated stakeholders with existing data
+    this.dynamicAutoPopulatedStakeholders.set(this.existingAutoPopulatedStakeholders());
+
     // Set form controls
     this.orgUnitControl.setValue(opp.responsibleOrgUnitId ?? null);
     this.initiativeTypeControl.setValue(opp.proposedInitiativeTypeId ?? null);
@@ -432,14 +812,31 @@ export class OpportunityTeamSectionComponent implements OnInit {
     const opp = this.opportunity();
     if (!opp || !opp.id) return;
 
+    // Get user-added stakeholders (non-auto-populated)
+    const userAddedStakeholders = (opp.stakeholders || [])
+      .filter((s) => !s.isAutoPopulated)
+      .map((s) => ({
+        userId: s.userId!,
+        entityRoleId: s.entityRoleId,
+        organizationHierarchyId: s.organizationHierarchyId ?? undefined,
+        notes: s.notes,
+      }));
+
+    // Get auto-populated stakeholders from the current org unit
+    const autoPopulated = this.autoPopulatedStakeholders().map((s) => ({
+      userId: undefined,
+      entityRoleId: s.entityRoleId,
+      organizationHierarchyId: s.organizationHierarchyId ?? undefined,
+      notes: s.notes,
+    }));
+
+    // Combine both
+    const allStakeholders = [...userAddedStakeholders, ...autoPopulated];
+
     const teamData = {
       responsibleOrgUnitId: this.orgUnitControl.value ?? undefined,
       proposedInitiativeTypeId: this.initiativeTypeControl.value ?? undefined,
-      stakeholders: opp.stakeholders?.map((s) => ({
-        userId: s.userId!,
-        entityRoleId: s.entityRoleId,
-        notes: s.notes,
-      })),
+      stakeholders: allStakeholders.length > 0 ? allStakeholders : undefined,
     };
 
     this.isSaving.set(true);
@@ -535,6 +932,10 @@ export class OpportunityTeamSectionComponent implements OnInit {
       this.orgUnitControl.setValue(opp.responsibleOrgUnitId ?? null);
       this.initiativeTypeControl.setValue(opp.proposedInitiativeTypeId ?? null);
     }
+
+    // Clear auto-populated stakeholders and reset loading state
+    this.dynamicAutoPopulatedStakeholders.set([]);
+    this.loadingAutoPopulatedStakeholders.set(false);
 
     this.isEditing.set(false);
     this.originalData = null;
@@ -655,6 +1056,9 @@ export class OpportunityTeamSectionComponent implements OnInit {
       entityRoleName: role.name,
       isInternal: true,
       stakeholderType: 'Internal',
+      organizationHierarchyId: null,
+      organizationHierarchyName: null,
+      isAutoPopulated: false,
       notes: null,
     };
 

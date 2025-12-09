@@ -48,6 +48,37 @@ export interface SuggestedOrgUnitsResponse {
 }
 
 /**
+ * @interface UserBasicModel
+ * @description Basic user information
+ */
+export interface UserBasicModel {
+  userId: number;
+  name: string | null;
+  email: string | null;
+}
+
+/**
+ * @interface EntityUserRoleGroupModel
+ * @description Group of users assigned to a specific entity role
+ */
+export interface EntityUserRoleGroupModel {
+  entityRoleId: number;
+  entityRoleName: string | null;
+  users: UserBasicModel[];
+}
+
+/**
+ * @interface EntityUserRolesByOrgUnitResponse
+ * @description Response model for entity user roles grouped by role for an organization hierarchy
+ */
+export interface EntityUserRolesByOrgUnitResponse {
+  organizationHierarchyId: number;
+  organizationHierarchyName: string | null;
+  organizationHierarchyType: string | null;
+  roleGroups: EntityUserRoleGroupModel[];
+}
+
+/**
  * @interface Output
  * @description Output model for deliverables with hierarchical UNOPS Products and Services List structure
  */
@@ -554,6 +585,46 @@ export class ValuesService {
   getSuggestedOrgUnits(countryIds: number[]): Observable<SuggestedOrgUnitsResponse> {
     const params = countryIds.map(id => `countryIds=${id}`).join('&');
     return this.http.get<SuggestedOrgUnitsResponse>(`${this.baseUrl}/suggested-org-units?${params}`);
+  }
+
+  /**
+   * @description Get entity user roles for multiple organization hierarchies.
+   * Used to auto-populate internal stakeholders when selecting OrgUnits.
+   * @param {number[]} organizationHierarchyIds - Array of organization hierarchy IDs
+   * @returns {Observable<EntityUserRolesByOrgUnitResponse[]>}
+   * @since 1.0.0
+   */
+  getEntityUserRolesByOrgUnits(organizationHierarchyIds: number[]): Observable<EntityUserRolesByOrgUnitResponse[]> {
+    return this.http.post<EntityUserRolesByOrgUnitResponse[]>(
+      `${this.baseUrl}/entity-user-roles-by-org-unit`,
+      organizationHierarchyIds
+    );
+  }
+
+  /**
+   * @description Get org unit IDs for countries including their parent and grandparent org units.
+   * Used when a GPO is selected to auto-populate stakeholders from country-responsible org units.
+   * @param {number[]} countryIds - Array of country IDs
+   * @returns {Observable<number[]>}
+   * @since 1.0.0
+   */
+  getOrgUnitIdsForCountries(countryIds: number[]): Observable<number[]> {
+    return this.http.post<number[]>(`${this.baseUrl}/org-unit-ids-for-countries`, countryIds);
+  }
+
+  /**
+   * @description Get child org unit IDs under a Hub/Region that relate to the given country IDs.
+   * Used when a Hub or Region is selected to auto-populate stakeholders from child org units.
+   * @param {number} parentOrgUnitId - The Hub/Region org unit ID
+   * @param {number[]} countryIds - Array of country IDs
+   * @returns {Observable<number[]>}
+   * @since 1.0.0
+   */
+  getChildOrgUnitIdsForHubRegion(parentOrgUnitId: number, countryIds: number[]): Observable<number[]> {
+    return this.http.post<number[]>(
+      `${this.baseUrl}/child-org-unit-ids-for-hub-region/${parentOrgUnitId}`,
+      countryIds
+    );
   }
 }
 

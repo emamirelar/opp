@@ -223,6 +223,12 @@ export interface OpportunityStakeholder {
   userId: number | null;
   userName: string | null;
   userEmail: string | null;
+  /** Organization Hierarchy ID - used for auto-populated stakeholders from EntityUserRoles */
+  organizationHierarchyId: number | null;
+  /** Organization Hierarchy Name - the name of the org unit for auto-populated stakeholders */
+  organizationHierarchyName: string | null;
+  /** Indicates if this stakeholder was auto-populated from EntityUserRoles. Cannot be edited/removed. */
+  isAutoPopulated: boolean;
   notes: string | null;
 }
 

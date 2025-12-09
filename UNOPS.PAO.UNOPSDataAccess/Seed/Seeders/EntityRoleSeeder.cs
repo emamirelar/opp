@@ -9,18 +9,30 @@ public class EntityRoleSeeder
 {
     public static async Task SeedEntityRolesAsync(UNOPSAppDbContext context)
     {
-        // Check if any EntityRoles exist for Opportunity entity
-        var existingRoles = await context.EntityRoles
-            .Where(er => er.EntityType == "Opportunity")
-            .AnyAsync();
+        await SeedOpportunityRolesAsync(context);
+        await SeedOrganizationHierarchyRolesAsync(context);
+    }
 
-        if (existingRoles)
+    /// <summary>
+    /// Adds a role only if it doesn't already exist (by EntityType and Name)
+    /// </summary>
+    private static async Task<bool> AddRoleIfNotExistsAsync(UNOPSAppDbContext context, EntityRole role)
+    {
+        var exists = await context.EntityRoles
+            .AnyAsync(er => er.EntityType == role.EntityType && er.Name == role.Name);
+
+        if (exists)
         {
-            Console.WriteLine("EntityRoles for Opportunity already exist. Skipping seed.");
-            return;
+            return false;
         }
 
-        var entityRoles = new List<EntityRole>
+        await context.EntityRoles.AddAsync(role);
+        return true;
+    }
+
+    private static async Task SeedOpportunityRolesAsync(UNOPSAppDbContext context)
+    {
+        var rolesToSeed = new List<EntityRole>
         {
             new EntityRole
             {
@@ -79,10 +91,160 @@ public class EntityRoleSeeder
             }
         };
 
-        await context.EntityRoles.AddRangeAsync(entityRoles);
-        await context.SaveChangesAsync();
+        var addedCount = 0;
+        foreach (var role in rolesToSeed)
+        {
+            if (await AddRoleIfNotExistsAsync(context, role))
+            {
+                addedCount++;
+            }
+        }
 
-        Console.WriteLine($"Seeded {entityRoles.Count} EntityRoles for Opportunity entity.");
+        if (addedCount > 0)
+        {
+            await context.SaveChangesAsync();
+            Console.WriteLine($"Seeded {addedCount} new EntityRoles for Opportunity entity.");
+        }
+        else
+        {
+            Console.WriteLine("All EntityRoles for Opportunity already exist. Skipping seed.");
+        }
+    }
+
+    private static async Task SeedOrganizationHierarchyRolesAsync(UNOPSAppDbContext context)
+    {
+        var rolesToSeed = new List<EntityRole>
+        {
+            new EntityRole
+            {
+                EntityType = "OrganizationHierarchy",
+                Name = "Region Director",
+                Description = "Director responsible for overseeing the entire region",
+                IsInternal = true,
+                AllowsMultiple = true,
+                Status = EntityStatus.Active,
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = 1 // System user
+            },
+            new EntityRole
+            {
+                EntityType = "OrganizationHierarchy",
+                Name = "Region Deputy Director",
+                Description = "Deputy Director supporting the Region Director",
+                IsInternal = true,
+                AllowsMultiple = true,
+                Status = EntityStatus.Active,
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = 1 // System user
+            },
+            new EntityRole
+            {
+                EntityType = "OrganizationHierarchy",
+                Name = "Hub Director",
+                Description = "Director responsible for overseeing a hub",
+                IsInternal = true,
+                AllowsMultiple = true,
+                Status = EntityStatus.Active,
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = 1 // System user
+            },
+            new EntityRole
+            {
+                EntityType = "OrganizationHierarchy",
+                Name = "Hub Deputy Director",
+                Description = "Deputy Director supporting the Hub Director",
+                IsInternal = true,
+                AllowsMultiple = true,
+                Status = EntityStatus.Active,
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = 1 // System user
+            },
+            new EntityRole
+            {
+                EntityType = "OrganizationHierarchy",
+                Name = "OrgUnit Director",
+                Description = "Director responsible for overseeing an organizational unit",
+                IsInternal = true,
+                AllowsMultiple = true,
+                Status = EntityStatus.Active,
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = 1 // System user
+            },
+            new EntityRole
+            {
+                EntityType = "OrganizationHierarchy",
+                Name = "OrgUnit Deputy Director",
+                Description = "Deputy Director supporting the OrgUnit Director",
+                IsInternal = true,
+                AllowsMultiple = true,
+                Status = EntityStatus.Active,
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = 1 // System user
+            },
+            new EntityRole
+            {
+                EntityType = "OrganizationHierarchy",
+                Name = "DoA1",
+                Description = "Delegation of Authority Level 1",
+                IsInternal = true,
+                AllowsMultiple = true,
+                Status = EntityStatus.Active,
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = 1 // System user
+            },
+            new EntityRole
+            {
+                EntityType = "OrganizationHierarchy",
+                Name = "DoA2",
+                Description = "Delegation of Authority Level 2",
+                IsInternal = true,
+                AllowsMultiple = true,
+                Status = EntityStatus.Active,
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = 1 // System user
+            },
+            new EntityRole
+            {
+                EntityType = "OrganizationHierarchy",
+                Name = "DoA3",
+                Description = "Delegation of Authority Level 3",
+                IsInternal = true,
+                AllowsMultiple = true,
+                Status = EntityStatus.Active,
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = 1 // System user
+            },
+            new EntityRole
+            {
+                EntityType = "OrganizationHierarchy",
+                Name = "DoA4",
+                Description = "Delegation of Authority Level 4",
+                IsInternal = true,
+                AllowsMultiple = true,
+                Status = EntityStatus.Active,
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = 1 // System user
+            }
+        };
+
+        var addedCount = 0;
+        foreach (var role in rolesToSeed)
+        {
+            if (await AddRoleIfNotExistsAsync(context, role))
+            {
+                addedCount++;
+            }
+        }
+
+        if (addedCount > 0)
+        {
+            await context.SaveChangesAsync();
+            Console.WriteLine($"Seeded {addedCount} new EntityRoles for OrganizationHierarchy entity.");
+        }
+        else
+        {
+            Console.WriteLine("All EntityRoles for OrganizationHierarchy already exist. Skipping seed.");
+        }
     }
 }
 
