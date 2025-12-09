@@ -117,6 +117,7 @@ export class OpportunityWhenSectionComponent implements OnInit {
   targetSigningDateSignal = signal<Date | null>(null);
   implementationStartDateSignal = signal<Date | null>(null);
   targetDeliveryDateSignal = signal<Date | null>(null);
+  submissionDeadlineSignal = signal<Date | null>(null);
 
   // Track if implementation start date has been explicitly set by user
   readonly isImplementationStartDateExplicitlySet = signal<boolean>(false);
@@ -130,6 +131,7 @@ export class OpportunityWhenSectionComponent implements OnInit {
    * @description Predefined duration options for implementation period
    */
   readonly durationOptions: DurationOption[] = [
+    { label: '3 months', value: 3 },
     { label: '6 months', value: 6 },
     { label: '12 months', value: 12 },
     { label: '18 months', value: 18 },
@@ -544,6 +546,26 @@ export class OpportunityWhenSectionComponent implements OnInit {
 
   // Note: Signing date validation removed per requirements - date can be past or future
 
+  /**
+   * @description Computed validation for submission deadline (must be before or equal to target signing date)
+   * @returns {boolean} True if submission deadline is invalid (after signing date)
+   */
+  readonly isSubmissionDeadlineAfterSigningDate = computed(() => {
+    const signingDate = this.targetSigningDateSignal();
+    const submissionDeadline = this.submissionDeadlineSignal();
+    
+    if (!signingDate || !submissionDeadline) return false;
+    
+    // Normalize both dates to midnight for date-only comparison
+    const signing = new Date(signingDate);
+    signing.setHours(0, 0, 0, 0);
+    
+    const submission = new Date(submissionDeadline);
+    submission.setHours(0, 0, 0, 0);
+    
+    // Error if submission deadline is strictly after signing date
+    return submission.getTime() > signing.getTime();
+  });
 
   /**
    * @description Computed validation for delivery date (must be after implementation start date)
@@ -576,6 +598,7 @@ export class OpportunityWhenSectionComponent implements OnInit {
   readonly hasDateValidationErrors = computed(() => {
     return this.isImplementationStartBeforeSigningDate() || 
            this.isDeliveryDateBeforeImplementationStart() ||
+           this.isSubmissionDeadlineAfterSigningDate() ||
            this.hasDeliverableDateErrors();
   });
 
@@ -755,6 +778,12 @@ export class OpportunityWhenSectionComponent implements OnInit {
         this.markAsChanged();
       }
     });
+    this.submissionDeadlineControl.valueChanges.subscribe((value) => {
+      this.submissionDeadlineSignal.set(value);
+      if (this.isEditing()) {
+        this.markAsChanged();
+      }
+    });
   }
 
   ngOnInit(): void {
@@ -780,7 +809,9 @@ export class OpportunityWhenSectionComponent implements OnInit {
     this.isSigningDateFirmControl.setValue(opp.isTargetSigningDateFirm || false);
     this.signingDateNotesControl.setValue(opp.signingDateNotes || null);
     if (opp.submissionDeadline) {
-      this.submissionDeadlineControl.setValue(new Date(opp.submissionDeadline));
+      const submissionDate = new Date(opp.submissionDeadline);
+      this.submissionDeadlineControl.setValue(submissionDate);
+      this.submissionDeadlineSignal.set(submissionDate);
     }
   }
 
@@ -812,6 +843,7 @@ export class OpportunityWhenSectionComponent implements OnInit {
     this.signingDateNotesControl.setValue(opp.signingDateNotes || null);
     const submissionDate = opp.submissionDeadline ? new Date(opp.submissionDeadline) : null;
     this.submissionDeadlineControl.setValue(submissionDate);
+    this.submissionDeadlineSignal.set(submissionDate);
 
     // Track if implementation start date was explicitly set
     this.isImplementationStartDateExplicitlySet.set(!!opp.implementationStartDate);
@@ -853,6 +885,11 @@ export class OpportunityWhenSectionComponent implements OnInit {
       if (this.isImplementationStartBeforeSigningDate()) {
         this.feedbackService.showErrorToast({
           detail: this.translateService.instant('message.opportunity.implementationStartMustBeAfterSigningDate'),
+          summary: this.translateService.instant('message.validation')
+        });
+      } else if (this.isSubmissionDeadlineAfterSigningDate()) {
+        this.feedbackService.showErrorToast({
+          detail: this.translateService.instant('message.opportunity.submissionDeadlineMustBeBeforeSigningDate'),
           summary: this.translateService.instant('message.validation')
         });
       } else if (this.isDeliveryDateBeforeImplementationStart()) {
@@ -975,6 +1012,7 @@ export class OpportunityWhenSectionComponent implements OnInit {
     this.signingDateNotesControl.setValue(opp.signingDateNotes || null);
     const submissionDate = opp.submissionDeadline ? new Date(opp.submissionDeadline) : null;
     this.submissionDeadlineControl.setValue(submissionDate);
+    this.submissionDeadlineSignal.set(submissionDate);
 
     // Clear local date state
     this.deliverableDates.set(new Map());
@@ -1157,6 +1195,33 @@ export class OpportunityWhenSectionComponent implements OnInit {
   }
 
   /**
+   * Handle signing date manual change
+   * @description Clears duration calculator selection when user manually changes the signing date
+   */
+  onSigningDateManualChange(): void {
+    // Clear duration calculator selection to prevent auto-adjustments
+    this.resetDurationSelection();
+    // Still auto-populate implementation start date if not explicitly set
+    const signingDate = this.targetSigningDateControl.value;
+    if (signingDate && !this.isImplementationStartDateExplicitlySet()) {
+      this.implementationStartDateControl.setValue(signingDate);
+    }
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Handle implementation start date manual change
+   * @description Marks as explicitly set and clears duration calculator selection
+   */
+  onImplementationStartDateManualChange(): void {
+    // Mark as explicitly set when user changes it
+    this.isImplementationStartDateExplicitlySet.set(true);
+    // Clear duration calculator selection to prevent auto-adjustments
+    this.resetDurationSelection();
+    this.cdr.detectChanges();
+  }
+
+  /**
    * Handle implementation start date change
    * @description Marks the implementation start date as explicitly set and recalculates delivery date
    */
@@ -1174,6 +1239,16 @@ export class OpportunityWhenSectionComponent implements OnInit {
       this.calculateDeliveryDateFromDuration(customDuration);
     }
 
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Handle delivery date manual change
+   * @description Clears duration calculator selection when user manually changes the delivery date
+   */
+  onDeliveryDateManualChange(): void {
+    // Clear duration calculator selection to prevent auto-adjustments
+    this.resetDurationSelection();
     this.cdr.detectChanges();
   }
 

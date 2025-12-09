@@ -154,5 +154,12 @@ public class Opportunity : ModifiableDeletableEntity
     
     [NotMapped]
     public virtual ICollection<EntityRolePerson>? RoleAssignments { get; set; }
+    
+    // Audit user navigation properties
+    [ForeignKey(nameof(CreatedBy))]
+    public virtual PAOUser? CreatedByUser { get; set; }
+    
+    [ForeignKey(nameof(LastModifiedBy))]
+    public virtual PAOUser? LastModifiedByUser { get; set; }
 }
 

@@ -154,8 +154,26 @@ export class OpportunityOverviewSectionComponent {
     const opp = this.opportunity();
     if (!opp || !opp.id) return;
 
+    // Validate opportunity name
+    const name = this.nameControl.value?.trim();
+    if (!name || name === '') {
+      this.feedbackService.showErrorToast({
+        detail: this.translateService.instant('message.validation.opportunityNameRequired'),
+        summary: this.translateService.instant('message.validationError')
+      });
+      return;
+    }
+
+    if (name.length > 255) {
+      this.feedbackService.showErrorToast({
+        detail: this.translateService.instant('message.validation.opportunityNameTooLong'),
+        summary: this.translateService.instant('message.validationError')
+      });
+      return;
+    }
+
     const overviewData = {
-      name: this.nameControl.value ?? undefined,
+      name: name,
       description: this.descriptionControl.value ?? undefined
     };
 

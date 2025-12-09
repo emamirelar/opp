@@ -9,6 +9,40 @@
   min-height: calc(100vh - 64px);
 }
 
+// Custom scrollbar styling for better visibility
+::ng-deep {
+  // Content scroll container
+  .overflow-y-auto {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 95, 136, 0.3) rgba(0, 0, 0, 0.05);
+
+    // Webkit browsers (Chrome, Safari, Edge)
+    &::-webkit-scrollbar {
+      width: 12px;
+      height: 12px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 10px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 95, 136, 0.3);
+      border-radius: 10px;
+      border: 2px solid rgba(0, 0, 0, 0.05);
+      
+      &:hover {
+        background: rgba(0, 95, 136, 0.5);
+      }
+      
+      &:active {
+        background: rgba(0, 95, 136, 0.7);
+      }
+    }
+  }
+}
+
 // Smooth transitions for interactive elements
 .bg-white,
 p-card,
@@ -160,4 +194,3 @@ a:hover i {
   position: relative;
   z-index: 2;
 }
-

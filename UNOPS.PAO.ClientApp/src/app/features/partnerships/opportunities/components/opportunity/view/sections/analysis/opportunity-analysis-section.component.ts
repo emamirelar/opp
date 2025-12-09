@@ -188,14 +188,14 @@ export class OpportunityAnalysisSectionComponent {
   }
 
   /**
-   * @description Handle View DST Analysis action
-   * Scrolls to the DST section on the page
+   * @description Handle View Risks Analysis action
+   * Scrolls to the Risks section on the page
    */
   onViewDSTAnalysis(): void {
-    // Scroll to DST section
-    const dstSection = document.getElementById('section-dst');
-    if (dstSection) {
-      dstSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Scroll to Risks section
+    const risksSection = document.getElementById('section-risks');
+    if (risksSection) {
+      risksSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }
 

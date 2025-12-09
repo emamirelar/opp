@@ -469,9 +469,12 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
     // Refresh the listview
     window.dispatchEvent(new CustomEvent('refresh-listview'));
     
-    // Navigate to the new opportunity detail page
+    // Open the new opportunity in a new tab if we have an ID
     if (opportunity && opportunity.id) {
-      this.router.navigate(['/partnerships/opportunities', opportunity.id]);
+      const url = this.router.serializeUrl(
+        this.router.createUrlTree(['/partnerships/opportunities', opportunity.id])
+      );
+      window.open(`/#${url}`, '_blank');
     }
   }
 

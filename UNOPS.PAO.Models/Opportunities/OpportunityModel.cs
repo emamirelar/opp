@@ -1,3 +1,4 @@
+using UNOPS.PAO.Models.OrganizationUnits;
 using UNOPS.PAO.Models.Shared;
 
 namespace UNOPS.PAO.Models;
@@ -13,6 +14,12 @@ public class OpportunityModel
     public string? WorkflowStageName { get; set; }
     public int? ResponsibleOrgUnitId { get; set; }
     public string? ResponsibleOrgUnitName { get; set; }
+    
+    /// <summary>
+    /// Full organization unit model for the responsible org unit (includes artifacts)
+    /// </summary>
+    public OrganizationHierarchyModel? ResponsibleOrgUnit { get; set; }
+    
     public int? ProposedInitiativeTypeId { get; set; }
     public string? ProposedInitiativeTypeName { get; set; }
     public decimal? InitiativeBudgetUSD { get; set; }
