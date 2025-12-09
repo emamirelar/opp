@@ -99,7 +99,9 @@ public class OpportunityManager : IOpportunityManager
             "Countries.Country",
             "SDGs.SDG",
             "SDGs.Targets.SDGTarget",
-            "SDGs.Targets.Indicators.SDGIndicator"
+            "SDGs.Targets.Indicators.SDGIndicator",
+            "CreatedByUser.UserProfile",
+            "LastModifiedByUser.UserProfile"
         };
 
         var entity = await opportunityRepository.GetByIdAsync(id, includes);
@@ -837,7 +839,39 @@ public class OpportunityManager : IOpportunityManager
                 .ToList();
         }
 
-        // Update Stakeholders
+        // Note: Internal stakeholders are now managed in the Team section (UpdateTeamSectionAsync)
+
+        await opportunityRepository.UpdateAsync(entity);
+
+        // Reload with all includes for complete response
+        return await GetOpportunityAsync(entity.Id) ?? throw new InvalidOperationException("Failed to reload opportunity after update");
+    }
+
+    public async Task<OpportunityModel> UpdateTeamSectionAsync(int id, TeamSectionRequest request)
+    {
+        var entity = await opportunityRepository.GetByIdAsync(id, new[]
+        {
+            nameof(Opportunity.Stakeholders)
+        });
+
+        if (entity == null)
+        {
+            throw new KeyNotFoundException($"Opportunity with ID {id} not found");
+        }
+
+        // Update Responsible Org Unit
+        if (request.ResponsibleOrgUnitId.HasValue)
+        {
+            entity.ResponsibleOrgUnitId = request.ResponsibleOrgUnitId.Value;
+        }
+
+        // Update Initiative Type
+        if (request.ProposedInitiativeTypeId.HasValue)
+        {
+            entity.ProposedInitiativeTypeId = request.ProposedInitiativeTypeId.Value;
+        }
+
+        // Update Internal Stakeholders (Team & Stakeholders)
         if (request.Stakeholders != null)
         {
             // Get entity roles to check AllowsMultiple property
@@ -875,38 +909,11 @@ public class OpportunityManager : IOpportunityManager
                     OpportunityId = id,
                     UserId = s.UserId,
                     EntityRoleId = s.EntityRoleId,
-                    IsInternal = true, // Internal stakeholders only for now
+                    IsInternal = true, // Internal stakeholders only
                     StakeholderType = "Internal",
                     Notes = s.Notes
                 })
                 .ToList();
-        }
-
-        await opportunityRepository.UpdateAsync(entity);
-
-        // Reload with all includes for complete response
-        return await GetOpportunityAsync(entity.Id) ?? throw new InvalidOperationException("Failed to reload opportunity after update");
-    }
-
-    public async Task<OpportunityModel> UpdateTeamSectionAsync(int id, TeamSectionRequest request)
-    {
-        var entity = await opportunityRepository.GetByIdAsync(id);
-
-        if (entity == null)
-        {
-            throw new KeyNotFoundException($"Opportunity with ID {id} not found");
-        }
-
-        // Update Responsible Org Unit
-        if (request.ResponsibleOrgUnitId.HasValue)
-        {
-            entity.ResponsibleOrgUnitId = request.ResponsibleOrgUnitId.Value;
-        }
-
-        // Update Initiative Type
-        if (request.ProposedInitiativeTypeId.HasValue)
-        {
-            entity.ProposedInitiativeTypeId = request.ProposedInitiativeTypeId.Value;
         }
 
         await opportunityRepository.UpdateAsync(entity);

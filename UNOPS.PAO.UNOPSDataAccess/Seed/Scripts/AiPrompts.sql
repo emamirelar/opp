@@ -2071,7 +2071,7 @@ Extract 5-8 risk-related keywords that would help identify similar project risks
 1. **Predefined High Risks**: Official UNOPS EAC (Engagement Acceptance Checklist) high-risk items
 2. **Similar Project Risks**: Risks from similar past projects found via semantic search
 
-**CRITICAL - RECOMMENDATIONS ONLY (AC4)**:
+**CRITICAL - RECOMMENDATIONS ONLY**:
 These are RECOMMENDATIONS for the user to review and decide whether to add. You are NOT auto-adding any risks.
 - The user MUST intentionally choose to add each risk to the opportunity register
 - Your job is to FLAG risks that may apply and explain WHY they are relevant
@@ -2118,7 +2118,7 @@ When analyzing the opportunity, check for these triggers and STRONGLY FLAG them 
 - **Technical**: Complexity, infrastructure limitations, expertise gaps
 
 **OUTPUT FORMAT**:
-Return a JSON array with 5-8 risks. Each risk MUST have:
+Return a JSON array with maximum of 10 risks. Each risk MUST have:
 - **title**: Clear, concise risk title (max 100 characters)
 - **description**: WHY this risk applies to THIS opportunity - be specific! Include triggering data (2-3 sentences)
 - **recommendation**: Specific, actionable mitigation steps if user decides to add this risk (2-3 sentences)
@@ -2156,7 +2156,7 @@ Return a JSON array with 5-8 risks. Each risk MUST have:
 ```
 
 **CRITICAL RULES**:
-1. Return 5-8 risks (prioritize predefined high risks when triggers are detected)
+1. Return 10 risks maximum (prioritize predefined high risks when triggers are detected)
 2. Each risk description MUST explain WHY it applies to THIS specific opportunity
 3. ALWAYS include oupQuestionId when selecting from predefined high risks
 4. Set confidenceLevel >= 80 ONLY when there is strong evidence (e.g., non-USD currency detected, draft partner status, fragile country)
@@ -2188,7 +2188,7 @@ The user has dismissed these recommendations. Do NOT include them again:
 1. First, check if any predefined high risks clearly apply based on opportunity data (especially currency, partner status, country risks)
 2. Then, select relevant risks from similar projects
 3. Ensure NO duplicates with existing risks or dismissed recommendations
-4. Return 5-8 most relevant risks with proper oupQuestionId for predefined ones
+4. Return maximum of 10 most relevant risks with proper oupQuestionId for predefined ones
 
 Return ONLY a valid JSON array.',
         NOW(),
@@ -3383,7 +3383,7 @@ CRITICAL: misalignmentItems must be array of strings NOT objects. Empty array if
 
 ## 1. Context and Challenge(s)
 
-- **(a) Unit and Opportunity Developer:** [Name, Position from opportunity details. DO NOT ASSUME ANYTHING. ONLY LIST THE UNIT AND OPPORTUNITY DEVELOPER THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
+- **(a) Unit and Opportunity Manager:** [Responsible Organizational Unit, Opportunity Manager Name from opportunity details. DO NOT ASSUME ANYTHING. ONLY LIST THE UNIT AND OPPORTUNITY DEVELOPER THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
 - **(b) Location:** [Country(ies), Region(s), District(s) from opportunity details. Describe the context (e.g., socio-economic situation, environmental factors). DO NOT ASSUME ANYTHING. ONLY LIST THE LOCATION THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
 - **(c) Context and Challenge(s):** [Describe the key challenges from the Challenges field. Be specific and quantify the problem where possible. DO NOT ASSUME ANYTHING. ONLY LIST THE CHALLENGES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
 

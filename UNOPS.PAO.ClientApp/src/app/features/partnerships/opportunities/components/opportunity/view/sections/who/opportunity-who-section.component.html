@@ -830,69 +830,8 @@
         </div>
       }
     </div>
-
-    <!-- Team & Stakeholders -->
-    <div>
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="text-sm font-semibold text-unops-secondary flex items-center gap-2">
-          <i class="pi pi-users text-unops-primary text-base"></i>
-          <span>{{ 'label.opportunity.teamStakeholders' | translate }} ({{ stakeholderCount() }})</span>
-        </h3>
-        @if (isEditing()) {
-          <p-button
-            [label]="'button.add' | translate"
-            icon="pi pi-plus"
-            size="small"
-            [text]="true"
-            (onClick)="openAddStakeholderDialog()"
-          />
-        }
-      </div>
-      @if (stakeholderCount() > 0) {
-        @for (stakeholder of opportunity().stakeholders; track stakeholder.id; let i = $index) {
-          <div class="bg-unops-surface-secondary rounded-unops-lg p-3 mb-2 border border-unops-neutral-300 shadow-unops-sm">
-            <div class="flex items-start justify-between">
-              <div class="flex items-center gap-3 flex-1">
-                <p-avatar
-                  [label]="stakeholder.userName?.charAt(0) || '?'"
-                  shape="circle"
-                  styleClass="bg-blue-100 text-blue-600"
-                />
-                <div class="flex-1">
-                  <div class="font-semibold text-unops-secondary">{{ stakeholder.userName }}</div>
-                  <div class="text-sm text-unops-primary">{{ stakeholder.entityRoleName }}</div>
-                </div>
-              </div>
-              @if (isEditing()) {
-                <div class="flex items-center gap-2">
-                  <p-button
-                    icon="pi pi-pencil"
-                    size="small"
-                    [text]="true"
-                    [rounded]="true"
-                    severity="secondary"
-                    (onClick)="editStakeholder(i)"
-                  />
-                  <p-button
-                    icon="pi pi-trash"
-                    size="small"
-                    [text]="true"
-                    [rounded]="true"
-                    severity="danger"
-                    (onClick)="removeStakeholder(i)"
-                  />
-                </div>
-              }
-            </div>
-          </div>
-        }
-      } @else {
-        <div class="text-center py-8 text-unops-neutral-500">
-          <i class="pi pi-users text-4xl mb-3 text-unops-neutral-400"></i>
-          <p>{{ 'message.noStakeholders' | translate }}</p>
-        </div>
-      }
-    </div>
+    
+    <!-- Note: Internal Team & Stakeholders section has been moved to the Team section -->
     
     <!-- External Stakeholders Section -->
     <div class="mt-6">
@@ -1154,85 +1093,7 @@
   </ng-template>
 </p-dialog>
 
-<!-- Team & Stakeholders Dialog -->
-<p-dialog
-  [header]="isEditingStakeholder() ? ('title.editStakeholder' | translate) : ('title.addStakeholder' | translate)"
-  [(visible)]="showStakeholderDialog"
-  [modal]="true"
-  [appendTo]="'body'"
-  [style]="{ width: '35rem' }"
->
-  @if (showStakeholderValidationError()) {
-    <p-message severity="error" icon="pi pi-info-circle" styleClass="mb-4 w-full">
-      {{ 'message.validation.stakeholderRequired' | translate }}
-    </p-message>
-  }
-
-  <div class="space-y-4">
-    <!-- User Selection -->
-    <div>
-      <p-floatlabel variant="on">
-        <p-select
-          id="stakeholderUser"
-          [formControl]="userControl"
-          [options]="internalUsers()"
-          optionLabel="name"
-          [filter]="true"
-          filterBy="name"
-          [showClear]="true"
-          [appendTo]="'body'"
-          [virtualScroll]="true"
-          [virtualScrollItemSize]="38"
-          class="w-full"
-        />
-        <label for="stakeholderUser">{{ 'label.user' | translate }} *</label>
-      </p-floatlabel>
-      @if (!userControl.value && showStakeholderValidationError()) {
-        <p-message severity="error" variant="simple" styleClass="mt-2">
-          {{ 'message.validation.userRequired' | translate }}
-        </p-message>
-      }
-    </div>
-
-    <!-- Role Selection -->
-    <div>
-      <p-floatlabel variant="on">
-        <p-select
-          id="stakeholderRole"
-          [formControl]="roleControl"
-          [options]="entityRoles()"
-          optionLabel="name"
-          [filter]="true"
-          filterBy="name"
-          [showClear]="true"
-          [appendTo]="'body'"
-          [virtualScroll]="true"
-          [virtualScrollItemSize]="38"
-          class="w-full"
-        />
-        <label for="stakeholderRole">{{ 'label.role' | translate }} *</label>
-      </p-floatlabel>
-      @if (!roleControl.value && showStakeholderValidationError()) {
-        <p-message severity="error" variant="simple" styleClass="mt-2">
-          {{ 'message.validation.roleRequired' | translate }}
-        </p-message>
-      }
-    </div>
-  </div>
-
-  <ng-template pTemplate="footer">
-    <p-button
-      [label]="'button.cancel' | translate"
-      severity="secondary"
-      (onClick)="cancelStakeholderDialog()"
-    />
-    <p-button
-      [label]="'button.confirm' | translate"
-      severity="primary"
-      (onClick)="confirmStakeholderDialog()"
-    />
-  </ng-template>
-</p-dialog>
+<!-- Note: Internal Team & Stakeholders dialog has been moved to the Team section -->
 
 <!-- External Stakeholder Dialog -->
 <p-dialog

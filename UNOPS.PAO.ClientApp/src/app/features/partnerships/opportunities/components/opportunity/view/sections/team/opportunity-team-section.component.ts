@@ -27,6 +27,10 @@ import { ChipModule } from 'primeng/chip';
 import { TooltipModule } from 'primeng/tooltip';
 import { TagModule } from 'primeng/tag';
 import { AvatarModule } from 'primeng/avatar';
+import { DialogModule } from 'primeng/dialog';
+import { MessageModule } from 'primeng/message';
+import { FloatLabelModule } from 'primeng/floatlabel';
+import { DividerModule } from 'primeng/divider';
 
 // Services and Models
 import {
@@ -38,6 +42,7 @@ import {
 import { OpportunityService } from '../../../../../services/opportunity.service';
 import {
   Opportunity,
+  OpportunityStakeholder,
   RelevantPerson,
   RelevantPeopleResponse,
 } from '@shared/models/opportunity.model';
@@ -77,6 +82,10 @@ import { FeedbackDialogService } from '@shared/services/ui';
     TooltipModule,
     TagModule,
     AvatarModule,
+    DialogModule,
+    MessageModule,
+    FloatLabelModule,
+    DividerModule,
   ],
   templateUrl: './opportunity-team-section.component.html',
   styleUrls: ['./opportunity-team-section.component.scss'],
@@ -126,6 +135,7 @@ export class OpportunityTeamSectionComponent implements OnInit {
   private originalData: {
     responsibleOrgUnitId?: number;
     proposedInitiativeTypeId?: number;
+    stakeholders?: OpportunityStakeholder[];
   } | null = null;
   private hasUnsavedChanges = false;
 
@@ -133,9 +143,24 @@ export class OpportunityTeamSectionComponent implements OnInit {
   orgUnitControl = new FormControl<number | null>(null);
   initiativeTypeControl = new FormControl<number | null>(null);
 
+  // Stakeholder dialog state
+  readonly showStakeholderDialog = signal(false);
+  readonly showStakeholderValidationError = signal(false);
+  readonly isEditingStakeholder = signal(false);
+  readonly editingStakeholderIndex = signal(-1);
+  readonly userControl = new FormControl<SimpleValue | null>(null);
+  readonly roleControl = new FormControl<SimpleValue | null>(null);
+
   // Dropdown data
   organizationUnits = signal<OrganizationUnit[]>([]);
   initiativeTypes = signal<SimpleValue[]>([]);
+  readonly entityRoles = signal<SimpleValue[]>([]);
+  readonly internalUsers = signal<SimpleValue[]>([]);
+
+  // Computed stakeholder count
+  readonly stakeholderCount = computed(() => {
+    return this.opportunity().stakeholders?.length || 0;
+  });
 
   // Suggested org units based on implementation countries
   suggestedOrgUnitIds = signal<number[]>([]);
@@ -178,6 +203,32 @@ export class OpportunityTeamSectionComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadDropdownData();
+    this.loadEntityRoles();
+    this.loadInternalUsers();
+  }
+
+  /**
+   * @description Load entity roles for Opportunity
+   */
+  private loadEntityRoles(): void {
+    this.valuesService.getEntityRoles('Opportunity').subscribe({
+      next: (roles) => {
+        this.entityRoles.set(roles);
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  /**
+   * @description Load internal users
+   */
+  private loadInternalUsers(): void {
+    this.valuesService.getInternalUsers().subscribe({
+      next: (users) => {
+        this.internalUsers.set(users);
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   /**
@@ -322,6 +373,7 @@ export class OpportunityTeamSectionComponent implements OnInit {
     this.originalData = {
       responsibleOrgUnitId: opp.responsibleOrgUnitId ?? undefined,
       proposedInitiativeTypeId: opp.proposedInitiativeTypeId ?? undefined,
+      stakeholders: opp.stakeholders ? [...opp.stakeholders] : [],
     };
 
     // Set form controls
@@ -383,40 +435,45 @@ export class OpportunityTeamSectionComponent implements OnInit {
     const teamData = {
       responsibleOrgUnitId: this.orgUnitControl.value ?? undefined,
       proposedInitiativeTypeId: this.initiativeTypeControl.value ?? undefined,
+      stakeholders: opp.stakeholders?.map((s) => ({
+        userId: s.userId!,
+        entityRoleId: s.entityRoleId,
+        notes: s.notes,
+      })),
     };
 
     this.isSaving.set(true);
-    this.opportunityService
-      .updateOpportunityTeam(opp.id, teamData)
-      .subscribe({
-        next: (fullUpdatedOpportunity) => {
-          this.isSaving.set(false);
-          this.isEditing.set(false);
-          this.originalData = null;
-          this.hasUnsavedChanges = false;
+    this.opportunityService.updateOpportunityTeam(opp.id, teamData).subscribe({
+      next: (fullUpdatedOpportunity) => {
+        this.isSaving.set(false);
+        this.isEditing.set(false);
+        this.originalData = null;
+        this.hasUnsavedChanges = false;
 
-          this.opportunityUpdated.emit(fullUpdatedOpportunity);
-          this.sectionSaved.emit();
-          this.changesSavedOrDiscarded.emit();
+        this.opportunityUpdated.emit(fullUpdatedOpportunity);
+        this.sectionSaved.emit();
+        this.changesSavedOrDiscarded.emit();
 
-          this.feedbackService.showSuccessToast({
-            detail: this.translateService.instant(
-              'message.opportunity.updatedSuccessfully'
-            ),
-            summary: this.translateService.instant('message.success'),
-          });
+        this.feedbackService.showSuccessToast({
+          detail: this.translateService.instant(
+            'message.opportunity.updatedSuccessfully'
+          ),
+          summary: this.translateService.instant('message.success'),
+        });
 
-          // Update warning banner visibility based on the newly saved org unit
-          // Use the value from the response since the input signal hasn't been updated yet
-          this.updateOrgUnitWarningBanner(fullUpdatedOpportunity.responsibleOrgUnitId ?? null);
+        // Update warning banner visibility based on the newly saved org unit
+        // Use the value from the response since the input signal hasn't been updated yet
+        this.updateOrgUnitWarningBanner(
+          fullUpdatedOpportunity.responsibleOrgUnitId ?? null
+        );
 
-          this.cdr.detectChanges();
-        },
-        error: () => {
-          this.isSaving.set(false);
-          this.cdr.detectChanges();
-        },
-      });
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.isSaving.set(false);
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   /**
@@ -465,6 +522,15 @@ export class OpportunityTeamSectionComponent implements OnInit {
       this.initiativeTypeControl.setValue(
         this.originalData.proposedInitiativeTypeId ?? null
       );
+
+      // Restore stakeholders
+      const updatedOpportunity = {
+        ...opp,
+        stakeholders: this.originalData.stakeholders
+          ? [...this.originalData.stakeholders]
+          : [],
+      };
+      this.opportunityUpdated.emit(updatedOpportunity);
     } else {
       this.orgUnitControl.setValue(opp.responsibleOrgUnitId ?? null);
       this.initiativeTypeControl.setValue(opp.proposedInitiativeTypeId ?? null);
@@ -475,6 +541,192 @@ export class OpportunityTeamSectionComponent implements OnInit {
     this.hasUnsavedChanges = false;
     this.changesSavedOrDiscarded.emit();
     this.cdr.detectChanges();
+  }
+
+  // ========================================================================
+  // STAKEHOLDER MANAGEMENT
+  // ========================================================================
+
+  /**
+   * @description Open dialog to add stakeholder
+   */
+  openAddStakeholderDialog(): void {
+    this.userControl.setValue(null);
+    this.roleControl.setValue(null);
+    this.isEditingStakeholder.set(false);
+    this.editingStakeholderIndex.set(-1);
+    this.showStakeholderValidationError.set(false);
+    this.showStakeholderDialog.set(true);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Edit existing stakeholder
+   */
+  editStakeholder(index: number): void {
+    const opp = this.opportunity();
+    const stakeholder = opp.stakeholders?.[index];
+
+    if (!stakeholder) return;
+
+    const user = this.internalUsers().find((u) => u.id === stakeholder.userId);
+    const role = this.entityRoles().find(
+      (r) => r.id === stakeholder.entityRoleId
+    );
+
+    this.isEditingStakeholder.set(true);
+    this.editingStakeholderIndex.set(index);
+    this.userControl.setValue(user || null);
+    this.roleControl.setValue(role || null);
+    this.showStakeholderValidationError.set(false);
+    this.showStakeholderDialog.set(true);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Cancel stakeholder dialog
+   */
+  cancelStakeholderDialog(): void {
+    this.showStakeholderDialog.set(false);
+    this.userControl.setValue(null);
+    this.roleControl.setValue(null);
+    this.isEditingStakeholder.set(false);
+    this.editingStakeholderIndex.set(-1);
+    this.showStakeholderValidationError.set(false);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Confirm stakeholder dialog (add or update)
+   */
+  confirmStakeholderDialog(): void {
+    const user = this.userControl.value;
+    const role = this.roleControl.value;
+
+    if (!user || !role) {
+      this.showStakeholderValidationError.set(true);
+      this.cdr.detectChanges();
+      return;
+    }
+
+    // Check for duplicate stakeholder (both when adding and editing)
+    // A stakeholder is considered duplicate if the same user-role combination exists
+    const opp = this.opportunity();
+    const currentEditingIndex = this.editingStakeholderIndex();
+    const isDuplicate = opp.stakeholders?.some((s, index) => {
+      // Skip the stakeholder we're currently editing
+      if (this.isEditingStakeholder() && index === currentEditingIndex) {
+        return false;
+      }
+      return s.userId === user.id && s.entityRoleId === role.id;
+    });
+
+    if (isDuplicate) {
+      this.feedbackService.showWarningToast({
+        summary: this.translateService.instant('message.warning'),
+        detail: this.translateService.instant(
+          'message.validation.stakeholderAlreadyAdded'
+        ),
+      });
+      return;
+    }
+
+    if (this.isEditingStakeholder()) {
+      this.updateStakeholder(user, role);
+    } else {
+      this.addStakeholder(user, role);
+    }
+  }
+
+  /**
+   * @description Add new stakeholder
+   */
+  addStakeholder(user: SimpleValue, role: SimpleValue): void {
+    const opp = this.opportunity();
+    const currentStakeholders = [...(opp.stakeholders || [])];
+
+    const newStakeholder: OpportunityStakeholder = {
+      id: 0,
+      opportunityId: opp.id!,
+      userId: user.id,
+      userName: user.name,
+      userEmail: null,
+      entityRoleId: role.id,
+      entityRoleName: role.name,
+      isInternal: true,
+      stakeholderType: 'Internal',
+      notes: null,
+    };
+
+    currentStakeholders.push(newStakeholder);
+
+    const updatedOpportunity = {
+      ...opp,
+      stakeholders: currentStakeholders,
+    };
+
+    this.opportunityUpdated.emit(updatedOpportunity);
+    this.markAsChanged();
+    this.cancelStakeholderDialog();
+  }
+
+  /**
+   * @description Update existing stakeholder
+   */
+  updateStakeholder(user: SimpleValue, role: SimpleValue): void {
+    const opp = this.opportunity();
+    const currentStakeholders = [...(opp.stakeholders || [])];
+    const index = this.editingStakeholderIndex();
+
+    if (index < 0 || index >= currentStakeholders.length) {
+      return;
+    }
+
+    currentStakeholders[index] = {
+      ...currentStakeholders[index],
+      userId: user.id,
+      userName: user.name,
+      entityRoleId: role.id,
+      entityRoleName: role.name,
+      notes: null,
+    };
+
+    const updatedOpportunity = {
+      ...opp,
+      stakeholders: currentStakeholders,
+    };
+
+    this.opportunityUpdated.emit(updatedOpportunity);
+    this.markAsChanged();
+    this.cancelStakeholderDialog();
+  }
+
+  /**
+   * @description Remove stakeholder
+   */
+  removeStakeholder(index: number): void {
+    this.feedbackService.showConfirmDialog(
+      {
+        summary: this.translateService.instant('confirmation.removeStakeholder'),
+        detail: this.translateService.instant(
+          'message.confirmRemoveStakeholder'
+        ),
+      },
+      () => {
+        const opp = this.opportunity();
+        const currentStakeholders = [...(opp.stakeholders || [])];
+        currentStakeholders.splice(index, 1);
+
+        const updatedOpportunity = {
+          ...opp,
+          stakeholders: currentStakeholders,
+        };
+
+        this.opportunityUpdated.emit(updatedOpportunity);
+        this.markAsChanged();
+        this.cdr.detectChanges();
+      }
+    );
   }
 }
 

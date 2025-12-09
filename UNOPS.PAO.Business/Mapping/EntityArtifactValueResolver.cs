@@ -49,22 +49,8 @@ public class EntityArtifactValueResolver : IValueResolver<object, object, List<E
             .OrderBy(a => a.ArtifactType!.Order)
             .ToList();
 
-        // Map to EntityArtifactModel
-        return artifacts.Select(artifact => new EntityArtifactModel
-        {
-            ArtifactTypeCode = artifact.ArtifactType?.ArtifactTypeCode ?? string.Empty,
-            ArtifactTypeName = artifact.ArtifactType?.Name,
-            Category = artifact.ArtifactType?.Category,
-            DataType = artifact.ArtifactType?.ArtifactDataType?.Name,
-            Value = GetArtifactValue(artifact),
-            DocumentId = artifact.DocumentId,
-            Metadata = artifact.Metadata,
-            EffectiveDate = artifact.EffectiveDate,
-            ExpiryDate = artifact.ExpiryDate,
-            Source = artifact.Source,
-            IsExtracted = artifact.IsExtracted,
-            ConfidenceScore = artifact.ConfidenceScore
-        }).ToList();
+        // Map to EntityArtifactModel using shared static method
+        return MapToModels(artifacts);
     }
 
     private string GetEntityType(object source)
@@ -91,7 +77,10 @@ public class EntityArtifactValueResolver : IValueResolver<object, object, List<E
         return 0;
     }
 
-    private object? GetArtifactValue(EntityArtifact artifact)
+    /// <summary>
+    /// Gets the appropriate value from an EntityArtifact based on its data type
+    /// </summary>
+    public static object? GetArtifactValue(EntityArtifact artifact)
     {
         var dataTypeName = artifact.ArtifactType?.ArtifactDataType?.Name?.ToLower();
 
@@ -102,9 +91,32 @@ public class EntityArtifactValueResolver : IValueResolver<object, object, List<E
             "boolean" or "bool" => artifact.ValueBoolean,
             "date" or "datetime" => artifact.ValueDate,
             "json" or "array" or "object" => artifact.ValueJson,
-            "document" => artifact.DocumentId,
+            "document" => artifact.ValueText,
             _ => artifact.ValueText // Default to text
         };
+    }
+
+    /// <summary>
+    /// Maps a collection of EntityArtifact entities to EntityArtifactModel objects
+    /// Can be used when the resolver doesn't work (e.g., nested entity mappings)
+    /// </summary>
+    public static List<EntityArtifactModel> MapToModels(IEnumerable<EntityArtifact> artifacts)
+    {
+        return artifacts.Select(artifact => new EntityArtifactModel
+        {
+            ArtifactTypeCode = artifact.ArtifactType?.ArtifactTypeCode ?? string.Empty,
+            ArtifactTypeName = artifact.ArtifactType?.Name,
+            Category = artifact.ArtifactType?.Category,
+            DataType = artifact.ArtifactType?.ArtifactDataType?.Name,
+            Value = GetArtifactValue(artifact),
+            DocumentId = artifact.DocumentId,
+            Metadata = artifact.Metadata,
+            EffectiveDate = artifact.EffectiveDate,
+            ExpiryDate = artifact.ExpiryDate,
+            Source = artifact.Source,
+            IsExtracted = artifact.IsExtracted,
+            ConfidenceScore = artifact.ConfidenceScore
+        }).ToList();
     }
 }
 

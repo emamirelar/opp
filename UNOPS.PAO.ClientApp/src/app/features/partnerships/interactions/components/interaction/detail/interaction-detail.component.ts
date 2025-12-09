@@ -396,9 +396,13 @@ export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDest
 
   handleOpportunityCreated(opportunity: any) {
     this.showCreateOpportunityDialog.set(false);
-    // Navigate to the newly created opportunity (when backend is implemented)
+    
+    // Open the new opportunity in a new tab if we have an ID
     if (opportunity && opportunity.id) {
-      this.router.navigate(['/opportunities', opportunity.id]);
+      const url = this.router.serializeUrl(
+        this.router.createUrlTree(['/partnerships/opportunities', opportunity.id])
+      );
+      window.open(`/#${url}`, '_blank');
     }
   }
 

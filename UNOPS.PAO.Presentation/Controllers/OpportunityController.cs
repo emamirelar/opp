@@ -464,6 +464,17 @@ public class OpportunityController : BaseController
     {
         try
         {
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(req.Name))
+            {
+                return BadRequest(new { error = "Opportunity name is required and cannot be empty" });
+            }
+
+            if (req.Name.Length > 255)
+            {
+                return BadRequest(new { error = "Opportunity name cannot exceed 255 characters" });
+            }
+
             var result = await _manager.UpdateOverviewSectionAsync(id, req);
             
             // Create audit log
@@ -860,6 +871,20 @@ public class OpportunityController : BaseController
     {
         try
         {
+            // Validate opportunity name if it's being updated
+            if (req.Name != null)
+            {
+                if (string.IsNullOrWhiteSpace(req.Name.Trim()))
+                {
+                    return BadRequest(new { error = "Opportunity name is required and cannot be empty" });
+                }
+
+                if (req.Name.Length > 255)
+                {
+                    return BadRequest(new { error = "Opportunity name cannot exceed 255 characters" });
+                }
+            }
+
             var result = await _manager.ApplyAiChangesAsync(id, req);
             
             // Create audit log
@@ -1534,7 +1559,11 @@ public class OpportunityController : BaseController
 
             if (string.IsNullOrWhiteSpace(request.Name))
             {
-                validationErrors.Add("Opportunity name is required");
+                validationErrors.Add("Opportunity name is required and cannot be empty");
+            }
+            else if (request.Name.Length > 255)
+            {
+                validationErrors.Add("Opportunity name cannot exceed 255 characters");
             }
 
             // Partner validation: only required if partnerId is provided (creating from partner context)

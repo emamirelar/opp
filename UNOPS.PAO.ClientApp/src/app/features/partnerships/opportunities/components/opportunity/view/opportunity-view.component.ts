@@ -39,6 +39,7 @@ import { AvatarModule } from 'primeng/avatar';
 import { FileUploadModule } from 'primeng/fileupload';
 import { TooltipModule } from 'primeng/tooltip';
 import { DropdownModule } from 'primeng/dropdown';
+import { SelectModule } from 'primeng/select';
 import { MarkdownModule } from 'ngx-markdown';
 
 // Services
@@ -95,6 +96,7 @@ import { ValuesService } from '@app/shared/services/api/values.service';
     FileUploadModule,
     TooltipModule,
     DropdownModule,
+    SelectModule,
     MarkdownModule,
     OpportunityCollaborationComponent,
     OpportunityAnalysisSectionComponent,
@@ -139,6 +141,7 @@ export class OpportunityViewComponent
   documentsCollapsed = signal(true); // Document panel state
   activeSection = signal<string>(''); // Active section for navigation - will be set from route params
   headerScrolled = signal<boolean>(false); // Header shrunk state when scrolled
+  innerWidth = signal<number>(window.innerWidth); // Track window width for responsive behavior
   
   // Unsaved changes tracking for sticky save bar (Option 2 UX)
   sectionsWithUnsavedChanges = signal<Set<string>>(new Set());
@@ -189,7 +192,7 @@ export class OpportunityViewComponent
     { id: 'team', label: 'label.opportunity.team', icon: 'pi-building' },
     { id: 'where', label: 'Where', icon: 'pi-globe' },
     { id: 'when', label: 'When', icon: 'pi-calendar' },
-    { id: 'dst', label: 'DST', icon: 'pi-chart-line' },
+    { id: 'risks', label: 'Risks', icon: 'pi-chart-line' },
     { id: 'related', label: 'Related', icon: 'pi-link' },
     { id: 'collaboration', label: 'Comments', icon: 'pi-comments' },
     { id: 'statement', label: 'Statement', icon: 'pi-file-edit' },
@@ -489,10 +492,8 @@ export class OpportunityViewComponent
         const scrollTop = scrollElement.scrollTop;
         // Shrink header after scrolling past the banner (240px banner height, hide after scrolling ~100px)
         const newHeaderScrolled = scrollTop > 100;
-        console.log(`[Scroll] scrollTop: ${scrollTop}, headerScrolled: ${this.headerScrolled()}, newHeaderScrolled: ${newHeaderScrolled}`);
         if (this.headerScrolled() !== newHeaderScrolled) {
           this.headerScrolled.set(newHeaderScrolled);
-          console.log(`[Scroll] Header state changed to: ${newHeaderScrolled}`);
           // Manually trigger change detection to ensure UI updates immediately
           this.cdr.detectChanges();
         }
@@ -1007,6 +1008,15 @@ export class OpportunityViewComponent
   }
 
   /**
+   * @description Handle window resize to update innerWidth signal
+   * @param {Event} event - The resize event
+   */
+  @HostListener('window:resize', ['$event'])
+  onResize(event: Event): void {
+    this.innerWidth.set((event.target as Window).innerWidth);
+  }
+
+  /**
    * Toggle full content display
    */
   toggleFullContent() {
@@ -1036,6 +1046,10 @@ export class OpportunityViewComponent
       year: 'numeric',
       month: 'short',
       day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
     });
   }
 

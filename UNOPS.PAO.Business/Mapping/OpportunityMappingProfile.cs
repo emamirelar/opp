@@ -17,6 +17,7 @@ public class OpportunityMappingProfile : Profile
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
             .ForMember(dest => dest.WorkflowStageName, opt => opt.MapFrom(src => src.WorkflowStage != null ? src.WorkflowStage.Name : null))
             .ForMember(dest => dest.ResponsibleOrgUnitName, opt => opt.MapFrom(src => src.ResponsibleOrgUnit != null ? src.ResponsibleOrgUnit.Name : null))
+            .ForMember(dest => dest.ResponsibleOrgUnit, opt => opt.MapFrom(src => src.ResponsibleOrgUnit))
             .ForMember(dest => dest.ProposedInitiativeTypeName, opt => opt.MapFrom(src => src.ProposedInitiativeType != null ? src.ProposedInitiativeType.Name : null))
             .ForMember(dest => dest.FundingPartners, opt => opt.MapFrom(src => src.FundingPartners))
             .ForMember(dest => dest.ClientPartners, opt => opt.MapFrom(src => src.ClientPartners))
@@ -25,7 +26,15 @@ public class OpportunityMappingProfile : Profile
             .ForMember(dest => dest.Deliverables, opt => opt.MapFrom(src => src.Deliverables))
             .ForMember(dest => dest.Countries, opt => opt.MapFrom(src => src.Countries))
             .ForMember(dest => dest.SDGs, opt => opt.MapFrom(src => src.SDGs))
-            .ForMember(dest => dest.UNCFOutcomes, opt => opt.MapFrom(src => src.UNCFOutcomes));
+            .ForMember(dest => dest.UNCFOutcomes, opt => opt.MapFrom(src => src.UNCFOutcomes))
+            .ForMember(dest => dest.CreatedByName, opt => opt.MapFrom(src => 
+                src.CreatedByUser != null && src.CreatedByUser.UserProfile != null 
+                    ? src.CreatedByUser.UserProfile.Name 
+                    : (src.CreatedByUser != null ? src.CreatedByUser.Email : null)))
+            .ForMember(dest => dest.LastModifiedByName, opt => opt.MapFrom(src => 
+                src.LastModifiedByUser != null && src.LastModifiedByUser.UserProfile != null 
+                    ? src.LastModifiedByUser.UserProfile.Name 
+                    : (src.LastModifiedByUser != null ? src.LastModifiedByUser.Email : null)));
             
         CreateMap<OpportunityRequest, Opportunity>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())

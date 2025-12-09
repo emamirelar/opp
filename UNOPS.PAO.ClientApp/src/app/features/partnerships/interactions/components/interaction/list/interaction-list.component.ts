@@ -10,7 +10,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ListviewComponent } from '@features/list-view/components/listview/listview.component';
 import { ListViewColumn, ListViewConfig, SearchParams } from '@features/list-view/components/listview/listview.model';
 import { DialogService } from 'primeng/dynamicdialog';
-import { PermissionUtilityService } from '@core/services/auth';
+import { PermissionUtilityService, PermissionService, EntityPermissions } from '@core/services/auth';
 import { FeedbackDialogService } from '@shared/services/ui';
 import { SearchField } from '@shared/services/utils';
 import { EntityConfigurationService } from '@shared/services/api/entity-configuration.service';
@@ -98,6 +98,21 @@ export class InteractionListComponent implements OnInit, OnDestroy {
   private permissionUtils = this.permissionUtilityService.createEntityPermissions('Interaction');
   entityPermissions = this.permissionUtils.entityPermissions;
   permissionsLoading = this.permissionUtils.permissionsLoading;
+
+  // Permission handling for Opportunity (needed for Create Opportunity action)
+  // Uses PermissionService directly with entity name to avoid route-based lookup
+  opportunityEntityPermissions = signal<EntityPermissions>({
+    entity: 'Opportunity',
+    hasAccess: false,
+    permissions: {
+      canRead: false,
+      canCreate: false,
+      canUpdate: false,
+      canDelete: false,
+      canExport: false,
+      canImport: false
+    }
+  });
 
   // Dynamic interaction columns loaded from API
   columns = signal<ListViewColumn[]>([]);
@@ -188,6 +203,7 @@ export class InteractionListComponent implements OnInit, OnDestroy {
   private dialogService = inject(DialogService);
   private translateService = inject(TranslateService);
   private pageContextService = inject(PageContextService);
+  private permissionService = inject(PermissionService);
 
   constructor(
     private interactionService: InteractionService,
@@ -200,8 +216,19 @@ export class InteractionListComponent implements OnInit, OnDestroy {
     // Register component data for AI Assistant
     this.pageContextService.setComponentData(this);
 
-    // Load permissions using utility service
+    // Load permissions using utility service for Interaction
     this.permissionUtils.loadPermissions(this.router, this.cdr);
+
+    // Load permissions for Opportunity entity directly by entity name
+    // This bypasses route-based lookup since we're on the Interaction page
+    this.permissionService.getEntityPermissions('Opportunity').subscribe({
+      next: (permissions) => {
+        this.opportunityEntityPermissions.set(permissions);
+      },
+      error: (error) => {
+        console.error('Error loading Opportunity permissions:', error);
+      }
+    });
 
     // Load dynamic columns from API
     this.loadInteractionColumns();
@@ -321,6 +348,15 @@ export class InteractionListComponent implements OnInit, OnDestroy {
    * Open the unified create opportunity dialog
    */
   openCreateOpportunityDialog(): void {
+    // Check if user has permission to create opportunities
+    if (!this.permissionUtilityService.canCreate(this.opportunityEntityPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: this.translateService.instant('message.noPermissionToCreate'),
+        summary: this.translateService.instant('message.permissionDenied'),
+      });
+      return;
+    }
+    
     // Just open the dialog - user will select interactions inside
     this.showCreateOpportunityDialog.set(true);
   }
