@@ -159,12 +159,61 @@ export class OpportunityWhySectionComponent implements OnInit {
 
   // SDG data
   sdgs = signal<SDG[]>([]);
+
+  // Sorted SDGs by sdgId
+  readonly sortedSDGs = computed(() => {
+    const allSDGs = [...this.sdgs()];
+    return allSDGs.sort((a, b) => {
+      const aId = a.sdgId || '';
+      const bId = b.sdgId || '';
+      
+      // Handle "N/A" - always put it at the end
+      if (aId === 'N/A' && bId !== 'N/A') return 1;
+      if (bId === 'N/A' && aId !== 'N/A') return -1;
+      if (aId === 'N/A' && bId === 'N/A') return 0;
+      
+      // Try numeric comparison first (for "1", "2", "3", etc.)
+      const aNum = parseInt(aId, 10);
+      const bNum = parseInt(bId, 10);
+      
+      if (!isNaN(aNum) && !isNaN(bNum)) {
+        return aNum - bNum;
+      }
+      
+      // Fallback to string comparison
+      return aId.localeCompare(bId);
+    });
+  });
   availableTargets = signal<SDGTarget[]>([]);
   availableIndicators = signal<SDGIndicator[]>([]);
   loadingTargets = signal<boolean>(false);
 
-  // SDG dialog
+  // SDG dialog - Two-step flow
   showSDGDialog = signal<boolean>(false);
+  sdgDialogStep = signal<1 | 2>(1); // Step 1: Select SDGs, Step 2: Select Targets/Indicators
+  
+  // Step 1: Multi-select SDGs with Main/Cross-cutting selection
+  selectedSDGIds = signal<Set<string>>(new Set()); // Set of selected SDG IDs (sdgId strings)
+  selectedSDGsForStep1 = signal<SDG[]>([]); // Selected SDG objects for step 1
+  // Map<sdgId, { isPrimary: boolean }> - Main/Cross-cutting selection for each SDG in step 1
+  sdgPrimarySecondaryInStep1 = signal<Map<string, { isPrimary: boolean | null }>>(new Map());
+  
+  // Step 2: Track which SDG panel is expanded (only one at a time)
+  expandedSDGIdInStep2 = signal<string | null>(null);
+  
+  // Step 2: Targets and Indicators per SDG
+  // Map<sdgId, { targets: Map<targetId, Set<indicatorIds>>, skipTargets: boolean, isPrimary: boolean }>
+  sdgTargetsAndIndicators = signal<Map<string, {
+    targets: Map<number, Set<number>>;
+    skipTargets: boolean;
+    isPrimary: boolean;
+    availableTargets: SDGTarget[];
+    availableIndicators: SDGIndicator[];
+    loadingTargets: boolean;
+    loadingIndicatorsForTargets: Set<number>;
+  }>>(new Map());
+  
+  // Legacy fields (kept for backward compatibility during transition)
   sdgControl = new FormControl<SDG | null>(null);
   isPrimaryControl = new FormControl<boolean>(false);
   skipTargetsControl = new FormControl<boolean>(false);
@@ -179,10 +228,10 @@ export class OpportunityWhySectionComponent implements OnInit {
     initialValue: false,
   });
 
-  // Selected targets and indicators for the current SDG being added/edited
+  // Selected targets and indicators for the current SDG being added/edited (legacy - used in old flow)
   selectedTargets = signal<Map<number, Set<number>>>(new Map()); // Map<targetId, Set<indicatorIds>>
 
-  // Track which targets are currently loading indicators
+  // Track which targets are currently loading indicators (legacy)
   loadingIndicatorsForTargets = signal<Set<number>>(new Set());
 
   // Pending SDG selections (for batch add functionality)
@@ -206,6 +255,31 @@ export class OpportunityWhySectionComponent implements OnInit {
 
   // Computed properties
   readonly sdgCount = computed(() => this.opportunity().sdGs?.length || 0);
+
+  // Sorted SDGs for view mode (sorted by sdgId)
+  readonly sortedOpportunitySDGs = computed(() => {
+    const sdGs = this.opportunity().sdGs || [];
+    return [...sdGs].sort((a, b) => {
+      const aId = a.sdgId || '';
+      const bId = b.sdgId || '';
+      
+      // Handle "N/A" - always put it at the end
+      if (aId === 'N/A' && bId !== 'N/A') return 1;
+      if (bId === 'N/A' && aId !== 'N/A') return -1;
+      if (aId === 'N/A' && bId === 'N/A') return 0;
+      
+      // Try numeric comparison first (for "1", "2", "3", etc.)
+      const aNum = parseInt(aId, 10);
+      const bNum = parseInt(bId, 10);
+      
+      if (!isNaN(aNum) && !isNaN(bNum)) {
+        return aNum - bNum;
+      }
+      
+      // Fallback to string comparison
+      return aId.localeCompare(bId);
+    });
+  });
   readonly primarySDG = computed(
     () => this.opportunity().sdGs?.find((sdg) => sdg.isPrimary) || null,
   );
@@ -932,9 +1006,68 @@ export class OpportunityWhySectionComponent implements OnInit {
 
   /**
    * @description Open SDG dialog for adding new SDG(s)
-   * Pre-loads existing SDGs into pending selections for editing
+   * Pre-loads existing SDGs for the two-step flow
    */
   openSDGDialog(): void {
+    // Reset to step 1
+    this.sdgDialogStep.set(1);
+    
+    // Pre-load existing SDGs from opportunity
+    const opp = this.opportunity();
+    const existingSDGs = opp.sdGs || [];
+    const existingSDGIds = new Set(existingSDGs.map(s => s.sdgId));
+    this.selectedSDGIds.set(existingSDGIds);
+    
+    // Get SDG objects for selected IDs
+    const allSDGs = this.sdgs();
+    const selectedSDGs = allSDGs.filter(s => existingSDGIds.has(s.sdgId || ''));
+    this.selectedSDGsForStep1.set(selectedSDGs);
+    
+    // Initialize Main/Cross-cutting selections from existing SDGs (retain existing selections)
+    const primarySecondaryMap = new Map<string, { isPrimary: boolean | null }>();
+    existingSDGs.forEach(existingSDG => {
+      // Retain the existing Main/Cross-cutting selection
+      primarySecondaryMap.set(existingSDG.sdgId, { isPrimary: existingSDG.isPrimary });
+    });
+    this.sdgPrimarySecondaryInStep1.set(primarySecondaryMap);
+    
+    // Initialize targets/indicators data for existing SDGs (for step 2)
+    const targetsMap = new Map<string, {
+      targets: Map<number, Set<number>>;
+      skipTargets: boolean;
+      isPrimary: boolean;
+      availableTargets: SDGTarget[];
+      availableIndicators: SDGIndicator[];
+      loadingTargets: boolean;
+      loadingIndicatorsForTargets: Set<number>;
+    }>();
+    
+    existingSDGs.forEach(existingSDG => {
+      const targets = new Map<number, Set<number>>();
+      if (existingSDG.targets && existingSDG.targets.length > 0) {
+        existingSDG.targets.forEach(target => {
+          const indicatorIds = new Set<number>();
+          target.indicators?.forEach(ind => {
+            indicatorIds.add(ind.sdgIndicatorDatabaseId);
+          });
+          targets.set(target.sdgTargetDatabaseId, indicatorIds);
+        });
+      }
+      
+      targetsMap.set(existingSDG.sdgId, {
+        targets,
+        skipTargets: false, // Targets and indicators are now optional, no skip option needed
+        isPrimary: existingSDG.isPrimary,
+        availableTargets: [],
+        availableIndicators: [],
+        loadingTargets: false,
+        loadingIndicatorsForTargets: new Set(),
+      });
+    });
+    
+    this.sdgTargetsAndIndicators.set(targetsMap);
+    
+    // Legacy state reset (kept for backward compatibility)
     this.isEditingSDG.set(false);
     this.editingSDGIndex.set(null);
     this.editingFromPending.set(false);
@@ -943,17 +1076,824 @@ export class OpportunityWhySectionComponent implements OnInit {
     this.isPrimaryControl.setValue(false);
     this.skipTargetsControl.setValue(false);
     this.showValidationError.set(false);
-
-    // Pre-load existing SDGs from opportunity into pending selections
-    const opp = this.opportunity();
-    const existingSDGs = opp.sdGs ? [...opp.sdGs] : [];
     this.pendingSDGSelections.set(existingSDGs);
-
     this.selectedTargets.set(new Map());
     this.availableTargets.set([]);
     this.availableIndicators.set([]);
     this.loadingIndicatorsForTargets.set(new Set());
     this.showSDGDialog.set(true);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Toggle SDG selection in step 1
+   */
+  toggleSDGSelection(sdg: SDG): void {
+    const selectedIds = new Set(this.selectedSDGIds());
+    const sdgId = sdg.sdgId || '';
+    const isNASDG = sdgId === 'N/A';
+    
+    if (selectedIds.has(sdgId)) {
+      // Deselecting
+      selectedIds.delete(sdgId);
+      this.selectedSDGIds.set(selectedIds);
+      
+      // Update selected SDG objects
+      const allSDGs = this.sdgs();
+      const selectedSDGs = allSDGs.filter(s => selectedIds.has(s.sdgId || ''));
+      this.selectedSDGsForStep1.set(selectedSDGs);
+      
+      // Remove from Main/Cross-cutting map
+      const primarySecondaryMap = new Map(this.sdgPrimarySecondaryInStep1());
+      primarySecondaryMap.delete(sdgId);
+      this.sdgPrimarySecondaryInStep1.set(primarySecondaryMap);
+      
+      this.cdr.detectChanges();
+      return;
+    } else {
+      // Selecting
+      // Special handling for N/A SDG
+      if (isNASDG) {
+        // If there are other SDGs selected, show confirmation
+        if (selectedIds.size > 0) {
+          this.feedbackService.showConfirmDialog(
+            {
+              summary: this.translateService.instant('confirmation.clearAllSDGs'),
+              detail: this.translateService.instant('message.opportunity.addingNASDGWillClearOthers'),
+            },
+            () => {
+              // User confirmed - clear all and add N/A
+              selectedIds.clear();
+              selectedIds.add(sdgId);
+              this.selectedSDGIds.set(selectedIds);
+              
+              const allSDGs = this.sdgs();
+              const selectedSDGs = allSDGs.filter(s => selectedIds.has(s.sdgId || ''));
+              this.selectedSDGsForStep1.set(selectedSDGs);
+              
+              // Set N/A as Main (always)
+              const primarySecondaryMap = new Map<string, { isPrimary: boolean | null }>();
+              primarySecondaryMap.set(sdgId, { isPrimary: true });
+              this.sdgPrimarySecondaryInStep1.set(primarySecondaryMap);
+              
+              this.cdr.detectChanges();
+            }
+          );
+          return;
+        } else {
+          // No other SDGs, just add N/A
+          selectedIds.add(sdgId);
+          this.selectedSDGIds.set(selectedIds);
+          
+          const allSDGs = this.sdgs();
+          const selectedSDGs = allSDGs.filter(s => selectedIds.has(s.sdgId || ''));
+          this.selectedSDGsForStep1.set(selectedSDGs);
+          
+          // Set N/A as Main (always)
+          const primarySecondaryMap = new Map(this.sdgPrimarySecondaryInStep1());
+          primarySecondaryMap.set(sdgId, { isPrimary: true });
+          this.sdgPrimarySecondaryInStep1.set(primarySecondaryMap);
+          
+          this.cdr.detectChanges();
+          return;
+        }
+      } else {
+        // Regular SDG - check if N/A is selected and remove it
+        if (selectedIds.has('N/A')) {
+          this.feedbackService.showInfoToast({
+            detail: this.translateService.instant('message.opportunity.naSDGRemovedWhenAddingOthers'),
+            summary: this.translateService.instant('message.info'),
+          });
+          selectedIds.delete('N/A');
+          
+          // Remove N/A from primary/secondary map
+          const primarySecondaryMap = new Map(this.sdgPrimarySecondaryInStep1());
+          primarySecondaryMap.delete('N/A');
+          this.sdgPrimarySecondaryInStep1.set(primarySecondaryMap);
+        }
+        
+        selectedIds.add(sdgId);
+        this.selectedSDGIds.set(selectedIds);
+        
+        const allSDGs = this.sdgs();
+        const selectedSDGs = allSDGs.filter(s => selectedIds.has(s.sdgId || ''));
+        this.selectedSDGsForStep1.set(selectedSDGs);
+        
+        // Initialize primary/secondary as null (user must select)
+        const primarySecondaryMap = new Map(this.sdgPrimarySecondaryInStep1());
+        primarySecondaryMap.set(sdgId, { isPrimary: null });
+        this.sdgPrimarySecondaryInStep1.set(primarySecondaryMap);
+      }
+    }
+    
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Toggle Main/Cross-cutting for an SDG in step 1
+   */
+  togglePrimarySecondaryInStep1(sdgId: string, isPrimary: boolean): void {
+    const primarySecondaryMap = new Map(this.sdgPrimarySecondaryInStep1());
+    
+    // If setting as Main, unset all others
+    if (isPrimary) {
+      primarySecondaryMap.forEach((value, key) => {
+        if (key !== sdgId && value.isPrimary === true) {
+          primarySecondaryMap.set(key, { isPrimary: false });
+        }
+      });
+    }
+    
+    primarySecondaryMap.set(sdgId, { isPrimary });
+    this.sdgPrimarySecondaryInStep1.set(primarySecondaryMap);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Get Primary/Secondary selection for an SDG in step 1
+   */
+  getPrimarySecondaryInStep1(sdgId: string): boolean | null {
+    return this.sdgPrimarySecondaryInStep1().get(sdgId)?.isPrimary ?? null;
+  }
+
+  /**
+   * @description Check if all selected SDGs have Main/Cross-cutting selected
+   */
+  readonly allSDGsHavePrimarySecondary = computed(() => {
+    const selectedIds = this.selectedSDGIds();
+    const primarySecondaryMap = this.sdgPrimarySecondaryInStep1();
+    
+    for (const sdgId of selectedIds) {
+      const selection = primarySecondaryMap.get(sdgId);
+      if (!selection || selection.isPrimary === null) {
+        return false;
+      }
+    }
+    return true;
+  });
+
+  /**
+   * @description Check if an SDG is selected in step 1
+   */
+  isSDGSelected(sdgId: string): boolean {
+    return this.selectedSDGIds().has(sdgId);
+  }
+
+  /**
+   * @description Get count of selected SDGs in step 1
+   */
+  readonly selectedSDGCount = computed(() => this.selectedSDGIds().size);
+
+  /**
+   * @description Proceed to step 2 (Targets and Indicators selection)
+   */
+  proceedToStep2(): void {
+    const selectedIds = this.selectedSDGIds();
+    if (selectedIds.size === 0) {
+      this.feedbackService.showErrorToast({
+        summary: this.translateService.instant('message.error'),
+        detail: this.translateService.instant('message.validation.atLeastOneSDGRequired'),
+      });
+      return;
+    }
+
+    // Validate that all SDGs have Main/Cross-cutting selected
+    if (!this.allSDGsHavePrimarySecondary()) {
+      this.feedbackService.showErrorToast({
+        summary: this.translateService.instant('message.error'),
+        detail: this.translateService.instant('message.validation.allSDGsMustHavePrimarySecondary'),
+      });
+      return;
+    }
+
+    // Validate that at least one SDG is marked as Main (Primary)
+    const primarySecondaryMap = this.sdgPrimarySecondaryInStep1();
+    let hasMainSDG = false;
+    for (const sdgId of selectedIds) {
+      const selection = primarySecondaryMap.get(sdgId);
+      if (selection && selection.isPrimary === true) {
+        hasMainSDG = true;
+        break;
+      }
+    }
+    
+    if (!hasMainSDG) {
+      this.feedbackService.showErrorToast({
+        summary: this.translateService.instant('message.error'),
+        detail: this.translateService.instant('message.validation.atLeastOneMainSDGRequired'),
+      });
+      return;
+    }
+
+    // Initialize targets/indicators data for each selected SDG
+    const targetsMap = new Map<string, {
+      targets: Map<number, Set<number>>;
+      skipTargets: boolean;
+      isPrimary: boolean;
+      availableTargets: SDGTarget[];
+      availableIndicators: SDGIndicator[];
+      loadingTargets: boolean;
+      loadingIndicatorsForTargets: Set<number>;
+    }>();
+
+    const selectedSDGs = this.selectedSDGsForStep1();
+    const opp = this.opportunity();
+    
+    // Expand the first SDG panel by default
+    if (selectedSDGs.length > 0) {
+      this.expandedSDGIdInStep2.set(selectedSDGs[0].sdgId || null);
+    }
+    const existingSDGs = opp.sdGs || [];
+
+    selectedSDGs.forEach((sdg) => {
+      // Check if this SDG already exists in the opportunity
+      const existingSDG = existingSDGs.find(s => s.sdgId === sdg.sdgId);
+      const isNASDG = sdg.sdgId === 'N/A';
+      
+      // Get Main/Cross-cutting from step 1 selection (N/A is always Main)
+      const step1Selection = primarySecondaryMap.get(sdg.sdgId || '');
+      const isPrimary = isNASDG ? true : (step1Selection?.isPrimary ?? false);
+
+      // Initialize with existing data if available
+      const existingTargets = existingSDG?.targets || [];
+      const targets = new Map<number, Set<number>>();
+      
+      if (existingTargets.length > 0) {
+        existingTargets.forEach(target => {
+          const indicatorIds = new Set<number>();
+          target.indicators?.forEach(ind => {
+            indicatorIds.add(ind.sdgIndicatorDatabaseId);
+          });
+          targets.set(target.sdgTargetDatabaseId, indicatorIds);
+        });
+      }
+
+      targetsMap.set(sdg.sdgId || '', {
+        targets,
+        skipTargets: false, // Targets and indicators are now optional, no skip option needed
+        isPrimary,
+        availableTargets: [],
+        availableIndicators: [],
+        loadingTargets: false,
+        loadingIndicatorsForTargets: new Set(),
+      });
+    });
+
+    this.sdgTargetsAndIndicators.set(targetsMap);
+    this.sdgDialogStep.set(2);
+    
+    // Load targets for all selected SDGs (except N/A)
+    const loadPromises = selectedSDGs
+      .filter(sdg => sdg.sdgId && sdg.sdgId !== 'N/A')
+      .map(sdg => this.loadTargetsForSDGInStep2(sdg.sdgId || ''));
+    
+    // After all targets are loaded, load indicators for existing targets
+    Promise.all(loadPromises).then(() => {
+      selectedSDGs.forEach(sdg => {
+        if (sdg.sdgId && sdg.sdgId !== 'N/A') {
+          const currentData = this.sdgTargetsAndIndicators();
+          const sdgData = currentData.get(sdg.sdgId || '');
+          if (sdgData && sdgData.targets.size > 0) {
+            // Load indicators for all existing targets
+            sdgData.targets.forEach((indicatorIds, targetDatabaseId) => {
+              const target = sdgData.availableTargets.find(t => t.id === targetDatabaseId);
+              if (target) {
+                this.loadIndicatorsForTargetInStep2(sdg.sdgId || '', target);
+              }
+            });
+          }
+        }
+      });
+    });
+    
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Load targets for an SDG in step 2
+   * @returns Promise that resolves when targets are loaded
+   */
+  loadTargetsForSDGInStep2(sdgId: string): Promise<void> {
+    const data = this.sdgTargetsAndIndicators();
+    const sdgData = data.get(sdgId);
+    if (!sdgData) {
+      return Promise.resolve();
+    }
+
+    // Set loading state
+    const updatedData = new Map(data);
+    updatedData.set(sdgId, {
+      ...sdgData,
+      loadingTargets: true,
+    });
+    this.sdgTargetsAndIndicators.set(updatedData);
+
+    return new Promise((resolve, reject) => {
+      this.valuesService.getSDGTargets(sdgId).subscribe({
+        next: (targets) => {
+          const currentData = this.sdgTargetsAndIndicators();
+          const currentSDGData = currentData.get(sdgId);
+          if (!currentSDGData) {
+            resolve();
+            return;
+          }
+
+          const updated = new Map(currentData);
+          updated.set(sdgId, {
+            ...currentSDGData,
+            availableTargets: targets,
+            loadingTargets: false,
+          });
+          this.sdgTargetsAndIndicators.set(updated);
+          this.cdr.detectChanges();
+          resolve();
+        },
+        error: (error) => {
+          console.error('Error loading SDG targets:', error);
+          const currentData = this.sdgTargetsAndIndicators();
+          const currentSDGData = currentData.get(sdgId);
+          if (!currentSDGData) {
+            resolve();
+            return;
+          }
+
+          const updated = new Map(currentData);
+          updated.set(sdgId, {
+            ...currentSDGData,
+            availableTargets: [],
+            loadingTargets: false,
+          });
+          this.sdgTargetsAndIndicators.set(updated);
+          this.cdr.detectChanges();
+          resolve(); // Resolve even on error to continue flow
+        },
+      });
+    });
+  }
+
+  /**
+   * @description Load indicators for a target in step 2 (helper method)
+   */
+  private loadIndicatorsForTargetInStep2(sdgId: string, target: SDGTarget): void {
+    const data = this.sdgTargetsAndIndicators();
+    const sdgData = data.get(sdgId);
+    if (!sdgData) return;
+
+    // Mark as loading
+    const loadingSet = new Set(sdgData.loadingIndicatorsForTargets);
+    loadingSet.add(target.id);
+    
+    const updated = new Map(data);
+    updated.set(sdgId, {
+      ...sdgData,
+      loadingIndicatorsForTargets: loadingSet,
+    });
+    this.sdgTargetsAndIndicators.set(updated);
+
+    // Load indicators
+    this.valuesService.getSDGIndicators(target.sdgTargetId).subscribe({
+      next: (indicators) => {
+        const currentData = this.sdgTargetsAndIndicators();
+        const currentSDGData = currentData.get(sdgId);
+        if (!currentSDGData) return;
+
+        // Add indicators to available list
+        const existingIndicators = currentSDGData.availableIndicators;
+        const combined = [...existingIndicators, ...indicators];
+        const unique = combined.filter(
+          (ind, index, self) => index === self.findIndex(i => i.id === ind.id)
+        );
+
+        // Remove from loading set
+        const loadingSet = new Set(currentSDGData.loadingIndicatorsForTargets);
+        loadingSet.delete(target.id);
+
+        const updated = new Map(currentData);
+        updated.set(sdgId, {
+          ...currentSDGData,
+          availableIndicators: unique,
+          loadingIndicatorsForTargets: loadingSet,
+        });
+        this.sdgTargetsAndIndicators.set(updated);
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error loading indicators:', error);
+        const currentData = this.sdgTargetsAndIndicators();
+        const currentSDGData = currentData.get(sdgId);
+        if (!currentSDGData) return;
+
+        const loadingSet = new Set(currentSDGData.loadingIndicatorsForTargets);
+        loadingSet.delete(target.id);
+
+        const updated = new Map(currentData);
+        updated.set(sdgId, {
+          ...currentSDGData,
+          loadingIndicatorsForTargets: loadingSet,
+        });
+        this.sdgTargetsAndIndicators.set(updated);
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  /**
+   * @description Toggle target selection in step 2
+   */
+  toggleTargetInStep2(sdgId: string, target: SDGTarget): void {
+    const data = this.sdgTargetsAndIndicators();
+    const sdgData = data.get(sdgId);
+    if (!sdgData) return;
+
+    const targets = new Map(sdgData.targets);
+    
+    if (targets.has(target.id)) {
+      // Remove target and its indicators
+      targets.delete(target.id);
+    } else {
+      // Add target with empty indicator set
+      targets.set(target.id, new Set());
+      
+      // Mark as loading and load indicators
+      const loadingSet = new Set(sdgData.loadingIndicatorsForTargets);
+      loadingSet.add(target.id);
+      
+      const updated = new Map(data);
+      updated.set(sdgId, {
+        ...sdgData,
+        targets,
+        loadingIndicatorsForTargets: loadingSet,
+      });
+      this.sdgTargetsAndIndicators.set(updated);
+
+      // Load indicators for this target
+      this.valuesService.getSDGIndicators(target.sdgTargetId).subscribe({
+        next: (indicators) => {
+          const currentData = this.sdgTargetsAndIndicators();
+          const currentSDGData = currentData.get(sdgId);
+          if (!currentSDGData) return;
+
+          // Add indicators to available list
+          const existingIndicators = currentSDGData.availableIndicators;
+          const combined = [...existingIndicators, ...indicators];
+          const unique = combined.filter(
+            (ind, index, self) => index === self.findIndex(i => i.id === ind.id)
+          );
+
+          // Remove from loading set
+          const loadingSet = new Set(currentSDGData.loadingIndicatorsForTargets);
+          loadingSet.delete(target.id);
+
+          const updated = new Map(currentData);
+          updated.set(sdgId, {
+            ...currentSDGData,
+            availableIndicators: unique,
+            loadingIndicatorsForTargets: loadingSet,
+          });
+          this.sdgTargetsAndIndicators.set(updated);
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('Error loading indicators:', error);
+          const currentData = this.sdgTargetsAndIndicators();
+          const currentSDGData = currentData.get(sdgId);
+          if (!currentSDGData) return;
+
+          const loadingSet = new Set(currentSDGData.loadingIndicatorsForTargets);
+          loadingSet.delete(target.id);
+
+          const updated = new Map(currentData);
+          updated.set(sdgId, {
+            ...currentSDGData,
+            loadingIndicatorsForTargets: loadingSet,
+          });
+          this.sdgTargetsAndIndicators.set(updated);
+          this.cdr.detectChanges();
+        },
+      });
+      return;
+    }
+
+    // Update without loading indicators
+    const updated = new Map(data);
+    updated.set(sdgId, {
+      ...sdgData,
+      targets,
+    });
+    this.sdgTargetsAndIndicators.set(updated);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Toggle indicator selection in step 2
+   */
+  toggleIndicatorInStep2(sdgId: string, targetId: number, indicatorId: number): void {
+    const data = this.sdgTargetsAndIndicators();
+    const sdgData = data.get(sdgId);
+    if (!sdgData) return;
+
+    const targets = new Map(sdgData.targets);
+    const indicatorIds = targets.get(targetId);
+    
+    if (indicatorIds) {
+      if (indicatorIds.has(indicatorId)) {
+        indicatorIds.delete(indicatorId);
+      } else {
+        indicatorIds.add(indicatorId);
+      }
+      targets.set(targetId, indicatorIds);
+    }
+
+    const updated = new Map(data);
+    updated.set(sdgId, {
+      ...sdgData,
+      targets,
+    });
+    this.sdgTargetsAndIndicators.set(updated);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Check if target is selected in step 2
+   */
+  isTargetSelectedInStep2(sdgId: string, targetId: number): boolean {
+    const data = this.sdgTargetsAndIndicators();
+    const sdgData = data.get(sdgId);
+    return sdgData?.targets.has(targetId) || false;
+  }
+
+  /**
+   * @description Check if indicator is selected in step 2
+   */
+  isIndicatorSelectedInStep2(sdgId: string, targetId: number, indicatorId: number): boolean {
+    const data = this.sdgTargetsAndIndicators();
+    const sdgData = data.get(sdgId);
+    const indicatorIds = sdgData?.targets.get(targetId);
+    return indicatorIds?.has(indicatorId) || false;
+  }
+
+  /**
+   * @description Get indicators for a target in step 2
+   */
+  getIndicatorsForTargetInStep2(sdgId: string, targetId: string): SDGIndicator[] {
+    const data = this.sdgTargetsAndIndicators();
+    const sdgData = data.get(sdgId);
+    if (!sdgData) return [];
+    return sdgData.availableIndicators.filter(i => i.sdgTargetId === targetId);
+  }
+
+
+  /**
+   * @description Toggle primary status for an SDG in step 2
+   * @deprecated Primary/Secondary selection is now done in step 1
+   */
+  togglePrimaryInStep2(sdgId: string): void {
+    // This method is no longer used - Primary/Secondary is selected in step 1
+    // Kept for backward compatibility
+  }
+
+  /**
+   * @description Go back to step 1
+   */
+  goBackToStep1(): void {
+    this.sdgDialogStep.set(1);
+    this.expandedSDGIdInStep2.set(null);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Get the index of the expanded SDG panel for accordion
+   */
+  getExpandedSDGIndex(): number | null {
+    const expandedId = this.expandedSDGIdInStep2();
+    if (expandedId === null) {
+      return null;
+    }
+    const selectedSDGs = this.selectedSDGsForStep1();
+    const index = selectedSDGs.findIndex(sdg => sdg.sdgId === expandedId);
+    return index >= 0 ? index : null;
+  }
+
+  /**
+   * @description Handle accordion tab change (only one panel expanded at a time)
+   */
+  onAccordionTabChange(event: any): void {
+    const selectedSDGs = this.selectedSDGsForStep1();
+    if (event.index !== null && event.index >= 0 && event.index < selectedSDGs.length) {
+      this.expandedSDGIdInStep2.set(selectedSDGs[event.index].sdgId || null);
+    } else {
+      this.expandedSDGIdInStep2.set(null);
+    }
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Finalize and commit SDG selections from step 2 (or step 1 if skipping step 2)
+   */
+  finalizeSDGSelections(): void {
+    const selectedSDGs = this.selectedSDGsForStep1();
+    const selectedIds = this.selectedSDGIds();
+    let targetsData = this.sdgTargetsAndIndicators();
+    const opp = this.opportunity();
+    const existingSDGs = opp.sdGs || [];
+    const primarySecondaryMap = this.sdgPrimarySecondaryInStep1();
+
+    // If called from Step 1, validate and initialize targets data
+    if (this.sdgDialogStep() === 1) {
+      // Validate that at least one SDG is selected
+      if (selectedIds.size === 0) {
+        this.feedbackService.showErrorToast({
+          summary: this.translateService.instant('message.error'),
+          detail: this.translateService.instant('message.validation.atLeastOneSDGRequired'),
+        });
+        return;
+      }
+
+      // Validate that all SDGs have Main/Cross-cutting selected
+      if (!this.allSDGsHavePrimarySecondary()) {
+        this.feedbackService.showErrorToast({
+          summary: this.translateService.instant('message.error'),
+          detail: this.translateService.instant('message.validation.allSDGsMustHavePrimarySecondary'),
+        });
+        return;
+      }
+
+      // Validate that at least one SDG is marked as Main
+      let hasMainSDG = false;
+      for (const sdgId of selectedIds) {
+        const selection = primarySecondaryMap.get(sdgId);
+        if (selection && selection.isPrimary === true) {
+          hasMainSDG = true;
+          break;
+        }
+      }
+      
+      if (!hasMainSDG) {
+        this.feedbackService.showErrorToast({
+          summary: this.translateService.instant('message.error'),
+          detail: this.translateService.instant('message.validation.atLeastOneMainSDGRequired'),
+        });
+        return;
+      }
+
+      // Initialize targets/indicators data for each selected SDG (similar to proceedToStep2)
+      const targetsMap = new Map<string, {
+        targets: Map<number, Set<number>>;
+        skipTargets: boolean;
+        isPrimary: boolean;
+        availableTargets: SDGTarget[];
+        availableIndicators: SDGIndicator[];
+        loadingTargets: boolean;
+        loadingIndicatorsForTargets: Set<number>;
+      }>();
+
+      selectedSDGs.forEach((sdg) => {
+        const existingSDG = existingSDGs.find(s => s.sdgId === sdg.sdgId);
+        const isNASDG = sdg.sdgId === 'N/A';
+        
+        // Get Main/Cross-cutting from step 1 selection (N/A is always Main)
+        const step1Selection = primarySecondaryMap.get(sdg.sdgId || '');
+        const isPrimary = isNASDG ? true : (step1Selection?.isPrimary ?? false);
+
+        // Initialize with existing data if available
+        const existingTargets = existingSDG?.targets || [];
+        const targets = new Map<number, Set<number>>();
+        if (existingTargets.length > 0) {
+          existingTargets.forEach(target => {
+            const indicatorIds = new Set<number>();
+            target.indicators?.forEach(ind => {
+              indicatorIds.add(ind.sdgIndicatorDatabaseId);
+            });
+            targets.set(target.sdgTargetDatabaseId, indicatorIds);
+          });
+        }
+
+        targetsMap.set(sdg.sdgId || '', {
+          targets,
+          skipTargets: false, // Targets and indicators are now optional, no skip option needed
+          isPrimary,
+          availableTargets: [],
+          availableIndicators: [],
+          loadingTargets: false,
+          loadingIndicatorsForTargets: new Set(),
+        });
+      });
+
+      this.sdgTargetsAndIndicators.set(targetsMap);
+      targetsData = targetsMap;
+    }
+
+    // Build OpportunitySDG array
+    const newSDGs: OpportunitySDG[] = selectedSDGs.map(sdg => {
+      const sdgData = targetsData.get(sdg.sdgId || '');
+      if (!sdgData) {
+        // Fallback if data missing - get from primary/secondary map
+        const step1Selection = primarySecondaryMap.get(sdg.sdgId || '');
+        const isNASDG = sdg.sdgId === 'N/A';
+        return {
+          id: 0,
+          opportunityId: opp.id!,
+          sdgId: sdg.sdgId || '',
+          sdgDatabaseId: sdg.id,
+          sdgNumber: sdg.sdgNumber || '',
+          sdgName: sdg.name,
+          isPrimary: isNASDG ? true : (step1Selection?.isPrimary ?? false),
+          skipTargetsAndIndicators: null,
+          notes: null,
+          targets: [],
+        };
+      }
+
+      // Find existing SDG to preserve ID
+      const existingSDG = existingSDGs.find(e => e.sdgId === sdg.sdgId);
+
+      // Build targets array
+      const targets: OpportunitySDGTarget[] = [];
+      if (sdgData.targets.size > 0) {
+        sdgData.targets.forEach((indicatorIds, targetDatabaseId) => {
+          const targetInfo = sdgData.availableTargets.find(t => t.id === targetDatabaseId);
+          if (targetInfo) {
+            // Find existing target to preserve ID
+            const existingTarget = existingSDG?.targets?.find(
+              t => t.sdgTargetDatabaseId === targetDatabaseId
+            );
+
+            const indicators: OpportunitySDGIndicator[] = [];
+            indicatorIds.forEach(indicatorId => {
+              const indicatorInfo = sdgData.availableIndicators.find(i => i.id === indicatorId);
+              if (indicatorInfo) {
+                // Find existing indicator to preserve ID
+                const existingIndicator = existingTarget?.indicators?.find(
+                  ind => ind.sdgIndicatorDatabaseId === indicatorId
+                );
+
+                indicators.push({
+                  id: existingIndicator?.id || 0,
+                  opportunityId: opp.id!,
+                  opportunitySDGTargetId: existingTarget?.id || 0,
+                  sdgIndicatorDatabaseId: indicatorInfo.id,
+                  sdgIndicatorId: indicatorInfo.sdgIndicatorId,
+                  sdgIndicatorLongDescription: indicatorInfo.sdgIndicatorLongDescription,
+                  notes: existingIndicator?.notes || null,
+                });
+              }
+            });
+
+            targets.push({
+              id: existingTarget?.id || 0,
+              opportunityId: opp.id!,
+              opportunitySDGId: existingSDG?.id || 0,
+              sdgTargetDatabaseId: targetInfo.id,
+              sdgTargetId: targetInfo.sdgTargetId,
+              targetDescription: targetInfo.targetDescription,
+              targetType: targetInfo.targetType,
+              notes: existingTarget?.notes || null,
+              indicators: indicators,
+            });
+          }
+        });
+      }
+
+      return {
+        id: existingSDG?.id || 0, // Preserve existing ID
+        opportunityId: opp.id!,
+        sdgId: sdg.sdgId || '',
+        sdgDatabaseId: sdg.id,
+        sdgNumber: sdg.sdgNumber || '',
+        sdgName: sdg.name,
+        isPrimary: sdgData.isPrimary,
+        skipTargetsAndIndicators: null, // No longer using skip option - targets are optional
+        notes: existingSDG?.notes || null, // Preserve notes
+        targets: targets,
+      };
+    });
+
+    // Replace existing SDGs with new selections
+    const updatedOpportunity = {
+      ...opp,
+      sdGs: newSDGs,
+    };
+
+    // Emit updated opportunity to parent
+    this.opportunityUpdated.emit(updatedOpportunity);
+
+    // Mark as changed
+    this.markAsChanged();
+
+    // Close dialog and reset
+    this.showSDGDialog.set(false);
+    this.sdgDialogStep.set(1);
+    this.selectedSDGIds.set(new Set());
+    this.selectedSDGsForStep1.set([]);
+    this.sdgPrimarySecondaryInStep1.set(new Map());
+    this.sdgTargetsAndIndicators.set(new Map());
+    this.expandedSDGIdInStep2.set(null);
+
+    this.feedbackService.showSuccessToast({
+      summary: this.translateService.instant('message.success'),
+      detail: this.translateService.instant('message.opportunity.sdgsUpdated'),
+    });
+
     this.cdr.detectChanges();
   }
 
@@ -1020,6 +1960,13 @@ export class OpportunityWhySectionComponent implements OnInit {
    */
   cancelSDGDialog(): void {
     this.showSDGDialog.set(false);
+    this.sdgDialogStep.set(1);
+    this.selectedSDGIds.set(new Set());
+    this.selectedSDGsForStep1.set([]);
+    this.sdgPrimarySecondaryInStep1.set(new Map());
+    this.sdgTargetsAndIndicators.set(new Map());
+    
+    // Legacy state reset
     this.sdgControl.setValue(null);
     this.isPrimaryControl.setValue(false);
     this.skipTargetsControl.setValue(false);
