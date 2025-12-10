@@ -34,6 +34,7 @@ public class EntityUserRoleGroupModel
 {
     public int EntityRoleId { get; set; }
     public string? EntityRoleName { get; set; }
+    public string? EntityRoleCode { get; set; }
     public List<UserBasicModel> Users { get; set; } = new();
 }
 

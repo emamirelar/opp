@@ -118,6 +118,7 @@ public class OpportunityMappingProfile : Profile
         // =================================================================
         CreateMap<OpportunityStakeholder, OpportunityStakeholderModel>()
             .ForMember(dest => dest.EntityRoleName, opt => opt.MapFrom(src => src.EntityRole != null ? src.EntityRole.Name : null))
+            .ForMember(dest => dest.EntityRoleCode, opt => opt.MapFrom(src => src.EntityRole != null ? src.EntityRole.Code : null))
             .ForMember(dest => dest.StakeholderType, opt => opt.MapFrom(src => src.IsInternal ? "Internal" : "External"))
             .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User != null && src.User.UserProfile != null ? src.User.UserProfile.Name : (src.User != null ? src.User.Email : null)))
             .ForMember(dest => dest.UserEmail, opt => opt.MapFrom(src => src.User != null ? src.User.Email : null))

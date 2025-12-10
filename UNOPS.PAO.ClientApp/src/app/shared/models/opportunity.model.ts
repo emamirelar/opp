@@ -241,6 +241,7 @@ export interface OpportunityStakeholder {
   opportunityId: number;
   entityRoleId: number;
   entityRoleName: string;
+  entityRoleCode: string | null;
   isInternal: boolean;
   stakeholderType: string;
   userId: number | null;
