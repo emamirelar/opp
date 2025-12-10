@@ -66,6 +66,7 @@ export interface UserBasicModel {
 export interface EntityUserRoleGroupModel {
   entityRoleId: number;
   entityRoleName: string | null;
+  entityRoleCode: string | null;
   users: UserBasicModel[];
 }
 

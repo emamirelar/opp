@@ -533,6 +533,7 @@ export class OpportunityTeamSectionComponent implements OnInit {
                   opportunityId: this.opportunity().id!,
                   entityRoleId: group.entityRoleId,
                   entityRoleName: group.entityRoleName || '',
+                  entityRoleCode: group.entityRoleCode || null,
                   isInternal: true,
                   stakeholderType: 'Internal',
                   userId: null,
@@ -611,6 +612,7 @@ export class OpportunityTeamSectionComponent implements OnInit {
                   opportunityId: this.opportunity().id!,
                   entityRoleId: group.entityRoleId,
                   entityRoleName: group.entityRoleName || '',
+                  entityRoleCode: group.entityRoleCode || null,
                   isInternal: true,
                   stakeholderType: 'Internal',
                   userId: null,
@@ -666,6 +668,7 @@ export class OpportunityTeamSectionComponent implements OnInit {
             opportunityId: this.opportunity().id!,
             entityRoleId: group.entityRoleId,
             entityRoleName: group.entityRoleName || '',
+            entityRoleCode: group.entityRoleCode || null,
             isInternal: true,
             stakeholderType: 'Internal',
             userId: null, // No specific user - auto-populated
@@ -1151,6 +1154,7 @@ export class OpportunityTeamSectionComponent implements OnInit {
       userEmail: null,
       entityRoleId: role.id,
       entityRoleName: role.name,
+      entityRoleCode: null, // Will be populated from backend when saved
       isInternal: true,
       stakeholderType: 'Internal',
       organizationHierarchyId: null,
@@ -1344,6 +1348,52 @@ export class OpportunityTeamSectionComponent implements OnInit {
     const userId = this.getSmeSelectedUserId(roleId);
     if (!userId) return null;
     return this.internalUsers().find((u) => u.id === userId) ?? null;
+  }
+
+  /**
+   * @description Get translation key for entity role based on code
+   * @param entityRoleCode - The code of the entity role (e.g., "DoA1_OrganizationHierarchy")
+   * @returns Translation key (e.g., "role.DoA1_OrganizationHierarchy") or null if code is not available
+   */
+  getRoleTranslationKey(entityRoleCode: string | null | undefined): string | null {
+    if (!entityRoleCode) return null;
+    return `role.${entityRoleCode}`;
+  }
+
+  /**
+   * @description Get translated role name, falling back to entityRoleName if translation is not available
+   * @param stakeholder - The stakeholder object
+   * @returns Translated role name or the original entityRoleName
+   */
+  getTranslatedRoleName(stakeholder: OpportunityStakeholder): string {
+    const translationKey = this.getRoleTranslationKey(stakeholder.entityRoleCode);
+    if (translationKey) {
+      const translated = this.translateService.instant(translationKey);
+      // If translation exists and is different from the key, use it
+      if (translated && translated !== translationKey) {
+        return translated;
+      }
+    }
+    // Fallback to entityRoleName
+    return stakeholder.entityRoleName;
+  }
+
+  /**
+   * @description Get translated SME role name, falling back to role.name if translation is not available
+   * @param role - The SimpleValue role object
+   * @returns Translated role name or the original role.name
+   */
+  getTranslatedSmeRoleName(role: SimpleValue): string {
+    const translationKey = this.getRoleTranslationKey(role.code);
+    if (translationKey) {
+      const translated = this.translateService.instant(translationKey);
+      // If translation exists and is different from the key, use it
+      if (translated && translated !== translationKey) {
+        return translated;
+      }
+    }
+    // Fallback to role.name
+    return role.name;
   }
 }
 
