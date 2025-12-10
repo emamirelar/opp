@@ -2183,7 +2183,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             var roleIdsToAdd = rolesToAdd.Select(r => r.EntityRoleId).Distinct().ToList();
             entityRoles = await context.Set<EntityRole>()
                 .Where(er => roleIdsToAdd.Contains(er.Id))
-                .ToDictionaryAsync(er => er.Id, er => er.Name);
+                .ToDictionaryAsync(er => er.Id, er => er.Code!);
         }
 
         // Remove EntityUserRoles that are no longer selected
@@ -2195,8 +2195,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         // Add new EntityUserRoles
         foreach (var req in rolesToAdd)
         {
-            var roleName = entityRoles.ContainsKey(req.EntityRoleId) ? entityRoles[req.EntityRoleId] : "Unknown Role";
-            var name = $"{roleName} - Opportunity - {opportunityId} - {req.UserId!.Value}";
+            var roleCode = entityRoles.ContainsKey(req.EntityRoleId) ? entityRoles[req.EntityRoleId] : "Unknown Role";
+            var name = $"{roleCode} - {opportunityId} - {req.UserId!.Value}";
             
             context.Set<EntityUserRole>().Add(new EntityUserRole
             {
@@ -3233,7 +3233,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         {
             // Get the "Opportunity Manager" entity role
             var opportunityManagerRole = await uNOPSAppDbContext.EntityRoles
-                .FirstOrDefaultAsync(er => er.EntityType == "Opportunity" && er.Name == "Opportunity Manager");
+                .FirstOrDefaultAsync(er => er.EntityType == "Opportunity" && er.Code == "Opportunity_Manager_Opportunity");
 
             if (opportunityManagerRole == null)
             {

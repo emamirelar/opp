@@ -15,15 +15,15 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 CSV_FILE = os.path.join(SCRIPT_DIR, "Archives/opportunity-feature-import-files/OrgUnit_Director_DeputyDirector_etc - ImportFile.csv")
 OUTPUT_FILE = os.path.join(SCRIPT_DIR, "../../UNOPS.PAO.UNOPSDataAccess/Seed/Seeders/OrgUnitDirectorRolesSeeder.cs")
 
-# Mapping from CSV column suffix to EntityRole name
-# Note: Ignoring HSSE columns as requested
+# Mapping from CSV column suffix to EntityRole name and code
+# Codes from EntityRoleSeeder.cs for OrganizationHierarchy entity type
 ROLE_MAPPINGS = {
-    "Region_Director_Resource_Email": "Region Director",
-    "Region_Deputy_Director_Resource_Email": "Region Deputy Director",
-    "Hub_Director_Resource_Email": "Hub Director",
-    "Hub_Deputy_Director_Resource_Email": "Hub Deputy Director",
-    "Org_Unit_Director_Resource_Email": "OrgUnit Director",
-    "Org_Unit_Deputy_Director_Resource_Email": "OrgUnit Deputy Director",
+    "Region_Director_Resource_Email": {"name": "Region Director", "code": "Regional_Director_OrganizationHierarchy"},
+    "Region_Deputy_Director_Resource_Email": {"name": "Region Deputy Director", "code": "Regional_Deputy_Director_OrganizationHierarchy"},
+    "Hub_Director_Resource_Email": {"name": "Hub Director", "code": "MCO_Director_OrganizationHierarchy"},
+    "Hub_Deputy_Director_Resource_Email": {"name": "Hub Deputy Director", "code": "MCO_Deputy_Director_OrganizationHierarchy"},
+    "Org_Unit_Director_Resource_Email": {"name": "OrgUnit Director", "code": "OrgUnit_Director_OrganizationHierarchy"},
+    "Org_Unit_Deputy_Director_Resource_Email": {"name": "OrgUnit Deputy Director", "code": "OrgUnit_Deputy_Director_OrganizationHierarchy"},
 }
 
 
@@ -40,10 +40,13 @@ def read_csv_data(csv_path):
             
             # Extract all role emails for this org unit
             role_emails = {}
-            for csv_column, role_name in ROLE_MAPPINGS.items():
+            for csv_column, role_info in ROLE_MAPPINGS.items():
                 email = row.get(csv_column, '').strip()
                 if email:
-                    role_emails[role_name] = email.lower()  # Normalize email to lowercase
+                    role_emails[role_info['name']] = {
+                        'email': email.lower(),  # Normalize email to lowercase
+                        'code': role_info['code']
+                    }
             
             if role_emails:
                 data.append({
@@ -58,8 +61,8 @@ def collect_unique_emails(data):
     """Collect all unique emails from the data."""
     emails = set()
     for entry in data:
-        for email in entry['role_emails'].values():
-            emails.add(email)
+        for role_data in entry['role_emails'].values():
+            emails.add(role_data['email'])
     return sorted(emails)
 
 
@@ -72,7 +75,7 @@ def generate_seeder_code(data):
     """Generate the C# seeder code."""
     unique_emails = collect_unique_emails(data)
     unique_org_units = collect_unique_org_units(data)
-    unique_roles = sorted(set(ROLE_MAPPINGS.values()))
+    unique_roles = sorted(set(role_info['name'] for role_info in ROLE_MAPPINGS.values()))
     
     code = '''using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.UNOPSDataAccess.Context;
@@ -91,12 +94,16 @@ public class OrgUnitDirectorRolesSeeder
     {
         Console.WriteLine("Starting OrgUnitDirectorRolesSeeder...");
         
-        // Get all EntityRoles for OrganizationHierarchy
+        // Get all EntityRoles for OrganizationHierarchy by Code
+        var roleCodes = new[] { "Regional_Director_OrganizationHierarchy", "Regional_Deputy_Director_OrganizationHierarchy", 
+            "MCO_Director_OrganizationHierarchy", "MCO_Deputy_Director_OrganizationHierarchy", 
+            "OrgUnit_Director_OrganizationHierarchy", "OrgUnit_Deputy_Director_OrganizationHierarchy" };
         var entityRoles = await context.EntityRoles
-            .Where(er => er.EntityType == "OrganizationHierarchy" && !er.IsDeleted)
+            .Where(er => er.EntityType == "OrganizationHierarchy" 
+                && roleCodes.Contains(er.Code) && !er.IsDeleted)
             .ToListAsync();
         
-        var roleNameToId = entityRoles.ToDictionary(r => r.Name, r => r.Id);
+        var roleCodeToId = entityRoles.ToDictionary(r => r.Code!, r => r.Id);
         
         // Get all users by email (case-insensitive)
         var allUsers = await context.PAOUsers
@@ -116,18 +123,18 @@ public class OrgUnitDirectorRolesSeeder
         
         var codeToOrgUnitId = orgUnits.ToDictionary(o => o.Code, o => o.Id);
         
-        // Get existing EntityUserRoles to avoid duplicates
+        // Get existing EntityUserRoles to update or add
         var existingRoles = await context.EntityUserRoles
             .Where(eur => eur.EntityType == "OrganizationHierarchy" && !eur.IsDeleted)
-            .Select(eur => new { eur.EntityId, eur.EntityRoleId, eur.UserId })
             .ToListAsync();
         
-        var existingRoleKeys = existingRoles
-            .Select(r => $"{r.EntityId}_{r.EntityRoleId}_{r.UserId}")
-            .ToHashSet();
+        var existingRoleDict = existingRoles
+            .GroupBy(r => (r.EntityId, r.EntityRoleId, r.UserId))
+            .ToDictionary(g => g.Key, g => g.First());
         
         var rolesToAdd = new List<EntityUserRole>();
-        var skippedCount = 0;
+        var rolesToUpdate = new List<EntityUserRole>();
+        var updatedCount = 0;
         var missingOrgUnits = new HashSet<string>();
         var missingUsers = new HashSet<string>();
         var missingRoles = new HashSet<string>();
@@ -145,35 +152,49 @@ public class OrgUnitDirectorRolesSeeder
         if (codeToOrgUnitId.TryGetValue("{org_unit_code}", out var orgUnit_{org_unit_code.replace('-', '_')}Id))
         {{
 '''
-        for role_name, email in entry['role_emails'].items():
+        for role_name, role_data in entry['role_emails'].items():
+            email = role_data['email']
+            role_code = role_data['code']
             safe_var_name = org_unit_code.replace('-', '_')
+            safe_role_name = role_name.replace(' ', '_')
+            var_suffix = f"{safe_var_name}_{safe_role_name}"
             code += f'''            // {role_name}: {email}
-            if (roleNameToId.TryGetValue("{role_name}", out var role_{safe_var_name}_{role_name.replace(' ', '_')}Id) &&
-                emailToUserId.TryGetValue("{email}", out var user_{safe_var_name}_{role_name.replace(' ', '_')}Id))
+            if (roleCodeToId.TryGetValue("{role_code}", out var role_{var_suffix}Id) &&
+                emailToUserId.TryGetValue("{email}", out var user_{var_suffix}Id))
             {{
-                var key_{safe_var_name}_{role_name.replace(' ', '_')} = $"{{orgUnit_{safe_var_name}Id}}_{{role_{safe_var_name}_{role_name.replace(' ', '_')}Id}}_{{user_{safe_var_name}_{role_name.replace(' ', '_')}Id}}";
-                if (!existingRoleKeys.Contains(key_{safe_var_name}_{role_name.replace(' ', '_')}))
+                var keyTuple_{var_suffix} = (EntityId: orgUnit_{safe_var_name}Id, EntityRoleId: role_{var_suffix}Id, UserId: user_{var_suffix}Id);
+                if (existingRoleDict.TryGetValue(keyTuple_{var_suffix}, out var existingRole_{var_suffix}))
                 {{
+                    // Update existing record
+                    existingRole_{var_suffix}.Name = $"{role_code} - {{orgUnit_{safe_var_name}Id}} - {{user_{var_suffix}Id}}";
+                    existingRole_{var_suffix}.Status = EntityStatus.Active;
+                    existingRole_{var_suffix}.LastModifiedDate = DateTime.UtcNow;
+                    existingRole_{var_suffix}.LastModifiedBy = 1;
+                    existingRole_{var_suffix}.IsDeleted = false;
+                    existingRole_{var_suffix}.DeletedDate = null;
+                    existingRole_{var_suffix}.DeletedBy = 0;
+                    rolesToUpdate.Add(existingRole_{var_suffix});
+                    updatedCount++;
+                }}
+                else
+                {{
+                    // Add new record
                     rolesToAdd.Add(new EntityUserRole
                     {{
-                        Name = $"{role_name} - OrganizationHierarchy - {{orgUnit_{safe_var_name}Id}} - {{user_{safe_var_name}_{role_name.replace(' ', '_')}Id}}",
+                        Name = $"{role_name} - OrganizationHierarchy - {{orgUnit_{safe_var_name}Id}} - {{user_{var_suffix}Id}}",
                         EntityId = orgUnit_{safe_var_name}Id,
                         EntityType = "OrganizationHierarchy",
-                        EntityRoleId = role_{safe_var_name}_{role_name.replace(' ', '_')}Id,
-                        UserId = user_{safe_var_name}_{role_name.replace(' ', '_')}Id,
+                        EntityRoleId = role_{var_suffix}Id,
+                        UserId = user_{var_suffix}Id,
                         Status = EntityStatus.Active,
                         CreatedDate = DateTime.UtcNow,
                         CreatedBy = 1
                     }});
                 }}
-                else
-                {{
-                    skippedCount++;
-                }}
             }}
             else
             {{
-                if (!roleNameToId.ContainsKey("{role_name}")) missingRoles.Add("{role_name}");
+                if (!roleCodeToId.ContainsKey("{role_code}")) missingRoles.Add("{role_code}");
                 if (!emailToUserId.ContainsKey("{email}")) missingUsers.Add("{email}");
             }}
 '''
@@ -190,17 +211,23 @@ public class OrgUnitDirectorRolesSeeder
         if (rolesToAdd.Any())
         {
             await context.EntityUserRoles.AddRangeAsync(rolesToAdd);
-            await context.SaveChangesAsync();
             Console.WriteLine($"Added {rolesToAdd.Count} new EntityUserRole records for OrganizationHierarchy.");
+        }
+        
+        // Update existing roles
+        if (rolesToUpdate.Any())
+        {
+            context.EntityUserRoles.UpdateRange(rolesToUpdate);
+            Console.WriteLine($"Updated {updatedCount} existing EntityUserRole records for OrganizationHierarchy.");
+        }
+        
+        if (rolesToAdd.Any() || rolesToUpdate.Any())
+        {
+            await context.SaveChangesAsync();
         }
         else
         {
-            Console.WriteLine("No new EntityUserRole records to add.");
-        }
-        
-        if (skippedCount > 0)
-        {
-            Console.WriteLine($"Skipped {skippedCount} existing EntityUserRole records.");
+            Console.WriteLine("No new or updated EntityUserRole records.");
         }
         
         if (missingOrgUnits.Any())

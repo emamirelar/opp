@@ -587,6 +587,7 @@ public class AppDbContext : AuditableDbContext<int, int>
         modelBuilder.Entity<EntityRole>(entity =>
         {
             entity.HasIndex(x => new { x.EntityType, x.Name });
+            entity.HasIndex(x => x.Code).IsUnique();
         });
 
         // EntityRolePerson configuration

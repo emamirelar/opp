@@ -40,5 +40,10 @@ public class EntityRole : ModifiableDeletableEntity
     /// Optional subtype classification for the role
     /// </summary>
     public string? SubType { get; set; }
+    
+    /// <summary>
+    /// Optional unique code identifier for the role (typically derived from Name with spaces replaced by underscores and dashes removed)
+    /// </summary>
+    public string? Code { get; set; }
 }
 
