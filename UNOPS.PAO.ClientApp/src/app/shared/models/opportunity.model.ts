@@ -109,7 +109,8 @@ export interface Opportunity {
   signingDateNotes: string | null;
   submissionDeadline: string | null;
   resultsFocus: string | null;
-  intendedImpactOutcomes: string | null;
+  expectedImpact: string | null;
+  expectedOutcomes: string | null;
   expectedBeneficiaries: string | null;
   estimatedDirectBeneficiaries: number | null;
   estimatedIndirectBeneficiaries: number | null;

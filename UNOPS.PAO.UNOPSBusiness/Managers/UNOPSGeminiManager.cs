@@ -4641,7 +4641,8 @@ public class UNOPSGeminiManager : IGeminiManager
                     // WHY Section - Strategic Information
                     Challenges = parsedResponse["challenges"]?.ToString(),
                     ResultsFocus = parsedResponse["resultsFocus"]?.ToString(),
-                    IntendedImpactOutcomes = parsedResponse["intendedImpactOutcomes"]?.ToString(),
+                    ExpectedImpact = parsedResponse["expectedImpact"]?.ToString(),
+                    ExpectedOutcomes = parsedResponse["expectedOutcomes"]?.ToString(),
                     ExpectedBeneficiaries = parsedResponse["expectedBeneficiaries"]?.ToString(),
                     EstimatedDirectBeneficiaries = parsedResponse["estimatedDirectBeneficiaries"]?.ToObject<int?>(),
                     EstimatedIndirectBeneficiaries = parsedResponse["estimatedIndirectBeneficiaries"]?.ToObject<int?>(),

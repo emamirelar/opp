@@ -244,6 +244,11 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     
     // Financial
     if (opp.initiativeBudgetUSD) count++;
+    if (opp.strategicAlignment) count++;
+    if (opp.resultsFocus) count++;
+    if (opp.expectedBeneficiaries) count++;
+    if (opp.expectedImpact) count++;
+    if (opp.expectedOutcomes) count++;
     
     // WHEN Section - Timeline
     if (opp.targetSigningDate) count++;
@@ -256,8 +261,9 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     // WHY Section - Strategic
     if (opp.challenges) count++;
     if (opp.resultsFocus) count++;
-    if (opp.intendedImpactOutcomes) count++;
     if (opp.expectedBeneficiaries) count++;
+    if (opp.expectedImpact) count++;
+    if (opp.expectedOutcomes) count++;
     if (opp.estimatedDirectBeneficiaries) count++;
     if (opp.estimatedIndirectBeneficiaries) count++;
     if (opp.beneficiariesToBeDetermined !== null && opp.beneficiariesToBeDetermined !== undefined) count++;
@@ -1870,7 +1876,7 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
           createRequest.partnerBudgets = selectedBudgets;
         }
       }
-
+      
       // WHY Section fields
       if (this.isFieldSelected('challenges') && opp.challenges) {
         createRequest.challenges = opp.challenges;
@@ -1880,10 +1886,14 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         createRequest.resultsFocus = opp.resultsFocus;
       }
 
-      if (this.isFieldSelected('intendedImpactOutcomes') && opp.intendedImpactOutcomes) {
-        createRequest.intendedImpactOutcomes = opp.intendedImpactOutcomes;
+      if (this.isFieldSelected('expectedImpact') && proposal.opportunity.expectedImpact) {
+        createRequest.expectedImpact = proposal.opportunity.expectedImpact;
       }
-
+      
+      if (this.isFieldSelected('expectedOutcomes') && proposal.opportunity.expectedOutcomes) {
+        createRequest.expectedOutcomes = proposal.opportunity.expectedOutcomes;
+      }
+      
       if (this.isFieldSelected('expectedBeneficiaries') && opp.expectedBeneficiaries) {
         createRequest.expectedBeneficiaries = opp.expectedBeneficiaries;
       }
@@ -2110,7 +2120,9 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     // Strategic Info (WHY section)
     if (opp.challenges) updated.set('challenges', selectAll);
     if (opp.resultsFocus) updated.set('resultsFocus', selectAll);
-    if (opp.intendedImpactOutcomes) updated.set('intendedImpactOutcomes', selectAll);
+    if (opp.expectedBeneficiaries) updated.set('expectedBeneficiaries', selectAll);
+    if (opp.expectedImpact) updated.set('expectedImpact', selectAll);
+    if (opp.expectedOutcomes) updated.set('expectedOutcomes', selectAll);
     if (opp.expectedBeneficiaries) updated.set('expectedBeneficiaries', selectAll);
     if (opp.estimatedDirectBeneficiaries) updated.set('estimatedDirectBeneficiaries', selectAll);
     if (opp.estimatedIndirectBeneficiaries) updated.set('estimatedIndirectBeneficiaries', selectAll);
@@ -2176,7 +2188,9 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     // Strategic Info (WHY section)
     if (opp.challenges) selected.set('challenges', true);
     if (opp.resultsFocus) selected.set('resultsFocus', true);
-    if (opp.intendedImpactOutcomes) selected.set('intendedImpactOutcomes', true);
+    if (opp.expectedBeneficiaries) selected.set('expectedBeneficiaries', true);
+    if (opp.expectedImpact) selected.set('expectedImpact', true);
+    if (opp.expectedOutcomes) selected.set('expectedOutcomes', true);
     if (opp.expectedBeneficiaries) selected.set('expectedBeneficiaries', true);
     if (opp.estimatedDirectBeneficiaries) selected.set('estimatedDirectBeneficiaries', true);
     if (opp.estimatedIndirectBeneficiaries) selected.set('estimatedIndirectBeneficiaries', true);

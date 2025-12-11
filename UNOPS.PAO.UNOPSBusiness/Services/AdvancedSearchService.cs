@@ -1213,7 +1213,8 @@ public class AdvancedSearchService
                     AddFieldIfNotNull(fields, "Description", opportunity.Description);
                     AddFieldIfNotNull(fields, "PartnerReference", opportunity.PartnerReference);
                     AddFieldIfNotNull(fields, "ResultsFocus", opportunity.ResultsFocus);
-                    AddFieldIfNotNull(fields, "IntendedImpactOutcomes", opportunity.IntendedImpactOutcomes);
+                    AddFieldIfNotNull(fields, "ExpectedImpact", opportunity.ExpectedImpact);
+                    AddFieldIfNotNull(fields, "ExpectedOutcomes", opportunity.ExpectedOutcomes);
                     AddFieldIfNotNull(fields, "ExpectedBeneficiaries", opportunity.ExpectedBeneficiaries);
 
                     // Related entities

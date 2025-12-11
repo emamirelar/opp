@@ -107,6 +107,46 @@
       }
     </div>
 
+    <!-- Expected Impact -->
+    <div>
+      <h3
+        class="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2"
+      >
+        <i class="pi pi-chart-line text-blue-600"></i>
+        {{ "label.opportunity.expectedImpact" | translate }}
+      </h3>
+      @if (isEditing()) {
+        <textarea
+          pInputTextarea
+          [formControl]="expectedImpactControl"
+          rows="4"
+          class="w-full"
+          maxlength="200"
+          [placeholder]="
+            'label.opportunity.expectedImpactPlaceholder' | translate
+          "
+        ></textarea>
+        @if (
+          expectedImpactControl.invalid &&
+          expectedImpactControl.touched &&
+          expectedImpactControl.errors?.['maxlength']
+        ) {
+          <p-message
+            severity="error"
+            variant="simple"
+            styleClass="mt-2"
+            [text]="
+              'validation.maxLength' | translate: { max: 200 }
+            "
+          ></p-message>
+        }
+      } @else {
+        <p class="text-gray-700 leading-relaxed">
+          {{ opportunity().expectedImpact || "-" }}
+        </p>
+      }
+    </div>
+
     <!-- Expected Outcomes -->
     <div>
       <h3
@@ -121,13 +161,28 @@
           [formControl]="expectedOutcomesControl"
           rows="4"
           class="w-full"
+          maxlength="200"
           [placeholder]="
             'label.opportunity.expectedOutcomesPlaceholder' | translate
           "
         ></textarea>
+        @if (
+          expectedOutcomesControl.invalid &&
+          expectedOutcomesControl.touched &&
+          expectedOutcomesControl.errors?.['maxlength']
+        ) {
+          <p-message
+            severity="error"
+            variant="simple"
+            styleClass="mt-2"
+            [text]="
+              'validation.maxLength' | translate: { max: 200 }
+            "
+          ></p-message>
+        }
       } @else {
         <p class="text-gray-700 leading-relaxed">
-          {{ opportunity().intendedImpactOutcomes || "-" }}
+          {{ opportunity().expectedOutcomes || "-" }}
         </p>
       }
     </div>

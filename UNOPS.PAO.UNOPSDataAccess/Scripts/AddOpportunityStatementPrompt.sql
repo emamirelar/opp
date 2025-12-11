@@ -60,7 +60,7 @@ VALUES (
 
 - **(a) Client:** [List client partners from the opportunity data]
 - **(b) Funding Partner:** [List funding partners from the opportunity data]
-- **(c) Impact:** [Extract from IntendedImpactOutcomes and ExpectedBeneficiaries fields]
+- **(c) Impact:** [Extract from ExpectedImpact, ExpectedOutcomes, and ExpectedBeneficiaries fields]
 - **(d) Expected Outcomes:** [Extract from ResultsFocus field]
 
 ## 4. UNOPS Value Proposition

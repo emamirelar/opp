@@ -1130,10 +1130,16 @@
           "description": "Results focus description (max 2000 characters)"
         },
         {
-          "name": "IntendedImpactOutcomes",
+          "name": "ExpectedImpact",
           "dataType": "string",
           "required": false,
-          "description": "Intended impact and outcomes (max 2000 characters)"
+          "description": "Expected impact description (max 200 characters)"
+        },
+        {
+          "name": "ExpectedOutcomes",
+          "dataType": "string",
+          "required": false,
+          "description": "Expected outcomes description (max 200 characters)"
         },
         {
           "name": "ExpectedBeneficiaries",
@@ -1499,10 +1505,16 @@
           "description": "Results focus description"
         },
         {
-          "name": "IntendedImpactOutcomes",
+          "name": "ExpectedImpact",
           "dataType": "string",
           "required": false,
-          "description": "Intended impact and outcomes description"
+          "description": "Expected impact description (max 200 characters)"
+        },
+        {
+          "name": "ExpectedOutcomes",
+          "dataType": "string",
+          "required": false,
+          "description": "Expected outcomes description (max 200 characters)"
         },
         {
           "name": "ExpectedBeneficiaries",
@@ -1792,10 +1804,16 @@
           "description": "Results focus description"
         },
         {
-          "name": "IntendedImpactOutcomes",
+          "name": "ExpectedImpact",
           "dataType": "string",
           "required": false,
-          "description": "Intended impact and outcomes"
+          "description": "Expected impact description (max 200 characters)"
+        },
+        {
+          "name": "ExpectedOutcomes",
+          "dataType": "string",
+          "required": false,
+          "description": "Expected outcomes description (max 200 characters)"
         },
         {
           "name": "ExpectedBeneficiaries",
@@ -3952,10 +3970,16 @@
             "description": "Results focus description (max 2000 characters)"
           },
           {
-            "name": "IntendedImpactOutcomes",
+            "name": "ExpectedImpact",
             "dataType": "string",
             "required": false,
-            "description": "Intended impact and outcomes (max 2000 characters)"
+            "description": "Expected impact description (max 200 characters)"
+          },
+          {
+            "name": "ExpectedOutcomes",
+            "dataType": "string",
+            "required": false,
+            "description": "Expected outcomes description (max 200 characters)"
           },
           {
             "name": "ExpectedBeneficiaries",

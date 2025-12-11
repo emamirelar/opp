@@ -476,9 +476,14 @@ public class OpportunityManager : IOpportunityManager
             entity.ExpectedBeneficiaries = request.ExpectedBeneficiaries;
         }
 
-        if (request.IntendedImpactOutcomes != null)
+        if (request.ExpectedImpact != null)
         {
-            entity.IntendedImpactOutcomes = request.IntendedImpactOutcomes;
+            entity.ExpectedImpact = request.ExpectedImpact;
+        }
+
+        if (request.ExpectedOutcomes != null)
+        {
+            entity.ExpectedOutcomes = request.ExpectedOutcomes;
         }
 
         if (request.Challenges != null)

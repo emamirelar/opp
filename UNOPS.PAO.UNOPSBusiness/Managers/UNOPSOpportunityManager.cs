@@ -1344,9 +1344,14 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         entity.EstimatedIndirectBeneficiaries = request.EstimatedIndirectBeneficiaries;
         entity.BeneficiariesToBeDetermined = request.BeneficiariesToBeDetermined;
 
-        if (request.IntendedImpactOutcomes != null)
+        if (request.ExpectedImpact != null)
         {
-            entity.IntendedImpactOutcomes = request.IntendedImpactOutcomes;
+            entity.ExpectedImpact = request.ExpectedImpact;
+        }
+
+        if (request.ExpectedOutcomes != null)
+        {
+            entity.ExpectedOutcomes = request.ExpectedOutcomes;
         }
 
         if (request.Challenges != null)
@@ -2734,9 +2739,14 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             entity.ResultsFocus = request.ResultsFocus;
         }
 
-        if (request.IntendedImpactOutcomes != null)
+        if (request.ExpectedImpact != null)
         {
-            entity.IntendedImpactOutcomes = request.IntendedImpactOutcomes;
+            entity.ExpectedImpact = request.ExpectedImpact;
+        }
+
+        if (request.ExpectedOutcomes != null)
+        {
+            entity.ExpectedOutcomes = request.ExpectedOutcomes;
         }
 
         if (request.ExpectedBeneficiaries != null)
@@ -3356,7 +3366,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             ["targetSigningDate"] = opportunity.TargetSigningDate?.ToString("yyyy-MM-dd") ?? "",
             ["targetDeliveryDate"] = opportunity.TargetDeliveryDate?.ToString("yyyy-MM-dd") ?? "",
             ["resultsFocus"] = opportunity.ResultsFocus ?? "",
-            ["intendedImpactOutcomes"] = opportunity.IntendedImpactOutcomes ?? "",
+            ["expectedImpact"] = opportunity.ExpectedImpact ?? "",
+            ["expectedOutcomes"] = opportunity.ExpectedOutcomes ?? "",
             ["expectedBeneficiaries"] = opportunity.ExpectedBeneficiaries ?? "",
             ["fundingPartners"] = string.Join(", ", fundingPartners),
             ["clientPartners"] = string.Join(", ", clientPartners),
@@ -3722,7 +3733,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
                 // Strategic Information fields
                 new() { Field = "resultsFocus", DisplayName = "label.opportunity.resultsFocus", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
-                new() { Field = "intendedImpactOutcomes", DisplayName = "label.opportunity.intendedImpactOutcomes", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "expectedImpact", DisplayName = "label.opportunity.expectedImpact", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "expectedOutcomes", DisplayName = "label.opportunity.expectedOutcomes", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
                 new() { Field = "expectedBeneficiaries", DisplayName = "label.opportunity.expectedBeneficiaries", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
 
                 // Budget field

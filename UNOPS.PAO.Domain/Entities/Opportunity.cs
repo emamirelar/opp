@@ -56,8 +56,17 @@ public class Opportunity : ModifiableDeletableEntity
     [MaxLength(2000)]
     public string? ResultsFocus { get; set; }
     
-    [MaxLength(2000)]
-    public string? IntendedImpactOutcomes { get; set; }
+    /// <summary>
+    /// Expected impact description (max 200 characters)
+    /// </summary>
+    [MaxLength(200)]
+    public string? ExpectedImpact { get; set; }
+    
+    /// <summary>
+    /// Expected outcomes description (max 200 characters)
+    /// </summary>
+    [MaxLength(200)]
+    public string? ExpectedOutcomes { get; set; }
     
     [MaxLength(1000)]
     public string? ExpectedBeneficiaries { get; set; }

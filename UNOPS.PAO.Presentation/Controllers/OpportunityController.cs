@@ -167,7 +167,7 @@ public class OpportunityController : BaseController
                 ? string.Join(", ", opportunity.Countries.Select(oc => oc.Country?.Name).Where(n => !string.IsNullOrWhiteSpace(n)))
                 : null;
 
-            var intendedImpact = opportunity.IntendedImpactOutcomes;
+            var intendedImpact = opportunity.ExpectedImpact ?? opportunity.ExpectedOutcomes;
             var initiativeType = opportunity.ProposedInitiativeType?.Name;
 
             _logger.LogInformation("Generating images for opportunity {OpportunityId}: {OpportunityName} in {Countries}", 

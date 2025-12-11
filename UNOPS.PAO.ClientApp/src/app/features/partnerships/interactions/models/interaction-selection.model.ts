@@ -157,7 +157,8 @@ export interface ProposedOpportunityResponseRaw {
     // WHY Section - Strategic Information
     challenges?: string | null;
     resultsFocus?: string | null;
-    intendedImpactOutcomes?: string | null;
+    expectedImpact?: string | null;
+    expectedOutcomes?: string | null;
     expectedBeneficiaries?: string | null;
     estimatedDirectBeneficiaries?: number | null;
     estimatedIndirectBeneficiaries?: number | null;
@@ -219,7 +220,8 @@ export interface ProposedOpportunityResponse {
     // WHY Section - Strategic Information
     challenges?: string | null;
     resultsFocus?: string | null;
-    intendedImpactOutcomes?: string | null;
+    expectedImpact?: string | null;
+    expectedOutcomes?: string | null;
     expectedBeneficiaries?: string | null;
     estimatedDirectBeneficiaries?: number | null;
     estimatedIndirectBeneficiaries?: number | null;
