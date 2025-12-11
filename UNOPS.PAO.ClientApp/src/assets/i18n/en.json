@@ -2936,6 +2936,7 @@
   "label.uploadNewDocuments": "Upload New Documents",
   "label.selectedFiles": "Selected Files",
   "label.selectExistingDocuments": "Select Existing Documents",
+  "label.existingDocument": "Existing",
   "label.or": "or",
   "label.fromComputer": "From Computer",
   "label.fromGoogleDrive": "From Google Drive",
