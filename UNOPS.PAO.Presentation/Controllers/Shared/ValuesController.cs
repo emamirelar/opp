@@ -192,9 +192,9 @@ public class ValuesController : BaseController
     }
 
     [HttpGet(APIDictionary.UNOPSMissions)]
-    public async Task<ActionResult> GetUNOPSMissions()
+    public async Task<ActionResult> GetUNOPSMissions([FromQuery] bool includeInactive = false)
     {
-        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetUNOPSMissions()));
+        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetUNOPSMissions(includeInactive)));
     }
 
     [HttpGet(APIDictionary.GeminiModels)]

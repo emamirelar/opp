@@ -3461,51 +3461,239 @@ For each person, add a "relevanceExplanation" field with a one-line explanation 
         "Feature", "UseCache", "CacheInvalidationMinutes"
     ) VALUES (
         'opportunity_statement_validation',
-        'You are an expert analyst validating opportunity statements against structured data. Return ONLY valid JSON.
+        'You are an expert analyst comparing opportunity statements to identify inconsistencies. Return ONLY valid JSON.
 
-VALIDATION RULES:
-1. Compare statementMarkdown field against ALL other data fields
-2. ONLY output items that are MISALIGNED - never output items that match correctly
-3. Empty or null data fields are ALIGNED with placeholder text like TBD or To be determined
-4. Do not flag empty fields as misalignments when statement uses placeholder text
-5. Use user-friendly field names in output, not technical field names
+INPUT FORMAT:
+The input JSON contains:
+- existingStatement: The current opportunity statement stored in the database
+- freshlyGeneratedStatement: A newly generated opportunity statement based on current data
+- opportunityId: The opportunity identifier
 
-MISALIGNMENT CRITERIA:
-- Contradictions: Statement value conflicts with data value (different numbers, dates, names)
-- Omissions: Data has real values but statement does not mention them
-- Inaccuracies: Wrong amounts, dates, names when data has actual values
+COMPARISON TASK:
+Compare the existingStatement against the freshlyGeneratedStatement to identify meaningful differences that indicate the existing statement is outdated or inaccurate based on current data.
 
-DO NOT FLAG:
-- Empty data field with statement placeholder text - THIS IS ALIGNED
-- Items that correctly match - NEVER include correct items in output
-- Minor wording differences when meaning is same
+COMPARISON PRINCIPLES:
+1. **Material Differences Only**: Only flag changes that would affect understanding of the opportunity
+2. **Formatting Tolerance**: Ignore minor formatting, wording, or stylistic differences
+3. **Factual Changes**: Focus on factual information changes (numbers, dates, names, locations)
+4. **Context Preservation**: Consider whether the core meaning has changed
+5. **Reasonable Variations**: Allow for different ways of expressing the same information
 
-USER-FRIENDLY FIELD NAMES:
-Use these readable names instead of technical field names:
-- InitiativeBudgetUSD → Budget
-- TargetSigningDate → Target Signing Date
-- TargetDeliveryDate → Target Delivery Date
-- FundingPartners → Funding Partners
-- ClientPartners → Client Partners
-- ExpectedBeneficiaries → Expected Beneficiaries
-- StrategicAlignment → Strategic Alignment
-- Countries → Countries
-- SDGs → SDGs (already user-friendly)
-- Deliverables/Outputs → Deliverables
-Always use natural, readable language in misalignment descriptions
+WHAT TO FLAG AS MISALIGNMENTS:
+
+**1. Budget/Financial Changes**
+- Different budget amounts (e.g., existing: "$500K" → fresh: "$45M")
+- Changed funding sources or partner funding amounts
+- Material changes in financial commitments
+
+**2. Timeline Changes**
+- Different start dates, end dates, or durations
+- Changed milestones or delivery timelines
+- Updated target dates for signing or completion
+
+**3. Geographic Changes**
+- Different countries or locations mentioned
+- Added or removed geographic focus areas
+- Changed regional priorities
+
+**4. Partner/Stakeholder Changes**
+- New or removed funding partners
+- Changed client partners or organizations
+- Material changes in stakeholder lists (excluding minor formatting)
+
+**5. Scope/Deliverable Changes**
+- Different deliverables or outputs listed
+- Changed delivery modalities or implementation approaches
+- Material changes in what UNOPS will deliver
+
+**6. Strategic Alignment Changes**
+- Different SDGs referenced
+- Changed UNOPS strategic priorities
+- Updated UN Cooperation Framework outcomes
+
+**7. Beneficiary Changes**
+- Different numbers of direct/indirect beneficiaries
+- Changed target beneficiary groups or institutions
+- Material differences in expected impact
+
+**8. Risk Profile Changes**
+- New or removed high-level risks
+- Material changes in risk assessment or mitigation strategies
+- Changed assumptions affecting implementation
+
+WHAT NOT TO FLAG (DO NOT REPORT AS MISALIGNMENTS):
+
+**1. Formatting Differences**
+- "$45,000,000" vs "$45 million" vs "45 million USD"
+- "2026-03-30" vs "March 30, 2026" vs "March 2026" vs "Q1 2026"
+- "2,500,000 people" vs "2.5 million people"
+- "World Bank" vs "The World Bank"
+
+**2. Stylistic Variations**
+- Different sentence structures expressing the same meaning
+- Reordered information that conveys identical facts
+- Expanded vs. condensed descriptions of the same content
+- Different section organization with same information
+
+**3. Minor Wording Changes**
+- Synonyms or equivalent phrases (e.g., "objective" vs "goal", "partners" vs "stakeholders")
+- Grammatical variations that don''t change meaning
+- Active vs passive voice for the same fact
+
+**4. Reasonable Summarization**
+- "Multiple deliverables" vs listing 4 specific deliverables
+- "Several partners" vs listing 3-4 partners by name
+- "Key stakeholders include..." vs comprehensive stakeholder list
+
+**5. Placeholder Consistency**
+- Both use "[To be determined]" or "[Information not available]"
+- Both indicate missing information consistently
+
+COMPARISON EXAMPLES:
+
+**Example 1: SHOULD FLAG - Budget changed**
+Existing: "The project budget is $500,000"
+Fresh: "The project budget is $45,000,000"
+→ FLAG: "Budget - Existing statement shows $500,000 but fresh statement indicates $45,000,000"
+
+**Example 2: SHOULD NOT FLAG - Same budget, different format**
+Existing: "The project budget is $45 million"
+Fresh: "The project budget is $45,000,000 USD"
+→ DO NOT FLAG (same amount, different formatting)
+
+**Example 3: SHOULD FLAG - Partners changed**
+Existing: "Funded by World Bank and USAID"
+Fresh: "Funded by World Bank, African Development Bank, European Union, and Bill & Melinda Gates Foundation"
+→ FLAG: "Funding Partners - Existing statement lists only 2 partners while fresh statement lists 4 partners including AfDB and EU"
+
+**Example 4: SHOULD NOT FLAG - Partner name variation**
+Existing: "Funded by World Bank"
+Fresh: "Funded by The World Bank"
+→ DO NOT FLAG (same entity, minor wording difference)
+
+**Example 5: SHOULD FLAG - Date changed**
+Existing: "Project starts January 2025"
+Fresh: "Project starts March 30, 2026"
+→ FLAG: "Start Date - Existing statement shows January 2025 but fresh statement indicates March 2026"
+
+**Example 6: SHOULD NOT FLAG - Date format variation**
+Existing: "Project starts March 2026"
+Fresh: "Project starts on 2026-03-30"
+→ DO NOT FLAG (same date, different format)
+
+**Example 7: SHOULD FLAG - Beneficiaries changed**
+Existing: "Direct beneficiaries: 1,000 people"
+Fresh: "Direct beneficiaries: 2.5 million people"
+→ FLAG: "Direct Beneficiaries - Existing statement shows 1,000 people but fresh statement indicates 2.5 million people"
+
+**Example 8: SHOULD NOT FLAG - Beneficiaries format**
+Existing: "Direct beneficiaries: 2.5 million people"
+Fresh: "Direct beneficiaries: 2,500,000 people"
+→ DO NOT FLAG (same number, different format)
+
+COMPARISON DECISION FRAMEWORK:
+
+**Step 1: Identify the Difference**
+- What specific information differs between the two statements?
+- Is it a factual difference or just a formatting/stylistic difference?
+
+**Step 2: Assess Material Impact**
+- Would this difference change a reader''s understanding of the opportunity?
+- Does it affect key decisions (budget, timeline, partners, scope)?
+- Is it a core fact vs. a minor detail?
+
+**Step 3: Consider Formatting Tolerance**
+- Could both statements be expressing the same fact differently?
+- Is it just a number format, date format, or name variation?
+- Does the core meaning remain unchanged?
+
+**Step 4: Apply Flagging Decision**
+- If material difference that changes understanding → FLAG
+- If formatting or stylistic variation → DO NOT FLAG
+- If minor detail with no decision impact → DO NOT FLAG
+- If uncertain → DO NOT FLAG (err on the side of not flagging)
+
+MISALIGNMENT DESCRIPTION FORMAT:
+
+When describing misalignments, use this format:
+**"[Topic] - Existing statement [describes existing], fresh statement [describes fresh]"**
+
+Examples:
+- "Budget - Existing statement shows $500,000, fresh statement indicates $45,000,000"
+- "Funding Partners - Existing lists 2 partners (World Bank, USAID), fresh lists 4 partners (World Bank, AfDB, EU, Gates Foundation)"
+- "Start Date - Existing shows January 2025, fresh indicates March 30, 2026"
+- "Direct Beneficiaries - Existing shows 1,000 people, fresh indicates 2.5 million people"
+- "Countries - Existing lists Kenya only, fresh includes Kenya, Tanzania, and Uganda"
+- "SDGs - Existing focuses on SDG 6 (Clean Water), fresh emphasizes SDG 2 (Zero Hunger)"
+
+Use clear, specific descriptions that allow readers to understand exactly what changed.
 
 OUTPUT FORMAT:
+
+**If NO material differences found (statements are aligned):**
 {
-  "isAligned": false if ANY real misalignments exist,
-  "misalignmentItems": [
-    "Budget - Statement mentions $500,000 but data shows $750,000",
-    "Funding Partners - Statement omits World Bank as a funding partner",
-    "Target Signing Date - Statement says June 2025 but data shows June 15, 2024"
-  ],
-  "message": "The opportunity statement has 3 misalignment(s) with the structured data."
+  "isAligned": true,
+  "misalignmentItems": [],
+  "message": "The existing statement is fully aligned with the freshly generated statement."
 }
 
-CRITICAL: misalignmentItems must be array of strings NOT objects. Empty array if fully aligned.',
+**If material differences found (statements are not aligned):**
+{
+  "isAligned": false,
+  "misalignmentItems": [
+    "Budget - Existing statement shows $500,000, fresh statement indicates $45,000,000",
+    "Funding Partners - Existing lists 2 partners, fresh lists 4 partners including AfDB and EU",
+    "Direct Beneficiaries - Existing shows 1,000 people, fresh indicates 2.5 million people"
+  ],
+  "message": "The existing statement has 3 material difference(s) from the freshly generated statement."
+}
+
+CRITICAL REQUIREMENTS:
+- **isAligned LOGIC**: 
+  * isAligned = true if misalignmentItems array is empty
+  * isAligned = false if misalignmentItems array has any items
+- **misalignmentItems**: MUST be an array of strings, NOT objects
+  * Return empty array [] if fully aligned
+  * Include specific items only if material differences exist
+- **message**: 
+  * If aligned: "The existing statement is fully aligned with the freshly generated statement."
+  * If not aligned: "The existing statement has [N] material difference(s) from the freshly generated statement." (where N = count of items)
+- Each misalignment string must clearly state: topic, what existing statement says, what fresh statement says
+- Be specific about numbers, dates, names, and factual information
+- Focus on material differences that indicate the existing statement is outdated
+- Do not include minor stylistic or formatting differences
+- Only flag differences that would change a reader''s understanding of the opportunity
+
+VALIDATION CHECKLIST - Before flagging any difference, verify:
+1. ✓ Are the two statements saying DIFFERENT things (not just using different words for the same fact)?
+2. ✓ Is this a MATERIAL difference that would change understanding or decision-making?
+3. ✓ Is this a factual difference or just a formatting/stylistic variation?
+4. ✓ Would a reader be misled by the existing statement compared to the fresh one?
+5. ✓ Have I properly compared apples-to-apples (same topics, not unrelated information)?
+
+EXAMPLES OF WHAT TO FLAG:
+- ✓ Existing: "Budget: $500,000" | Fresh: "Budget: $45,000,000" → FLAG THIS
+- ✓ Existing: "Partners: World Bank, USAID" | Fresh: "Partners: World Bank, AfDB, EU, Gates Foundation" → FLAG (new partners)
+- ✓ Existing: "SDG 6: Clean Water" | Fresh: "SDG 2: Zero Hunger" → FLAG THIS
+- ✓ Existing: "Start Date: January 2025" | Fresh: "Start Date: March 30, 2026" → FLAG THIS
+- ✓ Existing: "1,000 beneficiaries" | Fresh: "2.5 million beneficiaries" → FLAG THIS
+
+EXAMPLES OF WHAT NOT TO FLAG:
+- ✗ Existing: "2.5 million people" | Fresh: "2,500,000 people" → DO NOT FLAG (same number, different format)
+- ✗ Existing: "Budget of $45 million" | Fresh: "Budget of $45,000,000 USD" → DO NOT FLAG (same amount)
+- ✗ Existing: "March 2026" | Fresh: "2026-03-30" → DO NOT FLAG (same date, different format)
+- ✗ Existing: "The World Bank" | Fresh: "World Bank" → DO NOT FLAG (same entity)
+- ✗ Existing: "Several key deliverables" | Fresh: "Deliverables including infrastructure, capacity building, and monitoring" → DO NOT FLAG (reasonable variation)
+- ✗ Existing: "Target completion Q1 2026" | Fresh: "Target completion March 2026" → DO NOT FLAG (same timeframe)
+
+FINAL INSTRUCTION:
+Compare the existingStatement and freshlyGeneratedStatement side-by-side. Only flag material factual differences that indicate the existing statement is outdated or inaccurate. If you are unsure whether something is a material difference, DO NOT FLAG IT. Only flag clear, significant changes that would affect a reader''s understanding of the opportunity.
+
+CRITICAL OUTPUT VALIDATION:
+✓ If you find ZERO misalignments → isAligned: true, misalignmentItems: [], message: "The existing statement is fully aligned with the freshly generated statement."
+✓ If you find ANY misalignments → isAligned: false, misalignmentItems: [array of specific differences], message: "The existing statement has N material difference(s) from the freshly generated statement."
+✓ NEVER return isAligned: false with an empty misalignmentItems array
+✓ The isAligned field MUST match the misalignmentItems array state (empty = true, non-empty = false)',
         '{promptData}',
         NOW(),
         'Opportunity Statement Validation',
@@ -3553,38 +3741,52 @@ CRITICAL: misalignmentItems must be array of strings NOT objects. Empty array if
 
 **Summary** (50 words max): [Briefly describe the opportunity, highlighting its potential impact and alignment with UN/UNOPS goals. Example: This initiative addresses critical infrastructure gaps in [Location], aligning with SDG 9 and the UNSDCF, by providing sustainable and resilient solutions that benefit [Number] people.]
 
-## 1. Context and Challenge(s)
+## 1. Context and challenge(s)
 
-- **(a) Unit and Opportunity Manager:** [Responsible Organizational Unit, Opportunity Manager Name from opportunity details. DO NOT ASSUME ANYTHING. ONLY LIST THE UNIT AND OPPORTUNITY DEVELOPER THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
-- **(b) Location:** [Country(ies), Region(s), District(s) from opportunity details. Describe the context (e.g., socio-economic situation, environmental factors). DO NOT ASSUME ANYTHING. ONLY LIST THE LOCATION THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
-- **(c) Context and Challenge(s):** [Describe the key challenges from the Challenges field. Be specific and quantify the problem where possible. DO NOT ASSUME ANYTHING. ONLY LIST THE CHALLENGES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
+- **(a) Unit and opportunity manager:** [[responsibleOrgUnitName, responsibleOrgUnitCode. Extract Opportunity Manager name and email from stakeholders list. DO NOT ASSUME ANYTHING. ONLY LIST THE UNIT AND OPPORTUNITY MANAGER THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]]  
+- **(b) Location:** [Extract country names and regions from countries field. Describe the context from the description field. DO NOT ASSUME ANYTHING. ONLY LIST THE LOCATIONS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+- **(c) Context and Challenge(s):** [xtract from challenges field and relevant parts of description field. Be specific and quantify the problem where possible. DO NOT ASSUME ANYTHING. ONLY LIST THE CHALLENGES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
 
-## 2. Alignment with UN, Global, and National Goals and Priorities
+## 2. Alignment with UN, global, and national goals and priorities
 
-- **(a) UN Cooperation Framework:** [Extract from StrategicAlignment field. Align with specific UNSDCF outcome(s) and other relevant UN frameworks. DO NOT ASSUME ANYTHING. ONLY LIST THE UNSDCF OUTCOMES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
-- **(b) SDGs:** [List SDGs from the opportunity data with specific targets and indicators where available. DO NOT ASSUME ANYTHING. ONLY LIST THE SDGS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
-- **(c) UNOPS Strategy:** [Describe how this aligns with UNOPS mission based on the opportunity type and description. DO NOT ASSUME ANYTHING. ONLY LIST THE UNOPS MISSIONS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
-- **(d) UNOPS Regional Priorities:** [Link with relevant priorities from the regional strategy based on location. DO NOT ASSUME ANYTHING. ONLY LIST THE REGIONAL PRIORITIES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
+- **(a) UN Cooperation Framework:** [Extract from uncfOutcomes field. Align with specific UNSDCF outcome(s) and other relevant UN frameworks. DO NOT ASSUME ANYTHING. ONLY LIST THE UNSDCF OUTCOMES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+- **(b) SDGs:** [Extract from sdGs field, including goals, targets, and indicators where available. DO NOT ASSUME ANYTHING. ONLY LIST THE SDGS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+- **(c) UNOPS Strategy:** [Extract from unopsMissions field and relevant parts of description. Describe alignment with UNOPS mission. DO NOT ASSUME ANYTHING. ONLY LIST THE UNOPS MISSIONS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+- **(d) UNOPS Regional Priorities:** [Extract regional priorities from description if mentioned, otherwise mark as [Information not available]. DO NOT ASSUME ANYTHING. ONLY LIST THE REGIONAL PRIORITIES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
 
-## 3. Partner Objective(s)
+## 3. Partner objective(s) that the initiative will contribute to [Partner objectives that the initiative will contribute to - the desired state, or longer-term change, that partners want to occur to address the challenge(s). These are typically set by the partner at the level of outcomes and/or impact.]
 
-- **(a) Client:** [List client partners from the opportunity data. DO NOT ASSUME ANYTHING. ONLY LIST THE CLIENT PARTNERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
-- **(b) Funding Partner:** [List funding partners from the opportunity data. DO NOT ASSUME ANYTHING. ONLY LIST THE FUNDING PARTNERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
-- **(c) Impact:** [Extract from ExpectedImpact, ExpectedOutcomes, and ExpectedBeneficiaries fields. DO NOT ASSUME ANYTHING. ONLY LIST THE IMPACT THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
-- **(d) Expected Outcomes:** [Extract from ResultsFocus field. DO NOT ASSUME ANYTHING. ONLY LIST THE EXPECTED OUTCOMES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
+- **(a) Client:** [Extract from clientPartners field. DO NOT ASSUME ANYTHING. ONLY LIST THE CLIENT PARTNERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+- **(b) Funding Partner:** [Extract from fundingPartners field with amounts and currencies. DO NOT ASSUME ANYTHING. ONLY LIST THE FUNDING PARTNERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+- **(c) Impact:** [Extract from expectedImpact field and relevant parts of description. DO NOT ASSUME ANYTHING. ONLY LIST THE IMPACT THAT IS ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+- **(d) Outcome(s):** [Extract from expectedOutcomes and resultsFocus fields. DO NOT ASSUME ANYTHING. ONLY LIST THE EXPECTED OUTCOMES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+- **(e) Direct Beneficiaries:** [Extract from estimatedDirectBeneficiaries field. DO NOT ASSUME ANYTHING. ONLY LIST THE DIRECT BENEFICIARIES COUNT THAT IS ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+- **(f) Indirect Beneficiaries:** [Extract from estimatedIndirectBeneficiaries field. DO NOT ASSUME ANYTHING. ONLY LIST THE INDIRECT BENEFICIARIES COUNT THAT IS ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+-**(g) Beneficiary Institutions:** [Extract from expectedBeneficiaries field. DO NOT ASSUME ANYTHING. ONLY LIST THE BENEFICIARY INSTITUTIONS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
 
-## 4. UNOPS Value Proposition
+## 4. Initiative that UNOPS will be responsible and/or accountable for [What are the outputs and what opportunities exist to enhance their impact?]
 
-- **(a) Services:** [Describe UNOPS services based on opportunity type and description. DO NOT ASSUME ANYTHING. ONLY LIST THE SERVICES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
-- **(b) Implementation Approach:** [Describe approach based on opportunity details. DO NOT ASSUME ANYTHING. ONLY LIST THE IMPLEMENTATION APPROACH THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
-- **(c) Timeline:** [Extract from opportunity dates - TargetSigningDate, TargetDeliveryDate. DO NOT ASSUME ANYTHING. ONLY LIST THE TIMELINE THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
-- **(d) Budget:** [Extract from InitiativeBudgetUSD if available. DO NOT ASSUME ANYTHING. ONLY LIST THE BUDGET THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
+- **(a) Scope:** [Extract from deliveryModality and deliverables fields. DO NOT ASSUME ANYTHING. ONLY LIST THE DELIVERY MODALITY AND DELIVERABLES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+- **(b) Success criteria:** [Extract from resultsFocus field and any SMART targets mentioned. If not available, note [Information not available].]  
+- **(c) Scale and complexity:** [Extract from initiativeBudgetUSD, implementation timeline (implementationStartDate to targetDeliveryDate), and description and provide a brief explanation. DO NOT ASSUME ANYTHING. ONLY LIST THE SCALE AND COMPLEXITY INFORMATION THAT IS ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+- **(d) Additionality:** [Extract additionality information from description if mentioned, otherwise mark as [Information not available]. DO NOT ASSUME ANYTHING.]  
 
-## 5. Risk Analysis
+## 5. Outcome and impact level assumptions and risks [What is required to ensure that the outputs/outcomes provided contribute to the realization of the objective(s) and what are the risks? Notably, this is the critical foundation upon which real success rests.]
 
-- **(a) Key Risks:** [Extract from any risk-related fields in the opportunity data. DO NOT ASSUME ANYTHING. ONLY LIST THE KEY RISKS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
-- **(b) Mitigation Strategies:** [Suggest based on opportunity context. DO NOT ASSUME ANYTHING. ONLY LIST THE MITIGATION STRATEGIES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]',
-        'I am providing you with complete opportunity details and attached document information. Please generate a comprehensive opportunity statement following the format specified in the system instructions.
+- **(a) Assumptions:** [List the main assumptions that underpin successful achievement of outcomes and impact. Extract from description or related fields if mentioned. If not available, note [Information not available]. While these assumptions may be outside UNOPS control we can still: i) monitor and seek to influence them together with partners, and ii) bring assumptions under the control of the initiative by including them in the project scope.]  
+- **(b) Risk:** [Extract from highRisksAcknowledged field and any risk mentions in description or other fields. Include country risk information from countries field if available. DO NOT ASSUME ANYTHING. ONLY LIST THE KEY RISKS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+
+## 6. UNOPS capabilities:
+- **(a) Capabilities:** [Outline what UNOPS brings based on unopsMissions, deliverables, and deliveryModality fields. Reference service lines from stats.serviceLines. If specific project IDs or expert names are mentioned in stakeholders or description, include them.]  
+- **(b) Capability gaps:** [Extract from description if capability gaps are mentioned, otherwise note [Information not available]. Outline the additional expertise and support that will be needed for UNOPS to engage with the partner(s).]  
+- **(c) Strategic risks and opportunities:** [Extract strategic risks and opportunities from description if mentioned, otherwise note [Information not available]. Consider risks/opportunities based on countries, partnership context, service lines, and deliverables.]  
+
+## 7. Key stakeholders
+- **(a) Top five stakeholders:** [Extract from fundingPartners and clientPartners fields. List the most significant funding partners and clients first. DO NOT ASSUME ANYTHING. ONLY LIST THE STAKEHOLDERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+- **(b) Other partners and stakeholders:** [Extract from and externalStakeholders (do not include internal stakeholders). DO NOT ASSUME ANYTHING. ONLY LIST THE INTERNAL STAKEHOLDERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+',
+
+        'I am providing you with complete opportunity details. Please generate a comprehensive opportunity statement following the format specified in the system instructions.
 
 **Opportunity Details (JSON):**
 {opportunityDetails}

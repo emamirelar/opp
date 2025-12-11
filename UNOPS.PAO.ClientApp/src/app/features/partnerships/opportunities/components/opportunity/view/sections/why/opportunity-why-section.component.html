@@ -510,6 +510,7 @@
           @for (mission of displayedUNOPSMissions(); track mission.id) {
             <div
               class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3"
+              [class.opacity-60]="mission.status !== 'Active'"
             >
               <div class="flex items-start gap-3">
                 @if (mission.iconClass) {
@@ -520,15 +521,33 @@
                   <i class="pi pi-check-circle text-2xl text-blue-600"></i>
                 }
                 <div class="flex-1">
-                  <h4 class="font-medium text-gray-900 text-sm">
-                    {{ mission.name }}
-                  </h4>
+                  <div class="flex items-center gap-2">
+                    <h4 class="font-medium text-gray-900 text-sm">
+                      {{ mission.name }}
+                    </h4>
+                    @if (mission.status !== 'Active') {
+                      <span class="text-xs px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full border border-amber-300">
+                        {{ 'label.inactive' | translate }}
+                      </span>
+                    }
+                  </div>
                   @if (mission.description) {
                     <p class="text-xs text-gray-600 mt-1">
                       {{ mission.description }}
                     </p>
                   }
                 </div>
+                @if (isEditing() && mission.status !== 'Active') {
+                  <p-button
+                    icon="pi pi-times"
+                    [text]="true"
+                    [rounded]="true"
+                    severity="danger"
+                    size="small"
+                    (onClick)="removeUNOPSMission(mission.id)"
+                    [pTooltip]="'button.remove' | translate"
+                  />
+                }
               </div>
             </div>
           }
@@ -2097,7 +2116,7 @@
 
     <!-- Mission Selection List -->
     <div class="space-y-2 max-h-96 overflow-y-auto pr-2">
-      @for (mission of unopsMissions(); track mission.id) {
+      @for (mission of activeMissionsForDialog(); track mission.id) {
         <div
           class="border rounded-lg p-3 cursor-pointer transition-all hover:shadow-md"
           [class.bg-gradient-to-r]="isUNOPSMissionSelected(mission.id)"
@@ -2144,7 +2163,7 @@
         </div>
       }
 
-      @if (unopsMissions().length === 0) {
+      @if (activeMissionsForDialog().length === 0) {
         <p class="text-sm text-gray-400 italic">
           {{ "message.opportunity.loadingUNOPSMissions" | translate }}
         </p>
