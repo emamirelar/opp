@@ -1767,6 +1767,7 @@
   "message.opportunityWillBeCreatedForPartner": "Esta oportunidad se creará para el socio: {{partnerName}}",
   "message.otherRolesReadOnly": "Estos roles solo pueden ser modificados por administradores del sistema",
   "message.partner.mustBeActiveToCreateOpportunity": "Partner must be Active to create opportunities",
+  "message.partner.mustBeActiveOrDraftToCreateOpportunity": "El socio debe estar Activo o Borrador para crear oportunidades",
   "message.partnerActivatedSuccessfully": "El socio \"{{partnerName}}\" ha sido activado exitosamente.",
   "message.partnerCategoryRequired": "La categoría de socio es requerida",
   "message.partnerCreatedSuccessfully": "¡Socio creado exitosamente!",

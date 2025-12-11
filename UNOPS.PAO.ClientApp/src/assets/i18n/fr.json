@@ -1801,6 +1801,7 @@
   "message.opportunityWillBeCreatedForPartner": "Cette opportunité sera créée pour le partenaire : {{partnerName}}",
   "message.otherRolesReadOnly": "Ces rôles ne peuvent être modifiés que par les administrateurs système",
   "message.partner.mustBeActiveToCreateOpportunity": "Partner must be Active to create opportunities",
+  "message.partner.mustBeActiveOrDraftToCreateOpportunity": "Le partenaire doit être Actif ou Brouillon pour créer des opportunités",
   "message.partnerActivatedSuccessfully": "Le partenaire \"{{partnerName}}\" a été activé avec succès.",
   "message.partnerCategoryRequired": "La catégorie de partenaire est requise",
   "message.partnerCreatedSuccessfully": "Partenaire créé avec succès !",
