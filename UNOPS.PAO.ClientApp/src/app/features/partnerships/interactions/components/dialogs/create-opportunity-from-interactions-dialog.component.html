@@ -271,6 +271,7 @@
                       <p-checkbox
                         [binary]="true"
                         [ngModel]="isExistingDocumentSelected(doc.id)"
+                        (ngModelChange)="toggleExistingDocument(doc.id)"
                         (click)="$event.stopPropagation()"
                         [disabled]="generating() || isUploadingToGCS()">
                       </p-checkbox>
@@ -280,7 +281,7 @@
                       <div class="flex-1 min-w-0">
                         <div class="font-medium text-sm text-gray-900 truncate">{{ doc.name }}</div>
                         <div class="text-xs text-gray-600">
-                          {{ doc.documentType || 'Document' }}
+                          {{ doc.documentTypeName || doc.documentType?.name || 'Document' }}
                         </div>
                       </div>
                     </div>
@@ -656,57 +657,247 @@
             <!-- Responsible Org Unit & Initiative Type -->
             <div class="grid grid-cols-2 gap-4">
               @if (proposedOpportunity()!.opportunity.responsibleOrgUnitName) {
-                <div>
-                  <label class="block text-sm font-semibold text-gray-700 mb-2">
-                    {{ 'label.opportunity.responsibleOrgUnit' | translate }}
-                  </label>
+                <div 
+                  class="border rounded-lg p-4 transition-all cursor-pointer"
+                  [ngClass]="{
+                    'bg-blue-50 border-blue-300': isFieldSelected('responsibleOrgUnitName'),
+                    'hover:shadow-sm bg-white border-gray-200': !isFieldSelected('responsibleOrgUnitName')
+                  }"
+                  (click)="toggleField('responsibleOrgUnitName')">
+                  <div class="flex items-start gap-3 mb-2">
+                    <p-checkbox
+                      [binary]="true"
+                      [ngModel]="isFieldSelected('responsibleOrgUnitName')"
+                      (ngModelChange)="toggleField('responsibleOrgUnitName')"
+                      (click)="$event.stopPropagation()"
+                    />
+                    <label class="block text-sm font-semibold text-gray-700 flex-1">
+                      {{ 'label.opportunity.responsibleOrgUnit' | translate }}
+                    </label>
+                  </div>
                   <input
                     pInputText
                     [value]="proposedOpportunity()!.opportunity.responsibleOrgUnitName"
                     class="w-full bg-yellow-50 border-yellow-200"
-                    readonly />
+                    readonly
+                    (click)="$event.stopPropagation()" />
                 </div>
               }
               @if (proposedOpportunity()!.opportunity.proposedInitiativeTypeName) {
-                <div>
-                  <label class="block text-sm font-semibold text-gray-700 mb-2">
-                    {{ 'label.opportunity.initiativeType' | translate }}
-                  </label>
+                <div 
+                  class="border rounded-lg p-4 transition-all cursor-pointer"
+                  [ngClass]="{
+                    'bg-blue-50 border-blue-300': isFieldSelected('proposedInitiativeTypeName'),
+                    'hover:shadow-sm bg-white border-gray-200': !isFieldSelected('proposedInitiativeTypeName')
+                  }"
+                  (click)="toggleField('proposedInitiativeTypeName')">
+                  <div class="flex items-start gap-3 mb-2">
+                    <p-checkbox
+                      [binary]="true"
+                      [ngModel]="isFieldSelected('proposedInitiativeTypeName')"
+                      (ngModelChange)="toggleField('proposedInitiativeTypeName')"
+                      (click)="$event.stopPropagation()"
+                    />
+                    <label class="block text-sm font-semibold text-gray-700 flex-1">
+                      {{ 'label.opportunity.initiativeType' | translate }}
+                    </label>
+                  </div>
                   <input
                     pInputText
                     [value]="proposedOpportunity()!.opportunity.proposedInitiativeTypeName"
                     class="w-full bg-yellow-50 border-yellow-200"
-                    readonly />
+                    readonly
+                    (click)="$event.stopPropagation()" />
+                </div>
+              }
+            </div>
+
+            <!-- Delivery Modality & Pooled Funding -->
+            <div class="grid grid-cols-2 gap-4">
+              @if ($any(proposedOpportunity()!.opportunity).deliveryModality !== null && $any(proposedOpportunity()!.opportunity).deliveryModality !== undefined) {
+                <div 
+                  class="border rounded-lg p-4 transition-all cursor-pointer"
+                  [ngClass]="{
+                    'bg-blue-50 border-blue-300': isFieldSelected('deliveryModality'),
+                    'hover:shadow-sm bg-white border-gray-200': !isFieldSelected('deliveryModality')
+                  }"
+                  (click)="toggleField('deliveryModality')">
+                  <div class="flex items-start gap-3 mb-2">
+                    <p-checkbox
+                      [binary]="true"
+                      [ngModel]="isFieldSelected('deliveryModality')"
+                      (ngModelChange)="toggleField('deliveryModality')"
+                      (click)="$event.stopPropagation()"
+                    />
+                    <label class="block text-sm font-semibold text-gray-700 flex-1">
+                      {{ 'label.deliveryModality' | translate }}
+                    </label>
+                  </div>
+                  <p-select
+                    [(ngModel)]="$any(proposedOpportunity()!.opportunity).deliveryModality"
+                    [options]="deliveryModalityOptions"
+                    optionValue="value"
+                    class="w-full"
+                    styleClass="w-full bg-yellow-50"
+                    appendTo="body"
+                    (click)="$event.stopPropagation()">
+                    <ng-template pTemplate="selectedItem" let-selected>
+                      {{ getDeliveryModalityLabel(selected?.value || $any(proposedOpportunity()!.opportunity).deliveryModality) }}
+                    </ng-template>
+                    <ng-template pTemplate="item" let-item>
+                      {{ item.label | translate }}
+                    </ng-template>
+                  </p-select>
+                </div>
+              }
+              @if ($any(proposedOpportunity()!.opportunity).isPooledFunding !== null && $any(proposedOpportunity()!.opportunity).isPooledFunding !== undefined) {
+                <div 
+                  class="border rounded-lg p-4 transition-all cursor-pointer"
+                  [ngClass]="{
+                    'bg-blue-50 border-blue-300': isFieldSelected('isPooledFunding'),
+                    'hover:shadow-sm bg-white border-gray-200': !isFieldSelected('isPooledFunding')
+                  }"
+                  (click)="toggleField('isPooledFunding')">
+                  <div class="flex items-start gap-3 mb-2">
+                    <p-checkbox
+                      [binary]="true"
+                      [ngModel]="isFieldSelected('isPooledFunding')"
+                      (ngModelChange)="toggleField('isPooledFunding')"
+                      (click)="$event.stopPropagation()"
+                    />
+                    <label class="block text-sm font-semibold text-gray-700 flex-1">
+                      {{ 'label.pooledFunding' | translate }}
+                    </label>
+                  </div>
+                  <div class="flex items-center gap-2" (click)="$event.stopPropagation()">
+                    <span class="text-sm px-3 py-1 rounded" 
+                          [ngClass]="$any(proposedOpportunity()!.opportunity).isPooledFunding ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'">
+                      {{ $any(proposedOpportunity()!.opportunity).isPooledFunding ? ('label.yes' | translate) : ('label.no' | translate) }}
+                    </span>
+                  </div>
                 </div>
               }
             </div>
 
             <!-- Budget -->
             @if (proposedOpportunity()!.opportunity.initiativeBudgetUSD) {
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">
-                  {{ 'label.estimatedBudget' | translate }} (USD)
-                </label>
+              <div 
+                class="border rounded-lg p-4 transition-all cursor-pointer"
+                [ngClass]="{
+                  'bg-blue-50 border-blue-300': isFieldSelected('initiativeBudgetUSD'),
+                  'hover:shadow-sm bg-white border-gray-200': !isFieldSelected('initiativeBudgetUSD')
+                }"
+                (click)="toggleField('initiativeBudgetUSD')">
+                <div class="flex items-start gap-3 mb-3">
+                  <p-checkbox
+                    [binary]="true"
+                    [ngModel]="isFieldSelected('initiativeBudgetUSD')"
+                    (ngModelChange)="toggleField('initiativeBudgetUSD')"
+                    (click)="$event.stopPropagation()"
+                  />
+                  <label class="block text-sm font-semibold text-gray-700 flex-1">
+                    {{ 'label.proposedBudgetForInitiative' | translate }} (USD)
+                  </label>
+                </div>
                 <input
                   pInputText
                   [(ngModel)]="proposedOpportunity()!.opportunity.initiativeBudgetUSD"
                   type="number"
-                  class="w-full bg-yellow-50 border-yellow-200" />
+                  class="w-full bg-yellow-50 border-yellow-200"
+                  (click)="$event.stopPropagation()" />
               </div>
             }
 
-            <!-- Deliverables -->
+            <!-- Partner Budget Allocations -->
+            @if ($any(proposedOpportunity()!.opportunity).partnerBudgets && $any(proposedOpportunity()!.opportunity).partnerBudgets.length > 0) {
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <label class="block text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <i class="pi pi-dollar text-green-600"></i>
+                    {{ 'label.partnerBudgetAllocations' | translate }} ({{ $any(proposedOpportunity()!.opportunity).partnerBudgets.length }})
+                  </label>
+                  <div class="flex items-center gap-2">
+                    <p-checkbox
+                      [binary]="true"
+                      [ngModel]="isFieldSelected('partnerBudgets')"
+                      (ngModelChange)="toggleField('partnerBudgets')"
+                      inputId="field-partnerBudgets"
+                    />
+                    <label for="field-partnerBudgets" class="cursor-pointer text-sm font-medium text-gray-700">
+                      {{ 'label.selectAll' | translate }}
+                    </label>
+                  </div>
+                </div>
+                <div class="space-y-2">
+                  @for (budget of $any(proposedOpportunity()!.opportunity).partnerBudgets; track $index) {
+                    <div 
+                      class="rounded-lg p-3 transition-all cursor-pointer"
+                      [ngClass]="{
+                        'bg-blue-50 border border-blue-300': isFieldSelected('partnerBudgets[' + $index + ']'),
+                        'bg-yellow-50 border border-yellow-200 hover:shadow-sm': !isFieldSelected('partnerBudgets[' + $index + ']')
+                      }"
+                      (click)="toggleField('partnerBudgets[' + $index + ']')">
+                      <div class="flex items-center gap-3">
+                        <p-checkbox
+                          [binary]="true"
+                          [ngModel]="isFieldSelected('partnerBudgets[' + $index + ']')"
+                          (ngModelChange)="toggleField('partnerBudgets[' + $index + ']')"
+                          [inputId]="'partnerBudget-' + $index"
+                          (click)="$event.stopPropagation()"
+                        />
+                        <i class="pi pi-building text-gray-600"></i>
+                        <div class="flex-1 min-w-0">
+                          <span class="font-medium text-gray-900">{{ budget.partnerName }}</span>
+                        </div>
+                        <div class="text-right">
+                          <span class="font-semibold text-green-700">
+                            {{ budget.currency || 'USD' }} {{ budget.amount?.toLocaleString('en-US') || 0 }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Deliverables (Products and Services) -->
             @if (proposedOpportunity()!.opportunity.deliverables && proposedOpportunity()!.opportunity.deliverables!.length > 0) {
               <div>
                 <div class="flex items-center justify-between mb-3">
-                  <label class="block text-sm font-semibold text-gray-700">
+                  <label class="block text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <i class="pi pi-box text-indigo-600"></i>
                     {{ 'label.opportunity.deliverables' | translate }} ({{ proposedOpportunity()!.opportunity.deliverables!.length }})
                   </label>
+                  <div class="flex items-center gap-2">
+                    <p-checkbox
+                      [binary]="true"
+                      [ngModel]="isFieldSelected('deliverables')"
+                      (ngModelChange)="toggleField('deliverables')"
+                      inputId="field-deliverables"
+                    />
+                    <label for="field-deliverables" class="cursor-pointer text-sm font-medium text-gray-700">
+                      {{ 'label.selectAll' | translate }}
+                    </label>
+                  </div>
                 </div>
                 <div class="space-y-3">
                   @for (deliverable of proposedOpportunity()!.opportunity.deliverables; track $index) {
-                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <div 
+                      class="rounded-lg p-4 transition-all cursor-pointer"
+                      [ngClass]="{
+                        'bg-blue-50 border border-blue-300': isFieldSelected('deliverables[' + $index + ']'),
+                        'bg-yellow-50 border border-yellow-200 hover:shadow-sm': !isFieldSelected('deliverables[' + $index + ']')
+                      }"
+                      (click)="toggleField('deliverables[' + $index + ']')">
                       <div class="flex items-start gap-3">
+                        <p-checkbox
+                          [binary]="true"
+                          [ngModel]="isFieldSelected('deliverables[' + $index + ']')"
+                          (ngModelChange)="toggleField('deliverables[' + $index + ']')"
+                          [inputId]="'deliverable-' + $index"
+                          (click)="$event.stopPropagation()"
+                        />
                         <i class="pi pi-box text-gray-600 mt-1"></i>
                         <div class="flex-1 min-w-0">
                           <h4 class="font-semibold text-gray-900 mb-2">
@@ -753,19 +944,187 @@
             </h3>
           </div>
           <div class="p-4 space-y-4">
-            <!-- Strategic Alignment -->
-            @if (proposedOpportunity()!.opportunity.strategicAlignment) {
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                  <i class="pi pi-sitemap text-purple-600"></i>
-                  {{ 'label.opportunity.strategicAlignment' | translate }}
-                </label>
+            <!-- Context and Challenges -->
+            @if ($any(proposedOpportunity()!.opportunity).challenges) {
+              <div 
+                class="border rounded-lg p-4 transition-all cursor-pointer"
+                [ngClass]="{
+                  'bg-blue-50 border-blue-300': isFieldSelected('challenges'),
+                  'hover:shadow-sm bg-white border-gray-200': !isFieldSelected('challenges')
+                }"
+                (click)="toggleField('challenges')">
+                <div class="flex items-start gap-3 mb-3">
+                  <p-checkbox
+                    [binary]="true"
+                    [ngModel]="isFieldSelected('challenges')"
+                    (ngModelChange)="toggleField('challenges')"
+                    (click)="$event.stopPropagation()"
+                  />
+                  <label class="block text-sm font-semibold text-gray-700 flex-1 flex items-center gap-2">
+                    <i class="pi pi-exclamation-circle text-amber-600"></i>
+                    {{ 'label.contextAndChallenges' | translate }}
+                  </label>
+                </div>
                 <textarea
                   pTextarea
-                  [(ngModel)]="proposedOpportunity()!.opportunity.strategicAlignment"
+                  [(ngModel)]="$any(proposedOpportunity()!.opportunity).challenges"
                   rows="4"
-                  class="w-full bg-yellow-50 border-yellow-200">
+                  class="w-full bg-yellow-50 border-yellow-200"
+                  (click)="$event.stopPropagation()">
                 </textarea>
+              </div>
+            }
+
+            <!-- Results Focus -->
+            @if (proposedOpportunity()!.opportunity.resultsFocus) {
+              <div 
+                class="border rounded-lg p-4 transition-all cursor-pointer"
+                [ngClass]="{
+                  'bg-blue-50 border-blue-300': isFieldSelected('resultsFocus'),
+                  'hover:shadow-sm bg-white border-gray-200': !isFieldSelected('resultsFocus')
+                }"
+                (click)="toggleField('resultsFocus')">
+                <div class="flex items-start gap-3 mb-3">
+                  <p-checkbox
+                    [binary]="true"
+                    [ngModel]="isFieldSelected('resultsFocus')"
+                    (ngModelChange)="toggleField('resultsFocus')"
+                    (click)="$event.stopPropagation()"
+                  />
+                  <label class="block text-sm font-semibold text-gray-700 flex-1 flex items-center gap-2">
+                    <i class="pi pi-flag text-indigo-600"></i>
+                    {{ 'label.resultsFocus' | translate }}
+                  </label>
+                </div>
+                <textarea
+                  pTextarea
+                  [(ngModel)]="proposedOpportunity()!.opportunity.resultsFocus"
+                  rows="3"
+                  class="w-full bg-yellow-50 border-yellow-200"
+                  (click)="$event.stopPropagation()">
+                </textarea>
+              </div>
+            }
+
+            <!-- Expected Outcomes -->
+            @if (proposedOpportunity()!.opportunity.intendedImpactOutcomes) {
+              <div 
+                class="border rounded-lg p-4 transition-all cursor-pointer"
+                [ngClass]="{
+                  'bg-blue-50 border-blue-300': isFieldSelected('intendedImpactOutcomes'),
+                  'hover:shadow-sm bg-white border-gray-200': !isFieldSelected('intendedImpactOutcomes')
+                }"
+                (click)="toggleField('intendedImpactOutcomes')">
+                <div class="flex items-start gap-3 mb-3">
+                  <p-checkbox
+                    [binary]="true"
+                    [ngModel]="isFieldSelected('intendedImpactOutcomes')"
+                    (ngModelChange)="toggleField('intendedImpactOutcomes')"
+                    (click)="$event.stopPropagation()"
+                  />
+                  <label class="block text-sm font-semibold text-gray-700 flex-1 flex items-center gap-2">
+                    <i class="pi pi-chart-line text-blue-600"></i>
+                    {{ 'label.opportunity.expectedOutcomes' | translate }}
+                  </label>
+                </div>
+                <textarea
+                  pTextarea
+                  [(ngModel)]="proposedOpportunity()!.opportunity.intendedImpactOutcomes"
+                  rows="3"
+                  class="w-full bg-yellow-50 border-yellow-200"
+                  (click)="$event.stopPropagation()">
+                </textarea>
+              </div>
+            }
+
+            <!-- Expected Beneficiaries -->
+            @if (proposedOpportunity()!.opportunity.expectedBeneficiaries) {
+              <div 
+                class="border rounded-lg p-4 transition-all cursor-pointer"
+                [ngClass]="{
+                  'bg-blue-50 border-blue-300': isFieldSelected('expectedBeneficiaries'),
+                  'hover:shadow-sm bg-white border-gray-200': !isFieldSelected('expectedBeneficiaries')
+                }"
+                (click)="toggleField('expectedBeneficiaries')">
+                <div class="flex items-start gap-3 mb-3">
+                  <p-checkbox
+                    [binary]="true"
+                    [ngModel]="isFieldSelected('expectedBeneficiaries')"
+                    (ngModelChange)="toggleField('expectedBeneficiaries')"
+                    (click)="$event.stopPropagation()"
+                  />
+                  <label class="block text-sm font-semibold text-gray-700 flex-1 flex items-center gap-2">
+                    <i class="pi pi-users text-orange-600"></i>
+                    {{ 'label.opportunity.expectedBeneficiaries' | translate }}
+                  </label>
+                </div>
+                <textarea
+                  pTextarea
+                  [(ngModel)]="proposedOpportunity()!.opportunity.expectedBeneficiaries"
+                  rows="3"
+                  class="w-full bg-yellow-50 border-yellow-200"
+                  (click)="$event.stopPropagation()">
+                </textarea>
+              </div>
+            }
+
+            <!-- Estimated Beneficiaries (Numbers) -->
+            @if ($any(proposedOpportunity()!.opportunity).estimatedDirectBeneficiaries || $any(proposedOpportunity()!.opportunity).estimatedIndirectBeneficiaries) {
+              <div class="grid grid-cols-2 gap-4">
+                @if ($any(proposedOpportunity()!.opportunity).estimatedDirectBeneficiaries) {
+                  <div 
+                    class="border rounded-lg p-4 transition-all cursor-pointer"
+                    [ngClass]="{
+                      'bg-blue-50 border-blue-300': isFieldSelected('estimatedDirectBeneficiaries'),
+                      'hover:shadow-sm bg-white border-gray-200': !isFieldSelected('estimatedDirectBeneficiaries')
+                    }"
+                    (click)="toggleField('estimatedDirectBeneficiaries')">
+                    <div class="flex items-start gap-3 mb-2">
+                      <p-checkbox
+                        [binary]="true"
+                        [ngModel]="isFieldSelected('estimatedDirectBeneficiaries')"
+                        (ngModelChange)="toggleField('estimatedDirectBeneficiaries')"
+                        (click)="$event.stopPropagation()"
+                      />
+                      <label class="block text-sm font-semibold text-gray-700 flex-1">
+                        {{ 'label.estimatedDirectBeneficiaries' | translate }}
+                      </label>
+                    </div>
+                    <input
+                      pInputText
+                      [(ngModel)]="$any(proposedOpportunity()!.opportunity).estimatedDirectBeneficiaries"
+                      type="number"
+                      class="w-full bg-yellow-50 border-yellow-200"
+                      (click)="$event.stopPropagation()" />
+                  </div>
+                }
+                @if ($any(proposedOpportunity()!.opportunity).estimatedIndirectBeneficiaries) {
+                  <div 
+                    class="border rounded-lg p-4 transition-all cursor-pointer"
+                    [ngClass]="{
+                      'bg-blue-50 border-blue-300': isFieldSelected('estimatedIndirectBeneficiaries'),
+                      'hover:shadow-sm bg-white border-gray-200': !isFieldSelected('estimatedIndirectBeneficiaries')
+                    }"
+                    (click)="toggleField('estimatedIndirectBeneficiaries')">
+                    <div class="flex items-start gap-3 mb-2">
+                      <p-checkbox
+                        [binary]="true"
+                        [ngModel]="isFieldSelected('estimatedIndirectBeneficiaries')"
+                        (ngModelChange)="toggleField('estimatedIndirectBeneficiaries')"
+                        (click)="$event.stopPropagation()"
+                      />
+                      <label class="block text-sm font-semibold text-gray-700 flex-1">
+                        {{ 'label.estimatedIndirectBeneficiaries' | translate }}
+                      </label>
+                    </div>
+                    <input
+                      pInputText
+                      [(ngModel)]="$any(proposedOpportunity()!.opportunity).estimatedIndirectBeneficiaries"
+                      type="number"
+                      class="w-full bg-yellow-50 border-yellow-200"
+                      (click)="$event.stopPropagation()" />
+                  </div>
+                }
               </div>
             }
 
@@ -785,15 +1144,28 @@
                       inputId="field-sdGs"
                     />
                     <label for="field-sdGs" class="cursor-pointer text-sm font-medium text-gray-700">
-                      {{ 'label.selectSection' | translate }}
+                      {{ 'label.selectAll' | translate }}
                     </label>
                   </div>
                 </div>
                 <div class="space-y-3">
                   @for (sdg of proposedOpportunity()!.opportunity.sdGs; track $index) {
-                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div 
+                      class="rounded-lg p-4 transition-shadow cursor-pointer"
+                      [ngClass]="{
+                        'bg-blue-50 border border-blue-300': isFieldSelected('sdGs[' + $index + ']'),
+                        'bg-yellow-50 border border-yellow-200 hover:shadow-md': !isFieldSelected('sdGs[' + $index + ']')
+                      }"
+                      (click)="toggleField('sdGs[' + $index + ']')">
                       <div class="flex items-start justify-between gap-4">
                         <div class="flex items-center gap-4 flex-1">
+                          <p-checkbox
+                            [binary]="true"
+                            [ngModel]="isFieldSelected('sdGs[' + $index + ']')"
+                            (ngModelChange)="toggleField('sdGs[' + $index + ']')"
+                            [inputId]="'sdg-' + $index"
+                            (click)="$event.stopPropagation()"
+                          />
                           <!-- SDG Logo/Number -->
                           <div class="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-teal-600 text-white font-bold text-2xl rounded shadow-sm">
                             {{ sdg.sdgNumber }}
@@ -818,14 +1190,6 @@
                               }
                             </div>
                           </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                          <p-checkbox
-                            [binary]="true"
-                            [ngModel]="isFieldSelected('sdGs[' + $index + ']')"
-                            (ngModelChange)="toggleField('sdGs[' + $index + ']')"
-                            [inputId]="'sdg-' + $index"
-                          />
                         </div>
                       </div>
                     </div>
@@ -970,8 +1334,8 @@
           </div>
         }
 
-        <!-- ⏰ WHEN Section -->
-        @if (proposedOpportunity()!.opportunity.targetSigningDate || proposedOpportunity()!.opportunity.targetDeliveryDate) {
+          <!-- ⏰ WHEN Section -->
+          @if ($any(proposedOpportunity()!.opportunity).targetSigningDate || $any(proposedOpportunity()!.opportunity).targetDeliveryDate || $any(proposedOpportunity()!.opportunity).submissionDeadline || $any(proposedOpportunity()!.opportunity).implementationStartDate || $any(proposedOpportunity()!.opportunity).isTargetSigningDateFirm !== undefined || $any(proposedOpportunity()!.opportunity).signingDateNotes || $any(proposedOpportunity()!.opportunity).isPooledFunding !== undefined || $any(proposedOpportunity()!.opportunity).partnershipAgreementReference) {
           <div class="border border-gray-200 rounded-lg overflow-hidden">
             <div class="bg-gray-100 px-4 py-3 border-b border-gray-200">
               <h3 class="font-semibold text-gray-900 flex items-center gap-2">
@@ -979,33 +1343,159 @@
                 {{ 'label.opportunity.when' | translate }} - {{ 'label.opportunity.timeline' | translate }}
               </h3>
             </div>
-            <div class="p-4">
+            <div class="p-4 space-y-4">
               <div class="grid grid-cols-2 gap-4">
+                <!-- Submission Deadline (Proposal Submission Date) -->
+                @if ($any(proposedOpportunity()!.opportunity).submissionDeadline) {
+                  <div 
+                    class="border rounded-lg p-4 transition-all cursor-pointer"
+                    [ngClass]="{
+                      'bg-blue-50 border-blue-300': isFieldSelected('submissionDeadline'),
+                      'hover:shadow-sm bg-white border-gray-200': !isFieldSelected('submissionDeadline')
+                    }"
+                    (click)="toggleField('submissionDeadline')">
+                    <div class="flex items-start gap-3 mb-2">
+                      <p-checkbox
+                        [binary]="true"
+                        [ngModel]="isFieldSelected('submissionDeadline')"
+                        (ngModelChange)="toggleField('submissionDeadline')"
+                        (click)="$event.stopPropagation()"
+                      />
+                      <label class="block text-sm font-semibold text-gray-700 flex-1">
+                        {{ 'label.submissionDeadline' | translate }}
+                      </label>
+                    </div>
+                    <input
+                      pInputText
+                      [value]="$any(proposedOpportunity()!.opportunity).submissionDeadline | date:'mediumDate'"
+                      class="w-full bg-yellow-50 border-yellow-200"
+                      readonly
+                      (click)="$event.stopPropagation()" />
+                  </div>
+                }
+
+                <!-- Target Signing Date -->
                 @if (proposedOpportunity()!.opportunity.targetSigningDate) {
-                  <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">
-                      {{ 'label.opportunity.targetSigningDate' | translate }}
-                    </label>
+                  <div 
+                    class="border rounded-lg p-4 transition-all cursor-pointer"
+                    [ngClass]="{
+                      'bg-blue-50 border-blue-300': isFieldSelected('targetSigningDate'),
+                      'hover:shadow-sm bg-white border-gray-200': !isFieldSelected('targetSigningDate')
+                    }"
+                    (click)="toggleField('targetSigningDate')">
+                    <div class="flex items-start gap-3 mb-2">
+                      <p-checkbox
+                        [binary]="true"
+                        [ngModel]="isFieldSelected('targetSigningDate')"
+                        (ngModelChange)="toggleField('targetSigningDate')"
+                        (click)="$event.stopPropagation()"
+                      />
+                      <label class="block text-sm font-semibold text-gray-700 flex-1">
+                        {{ 'label.opportunity.targetSigningDate' | translate }}
+                      </label>
+                    </div>
                     <input
                       pInputText
                       [value]="proposedOpportunity()!.opportunity.targetSigningDate | date:'mediumDate'"
                       class="w-full bg-yellow-50 border-yellow-200"
-                      readonly />
+                      readonly
+                      (click)="$event.stopPropagation()" />
+                    @if ($any(proposedOpportunity()!.opportunity).isTargetSigningDateFirm) {
+                      <span class="text-xs px-2 py-1 bg-orange-100 text-orange-800 rounded mt-2 inline-block">
+                        {{ 'label.firmDeadline' | translate }}
+                      </span>
+                    }
                   </div>
                 }
+
+                <!-- Implementation Start Date -->
+                @if ($any(proposedOpportunity()!.opportunity).implementationStartDate) {
+                  <div 
+                    class="border rounded-lg p-4 transition-all cursor-pointer"
+                    [ngClass]="{
+                      'bg-blue-50 border-blue-300': isFieldSelected('implementationStartDate'),
+                      'hover:shadow-sm bg-white border-gray-200': !isFieldSelected('implementationStartDate')
+                    }"
+                    (click)="toggleField('implementationStartDate')">
+                    <div class="flex items-start gap-3 mb-2">
+                      <p-checkbox
+                        [binary]="true"
+                        [ngModel]="isFieldSelected('implementationStartDate')"
+                        (ngModelChange)="toggleField('implementationStartDate')"
+                        (click)="$event.stopPropagation()"
+                      />
+                      <label class="block text-sm font-semibold text-gray-700 flex-1">
+                        {{ 'label.implementationStartDate' | translate }}
+                      </label>
+                    </div>
+                    <input
+                      pInputText
+                      [value]="$any(proposedOpportunity()!.opportunity).implementationStartDate | date:'mediumDate'"
+                      class="w-full bg-yellow-50 border-yellow-200"
+                      readonly
+                      (click)="$event.stopPropagation()" />
+                  </div>
+                }
+
+                <!-- Target Delivery Date -->
                 @if (proposedOpportunity()!.opportunity.targetDeliveryDate) {
-                  <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">
-                      {{ 'label.opportunity.targetDeliveryDate' | translate }}
-                    </label>
+                  <div 
+                    class="border rounded-lg p-4 transition-all cursor-pointer"
+                    [ngClass]="{
+                      'bg-blue-50 border-blue-300': isFieldSelected('targetDeliveryDate'),
+                      'hover:shadow-sm bg-white border-gray-200': !isFieldSelected('targetDeliveryDate')
+                    }"
+                    (click)="toggleField('targetDeliveryDate')">
+                    <div class="flex items-start gap-3 mb-2">
+                      <p-checkbox
+                        [binary]="true"
+                        [ngModel]="isFieldSelected('targetDeliveryDate')"
+                        (ngModelChange)="toggleField('targetDeliveryDate')"
+                        (click)="$event.stopPropagation()"
+                      />
+                      <label class="block text-sm font-semibold text-gray-700 flex-1">
+                        {{ 'label.opportunity.targetDeliveryDate' | translate }}
+                      </label>
+                    </div>
                     <input
                       pInputText
                       [value]="proposedOpportunity()!.opportunity.targetDeliveryDate | date:'mediumDate'"
                       class="w-full bg-yellow-50 border-yellow-200"
-                      readonly />
+                      readonly
+                      (click)="$event.stopPropagation()" />
                   </div>
                 }
               </div>
+
+              <!-- Signing Date Notes -->
+              @if ($any(proposedOpportunity()!.opportunity).signingDateNotes) {
+                <div 
+                  class="border rounded-lg p-4 transition-all cursor-pointer"
+                  [ngClass]="{
+                    'bg-blue-50 border-blue-300': isFieldSelected('signingDateNotes'),
+                    'hover:shadow-sm bg-white border-gray-200': !isFieldSelected('signingDateNotes')
+                  }"
+                  (click)="toggleField('signingDateNotes')">
+                  <div class="flex items-start gap-3 mb-2">
+                    <p-checkbox
+                      [binary]="true"
+                      [ngModel]="isFieldSelected('signingDateNotes')"
+                      (ngModelChange)="toggleField('signingDateNotes')"
+                      (click)="$event.stopPropagation()"
+                    />
+                    <label class="block text-sm font-semibold text-gray-700 flex-1">
+                      {{ 'label.signingDateNotes' | translate }}
+                    </label>
+                  </div>
+                  <textarea
+                    pTextarea
+                    [(ngModel)]="$any(proposedOpportunity()!.opportunity).signingDateNotes"
+                    rows="2"
+                    class="w-full bg-yellow-50 border-yellow-200"
+                    (click)="$event.stopPropagation()">
+                  </textarea>
+                </div>
+              }
             </div>
           </div>
         }
@@ -1047,9 +1537,10 @@
                       <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                         <div class="flex items-start justify-between mb-3">
                           <div class="flex items-center gap-3 flex-1">
-                            <!-- Partner Logo -->
+                            <!-- Partner Logo with fallback -->
                             <img
                               [src]="partner.partnerLogoUrl || 'assets/images/Partner.png'"
+                              (error)="$any($event.target).src='assets/images/Partner.png'"
                               [alt]="partner.partnerName"
                               class="w-12 h-12 object-contain rounded"
                             />

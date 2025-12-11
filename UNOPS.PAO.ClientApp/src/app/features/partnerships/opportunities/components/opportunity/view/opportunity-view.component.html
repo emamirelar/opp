@@ -333,6 +333,7 @@
               #teamSection
               [opportunity]="opportunity()!"
               [canUpdate]="canUpdate()"
+              [suggestions]="teamSuggestions()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
               (changesDetected)="handleSectionChangesDetected('team')"
               (changesSavedOrDiscarded)="handleSectionChangesSaved('team')"

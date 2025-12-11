@@ -89,7 +89,9 @@ export class OpportunityAnalysisSectionComponent {
       const opp = this.opportunity();
       if (opp?.id && opp.id !== this.lastLoadedOpportunityId) {
         this.lastLoadedOpportunityId = opp.id;
-        this.loadInsights();
+        // Delay insights loading to allow critical data to load first
+        // This prevents connection exhaustion when multiple AI calls fire simultaneously
+        setTimeout(() => this.loadInsights(), 2500);
       }
     });
   }
@@ -237,7 +239,7 @@ export class OpportunityAnalysisSectionComponent {
 
   /**
    * @description Get button label based on action target
-   * @param {string} actionTarget - The section identifier (WHAT, WHERE, WHY, WHO, WHEN)
+   * @param {string} actionTarget - The section identifier (WHAT, WHERE, WHY, WHO, TEAM, WHEN)
    * @returns {string} Localized button label
    */
   getActionLabel(actionTarget: string): string {
@@ -246,6 +248,7 @@ export class OpportunityAnalysisSectionComponent {
       'WHERE': this.translateService.instant('button.goToWhereSection'),
       'WHY': this.translateService.instant('button.goToWhySection'),
       'WHO': this.translateService.instant('button.goToWhoSection'),
+      'TEAM': this.translateService.instant('button.goToTeamSection'),
       'WHEN': this.translateService.instant('button.goToWhenSection')
     };
     return labelMap[actionTarget] || this.translateService.instant('button.viewDetails');

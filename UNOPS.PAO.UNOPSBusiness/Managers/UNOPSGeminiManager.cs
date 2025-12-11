@@ -4615,21 +4615,43 @@ public class UNOPSGeminiManager : IGeminiManager
                 
                 var proposedData = new UNOPS.PAO.Models.Opportunities.ProposedOpportunityData
                 {
+                    // Basic Information
                     Name = parsedResponse["name"]?.ToString() ?? "",
                     Description = parsedResponse["description"]?.ToString() ?? "",
                     PartnerReference = parsedResponse["partnerReference"]?.ToString(),
+                    
+                    // Organizational & Initiative Type
                     ResponsibleOrgUnitId = parsedResponse["responsibleOrgUnitId"]?.ToObject<int?>(),
                     ResponsibleOrgUnitName = parsedResponse["responsibleOrgUnitName"]?.ToString(),
                     ProposedInitiativeTypeId = parsedResponse["proposedInitiativeTypeId"]?.ToObject<int?>(),
                     ProposedInitiativeTypeName = parsedResponse["proposedInitiativeTypeName"]?.ToString(),
+                    
+                    // Financial Information
                     InitiativeBudgetUSD = parsedResponse["initiativeBudgetUSD"]?.ToObject<decimal?>(),
                     PartnershipAgreementReference = parsedResponse["partnershipAgreementReference"]?.ToString(),
+                    
+                    // WHEN Section - Timeline Fields (aligned with ApplyOpportunityAiChangesRequest)
                     TargetSigningDate = parsedResponse["targetSigningDate"]?.ToObject<DateTime?>(),
+                    IsTargetSigningDateFirm = parsedResponse["isTargetSigningDateFirm"]?.ToObject<bool?>(),
+                    SigningDateNotes = parsedResponse["signingDateNotes"]?.ToString(),
+                    SubmissionDeadline = parsedResponse["submissionDeadline"]?.ToObject<DateTime?>(),
+                    ImplementationStartDate = parsedResponse["implementationStartDate"]?.ToObject<DateTime?>(),
                     TargetDeliveryDate = parsedResponse["targetDeliveryDate"]?.ToObject<DateTime?>(),
+                    
+                    // WHY Section - Strategic Information
+                    Challenges = parsedResponse["challenges"]?.ToString(),
                     ResultsFocus = parsedResponse["resultsFocus"]?.ToString(),
                     ExpectedImpact = parsedResponse["expectedImpact"]?.ToString(),
                     ExpectedOutcomes = parsedResponse["expectedOutcomes"]?.ToString(),
                     ExpectedBeneficiaries = parsedResponse["expectedBeneficiaries"]?.ToString(),
+                    EstimatedDirectBeneficiaries = parsedResponse["estimatedDirectBeneficiaries"]?.ToObject<int?>(),
+                    EstimatedIndirectBeneficiaries = parsedResponse["estimatedIndirectBeneficiaries"]?.ToObject<int?>(),
+                    BeneficiariesToBeDetermined = parsedResponse["beneficiariesToBeDetermined"]?.ToObject<bool?>(),
+                    
+                    // WHAT Section - Delivery & Stakeholders
+                    DeliveryModality = parsedResponse["deliveryModality"]?.ToObject<int?>(),
+                    MiscExternalStakeholders = parsedResponse["miscExternalStakeholders"]?.ToString(),
+                    ExternalStakeholderNotes = parsedResponse["externalStakeholderNotes"]?.ToString(),
                     
                     // Stringify collection fields (these are arrays of objects after GetDependentDropdownValues)
                     FundingPartners = parsedResponse["fundingPartners"]?.ToString(),

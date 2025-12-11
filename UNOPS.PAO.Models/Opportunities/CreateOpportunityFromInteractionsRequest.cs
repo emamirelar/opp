@@ -3,6 +3,7 @@ namespace UNOPS.PAO.Models.Opportunities;
 /// <summary>
 /// Request model for creating an opportunity from an AI-generated proposal
 /// Contains user-accepted fields with resolved IDs from the dependents
+/// Aligned with ApplyOpportunityAiChangesRequest for consistent field handling
 /// </summary>
 public class CreateOpportunityFromInteractionsRequest
 {
@@ -45,9 +46,13 @@ public class CreateOpportunityFromInteractionsRequest
     public string? PartnerReference { get; set; }
     public int? ResponsibleOrgUnitId { get; set; }
     public int? ProposedInitiativeTypeId { get; set; }
+    public int? DeliveryModality { get; set; }
+    public string? MiscExternalStakeholders { get; set; }
+    public string? ExternalStakeholderNotes { get; set; }
     public List<OpportunityDeliverableRequest>? Deliverables { get; set; }
 
     // WHY Section Properties (AI-proposed, user-accepted)
+    public string? Challenges { get; set; }
     public string? ResultsFocus { get; set; }
     /// <summary>
     /// Expected impact description (max 200 characters)
@@ -58,7 +63,9 @@ public class CreateOpportunityFromInteractionsRequest
     /// </summary>
     public string? ExpectedOutcomes { get; set; }
     public string? ExpectedBeneficiaries { get; set; }
-    public string? Challenges { get; set; }
+    public int? EstimatedDirectBeneficiaries { get; set; }
+    public int? EstimatedIndirectBeneficiaries { get; set; }
+    public bool? BeneficiariesToBeDetermined { get; set; }
     public List<int>? SdGs { get; set; }
 
     // WHO Section Properties (AI-proposed, user-accepted)
@@ -71,8 +78,15 @@ public class CreateOpportunityFromInteractionsRequest
     public List<int>? Countries { get; set; }
 
     // WHEN Section Properties (AI-proposed, user-accepted)
+    // Aligned with ApplyOpportunityAiChangesRequest for consistent timeline handling
     public DateTime? TargetSigningDate { get; set; }
     public DateTime? TargetDeliveryDate { get; set; }
+    public DateTime? ImplementationStartDate { get; set; }
+    public DateTime? SubmissionDeadline { get; set; }
+    public bool? IsTargetSigningDateFirm { get; set; }
+    public string? SigningDateNotes { get; set; }
+
+    // OTHER Properties
     public decimal? InitiativeBudgetUSD { get; set; }
     public string? PartnershipAgreementReference { get; set; }
 }

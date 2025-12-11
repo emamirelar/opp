@@ -145,6 +145,13 @@ export class AiComparisonComponent {
   readonly selectedFields = signal<Map<string, boolean>>(new Map());
 
   /**
+   * @description Map of array item selections (field -> index -> selected)
+   * For granular selection of individual items within array fields
+   * @type {WritableSignal<Map<string, Map<number, boolean>>>}
+   */
+  readonly selectedArrayItems = signal<Map<string, Map<number, boolean>>>(new Map());
+
+  /**
    * @description Whether currently applying changes
    * @type {WritableSignal<boolean>}
    */
@@ -203,6 +210,7 @@ export class AiComparisonComponent {
         this.currentData.set(null);
         this.error.set(null);
         this.selectedFields.set(new Map());
+        this.selectedArrayItems.set(new Map());
         this.applying.set(false); // Reset applying state when dialog closes
       }
     });
@@ -216,8 +224,23 @@ export class AiComparisonComponent {
       // Auto-select all differences when dialog opens and no selections exist
       if (isVisible && diffs.length > 0 && currentSelectionSize === 0) {
         const selectedMap = new Map<string, boolean>();
-        diffs.forEach(diff => selectedMap.set(diff.field, true));
+        const arrayItemsMap = new Map<string, Map<number, boolean>>();
+        
+        diffs.forEach(diff => {
+          selectedMap.set(diff.field, true);
+          
+          // Auto-select all items in array fields
+          if (this.isArrayField(diff.field) && Array.isArray(diff.aiValue)) {
+            const itemSelections = new Map<number, boolean>();
+            diff.aiValue.forEach((_: any, index: number) => {
+              itemSelections.set(index, true);
+            });
+            arrayItemsMap.set(diff.field, itemSelections);
+          }
+        });
+        
         this.selectedFields.set(selectedMap);
+        this.selectedArrayItems.set(arrayItemsMap);
       }
     }, { allowSignalWrites: true });
   }
@@ -295,6 +318,7 @@ export class AiComparisonComponent {
 
   /**
    * @description Calculate differences between current and AI-extracted data
+   * Only processes fields defined in fieldMappings - this gives parent component full control
    * @param {any} current - Current entity data
    * @param {any} aiData - AI-extracted entity data
    * @param {string} path - Current path in object hierarchy
@@ -303,62 +327,65 @@ export class AiComparisonComponent {
   private calculateDifferences(current: any, aiData: any, path: string = ''): DiffItem[] {
     const differences: DiffItem[] = [];
 
-    // Skip internal fields
-    const skipFields = ['id', 'createdBy', 'createdDate', 'lastModifiedBy', 'lastModifiedDate', 
-                       '_confidence', 'dependents', 'stats', 'permissions', 'createdByName', 'lastModifiedByName'];
+    // Get list of fields to process from fieldMappings
+    // If fieldMappings is provided, ONLY process those fields (single source of truth)
+    const mappings = this.fieldMappings();
+    
+    if (mappings && mappings.length > 0) {
+      // Use fieldMappings as the source of truth - only show fields defined there
+      for (const mapping of mappings) {
+        const key = mapping.fieldPath;
+        const currentValue = current[key];
+        const aiValue = aiData[key];
 
-    for (const key in aiData) {
-      if (skipFields.includes(key)) {
-        continue;
-      }
+        // Skip if AI value is blank (null, undefined, empty string, empty array, empty object)
+        if (this.isBlankValue(aiValue)) {
+          continue;
+        }
 
-      const currentValue = current[key];
-      const aiValue = aiData[key];
-      const fieldPath = path ? `${path}.${key}` : key;
-
-      // Skip if AI value is blank (null, undefined, empty string, empty array, empty object)
-      if (this.isBlankValue(aiValue)) {
-        continue;
-      }
-
-      // Handle arrays
-      if (Array.isArray(aiValue)) {
-        const currentArray = Array.isArray(currentValue) ? currentValue : [];
-        if (JSON.stringify(currentArray) !== JSON.stringify(aiValue)) {
+        // Check if values are different (pass field name for smart comparison)
+        const isDifferent = this.valuesAreDifferent(currentValue, aiValue, key);
+        
+        if (isDifferent) {
           differences.push({
-            field: fieldPath,
-            label: this.getFieldLabel(fieldPath),
-            currentValue: currentArray,
+            field: key,
+            label: mapping.displayName || this.getFieldLabel(key),
+            currentValue: currentValue,
             aiValue: aiValue,
-            type: 'array',
+            type: this.getValueType(aiValue),
             isDifferent: true
           });
         }
       }
-      // Handle objects (but not dates)
-      else if (typeof aiValue === 'object' && aiValue !== null && !(aiValue instanceof Date)) {
-        // For nested objects, we can recurse or treat as a single field
-        // For simplicity, treating as single field
-        if (JSON.stringify(currentValue) !== JSON.stringify(aiValue)) {
+    } else {
+      // Fallback: if no fieldMappings, process all AI data keys (legacy behavior)
+      // Skip internal fields
+      const skipFields = ['id', 'createdBy', 'createdDate', 'lastModifiedBy', 'lastModifiedDate', 
+                         '_confidence', 'dependents', 'stats', 'permissions', 'createdByName', 'lastModifiedByName'];
+
+      for (const key in aiData) {
+        if (skipFields.includes(key)) {
+          continue;
+        }
+
+        const currentValue = current[key];
+        const aiValue = aiData[key];
+        const fieldPath = path ? `${path}.${key}` : key;
+
+        // Skip if AI value is blank
+        if (this.isBlankValue(aiValue)) {
+          continue;
+        }
+
+        const isDifferent = this.valuesAreDifferent(currentValue, aiValue, key);
+        
+        if (isDifferent) {
           differences.push({
             field: fieldPath,
             label: this.getFieldLabel(fieldPath),
             currentValue: currentValue,
             aiValue: aiValue,
-            type: 'object',
-            isDifferent: true
-          });
-        }
-      }
-      // Handle primitive values
-      else {
-        if (currentValue !== aiValue) {
-          differences.push({
-            field: fieldPath,
-            label: this.getFieldLabel(fieldPath),
-            currentValue: currentValue,
-            aiValue: aiValue,
-            type: typeof aiValue,
+            type: this.getValueType(aiValue),
             isDifferent: true
           });
         }
@@ -366,6 +393,125 @@ export class AiComparisonComponent {
     }
 
     return differences;
+  }
+
+  /**
+   * @description Check if two values are different using smart comparison
+   * For arrays of objects, compares by ID field instead of full JSON serialization
+   * @param {any} currentValue - Current value
+   * @param {any} aiValue - AI-extracted value
+   * @param {string} fieldName - Name of the field being compared (for context-aware comparison)
+   * @returns {boolean} True if values are different
+   */
+  private valuesAreDifferent(currentValue: any, aiValue: any, fieldName?: string): boolean {
+    // Handle arrays
+    if (Array.isArray(aiValue)) {
+      const currentArray = Array.isArray(currentValue) ? currentValue : [];
+      
+      // Use ID-based comparison for known entity arrays
+      const idField = this.getIdFieldForArray(fieldName);
+      if (idField) {
+        return this.arraysHaveDifferentIds(currentArray, aiValue, idField);
+      }
+      
+      // Fallback to JSON comparison for other arrays
+      return JSON.stringify(currentArray) !== JSON.stringify(aiValue);
+    }
+    // Handle objects (but not dates)
+    else if (typeof aiValue === 'object' && aiValue !== null && !(aiValue instanceof Date)) {
+      return JSON.stringify(currentValue) !== JSON.stringify(aiValue);
+    }
+    // Handle primitive values
+    else {
+      return currentValue !== aiValue;
+    }
+  }
+
+  /**
+   * @description Get the ID field name for a given array field
+   * Returns the field to use for ID-based comparison
+   * @param {string} fieldName - Name of the array field
+   * @returns {string | null} ID field name or null if not a known entity array
+   */
+  private getIdFieldForArray(fieldName?: string): string | null {
+    if (!fieldName) return null;
+    
+    const idFieldMap: Record<string, string> = {
+      'fundingPartners': 'partnerId',
+      'clientPartners': 'partnerId',
+      'stakeholders': 'userId',
+      'teamMembers': 'userId',
+      'deliverables': 'outputId',
+      'countries': 'countryId',
+      'sdGs': 'sdgId',
+    };
+    
+    return idFieldMap[fieldName] || null;
+  }
+
+  /**
+   * @description Compare two arrays by their ID fields
+   * Returns true if the arrays have different IDs (regardless of other properties)
+   * @param {any[]} currentArray - Current array of objects
+   * @param {any[]} aiArray - AI-extracted array of objects
+   * @param {string} idField - Name of the ID field to compare
+   * @returns {boolean} True if arrays have different IDs
+   */
+  private arraysHaveDifferentIds(currentArray: any[], aiArray: any[], idField: string): boolean {
+    // Extract IDs from both arrays
+    const currentIds = new Set(
+      currentArray
+        .map(item => this.extractId(item, idField))
+        .filter(id => id !== null && id !== undefined)
+    );
+    
+    const aiIds = new Set(
+      aiArray
+        .map(item => this.extractId(item, idField))
+        .filter(id => id !== null && id !== undefined)
+    );
+    
+    // Compare by checking if sets have same elements
+    if (currentIds.size !== aiIds.size) {
+      return true;
+    }
+    
+    for (const id of currentIds) {
+      if (!aiIds.has(id)) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
+  /**
+   * @description Extract ID from an item (handles both object and primitive)
+   * @param {any} item - Item to extract ID from
+   * @param {string} idField - Name of the ID field
+   * @returns {any} The ID value or the item itself if primitive
+   */
+  private extractId(item: any, idField: string): any {
+    if (item === null || item === undefined) return null;
+    
+    // If item is a primitive (number/string), it IS the ID
+    if (typeof item !== 'object') {
+      return item;
+    }
+    
+    // If item is an object, get the ID field
+    return item[idField];
+  }
+
+  /**
+   * @description Get the type of a value for display purposes
+   * @param {any} value - Value to check
+   * @returns {string} Type string
+   */
+  private getValueType(value: any): string {
+    if (Array.isArray(value)) return 'array';
+    if (typeof value === 'object' && value !== null) return 'object';
+    return typeof value;
   }
 
   /**
@@ -403,9 +549,24 @@ export class AiComparisonComponent {
    */
   toggleField(fieldPath: string): void {
     const current = this.selectedFields().get(fieldPath) || false;
+    const newState = !current;
     const updated = new Map(this.selectedFields());
-    updated.set(fieldPath, !current);
+    updated.set(fieldPath, newState);
     this.selectedFields.set(updated);
+    
+    // Also toggle all array items when field checkbox is toggled
+    if (this.isArrayField(fieldPath)) {
+      const diff = this.differences().find(d => d.field === fieldPath);
+      if (diff && Array.isArray(diff.aiValue)) {
+        const arrayItemsUpdated = new Map(this.selectedArrayItems());
+        const itemSelections = new Map<number, boolean>();
+        diff.aiValue.forEach((_: any, index: number) => {
+          itemSelections.set(index, newState);
+        });
+        arrayItemsUpdated.set(fieldPath, itemSelections);
+        this.selectedArrayItems.set(arrayItemsUpdated);
+      }
+    }
   }
 
   /**
@@ -418,18 +579,94 @@ export class AiComparisonComponent {
   }
 
   /**
+   * @description Check if a field supports individual item selection
+   * @param {string} fieldPath - Path to the field
+   * @returns {boolean} Whether field is an array field with individual selection
+   */
+  isArrayField(fieldPath: string): boolean {
+    return ['fundingPartners', 'clientPartners', 'stakeholders', 'countries', 'sdGs', 'deliverables'].includes(fieldPath);
+  }
+
+  /**
+   * @description Toggle selection of an individual array item
+   * @param {string} fieldPath - Path to the array field
+   * @param {number} index - Index of the item in the array
+   * @returns {void}
+   */
+  toggleArrayItem(fieldPath: string, index: number): void {
+    const arrayItemsUpdated = new Map(this.selectedArrayItems());
+    let itemSelections = arrayItemsUpdated.get(fieldPath) || new Map<number, boolean>();
+    itemSelections = new Map(itemSelections);
+    
+    const current = itemSelections.get(index) || false;
+    itemSelections.set(index, !current);
+    arrayItemsUpdated.set(fieldPath, itemSelections);
+    this.selectedArrayItems.set(arrayItemsUpdated);
+    
+    // Update the main field selection based on whether any items are selected
+    const anySelected = Array.from(itemSelections.values()).some(v => v);
+    const updated = new Map(this.selectedFields());
+    updated.set(fieldPath, anySelected);
+    this.selectedFields.set(updated);
+  }
+
+  /**
+   * @description Check if an array item is selected
+   * @param {string} fieldPath - Path to the array field
+   * @param {number} index - Index of the item
+   * @returns {boolean} Whether the item is selected
+   */
+  isArrayItemSelected(fieldPath: string, index: number): boolean {
+    const itemSelections = this.selectedArrayItems().get(fieldPath);
+    return itemSelections?.get(index) || false;
+  }
+
+  /**
+   * @description Get count of selected items for an array field
+   * @param {string} fieldPath - Path to the array field
+   * @returns {number} Count of selected items
+   */
+  getSelectedArrayItemCount(fieldPath: string): number {
+    const itemSelections = this.selectedArrayItems().get(fieldPath);
+    if (!itemSelections) return 0;
+    return Array.from(itemSelections.values()).filter(v => v).length;
+  }
+
+  /**
+   * @description Check if all items in an array field are selected
+   * @param {string} fieldPath - Path to the array field
+   * @param {number} totalCount - Total number of items
+   * @returns {boolean} Whether all items are selected
+   */
+  areAllArrayItemsSelected(fieldPath: string, totalCount: number): boolean {
+    const selectedCount = this.getSelectedArrayItemCount(fieldPath);
+    return totalCount > 0 && selectedCount === totalCount;
+  }
+
+  /**
    * @description Select or deselect all fields
    * @returns {void}
    */
   toggleAll(): void {
     const selectAll = !this.allSelected();
     const updated = new Map(this.selectedFields());
+    const arrayItemsUpdated = new Map(this.selectedArrayItems());
     
     this.differences().forEach(diff => {
       updated.set(diff.field, selectAll);
+      
+      // Also update array item selections
+      if (this.isArrayField(diff.field) && Array.isArray(diff.aiValue)) {
+        const itemSelections = new Map<number, boolean>();
+        diff.aiValue.forEach((_: any, index: number) => {
+          itemSelections.set(index, selectAll);
+        });
+        arrayItemsUpdated.set(diff.field, itemSelections);
+      }
     });
     
     this.selectedFields.set(updated);
+    this.selectedArrayItems.set(arrayItemsUpdated);
   }
 
   /**
@@ -441,8 +678,25 @@ export class AiComparisonComponent {
     
     this.differences().forEach(diff => {
       if (this.selectedFields().get(diff.field)) {
-        // Build nested object structure
-        this.setNestedValue(selectedChanges, diff.field, diff.aiValue);
+        // For array fields with individual selection, filter to only selected items
+        if (this.isArrayField(diff.field) && Array.isArray(diff.aiValue)) {
+          const itemSelections = this.selectedArrayItems().get(diff.field);
+          if (itemSelections) {
+            const filteredItems = diff.aiValue.filter((_: any, index: number) => 
+              itemSelections.get(index) === true
+            );
+            // Only add if there are selected items
+            if (filteredItems.length > 0) {
+              this.setNestedValue(selectedChanges, diff.field, filteredItems);
+            }
+          } else {
+            // Fallback: include all items if no individual selections exist
+            this.setNestedValue(selectedChanges, diff.field, diff.aiValue);
+          }
+        } else {
+          // Build nested object structure for non-array fields
+          this.setNestedValue(selectedChanges, diff.field, diff.aiValue);
+        }
       }
     });
 
@@ -481,6 +735,7 @@ export class AiComparisonComponent {
   handleClose(): void {
     this.visibleChange.emit(false);
     this.selectedFields.set(new Map());
+    this.selectedArrayItems.set(new Map());
     this.applying.set(false);
     this.currentData.set(null);
     this.error.set(null);
