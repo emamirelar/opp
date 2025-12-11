@@ -97,6 +97,12 @@ public class ValuesManager : IApplicationService
     public IEnumerable<OutputModel> GetOutputs()
          => repository.GetOutputs().Select(mapper.Map<OutputModel>);
 
+    /// <summary>
+    /// Gets outputs by their IDs for semantic search results
+    /// </summary>
+    public IEnumerable<OutputModel> GetOutputsByIds(IEnumerable<int> ids)
+         => repository.GetOutputsByIds(ids).Select(mapper.Map<OutputModel>);
+
     public IEnumerable<SDGModel> GetSDGs()
          => repository.GetSDGs().Select(mapper.Map<SDGModel>);
 

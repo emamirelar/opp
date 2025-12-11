@@ -4,7 +4,7 @@
  */
 
 import { Component, input, output, signal, computed, inject, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, effect } from '@angular/core';
-import { CommonModule, KeyValuePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
@@ -15,12 +15,42 @@ import { SelectModule } from 'primeng/select';
 import { ChipModule } from 'primeng/chip';
 import { TooltipModule } from 'primeng/tooltip';
 import { DialogModule } from 'primeng/dialog';
+import { InputTextModule } from 'primeng/inputtext';
 
 // Services and Models
-import { ValuesService, SimpleValue, OrganizationUnit, Output } from '@shared/services/api/values.service';
+import { ValuesService, SimpleValue, OrganizationUnit, Output, OutputSemanticSearchMatch, OutputSemanticSearchResponse } from '@shared/services/api/values.service';
 import { OpportunityService } from '../../../../../services/opportunity.service';
 import { Opportunity, OpportunityDeliverable, FrameworkStatusResponse, ExtractedDeliverableInfo } from '@shared/models/opportunity.model';
 import { FeedbackDialogService } from '@shared/services/ui';
+
+/**
+ * @interface TreeNode
+ * @description Represents a node in the products/services tree hierarchy
+ */
+export interface TreeNode {
+  /** Unique identifier for the node */
+  id: string;
+  /** Display label for the node */
+  label: string;
+  /** Hierarchy level (0-4) */
+  level: number;
+  /** Full path from root to this node */
+  path: string[];
+  /** Child nodes */
+  children: TreeNode[];
+  /** Whether this node has a selectable output */
+  isSelectable: boolean;
+  /** The output associated with this node (if selectable) */
+  output?: Output;
+  /** Number of total selectable items under this node */
+  selectableCount: number;
+  /** Definition/description for this level */
+  definition?: string;
+  /** Service line (if available) */
+  serviceLine?: string;
+  /** Whether node has procurement component */
+  hasProcurementComponent?: boolean;
+}
 
 /**
  * @class OpportunityWhatSectionComponent
@@ -52,7 +82,7 @@ import { FeedbackDialogService } from '@shared/services/ui';
     ChipModule,
     TooltipModule,
     DialogModule,
-    KeyValuePipe,
+    InputTextModule,
   ],
   templateUrl: './opportunity-what-section.component.html',
   styleUrls: ['./opportunity-what-section.component.scss'],
@@ -154,8 +184,8 @@ export class OpportunityWhatSectionComponent implements OnInit {
   isEditingDeliverable = signal<boolean>(false);
   editingDeliverableIndex = signal<number | null>(null);
 
-  // Search mode toggle (search-first vs browse mode)
-  searchMode = signal<'search' | 'browse'>('search');
+  // Search mode toggle (search-first vs browse vs AI-assisted mode)
+  searchMode = signal<'search' | 'browse' | 'ai'>('search');
   
   // Search functionality
   searchQuery = signal<string>('');
@@ -166,6 +196,29 @@ export class OpportunityWhatSectionComponent implements OnInit {
   
   // Context from rejected AI recommendation
   rejectedItemContext = signal<string | null>(null);
+  
+  // Tree view state
+  treeData = signal<TreeNode[]>([]);
+  expandedNodes = signal<Set<string>>(new Set());
+  treeSearchQuery = signal<string>('');
+  
+  // AI Semantic Search state
+  aiSearchQuery = signal<string>('');
+  aiSearchResults = signal<OutputSemanticSearchMatch[]>([]);
+  isAiSearching = signal<boolean>(false);
+  aiSearchError = signal<string | null>(null);
+  
+  // Filtered tree based on search
+  filteredTreeData = computed(() => {
+    const query = this.treeSearchQuery().toLowerCase().trim();
+    const tree = this.treeData();
+    
+    if (!query || query.length < 2) {
+      return tree;
+    }
+    
+    return this.filterTreeBySearch(tree, query);
+  });
 
   /**
    * Computed signal to detect if procurement expert is required
@@ -341,9 +394,303 @@ export class OpportunityWhatSectionComponent implements OnInit {
         // Show all outputs by default
         this.filteredOutputs.set(data);
         
+        // Build tree structure for browse mode
+        this.buildTreeFromOutputs(data);
+        
         this.cdr.detectChanges();
       }
     });
+  }
+
+  /**
+   * @description Build hierarchical tree structure from flat outputs
+   */
+  private buildTreeFromOutputs(outputs: Output[]): void {
+    const tree: TreeNode[] = [];
+    const nodeMap = new Map<string, TreeNode>();
+
+    // Sort outputs for consistent ordering
+    const sortedOutputs = [...outputs].sort((a, b) => {
+      const pathA = [a.level0, a.level1, a.level2, a.level3, a.level4].filter(Boolean).join(' > ');
+      const pathB = [b.level0, b.level1, b.level2, b.level3, b.level4].filter(Boolean).join(' > ');
+      return pathA.localeCompare(pathB);
+    });
+
+    for (const output of sortedOutputs) {
+      const levels = [output.level0, output.level1, output.level2, output.level3, output.level4];
+      const definitions = [null, output.definitionLevel1, output.definitionLevel2, output.definitionLevel3, output.definitionLevel4];
+      
+      let parentNode: TreeNode | null = null;
+      const currentPath: string[] = [];
+
+      for (let i = 0; i < levels.length; i++) {
+        const levelValue = levels[i];
+        if (!levelValue) break;
+
+        currentPath.push(levelValue);
+        const nodeKey = currentPath.join('|||');
+        
+        // Check if this exact path represents a terminal node (selectable output)
+        const isTerminalAtThisLevel = this.isOutputTerminalAtLevel(output, i);
+
+        if (!nodeMap.has(nodeKey)) {
+          const newNode: TreeNode = {
+            id: nodeKey,
+            label: levelValue,
+            level: i,
+            path: [...currentPath],
+            children: [],
+            isSelectable: false,
+            selectableCount: 0,
+            definition: definitions[i] || undefined,
+            serviceLine: output.serviceLine
+          };
+          nodeMap.set(nodeKey, newNode);
+
+          if (parentNode) {
+            parentNode.children.push(newNode);
+          } else {
+            tree.push(newNode);
+          }
+        }
+
+        const currentNode = nodeMap.get(nodeKey)!;
+        
+        // Mark as selectable if this output terminates at this level
+        if (isTerminalAtThisLevel) {
+          currentNode.isSelectable = true;
+          currentNode.output = output;
+          currentNode.serviceLine = output.serviceLine;
+          currentNode.hasProcurementComponent = output.procurementComponent === true;
+        }
+
+        parentNode = currentNode;
+      }
+    }
+
+    // Calculate selectable counts for each node (recursive)
+    this.calculateSelectableCounts(tree);
+    
+    this.treeData.set(tree);
+  }
+
+  /**
+   * @description Check if an output terminates at a specific level
+   */
+  private isOutputTerminalAtLevel(output: Output, level: number): boolean {
+    const levels = [output.level0, output.level1, output.level2, output.level3, output.level4];
+    
+    // Terminal if current level has a value and next level is empty/undefined
+    if (!levels[level]) return false;
+    if (level === 4) return true; // Level 4 is always terminal if it exists
+    return !levels[level + 1];
+  }
+
+  /**
+   * @description Calculate total selectable items under each node
+   */
+  private calculateSelectableCounts(nodes: TreeNode[]): number {
+    let total = 0;
+    for (const node of nodes) {
+      const childCount = this.calculateSelectableCounts(node.children);
+      node.selectableCount = (node.isSelectable ? 1 : 0) + childCount;
+      total += node.selectableCount;
+    }
+    return total;
+  }
+
+  /**
+   * @description Filter tree nodes by search query
+   */
+  private filterTreeBySearch(nodes: TreeNode[], query: string): TreeNode[] {
+    const result: TreeNode[] = [];
+
+    for (const node of nodes) {
+      const labelMatches = node.label.toLowerCase().includes(query);
+      const definitionMatches = node.definition?.toLowerCase().includes(query);
+      const serviceLineMatches = node.serviceLine?.toLowerCase().includes(query);
+      const nodeMatches = labelMatches || definitionMatches || serviceLineMatches;
+
+      // Recursively filter children
+      const filteredChildren = this.filterTreeBySearch(node.children, query);
+
+      // Include node if it matches or has matching children
+      if (nodeMatches || filteredChildren.length > 0) {
+        result.push({
+          ...node,
+          children: filteredChildren.length > 0 ? filteredChildren : node.children
+        });
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * @description Toggle node expansion state
+   */
+  toggleNodeExpansion(nodeId: string): void {
+    const expanded = new Set(this.expandedNodes());
+    if (expanded.has(nodeId)) {
+      expanded.delete(nodeId);
+    } else {
+      expanded.add(nodeId);
+    }
+    this.expandedNodes.set(expanded);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Check if a node is expanded
+   */
+  isNodeExpanded(nodeId: string): boolean {
+    return this.expandedNodes().has(nodeId);
+  }
+
+  /**
+   * @description Expand all nodes in tree
+   */
+  expandAllNodes(): void {
+    const allNodeIds = new Set<string>();
+    const collectNodeIds = (nodes: TreeNode[]) => {
+      for (const node of nodes) {
+        if (node.children.length > 0) {
+          allNodeIds.add(node.id);
+          collectNodeIds(node.children);
+        }
+      }
+    };
+    collectNodeIds(this.treeData());
+    this.expandedNodes.set(allNodeIds);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Collapse all nodes in tree
+   */
+  collapseAllNodes(): void {
+    this.expandedNodes.set(new Set());
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Select a node from the tree (add to selection)
+   */
+  selectTreeNode(node: TreeNode): void {
+    if (!node.isSelectable || !node.output) {
+      return;
+    }
+
+    // Check if already selected
+    if (this.selectedOutputsForDialog().some(o => o.id === node.output!.id)) {
+      this.feedbackService.showWarningToast({
+        summary: this.translateService.instant('message.warning'),
+        detail: this.translateService.instant('message.validation.outputAlreadySelected')
+      });
+      return;
+    }
+
+    // Add to selection
+    this.selectedOutputsForDialog.set([...this.selectedOutputsForDialog(), node.output]);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Check if a tree node's output is already selected
+   */
+  isTreeNodeSelected(node: TreeNode): boolean {
+    if (!node.output) return false;
+    return this.selectedOutputsForDialog().some(o => o.id === node.output!.id);
+  }
+
+  /**
+   * @description Get the parent path string for display
+   */
+  getParentPath(node: TreeNode): string {
+    if (node.path.length <= 1) return '';
+    return node.path.slice(0, -1).join(' > ');
+  }
+
+  /**
+   * @description Clear tree search
+   */
+  clearTreeSearch(): void {
+    this.treeSearchQuery.set('');
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Handle tree search input
+   */
+  onTreeSearchInput(query: string): void {
+    this.treeSearchQuery.set(query);
+    
+    // Auto-expand matching nodes when searching
+    if (query.length >= 2) {
+      this.expandMatchingNodes(query.toLowerCase());
+    }
+    
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Expand nodes that match the search query
+   */
+  private expandMatchingNodes(query: string): void {
+    const nodesToExpand = new Set<string>();
+    
+    const findMatchingPaths = (nodes: TreeNode[], parentIds: string[] = []) => {
+      for (const node of nodes) {
+        const currentPath = [...parentIds, node.id];
+        const matches = node.label.toLowerCase().includes(query) ||
+                       node.definition?.toLowerCase().includes(query) ||
+                       node.serviceLine?.toLowerCase().includes(query);
+        
+        if (matches) {
+          // Expand all parent nodes
+          parentIds.forEach(id => nodesToExpand.add(id));
+        }
+        
+        if (node.children.length > 0) {
+          findMatchingPaths(node.children, currentPath);
+        }
+      }
+    };
+    
+    findMatchingPaths(this.treeData());
+    
+    // Merge with existing expanded nodes
+    const expanded = new Set(this.expandedNodes());
+    nodesToExpand.forEach(id => expanded.add(id));
+    this.expandedNodes.set(expanded);
+  }
+
+  /**
+   * @description Get level color class for visual distinction
+   */
+  getLevelColorClass(level: number): string {
+    const colors = [
+      'bg-blue-100 text-blue-700 border-blue-200',      // Level 0
+      'bg-purple-100 text-purple-700 border-purple-200', // Level 1
+      'bg-pink-100 text-pink-700 border-pink-200',       // Level 2
+      'bg-orange-100 text-orange-700 border-orange-200', // Level 3
+      'bg-green-100 text-green-700 border-green-200'     // Level 4
+    ];
+    return colors[level] || colors[0];
+  }
+
+  /**
+   * @description Get level badge color for chips
+   */
+  getLevelBadgeStyle(level: number): { [key: string]: string } {
+    const styles = [
+      { 'background-color': '#dbeafe', 'color': '#1e40af' },  // Level 0 - Blue
+      { 'background-color': '#ede9fe', 'color': '#5b21b6' },  // Level 1 - Purple
+      { 'background-color': '#fce7f3', 'color': '#9d174d' },  // Level 2 - Pink
+      { 'background-color': '#ffedd5', 'color': '#9a3412' },  // Level 3 - Orange
+      { 'background-color': '#d1fae5', 'color': '#065f46' }   // Level 4 - Green
+    ];
+    return styles[level] || styles[0];
   }
 
   /**
@@ -1108,18 +1455,145 @@ export class OpportunityWhatSectionComponent implements OnInit {
   }
 
   /**
-   * @description Toggle between search and browse modes
+   * @description Toggle between search modes (search -> ai -> browse -> search)
    */
   toggleSearchMode(): void {
-    const newMode = this.searchMode() === 'search' ? 'browse' : 'search';
+    const currentMode = this.searchMode();
+    let newMode: 'search' | 'browse' | 'ai';
+    
+    if (currentMode === 'search') {
+      newMode = 'ai';
+    } else if (currentMode === 'ai') {
+      newMode = 'browse';
+    } else {
+      newMode = 'search';
+    }
+    
     this.searchMode.set(newMode);
     
-    // Clear search when switching modes
+    // Clear search state when switching modes
     if (newMode === 'browse') {
+      this.searchQuery.set('');
+      this.searchResults.set([]);
+    } else if (newMode === 'search') {
+      this.aiSearchQuery.set('');
+      this.aiSearchResults.set([]);
+      this.aiSearchError.set(null);
+    } else if (newMode === 'ai') {
       this.searchQuery.set('');
       this.searchResults.set([]);
     }
     
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Set search mode directly
+   */
+  setSearchMode(mode: 'search' | 'browse' | 'ai'): void {
+    this.searchMode.set(mode);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Perform AI semantic search for Products & Services
+   * User enters text in their own words and gets AI-matched results
+   */
+  performAiSemanticSearch(): void {
+    const query = this.aiSearchQuery().trim();
+    
+    if (!query || query.length < 3) {
+      this.feedbackService.showWarningToast({
+        summary: this.translateService.instant('message.warning'),
+        detail: this.translateService.instant('message.aiSearchMinimum3Chars')
+      });
+      return;
+    }
+
+    this.isAiSearching.set(true);
+    this.aiSearchError.set(null);
+    this.aiSearchResults.set([]);
+    
+    this.valuesService.semanticSearchOutputs({
+      searchText: query,
+      maxResults: 10,
+      minSimilarity: 0.3
+    }).subscribe({
+      next: (response: OutputSemanticSearchResponse) => {
+        this.isAiSearching.set(false);
+        this.aiSearchResults.set(response.matches);
+        
+        if (response.matches.length === 0) {
+          this.feedbackService.showInfoToast({
+            summary: this.translateService.instant('message.info'),
+            detail: this.translateService.instant('message.noAiMatchesFound'),
+            life: 5000
+          });
+        }
+        
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        this.isAiSearching.set(false);
+        this.aiSearchError.set(error?.message || this.translateService.instant('message.error.aiSearchFailed'));
+        console.error('AI semantic search error:', error);
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  /**
+   * @description Select an output from AI search results
+   */
+  selectFromAiSearch(match: OutputSemanticSearchMatch): void {
+    const output = match.output;
+    
+    // Check if already selected
+    if (this.selectedOutputsForDialog().some(o => o.id === output.id)) {
+      this.feedbackService.showWarningToast({
+        summary: this.translateService.instant('message.warning'),
+        detail: this.translateService.instant('message.validation.outputAlreadySelected')
+      });
+      return;
+    }
+
+    // Add to selection
+    this.selectedOutputsForDialog.set([...this.selectedOutputsForDialog(), output]);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Check if an AI search result is already selected
+   */
+  isAiResultSelected(match: OutputSemanticSearchMatch): boolean {
+    return this.selectedOutputsForDialog().some(o => o.id === match.output.id);
+  }
+
+  /**
+   * @description Get confidence level label based on score
+   */
+  getConfidenceLevel(score: number): string {
+    if (score >= 0.8) return this.translateService.instant('label.confidence.high');
+    if (score >= 0.5) return this.translateService.instant('label.confidence.medium');
+    return this.translateService.instant('label.confidence.low');
+  }
+
+  /**
+   * @description Get confidence level CSS class based on score
+   */
+  getConfidenceClass(score: number): string {
+    if (score >= 0.8) return 'bg-green-100 text-green-700';
+    if (score >= 0.5) return 'bg-yellow-100 text-yellow-700';
+    return 'bg-orange-100 text-orange-700';
+  }
+
+  /**
+   * @description Clear AI search results and query
+   */
+  clearAiSearch(): void {
+    this.aiSearchQuery.set('');
+    this.aiSearchResults.set([]);
+    this.aiSearchError.set(null);
     this.cdr.detectChanges();
   }
 
@@ -1647,7 +2121,7 @@ export class OpportunityWhatSectionComponent implements OnInit {
 
   /**
    * Reject AI match and open manual search for alternative
-   * @description Allows user to reject the AI-suggested match and manually search for a more appropriate one
+   * @description Allows user to reject the AI-suggested match and search using AI semantic search
    * @note Option 2: Can find different match WITHOUT edit mode (auto-enters edit mode)
    */
   findDifferentMatch(item: ExtractedDeliverableInfo): void {
@@ -1664,15 +2138,16 @@ export class OpportunityWhatSectionComponent implements OnInit {
     const filtered = currentExtracted.filter(e => e.partnerLanguage !== item.partnerLanguage);
     this.extractedDeliverables.set(filtered);
     
-    // Open deliverables dialog in search mode for manual selection
-    this.searchMode.set('search');
+    // Open deliverables dialog
     this.openDeliverablesDialog();
     
-    this.feedbackService.showInfoToast({
-      summary: this.translateService.instant('message.info'),
-      detail: this.translateService.instant('message.searchForAlternativeMatch'),
-      life: 3000
-    });
+    // Put the partner language text into the AI search input and trigger search
+    this.aiSearchQuery.set(item.partnerLanguage);
+    
+    // Trigger AI semantic search after a short delay to allow dialog to open
+    setTimeout(() => {
+      this.performAiSemanticSearch();
+    }, 100);
     
     this.cdr.detectChanges();
   }

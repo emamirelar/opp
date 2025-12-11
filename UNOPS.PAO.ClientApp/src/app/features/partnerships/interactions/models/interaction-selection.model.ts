@@ -264,6 +264,7 @@ export interface ProposeOpportunityRequest {
   interactionIds?: number[];
   newDocumentStoragePaths?: string[]; // GCS URIs for newly uploaded documents
   newDocumentMimeTypes?: string[]; // MIME types for newly uploaded documents
+  newDocumentTypeIds?: (number | null)[]; // Document type IDs for newly uploaded documents
   existingDocumentIds?: number[]; // IDs of existing documents in database
 }
 
