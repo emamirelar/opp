@@ -2704,22 +2704,80 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 .ToList();
         }
 
-        if (request.Stakeholders != null)
+        if (request.Stakeholders != null && request.Stakeholders.Any())
         {
-            // Remove existing stakeholders
+            // Get the "Opportunity Manager" role ID to preserve it
+            var opportunityManagerRole = await context.Set<EntityRole>()
+                .Where(er => er.EntityType == "Opportunity" && er.Name == "Opportunity Manager" && !er.IsDeleted)
+                .FirstOrDefaultAsync();
+            
+            var opportunityManagerRoleId = opportunityManagerRole?.Id;
+            
+            // Find existing Opportunity Manager (to preserve if AI doesn't provide one)
+            OpportunityStakeholder? existingOpportunityManager = null;
+            if (opportunityManagerRoleId.HasValue && entity.Stakeholders != null)
+            {
+                existingOpportunityManager = entity.Stakeholders
+                    .FirstOrDefault(s => s.EntityRoleId == opportunityManagerRoleId.Value && s.UserId.HasValue);
+            }
+            
+            // Check if AI-extracted stakeholders include an Opportunity Manager
+            var aiHasOpportunityManager = opportunityManagerRoleId.HasValue && 
+                request.Stakeholders.Any(s => s.EntityRoleId == opportunityManagerRoleId.Value && s.UserId.HasValue);
+            
+            // Remove existing stakeholders EXCEPT Opportunity Manager if AI doesn't provide one
             if (entity.Stakeholders != null && entity.Stakeholders.Any())
             {
-                context.Set<OpportunityStakeholder>().RemoveRange(entity.Stakeholders);
+                var stakeholdersToRemove = entity.Stakeholders
+                    .Where(s => 
+                        // Remove all if AI provides Opportunity Manager
+                        aiHasOpportunityManager ||
+                        // Otherwise, keep the existing Opportunity Manager
+                        (opportunityManagerRoleId.HasValue && s.EntityRoleId != opportunityManagerRoleId.Value))
+                    .ToList();
+                
+                if (stakeholdersToRemove.Any())
+                {
+                    context.Set<OpportunityStakeholder>().RemoveRange(stakeholdersToRemove);
+                }
             }
 
-            // Add new stakeholders
-            entity.Stakeholders = request.Stakeholders
-                .Select(entityRoleId => new OpportunityStakeholder
+            // Add new stakeholders from AI (with proper userId and entityRoleId)
+            var newStakeholders = request.Stakeholders
+                .Where(s => s.UserId.HasValue) // Only add stakeholders with valid user IDs
+                .Select(s => new OpportunityStakeholder
                 {
                     OpportunityId = id,
-                    EntityRoleId = entityRoleId
+                    UserId = s.UserId,
+                    EntityRoleId = s.EntityRoleId,
+                    IsInternal = true,
+                    StakeholderType = "Internal",
+                    Notes = s.Notes
                 })
                 .ToList();
+
+            // Initialize stakeholders list if null
+            entity.Stakeholders ??= new List<OpportunityStakeholder>();
+            
+            // If AI doesn't have Opportunity Manager but we have one, keep it
+            if (!aiHasOpportunityManager && existingOpportunityManager != null)
+            {
+                // Filter out any existing stakeholders that are the preserved Opportunity Manager
+                entity.Stakeholders = entity.Stakeholders
+                    .Where(s => s.Id == existingOpportunityManager.Id)
+                    .ToList();
+            }
+            else
+            {
+                // Clear for fresh add
+                entity.Stakeholders = new List<OpportunityStakeholder>();
+            }
+            
+            // Add all new stakeholders
+            foreach (var stakeholder in newStakeholders)
+            {
+                entity.Stakeholders.Add(stakeholder);
+            }
         }
 
         if (request.MiscExternalStakeholders != null)

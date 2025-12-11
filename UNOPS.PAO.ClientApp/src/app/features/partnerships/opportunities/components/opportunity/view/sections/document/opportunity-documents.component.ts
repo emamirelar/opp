@@ -1284,11 +1284,18 @@ export class OpportunityDocumentsComponent implements OnInit {
           .map((sdg: any) => sdg.sdgId)
           .filter((id: number) => id != null);
       }
-      // Handle stakeholders - extract entity role IDs
+      // Handle stakeholders - convert to stakeholder request format with userId and entityRoleId
       else if (key === 'stakeholders' && Array.isArray(value)) {
         transformed.stakeholders = value
-          .map((stakeholder: any) => stakeholder.entityRoleId)
-          .filter((id: number) => id != null);
+          .filter(
+            (stakeholder: any) =>
+              stakeholder.userId != null && stakeholder.entityRoleId != null,
+          )
+          .map((stakeholder: any) => ({
+            userId: stakeholder.userId,
+            entityRoleId: stakeholder.entityRoleId,
+            notes: stakeholder.notes || null,
+          }));
       }
       // Handle deliverables - convert to deliverable request format
       else if (key === 'deliverables' && Array.isArray(value)) {

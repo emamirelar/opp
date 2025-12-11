@@ -30,7 +30,11 @@ public class ApplyOpportunityAiChangesRequest
     /// </summary>
     public List<OpportunityFundingPartnerRequest>? FundingPartners { get; set; }
     public List<int>? ClientPartners { get; set; }
-    public List<int>? Stakeholders { get; set; }
+    /// <summary>
+    /// Internal stakeholders with userId and entityRoleId
+    /// When applying AI changes, Opportunity Manager role is preserved if not included in this list
+    /// </summary>
+    public List<OpportunityStakeholderRequest>? Stakeholders { get; set; }
     public string? MiscExternalStakeholders { get; set; }
     public string? ExternalStakeholderNotes { get; set; }
 
