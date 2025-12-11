@@ -320,6 +320,13 @@ public class ValuesRepository
         => context.Outputs
             .Where(x => x.Status == EntityStatus.Active);
 
+    /// <summary>
+    /// Gets outputs by their IDs for semantic search results
+    /// </summary>
+    public IEnumerable<Output> GetOutputsByIds(IEnumerable<int> ids)
+        => context.Outputs
+            .Where(x => ids.Contains(x.Id) && x.Status == EntityStatus.Active);
+
     public IEnumerable<SDG> GetSDGs()
         => context.SDGs.Where(x => x.Status == EntityStatus.Active);
 

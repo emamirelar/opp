@@ -51,6 +51,12 @@ public class OpportunityProposalRequest
     public List<string>? NewDocumentMimeTypes { get; set; }
 
     /// <summary>
+    /// Document type IDs for newly uploaded documents (matches NewDocumentStoragePaths by index)
+    /// Used to categorize documents when creating the opportunity
+    /// </summary>
+    public List<int?>? NewDocumentTypeIds { get; set; }
+
+    /// <summary>
     /// IDs of existing documents already in the system
     /// Backend will query database for their GCS storage paths
     /// </summary>

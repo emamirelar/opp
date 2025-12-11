@@ -14,9 +14,14 @@ public class WhySectionRequest
     public string? ResultsFocus { get; set; }
 
     /// <summary>
-    /// Intended impact and outcomes description
+    /// Expected impact description (max 200 characters)
     /// </summary>
-    public string? IntendedImpactOutcomes { get; set; }
+    public string? ExpectedImpact { get; set; }
+    
+    /// <summary>
+    /// Expected outcomes description (max 200 characters)
+    /// </summary>
+    public string? ExpectedOutcomes { get; set; }
 
     /// <summary>
     /// Expected beneficiaries description

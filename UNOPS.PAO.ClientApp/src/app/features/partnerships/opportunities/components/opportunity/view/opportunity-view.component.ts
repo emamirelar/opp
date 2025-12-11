@@ -370,6 +370,10 @@ export class OpportunityViewComponent
     this.allSuggestions().filter((s) => s.actionTarget === 'WHEN'),
   );
 
+  teamSuggestions = computed(() =>
+    this.allSuggestions().filter((s) => s.actionTarget === 'TEAM'),
+  );
+
   // Filtered stakeholder lists
   internalStakeholders = computed(() => {
     const opp = this.opportunity();
@@ -528,6 +532,14 @@ export class OpportunityViewComponent
 
   /**
    * Load opportunity record details
+   * 
+   * NOTE: This component coordinates multiple child sections that make AI-powered API calls:
+   * - Analysis Section: AI insights (delayed 2.5s)
+   * - DST Section: Risks (immediate), Recommendations (0.5s), Similar Opportunities (1s), 
+   *   Similar Projects (1.5s), Relevant People (2s)
+   * 
+   * The staggered loading prevents connection exhaustion and ensures the notifications
+   * polling endpoint continues to work properly.
    */
   private _loadRecordDetails(targetSection?: string) {
     this.loading.set(true);

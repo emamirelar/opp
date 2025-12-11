@@ -108,9 +108,9 @@ export interface Opportunity {
   isTargetSigningDateFirm: boolean;
   signingDateNotes: string | null;
   submissionDeadline: string | null;
-  strategicAlignment: string | null;
   resultsFocus: string | null;
-  intendedImpactOutcomes: string | null;
+  expectedImpact: string | null;
+  expectedOutcomes: string | null;
   expectedBeneficiaries: string | null;
   estimatedDirectBeneficiaries: number | null;
   estimatedIndirectBeneficiaries: number | null;

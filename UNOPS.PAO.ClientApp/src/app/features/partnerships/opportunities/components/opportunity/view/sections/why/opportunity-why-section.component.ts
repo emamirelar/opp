@@ -16,7 +16,7 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { FormControl, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { FormControl, ReactiveFormsModule, FormsModule, Validators } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 // PrimeNG imports
@@ -134,7 +134,8 @@ export class OpportunityWhySectionComponent implements OnInit {
   private hasUnsavedChanges = false;
   private originalData: {
     expectedBeneficiaries?: string | null;
-    intendedImpactOutcomes?: string | null;
+    expectedImpact?: string | null;
+    expectedOutcomes?: string | null;
     challenges?: string | null;
     sdGs?: any[];
     uncfOutcomes?: any[];
@@ -146,7 +147,12 @@ export class OpportunityWhySectionComponent implements OnInit {
   estimatedDirectBeneficiariesControl = new FormControl<number | null>(null);
   estimatedIndirectBeneficiariesControl = new FormControl<number | null>(null);
   beneficiariesToBeDeterminedControl = new FormControl<boolean>(false);
-  expectedOutcomesControl = new FormControl<string | null>(null);
+  expectedImpactControl = new FormControl<string | null>(null, [
+    Validators.maxLength(200),
+  ]);
+  expectedOutcomesControl = new FormControl<string | null>(null, [
+    Validators.maxLength(200),
+  ]);
   challengesControl = new FormControl<string | null>(null);
 
   // Climate and framework alignments by country (map of countryId -> alignment status)
@@ -314,6 +320,11 @@ export class OpportunityWhySectionComponent implements OnInit {
     // Set up change detection on form controls
     // Only mark as changed if we're in edit mode (to avoid triggering on initial setValue)
     this.expectedBeneficiariesControl.valueChanges.subscribe(() => {
+      if (this.isEditing()) {
+        this.markAsChanged();
+      }
+    });
+    this.expectedImpactControl.valueChanges.subscribe(() => {
       if (this.isEditing()) {
         this.markAsChanged();
       }
@@ -702,7 +713,8 @@ export class OpportunityWhySectionComponent implements OnInit {
     // Backup original data for cancel
     this.originalData = {
       expectedBeneficiaries: opp.expectedBeneficiaries ?? null,
-      intendedImpactOutcomes: opp.intendedImpactOutcomes ?? null,
+      expectedImpact: opp.expectedImpact ?? null,
+      expectedOutcomes: opp.expectedOutcomes ?? null,
       challenges: opp.challenges ?? null,
       sdGs: opp.sdGs ? [...opp.sdGs] : [],
       uncfOutcomes: opp.uncfOutcomes ? [...opp.uncfOutcomes] : [],
@@ -732,7 +744,8 @@ export class OpportunityWhySectionComponent implements OnInit {
       this.estimatedIndirectBeneficiariesControl.enable();
     }
 
-    this.expectedOutcomesControl.setValue(opp.intendedImpactOutcomes ?? null);
+    this.expectedImpactControl.setValue(opp.expectedImpact ?? null);
+    this.expectedOutcomesControl.setValue(opp.expectedOutcomes ?? null);
     this.challengesControl.setValue(opp.challenges ?? null);
 
     // Initialize climate and framework alignments from countries
@@ -801,7 +814,8 @@ export class OpportunityWhySectionComponent implements OnInit {
         this.estimatedIndirectBeneficiariesControl.value ?? undefined,
       beneficiariesToBeDetermined:
         this.beneficiariesToBeDeterminedControl.value ?? false,
-      intendedImpactOutcomes: this.expectedOutcomesControl.value ?? undefined,
+      expectedImpact: this.expectedImpactControl.value ?? undefined,
+      expectedOutcomes: this.expectedOutcomesControl.value ?? undefined,
       challenges: this.challengesControl.value ?? undefined,
       sdGs: opp.sdGs?.map((sdg) => ({
         sdgId: sdg.sdgDatabaseId || 0, // Use the integer database ID
@@ -906,8 +920,11 @@ export class OpportunityWhySectionComponent implements OnInit {
       this.expectedBeneficiariesControl.setValue(
         this.originalData.expectedBeneficiaries ?? null,
       );
+      this.expectedImpactControl.setValue(
+        this.originalData.expectedImpact ?? null,
+      );
       this.expectedOutcomesControl.setValue(
-        this.originalData.intendedImpactOutcomes ?? null,
+        this.originalData.expectedOutcomes ?? null,
       );
       this.challengesControl.setValue(this.originalData.challenges ?? null);
 
@@ -915,8 +932,8 @@ export class OpportunityWhySectionComponent implements OnInit {
       const updatedOpportunity = {
         ...opp,
         expectedBeneficiaries: this.originalData.expectedBeneficiaries ?? null,
-        intendedImpactOutcomes:
-          this.originalData.intendedImpactOutcomes ?? null,
+        expectedImpact: this.originalData.expectedImpact ?? null,
+        expectedOutcomes: this.originalData.expectedOutcomes ?? null,
         challenges: this.originalData.challenges ?? null,
         sdGs: this.originalData.sdGs ? [...this.originalData.sdGs] : [],
         uncfOutcomes: this.originalData.uncfOutcomes
@@ -934,7 +951,8 @@ export class OpportunityWhySectionComponent implements OnInit {
       this.expectedBeneficiariesControl.setValue(
         opp.expectedBeneficiaries ?? null,
       );
-      this.expectedOutcomesControl.setValue(opp.intendedImpactOutcomes ?? null);
+      this.expectedImpactControl.setValue(opp.expectedImpact ?? null);
+      this.expectedOutcomesControl.setValue(opp.expectedOutcomes ?? null);
       this.challengesControl.setValue(opp.challenges ?? null);
     }
 

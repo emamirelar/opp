@@ -8,3 +8,56 @@
   border-color: var(--p-inputtext-border-color) !important;
 }
 
+// Tree View Styles
+.tree-container {
+  // Custom scrollbar
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+    
+    &:hover {
+      background: #a8a8a8;
+    }
+  }
+}
+
+.tree-node {
+  // Visual connector lines for tree hierarchy
+  .tree-node-row {
+    position: relative;
+    
+    // Smooth hover transition
+    transition: background-color 0.15s ease;
+  }
+  
+  // Highlight effect for selectable nodes
+  &:hover > .tree-node-row {
+    background-color: rgba(59, 130, 246, 0.05);
+  }
+}
+
+// Animation for expand/collapse
+.tree-node {
+  .pi-chevron-down,
+  .pi-chevron-right {
+    transition: transform 0.2s ease;
+  }
+}
+
+// Line clamp utility for definitions
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+

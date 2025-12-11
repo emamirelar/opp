@@ -1640,30 +1640,61 @@ Create a comprehensive summary including their complete profile, interaction his
 ### Basic Information (camelCase)
 - **name** (string): The ACTUAL PROJECT/OPPORTUNITY TITLE from the document (e.g., "Sustainable Water Infrastructure Development", "Education Reform Program")
 - **description** (string): Detailed description of the OPPORTUNITY/PROJECT itself - what the project does, its scope, objectives, and activities
-- **partnerReference** (string?): Reference number or identifier from the partner (e.g., "CN-2025-KE-INFRA-001", "REF-2025-001")
 
 ### Organizational & Initiative Type (camelCase)
 - **responsibleOrgUnitId** (int?): ID of the responsible organizational unit (use null if extracting text name)
 - **responsibleOrgUnitName** (string?): Name of the responsible organizational unit (e.g., "Global Infrastructure Unit", "East Africa Regional Office")
 - **proposedInitiativeTypeId** (int?): Type identifier for the proposed initiative (use null if extracting text name)
-- **proposedInitiativeTypeName** (string?): Name of the proposed initiative type (e.g., "Infrastructure Development", "Capacity Building", "Technical Assistance")
+- **proposedInitiativeTypeName** (string?): Name of the proposed initiative type. **VALID VALUES ONLY**: "Project", "Programme", or "Portfolio". Map document content to one of these three types: "Project" = single initiative with defined scope; "Programme" = collection of related projects; "Portfolio" = collection of programmes and projects. Add "proposedInitiativeTypeId" to dependents array for resolution.
 
 ### Financial & Timeline (camelCase)
-- **initiativeBudgetUSD** (decimal?): Total budget amount in USD (extract from text like "$65 million" → 65000000, "USD 1.5M" → 1500000)
+- **initiativeBudgetUSD** (decimal?): Total proposed budget in USD when NO PARTNER-SPECIFIC breakdown is available. Use this ONLY when the document mentions a total/overall budget without specifying which partner is contributing what amount. Convert to numeric: "$65 million" → 65000000
+
+- **partnerBudgets** (array): Array of budget allocations PER FUNDING PARTNER. Use this WHEN the document specifies funding amounts per partner. Each entry should include:
+  - **partnerName** (string): Name of the funding partner (MUST match a name in fundingPartners array)
+  - **amount** (decimal): Budget amount as a number (e.g., "$25 million" → 25000000)
+  - **currency** (string): Currency code (e.g., "USD", "EUR", "GBP"). Default to "USD" if not specified.
+  
+  **BUDGET EXTRACTION RULES**:
+  - If document says "$25M from World Bank, $15M from AfDB" → Use **partnerBudgets** with entries for each partner
+  - If document says "Total project budget: $65 million" without partner breakdown → Use **initiativeBudgetUSD**: 65000000
+  - If BOTH exist (total budget AND partner breakdown) → Use **partnerBudgets** (it provides more detail)
+  
+  Example: `"partnerBudgets": [{"partnerName": "World Bank", "amount": 25000000, "currency": "USD"}, {"partnerName": "AfDB", "amount": 12000000, "currency": "USD"}]`
+
+- **isPooledFunding** (boolean?): Whether funding is pooled across multiple partners (extract if mentioned as "pooled funding", "multi-donor trust fund", etc.)
 - **partnershipAgreementReference** (string?): Partnership agreement reference number or code
 - **targetSigningDate** (DateTime?): Target date for signing (ISO 8601 format: YYYY-MM-DDTHH:mm:ss.sssZ)
+- **isTargetSigningDateFirm** (boolean?): Whether the signing date is a firm deadline from the partner
+- **signingDateNotes** (string?): Notes about the signing date (e.g., partner deadline, submission closing date)
+- **submissionDeadline** (DateTime?): Partner submission or proposal deadline (ISO 8601 format)
+- **implementationStartDate** (DateTime?): When implementation is expected to start (ISO 8601 format)
 - **targetDeliveryDate** (DateTime?): Target delivery or completion date (ISO 8601 format: YYYY-MM-DDTHH:mm:ss.sssZ)
 
 ### Strategic Information (camelCase)
+- **challenges** (string?): Context and challenges that the opportunity aims to address
 - **strategicAlignment** (string?): How this opportunity aligns with strategic goals, organizational priorities, or regional development plans
 - **resultsFocus** (string?): Focus areas for results and key deliverables
-- **intendedImpactOutcomes** (string?): Expected impact and outcomes of the opportunity
+- **expectedImpact** (string?): Expected impact of the opportunity (max 200 characters)
+- **expectedOutcomes** (string?): Expected outcomes of the opportunity (max 200 characters)
 - **expectedBeneficiaries** (string?): Who will benefit from this opportunity (target population, communities, regions)
+- **estimatedDirectBeneficiaries** (int?): Estimated number of direct beneficiaries (extract numbers like "2 million beneficiaries" → 2000000)
+- **estimatedIndirectBeneficiaries** (int?): Estimated number of indirect beneficiaries
+- **beneficiariesToBeDetermined** (boolean?): Whether the number of beneficiaries is to be determined later (extract if mentioned as "TBD", "to be determined", "not yet determined", "beneficiaries pending assessment", etc.)
+
+### Delivery & Stakeholders (camelCase)
+- **deliveryModality** (int?): How UNOPS will deliver products/services. Use numeric values: 1 = NotYetKnown, 2 = AllDirect (direct execution), 3 = AllGrantSupport (grant support), 4 = Mixed (combination of approaches). Extract and map to the appropriate value based on implementation approach mentioned in the document.
+- **miscExternalStakeholders** (string?): Free-text list of external stakeholders not in the contact list
+- **externalStakeholderNotes** (string?): Notes about external stakeholders (influence, capacity, role)
 
 ### Related Entities (Arrays - camelCase)
 - **fundingPartners** (array): List of funding partner names as text strings (e.g., ["World Bank", "Asian Development Bank"])
 - **clientPartners** (array): List of client partner names as text strings (e.g., ["Ministry of Infrastructure - Kenya", "Local Government"])
-- **stakeholders** (array): List of stakeholder names as text strings (e.g., ["John Doe - Project Coordinator", "Jane Smith - Technical Advisor"])
+- **stakeholders** (array of objects): List of UNOPS internal stakeholders involved in the opportunity. Each stakeholder MUST be an object with:
+  - **userName** (string): Full name of the UNOPS staff member (e.g., "John Doe", "Jane Smith")
+  - **roleName** (string): Role name - MUST be one of: "Opportunity Manager", "Partnership Lead", "Reviewer", "Internal Stakeholder"
+  Example: [{"userName": "John Doe", "roleName": "Opportunity Manager"}, {"userName": "Jane Smith", "roleName": "Partnership Lead"}]
+- **teamMembers** (array): List of UNOPS internal team member names as text strings (e.g., ["Jane Smith - UNOPS Project Manager", "John Doe - UNOPS Technical Lead"])
 - **deliverables** (array): List of deliverable descriptions as text strings (e.g., ["Project Feasibility Study", "Infrastructure Design", "Implementation Plan"])
 - **countries** (array): List of country names as text strings (e.g., ["Kenya", "Tanzania", "Uganda"])
 - **sdGs** (array): List of SDG references as text strings (e.g., ["Goal 6", "SDG 9", "Goal 17"])
@@ -1677,7 +1708,7 @@ Create a comprehensive summary including their complete profile, interaction his
 2. Populate the corresponding Name field with the extracted text
 3. **Add the field name to the "dependents" array** so the system knows to resolve these text names to IDs using similarity matching
 
-**For Collection Fields (fundingPartners, clientPartners, stakeholders, deliverables, countries, sdGs):**
+**For Collection Fields (fundingPartners, clientPartners, stakeholders, teamMembers, deliverables, countries, sdGs):**
 - Extract as **simple arrays of text strings**
 - Add the collection field name to the "dependents" array
 - The backend will convert these text values to proper object structures with IDs
@@ -1685,7 +1716,9 @@ Create a comprehensive summary including their complete profile, interaction his
 **Example mapping:**
 - If you extract "Kenya" → Add "Kenya" to **countries** array, add "countries" to dependents
 - If you extract "World Bank" as funder → Add "World Bank" to **fundingPartners** array, add "fundingPartners" to dependents
-- If you extract "Infrastructure Development" as initiative type → Set proposedInitiativeTypeId = null, proposedInitiativeTypeName = "Infrastructure Development", add "proposedInitiativeTypeId" to dependents
+- If you extract content indicating a "single initiative with defined scope" → Set proposedInitiativeTypeId = null, proposedInitiativeTypeName = "Project", add "proposedInitiativeTypeId" to dependents
+- If you extract content indicating "multiple related projects" → Set proposedInitiativeTypeId = null, proposedInitiativeTypeName = "Programme", add "proposedInitiativeTypeId" to dependents
+- If you extract "Jane Smith - UNOPS Project Manager" → Add to **teamMembers** array, add "teamMembers" to dependents
 
 ## Analysis Instructions
 
@@ -1694,16 +1727,27 @@ Create a comprehensive summary including their complete profile, interaction his
 1. **Extract all relevant information** from the document text:
    - Project titles, names, or initiative names (for **name** field)
    - Detailed project descriptions, objectives, scope, and activities (for **description** field)
-   - Budget amounts, financial figures, and cost information (for **initiativeBudgetUSD** field)
+   - Budget amounts: 
+     * If partner-specific: "$X from World Bank" → add to **partnerBudgets** array
+     * If total only: "Budget: $65M" → set **initiativeBudgetUSD**: 65000000
+   - Multi-donor or pooled funding indicators (for **isPooledFunding** field)
    - Partner organization names (funding sources → **fundingPartners**, client entities → **clientPartners**)
    - Organizational unit names (for **responsibleOrgUnitName** field)
    - Initiative type names (for **proposedInitiativeTypeName** field)
    - Geographic locations, country names (for **countries** array)
    - SDG references (SDG 1, SDG 6, Goal 9, etc. → **sdGs** array)
    - Dates for signing, delivery, completion (for **targetSigningDate**, **targetDeliveryDate** fields)
+   - Proposal submission deadlines (for **submissionDeadline** field)
+   - Implementation start dates (for **implementationStartDate** field)
+   - Firm deadline indicators (for **isTargetSigningDateFirm**, **signingDateNotes** fields)
    - Deliverables, outputs, or project components (for **deliverables** array)
-   - Stakeholder names and roles (for **stakeholders** array)
+   - Stakeholder names and roles (for **stakeholders** array - external stakeholders)
+   - UNOPS team member names and roles (for **teamMembers** array - internal UNOPS staff)
+   - Context and challenges the project addresses (for **challenges** field)
    - Strategic information (strategic alignment, results focus, intended impact, expected beneficiaries)
+   - Beneficiary numbers/estimates (for **estimatedDirectBeneficiaries**, **estimatedIndirectBeneficiaries** fields)
+   - Delivery approach or modality (for **deliveryModality** field)
+   - External stakeholder lists and notes (for **miscExternalStakeholders**, **externalStakeholderNotes** fields)
 
 2. **Use null or empty arrays** for fields where no information is available in the document
 
@@ -1721,7 +1765,9 @@ Create a comprehensive summary including their complete profile, interaction his
 - Document mentions "World Bank" as funder → Add to **fundingPartners** array
 - Document mentions "Kenya" as location → Add to **countries** array
 - Document mentions "SDG 6" or "Goal 9" → Add to **sdGs** array
-- Document states "$65 million budget" → Extract as **initiativeBudgetUSD**: 65000000
+- Document states "$25 million from World Bank" → Add to **partnerBudgets**: `[{"partnerName": "World Bank", "amount": 25000000, "currency": "USD"}]`
+- Document states "€10 million from European Union" → Add to **partnerBudgets**: `[{"partnerName": "European Union", "amount": 10000000, "currency": "EUR"}]`
+- Document states "Total budget $65 million" (NO partner breakdown) → Set **initiativeBudgetUSD**: 65000000
 
 ## Response Format
 
@@ -1738,26 +1784,45 @@ Return a valid JSON object with the extracted opportunity data. **ALL property n
 {
   "name": "Sustainable Water and Sanitation Infrastructure Development Program",
   "description": "Comprehensive infrastructure development initiative to design, construct, and operationalize modern water treatment facilities serving 2 million beneficiaries. Key components include construction of 3 water treatment plants, rehabilitation of 200 km pipelines, installation of 50 community water points, and training programs for 500 local technicians.",
-  "partnerReference": "CN-2025-KE-INFRA-001",
   "responsibleOrgUnitId": null,
   "responsibleOrgUnitName": "Global Infrastructure Unit",
   "proposedInitiativeTypeId": null,
-  "proposedInitiativeTypeName": "Infrastructure Development",
-  "initiativeBudgetUSD": 65000000,
+  "proposedInitiativeTypeName": "Project",
+  "initiativeBudgetUSD": null,
+  "partnerBudgets": [
+    {"partnerName": "World Bank", "amount": 25000000, "currency": "USD"},
+    {"partnerName": "African Development Bank", "amount": 20000000, "currency": "USD"},
+    {"partnerName": "European Union", "amount": 15000000, "currency": "EUR"},
+    {"partnerName": "Bill and Melinda Gates Foundation", "amount": 5000000, "currency": "USD"}
+  ],
+  "isPooledFunding": true,
   "partnershipAgreementReference": "PA-WB-2024-015",
   "targetSigningDate": "2025-12-31T00:00:00.000Z",
+  "isTargetSigningDateFirm": true,
+  "signingDateNotes": "Partner deadline for proposal submission",
+  "submissionDeadline": "2025-10-31T00:00:00.000Z",
+  "implementationStartDate": "2026-01-15T00:00:00.000Z",
   "targetDeliveryDate": "2029-12-31T00:00:00.000Z",
+  "challenges": "Kenya faces significant water infrastructure challenges with only 59% of the population having access to clean water. Urban informal settlements like Kibera experience severe water scarcity, relying on expensive and often contaminated water sources.",
   "strategicAlignment": "Aligned with SDG 6 (Clean Water and Sanitation), SDG 9 (Industry, Innovation and Infrastructure) and SDG 17 (Partnerships for the Goals), supporting sustainable infrastructure development and improved access to clean water for underserved communities",
   "resultsFocus": "Delivering modern, climate-resilient water and sanitation facilities, improving water access for underserved communities, and building local capacity for operations and maintenance",
-  "intendedImpactOutcomes": "Improved health and well-being for 2+ million residents through reliable access to clean water, 85% reduction in waterborne diseases, creation of 500 permanent jobs in water facility operations, enhanced community resilience to climate change",
+  "expectedImpact": "Improved health and well-being for 2+ million residents through reliable access to clean water, 85% reduction in waterborne diseases",
+  "expectedOutcomes": "Creation of 500 permanent jobs in water facility operations, enhanced community resilience to climate change",
   "expectedBeneficiaries": "2.1 million residents of Nairobi Metropolitan Area, with priority focus on low-income communities in Kibera, Mathare, and Mukuru informal settlements, as well as peri-urban areas with limited water infrastructure",
+  "estimatedDirectBeneficiaries": 2100000,
+  "estimatedIndirectBeneficiaries": 5000000,
+  "beneficiariesToBeDetermined": false,
+  "deliveryModality": 2,
+  "miscExternalStakeholders": "Community Water Committees, Local NGOs, County Government Officials",
+  "externalStakeholderNotes": "Strong local government support; community leaders are key influencers for project acceptance",
   "fundingPartners": ["World Bank", "African Development Bank", "European Union", "Bill and Melinda Gates Foundation"],
   "clientPartners": ["Ministry of Infrastructure - Kenya", "Nairobi City Water and Sewerage Company"],
-  "stakeholders": ["John Kamau - Project Director", "Sarah Ochieng - Technical Lead", "Michael Mwangi - Community Liaison Officer"],
+  "stakeholders": [{"userName": "John Kamau", "roleName": "Opportunity Manager"}, {"userName": "Sarah Ochieng", "roleName": "Partnership Lead"}, {"userName": "Michael Mwangi", "roleName": "Internal Stakeholder"}],
+  "teamMembers": ["Jane Smith - UNOPS Infrastructure Lead", "David Brown - UNOPS Project Manager", "Lisa Chen - UNOPS Procurement Specialist"],
   "deliverables": ["Project Feasibility Study", "Environmental Impact Assessment", "Infrastructure Design and Engineering Plans", "Construction of 3 Water Treatment Plants", "Pipeline Rehabilitation (200 km)", "Community Water Points Installation (50 units)", "Operations and Maintenance Training Program"],
   "countries": ["Kenya"],
   "sdGs": ["Goal 6", "Goal 9", "Goal 11", "Goal 13", "Goal 17"],
-  "dependents": ["responsibleOrgUnitId", "proposedInitiativeTypeId", "fundingPartners", "clientPartners", "stakeholders", "deliverables", "countries", "sdGs"]
+  "dependents": ["responsibleOrgUnitId", "proposedInitiativeTypeId", "fundingPartners", "clientPartners", "stakeholders", "teamMembers", "deliverables", "countries", "sdGs"]
 }
 ```
 
@@ -1766,7 +1831,9 @@ Return a valid JSON object with the extracted opportunity data. **ALL property n
 - The "name" should be the project title, NOT a file name
 - The "description" should explain what the project does, NOT describe the document
 - **ALWAYS return empty arrays [] for collections when no data found, NEVER null**
-- **ALWAYS include the "dependents" array** with all fields needing ID resolution',
+- **ALWAYS include the "dependents" array** with all fields needing ID resolution
+- **stakeholders** MUST be an array of objects with userName and roleName (valid roles: "Opportunity Manager", "Partnership Lead", "Reviewer", "Internal Stakeholder")
+- External stakeholder free-text goes in **miscExternalStakeholders** and **externalStakeholderNotes** fields, NOT in stakeholders array',
         'Analyze this **{documentType}** document and extract opportunity information relevant to the following opportunity:
 
 **Current Opportunity Context:**
@@ -1841,7 +1908,7 @@ Return a JSON object with a "keywords" array and a single "query" string that co
 {
   "name": "Sustainable Water and Sanitation Infrastructure Development Program",
   "description": "Comprehensive infrastructure development initiative to design, construct, and operationalize modern water treatment facilities...",
-  "proposedInitiativeTypeName": "Infrastructure Development",
+  "proposedInitiativeTypeName": "Project",
   "countries": ["Kenya"],
   "sdGs": ["Goal 6", "Goal 9"],
   "deliverables": ["Water Treatment Plants", "Pipeline Rehabilitation", "Training Programs"],
@@ -1871,7 +1938,6 @@ Return a JSON object with a "keywords" array and a single "query" string that co
 - ID: {id}
 - Name: {name}
 - Description: {description}
-- Partner Reference: {partnerReference}
 - Status: {status}
 
 **Organizational Context:**
@@ -1886,7 +1952,8 @@ Return a JSON object with a "keywords" array and a single "query" string that co
 **Strategic Information:**
 - Strategic Alignment: {strategicAlignment}
 - Results Focus: {resultsFocus}
-- Intended Impact: {intendedImpactOutcomes}
+- Expected Impact: {expectedImpact}
+- Expected Outcomes: {expectedOutcomes}
 - Expected Beneficiaries: {expectedBeneficiaries}
 
 **Related Entities:**
@@ -1979,7 +2046,7 @@ Return a JSON object with a "keywords" array and a single "query" string:
   "description": "Large-scale water infrastructure development in conflict-affected regions...",
   "countries": ["Myanmar"],
   "initiativeBudgetUSD": 65000000,
-  "proposedInitiativeTypeName": "Infrastructure Development"
+  "proposedInitiativeTypeName": "Project"
 }
 ```
 
@@ -2005,7 +2072,6 @@ Return a JSON object with a "keywords" array and a single "query" string:
 - ID: {id}
 - Name: {name}
 - Description: {description}
-- Partner Reference: {partnerReference}
 - Status: {status}
 
 **Organizational Context:**
@@ -2020,7 +2086,8 @@ Return a JSON object with a "keywords" array and a single "query" string:
 **Strategic Information:**
 - Strategic Alignment: {strategicAlignment}
 - Results Focus: {resultsFocus}
-- Intended Impact: {intendedImpactOutcomes}
+- Expected Impact: {expectedImpact}
+- Expected Outcomes: {expectedOutcomes}
 - Expected Beneficiaries: {expectedBeneficiaries}
 
 **Related Entities:**
@@ -2058,9 +2125,6 @@ Extract 5-8 risk-related keywords that would help identify similar project risks
     );
 
     -- Insert refine_opportunity_risks prompt
-    -- Updated to use High Risk Guidance document (PDF) instead of inline preDefinedHighRisks data
-    -- The PDF contains detailed explanations of all 17 predefined high risks with oupQuestionId values
-    -- AC4: Emphasize recommendations only - users must intentionally add risks
     INSERT INTO public."AiPrompt" (
         "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
         "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
@@ -2074,10 +2138,10 @@ Extract 5-8 risk-related keywords that would help identify similar project risks
 
 **CRITICAL - HIGH RISK GUIDANCE DOCUMENT**:
 An official UNOPS High Risk Guidance document is attached to this request. This PDF contains:
-- All 17 predefined high risk items with oupQuestionId values
+- All 17 predefined high risk categories
 - Detailed explanations and context for each high risk
-- Detection criteria and triggers for auto-detection
-READ the attached document to understand the official high risks and their oupQuestionId values.
+- Detection criteria and triggers
+READ the attached document to understand the official high risks.
 
 **CRITICAL - RECOMMENDATIONS ONLY**:
 These are RECOMMENDATIONS for the user to review and decide whether to add. You are NOT auto-adding any risks.
@@ -2088,42 +2152,41 @@ These are RECOMMENDATIONS for the user to review and decide whether to add. You 
 
 **YOUR TASK**: Given an opportunity context, analyze and recommend the TOP 10 most relevant risks. For each risk, clearly explain WHY it applies to THIS specific opportunity so the user can make an informed decision.
 
-**PREDEFINED HIGH RISK AUTO-DETECTION RULES** (from attached document):
-When analyzing the opportunity, check for these triggers and STRONGLY FLAG them with clear reasoning:
+**PREDEFINED HIGH RISK CATEGORIES** (use these EXACT keywords in titles for predefined risks):
+When analyzing the opportunity, check for these triggers and use the corresponding keywords in your risk title:
 
-- **Currency Exchange Risk (oupQuestionId: 101)**: 
+- **"Currency Exchange Risk"**: 
   - TRIGGER: ANY funding partner contribution in non-USD currency
   - WHY FLAG: Foreign currency gain/loss exposure affects project budget predictability
   - Confidence: 90% if non-USD funding detected
   - MUST explain: Which partner(s), what currency, estimated exposure
 
-- **New/Unvetted Funding Source (oupQuestionId: 92)**: 
+- **"New Unvetted Funding Partner"** or **"Due Diligence"**: 
   - TRIGGER: ANY partner has status "Draft" or lacks due diligence approval
   - WHY FLAG: New partners without established track record increase financial and reputational risk
   - Confidence: 85% if unvetted partner detected
   - MUST explain: Which partner(s), what status, why concerning
 
-- **Security/Fragility Issues (oupQuestionId: 415)**: 
+- **"Security"** or **"Fragility"**: 
   - TRIGGER: Implementation country is fragile/conflict-affected state
   - WHY FLAG: Operational continuity, staff safety, and delivery risks
   - Confidence: 80% if fragile state detected
   - MUST explain: Which country(ies), fragility classification, specific concerns
 
-**OTHER HIGH RISKS TO CHECK** (read attached document for full details):
-- oupQuestionId 476: No Host Country Agreement
-- oupQuestionId 93: Scope Outside UNOPS Mandate
-- oupQuestionId 94: Support to Non-UN Security Forces
-- oupQuestionId 477: Conflict of Interest
-- oupQuestionId 478: Reputational Risk
-- oupQuestionId 479: Pre-selection by Government with CPI < 50
-- oupQuestionId 515: Pay Agent Services to Third Parties
-- oupQuestionId 481: Negative SDG Impact
-- oupQuestionId 413: Grants to For-Profit Entities
-- oupQuestionId 138: IT Security and Privacy Risks
-- oupQuestionId 513: Engagement Exceeds $100 Million
-- oupQuestionId 514: Pricing Policy Deviation
-- oupQuestionId 376: Implementation Before/After Legal Agreement
-- oupQuestionId 103: Other Undefined High Risks
+**OTHER HIGH RISK KEYWORDS** (read attached document for details, use these keywords in titles):
+- "Host Country Agreement" or "HCA" or "SBAA": No legal agreement in place
+- "Mandate" or "Scope Outside": Activities outside UNOPS mandate
+- "Non-UN Security" or "Military": Support to non-UN security forces
+- "Conflict of Interest": COI situations
+- "Reputational": Reputation risk concerns
+- "CPI" or "Corruption": Government pre-selection with low corruption index
+- "Pay Agent": Third party payment services
+- "SDG Impact" or "Negative Impact": Negative sustainable development impact
+- "Grants" or "For-Profit": Grants to for-profit entities
+- "IT Security" or "Privacy" or "Cyber": Information security risks
+- "100 Million" or "Large Budget": Very large engagements
+- "Pricing Policy": Fee/pricing deviations
+- "Implementation Timing" or "Before Signing": Implementation outside legal agreement dates
 
 **ANALYSIS GUIDELINES**:
 1. **Read Document First**: Carefully read the attached High Risk Guidance document to understand all predefined high risks
@@ -2320,11 +2383,12 @@ Return ONLY a valid JSON array.',
 - Reference actual data from the opportunity
 - Provide clear next steps
 - Include "actionTarget" to specify which section the suggestion relates to:
-  * "WHAT" - For opportunity name, description, initiative type, deliverables
-  * "WHERE" - For countries, geographic scope, implementation locations
-  * "WHY" - For strategic alignment, SDGs, intended impact, results focus
-  * "WHO" - For funding partners, client partners, stakeholders, responsible units
-  * "WHEN" - For budget, target signing date, target delivery date, timeline
+  * "WHAT" - For opportunity name, description, initiative type, delivery modality, deliverables/products
+  * "WHY" - For challenges, results focus, intended impact outcomes, expected beneficiaries (text and estimates), SDGs, UNCF outcomes, UNOPS missions
+  * "WHO" - For funding partners, client partners, external stakeholders, pooled funding settings
+  * "TEAM" - For responsible org unit, internal stakeholders (UNOPS team members)
+  * "WHERE" - For implementation countries, geographic scope
+  * "WHEN" - For target signing date, implementation start date, target delivery date, submission deadline, timeline settings
 
 **OUTPUT FORMAT**:
 Return a JSON object with this exact structure (NO actionLabel field):
@@ -2343,7 +2407,7 @@ Return a JSON object with this exact structure (NO actionLabel field):
     {
       "title": "Brief suggestion title (max 60 chars)",
       "description": "Actionable recommendation with specific steps (max 200 chars)",
-      "actionTarget": "WHAT|WHERE|WHY|WHO|WHEN"
+      "actionTarget": "WHAT|WHY|WHO|TEAM|WHERE|WHEN"
     }
   ],
   "analysisConfidence": 0.85,
@@ -2411,29 +2475,24 @@ Return a JSON object with this exact structure (NO actionLabel field):
       "actionTarget": "WHAT"
     },
     {
-      "title": "Add Target Signing Date to Enable Workflow Progression",
-      "description": "Set target signing date in WHEN section. Based on current workflow stage, suggest Q4 2025 to allow time for approvals and partner coordination.",
-      "actionTarget": "WHEN"
-    },
-    {
-      "title": "Include SDG 13 (Climate Action) Based on Deliverables",
-      "description": "Deliverables mention climate-resilient infrastructure. Adding SDG 13 would strengthen strategic alignment and improve funding opportunities.",
-      "actionTarget": "WHY"
-    },
-    {
-      "title": "Diversify Funding Partners for Risk Mitigation",
-      "description": "Currently 4 funding partners. Consider adding 1-2 bilateral donors or private sector partners to reduce funding concentration risk and increase sustainability.",
+      "title": "Add Funding and Client Partners",
+      "description": "Add at least one funding partner and one client partner to WHO section to establish clear partnership structure and funding sources.",
       "actionTarget": "WHO"
     },
     {
-      "title": "Extend Timeline by 6 Months for Realistic Delivery",
-      "description": "Based on budget and complexity, consider extending delivery date to Q2 2030 to accommodate procurement delays, monsoon season constraints, and training programs.",
+      "title": "Define Implementation Countries",
+      "description": "Add target implementation countries to WHERE section to establish geographic scope and enable country-specific analysis and planning.",
+      "actionTarget": "WHERE"
+    },
+    {
+      "title": "Set Critical Timeline Dates",
+      "description": "Add target signing date and submission deadline in WHEN section. Based on workflow stage, suggest Q4 2025 signing to allow time for approvals.",
       "actionTarget": "WHEN"
     },
     {
-      "title": "Complete WHO Section with Stakeholder Details",
-      "description": "Add contact details and roles for the 3 stakeholders listed. This will facilitate coordination and demonstrate strong local engagement.",
-      "actionTarget": "WHO"
+      "title": "Assign Responsible Org Unit and Team Members",
+      "description": "Add responsible organization unit and assign internal UNOPS stakeholders to TEAM section to establish clear ownership and accountability.",
+      "actionTarget": "TEAM"
     }
   ],
   "analysisConfidence": 0.92,
@@ -2442,14 +2501,16 @@ Return a JSON object with this exact structure (NO actionLabel field):
 ```
 
 **CRITICAL RULES**:
-1. Generate 3-5 insights and 3-5 suggestions (quality over quantity)
-2. Reference actual data values from the opportunity (budget amounts, specific dates, partner names)
-3. Be specific and actionable, not generic
-4. Use appropriate type and priority for each insight
-5. Ensure all field names match exactly: "title", "description", "type", "priority", "actionLabel"
-6. Return ONLY valid JSON, no additional text
-7. Set analysisConfidence between 0.0 and 1.0 based on data completeness
-8. Use ISO 8601 format for analysisTimestamp',
+1. Generate 3-7 insights and 3-7 suggestions (quality over quantity)
+2. **For suggestions: Aim for AT LEAST ONE suggestion per section** (WHAT, WHY, WHO, WHEN, WHERE, TEAM) if there are improvement opportunities
+3. Prioritize suggestions that address the most critical gaps or improvements needed
+4. Reference actual data values from the opportunity (budget amounts, specific dates, partner names)
+5. Be specific and actionable, not generic
+6. Use appropriate type and priority for each insight
+7. Ensure all field names match exactly: "title", "description", "type", "priority", "actionTarget"
+8. Return ONLY valid JSON, no additional text
+9. Set analysisConfidence between 0.0 and 1.0 based on data completeness
+10. Use ISO 8601 format for analysisTimestamp',
         'Analyze the following UNOPS opportunity and provide insights and suggestions to improve quality, completeness, and strategic alignment.
 
 **Opportunity Details:**
@@ -2458,25 +2519,35 @@ Return a JSON object with this exact structure (NO actionLabel field):
 - ID: {id}
 - Name: {name}
 - Description: {description}
-- Partner Reference: {partnerReference}
 - Status: {status}
 - Workflow Stage: {workflowStageName}
 
 **Organizational Context:**
 - Responsible Org Unit: {responsibleOrgUnitName}
 - Proposed Initiative Type: {proposedInitiativeTypeName}
+- Delivery Modality: {deliveryModality}
 
 **Financial & Timeline:**
 - Budget (USD): {initiativeBudgetUSD}
+- Is Pooled Funding: {isPooledFunding}
 - Target Signing Date: {targetSigningDate}
+- Is Signing Date Firm: {isTargetSigningDateFirm}
+- Signing Date Notes: {signingDateNotes}
+- Submission Deadline: {submissionDeadline}
+- Implementation Start Date: {implementationStartDate}
 - Target Delivery Date: {targetDeliveryDate}
 - Partnership Agreement Reference: {partnershipAgreementReference}
 
 **Strategic Information:**
+- Context and Challenges: {challenges}
 - Strategic Alignment: {strategicAlignment}
 - Results Focus: {resultsFocus}
-- Intended Impact & Outcomes: {intendedImpactOutcomes}
+- Expected Impact: {expectedImpact}
+- Expected Outcomes: {expectedOutcomes}
 - Expected Beneficiaries: {expectedBeneficiaries}
+- Estimated Direct Beneficiaries: {estimatedDirectBeneficiaries}
+- Estimated Indirect Beneficiaries: {estimatedIndirectBeneficiaries}
+- Beneficiaries To Be Determined: {beneficiariesToBeDetermined}
 
 **Partner Results Framework (WHY Section):**
 - Framework Availability: {partnerFrameworkAvailability}
@@ -2487,6 +2558,8 @@ Return a JSON object with this exact structure (NO actionLabel field):
 - Funding Partners: {fundingPartners}
 - Client Partners: {clientPartners}
 - Stakeholders: {stakeholders}
+- External Stakeholders (misc): {miscExternalStakeholders}
+- External Stakeholder Notes: {externalStakeholderNotes}
 - Total Funding Partners: {stats.totalFundingPartners}
 - Total Client Partners: {stats.totalClientPartners}
 - Total Stakeholders: {stats.totalStakeholders}
@@ -2498,6 +2571,9 @@ Return a JSON object with this exact structure (NO actionLabel field):
 - Total Countries: {stats.totalCountries}
 - Total SDGs: {stats.totalSDGs}
 - Total Deliverables: {stats.totalDeliverables}
+
+**Risk & Compliance:**
+- High Risks Acknowledged: {highRisksAcknowledged}
 
 **Completeness Metrics:**
 - Overall Completeness: {completionPercentage}%
@@ -2517,10 +2593,14 @@ Return a JSON object with this exact structure (NO actionLabel field):
 1. Analyze the opportunity data for completeness, quality, strategic alignment, and potential issues
 2. **CHECK PARTNER RESULTS FRAMEWORK STATUS**: If Partner Results Framework is not defined or incomplete AND deliverables are missing, generate HIGH PRIORITY warning and suggestion to complete framework first
 3. **CHECK DELIVERABLES STATUS**: If deliverables are missing but Partner Results Framework exists, suggest extracting products from framework. If both are missing, prioritize framework completion
-4. Generate 3-5 insights covering strengths, concerns, and observations
-5. Generate 3-5 actionable suggestions with specific recommendations
-6. Reference actual data values in your analysis
-7. Return ONLY valid JSON with the specified structure',
+4. **CHECK TIMELINE CONSISTENCY**: If submission deadline is after target signing date, flag as warning. Check if implementation dates are realistic.
+5. **CHECK BENEFICIARY DATA**: If beneficiaries to be determined is false but estimated counts are missing, flag as incomplete
+6. **CHECK HIGH RISKS**: If high risks not acknowledged and opportunity is in advanced workflow stage, flag as warning
+7. Generate 3-7 insights covering strengths, concerns, and observations
+8. Generate 3-7 actionable suggestions with specific recommendations
+9. **CRITICAL FOR SUGGESTIONS**: Aim to provide at least ONE suggestion per section (WHAT, WHY, WHO, WHEN, WHERE, TEAM) if improvement opportunities exist in those sections. Not all sections are mandatory, but cover the sections that need attention.
+10. Reference actual data values in your analysis
+11. Return ONLY valid JSON with the specified structure',
         NOW(),
         'Opportunity',
         1,
@@ -2593,7 +2673,6 @@ Return a JSON object with a "keywords" array and a single "query" string that co
 - ID: {id}
 - Name: {name}
 - Description: {description}
-- Partner Reference: {partnerReference}
 - Status: {status}
 
 **Organizational Context:**
@@ -2608,7 +2687,8 @@ Return a JSON object with a "keywords" array and a single "query" string that co
 **Strategic Information:**
 - Strategic Alignment: {strategicAlignment}
 - Results Focus: {resultsFocus}
-- Intended Impact: {intendedImpactOutcomes}
+- Expected Impact: {expectedImpact}
+- Expected Outcomes: {expectedOutcomes}
 - Expected Beneficiaries: {expectedBeneficiaries}
 
 **Related Entities:**
@@ -2689,7 +2769,7 @@ Return a JSON object with a "keywords" array (list of roles) and a single "query
 {
   "name": "Sustainable Water Infrastructure Development",
   "description": "Infrastructure development to design and construct water treatment facilities...",
-  "proposedInitiativeTypeName": "Infrastructure Development",
+  "proposedInitiativeTypeName": "Project",
   "countries": ["Kenya"],
   "sdGs": ["Goal 6", "Goal 13"],
   "deliverables": ["Water Treatment Plants", "Training Programs"]
@@ -2718,7 +2798,6 @@ Return a JSON object with a "keywords" array (list of roles) and a single "query
 - ID: {id}
 - Name: {name}
 - Description: {description}
-- Partner Reference: {partnerReference}
 
 **Organizational Context:**
 - Responsible Org Unit: {responsibleOrgUnitName}
@@ -2732,7 +2811,8 @@ Return a JSON object with a "keywords" array (list of roles) and a single "query
 **Strategic Information:**
 - Strategic Alignment: {strategicAlignment}
 - Results Focus: {resultsFocus}
-- Intended Impact: {intendedImpactOutcomes}
+- Expected Impact: {expectedImpact}
+- Expected Outcomes: {expectedOutcomes}
 
 **Related Entities:**
 - Deliverables: {deliverables}
@@ -2787,25 +2867,52 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
 ### Basic Information (camelCase)
 - **name** (string): Use the user-provided opportunity name exactly as given
 - **description** (string): Expand and enhance the user-provided description by incorporating relevant details from interactions (discussion points, objectives, scope mentioned in meetings/emails) AND documents (key points from document names and descriptions)
-- **partnerReference** (string?): Extract any reference numbers or proposal IDs mentioned in interactions or document names (e.g., "RFP-2025-001", "Concept Note CN-2025")
 
 ### Organizational & Initiative Type (camelCase)
 - **responsibleOrgUnitId** (int?): Always set to null (will be resolved from text name)
 - **responsibleOrgUnitName** (string?): Extract the UNOPS organizational unit mentioned in interactions (look at users'' org units from interaction participants)
 - **proposedInitiativeTypeId** (int?): Always set to null (will be resolved from text name)
-- **proposedInitiativeTypeName** (string?): Infer the initiative type from interaction content AND document types/names (e.g., "Infrastructure Development", "Capacity Building", "Technical Assistance", "Advisory Services", "Procurement Services")
+- **proposedInitiativeTypeName** (string?): Infer the initiative type from interaction content AND document types/names. **VALID VALUES ONLY**: "Project", "Programme", or "Portfolio". Map content to one of these three types: "Project" = single initiative with defined scope; "Programme" = collection of related projects; "Portfolio" = collection of programmes and projects. Add "proposedInitiativeTypeId" to dependents array for resolution.
 
 ### Financial & Timeline (camelCase)
-- **initiativeBudgetUSD** (decimal?): Extract budget amounts mentioned in interactions or document names/descriptions (convert to USD numeric value: "$5 million" → 5000000, "€3M" → 3000000)
+- **initiativeBudgetUSD** (decimal?): Total proposed budget in USD when NO PARTNER-SPECIFIC breakdown is available. Use this ONLY when interactions/documents mention a total budget without specifying which partner is contributing. Convert to numeric: "$5 million" → 5000000
+
+- **partnerBudgets** (array): Array of budget allocations PER FUNDING PARTNER. Use this WHEN partner-specific funding amounts are mentioned. Each entry should include:
+  - **partnerName** (string): Name of the funding partner (MUST match a name in fundingPartners array)
+  - **amount** (decimal): Budget amount as a number (e.g., "$25 million" → 25000000)
+  - **currency** (string): Currency code (e.g., "USD", "EUR", "GBP"). Default to "USD" if not specified.
+  
+  **BUDGET EXTRACTION RULES**:
+  - If document/interaction says "$25M from World Bank" → Use **partnerBudgets**
+  - If document/interaction says "Total budget: $45 million" without breakdown → Use **initiativeBudgetUSD**: 45000000
+  - If BOTH exist → Prefer **partnerBudgets** (more detailed)
+  
+  Example: `"partnerBudgets": [{"partnerName": "World Bank", "amount": 25000000, "currency": "USD"}]`
+
+- **isPooledFunding** (boolean?): Whether funding is pooled across multiple partners (extract if mentioned as "pooled funding", "multi-donor trust fund", etc.)
 - **partnershipAgreementReference** (string?): Extract partnership or framework agreement references mentioned in interactions or document names
 - **targetSigningDate** (DateTime?): Extract or infer target signing dates from interactions or documents (ISO 8601 format: YYYY-MM-DDTHH:mm:ss.sssZ)
+- **isTargetSigningDateFirm** (boolean?): Whether the signing date is a firm deadline from the partner (extract if mentioned as "deadline", "firm date", etc.)
+- **signingDateNotes** (string?): Notes about the signing date (e.g., partner deadline, submission requirements)
+- **submissionDeadline** (DateTime?): Partner submission or proposal deadline (ISO 8601 format)
+- **implementationStartDate** (DateTime?): When implementation is expected to start (ISO 8601 format)
 - **targetDeliveryDate** (DateTime?): Extract or infer target delivery/completion dates from interactions or documents (ISO 8601 format: YYYY-MM-DDTHH:mm:ss.sssZ)
 
 ### Strategic Information (camelCase)
+- **challenges** (string?): Context and challenges that the opportunity aims to address - extract from discussions about problems, gaps, or needs
 - **strategicAlignment** (string?): Synthesize strategic alignment from interaction discussions AND document context - how does this align with SDGs, UNOPS mandate, partner priorities, and development goals mentioned
 - **resultsFocus** (string?): Extract and synthesize expected results, outcomes, and key focus areas discussed in interactions or referenced in documents
-- **intendedImpactOutcomes** (string?): Generate a comprehensive impact statement based on benefits, outcomes, and impacts discussed across interactions and documents
+- **expectedImpact** (string?): Generate a comprehensive impact statement based on benefits and impacts discussed across interactions and documents (max 200 characters)
+- **expectedOutcomes** (string?): Generate expected outcomes based on results and deliverables discussed across interactions and documents (max 200 characters)
 - **expectedBeneficiaries** (string?): Extract information about target beneficiaries, communities, regions, or populations that will benefit from interactions or documents
+- **estimatedDirectBeneficiaries** (int?): Estimated number of direct beneficiaries (extract numbers like "2 million beneficiaries" → 2000000)
+- **estimatedIndirectBeneficiaries** (int?): Estimated number of indirect beneficiaries
+- **beneficiariesToBeDetermined** (boolean?): Whether the number of beneficiaries is to be determined later (infer from context if beneficiary numbers are not yet finalized, extract if mentioned as "TBD", "to be determined", "pending assessment", etc.)
+
+### Delivery & Stakeholders (camelCase)
+- **deliveryModality** (int?): How UNOPS will deliver products/services. Use numeric values: 1 = NotYetKnown, 2 = AllDirect (direct execution), 3 = AllGrantSupport (grant support), 4 = Mixed (combination of approaches). Infer from discussions about implementation approach.
+- **miscExternalStakeholders** (string?): Free-text list of external stakeholders not in the contact list
+- **externalStakeholderNotes** (string?): Notes about external stakeholders (influence, capacity, role)
 
 ### Related Entities (Arrays - camelCase)
 
@@ -2825,7 +2932,11 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
   - **Example**: ["Ministry of Health - Kenya", "Local Government", "{partnerName}"]
   - **MUST add "clientPartners" to dependents array**
 
-- **stakeholders** (array): List of stakeholder names with roles as text strings - extract key contacts and their roles from interaction participants or document metadata (e.g., ["Jane Doe - Project Director", "John Smith - Technical Advisor"]) - **MUST add "stakeholders" to dependents array**
+- **stakeholders** (array of objects): List of UNOPS internal stakeholders involved in the opportunity. Each stakeholder MUST be an object with:
+  - **userName** (string): Full name of the UNOPS staff member (e.g., "John Doe", "Jane Smith") - extract from interaction participants who are UNOPS staff
+  - **roleName** (string): Role name - MUST be one of: "Opportunity Manager", "Partnership Lead", "Reviewer", "Internal Stakeholder"
+  - Example: [{"userName": "John Doe", "roleName": "Opportunity Manager"}, {"userName": "Jane Smith", "roleName": "Partnership Lead"}]
+  - **MUST add "stakeholders" to dependents array**
 - **deliverables** (array): List of deliverable descriptions as text strings - extract outputs, deliverables, or project components mentioned in interactions or document names (e.g., ["Feasibility Study", "Infrastructure Design", "Training Program"]) - **MUST add "deliverables" to dependents array**
 - **countries** (array): List of country names as text strings - extract all countries mentioned in interactions or documents (e.g., ["Kenya", "Tanzania", "Uganda"]) - **MUST add "countries" to dependents array**
 - **sdGs** (array): List of SDG references as text strings - identify relevant SDGs based on interaction topics, themes, and document content (e.g., ["Goal 3", "Goal 6", "Goal 9", "Goal 17"]) - **MUST add "sdGs" to dependents array**
@@ -2946,22 +3057,38 @@ Return a valid JSON object with the proposed opportunity data. **ALL property na
 {
   "name": "Regional Water Infrastructure Partnership",
   "description": "Comprehensive water infrastructure initiative to improve access to clean water across East Africa, based on discussions with Ministry of Water and Sanitation representatives over the past 6 months and supporting documents including feasibility studies and technical assessments. The program will focus on constructing water treatment facilities, rehabilitating distribution networks, and building local technical capacity for sustainable operations.",
-  "partnerReference": "MOW-RFP-2025-003",
   "responsibleOrgUnitId": null,
   "responsibleOrgUnitName": "East Africa Regional Office",
   "proposedInitiativeTypeId": null,
-  "proposedInitiativeTypeName": "Infrastructure Development",
-  "initiativeBudgetUSD": 45000000,
+  "proposedInitiativeTypeName": "Programme",
+  "initiativeBudgetUSD": null,
+  "partnerBudgets": [
+    {"partnerName": "World Bank", "amount": 30000000, "currency": "USD"},
+    {"partnerName": "African Development Bank", "amount": 15000000, "currency": "USD"}
+  ],
+  "isPooledFunding": true,
   "partnershipAgreementReference": null,
   "targetSigningDate": "2026-06-30T00:00:00.000Z",
+  "isTargetSigningDateFirm": false,
+  "signingDateNotes": "Tentative date based on discussions; may adjust based on funding confirmation",
+  "submissionDeadline": "2026-03-31T00:00:00.000Z",
+  "implementationStartDate": "2026-07-01T00:00:00.000Z",
   "targetDeliveryDate": "2029-12-31T00:00:00.000Z",
+  "challenges": "East Africa faces significant water infrastructure gaps, with only 59% average access to clean water in the region. Rapid urbanization has strained existing systems, and climate change is increasing water scarcity. Current infrastructure requires modernization to meet growing demand.",
   "strategicAlignment": "Aligned with SDG 6 (Clean Water and Sanitation) and SDG 17 (Partnerships for the Goals). Supports UNOPS infrastructure mandate and Kenya Vision 2030 development priorities. Addresses critical water access gaps identified in partnership discussions and government development plans.",
   "resultsFocus": "Delivering sustainable water infrastructure, improving water access for underserved communities, building local technical capacity for operations and maintenance, and establishing replicable models for regional scale-up.",
-  "intendedImpactOutcomes": "Improved health outcomes for 3 million residents through reliable clean water access, 70% reduction in waterborne diseases, creation of 300 permanent jobs in water facility operations, strengthened government capacity for infrastructure management, and enhanced climate resilience.",
+  "expectedImpact": "Improved health outcomes for 3 million residents through reliable clean water access, 70% reduction in waterborne diseases",
+  "expectedOutcomes": "Creation of 300 permanent jobs in water facility operations, strengthened government capacity for infrastructure management, and enhanced climate resilience",
   "expectedBeneficiaries": "3 million residents across urban and peri-urban areas in Kenya, Tanzania, and Uganda, with priority focus on underserved low-income communities, informal settlements, and rural areas with limited water infrastructure.",
+  "estimatedDirectBeneficiaries": 3000000,
+  "estimatedIndirectBeneficiaries": 8000000,
+  "beneficiariesToBeDetermined": false,
+  "deliveryModality": 2,
+  "miscExternalStakeholders": "Local water user associations, NGO partners, community leaders",
+  "externalStakeholderNotes": "Strong government support at national level; community engagement critical for project acceptance",
   "fundingPartners": ["World Bank", "African Development Bank"],
   "clientPartners": ["Ministry of Water and Sanitation - Kenya", "Ministry of Water - Tanzania"],
-  "stakeholders": ["Jane Kamau - Programme Director, Ministry of Water Kenya", "John Omondi - UNOPS Infrastructure Lead", "Sarah Mwangi - World Bank Task Manager"],
+  "stakeholders": [{"userName": "John Omondi", "roleName": "Opportunity Manager"}, {"userName": "Sarah Mwangi", "roleName": "Partnership Lead"}],
   "deliverables": ["Feasibility Study and Environmental Assessment", "Water Treatment Plant Construction (5 facilities)", "Pipeline Network Rehabilitation (300 km)", "Operations and Maintenance Training Program", "Community Engagement Strategy"],
   "countries": ["Kenya", "Tanzania", "Uganda"],
   "sdGs": ["Goal 3", "Goal 6", "Goal 9", "Goal 11", "Goal 13", "Goal 17"],
@@ -3082,7 +3209,7 @@ Return a JSON object with a "keywords" array and a single "query" string:
   "name": "Water Infrastructure Development",
   "description": "Infrastructure to construct water treatment facilities...",
   "countries": ["Kenya"],
-  "proposedInitiativeTypeName": "Infrastructure Development"
+  "proposedInitiativeTypeName": "Project"
 }
 ```
 
@@ -3108,7 +3235,6 @@ Return a JSON object with a "keywords" array and a single "query" string:
 - ID: {id}
 - Name: {name}
 - Description: {description}
-- Partner Reference: {partnerReference}
 
 **Organizational Context:**
 - Responsible Org Unit: {responsibleOrgUnitName}
@@ -3122,7 +3248,8 @@ Return a JSON object with a "keywords" array and a single "query" string:
 **Strategic Information:**
 - Strategic Alignment: {strategicAlignment}
 - Results Focus: {resultsFocus}
-- Intended Impact: {intendedImpactOutcomes}
+- Expected Impact: {expectedImpact}
+- Expected Outcomes: {expectedOutcomes}
 
 **Related Entities:**
 - Deliverables: {deliverables}
@@ -3443,11 +3570,11 @@ CRITICAL: misalignmentItems must be array of strings NOT objects. Empty array if
 
 **(a) Client:** [List client partners from the opportunity data. DO NOT ASSUME ANYTHING. ONLY LIST THE CLIENT PARTNERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
 **(b) Funding Partner:** [List funding partners from the opportunity data. DO NOT ASSUME ANYTHING. ONLY LIST THE FUNDING PARTNERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-**(c) Impact:** [Extrapolate from Challenges and from IntendedImpactOutcomes and ExpectedBeneficiaries fields. DO NOT ASSUME ANYTHING. ONLY LIST THE IMPACT THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-**(d) Outcomes:** [Extract from IntendedImpactOutcomes field. DO NOT ASSUME ANYTHING. ONLY LIST THE EXPECTED OUTCOMES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+**(c) Impact:** [Extract from ExpectedImpact, ExpectedOutcomes, and ExpectedBeneficiaries fields. DO NOT ASSUME ANYTHING. ONLY LIST THE IMPACT THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+**(d) Expected Outcomes:** [Extract from ResultsFocus field. DO NOT ASSUME ANYTHING. ONLY LIST THE EXPECTED OUTCOMES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
 **(e) Direct Beneficiaries:** [Extract from EstimatedDirectBeneficiaries field. DO NOT ASSUME ANYTHING. ONLY LIST THE DIRECT BENEFICIARIES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
 **(f) Indirect Beneficiaries:** [Extract from the EstimatedIndirectBeneficiaries field. DO NOT ASSUME ANYTHING. ONLY LIST THE INDIRECT BENEFICIARIES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-**(g) Beneficiary Institutions:** [Extract from the ExpectedBeneficiaries field. DO NOT ASSUME ANYTHING. ONLY LIST THE BENEFICIARY INSTITUTIONS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+**(g) Beneficiary Institutions:** [Extract from the ExpectedBeneficiaries field. DO NOT ASSUME ANYTHING. ONLY LIST THE BENEFICIARY INSTITUTIONS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
 
 ## 4. Initiative that UNOPS will be responsible and/or accountable for [What are the outputs and what opportunities exist to enhance their impact?]
 
