@@ -119,6 +119,14 @@ export class OpportunityTeamSectionComponent implements OnInit {
   readonly canUpdate = input<boolean>(false);
 
   /**
+   * @description Input signal to trigger relevant people refresh when any section saves
+   * Parent should increment this value when any section saves successfully
+   * @type {Signal<number>}
+   * @since 2.0.0
+   */
+  readonly sectionSaveTrigger = input<number>(0);
+
+  /**
    * @description Output event when opportunity is updated - signals parent to refresh
    */
   readonly opportunityUpdated = output<Opportunity>();
@@ -328,6 +336,7 @@ export class OpportunityTeamSectionComponent implements OnInit {
 
   // Relevant People signals
   private lastLoadedOpportunityId: number | null = null;
+  private lastSectionSaveTrigger: number = 0;
   readonly relevantPeople = signal<RelevantPerson[] | null>(null);
   readonly relevantPeopleResponse = signal<RelevantPeopleResponse | null>(null);
   readonly loadingRelevantPeople = signal<boolean>(false);
@@ -359,6 +368,26 @@ export class OpportunityTeamSectionComponent implements OnInit {
       if (opp && opp.id && opp.id !== this.lastLoadedOpportunityId) {
         this.lastLoadedOpportunityId = opp.id;
         this.loadRelevantPeople();
+      }
+    });
+
+    // Effect to refresh relevant people when sectionSaveTrigger changes (any section saves)
+    effect(() => {
+      const trigger = this.sectionSaveTrigger();
+
+      // Only refresh if trigger has changed and this isn't the initial load
+      if (trigger > 0 && trigger !== this.lastSectionSaveTrigger) {
+        this.lastSectionSaveTrigger = trigger;
+
+        console.log('🔄 Team Section: Section save detected, refreshing relevant people');
+
+        // Use setTimeout to avoid calling during signal computation
+        // Delay to prevent overwhelming the backend
+        setTimeout(() => {
+          this.relevantPeople.set(null);
+          this.relevantPeopleResponse.set(null);
+          this.loadRelevantPeople(true); // Invalidate cache
+        }, 4000);
       }
     });
 

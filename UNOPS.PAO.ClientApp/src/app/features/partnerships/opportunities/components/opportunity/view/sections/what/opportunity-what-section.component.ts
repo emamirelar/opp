@@ -114,6 +114,12 @@ export class OpportunityWhatSectionComponent implements OnInit {
   readonly documentUploadTrigger = input<number>(0);
 
   /**
+   * @description Input signal to trigger framework status refresh when any section saves
+   * Parent should increment this value after any section saves successfully
+   */
+  readonly sectionSaveTrigger = input<number>(0);
+
+  /**
    * @description Output event when opportunity is updated - signals parent to refresh
    */
   readonly opportunityUpdated = output<Opportunity>();
@@ -143,6 +149,11 @@ export class OpportunityWhatSectionComponent implements OnInit {
     deliverables?: any[];
   } | null = null;
   private hasUnsavedChanges = false;
+  
+  // Track last processed values to prevent infinite effect loops
+  private lastProcessedOpportunityId: number | null = null;
+  private lastDocumentUploadTrigger: number = 0;
+  private lastSectionSaveTrigger: number = 0;
 
   // Form controls for WHAT section
   orgUnitControl = new FormControl<number | null>(null);
@@ -327,29 +338,58 @@ export class OpportunityWhatSectionComponent implements OnInit {
 
   constructor() {
     // Effect must be in constructor (injection context)
-    // Re-check framework status when opportunity changes (e.g., when frameworks are tagged in WHO section)
+    // IMPORTANT: Only trigger initial load when opportunity ID changes
+    // to prevent infinite loops caused by signal updates
     effect(() => {
       const opp = this.opportunity();
       if (opp && opp.id) {
-        // Re-check framework status whenever opportunity signal changes
-        this.checkFrameworkStatus();
-        
-        // Auto-load AI recommendations (Option 2: load automatically)
-        if (!this.hasRunExtraction()) {
-          this.extractProductsAndServices();
+        // Only process if this is a NEW opportunity ID (prevents infinite loops)
+        if (this.lastProcessedOpportunityId !== opp.id) {
+          this.lastProcessedOpportunityId = opp.id;
+          
+          // Use setTimeout to avoid calling during signal computation
+          setTimeout(() => {
+            // Initial load: check framework status for the new opportunity
+            this.checkFrameworkStatus();
+            
+            // Auto-load AI recommendations (only on first load)
+            if (!this.hasRunExtraction()) {
+              this.extractProductsAndServices();
+            }
+          }, 0);
         }
       }
     });
     
-    // Effect to refresh AI recommendations when documents are uploaded
-    // This watches the documentUploadTrigger input and refreshes when it changes
+    // Effect to refresh framework status and AI recommendations when documents are uploaded
     effect(() => {
       const trigger = this.documentUploadTrigger();
-      // Only refresh if extraction has already run (trigger > 0 means parent incremented it)
-      if (trigger > 0 && this.hasRunExtraction()) {
+      // Only refresh if trigger actually increased (prevents initial/redundant runs)
+      if (trigger > this.lastDocumentUploadTrigger) {
+        this.lastDocumentUploadTrigger = trigger;
         // Use setTimeout to avoid calling during signal computation
         setTimeout(() => {
-          this.refreshAiRecommendations();
+          // Refresh framework status (document might be tagged as framework)
+          this.checkFrameworkStatus();
+          // Refresh AI recommendations from documents
+          if (this.hasRunExtraction()) {
+            this.refreshAiRecommendations();
+          }
+        }, 0);
+      }
+    });
+    
+    // Effect to refresh framework status when any section saves
+    // This handles cases like WHO section tagging documents to partners
+    effect(() => {
+      const trigger = this.sectionSaveTrigger();
+      // Only refresh if trigger actually increased (prevents initial/redundant runs)
+      if (trigger > this.lastSectionSaveTrigger) {
+        this.lastSectionSaveTrigger = trigger;
+        // Use setTimeout to avoid calling during signal computation
+        setTimeout(() => {
+          // Refresh framework status after section saves
+          this.checkFrameworkStatus();
         }, 0);
       }
     });

@@ -3711,13 +3711,14 @@ Return a JSON array with this exact structure:
 - "Sustainable development goals achievement" → Outcome, not a deliverable
 
 **CRITICAL RULES**:
-1. **Minimum 3 extractions** if ANY relevant content is found that aligns with UNOPS taxonomy
-2. **Return empty array []** if NO products/services can be identified that match UNOPS taxonomy
-3. **FAVOR TAXONOMY ALIGNMENT**: Use partner wording but ensure it can be mapped to UNOPS services
-4. **ALWAYS include context** - WHERE in document this was found
-5. **Order by confidence** - highest confidence items first (taxonomy alignment is part of confidence)
-6. **ONLY extract items with confidence ≥ 0.7** - We need reasonable certainty and taxonomy alignment
-7. Return ONLY valid JSON, no additional text or explanation',
+1. **Maximum 10 extractions** - Limit output to top 10 most relevant items by confidence score
+2. **Minimum 3 extractions** if ANY relevant content is found that aligns with UNOPS taxonomy
+3. **Return empty array []** if NO products/services can be identified that match UNOPS taxonomy
+4. **FAVOR TAXONOMY ALIGNMENT**: Use partner wording but ensure it can be mapped to UNOPS services
+5. **ALWAYS include context** - WHERE in document this was found
+6. **Order by confidence** - highest confidence items first (taxonomy alignment is part of confidence)
+7. **ONLY extract items with confidence ≥ 0.7** - We need reasonable certainty and taxonomy alignment
+8. Return ONLY valid JSON, no additional text or explanation',
         'Analyze the following documents to extract products and services that the partner is requesting from UNOPS.
 
 **Opportunity Context:**

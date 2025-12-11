@@ -149,6 +149,9 @@ export class OpportunityViewComponent
   
   // Document upload trigger - incremented when documents are uploaded to notify WHAT section to refresh AI recommendations
   documentUploadTrigger = signal<number>(0);
+  
+  // Section save trigger - incremented when any section saves to notify WHAT section to refresh framework status
+  sectionSaveTrigger = signal<number>(0);
 
   @ViewChild('contentScrollContainer', { read: ElementRef })
   contentScrollContainer?: ElementRef;
@@ -739,6 +742,9 @@ export class OpportunityViewComponent
     
     // Angular signals automatically notify ALL child components - no manual detectChanges() needed
     // All sections will re-render with latest data
+    
+    // Notify WHAT section and DST section to refresh AI-powered data (framework status, recommendations, etc.)
+    this.handleSectionSaveComplete();
   }
   
   /**
@@ -799,6 +805,15 @@ export class OpportunityViewComponent
     const updatedSections = new Set(currentSections);
     updatedSections.delete(sectionId);
     this.sectionsWithUnsavedChanges.set(updatedSections);
+  }
+
+  /**
+   * @description Handle section save completion - notifies WHAT section to refresh framework status
+   * Called when any section successfully saves data
+   */
+  handleSectionSaveComplete(): void {
+    // Increment the section save trigger to notify WHAT section to refresh framework status
+    this.sectionSaveTrigger.update(v => v + 1);
   }
 
   /**
