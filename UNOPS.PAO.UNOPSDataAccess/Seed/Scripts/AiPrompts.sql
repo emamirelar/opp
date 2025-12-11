@@ -3570,11 +3570,11 @@ CRITICAL: misalignmentItems must be array of strings NOT objects. Empty array if
 
 **(a) Client:** [List client partners from the opportunity data. DO NOT ASSUME ANYTHING. ONLY LIST THE CLIENT PARTNERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
 **(b) Funding Partner:** [List funding partners from the opportunity data. DO NOT ASSUME ANYTHING. ONLY LIST THE FUNDING PARTNERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-**(c) Impact:** [Extract from ExpectedImpact, ExpectedOutcomes, and ExpectedBeneficiaries fields. DO NOT ASSUME ANYTHING. ONLY LIST THE IMPACT THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-**(d) Expected Outcomes:** [Extract from ResultsFocus field. DO NOT ASSUME ANYTHING. ONLY LIST THE EXPECTED OUTCOMES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+**(c) Impact:** [Extrapolate from Challenges and from IntendedImpactOutcomes and ExpectedBeneficiaries fields. DO NOT ASSUME ANYTHING. ONLY LIST THE IMPACT THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+**(d) Outcomes:** [Extract from IntendedImpactOutcomes field. DO NOT ASSUME ANYTHING. ONLY LIST THE EXPECTED OUTCOMES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
 **(e) Direct Beneficiaries:** [Extract from EstimatedDirectBeneficiaries field. DO NOT ASSUME ANYTHING. ONLY LIST THE DIRECT BENEFICIARIES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
 **(f) Indirect Beneficiaries:** [Extract from the EstimatedIndirectBeneficiaries field. DO NOT ASSUME ANYTHING. ONLY LIST THE INDIRECT BENEFICIARIES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-**(g) Beneficiary Institutions:** [Extract from the ExpectedBeneficiaries field. DO NOT ASSUME ANYTHING. ONLY LIST THE BENEFICIARY INSTITUTIONS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
+**(g) Beneficiary Institutions:** [Extract from the ExpectedBeneficiaries field. DO NOT ASSUME ANYTHING. ONLY LIST THE BENEFICIARY INSTITUTIONS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
 
 ## 4. Initiative that UNOPS will be responsible and/or accountable for [What are the outputs and what opportunities exist to enhance their impact?]
 
