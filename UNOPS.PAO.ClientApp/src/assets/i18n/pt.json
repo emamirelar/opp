@@ -2661,6 +2661,7 @@
   "message.documentSourceSummary": "{newCount} novos, {existingCount} existentes",
   "message.selectExistingDocumentsFromPartner": "Selecione documentos existentes da biblioteca deste parceiro para incluir na sua oportunidade.",
   "message.warning.documentSkipped": "O documento '{{name}}' não pôde ser processado e foi ignorado.",
+  "message.warning.googleDriveAuthRequired": "A autenticação do Google Drive é necessária para processar este documento.",
   "message.documentSourcesSummaryExisting": "{{count}} documento(s) existente(s) selecionado(s)",
   "message.documentSourcesSummaryBoth": "{{newCount}} novo(s) documento(s) e {{existingCount}} documento(s) existente(s) selecionado(s)",
   "message.error.uploadingDocuments": "Erro ao carregar documentos",

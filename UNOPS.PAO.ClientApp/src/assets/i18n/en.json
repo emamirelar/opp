@@ -2878,6 +2878,7 @@
   "message.documentSourceSummary": "{newCount} new, {existingCount} existing",
   "message.selectExistingDocumentsFromPartner": "Select existing documents from this partner's document library to include in your opportunity.",
   "message.warning.documentSkipped": "Document '{{name}}' could not be processed and was skipped.",
+  "message.warning.googleDriveAuthRequired": "Google Drive authentication required to process this document.",
   "message.documentSourcesSummaryNew": "{{count}} new document(s) selected",
   "message.documentSourcesSummaryExisting": "{{count}} existing document(s) selected",
   "message.documentSourcesSummaryBoth": "{{newCount}} new document(s) and {{existingCount}} existing document(s) selected",

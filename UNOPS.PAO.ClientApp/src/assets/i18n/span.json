@@ -2633,6 +2633,7 @@
   "message.documentSourceSummary": "{newCount} nuevos, {existingCount} existentes",
   "message.selectExistingDocumentsFromPartner": "Seleccione documentos existentes de la biblioteca de este socio para incluirlos en su oportunidad.",
   "message.warning.documentSkipped": "El documento '{{name}}' no pudo ser procesado y fue omitido.",
+  "message.warning.googleDriveAuthRequired": "Se requiere autenticación de Google Drive para procesar este documento.",
   "message.documentSourcesSummaryNew": "{{count}} nuevo(s) documento(s) seleccionado(s)",
   "message.documentSourcesSummaryExisting": "{{count}} documento(s) existente(s) seleccionado(s)",
   "message.documentSourcesSummaryBoth": "{{newCount}} nuevo(s) documento(s) y {{existingCount}} documento(s) existente(s) seleccionado(s)",
