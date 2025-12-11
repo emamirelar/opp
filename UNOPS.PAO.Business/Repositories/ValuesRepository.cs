@@ -428,8 +428,10 @@ public class ValuesRepository
             {
                 Id = x.Id,
                 Name = x.Name,
-                Code = x.Name,
-                Description = x.Description
+                Code = x.Code,
+                Description = x.Description,
+                Type = x.Type,
+                SubType = x.SubType
             })
             .ToListAsync();
     }
@@ -702,11 +704,12 @@ public class ValuesRepository
             // Group by EntityRole for this specific org unit
             var roleGroups = entityUserRoles
                 .Where(eur => eur.EntityId == orgUnit.Id)
-                .GroupBy(eur => new { eur.EntityRoleId, RoleName = eur.EntityRole?.Name })
+                .GroupBy(eur => new { eur.EntityRoleId, RoleName = eur.EntityRole?.Name, RoleCode = eur.EntityRole?.Code })
                 .Select(g => new Models.OrganizationUnits.EntityUserRoleGroupModel
                 {
                     EntityRoleId = g.Key.EntityRoleId ?? 0,
                     EntityRoleName = g.Key.RoleName,
+                    EntityRoleCode = g.Key.RoleCode,
                     Users = g.Select(eur => new Models.OrganizationUnits.UserBasicModel
                     {
                         UserId = eur.UserId,

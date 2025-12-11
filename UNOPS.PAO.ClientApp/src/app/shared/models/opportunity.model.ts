@@ -64,6 +64,28 @@ export interface OpportunityUNOPSMission {
 }
 
 /**
+ * SME (Subject Matter Expert) selection for an opportunity
+ * Loaded from EntityUserRoles table where EntityType = "Opportunity"
+ */
+export interface SMESelection {
+  entityRoleId: number;
+  entityRoleName: string | null;
+  isSelected: boolean;
+  userId: number | null;
+  userName: string | null;
+  userEmail: string | null;
+}
+
+/**
+ * SME (Subject Matter Expert) selection request for saving
+ */
+export interface SMESelectionRequest {
+  entityRoleId: number;
+  isSelected: boolean;
+  userId: number | null;
+}
+
+/**
  * Main Opportunity model matching backend OpportunityModel.cs
  */
 export interface Opportunity {
@@ -110,6 +132,7 @@ export interface Opportunity {
   sdGs: OpportunitySDG[];
   uncfOutcomes?: OpportunityUNCFOutcome[];
   unopsMissions?: OpportunityUNOPSMission[];
+  smeSelections?: SMESelection[];
   stats: OpportunityStats | null;
   isNewValueRangeForOrgUnit: boolean | null;
   orgUnitHistoricalMaxValue: number | null;
@@ -217,6 +240,7 @@ export interface OpportunityStakeholder {
   opportunityId: number;
   entityRoleId: number;
   entityRoleName: string;
+  entityRoleCode: string | null;
   isInternal: boolean;
   stakeholderType: string;
   userId: number | null;

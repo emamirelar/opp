@@ -192,7 +192,7 @@ public static class SDGSeeder
                 Status = EntityStatus.Active,
                 IsDeleted = false,
                 SDGId = "SDG-08",
-                SDGNumber = "goal 17",
+                SDGNumber = "Goal 8",
                 SDGDescription = "Goal 8: Decent Work and Economic Growth",
                 SDGLogo = "https://storage.googleapis.com/unops_sdg/SDG-08.png",
                 SDGLongDescription = "Promote sustained, inclusive and sustainable economic growth, full and productive employment and decent work for all"

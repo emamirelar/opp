@@ -154,7 +154,7 @@
 
       <div class="space-y-3">
         @if (opportunity().sdGs && opportunity().sdGs!.length > 0) {
-          @for (sdg of opportunity().sdGs; track sdg.sdgId; let idx = $index) {
+          @for (sdg of sortedOpportunitySDGs(); track sdg.sdgId; let idx = $index) {
             <div
               class="bg-unops-surface-primary border border-unops-neutral-300 rounded-unops-lg p-4 hover:shadow-unops-md transition-shadow"
             >
@@ -192,7 +192,7 @@
                           'min-width': '76px',
                         }"
                       >
-                        {{ sdg.isPrimary ? "Primary" : "Secondary" }}
+                        {{ sdg.isPrimary ? ("label.opportunity.sdgPrimary" | translate) : ("label.opportunity.sdgSecondary" | translate) }}
                       </div>
                     </div>
 
@@ -256,28 +256,6 @@
                     }
                   </div>
                 </div>
-                @if (isEditing()) {
-                  <div class="flex gap-2">
-                    <p-button
-                      icon="pi pi-pencil"
-                      [text]="true"
-                      [rounded]="true"
-                      severity="secondary"
-                      size="small"
-                      (onClick)="editSDG(idx)"
-                      pTooltip="{{ 'button.edit' | translate }}"
-                    />
-                    <p-button
-                      icon="pi pi-trash"
-                      [text]="true"
-                      [rounded]="true"
-                      severity="danger"
-                      size="small"
-                      (onClick)="removeSDG(idx)"
-                      pTooltip="{{ 'button.delete' | translate }}"
-                    />
-                  </div>
-                }
               </div>
             </div>
           }
@@ -434,7 +412,7 @@
       </div>
     }
 
-    <!-- Alignment to UNOPS Strategy -->
+    <!-- Alignment to UNOPS Strategic Missions -->
     <div>
       <div class="flex items-center justify-between mb-4">
         <h3
@@ -1426,555 +1404,343 @@
   </div>
 </p-panel>
 
-<!-- SDG Dialog -->
+<!-- SDG Dialog - Two-Step Flow -->
 <p-dialog
-  [header]="'label.opportunity.addSDG' | translate"
+  [header]="sdgDialogStep() === 1 ? ('label.opportunity.selectSDGs' | translate) : ('label.opportunity.selectTargetsAndIndicators' | translate)"
   [(visible)]="showSDGDialog"
   [modal]="true"
   [appendTo]="'body'"
-  [style]="{ width: '55rem', 'max-height': '90vh' }"
+  [style]="{ width: sdgDialogStep() === 1 ? '50rem' : '65rem', 'max-height': '90vh' }"
   [contentStyle]="{ 'max-height': '75vh', 'overflow-y': 'auto' }"
 >
   <div class="space-y-6">
-    <!-- TOP SECTION: SDG Selection & Configuration -->
-    <div
-      class="bg-unops-surface-secondary border-2 border-unops-primary-200 rounded-unops-lg p-5"
-    >
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-base font-bold text-unops-secondary">
-          {{ "label.configureAndSelectSDG" | translate }}
-        </h3>
-        @if (editingFromPending()) {
-          <div
-            class="text-xs font-bold px-3 py-1 rounded-lg flex items-center gap-2"
-            style="background-color: #fef3c7; color: #92400e"
-          >
-            <i class="pi pi-pencil"></i>
-            <span>{{ "label.editing" | translate }}</span>
-          </div>
-        }
-      </div>
-
-      <!-- Validation Error Message -->
-      @if (showValidationError()) {
-        <p-message
-          severity="error"
-          icon="pi pi-info-circle"
-          styleClass="mb-4 w-full"
+    <!-- Step Indicator -->
+    <div class="flex items-center justify-center gap-4 mb-6">
+      <div class="flex items-center gap-2">
+        <div
+          class="w-8 h-8 rounded-full flex items-center justify-center font-bold"
+          [class.bg-unops-primary]="sdgDialogStep() === 1"
+          [class.text-white]="sdgDialogStep() === 1"
+          [class.bg-gray-200]="sdgDialogStep() !== 1"
+          [class.text-gray-600]="sdgDialogStep() !== 1"
         >
-          {{ "message.validation.sdgRequired" | translate }}
-        </p-message>
-      }
+          1
+        </div>
+        <span
+          class="text-sm font-medium"
+          [class.text-unops-primary]="sdgDialogStep() === 1"
+          [class.text-gray-600]="sdgDialogStep() !== 1"
+        >
+          {{ "label.selectSDGs" | translate }}
+        </span>
+      </div>
+      <div class="w-16 h-0.5 bg-gray-300"></div>
+      <div class="flex items-center gap-2">
+        <div
+          class="w-8 h-8 rounded-full flex items-center justify-center font-bold"
+          [class.bg-unops-primary]="sdgDialogStep() === 2"
+          [class.text-white]="sdgDialogStep() === 2"
+          [class.bg-gray-200]="sdgDialogStep() !== 2"
+          [class.text-gray-600]="sdgDialogStep() !== 2"
+        >
+          2
+        </div>
+        <span
+          class="text-sm font-medium"
+          [class.text-unops-primary]="sdgDialogStep() === 2"
+          [class.text-gray-600]="sdgDialogStep() !== 2"
+        >
+          {{ "label.selectTargetsAndIndicators" | translate }}
+        </span>
+      </div>
+    </div>
 
+    <!-- STEP 1: Multi-Select SDGs -->
+    @if (sdgDialogStep() === 1) {
       <div class="space-y-4">
-        <!-- SDG Dropdown -->
-        <div>
-          <label class="block text-sm font-semibold text-gray-600 mb-2">
-            {{ "label.opportunity.sdg" | translate }} *
-          </label>
-          <p-select
-            [formControl]="sdgControl"
-            [options]="availableSDGs()"
-            optionLabel="name"
-            [placeholder]="'label.opportunity.selectSDG' | translate"
-            styleClass="w-full"
-            [appendTo]="'body'"
-            [showClear]="true"
-            [filter]="true"
-            filterBy="name,sdgNumber"
-            (onChange)="onSDGChange($event.value)"
-          >
-            <ng-template let-sdg pTemplate="item">
-              <div class="flex items-center gap-3">
+        <!-- SDG Selection List -->
+        <div class="space-y-2 max-h-[500px] overflow-y-auto pr-2">
+          @for (sdg of sortedSDGs(); track sdg.id) {
+            @let isSelected = isSDGSelected(sdg.sdgId || '');
+            @let primarySecondary = getPrimarySecondaryInStep1(sdg.sdgId || '');
+            @let isNASDG = sdg.sdgId === 'N/A';
+            <div
+              class="border rounded-lg p-4 transition-all hover:shadow-md cursor-pointer"
+              [class.bg-blue-50]="isSelected"
+              [class.border-blue-300]="isSelected"
+              [class.bg-white]="!isSelected"
+              [class.border-gray-200]="!isSelected"
+              (click)="toggleSDGSelection(sdg)"
+            >
+              <div class="flex items-start gap-3">
+                <div class="flex-shrink-0 mt-0.5" (click)="$event.stopPropagation()">
+                  <p-checkbox
+                    [binary]="true"
+                    [ngModel]="isSelected"
+                    (ngModelChange)="toggleSDGSelection(sdg)"
+                    [inputId]="'sdg-' + sdg.sdgId"
+                  />
+                </div>
                 @if (sdg.sdgLogo) {
                   <img
                     [src]="sdg.sdgLogo"
                     [alt]="'SDG ' + sdg.sdgNumber"
-                    class="w-12 h-12 object-contain"
+                    class="w-16 h-16 object-contain rounded flex-shrink-0"
                   />
                 } @else {
                   <div
-                    class="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-green-500 to-teal-600 text-white font-bold text-lg rounded"
+                    class="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-teal-600 text-white font-bold text-2xl rounded shadow-sm flex-shrink-0"
                   >
                     {{ sdg.sdgNumber }}
                   </div>
                 }
-                <div>
-                  <div class="font-semibold">
-                    SDG {{ sdg.sdgNumber }}: {{ sdg.name }}
-                  </div>
+                <div class="flex-1 min-w-0">
+                  <h4 class="font-semibold text-unops-secondary mb-1">
+                    {{ "label.opportunity.sdg" | translate }}
+                    {{ sdg.sdgNumber }}: {{ sdg.name }}
+                  </h4>
                   @if (sdg.sdgDescription) {
-                    <div class="text-sm text-gray-600">
+                    <p class="text-sm text-gray-600 line-clamp-2">
                       {{ sdg.sdgDescription }}
-                    </div>
+                    </p>
                   }
-                </div>
-              </div>
-            </ng-template>
-          </p-select>
-          @if (!sdgControl.value && showValidationError()) {
-            <p-message severity="error" variant="simple" styleClass="mt-2">
-              {{ "message.validation.sdgRequired" | translate }}
-            </p-message>
-          }
-          @if (availableSDGs().length === 0 && !editingFromPending()) {
-            <p-message severity="info" variant="simple" styleClass="mt-2">
-              {{ "message.opportunity.allSDGsSelected" | translate }}
-            </p-message>
-          }
-        </div>
-
-        <!-- SDG Details Section (Blue Info Box) -->
-        @if (sdgControl.value) {
-          <div
-            class="bg-blue-50 border border-blue-200 rounded-lg p-5 space-y-4"
-          >
-            <div class="flex items-start gap-4">
-              <!-- SDG Logo -->
-              @if (sdgControl.value.sdgLogo) {
-                <img
-                  [src]="sdgControl.value.sdgLogo"
-                  [alt]="'SDG ' + sdgControl.value.sdgNumber"
-                  class="w-20 h-20 object-contain rounded"
-                />
-              } @else {
-                <div
-                  class="flex items-center justify-center w-20 h-20 bg-gradient-to-br from-green-500 to-teal-600 text-white font-bold text-2xl rounded shadow-sm"
-                >
-                  {{ sdgControl.value.sdgNumber }}
-                </div>
-              }
-              <div class="flex-1">
-                <h4 class="text-base font-bold text-gray-900 mb-2">
-                  SDG {{ sdgControl.value.sdgNumber }}:
-                  {{ sdgControl.value.name }}
-                </h4>
-                @if (sdgControl.value.sdgDescription) {
-                  <p class="text-sm text-gray-700 leading-relaxed mb-3">
-                    {{ sdgControl.value.sdgDescription }}
-                  </p>
-                }
-                @if (sdgControl.value.sdgLongDescription) {
-                  <p class="text-xs text-gray-600 leading-relaxed">
-                    {{ sdgControl.value.sdgLongDescription }}
-                  </p>
-                }
-              </div>
-            </div>
-          </div>
-        }
-
-        <!-- Primary/Secondary Selection with Add Button -->
-        <div>
-          <label class="block text-sm font-semibold text-gray-600 mb-2">
-            {{ "label.opportunity.alignmentType" | translate }} *
-          </label>
-          <div class="flex items-center justify-between gap-4">
-            <!-- Radio Buttons -->
-            <div class="flex items-center gap-4">
-              <div class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  id="primary"
-                  [formControl]="isPrimaryControl"
-                  [value]="true"
-                  class="w-4 h-4 text-green-600"
-                />
-                <label
-                  for="primary"
-                  class="text-sm font-medium text-gray-700 cursor-pointer"
-                  [class.opacity-50]="sdgControl.value?.sdgId === 'N/A'"
-                  [class.cursor-not-allowed]="sdgControl.value?.sdgId === 'N/A'"
-                >
-                  <span class="inline-flex items-center gap-2">
-                    <div
-                      class="text-xs font-bold px-2 py-1 rounded-lg text-center"
-                      style="
-                        background-color: rgb(76, 175, 80);
-                        color: white;
-                        min-width: 76px;
-                      "
-                    >
-                      Primary
-                    </div>
-                  </span>
-                </label>
-              </div>
-              <div class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  id="secondary"
-                  [formControl]="isPrimaryControl"
-                  [value]="false"
-                  class="w-4 h-4 text-blue-600"
-                />
-                <label
-                  for="secondary"
-                  class="text-sm font-medium text-gray-700 cursor-pointer"
-                  [class.opacity-50]="sdgControl.value?.sdgId === 'N/A'"
-                  [class.cursor-not-allowed]="sdgControl.value?.sdgId === 'N/A'"
-                >
-                  <span class="inline-flex items-center gap-2">
-                    <div
-                      class="text-xs font-bold px-2 py-1 rounded-lg text-center"
-                      style="
-                        background-color: #0ea5e9;
-                        color: white;
-                        min-width: 76px;
-                      "
-                    >
-                      Secondary
-                    </div>
-                  </span>
-                </label>
-              </div>
-            </div>
-
-            <!-- Add SDG to Selection Button (Always Visible) -->
-            <div class="flex-shrink-0">
-              @if (editingFromPending()) {
-                <p-button
-                  [label]="'button.updateSDGConfig' | translate"
-                  icon="pi pi-check"
-                  severity="primary"
-                  size="small"
-                  (onClick)="updatePendingSDG()"
-                  [disabled]="!isSDGConfigurationComplete()"
-                />
-              } @else {
-                <p-button
-                  [label]="'button.addSDGToSelection' | translate"
-                  icon="pi pi-plus"
-                  severity="primary"
-                  size="small"
-                  (onClick)="addSDGToPendingSelection()"
-                  [disabled]="!isSDGConfigurationComplete()"
-                />
-              }
-            </div>
-          </div>
-          <p class="text-xs text-gray-500 mt-2">
-            <i class="pi pi-info-circle"></i> You can only have one Primary SDG,
-            but multiple Secondary SDGs
-          </p>
-        </div>
-
-        <!-- SDG Targets Section (Hidden for N/A SDG) -->
-        @if (sdgControl.value && sdgControl.value.sdgId !== 'N/A') {
-          <div class="border-t border-gray-200 pt-4 mt-4">
-            <label class="block text-sm font-semibold text-gray-700 mb-3">
-              {{ "label.opportunity.sdgTargets" | translate }}
-            </label>
-            <p class="text-xs text-gray-600 mb-3">
-              <i class="pi pi-info-circle"></i>
-              {{ "message.opportunity.sdgTargetsInfo" | translate }}
-            </p>
-
-            <!-- Option to skip targets and indicators -->
-            <div
-              class="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4"
-            >
-              <p-checkbox
-                [binary]="true"
-                [formControl]="skipTargetsControl"
-                inputId="skipTargets"
-              />
-              <div class="flex-1">
-                <label
-                  for="skipTargets"
-                  class="text-sm font-medium text-gray-900 cursor-pointer block mb-1"
-                >
-                  {{ "label.opportunity.skipTargetsAndIndicators" | translate }}
-                </label>
-                <p class="text-xs text-gray-600">
-                  {{
-                    "message.opportunity.skipTargetsAndIndicatorsInfo"
-                      | translate
-                  }}
-                </p>
-              </div>
-            </div>
-
-            @if (!skipTargetsControl.value) {
-              @if (loadingTargets()) {
-                <!-- Loading state for targets -->
-                <div class="flex items-center gap-2 text-sm text-blue-600 py-4">
-                  <i class="pi pi-spin pi-spinner"></i>
-                  <span>{{ "message.loading" | translate }}...</span>
-                </div>
-              } @else if (availableTargets().length > 0) {
-                <div class="space-y-2 max-h-96 overflow-y-auto">
-                  @for (target of availableTargets(); track target.id) {
-                    <div class="border border-gray-200 rounded-lg">
-                      <!-- Target Checkbox -->
-                      <div
-                        class="p-3 bg-gray-50 hover:bg-gray-100 transition-colors"
-                      >
-                        <div class="flex items-start gap-3">
-                          <p-checkbox
-                            [binary]="true"
-                            [ngModel]="isTargetSelected(target.id)"
-                            (ngModelChange)="toggleTarget(target)"
-                            [inputId]="'target-' + target.id"
+                  
+                  <!-- Primary/Secondary Selection (shown when SDG is selected) -->
+                  @if (isSelected) {
+                    <div class="mt-3 pt-3 border-t border-gray-200" (click)="$event.stopPropagation()">
+                      <label class="block text-sm font-semibold text-gray-600 mb-2">
+                        {{ "label.opportunity.alignmentType" | translate }} *
+                      </label>
+                      <div class="flex items-center gap-4">
+                        <label class="flex items-center gap-2" [class.cursor-pointer]="!isNASDG" [class.opacity-50]="isNASDG" [class.cursor-not-allowed]="isNASDG">
+                          <input
+                            type="radio"
+                            [name]="'primary-' + sdg.sdgId"
+                            [checked]="primarySecondary === true"
+                            (change)="togglePrimarySecondaryInStep1(sdg.sdgId || '', true)"
+                            [disabled]="isNASDG"
+                            class="w-4 h-4 text-green-600"
                           />
-                          <label
-                            [for]="'target-' + target.id"
-                            class="flex-1 cursor-pointer"
-                          >
-                            <div class="font-semibold text-gray-900">
-                              {{ "label.target" | translate }}
-                              {{ target.sdgTargetId }}
-                            </div>
-                            <div class="text-sm text-gray-600 mt-1">
-                              {{ target.targetDescription }}
-                            </div>
-                          </label>
-                        </div>
-                      </div>
-
-                      <!-- Indicators for selected target -->
-                      @if (isTargetSelected(target.id)) {
-                        <div class="p-3 bg-white border-t border-gray-200">
                           <div
-                            class="text-xs font-semibold text-gray-700 mb-2 uppercase"
+                            class="text-xs font-bold px-2 py-1 rounded-lg text-center transition-opacity"
+                            [style]="{
+                              'background-color': 'rgb(76, 175, 80)',
+                              color: 'white',
+                              'min-width': '76px',
+                              opacity: primarySecondary === true ? 1 : 0.5
+                            }"
                           >
-                            {{ "label.opportunity.sdgIndicators" | translate }}
+                            {{ "label.opportunity.sdgPrimary" | translate }}
                           </div>
-
-                          @if (isLoadingIndicators(target.id)) {
-                            <!-- Loading state -->
-                            <div
-                              class="flex items-center gap-2 text-xs text-blue-600 pl-4 py-2"
-                            >
-                              <i class="pi pi-spin pi-spinner"></i>
-                              <span
-                                >{{ "message.loading" | translate }}...</span
-                              >
-                            </div>
-                          } @else if (
-                            getIndicatorsForTarget(target.sdgTargetId).length >
-                            0
-                          ) {
-                            <!-- Indicators loaded and available -->
-                            <div class="space-y-2 pl-4">
-                              @for (
-                                indicator of getIndicatorsForTarget(
-                                  target.sdgTargetId
-                                );
-                                track indicator.id
-                              ) {
-                                <div class="flex items-start gap-2">
-                                  <p-checkbox
-                                    [binary]="true"
-                                    [ngModel]="
-                                      isIndicatorSelected(
-                                        target.id,
-                                        indicator.id
-                                      )
-                                    "
-                                    (ngModelChange)="
-                                      toggleIndicator(target.id, indicator.id)
-                                    "
-                                    [inputId]="'indicator-' + indicator.id"
-                                  />
-                                  <label
-                                    [for]="'indicator-' + indicator.id"
-                                    class="flex-1 cursor-pointer text-sm text-gray-700"
-                                  >
-                                    {{ indicator.sdgIndicatorLongDescription }}
-                                  </label>
-                                </div>
-                              }
-                            </div>
-                          } @else {
-                            <!-- No indicators found -->
-                            <div class="text-xs text-amber-600 pl-4 py-2">
-                              <div class="flex items-center gap-2 mb-1">
-                                <i class="pi pi-info-circle"></i>
-                                <span class="font-medium"
-                                  >No indicators available for this target</span
-                                >
-                              </div>
-                              <div class="text-gray-600 text-xs ml-5">
-                                Please ensure the database has been seeded with
-                                SDG Indicators data.
-                              </div>
-                            </div>
-                          }
-                        </div>
+                        </label>
+                        <label class="flex items-center gap-2" [class.cursor-pointer]="!isNASDG" [class.opacity-50]="isNASDG" [class.cursor-not-allowed]="isNASDG">
+                          <input
+                            type="radio"
+                            [name]="'primary-' + sdg.sdgId"
+                            [checked]="primarySecondary === false"
+                            (change)="togglePrimarySecondaryInStep1(sdg.sdgId || '', false)"
+                            [disabled]="isNASDG"
+                            class="w-4 h-4 text-blue-600"
+                          />
+                          <div
+                            class="text-xs font-bold px-2 py-1 rounded-lg text-center transition-opacity"
+                            [style]="{
+                              'background-color': 'var(--p-badge-info-background)',
+                              color: 'var(--p-badge-info-color)',
+                              'min-width': '76px',
+                              opacity: primarySecondary === false ? 1 : 0.5
+                            }"
+                          >
+                            {{ "label.opportunity.sdgSecondary" | translate }}
+                          </div>
+                        </label>
+                        @if (isNASDG) {
+                          <span class="text-xs text-gray-500 italic">
+                            ({{ "message.opportunity.naSDGAlwaysPrimary" | translate }})
+                          </span>
+                        }
+                      </div>
+                      @if (primarySecondary === null && !isNASDG) {
+                        <p-message severity="error" variant="simple" styleClass="mt-2">
+                          {{ "message.validation.primarySecondaryRequired" | translate }}
+                        </p-message>
                       }
                     </div>
                   }
                 </div>
-              }
-            }
-          </div>
-        }
-      </div>
-    </div>
-
-    <!-- BOTTOM SECTION: Selected SDGs -->
-    @if (pendingSDGSelections().length > 0) {
-      <div class="border-t-2 border-gray-200 pt-6">
-        <div class="flex items-center justify-between mb-4">
-          <h3
-            class="text-base font-bold text-unops-secondary flex items-center gap-2"
-          >
-            <i class="pi pi-check-circle text-unops-success"></i>
-            {{ "label.selectedSDGs" | translate }} ({{ pendingSDGCount() }})
-          </h3>
-          <p-button
-            [label]="'button.clearAll' | translate"
-            icon="pi pi-times"
-            [text]="true"
-            size="small"
-            severity="secondary"
-            (onClick)="clearPendingSDGs()"
-          />
-        </div>
-
-        <!-- Selected SDGs Cards -->
-        <div class="space-y-3 max-h-[400px] overflow-y-auto pr-2">
-          @for (sdg of pendingSDGSelections(); track $index) {
-            <div
-              class="bg-white border-2 border-unops-primary-200 rounded-unops-lg p-4 shadow-sm hover:shadow-md transition-shadow"
-            >
-              <div class="flex items-start justify-between gap-4">
-                <div class="flex items-center gap-4 flex-1">
-                  <!-- SDG Logo -->
-                  @if (getSDGLogo(sdg.sdgId)) {
-                    <img
-                      [src]="getSDGLogo(sdg.sdgId)"
-                      [alt]="'SDG ' + sdg.sdgNumber"
-                      class="w-16 h-16 object-contain rounded flex-shrink-0"
-                    />
-                  } @else {
-                    <div
-                      class="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-teal-600 text-white font-bold text-2xl rounded shadow-sm flex-shrink-0"
-                    >
-                      {{ sdg.sdgNumber }}
-                    </div>
-                  }
-                  <div class="flex-1 min-w-0">
-                    <h4 class="font-semibold text-unops-secondary mb-2">
-                      {{ "label.opportunity.sdg" | translate }}
-                      {{ sdg.sdgNumber }}: {{ sdg.sdgName }}
-                    </h4>
-                    <div class="flex items-center gap-2 mb-2 flex-wrap">
-                      <div
-                        class="text-xs font-bold px-2 py-1 rounded-lg text-center"
-                        [style]="{
-                          'background-color': sdg.isPrimary
-                            ? 'rgb(76, 175, 80)'
-                            : '#0ea5e9',
-                          color: 'white',
-                          'min-width': '76px',
-                        }"
-                      >
-                        {{ sdg.isPrimary ? "Primary" : "Secondary" }}
-                      </div>
-                    </div>
-
-                    <!-- Display Targets and Indicators (condensed) -->
-                    @if (sdg.skipTargetsAndIndicators) {
-                      <div class="text-xs text-gray-500 italic">
-                        ({{
-                          "label.opportunity.skipTargetsAndIndicators"
-                            | translate
-                        }})
-                      </div>
-                    } @else if (sdg.targets && sdg.targets.length > 0) {
-                      <div
-                        class="mt-2 pl-3 border-l-2 border-unops-primary-200 space-y-1"
-                      >
-                        @for (target of sdg.targets; track target.id) {
-                          <div class="text-xs">
-                            <div
-                              class="font-medium text-unops-primary flex items-center gap-1"
-                            >
-                              <i class="pi pi-check-circle text-[10px]"></i>
-                              {{ "label.target" | translate }}
-                              {{ target.sdgTargetId }}
-                            </div>
-
-                            <!-- Indicators for this target -->
-                            @if (
-                              target.indicators && target.indicators.length > 0
-                            ) {
-                              <div class="ml-4 mt-1 space-y-0.5">
-                                @for (
-                                  indicator of target.indicators;
-                                  track indicator.id
-                                ) {
-                                  <div class="flex items-start gap-1">
-                                    <i
-                                      class="pi pi-angle-right text-[10px] text-unops-neutral-500 mt-0.5"
-                                    ></i>
-                                    <div
-                                      class="text-[11px] text-unops-neutral-700 line-clamp-1"
-                                    >
-                                      {{
-                                        indicator.sdgIndicatorLongDescription
-                                      }}
-                                    </div>
-                                  </div>
-                                }
-                              </div>
-                            }
-                          </div>
-                        }
-                      </div>
-                    }
-                    
-                    <!-- Validation Error Message -->
-                    @if (hasValidationError($index)) {
-                      <div class="mt-3">
-                        <p-message 
-                          severity="error" 
-                          variant="simple"
-                          styleClass="w-full"
-                        >
-                          {{ "message.validation.sdgTargetsOrOptOutRequired" | translate }}
-                        </p-message>
-                      </div>
-                    }
-                  </div>
-                </div>
-                <div class="flex gap-2 flex-shrink-0">
-                  <p-button
-                    icon="pi pi-pencil"
-                    [text]="true"
-                    [rounded]="true"
-                    severity="secondary"
-                    size="small"
-                    (onClick)="editPendingSDG($index)"
-                    pTooltip="{{ 'button.edit' | translate }}"
-                  />
-                  <p-button
-                    icon="pi pi-trash"
-                    [text]="true"
-                    [rounded]="true"
-                    severity="danger"
-                    size="small"
-                    (onClick)="removePendingSDG($index)"
-                    pTooltip="{{ 'button.delete' | translate }}"
-                  />
-                </div>
               </div>
             </div>
           }
         </div>
       </div>
-    } @else {
-      <!-- Empty State -->
-      <div class="border-t-2 border-gray-200 pt-6">
-        <div
-          class="text-center py-8 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-300"
-        >
-          <i class="pi pi-globe text-4xl mb-3"></i>
-          <p class="text-sm">
-            {{ "message.opportunity.noPendingSDGs" | translate }}
-          </p>
+    }
+
+    <!-- STEP 2: Targets and Indicators Selection -->
+    @if (sdgDialogStep() === 2) {
+      <div class="space-y-6">
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <div class="flex items-start gap-2">
+            <i class="pi pi-info-circle text-blue-600 mt-0.5"></i>
+            <div class="text-sm text-blue-800">
+              <p class="font-medium mb-1">
+                {{ "message.opportunity.selectTargetsStep2" | translate }}
+              </p>
+              <p class="text-xs">
+                {{ "message.opportunity.selectTargetsStep2Description" | translate }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Targets and Indicators for each selected SDG (Collapsible) -->
+        <div class="max-h-[500px] overflow-y-auto pr-2">
+          <p-accordion [multiple]="false" [activeIndex]="getExpandedSDGIndex()" (onChange)="onAccordionTabChange($event)">
+            @for (sdg of selectedSDGsForStep1(); track sdg.id; let idx = $index) {
+              @let sdgData = sdgTargetsAndIndicators().get(sdg.sdgId || '');
+              @if (sdgData) {
+                <p-accordionTab>
+                  <ng-template pTemplate="header">
+                    <div class="flex items-center gap-3 w-full">
+                      @if (sdg.sdgLogo) {
+                        <img
+                          [src]="sdg.sdgLogo"
+                          [alt]="'SDG ' + sdg.sdgNumber"
+                          class="w-12 h-12 object-contain rounded flex-shrink-0"
+                        />
+                      } @else {
+                        <div
+                          class="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-green-500 to-teal-600 text-white font-bold text-xl rounded shadow-sm flex-shrink-0"
+                        >
+                          {{ sdg.sdgNumber }}
+                        </div>
+                      }
+                      <div class="flex-1 min-w-0">
+                        <div class="font-semibold text-unops-secondary">
+                          {{ "label.opportunity.sdg" | translate }}
+                          {{ sdg.sdgNumber }}: {{ sdg.name }}
+                        </div>
+                        <div class="flex items-center gap-2 mt-1">
+                          <div
+                            class="text-xs font-bold px-2 py-0.5 rounded-lg text-center"
+                            [style]="{
+                              'background-color': sdgData.isPrimary
+                                ? 'rgb(76, 175, 80)'
+                                : '#0ea5e9',
+                              color: 'white',
+                              'min-width': '76px',
+                            }"
+                          >
+                            {{ sdgData.isPrimary ? ("label.opportunity.sdgPrimary" | translate) : ("label.opportunity.sdgSecondary" | translate) }}
+                          </div>
+                          @if (sdg.sdgId === 'N/A') {
+                            <span class="text-xs text-gray-500 italic">
+                              ({{ "message.opportunity.naSDGAlwaysPrimary" | translate }})
+                            </span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  </ng-template>
+
+                  <div class="space-y-4 pt-2">
+                  <!-- Targets and Indicators (only if not N/A) -->
+                  @if (sdg.sdgId !== 'N/A') {
+                    <div class="space-y-3">
+                      <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        {{ "label.opportunity.sdgTargets" | translate }}
+                      </label>
+
+                      @if (sdgData.loadingTargets) {
+                        <div class="flex items-center gap-2 text-sm text-blue-600 py-4">
+                          <i class="pi pi-spin pi-spinner"></i>
+                          <span>{{ "message.loading" | translate }}...</span>
+                        </div>
+                      } @else if (sdgData.availableTargets.length > 0) {
+                        <div class="space-y-2">
+                          @for (target of sdgData.availableTargets; track target.id) {
+                            <div class="border border-gray-200 rounded-lg">
+                              <!-- Target Checkbox -->
+                              <div class="p-3 bg-gray-50 hover:bg-gray-100 transition-colors">
+                                <div class="flex items-start gap-3">
+                                  <p-checkbox
+                                    [binary]="true"
+                                    [ngModel]="isTargetSelectedInStep2(sdg.sdgId || '', target.id)"
+                                    (ngModelChange)="toggleTargetInStep2(sdg.sdgId || '', target)"
+                                    [inputId]="'target-' + sdg.sdgId + '-' + target.id"
+                                  />
+                                  <label
+                                    [for]="'target-' + sdg.sdgId + '-' + target.id"
+                                    class="flex-1 cursor-pointer"
+                                  >
+                                    <div class="font-semibold text-gray-900">
+                                      {{ "label.target" | translate }} {{ target.sdgTargetId }}
+                                    </div>
+                                    <div class="text-sm text-gray-600 mt-1">
+                                      {{ target.targetDescription }}
+                                    </div>
+                                  </label>
+                                </div>
+                              </div>
+
+                              <!-- Indicators for selected target -->
+                              @if (isTargetSelectedInStep2(sdg.sdgId || '', target.id)) {
+                                <div class="p-3 bg-white border-t border-gray-200">
+                                  <div class="text-xs font-semibold text-gray-700 mb-2 uppercase">
+                                    {{ "label.opportunity.sdgIndicators" | translate }}
+                                  </div>
+
+                                  @if (sdgData.loadingIndicatorsForTargets.has(target.id)) {
+                                    <div class="flex items-center gap-2 text-xs text-blue-600 pl-4 py-2">
+                                      <i class="pi pi-spin pi-spinner"></i>
+                                      <span>{{ "message.loading" | translate }}...</span>
+                                    </div>
+                                  } @else if (getIndicatorsForTargetInStep2(sdg.sdgId || '', target.sdgTargetId).length > 0) {
+                                    <div class="space-y-2 pl-4 max-h-48 overflow-y-auto">
+                                      @for (
+                                        indicator of getIndicatorsForTargetInStep2(sdg.sdgId || '', target.sdgTargetId);
+                                        track indicator.id
+                                      ) {
+                                        <div class="flex items-start gap-2">
+                                          <p-checkbox
+                                            [binary]="true"
+                                            [ngModel]="isIndicatorSelectedInStep2(sdg.sdgId || '', target.id, indicator.id)"
+                                            (ngModelChange)="toggleIndicatorInStep2(sdg.sdgId || '', target.id, indicator.id)"
+                                            [inputId]="'indicator-' + sdg.sdgId + '-' + target.id + '-' + indicator.id"
+                                          />
+                                          <label
+                                            [for]="'indicator-' + sdg.sdgId + '-' + target.id + '-' + indicator.id"
+                                            class="flex-1 cursor-pointer text-sm text-gray-700"
+                                          >
+                                            {{ indicator.sdgIndicatorLongDescription }}
+                                          </label>
+                                        </div>
+                                      }
+                                    </div>
+                                  } @else {
+                                    <div class="text-xs text-amber-600 pl-4 py-2">
+                                      <i class="pi pi-info-circle"></i>
+                                      <span class="ml-2">
+                                        {{ "message.noIndicatorsAvailable" | translate }}
+                                      </span>
+                                    </div>
+                                  }
+                                </div>
+                              }
+                            </div>
+                          }
+                        </div>
+                      } @else {
+                        <p class="text-sm text-gray-500 italic">
+                          {{ "message.noTargetsAvailable" | translate }}
+                        </p>
+                      }
+                    </div>
+                  }
+                </div>
+                </p-accordionTab>
+              }
+            }
+          </p-accordion>
         </div>
       </div>
     }
@@ -1982,29 +1748,58 @@
 
   <ng-template pTemplate="footer">
     <div class="flex items-center justify-between w-full">
-      <span class="text-sm text-gray-600">
-        @if (pendingSDGCount() > 0) {
-          {{ pendingSDGCount() }} {{ "label.sdgsSelected" | translate }}
-        }
-      </span>
+      @if (sdgDialogStep() === 1 && selectedSDGCount() > 0) {
+        <div class="flex items-center gap-2 text-green-800">
+          <i class="pi pi-check-circle"></i>
+          <span class="text-sm font-medium">
+            {{ selectedSDGCount() }}
+            {{ selectedSDGCount() === 1 ? ("label.sdgSelected" | translate) : ("label.sdgsSelected" | translate) }}
+          </span>
+        </div>
+      } @else {
+        <span></span>
+      }
       <div class="flex gap-2">
+        @if (sdgDialogStep() === 1) {
         <p-button
           [label]="'button.cancel' | translate"
           severity="secondary"
           (onClick)="cancelSDGDialog()"
         />
         <p-button
-          [label]="
-            pendingSDGCount() === 1
-              ? ('button.add1SDG' | translate)
-              : ('button.addMultipleSDGs'
-                | translate: { count: pendingSDGCount() })
-          "
-          severity="primary"
+          [label]="'button.finish' | translate"
           icon="pi pi-check"
-          (onClick)="commitPendingSDGs()"
-          [disabled]="pendingSDGCount() === 0"
+          severity="primary"
+          (onClick)="finalizeSDGSelections()"
+          [disabled]="selectedSDGCount() === 0"
         />
+        <p-button
+          [label]="'button.next' | translate"
+          icon="pi pi-arrow-right"
+          severity="primary"
+          [outlined]="true"
+          (onClick)="proceedToStep2()"
+          [disabled]="selectedSDGCount() === 0"
+        />
+        } @else {
+          <p-button
+            [label]="'button.back' | translate"
+            icon="pi pi-arrow-left"
+            severity="secondary"
+            (onClick)="goBackToStep1()"
+          />
+          <p-button
+            [label]="'button.cancel' | translate"
+            severity="secondary"
+            (onClick)="cancelSDGDialog()"
+          />
+          <p-button
+            [label]="'button.finish' | translate"
+          icon="pi pi-check"
+            severity="primary"
+            (onClick)="finalizeSDGSelections()"
+        />
+        }
       </div>
     </div>
   </ng-template>
