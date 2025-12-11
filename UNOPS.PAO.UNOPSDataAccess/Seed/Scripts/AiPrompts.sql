@@ -1657,7 +1657,8 @@ Create a comprehensive summary including their complete profile, interaction his
 ### Strategic Information (camelCase)
 - **strategicAlignment** (string?): How this opportunity aligns with strategic goals, organizational priorities, or regional development plans
 - **resultsFocus** (string?): Focus areas for results and key deliverables
-- **intendedImpactOutcomes** (string?): Expected impact and outcomes of the opportunity
+- **expectedImpact** (string?): Expected impact of the opportunity (max 200 characters)
+- **expectedOutcomes** (string?): Expected outcomes of the opportunity (max 200 characters)
 - **expectedBeneficiaries** (string?): Who will benefit from this opportunity (target population, communities, regions)
 
 ### Related Entities (Arrays - camelCase)
@@ -1749,7 +1750,8 @@ Return a valid JSON object with the extracted opportunity data. **ALL property n
   "targetDeliveryDate": "2029-12-31T00:00:00.000Z",
   "strategicAlignment": "Aligned with SDG 6 (Clean Water and Sanitation), SDG 9 (Industry, Innovation and Infrastructure) and SDG 17 (Partnerships for the Goals), supporting sustainable infrastructure development and improved access to clean water for underserved communities",
   "resultsFocus": "Delivering modern, climate-resilient water and sanitation facilities, improving water access for underserved communities, and building local capacity for operations and maintenance",
-  "intendedImpactOutcomes": "Improved health and well-being for 2+ million residents through reliable access to clean water, 85% reduction in waterborne diseases, creation of 500 permanent jobs in water facility operations, enhanced community resilience to climate change",
+  "expectedImpact": "Improved health and well-being for 2+ million residents through reliable access to clean water, 85% reduction in waterborne diseases",
+  "expectedOutcomes": "Creation of 500 permanent jobs in water facility operations, enhanced community resilience to climate change",
   "expectedBeneficiaries": "2.1 million residents of Nairobi Metropolitan Area, with priority focus on low-income communities in Kibera, Mathare, and Mukuru informal settlements, as well as peri-urban areas with limited water infrastructure",
   "fundingPartners": ["World Bank", "African Development Bank", "European Union", "Bill and Melinda Gates Foundation"],
   "clientPartners": ["Ministry of Infrastructure - Kenya", "Nairobi City Water and Sewerage Company"],
@@ -1886,7 +1888,8 @@ Return a JSON object with a "keywords" array and a single "query" string that co
 **Strategic Information:**
 - Strategic Alignment: {strategicAlignment}
 - Results Focus: {resultsFocus}
-- Intended Impact: {intendedImpactOutcomes}
+- Expected Impact: {expectedImpact}
+- Expected Outcomes: {expectedOutcomes}
 - Expected Beneficiaries: {expectedBeneficiaries}
 
 **Related Entities:**
@@ -2020,7 +2023,8 @@ Return a JSON object with a "keywords" array and a single "query" string:
 **Strategic Information:**
 - Strategic Alignment: {strategicAlignment}
 - Results Focus: {resultsFocus}
-- Intended Impact: {intendedImpactOutcomes}
+- Expected Impact: {expectedImpact}
+- Expected Outcomes: {expectedOutcomes}
 - Expected Beneficiaries: {expectedBeneficiaries}
 
 **Related Entities:**
@@ -2475,7 +2479,8 @@ Return a JSON object with this exact structure (NO actionLabel field):
 **Strategic Information:**
 - Strategic Alignment: {strategicAlignment}
 - Results Focus: {resultsFocus}
-- Intended Impact & Outcomes: {intendedImpactOutcomes}
+- Expected Impact: {expectedImpact}
+- Expected Outcomes: {expectedOutcomes}
 - Expected Beneficiaries: {expectedBeneficiaries}
 
 **Partner Results Framework (WHY Section):**
@@ -2608,7 +2613,8 @@ Return a JSON object with a "keywords" array and a single "query" string that co
 **Strategic Information:**
 - Strategic Alignment: {strategicAlignment}
 - Results Focus: {resultsFocus}
-- Intended Impact: {intendedImpactOutcomes}
+- Expected Impact: {expectedImpact}
+- Expected Outcomes: {expectedOutcomes}
 - Expected Beneficiaries: {expectedBeneficiaries}
 
 **Related Entities:**
@@ -2732,7 +2738,8 @@ Return a JSON object with a "keywords" array (list of roles) and a single "query
 **Strategic Information:**
 - Strategic Alignment: {strategicAlignment}
 - Results Focus: {resultsFocus}
-- Intended Impact: {intendedImpactOutcomes}
+- Expected Impact: {expectedImpact}
+- Expected Outcomes: {expectedOutcomes}
 
 **Related Entities:**
 - Deliverables: {deliverables}
@@ -2804,7 +2811,8 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
 ### Strategic Information (camelCase)
 - **strategicAlignment** (string?): Synthesize strategic alignment from interaction discussions AND document context - how does this align with SDGs, UNOPS mandate, partner priorities, and development goals mentioned
 - **resultsFocus** (string?): Extract and synthesize expected results, outcomes, and key focus areas discussed in interactions or referenced in documents
-- **intendedImpactOutcomes** (string?): Generate a comprehensive impact statement based on benefits, outcomes, and impacts discussed across interactions and documents
+- **expectedImpact** (string?): Generate a comprehensive impact statement based on benefits and impacts discussed across interactions and documents (max 200 characters)
+- **expectedOutcomes** (string?): Generate expected outcomes based on results and deliverables discussed across interactions and documents (max 200 characters)
 - **expectedBeneficiaries** (string?): Extract information about target beneficiaries, communities, regions, or populations that will benefit from interactions or documents
 
 ### Related Entities (Arrays - camelCase)
@@ -2957,7 +2965,8 @@ Return a valid JSON object with the proposed opportunity data. **ALL property na
   "targetDeliveryDate": "2029-12-31T00:00:00.000Z",
   "strategicAlignment": "Aligned with SDG 6 (Clean Water and Sanitation) and SDG 17 (Partnerships for the Goals). Supports UNOPS infrastructure mandate and Kenya Vision 2030 development priorities. Addresses critical water access gaps identified in partnership discussions and government development plans.",
   "resultsFocus": "Delivering sustainable water infrastructure, improving water access for underserved communities, building local technical capacity for operations and maintenance, and establishing replicable models for regional scale-up.",
-  "intendedImpactOutcomes": "Improved health outcomes for 3 million residents through reliable clean water access, 70% reduction in waterborne diseases, creation of 300 permanent jobs in water facility operations, strengthened government capacity for infrastructure management, and enhanced climate resilience.",
+  "expectedImpact": "Improved health outcomes for 3 million residents through reliable clean water access, 70% reduction in waterborne diseases",
+  "expectedOutcomes": "Creation of 300 permanent jobs in water facility operations, strengthened government capacity for infrastructure management, and enhanced climate resilience",
   "expectedBeneficiaries": "3 million residents across urban and peri-urban areas in Kenya, Tanzania, and Uganda, with priority focus on underserved low-income communities, informal settlements, and rural areas with limited water infrastructure.",
   "fundingPartners": ["World Bank", "African Development Bank"],
   "clientPartners": ["Ministry of Water and Sanitation - Kenya", "Ministry of Water - Tanzania"],
@@ -3122,7 +3131,8 @@ Return a JSON object with a "keywords" array and a single "query" string:
 **Strategic Information:**
 - Strategic Alignment: {strategicAlignment}
 - Results Focus: {resultsFocus}
-- Intended Impact: {intendedImpactOutcomes}
+- Expected Impact: {expectedImpact}
+- Expected Outcomes: {expectedOutcomes}
 
 **Related Entities:**
 - Deliverables: {deliverables}
@@ -3443,7 +3453,7 @@ CRITICAL: misalignmentItems must be array of strings NOT objects. Empty array if
 
 - **(a) Client:** [List client partners from the opportunity data. DO NOT ASSUME ANYTHING. ONLY LIST THE CLIENT PARTNERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
 - **(b) Funding Partner:** [List funding partners from the opportunity data. DO NOT ASSUME ANYTHING. ONLY LIST THE FUNDING PARTNERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
-- **(c) Impact:** [Extract from IntendedImpactOutcomes and ExpectedBeneficiaries fields. DO NOT ASSUME ANYTHING. ONLY LIST THE IMPACT THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
+- **(c) Impact:** [Extract from ExpectedImpact, ExpectedOutcomes, and ExpectedBeneficiaries fields. DO NOT ASSUME ANYTHING. ONLY LIST THE IMPACT THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
 - **(d) Expected Outcomes:** [Extract from ResultsFocus field. DO NOT ASSUME ANYTHING. ONLY LIST THE EXPECTED OUTCOMES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
 
 ## 4. UNOPS Value Proposition

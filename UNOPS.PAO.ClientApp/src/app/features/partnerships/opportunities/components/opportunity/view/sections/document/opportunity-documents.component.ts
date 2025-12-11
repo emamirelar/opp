@@ -336,8 +336,12 @@ export class OpportunityDocumentsComponent implements OnInit {
       displayName: 'Results Focus',
     },
     {
-      fieldPath: 'intendedImpactOutcomes',
-      displayName: 'Intended Impact & Outcomes',
+      fieldPath: 'expectedImpact',
+      displayName: 'Expected Impact',
+    },
+    {
+      fieldPath: 'expectedOutcomes',
+      displayName: 'Expected Outcomes',
     },
     {
       fieldPath: 'expectedBeneficiaries',

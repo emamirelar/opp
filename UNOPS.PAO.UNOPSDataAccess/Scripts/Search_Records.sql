@@ -449,10 +449,15 @@ BEGIN
                       WHEN o."ResultsFocus" ILIKE word_pattern THEN 0.6 * text_boost
                       WHEN similarity(COALESCE(o."ResultsFocus", ''), search_query) > 0.2 THEN similarity(COALESCE(o."ResultsFocus", ''), search_query) * 0.5 * text_boost
                       ELSE 0 END),
-                ('IntendedImpactOutcomes', COALESCE(o."IntendedImpactOutcomes", ''),
-                 CASE WHEN o."IntendedImpactOutcomes" ILIKE exact_pattern THEN 0.7 * text_boost
-                      WHEN o."IntendedImpactOutcomes" ILIKE word_pattern THEN 0.6 * text_boost
-                      WHEN similarity(COALESCE(o."IntendedImpactOutcomes", ''), search_query) > 0.2 THEN similarity(COALESCE(o."IntendedImpactOutcomes", ''), search_query) * 0.5 * text_boost
+                ('ExpectedImpact', COALESCE(o."ExpectedImpact", ''),
+                 CASE WHEN o."ExpectedImpact" ILIKE exact_pattern THEN 0.7 * text_boost
+                      WHEN o."ExpectedImpact" ILIKE word_pattern THEN 0.6 * text_boost
+                      WHEN similarity(COALESCE(o."ExpectedImpact", ''), search_query) > 0.2 THEN similarity(COALESCE(o."ExpectedImpact", ''), search_query) * 0.5 * text_boost
+                      ELSE 0 END),
+                ('ExpectedOutcomes', COALESCE(o."ExpectedOutcomes", ''),
+                 CASE WHEN o."ExpectedOutcomes" ILIKE exact_pattern THEN 0.7 * text_boost
+                      WHEN o."ExpectedOutcomes" ILIKE word_pattern THEN 0.6 * text_boost
+                      WHEN similarity(COALESCE(o."ExpectedOutcomes", ''), search_query) > 0.2 THEN similarity(COALESCE(o."ExpectedOutcomes", ''), search_query) * 0.5 * text_boost
                       ELSE 0 END),
                 
                 -- TIER 3 - ORGANIZATIONAL CONTEXT (Score: 0.6-0.5)

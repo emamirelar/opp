@@ -49,7 +49,14 @@ public class CreateOpportunityFromInteractionsRequest
 
     // WHY Section Properties (AI-proposed, user-accepted)
     public string? ResultsFocus { get; set; }
-    public string? IntendedImpactOutcomes { get; set; }
+    /// <summary>
+    /// Expected impact description (max 200 characters)
+    /// </summary>
+    public string? ExpectedImpact { get; set; }
+    /// <summary>
+    /// Expected outcomes description (max 200 characters)
+    /// </summary>
+    public string? ExpectedOutcomes { get; set; }
     public string? ExpectedBeneficiaries { get; set; }
     public string? Challenges { get; set; }
     public List<int>? SdGs { get; set; }

@@ -236,7 +236,8 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     if (opp.strategicAlignment) count++;
     if (opp.resultsFocus) count++;
     if (opp.expectedBeneficiaries) count++;
-    if (opp.intendedImpactOutcomes) count++;
+    if (opp.expectedImpact) count++;
+    if (opp.expectedOutcomes) count++;
     if (opp.targetSigningDate) count++;
     if (opp.targetDeliveryDate) count++;
     if (opp.deliverables && opp.deliverables.length > 0) count++;
@@ -1545,8 +1546,12 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         createRequest.resultsFocus = proposal.opportunity.resultsFocus;
       }
       
-      if (this.isFieldSelected('intendedImpactOutcomes') && proposal.opportunity.intendedImpactOutcomes) {
-        createRequest.intendedImpactOutcomes = proposal.opportunity.intendedImpactOutcomes;
+      if (this.isFieldSelected('expectedImpact') && proposal.opportunity.expectedImpact) {
+        createRequest.expectedImpact = proposal.opportunity.expectedImpact;
+      }
+      
+      if (this.isFieldSelected('expectedOutcomes') && proposal.opportunity.expectedOutcomes) {
+        createRequest.expectedOutcomes = proposal.opportunity.expectedOutcomes;
       }
       
       if (this.isFieldSelected('expectedBeneficiaries') && proposal.opportunity.expectedBeneficiaries) {
@@ -1708,7 +1713,8 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     if (opp.strategicAlignment) updated.set('strategicAlignment', selectAll);
     if (opp.resultsFocus) updated.set('resultsFocus', selectAll);
     if (opp.expectedBeneficiaries) updated.set('expectedBeneficiaries', selectAll);
-    if (opp.intendedImpactOutcomes) updated.set('intendedImpactOutcomes', selectAll);
+    if (opp.expectedImpact) updated.set('expectedImpact', selectAll);
+    if (opp.expectedOutcomes) updated.set('expectedOutcomes', selectAll);
     if (opp.targetSigningDate) updated.set('targetSigningDate', selectAll);
     if (opp.targetDeliveryDate) updated.set('targetDeliveryDate', selectAll);
     if (opp.deliverables && opp.deliverables.length > 0) updated.set('deliverables', selectAll);
@@ -1740,7 +1746,8 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     if (opp.strategicAlignment) selected.set('strategicAlignment', true);
     if (opp.resultsFocus) selected.set('resultsFocus', true);
     if (opp.expectedBeneficiaries) selected.set('expectedBeneficiaries', true);
-    if (opp.intendedImpactOutcomes) selected.set('intendedImpactOutcomes', true);
+    if (opp.expectedImpact) selected.set('expectedImpact', true);
+    if (opp.expectedOutcomes) selected.set('expectedOutcomes', true);
     if (opp.targetSigningDate) selected.set('targetSigningDate', true);
     if (opp.targetDeliveryDate) selected.set('targetDeliveryDate', true);
     if (opp.deliverables && opp.deliverables.length > 0) selected.set('deliverables', true);

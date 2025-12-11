@@ -850,8 +850,24 @@
               </div>
             }
 
+            <!-- Expected Impact -->
+            @if (proposedOpportunity()!.opportunity.expectedImpact) {
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                  <i class="pi pi-chart-line text-blue-600"></i>
+                  {{ 'label.opportunity.expectedImpact' | translate }}
+                </label>
+                <textarea
+                  pTextarea
+                  [(ngModel)]="proposedOpportunity()!.opportunity.expectedImpact"
+                  rows="3"
+                  class="w-full bg-yellow-50 border-yellow-200">
+                </textarea>
+              </div>
+            }
+
             <!-- Expected Outcomes -->
-            @if (proposedOpportunity()!.opportunity.intendedImpactOutcomes) {
+            @if (proposedOpportunity()!.opportunity.expectedOutcomes) {
               <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                   <i class="pi pi-chart-line text-blue-600"></i>
@@ -859,7 +875,7 @@
                 </label>
                 <textarea
                   pTextarea
-                  [(ngModel)]="proposedOpportunity()!.opportunity.intendedImpactOutcomes"
+                  [(ngModel)]="proposedOpportunity()!.opportunity.expectedOutcomes"
                   rows="3"
                   class="w-full bg-yellow-50 border-yellow-200">
                 </textarea>

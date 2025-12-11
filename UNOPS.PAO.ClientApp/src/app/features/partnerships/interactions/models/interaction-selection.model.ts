@@ -143,7 +143,8 @@ export interface ProposedOpportunityResponseRaw {
     targetDeliveryDate?: string | null;
     strategicAlignment?: string | null;
     resultsFocus?: string | null;
-    intendedImpactOutcomes?: string | null;
+    expectedImpact?: string | null;
+    expectedOutcomes?: string | null;
     expectedBeneficiaries?: string | null;
     // Collection fields are stringified JSON from backend
     fundingPartners?: string | null;
@@ -182,7 +183,8 @@ export interface ProposedOpportunityResponse {
     targetDeliveryDate?: string | null;
     strategicAlignment?: string | null;
     resultsFocus?: string | null;
-    intendedImpactOutcomes?: string | null;
+    expectedImpact?: string | null;
+    expectedOutcomes?: string | null;
     expectedBeneficiaries?: string | null;
     fundingPartners?: ProposedFundingPartner[] | null;
     clientPartners?: ProposedClientPartner[] | null;

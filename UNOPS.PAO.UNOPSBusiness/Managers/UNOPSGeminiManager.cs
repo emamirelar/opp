@@ -4627,7 +4627,8 @@ public class UNOPSGeminiManager : IGeminiManager
                     TargetSigningDate = parsedResponse["targetSigningDate"]?.ToObject<DateTime?>(),
                     TargetDeliveryDate = parsedResponse["targetDeliveryDate"]?.ToObject<DateTime?>(),
                     ResultsFocus = parsedResponse["resultsFocus"]?.ToString(),
-                    IntendedImpactOutcomes = parsedResponse["intendedImpactOutcomes"]?.ToString(),
+                    ExpectedImpact = parsedResponse["expectedImpact"]?.ToString(),
+                    ExpectedOutcomes = parsedResponse["expectedOutcomes"]?.ToString(),
                     ExpectedBeneficiaries = parsedResponse["expectedBeneficiaries"]?.ToString(),
                     
                     // Stringify collection fields (these are arrays of objects after GetDependentDropdownValues)
