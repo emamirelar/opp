@@ -216,7 +216,14 @@
               <div class="flex items-start justify-between gap-4">
                 <div class="flex items-center gap-4 flex-1">
                   <!-- SDG Logo -->
-                  @if (getSDGLogo(sdg.sdgId)) {
+                  @if (sdg.sdgId === 'N/A') {
+                    <div
+                      class="flex items-center justify-center w-16 h-16 bg-gray-200 text-gray-700 font-semibold rounded shadow-sm text-center px-2"
+                      [style.font-size]="'0.875rem'"
+                    >
+                      {{ sdg.sdgNumber }}
+                    </div>
+                  } @else if (getSDGLogo(sdg.sdgId)) {
                     <img
                       [src]="getSDGLogo(sdg.sdgId)"
                       [alt]="'SDG ' + sdg.sdgNumber"
@@ -231,8 +238,12 @@
                   }
                   <div class="flex-1">
                     <h4 class="font-semibold text-unops-secondary mb-1">
-                      {{ "label.opportunity.sdg" | translate }}
-                      {{ sdg.sdgNumber }}: {{ sdg.sdgName }}
+                      @if (sdg.sdgId === 'N/A') {
+                        {{ sdg.sdgName }}
+                      } @else {
+                        {{ "label.opportunity.sdg" | translate }}
+                        {{ sdg.sdgName }}
+                      }
                     </h4>
                     <div class="flex items-center gap-2 mb-2">
                       <div
@@ -1445,10 +1456,25 @@
             [formControl]="expectedBeneficiariesControl"
             rows="4"
             class="w-full"
+            maxlength="1000"
             [placeholder]="
               'label.opportunity.expectedBeneficiariesPlaceholder' | translate
             "
           ></textarea>
+          @if (
+            expectedBeneficiariesControl.invalid &&
+            expectedBeneficiariesControl.touched &&
+            expectedBeneficiariesControl.errors?.['maxlength']
+          ) {
+            <p-message
+              severity="error"
+              variant="simple"
+              styleClass="mt-2"
+              [text]="
+                'validation.maxLength' | translate: { max: 1000 }
+              "
+            ></p-message>
+          }
         } @else {
           <p class="text-unops-neutral-800 leading-relaxed">
             {{ opportunity().expectedBeneficiaries || "-" }}
@@ -1510,6 +1536,16 @@
       </div>
     </div>
 
+    <!-- Validation Error Message -->
+    @if (sdgDialogValidationError()) {
+      <p-message
+        severity="error"
+        icon="pi pi-exclamation-triangle"
+        styleClass="mb-4 w-full"
+        [text]="sdgDialogValidationError()!"
+      ></p-message>
+    }
+
     <!-- STEP 1: Multi-Select SDGs -->
     @if (sdgDialogStep() === 1) {
       <div class="space-y-4">
@@ -1536,7 +1572,14 @@
                     [inputId]="'sdg-' + sdg.sdgId"
                   />
                 </div>
-                @if (sdg.sdgLogo) {
+                @if (isNASDG) {
+                  <div
+                    class="flex items-center justify-center w-16 h-16 bg-gray-200 text-gray-700 font-semibold rounded shadow-sm flex-shrink-0 text-center px-2"
+                    [style.font-size]="'0.875rem'"
+                  >
+                    {{ sdg.sdgNumber }}
+                  </div>
+                } @else if (sdg.sdgLogo) {
                   <img
                     [src]="sdg.sdgLogo"
                     [alt]="'SDG ' + sdg.sdgNumber"
@@ -1551,14 +1594,13 @@
                 }
                 <div class="flex-1 min-w-0">
                   <h4 class="font-semibold text-unops-secondary mb-1">
-                    {{ "label.opportunity.sdg" | translate }}
-                    {{ sdg.sdgNumber }}: {{ sdg.name }}
+                    @if (isNASDG) {
+                      {{ sdg.name }}
+                    } @else {
+                      {{ "label.opportunity.sdg" | translate }}
+                      {{ sdg.name }}
+                    }
                   </h4>
-                  @if (sdg.sdgDescription) {
-                    <p class="text-sm text-gray-600 line-clamp-2">
-                      {{ sdg.sdgDescription }}
-                    </p>
-                  }
                   
                   <!-- Primary/Secondary Selection (shown when SDG is selected) -->
                   @if (isSelected) {
@@ -1656,7 +1698,14 @@
                 <p-accordionTab>
                   <ng-template pTemplate="header">
                     <div class="flex items-center gap-3 w-full">
-                      @if (sdg.sdgLogo) {
+                      @if (sdg.sdgId === 'N/A') {
+                        <div
+                          class="flex items-center justify-center w-12 h-12 bg-gray-200 text-gray-700 font-semibold rounded shadow-sm flex-shrink-0 text-center px-1"
+                          [style.font-size]="'0.75rem'"
+                        >
+                          {{ sdg.sdgNumber }}
+                        </div>
+                      } @else if (sdg.sdgLogo) {
                         <img
                           [src]="sdg.sdgLogo"
                           [alt]="'SDG ' + sdg.sdgNumber"
@@ -1671,8 +1720,12 @@
                       }
                       <div class="flex-1 min-w-0">
                         <div class="font-semibold text-unops-secondary">
-                          {{ "label.opportunity.sdg" | translate }}
-                          {{ sdg.sdgNumber }}: {{ sdg.name }}
+                          @if (sdg.sdgId === 'N/A') {
+                            {{ sdg.name }}
+                          } @else {
+                            {{ "label.opportunity.sdg" | translate }}
+                            {{ sdg.name }}
+                          }
                         </div>
                         <div class="flex items-center gap-2 mt-1">
                           <div
@@ -1822,18 +1875,18 @@
           (onClick)="cancelSDGDialog()"
         />
         <p-button
-          [label]="'button.finish' | translate"
-          icon="pi pi-check"
-          severity="primary"
-          (onClick)="finalizeSDGSelections()"
-          [disabled]="selectedSDGCount() === 0"
-        />
-        <p-button
           [label]="'button.next' | translate"
           icon="pi pi-arrow-right"
           severity="primary"
           [outlined]="true"
           (onClick)="proceedToStep2()"
+          [disabled]="selectedSDGCount() === 0"
+        />
+        <p-button
+          [label]="'button.finish' | translate"
+          icon="pi pi-check"
+          severity="primary"
+          (onClick)="finalizeSDGSelections()"
           [disabled]="selectedSDGCount() === 0"
         />
         } @else {
