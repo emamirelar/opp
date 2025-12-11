@@ -84,15 +84,15 @@ public static class UNOPSMissionSeeder
             }
         }
 
-        // Delete UNOPS Missions that are no longer in the seed list
-        var missionsToDelete = existingMissions
-            .Where(m => !missionCodesToKeep.Contains(m.Code))
+        // Mark UNOPS Missions that are no longer in the seed list as Inactive (instead of deleting)
+        var missionsToDeactivate = existingMissions
+            .Where(m => !missionCodesToKeep.Contains(m.Code) && m.Status != EntityStatus.Inactive)
             .ToList();
 
-        foreach (var missionToDelete in missionsToDelete)
+        foreach (var missionToDeactivate in missionsToDeactivate)
         {
-            context.Set<UNOPSMission>().Remove(missionToDelete);
-            Console.WriteLine($"  🗑️  Deleted UNOPS Mission: {missionToDelete.Code} - {missionToDelete.Name}");
+            missionToDeactivate.Status = EntityStatus.Inactive;
+            Console.WriteLine($"  ⚠️  Marked UNOPS Mission as Inactive: {missionToDeactivate.Code} - {missionToDeactivate.Name}");
         }
 
         await context.SaveChangesAsync();
@@ -105,9 +105,9 @@ public static class UNOPSMissionSeeder
         {
             new UNOPSMission
             {
-                Code = "CLIMATE_BIODIVERSITY",
-                Name = "Climate, Biodiversity, and Pollution",
-                Description = "Address the interconnected challenges of climate change, biodiversity loss, and pollution",
+                Code = "TRIPLE_PLANETARY_CRISIS",
+                Name = "Triple Planetary Crisis",
+                Description = "Address the interconnected challenges of climate change, biodiversity loss, and environmental degradation",
                 DisplayOrder = 1,
                 IconClass = "pi pi-globe",
                 Status = EntityStatus.Active,
@@ -116,8 +116,8 @@ public static class UNOPSMissionSeeder
             new UNOPSMission
             {
                 Code = "ENERGY_TRANSITION",
-                Name = "Energy Access and Transition",
-                Description = "Increase energy access and accelerate the transition away from fossil fuels, promoting renewable energy and energy efficiency",
+                Name = "Energy Transition",
+                Description = "Increase energy access and accelerate net-zero transition, promoting renewable energy and energy efficiency",
                 DisplayOrder = 2,
                 IconClass = "pi pi-bolt",
                 Status = EntityStatus.Active,
@@ -125,61 +125,61 @@ public static class UNOPSMissionSeeder
             },
             new UNOPSMission
             {
-                Code = "DIGITAL_TRANSFORMATION",
-                Name = "Just Digital Transformation",
-                Description = "Advance just digital transformation, promoting developing countries' access to and use of digital infrastructure, technology and data",
+                Code = "SIDS_RESILIENCE_SUSTAINABILITY",
+                Name = "SIDS Resilience and Sustainability",
+                Description = "Support small island developing States in increasing resilience to environmental and economic shocks, and harnessing the benefits of a sustainable ocean economy",
                 DisplayOrder = 3,
-                IconClass = "pi pi-tablet",
-                Status = EntityStatus.Active,
-                IsDeleted = false
-            },
-            new UNOPSMission
-            {
-                Code = "SUSTAINABLE_FOOD",
-                Name = "Sustainable Food Systems",
-                Description = "Support the transition to sustainable food systems",
-                DisplayOrder = 4,
-                IconClass = "pi pi-sun",
-                Status = EntityStatus.Active,
-                IsDeleted = false
-            },
-            new UNOPSMission
-            {
-                Code = "SIDS_RESILIENCE",
-                Name = "SIDS Resilience and Ocean Economy",
-                Description = "Support small island developing States in increasing resilience to environmental and economic shocks and harness the benefits of a sustainable ocean economy",
-                DisplayOrder = 5,
                 IconClass = "pi pi-flag",
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
             new UNOPSMission
             {
-                Code = "FRAGILITY_EQUITY",
-                Name = "Fragility, Equity, and Community Resilience",
-                Description = "Address root causes of fragility, advance equity, and strengthen the resilience of communities affected by conflict and disaster",
-                DisplayOrder = 6,
-                IconClass = "pi pi-heart",
-                Status = EntityStatus.Active,
-                IsDeleted = false
-            },
-            new UNOPSMission
-            {
-                Code = "HEALTH_CARE",
-                Name = "Quality Health Care",
-                Description = "Enhance the availability of essential supplies, equipment and facilities for quality health care and services",
-                DisplayOrder = 7,
+                Code = "QUALITY_HEALTHCARE",
+                Name = "Quality Healthcare",
+                Description = "Strengthen the availability of essential health-related supplies, equipment and facilities necessary to deliver quality healthcare and services",
+                DisplayOrder = 4,
                 IconClass = "pi pi-heart-fill",
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
             new UNOPSMission
             {
-                Code = "SOCIAL_DEVELOPMENT",
-                Name = "Inclusive Social Development",
-                Description = "Provide essential and sustainable goods, services and infrastructure, rooted in the social development values of the United Nations Charter and the 2030 Agenda, to reduce inequalities and achieve inclusive social development",
-                DisplayOrder = 8,
+                Code = "JUST_DIGITAL_TRANSFORMATION",
+                Name = "Just Digital Transformation",
+                Description = "Shape a just digital transformation, promoting developing countries' access and use of digital infrastructures, technologies and data",
+                DisplayOrder = 5,
+                IconClass = "pi pi-tablet",
+                Status = EntityStatus.Active,
+                IsDeleted = false
+            },
+            new UNOPSMission
+            {
+                Code = "SOCIAL_PROTECTION_EQUALITY_EDUCATION_JOBS",
+                Name = "Social Protection, Equality, Education and Jobs",
+                Description = "Provide essential and sustainable services and infrastructure to communities and promote education and decent job creation to overcome inequalities and create prosperity",
+                DisplayOrder = 6,
                 IconClass = "pi pi-users",
+                Status = EntityStatus.Active,
+                IsDeleted = false
+            },
+            new UNOPSMission
+            {
+                Code = "HUMANITARIAN_DEVELOPMENT_PEACE_NEXUS",
+                Name = "Humanitarian, Development and Peace Nexus",
+                Description = "Support the holistic efforts to address the root causes of fragility and strengthen the resilience of communities affected by conflict and disasters",
+                DisplayOrder = 7,
+                IconClass = "pi pi-heart",
+                Status = EntityStatus.Active,
+                IsDeleted = false
+            },
+            new UNOPSMission
+            {
+                Code = "FOOD_SYSTEMS_TRANSFORMATION",
+                Name = "Food Systems Transformation",
+                Description = "Contribute to accelerating actions to support food security and healthy diets for all",
+                DisplayOrder = 8,
+                IconClass = "pi pi-sun",
                 Status = EntityStatus.Active,
                 IsDeleted = false
             }
