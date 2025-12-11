@@ -914,41 +914,107 @@ export class OpportunityDocumentsComponent implements OnInit {
           });
         }
       } else {
-        // File is already PDF - just link it (old behavior)
-        const linkModel = {
-          link: this.googleDriveLink,
-          googleId: this.googleDriveId,
-          name: this.selectedGoogleDriveFile.name || '',
-          type: this.selectedGoogleDriveFile.mimeType || '',
-          parentEntityName: 'Opportunity',
-          parentEntityId: this.opportunityId(),
-          documentTypeId: this.selectedDocumentType,
-        };
+        // File is already PDF - download from Google Drive and upload to GCS
+        // This ensures the file is stored in our GCS bucket for reliable access
+        
+        // If auth not available, try to initialize it now
+        if (!this.googleDriveAuthAvailable) {
+          try {
+            const authAvailable = await firstValueFrom(
+              this.googleDriveService.initializeAuth(),
+            );
+            this.googleDriveAuthAvailable = authAvailable;
 
-        this.documentService.linkFile(linkModel).subscribe({
-          next: (doc: any) => {
-            this.uploading.set(false);
-            this.showLinkDialog.set(false);
-            this.googleDriveLink = '';
-            this.googleDriveId = '';
-            this.selectedGoogleDriveFile = null;
-            this.selectedDocumentType = null;
-            this.showLinkValidationError.set(false);
-
-            this.feedbackService.showSuccessToast({
-              summary: this.translateService.instant('message.success'),
-              detail: this.translateService.instant(
-                'message.document.linkedSuccessfully',
-              ),
+            if (!authAvailable) {
+              this.feedbackService.showErrorToast({
+                summary: this.translateService.instant('message.error'),
+                detail:
+                  'Google Drive authorization failed. Please check your configuration and try again.',
+              });
+              this.uploading.set(false);
+              return;
+            }
+          } catch (error) {
+            console.error('❌ Failed to initialize Google Drive auth:', error);
+            this.feedbackService.showErrorToast({
+              summary: this.translateService.instant('message.error'),
+              detail:
+                'Failed to initialize Google Drive authorization. Please refresh the page and try again.',
             });
-
-            this.loadDocuments();
-          },
-          error: (error: any) => {
             this.uploading.set(false);
-            console.error('Link error:', error);
-          },
-        });
+            return;
+          }
+        }
+
+        // Show download progress
+        this.isConvertingFile = true;
+        this.conversionMessage = `Downloading "${this.selectedGoogleDriveFile.name}" from Drive...`;
+
+        try {
+          // Download the PDF file from Google Drive
+          const result = await firstValueFrom(
+            this.googleDriveService.downloadDriveFile(
+              this.googleDriveId,
+              this.selectedGoogleDriveFile.name || '',
+              this.selectedGoogleDriveFile.mimeType || 'application/pdf',
+            ),
+          );
+
+          // Convert base64 to File object
+          const blob = this.base64ToBlob(result.data, result.mimeType);
+          const pdfFile = new File([blob], result.name, {
+            type: result.mimeType,
+          });
+
+          // Upload PDF to GCS
+          const formData = new FormData();
+          formData.append('File', pdfFile);
+          formData.append('Name', result.name);
+          formData.append('ParentEntityName', 'Opportunity');
+          formData.append('ParentEntityId', this.opportunityId().toString());
+          formData.append(
+            'DocumentTypeId',
+            this.selectedDocumentType.toString(),
+          );
+          formData.append('UploadToGCS', 'true');
+          formData.append('Link', this.googleDriveLink); // Keep original Drive link
+          formData.append('GoogleId', this.googleDriveId); // Keep Google Drive ID
+
+          this.isConvertingFile = false;
+
+          // Upload to server
+          this.documentService.uploadFile(formData).subscribe({
+            next: (doc: any) => {
+              this.uploading.set(false);
+              this.showLinkDialog.set(false);
+              this.googleDriveLink = '';
+              this.googleDriveId = '';
+              this.selectedGoogleDriveFile = null;
+              this.selectedDocumentType = null;
+              this.showLinkValidationError.set(false);
+
+              this.feedbackService.showSuccessToast({
+                summary: this.translateService.instant('message.success'),
+                detail: this.translateService.instant(
+                  'message.document.uploadedSuccessfully',
+                ),
+              });
+
+              this.loadDocuments();
+            },
+            error: (error: any) => {
+              this.uploading.set(false);
+              console.error('Upload error:', error);
+            },
+          });
+        } catch (error: any) {
+          this.uploading.set(false);
+          this.isConvertingFile = false;
+          this.feedbackService.showErrorToast({
+            summary: this.translateService.instant('message.error'),
+            detail: `Failed to download Drive file: ${error.message || 'Unknown error'}`,
+          });
+        }
       }
     } catch (error) {
       this.uploading.set(false);

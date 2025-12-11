@@ -351,23 +351,33 @@
               [disabled]="isWaitingResponse()">
             </p-button>
             
+            <!-- Hidden file input for local file selection -->
             <input
               #fileInput
               type="file"
               class="hidden"
               (change)="onFileSelect($event)"
-              [accept]="'image/*,application/pdf,text/*,audio/*'"
+              [accept]="'image/*,application/pdf,text/*,audio/*,.doc,.docx,.xls,.xlsx,.ppt,.pptx'"
               [multiple]="false">
             
+            <!-- Attach button with menu for upload options -->
             <p-button
               icon="pi pi-paperclip"
-              (onClick)="fileInput.click()"
+              (onClick)="showAttachMenu($event)"
               [text]="true"
               [rounded]="true"
               size="small"
               pTooltip="{{ 'aiAssistant.attachFile' | translate }}"
               [disabled]="isProcessingFile()">
             </p-button>
+            
+            <!-- Attach menu with upload options -->
+            <p-menu
+              #attachMenu
+              [model]="attachMenuItems()"
+              [popup]="true"
+              appendTo="body">
+            </p-menu>
           </div>
           
           <div class="flex gap-1">

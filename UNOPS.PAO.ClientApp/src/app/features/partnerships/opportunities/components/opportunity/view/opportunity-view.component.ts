@@ -146,6 +146,9 @@ export class OpportunityViewComponent
   // Unsaved changes tracking for sticky save bar (Option 2 UX)
   sectionsWithUnsavedChanges = signal<Set<string>>(new Set());
   readonly hasUnsavedChanges = computed(() => this.sectionsWithUnsavedChanges().size > 0);
+  
+  // Document upload trigger - incremented when documents are uploaded to notify WHAT section to refresh AI recommendations
+  documentUploadTrigger = signal<number>(0);
 
   @ViewChild('contentScrollContainer', { read: ElementRef })
   contentScrollContainer?: ElementRef;
@@ -761,6 +764,19 @@ export class OpportunityViewComponent
       this.shouldScrollAfterDataLoad = false;
       this._loadRecordDetails();
     }
+  }
+
+  /**
+   * @description Handle document upload/link events from the documents component
+   * Reloads the opportunity AND triggers AI recommendations refresh in the WHAT section
+   * @returns {void}
+   */
+  handleDocumentUploaded(): void {
+    // Increment the document upload trigger to notify WHAT section to refresh AI recommendations
+    this.documentUploadTrigger.update(v => v + 1);
+    
+    // Also reload the opportunity data
+    this.reloadOpportunity();
   }
 
   /**

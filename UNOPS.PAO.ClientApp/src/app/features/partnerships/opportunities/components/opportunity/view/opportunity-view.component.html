@@ -237,7 +237,7 @@
           [collapsed]="documentsCollapsed()"
           [canUpdate]="canUpdate()"
           (togglePanel)="toggleDocumentsPanel()"
-          (opportunityUpdated)="reloadOpportunity()"
+          (opportunityUpdated)="handleDocumentUploaded()"
         />
       </div>
 
@@ -280,6 +280,7 @@
               [opportunity]="opportunity()!"
               [canUpdate]="canUpdate()"
               [suggestions]="whatSuggestions()"
+              [documentUploadTrigger]="documentUploadTrigger()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
               (changesDetected)="handleSectionChangesDetected('what')"
               (changesSavedOrDiscarded)="handleSectionChangesSaved('what')"
