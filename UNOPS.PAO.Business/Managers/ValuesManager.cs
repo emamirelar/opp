@@ -97,6 +97,12 @@ public class ValuesManager : IApplicationService
     public IEnumerable<OutputModel> GetOutputs()
          => repository.GetOutputs().Select(mapper.Map<OutputModel>);
 
+    /// <summary>
+    /// Gets outputs by their IDs for semantic search results
+    /// </summary>
+    public IEnumerable<OutputModel> GetOutputsByIds(IEnumerable<int> ids)
+         => repository.GetOutputsByIds(ids).Select(mapper.Map<OutputModel>);
+
     public IEnumerable<SDGModel> GetSDGs()
          => repository.GetSDGs().Select(mapper.Map<SDGModel>);
 
@@ -124,8 +130,8 @@ public class ValuesManager : IApplicationService
     public IEnumerable<UNCFIndicatorModel> GetUNCFIndicatorsByOutcomeId(int outcomeId)
          => repository.GetUNCFIndicatorsByOutcomeId(outcomeId).Select(mapper.Map<UNCFIndicatorModel>);
 
-    public IEnumerable<UNOPSMissionModel> GetUNOPSMissions()
-         => repository.GetUNOPSMissions().Select(mapper.Map<UNOPSMissionModel>);
+    public IEnumerable<UNOPSMissionModel> GetUNOPSMissions(bool includeInactive = false)
+         => repository.GetUNOPSMissions(includeInactive).Select(mapper.Map<UNOPSMissionModel>);
 
     public async Task<IEnumerable<SimpleValueModel>> GetEntityRolesAsync(string entityType)
          => await repository.GetEntityRolesAsync(entityType);

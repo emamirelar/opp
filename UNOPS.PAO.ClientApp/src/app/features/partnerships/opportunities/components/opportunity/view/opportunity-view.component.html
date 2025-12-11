@@ -237,7 +237,7 @@
           [collapsed]="documentsCollapsed()"
           [canUpdate]="canUpdate()"
           (togglePanel)="toggleDocumentsPanel()"
-          (opportunityUpdated)="reloadOpportunity()"
+          (opportunityUpdated)="handleDocumentUploaded()"
         />
       </div>
 
@@ -246,8 +246,10 @@
         <div class="flex flex-col gap-6">
           <!-- ANALYSIS - Quick Stats & Insights -->
           <div id="section-analysis">
-            <app-opportunity-analysis-section 
-              [opportunity]="opportunity()!" />
+            <app-opportunity-analysis-section
+              [opportunity]="opportunity()!"
+              [sectionSaveTrigger]="sectionSaveTrigger()"
+            />
           </div>
 
           <!-- OVERVIEW Section - Name & Description -->
@@ -280,6 +282,8 @@
               [opportunity]="opportunity()!"
               [canUpdate]="canUpdate()"
               [suggestions]="whatSuggestions()"
+              [documentUploadTrigger]="documentUploadTrigger()"
+              [sectionSaveTrigger]="sectionSaveTrigger()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
               (changesDetected)="handleSectionChangesDetected('what')"
               (changesSavedOrDiscarded)="handleSectionChangesSaved('what')"
@@ -333,6 +337,8 @@
               #teamSection
               [opportunity]="opportunity()!"
               [canUpdate]="canUpdate()"
+              [suggestions]="teamSuggestions()"
+              [sectionSaveTrigger]="sectionSaveTrigger()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
               (changesDetected)="handleSectionChangesDetected('team')"
               (changesSavedOrDiscarded)="handleSectionChangesSaved('team')"
@@ -377,7 +383,10 @@
 
           <!-- Risks Section - Insights & Recommendations -->
           <div id="section-risks">
-            <app-opportunity-dst-section [opportunity]="opportunity()!" />
+            <app-opportunity-dst-section
+              [opportunity]="opportunity()!"
+              [sectionSaveTrigger]="sectionSaveTrigger()"
+            />
           </div>
 
           <!-- Related Items Section -->

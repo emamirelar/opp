@@ -3,7 +3,6 @@ namespace UNOPS.PAO.Presentation.Controllers.Shared;
 using System.ComponentModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using UNOPS.PAO.Business.Managers;
 using UNOPS.PAO.DataAccess.Services;
@@ -12,7 +11,6 @@ using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Utilities.Helpers;
-using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Models.Users;
@@ -194,9 +192,9 @@ public class ValuesController : BaseController
     }
 
     [HttpGet(APIDictionary.UNOPSMissions)]
-    public async Task<ActionResult> GetUNOPSMissions()
+    public async Task<ActionResult> GetUNOPSMissions([FromQuery] bool includeInactive = false)
     {
-        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetUNOPSMissions()));
+        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetUNOPSMissions(includeInactive)));
     }
 
     [HttpGet(APIDictionary.GeminiModels)]

@@ -960,6 +960,8 @@ export class OpportunityWhoSectionComponent implements OnInit {
   openAddExternalStakeholderDialog(): void {
     this.contactControl.reset();
     this.showExternalStakeholderValidationError.set(false);
+    // Refresh contacts from API when dialog opens
+    this.loadContacts();
     this.showExternalStakeholderDialog.set(true);
   }
   

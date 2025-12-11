@@ -127,24 +127,48 @@ export interface ProposedStakeholder {
 
 /**
  * Proposed opportunity response from backend (raw format with stringified collections)
+ * Aligned with ProposedOpportunityData in C# backend
  */
 export interface ProposedOpportunityResponseRaw {
   opportunity: {
+    // Basic Information
     name: string;
     description: string;
     partnerReference?: string;
+    
+    // Organizational & Initiative Type
     responsibleOrgUnitId?: number | null;
     responsibleOrgUnitName?: string | null;
     proposedInitiativeTypeId?: number | null;
     proposedInitiativeTypeName?: string | null;
+    
+    // Financial Information
     initiativeBudgetUSD?: number | null;
     partnershipAgreementReference?: string | null;
+    
+    // WHEN Section - Timeline Fields (aligned with ApplyOpportunityAiChangesRequest)
     targetSigningDate?: string | null;
+    isTargetSigningDateFirm?: boolean | null;
+    signingDateNotes?: string | null;
+    submissionDeadline?: string | null;
+    implementationStartDate?: string | null;
     targetDeliveryDate?: string | null;
-    strategicAlignment?: string | null;
+    
+    // WHY Section - Strategic Information
+    challenges?: string | null;
     resultsFocus?: string | null;
-    intendedImpactOutcomes?: string | null;
+    expectedImpact?: string | null;
+    expectedOutcomes?: string | null;
     expectedBeneficiaries?: string | null;
+    estimatedDirectBeneficiaries?: number | null;
+    estimatedIndirectBeneficiaries?: number | null;
+    beneficiariesToBeDetermined?: boolean | null;
+    
+    // WHAT Section - Delivery & Stakeholders
+    deliveryModality?: number | null;
+    miscExternalStakeholders?: string | null;
+    externalStakeholderNotes?: string | null;
+    
     // Collection fields are stringified JSON from backend
     fundingPartners?: string | null;
     clientPartners?: string | null;
@@ -166,24 +190,49 @@ export interface ProposedOpportunityResponseRaw {
 
 /**
  * Proposed opportunity response (parsed format with typed collections)
+ * Aligned with ProposedOpportunityData in C# backend and opportunity-documents field mappings
  */
 export interface ProposedOpportunityResponse {
   opportunity: {
+    // Basic Information
     name: string;
     description: string;
     partnerReference?: string;
+    
+    // Organizational & Initiative Type
     responsibleOrgUnitId?: number | null;
     responsibleOrgUnitName?: string | null;
     proposedInitiativeTypeId?: number | null;
     proposedInitiativeTypeName?: string | null;
+    
+    // Financial Information
     initiativeBudgetUSD?: number | null;
     partnershipAgreementReference?: string | null;
+    
+    // WHEN Section - Timeline Fields (aligned with ApplyOpportunityAiChangesRequest)
     targetSigningDate?: string | null;
+    isTargetSigningDateFirm?: boolean | null;
+    signingDateNotes?: string | null;
+    submissionDeadline?: string | null;
+    implementationStartDate?: string | null;
     targetDeliveryDate?: string | null;
-    strategicAlignment?: string | null;
+    
+    // WHY Section - Strategic Information
+    challenges?: string | null;
     resultsFocus?: string | null;
-    intendedImpactOutcomes?: string | null;
+    expectedImpact?: string | null;
+    expectedOutcomes?: string | null;
     expectedBeneficiaries?: string | null;
+    estimatedDirectBeneficiaries?: number | null;
+    estimatedIndirectBeneficiaries?: number | null;
+    beneficiariesToBeDetermined?: boolean | null;
+    
+    // WHAT Section - Delivery & Stakeholders
+    deliveryModality?: number | null;
+    miscExternalStakeholders?: string | null;
+    externalStakeholderNotes?: string | null;
+    
+    // Collection fields (parsed from stringified JSON)
     fundingPartners?: ProposedFundingPartner[] | null;
     clientPartners?: ProposedClientPartner[] | null;
     stakeholders?: ProposedStakeholder[] | null;
@@ -215,6 +264,7 @@ export interface ProposeOpportunityRequest {
   interactionIds?: number[];
   newDocumentStoragePaths?: string[]; // GCS URIs for newly uploaded documents
   newDocumentMimeTypes?: string[]; // MIME types for newly uploaded documents
+  newDocumentTypeIds?: (number | null)[]; // Document type IDs for newly uploaded documents
   existingDocumentIds?: number[]; // IDs of existing documents in database
 }
 

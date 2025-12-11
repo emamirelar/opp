@@ -112,6 +112,53 @@ export interface Output {
 }
 
 /**
+ * @interface OutputSemanticSearchRequest
+ * @description Request model for semantic search of Products & Services
+ */
+export interface OutputSemanticSearchRequest {
+  /** The user's text/phrase to search for (in their own words) */
+  searchText: string;
+  /** Maximum number of results to return (default: 5) */
+  maxResults?: number;
+  /** Minimum similarity threshold (0.0 - 1.0, default: 0.3) */
+  minSimilarity?: number;
+}
+
+/**
+ * @interface OutputSemanticSearchResponse
+ * @description Response model for semantic search of Products & Services
+ */
+export interface OutputSemanticSearchResponse {
+  /** The original search text entered by the user */
+  searchText: string;
+  /** List of matched outputs with similarity scores */
+  matches: OutputSemanticSearchMatch[];
+  /** Total number of matches found */
+  totalMatches: number;
+}
+
+/**
+ * @interface OutputSemanticSearchMatch
+ * @description A single match result from semantic search
+ */
+export interface OutputSemanticSearchMatch {
+  /** The matched Output */
+  output: Output;
+  /** Combined similarity score (0.0 - 1.0) */
+  similarityScore: number;
+  /** The level at which the match was found (Level0, Level1, etc.) */
+  matchedLevel: string;
+  /** The hierarchy path that matched */
+  matchedHierarchy: string;
+  /** Semantic score component */
+  semanticScore: number;
+  /** Keyword match score component */
+  keywordScore: number;
+  /** Text similarity score component */
+  textSimilarityScore: number;
+}
+
+/**
  * @interface SDG
  * @description Sustainable Development Goal model
  */
@@ -307,6 +354,19 @@ export class ValuesService {
   }
 
   /**
+   * @description Perform semantic search for Products & Services using AI embeddings
+   * User enters text in their own words and gets matched UNOPS taxonomy items
+   * Uses combined text similarity + embedding search for best results
+   * @param {OutputSemanticSearchRequest} request - The search request
+   * @returns {Observable<OutputSemanticSearchResponse>}
+   * @since 1.0.0
+   */
+  semanticSearchOutputs(request: OutputSemanticSearchRequest): Observable<OutputSemanticSearchResponse> {
+    // Call the opportunity controller endpoint for AI-powered deliverable search
+    return this.http.post<OutputSemanticSearchResponse>('/api/opportunity/find-deliverable', request);
+  }
+
+  /**
    * @description Get all SDGs
    * @returns {Observable<SDG[]>}
    * @since 1.0.0
@@ -317,10 +377,14 @@ export class ValuesService {
   
   /**
    * @description Get all UNOPS Strategic Missions
+   * @param {boolean} includeInactive - Whether to include inactive missions (default: false)
    * @returns Observable<UNOPSMission[]>
    */
-  getUNOPSMissions(): Observable<import('../../models/opportunity.model').UNOPSMission[]> {
-    return this.http.get<import('../../models/opportunity.model').UNOPSMission[]>(`${this.baseUrl}/unops-missions`);
+  getUNOPSMissions(includeInactive: boolean = false): Observable<import('../../models/opportunity.model').UNOPSMission[]> {
+    const url = includeInactive 
+      ? `${this.baseUrl}/unops-missions?includeInactive=true`
+      : `${this.baseUrl}/unops-missions`;
+    return this.http.get<import('../../models/opportunity.model').UNOPSMission[]>(url);
   }
 
   /**

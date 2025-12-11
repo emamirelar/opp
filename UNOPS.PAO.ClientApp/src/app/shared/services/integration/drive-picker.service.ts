@@ -1,8 +1,23 @@
 import { EventEmitter, Injectable, Output } from '@angular/core';
 import { ConfigurationService } from '@core/services/configuration';
+import { Observable, Subject } from 'rxjs';
 
 declare const google: any;
 declare const gapi: any;
+
+/**
+ * @description Interface representing a file selected from Google Drive
+ * @export
+ */
+export interface DriveFile {
+  id: string;
+  name: string;
+  mimeType: string;
+  url?: string;
+  iconUrl?: string;
+  lastEditedUtc?: number;
+  sizeBytes?: number;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -14,6 +29,9 @@ export class DrivePickerService {
   private googleDriveDefaultFolder: string = '';
   private pickerReady = false;
   private acceptedMIMETypes = '';
+  
+  /** Subject for Observable-based file picking */
+  private pickFilesSubject: Subject<DriveFile[]> | null = null;
 
   @Output() onFilesSelectedEmitter = new EventEmitter<any>();
 
@@ -111,7 +129,31 @@ export class DrivePickerService {
     if (data.action === google.picker.Action.PICKED) {
       var selectedDocuments = data[google.picker.Response.DOCUMENTS];
 
+      // Emit via EventEmitter for legacy support
       this.onFilesSelectedEmitter.emit({ processed: false, files: selectedDocuments });
+      
+      // Emit via Subject for Observable-based API
+      if (this.pickFilesSubject) {
+        const driveFiles: DriveFile[] = selectedDocuments.map((doc: any) => ({
+          id: doc.id,
+          name: doc.name,
+          mimeType: doc.mimeType,
+          url: doc.url || `https://drive.google.com/file/d/${doc.id}/view`,
+          iconUrl: doc.iconUrl,
+          lastEditedUtc: doc.lastEditedUtc,
+          sizeBytes: doc.sizeBytes,
+        }));
+        this.pickFilesSubject.next(driveFiles);
+        this.pickFilesSubject.complete();
+        this.pickFilesSubject = null;
+      }
+    } else if (data.action === google.picker.Action.CANCEL) {
+      // Handle cancel - complete the Subject with empty array
+      if (this.pickFilesSubject) {
+        this.pickFilesSubject.next([]);
+        this.pickFilesSubject.complete();
+        this.pickFilesSubject = null;
+      }
     }
   }
 
@@ -121,5 +163,20 @@ export class DrivePickerService {
     } else {
       this.createPicker();
     }
+  }
+
+  /**
+   * @description Pick files from Google Drive with Observable-based API
+   * @returns {Observable<DriveFile[]>} Observable that emits selected files
+   */
+  public pickFiles(): Observable<DriveFile[]> {
+    // Create a new Subject for this pick operation
+    this.pickFilesSubject = new Subject<DriveFile[]>();
+    
+    // Open the picker
+    this.openPicker();
+    
+    // Return the Observable
+    return this.pickFilesSubject.asObservable();
   }
 }

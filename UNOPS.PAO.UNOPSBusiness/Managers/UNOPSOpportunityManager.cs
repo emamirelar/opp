@@ -115,17 +115,51 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                     .FirstOrDefault();
             }
 
-            entity.FundingPartners = model.FundingPartners
-                .Select(fp => {
-                    var mapped = mapper.Map<OpportunityFundingPartner>(fp);
-                    // Set default currency if not provided
-                    if (mapped.CurrencyId == 0)
+            // Use exchange rate service for currency conversion (same as ApplyAiChangesAsync)
+            var exchangeRateService = new ExchangeRateService(uNOPSAppDbContext);
+            var fundingPartners = new List<OpportunityFundingPartner>();
+            
+            foreach (var fp in model.FundingPartners)
+            {
+                var mapped = mapper.Map<OpportunityFundingPartner>(fp);
+                
+                // Set default currency if not provided
+                var currencyId = mapped.CurrencyId > 0 ? mapped.CurrencyId : defaultCurrencyId;
+                mapped.CurrencyId = currencyId;
+                
+                var currency = await uNOPSAppDbContext.Currencies.FindAsync(currencyId);
+                var amount = mapped.Amount;
+                
+                // Convert amount to USD if amount is provided (same logic as ApplyAiChangesAsync)
+                if (amount.HasValue && amount.Value > 0 && currency != null)
+                {
+                    try
                     {
-                        mapped.CurrencyId = defaultCurrencyId;
+                        var conversionResult = await exchangeRateService.ConvertToUSDAsync(
+                            amount.Value, 
+                            currency.Code ?? "USD"
+                        );
+                        
+                        mapped.AmountUSD = conversionResult.AmountUSD;
+                        mapped.ExchangeRate = conversionResult.ExchangeRate;
+                        mapped.ExchangeRateDate = conversionResult.ExchangeRateDate;
+                        mapped.ExchangeRateId = conversionResult.ExchangeRateId > 0 ? conversionResult.ExchangeRateId : null;
                     }
-                    return mapped;
-                })
-                .ToList();
+                    catch (Exception ex)
+                    {
+                        // Log warning but don't fail the operation
+                        Console.WriteLine($"Warning: Could not convert amount to USD for partner {fp.PartnerId}: {ex.Message}");
+                        // If conversion fails, just store the original amount as USD
+                        mapped.AmountUSD = amount.Value;
+                        mapped.ExchangeRate = 1.0m;
+                        mapped.ExchangeRateDate = DateTime.UtcNow;
+                    }
+                }
+                
+                fundingPartners.Add(mapped);
+            }
+            
+            entity.FundingPartners = fundingPartners;
         }
 
         if (model.ClientPartners != null && model.ClientPartners.Any())
@@ -1202,6 +1236,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             entity.Description = request.Description;
         }
 
+        // Update initiative budget (allow setting to null to clear)
+        entity.InitiativeBudgetUSD = request.InitiativeBudgetUSD;
+
         await opportunityRepository.UpdateAsync(entity);
 
         // Reload with all includes for complete response
@@ -1307,9 +1344,14 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         entity.EstimatedIndirectBeneficiaries = request.EstimatedIndirectBeneficiaries;
         entity.BeneficiariesToBeDetermined = request.BeneficiariesToBeDetermined;
 
-        if (request.IntendedImpactOutcomes != null)
+        if (request.ExpectedImpact != null)
         {
-            entity.IntendedImpactOutcomes = request.IntendedImpactOutcomes;
+            entity.ExpectedImpact = request.ExpectedImpact;
+        }
+
+        if (request.ExpectedOutcomes != null)
+        {
+            entity.ExpectedOutcomes = request.ExpectedOutcomes;
         }
 
         if (request.Challenges != null)
@@ -2659,6 +2701,11 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             entity.ProposedInitiativeTypeId = request.ProposedInitiativeTypeId.Value;
         }
 
+        if (request.DeliveryModality.HasValue)
+        {
+            entity.DeliveryModality = (DeliveryModality)request.DeliveryModality.Value;
+        }
+
         // Update deliverables
         if (request.Deliverables != null)
         {
@@ -2682,19 +2729,44 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
         // WHY Section - Update strategic properties
 
+        if (request.Challenges != null)
+        {
+            entity.Challenges = request.Challenges;
+        }
+
         if (request.ResultsFocus != null)
         {
             entity.ResultsFocus = request.ResultsFocus;
         }
 
-        if (request.IntendedImpactOutcomes != null)
+        if (request.ExpectedImpact != null)
         {
-            entity.IntendedImpactOutcomes = request.IntendedImpactOutcomes;
+            entity.ExpectedImpact = request.ExpectedImpact;
+        }
+
+        if (request.ExpectedOutcomes != null)
+        {
+            entity.ExpectedOutcomes = request.ExpectedOutcomes;
         }
 
         if (request.ExpectedBeneficiaries != null)
         {
             entity.ExpectedBeneficiaries = request.ExpectedBeneficiaries;
+        }
+
+        if (request.EstimatedDirectBeneficiaries.HasValue)
+        {
+            entity.EstimatedDirectBeneficiaries = request.EstimatedDirectBeneficiaries.Value;
+        }
+
+        if (request.EstimatedIndirectBeneficiaries.HasValue)
+        {
+            entity.EstimatedIndirectBeneficiaries = request.EstimatedIndirectBeneficiaries.Value;
+        }
+
+        if (request.BeneficiariesToBeDetermined.HasValue)
+        {
+            entity.BeneficiariesToBeDetermined = request.BeneficiariesToBeDetermined.Value;
         }
 
         // Update SDGs
@@ -2739,15 +2811,63 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                     .FirstOrDefault();
             }
 
-            // Add new funding partners
-            entity.FundingPartners = request.FundingPartners
-                .Select(partnerId => new OpportunityFundingPartner
+            // Add new funding partners with amounts if provided - using exchange rate conversion
+            var exchangeRateService = new ExchangeRateService(context);
+            var fundingPartners = new List<OpportunityFundingPartner>();
+            
+            foreach (var fp in request.FundingPartners)
+            {
+                var currencyId = fp.CurrencyId ?? defaultCurrencyId;
+                var currency = await context.Currencies.FindAsync(currencyId);
+                var amount = fp.Amount ?? fp.FundedAmount; // Use Amount or FundedAmount alias
+                
+                var fundingPartner = new OpportunityFundingPartner
                 {
                     OpportunityId = id,
-                    PartnerId = partnerId,
-                    CurrencyId = defaultCurrencyId // Set default USD currency
-                })
-                .ToList();
+                    PartnerId = fp.PartnerId,
+                    Amount = amount,
+                    Percentage = fp.Percentage,
+                    CurrencyId = currencyId,
+                    FeePercentage = fp.FeePercentage,
+                    FeeAmount = fp.FeeAmount,
+                    FeeAmountUSD = fp.FeeAmountUSD,
+                    IsAmountBasedFee = fp.IsAmountBasedFee,
+                    PartnershipAgreementReference = fp.PartnershipAgreementReference,
+                    DocumentId = fp.DocumentId,
+                    IsPooledContribution = fp.IsPooledContribution,
+                    SelectedPartnerAgreementNumber = fp.SelectedPartnerAgreementNumber
+                };
+                
+                // Convert amount to USD if amount is provided (same logic as UpdateWhoSectionAsync)
+                if (amount.HasValue && amount.Value > 0 && currency != null)
+                {
+                    try
+                    {
+                        var conversionResult = await exchangeRateService.ConvertToUSDAsync(
+                            amount.Value, 
+                            currency.Code ?? "USD"
+                        );
+                        
+                        fundingPartner.AmountUSD = conversionResult.AmountUSD;
+                        fundingPartner.ExchangeRate = conversionResult.ExchangeRate;
+                        fundingPartner.ExchangeRateDate = conversionResult.ExchangeRateDate;
+                        fundingPartner.ExchangeRateId = conversionResult.ExchangeRateId > 0 ? conversionResult.ExchangeRateId : null;
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log warning but don't fail the operation
+                        Console.WriteLine($"Warning: Could not convert amount to USD for partner {fp.PartnerId}: {ex.Message}");
+                        // If conversion fails, just store the original amount as USD
+                        fundingPartner.AmountUSD = amount.Value;
+                        fundingPartner.ExchangeRate = 1.0m;
+                        fundingPartner.ExchangeRateDate = DateTime.UtcNow;
+                    }
+                }
+                
+                fundingPartners.Add(fundingPartner);
+            }
+            
+            entity.FundingPartners = fundingPartners;
         }
 
         if (request.ClientPartners != null)
@@ -2768,25 +2888,93 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 .ToList();
         }
 
-        if (request.Stakeholders != null)
+        if (request.Stakeholders != null && request.Stakeholders.Any())
         {
-            // Remove existing stakeholders
+            // Get the "Opportunity Manager" role ID to preserve it
+            var opportunityManagerRole = await context.Set<EntityRole>()
+                .Where(er => er.EntityType == "Opportunity" && er.Name == "Opportunity Manager" && !er.IsDeleted)
+                .FirstOrDefaultAsync();
+            
+            var opportunityManagerRoleId = opportunityManagerRole?.Id;
+            
+            // Find existing Opportunity Manager (to preserve if AI doesn't provide one)
+            OpportunityStakeholder? existingOpportunityManager = null;
+            if (opportunityManagerRoleId.HasValue && entity.Stakeholders != null)
+            {
+                existingOpportunityManager = entity.Stakeholders
+                    .FirstOrDefault(s => s.EntityRoleId == opportunityManagerRoleId.Value && s.UserId.HasValue);
+            }
+            
+            // Check if AI-extracted stakeholders include an Opportunity Manager
+            var aiHasOpportunityManager = opportunityManagerRoleId.HasValue && 
+                request.Stakeholders.Any(s => s.EntityRoleId == opportunityManagerRoleId.Value && s.UserId.HasValue);
+            
+            // Remove existing stakeholders EXCEPT Opportunity Manager if AI doesn't provide one
             if (entity.Stakeholders != null && entity.Stakeholders.Any())
             {
-                context.Set<OpportunityStakeholder>().RemoveRange(entity.Stakeholders);
+                var stakeholdersToRemove = entity.Stakeholders
+                    .Where(s => 
+                        // Remove all if AI provides Opportunity Manager
+                        aiHasOpportunityManager ||
+                        // Otherwise, keep the existing Opportunity Manager
+                        (opportunityManagerRoleId.HasValue && s.EntityRoleId != opportunityManagerRoleId.Value))
+                    .ToList();
+                
+                if (stakeholdersToRemove.Any())
+                {
+                    context.Set<OpportunityStakeholder>().RemoveRange(stakeholdersToRemove);
+                }
             }
 
-            // Add new stakeholders
-            entity.Stakeholders = request.Stakeholders
-                .Select(entityRoleId => new OpportunityStakeholder
+            // Add new stakeholders from AI (with proper userId and entityRoleId)
+            var newStakeholders = request.Stakeholders
+                .Where(s => s.UserId.HasValue) // Only add stakeholders with valid user IDs
+                .Select(s => new OpportunityStakeholder
                 {
                     OpportunityId = id,
-                    EntityRoleId = entityRoleId
+                    UserId = s.UserId,
+                    EntityRoleId = s.EntityRoleId,
+                    IsInternal = true,
+                    StakeholderType = "Internal",
+                    Notes = s.Notes
                 })
                 .ToList();
+
+            // Initialize stakeholders list if null
+            entity.Stakeholders ??= new List<OpportunityStakeholder>();
+            
+            // If AI doesn't have Opportunity Manager but we have one, keep it
+            if (!aiHasOpportunityManager && existingOpportunityManager != null)
+            {
+                // Filter out any existing stakeholders that are the preserved Opportunity Manager
+                entity.Stakeholders = entity.Stakeholders
+                    .Where(s => s.Id == existingOpportunityManager.Id)
+                    .ToList();
+            }
+            else
+            {
+                // Clear for fresh add
+                entity.Stakeholders = new List<OpportunityStakeholder>();
+            }
+            
+            // Add all new stakeholders
+            foreach (var stakeholder in newStakeholders)
+            {
+                entity.Stakeholders.Add(stakeholder);
+            }
         }
 
-        // WHERE Section - Update countries
+        if (request.MiscExternalStakeholders != null)
+        {
+            entity.MiscExternalStakeholders = request.MiscExternalStakeholders;
+        }
+
+        if (request.ExternalStakeholderNotes != null)
+        {
+            entity.ExternalStakeholderNotes = request.ExternalStakeholderNotes;
+        }
+
+        // WHERE Section - Update countries (same logic as UpdateWhereSectionAsync)
         if (request.Countries != null)
         {
             // Remove existing countries
@@ -2795,12 +2983,18 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 context.Set<OpportunityCountry>().RemoveRange(entity.Countries);
             }
 
-            // Add new countries
+            // Compute OrgUnitWithStrategyId for each country (same as UpdateWhereSectionAsync)
+            var countryOrgUnitStrategyMap = await ComputeOrgUnitWithStrategyForCountriesAsync(request.Countries);
+
+            // Add new countries with OrgUnitWithStrategyId computed
             entity.Countries = request.Countries
                 .Select(countryId => new OpportunityCountry
                 {
                     OpportunityId = id,
-                    CountryId = countryId
+                    CountryId = countryId,
+                    OrgUnitWithStrategyId = countryOrgUnitStrategyMap.ContainsKey(countryId) 
+                        ? countryOrgUnitStrategyMap[countryId] 
+                        : null
                 })
                 .ToList();
         }
@@ -2814,6 +3008,26 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         if (request.TargetDeliveryDate.HasValue)
         {
             entity.TargetDeliveryDate = request.TargetDeliveryDate.Value;
+        }
+
+        if (request.ImplementationStartDate.HasValue)
+        {
+            entity.ImplementationStartDate = request.ImplementationStartDate.Value;
+        }
+
+        if (request.SubmissionDeadline.HasValue)
+        {
+            entity.SubmissionDeadline = request.SubmissionDeadline.Value;
+        }
+
+        if (request.IsTargetSigningDateFirm.HasValue)
+        {
+            entity.IsTargetSigningDateFirm = request.IsTargetSigningDateFirm.Value;
+        }
+
+        if (request.SigningDateNotes != null)
+        {
+            entity.SigningDateNotes = request.SigningDateNotes;
         }
 
         // Other properties
@@ -2845,6 +3059,127 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
         // Reload with all includes for complete response
         return await GetOpportunityAsync(entity.Id);
+    }
+
+    /// <summary>
+    /// Creates an opportunity from AI-generated proposal with user-accepted fields
+    /// Handles deduplication, context partner inclusion, and exchange rate calculations
+    /// </summary>
+    /// <param name="request">Create request with accepted fields and resolved IDs</param>
+    /// <param name="currentUserId">Current user ID for assignment as Opportunity Manager</param>
+    /// <returns>Created opportunity model</returns>
+    public async Task<OpportunityModel> CreateOpportunityFromProposalAsync(
+        CreateOpportunityFromInteractionsRequest request,
+        int currentUserId)
+    {
+        // Deduplicate SDGs by SDGId
+        var uniqueSdGs = request.SdGs?.Distinct().ToList() ?? new List<int>();
+        
+        // Deduplicate Countries by CountryId
+        var uniqueCountries = request.Countries?.Distinct().ToList() ?? new List<int>();
+        
+        // Deduplicate Stakeholders by UserId + EntityRoleId combination
+        var uniqueStakeholders = request.Stakeholders?
+            .GroupBy(s => new { s.UserId, s.EntityRoleId })
+            .Select(g => g.First())
+            .ToList() ?? new List<OpportunityStakeholderRequest>();
+        
+        // Build opportunity request from accepted proposal
+        var opportunityRequest = new OpportunityRequest
+        {
+            Name = request.Name,
+            Description = request.Description,
+            PartnerReference = request.PartnerReference,
+            ResponsibleOrgUnitId = request.ResponsibleOrgUnitId,
+            ProposedInitiativeTypeId = request.ProposedInitiativeTypeId,
+            DeliveryModality = request.DeliveryModality,
+            InitiativeBudgetUSD = request.InitiativeBudgetUSD,
+            TargetSigningDate = request.TargetSigningDate,
+            TargetDeliveryDate = request.TargetDeliveryDate,
+            Challenges = request.Challenges,
+            ResultsFocus = request.ResultsFocus,
+            ExpectedImpact = request.ExpectedImpact,
+            ExpectedOutcomes = request.ExpectedOutcomes,
+            ExpectedBeneficiaries = request.ExpectedBeneficiaries,
+            EstimatedDirectBeneficiaries = request.EstimatedDirectBeneficiaries,
+            EstimatedIndirectBeneficiaries = request.EstimatedIndirectBeneficiaries,
+            BeneficiariesToBeDetermined = request.BeneficiariesToBeDetermined ?? false,
+            MiscExternalStakeholders = request.MiscExternalStakeholders,
+            ExternalStakeholderNotes = request.ExternalStakeholderNotes,
+            SDGs = uniqueSdGs.Select(sdgId => new OpportunitySDGRequest { SDGId = sdgId }).ToList(),
+            Countries = uniqueCountries.Select(countryId => new OpportunityCountryRequest { CountryId = countryId }).ToList(),
+            Deliverables = request.Deliverables ?? new List<OpportunityDeliverableRequest>(),
+            Stakeholders = uniqueStakeholders,
+            FundingPartners = new List<OpportunityFundingPartnerRequest>(),
+            ClientPartners = new List<OpportunityClientPartnerRequest>()
+        };
+
+        // Deduplicate funding partners by PartnerId (keep first occurrence with all its properties)
+        var uniqueFundingPartners = request.FundingPartners?
+            .GroupBy(fp => fp.PartnerId)
+            .Select(g => g.First())
+            .ToList() ?? new List<OpportunityFundingPartnerRequest>();
+        
+        // Deduplicate client partners by PartnerId (keep first occurrence)
+        var uniqueClientPartners = request.ClientPartners?
+            .GroupBy(cp => cp.PartnerId)
+            .Select(g => g.First())
+            .ToList() ?? new List<OpportunityClientPartnerRequest>();
+
+        // Add the context partner as funding/client based on user selection (only if partnerId provided)
+        // This ensures the context partner is included even if not in the AI-proposed arrays
+        if (request.PartnerId.HasValue && request.PartnerId > 0)
+        {
+            // Check if context partner is already in the deduplicated AI-proposed arrays
+            var contextPartnerInFunding = uniqueFundingPartners.Any(fp => fp.PartnerId == request.PartnerId.Value);
+            var contextPartnerInClient = uniqueClientPartners.Any(cp => cp.PartnerId == request.PartnerId.Value);
+            
+            // Add to funding partners if user selected funding role and not already in array
+            if (request.IsFundingPartner && !contextPartnerInFunding)
+            {
+                opportunityRequest.FundingPartners.Add(new OpportunityFundingPartnerRequest
+                {
+                    PartnerId = request.PartnerId.Value,
+                    Amount = null // User can set later
+                });
+            }
+            
+            // Add to client partners if user selected client role and not already in array
+            if (request.IsClientPartner && !contextPartnerInClient)
+            {
+                opportunityRequest.ClientPartners.Add(new OpportunityClientPartnerRequest
+                {
+                    PartnerId = request.PartnerId.Value
+                });
+            }
+        }
+
+        // Add all deduplicated AI-proposed funding partners
+        if (uniqueFundingPartners.Any())
+        {
+            opportunityRequest.FundingPartners.AddRange(uniqueFundingPartners);
+        }
+
+        // Add all deduplicated AI-proposed client partners  
+        if (uniqueClientPartners.Any())
+        {
+            opportunityRequest.ClientPartners.AddRange(uniqueClientPartners);
+        }
+
+        // Create the opportunity using existing CreateOpportunityAsync
+        var createdOpportunity = await CreateOpportunityAsync(opportunityRequest);
+
+        // Assign the current user as Opportunity Manager
+        try
+        {
+            await AssignCreatorAsOpportunityManagerAsync(createdOpportunity.Id, currentUserId);
+        }
+        catch (Exception)
+        {
+            // Don't fail if assignment fails - log handled by caller
+        }
+
+        return createdOpportunity;
     }
 
     public async Task<bool> DeleteOpportunityAsync(int id)
@@ -2964,6 +3299,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     /// <summary>
     /// Data retrieval method for AI prompts - Gets comprehensive opportunity details for keyword extraction
     /// This method is called via reflection by the BaseUNOPSManager
+    /// Includes ALL data from implemented interfaces: Risks, DST Analysis, Insights, Suggestions, etc.
     /// </summary>
     /// <param name="id">Opportunity ID</param>
     /// <returns>Dictionary containing all opportunity details formatted for AI prompt placeholders</returns>
@@ -2972,12 +3308,26 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         var opportunity = await context.Set<Opportunity>()
             .Include(o => o.ResponsibleOrgUnit)
             .Include(o => o.ProposedInitiativeType)
+            .Include(o => o.WorkflowStage)
             .Include(o => o.FundingPartners).ThenInclude(fp => fp.Partner)
+            .Include(o => o.FundingPartners).ThenInclude(fp => fp.Currency)
+            .Include(o => o.FundingPartners).ThenInclude(fp => fp.Document)
             .Include(o => o.ClientPartners).ThenInclude(cp => cp.Partner)
+            .Include(o => o.ClientPartners).ThenInclude(cp => cp.Document)
             .Include(o => o.Stakeholders).ThenInclude(s => s.User).ThenInclude(u => u.UserProfile)
+            .Include(o => o.Stakeholders).ThenInclude(s => s.EntityRole)
+            .Include(o => o.Stakeholders).ThenInclude(s => s.OrganizationHierarchy)
+            .Include(o => o.ExternalStakeholders).ThenInclude(es => es.Contact).ThenInclude(c => c.Partner)
             .Include(o => o.Deliverables).ThenInclude(d => d.Output)
             .Include(o => o.Countries).ThenInclude(c => c.Country)
             .Include(o => o.SDGs).ThenInclude(s => s.SDG)
+            .Include(o => o.SDGTargets).ThenInclude(t => t.SDGTarget)
+            .Include(o => o.SDGIndicators).ThenInclude(i => i.SDGIndicator)
+            .Include(o => o.UNCFOutcomes).ThenInclude(u => u.UNCFOutcome)
+            .Include(o => o.UNCFIndicators).ThenInclude(ui => ui.UNCFIndicator)
+            .Include(o => o.UNOPSMissions).ThenInclude(m => m.UNOPSMission)
+            .Include(o => o.CreatedByUser)
+            .Include(o => o.LastModifiedByUser)
             .FirstOrDefaultAsync(o => o.Id == id);
 
         if (opportunity == null)
@@ -2986,68 +3336,492 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         }
 
         var stats = ComputeOpportunityStats(opportunity);
+        
+        // ==========================================
+        // LOAD RISK REGISTER DATA
+        // ==========================================
+        var risks = await context.Set<Domain.Entities.Risk>()
+            .Include(r => r.RiskTypeEntity)
+            .Include(r => r.RiskCategory)
+            .Include(r => r.RiskProbabilityEntity)
+            .Include(r => r.RiskProximityEntity)
+            .Include(r => r.RiskImpactLevelEntity)
+            .Include(r => r.RiskResponseTypeEntity)
+            .Include(r => r.PreDefinedHighRisk)
+            .Where(r => r.EntityType == "Opportunity" && r.EntityId == id && !r.IsDeleted)
+            .OrderByDescending(r => r.CreatedDate)
+            .ToListAsync();
+        
+        var risksDetails = risks.Select(r => new
+        {
+            Title = r.Title ?? "Untitled Risk",
+            Description = r.Description ?? "",
+            Recommendation = r.Recommendation ?? "",
+            RiskType = r.RiskTypeEntity?.Name ?? "Unknown",
+            RiskCategory = r.RiskCategory?.Name ?? "Unknown",
+            RiskCategoryCode = r.RiskCategory?.Code ?? "Unknown",
+            RiskCategoryShortCode = r.RiskCategory?.ShortCode ?? "Unknown",
+            RiskCategoryLevel = r.RiskCategory?.Level ?? 0,
+            Probability = r.RiskProbabilityEntity?.Name ?? "Unknown",
+            ProbabilityValue = r.RiskProbabilityEntity?.NumericValue ?? 0,
+            Proximity = r.RiskProximityEntity?.Name ?? "Unknown",
+            ImpactLevel = r.RiskImpactLevelEntity?.Name ?? "Unknown",
+            ImpactValue = r.RiskImpactLevelEntity?.NumericValue ?? 0,
+            ResponseType = r.RiskResponseTypeEntity?.Name ?? "Not specified",
+            IsPreDefinedHighRisk = r.PreDefinedHighRiskId.HasValue,
+            PreDefinedHighRiskCode = r.PreDefinedHighRisk?.Code ?? "",
+            PreDefinedHighRiskTitle = r.PreDefinedHighRisk?.ShortTitle ?? "",
+            IdentifiedDate = r.IdentifiedDate?.ToString("yyyy-MM-dd") ?? "",
+            IdentifiedBy = r.IdentifiedBy?.ToString() ?? ""
+        }).ToList();
+        
+        var risksText = risksDetails.Any()
+            ? string.Join("\n", risksDetails.Select(r =>
+                $"- [{r.RiskType}] {r.Title}" +
+                (string.IsNullOrEmpty(r.Description) ? "" : $"\n  Description: {r.Description}") +
+                (string.IsNullOrEmpty(r.Recommendation) ? "" : $"\n  Recommendation: {r.Recommendation}") +
+                $"\n  Category: {r.RiskCategory} ({r.RiskCategoryShortCode}, Level {r.RiskCategoryLevel})" +
+                $"\n  Probability: {r.Probability} (Value: {r.ProbabilityValue})" +
+                $"\n  Impact: {r.ImpactLevel} (Value: {r.ImpactValue})" +
+                $"\n  Proximity: {r.Proximity}" +
+                (string.IsNullOrEmpty(r.ResponseType) || r.ResponseType == "Not specified" ? "" : $"\n  Response: {r.ResponseType}") +
+                (r.IsPreDefinedHighRisk ? $"\n  Pre-Defined High Risk: {r.PreDefinedHighRiskCode} - {r.PreDefinedHighRiskTitle}" : "") +
+                (string.IsNullOrEmpty(r.IdentifiedDate) ? "" : $"\n  Identified: {r.IdentifiedDate} by {r.IdentifiedBy}")))
+            : "No risks identified";
+        
+        // ==========================================
+        // LOAD SME SELECTIONS
+        // ==========================================
+        var smeSelections = await GetSMESelectionsAsync(id);
+        var smeSelectionsText = smeSelections.Any()
+            ? string.Join("\n", smeSelections
+                .Where(s => s.IsSelected && !string.IsNullOrEmpty(s.UserName))
+                .Select(s => $"- {s.EntityRoleName}: {s.UserName} ({s.UserEmail})"))
+            : "No SME selections made";
+        
+        // ==========================================
+        // LOAD PARTNER AGREEMENTS (for context)
+        // ==========================================
+        var partnerAgreementsSummary = new List<string>();
+        if (opportunity.FundingPartners != null && opportunity.FundingPartners.Any())
+        {
+            var opportunityCountryIds = opportunity.Countries?.Select(c => c.CountryId).ToList() ?? new List<int>();
+            
+            foreach (var fp in opportunity.FundingPartners.Take(5)) // Limit to first 5 for brevity
+            {
+                var agreements = await LoadPartnerAgreementsAsync(
+                    fp.PartnerId,
+                    opportunity.CreatedDate,
+                    opportunity.TargetDeliveryDate,
+                    opportunityCountryIds
+                );
+                
+                if (agreements.Any())
+                {
+                    var agreementInfo = string.Join("; ", agreements.Take(2).Select(a =>
+                        $"{a.Name} ({a.PartnerAgreementType}, {a.StartDate?.ToString("yyyy-MM-dd") ?? "N/A"} to {a.EndDate?.ToString("yyyy-MM-dd") ?? "N/A"})"));
+                    partnerAgreementsSummary.Add($"{fp.Partner?.Name ?? "Unknown"}: {agreementInfo}");
+                }
+            }
+        }
+        
+        var partnerAgreementsText = partnerAgreementsSummary.Any()
+            ? string.Join("\n", partnerAgreementsSummary)
+            : "No partner agreements loaded";
 
-        // Format arrays as comma-separated strings for the AI prompt
-        var fundingPartners = opportunity.FundingPartners?
-            .Select(fp => fp.Partner?.Name ?? "Unknown")
-            .Where(name => !string.IsNullOrEmpty(name))
-            .ToList() ?? new List<string>();
+        // Format funding partners with detailed information
+        var fundingPartnersDetails = opportunity.FundingPartners?
+            .Select(fp => new
+            {
+                PartnerName = fp.Partner?.Name ?? "Unknown",
+                Amount = fp.Amount?.ToString("N2") ?? "Not specified",
+                Currency = fp.Currency?.Code ?? "USD",
+                AmountUSD = fp.AmountUSD?.ToString("N2"),
+                Percentage = fp.Percentage?.ToString("N2") + "%",
+                FeePercentage = fp.FeePercentage?.ToString("N2") + "%",
+                FeeAmount = fp.FeeAmount?.ToString("N2"),
+                FeeAmountUSD = fp.FeeAmountUSD?.ToString("N2"),
+                CommitmentStatus = fp.CommitmentStatus ?? "Not specified",
+                PartnershipAgreementReference = fp.PartnershipAgreementReference ?? "",
+                IsPooledContribution = fp.IsPooledContribution ? "Yes" : "No",
+                DocumentName = fp.Document?.Name ?? ""
+            })
+            .ToList();
 
-        var clientPartners = opportunity.ClientPartners?
-            .Select(cp => cp.Partner?.Name ?? "Unknown")
-            .Where(name => !string.IsNullOrEmpty(name))
-            .ToList() ?? new List<string>();
+        var fundingPartnersText = fundingPartnersDetails != null && fundingPartnersDetails.Any()
+            ? string.Join("\n", fundingPartnersDetails.Select(fp =>
+                $"- {fp.PartnerName}: {fp.Amount} {fp.Currency} (USD: {fp.AmountUSD ?? "Not converted"}), " +
+                $"Commitment: {fp.CommitmentStatus}, Fee: {fp.FeePercentage}, Pooled: {fp.IsPooledContribution}"))
+            : "No funding partners";
 
-        var stakeholders = opportunity.Stakeholders?
-            .Select(s => s.User?.Name ?? "Unknown")
-            .Where(name => !string.IsNullOrEmpty(name))
-            .ToList() ?? new List<string>();
+        // Format client partners with detailed information
+        var clientPartnersDetails = opportunity.ClientPartners?
+            .Select(cp => new
+            {
+                PartnerName = cp.Partner?.Name ?? "Unknown",
+                PartnerStatus = cp.Partner?.Status.ToString() ?? "",
+                DocumentName = cp.Document?.Name ?? ""
+            })
+            .ToList();
 
-        var deliverables = opportunity.Deliverables?
-            .Select(d => d.Output?.Name ?? d.Notes ?? "")
-            .Where(desc => !string.IsNullOrEmpty(desc))
-            .ToList() ?? new List<string>();
+        var clientPartnersText = clientPartnersDetails != null && clientPartnersDetails.Any()
+            ? string.Join("\n", clientPartnersDetails.Select(cp => $"- {cp.PartnerName} (Status: {cp.PartnerStatus})"))
+            : "No client partners";
 
-        var countries = opportunity.Countries?
-            .Select(c => c.Country?.Name ?? "Unknown")
-            .Where(name => !string.IsNullOrEmpty(name))
-            .ToList() ?? new List<string>();
+        // Format stakeholders with detailed information
+        var stakeholdersDetails = opportunity.Stakeholders?
+            .Select(s => new
+            {
+                UserName = s.User?.Name ?? "Unknown",
+                UserEmail = s.User?.Email ?? "",
+                RoleName = s.EntityRole?.Name ?? "No role",
+                RoleCode = s.EntityRole?.Code ?? "",
+                OrgUnitName = s.OrganizationHierarchy?.Name ?? "",
+                IsAutoPopulated = s.IsAutoPopulated ? "Auto-assigned" : "Manually assigned",
+                Notes = s.Notes ?? ""
+            })
+            .ToList();
 
-        var sdgs = opportunity.SDGs?
-            .Select(s => s.SDG?.Name ?? "Unknown")
-            .Where(name => !string.IsNullOrEmpty(name))
-            .ToList() ?? new List<string>();
+        var stakeholdersText = stakeholdersDetails != null && stakeholdersDetails.Any()
+            ? string.Join("\n", stakeholdersDetails.Select(s =>
+                $"- {s.UserName} ({s.UserEmail}): {s.RoleName} [{s.IsAutoPopulated}]" +
+                (string.IsNullOrEmpty(s.OrgUnitName) ? "" : $", Org Unit: {s.OrgUnitName}") +
+                (string.IsNullOrEmpty(s.Notes) ? "" : $", Notes: {s.Notes}")))
+            : "No internal stakeholders";
 
-        // Return dictionary with all placeholders the AI prompt expects
+        // Format external stakeholders
+        var externalStakeholdersDetails = opportunity.ExternalStakeholders?
+            .Select(es => new
+            {
+                ContactName = es.Contact?.Name ?? "Unknown",
+                ContactEmail = es.Contact?.Email ?? "",
+                PartnerName = es.Contact?.Partner?.Name ?? ""
+            })
+            .ToList();
+
+        var externalStakeholdersText = externalStakeholdersDetails != null && externalStakeholdersDetails.Any()
+            ? string.Join("\n", externalStakeholdersDetails.Select(es =>
+                $"- {es.ContactName} ({es.ContactEmail})" +
+                (string.IsNullOrEmpty(es.PartnerName) ? "" : $" from {es.PartnerName}")))
+            : "No external stakeholders";
+
+        // Format deliverables with detailed information
+        var deliverablesDetails = opportunity.Deliverables?
+            .Select(d => new
+            {
+                OutputName = d.Output?.Name ?? "Not specified",
+                Level0 = d.Output?.Level0 ?? "",
+                Level1 = d.Output?.Level1 ?? "",
+                Level2 = d.Output?.Level2 ?? "",
+                Level3 = d.Output?.Level3 ?? "",
+                Level4 = d.Output?.Level4 ?? "",
+                ServiceLine = d.Output?.ServiceLine ?? "",
+                Quantity = d.Quantity?.ToString() ?? "Not specified",
+                PlannedStartDate = d.PlannedStartDate?.Date.ToString("yyyy-MM-dd") ?? "",
+                PlannedEndDate = d.PlannedEndDate?.Date.ToString("yyyy-MM-dd") ?? "",
+                Notes = d.Notes ?? ""
+            })
+            .ToList();
+
+        var deliverablesText = deliverablesDetails != null && deliverablesDetails.Any()
+            ? string.Join("\n", deliverablesDetails.Select(d =>
+                $"- {d.OutputName}" +
+                (string.IsNullOrEmpty(d.ServiceLine) ? "" : $" (Service Line: {d.ServiceLine})") +
+                (d.Quantity != "Not specified" ? $", Quantity: {d.Quantity}" : "") +
+                (string.IsNullOrEmpty(d.PlannedStartDate) ? "" : $", Start: {d.PlannedStartDate}") +
+                (string.IsNullOrEmpty(d.PlannedEndDate) ? "" : $", End: {d.PlannedEndDate}") +
+                (string.IsNullOrEmpty(d.Notes) ? "" : $", Notes: {d.Notes}")))
+            : "No deliverables";
+
+        // Format countries with detailed information
+        var countriesDetails = opportunity.Countries?
+            .Select(c => new
+            {
+                CountryName = c.Country?.Name ?? "Unknown",
+                Iso2Code = c.Country?.Iso2Code ?? "",
+                Continent = c.Country?.ContinentDescription ?? "",
+                Region = c.Country?.RegionDescription ?? "",
+                SpecificAreas = c.SpecificAreas ?? "",
+                RiskScore = c.RiskScore?.ToString() ?? "Not assessed",
+                HumanitarianFrameworkAlignment = c.HumanitarianFrameworkAlignment.HasValue
+                    ? (c.HumanitarianFrameworkAlignment.Value ? "Aligned" : "Not aligned")
+                    : "Not assessed",
+                NdcAlignment = c.NdcAlignment.HasValue
+                    ? (c.NdcAlignment.Value ? "Aligned" : "Not aligned")
+                    : "Not assessed",
+                NapAlignment = c.NapAlignment.HasValue
+                    ? (c.NapAlignment.Value ? "Aligned" : "Not aligned")
+                    : "Not assessed",
+                OrgUnitStrategyAlignment = c.OrgUnitStrategyAlignment.HasValue
+                    ? (c.OrgUnitStrategyAlignment.Value ? "Aligned" : "Not aligned")
+                    : "Not assessed"
+            })
+            .ToList();
+
+        var countriesText = countriesDetails != null && countriesDetails.Any()
+            ? string.Join("\n", countriesDetails.Select(c =>
+                $"- {c.CountryName} ({c.Iso2Code})" +
+                (string.IsNullOrEmpty(c.Region) ? "" : $", Region: {c.Region}") +
+                (string.IsNullOrEmpty(c.SpecificAreas) ? "" : $", Areas: {c.SpecificAreas}") +
+                $", Risk Score: {c.RiskScore}" +
+                $", Humanitarian Framework: {c.HumanitarianFrameworkAlignment}" +
+                $", NDC: {c.NdcAlignment}" +
+                $", NAP: {c.NapAlignment}" +
+                $", Org Strategy: {c.OrgUnitStrategyAlignment}"))
+            : "No countries";
+
+        // Format SDGs with targets and indicators
+        var sdgsDetails = opportunity.SDGs?
+            .Select(s => new
+            {
+                SDGNumber = s.SDG?.SDGNumber ?? "",
+                SDGName = s.SDG?.Name ?? "Unknown",
+                IsPrimary = s.IsPrimary ? "Primary" : "Secondary",
+                SkipTargets = (s.SkipTargetsAndIndicators ?? false) ? "Yes" : "No",
+                Notes = s.Notes ?? "",
+                Targets = opportunity.SDGTargets?
+                    .Where(t => t.OpportunitySDGId == s.Id)
+                    .Select(t => new
+                    {
+                        TargetId = t.SDGTarget?.SDGTargetId ?? "",
+                        Description = t.SDGTarget?.TargetDescription ?? "",
+                        Notes = t.Notes ?? "",
+                        Indicators = opportunity.SDGIndicators?
+                            .Where(i => i.OpportunitySDGTargetId == t.Id)
+                            .Select(i => new
+                            {
+                                IndicatorId = i.SDGIndicator?.SDGIndicatorId ?? "",
+                                Description = i.SDGIndicator?.SDGIndicatorLongDescription ?? "",
+                                Notes = i.Notes ?? ""
+                            })
+                            .ToList()
+                    })
+                    .ToList()
+            })
+            .ToList();
+
+        var sdgsText = sdgsDetails != null && sdgsDetails.Any()
+            ? string.Join("\n", sdgsDetails.Select(s =>
+            {
+                var baseText = $"- SDG {s.SDGNumber}: {s.SDGName} [{s.IsPrimary}]";
+                if (s.SkipTargets == "Yes")
+                {
+                    return baseText + " (No specific targets/indicators)";
+                }
+                var targetsText = s.Targets != null && s.Targets.Any()
+                    ? "\n  Targets:\n  " + string.Join("\n  ", s.Targets.Select(t =>
+                    {
+                        var targetText = $"• Target {t.TargetId}: {t.Description}";
+                        var indicatorsText = t.Indicators != null && t.Indicators.Any()
+                            ? "\n    Indicators:\n    " + string.Join("\n    ", t.Indicators.Select(i =>
+                                $"○ Indicator {i.IndicatorId}: {i.Description}"))
+                            : "";
+                        return targetText + indicatorsText;
+                    }))
+                    : "";
+                return baseText + targetsText;
+            }))
+            : "No SDGs";
+
+        // Format UNCF Outcomes
+        var uncfOutcomesDetails = opportunity.UNCFOutcomes?
+            .Select(u => new
+            {
+                OutcomeName = u.UNCFOutcome?.Name ?? "Unknown",
+                ExternalId = u.UNCFOutcome?.UNCFOutcomeId ?? "",
+                Country = u.UNCFOutcome?.Country ?? "",
+                VersionNo = u.UNCFOutcome?.UNCooperationFrameworkVersionNo?.ToString() ?? "",
+                Notes = u.Notes ?? "",
+                Indicators = opportunity.UNCFIndicators?
+                    .Where(i => i.OpportunityUNCFOutcomeId == u.Id)
+                    .Select(i => new
+                    {
+                        IndicatorName = i.UNCFIndicator?.Name ?? "",
+                        ExternalId = i.UNCFIndicator?.UNCFIndicatorId ?? "",
+                        Notes = i.Notes ?? ""
+                    })
+                    .ToList()
+            })
+            .ToList();
+
+        var uncfOutcomesText = uncfOutcomesDetails != null && uncfOutcomesDetails.Any()
+            ? string.Join("\n", uncfOutcomesDetails.Select(u =>
+            {
+                var baseText = $"- {u.OutcomeName} (Country: {u.Country}, Version: {u.VersionNo})";
+                var indicatorsText = u.Indicators != null && u.Indicators.Any()
+                    ? "\n  Indicators:\n  " + string.Join("\n  ", u.Indicators.Select(i => $"• {i.IndicatorName}"))
+                    : "";
+                return baseText + indicatorsText;
+            }))
+            : "No UNCF Outcomes";
+
+        // Format UNOPS Missions
+        var unopsMissionsDetails = opportunity.UNOPSMissions?
+            .Select(m => new
+            {
+                MissionCode = m.UNOPSMission?.Code ?? "",
+                MissionName = m.UNOPSMission?.Name ?? "Unknown",
+                Description = m.UNOPSMission?.Description ?? ""
+            })
+            .ToList();
+
+        var unopsMissionsText = unopsMissionsDetails != null && unopsMissionsDetails.Any()
+            ? string.Join("\n", unopsMissionsDetails.Select(m =>
+                $"- {m.MissionCode}: {m.MissionName}" +
+                (string.IsNullOrEmpty(m.Description) ? "" : $" - {m.Description}")))
+            : "No UNOPS Mission alignments";
+
+        // Return comprehensive dictionary with all opportunity details
         return new Dictionary<string, object>
         {
+            // Basic Information
             ["id"] = opportunity.Id.ToString(),
             ["name"] = opportunity.Name ?? "",
             ["description"] = opportunity.Description ?? "",
             ["partnerReference"] = opportunity.PartnerReference ?? "",
             ["status"] = opportunity.Status.ToString(),
+            ["workflowStageId"] = opportunity.WorkflowStageId?.ToString() ?? "",
+            ["workflowStageName"] = opportunity.WorkflowStage?.Name ?? "",
+            
+            // Organizational Information
+            ["responsibleOrgUnitId"] = opportunity.ResponsibleOrgUnitId?.ToString() ?? "",
             ["responsibleOrgUnitName"] = opportunity.ResponsibleOrgUnit?.Name ?? "",
+            ["responsibleOrgUnitCode"] = opportunity.ResponsibleOrgUnit?.Code ?? "",
+            
+            // Initiative Type
+            ["proposedInitiativeTypeId"] = opportunity.ProposedInitiativeTypeId?.ToString() ?? "",
             ["proposedInitiativeTypeName"] = opportunity.ProposedInitiativeType?.Name ?? "",
+            
+            // Budget and Dates
             ["initiativeBudgetUSD"] = opportunity.InitiativeBudgetUSD?.ToString("N2") ?? "",
-            ["targetSigningDate"] = opportunity.TargetSigningDate?.ToString("yyyy-MM-dd") ?? "",
-            ["targetDeliveryDate"] = opportunity.TargetDeliveryDate?.ToString("yyyy-MM-dd") ?? "",
+            ["targetSigningDate"] = opportunity.TargetSigningDate?.Date.ToString("yyyy-MM-dd") ?? "",
+            ["implementationStartDate"] = opportunity.ImplementationStartDate?.Date.ToString("yyyy-MM-dd") ?? "",
+            ["targetDeliveryDate"] = opportunity.TargetDeliveryDate?.Date.ToString("yyyy-MM-dd") ?? "",
+            ["isTargetSigningDateFirm"] = opportunity.IsTargetSigningDateFirm ? "Yes" : "No",
+            ["signingDateNotes"] = opportunity.SigningDateNotes ?? "",
+            ["submissionDeadline"] = opportunity.SubmissionDeadline?.Date.ToString("yyyy-MM-dd") ?? "",
+            
+            // Strategic Information
             ["resultsFocus"] = opportunity.ResultsFocus ?? "",
-            ["intendedImpactOutcomes"] = opportunity.IntendedImpactOutcomes ?? "",
+            ["expectedImpact"] = opportunity.ExpectedImpact ?? "",
+            ["expectedOutcomes"] = opportunity.ExpectedOutcomes ?? "",
             ["expectedBeneficiaries"] = opportunity.ExpectedBeneficiaries ?? "",
-            ["fundingPartners"] = string.Join(", ", fundingPartners),
-            ["clientPartners"] = string.Join(", ", clientPartners),
-            ["stakeholders"] = string.Join(", ", stakeholders),
-            ["deliverables"] = string.Join(", ", deliverables),
-            ["countries"] = string.Join(", ", countries),
-            ["sdGs"] = string.Join(", ", sdgs),
+            ["estimatedDirectBeneficiaries"] = opportunity.EstimatedDirectBeneficiaries?.ToString() ?? "Not specified",
+            ["estimatedIndirectBeneficiaries"] = opportunity.EstimatedIndirectBeneficiaries?.ToString() ?? "Not specified",
+            ["beneficiariesToBeDetermined"] = opportunity.BeneficiariesToBeDetermined ? "Yes" : "No",
+            ["challenges"] = opportunity.Challenges ?? "",
+            
+            // Marketing Content
+            // LEAVE OUT GENERATED CONTENT LIKE OPPORTUNITY STATEMENT THAT RELIES ON STRUCTURED DATA ANYWAY AND THE BANNER AND THUMBNAIL ARE NOT NEEDED FOR AI GENERATION ANYWAY
+            // ["opportunityStatementMarkdown"] = opportunity.OpportunityStatementMarkdown ?? "",
+            // ["hasOpportunityBannerImage"] = !string.IsNullOrEmpty(opportunity.OpportunityBannerImage) ? "Yes" : "No",
+            // ["hasOpportunityThumbnail"] = !string.IsNullOrEmpty(opportunity.OpportunityThumbnail) ? "Yes" : "No",
+            
+            // Funding and Risk Information
+            ["isPooledFunding"] = opportunity.IsPooledFunding ? "Yes" : "No",
+            ["highRisksAcknowledged"] = opportunity.HighRisksAcknowledged ? "Yes" : "No",
+            ["deliveryModality"] = opportunity.DeliveryModality?.ToString() ?? "Not specified",
+            
+            // External Stakeholder Notes
+            ["miscExternalStakeholders"] = opportunity.MiscExternalStakeholders ?? "",
+            ["externalStakeholderNotes"] = opportunity.ExternalStakeholderNotes ?? "",
+            
+            // Arrays - Detailed Information
+            ["fundingPartners"] = fundingPartnersText,
+            ["fundingPartnersCount"] = (fundingPartnersDetails?.Count ?? 0).ToString(),
+            ["clientPartners"] = clientPartnersText,
+            ["clientPartnersCount"] = (clientPartnersDetails?.Count ?? 0).ToString(),
+            ["stakeholders"] = stakeholdersText,
+            ["stakeholdersCount"] = (stakeholdersDetails?.Count ?? 0).ToString(),
+            ["externalStakeholders"] = externalStakeholdersText,
+            ["externalStakeholdersCount"] = (externalStakeholdersDetails?.Count ?? 0).ToString(),
+            ["deliverables"] = deliverablesText,
+            ["deliverablesCount"] = (deliverablesDetails?.Count ?? 0).ToString(),
+            ["countries"] = countriesText,
+            ["countriesCount"] = (countriesDetails?.Count ?? 0).ToString(),
+            ["sdGs"] = sdgsText,
+            ["sdGsCount"] = (sdgsDetails?.Count ?? 0).ToString(),
+            ["uncfOutcomes"] = uncfOutcomesText,
+            ["uncfOutcomesCount"] = (uncfOutcomesDetails?.Count ?? 0).ToString(),
+            ["unopsMissions"] = unopsMissionsText,
+            ["unopsMissionsCount"] = (unopsMissionsDetails?.Count ?? 0).ToString(),
+            
+            // Statistics
+            ["stats.totalFundingUSD"] = stats.TotalFundingUSD.ToString("N2"),
+            ["stats.totalFeeAmountUSD"] = stats.TotalFeeAmountUSD.ToString("N2"),
             ["stats.totalFundingPartners"] = stats.FundingPartnerCount.ToString(),
             ["stats.totalClientPartners"] = stats.ClientPartnerCount.ToString(),
+            ["stats.totalPartners"] = stats.TotalPartnerCount.ToString(),
             ["stats.totalStakeholders"] = stats.StakeholderCount.ToString(),
+            ["stats.totalInternalStakeholders"] = stats.InternalStakeholderCount.ToString(),
+            ["stats.totalExternalStakeholders"] = stats.ExternalStakeholderCount.ToString(),
             ["stats.totalDeliverables"] = stats.DeliverableCount.ToString(),
             ["stats.totalCountries"] = stats.CountryCount.ToString(),
             ["stats.totalSDGs"] = stats.SDGCount.ToString(),
+            ["stats.primarySDGId"] = stats.PrimarySDGId?.ToString() ?? "",
+            ["stats.daysToTargetSigningDate"] = stats.DaysToTargetSigningDate?.ToString() ?? "",
+            ["stats.serviceLines"] = string.Join(", ", stats.ServiceLines ?? new List<string>()),
+            
+            // Audit Information
             ["createdDate"] = opportunity.CreatedDate.ToString("yyyy-MM-dd HH:mm:ss"),
-            ["lastModifiedDate"] = opportunity.LastModifiedDate?.ToString("yyyy-MM-dd HH:mm:ss") ?? ""
+            ["lastModifiedDate"] = opportunity.LastModifiedDate?.ToString("yyyy-MM-dd HH:mm:ss") ?? "",
+            ["createdBy"] = opportunity.CreatedBy.ToString(),
+            ["createdByName"] = opportunity.CreatedByUser?.Name ?? "",
+            ["lastModifiedBy"] = opportunity.LastModifiedBy.ToString(),
+            ["lastModifiedByName"] = opportunity.LastModifiedByUser?.Name ?? "",
+            
+            // ==========================================
+            // RISK REGISTER DATA
+            // ==========================================
+            ["risks"] = risksText,
+            ["risksCount"] = risksDetails.Count.ToString(),
+            ["totalThreats"] = risksDetails.Count(r => r.RiskType.Equals("Threat", StringComparison.OrdinalIgnoreCase)).ToString(),
+            ["totalOpportunityRisks"] = risksDetails.Count(r => r.RiskType.Equals("Opportunity", StringComparison.OrdinalIgnoreCase)).ToString(),
+            ["highImpactRisks"] = risksDetails.Count(r => r.ImpactValue >= 4).ToString(),
+            ["highProbabilityRisks"] = risksDetails.Count(r => r.ProbabilityValue >= 4).ToString(),
+            ["preDefinedHighRisksCount"] = risksDetails.Count(r => r.IsPreDefinedHighRisk).ToString(),
+            
+            // ==========================================
+            // SME SELECTIONS
+            // ==========================================
+            ["smeSelections"] = smeSelectionsText,
+            ["smeSelectionsCount"] = smeSelections.Count(s => s.IsSelected).ToString(),
+            
+            // ==========================================
+            // PARTNER AGREEMENTS SUMMARY
+            // ==========================================
+            ["partnerAgreements"] = partnerAgreementsText,
+            ["partnerAgreementsCount"] = partnerAgreementsSummary.Count.ToString(),
+            
+            // ==========================================
+            // ADDITIONAL COMPUTED FIELDS
+            // ==========================================
+            ["hasOpportunityStatement"] = !string.IsNullOrEmpty(opportunity.OpportunityStatementMarkdown) ? "Yes" : "No",
+            ["opportunityStatementLength"] = opportunity.OpportunityStatementMarkdown?.Length.ToString() ?? "0",
+            ["hasHighRiskAcknowledgement"] = opportunity.HighRisksAcknowledged ? "Yes" : "No",
+            ["isMultiCountry"] = stats.CountryCount > 1 ? "Yes" : "No",
+            ["isMultiFunder"] = stats.FundingPartnerCount > 1 ? "Yes" : "No",
+            ["hasSDGTargets"] = opportunity.SDGTargets?.Any() == true ? "Yes" : "No",
+            ["hasSDGIndicators"] = opportunity.SDGIndicators?.Any() == true ? "Yes" : "No",
+            ["hasUNCFAlignment"] = opportunity.UNCFOutcomes?.Any() == true ? "Yes" : "No",
+            ["hasUNOPSMissionAlignment"] = opportunity.UNOPSMissions?.Any() == true ? "Yes" : "No",
+            ["hasExternalStakeholders"] = opportunity.ExternalStakeholders?.Any() == true ? "Yes" : "No",
+            ["hasMiscExternalStakeholders"] = !string.IsNullOrEmpty(opportunity.MiscExternalStakeholders) ? "Yes" : "No",
+            ["fundingToFeeRatio"] = stats.TotalFundingUSD > 0 && stats.TotalFeeAmountUSD > 0 
+                ? (stats.TotalFeeAmountUSD / stats.TotalFundingUSD * 100).ToString("N2") + "%" 
+                : "N/A",
+            
+            // ==========================================
+            // TIMELINE ANALYSIS
+            // ==========================================
+            ["hasDefinedTimeline"] = opportunity.TargetSigningDate.HasValue && opportunity.TargetDeliveryDate.HasValue ? "Yes" : "No",
+            ["estimatedDurationMonths"] = opportunity.TargetSigningDate.HasValue && opportunity.TargetDeliveryDate.HasValue
+                ? Math.Round((opportunity.TargetDeliveryDate.Value - opportunity.TargetSigningDate.Value).TotalDays / 30.0).ToString()
+                : "Not specified",
+            ["hasSubmissionDeadline"] = opportunity.SubmissionDeadline.HasValue ? "Yes" : "No",
+            ["daysUntilSubmissionDeadline"] = opportunity.SubmissionDeadline.HasValue
+                ? ((int)(opportunity.SubmissionDeadline.Value.Date - DateTime.UtcNow.Date).TotalDays).ToString()
+                : "N/A"
         };
     }
 
@@ -3398,7 +4172,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
                 // Strategic Information fields
                 new() { Field = "resultsFocus", DisplayName = "label.opportunity.resultsFocus", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
-                new() { Field = "intendedImpactOutcomes", DisplayName = "label.opportunity.intendedImpactOutcomes", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "expectedImpact", DisplayName = "label.opportunity.expectedImpact", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "expectedOutcomes", DisplayName = "label.opportunity.expectedOutcomes", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
                 new() { Field = "expectedBeneficiaries", DisplayName = "label.opportunity.expectedBeneficiaries", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
 
                 // Budget field

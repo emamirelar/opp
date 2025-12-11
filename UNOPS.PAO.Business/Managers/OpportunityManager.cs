@@ -476,9 +476,14 @@ public class OpportunityManager : IOpportunityManager
             entity.ExpectedBeneficiaries = request.ExpectedBeneficiaries;
         }
 
-        if (request.IntendedImpactOutcomes != null)
+        if (request.ExpectedImpact != null)
         {
-            entity.IntendedImpactOutcomes = request.IntendedImpactOutcomes;
+            entity.ExpectedImpact = request.ExpectedImpact;
+        }
+
+        if (request.ExpectedOutcomes != null)
+        {
+            entity.ExpectedOutcomes = request.ExpectedOutcomes;
         }
 
         if (request.Challenges != null)
@@ -1310,9 +1315,14 @@ public class OpportunityManager : IOpportunityManager
         throw new NotImplementedException("GetOpportunitySearchFields is only implemented in UNOPSOpportunityManager");
     }
 
-    public Task<bool> UpdateHighRiskAcknowledgementAsync(int opportunityId, bool acknowledged)
+    public Task<bool> UpdateHighRiskAcknowledgementAsync(int opportunityId, bool acknowledged)     
     {
-        throw new NotImplementedException("UpdateHighRiskAcknowledgementAsync is only implemented in UNOPSOpportunityManager");
+        throw new NotImplementedException("UpdateHighRiskAcknowledgementAsync is only implemented in UNOPSOpportunityManager");                                                                       
+    }
+
+    public Task<OpportunityModel> CreateOpportunityFromProposalAsync(CreateOpportunityFromInteractionsRequest request, int currentUserId)
+    {
+        throw new NotImplementedException("CreateOpportunityFromProposalAsync is only implemented in UNOPSOpportunityManager");
     }
 }
 

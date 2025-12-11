@@ -106,7 +106,15 @@ export class OpportunityDstSectionComponent {
    * @since 1.0.0
    */
   readonly opportunity = input.required<Opportunity>();
-  
+
+  /**
+   * @description Input signal to trigger DST data refresh when any section saves
+   * Parent should increment this value when any section saves successfully
+   * @type {Signal<number>}
+   * @since 2.0.0
+   */
+  readonly sectionSaveTrigger = input<number>(0);
+
   /**
    * @description Track the last loaded opportunity ID to prevent duplicate API calls
    * @type {number | null}
@@ -114,6 +122,14 @@ export class OpportunityDstSectionComponent {
    * @since 1.0.0
    */
   private lastLoadedOpportunityId: number | null = null;
+
+  /**
+   * @description Track the last processed section save trigger to prevent duplicate refreshes
+   * @type {number}
+   * @private
+   * @since 2.0.0
+   */
+  private lastSectionSaveTrigger: number = 0;
 
   /**
    * @description Signal for similar projects data
@@ -524,12 +540,49 @@ export class OpportunityDstSectionComponent {
         console.log('🔄 DST Section: Opportunity changed, loading DST data for ID:', opp.id);
         this.lastLoadedOpportunityId = opp.id;
 
-        // Load all DST data for the new opportunity
+        // Load risks first (most important for user), then stagger AI-heavy calls
+        // This prevents connection exhaustion and allows notifications endpoint to work
         this.loadDSTRisks();
-        this.loadDSTRecommendations();
-        this.loadSimilarOpportunities();
-        this.loadSimilarProjects();
-        this.loadRelevantPeople();
+
+        // Stagger AI-powered calls with delays to prevent overwhelming the backend
+        setTimeout(() => this.loadDSTRecommendations(), 500);
+        setTimeout(() => this.loadSimilarOpportunities(), 1000);
+        setTimeout(() => this.loadSimilarProjects(), 1500);
+        setTimeout(() => this.loadRelevantPeople(), 2000);
+      }
+    });
+
+    // Effect to refresh AI data when sectionSaveTrigger changes (any section saves)
+    effect(() => {
+      const trigger = this.sectionSaveTrigger();
+
+      // Only refresh if trigger has changed and this isn't the initial load
+      if (trigger > 0 && trigger !== this.lastSectionSaveTrigger) {
+        this.lastSectionSaveTrigger = trigger;
+
+        console.log('🔄 DST Section: Section save detected, refreshing AI data');
+
+        // Use setTimeout to avoid calling during signal computation
+        // Stagger refreshes to prevent overwhelming the backend
+        setTimeout(() => {
+          // Refresh risk recommendations with cache invalidation
+          this.loadDSTRecommendations();
+        }, 500);
+        setTimeout(() => {
+          // Refresh similar opportunities with cache invalidation
+          this.similarOpportunitiesResponse.set(null);
+          this.loadSimilarOpportunities();
+        }, 1500);
+        setTimeout(() => {
+          // Refresh similar projects with cache invalidation
+          this.similarProjectsResponse.set(null);
+          this.loadSimilarProjects(true);
+        }, 2500);
+        setTimeout(() => {
+          // Refresh relevant people with cache invalidation
+          this.relevantPeopleResponse.set(null);
+          this.loadRelevantPeople(true);
+        }, 3500);
       }
     });
   }

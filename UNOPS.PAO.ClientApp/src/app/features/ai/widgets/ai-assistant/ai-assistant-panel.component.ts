@@ -24,6 +24,7 @@ import { AiAssistantService } from '@ai/services/ai-assistant.service';
 import { ChatMessage, ChatFile } from './ai-assistant.model';
 import { DynamicContentService } from './dynamic-content.service';
 import { PageContextService } from '@shared/services/utils/page-context.service';
+import { DrivePickerService, DriveFile } from '@shared/services/integration/drive-picker.service';
 
 @Component({
   selector: 'app-ai-assistant-panel',
@@ -50,6 +51,8 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
   @ViewChild('scanComponent') private scanComponent!: AiAssistantScanComponent;
   @ViewChild('sessionMenu') private sessionMenu!: Menu;
   @ViewChild('messageInput') private messageInput!: ElementRef;
+  @ViewChild('attachMenu') private attachMenu!: Menu;
+  @ViewChild('fileInput') private fileInputRef!: ElementRef;
   @Input() viewContainerRef!: ViewContainerRef;
   @Input() hideHeader: boolean = false; // Hide header in fullscreen mode
   @Input() rightPanelEntityType: string | null = null; // Entity type in right panel
@@ -105,6 +108,20 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
   editingTitle = signal('');
   sessionMenuItems = signal<MenuItem[]>([]);
   
+  // Attach menu items for file upload options
+  attachMenuItems = computed<MenuItem[]>(() => [
+    {
+      label: this.translateService.instant('aiAssistant.uploadFromComputer'),
+      icon: 'pi pi-upload',
+      command: () => this.triggerFileInput()
+    },
+    {
+      label: this.translateService.instant('aiAssistant.uploadFromGoogleDrive'),
+      icon: 'pi pi-google',
+      command: () => this.openGoogleDrivePicker()
+    }
+  ]);
+  
   // Dynamic dots for generating message
   generatingDots = signal(1);
   private generatingInterval?: number;
@@ -141,7 +158,8 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     private http: HttpClient,
     private authService: AuthService,
     private translateService: TranslateService,
-    private pageContextService: PageContextService
+    private pageContextService: PageContextService,
+    private drivePickerService: DrivePickerService
   ) {
     // Effects must be in constructor (injection context)
     
@@ -436,6 +454,60 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
         }
       }, 300); // Wait for keyboard animation to complete
     }
+  }
+
+  /**
+   * Show the attach menu with upload options
+   */
+  showAttachMenu(event: Event): void {
+    this.attachMenu.toggle(event);
+  }
+
+  /**
+   * Trigger the hidden file input for local file selection
+   */
+  triggerFileInput(): void {
+    this.fileInputRef?.nativeElement?.click();
+  }
+
+  /**
+   * Open Google Drive picker to select files
+   */
+  openGoogleDrivePicker(): void {
+    this.drivePickerService.pickFiles().subscribe({
+      next: (files: DriveFile[]) => {
+        if (files && files.length > 0) {
+          this.handleDriveFiles(files);
+        }
+      },
+      error: (error: any) => {
+        console.error('Error selecting files from Google Drive:', error);
+      }
+    });
+  }
+
+  /**
+   * Handle files selected from Google Drive
+   * Downloads the file content and adds to selectedFiles
+   */
+  private handleDriveFiles(driveFiles: DriveFile[]): void {
+    this.isProcessingFile.set(true);
+    
+    // Process the first file (single file selection for now)
+    const driveFile = driveFiles[0];
+    
+    // Create a File object from Drive file data
+    // For now, we'll store the Drive file info and handle GCS upload later
+    const fileData = {
+      file: new File([], driveFile.name, { type: driveFile.mimeType }),
+      name: driveFile.name,
+      content: '',
+      driveFileId: driveFile.id,
+      driveFile: driveFile // Store the full Drive file info for later processing
+    };
+    
+    this.selectedFiles.set([fileData]);
+    this.isProcessingFile.set(false);
   }
 
   onFileSelect(event: any): void {

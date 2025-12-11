@@ -16,7 +16,7 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { FormControl, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { FormControl, ReactiveFormsModule, FormsModule, Validators } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 // PrimeNG imports
@@ -134,7 +134,8 @@ export class OpportunityWhySectionComponent implements OnInit {
   private hasUnsavedChanges = false;
   private originalData: {
     expectedBeneficiaries?: string | null;
-    intendedImpactOutcomes?: string | null;
+    expectedImpact?: string | null;
+    expectedOutcomes?: string | null;
     challenges?: string | null;
     sdGs?: any[];
     uncfOutcomes?: any[];
@@ -142,11 +143,18 @@ export class OpportunityWhySectionComponent implements OnInit {
   } | null = null;
 
   // Form controls for WHY section
-  expectedBeneficiariesControl = new FormControl<string | null>(null);
+  expectedBeneficiariesControl = new FormControl<string | null>(null, [
+    Validators.maxLength(1000),
+  ]);
   estimatedDirectBeneficiariesControl = new FormControl<number | null>(null);
   estimatedIndirectBeneficiariesControl = new FormControl<number | null>(null);
   beneficiariesToBeDeterminedControl = new FormControl<boolean>(false);
-  expectedOutcomesControl = new FormControl<string | null>(null);
+  expectedImpactControl = new FormControl<string | null>(null, [
+    Validators.maxLength(200),
+  ]);
+  expectedOutcomesControl = new FormControl<string | null>(null, [
+    Validators.maxLength(200),
+  ]);
   challengesControl = new FormControl<string | null>(null);
 
   // Climate and framework alignments by country (map of countryId -> alignment status)
@@ -191,6 +199,7 @@ export class OpportunityWhySectionComponent implements OnInit {
   // SDG dialog - Two-step flow
   showSDGDialog = signal<boolean>(false);
   sdgDialogStep = signal<1 | 2>(1); // Step 1: Select SDGs, Step 2: Select Targets/Indicators
+  sdgDialogValidationError = signal<string | null>(null); // Validation error message to display in dialog
   
   // Step 1: Multi-select SDGs with Main/Cross-cutting selection
   selectedSDGIds = signal<Set<string>>(new Set()); // Set of selected SDG IDs (sdgId strings)
@@ -314,6 +323,11 @@ export class OpportunityWhySectionComponent implements OnInit {
     // Set up change detection on form controls
     // Only mark as changed if we're in edit mode (to avoid triggering on initial setValue)
     this.expectedBeneficiariesControl.valueChanges.subscribe(() => {
+      if (this.isEditing()) {
+        this.markAsChanged();
+      }
+    });
+    this.expectedImpactControl.valueChanges.subscribe(() => {
       if (this.isEditing()) {
         this.markAsChanged();
       }
@@ -575,9 +589,10 @@ export class OpportunityWhySectionComponent implements OnInit {
 
   /**
    * @description Load UNOPS Missions from values service
+   * Includes inactive missions to display previously selected missions that may now be inactive
    */
   private loadUNOPSMissions(): void {
-    this.valuesService.getUNOPSMissions().subscribe({
+    this.valuesService.getUNOPSMissions(true).subscribe({
       next: (data) => {
         this.unopsMissions.set(data);
 
@@ -620,6 +635,17 @@ export class OpportunityWhySectionComponent implements OnInit {
   }
 
   /**
+   * @description Remove a UNOPS Mission from selection (used for inactive missions)
+   */
+  removeUNOPSMission(missionId: number): void {
+    const selected = new Set(this.selectedUNOPSMissions());
+    selected.delete(missionId);
+    this.selectedUNOPSMissions.set(selected);
+    this.markAsChanged();
+    this.cdr.detectChanges();
+  }
+
+  /**
    * @description Get count of selected UNOPS Missions
    */
   unopsMissionCount = computed(() => {
@@ -634,6 +660,14 @@ export class OpportunityWhySectionComponent implements OnInit {
     const allMissions = this.unopsMissions();
 
     return allMissions.filter((mission) => selectedIds.has(mission.id));
+  });
+
+  /**
+   * @description Get only active UNOPS Missions for selection in dialog
+   * Excludes inactive missions to prevent users from selecting them
+   */
+  activeMissionsForDialog = computed(() => {
+    return this.unopsMissions().filter((mission) => mission.status === 'Active');
   });
 
   /**
@@ -702,7 +736,8 @@ export class OpportunityWhySectionComponent implements OnInit {
     // Backup original data for cancel
     this.originalData = {
       expectedBeneficiaries: opp.expectedBeneficiaries ?? null,
-      intendedImpactOutcomes: opp.intendedImpactOutcomes ?? null,
+      expectedImpact: opp.expectedImpact ?? null,
+      expectedOutcomes: opp.expectedOutcomes ?? null,
       challenges: opp.challenges ?? null,
       sdGs: opp.sdGs ? [...opp.sdGs] : [],
       uncfOutcomes: opp.uncfOutcomes ? [...opp.uncfOutcomes] : [],
@@ -732,7 +767,8 @@ export class OpportunityWhySectionComponent implements OnInit {
       this.estimatedIndirectBeneficiariesControl.enable();
     }
 
-    this.expectedOutcomesControl.setValue(opp.intendedImpactOutcomes ?? null);
+    this.expectedImpactControl.setValue(opp.expectedImpact ?? null);
+    this.expectedOutcomesControl.setValue(opp.expectedOutcomes ?? null);
     this.challengesControl.setValue(opp.challenges ?? null);
 
     // Initialize climate and framework alignments from countries
@@ -801,7 +837,8 @@ export class OpportunityWhySectionComponent implements OnInit {
         this.estimatedIndirectBeneficiariesControl.value ?? undefined,
       beneficiariesToBeDetermined:
         this.beneficiariesToBeDeterminedControl.value ?? false,
-      intendedImpactOutcomes: this.expectedOutcomesControl.value ?? undefined,
+      expectedImpact: this.expectedImpactControl.value ?? undefined,
+      expectedOutcomes: this.expectedOutcomesControl.value ?? undefined,
       challenges: this.challengesControl.value ?? undefined,
       sdGs: opp.sdGs?.map((sdg) => ({
         sdgId: sdg.sdgDatabaseId || 0, // Use the integer database ID
@@ -906,8 +943,11 @@ export class OpportunityWhySectionComponent implements OnInit {
       this.expectedBeneficiariesControl.setValue(
         this.originalData.expectedBeneficiaries ?? null,
       );
+      this.expectedImpactControl.setValue(
+        this.originalData.expectedImpact ?? null,
+      );
       this.expectedOutcomesControl.setValue(
-        this.originalData.intendedImpactOutcomes ?? null,
+        this.originalData.expectedOutcomes ?? null,
       );
       this.challengesControl.setValue(this.originalData.challenges ?? null);
 
@@ -915,8 +955,8 @@ export class OpportunityWhySectionComponent implements OnInit {
       const updatedOpportunity = {
         ...opp,
         expectedBeneficiaries: this.originalData.expectedBeneficiaries ?? null,
-        intendedImpactOutcomes:
-          this.originalData.intendedImpactOutcomes ?? null,
+        expectedImpact: this.originalData.expectedImpact ?? null,
+        expectedOutcomes: this.originalData.expectedOutcomes ?? null,
         challenges: this.originalData.challenges ?? null,
         sdGs: this.originalData.sdGs ? [...this.originalData.sdGs] : [],
         uncfOutcomes: this.originalData.uncfOutcomes
@@ -934,7 +974,8 @@ export class OpportunityWhySectionComponent implements OnInit {
       this.expectedBeneficiariesControl.setValue(
         opp.expectedBeneficiaries ?? null,
       );
-      this.expectedOutcomesControl.setValue(opp.intendedImpactOutcomes ?? null);
+      this.expectedImpactControl.setValue(opp.expectedImpact ?? null);
+      this.expectedOutcomesControl.setValue(opp.expectedOutcomes ?? null);
       this.challengesControl.setValue(opp.challenges ?? null);
     }
 
@@ -1011,6 +1052,8 @@ export class OpportunityWhySectionComponent implements OnInit {
   openSDGDialog(): void {
     // Reset to step 1
     this.sdgDialogStep.set(1);
+    // Clear any validation errors
+    this.sdgDialogValidationError.set(null);
     
     // Pre-load existing SDGs from opportunity
     const opp = this.opportunity();
@@ -1089,6 +1132,9 @@ export class OpportunityWhySectionComponent implements OnInit {
    * @description Toggle SDG selection in step 1
    */
   toggleSDGSelection(sdg: SDG): void {
+    // Clear validation error when user makes changes
+    this.sdgDialogValidationError.set(null);
+    
     const selectedIds = new Set(this.selectedSDGIds());
     const sdgId = sdg.sdgId || '';
     const isNASDG = sdgId === 'N/A';
@@ -1193,6 +1239,9 @@ export class OpportunityWhySectionComponent implements OnInit {
    * @description Toggle Main/Cross-cutting for an SDG in step 1
    */
   togglePrimarySecondaryInStep1(sdgId: string, isPrimary: boolean): void {
+    // Clear validation error when user makes changes
+    this.sdgDialogValidationError.set(null);
+    
     const primarySecondaryMap = new Map(this.sdgPrimarySecondaryInStep1());
     
     // If setting as Main, unset all others
@@ -1248,21 +1297,22 @@ export class OpportunityWhySectionComponent implements OnInit {
    * @description Proceed to step 2 (Targets and Indicators selection)
    */
   proceedToStep2(): void {
+    // Clear any previous validation errors
+    this.sdgDialogValidationError.set(null);
+    
     const selectedIds = this.selectedSDGIds();
     if (selectedIds.size === 0) {
-      this.feedbackService.showErrorToast({
-        summary: this.translateService.instant('message.error'),
-        detail: this.translateService.instant('message.validation.atLeastOneSDGRequired'),
-      });
+      this.sdgDialogValidationError.set(
+        this.translateService.instant('message.validation.atLeastOneSDGRequired')
+      );
       return;
     }
 
     // Validate that all SDGs have Main/Cross-cutting selected
     if (!this.allSDGsHavePrimarySecondary()) {
-      this.feedbackService.showErrorToast({
-        summary: this.translateService.instant('message.error'),
-        detail: this.translateService.instant('message.validation.allSDGsMustHavePrimarySecondary'),
-      });
+      this.sdgDialogValidationError.set(
+        this.translateService.instant('message.validation.allSDGsMustHavePrimarySecondary')
+      );
       return;
     }
 
@@ -1278,10 +1328,9 @@ export class OpportunityWhySectionComponent implements OnInit {
     }
     
     if (!hasMainSDG) {
-      this.feedbackService.showErrorToast({
-        summary: this.translateService.instant('message.error'),
-        detail: this.translateService.instant('message.validation.atLeastOneMainSDGRequired'),
-      });
+      this.sdgDialogValidationError.set(
+        this.translateService.instant('message.validation.atLeastOneMainSDGRequired')
+      );
       return;
     }
 
@@ -1700,21 +1749,22 @@ export class OpportunityWhySectionComponent implements OnInit {
 
     // If called from Step 1, validate and initialize targets data
     if (this.sdgDialogStep() === 1) {
+      // Clear any previous validation errors
+      this.sdgDialogValidationError.set(null);
+      
       // Validate that at least one SDG is selected
       if (selectedIds.size === 0) {
-        this.feedbackService.showErrorToast({
-          summary: this.translateService.instant('message.error'),
-          detail: this.translateService.instant('message.validation.atLeastOneSDGRequired'),
-        });
+        this.sdgDialogValidationError.set(
+          this.translateService.instant('message.validation.atLeastOneSDGRequired')
+        );
         return;
       }
 
       // Validate that all SDGs have Main/Cross-cutting selected
       if (!this.allSDGsHavePrimarySecondary()) {
-        this.feedbackService.showErrorToast({
-          summary: this.translateService.instant('message.error'),
-          detail: this.translateService.instant('message.validation.allSDGsMustHavePrimarySecondary'),
-        });
+        this.sdgDialogValidationError.set(
+          this.translateService.instant('message.validation.allSDGsMustHavePrimarySecondary')
+        );
         return;
       }
 
@@ -1729,10 +1779,9 @@ export class OpportunityWhySectionComponent implements OnInit {
       }
       
       if (!hasMainSDG) {
-        this.feedbackService.showErrorToast({
-          summary: this.translateService.instant('message.error'),
-          detail: this.translateService.instant('message.validation.atLeastOneMainSDGRequired'),
-        });
+        this.sdgDialogValidationError.set(
+          this.translateService.instant('message.validation.atLeastOneMainSDGRequired')
+        );
         return;
       }
 
@@ -1961,6 +2010,7 @@ export class OpportunityWhySectionComponent implements OnInit {
   cancelSDGDialog(): void {
     this.showSDGDialog.set(false);
     this.sdgDialogStep.set(1);
+    this.sdgDialogValidationError.set(null);
     this.selectedSDGIds.set(new Set());
     this.selectedSDGsForStep1.set([]);
     this.sdgPrimarySecondaryInStep1.set(new Map());

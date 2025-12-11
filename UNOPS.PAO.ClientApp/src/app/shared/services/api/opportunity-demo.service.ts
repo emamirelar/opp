@@ -37,7 +37,6 @@ export interface DemoOpportunity {
 
   // Impact
   sdgAlignment: DemoSDGAlignment[];
-  strategicAlignment: string;
   expectedBeneficiaries: string;
   expectedOutcomes: string;
 
@@ -359,8 +358,6 @@ export class OpportunityDemoService {
       },
     ],
 
-    strategicAlignment:
-      'UNOPS Strategic Plan 2022-2025: Infrastructure & Water Security',
     expectedBeneficiaries: '500,000 people in rural communities',
     expectedOutcomes:
       'Improved access to clean water, enhanced local capacity for maintenance, sustainable water management systems',

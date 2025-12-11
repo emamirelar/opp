@@ -1390,7 +1390,7 @@ public static class SDGTargetSeeder
                 IsDeleted = false,
                 SDGTargetId = "15.3",
                 SDGId = "SDG-15",
-                TargetDescription = "15.3 By 2020, combat desertification, restore degraded land and soil, including land affected by desertification, drought and floods, and strive to achieve a land- degradation-neutral world.",
+                TargetDescription = "15.3 By 2030, combat desertification, restore degraded land and soil, including land affected by desertification, drought and floods, and strive to achieve a land- degradation-neutral world.",
                 TargetType = "Outcome"
             },
             new SDGTarget

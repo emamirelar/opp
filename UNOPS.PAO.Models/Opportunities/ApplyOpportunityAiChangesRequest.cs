@@ -11,18 +11,39 @@ public class ApplyOpportunityAiChangesRequest
     public string? Description { get; set; }
     public int? ResponsibleOrgUnitId { get; set; }
     public int? ProposedInitiativeTypeId { get; set; }
+    public int? DeliveryModality { get; set; }
     public List<OpportunityDeliverableRequest>? Deliverables { get; set; }
 
     // WHY Section Properties
+    public string? Challenges { get; set; }
     public string? ResultsFocus { get; set; }
-    public string? IntendedImpactOutcomes { get; set; }
+    /// <summary>
+    /// Expected impact description (max 200 characters)
+    /// </summary>
+    public string? ExpectedImpact { get; set; }
+    /// <summary>
+    /// Expected outcomes description (max 200 characters)
+    /// </summary>
+    public string? ExpectedOutcomes { get; set; }
     public string? ExpectedBeneficiaries { get; set; }
+    public int? EstimatedDirectBeneficiaries { get; set; }
+    public int? EstimatedIndirectBeneficiaries { get; set; }
+    public bool? BeneficiariesToBeDetermined { get; set; }
     public List<int>? SdGs { get; set; }
 
     // WHO Section Properties
-    public List<int>? FundingPartners { get; set; }
+    /// <summary>
+    /// Funding partners with optional budget information (amount, currency)
+    /// </summary>
+    public List<OpportunityFundingPartnerRequest>? FundingPartners { get; set; }
     public List<int>? ClientPartners { get; set; }
-    public List<int>? Stakeholders { get; set; }
+    /// <summary>
+    /// Internal stakeholders with userId and entityRoleId
+    /// When applying AI changes, Opportunity Manager role is preserved if not included in this list
+    /// </summary>
+    public List<OpportunityStakeholderRequest>? Stakeholders { get; set; }
+    public string? MiscExternalStakeholders { get; set; }
+    public string? ExternalStakeholderNotes { get; set; }
 
     // WHERE Section Properties
     public List<int>? Countries { get; set; }
@@ -30,6 +51,10 @@ public class ApplyOpportunityAiChangesRequest
     // WHEN Section Properties
     public DateTime? TargetSigningDate { get; set; }
     public DateTime? TargetDeliveryDate { get; set; }
+    public DateTime? ImplementationStartDate { get; set; }
+    public DateTime? SubmissionDeadline { get; set; }
+    public bool? IsTargetSigningDateFirm { get; set; }
+    public string? SigningDateNotes { get; set; }
 
     // OTHER Properties
     public string? PartnerReference { get; set; }

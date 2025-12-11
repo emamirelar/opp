@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using UNOPS.PAO.Business.Interfaces;
@@ -24,6 +25,8 @@ using System.Text.Json;
 using UNOPS.PAO.Models.AuditLogs;
 using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.Models.Search;
+using Google.Apis.Auth.OAuth2;
+using UNOPS.PAO.Business.Managers;
 
 namespace UNOPS.PAO.Presentation.Controllers;
 
@@ -38,6 +41,7 @@ public class OpportunityController : BaseController
     private readonly IRiskManager _riskManager;
     private readonly int _currentUserId;
     private readonly AppDbContext _context;
+    private readonly IConfiguration _configuration;
     private readonly UNOPSDocumentManager _documentManager;
     private readonly AdvancedSearchService _advancedSearchService;
 
@@ -63,6 +67,7 @@ public class OpportunityController : BaseController
         _riskManager = manager.RiskManager;
         _currentUserId = userResolverService.GetCurrentUserId();
         _context = context;
+        _configuration = configuration;
         _documentManager = new UNOPSDocumentManager(driveManager, configuration, mapper, unopsContext, userManager, serviceProvider);
         _advancedSearchService = advancedSearchService;
     }
@@ -167,7 +172,7 @@ public class OpportunityController : BaseController
                 ? string.Join(", ", opportunity.Countries.Select(oc => oc.Country?.Name).Where(n => !string.IsNullOrWhiteSpace(n)))
                 : null;
 
-            var intendedImpact = opportunity.IntendedImpactOutcomes;
+            var intendedImpact = opportunity.ExpectedImpact ?? opportunity.ExpectedOutcomes;
             var initiativeType = opportunity.ProposedInitiativeType?.Name;
 
             _logger.LogInformation("Generating images for opportunity {OpportunityId}: {OpportunityName} in {Countries}", 
@@ -1585,109 +1590,8 @@ public class OpportunityController : BaseController
                 });
             }
 
-            // Description is optional - no validation required
-
-            if (request.PartnerId.HasValue && request.PartnerId > 0)
-            {
-                _logger.LogInformation("📊 [API] Context partner {PartnerId} will be added as {Role}", 
-                    request.PartnerId, 
-                    request.IsFundingPartner && request.IsClientPartner ? "both funding and client" :
-                    request.IsFundingPartner ? "funding partner" : "client partner");
-            }
-            else
-            {
-                _logger.LogInformation("📊 [API] No context partner - will use AI-proposed partners from interactions");
-            }
-
-            // Deduplicate SDGs by SDGId
-            var uniqueSdGs = request.SdGs?.Distinct().ToList() ?? new List<int>();
-            
-            // Deduplicate Countries by CountryId
-            var uniqueCountries = request.Countries?.Distinct().ToList() ?? new List<int>();
-            
-            // Deduplicate Stakeholders by UserId + EntityRoleId combination
-            var uniqueStakeholders = request.Stakeholders?
-                .GroupBy(s => new { s.UserId, s.EntityRoleId })
-                .Select(g => g.First())
-                .ToList() ?? new List<OpportunityStakeholderRequest>();
-            
-            // Build opportunity request from accepted proposal
-            var opportunityRequest = new OpportunityRequest
-            {
-                Name = request.Name,
-                Description = request.Description,
-                PartnerReference = request.PartnerReference,
-                ResponsibleOrgUnitId = request.ResponsibleOrgUnitId,
-                ProposedInitiativeTypeId = request.ProposedInitiativeTypeId,
-                InitiativeBudgetUSD = request.InitiativeBudgetUSD,
-                TargetSigningDate = request.TargetSigningDate,
-                TargetDeliveryDate = request.TargetDeliveryDate,
-                SDGs = uniqueSdGs.Select(sdgId => new OpportunitySDGRequest { SDGId = sdgId }).ToList(),
-                Countries = uniqueCountries.Select(countryId => new OpportunityCountryRequest { CountryId = countryId }).ToList(),
-                Deliverables = request.Deliverables ?? new List<OpportunityDeliverableRequest>(),
-                Stakeholders = uniqueStakeholders,
-                FundingPartners = new List<OpportunityFundingPartnerRequest>(),
-                ClientPartners = new List<OpportunityClientPartnerRequest>()
-            };
-
-            // Deduplicate funding partners by PartnerId (keep first occurrence with all its properties)
-            var uniqueFundingPartners = request.FundingPartners?
-                .GroupBy(fp => fp.PartnerId)
-                .Select(g => g.First())
-                .ToList() ?? new List<OpportunityFundingPartnerRequest>();
-            
-            // Deduplicate client partners by PartnerId (keep first occurrence)
-            var uniqueClientPartners = request.ClientPartners?
-                .GroupBy(cp => cp.PartnerId)
-                .Select(g => g.First())
-                .ToList() ?? new List<OpportunityClientPartnerRequest>();
-
-            // Add the context partner as funding/client based on user selection (only if partnerId provided)
-            // This ensures the context partner is included even if not in the AI-proposed arrays
-            if (request.PartnerId.HasValue && request.PartnerId > 0)
-            {
-                // Check if context partner is already in the deduplicated AI-proposed arrays
-                var contextPartnerInFunding = uniqueFundingPartners.Any(fp => fp.PartnerId == request.PartnerId.Value);
-                var contextPartnerInClient = uniqueClientPartners.Any(cp => cp.PartnerId == request.PartnerId.Value);
-                
-                // Add to funding partners if user selected funding role and not already in array
-                if (request.IsFundingPartner && !contextPartnerInFunding)
-                {
-                    _logger.LogInformation("➕ [API] Adding context partner {PartnerId} to funding partners", request.PartnerId.Value);
-                    opportunityRequest.FundingPartners.Add(new OpportunityFundingPartnerRequest
-                    {
-                        PartnerId = request.PartnerId.Value,
-                        Amount = null // User can set later
-                    });
-                }
-                
-                // Add to client partners if user selected client role and not already in array
-                if (request.IsClientPartner && !contextPartnerInClient)
-                {
-                    _logger.LogInformation("➕ [API] Adding context partner {PartnerId} to client partners", request.PartnerId.Value);
-                    opportunityRequest.ClientPartners.Add(new OpportunityClientPartnerRequest
-                    {
-                        PartnerId = request.PartnerId.Value
-                    });
-                }
-            }
-
-            // Add all deduplicated AI-proposed funding partners
-            if (uniqueFundingPartners.Any())
-            {
-                _logger.LogInformation("➕ [API] Adding {Count} deduplicated AI-proposed funding partners", uniqueFundingPartners.Count);
-                opportunityRequest.FundingPartners.AddRange(uniqueFundingPartners);
-            }
-
-            // Add all deduplicated AI-proposed client partners  
-            if (uniqueClientPartners.Any())
-            {
-                _logger.LogInformation("➕ [API] Adding {Count} deduplicated AI-proposed client partners", uniqueClientPartners.Count);
-                opportunityRequest.ClientPartners.AddRange(uniqueClientPartners);
-            }
-
-            // Create the opportunity
-            var result = await _manager.CreateOpportunityAsync(opportunityRequest);
+            // Create the opportunity using manager (handles deduplication, partner logic, etc.)
+            var result = await _manager.CreateOpportunityFromProposalAsync(request, _currentUserId);
 
             // Persist uploaded documents to database if any (from GCS temporary uploads)
             if (request.Documents != null && request.Documents.Any())
@@ -1759,18 +1663,6 @@ public class OpportunityController : BaseController
                 }
                 
                 await _context.SaveChangesAsync();
-            }
-
-            // Assign the current user as Opportunity Manager
-            try
-            {
-                await _manager.AssignCreatorAsOpportunityManagerAsync(result.Id, _currentUserId);
-                _logger.LogInformation("✅ Assigned user {UserId} as Opportunity Manager for opportunity {OpportunityId}", 
-                    _currentUserId, result.Id);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "⚠️ Failed to assign creator as Opportunity Manager for opportunity {OpportunityId}", result.Id);
             }
 
             // Create audit log noting this was AI-assisted
@@ -1868,6 +1760,128 @@ public class OpportunityController : BaseController
         {
             _logger.LogError(ex, "Error getting framework status for opportunity {OpportunityId}", id);
             return StatusCode(500, new { error = "Internal server error while getting framework status", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Searches for Products & Services (Outputs) using AI semantic search
+    /// Combines text similarity and embedding-based search for best results
+    /// </summary>
+    /// <param name="request">Search request with text query</param>
+    /// <returns>List of matched Outputs with similarity scores</returns>
+    [HttpPost(APIDictionary.Opportunity + "/find-deliverable")]
+    [AccessControlled(EntityTypes.Opportunity, "read")]
+    public async Task<ActionResult<OutputSemanticSearchResponse>> FindDeliverable([FromBody] OutputSemanticSearchRequest request)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(request.SearchText) || request.SearchText.Length < 3)
+            {
+                return BadRequest(new { error = "Search text must be at least 3 characters" });
+            }
+
+            _logger.LogInformation("🔍 [API] AI search for deliverable: '{SearchText}'", request.SearchText);
+
+            var matches = new List<OutputSemanticSearchMatch>();
+            var maxResults = request.MaxResults > 0 ? request.MaxResults : 10;
+            var minSimilarity = request.MinSimilarity > 0 ? request.MinSimilarity : 0.3f;
+
+            // Create AiContextualService for embedding generation and search
+            var credentials = GoogleCredential.GetApplicationDefault();
+            var unopsContext = HttpContext.RequestServices.GetRequiredService<UNOPS.PAO.UNOPSDataAccess.Context.UNOPSAppDbContext>();
+            var aiService = new AiContextualService(_configuration, unopsContext, credentials, null, _logger);
+
+            // Generate embedding for search text
+            var embeddingVector = await aiService.CreateEmbeddingForText(request.SearchText);
+            
+            if (string.IsNullOrEmpty(embeddingVector))
+            {
+                _logger.LogWarning("Failed to generate embedding for search text: {SearchText}", request.SearchText);
+                return Ok(new OutputSemanticSearchResponse
+                {
+                    SearchText = request.SearchText,
+                    Matches = new List<OutputSemanticSearchMatch>(),
+                    TotalMatches = 0
+                });
+            }
+
+            // Use embedding search for semantic matching (this function exists and works)
+            var searchResults = await aiService.ExecuteEmbeddingSearchMultiple(
+                entityName: "Output",
+                embeddingVector: embeddingVector,
+                embeddingThreshold: 0.4f,  // Lower threshold for broader matches
+                resultLimit: maxResults * 2,  // Get more results to filter
+                whereCondition: null
+            );
+
+            // Take top results
+            var topResults = searchResults
+                .OrderByDescending(r => r.Score)
+                .Take(maxResults)
+                .ToList();
+
+            if (!topResults.Any())
+            {
+                _logger.LogInformation("No matches found for: {SearchText}", request.SearchText);
+                return Ok(new OutputSemanticSearchResponse
+                {
+                    SearchText = request.SearchText,
+                    Matches = new List<OutputSemanticSearchMatch>(),
+                    TotalMatches = 0
+                });
+            }
+
+            // Get Output details for matched IDs
+            var outputIds = topResults.Select(r => r.EntityId).ToList();
+            var valuesManager = HttpContext.RequestServices.GetRequiredService<ValuesManager>();
+            var outputs = valuesManager.GetOutputsByIds(outputIds).ToList();
+            var outputsDict = outputs.ToDictionary(o => o.Id);
+
+            foreach (var result in topResults)
+            {
+                if (outputsDict.TryGetValue(result.EntityId, out var output))
+                {
+                    // Build hierarchy path
+                    var hierarchyParts = new List<string>();
+                    if (!string.IsNullOrEmpty(output.Level0)) hierarchyParts.Add(output.Level0);
+                    if (!string.IsNullOrEmpty(output.Level1)) hierarchyParts.Add(output.Level1);
+                    if (!string.IsNullOrEmpty(output.Level2)) hierarchyParts.Add(output.Level2);
+                    if (!string.IsNullOrEmpty(output.Level3)) hierarchyParts.Add(output.Level3);
+                    if (!string.IsNullOrEmpty(output.Level4)) hierarchyParts.Add(output.Level4);
+                    
+                    // Determine matched level
+                    var matchedLevel = "Level0";
+                    if (!string.IsNullOrEmpty(output.Level4)) matchedLevel = "Level4";
+                    else if (!string.IsNullOrEmpty(output.Level3)) matchedLevel = "Level3";
+                    else if (!string.IsNullOrEmpty(output.Level2)) matchedLevel = "Level2";
+                    else if (!string.IsNullOrEmpty(output.Level1)) matchedLevel = "Level1";
+
+                    matches.Add(new OutputSemanticSearchMatch
+                    {
+                        Output = output,
+                        SimilarityScore = result.Score,
+                        MatchedLevel = matchedLevel,
+                        MatchedHierarchy = string.Join(" > ", hierarchyParts),
+                        SemanticScore = result.SearchType == "embedding" ? result.Score : 0,
+                        KeywordScore = result.SearchType == "similarity" ? result.Score : 0,
+                        TextSimilarityScore = result.SearchType == "similarity" ? result.Score : 0
+                    });
+                }
+            }
+
+            _logger.LogInformation("✅ [API] AI search found {Count} matches for: {SearchText}", matches.Count, request.SearchText);
+
+            return Ok(new OutputSemanticSearchResponse
+            {
+                SearchText = request.SearchText,
+                Matches = matches,
+                TotalMatches = matches.Count
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in AI deliverable search for: {SearchText}", request.SearchText);
+            return StatusCode(500, new { error = "Internal server error during AI search", details = ex.Message });
         }
     }
 
