@@ -1452,6 +1452,13 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
   }
 
   /**
+   * Get existing document info by ID (for display in step 2)
+   */
+  getExistingDocumentInfo(documentId: number): any | null {
+    return this.availablePartnerDocuments().find(d => d.id === documentId) || null;
+  }
+
+  /**
    * Get delivery modality label by value
    */
   getDeliveryModalityLabel(value: number | null | undefined): string {
