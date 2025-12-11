@@ -3299,6 +3299,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     /// <summary>
     /// Data retrieval method for AI prompts - Gets comprehensive opportunity details for keyword extraction
     /// This method is called via reflection by the BaseUNOPSManager
+    /// Includes ALL data from implemented interfaces: Risks, DST Analysis, Insights, Suggestions, etc.
     /// </summary>
     /// <param name="id">Opportunity ID</param>
     /// <returns>Dictionary containing all opportunity details formatted for AI prompt placeholders</returns>
@@ -3335,6 +3336,98 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         }
 
         var stats = ComputeOpportunityStats(opportunity);
+        
+        // ==========================================
+        // LOAD RISK REGISTER DATA
+        // ==========================================
+        var risks = await context.Set<Domain.Entities.Risk>()
+            .Include(r => r.RiskTypeEntity)
+            .Include(r => r.RiskCategory)
+            .Include(r => r.RiskProbabilityEntity)
+            .Include(r => r.RiskProximityEntity)
+            .Include(r => r.RiskImpactLevelEntity)
+            .Include(r => r.RiskResponseTypeEntity)
+            .Include(r => r.PreDefinedHighRisk)
+            .Where(r => r.EntityType == "Opportunity" && r.EntityId == id && !r.IsDeleted)
+            .OrderByDescending(r => r.CreatedDate)
+            .ToListAsync();
+        
+        var risksDetails = risks.Select(r => new
+        {
+            Title = r.Title ?? "Untitled Risk",
+            Description = r.Description ?? "",
+            Recommendation = r.Recommendation ?? "",
+            RiskType = r.RiskTypeEntity?.Name ?? "Unknown",
+            RiskCategory = r.RiskCategory?.Name ?? "Unknown",
+            RiskCategoryCode = r.RiskCategory?.Code ?? "Unknown",
+            RiskCategoryShortCode = r.RiskCategory?.ShortCode ?? "Unknown",
+            RiskCategoryLevel = r.RiskCategory?.Level ?? 0,
+            Probability = r.RiskProbabilityEntity?.Name ?? "Unknown",
+            ProbabilityValue = r.RiskProbabilityEntity?.NumericValue ?? 0,
+            Proximity = r.RiskProximityEntity?.Name ?? "Unknown",
+            ImpactLevel = r.RiskImpactLevelEntity?.Name ?? "Unknown",
+            ImpactValue = r.RiskImpactLevelEntity?.NumericValue ?? 0,
+            ResponseType = r.RiskResponseTypeEntity?.Name ?? "Not specified",
+            IsPreDefinedHighRisk = r.PreDefinedHighRiskId.HasValue,
+            PreDefinedHighRiskCode = r.PreDefinedHighRisk?.Code ?? "",
+            PreDefinedHighRiskTitle = r.PreDefinedHighRisk?.ShortTitle ?? "",
+            IdentifiedDate = r.IdentifiedDate?.ToString("yyyy-MM-dd") ?? "",
+            IdentifiedBy = r.IdentifiedBy?.ToString() ?? ""
+        }).ToList();
+        
+        var risksText = risksDetails.Any()
+            ? string.Join("\n", risksDetails.Select(r =>
+                $"- [{r.RiskType}] {r.Title}" +
+                (string.IsNullOrEmpty(r.Description) ? "" : $"\n  Description: {r.Description}") +
+                (string.IsNullOrEmpty(r.Recommendation) ? "" : $"\n  Recommendation: {r.Recommendation}") +
+                $"\n  Category: {r.RiskCategory} ({r.RiskCategoryShortCode}, Level {r.RiskCategoryLevel})" +
+                $"\n  Probability: {r.Probability} (Value: {r.ProbabilityValue})" +
+                $"\n  Impact: {r.ImpactLevel} (Value: {r.ImpactValue})" +
+                $"\n  Proximity: {r.Proximity}" +
+                (string.IsNullOrEmpty(r.ResponseType) || r.ResponseType == "Not specified" ? "" : $"\n  Response: {r.ResponseType}") +
+                (r.IsPreDefinedHighRisk ? $"\n  Pre-Defined High Risk: {r.PreDefinedHighRiskCode} - {r.PreDefinedHighRiskTitle}" : "") +
+                (string.IsNullOrEmpty(r.IdentifiedDate) ? "" : $"\n  Identified: {r.IdentifiedDate} by {r.IdentifiedBy}")))
+            : "No risks identified";
+        
+        // ==========================================
+        // LOAD SME SELECTIONS
+        // ==========================================
+        var smeSelections = await GetSMESelectionsAsync(id);
+        var smeSelectionsText = smeSelections.Any()
+            ? string.Join("\n", smeSelections
+                .Where(s => s.IsSelected && !string.IsNullOrEmpty(s.UserName))
+                .Select(s => $"- {s.EntityRoleName}: {s.UserName} ({s.UserEmail})"))
+            : "No SME selections made";
+        
+        // ==========================================
+        // LOAD PARTNER AGREEMENTS (for context)
+        // ==========================================
+        var partnerAgreementsSummary = new List<string>();
+        if (opportunity.FundingPartners != null && opportunity.FundingPartners.Any())
+        {
+            var opportunityCountryIds = opportunity.Countries?.Select(c => c.CountryId).ToList() ?? new List<int>();
+            
+            foreach (var fp in opportunity.FundingPartners.Take(5)) // Limit to first 5 for brevity
+            {
+                var agreements = await LoadPartnerAgreementsAsync(
+                    fp.PartnerId,
+                    opportunity.CreatedDate,
+                    opportunity.TargetDeliveryDate,
+                    opportunityCountryIds
+                );
+                
+                if (agreements.Any())
+                {
+                    var agreementInfo = string.Join("; ", agreements.Take(2).Select(a =>
+                        $"{a.Name} ({a.PartnerAgreementType}, {a.StartDate?.ToString("yyyy-MM-dd") ?? "N/A"} to {a.EndDate?.ToString("yyyy-MM-dd") ?? "N/A"})"));
+                    partnerAgreementsSummary.Add($"{fp.Partner?.Name ?? "Unknown"}: {agreementInfo}");
+                }
+            }
+        }
+        
+        var partnerAgreementsText = partnerAgreementsSummary.Any()
+            ? string.Join("\n", partnerAgreementsSummary)
+            : "No partner agreements loaded";
 
         // Format funding partners with detailed information
         var fundingPartnersDetails = opportunity.FundingPartners?
@@ -3619,9 +3712,10 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             ["challenges"] = opportunity.Challenges ?? "",
             
             // Marketing Content
-            ["opportunityStatementMarkdown"] = opportunity.OpportunityStatementMarkdown ?? "",
-            ["hasOpportunityBannerImage"] = !string.IsNullOrEmpty(opportunity.OpportunityBannerImage) ? "Yes" : "No",
-            ["hasOpportunityThumbnail"] = !string.IsNullOrEmpty(opportunity.OpportunityThumbnail) ? "Yes" : "No",
+            // LEAVE OUT GENERATED CONTENT LIKE OPPORTUNITY STATEMENT THAT RELIES ON STRUCTURED DATA ANYWAY AND THE BANNER AND THUMBNAIL ARE NOT NEEDED FOR AI GENERATION ANYWAY
+            // ["opportunityStatementMarkdown"] = opportunity.OpportunityStatementMarkdown ?? "",
+            // ["hasOpportunityBannerImage"] = !string.IsNullOrEmpty(opportunity.OpportunityBannerImage) ? "Yes" : "No",
+            // ["hasOpportunityThumbnail"] = !string.IsNullOrEmpty(opportunity.OpportunityThumbnail) ? "Yes" : "No",
             
             // Funding and Risk Information
             ["isPooledFunding"] = opportunity.IsPooledFunding ? "Yes" : "No",
@@ -3674,7 +3768,60 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             ["createdBy"] = opportunity.CreatedBy.ToString(),
             ["createdByName"] = opportunity.CreatedByUser?.Name ?? "",
             ["lastModifiedBy"] = opportunity.LastModifiedBy.ToString(),
-            ["lastModifiedByName"] = opportunity.LastModifiedByUser?.Name ?? ""
+            ["lastModifiedByName"] = opportunity.LastModifiedByUser?.Name ?? "",
+            
+            // ==========================================
+            // RISK REGISTER DATA
+            // ==========================================
+            ["risks"] = risksText,
+            ["risksCount"] = risksDetails.Count.ToString(),
+            ["totalThreats"] = risksDetails.Count(r => r.RiskType.Equals("Threat", StringComparison.OrdinalIgnoreCase)).ToString(),
+            ["totalOpportunityRisks"] = risksDetails.Count(r => r.RiskType.Equals("Opportunity", StringComparison.OrdinalIgnoreCase)).ToString(),
+            ["highImpactRisks"] = risksDetails.Count(r => r.ImpactValue >= 4).ToString(),
+            ["highProbabilityRisks"] = risksDetails.Count(r => r.ProbabilityValue >= 4).ToString(),
+            ["preDefinedHighRisksCount"] = risksDetails.Count(r => r.IsPreDefinedHighRisk).ToString(),
+            
+            // ==========================================
+            // SME SELECTIONS
+            // ==========================================
+            ["smeSelections"] = smeSelectionsText,
+            ["smeSelectionsCount"] = smeSelections.Count(s => s.IsSelected).ToString(),
+            
+            // ==========================================
+            // PARTNER AGREEMENTS SUMMARY
+            // ==========================================
+            ["partnerAgreements"] = partnerAgreementsText,
+            ["partnerAgreementsCount"] = partnerAgreementsSummary.Count.ToString(),
+            
+            // ==========================================
+            // ADDITIONAL COMPUTED FIELDS
+            // ==========================================
+            ["hasOpportunityStatement"] = !string.IsNullOrEmpty(opportunity.OpportunityStatementMarkdown) ? "Yes" : "No",
+            ["opportunityStatementLength"] = opportunity.OpportunityStatementMarkdown?.Length.ToString() ?? "0",
+            ["hasHighRiskAcknowledgement"] = opportunity.HighRisksAcknowledged ? "Yes" : "No",
+            ["isMultiCountry"] = stats.CountryCount > 1 ? "Yes" : "No",
+            ["isMultiFunder"] = stats.FundingPartnerCount > 1 ? "Yes" : "No",
+            ["hasSDGTargets"] = opportunity.SDGTargets?.Any() == true ? "Yes" : "No",
+            ["hasSDGIndicators"] = opportunity.SDGIndicators?.Any() == true ? "Yes" : "No",
+            ["hasUNCFAlignment"] = opportunity.UNCFOutcomes?.Any() == true ? "Yes" : "No",
+            ["hasUNOPSMissionAlignment"] = opportunity.UNOPSMissions?.Any() == true ? "Yes" : "No",
+            ["hasExternalStakeholders"] = opportunity.ExternalStakeholders?.Any() == true ? "Yes" : "No",
+            ["hasMiscExternalStakeholders"] = !string.IsNullOrEmpty(opportunity.MiscExternalStakeholders) ? "Yes" : "No",
+            ["fundingToFeeRatio"] = stats.TotalFundingUSD > 0 && stats.TotalFeeAmountUSD > 0 
+                ? (stats.TotalFeeAmountUSD / stats.TotalFundingUSD * 100).ToString("N2") + "%" 
+                : "N/A",
+            
+            // ==========================================
+            // TIMELINE ANALYSIS
+            // ==========================================
+            ["hasDefinedTimeline"] = opportunity.TargetSigningDate.HasValue && opportunity.TargetDeliveryDate.HasValue ? "Yes" : "No",
+            ["estimatedDurationMonths"] = opportunity.TargetSigningDate.HasValue && opportunity.TargetDeliveryDate.HasValue
+                ? Math.Round((opportunity.TargetDeliveryDate.Value - opportunity.TargetSigningDate.Value).TotalDays / 30.0).ToString()
+                : "Not specified",
+            ["hasSubmissionDeadline"] = opportunity.SubmissionDeadline.HasValue ? "Yes" : "No",
+            ["daysUntilSubmissionDeadline"] = opportunity.SubmissionDeadline.HasValue
+                ? ((int)(opportunity.SubmissionDeadline.Value.Date - DateTime.UtcNow.Date).TotalDays).ToString()
+                : "N/A"
         };
     }
 

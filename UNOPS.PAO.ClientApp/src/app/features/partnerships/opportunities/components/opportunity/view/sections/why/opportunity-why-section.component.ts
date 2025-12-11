@@ -586,9 +586,10 @@ export class OpportunityWhySectionComponent implements OnInit {
 
   /**
    * @description Load UNOPS Missions from values service
+   * Includes inactive missions to display previously selected missions that may now be inactive
    */
   private loadUNOPSMissions(): void {
-    this.valuesService.getUNOPSMissions().subscribe({
+    this.valuesService.getUNOPSMissions(true).subscribe({
       next: (data) => {
         this.unopsMissions.set(data);
 
@@ -631,6 +632,17 @@ export class OpportunityWhySectionComponent implements OnInit {
   }
 
   /**
+   * @description Remove a UNOPS Mission from selection (used for inactive missions)
+   */
+  removeUNOPSMission(missionId: number): void {
+    const selected = new Set(this.selectedUNOPSMissions());
+    selected.delete(missionId);
+    this.selectedUNOPSMissions.set(selected);
+    this.markAsChanged();
+    this.cdr.detectChanges();
+  }
+
+  /**
    * @description Get count of selected UNOPS Missions
    */
   unopsMissionCount = computed(() => {
@@ -645,6 +657,14 @@ export class OpportunityWhySectionComponent implements OnInit {
     const allMissions = this.unopsMissions();
 
     return allMissions.filter((mission) => selectedIds.has(mission.id));
+  });
+
+  /**
+   * @description Get only active UNOPS Missions for selection in dialog
+   * Excludes inactive missions to prevent users from selecting them
+   */
+  activeMissionsForDialog = computed(() => {
+    return this.unopsMissions().filter((mission) => mission.status === 'Active');
   });
 
   /**
