@@ -1349,7 +1349,7 @@
   "label.opportunity.sourceInteractions": "Source Interactions",
   "label.opportunity.responsibleOrgUnit": "Responsible Organizational Unit",
   "label.opportunity.sdg": "SDG",
-  "label.opportunity.alignmentToUNOPSStrategy": "Alignment to UNOPS Strategy",
+  "label.opportunity.alignmentToUNOPSStrategy": "Alignment to UNOPS Strategic Missions",
   "label.opportunity.unopsMissionsNotApplicable": "This opportunity will not align to any UNOPS missions (not applicable)",
   "message.opportunity.noUNOPSMissionsSelected": "No UNOPS missions selected",
   "message.opportunity.loadingUNOPSMissions": "Loading UNOPS missions...",

@@ -2736,7 +2736,7 @@
   "label.opportunity.beneficiaryNumbersToBeDetermined": "Os números estimados de beneficiários serão buscados se o desenvolvimento for prosseguido",
   "message.opportunity.beneficiariesToBeDetermined": "Os números de beneficiários serão determinados durante o desenvolvimento",
   "placeholder.opportunity.enterNumber": "Digite o número",
-  "label.opportunity.alignmentToUNOPSStrategy": "Alinhamento com a Estratégia da UNOPS",
+  "label.opportunity.alignmentToUNOPSStrategy": "Alinhamento com as Missões Estratégicas da UNOPS",
   "label.opportunity.unopsMissionsNotApplicable": "Esta oportunidade não se alinhará com nenhuma missão da UNOPS (não aplicável)",
   "message.opportunity.noUNOPSMissionsSelected": "Nenhuma missão UNOPS selecionada",
   "message.opportunity.loadingUNOPSMissions": "Carregando missões UNOPS...",
