@@ -2667,6 +2667,7 @@
   "message.uploadingDocuments": "Téléchargement de documents...",
   "message.documentSourceSummary": "{newCount} nouveaux, {existingCount} existants",
   "message.selectExistingDocumentsFromPartner": "Sélectionnez des documents existants de la bibliothèque de ce partenaire pour les inclure dans votre opportunité.",
+  "message.warning.documentSkipped": "Le document '{{name}}' n'a pas pu être traité et a été ignoré.",
   "message.documentSourcesSummaryNew": "{{count}} nouveau(x) document(s) sélectionné(s)",
   "message.documentSourcesSummaryExisting": "{{count}} document(s) existant(s) sélectionné(s)",
   "message.documentSourcesSummaryBoth": "{{newCount}} nouveau(x) document(s) et {{existingCount}} document(s) existant(s) sélectionné(s)",

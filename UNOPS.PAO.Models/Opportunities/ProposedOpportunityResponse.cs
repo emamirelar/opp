@@ -56,6 +56,7 @@ public class OpportunityProposalResponse
 /// <summary>
 /// Proposed opportunity data structure matching the OpportunityModel fields
 /// Contains AI-extracted values from interactions with dependents for ID resolution
+/// Aligned with opportunity-documents field mappings for consistent AI extraction
 /// </summary>
 public class ProposedOpportunityData
 {
@@ -70,16 +71,31 @@ public class ProposedOpportunityData
     public int? ProposedInitiativeTypeId { get; set; }
     public string? ProposedInitiativeTypeName { get; set; }
     
-    // Financial & Timeline
+    // Financial Information
     public decimal? InitiativeBudgetUSD { get; set; }
     public string? PartnershipAgreementReference { get; set; }
+    
+    // WHEN Section - Timeline Fields
     public DateTime? TargetSigningDate { get; set; }
+    public bool? IsTargetSigningDateFirm { get; set; }
+    public string? SigningDateNotes { get; set; }
+    public DateTime? SubmissionDeadline { get; set; }
+    public DateTime? ImplementationStartDate { get; set; }
     public DateTime? TargetDeliveryDate { get; set; }
     
-    // Strategic Information
+    // WHY Section - Strategic Information
+    public string? Challenges { get; set; }
     public string? ResultsFocus { get; set; }
     public string? IntendedImpactOutcomes { get; set; }
     public string? ExpectedBeneficiaries { get; set; }
+    public int? EstimatedDirectBeneficiaries { get; set; }
+    public int? EstimatedIndirectBeneficiaries { get; set; }
+    public bool? BeneficiariesToBeDetermined { get; set; }
+    
+    // WHAT Section - Delivery & Stakeholders
+    public int? DeliveryModality { get; set; }
+    public string? MiscExternalStakeholders { get; set; }
+    public string? ExternalStakeholderNotes { get; set; }
     
     // Related Entities (processed by GetDependentDropdownValues into structured objects)
     // Stringified JSON arrays to avoid serialization issues - frontend will parse these

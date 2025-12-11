@@ -163,6 +163,14 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
   pendingGoogleDriveFiles = signal<{id: string, name: string, mimeType: string}[]>([]);
   selectedDocumentTypeForDialog = signal<number | null>(null);
 
+  // Delivery Modality options (values match backend enum: 1=NotYetKnown, 2=AllDirect, 3=AllGrantSupport, 4=Mixed)
+  readonly deliveryModalityOptions = [
+    { value: 1, label: 'label.deliveryModality.notYetKnown' },
+    { value: 2, label: 'label.deliveryModality.allDirect' },
+    { value: 3, label: 'label.deliveryModality.allGrantSupport' },
+    { value: 4, label: 'label.deliveryModality.mixed' }
+  ];
+
   // Proposed opportunity data (Step 2)
   proposedOpportunity = signal<ProposedOpportunityResponse | null>(null);
   
@@ -225,19 +233,41 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     if (!proposal || !proposal.opportunity) return 0;
     
     let count = 0;
-    const opp = proposal.opportunity;
+    const opp = proposal.opportunity as any; // Cast to any for extended fields
     
-    // Count non-empty fields
+    // Count non-empty fields - aligned with opportunity-documents field mappings
+    // Basic Info
     if (opp.name) count++;
     if (opp.description) count++;
     if (opp.responsibleOrgUnitName) count++;
     if (opp.proposedInitiativeTypeName) count++;
+    
+    // Financial
     if (opp.initiativeBudgetUSD) count++;
-    if (opp.resultsFocus) count++;
-    if (opp.expectedBeneficiaries) count++;
-    if (opp.intendedImpactOutcomes) count++;
+    
+    // WHEN Section - Timeline
     if (opp.targetSigningDate) count++;
+    if (opp.isTargetSigningDateFirm !== null && opp.isTargetSigningDateFirm !== undefined) count++;
+    if (opp.signingDateNotes) count++;
+    if (opp.submissionDeadline) count++;
+    if (opp.implementationStartDate) count++;
     if (opp.targetDeliveryDate) count++;
+    
+    // WHY Section - Strategic
+    if (opp.challenges) count++;
+    if (opp.resultsFocus) count++;
+    if (opp.intendedImpactOutcomes) count++;
+    if (opp.expectedBeneficiaries) count++;
+    if (opp.estimatedDirectBeneficiaries) count++;
+    if (opp.estimatedIndirectBeneficiaries) count++;
+    if (opp.beneficiariesToBeDetermined !== null && opp.beneficiariesToBeDetermined !== undefined) count++;
+    
+    // WHAT Section - Delivery
+    if (opp.deliveryModality) count++;
+    if (opp.miscExternalStakeholders) count++;
+    if (opp.externalStakeholderNotes) count++;
+    
+    // Collections
     if (opp.deliverables && opp.deliverables.length > 0) count++;
     if (opp.fundingPartners && opp.fundingPartners.length > 0) count++;
     if (opp.clientPartners && opp.clientPartners.length > 0) count++;
@@ -829,20 +859,41 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         return;
       }
       
-      // Call API to get partner documents
+      // Call API to get partner documents using the correct endpoint format: /api/document/{entityName}/{entityId}
       const documents = await this.http
-        .get<any[]>(`/api/partner/${partnerIdValue}/documents`)
+        .get<any[]>(`/api/document/Partner/${partnerIdValue}`)
         .toPromise();
       
-      if (documents) {
+      // Handle response - check for valid data
+      if (documents && Array.isArray(documents)) {
         this.availablePartnerDocuments.set(documents);
+        
+        if (documents.length === 0) {
+          console.log(`ℹ️ No documents found for partner ${partnerIdValue}`);
+        } else {
+          console.log(`✅ Loaded ${documents.length} documents for partner ${partnerIdValue}`);
+        }
+      } else {
+        // Empty or null response - treat as no documents
+        this.availablePartnerDocuments.set([]);
+        console.log(`ℹ️ Empty response for partner ${partnerIdValue} documents`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading partner documents:', error);
-      this.feedbackDialogService.showErrorToast({
-        summary: this.translateService.instant('common.error.title'),
-        detail: this.translateService.instant('message.error.loadingDocuments')
-      });
+      
+      // Check if it's a 404 (partner has no documents) or parsing error
+      if (error?.status === 404 || error?.status === 200 || error?.message?.includes('parsing')) {
+        // Partner has no documents or empty response - just set empty array, don't show error to user
+        this.availablePartnerDocuments.set([]);
+        console.warn(`⚠️ Partner ${this.partnerId()} has no documents (404 or empty response)`);
+      } else {
+        // Real error - show to user
+        this.feedbackDialogService.showErrorToast({
+          summary: this.translateService.instant('common.error.title'),
+          detail: this.translateService.instant('message.error.loadingDocuments')
+        });
+        this.availablePartnerDocuments.set([]);
+      }
     }
   }
   
@@ -1130,6 +1181,144 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
       this.isUploadingToGCS.set(false);
     }
   }
+
+  /**
+   * Upload existing partner documents to GCS
+   * Handles documents with StoragePath (already in GCS), GoogleId (Drive), or needs download
+   */
+  private async uploadExistingDocumentsToGCS(): Promise<{gcsPath: string, mimeType: string, name: string, documentTypeId: number | null}[]> {
+    const uploadedDocs: {gcsPath: string, mimeType: string, name: string, documentTypeId: number | null}[] = [];
+    const selectedIds = this.selectedExistingDocumentIds();
+    const availableDocs = this.availablePartnerDocuments();
+    
+    if (selectedIds.length === 0) {
+      return uploadedDocs;
+    }
+    
+    this.isUploadingToGCS.set(true);
+    const totalDocs = selectedIds.length;
+    let docIndex = 0;
+    
+    try {
+      for (const documentId of selectedIds) {
+        docIndex++;
+        const docInfo = availableDocs.find(d => d.id === documentId);
+        const docName = docInfo?.name || `Document_${documentId}`;
+        const mimeType = docInfo?.mimeType || docInfo?.type || 'application/pdf';
+        
+        this.uploadProgress.set(`Processing existing document ${docIndex} of ${totalDocs}: ${docName}...`);
+        console.log(`📄 [ExistingDoc] Processing document ${documentId}: ${docName}`, docInfo);
+        
+        try {
+          // Case 1: Document already has a GCS storage path - use it directly
+          if (docInfo?.storagePath && docInfo.storagePath.startsWith('gs://')) {
+            console.log(`✅ [ExistingDoc] Document ${documentId} already in GCS: ${docInfo.storagePath}`);
+            uploadedDocs.push({
+              gcsPath: docInfo.storagePath,
+              mimeType: mimeType,
+              name: docName,
+              documentTypeId: docInfo?.documentTypeId || null
+            });
+            continue;
+          }
+          
+          // Case 2: Document has a Google Drive ID - download/export from Drive
+          if (docInfo?.googleId) {
+            console.log(`📥 [ExistingDoc] Document ${documentId} has GoogleId: ${docInfo.googleId}`);
+            
+            if (!this.googleDriveAuthAvailable) {
+              console.warn(`⚠️ [ExistingDoc] Google Drive auth not available, skipping document ${documentId}`);
+              this.feedbackDialogService.showWarningToast({
+                summary: this.translateService.instant('common.warning.title'),
+                detail: this.translateService.instant('message.warning.googleDriveAuthRequired')
+              });
+              continue;
+            }
+            
+            // Check if it needs PDF conversion (Office docs)
+            const needsConversion = this.googleDriveService.needsPdfConversion(mimeType);
+            
+            let pdfBlob: Blob;
+            let pdfFileName: string;
+            
+            if (needsConversion) {
+              // Export as PDF
+              this.uploadProgress.set(`Exporting ${docName} from Drive as PDF...`);
+              const exportResult = await firstValueFrom(
+                this.googleDriveService.exportDriveFileAsPdf(docInfo.googleId, docName)
+              );
+              pdfBlob = this.base64ToBlob(exportResult.data, exportResult.mimeType);
+              pdfFileName = exportResult.name;
+            } else {
+              // Download directly (already PDF or image)
+              this.uploadProgress.set(`Downloading ${docName} from Drive...`);
+              const downloadResult = await firstValueFrom(
+                this.googleDriveService.downloadDriveFile(docInfo.googleId, docName, mimeType)
+              );
+              pdfBlob = this.base64ToBlob(downloadResult.data, downloadResult.mimeType);
+              pdfFileName = downloadResult.name;
+            }
+            
+            // Upload to GCS
+            this.uploadProgress.set(`Uploading ${pdfFileName} to cloud storage...`);
+            const pdfFile = new File([pdfBlob], pdfFileName, { type: 'application/pdf' });
+            
+            const formData = new FormData();
+            formData.append('File', pdfFile);
+            formData.append('Name', pdfFileName);
+            formData.append('UploadToGCS', 'true');
+            formData.append('SkipDatabaseSave', 'true');
+            formData.append('GoogleId', docInfo.googleId);
+            
+            const uploadResponse = await this.http
+              .post<any>('/api/document/upload', formData)
+              .toPromise();
+            
+            if (uploadResponse && uploadResponse.storagePath) {
+              uploadedDocs.push({
+                gcsPath: uploadResponse.storagePath,
+                mimeType: 'application/pdf',
+                name: pdfFileName,
+                documentTypeId: docInfo?.documentTypeId || null
+              });
+              console.log(`✅ [ExistingDoc] Uploaded ${pdfFileName} to GCS: ${uploadResponse.storagePath}`);
+            }
+            continue;
+          }
+          
+          // Case 3: Document has a link (external URL) - skip for now
+          if (docInfo?.link) {
+            console.warn(`⚠️ [ExistingDoc] Document ${documentId} is an external link, skipping`);
+            continue;
+          }
+          
+          // Case 4: No suitable source found
+          console.warn(`⚠️ [ExistingDoc] Document ${documentId} has no GCS path or Google Drive ID, skipping`);
+          this.feedbackDialogService.showWarningToast({
+            summary: this.translateService.instant('common.warning.title'),
+            detail: this.translateService.instant('message.warning.documentSkipped', { name: docName })
+          });
+          
+        } catch (docError: any) {
+          console.error(`❌ [ExistingDoc] Error processing document ${documentId}:`, docError);
+          this.feedbackDialogService.showWarningToast({
+            summary: this.translateService.instant('common.warning.title'),
+            detail: this.translateService.instant('message.warning.documentSkipped', { name: docName })
+          });
+        }
+      }
+      
+      this.uploadProgress.set('');
+      return uploadedDocs;
+      
+    } catch (error) {
+      console.error('Error uploading existing documents to GCS:', error);
+      this.uploadProgress.set('');
+      throw error;
+    } finally {
+      this.isUploadingToGCS.set(false);
+    }
+  }
   
   /**
    * Convert base64 to Blob
@@ -1154,6 +1343,15 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
   }
 
   /**
+   * Get delivery modality label by value
+   */
+  getDeliveryModalityLabel(value: number | null | undefined): string {
+    if (value === null || value === undefined) return '-';
+    const option = this.deliveryModalityOptions.find(o => o.value === value);
+    return option ? this.translateService.instant(option.label) : '-';
+  }
+
+  /**
    * Generate AI proposal (Step 1 -> Step 2)
    */
   async generateProposal(): Promise<void> {
@@ -1171,11 +1369,12 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
       let uploadedDocs: {gcsPath: string, mimeType: string, name: string, documentTypeId: number | null}[] = [];
       const localFilesCount = this.selectedFiles().length;
       const driveFilesCount = this.selectedGoogleDriveFiles().length;
+      const existingDocsCount = this.selectedExistingDocumentIds().length;
       
       console.log('📝 [GenerateProposal] Document state before upload:', {
         localFiles: localFilesCount,
         driveFiles: driveFilesCount,
-        existingDocumentIds: this.selectedExistingDocumentIds().length
+        existingDocumentIds: existingDocsCount
       });
       
       if (localFilesCount > 0 || driveFilesCount > 0) {
@@ -1199,6 +1398,27 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         console.log('ℹ️ [GenerateProposal] No local or Drive files to upload');
       }
       
+      // Step 1b: Upload existing partner documents to GCS (download content and re-upload to get GCS path)
+      if (existingDocsCount > 0) {
+        console.log('📤 [GenerateProposal] Uploading existing partner documents to GCS...');
+        try {
+          const existingDocsUploaded = await this.uploadExistingDocumentsToGCS();
+          uploadedDocs = [...uploadedDocs, ...existingDocsUploaded];
+          console.log('✅ [GenerateProposal] Existing documents uploaded:', {
+            uploadedCount: existingDocsUploaded.length,
+            documents: existingDocsUploaded.map(d => ({ name: d.name, gcsPath: d.gcsPath }))
+          });
+        } catch (uploadError: any) {
+          console.error('❌ [GenerateProposal] Error uploading existing documents:', uploadError);
+          this.feedbackDialogService.showErrorToast({
+            summary: this.translateService.instant('common.error.title'),
+            detail: uploadError?.message || this.translateService.instant('message.error.uploadingDocuments')
+          });
+          this.generating.set(false);
+          return;
+        }
+      }
+      
       // Step 2: Get selected interaction IDs
       const interactionIds = this.selectedInteractions()
         .filter(i => i.selected !== false)
@@ -1211,6 +1431,7 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
       // as the user hasn't explicitly selected partner roles
       const isFromInteractionDetail = this.mode() === 'detail-view';
       
+      // All documents (new uploads + existing) are now in GCS with paths
       const request: ProposeOpportunityRequest = {
         opportunityName: this.opportunityName(),
         opportunityDescription: this.opportunityDescription(),
@@ -1220,8 +1441,8 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         isClientPartner: isFromInteractionDetail ? false : this.isClientPartner(),
         interactionIds: interactionIds.length > 0 ? interactionIds : undefined,
         newDocumentStoragePaths: uploadedDocs.length > 0 ? uploadedDocs.map(d => d.gcsPath) : undefined,
-        newDocumentMimeTypes: uploadedDocs.length > 0 ? uploadedDocs.map(d => d.mimeType) : undefined,
-        existingDocumentIds: this.selectedExistingDocumentIds().length > 0 ? this.selectedExistingDocumentIds() : undefined
+        newDocumentMimeTypes: uploadedDocs.length > 0 ? uploadedDocs.map(d => d.mimeType) : undefined
+        // Note: existingDocumentIds removed - all docs are now in newDocumentStoragePaths after GCS upload
       };
       
       console.log('📤 [GenerateProposal] Sending proposal request:', {
@@ -1230,7 +1451,6 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         newDocPaths: request.newDocumentStoragePaths?.length || 0,
         newDocPathsList: request.newDocumentStoragePaths || [],
         newDocMimeTypes: request.newDocumentMimeTypes || [],
-        existingDocs: request.existingDocumentIds?.length || 0,
         partnerId: request.partnerId
       });
 
@@ -1579,6 +1799,18 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         createRequest.estimatedIndirectBeneficiaries = opp.estimatedIndirectBeneficiaries;
       }
 
+      if (this.isFieldSelected('beneficiariesToBeDetermined') && opp.beneficiariesToBeDetermined !== null && opp.beneficiariesToBeDetermined !== undefined) {
+        createRequest.beneficiariesToBeDetermined = opp.beneficiariesToBeDetermined;
+      }
+
+      if (this.isFieldSelected('miscExternalStakeholders') && opp.miscExternalStakeholders) {
+        createRequest.miscExternalStakeholders = opp.miscExternalStakeholders;
+      }
+
+      if (this.isFieldSelected('externalStakeholderNotes') && opp.externalStakeholderNotes) {
+        createRequest.externalStakeholderNotes = opp.externalStakeholderNotes;
+      }
+
       // WHEN Section fields
       if (this.isFieldSelected('submissionDeadline') && opp.submissionDeadline) {
         createRequest.submissionDeadline = opp.submissionDeadline;
@@ -1596,20 +1828,35 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         createRequest.targetDeliveryDate = opp.targetDeliveryDate;
       }
 
+      if (this.isFieldSelected('isTargetSigningDateFirm') && opp.isTargetSigningDateFirm !== null && opp.isTargetSigningDateFirm !== undefined) {
+        createRequest.isTargetSigningDateFirm = opp.isTargetSigningDateFirm;
+      }
+
       if (this.isFieldSelected('signingDateNotes') && opp.signingDateNotes) {
         createRequest.signingDateNotes = opp.signingDateNotes;
       }
       
-      // Collection fields
+      // Collection fields - with individual item selection
       if (this.isFieldSelected('deliverables') && opp.deliverables && opp.deliverables.length > 0) {
-        createRequest.deliverables = opp.deliverables;
+        // Filter by selected individual deliverables
+        const selectedDeliverables = opp.deliverables.filter((_: any, idx: number) => 
+          this.isFieldSelected(`deliverables[${idx}]`)
+        );
+        if (selectedDeliverables.length > 0) {
+          createRequest.deliverables = selectedDeliverables;
+        }
       }
 
       if (this.isFieldSelected('sdGs') && opp.sdGs && opp.sdGs.length > 0) {
-        // Map SDGs to just IDs (backend expects List<int>)
-        createRequest.sdGs = opp.sdGs
-          .map((sdg: any) => sdg.sdgId || sdg.id)
-          .filter((id: number) => id != null);
+        // Filter by selected individual SDGs, then map to IDs (backend expects List<int>)
+        const selectedSdgs = opp.sdGs.filter((_: any, idx: number) => 
+          this.isFieldSelected(`sdGs[${idx}]`)
+        );
+        if (selectedSdgs.length > 0) {
+          createRequest.sdGs = selectedSdgs
+            .map((sdg: any) => sdg.sdgId || sdg.id)
+            .filter((id: number) => id != null);
+        }
       }
 
       // Handle partners based on user's role selections
@@ -1649,14 +1896,25 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
       }
 
       if (this.isFieldSelected('stakeholders') && opp.stakeholders && opp.stakeholders.length > 0) {
-        createRequest.stakeholders = opp.stakeholders;
+        // Filter by selected individual stakeholders
+        const selectedStakeholders = opp.stakeholders.filter((_: any, idx: number) => 
+          this.isFieldSelected(`stakeholders[${idx}]`)
+        );
+        if (selectedStakeholders.length > 0) {
+          createRequest.stakeholders = selectedStakeholders;
+        }
       }
 
       if (this.isFieldSelected('countries') && opp.countries && opp.countries.length > 0) {
-        // Map countries to just IDs (backend expects List<int>)
-        createRequest.countries = opp.countries
-          .map((c: any) => c.country?.id || c.countryId || c.id)
-          .filter((id: number) => id != null);
+        // Filter by selected individual countries, then map to IDs (backend expects List<int>)
+        const selectedCountries = opp.countries.filter((_: any, idx: number) => 
+          this.isFieldSelected(`countries[${idx}]`)
+        );
+        if (selectedCountries.length > 0) {
+          createRequest.countries = selectedCountries
+            .map((c: any) => c.country?.id || c.countryId || c.id)
+            .filter((id: number) => id != null);
+        }
       }
       
       console.log('📤 Sending create request:', createRequest);
@@ -1759,12 +2017,16 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     if (opp.expectedBeneficiaries) updated.set('expectedBeneficiaries', selectAll);
     if (opp.estimatedDirectBeneficiaries) updated.set('estimatedDirectBeneficiaries', selectAll);
     if (opp.estimatedIndirectBeneficiaries) updated.set('estimatedIndirectBeneficiaries', selectAll);
+    if (opp.beneficiariesToBeDetermined !== null && opp.beneficiariesToBeDetermined !== undefined) updated.set('beneficiariesToBeDetermined', selectAll);
+    if (opp.miscExternalStakeholders) updated.set('miscExternalStakeholders', selectAll);
+    if (opp.externalStakeholderNotes) updated.set('externalStakeholderNotes', selectAll);
 
     // Timeline (WHEN section)
     if (opp.submissionDeadline) updated.set('submissionDeadline', selectAll);
     if (opp.targetSigningDate) updated.set('targetSigningDate', selectAll);
     if (opp.implementationStartDate) updated.set('implementationStartDate', selectAll);
     if (opp.targetDeliveryDate) updated.set('targetDeliveryDate', selectAll);
+    if (opp.isTargetSigningDateFirm !== null && opp.isTargetSigningDateFirm !== undefined) updated.set('isTargetSigningDateFirm', selectAll);
     if (opp.signingDateNotes) updated.set('signingDateNotes', selectAll);
 
     // Collections - also toggle individual items
@@ -1821,12 +2083,16 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     if (opp.expectedBeneficiaries) selected.set('expectedBeneficiaries', true);
     if (opp.estimatedDirectBeneficiaries) selected.set('estimatedDirectBeneficiaries', true);
     if (opp.estimatedIndirectBeneficiaries) selected.set('estimatedIndirectBeneficiaries', true);
+    if (opp.beneficiariesToBeDetermined !== null && opp.beneficiariesToBeDetermined !== undefined) selected.set('beneficiariesToBeDetermined', true);
+    if (opp.miscExternalStakeholders) selected.set('miscExternalStakeholders', true);
+    if (opp.externalStakeholderNotes) selected.set('externalStakeholderNotes', true);
 
     // Timeline (WHEN section)
     if (opp.submissionDeadline) selected.set('submissionDeadline', true);
     if (opp.targetSigningDate) selected.set('targetSigningDate', true);
     if (opp.implementationStartDate) selected.set('implementationStartDate', true);
     if (opp.targetDeliveryDate) selected.set('targetDeliveryDate', true);
+    if (opp.isTargetSigningDateFirm !== null && opp.isTargetSigningDateFirm !== undefined) selected.set('isTargetSigningDateFirm', true);
     if (opp.signingDateNotes) selected.set('signingDateNotes', true);
 
     // Collections - also auto-select individual items

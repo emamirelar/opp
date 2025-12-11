@@ -3,6 +3,7 @@ namespace UNOPS.PAO.Models.Opportunities;
 /// <summary>
 /// Request model for creating an opportunity from an AI-generated proposal
 /// Contains user-accepted fields with resolved IDs from the dependents
+/// Aligned with ApplyOpportunityAiChangesRequest for consistent field handling
 /// </summary>
 public class CreateOpportunityFromInteractionsRequest
 {
@@ -70,8 +71,15 @@ public class CreateOpportunityFromInteractionsRequest
     public List<int>? Countries { get; set; }
 
     // WHEN Section Properties (AI-proposed, user-accepted)
+    // Aligned with ApplyOpportunityAiChangesRequest for consistent timeline handling
     public DateTime? TargetSigningDate { get; set; }
     public DateTime? TargetDeliveryDate { get; set; }
+    public DateTime? ImplementationStartDate { get; set; }
+    public DateTime? SubmissionDeadline { get; set; }
+    public bool? IsTargetSigningDateFirm { get; set; }
+    public string? SigningDateNotes { get; set; }
+
+    // OTHER Properties
     public decimal? InitiativeBudgetUSD { get; set; }
     public string? PartnershipAgreementReference { get; set; }
 }

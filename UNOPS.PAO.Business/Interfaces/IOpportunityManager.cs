@@ -20,6 +20,7 @@ public interface IOpportunityManager
     Task<OpportunityModel> UpdateWhereSectionAsync(int id, WhereSectionRequest request);
     Task<OpportunityModel> UpdateWhenSectionAsync(int id, WhenSectionRequest request);
     Task<OpportunityModel> ApplyAiChangesAsync(int id, ApplyOpportunityAiChangesRequest request);
+    Task<OpportunityModel> CreateOpportunityFromProposalAsync(CreateOpportunityFromInteractionsRequest request, int currentUserId);
     Task<RelatedItemsModel> GetRelatedItemsAsync(int id);
     Task<bool> DeleteOpportunityAsync(int id);
     Task<SimilarOpportunitiesResponse> GetSimilarOpportunitiesAsync(int id, int maxResults = 6, ClaimsPrincipal? user = null);

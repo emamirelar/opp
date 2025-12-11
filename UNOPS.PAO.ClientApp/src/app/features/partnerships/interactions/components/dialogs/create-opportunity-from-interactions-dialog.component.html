@@ -271,6 +271,7 @@
                       <p-checkbox
                         [binary]="true"
                         [ngModel]="isExistingDocumentSelected(doc.id)"
+                        (ngModelChange)="toggleExistingDocument(doc.id)"
                         (click)="$event.stopPropagation()"
                         [disabled]="generating() || isUploadingToGCS()">
                       </p-checkbox>
@@ -280,7 +281,7 @@
                       <div class="flex-1 min-w-0">
                         <div class="font-medium text-sm text-gray-900 truncate">{{ doc.name }}</div>
                         <div class="text-xs text-gray-600">
-                          {{ doc.documentType || 'Document' }}
+                          {{ doc.documentTypeName || doc.documentType?.name || 'Document' }}
                         </div>
                       </div>
                     </div>
@@ -713,7 +714,7 @@
 
             <!-- Delivery Modality & Pooled Funding -->
             <div class="grid grid-cols-2 gap-4">
-              @if ($any(proposedOpportunity()!.opportunity).deliveryModality) {
+              @if ($any(proposedOpportunity()!.opportunity).deliveryModality !== null && $any(proposedOpportunity()!.opportunity).deliveryModality !== undefined) {
                 <div 
                   class="border rounded-lg p-4 transition-all cursor-pointer"
                   [ngClass]="{
@@ -732,12 +733,21 @@
                       {{ 'label.deliveryModality' | translate }}
                     </label>
                   </div>
-                  <input
-                    pInputText
-                    [value]="$any(proposedOpportunity()!.opportunity).deliveryModality"
-                    class="w-full bg-yellow-50 border-yellow-200"
-                    readonly
-                    (click)="$event.stopPropagation()" />
+                  <p-select
+                    [(ngModel)]="$any(proposedOpportunity()!.opportunity).deliveryModality"
+                    [options]="deliveryModalityOptions"
+                    optionValue="value"
+                    class="w-full"
+                    styleClass="w-full bg-yellow-50"
+                    appendTo="body"
+                    (click)="$event.stopPropagation()">
+                    <ng-template pTemplate="selectedItem" let-selected>
+                      {{ getDeliveryModalityLabel(selected?.value || $any(proposedOpportunity()!.opportunity).deliveryModality) }}
+                    </ng-template>
+                    <ng-template pTemplate="item" let-item>
+                      {{ item.label | translate }}
+                    </ng-template>
+                  </p-select>
                 </div>
               }
               @if ($any(proposedOpportunity()!.opportunity).isPooledFunding !== null && $any(proposedOpportunity()!.opportunity).isPooledFunding !== undefined) {
@@ -786,7 +796,7 @@
                     (click)="$event.stopPropagation()"
                   />
                   <label class="block text-sm font-semibold text-gray-700 flex-1">
-                    {{ 'label.estimatedBudget' | translate }} (USD)
+                    {{ 'label.proposedBudgetForInitiative' | translate }} (USD)
                   </label>
                 </div>
                 <input
@@ -1288,7 +1298,7 @@
                         (click)="$event.stopPropagation()"
                       />
                       <label class="block text-sm font-semibold text-gray-700 flex-1">
-                        {{ 'label.proposalSubmissionDate' | translate }}
+                        {{ 'label.submissionDeadline' | translate }}
                       </label>
                     </div>
                     <input
@@ -1463,9 +1473,10 @@
                       <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                         <div class="flex items-start justify-between mb-3">
                           <div class="flex items-center gap-3 flex-1">
-                            <!-- Partner Logo -->
+                            <!-- Partner Logo with fallback -->
                             <img
                               [src]="partner.partnerLogoUrl || 'assets/images/Partner.png'"
+                              (error)="$any($event.target).src='assets/images/Partner.png'"
                               [alt]="partner.partnerName"
                               class="w-12 h-12 object-contain rounded"
                             />

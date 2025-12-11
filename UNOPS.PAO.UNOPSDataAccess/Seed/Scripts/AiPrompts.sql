@@ -1679,6 +1679,7 @@ Create a comprehensive summary including their complete profile, interaction his
 - **expectedBeneficiaries** (string?): Who will benefit from this opportunity (target population, communities, regions)
 - **estimatedDirectBeneficiaries** (int?): Estimated number of direct beneficiaries (extract numbers like "2 million beneficiaries" → 2000000)
 - **estimatedIndirectBeneficiaries** (int?): Estimated number of indirect beneficiaries
+- **beneficiariesToBeDetermined** (boolean?): Whether the number of beneficiaries is to be determined later (extract if mentioned as "TBD", "to be determined", "not yet determined", "beneficiaries pending assessment", etc.)
 
 ### Delivery & Stakeholders (camelCase)
 - **deliveryModality** (int?): How UNOPS will deliver products/services. Use numeric values: 1 = NotYetKnown, 2 = AllDirect (direct execution), 3 = AllGrantSupport (grant support), 4 = Mixed (combination of approaches). Extract and map to the appropriate value based on implementation approach mentioned in the document.
@@ -1714,7 +1715,8 @@ Create a comprehensive summary including their complete profile, interaction his
 **Example mapping:**
 - If you extract "Kenya" → Add "Kenya" to **countries** array, add "countries" to dependents
 - If you extract "World Bank" as funder → Add "World Bank" to **fundingPartners** array, add "fundingPartners" to dependents
-- If you extract "Infrastructure Development" as initiative type → Set proposedInitiativeTypeId = null, proposedInitiativeTypeName = "Infrastructure Development", add "proposedInitiativeTypeId" to dependents
+- If you extract content indicating a "single initiative with defined scope" → Set proposedInitiativeTypeId = null, proposedInitiativeTypeName = "Project", add "proposedInitiativeTypeId" to dependents
+- If you extract content indicating "multiple related projects" → Set proposedInitiativeTypeId = null, proposedInitiativeTypeName = "Programme", add "proposedInitiativeTypeId" to dependents
 - If you extract "Jane Smith - UNOPS Project Manager" → Add to **teamMembers** array, add "teamMembers" to dependents
 
 ## Analysis Instructions
@@ -1807,6 +1809,7 @@ Return a valid JSON object with the extracted opportunity data. **ALL property n
   "expectedBeneficiaries": "2.1 million residents of Nairobi Metropolitan Area, with priority focus on low-income communities in Kibera, Mathare, and Mukuru informal settlements, as well as peri-urban areas with limited water infrastructure",
   "estimatedDirectBeneficiaries": 2100000,
   "estimatedIndirectBeneficiaries": 5000000,
+  "beneficiariesToBeDetermined": false,
   "deliveryModality": 2,
   "miscExternalStakeholders": "Community Water Committees, Local NGOs, County Government Officials",
   "externalStakeholderNotes": "Strong local government support; community leaders are key influencers for project acceptance",
@@ -1903,7 +1906,7 @@ Return a JSON object with a "keywords" array and a single "query" string that co
 {
   "name": "Sustainable Water and Sanitation Infrastructure Development Program",
   "description": "Comprehensive infrastructure development initiative to design, construct, and operationalize modern water treatment facilities...",
-  "proposedInitiativeTypeName": "Infrastructure Development",
+  "proposedInitiativeTypeName": "Project",
   "countries": ["Kenya"],
   "sdGs": ["Goal 6", "Goal 9"],
   "deliverables": ["Water Treatment Plants", "Pipeline Rehabilitation", "Training Programs"],
@@ -2040,7 +2043,7 @@ Return a JSON object with a "keywords" array and a single "query" string:
   "description": "Large-scale water infrastructure development in conflict-affected regions...",
   "countries": ["Myanmar"],
   "initiativeBudgetUSD": 65000000,
-  "proposedInitiativeTypeName": "Infrastructure Development"
+  "proposedInitiativeTypeName": "Project"
 }
 ```
 
@@ -2760,7 +2763,7 @@ Return a JSON object with a "keywords" array (list of roles) and a single "query
 {
   "name": "Sustainable Water Infrastructure Development",
   "description": "Infrastructure development to design and construct water treatment facilities...",
-  "proposedInitiativeTypeName": "Infrastructure Development",
+  "proposedInitiativeTypeName": "Project",
   "countries": ["Kenya"],
   "sdGs": ["Goal 6", "Goal 13"],
   "deliverables": ["Water Treatment Plants", "Training Programs"]
@@ -2896,6 +2899,7 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
 - **expectedBeneficiaries** (string?): Extract information about target beneficiaries, communities, regions, or populations that will benefit from interactions or documents
 - **estimatedDirectBeneficiaries** (int?): Estimated number of direct beneficiaries (extract numbers like "2 million beneficiaries" → 2000000)
 - **estimatedIndirectBeneficiaries** (int?): Estimated number of indirect beneficiaries
+- **beneficiariesToBeDetermined** (boolean?): Whether the number of beneficiaries is to be determined later (infer from context if beneficiary numbers are not yet finalized, extract if mentioned as "TBD", "to be determined", "pending assessment", etc.)
 
 ### Delivery & Stakeholders (camelCase)
 - **deliveryModality** (int?): How UNOPS will deliver products/services. Use numeric values: 1 = NotYetKnown, 2 = AllDirect (direct execution), 3 = AllGrantSupport (grant support), 4 = Mixed (combination of approaches). Infer from discussions about implementation approach.
@@ -3048,7 +3052,7 @@ Return a valid JSON object with the proposed opportunity data. **ALL property na
   "responsibleOrgUnitId": null,
   "responsibleOrgUnitName": "East Africa Regional Office",
   "proposedInitiativeTypeId": null,
-  "proposedInitiativeTypeName": "Infrastructure Development",
+  "proposedInitiativeTypeName": "Programme",
   "initiativeBudgetUSD": null,
   "partnerBudgets": [
     {"partnerName": "World Bank", "amount": 30000000, "currency": "USD"},
@@ -3069,6 +3073,7 @@ Return a valid JSON object with the proposed opportunity data. **ALL property na
   "expectedBeneficiaries": "3 million residents across urban and peri-urban areas in Kenya, Tanzania, and Uganda, with priority focus on underserved low-income communities, informal settlements, and rural areas with limited water infrastructure.",
   "estimatedDirectBeneficiaries": 3000000,
   "estimatedIndirectBeneficiaries": 8000000,
+  "beneficiariesToBeDetermined": false,
   "deliveryModality": 2,
   "miscExternalStakeholders": "Local water user associations, NGO partners, community leaders",
   "externalStakeholderNotes": "Strong government support at national level; community engagement critical for project acceptance",
@@ -3195,7 +3200,7 @@ Return a JSON object with a "keywords" array and a single "query" string:
   "name": "Water Infrastructure Development",
   "description": "Infrastructure to construct water treatment facilities...",
   "countries": ["Kenya"],
-  "proposedInitiativeTypeName": "Infrastructure Development"
+  "proposedInitiativeTypeName": "Project"
 }
 ```
 

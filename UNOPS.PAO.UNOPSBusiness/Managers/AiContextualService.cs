@@ -1609,6 +1609,13 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                         .Select(x => x.Name)
                         .FirstOrDefaultAsync();
                 }
+                else if (dependent.Equals("proposedInitiativeTypeId", StringComparison.OrdinalIgnoreCase))
+                {
+                    name = await _context.ProposedInitiativeTypes
+                        .Where(x => x.Id == id)
+                        .Select(x => x.Name)
+                        .FirstOrDefaultAsync();
+                }
                 else
                 {
                     // For other entities, try to find by convention using the pluralized entity name

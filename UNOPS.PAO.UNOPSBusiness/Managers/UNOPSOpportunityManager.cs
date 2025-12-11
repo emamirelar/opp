@@ -115,17 +115,51 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                     .FirstOrDefault();
             }
 
-            entity.FundingPartners = model.FundingPartners
-                .Select(fp => {
-                    var mapped = mapper.Map<OpportunityFundingPartner>(fp);
-                    // Set default currency if not provided
-                    if (mapped.CurrencyId == 0)
+            // Use exchange rate service for currency conversion (same as ApplyAiChangesAsync)
+            var exchangeRateService = new ExchangeRateService(uNOPSAppDbContext);
+            var fundingPartners = new List<OpportunityFundingPartner>();
+            
+            foreach (var fp in model.FundingPartners)
+            {
+                var mapped = mapper.Map<OpportunityFundingPartner>(fp);
+                
+                // Set default currency if not provided
+                var currencyId = mapped.CurrencyId > 0 ? mapped.CurrencyId : defaultCurrencyId;
+                mapped.CurrencyId = currencyId;
+                
+                var currency = await uNOPSAppDbContext.Currencies.FindAsync(currencyId);
+                var amount = mapped.Amount;
+                
+                // Convert amount to USD if amount is provided (same logic as ApplyAiChangesAsync)
+                if (amount.HasValue && amount.Value > 0 && currency != null)
+                {
+                    try
                     {
-                        mapped.CurrencyId = defaultCurrencyId;
+                        var conversionResult = await exchangeRateService.ConvertToUSDAsync(
+                            amount.Value, 
+                            currency.Code ?? "USD"
+                        );
+                        
+                        mapped.AmountUSD = conversionResult.AmountUSD;
+                        mapped.ExchangeRate = conversionResult.ExchangeRate;
+                        mapped.ExchangeRateDate = conversionResult.ExchangeRateDate;
+                        mapped.ExchangeRateId = conversionResult.ExchangeRateId > 0 ? conversionResult.ExchangeRateId : null;
                     }
-                    return mapped;
-                })
-                .ToList();
+                    catch (Exception ex)
+                    {
+                        // Log warning but don't fail the operation
+                        Console.WriteLine($"Warning: Could not convert amount to USD for partner {fp.PartnerId}: {ex.Message}");
+                        // If conversion fails, just store the original amount as USD
+                        mapped.AmountUSD = amount.Value;
+                        mapped.ExchangeRate = 1.0m;
+                        mapped.ExchangeRateDate = DateTime.UtcNow;
+                    }
+                }
+                
+                fundingPartners.Add(mapped);
+            }
+            
+            entity.FundingPartners = fundingPartners;
         }
 
         if (model.ClientPartners != null && model.ClientPartners.Any())
@@ -2875,6 +2909,126 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
         // Reload with all includes for complete response
         return await GetOpportunityAsync(entity.Id);
+    }
+
+    /// <summary>
+    /// Creates an opportunity from AI-generated proposal with user-accepted fields
+    /// Handles deduplication, context partner inclusion, and exchange rate calculations
+    /// </summary>
+    /// <param name="request">Create request with accepted fields and resolved IDs</param>
+    /// <param name="currentUserId">Current user ID for assignment as Opportunity Manager</param>
+    /// <returns>Created opportunity model</returns>
+    public async Task<OpportunityModel> CreateOpportunityFromProposalAsync(
+        CreateOpportunityFromInteractionsRequest request,
+        int currentUserId)
+    {
+        // Deduplicate SDGs by SDGId
+        var uniqueSdGs = request.SdGs?.Distinct().ToList() ?? new List<int>();
+        
+        // Deduplicate Countries by CountryId
+        var uniqueCountries = request.Countries?.Distinct().ToList() ?? new List<int>();
+        
+        // Deduplicate Stakeholders by UserId + EntityRoleId combination
+        var uniqueStakeholders = request.Stakeholders?
+            .GroupBy(s => new { s.UserId, s.EntityRoleId })
+            .Select(g => g.First())
+            .ToList() ?? new List<OpportunityStakeholderRequest>();
+        
+        // Build opportunity request from accepted proposal
+        var opportunityRequest = new OpportunityRequest
+        {
+            Name = request.Name,
+            Description = request.Description,
+            PartnerReference = request.PartnerReference,
+            ResponsibleOrgUnitId = request.ResponsibleOrgUnitId,
+            ProposedInitiativeTypeId = request.ProposedInitiativeTypeId,
+            DeliveryModality = request.DeliveryModality,
+            InitiativeBudgetUSD = request.InitiativeBudgetUSD,
+            TargetSigningDate = request.TargetSigningDate,
+            TargetDeliveryDate = request.TargetDeliveryDate,
+            Challenges = request.Challenges,
+            ResultsFocus = request.ResultsFocus,
+            IntendedImpactOutcomes = request.IntendedImpactOutcomes,
+            ExpectedBeneficiaries = request.ExpectedBeneficiaries,
+            EstimatedDirectBeneficiaries = request.EstimatedDirectBeneficiaries,
+            EstimatedIndirectBeneficiaries = request.EstimatedIndirectBeneficiaries,
+            BeneficiariesToBeDetermined = request.BeneficiariesToBeDetermined ?? false,
+            MiscExternalStakeholders = request.MiscExternalStakeholders,
+            ExternalStakeholderNotes = request.ExternalStakeholderNotes,
+            SDGs = uniqueSdGs.Select(sdgId => new OpportunitySDGRequest { SDGId = sdgId }).ToList(),
+            Countries = uniqueCountries.Select(countryId => new OpportunityCountryRequest { CountryId = countryId }).ToList(),
+            Deliverables = request.Deliverables ?? new List<OpportunityDeliverableRequest>(),
+            Stakeholders = uniqueStakeholders,
+            FundingPartners = new List<OpportunityFundingPartnerRequest>(),
+            ClientPartners = new List<OpportunityClientPartnerRequest>()
+        };
+
+        // Deduplicate funding partners by PartnerId (keep first occurrence with all its properties)
+        var uniqueFundingPartners = request.FundingPartners?
+            .GroupBy(fp => fp.PartnerId)
+            .Select(g => g.First())
+            .ToList() ?? new List<OpportunityFundingPartnerRequest>();
+        
+        // Deduplicate client partners by PartnerId (keep first occurrence)
+        var uniqueClientPartners = request.ClientPartners?
+            .GroupBy(cp => cp.PartnerId)
+            .Select(g => g.First())
+            .ToList() ?? new List<OpportunityClientPartnerRequest>();
+
+        // Add the context partner as funding/client based on user selection (only if partnerId provided)
+        // This ensures the context partner is included even if not in the AI-proposed arrays
+        if (request.PartnerId.HasValue && request.PartnerId > 0)
+        {
+            // Check if context partner is already in the deduplicated AI-proposed arrays
+            var contextPartnerInFunding = uniqueFundingPartners.Any(fp => fp.PartnerId == request.PartnerId.Value);
+            var contextPartnerInClient = uniqueClientPartners.Any(cp => cp.PartnerId == request.PartnerId.Value);
+            
+            // Add to funding partners if user selected funding role and not already in array
+            if (request.IsFundingPartner && !contextPartnerInFunding)
+            {
+                opportunityRequest.FundingPartners.Add(new OpportunityFundingPartnerRequest
+                {
+                    PartnerId = request.PartnerId.Value,
+                    Amount = null // User can set later
+                });
+            }
+            
+            // Add to client partners if user selected client role and not already in array
+            if (request.IsClientPartner && !contextPartnerInClient)
+            {
+                opportunityRequest.ClientPartners.Add(new OpportunityClientPartnerRequest
+                {
+                    PartnerId = request.PartnerId.Value
+                });
+            }
+        }
+
+        // Add all deduplicated AI-proposed funding partners
+        if (uniqueFundingPartners.Any())
+        {
+            opportunityRequest.FundingPartners.AddRange(uniqueFundingPartners);
+        }
+
+        // Add all deduplicated AI-proposed client partners  
+        if (uniqueClientPartners.Any())
+        {
+            opportunityRequest.ClientPartners.AddRange(uniqueClientPartners);
+        }
+
+        // Create the opportunity using existing CreateOpportunityAsync
+        var createdOpportunity = await CreateOpportunityAsync(opportunityRequest);
+
+        // Assign the current user as Opportunity Manager
+        try
+        {
+            await AssignCreatorAsOpportunityManagerAsync(createdOpportunity.Id, currentUserId);
+        }
+        catch (Exception)
+        {
+            // Don't fail if assignment fails - log handled by caller
+        }
+
+        return createdOpportunity;
     }
 
     public async Task<bool> DeleteOpportunityAsync(int id)
