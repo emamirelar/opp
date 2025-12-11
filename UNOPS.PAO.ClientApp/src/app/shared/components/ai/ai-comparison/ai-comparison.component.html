@@ -250,32 +250,70 @@
                     <!-- Render based on field type -->
                     <div class="text-unops-sm">
                       @if (isDeliverableField(diff.field) && isArray(diff.aiValue)) {
-                        <!-- Deliverables Complex View -->
+                        <!-- Deliverables Complex View with Individual Selection -->
                         <div class="space-y-2">
+                          <div class="flex items-center justify-between mb-2">
+                            <span class="text-unops-xs text-unops-primary font-medium">
+                              {{ getSelectedArrayItemCount(diff.field) }} / {{ diff.aiValue.length }} {{ 'label.selected' | translate }}
+                            </span>
+                          </div>
                           @for (item of diff.aiValue; track $index) {
                             @let deliverable = asAny(item);
-                            <div class="bg-white rounded-unops-md p-3 border-2 border-unops-primary-light">
-                              <div class="font-medium text-unops-sm text-unops-primary mb-1">{{ deliverable.outputName }}</div>
-                              @if (deliverable.outputDescription) {
-                                <p class="text-unops-xs text-unops-primary mb-2 line-clamp-2">{{ deliverable.outputDescription }}</p>
-                              }
-                              <div class="flex items-center gap-2 flex-wrap">
-                                @if (deliverable.outputGroup) {
-                                  <span class="text-unops-xs bg-unops-primary-light text-unops-primary px-2 py-1 rounded-unops-sm">{{ deliverable.outputGroup }}</span>
-                                }
-                                @if (deliverable.quantity && deliverable.unitCode) {
-                                  <span class="text-unops-xs bg-unops-warning text-white px-2 py-1 rounded-unops-sm font-bold">{{ deliverable.quantity }} {{ deliverable.unitCode }}</span>
-                                }
+                            <div 
+                              class="bg-white rounded-unops-md p-3 cursor-pointer transition-all"
+                              [ngClass]="{
+                                'border-2 border-unops-success ring-2 ring-unops-success ring-opacity-30': isArrayItemSelected(diff.field, $index),
+                                'border-2 border-unops-neutral-light opacity-60': !isArrayItemSelected(diff.field, $index)
+                              }"
+                              (click)="toggleArrayItem(diff.field, $index); $event.stopPropagation()">
+                              <div class="flex items-start gap-2 mb-2">
+                                <p-checkbox
+                                  [binary]="true"
+                                  [ngModel]="isArrayItemSelected(diff.field, $index)"
+                                  (ngModelChange)="toggleArrayItem(diff.field, $index)"
+                                  (click)="$event.stopPropagation()"
+                                />
+                                <div class="flex-1">
+                                  <div class="font-medium text-unops-sm text-unops-primary mb-1">{{ deliverable.outputName }}</div>
+                                  @if (deliverable.outputDescription) {
+                                    <p class="text-unops-xs text-unops-primary mb-2 line-clamp-2">{{ deliverable.outputDescription }}</p>
+                                  }
+                                  <div class="flex items-center gap-2 flex-wrap">
+                                    @if (deliverable.outputGroup) {
+                                      <span class="text-unops-xs bg-unops-primary-light text-unops-primary px-2 py-1 rounded-unops-sm">{{ deliverable.outputGroup }}</span>
+                                    }
+                                    @if (deliverable.quantity && deliverable.unitCode) {
+                                      <span class="text-unops-xs bg-unops-warning text-white px-2 py-1 rounded-unops-sm font-bold">{{ deliverable.quantity }} {{ deliverable.unitCode }}</span>
+                                    }
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           }
                         </div>
                       } @else if (isFundingPartnerField(diff.field) && isArray(diff.aiValue)) {
-                        <!-- Funding Partners Complex View -->
+                        <!-- Funding Partners Complex View with Individual Selection -->
                         <div class="space-y-2">
+                          <div class="flex items-center justify-between mb-2">
+                            <span class="text-unops-xs text-unops-primary font-medium">
+                              {{ getSelectedArrayItemCount(diff.field) }} / {{ diff.aiValue.length }} {{ 'label.selected' | translate }}
+                            </span>
+                          </div>
                           @for (item of diff.aiValue; track $index) {
                             @let partner = asAny(item);
-                            <div class="bg-white rounded-unops-md p-3 border-2 border-unops-primary-light flex items-start gap-3">
+                            <div 
+                              class="bg-white rounded-unops-md p-3 flex items-start gap-3 cursor-pointer transition-all"
+                              [ngClass]="{
+                                'border-2 border-unops-success ring-2 ring-unops-success ring-opacity-30': isArrayItemSelected(diff.field, $index),
+                                'border-2 border-unops-neutral-light opacity-60': !isArrayItemSelected(diff.field, $index)
+                              }"
+                              (click)="toggleArrayItem(diff.field, $index); $event.stopPropagation()">
+                              <p-checkbox
+                                [binary]="true"
+                                [ngModel]="isArrayItemSelected(diff.field, $index)"
+                                (ngModelChange)="toggleArrayItem(diff.field, $index)"
+                                (click)="$event.stopPropagation()"
+                              />
                               <img
                                 [src]="partner.partnerLogoUrl || 'assets/images/Partner.png'"
                                 (error)="$any($event.target).src='assets/images/Partner.png'"
@@ -297,11 +335,28 @@
                           }
                         </div>
                       } @else if (isClientPartnerField(diff.field) && isArray(diff.aiValue)) {
-                        <!-- Client Partners Complex View -->
+                        <!-- Client Partners Complex View with Individual Selection -->
                         <div class="space-y-2">
+                          <div class="flex items-center justify-between mb-2">
+                            <span class="text-unops-xs text-unops-primary font-medium">
+                              {{ getSelectedArrayItemCount(diff.field) }} / {{ diff.aiValue.length }} {{ 'label.selected' | translate }}
+                            </span>
+                          </div>
                           @for (item of diff.aiValue; track $index) {
                             @let client = asAny(item);
-                            <div class="bg-white rounded-unops-md p-2 border-2 border-unops-primary-light flex items-center gap-2">
+                            <div 
+                              class="bg-white rounded-unops-md p-2 flex items-center gap-2 cursor-pointer transition-all"
+                              [ngClass]="{
+                                'border-2 border-unops-success ring-2 ring-unops-success ring-opacity-30': isArrayItemSelected(diff.field, $index),
+                                'border-2 border-unops-neutral-light opacity-60': !isArrayItemSelected(diff.field, $index)
+                              }"
+                              (click)="toggleArrayItem(diff.field, $index); $event.stopPropagation()">
+                              <p-checkbox
+                                [binary]="true"
+                                [ngModel]="isArrayItemSelected(diff.field, $index)"
+                                (ngModelChange)="toggleArrayItem(diff.field, $index)"
+                                (click)="$event.stopPropagation()"
+                              />
                               <img
                                 [src]="client.partnerLogoUrl || 'assets/images/Partner.png'"
                                 (error)="$any($event.target).src='assets/images/Partner.png'"
@@ -313,11 +368,28 @@
                           }
                         </div>
                       } @else if (isSDGField(diff.field) && isArray(diff.aiValue)) {
-                        <!-- SDGs Complex View -->
+                        <!-- SDGs Complex View with Individual Selection -->
                         <div class="space-y-2">
+                          <div class="flex items-center justify-between mb-2">
+                            <span class="text-unops-xs text-unops-primary font-medium">
+                              {{ getSelectedArrayItemCount(diff.field) }} / {{ diff.aiValue.length }} {{ 'label.selected' | translate }}
+                            </span>
+                          </div>
                           @for (item of diff.aiValue; track $index) {
                             @let sdg = asAny(item);
-                            <div class="bg-white border-2 border-unops-primary-light rounded-unops-md p-3 flex items-center gap-3">
+                            <div 
+                              class="bg-white rounded-unops-md p-3 flex items-center gap-3 cursor-pointer transition-all"
+                              [ngClass]="{
+                                'border-2 border-unops-success ring-2 ring-unops-success ring-opacity-30': isArrayItemSelected(diff.field, $index),
+                                'border-2 border-unops-neutral-light opacity-60': !isArrayItemSelected(diff.field, $index)
+                              }"
+                              (click)="toggleArrayItem(diff.field, $index); $event.stopPropagation()">
+                              <p-checkbox
+                                [binary]="true"
+                                [ngModel]="isArrayItemSelected(diff.field, $index)"
+                                (ngModelChange)="toggleArrayItem(diff.field, $index)"
+                                (click)="$event.stopPropagation()"
+                              />
                               <img
                                 [src]="getSDGLogo(sdg.sdgId)"
                                 alt="SDG Logo"
@@ -338,22 +410,58 @@
                           }
                         </div>
                       } @else if (isCountryField(diff.field) && isArray(diff.aiValue)) {
-                        <!-- Countries Complex View -->
-                        <div class="flex flex-wrap gap-2">
-                          @for (item of diff.aiValue; track $index) {
-                            @let countryItem = asAny(item);
-                            <div class="bg-white border-2 border-unops-primary-light rounded-unops-md px-3 py-2 flex items-center gap-2">
-                              <span class="text-2xl">{{ getCountryFlag(countryItem.country?.iso2Code || countryItem.countryCode) }}</span>
-                              <span class="text-unops-sm font-bold text-unops-primary">{{ countryItem.country?.name || countryItem.countryName }}</span>
-                            </div>
-                          }
+                        <!-- Countries Complex View with Individual Selection -->
+                        <div class="space-y-2">
+                          <div class="flex items-center justify-between mb-2">
+                            <span class="text-unops-xs text-unops-primary font-medium">
+                              {{ getSelectedArrayItemCount(diff.field) }} / {{ diff.aiValue.length }} {{ 'label.selected' | translate }}
+                            </span>
+                          </div>
+                          <div class="flex flex-wrap gap-2">
+                            @for (item of diff.aiValue; track $index) {
+                              @let countryItem = asAny(item);
+                              <div 
+                                class="bg-white rounded-unops-md px-3 py-2 flex items-center gap-2 cursor-pointer transition-all"
+                                [ngClass]="{
+                                  'border-2 border-unops-success ring-2 ring-unops-success ring-opacity-30': isArrayItemSelected(diff.field, $index),
+                                  'border-2 border-unops-neutral-light opacity-60': !isArrayItemSelected(diff.field, $index)
+                                }"
+                                (click)="toggleArrayItem(diff.field, $index); $event.stopPropagation()">
+                                <p-checkbox
+                                  [binary]="true"
+                                  [ngModel]="isArrayItemSelected(diff.field, $index)"
+                                  (ngModelChange)="toggleArrayItem(diff.field, $index)"
+                                  (click)="$event.stopPropagation()"
+                                />
+                                <span class="text-2xl">{{ getCountryFlag(countryItem.country?.iso2Code || countryItem.countryCode) }}</span>
+                                <span class="text-unops-sm font-bold text-unops-primary">{{ countryItem.country?.name || countryItem.countryName }}</span>
+                              </div>
+                            }
+                          </div>
                         </div>
                       } @else if (isStakeholderField(diff.field) && isArray(diff.aiValue)) {
-                        <!-- Stakeholders Complex View -->
+                        <!-- Stakeholders Complex View with Individual Selection -->
                         <div class="space-y-2">
+                          <div class="flex items-center justify-between mb-2">
+                            <span class="text-unops-xs text-unops-primary font-medium">
+                              {{ getSelectedArrayItemCount(diff.field) }} / {{ diff.aiValue.length }} {{ 'label.selected' | translate }}
+                            </span>
+                          </div>
                           @for (item of diff.aiValue; track $index) {
                             @let stakeholder = asAny(item);
-                            <div class="bg-white rounded-unops-md p-2 border-2 border-unops-primary-light flex items-center gap-2">
+                            <div 
+                              class="bg-white rounded-unops-md p-2 flex items-center gap-2 cursor-pointer transition-all"
+                              [ngClass]="{
+                                'border-2 border-unops-success ring-2 ring-unops-success ring-opacity-30': isArrayItemSelected(diff.field, $index),
+                                'border-2 border-unops-neutral-light opacity-60': !isArrayItemSelected(diff.field, $index)
+                              }"
+                              (click)="toggleArrayItem(diff.field, $index); $event.stopPropagation()">
+                              <p-checkbox
+                                [binary]="true"
+                                [ngModel]="isArrayItemSelected(diff.field, $index)"
+                                (ngModelChange)="toggleArrayItem(diff.field, $index)"
+                                (click)="$event.stopPropagation()"
+                              />
                               <div class="w-8 h-8 rounded-full bg-unops-primary text-white flex items-center justify-center text-unops-xs font-bold">
                                 {{ getInitials(stakeholder.userName) }}
                               </div>
