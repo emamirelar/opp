@@ -1286,10 +1286,78 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
             continue;
           }
           
-          // Case 3: Document has a link (external URL) - skip for now
+          // Case 3: Document has a Google Drive link - extract file ID and process
           if (docInfo?.link) {
-            console.warn(`⚠️ [ExistingDoc] Document ${documentId} is an external link, skipping`);
-            continue;
+            const driveFileId = this.extractGoogleDriveFileId(docInfo.link);
+            
+            if (driveFileId) {
+              console.log(`📥 [ExistingDoc] Document ${documentId} has Drive link, extracted ID: ${driveFileId}`);
+              
+              if (!this.googleDriveAuthAvailable) {
+                console.warn(`⚠️ [ExistingDoc] Google Drive auth not available, skipping document ${documentId}`);
+                this.feedbackDialogService.showWarningToast({
+                  summary: this.translateService.instant('common.warning.title'),
+                  detail: this.translateService.instant('message.warning.googleDriveAuthRequired')
+                });
+                continue;
+              }
+              
+              // Google Docs/Sheets/Slides need PDF export, other files can be downloaded directly
+              const isGoogleDoc = docInfo.link.includes('docs.google.com/document') || 
+                                  docInfo.link.includes('docs.google.com/spreadsheets') ||
+                                  docInfo.link.includes('docs.google.com/presentation');
+              
+              let pdfBlob: Blob;
+              let pdfFileName: string;
+              
+              if (isGoogleDoc) {
+                // Export as PDF
+                this.uploadProgress.set(`Exporting ${docName} from Drive as PDF...`);
+                const exportResult = await firstValueFrom(
+                  this.googleDriveService.exportDriveFileAsPdf(driveFileId, docName)
+                );
+                pdfBlob = this.base64ToBlob(exportResult.data, exportResult.mimeType);
+                pdfFileName = exportResult.name;
+              } else {
+                // Download directly
+                this.uploadProgress.set(`Downloading ${docName} from Drive...`);
+                const downloadResult = await firstValueFrom(
+                  this.googleDriveService.downloadDriveFile(driveFileId, docName, mimeType)
+                );
+                pdfBlob = this.base64ToBlob(downloadResult.data, downloadResult.mimeType);
+                pdfFileName = downloadResult.name;
+              }
+              
+              // Upload to GCS
+              this.uploadProgress.set(`Uploading ${pdfFileName} to cloud storage...`);
+              const pdfFile = new File([pdfBlob], pdfFileName, { type: 'application/pdf' });
+              
+              const formData = new FormData();
+              formData.append('File', pdfFile);
+              formData.append('Name', pdfFileName);
+              formData.append('UploadToGCS', 'true');
+              formData.append('SkipDatabaseSave', 'true');
+              formData.append('GoogleId', driveFileId);
+              
+              const uploadResponse = await this.http
+                .post<any>('/api/document/upload', formData)
+                .toPromise();
+              
+              if (uploadResponse && uploadResponse.storagePath) {
+                uploadedDocs.push({
+                  gcsPath: uploadResponse.storagePath,
+                  mimeType: 'application/pdf',
+                  name: pdfFileName,
+                  documentTypeId: docInfo?.documentTypeId || null
+                });
+                console.log(`✅ [ExistingDoc] Uploaded ${pdfFileName} to GCS: ${uploadResponse.storagePath}`);
+              }
+              continue;
+            } else {
+              // Non-Google Drive external link - skip
+              console.warn(`⚠️ [ExistingDoc] Document ${documentId} is an external link (not Google Drive), skipping`);
+              continue;
+            }
           }
           
           // Case 4: No suitable source found
@@ -1331,6 +1399,35 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     }
     const byteArray = new Uint8Array(byteNumbers);
     return new Blob([byteArray], { type: mimeType });
+  }
+  
+  /**
+   * Extract Google Drive file ID from a Google Drive/Docs URL
+   * Supports URLs like:
+   * - https://docs.google.com/document/d/{fileId}/edit
+   * - https://docs.google.com/spreadsheets/d/{fileId}/edit
+   * - https://docs.google.com/presentation/d/{fileId}/edit
+   * - https://drive.google.com/file/d/{fileId}/view
+   * - https://drive.google.com/open?id={fileId}
+   */
+  private extractGoogleDriveFileId(url: string): string | null {
+    if (!url) return null;
+    
+    // Pattern 1: /d/{fileId}/ format (docs, sheets, slides, drive files)
+    const dPattern = /\/d\/([a-zA-Z0-9_-]+)/;
+    const dMatch = url.match(dPattern);
+    if (dMatch && dMatch[1]) {
+      return dMatch[1];
+    }
+    
+    // Pattern 2: ?id={fileId} format (older drive links)
+    const idPattern = /[?&]id=([a-zA-Z0-9_-]+)/;
+    const idMatch = url.match(idPattern);
+    if (idMatch && idMatch[1]) {
+      return idMatch[1];
+    }
+    
+    return null;
   }
 
   /**
