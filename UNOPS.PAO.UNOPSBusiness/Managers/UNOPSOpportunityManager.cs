@@ -2972,12 +2972,26 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         var opportunity = await context.Set<Opportunity>()
             .Include(o => o.ResponsibleOrgUnit)
             .Include(o => o.ProposedInitiativeType)
+            .Include(o => o.WorkflowStage)
             .Include(o => o.FundingPartners).ThenInclude(fp => fp.Partner)
+            .Include(o => o.FundingPartners).ThenInclude(fp => fp.Currency)
+            .Include(o => o.FundingPartners).ThenInclude(fp => fp.Document)
             .Include(o => o.ClientPartners).ThenInclude(cp => cp.Partner)
+            .Include(o => o.ClientPartners).ThenInclude(cp => cp.Document)
             .Include(o => o.Stakeholders).ThenInclude(s => s.User).ThenInclude(u => u.UserProfile)
+            .Include(o => o.Stakeholders).ThenInclude(s => s.EntityRole)
+            .Include(o => o.Stakeholders).ThenInclude(s => s.OrganizationHierarchy)
+            .Include(o => o.ExternalStakeholders).ThenInclude(es => es.Contact).ThenInclude(c => c.Partner)
             .Include(o => o.Deliverables).ThenInclude(d => d.Output)
             .Include(o => o.Countries).ThenInclude(c => c.Country)
             .Include(o => o.SDGs).ThenInclude(s => s.SDG)
+            .Include(o => o.SDGTargets).ThenInclude(t => t.SDGTarget)
+            .Include(o => o.SDGIndicators).ThenInclude(i => i.SDGIndicator)
+            .Include(o => o.UNCFOutcomes).ThenInclude(u => u.UNCFOutcome)
+            .Include(o => o.UNCFIndicators).ThenInclude(ui => ui.UNCFIndicator)
+            .Include(o => o.UNOPSMissions).ThenInclude(m => m.UNOPSMission)
+            .Include(o => o.CreatedByUser)
+            .Include(o => o.LastModifiedByUser)
             .FirstOrDefaultAsync(o => o.Id == id);
 
         if (opportunity == null)
@@ -2987,67 +3001,344 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
         var stats = ComputeOpportunityStats(opportunity);
 
-        // Format arrays as comma-separated strings for the AI prompt
-        var fundingPartners = opportunity.FundingPartners?
-            .Select(fp => fp.Partner?.Name ?? "Unknown")
-            .Where(name => !string.IsNullOrEmpty(name))
-            .ToList() ?? new List<string>();
+        // Format funding partners with detailed information
+        var fundingPartnersDetails = opportunity.FundingPartners?
+            .Select(fp => new
+            {
+                PartnerName = fp.Partner?.Name ?? "Unknown",
+                Amount = fp.Amount?.ToString("N2") ?? "Not specified",
+                Currency = fp.Currency?.Code ?? "USD",
+                AmountUSD = fp.AmountUSD?.ToString("N2"),
+                Percentage = fp.Percentage?.ToString("N2") + "%",
+                FeePercentage = fp.FeePercentage?.ToString("N2") + "%",
+                FeeAmount = fp.FeeAmount?.ToString("N2"),
+                FeeAmountUSD = fp.FeeAmountUSD?.ToString("N2"),
+                CommitmentStatus = fp.CommitmentStatus ?? "Not specified",
+                PartnershipAgreementReference = fp.PartnershipAgreementReference ?? "",
+                IsPooledContribution = fp.IsPooledContribution ? "Yes" : "No",
+                DocumentName = fp.Document?.Name ?? ""
+            })
+            .ToList();
 
-        var clientPartners = opportunity.ClientPartners?
-            .Select(cp => cp.Partner?.Name ?? "Unknown")
-            .Where(name => !string.IsNullOrEmpty(name))
-            .ToList() ?? new List<string>();
+        var fundingPartnersText = fundingPartnersDetails != null && fundingPartnersDetails.Any()
+            ? string.Join("\n", fundingPartnersDetails.Select(fp =>
+                $"- {fp.PartnerName}: {fp.Amount} {fp.Currency} (USD: {fp.AmountUSD ?? "Not converted"}), " +
+                $"Commitment: {fp.CommitmentStatus}, Fee: {fp.FeePercentage}, Pooled: {fp.IsPooledContribution}"))
+            : "No funding partners";
 
-        var stakeholders = opportunity.Stakeholders?
-            .Select(s => s.User?.Name ?? "Unknown")
-            .Where(name => !string.IsNullOrEmpty(name))
-            .ToList() ?? new List<string>();
+        // Format client partners with detailed information
+        var clientPartnersDetails = opportunity.ClientPartners?
+            .Select(cp => new
+            {
+                PartnerName = cp.Partner?.Name ?? "Unknown",
+                PartnerStatus = cp.Partner?.Status.ToString() ?? "",
+                DocumentName = cp.Document?.Name ?? ""
+            })
+            .ToList();
 
-        var deliverables = opportunity.Deliverables?
-            .Select(d => d.Output?.Name ?? d.Notes ?? "")
-            .Where(desc => !string.IsNullOrEmpty(desc))
-            .ToList() ?? new List<string>();
+        var clientPartnersText = clientPartnersDetails != null && clientPartnersDetails.Any()
+            ? string.Join("\n", clientPartnersDetails.Select(cp => $"- {cp.PartnerName} (Status: {cp.PartnerStatus})"))
+            : "No client partners";
 
-        var countries = opportunity.Countries?
-            .Select(c => c.Country?.Name ?? "Unknown")
-            .Where(name => !string.IsNullOrEmpty(name))
-            .ToList() ?? new List<string>();
+        // Format stakeholders with detailed information
+        var stakeholdersDetails = opportunity.Stakeholders?
+            .Select(s => new
+            {
+                UserName = s.User?.Name ?? "Unknown",
+                UserEmail = s.User?.Email ?? "",
+                RoleName = s.EntityRole?.Name ?? "No role",
+                RoleCode = s.EntityRole?.Code ?? "",
+                OrgUnitName = s.OrganizationHierarchy?.Name ?? "",
+                IsAutoPopulated = s.IsAutoPopulated ? "Auto-assigned" : "Manually assigned",
+                Notes = s.Notes ?? ""
+            })
+            .ToList();
 
-        var sdgs = opportunity.SDGs?
-            .Select(s => s.SDG?.Name ?? "Unknown")
-            .Where(name => !string.IsNullOrEmpty(name))
-            .ToList() ?? new List<string>();
+        var stakeholdersText = stakeholdersDetails != null && stakeholdersDetails.Any()
+            ? string.Join("\n", stakeholdersDetails.Select(s =>
+                $"- {s.UserName} ({s.UserEmail}): {s.RoleName} [{s.IsAutoPopulated}]" +
+                (string.IsNullOrEmpty(s.OrgUnitName) ? "" : $", Org Unit: {s.OrgUnitName}") +
+                (string.IsNullOrEmpty(s.Notes) ? "" : $", Notes: {s.Notes}")))
+            : "No internal stakeholders";
 
-        // Return dictionary with all placeholders the AI prompt expects
+        // Format external stakeholders
+        var externalStakeholdersDetails = opportunity.ExternalStakeholders?
+            .Select(es => new
+            {
+                ContactName = es.Contact?.Name ?? "Unknown",
+                ContactEmail = es.Contact?.Email ?? "",
+                PartnerName = es.Contact?.Partner?.Name ?? ""
+            })
+            .ToList();
+
+        var externalStakeholdersText = externalStakeholdersDetails != null && externalStakeholdersDetails.Any()
+            ? string.Join("\n", externalStakeholdersDetails.Select(es =>
+                $"- {es.ContactName} ({es.ContactEmail})" +
+                (string.IsNullOrEmpty(es.PartnerName) ? "" : $" from {es.PartnerName}")))
+            : "No external stakeholders";
+
+        // Format deliverables with detailed information
+        var deliverablesDetails = opportunity.Deliverables?
+            .Select(d => new
+            {
+                OutputName = d.Output?.Name ?? "Not specified",
+                Level0 = d.Output?.Level0 ?? "",
+                Level1 = d.Output?.Level1 ?? "",
+                Level2 = d.Output?.Level2 ?? "",
+                Level3 = d.Output?.Level3 ?? "",
+                Level4 = d.Output?.Level4 ?? "",
+                ServiceLine = d.Output?.ServiceLine ?? "",
+                Quantity = d.Quantity?.ToString() ?? "Not specified",
+                PlannedStartDate = d.PlannedStartDate?.Date.ToString("yyyy-MM-dd") ?? "",
+                PlannedEndDate = d.PlannedEndDate?.Date.ToString("yyyy-MM-dd") ?? "",
+                Notes = d.Notes ?? ""
+            })
+            .ToList();
+
+        var deliverablesText = deliverablesDetails != null && deliverablesDetails.Any()
+            ? string.Join("\n", deliverablesDetails.Select(d =>
+                $"- {d.OutputName}" +
+                (string.IsNullOrEmpty(d.ServiceLine) ? "" : $" (Service Line: {d.ServiceLine})") +
+                (d.Quantity != "Not specified" ? $", Quantity: {d.Quantity}" : "") +
+                (string.IsNullOrEmpty(d.PlannedStartDate) ? "" : $", Start: {d.PlannedStartDate}") +
+                (string.IsNullOrEmpty(d.PlannedEndDate) ? "" : $", End: {d.PlannedEndDate}") +
+                (string.IsNullOrEmpty(d.Notes) ? "" : $", Notes: {d.Notes}")))
+            : "No deliverables";
+
+        // Format countries with detailed information
+        var countriesDetails = opportunity.Countries?
+            .Select(c => new
+            {
+                CountryName = c.Country?.Name ?? "Unknown",
+                Iso2Code = c.Country?.Iso2Code ?? "",
+                Continent = c.Country?.ContinentDescription ?? "",
+                Region = c.Country?.RegionDescription ?? "",
+                SpecificAreas = c.SpecificAreas ?? "",
+                RiskScore = c.RiskScore?.ToString() ?? "Not assessed",
+                HumanitarianFrameworkAlignment = c.HumanitarianFrameworkAlignment.HasValue
+                    ? (c.HumanitarianFrameworkAlignment.Value ? "Aligned" : "Not aligned")
+                    : "Not assessed",
+                NdcAlignment = c.NdcAlignment.HasValue
+                    ? (c.NdcAlignment.Value ? "Aligned" : "Not aligned")
+                    : "Not assessed",
+                NapAlignment = c.NapAlignment.HasValue
+                    ? (c.NapAlignment.Value ? "Aligned" : "Not aligned")
+                    : "Not assessed",
+                OrgUnitStrategyAlignment = c.OrgUnitStrategyAlignment.HasValue
+                    ? (c.OrgUnitStrategyAlignment.Value ? "Aligned" : "Not aligned")
+                    : "Not assessed"
+            })
+            .ToList();
+
+        var countriesText = countriesDetails != null && countriesDetails.Any()
+            ? string.Join("\n", countriesDetails.Select(c =>
+                $"- {c.CountryName} ({c.Iso2Code})" +
+                (string.IsNullOrEmpty(c.Region) ? "" : $", Region: {c.Region}") +
+                (string.IsNullOrEmpty(c.SpecificAreas) ? "" : $", Areas: {c.SpecificAreas}") +
+                $", Risk Score: {c.RiskScore}" +
+                $", Humanitarian Framework: {c.HumanitarianFrameworkAlignment}" +
+                $", NDC: {c.NdcAlignment}" +
+                $", NAP: {c.NapAlignment}" +
+                $", Org Strategy: {c.OrgUnitStrategyAlignment}"))
+            : "No countries";
+
+        // Format SDGs with targets and indicators
+        var sdgsDetails = opportunity.SDGs?
+            .Select(s => new
+            {
+                SDGNumber = s.SDG?.SDGNumber ?? "",
+                SDGName = s.SDG?.Name ?? "Unknown",
+                IsPrimary = s.IsPrimary ? "Primary" : "Secondary",
+                SkipTargets = (s.SkipTargetsAndIndicators ?? false) ? "Yes" : "No",
+                Notes = s.Notes ?? "",
+                Targets = opportunity.SDGTargets?
+                    .Where(t => t.OpportunitySDGId == s.Id)
+                    .Select(t => new
+                    {
+                        TargetId = t.SDGTarget?.SDGTargetId ?? "",
+                        Description = t.SDGTarget?.TargetDescription ?? "",
+                        Notes = t.Notes ?? "",
+                        Indicators = opportunity.SDGIndicators?
+                            .Where(i => i.OpportunitySDGTargetId == t.Id)
+                            .Select(i => new
+                            {
+                                IndicatorId = i.SDGIndicator?.SDGIndicatorId ?? "",
+                                Description = i.SDGIndicator?.SDGIndicatorLongDescription ?? "",
+                                Notes = i.Notes ?? ""
+                            })
+                            .ToList()
+                    })
+                    .ToList()
+            })
+            .ToList();
+
+        var sdgsText = sdgsDetails != null && sdgsDetails.Any()
+            ? string.Join("\n", sdgsDetails.Select(s =>
+            {
+                var baseText = $"- SDG {s.SDGNumber}: {s.SDGName} [{s.IsPrimary}]";
+                if (s.SkipTargets == "Yes")
+                {
+                    return baseText + " (No specific targets/indicators)";
+                }
+                var targetsText = s.Targets != null && s.Targets.Any()
+                    ? "\n  Targets:\n  " + string.Join("\n  ", s.Targets.Select(t =>
+                    {
+                        var targetText = $"• Target {t.TargetId}: {t.Description}";
+                        var indicatorsText = t.Indicators != null && t.Indicators.Any()
+                            ? "\n    Indicators:\n    " + string.Join("\n    ", t.Indicators.Select(i =>
+                                $"○ Indicator {i.IndicatorId}: {i.Description}"))
+                            : "";
+                        return targetText + indicatorsText;
+                    }))
+                    : "";
+                return baseText + targetsText;
+            }))
+            : "No SDGs";
+
+        // Format UNCF Outcomes
+        var uncfOutcomesDetails = opportunity.UNCFOutcomes?
+            .Select(u => new
+            {
+                OutcomeName = u.UNCFOutcome?.Name ?? "Unknown",
+                ExternalId = u.UNCFOutcome?.UNCFOutcomeId ?? "",
+                Country = u.UNCFOutcome?.Country ?? "",
+                VersionNo = u.UNCFOutcome?.UNCooperationFrameworkVersionNo?.ToString() ?? "",
+                Notes = u.Notes ?? "",
+                Indicators = opportunity.UNCFIndicators?
+                    .Where(i => i.OpportunityUNCFOutcomeId == u.Id)
+                    .Select(i => new
+                    {
+                        IndicatorName = i.UNCFIndicator?.Name ?? "",
+                        ExternalId = i.UNCFIndicator?.UNCFIndicatorId ?? "",
+                        Notes = i.Notes ?? ""
+                    })
+                    .ToList()
+            })
+            .ToList();
+
+        var uncfOutcomesText = uncfOutcomesDetails != null && uncfOutcomesDetails.Any()
+            ? string.Join("\n", uncfOutcomesDetails.Select(u =>
+            {
+                var baseText = $"- {u.OutcomeName} (Country: {u.Country}, Version: {u.VersionNo})";
+                var indicatorsText = u.Indicators != null && u.Indicators.Any()
+                    ? "\n  Indicators:\n  " + string.Join("\n  ", u.Indicators.Select(i => $"• {i.IndicatorName}"))
+                    : "";
+                return baseText + indicatorsText;
+            }))
+            : "No UNCF Outcomes";
+
+        // Format UNOPS Missions
+        var unopsMissionsDetails = opportunity.UNOPSMissions?
+            .Select(m => new
+            {
+                MissionCode = m.UNOPSMission?.Code ?? "",
+                MissionName = m.UNOPSMission?.Name ?? "Unknown",
+                Description = m.UNOPSMission?.Description ?? ""
+            })
+            .ToList();
+
+        var unopsMissionsText = unopsMissionsDetails != null && unopsMissionsDetails.Any()
+            ? string.Join("\n", unopsMissionsDetails.Select(m =>
+                $"- {m.MissionCode}: {m.MissionName}" +
+                (string.IsNullOrEmpty(m.Description) ? "" : $" - {m.Description}")))
+            : "No UNOPS Mission alignments";
+
+        // Return comprehensive dictionary with all opportunity details
         return new Dictionary<string, object>
         {
+            // Basic Information
             ["id"] = opportunity.Id.ToString(),
             ["name"] = opportunity.Name ?? "",
             ["description"] = opportunity.Description ?? "",
             ["partnerReference"] = opportunity.PartnerReference ?? "",
             ["status"] = opportunity.Status.ToString(),
+            ["workflowStageId"] = opportunity.WorkflowStageId?.ToString() ?? "",
+            ["workflowStageName"] = opportunity.WorkflowStage?.Name ?? "",
+            
+            // Organizational Information
+            ["responsibleOrgUnitId"] = opportunity.ResponsibleOrgUnitId?.ToString() ?? "",
             ["responsibleOrgUnitName"] = opportunity.ResponsibleOrgUnit?.Name ?? "",
+            ["responsibleOrgUnitCode"] = opportunity.ResponsibleOrgUnit?.Code ?? "",
+            
+            // Initiative Type
+            ["proposedInitiativeTypeId"] = opportunity.ProposedInitiativeTypeId?.ToString() ?? "",
             ["proposedInitiativeTypeName"] = opportunity.ProposedInitiativeType?.Name ?? "",
+            
+            // Budget and Dates
             ["initiativeBudgetUSD"] = opportunity.InitiativeBudgetUSD?.ToString("N2") ?? "",
-            ["targetSigningDate"] = opportunity.TargetSigningDate?.ToString("yyyy-MM-dd") ?? "",
-            ["targetDeliveryDate"] = opportunity.TargetDeliveryDate?.ToString("yyyy-MM-dd") ?? "",
+            ["targetSigningDate"] = opportunity.TargetSigningDate?.Date.ToString("yyyy-MM-dd") ?? "",
+            ["implementationStartDate"] = opportunity.ImplementationStartDate?.Date.ToString("yyyy-MM-dd") ?? "",
+            ["targetDeliveryDate"] = opportunity.TargetDeliveryDate?.Date.ToString("yyyy-MM-dd") ?? "",
+            ["isTargetSigningDateFirm"] = opportunity.IsTargetSigningDateFirm ? "Yes" : "No",
+            ["signingDateNotes"] = opportunity.SigningDateNotes ?? "",
+            ["submissionDeadline"] = opportunity.SubmissionDeadline?.Date.ToString("yyyy-MM-dd") ?? "",
+            
+            // Strategic Information
             ["resultsFocus"] = opportunity.ResultsFocus ?? "",
             ["intendedImpactOutcomes"] = opportunity.IntendedImpactOutcomes ?? "",
             ["expectedBeneficiaries"] = opportunity.ExpectedBeneficiaries ?? "",
-            ["fundingPartners"] = string.Join(", ", fundingPartners),
-            ["clientPartners"] = string.Join(", ", clientPartners),
-            ["stakeholders"] = string.Join(", ", stakeholders),
-            ["deliverables"] = string.Join(", ", deliverables),
-            ["countries"] = string.Join(", ", countries),
-            ["sdGs"] = string.Join(", ", sdgs),
+            ["estimatedDirectBeneficiaries"] = opportunity.EstimatedDirectBeneficiaries?.ToString() ?? "Not specified",
+            ["estimatedIndirectBeneficiaries"] = opportunity.EstimatedIndirectBeneficiaries?.ToString() ?? "Not specified",
+            ["beneficiariesToBeDetermined"] = opportunity.BeneficiariesToBeDetermined ? "Yes" : "No",
+            ["challenges"] = opportunity.Challenges ?? "",
+            
+            // Marketing Content
+            ["opportunityStatementMarkdown"] = opportunity.OpportunityStatementMarkdown ?? "",
+            ["hasOpportunityBannerImage"] = !string.IsNullOrEmpty(opportunity.OpportunityBannerImage) ? "Yes" : "No",
+            ["hasOpportunityThumbnail"] = !string.IsNullOrEmpty(opportunity.OpportunityThumbnail) ? "Yes" : "No",
+            
+            // Funding and Risk Information
+            ["isPooledFunding"] = opportunity.IsPooledFunding ? "Yes" : "No",
+            ["highRisksAcknowledged"] = opportunity.HighRisksAcknowledged ? "Yes" : "No",
+            ["deliveryModality"] = opportunity.DeliveryModality?.ToString() ?? "Not specified",
+            
+            // External Stakeholder Notes
+            ["miscExternalStakeholders"] = opportunity.MiscExternalStakeholders ?? "",
+            ["externalStakeholderNotes"] = opportunity.ExternalStakeholderNotes ?? "",
+            
+            // Arrays - Detailed Information
+            ["fundingPartners"] = fundingPartnersText,
+            ["fundingPartnersCount"] = (fundingPartnersDetails?.Count ?? 0).ToString(),
+            ["clientPartners"] = clientPartnersText,
+            ["clientPartnersCount"] = (clientPartnersDetails?.Count ?? 0).ToString(),
+            ["stakeholders"] = stakeholdersText,
+            ["stakeholdersCount"] = (stakeholdersDetails?.Count ?? 0).ToString(),
+            ["externalStakeholders"] = externalStakeholdersText,
+            ["externalStakeholdersCount"] = (externalStakeholdersDetails?.Count ?? 0).ToString(),
+            ["deliverables"] = deliverablesText,
+            ["deliverablesCount"] = (deliverablesDetails?.Count ?? 0).ToString(),
+            ["countries"] = countriesText,
+            ["countriesCount"] = (countriesDetails?.Count ?? 0).ToString(),
+            ["sdGs"] = sdgsText,
+            ["sdGsCount"] = (sdgsDetails?.Count ?? 0).ToString(),
+            ["uncfOutcomes"] = uncfOutcomesText,
+            ["uncfOutcomesCount"] = (uncfOutcomesDetails?.Count ?? 0).ToString(),
+            ["unopsMissions"] = unopsMissionsText,
+            ["unopsMissionsCount"] = (unopsMissionsDetails?.Count ?? 0).ToString(),
+            
+            // Statistics
+            ["stats.totalFundingUSD"] = stats.TotalFundingUSD.ToString("N2"),
+            ["stats.totalFeeAmountUSD"] = stats.TotalFeeAmountUSD.ToString("N2"),
             ["stats.totalFundingPartners"] = stats.FundingPartnerCount.ToString(),
             ["stats.totalClientPartners"] = stats.ClientPartnerCount.ToString(),
+            ["stats.totalPartners"] = stats.TotalPartnerCount.ToString(),
             ["stats.totalStakeholders"] = stats.StakeholderCount.ToString(),
+            ["stats.totalInternalStakeholders"] = stats.InternalStakeholderCount.ToString(),
+            ["stats.totalExternalStakeholders"] = stats.ExternalStakeholderCount.ToString(),
             ["stats.totalDeliverables"] = stats.DeliverableCount.ToString(),
             ["stats.totalCountries"] = stats.CountryCount.ToString(),
             ["stats.totalSDGs"] = stats.SDGCount.ToString(),
+            ["stats.primarySDGId"] = stats.PrimarySDGId?.ToString() ?? "",
+            ["stats.daysToTargetSigningDate"] = stats.DaysToTargetSigningDate?.ToString() ?? "",
+            ["stats.serviceLines"] = string.Join(", ", stats.ServiceLines ?? new List<string>()),
+            
+            // Audit Information
             ["createdDate"] = opportunity.CreatedDate.ToString("yyyy-MM-dd HH:mm:ss"),
-            ["lastModifiedDate"] = opportunity.LastModifiedDate?.ToString("yyyy-MM-dd HH:mm:ss") ?? ""
+            ["lastModifiedDate"] = opportunity.LastModifiedDate?.ToString("yyyy-MM-dd HH:mm:ss") ?? "",
+            ["createdBy"] = opportunity.CreatedBy.ToString(),
+            ["createdByName"] = opportunity.CreatedByUser?.Name ?? "",
+            ["lastModifiedBy"] = opportunity.LastModifiedBy.ToString(),
+            ["lastModifiedByName"] = opportunity.LastModifiedByUser?.Name ?? ""
         };
     }
 

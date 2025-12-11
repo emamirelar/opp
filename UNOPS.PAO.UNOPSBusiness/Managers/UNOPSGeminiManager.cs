@@ -5401,6 +5401,8 @@ public class UNOPSGeminiManager : IGeminiManager
                 // Specifically remove the statementMarkdown field from the opportunity details
                 opportunityDetails["statementMarkdown"] = null;
 
+                Console.WriteLine($"======================[OPPORTUNITY-STATEMENT] opportunityDetails: {JsonConvert.SerializeObject(opportunityDetails, Formatting.Indented)}");
+
                 if (opportunityDetails == null || !opportunityDetails.Any())
                 {
                     throw new KeyNotFoundException($"Opportunity with ID {opportunityId} not found");

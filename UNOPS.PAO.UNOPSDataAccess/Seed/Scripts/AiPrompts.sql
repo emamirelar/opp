@@ -3428,36 +3428,50 @@ CRITICAL: misalignmentItems must be array of strings NOT objects. Empty array if
 
 ## 1. Context and Challenge(s)
 
-- **(a) Unit and Opportunity Manager:** [Responsible Organizational Unit, Opportunity Manager Name from opportunity details. DO NOT ASSUME ANYTHING. ONLY LIST THE UNIT AND OPPORTUNITY DEVELOPER THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
-- **(b) Location:** [Country(ies), Region(s), District(s) from opportunity details. Describe the context (e.g., socio-economic situation, environmental factors). DO NOT ASSUME ANYTHING. ONLY LIST THE LOCATION THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
-- **(c) Context and Challenge(s):** [Describe the key challenges from the Challenges field. Be specific and quantify the problem where possible. DO NOT ASSUME ANYTHING. ONLY LIST THE CHALLENGES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
+**(a) Unit and Opportunity Manager:** [Responsible Organizational Unit, Opportunity Manager Name (from the Internal stakeholders section) from opportunity details. DO NOT ASSUME ANYTHING. ONLY LIST THE UNIT AND OPPORTUNITY DEVELOPER THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+**(b) Location:** [Country(ies), Region(s), District(s) from opportunity details. Describe the context (e.g., socio-economic situation, environmental factors). DO NOT ASSUME ANYTHING. ONLY LIST THE LOCATION THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+**(c) Context and Challenge(s):** [Describe the key challenges from the Challenges field. Be specific and quantify the problem where possible. DO NOT ASSUME ANYTHING. ONLY LIST THE CHALLENGES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
 
 ## 2. Alignment with UN, Global, and National Goals and Priorities
 
-- **(a) UN Cooperation Framework:** [Extract from StrategicAlignment field. Align with specific UNSDCF outcome(s) and other relevant UN frameworks. DO NOT ASSUME ANYTHING. ONLY LIST THE UNSDCF OUTCOMES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
-- **(b) SDGs:** [List SDGs from the opportunity data with specific targets and indicators where available. DO NOT ASSUME ANYTHING. ONLY LIST THE SDGS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
-- **(c) UNOPS Strategy:** [Describe how this aligns with UNOPS mission based on the opportunity type and description. DO NOT ASSUME ANYTHING. ONLY LIST THE UNOPS MISSIONS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
-- **(d) UNOPS Regional Priorities:** [Link with relevant priorities from the regional strategy based on location. DO NOT ASSUME ANYTHING. ONLY LIST THE REGIONAL PRIORITIES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
+**(a) UN Cooperation Framework:** [Extract from StrategicAlignment field. Align with specific UNSDCF outcome(s) and other relevant UN frameworks. DO NOT ASSUME ANYTHING. ONLY LIST THE UNSDCF OUTCOMES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+**(b) SDGs:** [List SDGs from the opportunity data with specific targets and indicators where available. DO NOT ASSUME ANYTHING. ONLY LIST THE SDGS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+**(c) UNOPS Strategy:** [Describe how this aligns with UNOPS mission based on the opportunity type and description. DO NOT ASSUME ANYTHING. ONLY LIST THE UNOPS MISSIONS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+**(d) UNOPS Regional Priorities:** [Link with relevant priorities from the regional strategy based on location. DO NOT ASSUME ANYTHING. ONLY LIST THE REGIONAL PRIORITIES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
 
-## 3. Partner Objective(s)
+## 3. Partner Objective(s) [Partner objectives that the initiative will contribute to - the desired state, or longer-term change, that partners want to occur to address the challenge(s). These are typically set by the partner at the level of outcomes and/or impact.]
 
-- **(a) Client:** [List client partners from the opportunity data. DO NOT ASSUME ANYTHING. ONLY LIST THE CLIENT PARTNERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
-- **(b) Funding Partner:** [List funding partners from the opportunity data. DO NOT ASSUME ANYTHING. ONLY LIST THE FUNDING PARTNERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
-- **(c) Impact:** [Extract from IntendedImpactOutcomes and ExpectedBeneficiaries fields. DO NOT ASSUME ANYTHING. ONLY LIST THE IMPACT THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
-- **(d) Expected Outcomes:** [Extract from ResultsFocus field. DO NOT ASSUME ANYTHING. ONLY LIST THE EXPECTED OUTCOMES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
+**(a) Client:** [List client partners from the opportunity data. DO NOT ASSUME ANYTHING. ONLY LIST THE CLIENT PARTNERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+**(b) Funding Partner:** [List funding partners from the opportunity data. DO NOT ASSUME ANYTHING. ONLY LIST THE FUNDING PARTNERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+**(c) Impact:** [Extrapolate from Challenges and from IntendedImpactOutcomes and ExpectedBeneficiaries fields. DO NOT ASSUME ANYTHING. ONLY LIST THE IMPACT THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+**(d) Outcomes:** [Extract from IntendedImpactOutcomes field. DO NOT ASSUME ANYTHING. ONLY LIST THE EXPECTED OUTCOMES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+**(e) Direct Beneficiaries:** [Extract from EstimatedDirectBeneficiaries field. DO NOT ASSUME ANYTHING. ONLY LIST THE DIRECT BENEFICIARIES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+**(f) Indirect Beneficiaries:** [Extract from the EstimatedIndirectBeneficiaries field. DO NOT ASSUME ANYTHING. ONLY LIST THE INDIRECT BENEFICIARIES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+**(g) Beneficiary Institutions:** [Extract from the ExpectedBeneficiaries field. DO NOT ASSUME ANYTHING. ONLY LIST THE BENEFICIARY INSTITUTIONS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
 
-## 4. UNOPS Value Proposition
+## 4. Initiative that UNOPS will be responsible and/or accountable for [What are the outputs and what opportunities exist to enhance their impact?]
 
-- **(a) Services:** [Describe UNOPS services based on opportunity type and description. DO NOT ASSUME ANYTHING. ONLY LIST THE SERVICES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
-- **(b) Implementation Approach:** [Describe approach based on opportunity details. DO NOT ASSUME ANYTHING. ONLY LIST THE IMPLEMENTATION APPROACH THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
-- **(c) Timeline:** [Extract from opportunity dates - TargetSigningDate, TargetDeliveryDate. DO NOT ASSUME ANYTHING. ONLY LIST THE TIMELINE THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
-- **(d) Budget:** [Extract from InitiativeBudgetUSD if available. DO NOT ASSUME ANYTHING. ONLY LIST THE BUDGET THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
+**(a) Scope:** [Extract the delivery modality and products / services from the opportunity data. DO NOT ASSUME ANYTHING. ONLY LIST THE DELIVERY MODALITY AND PRODUCTS / SERVICES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+**(b) Success criteria:** [List SMART targets for the initiative that UNOPS will help design and manage, including implementation targets in the SP results framework.]  
+**(c) Scale and complexity:** [Extract the scale and complexity from the opportunity data. DO NOT ASSUME ANYTHING. ONLY LIST THE SCALE AND COMPLEXITY THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+**(d) Additionality:** [Extract the additionality from the opportunity data. DO NOT ASSUME ANYTHING. ONLY LIST THE ADDITIONALITY THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
 
-## 5. Risk Analysis
+## 5. Outcome and impact level assumptions and risks [What is required to ensure that the outputs/outcomes provided contribute to the realization of the objective(s) and what are the risks? Notably, this is the critical foundation upon which real success rests.]
 
-- **(a) Key Risks:** [Extract from any risk-related fields in the opportunity data. DO NOT ASSUME ANYTHING. ONLY LIST THE KEY RISKS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]
-- **(b) Mitigation Strategies:** [Suggest based on opportunity context. DO NOT ASSUME ANYTHING. ONLY LIST THE MITIGATION STRATEGIES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]',
-        'I am providing you with complete opportunity details and attached document information. Please generate a comprehensive opportunity statement following the format specified in the system instructions.
+**(a) Assumptions:** [List the main assumptions that underpin successful achievement of outcomes and impact listed under Partner Objectives (i.e. not deliverables). While these assumptions may be outside UNOPS control we can still: i) monitor and seek to influence them together with partners, and ii) bring assumptions under the control of the initiative by including them in the project scope. Simple examples from a project to build a school: If it is unclear if teachers will be available, UNOPS can encourage the government or UNICEF to take action. If access to adequate infrastructure services (e.g. power) is lacking, then this can be added to the scope of the UNOPS project.]  
+**(b) Risk:** [Extract from any risk-related fields in the opportunity data. DO NOT ASSUME ANYTHING. ONLY LIST THE KEY RISKS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+
+## 6. UNOPS capabilities:
+**(a) Capabilities:** [Outline what UNOPS (globally) brings to this initiative: capacity statements, standards, practices (toolbox). Project IDs that the initiative may learn from and build upon (include project IDs with links to oUP). UNOPS experts that may be involved (names).]  
+**(b) Capability gaps:** [Outline the additional expertise and support (technical experts, RBM experts, initial funding) that will be needed for UNOPS to engage with the partner(s) to design and manage the initiative, incl. the pursuit of additionalities]  
+**(c) Strategic risks and opportunities:** [List strategic risks to UNOPS associated with whether or not we take this opportunity forward, e.g. lose or gain trust with the government or the UNCT. Strategic opportunities, e.g. potential to a) transfer and/or innovate effective practical solutions; and/or b) enable coalitions of partners to respond to the objective.]  
+
+## 7. Key stakeholders
+**(a) Top five stakeholders:** [List the funding partners, clients, and external stakeholders. DO NOT ASSUME ANYTHING. ONLY LIST THE FUNDING PARTNERS, CLIENTS, AND EXTERNAL STAKEHOLDERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+**(b) Other partners and stakeholders:** [List the internal stakeholders. DO NOT ASSUME ANYTHING. ONLY LIST THE INTERNAL STAKEHOLDERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+',
+
+        'I am providing you with complete opportunity details. Please generate a comprehensive opportunity statement following the format specified in the system instructions.
 
 **Opportunity Details (JSON):**
 {opportunityDetails}
