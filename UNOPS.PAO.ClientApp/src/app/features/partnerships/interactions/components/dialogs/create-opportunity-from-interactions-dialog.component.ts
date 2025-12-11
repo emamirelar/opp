@@ -1213,11 +1213,13 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
           // Case 1: Document already has a GCS storage path - use it directly
           if (docInfo?.storagePath && docInfo.storagePath.startsWith('gs://')) {
             console.log(`✅ [ExistingDoc] Document ${documentId} already in GCS: ${docInfo.storagePath}`);
+            // Get documentTypeId from either documentTypeId property or documentType.id (API returns nested object)
+            const docTypeId = docInfo?.documentTypeId || docInfo?.documentType?.id || null;
             uploadedDocs.push({
               gcsPath: docInfo.storagePath,
               mimeType: mimeType,
               name: docName,
-              documentTypeId: docInfo?.documentTypeId || null
+              documentTypeId: docTypeId
             });
             continue;
           }
@@ -1275,11 +1277,13 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
               .toPromise();
             
             if (uploadResponse && uploadResponse.storagePath) {
+              // Get documentTypeId from either documentTypeId property or documentType.id (API returns nested object)
+              const docTypeId = docInfo?.documentTypeId || docInfo?.documentType?.id || null;
               uploadedDocs.push({
                 gcsPath: uploadResponse.storagePath,
                 mimeType: 'application/pdf',
                 name: pdfFileName,
-                documentTypeId: docInfo?.documentTypeId || null
+                documentTypeId: docTypeId
               });
               console.log(`✅ [ExistingDoc] Uploaded ${pdfFileName} to GCS: ${uploadResponse.storagePath}`);
             }
@@ -1344,11 +1348,13 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
                 .toPromise();
               
               if (uploadResponse && uploadResponse.storagePath) {
+                // Get documentTypeId from either documentTypeId property or documentType.id (API returns nested object)
+                const docTypeId = docInfo?.documentTypeId || docInfo?.documentType?.id || null;
                 uploadedDocs.push({
                   gcsPath: uploadResponse.storagePath,
                   mimeType: 'application/pdf',
                   name: pdfFileName,
-                  documentTypeId: docInfo?.documentTypeId || null
+                  documentTypeId: docTypeId
                 });
                 console.log(`✅ [ExistingDoc] Uploaded ${pdfFileName} to GCS: ${uploadResponse.storagePath}`);
               }
@@ -1538,7 +1544,8 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         isClientPartner: isFromInteractionDetail ? false : this.isClientPartner(),
         interactionIds: interactionIds.length > 0 ? interactionIds : undefined,
         newDocumentStoragePaths: uploadedDocs.length > 0 ? uploadedDocs.map(d => d.gcsPath) : undefined,
-        newDocumentMimeTypes: uploadedDocs.length > 0 ? uploadedDocs.map(d => d.mimeType) : undefined
+        newDocumentMimeTypes: uploadedDocs.length > 0 ? uploadedDocs.map(d => d.mimeType) : undefined,
+        newDocumentTypeIds: uploadedDocs.length > 0 ? uploadedDocs.map(d => d.documentTypeId) : undefined
         // Note: existingDocumentIds removed - all docs are now in newDocumentStoragePaths after GCS upload
       };
       

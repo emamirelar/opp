@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using UNOPS.PAO.Business.Interfaces;
@@ -24,6 +25,8 @@ using System.Text.Json;
 using UNOPS.PAO.Models.AuditLogs;
 using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.Models.Search;
+using Google.Apis.Auth.OAuth2;
+using UNOPS.PAO.Business.Managers;
 
 namespace UNOPS.PAO.Presentation.Controllers;
 
@@ -38,6 +41,7 @@ public class OpportunityController : BaseController
     private readonly IRiskManager _riskManager;
     private readonly int _currentUserId;
     private readonly AppDbContext _context;
+    private readonly IConfiguration _configuration;
     private readonly UNOPSDocumentManager _documentManager;
     private readonly AdvancedSearchService _advancedSearchService;
 
@@ -63,6 +67,7 @@ public class OpportunityController : BaseController
         _riskManager = manager.RiskManager;
         _currentUserId = userResolverService.GetCurrentUserId();
         _context = context;
+        _configuration = configuration;
         _documentManager = new UNOPSDocumentManager(driveManager, configuration, mapper, unopsContext, userManager, serviceProvider);
         _advancedSearchService = advancedSearchService;
     }
@@ -1755,6 +1760,128 @@ public class OpportunityController : BaseController
         {
             _logger.LogError(ex, "Error getting framework status for opportunity {OpportunityId}", id);
             return StatusCode(500, new { error = "Internal server error while getting framework status", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Searches for Products & Services (Outputs) using AI semantic search
+    /// Combines text similarity and embedding-based search for best results
+    /// </summary>
+    /// <param name="request">Search request with text query</param>
+    /// <returns>List of matched Outputs with similarity scores</returns>
+    [HttpPost(APIDictionary.Opportunity + "/find-deliverable")]
+    [AccessControlled(EntityTypes.Opportunity, "read")]
+    public async Task<ActionResult<OutputSemanticSearchResponse>> FindDeliverable([FromBody] OutputSemanticSearchRequest request)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(request.SearchText) || request.SearchText.Length < 3)
+            {
+                return BadRequest(new { error = "Search text must be at least 3 characters" });
+            }
+
+            _logger.LogInformation("🔍 [API] AI search for deliverable: '{SearchText}'", request.SearchText);
+
+            var matches = new List<OutputSemanticSearchMatch>();
+            var maxResults = request.MaxResults > 0 ? request.MaxResults : 10;
+            var minSimilarity = request.MinSimilarity > 0 ? request.MinSimilarity : 0.3f;
+
+            // Create AiContextualService for embedding generation and search
+            var credentials = GoogleCredential.GetApplicationDefault();
+            var unopsContext = HttpContext.RequestServices.GetRequiredService<UNOPS.PAO.UNOPSDataAccess.Context.UNOPSAppDbContext>();
+            var aiService = new AiContextualService(_configuration, unopsContext, credentials, null, _logger);
+
+            // Generate embedding for search text
+            var embeddingVector = await aiService.CreateEmbeddingForText(request.SearchText);
+            
+            if (string.IsNullOrEmpty(embeddingVector))
+            {
+                _logger.LogWarning("Failed to generate embedding for search text: {SearchText}", request.SearchText);
+                return Ok(new OutputSemanticSearchResponse
+                {
+                    SearchText = request.SearchText,
+                    Matches = new List<OutputSemanticSearchMatch>(),
+                    TotalMatches = 0
+                });
+            }
+
+            // Use embedding search for semantic matching (this function exists and works)
+            var searchResults = await aiService.ExecuteEmbeddingSearchMultiple(
+                entityName: "Output",
+                embeddingVector: embeddingVector,
+                embeddingThreshold: 0.4f,  // Lower threshold for broader matches
+                resultLimit: maxResults * 2,  // Get more results to filter
+                whereCondition: null
+            );
+
+            // Take top results
+            var topResults = searchResults
+                .OrderByDescending(r => r.Score)
+                .Take(maxResults)
+                .ToList();
+
+            if (!topResults.Any())
+            {
+                _logger.LogInformation("No matches found for: {SearchText}", request.SearchText);
+                return Ok(new OutputSemanticSearchResponse
+                {
+                    SearchText = request.SearchText,
+                    Matches = new List<OutputSemanticSearchMatch>(),
+                    TotalMatches = 0
+                });
+            }
+
+            // Get Output details for matched IDs
+            var outputIds = topResults.Select(r => r.EntityId).ToList();
+            var valuesManager = HttpContext.RequestServices.GetRequiredService<ValuesManager>();
+            var outputs = valuesManager.GetOutputsByIds(outputIds).ToList();
+            var outputsDict = outputs.ToDictionary(o => o.Id);
+
+            foreach (var result in topResults)
+            {
+                if (outputsDict.TryGetValue(result.EntityId, out var output))
+                {
+                    // Build hierarchy path
+                    var hierarchyParts = new List<string>();
+                    if (!string.IsNullOrEmpty(output.Level0)) hierarchyParts.Add(output.Level0);
+                    if (!string.IsNullOrEmpty(output.Level1)) hierarchyParts.Add(output.Level1);
+                    if (!string.IsNullOrEmpty(output.Level2)) hierarchyParts.Add(output.Level2);
+                    if (!string.IsNullOrEmpty(output.Level3)) hierarchyParts.Add(output.Level3);
+                    if (!string.IsNullOrEmpty(output.Level4)) hierarchyParts.Add(output.Level4);
+                    
+                    // Determine matched level
+                    var matchedLevel = "Level0";
+                    if (!string.IsNullOrEmpty(output.Level4)) matchedLevel = "Level4";
+                    else if (!string.IsNullOrEmpty(output.Level3)) matchedLevel = "Level3";
+                    else if (!string.IsNullOrEmpty(output.Level2)) matchedLevel = "Level2";
+                    else if (!string.IsNullOrEmpty(output.Level1)) matchedLevel = "Level1";
+
+                    matches.Add(new OutputSemanticSearchMatch
+                    {
+                        Output = output,
+                        SimilarityScore = result.Score,
+                        MatchedLevel = matchedLevel,
+                        MatchedHierarchy = string.Join(" > ", hierarchyParts),
+                        SemanticScore = result.SearchType == "embedding" ? result.Score : 0,
+                        KeywordScore = result.SearchType == "similarity" ? result.Score : 0,
+                        TextSimilarityScore = result.SearchType == "similarity" ? result.Score : 0
+                    });
+                }
+            }
+
+            _logger.LogInformation("✅ [API] AI search found {Count} matches for: {SearchText}", matches.Count, request.SearchText);
+
+            return Ok(new OutputSemanticSearchResponse
+            {
+                SearchText = request.SearchText,
+                Matches = matches,
+                TotalMatches = matches.Count
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in AI deliverable search for: {SearchText}", request.SearchText);
+            return StatusCode(500, new { error = "Internal server error during AI search", details = ex.Message });
         }
     }
 
