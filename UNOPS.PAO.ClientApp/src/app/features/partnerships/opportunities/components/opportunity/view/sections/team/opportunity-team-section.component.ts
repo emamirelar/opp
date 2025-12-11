@@ -107,6 +107,11 @@ export class OpportunityTeamSectionComponent implements OnInit {
   readonly opportunity = input.required<Opportunity>();
 
   /**
+   * @description Input signal for AI suggestions relevant to this section
+   */
+  readonly suggestions = input<any[]>([]);
+
+  /**
    * @description Input signal for update permission - controls visibility of edit button
    */
   readonly canUpdate = input<boolean>(false);

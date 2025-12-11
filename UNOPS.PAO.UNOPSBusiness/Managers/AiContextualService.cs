@@ -1177,7 +1177,13 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                                 // Handle opportunity-specific arrays that need full object structures
                                 if (opportunityType && IsOpportunityCollectionField(dependent))
                                 {
-                                    var objectsArray = await BuildOpportunityCollectionObjects(textArray, dependent);
+                                    // Pass partnerBudgets array if available (for funding partner budget associations)
+                                    JArray partnerBudgets = null;
+                                    if (dependent.Equals("fundingPartners", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        partnerBudgets = responseObject["partnerBudgets"] as JArray;
+                                    }
+                                    var objectsArray = await BuildOpportunityCollectionObjects(textArray, dependent, partnerBudgets);
                                     responseObject[dependent] = objectsArray;
                                     continue;
                                 }
@@ -1454,13 +1460,13 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 entityName = "Partners";
                 whereCondition = "1=1";
             }
-            // Special case for stakeholders (Opportunity specific) - TODO: Implement stakeholder mapping
+            // Special case for stakeholders (Opportunity specific) - handled by BuildStakeholderObject
+            // Stakeholders are resolved in BuildStakeholderObject using userName and roleName from AI
             else if (dependent.Equals("stakeholders", StringComparison.OrdinalIgnoreCase))
             {
-                // TODO: Implement stakeholder entity mapping for Opportunity
-                // This requires determining the correct entity type for stakeholders in the Opportunity context
-                Console.WriteLine($"[TODO] Stakeholder mapping for Opportunity not yet implemented. Skipping '{text}'");
-                return null;
+                // Stakeholder user resolution uses UserProfile table (same as User/PartnerFocalPointUser)
+                entityName = "UserProfile";
+                whereCondition = "1=1";
             }
             // Special case for countries (Opportunity specific) - should look at Countries table
             else if (dependent.Equals("countries", StringComparison.OrdinalIgnoreCase))
@@ -3035,6 +3041,7 @@ Keywords:";
             return dependent.Equals("fundingPartners", StringComparison.OrdinalIgnoreCase) ||
                    dependent.Equals("clientPartners", StringComparison.OrdinalIgnoreCase) ||
                    dependent.Equals("stakeholders", StringComparison.OrdinalIgnoreCase) ||
+                   dependent.Equals("teamMembers", StringComparison.OrdinalIgnoreCase) ||
                    dependent.Equals("deliverables", StringComparison.OrdinalIgnoreCase) ||
                    dependent.Equals("countries", StringComparison.OrdinalIgnoreCase) ||
                    dependent.Equals("sdGs", StringComparison.OrdinalIgnoreCase);
@@ -3043,7 +3050,10 @@ Keywords:";
         /// <summary>
         /// Builds opportunity collection objects from text arrays
         /// </summary>
-        private async Task<JArray> BuildOpportunityCollectionObjects(JArray textArray, string dependent)
+        /// <param name="textArray">Array of text values to convert to objects</param>
+        /// <param name="dependent">The dependent field name being processed</param>
+        /// <param name="partnerBudgets">Optional array of partner budget allocations (used for funding partners)</param>
+        private async Task<JArray> BuildOpportunityCollectionObjects(JArray textArray, string dependent, JArray partnerBudgets = null)
         {
             var objectsArray = new JArray();
             
@@ -3066,18 +3076,40 @@ Keywords:";
                     }
                     else if (dependent.Equals("fundingPartners", StringComparison.OrdinalIgnoreCase))
                     {
-                        var partnerObj = await BuildPartnerObject(textValue, "Funding");
+                        // Look up budget for this partner from partnerBudgets array
+                        decimal? amount = null;
+                        string currency = "USD";
+                        
+                        if (partnerBudgets != null && partnerBudgets.Count > 0)
+                        {
+                            var budgetEntry = FindPartnerBudget(textValue, partnerBudgets);
+                            if (budgetEntry != null)
+                            {
+                                amount = budgetEntry["amount"]?.Value<decimal?>();
+                                currency = budgetEntry["currency"]?.ToString() ?? "USD";
+                                Console.WriteLine($"[INFO] Found budget for partner '{textValue}': {amount} {currency}");
+                            }
+                        }
+                        
+                        var partnerObj = await BuildPartnerObject(textValue, "Funding", amount, currency);
                         if (partnerObj != null) objectsArray.Add(partnerObj);
                     }
                     else if (dependent.Equals("clientPartners", StringComparison.OrdinalIgnoreCase))
                     {
-                        var partnerObj = await BuildPartnerObject(textValue, "Client");
+                        var partnerObj = await BuildPartnerObject(textValue, "Client", null, null);
                         if (partnerObj != null) objectsArray.Add(partnerObj);
                     }
                     else if (dependent.Equals("stakeholders", StringComparison.OrdinalIgnoreCase))
                     {
-                        // TODO: Implement stakeholder object building
-                        Console.WriteLine($"[TODO] Stakeholder object building not yet implemented for '{textValue}'");
+                        // Stakeholders now come as JSON objects with userName and roleName
+                        // Handle both object format and legacy string format
+                        var stakeholderObj = await BuildStakeholderObject(textItem);
+                        if (stakeholderObj != null) objectsArray.Add(stakeholderObj);
+                    }
+                    else if (dependent.Equals("teamMembers", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var teamMemberObj = await BuildTeamMemberObject(textValue);
+                        if (teamMemberObj != null) objectsArray.Add(teamMemberObj);
                     }
                     else if (dependent.Equals("deliverables", StringComparison.OrdinalIgnoreCase))
                     {
@@ -3095,7 +3127,65 @@ Keywords:";
         }
         
         /// <summary>
+        /// Finds a partner's budget entry from the partnerBudgets array using fuzzy matching
+        /// </summary>
+        private JObject FindPartnerBudget(string partnerName, JArray partnerBudgets)
+        {
+            if (string.IsNullOrEmpty(partnerName) || partnerBudgets == null) return null;
+            
+            var normalizedPartnerName = partnerName.ToLowerInvariant().Trim();
+            
+            foreach (var budget in partnerBudgets)
+            {
+                var budgetPartnerName = budget["partnerName"]?.ToString();
+                if (string.IsNullOrEmpty(budgetPartnerName)) continue;
+                
+                var normalizedBudgetPartnerName = budgetPartnerName.ToLowerInvariant().Trim();
+                
+                // Exact match
+                if (normalizedPartnerName == normalizedBudgetPartnerName)
+                {
+                    return budget as JObject;
+                }
+                
+                // Partial match (one contains the other)
+                if (normalizedPartnerName.Contains(normalizedBudgetPartnerName) || 
+                    normalizedBudgetPartnerName.Contains(normalizedPartnerName))
+                {
+                    return budget as JObject;
+                }
+                
+                // Common abbreviation handling (e.g., "AfDB" matches "African Development Bank")
+                var partnerWords = normalizedPartnerName.Split(new[] { ' ', '-', '_' }, StringSplitOptions.RemoveEmptyEntries);
+                var budgetWords = normalizedBudgetPartnerName.Split(new[] { ' ', '-', '_' }, StringSplitOptions.RemoveEmptyEntries);
+                
+                // Check if budget name is an abbreviation of partner name (first letters match)
+                if (budgetWords.Length == 1 && partnerWords.Length > 1)
+                {
+                    var abbreviation = string.Concat(partnerWords.Select(w => w[0]));
+                    if (abbreviation == normalizedBudgetPartnerName)
+                    {
+                        return budget as JObject;
+                    }
+                }
+                
+                // Vice versa
+                if (partnerWords.Length == 1 && budgetWords.Length > 1)
+                {
+                    var abbreviation = string.Concat(budgetWords.Select(w => w[0]));
+                    if (abbreviation == normalizedPartnerName)
+                    {
+                        return budget as JObject;
+                    }
+                }
+            }
+            
+            return null;
+        }
+        
+        /// <summary>
         /// Builds a country object from text value
+        /// Returns format matching OpportunityCountryModel: { countryId, country: {...} }
         /// </summary>
         private async Task<JObject> BuildCountryObject(string countryText)
         {
@@ -3119,9 +3209,11 @@ Keywords:";
                 
                 if (country == null) return null;
                 
-                // Return nested country object to match OpportunityCountryModel structure
+                // Return object matching OpportunityCountryModel structure
+                // countryId at root level for comparison, nested country for display
                 return new JObject
                 {
+                    ["countryId"] = country.Id,
                     ["country"] = new JObject
                     {
                         ["id"] = country.Id,
@@ -3184,7 +3276,11 @@ Keywords:";
         /// <summary>
         /// Builds a partner object from text value
         /// </summary>
-        private async Task<JObject> BuildPartnerObject(string partnerText, string partnerType)
+        /// <param name="partnerText">The partner name text to search for</param>
+        /// <param name="partnerType">"Funding" or "Client"</param>
+        /// <param name="budgetAmount">Optional budget amount (for funding partners)</param>
+        /// <param name="budgetCurrency">Optional budget currency code (for funding partners, defaults to USD)</param>
+        private async Task<JObject> BuildPartnerObject(string partnerText, string partnerType, decimal? budgetAmount = null, string budgetCurrency = null)
         {
             try
             {
@@ -3213,11 +3309,22 @@ Keywords:";
                     ["partnerLogoUrl"] = !string.IsNullOrEmpty(partner.LogoUrl) ? partner.LogoUrl : "assets/images/Partner.png"
                 };
                 
-                // Add amount field for funding partners (can be updated later)
+                // Add budget fields for funding partners
                 if (partnerType == "Funding")
                 {
-                    partnerObj["amount"] = null;
-                    partnerObj["currencyCode"] = "USD";
+                    // Resolve currency code to ID
+                    var currencyCode = !string.IsNullOrEmpty(budgetCurrency) ? budgetCurrency.ToUpperInvariant() : "USD";
+                    int? currencyId = await GetCurrencyIdFromCode(currencyCode);
+                    
+                    // Use provided budget amount/currency if available
+                    partnerObj["amount"] = budgetAmount.HasValue ? (JToken)budgetAmount.Value : JValue.CreateNull();
+                    partnerObj["currencyId"] = currencyId.HasValue ? (JToken)currencyId.Value : JValue.CreateNull();
+                    partnerObj["currencyCode"] = currencyCode;
+                    
+                    if (budgetAmount.HasValue)
+                    {
+                        Console.WriteLine($"[INFO] Partner '{partner.Name}' budget set to {budgetAmount.Value} {currencyCode} (CurrencyId: {currencyId})");
+                    }
                 }
                 
                 return partnerObj;
@@ -3225,6 +3332,262 @@ Keywords:";
             catch (Exception ex)
             {
                 Console.WriteLine($"[ERROR] Error building partner object for '{partnerText}': {ex.Message}");
+                return null;
+            }
+        }
+        
+        /// <summary>
+        /// Gets the currency ID from a currency code (e.g., "USD" → 1, "EUR" → 2)
+        /// </summary>
+        private async Task<int?> GetCurrencyIdFromCode(string currencyCode)
+        {
+            if (string.IsNullOrEmpty(currencyCode)) return null;
+            
+            try
+            {
+                var currency = await _context.Currencies
+                    .Where(c => c.Code.ToUpper() == currencyCode.ToUpper() && !c.IsDeleted)
+                    .Select(c => new { c.Id })
+                    .FirstOrDefaultAsync();
+                
+                if (currency == null)
+                {
+                    Console.WriteLine($"[WARNING] Currency not found for code: '{currencyCode}', defaulting to USD lookup");
+                    // Try to get USD as fallback
+                    currency = await _context.Currencies
+                        .Where(c => c.Code.ToUpper() == "USD" && !c.IsDeleted)
+                        .Select(c => new { c.Id })
+                        .FirstOrDefaultAsync();
+                }
+                
+                return currency?.Id;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error looking up currency '{currencyCode}': {ex.Message}");
+                return null;
+            }
+        }
+        
+        /// <summary>
+        /// Builds a team member object from text value (UNOPS internal staff)
+        /// Expected format: "Name - Role" (e.g., "Jane Smith - Project Manager")
+        /// </summary>
+        private async Task<JObject> BuildTeamMemberObject(string teamMemberText)
+        {
+            try
+            {
+                // Extract name from text (before the " - " if present)
+                string nameToSearch = teamMemberText;
+                string roleHint = null;
+                
+                if (teamMemberText.Contains(" - "))
+                {
+                    var parts = teamMemberText.Split(new[] { " - " }, 2, StringSplitOptions.None);
+                    nameToSearch = parts[0].Trim();
+                    if (parts.Length > 1)
+                    {
+                        roleHint = parts[1].Trim();
+                    }
+                }
+                
+                // Try to find the user by name (supports fuzzy matching via GetEntityIdFromText)
+                var userId = await GetEntityIdFromText(nameToSearch, "userIds");
+                
+                if (userId == null || userId is DBNull)
+                {
+                    Console.WriteLine($"[WARNING] Team member user not found: '{nameToSearch}' (original: '{teamMemberText}')");
+                    return null;
+                }
+                
+                // Cast to int for database query
+                int userIdInt = Convert.ToInt32(userId);
+                
+                // Get full user details from database - PAOUser has UserProfile for name details
+                var user = await _context.PAOUsers
+                    .Include(u => u.UserProfile)
+                    .Where(u => u.Id == userIdInt)
+                    .Select(u => new 
+                    { 
+                        u.Id, 
+                        FirstName = u.UserProfile != null ? u.UserProfile.FirstName : null, 
+                        LastName = u.UserProfile != null ? u.UserProfile.LastName : null, 
+                        u.Email,
+                        ProfilePosition = u.UserProfile != null ? u.UserProfile.Position : null
+                    })
+                    .FirstOrDefaultAsync();
+                
+                if (user == null)
+                {
+                    Console.WriteLine($"[WARNING] User with ID {userIdInt} not found in database");
+                    return null;
+                }
+                
+                // Build team member object
+                // Note: EntityRoleId will need to be set by the frontend or backend based on role selection
+                string userName = $"{user.FirstName} {user.LastName}".Trim();
+                if (string.IsNullOrWhiteSpace(userName))
+                {
+                    userName = user.Email?.Split('@').FirstOrDefault() ?? "Unknown";
+                }
+                
+                return new JObject
+                {
+                    ["userId"] = user.Id,
+                    ["userName"] = userName,
+                    ["userEmail"] = user.Email,
+                    ["userTitle"] = user.ProfilePosition ?? roleHint ?? "Team Member",
+                    ["entityRoleId"] = null, // To be filled by frontend/backend
+                    ["entityRoleName"] = roleHint ?? "Team Member" // Suggested role from AI extraction
+                };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error building team member object for '{teamMemberText}': {ex.Message}");
+                return null;
+            }
+        }
+        
+        /// <summary>
+        /// Builds a stakeholder object from AI-extracted data
+        /// AI now returns stakeholders as objects with userName and roleName
+        /// </summary>
+        /// <param name="stakeholderData">JToken containing either a JSON object {userName, roleName} or a legacy string</param>
+        private async Task<JObject> BuildStakeholderObject(JToken stakeholderData)
+        {
+            try
+            {
+                string userName = null;
+                string roleName = null;
+                
+                // Handle new JSON object format: { "userName": "John Doe", "roleName": "Opportunity Manager" }
+                if (stakeholderData is JObject stakeholderObj)
+                {
+                    userName = stakeholderObj["userName"]?.ToString();
+                    roleName = stakeholderObj["roleName"]?.ToString();
+                }
+                // Handle legacy string format: "John Doe - Project Manager"
+                else if (stakeholderData is JValue stakeholderValue && stakeholderValue.Type == JTokenType.String)
+                {
+                    var textValue = stakeholderValue.ToString();
+                    if (textValue.Contains(" - "))
+                    {
+                        var parts = textValue.Split(new[] { " - " }, 2, StringSplitOptions.None);
+                        userName = parts[0].Trim();
+                        if (parts.Length > 1)
+                        {
+                            roleName = parts[1].Trim();
+                        }
+                    }
+                    else
+                    {
+                        userName = textValue;
+                    }
+                }
+                
+                if (string.IsNullOrWhiteSpace(userName))
+                {
+                    Console.WriteLine($"[WARNING] Stakeholder userName is empty. Skipping.");
+                    return null;
+                }
+                
+                // Try to find the user by name using similarity search
+                var userId = await GetEntityIdFromText(userName, "userIds");
+                
+                if (userId == null || userId is DBNull)
+                {
+                    Console.WriteLine($"[WARNING] Stakeholder user not found: '{userName}'. Skipping.");
+                    return null;
+                }
+                
+                int userIdInt = Convert.ToInt32(userId);
+                
+                // Get full user details from database
+                var user = await _context.PAOUsers
+                    .Include(u => u.UserProfile)
+                    .Where(u => u.Id == userIdInt)
+                    .Select(u => new 
+                    { 
+                        u.Id, 
+                        FirstName = u.UserProfile != null ? u.UserProfile.FirstName : null, 
+                        LastName = u.UserProfile != null ? u.UserProfile.LastName : null, 
+                        u.Email
+                    })
+                    .FirstOrDefaultAsync();
+                
+                if (user == null)
+                {
+                    Console.WriteLine($"[WARNING] User with ID {userIdInt} not found in database");
+                    return null;
+                }
+                
+                // Try to resolve the entity role ID from the role name
+                int? entityRoleId = null;
+                if (!string.IsNullOrWhiteSpace(roleName))
+                {
+                    entityRoleId = await GetEntityRoleIdForOpportunity(roleName);
+                }
+                
+                // If no role matched, default to "Internal Stakeholder"
+                if (!entityRoleId.HasValue)
+                {
+                    Console.WriteLine($"[INFO] Role '{roleName}' not found. Using 'Internal Stakeholder' as default.");
+                    entityRoleId = await GetEntityRoleIdForOpportunity("Internal Stakeholder");
+                    roleName = "Internal Stakeholder";
+                }
+                
+                string resolvedUserName = $"{user.FirstName} {user.LastName}".Trim();
+                if (string.IsNullOrWhiteSpace(resolvedUserName))
+                {
+                    resolvedUserName = user.Email?.Split('@').FirstOrDefault() ?? userName;
+                }
+                
+                return new JObject
+                {
+                    ["userId"] = user.Id,
+                    ["userName"] = resolvedUserName,
+                    ["userEmail"] = user.Email,
+                    ["entityRoleId"] = entityRoleId,
+                    ["entityRoleName"] = roleName
+                };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error building stakeholder object: {ex.Message}");
+                return null;
+            }
+        }
+        
+        /// <summary>
+        /// Gets the EntityRole ID for an Opportunity role by name using similarity search
+        /// </summary>
+        private async Task<int?> GetEntityRoleIdForOpportunity(string roleName)
+        {
+            if (string.IsNullOrWhiteSpace(roleName)) return null;
+            
+            try
+            {
+                // Use PostgreSQL similarity search to find matching EntityRole
+                var roleId = await _context.EntityRoles
+                    .Where(er => er.EntityType == "Opportunity" && !er.IsDeleted)
+                    .OrderByDescending(er => EF.Functions.TrigramsSimilarity(er.Name.ToLower(), roleName.ToLower()))
+                    .Select(er => (int?)er.Id)
+                    .FirstOrDefaultAsync();
+                
+                if (roleId.HasValue)
+                {
+                    Console.WriteLine($"[INFO] Resolved role '{roleName}' to EntityRoleId: {roleId}");
+                }
+                else
+                {
+                    Console.WriteLine($"[WARNING] No EntityRole found for role name: '{roleName}'");
+                }
+                
+                return roleId;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error resolving EntityRole for '{roleName}': {ex.Message}");
                 return null;
             }
         }
@@ -3249,10 +3612,23 @@ Keywords:";
                 // Cast to int for database query
                 int outputIdInt = Convert.ToInt32(outputId);
                 
-                // Get full output details from database
+                // Get full output details from database (include both Level names and Definitions)
                 var output = await _context.Outputs
                     .Where(o => o.Id == outputIdInt)
-                    .Select(o => new { o.Id, o.Name, o.DefinitionLevel1, o.DefinitionLevel2, o.DefinitionLevel3, o.DefinitionLevel4 })
+                    .Select(o => new { 
+                        o.Id, 
+                        o.Name, 
+                        o.Level0, 
+                        o.Level1, 
+                        o.Level2, 
+                        o.Level3, 
+                        o.Level4,
+                        o.DefinitionLevel1, 
+                        o.DefinitionLevel2, 
+                        o.DefinitionLevel3, 
+                        o.DefinitionLevel4,
+                        o.ServiceLine
+                    })
                     .FirstOrDefaultAsync();
                 
                 if (output == null)
@@ -3261,14 +3637,21 @@ Keywords:";
                     return null;
                 }
                 
+                // Return deliverable object with all level information for frontend display
                 return new JObject
                 {
                     ["outputId"] = output.Id,
                     ["outputName"] = output.Name,
-                    ["level0"] = output.DefinitionLevel1 ?? "",
-                    ["level1"] = output.DefinitionLevel2 ?? "",
-                    ["level2"] = output.DefinitionLevel3 ?? "",
-                    ["level3"] = output.DefinitionLevel4 ?? "",
+                    ["level0"] = output.Level0 ?? "",
+                    ["level1"] = output.Level1 ?? "",
+                    ["level2"] = output.Level2 ?? "",
+                    ["level3"] = output.Level3 ?? "",
+                    ["level4"] = output.Level4 ?? "",
+                    ["definitionLevel1"] = output.DefinitionLevel1 ?? "",
+                    ["definitionLevel2"] = output.DefinitionLevel2 ?? "",
+                    ["definitionLevel3"] = output.DefinitionLevel3 ?? "",
+                    ["definitionLevel4"] = output.DefinitionLevel4 ?? "",
+                    ["serviceLine"] = output.ServiceLine ?? "",
                     ["quantity"] = null
                 };
             }

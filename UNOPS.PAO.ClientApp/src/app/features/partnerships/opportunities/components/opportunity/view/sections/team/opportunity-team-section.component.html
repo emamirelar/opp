@@ -48,6 +48,24 @@
     </div>
   </ng-template>
 
+  <!-- AI Suggestions -->
+  @if (suggestions() && suggestions().length > 0) {
+    <div class="bg-unops-accent-yellow-soft rounded-unops-lg p-3 border border-unops-warning-light mb-6">
+      <div class="flex items-start gap-2 mb-2">
+        <i class="pi pi-lightbulb text-unops-warning-darker text-sm mt-0.5"></i>
+        <h4 class="text-xs font-semibold text-unops-secondary">{{ 'label.aiSuggestions' | translate }}</h4>
+      </div>
+      <div class="space-y-2 pl-5">
+        @for (suggestion of suggestions(); track $index) {
+          <div class="bg-unops-surface-primary rounded p-2 border border-unops-warning-light shadow-unops-sm">
+            <div class="font-semibold text-xs text-unops-secondary mb-1">{{ suggestion.title }}</div>
+            <p class="text-xs text-unops-neutral-700">{{ suggestion.description }}</p>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
   <div class="space-y-6">
     <!-- Warning Banner for Hub/Region/GPO Org Units -->
     @if (showOrgUnitWarningBanner()) {

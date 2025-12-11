@@ -141,7 +141,6 @@ export interface ProposedOpportunityResponseRaw {
     partnershipAgreementReference?: string | null;
     targetSigningDate?: string | null;
     targetDeliveryDate?: string | null;
-    strategicAlignment?: string | null;
     resultsFocus?: string | null;
     intendedImpactOutcomes?: string | null;
     expectedBeneficiaries?: string | null;
@@ -180,7 +179,6 @@ export interface ProposedOpportunityResponse {
     partnershipAgreementReference?: string | null;
     targetSigningDate?: string | null;
     targetDeliveryDate?: string | null;
-    strategicAlignment?: string | null;
     resultsFocus?: string | null;
     intendedImpactOutcomes?: string | null;
     expectedBeneficiaries?: string | null;

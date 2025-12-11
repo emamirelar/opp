@@ -233,7 +233,6 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     if (opp.responsibleOrgUnitName) count++;
     if (opp.proposedInitiativeTypeName) count++;
     if (opp.initiativeBudgetUSD) count++;
-    if (opp.strategicAlignment) count++;
     if (opp.resultsFocus) count++;
     if (opp.expectedBeneficiaries) count++;
     if (opp.intendedImpactOutcomes) count++;
@@ -1520,63 +1519,103 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         documents: createRequest.documents
       });
       
+      // Cast opportunity to any to handle new fields
+      const opp = proposal.opportunity as any;
+
       // Add optional fields only if selected
-      if (this.isFieldSelected('partnerReference') && proposal.opportunity.partnerReference) {
-        createRequest.partnerReference = proposal.opportunity.partnerReference;
+      if (this.isFieldSelected('responsibleOrgUnitName') && opp.responsibleOrgUnitId) {
+        createRequest.responsibleOrgUnitId = opp.responsibleOrgUnitId;
       }
-      
-      if (this.isFieldSelected('responsibleOrgUnitName') && proposal.opportunity.responsibleOrgUnitId) {
-        createRequest.responsibleOrgUnitId = proposal.opportunity.responsibleOrgUnitId;
+
+      if (this.isFieldSelected('proposedInitiativeTypeName') && opp.proposedInitiativeTypeId) {
+        createRequest.proposedInitiativeTypeId = opp.proposedInitiativeTypeId;
       }
-      
-      if (this.isFieldSelected('proposedInitiativeTypeName') && proposal.opportunity.proposedInitiativeTypeId) {
-        createRequest.proposedInitiativeTypeId = proposal.opportunity.proposedInitiativeTypeId;
+
+      if (this.isFieldSelected('deliveryModality') && opp.deliveryModality) {
+        createRequest.deliveryModality = opp.deliveryModality;
       }
-      
-      if (this.isFieldSelected('initiativeBudgetUSD') && proposal.opportunity.initiativeBudgetUSD) {
-        createRequest.initiativeBudgetUSD = proposal.opportunity.initiativeBudgetUSD;
+
+      if (this.isFieldSelected('isPooledFunding') && opp.isPooledFunding !== null && opp.isPooledFunding !== undefined) {
+        createRequest.isPooledFunding = opp.isPooledFunding;
       }
-      
-      if (this.isFieldSelected('strategicAlignment') && proposal.opportunity.strategicAlignment) {
-        createRequest.strategicAlignment = proposal.opportunity.strategicAlignment;
+
+      if (this.isFieldSelected('initiativeBudgetUSD') && opp.initiativeBudgetUSD) {
+        createRequest.initiativeBudgetUSD = opp.initiativeBudgetUSD;
       }
-      
-      if (this.isFieldSelected('resultsFocus') && proposal.opportunity.resultsFocus) {
-        createRequest.resultsFocus = proposal.opportunity.resultsFocus;
+
+      // Partner budget allocations - for detailed partner-specific budgets
+      if (this.isFieldSelected('partnerBudgets') && opp.partnerBudgets && opp.partnerBudgets.length > 0) {
+        // Filter by selected individual partner budgets
+        const selectedBudgets = opp.partnerBudgets.filter((_: any, idx: number) => 
+          this.isFieldSelected(`partnerBudgets[${idx}]`)
+        );
+        if (selectedBudgets.length > 0) {
+          createRequest.partnerBudgets = selectedBudgets;
+        }
       }
-      
-      if (this.isFieldSelected('intendedImpactOutcomes') && proposal.opportunity.intendedImpactOutcomes) {
-        createRequest.intendedImpactOutcomes = proposal.opportunity.intendedImpactOutcomes;
+
+      // WHY Section fields
+      if (this.isFieldSelected('challenges') && opp.challenges) {
+        createRequest.challenges = opp.challenges;
       }
-      
-      if (this.isFieldSelected('expectedBeneficiaries') && proposal.opportunity.expectedBeneficiaries) {
-        createRequest.expectedBeneficiaries = proposal.opportunity.expectedBeneficiaries;
+
+      if (this.isFieldSelected('resultsFocus') && opp.resultsFocus) {
+        createRequest.resultsFocus = opp.resultsFocus;
       }
-      
-      if (this.isFieldSelected('targetSigningDate') && proposal.opportunity.targetSigningDate) {
-        createRequest.targetSigningDate = proposal.opportunity.targetSigningDate;
+
+      if (this.isFieldSelected('intendedImpactOutcomes') && opp.intendedImpactOutcomes) {
+        createRequest.intendedImpactOutcomes = opp.intendedImpactOutcomes;
       }
-      
-      if (this.isFieldSelected('targetDeliveryDate') && proposal.opportunity.targetDeliveryDate) {
-        createRequest.targetDeliveryDate = proposal.opportunity.targetDeliveryDate;
+
+      if (this.isFieldSelected('expectedBeneficiaries') && opp.expectedBeneficiaries) {
+        createRequest.expectedBeneficiaries = opp.expectedBeneficiaries;
+      }
+
+      if (this.isFieldSelected('estimatedDirectBeneficiaries') && opp.estimatedDirectBeneficiaries) {
+        createRequest.estimatedDirectBeneficiaries = opp.estimatedDirectBeneficiaries;
+      }
+
+      if (this.isFieldSelected('estimatedIndirectBeneficiaries') && opp.estimatedIndirectBeneficiaries) {
+        createRequest.estimatedIndirectBeneficiaries = opp.estimatedIndirectBeneficiaries;
+      }
+
+      // WHEN Section fields
+      if (this.isFieldSelected('submissionDeadline') && opp.submissionDeadline) {
+        createRequest.submissionDeadline = opp.submissionDeadline;
+      }
+
+      if (this.isFieldSelected('targetSigningDate') && opp.targetSigningDate) {
+        createRequest.targetSigningDate = opp.targetSigningDate;
+      }
+
+      if (this.isFieldSelected('implementationStartDate') && opp.implementationStartDate) {
+        createRequest.implementationStartDate = opp.implementationStartDate;
+      }
+
+      if (this.isFieldSelected('targetDeliveryDate') && opp.targetDeliveryDate) {
+        createRequest.targetDeliveryDate = opp.targetDeliveryDate;
+      }
+
+      if (this.isFieldSelected('signingDateNotes') && opp.signingDateNotes) {
+        createRequest.signingDateNotes = opp.signingDateNotes;
       }
       
       // Collection fields
-      if (this.isFieldSelected('deliverables') && proposal.opportunity.deliverables && proposal.opportunity.deliverables.length > 0) {
-        createRequest.deliverables = proposal.opportunity.deliverables;
+      if (this.isFieldSelected('deliverables') && opp.deliverables && opp.deliverables.length > 0) {
+        createRequest.deliverables = opp.deliverables;
       }
-      
-      if (this.isFieldSelected('sdGs') && proposal.opportunity.sdGs && proposal.opportunity.sdGs.length > 0) {
+
+      if (this.isFieldSelected('sdGs') && opp.sdGs && opp.sdGs.length > 0) {
         // Map SDGs to just IDs (backend expects List<int>)
-        createRequest.sdGs = proposal.opportunity.sdGs
+        createRequest.sdGs = opp.sdGs
           .map((sdg: any) => sdg.sdgId || sdg.id)
           .filter((id: number) => id != null);
       }
-      
+
       // Handle partners based on user's role selections
       const fundingPartners: any[] = [];
       const clientPartners: any[] = [];
-      
+
       for (const partner of this.allProposedPartners()) {
         const roleSelection = this.partnerRoleSelections().get(partner.partnerId);
         if (roleSelection && roleSelection.selected) {
@@ -1589,33 +1628,33 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
               feePercentage: partner.feePercentage || null,
               feeAmount: partner.feeAmount || null,
               feeAmountUSD: partner.feeAmountUSD || null,
-              isAmountBasedFee: partner.isAmountBasedFee || false
+              isAmountBasedFee: partner.isAmountBasedFee || false,
             });
           }
           if (roleSelection.isClient) {
             // Add to client partners with proper structure
             clientPartners.push({
-              partnerId: partner.partnerId
+              partnerId: partner.partnerId,
             });
           }
         }
       }
-      
+
       if (fundingPartners.length > 0) {
         createRequest.fundingPartners = fundingPartners;
       }
-      
+
       if (clientPartners.length > 0) {
         createRequest.clientPartners = clientPartners;
       }
-      
-      if (this.isFieldSelected('stakeholders') && proposal.opportunity.stakeholders && proposal.opportunity.stakeholders.length > 0) {
-        createRequest.stakeholders = proposal.opportunity.stakeholders;
+
+      if (this.isFieldSelected('stakeholders') && opp.stakeholders && opp.stakeholders.length > 0) {
+        createRequest.stakeholders = opp.stakeholders;
       }
-      
-      if (this.isFieldSelected('countries') && proposal.opportunity.countries && proposal.opportunity.countries.length > 0) {
+
+      if (this.isFieldSelected('countries') && opp.countries && opp.countries.length > 0) {
         // Map countries to just IDs (backend expects List<int>)
-        createRequest.countries = proposal.opportunity.countries
+        createRequest.countries = opp.countries
           .map((c: any) => c.country?.id || c.countryId || c.id)
           .filter((id: number) => id != null);
       }
@@ -1693,31 +1732,61 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
   toggleAllFields(): void {
     const selectAll = !this.allFieldsSelected();
     const updated = new Map(this.selectedFields());
-    
+
     const proposal = this.proposedOpportunity();
     if (!proposal || !proposal.opportunity) return;
-    
-    const opp = proposal.opportunity;
-    
+
+    const opp = proposal.opportunity as any; // Cast to any to handle new fields
+
     // Toggle all non-empty fields
+    // Basic Info
     if (opp.name) updated.set('name', selectAll);
     if (opp.description) updated.set('description', selectAll);
     if (opp.responsibleOrgUnitName) updated.set('responsibleOrgUnitName', selectAll);
     if (opp.proposedInitiativeTypeName) updated.set('proposedInitiativeTypeName', selectAll);
+    if (opp.deliveryModality) updated.set('deliveryModality', selectAll);
+    if (opp.isPooledFunding !== null && opp.isPooledFunding !== undefined) updated.set('isPooledFunding', selectAll);
     if (opp.initiativeBudgetUSD) updated.set('initiativeBudgetUSD', selectAll);
-    if (opp.strategicAlignment) updated.set('strategicAlignment', selectAll);
+    if (opp.partnerBudgets && opp.partnerBudgets.length > 0) {
+      updated.set('partnerBudgets', selectAll);
+      opp.partnerBudgets.forEach((_: any, idx: number) => updated.set(`partnerBudgets[${idx}]`, selectAll));
+    }
+
+    // Strategic Info (WHY section)
+    if (opp.challenges) updated.set('challenges', selectAll);
     if (opp.resultsFocus) updated.set('resultsFocus', selectAll);
-    if (opp.expectedBeneficiaries) updated.set('expectedBeneficiaries', selectAll);
     if (opp.intendedImpactOutcomes) updated.set('intendedImpactOutcomes', selectAll);
+    if (opp.expectedBeneficiaries) updated.set('expectedBeneficiaries', selectAll);
+    if (opp.estimatedDirectBeneficiaries) updated.set('estimatedDirectBeneficiaries', selectAll);
+    if (opp.estimatedIndirectBeneficiaries) updated.set('estimatedIndirectBeneficiaries', selectAll);
+
+    // Timeline (WHEN section)
+    if (opp.submissionDeadline) updated.set('submissionDeadline', selectAll);
     if (opp.targetSigningDate) updated.set('targetSigningDate', selectAll);
+    if (opp.implementationStartDate) updated.set('implementationStartDate', selectAll);
     if (opp.targetDeliveryDate) updated.set('targetDeliveryDate', selectAll);
-    if (opp.deliverables && opp.deliverables.length > 0) updated.set('deliverables', selectAll);
+    if (opp.signingDateNotes) updated.set('signingDateNotes', selectAll);
+
+    // Collections - also toggle individual items
+    if (opp.deliverables && opp.deliverables.length > 0) {
+      updated.set('deliverables', selectAll);
+      opp.deliverables.forEach((_: any, idx: number) => updated.set(`deliverables[${idx}]`, selectAll));
+    }
     if (opp.fundingPartners && opp.fundingPartners.length > 0) updated.set('fundingPartners', selectAll);
     if (opp.clientPartners && opp.clientPartners.length > 0) updated.set('clientPartners', selectAll);
-    if (opp.stakeholders && opp.stakeholders.length > 0) updated.set('stakeholders', selectAll);
-    if (opp.countries && opp.countries.length > 0) updated.set('countries', selectAll);
-    if (opp.sdGs && opp.sdGs.length > 0) updated.set('sdGs', selectAll);
-    
+    if (opp.stakeholders && opp.stakeholders.length > 0) {
+      updated.set('stakeholders', selectAll);
+      opp.stakeholders.forEach((_: any, idx: number) => updated.set(`stakeholders[${idx}]`, selectAll));
+    }
+    if (opp.countries && opp.countries.length > 0) {
+      updated.set('countries', selectAll);
+      opp.countries.forEach((_: any, idx: number) => updated.set(`countries[${idx}]`, selectAll));
+    }
+    if (opp.sdGs && opp.sdGs.length > 0) {
+      updated.set('sdGs', selectAll);
+      opp.sdGs.forEach((_: any, idx: number) => updated.set(`sdGs[${idx}]`, selectAll));
+    }
+
     this.selectedFields.set(updated);
   }
   
@@ -1727,31 +1796,61 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
   private initializeFieldSelection(): void {
     const proposal = this.proposedOpportunity();
     if (!proposal || !proposal.opportunity) return;
-    
+
     const selected = new Map<string, boolean>();
-    const opp = proposal.opportunity;
-    
+    const opp = proposal.opportunity as any; // Cast to any to handle new fields
+
     // Auto-select all non-empty fields
+    // Basic Info
     if (opp.name) selected.set('name', true);
     if (opp.description) selected.set('description', true);
     if (opp.responsibleOrgUnitName) selected.set('responsibleOrgUnitName', true);
     if (opp.proposedInitiativeTypeName) selected.set('proposedInitiativeTypeName', true);
+    if (opp.deliveryModality) selected.set('deliveryModality', true);
+    if (opp.isPooledFunding !== null && opp.isPooledFunding !== undefined) selected.set('isPooledFunding', true);
     if (opp.initiativeBudgetUSD) selected.set('initiativeBudgetUSD', true);
-    if (opp.strategicAlignment) selected.set('strategicAlignment', true);
+    if (opp.partnerBudgets && opp.partnerBudgets.length > 0) {
+      selected.set('partnerBudgets', true);
+      opp.partnerBudgets.forEach((_: any, idx: number) => selected.set(`partnerBudgets[${idx}]`, true));
+    }
+
+    // Strategic Info (WHY section)
+    if (opp.challenges) selected.set('challenges', true);
     if (opp.resultsFocus) selected.set('resultsFocus', true);
-    if (opp.expectedBeneficiaries) selected.set('expectedBeneficiaries', true);
     if (opp.intendedImpactOutcomes) selected.set('intendedImpactOutcomes', true);
+    if (opp.expectedBeneficiaries) selected.set('expectedBeneficiaries', true);
+    if (opp.estimatedDirectBeneficiaries) selected.set('estimatedDirectBeneficiaries', true);
+    if (opp.estimatedIndirectBeneficiaries) selected.set('estimatedIndirectBeneficiaries', true);
+
+    // Timeline (WHEN section)
+    if (opp.submissionDeadline) selected.set('submissionDeadline', true);
     if (opp.targetSigningDate) selected.set('targetSigningDate', true);
+    if (opp.implementationStartDate) selected.set('implementationStartDate', true);
     if (opp.targetDeliveryDate) selected.set('targetDeliveryDate', true);
-    if (opp.deliverables && opp.deliverables.length > 0) selected.set('deliverables', true);
+    if (opp.signingDateNotes) selected.set('signingDateNotes', true);
+
+    // Collections - also auto-select individual items
+    if (opp.deliverables && opp.deliverables.length > 0) {
+      selected.set('deliverables', true);
+      opp.deliverables.forEach((_: any, idx: number) => selected.set(`deliverables[${idx}]`, true));
+    }
     if (opp.fundingPartners && opp.fundingPartners.length > 0) selected.set('fundingPartners', true);
     if (opp.clientPartners && opp.clientPartners.length > 0) selected.set('clientPartners', true);
-    if (opp.stakeholders && opp.stakeholders.length > 0) selected.set('stakeholders', true);
-    if (opp.countries && opp.countries.length > 0) selected.set('countries', true);
-    if (opp.sdGs && opp.sdGs.length > 0) selected.set('sdGs', true);
-    
+    if (opp.stakeholders && opp.stakeholders.length > 0) {
+      selected.set('stakeholders', true);
+      opp.stakeholders.forEach((_: any, idx: number) => selected.set(`stakeholders[${idx}]`, true));
+    }
+    if (opp.countries && opp.countries.length > 0) {
+      selected.set('countries', true);
+      opp.countries.forEach((_: any, idx: number) => selected.set(`countries[${idx}]`, true));
+    }
+    if (opp.sdGs && opp.sdGs.length > 0) {
+      selected.set('sdGs', true);
+      opp.sdGs.forEach((_: any, idx: number) => selected.set(`sdGs[${idx}]`, true));
+    }
+
     this.selectedFields.set(selected);
-    
+
     // Initialize partner role selections
     this.initializePartnerRoleSelections();
   }

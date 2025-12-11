@@ -45,13 +45,19 @@ public class CreateOpportunityFromInteractionsRequest
     public string? PartnerReference { get; set; }
     public int? ResponsibleOrgUnitId { get; set; }
     public int? ProposedInitiativeTypeId { get; set; }
+    public int? DeliveryModality { get; set; }
+    public string? MiscExternalStakeholders { get; set; }
+    public string? ExternalStakeholderNotes { get; set; }
     public List<OpportunityDeliverableRequest>? Deliverables { get; set; }
 
     // WHY Section Properties (AI-proposed, user-accepted)
+    public string? Challenges { get; set; }
     public string? ResultsFocus { get; set; }
     public string? IntendedImpactOutcomes { get; set; }
     public string? ExpectedBeneficiaries { get; set; }
-    public string? Challenges { get; set; }
+    public int? EstimatedDirectBeneficiaries { get; set; }
+    public int? EstimatedIndirectBeneficiaries { get; set; }
+    public bool? BeneficiariesToBeDetermined { get; set; }
     public List<int>? SdGs { get; set; }
 
     // WHO Section Properties (AI-proposed, user-accepted)

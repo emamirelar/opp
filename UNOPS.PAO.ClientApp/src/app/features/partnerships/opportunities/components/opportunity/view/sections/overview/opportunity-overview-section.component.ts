@@ -3,7 +3,7 @@
  * @author UNOPS Opportunity+ System Development Team
  */
 
-import { Component, input, output, signal, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, input, output, signal, computed, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -13,6 +13,7 @@ import { PanelModule } from 'primeng/panel';
 import { ButtonModule } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
 import { InputTextarea } from 'primeng/inputtextarea';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { TooltipModule } from 'primeng/tooltip';
 
 // Services and Models
@@ -50,6 +51,7 @@ import { FeedbackDialogService } from '@shared/services/ui';
     ButtonModule,
     InputText,
     InputTextarea,
+    InputNumberModule,
     TooltipModule,
   ],
   templateUrl: './opportunity-overview-section.component.html',
@@ -94,12 +96,32 @@ export class OpportunityOverviewSectionComponent {
   private originalData: {
     name?: string;
     description?: string;
+    initiativeBudgetUSD?: number | null;
   } | null = null;
   private hasUnsavedChanges = false;
 
   // Form controls for Overview section
   nameControl = new FormControl<string | null>(null);
   descriptionControl = new FormControl<string | null>(null);
+  initiativeBudgetControl = new FormControl<number | null>(null);
+
+  /**
+   * @description Computed: Check if there is a proposed budget
+   */
+  readonly hasProposedBudget = computed(() => {
+    const opp = this.opportunity();
+    return opp?.initiativeBudgetUSD != null && opp.initiativeBudgetUSD > 0;
+  });
+
+  /**
+   * @description Computed: Calculate unfunded amount (Proposed Budget - Total Funding)
+   */
+  readonly unfundedAmount = computed(() => {
+    const opp = this.opportunity();
+    const proposedBudget = opp?.initiativeBudgetUSD ?? 0;
+    const totalFunding = opp?.stats?.totalFundingUSD ?? 0;
+    return proposedBudget - totalFunding;
+  });
 
   constructor() {
     // Set up change detection on form controls
@@ -110,6 +132,11 @@ export class OpportunityOverviewSectionComponent {
       }
     });
     this.descriptionControl.valueChanges.subscribe(() => {
+      if (this.isEditing()) {
+        this.markAsChanged();
+      }
+    });
+    this.initiativeBudgetControl.valueChanges.subscribe(() => {
       if (this.isEditing()) {
         this.markAsChanged();
       }
@@ -125,12 +152,14 @@ export class OpportunityOverviewSectionComponent {
     // Backup original data for cancel
     this.originalData = {
       name: opp.name ?? '',
-      description: opp.description ?? ''
+      description: opp.description ?? '',
+      initiativeBudgetUSD: opp.initiativeBudgetUSD ?? null
     };
 
     // Set form controls
     this.nameControl.setValue(opp.name ?? null);
     this.descriptionControl.setValue(opp.description ?? null);
+    this.initiativeBudgetControl.setValue(opp.initiativeBudgetUSD ?? null);
 
     this.isEditing.set(true);
     this.cdr.detectChanges();
@@ -174,7 +203,8 @@ export class OpportunityOverviewSectionComponent {
 
     const overviewData = {
       name: name,
-      description: this.descriptionControl.value ?? undefined
+      description: this.descriptionControl.value ?? undefined,
+      initiativeBudgetUSD: this.initiativeBudgetControl.value ?? undefined
     };
 
     this.isSaving.set(true);
@@ -212,6 +242,7 @@ export class OpportunityOverviewSectionComponent {
     const opp = this.opportunity();
     this.nameControl.setValue(opp.name ?? null);
     this.descriptionControl.setValue(opp.description ?? null);
+    this.initiativeBudgetControl.setValue(opp.initiativeBudgetUSD ?? null);
     
     this.isEditing.set(false);
     this.originalData = null;

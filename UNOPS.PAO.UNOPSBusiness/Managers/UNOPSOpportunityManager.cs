@@ -1199,6 +1199,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             entity.Description = request.Description;
         }
 
+        // Update initiative budget (allow setting to null to clear)
+        entity.InitiativeBudgetUSD = request.InitiativeBudgetUSD;
+
         await opportunityRepository.UpdateAsync(entity);
 
         // Reload with all includes for complete response
@@ -2519,6 +2522,11 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             entity.ProposedInitiativeTypeId = request.ProposedInitiativeTypeId.Value;
         }
 
+        if (request.DeliveryModality.HasValue)
+        {
+            entity.DeliveryModality = (DeliveryModality)request.DeliveryModality.Value;
+        }
+
         // Update deliverables
         if (request.Deliverables != null)
         {
@@ -2542,6 +2550,11 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
         // WHY Section - Update strategic properties
 
+        if (request.Challenges != null)
+        {
+            entity.Challenges = request.Challenges;
+        }
+
         if (request.ResultsFocus != null)
         {
             entity.ResultsFocus = request.ResultsFocus;
@@ -2555,6 +2568,21 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         if (request.ExpectedBeneficiaries != null)
         {
             entity.ExpectedBeneficiaries = request.ExpectedBeneficiaries;
+        }
+
+        if (request.EstimatedDirectBeneficiaries.HasValue)
+        {
+            entity.EstimatedDirectBeneficiaries = request.EstimatedDirectBeneficiaries.Value;
+        }
+
+        if (request.EstimatedIndirectBeneficiaries.HasValue)
+        {
+            entity.EstimatedIndirectBeneficiaries = request.EstimatedIndirectBeneficiaries.Value;
+        }
+
+        if (request.BeneficiariesToBeDetermined.HasValue)
+        {
+            entity.BeneficiariesToBeDetermined = request.BeneficiariesToBeDetermined.Value;
         }
 
         // Update SDGs
@@ -2599,15 +2627,63 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                     .FirstOrDefault();
             }
 
-            // Add new funding partners
-            entity.FundingPartners = request.FundingPartners
-                .Select(partnerId => new OpportunityFundingPartner
+            // Add new funding partners with amounts if provided - using exchange rate conversion
+            var exchangeRateService = new ExchangeRateService(context);
+            var fundingPartners = new List<OpportunityFundingPartner>();
+            
+            foreach (var fp in request.FundingPartners)
+            {
+                var currencyId = fp.CurrencyId ?? defaultCurrencyId;
+                var currency = await context.Currencies.FindAsync(currencyId);
+                var amount = fp.Amount ?? fp.FundedAmount; // Use Amount or FundedAmount alias
+                
+                var fundingPartner = new OpportunityFundingPartner
                 {
                     OpportunityId = id,
-                    PartnerId = partnerId,
-                    CurrencyId = defaultCurrencyId // Set default USD currency
-                })
-                .ToList();
+                    PartnerId = fp.PartnerId,
+                    Amount = amount,
+                    Percentage = fp.Percentage,
+                    CurrencyId = currencyId,
+                    FeePercentage = fp.FeePercentage,
+                    FeeAmount = fp.FeeAmount,
+                    FeeAmountUSD = fp.FeeAmountUSD,
+                    IsAmountBasedFee = fp.IsAmountBasedFee,
+                    PartnershipAgreementReference = fp.PartnershipAgreementReference,
+                    DocumentId = fp.DocumentId,
+                    IsPooledContribution = fp.IsPooledContribution,
+                    SelectedPartnerAgreementNumber = fp.SelectedPartnerAgreementNumber
+                };
+                
+                // Convert amount to USD if amount is provided (same logic as UpdateWhoSectionAsync)
+                if (amount.HasValue && amount.Value > 0 && currency != null)
+                {
+                    try
+                    {
+                        var conversionResult = await exchangeRateService.ConvertToUSDAsync(
+                            amount.Value, 
+                            currency.Code ?? "USD"
+                        );
+                        
+                        fundingPartner.AmountUSD = conversionResult.AmountUSD;
+                        fundingPartner.ExchangeRate = conversionResult.ExchangeRate;
+                        fundingPartner.ExchangeRateDate = conversionResult.ExchangeRateDate;
+                        fundingPartner.ExchangeRateId = conversionResult.ExchangeRateId > 0 ? conversionResult.ExchangeRateId : null;
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log warning but don't fail the operation
+                        Console.WriteLine($"Warning: Could not convert amount to USD for partner {fp.PartnerId}: {ex.Message}");
+                        // If conversion fails, just store the original amount as USD
+                        fundingPartner.AmountUSD = amount.Value;
+                        fundingPartner.ExchangeRate = 1.0m;
+                        fundingPartner.ExchangeRateDate = DateTime.UtcNow;
+                    }
+                }
+                
+                fundingPartners.Add(fundingPartner);
+            }
+            
+            entity.FundingPartners = fundingPartners;
         }
 
         if (request.ClientPartners != null)
@@ -2646,7 +2722,17 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 .ToList();
         }
 
-        // WHERE Section - Update countries
+        if (request.MiscExternalStakeholders != null)
+        {
+            entity.MiscExternalStakeholders = request.MiscExternalStakeholders;
+        }
+
+        if (request.ExternalStakeholderNotes != null)
+        {
+            entity.ExternalStakeholderNotes = request.ExternalStakeholderNotes;
+        }
+
+        // WHERE Section - Update countries (same logic as UpdateWhereSectionAsync)
         if (request.Countries != null)
         {
             // Remove existing countries
@@ -2655,12 +2741,18 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 context.Set<OpportunityCountry>().RemoveRange(entity.Countries);
             }
 
-            // Add new countries
+            // Compute OrgUnitWithStrategyId for each country (same as UpdateWhereSectionAsync)
+            var countryOrgUnitStrategyMap = await ComputeOrgUnitWithStrategyForCountriesAsync(request.Countries);
+
+            // Add new countries with OrgUnitWithStrategyId computed
             entity.Countries = request.Countries
                 .Select(countryId => new OpportunityCountry
                 {
                     OpportunityId = id,
-                    CountryId = countryId
+                    CountryId = countryId,
+                    OrgUnitWithStrategyId = countryOrgUnitStrategyMap.ContainsKey(countryId) 
+                        ? countryOrgUnitStrategyMap[countryId] 
+                        : null
                 })
                 .ToList();
         }
@@ -2674,6 +2766,26 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         if (request.TargetDeliveryDate.HasValue)
         {
             entity.TargetDeliveryDate = request.TargetDeliveryDate.Value;
+        }
+
+        if (request.ImplementationStartDate.HasValue)
+        {
+            entity.ImplementationStartDate = request.ImplementationStartDate.Value;
+        }
+
+        if (request.SubmissionDeadline.HasValue)
+        {
+            entity.SubmissionDeadline = request.SubmissionDeadline.Value;
+        }
+
+        if (request.IsTargetSigningDateFirm.HasValue)
+        {
+            entity.IsTargetSigningDateFirm = request.IsTargetSigningDateFirm.Value;
+        }
+
+        if (request.SigningDateNotes != null)
+        {
+            entity.SigningDateNotes = request.SigningDateNotes;
         }
 
         // Other properties

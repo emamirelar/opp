@@ -144,6 +144,7 @@
                             <div class="bg-white rounded-unops-md p-3 border border-unops-neutral-light flex items-start gap-3">
                               <img
                                 [src]="partner.partnerLogoUrl || 'assets/images/Partner.png'"
+                                (error)="$any($event.target).src='assets/images/Partner.png'"
                                 alt="Partner Logo"
                                 class="w-10 h-10 object-contain rounded-unops-sm"
                               />
@@ -169,6 +170,7 @@
                             <div class="bg-white rounded-unops-md p-2 border border-unops-neutral-light flex items-center gap-2">
                               <img
                                 [src]="client.partnerLogoUrl || 'assets/images/Partner.png'"
+                                (error)="$any($event.target).src='assets/images/Partner.png'"
                                 alt="Partner Logo"
                                 class="w-8 h-8 object-contain rounded-unops-sm"
                               />
@@ -276,6 +278,7 @@
                             <div class="bg-white rounded-unops-md p-3 border-2 border-unops-primary-light flex items-start gap-3">
                               <img
                                 [src]="partner.partnerLogoUrl || 'assets/images/Partner.png'"
+                                (error)="$any($event.target).src='assets/images/Partner.png'"
                                 alt="Partner Logo"
                                 class="w-10 h-10 object-contain rounded-unops-sm"
                               />
@@ -301,6 +304,7 @@
                             <div class="bg-white rounded-unops-md p-2 border-2 border-unops-primary-light flex items-center gap-2">
                               <img
                                 [src]="client.partnerLogoUrl || 'assets/images/Partner.png'"
+                                (error)="$any($event.target).src='assets/images/Partner.png'"
                                 alt="Partner Logo"
                                 class="w-8 h-8 object-contain rounded-unops-sm"
                               />

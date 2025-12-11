@@ -294,12 +294,12 @@ export class OpportunityDocumentsComponent implements OnInit {
       displayName: 'Description',
     },
     {
-      fieldPath: 'partnerReference',
-      displayName: 'Partner Reference',
-    },
-    {
       fieldPath: 'responsibleOrgUnitName',
       displayName: 'Responsible Organization Unit',
+    },
+    {
+      fieldPath: 'proposedInitiativeTypeId',
+      displayName: 'Initiative Type (ID)',
     },
     {
       fieldPath: 'proposedInitiativeTypeName',
@@ -307,19 +307,34 @@ export class OpportunityDocumentsComponent implements OnInit {
     },
     {
       fieldPath: 'initiativeBudgetUSD',
-      displayName: 'Budget (USD)',
+      displayName: 'Total Budget (USD)',
       formatFn: (value) =>
         value != null
           ? `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
           : '-',
     },
     {
-      fieldPath: 'partnershipAgreementReference',
-      displayName: 'Partnership Agreement Reference',
-    },
-    {
       fieldPath: 'targetSigningDate',
       displayName: 'Target Signing Date',
+      formatFn: (value) => (value ? new Date(value).toLocaleDateString() : '-'),
+    },
+    {
+      fieldPath: 'isTargetSigningDateFirm',
+      displayName: 'Firm Signing Date',
+      formatFn: (value) => (value ? 'Yes' : 'No'),
+    },
+    {
+      fieldPath: 'signingDateNotes',
+      displayName: 'Signing Date Notes',
+    },
+    {
+      fieldPath: 'submissionDeadline',
+      displayName: 'Proposal Submission Deadline',
+      formatFn: (value) => (value ? new Date(value).toLocaleDateString() : '-'),
+    },
+    {
+      fieldPath: 'implementationStartDate',
+      displayName: 'Implementation Start Date',
       formatFn: (value) => (value ? new Date(value).toLocaleDateString() : '-'),
     },
     {
@@ -328,8 +343,8 @@ export class OpportunityDocumentsComponent implements OnInit {
       formatFn: (value) => (value ? new Date(value).toLocaleDateString() : '-'),
     },
     {
-      fieldPath: 'strategicAlignment',
-      displayName: 'Strategic Alignment',
+      fieldPath: 'challenges',
+      displayName: 'Context and Challenges',
     },
     {
       fieldPath: 'resultsFocus',
@@ -344,6 +359,45 @@ export class OpportunityDocumentsComponent implements OnInit {
       displayName: 'Expected Beneficiaries',
     },
     {
+      fieldPath: 'estimatedDirectBeneficiaries',
+      displayName: 'Estimated Direct Beneficiaries',
+      formatFn: (value) =>
+        value != null ? `${value.toLocaleString('en-US')} people` : '-',
+    },
+    {
+      fieldPath: 'estimatedIndirectBeneficiaries',
+      displayName: 'Estimated Indirect Beneficiaries',
+      formatFn: (value) =>
+        value != null ? `${value.toLocaleString('en-US')} people` : '-',
+    },
+    {
+      fieldPath: 'beneficiariesToBeDetermined',
+      displayName: 'Beneficiaries To Be Determined',
+      formatFn: (value) => (value ? 'Yes' : 'No'),
+    },
+    {
+      fieldPath: 'deliveryModality',
+      displayName: 'Delivery Modality',
+      formatFn: (value) => {
+        if (!value) return '-';
+        const modalityMap: { [key: number]: string } = {
+          1: 'Not Yet Known',
+          2: 'All Direct - UNOPS will be delivering all Products & Services directly',
+          3: 'All Grant Support - All Products & Services will be delivered via Grant Support',
+          4: 'Mixed - Some Products and Services will be delivered via Grant Support Modality'
+        };
+        return modalityMap[value as number] || `Unknown (${value})`;
+      },
+    },
+    {
+      fieldPath: 'miscExternalStakeholders',
+      displayName: 'External Stakeholders (Other)',
+    },
+    {
+      fieldPath: 'externalStakeholderNotes',
+      displayName: 'External Stakeholder Notes',
+    },
+   {
       fieldPath: 'fundingPartners',
       displayName: 'Funding Partners',
       formatFn: (value) =>
@@ -365,11 +419,11 @@ export class OpportunityDocumentsComponent implements OnInit {
     },
     {
       fieldPath: 'deliverables',
-      displayName: 'Deliverables',
+      displayName: 'Products & Services',
       formatFn: (value) =>
         Array.isArray(value)
-          ? `${value.length} deliverable(s)`
-          : '0 deliverables',
+          ? `${value.length} product(s) & service(s)`
+          : '0 products & services',
     },
     {
       fieldPath: 'countries',
@@ -1142,6 +1196,12 @@ export class OpportunityDocumentsComponent implements OnInit {
       .applyAiChanges(this.opportunityId(), transformedChanges)
       .subscribe({
         next: (updatedOpportunity: any) => {
+          // **CRITICAL**: Clear AI extracted data immediately to prevent stale comparisons
+          this.aiExtractedData.set(null);
+          
+          // Close the comparison dialog FIRST
+          this.showComparisonDialog.set(false);
+
           // Show success feedback
           this.feedbackService.showSuccessToast({
             summary: this.translateService.instant('message.success'),
@@ -1150,15 +1210,16 @@ export class OpportunityDocumentsComponent implements OnInit {
             ),
           });
 
-          // Close the comparison dialog
-          this.showComparisonDialog.set(false);
-          this.aiExtractedData.set(null);
-
           // Emit event to parent to reload entire opportunity view
+          // The parent will reload the opportunity, which will update the input signal
+          // This ensures fresh data before the next comparison
           this.opportunityUpdated.emit();
 
-          // Reload documents to reflect any document-related changes
-          this.loadDocuments();
+          // Wait for opportunity to reload, then reload documents
+          // Using setTimeout to ensure the opportunity data is refreshed
+          setTimeout(() => {
+            this.loadDocuments();
+          }, 500);
         },
         error: (error: any) => {
           console.error('❌ Error applying AI changes:', error);
@@ -1183,9 +1244,24 @@ export class OpportunityDocumentsComponent implements OnInit {
 
       // Handle funding partners - extract partner IDs
       if (key === 'fundingPartners' && Array.isArray(value)) {
+        // Send full funding partner objects with amounts and currency
         transformed.fundingPartners = value
-          .map((partner: any) => partner.partnerId)
-          .filter((id: number) => id != null);
+          .filter((partner: any) => partner.partnerId != null)
+          .map((partner: any) => ({
+            partnerId: partner.partnerId,
+            amount: partner.amount || null,
+            fundedAmount: partner.amount || null, // Alias
+            currencyId: partner.currencyId || null,
+            percentage: partner.percentage || null,
+            feePercentage: partner.feePercentage || null,
+            feeAmount: partner.feeAmount || null,
+            feeAmountUSD: partner.feeAmountUSD || null,
+            isAmountBasedFee: partner.isAmountBasedFee || false,
+            partnershipAgreementReference: partner.partnershipAgreementReference || null,
+            documentId: partner.documentId || null,
+            isPooledContribution: partner.isPooledContribution || false,
+            selectedPartnerAgreementNumber: partner.selectedPartnerAgreementNumber || null
+          }));
       }
       // Handle client partners - extract partner IDs
       else if (key === 'clientPartners' && Array.isArray(value)) {
