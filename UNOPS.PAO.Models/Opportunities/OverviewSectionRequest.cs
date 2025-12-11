@@ -2,7 +2,7 @@ namespace UNOPS.PAO.Models.Opportunities;
 
 /// <summary>
 /// Request model for updating the Overview section of an opportunity
-/// Includes name and description fields
+/// Includes name, description, and initiative budget fields
 /// </summary>
 public class OverviewSectionRequest
 {
@@ -15,6 +15,11 @@ public class OverviewSectionRequest
     /// Opportunity description
     /// </summary>
     public string? Description { get; set; }
+
+    /// <summary>
+    /// Proposed budget for the initiative in USD
+    /// </summary>
+    public decimal? InitiativeBudgetUSD { get; set; }
 }
 
 

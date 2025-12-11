@@ -15,7 +15,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClientModule, HttpClient } from '@angular/common/http';
 import { ComponentResolverService } from '@shared/services/utils/component-resolver.service';
 import { interval, Subscription } from 'rxjs';
-import { switchMap, tap } from 'rxjs/operators';
+import { exhaustMap, tap } from 'rxjs/operators';
 import { AuthService } from '@core/services/auth';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { ImportDialogService } from '@features/import-export/components/import/dialog/import-dialog.service';
@@ -413,9 +413,11 @@ export class TopbarComponent implements OnInit, OnDestroy {
     this.loadNotifications();
 
     // Set up polling every 15 seconds for unread notifications
+    // Use exhaustMap instead of switchMap to prevent cancelling in-flight requests
+    // exhaustMap ignores new interval ticks while a request is pending
     this.notificationSubscription = interval(15000)
       .pipe(
-        switchMap(() => this.notificationService.getNotifications(this.userId, true)) // Get unread notifications
+        exhaustMap(() => this.notificationService.getNotifications(this.userId, true)) // Get unread notifications
       )
       .subscribe({
         next: (notifications: Notification[]) => {

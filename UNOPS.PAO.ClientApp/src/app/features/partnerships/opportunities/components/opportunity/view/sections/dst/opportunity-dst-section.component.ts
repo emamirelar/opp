@@ -524,12 +524,15 @@ export class OpportunityDstSectionComponent {
         console.log('🔄 DST Section: Opportunity changed, loading DST data for ID:', opp.id);
         this.lastLoadedOpportunityId = opp.id;
 
-        // Load all DST data for the new opportunity
+        // Load risks first (most important for user), then stagger AI-heavy calls
+        // This prevents connection exhaustion and allows notifications endpoint to work
         this.loadDSTRisks();
-        this.loadDSTRecommendations();
-        this.loadSimilarOpportunities();
-        this.loadSimilarProjects();
-        this.loadRelevantPeople();
+        
+        // Stagger AI-powered calls with delays to prevent overwhelming the backend
+        setTimeout(() => this.loadDSTRecommendations(), 500);
+        setTimeout(() => this.loadSimilarOpportunities(), 1000);
+        setTimeout(() => this.loadSimilarProjects(), 1500);
+        setTimeout(() => this.loadRelevantPeople(), 2000);
       }
     });
   }
