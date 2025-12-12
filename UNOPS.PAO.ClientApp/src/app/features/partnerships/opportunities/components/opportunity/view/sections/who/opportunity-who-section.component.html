@@ -905,7 +905,7 @@
   [(visible)]="showFundingPartnerDialog"
   [modal]="true"
   [appendTo]="'body'"
-  [style]="{ width: '35rem' }"
+  [style]="{ width: '80rem' }"
 >
   @if (showFundingValidationError()) {
     <p-message severity="error" icon="pi pi-info-circle" styleClass="mb-4 w-full">
@@ -916,22 +916,21 @@
   <div class="space-y-4">
     <!-- Partner Selection -->
     <div>
-      <p-floatlabel variant="on">
-        <p-select
-          id="fundingPartner"
-          [formControl]="partnerControl"
-          [options]="availablePartners()"
-          optionLabel="name"
-          [filter]="true"
-          filterBy="name"
-          [showClear]="true"
-          [appendTo]="'body'"
-          [virtualScroll]="true"
-          [virtualScrollItemSize]="38"
-          class="w-full"
-        />
-        <label for="fundingPartner">{{ 'label.partner' | translate }} *</label>
-      </p-floatlabel>
+      <h4 class="text-sm font-semibold text-unops-neutral-700 mb-2">
+        {{ 'label.partner' | translate }} *
+      </h4>
+      <p-select
+        id="fundingPartner"
+        [formControl]="partnerControl"
+        [options]="availablePartners()"
+        optionLabel="name"
+        [filter]="true"
+        filterBy="name"
+        [showClear]="true"
+        [appendTo]="'body'"
+        [placeholder]="'label.partner.selectPartner' | translate"
+        class="w-full"
+      />
       <div class="text-xs text-gray-600 mt-1">
         <i class="pi pi-info-circle mr-1"></i>
         {{ 'helpText.opportunity.fundingPartnerSelection' | translate }}
@@ -945,20 +944,21 @@
 
     <!-- Currency Selection -->
     <div>
-      <p-floatlabel variant="on">
-        <p-select
-          id="fundingCurrency"
-          [formControl]="currencyControl"
-          [options]="availableCurrencies()"
-          optionLabel="name"
-          optionValue="id"
-          [filter]="true"
-          filterBy="name,code"
-          [appendTo]="'body'"
-          class="w-full"
-        />
-        <label for="fundingCurrency">{{ 'label.currency' | translate }} *</label>
-      </p-floatlabel>
+      <h4 class="text-sm font-semibold text-unops-neutral-700 mb-2">
+        {{ 'label.currency' | translate }} *
+      </h4>
+      <p-select
+        id="fundingCurrency"
+        [formControl]="currencyControl"
+        [options]="availableCurrencies()"
+        optionLabel="name"
+        optionValue="id"
+        [filter]="true"
+        filterBy="name,code"
+        [appendTo]="'body'"
+        [placeholder]="'label.currency.selectCurrency' | translate"
+        class="w-full"
+      />
       @if (!currencyControl.value && showFundingValidationError()) {
         <p-message severity="error" variant="simple" styleClass="mt-2">
           {{ 'message.validation.currencyRequired' | translate }}
@@ -968,17 +968,17 @@
 
     <!-- Amount -->
     <div>
-      <p-floatlabel variant="on">
-        <p-inputnumber
-          id="amount"
-          [formControl]="amountControl"
-          mode="currency"
-          [currency]="getSelectedCurrencyCode() || 'USD'"
-          [minFractionDigits]="0"
-          class="w-full"
-        />
-        <label for="amount">{{ 'label.amount' | translate }} *</label>
-      </p-floatlabel>
+      <h4 class="text-sm font-semibold text-unops-neutral-700 mb-2">
+        {{ 'label.amount' | translate }} *
+      </h4>
+      <p-inputnumber
+        id="amount"
+        [formControl]="amountControl"
+        mode="currency"
+        [currency]="getSelectedCurrencyCode() || 'USD'"
+        [minFractionDigits]="0"
+        class="w-full"
+      />
       @if (amountControl.value === null && showFundingValidationError()) {
         <p-message severity="error" variant="simple" styleClass="mt-2">
           {{ 'message.validation.amountRequired' | translate }}
@@ -1063,7 +1063,7 @@
   [(visible)]="showClientPartnerDialog"
   [modal]="true"
   [appendTo]="'body'"
-  [style]="{ width: '35rem' }"
+  [style]="{ width: '80rem' }"
 >
   @if (showClientValidationError()) {
     <p-message severity="error" icon="pi pi-info-circle" styleClass="mb-4 w-full">
@@ -1074,22 +1074,21 @@
   <div class="space-y-4">
     <!-- Partner Selection -->
     <div>
-      <p-floatlabel variant="on">
-        <p-select
-          id="clientPartner"
-          [formControl]="clientPartnerControl"
-          [options]="availablePartners()"
-          optionLabel="name"
-          [filter]="true"
-          filterBy="name"
-          [showClear]="true"
-          [appendTo]="'body'"
-          [virtualScroll]="true"
-          [virtualScrollItemSize]="38"
-          class="w-full"
-        />
-        <label for="clientPartner">{{ 'label.partner' | translate }} *</label>
-      </p-floatlabel>
+      <h4 class="text-sm font-semibold text-unops-neutral-700 mb-2">
+        {{ 'label.partner' | translate }} *
+      </h4>
+      <p-select
+        id="clientPartner"
+        [formControl]="clientPartnerControl"
+        [options]="availablePartners()"
+        optionLabel="name"
+        [filter]="true"
+        filterBy="name"
+        [showClear]="true"
+        [appendTo]="'body'"
+        [placeholder]="'label.partner.selectPartner' | translate"
+        class="w-full"
+      />
       @if (!clientPartnerControl.value && showClientValidationError()) {
         <p-message severity="error" variant="simple" styleClass="mt-2">
           {{ 'message.validation.partnerRequired' | translate }}
@@ -1131,22 +1130,21 @@
   <div class="space-y-4">
     <!-- Contact Selection -->
     <div>
-      <p-floatlabel variant="on">
-        <p-select
-          id="externalStakeholderContact"
-          [formControl]="contactControl"
-          [options]="availableContacts()"
-          optionLabel="name"
-          [filter]="true"
-          filterBy="name,email"
-          [showClear]="true"
-          [appendTo]="'body'"
-          [virtualScroll]="true"
-          [virtualScrollItemSize]="38"
-          class="w-full"
-        />
-        <label for="externalStakeholderContact">{{ 'label.interaction.contact' | translate}} *</label>
-      </p-floatlabel>
+      <h4 class="text-sm font-semibold text-unops-neutral-700 mb-2">
+        {{ 'label.interaction.contact' | translate }} *
+      </h4>
+      <p-select
+        id="externalStakeholderContact"
+        [formControl]="contactControl"
+        [options]="availableContacts()"
+        optionLabel="name"
+        [filter]="true"
+        filterBy="name,email"
+        [showClear]="true"
+        [appendTo]="'body'"
+        [placeholder]="'label.interaction.selectContact' | translate"
+        class="w-full"
+      />
       @if (!contactControl.value && showExternalStakeholderValidationError()) {
         <p-message severity="error" variant="simple" styleClass="mt-2">
           {{ 'message.validation.contactRequired' | translate }}
