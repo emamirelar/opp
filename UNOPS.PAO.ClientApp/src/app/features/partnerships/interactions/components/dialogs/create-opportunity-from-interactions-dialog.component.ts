@@ -1878,10 +1878,13 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
       // as the user hasn't explicitly selected partner roles
       const isFromInteractionDetail = this.mode() === 'detail-view';
       
+      // Cast opportunity to any to handle new fields
+      const opp = proposal.opportunity as any;
+      
+      // Build create request - only include selected fields
       const createRequest: any = {
-        // Required fields (always included)
-        name: proposal.opportunity.name,
-        description: proposal.opportunity.description,
+        // Name is truly required by backend - always include if selected (it should always be selected)
+        name: this.isFieldSelected('name') ? opp.name : opp.name, // Name is always required
         // Only include partnerId when in list-view mode (from partner context with role selection)
         partnerId: isFromInteractionDetail ? 0 : (this.partnerId() || 0),
         isFundingPartner: isFromInteractionDetail ? false : this.isFundingPartner(),
@@ -1896,13 +1899,13 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         }))
       };
       
+      // Description - include value if selected, empty string if deselected (backend requires non-null)
+      createRequest.description = this.isFieldSelected('description') && opp.description ? opp.description : '';
+      
       console.log('📤 [CreateOpportunity] Documents in create request:', {
         count: createRequest.documents.length,
         documents: createRequest.documents
       });
-      
-      // Cast opportunity to any to handle new fields
-      const opp = proposal.opportunity as any;
 
       // Add optional fields only if selected
       if (this.isFieldSelected('responsibleOrgUnitName') && opp.responsibleOrgUnitId) {
