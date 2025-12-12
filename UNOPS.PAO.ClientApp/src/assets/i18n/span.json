@@ -1085,6 +1085,7 @@
   "label.continent": "Continente",
   "label.country": "País",
   "label.currency": "Moneda",
+  "label.currency.selectCurrency": "Seleccionar moneda",
   "label.current": "Actual",
   "label.dueDiligence": "Debida Diligencia",
   "label.expires": "Expira",
