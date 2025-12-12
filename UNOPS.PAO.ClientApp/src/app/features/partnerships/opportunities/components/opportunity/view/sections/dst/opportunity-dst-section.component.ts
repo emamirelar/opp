@@ -251,6 +251,20 @@ export class OpportunityDstSectionComponent {
   showAddRiskDialog = false;
 
   /**
+   * @description Track whether dialog is in edit mode
+   * @type {boolean}
+   * @since 2.0.0
+   */
+  isEditMode = false;
+
+  /**
+   * @description Currently editing risk ID (null if adding new)
+   * @type {number | null}
+   * @since 2.0.0
+   */
+  editingRiskId: number | null = null;
+
+  /**
    * @description Acknowledgement that user has reviewed all organizational high risks
    * AC1: User must acknowledge they've reviewed all applicable high risks
    * Loaded from and persisted to the Opportunity entity
@@ -845,6 +859,8 @@ export class OpportunityDstSectionComponent {
    * @since 1.0.0
    */
   addToRiskRegister(): void {
+    this.isEditMode = false;
+    this.editingRiskId = null;
     this.resetNewRiskForm();
     this.showDialogValidationError.set(false);
     this.showAddRiskDialog = true;
@@ -856,8 +872,52 @@ export class OpportunityDstSectionComponent {
    */
   cancelAddRisk(): void {
     this.showAddRiskDialog = false;
+    this.isEditMode = false;
+    this.editingRiskId = null;
     this.resetNewRiskForm();
     this.showDialogValidationError.set(false);
+  }
+
+  /**
+   * @description Open dialog to edit an existing risk
+   * @param {Risk} risk - The risk to edit
+   * @since 2.0.0
+   */
+  editRisk(risk: Risk): void {
+    this.isEditMode = true;
+    this.editingRiskId = risk.id;
+
+    // Pre-fill form with existing risk data
+    this.newRisk = {
+      title: risk.title,
+      description: risk.description || '',
+      recommendation: risk.recommendation || '',
+      riskTypeId: risk.riskTypeId || null,
+      riskCategoryId: risk.riskCategoryId || null,
+      riskProbabilityId: risk.riskProbabilityId || null,
+      riskProximityId: risk.riskProximityId || null,
+      riskImpactLevelId: risk.riskImpactLevelId || null,
+      riskResponseTypeId: risk.riskResponseTypeId || null,
+      preDefinedHighRiskId: risk.preDefinedHighRiskId || null,
+      impact: risk.impact || 2
+    };
+
+    // Update signal for reactive filtering
+    this.selectedRiskTypeId.set(risk.riskTypeId || null);
+
+    // Set the category tree node for the TreeSelect
+    if (risk.riskCategoryId) {
+      const foundNode = this.findCategoryNodeById(risk.riskCategoryId);
+      this.selectedCategoryNode = foundNode;
+    } else {
+      this.selectedCategoryNode = null;
+    }
+
+    // Set the pre-defined high risk if applicable
+    this.selectedPreDefinedHighRiskId = risk.preDefinedHighRiskId || null;
+
+    this.showDialogValidationError.set(false);
+    this.showAddRiskDialog = true;
   }
 
   /**
@@ -905,7 +965,7 @@ export class OpportunityDstSectionComponent {
   }
 
   /**
-   * @description Confirm and save new risk
+   * @description Confirm and save new risk or update existing risk
    * @since 1.0.0
    */
   confirmAddRisk(): void {
@@ -931,29 +991,57 @@ export class OpportunityDstSectionComponent {
       impact: this.newRisk.impact
     };
 
-    this.opportunityService.addDSTRisk(this.opportunity().id, request).subscribe({
-      next: (createdRisk: Risk) => {
-        this.isProcessingRisk.set(false);
-        this.showAddRiskDialog = false;
-        this.showDialogValidationError.set(false);
+    // Determine if we're editing or adding
+    if (this.isEditMode && this.editingRiskId) {
+      // Update existing risk
+      this.opportunityService.updateDSTRisk(this.opportunity().id, this.editingRiskId, request).subscribe({
+        next: (updatedRisk: Risk) => {
+          this.isProcessingRisk.set(false);
+          this.showAddRiskDialog = false;
+          this.showDialogValidationError.set(false);
 
-        // Add the new risk to the list
-        this.risks.update(risks => [...risks, createdRisk]);
+          // Update the risk in the list
+          this.risks.update(risks => risks.map(r => r.id === this.editingRiskId ? updatedRisk : r));
 
-        this.feedbackService.showSuccessToast({
-          summary: 'Success',
-          detail: 'Risk added to register successfully'
-        });
+          this.feedbackService.showSuccessToast({
+            summary: 'Success',
+            detail: 'Risk updated successfully'
+          });
 
-        // Reset form
-        this.resetNewRiskForm();
+          // Reset form and edit mode
+          this.isEditMode = false;
+          this.editingRiskId = null;
+          this.resetNewRiskForm();
 
-        // Refresh recommendations since existing risks have changed
-        // The cache will auto-invalidate because existing risk titles are part of the prompt
-        console.log('🔄 [DST] Refreshing recommendations after adding risk...');
-        this.loadDSTRecommendations();
-      }
-    });
+          console.log(`✏️ [DST] Updated risk: ${updatedRisk.title} (ID: ${updatedRisk.id})`);
+        }
+      });
+    } else {
+      // Add new risk
+      this.opportunityService.addDSTRisk(this.opportunity().id, request).subscribe({
+        next: (createdRisk: Risk) => {
+          this.isProcessingRisk.set(false);
+          this.showAddRiskDialog = false;
+          this.showDialogValidationError.set(false);
+
+          // Add the new risk to the list
+          this.risks.update(risks => [...risks, createdRisk]);
+
+          this.feedbackService.showSuccessToast({
+            summary: 'Success',
+            detail: 'Risk added to register successfully'
+          });
+
+          // Reset form
+          this.resetNewRiskForm();
+
+          // Refresh recommendations since existing risks have changed
+          // The cache will auto-invalidate because existing risk titles are part of the prompt
+          console.log('🔄 [DST] Refreshing recommendations after adding risk...');
+          this.loadDSTRecommendations();
+        }
+      });
+    }
   }
 
   /**
