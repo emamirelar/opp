@@ -1119,6 +1119,7 @@
   "label.continent": "Continent",
   "label.country": "Country",
   "label.currency": "Currency",
+  "label.currency.selectCurrency": "Select Currency",
   "label.current": "Current",
   "label.currentPath": "Current Path",
   "label.currentValue": "Current Value",

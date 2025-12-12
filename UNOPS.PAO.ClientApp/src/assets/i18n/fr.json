@@ -1091,6 +1091,7 @@
   "label.continent": "Continent",
   "label.country": "Pays",
   "label.currency": "Devise",
+  "label.currency.selectCurrency": "Sélectionner une devise",
   "label.current": "Actuel",
   "label.currentPath": "Chemin Actuel",
   "label.dueDiligence": "Diligence Raisonnable",

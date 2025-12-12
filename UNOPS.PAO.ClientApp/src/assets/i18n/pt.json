@@ -1090,6 +1090,7 @@
   "label.continent": "Continente",
   "label.country": "País",
   "label.currency": "Moeda",
+  "label.currency.selectCurrency": "Selecionar moeda",
   "label.current": "Atual",
   "label.currentPath": "Caminho Atual",
   "label.dueDiligence": "Diligência Devida",
