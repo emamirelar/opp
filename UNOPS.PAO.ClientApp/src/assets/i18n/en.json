@@ -1475,7 +1475,7 @@
   "label.opportunity.implementationStartDateHint": "Defaults to signing date if not specified",
   "label.opportunity.defaultsToSigningDate": "Defaults to signing date",
   "label.opportunity.totalDuration": "Total Duration",
-  "label.opportunity.durationCalculator": "Duration Calculator",
+  "label.opportunity.durationCalculator": "Duration Calculator (Optional)",
   "label.opportunity.durationCalculatorHint": "Select a duration to automatically calculate the Target Delivery Date based on the Target Signing Date",
   "label.opportunity.durationCalculatorHintV2": "Select a duration to automatically calculate the Target Delivery Date based on the Implementation Start Date",
   "label.opportunity.selectDuration": "Select Duration",
