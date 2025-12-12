@@ -79,7 +79,7 @@ export class PartnerViewOpportunitiesComponent implements OnInit {
 
   partnerId = input<string>();
   partnerName = input<string>();
-  partnerStatus?: string;
+  partnerStatus = signal<string | undefined>(undefined);
   dataUrl = signal<string>('');
   
   // Internal partner name signal for when loaded from route data
@@ -248,6 +248,8 @@ export class PartnerViewOpportunitiesComponent implements OnInit {
     if (this.partnerId()) {
       this.setupDataUrlWithPartnerFilter(this.partnerId()!);
       this.loadPermissions();
+      // Fetch partner status if not available from route data
+      this.loadPartnerStatus(this.partnerId()!);
     } else {
       // Otherwise, get partnerId from parent route params (when used as a child route)
       this.route.parent?.paramMap.subscribe(params => {
@@ -256,6 +258,8 @@ export class PartnerViewOpportunitiesComponent implements OnInit {
           this.setupDataUrlWithPartnerFilter(recordId);
           // Load permissions once we have the partner ID
           this.loadPermissions();
+          // Fetch partner status if not available from route data
+          this.loadPartnerStatus(recordId);
         }
       });
 
@@ -263,7 +267,7 @@ export class PartnerViewOpportunitiesComponent implements OnInit {
       this.route.parent?.data.subscribe(data => {
         const partnerData = data['partnerData'];
         if (partnerData) {
-          this.partnerStatus = partnerData.status;
+          this.partnerStatus.set(partnerData.status);
           // Store partner name in internal signal for dialog config
           if (partnerData.name) {
             this.internalPartnerName.set(partnerData.name);
@@ -277,6 +281,24 @@ export class PartnerViewOpportunitiesComponent implements OnInit {
     
     // Load dynamic search fields from API
     this.loadSearchFields();
+  }
+
+  /**
+   * Loads partner status from API if not already available
+   */
+  private loadPartnerStatus(partnerId: string): void {
+    // Only fetch if status is not already set
+    if (!this.partnerStatus()) {
+      this.partnerService.getPartnerById(partnerId).subscribe({
+        next: (partner) => {
+          this.partnerStatus.set(partner.status || undefined);
+        },
+        error: (error) => {
+          console.warn('Could not load partner status:', error);
+          // Don't set error state - allow dialog to open and let backend validate
+        }
+      });
+    }
   }
 
   private setupDataUrlWithPartnerFilter(partnerId: string): void {
@@ -458,10 +480,46 @@ export class PartnerViewOpportunitiesComponent implements OnInit {
       return;
     }
 
-    // Check if partner is active
-    if (this.partnerStatus !== 'Active') {
+    // Check partner status - allow Active and Draft partners
+    const currentStatus = this.partnerStatus();
+    if (!currentStatus) {
+      // If status is not available, fetch it from the API
+      const partnerId = this.partnerId() || this.getCurrentPartnerIdFromRoute();
+      if (partnerId) {
+        this.partnerService.getPartnerById(partnerId).subscribe({
+          next: (partner) => {
+            const status = partner.status || undefined;
+            this.partnerStatus.set(status);
+            this.checkAndOpenDialog(status);
+          },
+          error: () => {
+            // If we can't fetch the status, allow the dialog to open
+            // The backend will validate the status
+            this.showCreateOpportunityDialog.set(true);
+          }
+        });
+        return;
+      } else {
+        // If we can't determine partner ID, allow the dialog to open
+        // The backend will validate the status
+        this.showCreateOpportunityDialog.set(true);
+        return;
+      }
+    }
+
+    this.checkAndOpenDialog(currentStatus);
+  }
+
+  /**
+   * Checks partner status and opens dialog if allowed
+   * Allows Active and Draft statuses
+   */
+  private checkAndOpenDialog(status: string | undefined): void {
+    const allowedStatuses = ['Active', 'Draft'];
+    
+    if (status && !allowedStatuses.includes(status)) {
       this.feedbackDialogService.showErrorToast({
-        detail: this.translateService.instant('message.partner.mustBeActiveToCreateOpportunity'),
+        detail: this.translateService.instant('message.partner.mustBeActiveOrDraftToCreateOpportunity'),
         summary: this.translateService.instant('common.error.title')
       });
       return;

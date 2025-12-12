@@ -2013,6 +2013,7 @@
   "message.opportunityWillBeCreatedForPartner": "This opportunity will be created for partner: {{partnerName}}",
   "message.otherRolesReadOnly": "These roles can only be modified by system administrators",
   "message.partner.mustBeActiveToCreateOpportunity": "Partner must be Active to create opportunities",
+  "message.partner.mustBeActiveOrDraftToCreateOpportunity": "Partner must be Active or Draft to create opportunities",
   "message.partnerActivatedSuccessfully": "Partner \"{{partnerName}}\" has been activated successfully.",
   "message.partnerCategoryRequired": "Partner Category is required",
   "message.partnerCreatedSuccessfully": "Partner created successfully!",
