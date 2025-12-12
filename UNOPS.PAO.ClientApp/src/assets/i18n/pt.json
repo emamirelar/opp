@@ -1312,7 +1312,7 @@
   "label.opportunity.implementationStartDateHint": "Por padrão, a data de assinatura se não especificada",
   "label.opportunity.defaultsToSigningDate": "Por padrão à data de assinatura",
   "label.opportunity.totalDuration": "Duração Total",
-  "label.opportunity.durationCalculator": "Calculadora de Duração",
+  "label.opportunity.durationCalculator": "Calculadora de Duração (Opcional)",
   "label.opportunity.durationCalculatorHint": "Selecione uma duração para calcular automaticamente a data prevista de entrega com base na data prevista de assinatura",
   "label.opportunity.durationCalculatorHintV2": "Selecione uma duração para calcular automaticamente a data prevista de entrega com base na data de início da implementação",
   "label.opportunity.selectDuration": "Selecionar Duração",
