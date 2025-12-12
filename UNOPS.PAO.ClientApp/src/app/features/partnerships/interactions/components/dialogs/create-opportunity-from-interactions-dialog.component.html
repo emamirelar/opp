@@ -1033,6 +1033,7 @@
                   [(ngModel)]="proposedOpportunity()!.opportunity.expectedBeneficiaries"
                   rows="3"
                   class="w-full bg-yellow-50 border-yellow-200"
+                  maxlength="1000"
                   (click)="$event.stopPropagation()">
                 </textarea>
               </div>
@@ -1179,7 +1180,8 @@
                   pTextarea
                   [(ngModel)]="proposedOpportunity()!.opportunity.expectedBeneficiaries"
                   rows="3"
-                  class="w-full bg-yellow-50 border-yellow-200">
+                  class="w-full bg-yellow-50 border-yellow-200"
+                  maxlength="1000">
                 </textarea>
               </div>
             }
@@ -1195,7 +1197,8 @@
                   pTextarea
                   [(ngModel)]="proposedOpportunity()!.opportunity.expectedImpact"
                   rows="3"
-                  class="w-full bg-yellow-50 border-yellow-200">
+                  class="w-full bg-yellow-50 border-yellow-200"
+                  maxlength="200">
                 </textarea>
               </div>
             }
@@ -1211,7 +1214,8 @@
                   pTextarea
                   [(ngModel)]="proposedOpportunity()!.opportunity.expectedOutcomes"
                   rows="3"
-                  class="w-full bg-yellow-50 border-yellow-200">
+                  class="w-full bg-yellow-50 border-yellow-200"
+                  maxlength="200">
                 </textarea>
               </div>
             }
