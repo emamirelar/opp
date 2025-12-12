@@ -70,10 +70,14 @@ public interface IGeminiManager
     /// <summary>
     /// Generates a comprehensive opportunity statement in markdown format following the UNOPS template
     /// </summary>
-    Task<string> GenerateOpportunityStatementAsync(int opportunityId, ClaimsPrincipal user = null);
+    /// <param name="opportunityId">Opportunity ID</param>
+    /// <param name="user">Current user claims</param>
+    /// <param name="saveToDatabase">Whether to save the generated statement to the database (default: true)</param>
+    Task<string> GenerateOpportunityStatementAsync(int opportunityId, ClaimsPrincipal user = null, bool saveToDatabase = true);
     
     /// <summary>
-    /// Validates whether the opportunity statement is aligned with the structured data in the opportunity record
+    /// Validates whether the existing opportunity statement is aligned with a freshly generated statement
+    /// Compares the stored statement against a newly generated one based on current data
     /// </summary>
     Task<OpportunityStatementValidationResponse> ValidateOpportunityStatementAsync(int opportunityId, ClaimsPrincipal user = null);
     

@@ -835,18 +835,18 @@ public class GeminiController : BaseController
     }
 
     /// <summary>
-    /// Validates whether the opportunity statement is aligned with the structured data in the opportunity record
-    /// Uses Gemini AI to analyze the statement content against actual opportunity fields
-    /// Returns whether the statement is aligned and specific misalignment items if not aligned
+    /// Validates whether the existing opportunity statement is up-to-date by comparing it against a freshly generated statement
+    /// Generates a new statement based on current data (without saving) and compares it with the existing statement
+    /// Returns whether the statements are aligned and specific differences if not aligned
     /// </summary>
     /// <param name="id">Opportunity ID</param>
     /// <example_uses>
     /// Validate opportunity statement alignment for opportunity 123
-    /// Check if statement matches structured data
-    /// Find discrepancies between statement and opportunity fields
+    /// Check if existing statement is outdated compared to current data
+    /// Find differences between existing and freshly generated statements
     /// </example_uses>
-    /// <when_to_use>Use this when the user needs to verify that the opportunity statement accurately reflects the structured data in the opportunity record.</when_to_use>
-    /// <returns>Validation response with alignment status and misalignment items</returns>
+    /// <when_to_use>Use this when the user needs to verify that the opportunity statement is up-to-date with current opportunity data, or to see what would change if the statement were regenerated.</when_to_use>
+    /// <returns>Validation response with alignment status, misalignment items, and the freshly generated statement for reference</returns>
     [HttpPost(APIDictionary.OpportunityValidateStatement)]
     public async Task<ActionResult> ValidateOpportunityStatement(int id)
     {

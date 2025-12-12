@@ -377,10 +377,14 @@ export class ValuesService {
   
   /**
    * @description Get all UNOPS Strategic Missions
+   * @param {boolean} includeInactive - Whether to include inactive missions (default: false)
    * @returns Observable<UNOPSMission[]>
    */
-  getUNOPSMissions(): Observable<import('../../models/opportunity.model').UNOPSMission[]> {
-    return this.http.get<import('../../models/opportunity.model').UNOPSMission[]>(`${this.baseUrl}/unops-missions`);
+  getUNOPSMissions(includeInactive: boolean = false): Observable<import('../../models/opportunity.model').UNOPSMission[]> {
+    const url = includeInactive 
+      ? `${this.baseUrl}/unops-missions?includeInactive=true`
+      : `${this.baseUrl}/unops-missions`;
+    return this.http.get<import('../../models/opportunity.model').UNOPSMission[]>(url);
   }
 
   /**

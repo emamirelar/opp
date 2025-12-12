@@ -5424,12 +5424,13 @@ public class UNOPSGeminiManager : IGeminiManager
         /// <summary>
         /// Generates a comprehensive opportunity statement in markdown format following the UNOPS template
         /// Retrieves opportunity details and attached documents, sends to Gemini for analysis
-        /// Caches the result and saves to the Opportunity entity
+        /// Caches the result and optionally saves to the Opportunity entity
         /// </summary>
         /// <param name="opportunityId">The opportunity ID to generate statement for</param>
         /// <param name="user">Current user context</param>
+        /// <param name="saveToDatabase">Whether to save the generated statement to the database (default: true)</param>
         /// <returns>Generated opportunity statement in markdown format</returns>
-        public async Task<string> GenerateOpportunityStatementAsync(int opportunityId, ClaimsPrincipal? user = null)
+        public async Task<string> GenerateOpportunityStatementAsync(int opportunityId, ClaimsPrincipal? user = null, bool saveToDatabase = true)
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             
@@ -5447,8 +5448,12 @@ public class UNOPSGeminiManager : IGeminiManager
                 // Step 2: Get comprehensive opportunity data
                 var opportunityDetails = await opportunityManager.GetOpportunityDetailsForAIAsync(opportunityId);
 
-                // Specifically remove the statementMarkdown field from the opportunity details
-                opportunityDetails["statementMarkdown"] = null;
+                // Specifically remove the statementMarkdown, workflowStageName, and status field from the opportunity details
+                opportunityDetails["opportunityStatementMarkdown"] = null;
+                opportunityDetails["workflowStageName"] = null;
+                opportunityDetails["status"] = null;
+
+                Console.WriteLine($"======================[OPPORTUNITY-STATEMENT] opportunityDetails: {JsonConvert.SerializeObject(opportunityDetails, Formatting.Indented)}");
 
                 if (opportunityDetails == null || !opportunityDetails.Any())
                 {
@@ -5592,21 +5597,28 @@ public class UNOPSGeminiManager : IGeminiManager
                     throw new InvalidOperationException($"Failed to process AI response: {ex.Message}", ex);
                 }
 
-                // Step 9: Save the generated statement to the Opportunity entity
-                var opportunity = await _context.Opportunities.FindAsync(opportunityId);
-                if (opportunity != null)
+                // Step 9: Optionally save the generated statement to the Opportunity entity
+                if (saveToDatabase)
                 {
-                    opportunity.OpportunityStatementMarkdown = statementMarkdown;
-                    _context.Opportunities.Update(opportunity);
-                    await _context.SaveChangesAsync();
-                    
-                    _logger.LogInformation($"💾 [OPPORTUNITY-STATEMENT] Saved statement to database for opportunity {opportunityId}");
+                    var opportunity = await _context.Opportunities.FindAsync(opportunityId);
+                    if (opportunity != null)
+                    {
+                        opportunity.OpportunityStatementMarkdown = statementMarkdown;
+                        _context.Opportunities.Update(opportunity);
+                        await _context.SaveChangesAsync();
+                        
+                        _logger.LogInformation($"💾 [OPPORTUNITY-STATEMENT] Saved statement to database for opportunity {opportunityId}");
+                    }
+                }
+                else
+                {
+                    _logger.LogInformation($"🔍 [OPPORTUNITY-STATEMENT] Skipping database save (saveToDatabase=false)");
                 }
 
                 stopwatch.Stop();
 
                 _logger.LogInformation(
-                    $"✅ [OPPORTUNITY-STATEMENT] Generated opportunity statement for opportunity {opportunityId} in {stopwatch.ElapsedMilliseconds}ms"
+                    $"✅ [OPPORTUNITY-STATEMENT] Generated opportunity statement for opportunity {opportunityId} in {stopwatch.ElapsedMilliseconds}ms (saved: {saveToDatabase})"
                 );
 
                 return statementMarkdown;
@@ -5620,9 +5632,9 @@ public class UNOPSGeminiManager : IGeminiManager
         }
 
         /// <summary>
-        /// Validates whether the opportunity statement is aligned with the structured data in the opportunity record
-        /// Uses Gemini AI to analyze the statement content against actual opportunity fields
-        /// Returns whether the statement is aligned and specific misalignment items if not aligned
+        /// Validates whether the opportunity statement is aligned with the current structured data by comparing the existing statement against a freshly generated one
+        /// Uses Gemini AI to generate a new statement and then compare it with the existing statement
+        /// Returns whether the statements are aligned and specific misalignment items if not aligned
         /// </summary>
         /// <param name="opportunityId">The opportunity ID to validate statement for</param>
         /// <param name="user">Current user context</param>
@@ -5635,22 +5647,7 @@ public class UNOPSGeminiManager : IGeminiManager
             {
                 _logger.LogInformation($"🔍 [STATEMENT-VALIDATION] Starting statement validation for opportunity {opportunityId}");
 
-                // Step 1: Get opportunity manager
-                var opportunityManager = _managerWrapper.OpportunityManager as UNOPSOpportunityManager;
-                if (opportunityManager == null)
-                {
-                    throw new InvalidOperationException("UNOPSOpportunityManager is required for statement validation");
-                }
-
-                // Step 2: Get comprehensive opportunity data using the same method as statement generation
-                var opportunityDetails = await opportunityManager.GetOpportunityDetailsForAIAsync(opportunityId);
-                
-                if (opportunityDetails == null || !opportunityDetails.Any())
-                {
-                    throw new KeyNotFoundException($"Opportunity with ID {opportunityId} not found");
-                }
-
-                // Step 3: Get the opportunity statement markdown separately
+                // Step 1: Get the existing opportunity statement from the database
                 var opportunity = await _context.Opportunities
                     .Where(o => o.Id == opportunityId)
                     .Select(o => new { o.OpportunityStatementMarkdown })
@@ -5661,9 +5658,15 @@ public class UNOPSGeminiManager : IGeminiManager
                     throw new BusinessException("No opportunity statement exists to validate");
                 }
 
-                _logger.LogInformation($"📊 [STATEMENT-VALIDATION] Retrieved opportunity with statement (length: {opportunity.OpportunityStatementMarkdown.Length} chars)");
+                _logger.LogInformation($"📊 [STATEMENT-VALIDATION] Retrieved existing statement (length: {opportunity.OpportunityStatementMarkdown.Length} chars)");
 
-                // Step 4: Get the validation prompt
+                // Step 2: Generate a fresh opportunity statement WITHOUT saving to database
+                _logger.LogInformation($"🔄 [STATEMENT-VALIDATION] Generating fresh statement for comparison...");
+                var freshStatementMarkdown = await GenerateOpportunityStatementAsync(opportunityId, user, saveToDatabase: false);
+                
+                _logger.LogInformation($"✅ [STATEMENT-VALIDATION] Generated fresh statement (length: {freshStatementMarkdown.Length} chars)");
+
+                // Step 3: Get the validation prompt
                 var promptData = await _aiService.GetPromptData("opportunity_statement_validation");
                 var validationPrompt = promptData.FirstOrDefault();
 
@@ -5672,20 +5675,25 @@ public class UNOPSGeminiManager : IGeminiManager
                     throw new InvalidOperationException("Validation prompt 'opportunity_statement_validation' not found in database");
                 }
 
-                // Step 5: Add the statement markdown to the opportunity details dictionary
-                opportunityDetails["statementMarkdown"] = opportunity.OpportunityStatementMarkdown;
+                // Step 4: Prepare comparison data for Gemini
+                var comparisonData = new
+                {
+                    existingStatement = opportunity.OpportunityStatementMarkdown,
+                    freshlyGeneratedStatement = freshStatementMarkdown,
+                    opportunityId = opportunityId
+                };
 
-                var structuredDataJson = JsonConvert.SerializeObject(opportunityDetails, Formatting.Indented);
-                _logger.LogInformation($"📝 [STATEMENT-VALIDATION] Prepared structured data (length: {structuredDataJson.Length} chars)");
+                var comparisonDataJson = JsonConvert.SerializeObject(comparisonData, Formatting.Indented);
+                _logger.LogInformation($"📝 [STATEMENT-VALIDATION] Prepared comparison data (length: {comparisonDataJson.Length} chars)");
 
-                // Step 6: Process placeholders in system instructions and user prompt
+                // Step 5: Process placeholders in system instructions and user prompt
                 var systemInstructionsTemplate = validationPrompt.SystemInstructions ?? string.Empty;
-                var fullyFormedSystemInstructions = _aiService.ProcessPlaceholders(systemInstructionsTemplate, structuredDataJson);
+                var fullyFormedSystemInstructions = _aiService.ProcessPlaceholders(systemInstructionsTemplate, comparisonDataJson);
                 
                 var userPromptTemplate = validationPrompt.UserPrompt ?? string.Empty;
-                var fullyFormedUserPrompt = _aiService.ProcessPlaceholders(userPromptTemplate, structuredDataJson);
+                var fullyFormedUserPrompt = _aiService.ProcessPlaceholders(userPromptTemplate, comparisonDataJson);
 
-                // Step 7: Call Gemini API for validation
+                // Step 6: Call Gemini API for validation
                 var userContent = new
                 {
                     role = "user",
@@ -5805,6 +5813,32 @@ public class UNOPSGeminiManager : IGeminiManager
                 }
 
                 validationResult.OpportunityId = opportunityId;
+                validationResult.FreshlyGeneratedStatement = freshStatementMarkdown;
+
+                // Defensive check: Ensure isAligned is consistent with misalignmentItems array
+                var hasNoMisalignments = validationResult.MisalignmentItems == null || validationResult.MisalignmentItems.Count == 0;
+                
+                if (hasNoMisalignments && !validationResult.IsAligned)
+                {
+                    _logger.LogWarning($"⚠️ [STATEMENT-VALIDATION] Correcting inconsistent response: isAligned was false but no misalignment items exist. Setting isAligned to true.");
+                    validationResult.IsAligned = true;
+                    
+                    if (string.IsNullOrEmpty(validationResult.Message))
+                    {
+                        validationResult.Message = "The existing statement is fully aligned with the freshly generated statement.";
+                    }
+                }
+                else if (!hasNoMisalignments && validationResult.IsAligned)
+                {
+                    var misalignmentCount = validationResult.MisalignmentItems?.Count ?? 0;
+                    _logger.LogWarning($"⚠️ [STATEMENT-VALIDATION] Correcting inconsistent response: isAligned was true but {misalignmentCount} misalignment items exist. Setting isAligned to false.");
+                    validationResult.IsAligned = false;
+                    
+                    if (string.IsNullOrEmpty(validationResult.Message))
+                    {
+                        validationResult.Message = $"The existing statement has {misalignmentCount} material difference(s) from the freshly generated statement.";
+                    }
+                }
 
                 stopwatch.Stop();
 

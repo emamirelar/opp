@@ -213,7 +213,7 @@ public class GeminiManager : IGeminiManager
         throw new NotImplementedException("This method should be implemented in UNOPSGeminiManager");
     }
     
-    public Task<string> GenerateOpportunityStatementAsync(int opportunityId, ClaimsPrincipal user = null)
+    public Task<string> GenerateOpportunityStatementAsync(int opportunityId, ClaimsPrincipal user = null, bool saveToDatabase = true)
     {
         throw new NotImplementedException();
     }
