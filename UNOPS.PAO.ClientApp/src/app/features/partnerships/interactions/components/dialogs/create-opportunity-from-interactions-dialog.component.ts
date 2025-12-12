@@ -36,6 +36,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { SelectModule } from 'primeng/select';
 import { ChipModule } from 'primeng/chip';
 import { AvatarModule } from 'primeng/avatar';
+import { DatePickerModule } from 'primeng/datepicker';
 
 // Models
 import {
@@ -92,7 +93,8 @@ import { firstValueFrom } from 'rxjs';
     TooltipModule,
     SelectModule,
     ChipModule,
-    AvatarModule
+    AvatarModule,
+    DatePickerModule
   ],
   templateUrl: './create-opportunity-from-interactions-dialog.component.html',
   styleUrls: ['./create-opportunity-from-interactions-dialog.component.scss'],
@@ -143,6 +145,9 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
   isClientPartner = signal(false);
   showValidationError = signal(false);
   
+  // Field validation errors (key: field name, value: error message)
+  fieldValidationErrors = signal<Map<string, string>>(new Map());
+  
   // Document upload state
   selectedFiles = signal<{file: File, documentTypeId: number | null}[]>([]);
   uploadedDocuments = signal<{gcsPath: string, mimeType: string, name: string, documentTypeId: number | null}[]>([]);
@@ -170,6 +175,20 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     { value: 3, label: 'label.deliveryModality.allGrantSupport' },
     { value: 4, label: 'label.deliveryModality.mixed' }
   ];
+  
+  // Field MaxLength constants (from Opportunity.cs entity)
+  readonly FIELD_MAX_LENGTHS = {
+    name: 255,
+    partnerReference: 255,
+    signingDateNotes: 1000,
+    resultsFocus: 2000,
+    expectedImpact: 200,
+    expectedOutcomes: 200,
+    expectedBeneficiaries: 1000,
+    miscExternalStakeholders: 2000,
+    externalStakeholderNotes: 2000,
+    challenges: 4000 // No explicit limit in entity, but reasonable limit
+  } as const;
 
   // Proposed opportunity data (Step 2)
   proposedOpportunity = signal<ProposedOpportunityResponse | null>(null);
@@ -1615,6 +1634,17 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         return null;
       };
       
+      // Helper function to convert date strings to Date objects for p-datepicker
+      const parseDate = (value: any): Date | null => {
+        if (!value) return null;
+        if (value instanceof Date) return value;
+        if (typeof value === 'string') {
+          const parsed = new Date(value);
+          return isNaN(parsed.getTime()) ? null : parsed;
+        }
+        return null;
+      };
+
       const parsedResponse: ProposedOpportunityResponse = {
         ...rawResponse,
         opportunity: {
@@ -1625,11 +1655,16 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
           deliverables: safeJsonParse(rawResponse.opportunity.deliverables, 'deliverables'),
           countries: safeJsonParse(rawResponse.opportunity.countries, 'countries'),
           sdGs: safeJsonParse(rawResponse.opportunity.sdGs, 'sdGs'),
-          dependents: safeJsonParse(rawResponse.opportunity.dependents, 'dependents')
+          dependents: safeJsonParse(rawResponse.opportunity.dependents, 'dependents'),
+          // Convert date strings to Date objects for p-datepicker compatibility
+          targetSigningDate: parseDate(rawResponse.opportunity.targetSigningDate),
+          targetDeliveryDate: parseDate(rawResponse.opportunity.targetDeliveryDate),
+          submissionDeadline: parseDate((rawResponse.opportunity as any).submissionDeadline),
+          implementationStartDate: parseDate((rawResponse.opportunity as any).implementationStartDate)
         }
       };
       
-      console.log('✅ Parsed response with typed collections:', parsedResponse);
+      console.log('✅ Parsed response with typed collections and dates:', parsedResponse);
       this.proposedOpportunity.set(parsedResponse);
       
       // Store uploaded documents for later use when creating opportunity
@@ -1811,6 +1846,16 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
       return;
     }
     
+    // Validate field lengths before proceeding
+    if (!this.validateFieldLengths()) {
+      const errors = Array.from(this.fieldValidationErrors().values());
+      this.feedbackDialogService.showErrorToast({
+        summary: this.translateService.instant('message.validation.error'),
+        detail: errors.join('\n')
+      });
+      return;
+    }
+    
     this.generating.set(true);
     
     try {
@@ -1833,10 +1878,13 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
       // as the user hasn't explicitly selected partner roles
       const isFromInteractionDetail = this.mode() === 'detail-view';
       
+      // Cast opportunity to any to handle new fields
+      const opp = proposal.opportunity as any;
+      
+      // Build create request - only include selected fields
       const createRequest: any = {
-        // Required fields (always included)
-        name: proposal.opportunity.name,
-        description: proposal.opportunity.description,
+        // Name is truly required by backend - always include if selected (it should always be selected)
+        name: this.isFieldSelected('name') ? opp.name : opp.name, // Name is always required
         // Only include partnerId when in list-view mode (from partner context with role selection)
         partnerId: isFromInteractionDetail ? 0 : (this.partnerId() || 0),
         isFundingPartner: isFromInteractionDetail ? false : this.isFundingPartner(),
@@ -1851,13 +1899,13 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         }))
       };
       
+      // Description - include value if selected, empty string if deselected (backend requires non-null)
+      createRequest.description = this.isFieldSelected('description') && opp.description ? opp.description : '';
+      
       console.log('📤 [CreateOpportunity] Documents in create request:', {
         count: createRequest.documents.length,
         documents: createRequest.documents
       });
-      
-      // Cast opportunity to any to handle new fields
-      const opp = proposal.opportunity as any;
 
       // Add optional fields only if selected
       if (this.isFieldSelected('responsibleOrgUnitName') && opp.responsibleOrgUnitId) {
@@ -1957,8 +2005,9 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         createRequest.signingDateNotes = opp.signingDateNotes;
       }
       
-      // Collection fields - with individual item selection
-      if (this.isFieldSelected('deliverables') && opp.deliverables && opp.deliverables.length > 0) {
+      // Collection fields - check individual items (don't require parent checkbox)
+      // This allows selecting individual items even when "Select All" is unchecked
+      if (opp.deliverables && opp.deliverables.length > 0) {
         // Filter by selected individual deliverables
         const selectedDeliverables = opp.deliverables.filter((_: any, idx: number) => 
           this.isFieldSelected(`deliverables[${idx}]`)
@@ -1968,7 +2017,7 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         }
       }
 
-      if (this.isFieldSelected('sdGs') && opp.sdGs && opp.sdGs.length > 0) {
+      if (opp.sdGs && opp.sdGs.length > 0) {
         // Filter by selected individual SDGs, then map to IDs (backend expects List<int>)
         const selectedSdgs = opp.sdGs.filter((_: any, idx: number) => 
           this.isFieldSelected(`sdGs[${idx}]`)
@@ -2016,7 +2065,8 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         createRequest.clientPartners = clientPartners;
       }
 
-      if (this.isFieldSelected('stakeholders') && opp.stakeholders && opp.stakeholders.length > 0) {
+      // Stakeholders - check individual items (don't require parent checkbox)
+      if (opp.stakeholders && opp.stakeholders.length > 0) {
         // Filter by selected individual stakeholders
         const selectedStakeholders = opp.stakeholders.filter((_: any, idx: number) => 
           this.isFieldSelected(`stakeholders[${idx}]`)
@@ -2026,7 +2076,8 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         }
       }
 
-      if (this.isFieldSelected('countries') && opp.countries && opp.countries.length > 0) {
+      // Countries - check individual items (don't require parent checkbox)
+      if (opp.countries && opp.countries.length > 0) {
         // Filter by selected individual countries, then map to IDs (backend expects List<int>)
         const selectedCountries = opp.countries.filter((_: any, idx: number) => 
           this.isFieldSelected(`countries[${idx}]`)
@@ -2090,11 +2141,58 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
 
   /**
    * Toggle selection of a field in the proposal
+   * For collection fields (deliverables, sdGs, countries, stakeholders, partnerBudgets),
+   * this also toggles all child items when the parent is toggled.
    */
   toggleField(fieldPath: string): void {
     const current = this.selectedFields().get(fieldPath) || false;
+    const newValue = !current;
     const updated = new Map(this.selectedFields());
-    updated.set(fieldPath, !current);
+    updated.set(fieldPath, newValue);
+    
+    // Handle parent-child relationship for collection fields
+    // When toggling a parent field, also toggle all its children
+    const collectionFields = ['deliverables', 'sdGs', 'countries', 'stakeholders', 'partnerBudgets'];
+    
+    if (collectionFields.includes(fieldPath)) {
+      // This is a parent collection field - toggle all children
+      const proposal = this.proposedOpportunity();
+      if (proposal && proposal.opportunity) {
+        const opp = proposal.opportunity as any;
+        const collection = opp[fieldPath];
+        if (collection && Array.isArray(collection)) {
+          collection.forEach((_: any, idx: number) => {
+            updated.set(`${fieldPath}[${idx}]`, newValue);
+          });
+        }
+      }
+    } else {
+      // Check if this is a child field (e.g., 'deliverables[0]')
+      // If so, update the parent's state based on whether all children are selected
+      const match = fieldPath.match(/^(\w+)\[\d+\]$/);
+      if (match) {
+        const parentField = match[1];
+        if (collectionFields.includes(parentField)) {
+          // Check if all children are now selected
+          const proposal = this.proposedOpportunity();
+          if (proposal && proposal.opportunity) {
+            const opp = proposal.opportunity as any;
+            const collection = opp[parentField];
+            if (collection && Array.isArray(collection)) {
+              // After this toggle, check if all children will be selected
+              const allSelected = collection.every((_: any, idx: number) => {
+                const childPath = `${parentField}[${idx}]`;
+                // Use the new value for the current field, otherwise check the map
+                if (childPath === fieldPath) return newValue;
+                return updated.get(childPath) || false;
+              });
+              updated.set(parentField, allSelected);
+            }
+          }
+        }
+      }
+    }
+    
     this.selectedFields.set(updated);
   }
 
@@ -2103,6 +2201,103 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
    */
   isFieldSelected(fieldPath: string): boolean {
     return this.selectedFields().get(fieldPath) || false;
+  }
+  
+  /**
+   * Validate field lengths against MaxLength constraints from Opportunity.cs
+   * Returns true if all fields are valid, false otherwise
+   */
+  validateFieldLengths(): boolean {
+    const errors = new Map<string, string>();
+    const proposal = this.proposedOpportunity();
+    
+    if (!proposal || !proposal.opportunity) {
+      this.fieldValidationErrors.set(errors);
+      return true;
+    }
+    
+    const opp = proposal.opportunity as any;
+    
+    // Helper function to check field length
+    const checkLength = (fieldName: string, value: string | null | undefined, maxLength: number, displayName: string) => {
+      if (value && value.length > maxLength) {
+        errors.set(fieldName, this.translateService.instant('message.validation.fieldTooLong', {
+          field: displayName,
+          max: maxLength,
+          current: value.length
+        }));
+      }
+    };
+    
+    // Validate Name (required, max 255)
+    if (opp.name) {
+      checkLength('name', opp.name, this.FIELD_MAX_LENGTHS.name, this.translateService.instant('label.name'));
+    }
+    
+    // Validate SigningDateNotes (max 1000)
+    if (this.isFieldSelected('signingDateNotes') && opp.signingDateNotes) {
+      checkLength('signingDateNotes', opp.signingDateNotes, this.FIELD_MAX_LENGTHS.signingDateNotes, 
+        this.translateService.instant('label.signingDateNotes'));
+    }
+    
+    // Validate ResultsFocus (max 2000)
+    if (this.isFieldSelected('resultsFocus') && opp.resultsFocus) {
+      checkLength('resultsFocus', opp.resultsFocus, this.FIELD_MAX_LENGTHS.resultsFocus, 
+        this.translateService.instant('label.resultsFocus'));
+    }
+    
+    // Validate ExpectedImpact (max 200)
+    if (this.isFieldSelected('expectedImpact') && opp.expectedImpact) {
+      checkLength('expectedImpact', opp.expectedImpact, this.FIELD_MAX_LENGTHS.expectedImpact, 
+        this.translateService.instant('label.opportunity.expectedImpact'));
+    }
+    
+    // Validate ExpectedOutcomes (max 200)
+    if (this.isFieldSelected('expectedOutcomes') && opp.expectedOutcomes) {
+      checkLength('expectedOutcomes', opp.expectedOutcomes, this.FIELD_MAX_LENGTHS.expectedOutcomes, 
+        this.translateService.instant('label.opportunity.expectedOutcomes'));
+    }
+    
+    // Validate ExpectedBeneficiaries (max 1000)
+    if (this.isFieldSelected('expectedBeneficiaries') && opp.expectedBeneficiaries) {
+      checkLength('expectedBeneficiaries', opp.expectedBeneficiaries, this.FIELD_MAX_LENGTHS.expectedBeneficiaries, 
+        this.translateService.instant('label.opportunity.expectedBeneficiaries'));
+    }
+    
+    // Validate MiscExternalStakeholders (max 2000)
+    if (this.isFieldSelected('miscExternalStakeholders') && opp.miscExternalStakeholders) {
+      checkLength('miscExternalStakeholders', opp.miscExternalStakeholders, this.FIELD_MAX_LENGTHS.miscExternalStakeholders, 
+        this.translateService.instant('label.miscExternalStakeholders'));
+    }
+    
+    // Validate ExternalStakeholderNotes (max 2000)
+    if (this.isFieldSelected('externalStakeholderNotes') && opp.externalStakeholderNotes) {
+      checkLength('externalStakeholderNotes', opp.externalStakeholderNotes, this.FIELD_MAX_LENGTHS.externalStakeholderNotes, 
+        this.translateService.instant('label.externalStakeholderNotes'));
+    }
+    
+    // Validate Challenges (reasonable limit)
+    if (this.isFieldSelected('challenges') && opp.challenges) {
+      checkLength('challenges', opp.challenges, this.FIELD_MAX_LENGTHS.challenges, 
+        this.translateService.instant('label.contextAndChallenges'));
+    }
+    
+    this.fieldValidationErrors.set(errors);
+    return errors.size === 0;
+  }
+  
+  /**
+   * Get validation error for a specific field
+   */
+  getFieldError(fieldName: string): string | null {
+    return this.fieldValidationErrors().get(fieldName) || null;
+  }
+  
+  /**
+   * Check if a field has a validation error
+   */
+  hasFieldError(fieldName: string): boolean {
+    return this.fieldValidationErrors().has(fieldName);
   }
 
   /**
@@ -2131,13 +2326,13 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
       opp.partnerBudgets.forEach((_: any, idx: number) => updated.set(`partnerBudgets[${idx}]`, selectAll));
     }
 
-    // Strategic Info (WHY section)
+    // Strategic Info (WHY section) - Always include these fields even if empty
     if (opp.challenges) updated.set('challenges', selectAll);
-    if (opp.resultsFocus) updated.set('resultsFocus', selectAll);
-    if (opp.expectedBeneficiaries) updated.set('expectedBeneficiaries', selectAll);
-    if (opp.expectedImpact) updated.set('expectedImpact', selectAll);
-    if (opp.expectedOutcomes) updated.set('expectedOutcomes', selectAll);
-    if (opp.expectedBeneficiaries) updated.set('expectedBeneficiaries', selectAll);
+    // These 4 fields are always shown so always include them in toggle
+    updated.set('resultsFocus', selectAll);
+    updated.set('expectedBeneficiaries', selectAll);
+    updated.set('expectedImpact', selectAll);
+    updated.set('expectedOutcomes', selectAll);
     if (opp.estimatedDirectBeneficiaries) updated.set('estimatedDirectBeneficiaries', selectAll);
     if (opp.estimatedIndirectBeneficiaries) updated.set('estimatedIndirectBeneficiaries', selectAll);
     if (opp.beneficiariesToBeDetermined !== null && opp.beneficiariesToBeDetermined !== undefined) updated.set('beneficiariesToBeDetermined', selectAll);
@@ -2199,13 +2394,13 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
       opp.partnerBudgets.forEach((_: any, idx: number) => selected.set(`partnerBudgets[${idx}]`, true));
     }
 
-    // Strategic Info (WHY section)
+    // Strategic Info (WHY section) - Always include these fields
+    // Select if they have values, otherwise initialize as unselected
     if (opp.challenges) selected.set('challenges', true);
-    if (opp.resultsFocus) selected.set('resultsFocus', true);
-    if (opp.expectedBeneficiaries) selected.set('expectedBeneficiaries', true);
-    if (opp.expectedImpact) selected.set('expectedImpact', true);
-    if (opp.expectedOutcomes) selected.set('expectedOutcomes', true);
-    if (opp.expectedBeneficiaries) selected.set('expectedBeneficiaries', true);
+    selected.set('resultsFocus', !!opp.resultsFocus);
+    selected.set('expectedBeneficiaries', !!opp.expectedBeneficiaries);
+    selected.set('expectedImpact', !!opp.expectedImpact);
+    selected.set('expectedOutcomes', !!opp.expectedOutcomes);
     if (opp.estimatedDirectBeneficiaries) selected.set('estimatedDirectBeneficiaries', true);
     if (opp.estimatedIndirectBeneficiaries) selected.set('estimatedIndirectBeneficiaries', true);
     if (opp.beneficiariesToBeDetermined !== null && opp.beneficiariesToBeDetermined !== undefined) selected.set('beneficiariesToBeDetermined', true);
@@ -2389,6 +2584,7 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     this.generating.set(false);
     this.proposedOpportunity.set(null);
     this.selectedFields.set(new Map());
+    this.fieldValidationErrors.set(new Map());
     
     // Clear document state
     this.selectedFiles.set([]);

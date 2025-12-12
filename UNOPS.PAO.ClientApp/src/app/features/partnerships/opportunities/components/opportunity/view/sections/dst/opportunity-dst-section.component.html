@@ -68,6 +68,17 @@
                       [severity]="getRiskSeverity(risk)"
                     />
                     <p-button
+                      icon="pi pi-pencil"
+                      [rounded]="true"
+                      [text]="true"
+                      severity="primary"
+                      size="small"
+                      [pTooltip]="'button.edit' | translate"
+                      tooltipPosition="top"
+                      (onClick)="editRisk(risk)"
+                      [disabled]="isDeletingRisk() || isProcessingRisk()"
+                    />
+                    <p-button
                       icon="pi pi-trash"
                       [rounded]="true"
                       [text]="true"
@@ -76,7 +87,7 @@
                       [pTooltip]="'button.delete' | translate"
                       tooltipPosition="top"
                       (onClick)="confirmDeleteRisk(risk)"
-                      [disabled]="isDeletingRisk()"
+                      [disabled]="isDeletingRisk() || isProcessingRisk()"
                     />
                   </div>
                 </div>
@@ -470,9 +481,9 @@
     </div>
 </p-panel>
 
-<!-- Add Risk Dialog -->
+<!-- Add/Edit Risk Dialog -->
 <p-dialog
-  [header]="'title.dst.addRisk' | translate"
+  [header]="(isEditMode ? 'title.dst.editRisk' : 'title.dst.addRisk') | translate"
   [(visible)]="showAddRiskDialog"
   [modal]="true"
   [style]="{ width: '60rem' }"
