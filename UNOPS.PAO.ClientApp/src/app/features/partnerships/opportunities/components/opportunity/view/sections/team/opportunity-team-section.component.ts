@@ -242,9 +242,15 @@ export class OpportunityTeamSectionComponent implements OnInit {
     return subType;
   }
 
-  // Computed user-added stakeholders (non-auto-populated)
+  // Computed user-added stakeholders (non-auto-populated and non-SME)
+  // SME stakeholders are displayed separately in the SME section
   readonly userAddedStakeholders = computed(() => {
-    return this.opportunity().stakeholders?.filter((s) => !s.organizationHierarchyId) || [];
+    const smeRoleIds = new Set(this.smeRoles().map((r) => r.id));
+    return (
+      this.opportunity().stakeholders?.filter(
+        (s) => !s.organizationHierarchyId && !smeRoleIds.has(s.entityRoleId)
+      ) || []
+    );
   });
 
   // Raw auto-populated stakeholders from opportunity data (without user names)
