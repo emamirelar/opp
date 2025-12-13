@@ -2083,7 +2083,13 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         if (isGpo)
         {
             // GPO: Get org units for implementation countries (with parent/grandparent)
+            // AND include the GPO org unit itself
             orgUnitIdsForRoles = await GetOrgUnitIdsForCountriesWithHierarchyAsync(entity.Id);
+            // Add the GPO org unit ID if not already included
+            if (!orgUnitIdsForRoles.Contains(orgUnitId))
+            {
+                orgUnitIdsForRoles.Add(orgUnitId);
+            }
         }
         else if (isHubOrRegion)
         {
