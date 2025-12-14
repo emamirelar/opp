@@ -1,56 +1,77 @@
 <p-panel [toggleable]="true" [collapsed]="false" class="{{isSaving() ? 'opacity-50 pointer-events-none' : ''}}">
   <ng-template pTemplate="header">
-    <div class="flex items-center justify-between w-full pr-4">
-      <div class="flex items-center gap-2">
-        <i class="pi pi-users text-unops-secondary"></i>
-        <span class="font-semibold">{{ 'label.opportunity.whoPartnersAndPeople' | translate }}</span>
-      </div>
-      <div class="flex items-center gap-2">
-        @if (isSaving()) {
-          <i class="pi pi-spin pi-spinner text-xl text-primary"></i>
-        }
-        @if (canUpdate()) {
-          @if (!isEditing()) {
-            <p-button
-              icon="pi pi-pencil"
-              [text]="true"
-              [rounded]="true"
-              severity="secondary"
-              size="small"
-              (onClick)="startEditing()"
-              pTooltip="{{ 'button.edit' | translate }}"
-            />
-          } @else {
-            <p-button
-              icon="pi pi-check"
-              [text]="true"
-              [rounded]="true"
-              severity="success"
-              size="small"
-              (onClick)="saveSection()"
-              [disabled]="isSaving()"
-              pTooltip="{{ 'button.save' | translate }}"
-            />
-            <p-button
-              icon="pi pi-times"
-              [text]="true"
-              [rounded]="true"
-              severity="danger"
-              size="small"
-              (onClick)="cancelEditing()"
-              [disabled]="isSaving()"
-              pTooltip="{{ 'button.cancel' | translate }}"
-            />
+    <div class="flex flex-col w-full pr-4">
+      <div class="flex items-center justify-between w-full">
+        <div class="flex items-center gap-2">
+          <i class="pi pi-users text-unops-secondary"></i>
+          <span class="font-semibold">{{ 'label.opportunity.whoPartnersAndPeople' | translate }}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          @if (isSaving()) {
+            <i class="pi pi-spin pi-spinner text-xl text-primary"></i>
           }
-        }
+          @if (canUpdate()) {
+            @if (!isEditing()) {
+              <p-button
+                icon="pi pi-pencil"
+                [text]="true"
+                [rounded]="true"
+                severity="secondary"
+                size="small"
+                (onClick)="startEditing()"
+                pTooltip="{{ 'button.edit' | translate }}"
+              />
+            }
+          }
+        </div>
       </div>
+      
+      <!-- Unsaved Changes Warning Bar (shown when editing with unsaved changes) -->
+      @if (isEditing() && hasUnsavedChangesSignal()) {
+        <div class="mt-3 bg-amber-100 border-l-4 border-amber-500 px-4 py-3 rounded">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div class="flex items-start gap-2 flex-1">
+              <i class="pi pi-exclamation-triangle text-amber-600 text-lg flex-shrink-0 mt-0.5"></i>
+              <div class="flex flex-col">
+                <span class="text-sm font-bold text-amber-900">
+                  {{ 'message.unsavedChanges' | translate }}
+                </span>
+                <span class="text-xs font-medium text-amber-800">
+                  {{ 'message.unsavedChangesSectionDetail' | translate }}
+                </span>
+              </div>
+            </div>
+            <div class="flex gap-2 w-full sm:w-auto">
+              <p-button
+                [label]="'button.discardChanges' | translate"
+                icon="pi pi-times"
+                severity="danger"
+                [outlined]="true"
+                (onClick)="cancelEditing()"
+                [disabled]="isSaving()"
+                styleClass="flex-1 sm:flex-none"
+                size="small"
+              />
+              <p-button
+                [label]="'button.saveChanges' | translate"
+                icon="pi pi-check"
+                severity="success"
+                (onClick)="saveSection()"
+                [disabled]="isSaving()"
+                styleClass="flex-1 sm:flex-none"
+                size="small"
+              />
+            </div>
+          </div>
+        </div>
+      }
     </div>
   </ng-template>
 
   <div class="space-y-6">
     <!-- AI Suggestions -->
     @if (suggestions() && suggestions().length > 0) {
-      <div class="bg-unops-accent-yellow-soft rounded-unops-lg p-3 border border-unops-warning-light">
+      <div style="background-color: rgb(253, 250, 241);" class="rounded-unops-lg p-3 border border-unops-warning-light">
         <div class="flex items-start gap-2 mb-2">
           <i class="pi pi-lightbulb text-unops-warning-darker text-sm mt-0.5"></i>
           <h4 class="text-xs font-semibold text-unops-secondary">{{ 'label.aiSuggestions' | translate }}</h4>
@@ -59,7 +80,7 @@
           @for (suggestion of suggestions(); track $index) {
             <div class="bg-unops-surface-primary rounded p-2 border border-unops-warning-light shadow-unops-sm">
               <div class="font-semibold text-xs text-unops-secondary mb-1">{{ suggestion.title }}</div>
-              <p class="text-xs text-unops-neutral-700">{{ suggestion.description }}</p>
+              <p class="text-xs text-unops-neutral-800">{{ suggestion.description }}</p>
             </div>
           }
         </div>
@@ -91,21 +112,21 @@
 
     <!-- Org Unit Value Range Warning -->
     @if (opportunity().isNewValueRangeForOrgUnit) {
-      <div class="p-4 bg-unops-surface-cream border border-unops-warning-light rounded-unops-lg flex items-start gap-3">
-        <i class="pi pi-exclamation-triangle text-unops-warning-darker text-xl mt-0.5"></i>
-        <div class="flex-1">
-          <div class="font-semibold text-unops-secondary mb-1">
-            {{ 'message.warning.newValueRangeForOrgUnit' | translate }}
-          </div>
-          <div class="text-sm text-unops-neutral-800">
-            {{ 'message.warning.newValueRangeDetails' | translate: {
-              orgUnit: opportunity().responsibleOrgUnitName,
-              currentValue: (opportunity().stats?.totalFundingUSD | number:'1.2-2'),
-              historicalMax: (opportunity().orgUnitHistoricalMaxValue | number:'1.2-2')
-            } }}
-          </div>
+    <div style="background-color: rgb(253, 250, 241);" class="p-4 border border-unops-warning-light rounded-unops-lg flex items-start gap-3">
+      <i class="pi pi-exclamation-triangle text-unops-warning-darker text-xl mt-0.5"></i>
+      <div class="flex-1">
+        <div class="text-xs font-semibold text-unops-secondary mb-1">
+          {{ 'message.warning.newValueRangeForOrgUnit' | translate }}
+        </div>
+        <div class="text-xs text-unops-neutral-800">
+          {{ 'message.warning.newValueRangeDetails' | translate: {
+            orgUnit: opportunity().responsibleOrgUnitName,
+            currentValue: (opportunity().stats?.totalFundingUSD | number:'1.2-2'),
+            historicalMax: (opportunity().orgUnitHistoricalMaxValue | number:'1.2-2')
+          } }}
         </div>
       </div>
+    </div>
     }
 
     <!-- Funding Partners -->
@@ -180,12 +201,12 @@
                   
                   <!-- Draft Warning -->
                   @if (partner.partnerStatus === 'Draft') {
-                    <div class="mt-2 p-2 bg-unops-surface-cream border border-unops-warning-light rounded flex items-start gap-2">
-                      <i class="pi pi-exclamation-triangle text-unops-warning-darker text-sm mt-0.5"></i>
-                      <span class="text-xs text-unops-neutral-800">
-                        {{ 'message.warning.partnerDraftStatus' | translate }}
-                      </span>
-                    </div>
+                  <div style="background-color: rgb(253, 250, 241);" class="mt-2 p-2 border border-unops-warning-light rounded flex items-start gap-2">
+                    <i class="pi pi-exclamation-triangle text-unops-warning-darker text-sm mt-0.5"></i>
+                    <span class="text-xs text-unops-neutral-800">
+                      {{ 'message.warning.partnerDraftStatus' | translate }}
+                    </span>
+                  </div>
                   }
                   
                   <!-- DD Status Display -->
@@ -207,29 +228,29 @@
                     
                     <!-- DD Expiry Warning -->
                     @if (partner.ddStatus === 'Expired' || partner.ddStatus === 'Expiring Soon') {
-                      <div class="mt-2 p-2 bg-unops-surface-cream border border-unops-warning-light rounded flex items-start gap-2">
-                        <i class="pi pi-exclamation-triangle text-unops-warning-darker text-sm mt-0.5"></i>
-                        <span class="text-xs text-unops-neutral-800">
-                          @if (partner.ddStatus === 'Expired') {
-                            {{ 'message.warning.ddExpired' | translate }}
-                          } @else {
-                            {{ 'message.warning.ddExpiringSoon' | translate }}
-                          }
-                        </span>
-                      </div>
+                    <div style="background-color: rgb(253, 250, 241);" class="mt-2 p-2 border border-unops-warning-light rounded flex items-start gap-2">
+                      <i class="pi pi-exclamation-triangle text-unops-warning-darker text-sm mt-0.5"></i>
+                      <span class="text-xs text-unops-neutral-800">
+                        @if (partner.ddStatus === 'Expired') {
+                          {{ 'message.warning.ddExpired' | translate }}
+                        } @else {
+                          {{ 'message.warning.ddExpiringSoon' | translate }}
+                        }
+                      </span>
+                    </div>
                     }
                     
                     <!-- DD Expires Before Opportunity End Warning -->
                     @if (partner.ddExpiresBeforeOpportunityEnd && partner.ddExpiryDate) {
-                      <div class="mt-2 p-2 bg-unops-surface-cream border border-unops-warning-light rounded flex items-start gap-2">
-                        <i class="pi pi-exclamation-circle text-unops-warning-darker text-sm mt-0.5"></i>
-                        <span class="text-xs text-unops-neutral-800">
-                          {{ 'message.warning.ddExpiresBeforeOpportunityEnd' | translate: {
-                            expiryDate: (partner.ddExpiryDate | date:'mediumDate'),
-                            opportunityEndDate: (opportunity().targetDeliveryDate | date:'mediumDate')
-                          } }}
-                        </span>
-                      </div>
+                    <div style="background-color: rgb(253, 250, 241);" class="mt-2 p-2 border border-unops-warning-light rounded flex items-start gap-2">
+                      <i class="pi pi-exclamation-circle text-unops-warning-darker text-sm mt-0.5"></i>
+                      <span class="text-xs text-unops-neutral-800">
+                        {{ 'message.warning.ddExpiresBeforeOpportunityEnd' | translate: {
+                          expiryDate: (partner.ddExpiryDate | date:'mediumDate'),
+                          opportunityEndDate: (opportunity().targetDeliveryDate | date:'mediumDate')
+                        } }}
+                      </span>
+                    </div>
                     }
                   }
                   
@@ -289,10 +310,12 @@
                                 </div>
                               }
                               @if (partner.availableAgreements[0].warningMessage) {
-                                <div class="mt-2 p-1.5 bg-unops-surface-cream border border-unops-warning-light rounded text-unops-warning-darker">
-                                  <i class="pi pi-exclamation-triangle mr-1"></i>
+                              <div style="background-color: rgb(253, 250, 241);" class="mt-2 p-1.5 border border-unops-warning-light rounded flex items-start gap-2">
+                                <i class="pi pi-exclamation-triangle text-unops-warning-darker text-sm mt-0.5"></i>
+                                <span class="text-xs text-unops-neutral-800">
                                   {{ partner.availableAgreements[0].warningMessage }}
-                                </div>
+                                </span>
+                              </div>
                               }
                             </div>
                           </div>
@@ -351,10 +374,12 @@
                                       </div>
                                     }
                                     @if (agreement.warningMessage) {
-                                      <div class="mt-2 p-1.5 bg-unops-surface-cream border border-unops-warning-light rounded text-unops-warning-darker">
-                                        <i class="pi pi-exclamation-triangle mr-1"></i>
+                                    <div style="background-color: rgb(253, 250, 241);" class="mt-2 p-1.5 border border-unops-warning-light rounded flex items-start gap-2">
+                                      <i class="pi pi-exclamation-triangle text-unops-warning-darker text-sm mt-0.5"></i>
+                                      <span class="text-xs text-unops-neutral-800">
                                         {{ agreement.warningMessage }}
-                                      </div>
+                                      </span>
+                                    </div>
                                     }
                                   </div>
                                 </div>
@@ -362,9 +387,11 @@
                             }
                           }
                         } @else {
-                          <div class="mt-1 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
-                            <i class="pi pi-info-circle mr-1"></i>
-                            {{ 'message.info.multipleAgreementsAvailable' | translate: {count: partner.availableAgreements.length} }}
+                          <div style="background-color: rgb(253, 250, 241);" class="mt-1 p-2 border border-unops-warning-light rounded flex items-start gap-2">
+                            <i class="pi pi-info-circle text-unops-warning-darker text-sm mt-0.5"></i>
+                            <span class="text-xs text-unops-neutral-800">
+                              {{ 'message.info.multipleAgreementsAvailable' | translate: {count: partner.availableAgreements.length} }}
+                            </span>
                           </div>
                         }
                       }
@@ -393,14 +420,14 @@
                   
                   <!-- USD Equivalent and Exchange Rate -->
                   @if (partner.amountUSD && partner.currencyCode !== 'USD') {
-                    <div class="mt-2 bg-unops-info-lighter border border-unops-info-light rounded">
-                      <div class="text-xs text-unops-info-darker">
+                    <div class="mt-2 bg-unops-primary-container-soft border border-unops-primary-200 rounded p-3">
+                      <div class="text-xs text-unops-secondary">
                         <div class="flex items-center mb-1">
                           <span class="font-medium">{{ 'label.usdEquivalent' | translate }}:</span>
                           <span class="font-semibold ml-2">${{ partner.amountUSD | number:'1.0-2' }}</span>
                         </div>
                         @if (partner.exchangeRateDisplay) {
-                          <div class="text-xs text-unops-info-dark">
+                          <div class="text-xs text-unops-neutral-700">
                             <i class="pi pi-info-circle mr-1"></i>
                             {{ 'label.exchangeRate' | translate }}: {{ partner.exchangeRateDisplay }}
                           </div>
@@ -546,7 +573,7 @@
                 
                 <!-- Draft Warning -->
                 @if (client.partnerStatus === 'Draft') {
-                  <div class="mt-2 p-2 bg-unops-surface-cream border border-unops-warning-light rounded flex items-start gap-2">
+                  <div style="background-color: rgb(253, 250, 241);" class="mt-2 p-2 border border-unops-warning-light rounded flex items-start gap-2">
                     <i class="pi pi-exclamation-triangle text-unops-warning-darker text-sm mt-0.5"></i>
                     <span class="text-xs text-unops-neutral-800">
                       {{ 'message.warning.partnerDraftStatus' | translate }}
@@ -573,7 +600,7 @@
                   
                   <!-- DD Expiry Warning -->
                   @if (client.ddStatus === 'Expired' || client.ddStatus === 'Expiring Soon') {
-                    <div class="mt-2 p-2 bg-unops-surface-cream border border-unops-warning-light rounded flex items-start gap-2">
+                    <div style="background-color: rgb(253, 250, 241);" class="mt-2 p-2 border border-unops-warning-light rounded flex items-start gap-2">
                       <i class="pi pi-exclamation-triangle text-unops-warning-darker text-sm mt-0.5"></i>
                       <span class="text-xs text-unops-neutral-800">
                         @if (client.ddStatus === 'Expired') {
@@ -587,7 +614,7 @@
                   
                   <!-- DD Expires Before Opportunity End Warning -->
                   @if (client.ddExpiresBeforeOpportunityEnd && client.ddExpiryDate) {
-                    <div class="mt-2 p-2 bg-unops-surface-cream border border-unops-warning-light rounded flex items-start gap-2">
+                    <div style="background-color: rgb(253, 250, 241);" class="mt-2 p-2 border border-unops-warning-light rounded flex items-start gap-2">
                       <i class="pi pi-exclamation-circle text-unops-warning-darker text-sm mt-0.5"></i>
                       <span class="text-xs text-unops-neutral-800">
                         {{ 'message.warning.ddExpiresBeforeOpportunityEnd' | translate: {
@@ -655,10 +682,12 @@
                               </div>
                             }
                             @if (client.availableAgreements[0].warningMessage) {
-                              <div class="mt-2 p-1.5 bg-unops-surface-cream border border-unops-warning-light rounded text-unops-warning-darker">
-                                <i class="pi pi-exclamation-triangle mr-1"></i>
+                            <div style="background-color: rgb(253, 250, 241);" class="mt-2 p-1.5 border border-unops-warning-light rounded flex items-start gap-2">
+                              <i class="pi pi-exclamation-triangle text-unops-warning-darker text-sm mt-0.5"></i>
+                              <span class="text-xs text-unops-neutral-800">
                                 {{ client.availableAgreements[0].warningMessage }}
-                              </div>
+                              </span>
+                            </div>
                             }
                           </div>
                         </div>
@@ -717,9 +746,11 @@
                                     </div>
                                   }
                                   @if (agreement.warningMessage) {
-                                    <div class="mt-2 p-1.5 bg-unops-surface-cream border border-unops-warning-light rounded text-unops-warning-darker">
-                                      <i class="pi pi-exclamation-triangle mr-1"></i>
-                                      {{ agreement.warningMessage }}
+                                    <div style="background-color: rgb(253, 250, 241);" class="mt-2 p-1.5 border border-unops-warning-light rounded flex items-start gap-2">
+                                      <i class="pi pi-exclamation-triangle text-unops-warning-darker text-sm mt-0.5"></i>
+                                      <span class="text-xs text-unops-neutral-800">
+                                        {{ agreement.warningMessage }}
+                                      </span>
                                     </div>
                                   }
                                 </div>
@@ -728,9 +759,11 @@
                           }
                         }
                       } @else {
-                        <div class="mt-1 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
-                          <i class="pi pi-info-circle mr-1"></i>
-                          {{ 'message.info.multipleAgreementsAvailable' | translate: {count: client.availableAgreements.length} }}
+                        <div style="background-color: rgb(253, 250, 241);" class="mt-1 p-2 border border-unops-warning-light rounded flex items-start gap-2">
+                          <i class="pi pi-info-circle text-unops-warning-darker text-sm mt-0.5"></i>
+                          <span class="text-xs text-unops-neutral-800">
+                            {{ 'message.info.multipleAgreementsAvailable' | translate: {count: client.availableAgreements.length} }}
+                          </span>
                         </div>
                       }
                     }
@@ -897,6 +930,48 @@
       }
     </div>
   </div>
+  
+  <!-- Footer with Unsaved Changes Warning -->
+  <ng-template pTemplate="footer">
+    @if (isEditing() && hasUnsavedChangesSignal()) {
+      <div class="bg-amber-100 border-t-4 border-amber-500 px-4 py-3 rounded-b">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div class="flex items-start gap-2 flex-1">
+            <i class="pi pi-exclamation-triangle text-amber-600 text-lg flex-shrink-0 mt-0.5"></i>
+            <div class="flex flex-col">
+              <span class="text-sm font-bold text-amber-900">
+                {{ 'message.unsavedChanges' | translate }}
+              </span>
+              <span class="text-xs font-medium text-amber-800">
+                {{ 'message.unsavedChangesSectionDetail' | translate }}
+              </span>
+            </div>
+          </div>
+          <div class="flex gap-2 w-full sm:w-auto">
+            <p-button
+              [label]="'button.discardChanges' | translate"
+              icon="pi pi-times"
+              severity="danger"
+              [outlined]="true"
+              (onClick)="cancelEditing()"
+              [disabled]="isSaving()"
+              styleClass="flex-1 sm:flex-none"
+              size="small"
+            />
+            <p-button
+              [label]="'button.saveChanges' | translate"
+              icon="pi pi-check"
+              severity="success"
+              (onClick)="saveSection()"
+              [disabled]="isSaving()"
+              styleClass="flex-1 sm:flex-none"
+              size="small"
+            />
+          </div>
+        </div>
+      </div>
+    }
+  </ng-template>
 </p-panel>
 
 <!-- Funding Partner Dialog -->

@@ -243,7 +243,7 @@
             #commentTextarea
             [(ngModel)]="newCommentContent"
             (input)="onCommentInput($event, false)"
-            class="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            class="w-full p-3 rounded-lg resize-none focus:outline-none new-comment-textarea"
             rows="3"
             [placeholder]="'placeholder.addComment' | translate"
           ></textarea>

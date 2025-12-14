@@ -96,6 +96,11 @@ export class OpportunityWhatSectionComponent implements OnInit {
   private readonly feedbackService = inject(FeedbackDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
 
+  // State tracking properties to prevent duplicate processing in effects
+  private lastProcessedOpportunityId: number | undefined;
+  private lastDocumentUploadTrigger = 0;
+  private lastSectionSaveTrigger = 0;
+
   /**
    * @description Input signal for opportunity data from parent
    */
@@ -142,18 +147,13 @@ export class OpportunityWhatSectionComponent implements OnInit {
   // Edit mode state
   readonly isEditing = signal<boolean>(false);
   readonly isSaving = signal<boolean>(false);
+  readonly hasUnsavedChangesSignal = signal<boolean>(false);
   private originalData: {
     responsibleOrgUnitId?: number;
     proposedInitiativeTypeId?: number;
     deliveryModality?: number | null;
     deliverables?: any[];
   } | null = null;
-  private hasUnsavedChanges = false;
-  
-  // Track last processed values to prevent infinite effect loops
-  private lastProcessedOpportunityId: number | null = null;
-  private lastDocumentUploadTrigger: number = 0;
-  private lastSectionSaveTrigger: number = 0;
 
   // Form controls for WHAT section
   orgUnitControl = new FormControl<number | null>(null);
@@ -1857,8 +1857,8 @@ export class OpportunityWhatSectionComponent implements OnInit {
    * @private
    */
   private markAsChanged(): void {
-    if (!this.hasUnsavedChanges) {
-      this.hasUnsavedChanges = true;
+    if (!this.hasUnsavedChangesSignal()) {
+      this.hasUnsavedChangesSignal.set(true);
       this.changesDetected.emit();
     }
   }
@@ -1883,7 +1883,7 @@ export class OpportunityWhatSectionComponent implements OnInit {
         this.isSaving.set(false);
         this.isEditing.set(false);
         this.originalData = null;
-        this.hasUnsavedChanges = false;
+        this.hasUnsavedChangesSignal.set(false);
         
         // Emit full updated opportunity to parent
         this.opportunityUpdated.emit(fullUpdatedOpportunity);
@@ -1943,7 +1943,7 @@ export class OpportunityWhatSectionComponent implements OnInit {
     
     this.isEditing.set(false);
     this.originalData = null;
-    this.hasUnsavedChanges = false;
+    this.hasUnsavedChangesSignal.set(false);
     
     // Clear unsaved changes tracking
     this.changesSavedOrDiscarded.emit();

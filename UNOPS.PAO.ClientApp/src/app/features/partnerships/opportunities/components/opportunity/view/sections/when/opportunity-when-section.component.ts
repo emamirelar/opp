@@ -101,7 +101,7 @@ export class OpportunityWhenSectionComponent implements OnInit {
   readonly isEditing = signal(false);
   readonly isSaving = signal(false);
   readonly isTimelineCollapsed = signal(false);
-  private hasUnsavedChanges = false;
+  readonly hasUnsavedChangesSignal = signal<boolean>(false);
 
   // Form controls
   targetSigningDateControl = new FormControl<Date | null>(null);
@@ -893,10 +893,28 @@ export class OpportunityWhenSectionComponent implements OnInit {
    * @private
    */
   private markAsChanged(): void {
-    if (!this.hasUnsavedChanges) {
-      this.hasUnsavedChanges = true;
+    if (!this.hasUnsavedChangesSignal()) {
+      this.hasUnsavedChangesSignal.set(true);
       this.changesDetected.emit();
     }
+  }
+
+  /**
+   * @description Normalize date to UTC midnight (T00:00:00Z)
+   * @param {Date | null} date - Date to normalize
+   * @returns {string | null} ISO string with T00:00:00Z or null
+   * @private
+   */
+  private normalizeDateToUTCMidnight(date: Date | null): string | null {
+    if (!date) return null;
+    
+    // Create new date with UTC midnight using the local date values
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
+    
+    const utcDate = new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
+    return utcDate.toISOString();
   }
 
   /**
@@ -954,24 +972,24 @@ export class OpportunityWhenSectionComponent implements OnInit {
       return;
     }
 
-    // Build updated deliverables with dates from local state
+    // Build updated deliverables with dates from local state (normalized to UTC midnight)
     const dateMap = this.deliverableDates();
     const updatedDeliverables = (opp.deliverables || []).map((d) => {
       const dates = dateMap.get(d.id);
       return {
         ...d,
-        plannedStartDate: dates?.start?.toISOString() ?? d.plannedStartDate,
-        plannedEndDate: dates?.end?.toISOString() ?? d.plannedEndDate
+        plannedStartDate: this.normalizeDateToUTCMidnight(dates?.start ?? null) ?? d.plannedStartDate,
+        plannedEndDate: this.normalizeDateToUTCMidnight(dates?.end ?? null) ?? d.plannedEndDate
       };
     });
 
     const whenData = {
-      targetSigningDate: this.targetSigningDateControl.value,
-      implementationStartDate: this.implementationStartDateControl.value,
-      targetDeliveryDate: this.targetDeliveryDateControl.value,
+      targetSigningDate: this.normalizeDateToUTCMidnight(this.targetSigningDateControl.value),
+      implementationStartDate: this.normalizeDateToUTCMidnight(this.implementationStartDateControl.value),
+      targetDeliveryDate: this.normalizeDateToUTCMidnight(this.targetDeliveryDateControl.value),
       isTargetSigningDateFirm: this.isSigningDateFirmControl.value,
       signingDateNotes: this.signingDateNotesControl.value,
-      submissionDeadline: this.submissionDeadlineControl.value,
+      submissionDeadline: this.normalizeDateToUTCMidnight(this.submissionDeadlineControl.value),
       deliverables: updatedDeliverables
     };
 
@@ -980,7 +998,7 @@ export class OpportunityWhenSectionComponent implements OnInit {
       next: (fullUpdatedOpportunity) => {
         this.isSaving.set(false);
         this.isEditing.set(false);
-        this.hasUnsavedChanges = false;
+        this.hasUnsavedChangesSignal.set(false);
 
         // Clear local date state and reset duration selection
         this.deliverableDates.set(new Map());
@@ -1010,7 +1028,7 @@ export class OpportunityWhenSectionComponent implements OnInit {
    */
   cancelEditing(): void {
     this.isEditing.set(false);
-    this.hasUnsavedChanges = false;
+    this.hasUnsavedChangesSignal.set(false);
 
     // Reset duration selection
     this.resetDurationSelection();

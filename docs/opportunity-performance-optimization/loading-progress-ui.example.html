@@ -1,0 +1,287 @@
+<!-- 
+  Loading Progress UI Components for Opportunity View
+  
+  This file demonstrates the HTML structure for implementing loading progress
+  indication in the opportunity-view.component.html file.
+-->
+
+<!-- ============================================ -->
+<!-- OPTION 1: Top-Fixed Progress Strip (Recommended) -->
+<!-- ============================================ -->
+
+<!-- Insert this AFTER the section navigation chips/dropdown -->
+@if (showProgressBar()) {
+  <div 
+    class="loading-progress-strip bg-unops-surface-primary border-b border-unops-neutral-200 transition-all duration-300 py-2 px-unops-md md:px-unops-2xl"
+  >
+    <div class="flex items-center justify-between gap-4">
+      <!-- Progress Bar -->
+      <div class="flex-1 min-w-0">
+        <div class="w-full bg-unops-neutral-200 rounded-full h-1.5 overflow-hidden">
+          <div 
+            class="bg-unops-primary h-1.5 rounded-full transition-all duration-500 ease-out"
+            [style.width.%]="progressPercentage()"
+          ></div>
+        </div>
+      </div>
+      
+      <!-- Progress Text -->
+      <div class="flex items-center gap-3 text-sm text-unops-neutral-700 flex-shrink-0">
+        <span class="flex items-center gap-2">
+          <i class="pi pi-spin pi-spinner text-unops-primary text-sm"></i>
+          <span class="font-medium hidden sm:inline">{{ progressMessage() }}</span>
+        </span>
+        <span class="text-unops-neutral-500 font-medium">
+          {{ progressPercentage() }}%
+        </span>
+      </div>
+    </div>
+    
+    <!-- Accessibility: Screen reader announcement -->
+    <div 
+      role="status" 
+      aria-live="polite" 
+      aria-atomic="true"
+      class="sr-only"
+    >
+      {{ progressMessage() }}
+    </div>
+  </div>
+}
+
+<!-- ============================================ -->
+<!-- OPTION 2: Floating Toast Indicator -->
+<!-- ============================================ -->
+
+@if (showProgressBar()) {
+  <div 
+    class="loading-toast fixed top-20 right-4 z-50 bg-white shadow-unops-xl rounded-unops-lg border border-unops-neutral-300 p-4 w-80 max-w-full transition-all duration-300"
+    style="animation: slideInRight 0.3s ease-out"
+  >
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center gap-2">
+        <i class="pi pi-spin pi-spinner text-unops-primary"></i>
+        <span class="font-semibold text-unops-neutral-900">
+          {{ 'message.loading' | translate }}
+        </span>
+      </div>
+      <button 
+        (click)="dismissLoadingToast()"
+        class="text-unops-neutral-500 hover:text-unops-neutral-700 transition-colors"
+        [attr.aria-label]="'button.close' | translate"
+      >
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+    
+    <!-- Progress Bar -->
+    <div class="mb-2">
+      <div class="w-full bg-unops-neutral-200 rounded-full h-2 overflow-hidden">
+        <div 
+          class="bg-unops-primary h-2 rounded-full transition-all duration-500 ease-out"
+          [style.width.%]="progressPercentage()"
+        ></div>
+      </div>
+    </div>
+    
+    <!-- Progress Message -->
+    <div class="text-sm text-unops-neutral-600">
+      {{ progressMessage() }}
+    </div>
+  </div>
+}
+
+<!-- ============================================ -->
+<!-- OPTION 3: Section Skeleton Loaders -->
+<!-- ============================================ -->
+
+<!-- Example for DST Section -->
+<div id="section-risks">
+  @if (dstSectionComponent?.loadingRisks() || dstSectionComponent?.loadingRecommendations()) {
+    <!-- Skeleton Loader -->
+    <div class="bg-unops-surface-primary rounded-unops-lg shadow-unops-sm border border-unops-neutral-300 p-6">
+      <!-- Header Skeleton -->
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+          <div class="skeleton-box w-10 h-10 rounded-full"></div>
+          <div class="skeleton-box w-48 h-6 rounded"></div>
+        </div>
+        <div class="skeleton-box w-20 h-8 rounded"></div>
+      </div>
+      
+      <!-- Content Skeleton -->
+      <div class="space-y-4">
+        <div class="skeleton-box w-full h-4 rounded"></div>
+        <div class="skeleton-box w-5/6 h-4 rounded"></div>
+        <div class="skeleton-box w-4/6 h-4 rounded"></div>
+      </div>
+      
+      <!-- Card Skeletons -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+        @for (item of [1, 2, 3, 4]; track item) {
+          <div class="skeleton-card p-4 border border-unops-neutral-200 rounded-unops-md">
+            <div class="skeleton-box w-3/4 h-5 rounded mb-3"></div>
+            <div class="skeleton-box w-full h-3 rounded mb-2"></div>
+            <div class="skeleton-box w-5/6 h-3 rounded"></div>
+          </div>
+        }
+      </div>
+    </div>
+  } @else {
+    <!-- Actual DST Section Component -->
+    <app-opportunity-dst-section
+      #risksSection
+      [opportunity]="opportunity()!" 
+      [canUpdate]="canUpdate()"
+      (opportunityUpdated)="handleOpportunityUpdate($event)"
+      (changesDetected)="handleSectionChangesDetected('risks')"
+      (changesSavedOrDiscarded)="handleSectionChangesSaved('risks')"
+      (risksLoaded)="onDSTRisksLoaded()"
+      (recommendationsLoaded)="onDSTRecommendationsLoaded()"
+      (similarOpportunitiesLoaded)="onDSTSimilarOpportunitiesLoaded()"
+      (similarProjectsLoaded)="onDSTSimilarProjectsLoaded()"
+      (relevantPeopleLoaded)="onDSTRelevantPeopleLoaded()"
+    />
+  }
+</div>
+
+<!-- ============================================ -->
+<!-- Skeleton Loader Styles (SCSS) -->
+<!-- ============================================ -->
+
+<!--
+// Add to opportunity-view.component.scss
+
+.skeleton-box {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-card {
+  background: linear-gradient(
+    90deg,
+    #f8f8f8 25%,
+    #f0f0f0 50%,
+    #f8f8f8 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes slideInRight {
+  0% {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-box,
+  .skeleton-card {
+    animation: none;
+    background: #f0f0f0;
+  }
+  
+  .loading-toast {
+    animation: none;
+  }
+}
+
+// Loading progress strip styles
+.loading-progress-strip {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  backdrop-filter: blur(8px);
+  background-color: rgba(255, 255, 255, 0.95);
+}
+
+// Progress bar animation
+.loading-progress-strip .bg-unops-primary {
+  transition: width 0.5s ease-out;
+}
+-->
+
+<!-- ============================================ -->
+<!-- Detailed Progress View (Expandable) -->
+<!-- ============================================ -->
+
+<!-- Optional: Expandable detailed progress panel -->
+@if (showProgressBar() && showDetailedProgress()) {
+  <div class="loading-details-panel bg-unops-surface-primary border-b border-unops-neutral-200 px-unops-md md:px-unops-2xl py-4">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      @for (section of loadingProgress().sections | keyvalue; track section.key) {
+        <div class="flex items-center gap-2">
+          <!-- Status Icon -->
+          @switch (section.value.status) {
+            @case ('completed') {
+              <i class="pi pi-check-circle text-green-600"></i>
+            }
+            @case ('loading') {
+              <i class="pi pi-spin pi-spinner text-unops-primary"></i>
+            }
+            @case ('error') {
+              <i class="pi pi-times-circle text-red-600"></i>
+            }
+            @default {
+              <i class="pi pi-circle text-unops-neutral-400"></i>
+            }
+          }
+          
+          <!-- Section Label -->
+          <span 
+            class="text-sm"
+            [class.text-unops-neutral-900]="section.value.status === 'completed'"
+            [class.text-unops-primary]="section.value.status === 'loading'"
+            [class.text-red-600]="section.value.status === 'error'"
+            [class.text-unops-neutral-500]="section.value.status === 'pending'"
+          >
+            {{ section.value.label }}
+          </span>
+        </div>
+      }
+    </div>
+    
+    <!-- Toggle Button -->
+    <button 
+      (click)="toggleDetailedProgress()"
+      class="mt-3 text-sm text-unops-primary hover:text-unops-primary-dark flex items-center gap-2"
+    >
+      <span>{{ 'button.hideDetails' | translate }}</span>
+      <i class="pi pi-chevron-up"></i>
+    </button>
+  </div>
+}
+
+<!-- Toggle Button (when details are hidden) -->
+@if (showProgressBar() && !showDetailedProgress()) {
+  <button 
+    (click)="toggleDetailedProgress()"
+    class="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-unops-primary hover:text-unops-primary-dark"
+    [attr.aria-label]="'button.showDetails' | translate"
+  >
+    <i class="pi pi-chevron-down"></i>
+  </button>
+}
+

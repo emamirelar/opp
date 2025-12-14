@@ -5,59 +5,80 @@
   class="{{ isSaving() ? 'opacity-50 pointer-events-none' : '' }}"
 >
   <ng-template pTemplate="header">
-    <div class="flex items-center justify-between w-full pr-4">
-      <div class="flex items-center gap-2">
-        <i class="pi pi-lightbulb text-unops-secondary"></i>
-        <span class="font-semibold">{{ 'label.opportunity.whyImpactAlignment' | translate }}</span>
-      </div>
-      <div class="flex items-center gap-2">
-        @if (isSaving()) {
-          <i class="pi pi-spin pi-spinner text-xl text-primary"></i>
-        }
-        @if (canUpdate()) {
-          @if (!isEditing()) {
-            <p-button
-              icon="pi pi-pencil"
-              [text]="true"
-              [rounded]="true"
-              severity="secondary"
-              size="small"
-              (onClick)="startEditing()"
-              pTooltip="{{ 'button.edit' | translate }}"
-              [disabled]="isSaving()"
-            />
-          } @else {
-            <p-button
-              icon="pi pi-check"
-              [text]="true"
-              [rounded]="true"
-              severity="success"
-              size="small"
-              (onClick)="saveSection()"
-              [disabled]="isSaving()"
-              pTooltip="{{ 'button.save' | translate }}"
-            />
-            <p-button
-              icon="pi pi-times"
-              [text]="true"
-              [rounded]="true"
-              severity="danger"
-              size="small"
-              (onClick)="cancelEditing()"
-              [disabled]="isSaving()"
-              pTooltip="{{ 'button.cancel' | translate }}"
-            />
+    <div class="flex flex-col w-full pr-4">
+      <div class="flex items-center justify-between w-full">
+        <div class="flex items-center gap-2">
+          <i class="pi pi-lightbulb text-unops-secondary"></i>
+          <span class="font-semibold">{{ 'label.opportunity.whyImpactAlignment' | translate }}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          @if (isSaving()) {
+            <i class="pi pi-spin pi-spinner text-xl text-primary"></i>
           }
-        }
+          @if (canUpdate()) {
+            @if (!isEditing()) {
+              <p-button
+                icon="pi pi-pencil"
+                [text]="true"
+                [rounded]="true"
+                severity="secondary"
+                size="small"
+                (onClick)="startEditing()"
+                pTooltip="{{ 'button.edit' | translate }}"
+                [disabled]="isSaving()"
+              />
+            }
+          }
+        </div>
       </div>
+      
+      <!-- Unsaved Changes Warning Bar (shown when editing with unsaved changes) -->
+      @if (isEditing() && hasUnsavedChangesSignal()) {
+        <div class="mt-3 bg-amber-100 border-l-4 border-amber-500 px-4 py-3 rounded">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div class="flex items-start gap-2 flex-1">
+              <i class="pi pi-exclamation-triangle text-amber-600 text-lg flex-shrink-0 mt-0.5"></i>
+              <div class="flex flex-col">
+                <span class="text-sm font-bold text-amber-900">
+                  {{ 'message.unsavedChanges' | translate }}
+                </span>
+                <span class="text-xs font-medium text-amber-800">
+                  {{ 'message.unsavedChangesSectionDetail' | translate }}
+                </span>
+              </div>
+            </div>
+            <div class="flex gap-2 w-full sm:w-auto">
+              <p-button
+                [label]="'button.discardChanges' | translate"
+                icon="pi pi-times"
+                severity="danger"
+                [outlined]="true"
+                (onClick)="cancelEditing()"
+                [disabled]="isSaving()"
+                styleClass="flex-1 sm:flex-none"
+                size="small"
+              />
+              <p-button
+                [label]="'button.saveChanges' | translate"
+                icon="pi pi-check"
+                severity="success"
+                (onClick)="saveSection()"
+                [disabled]="isSaving()"
+                styleClass="flex-1 sm:flex-none"
+                size="small"
+              />
+            </div>
+          </div>
+        </div>
+      }
     </div>
   </ng-template>
 
   <div class="space-y-6">
     <!-- AI Suggestions -->
     @if (suggestions() && suggestions().length > 0) {
-      <div
-        class="bg-unops-accent-yellow-soft rounded-unops-lg p-3 border border-unops-warning-light"
+      <div style="background-color: rgb(253, 250, 241);"
+        class="rounded-unops-lg p-3 border border-unops-warning-light"
       >
         <div class="flex items-start gap-2 mb-2">
           <i
@@ -75,7 +96,7 @@
               <div class="font-semibold text-xs text-unops-secondary mb-1">
                 {{ suggestion.title }}
               </div>
-              <p class="text-xs text-unops-neutral-700">
+              <p class="text-xs text-unops-neutral-800">
                 {{ suggestion.description }}
               </p>
             </div>
@@ -265,11 +286,11 @@
                     <!-- Display Targets and Indicators or Opt-Out Status -->
                     @if (sdg.skipTargetsAndIndicators) {
                       <div class="mt-3">
-                        <div class="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3">
-                          <i class="pi pi-info-circle text-amber-600 text-sm mt-0.5"></i>
-                          <div class="text-sm text-amber-800">
-                            <span class="font-medium">{{ "label.opportunity.skipTargetsAndIndicators" | translate }}</span>
-                            <p class="text-xs text-amber-700 mt-1">
+                        <div style="background-color: rgb(253, 250, 241);" class="flex items-start gap-2 border border-unops-warning-light rounded-lg p-3">
+                          <i class="pi pi-info-circle text-unops-warning-darker text-sm mt-0.5"></i>
+                          <div class="text-sm">
+                            <span class="font-medium text-unops-secondary">{{ "label.opportunity.skipTargetsAndIndicators" | translate }}</span>
+                            <p class="text-xs text-unops-neutral-800 mt-1">
                               {{ "message.opportunity.skipTargetsAndIndicatorsInfo" | translate }}
                             </p>
                           </div>
@@ -709,11 +730,11 @@
 
         <!-- Countries WITHOUT framework - Show banner -->
         @if (countriesWithoutFramework().length > 0) {
-          <div class="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div style="background-color: rgb(253, 250, 241);" class="mt-3 border border-unops-warning-light rounded-lg p-4">
             <div class="flex items-start gap-3">
-              <i class="pi pi-info-circle text-amber-600 mt-0.5"></i>
+              <i class="pi pi-info-circle text-unops-warning-darker mt-0.5"></i>
               <div class="flex-1">
-                <p class="text-xs font-medium text-amber-900 mb-2">
+                <p class="text-xs font-medium text-unops-secondary mb-2">
                   {{
                     "message.opportunity.countriesWithoutFramework" | translate
                   }}
@@ -724,7 +745,7 @@
                     track country.id
                   ) {
                     <span
-                      class="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs text-gray-700 border border-amber-300"
+                      class="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs text-unops-neutral-800 border border-unops-warning-light"
                     >
                       <span class="font-semibold">{{
                         country.country?.iso2Code
@@ -869,17 +890,17 @@
 
         <!-- Countries WITHOUT NDC - Show banner -->
         @if (countriesWithoutNdc().length > 0) {
-          <div class="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div style="background-color: rgb(253, 250, 241);" class="mt-3 border border-unops-warning-light rounded-lg p-4">
             <div class="flex items-start gap-3">
-              <i class="pi pi-info-circle text-amber-600 mt-0.5"></i>
+              <i class="pi pi-info-circle text-unops-warning-darker mt-0.5"></i>
               <div class="flex-1">
-                <p class="text-xs font-medium text-amber-900 mb-2">
+                <p class="text-xs font-medium text-unops-secondary mb-2">
                   {{ "message.opportunity.countriesWithoutNdc" | translate }}
                 </p>
                 <div class="flex flex-wrap gap-2">
                   @for (country of countriesWithoutNdc(); track country.id) {
                     <span
-                      class="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs text-gray-700 border border-amber-300"
+                      class="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs text-unops-neutral-800 border border-unops-warning-light"
                     >
                       <span class="font-semibold">{{
                         country.country?.iso2Code
@@ -1024,17 +1045,17 @@
 
         <!-- Countries WITHOUT NAP - Show banner -->
         @if (countriesWithoutNap().length > 0) {
-          <div class="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div style="background-color: rgb(253, 250, 241);" class="mt-3 border border-unops-warning-light rounded-lg p-4">
             <div class="flex items-start gap-3">
-              <i class="pi pi-info-circle text-amber-600 mt-0.5"></i>
+              <i class="pi pi-info-circle text-unops-warning-darker mt-0.5"></i>
               <div class="flex-1">
-                <p class="text-xs font-medium text-amber-900 mb-2">
+                <p class="text-xs font-medium text-unops-secondary mb-2">
                   {{ "message.opportunity.countriesWithoutNap" | translate }}
                 </p>
                 <div class="flex flex-wrap gap-2">
                   @for (country of countriesWithoutNap(); track country.id) {
                     <span
-                      class="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs text-gray-700 border border-amber-300"
+                      class="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs text-unops-neutral-800 border border-unops-warning-light"
                     >
                       <span class="font-semibold">{{
                         country.country?.iso2Code
@@ -1262,11 +1283,11 @@
 
         <!-- Countries WITHOUT Organization Unit Strategy - Show banner -->
         @if (countriesWithoutOrgUnitStrategy().length > 0) {
-          <div class="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div style="background-color: rgb(253, 250, 241);" class="mt-3 border border-unops-warning-light rounded-lg p-4">
             <div class="flex items-start gap-3">
-              <i class="pi pi-info-circle text-amber-600 mt-0.5"></i>
+              <i class="pi pi-info-circle text-unops-warning-darker mt-0.5"></i>
               <div class="flex-1">
-                <p class="text-xs font-medium text-amber-900 mb-2">
+                <p class="text-xs font-medium text-unops-secondary mb-2">
                   {{
                     "message.opportunity.countriesWithoutOrgUnitStrategy"
                       | translate
@@ -1278,7 +1299,7 @@
                     track country.id
                   ) {
                     <span
-                      class="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs text-gray-700 border border-amber-300"
+                      class="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs text-unops-neutral-800 border border-unops-warning-light"
                     >
                       <span class="font-semibold">{{
                         country.country?.iso2Code
@@ -1502,6 +1523,48 @@
       </div>
     </div>
   </div>
+  
+  <!-- Footer with Unsaved Changes Warning -->
+  <ng-template pTemplate="footer">
+    @if (isEditing() && hasUnsavedChangesSignal()) {
+      <div class="bg-amber-100 border-t-4 border-amber-500 px-4 py-3 rounded-b">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div class="flex items-start gap-2 flex-1">
+            <i class="pi pi-exclamation-triangle text-amber-600 text-lg flex-shrink-0 mt-0.5"></i>
+            <div class="flex flex-col">
+              <span class="text-sm font-bold text-amber-900">
+                {{ 'message.unsavedChanges' | translate }}
+              </span>
+              <span class="text-xs font-medium text-amber-800">
+                {{ 'message.unsavedChangesSectionDetail' | translate }}
+              </span>
+            </div>
+          </div>
+          <div class="flex gap-2 w-full sm:w-auto">
+            <p-button
+              [label]="'button.discardChanges' | translate"
+              icon="pi pi-times"
+              severity="danger"
+              [outlined]="true"
+              (onClick)="cancelEditing()"
+              [disabled]="isSaving()"
+              styleClass="flex-1 sm:flex-none"
+              size="small"
+            />
+            <p-button
+              [label]="'button.saveChanges' | translate"
+              icon="pi pi-check"
+              severity="success"
+              (onClick)="saveSection()"
+              [disabled]="isSaving()"
+              styleClass="flex-1 sm:flex-none"
+              size="small"
+            />
+          </div>
+        </div>
+      </div>
+    }
+  </ng-template>
 </p-panel>
 
 <!-- SDG Dialog - Two-Step Flow -->
