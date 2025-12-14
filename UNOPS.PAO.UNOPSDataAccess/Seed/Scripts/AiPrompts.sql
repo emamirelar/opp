@@ -3479,256 +3479,558 @@ For each person, add a "relevanceExplanation" field with a one-line explanation 
         "Feature", "UseCache", "CacheInvalidationMinutes"
     ) VALUES (
         'opportunity_statement_validation',
-        'You are an expert analyst comparing opportunity statements to identify inconsistencies. Return ONLY valid JSON.
+        'You are an expert analyst validating opportunity statement markdown against structured opportunity data. Return ONLY valid JSON.
+
+🚨🚨🚨 CRITICAL RULE #1 - READ THIS FIRST 🚨🚨🚨
+**IF MARKDOWN AND DATA SAY THE SAME THING → DO NOT FLAG IT**
+
+Examples of SAME (DO NOT FLAG):
+- Markdown: "No UNCF Outcomes" = Data: "No UNCF Outcomes" → IDENTICAL → DO NOT FLAG
+- Markdown: "No SDGs" = Data: "No SDGs" → IDENTICAL → DO NOT FLAG
+- Markdown: "No risks" = Data: "No risks" → IDENTICAL → DO NOT FLAG
+- Markdown: "5,214,368.48 USD (4,500,000.00 EUR)" = Data: "4,500,000.00 EUR (5,214,368.48 USD)" → SAME AMOUNTS → DO NOT FLAG
+- Markdown: "$45M" = Data: 45214368.48 → REASONABLE ROUNDING → DO NOT FLAG
+
+**ONLY FLAG when markdown states DIFFERENT facts than data**
+- Markdown: "No SDGs" but Data: "SDG 6: Clean Water" → DIFFERENT → FLAG THIS
+- Markdown: "$500K" but Data: 45214368.48 → DIFFERENT → FLAG THIS
 
 INPUT FORMAT:
 The input JSON contains:
-- existingStatement: The current opportunity statement stored in the database
-- freshlyGeneratedStatement: A newly generated opportunity statement based on current data
+- existingStatementMarkdown: The current opportunity statement markdown stored in the database
+- opportunityData: The structured opportunity data (JSON object with all current opportunity information)
 - opportunityId: The opportunity identifier
 
-COMPARISON TASK:
-Compare the existingStatement against the freshlyGeneratedStatement to identify meaningful differences that indicate the existing statement is outdated or inaccurate based on current data.
+VALIDATION TASK:
+Validate whether the existingStatementMarkdown accurately reflects the information in opportunityData. Identify material factual inaccuracies where markdown states DIFFERENT facts than data shows.
 
-COMPARISON PRINCIPLES:
-1. **Material Differences Only**: Only flag changes that would affect understanding of the opportunity
-2. **Formatting Tolerance**: Ignore minor formatting, wording, or stylistic differences
-3. **Factual Changes**: Focus on factual information changes (numbers, dates, names, locations)
-4. **Context Preservation**: Consider whether the core meaning has changed
-5. **Reasonable Variations**: Allow for different ways of expressing the same information
+🚨🚨🚨 BEFORE YOU DO ANYTHING ELSE - READ THESE EXAMPLES 🚨🚨🚨
 
-WHAT TO FLAG AS MISALIGNMENTS:
+**THESE ARE NOT INACCURACIES (DO NOT FLAG):**
+1. Markdown: "UNCF Outcomes: No UNCF Outcomes" | Data: uncfOutcomes = "No UNCF Outcomes"
+   → **THEY SAY THE SAME THING** → DO NOT FLAG
 
-**1. Budget/Financial Changes**
-- Different budget amounts (e.g., existing: "$500K" → fresh: "$45M")
-- Changed funding sources or partner funding amounts
-- Material changes in financial commitments
+2. Markdown: "SDGs: No SDGs" | Data: sdGs = "No SDGs"
+   → **THEY SAY THE SAME THING** → DO NOT FLAG
 
-**2. Timeline Changes**
-- Different start dates, end dates, or durations
-- Changed milestones or delivery timelines
-- Updated target dates for signing or completion
+3. Markdown: "UNOPS Mission alignments: No UNOPS Mission alignments" | Data: unopsMissions = "No UNOPS Mission alignments"
+   → **THEY SAY THE SAME THING** → DO NOT FLAG
 
-**3. Geographic Changes**
-- Different countries or locations mentioned
-- Added or removed geographic focus areas
-- Changed regional priorities
+4. Markdown: "NIC-Union Europea: 5,214,368.48 USD (4,500,000.00 EUR)" | Data: fundingPartner amount = "4,500,000.00 EUR (5,214,368.48 USD)"
+   → **SAME AMOUNTS, JUST DIFFERENT ORDER OF USD/EUR** → DO NOT FLAG
 
-**4. Partner/Stakeholder Changes**
-- New or removed funding partners
-- Changed client partners or organizations
-- Material changes in stakeholder lists (excluding minor formatting)
+5. Markdown: "Budget of $45M" | Data: totalBudget = 45214368.48
+   → **REASONABLE ROUNDING (0.5% difference)** → DO NOT FLAG
 
-**5. Scope/Deliverable Changes**
-- Different deliverables or outputs listed
-- Changed delivery modalities or implementation approaches
-- Material changes in what UNOPS will deliver
+**THESE ARE INACCURACIES (SHOULD FLAG):**
+1. Markdown: "SDGs: No SDGs" | Data: sdGs = ["SDG 6: Clean Water and Sanitation"]
+   → **MARKDOWN SAYS "NO" BUT DATA HAS ACTUAL SDG** → FLAG THIS
 
-**6. Strategic Alignment Changes**
-- Different SDGs referenced
-- Changed UNOPS strategic priorities
-- Updated UN Cooperation Framework outcomes
+2. Markdown: "Budget of $5M" | Data: totalBudget = 45214368.48
+   → **MARKDOWN SHOWS $5M BUT DATA SHOWS $45M (88% off)** → FLAG THIS
 
-**7. Beneficiary Changes**
-- Different numbers of direct/indirect beneficiaries
-- Changed target beneficiary groups or institutions
-- Material differences in expected impact
+3. Markdown: "Funded by World Bank" | Data: fundingPartners = ["AfDB", "EU"]
+   → **MARKDOWN LISTS WRONG PARTNERS** → FLAG THIS
 
-**8. Risk Profile Changes**
-- New or removed high-level risks
-- Material changes in risk assessment or mitigation strategies
-- Changed assumptions affecting implementation
+VALIDATION PRINCIPLES:
+1. **Material Inaccuracies Only**: Only flag factual information in the markdown that contradicts the structured data
+2. **Ignore Absence**: DO NOT flag information that is missing/absent in both the markdown and the structured data
+3. **Placeholder Equivalence**: If structured data is null/empty/missing, ANY placeholder in markdown is acceptable ("No [field]", "[Information not available]", "[To be determined]", etc.)
+4. **Factual Accuracy**: Focus on verifying numbers, dates, names, locations, amounts match between markdown and data
+5. **Narrative vs Data**: The markdown is a narrative document - it may describe data in different words, formats, or structures as long as it''s factually accurate
+6. **Number Tolerance**: Markdown can round large numbers (e.g., $45,214,368.48 → "$45M") as long as rounding is reasonable and doesn''t materially misrepresent the value
+7. **🚨 SAME MEANS SAME**: If markdown and data say the SAME THING (even in slightly different words), DO NOT FLAG. Example: Markdown "No risks identified" = Data "No risks identified" → DO NOT FLAG (they agree!)
+8. **CRITICAL**: Only flag when markdown states something MATERIALLY DIFFERENT from what the data shows, not when they agree or are reasonably formatted
 
-WHAT NOT TO FLAG (DO NOT REPORT AS MISALIGNMENTS):
+WHAT TO FLAG AS INACCURACIES (Markdown contradicts data):
 
-**1. Formatting Differences**
-- "$45,000,000" vs "$45 million" vs "45 million USD"
-- "2026-03-30" vs "March 30, 2026" vs "March 2026" vs "Q1 2026"
-- "2,500,000 people" vs "2.5 million people"
-- "World Bank" vs "The World Bank"
+**1. Budget/Financial Inaccuracies**
+- Markdown shows budget amount that differs from opportunityData.totalBudget
+- Markdown lists funding partners not in opportunityData.fundingPartners
+- Markdown shows funding amounts that don''t match opportunityData.fundingPartners[].amount
 
-**2. Stylistic Variations**
-- Different sentence structures expressing the same meaning
-- Reordered information that conveys identical facts
-- Expanded vs. condensed descriptions of the same content
-- Different section organization with same information
+**2. Timeline Inaccuracies**
+- Markdown shows start/end dates that differ from opportunityData.targetSigningDate or opportunityData.estimatedStartDate or opportunityData.estimatedCompletionDate
+- Markdown shows duration that contradicts calculated duration from data dates
 
-**3. Minor Wording Changes**
-- Synonyms or equivalent phrases (e.g., "objective" vs "goal", "partners" vs "stakeholders")
-- Grammatical variations that don''t change meaning
-- Active vs passive voice for the same fact
+**3. Geographic Inaccuracies**
+- Markdown mentions countries not in opportunityData.countries[]
+- Markdown excludes countries that are in opportunityData.countries[]
 
-**4. Reasonable Summarization**
-- "Multiple deliverables" vs listing 4 specific deliverables
-- "Several partners" vs listing 3-4 partners by name
-- "Key stakeholders include..." vs comprehensive stakeholder list
+**4. Partner/Stakeholder Inaccuracies**
+- Markdown lists funding partners not in opportunityData.fundingPartners[]
+- Markdown lists client partners not in opportunityData.clientPartners[]
+- Markdown lists stakeholders not in opportunityData.contactStakeholders[]
 
-**5. Placeholder Consistency**
-- Both use "[To be determined]" or "[Information not available]"
-- Both indicate missing information consistently
+**5. Scope/Deliverable Inaccuracies**
+- Markdown lists deliverables not in opportunityData.deliverables[]
+- Markdown shows delivery modality that contradicts opportunityData.deliveryModality
 
-COMPARISON EXAMPLES:
+**6. Strategic Alignment Inaccuracies**
+- Markdown lists SDGs not in opportunityData.sdGs[]
+- Markdown lists UNOPS missions not in opportunityData.unopsMissions[]
+- Markdown lists UNCF outcomes not in opportunityData.uncfOutcomes[]
 
-**Example 1: SHOULD FLAG - Budget changed**
-Existing: "The project budget is $500,000"
-Fresh: "The project budget is $45,000,000"
-→ FLAG: "Budget - Existing statement shows $500,000 but fresh statement indicates $45,000,000"
+**7. Beneficiary Inaccuracies**
+- Markdown shows beneficiary numbers that differ from opportunityData.directBeneficiaries or opportunityData.indirectBeneficiaries
+- Markdown lists beneficiary institutions not in opportunityData.beneficiaryInstitutions
+
+**8. Basic Information Inaccuracies**
+- Markdown shows opportunity name that differs from opportunityData.name
+- Markdown shows org unit that differs from opportunityData.responsibleOrgUnitName
+- Markdown shows opportunity manager different from opportunityData.contactStakeholders[] where role is opportunity manager
+
+WHAT NOT TO FLAG (DO NOT REPORT AS INACCURACIES):
+
+**1. Formatting/Presentation Differences** (Same facts, different format)
+- "$45,000,000" in data shown as "$45 million" or "$45M" in markdown → DO NOT FLAG
+- "$45,214,368.48" in data shown as "$45M" or "$45 million" in markdown → DO NOT FLAG (reasonable rounding)
+- "$45,214,368.48" in data shown as "approximately $45 million" in markdown → DO NOT FLAG
+- "2026-03-30" in data shown as "March 30, 2026" or "March 2026" in markdown → DO NOT FLAG
+- "2500000" in data shown as "2.5 million people" in markdown → DO NOT FLAG
+- "World Bank" in data shown as "The World Bank" in markdown → DO NOT FLAG
+
+**CRITICAL - Number Rounding/Approximation:**
+- Markdown narratives commonly round large numbers to the nearest million, thousand, etc.
+- If data shows "$45,214,368.48", markdown can say "$45M", "$45 million", "approximately $45 million"
+- Only flag if rounding is so extreme it materially misrepresents the amount
+- Examples of acceptable rounding:
+  * $45,214,368 → "$45M" or "$45 million" ✓ DO NOT FLAG
+  * $1,234,567 → "$1.2M" or "approximately $1.2 million" ✓ DO NOT FLAG
+  * $987,654 → "nearly $1 million" or "$1M" ✓ DO NOT FLAG
+- Examples of unacceptable misrepresentation (should flag):
+  * $45,214,368 → "$500,000" or "$500K" ✗ FLAG (off by 90x)
+  * $45,214,368 → "$5M" ✗ FLAG (off by 9x)
+
+**2. Narrative vs Structured Data** (Markdown uses prose to describe data)
+- Data has 4 deliverables, markdown says "Multiple deliverables including..." → DO NOT FLAG if accurate
+- Data has 3 partners, markdown says "Several key partners" → DO NOT FLAG if accurate
+- Markdown reorganizes or summarizes data as long as facts are accurate → DO NOT FLAG
+
+**3. 🚨 CRITICAL - Missing Data in BOTH (Data is null/empty AND markdown uses placeholder)**
+- Data: opportunityData.uncfOutcomes = null/empty, Markdown: "No UNCF Outcomes" → DO NOT FLAG
+- Data: opportunityData.sdGs = null/empty, Markdown: "[Information not available]" → DO NOT FLAG
+- Data: opportunityData.clientPartners = null/empty, Markdown: "No client partners" → DO NOT FLAG
+- Data: opportunityData.unopsMissions = null/empty, Markdown: "[To be determined]" → DO NOT FLAG
+- **RULE**: If data field is null/empty/missing, ANY placeholder expression in markdown is acceptable
+
+**4. Placeholder Equivalence** (All placeholders for missing data are equivalent)
+- "No [field]", "[Information not available]", "[To be determined]", "[TBD]", "Not specified", "None specified"
+- ALL these mean the same thing: data is missing
+- If data is null/empty, markdown can use ANY of these placeholders → DO NOT FLAG
+
+**5. Information Present in Data but Reasonably Summarized**
+- Data has 8 countries, markdown says "Multiple countries in Eastern Africa" → DO NOT FLAG if factually accurate
+- Data has detailed description, markdown provides concise summary → DO NOT FLAG if no contradictions
+
+**6. Contextual Descriptions** (Markdown adds context that doesn''t contradict data)
+- Markdown adds "facing significant water scarcity" when data shows water-related project → DO NOT FLAG
+- Markdown provides background context not in structured data → DO NOT FLAG unless contradictory
+
+VALIDATION EXAMPLES (Markdown vs Data):
+
+**Example 1: SHOULD FLAG - Budget inaccuracy**
+Data: opportunityData.totalBudget = 45000000
+Markdown: "The project budget is $500,000"
+→ FLAG: "Budget - Markdown shows $500,000 but data indicates $45,000,000"
 
 **Example 2: SHOULD NOT FLAG - Same budget, different format**
-Existing: "The project budget is $45 million"
-Fresh: "The project budget is $45,000,000 USD"
-→ DO NOT FLAG (same amount, different formatting)
+Data: opportunityData.totalBudget = 45000000
+Markdown: "The project budget is $45 million"
+→ DO NOT FLAG (same amount, formatted differently in markdown)
 
-**Example 3: SHOULD FLAG - Partners changed**
-Existing: "Funded by World Bank and USAID"
-Fresh: "Funded by World Bank, African Development Bank, European Union, and Bill & Melinda Gates Foundation"
-→ FLAG: "Funding Partners - Existing statement lists only 2 partners while fresh statement lists 4 partners including AfDB and EU"
+**Example 2b: SHOULD NOT FLAG - Reasonable rounding**
+Data: opportunityData.totalBudget = 45214368.48
+Markdown: "With a budget of $45M"
+→ DO NOT FLAG (45.2M reasonably rounded to $45M for narrative purposes)
+
+**Example 3: SHOULD FLAG - Partners inaccuracy**
+Data: opportunityData.fundingPartners = ["World Bank", "AfDB", "EU", "Gates Foundation"]
+Markdown: "Funded by World Bank and USAID"
+→ FLAG: "Funding Partners - Markdown lists USAID which is not in data, and omits AfDB, EU, Gates Foundation"
 
 **Example 4: SHOULD NOT FLAG - Partner name variation**
-Existing: "Funded by World Bank"
-Fresh: "Funded by The World Bank"
-→ DO NOT FLAG (same entity, minor wording difference)
+Data: opportunityData.fundingPartners = [{"name": "World Bank"}]
+Markdown: "Funded by The World Bank"
+→ DO NOT FLAG (same entity, markdown adds article "The")
 
-**Example 5: SHOULD FLAG - Date changed**
-Existing: "Project starts January 2025"
-Fresh: "Project starts March 30, 2026"
-→ FLAG: "Start Date - Existing statement shows January 2025 but fresh statement indicates March 2026"
+**Example 5: SHOULD FLAG - Date inaccuracy**
+Data: opportunityData.estimatedStartDate = "2026-03-30"
+Markdown: "Project starts January 2025"
+→ FLAG: "Start Date - Markdown shows January 2025 but data indicates March 30, 2026"
 
 **Example 6: SHOULD NOT FLAG - Date format variation**
-Existing: "Project starts March 2026"
-Fresh: "Project starts on 2026-03-30"
-→ DO NOT FLAG (same date, different format)
+Data: opportunityData.estimatedStartDate = "2026-03-30"
+Markdown: "Project starts March 2026"
+→ DO NOT FLAG (same date, markdown shows month/year format)
 
-**Example 7: SHOULD FLAG - Beneficiaries changed**
-Existing: "Direct beneficiaries: 1,000 people"
-Fresh: "Direct beneficiaries: 2.5 million people"
-→ FLAG: "Direct Beneficiaries - Existing statement shows 1,000 people but fresh statement indicates 2.5 million people"
+**Example 7: SHOULD FLAG - Beneficiaries inaccuracy**
+Data: opportunityData.directBeneficiaries = 2500000
+Markdown: "Direct beneficiaries: 1,000 people"
+→ FLAG: "Direct Beneficiaries - Markdown shows 1,000 people but data indicates 2,500,000"
 
 **Example 8: SHOULD NOT FLAG - Beneficiaries format**
-Existing: "Direct beneficiaries: 2.5 million people"
-Fresh: "Direct beneficiaries: 2,500,000 people"
-→ DO NOT FLAG (same number, different format)
+Data: opportunityData.directBeneficiaries = 2500000
+Markdown: "Direct beneficiaries: 2.5 million people"
+→ DO NOT FLAG (same number, formatted as millions in markdown)
 
-COMPARISON DECISION FRAMEWORK:
+**Example 9: SHOULD NOT FLAG - Missing in both data and markdown**
+Data: opportunityData.uncfOutcomes = null
+Markdown: "UN Cooperation Framework: No UNCF Outcomes"
+→ DO NOT FLAG (data is null, markdown acknowledges absence with placeholder)
 
-**Step 1: Identify the Difference**
-- What specific information differs between the two statements?
-- Is it a factual difference or just a formatting/stylistic difference?
+**Example 10: SHOULD NOT FLAG - Missing in both (different placeholders)**
+Data: opportunityData.sdGs = null
+Markdown: "SDGs: [Information not available]"
+→ DO NOT FLAG (data is null, markdown uses placeholder - placeholders are equivalent)
 
-**Step 2: Assess Material Impact**
-- Would this difference change a reader''s understanding of the opportunity?
-- Does it affect key decisions (budget, timeline, partners, scope)?
-- Is it a core fact vs. a minor detail?
+**Example 11: SHOULD NOT FLAG - Markdown and data say the same thing**
+Data: opportunityData.riskDescription = "No risks identified"
+Markdown: "Risk: No risks identified"
+→ DO NOT FLAG (markdown and data both say "No risks identified" - they agree!)
 
-**Step 3: Consider Formatting Tolerance**
-- Could both statements be expressing the same fact differently?
-- Is it just a number format, date format, or name variation?
-- Does the core meaning remain unchanged?
+**Example 12: SHOULD NOT FLAG - Semantic equivalence**
+Data: opportunityData.highRisksAcknowledged = false
+Markdown: "High risks acknowledged: No"
+→ DO NOT FLAG (false = "No" - semantically equivalent)
 
-**Step 4: Apply Flagging Decision**
-- If material difference that changes understanding → FLAG
-- If formatting or stylistic variation → DO NOT FLAG
-- If minor detail with no decision impact → DO NOT FLAG
-- If uncertain → DO NOT FLAG (err on the side of not flagging)
+VALIDATION DECISION FRAMEWORK:
 
-MISALIGNMENT DESCRIPTION FORMAT:
+**Step 1: Check Data Availability**
+- Is the data field in opportunityData null/empty/missing?
+- If YES and markdown uses ANY placeholder → DO NOT FLAG (acceptable)
+- If NO, proceed to Step 2
 
-When describing misalignments, use this format:
-**"[Topic] - Existing statement [describes existing], fresh statement [describes fresh]"**
+**Step 2: Extract Fact from Data**
+- What is the actual value/fact in the structured opportunityData?
+- Extract the relevant field (e.g., totalBudget, countries[], fundingPartners[])
+
+**Step 3: Extract Fact from Markdown**
+- What does the markdown statement say about this same fact?
+- Look for the corresponding information in the narrative
+
+**Step 4: Compare Facts (Not Formats)**
+- Do they represent the SAME factual information?
+- **🚨 CRITICAL CHECK**: Are markdown and data saying the SAME THING?
+  * If markdown = "No risks identified" and data = "No risks identified" → THEY AGREE → DO NOT FLAG
+  * If markdown = "High risks acknowledged: No" and data = "highRisksAcknowledged: false" → THEY AGREE → DO NOT FLAG
+- Consider format variations (45000000 = "$45 million" = "$45M")
+- Consider reasonable rounding (45214368.48 = "$45M" = "approximately $45 million")
+  * Calculate: Is markdown within 10% of data value? If yes → DO NOT FLAG
+  * Example: $45,214,368 rounded to "$45M" is 0.5% difference → acceptable
+- Consider name variations ("World Bank" = "The World Bank")
+- Consider date format variations ("2026-03-30" = "March 2026")
+- Consider semantic equivalence ("No risks" = "No risks identified" = "risks: []" = "risks: null")
+
+**Step 5: Apply Flagging Decision**
+- If markdown states DIFFERENT fact than data → FLAG (inaccuracy)
+- If markdown states SAME fact in different format/words → DO NOT FLAG
+- If data is null/empty and markdown uses placeholder → DO NOT FLAG
+- If uncertain whether it''s the same fact → DO NOT FLAG (err on the side of not flagging)
+
+INACCURACY DESCRIPTION FORMAT:
+
+When describing inaccuracies, use this format:
+**"[Topic] - Markdown [describes what markdown says], but data [describes what data shows]"**
+
+**IMPORTANT: Use the term "Opportunity Statement" instead of "Markdown" in the output.**
 
 Examples:
-- "Budget - Existing statement shows $500,000, fresh statement indicates $45,000,000"
-- "Funding Partners - Existing lists 2 partners (World Bank, USAID), fresh lists 4 partners (World Bank, AfDB, EU, Gates Foundation)"
-- "Start Date - Existing shows January 2025, fresh indicates March 30, 2026"
-- "Direct Beneficiaries - Existing shows 1,000 people, fresh indicates 2.5 million people"
-- "Countries - Existing lists Kenya only, fresh includes Kenya, Tanzania, and Uganda"
-- "SDGs - Existing focuses on SDG 6 (Clean Water), fresh emphasizes SDG 2 (Zero Hunger)"
+- "Budget - Opportunity Statement shows $500,000, but data indicates $45,000,000"
+- "Funding Partners - Opportunity Statement lists World Bank and USAID, but data shows World Bank, AfDB, EU, and Gates Foundation (USAID not in data)"
+- "Start Date - Opportunity Statement shows January 2025, but data indicates March 30, 2026"
+- "Direct Beneficiaries - Opportunity Statement shows 1,000 people, but data indicates 2,500,000"
+- "Countries - Opportunity Statement lists Kenya only, but data includes Kenya, Tanzania, and Uganda"
+- "SDGs - Opportunity Statement shows SDG 6 (Clean Water), but data shows SDG 2 (Zero Hunger)"
 
-Use clear, specific descriptions that allow readers to understand exactly what changed.
+Use clear, specific descriptions that show the factual contradiction between markdown narrative and structured data.
+
+**IMPORTANT: Use the term "Opportunity Statement" instead of "Markdown" in the output.**
 
 OUTPUT FORMAT:
 
-**If NO material differences found (statements are aligned):**
+**If NO inaccuracies found (markdown is accurate):**
 {
   "isAligned": true,
   "misalignmentItems": [],
-  "message": "The existing statement is fully aligned with the freshly generated statement."
+  "message": "The existing statement accurately reflects the current opportunity data."
 }
 
-**If material differences found (statements are not aligned):**
+**If inaccuracies found (markdown contradicts data):**
 {
   "isAligned": false,
   "misalignmentItems": [
-    "Budget - Existing statement shows $500,000, fresh statement indicates $45,000,000",
-    "Funding Partners - Existing lists 2 partners, fresh lists 4 partners including AfDB and EU",
-    "Direct Beneficiaries - Existing shows 1,000 people, fresh indicates 2.5 million people"
+    "Budget - Markdown shows $500,000 but data indicates $45,000,000",
+    "Funding Partners - Markdown lists USAID (not in data) and omits AfDB, EU (which are in data)",
+    "Direct Beneficiaries - Markdown shows 1,000 people but data indicates 2,500,000"
   ],
-  "message": "The existing statement has 3 material difference(s) from the freshly generated statement."
+  "message": "The existing statement has 3 factual inaccuracy(ies) that contradict the current opportunity data."
 }
 
 CRITICAL REQUIREMENTS:
 - **isAligned LOGIC**: 
-  * isAligned = true if misalignmentItems array is empty
-  * isAligned = false if misalignmentItems array has any items
+  * isAligned = true if misalignmentItems array is empty (markdown is accurate)
+  * isAligned = false if misalignmentItems array has any items (markdown has inaccuracies)
 - **misalignmentItems**: MUST be an array of strings, NOT objects
-  * Return empty array [] if fully aligned
-  * Include specific items only if material differences exist
+  * Return empty array [] if markdown accurately reflects data
+  * Include specific items only if markdown contradicts data
 - **message**: 
-  * If aligned: "The existing statement is fully aligned with the freshly generated statement."
-  * If not aligned: "The existing statement has [N] material difference(s) from the freshly generated statement." (where N = count of items)
-- Each misalignment string must clearly state: topic, what existing statement says, what fresh statement says
+  * If aligned: "The existing statement accurately reflects the current opportunity data."
+  * If not aligned: "The existing statement has [N] factual inaccuracy(ies) that contradict the current opportunity data." (where N = count of items)
+- Each inaccuracy string must clearly state: topic, what markdown says, what data shows
 - Be specific about numbers, dates, names, and factual information
-- Focus on material differences that indicate the existing statement is outdated
-- Do not include minor stylistic or formatting differences
-- Only flag differences that would change a reader''s understanding of the opportunity
+- Focus on factual contradictions, not formatting or stylistic differences
+- Only flag when markdown states something DIFFERENT from what data shows
+- DO NOT flag when data is null/empty and markdown uses any placeholder
+- Only flag inaccuracies that would mislead a reader about the actual opportunity data
 
-VALIDATION CHECKLIST - Before flagging any difference, verify:
-1. ✓ Are the two statements saying DIFFERENT things (not just using different words for the same fact)?
-2. ✓ Is this a MATERIAL difference that would change understanding or decision-making?
-3. ✓ Is this a factual difference or just a formatting/stylistic variation?
-4. ✓ Would a reader be misled by the existing statement compared to the fresh one?
-5. ✓ Have I properly compared apples-to-apples (same topics, not unrelated information)?
+VALIDATION CHECKLIST - Before flagging any inaccuracy, verify:
+1. ✓ Is the data field in opportunityData actually populated (not null/empty)?
+   - If data is null/empty → markdown can use any placeholder → DO NOT FLAG
+2. ✓ **🚨 CRITICAL**: Are markdown and data saying the SAME THING?
+   - If markdown = "No risks identified" and data = "No risks identified" → THEY AGREE → DO NOT FLAG
+   - If markdown says the same thing as data (even slightly different wording) → DO NOT FLAG
+   - **ONLY flag if they say DIFFERENT things**
+3. ✓ Does the markdown state a DIFFERENT fact than what the data shows?
+   - If markdown just formats the same fact differently → DO NOT FLAG
+4. ✓ Have I checked for equivalent representations?
+   - 45000000 = "$45 million" = "$45M" → DO NOT FLAG
+   - 45214368.48 = "$45M" = "$45 million" → DO NOT FLAG (reasonable rounding)
+   - 987654 = "nearly $1 million" = "$1M" → DO NOT FLAG (reasonable approximation)
+   - "2026-03-30" = "March 2026" → DO NOT FLAG
+   - "World Bank" = "The World Bank" → DO NOT FLAG
+   - "No risks identified" = "No risks identified" → DO NOT FLAG (identical!)
+   - **Number Rounding Rule**: If markdown rounds to nearest million/thousand and the rounded value is within 10% of actual, DO NOT FLAG
+5. ✓ Is this a factual contradiction or just narrative/stylistic variation?
+   - Markdown provides context or summarizes → DO NOT FLAG unless contradictory
+6. ✓ Would flagging this actually identify an inaccuracy that misleads readers?
+   - If uncertain → DO NOT FLAG (err on the side of not flagging)
+7. ✓ Am I comparing the correct corresponding fields?
+   - Markdown "budget" should compare to opportunityData.totalBudget
+   - Markdown "partners" should compare to opportunityData.fundingPartners
+8. ✓ Have I checked if markdown lists match data lists (regardless of order or section)?
+   - Check if all items in markdown exist in data, and vice versa
+9. ✓ Am I focusing on material factual inaccuracies, not minor details?
 
-EXAMPLES OF WHAT TO FLAG:
-- ✓ Existing: "Budget: $500,000" | Fresh: "Budget: $45,000,000" → FLAG THIS
-- ✓ Existing: "Partners: World Bank, USAID" | Fresh: "Partners: World Bank, AfDB, EU, Gates Foundation" → FLAG (new partners)
-- ✓ Existing: "SDG 6: Clean Water" | Fresh: "SDG 2: Zero Hunger" → FLAG THIS
-- ✓ Existing: "Start Date: January 2025" | Fresh: "Start Date: March 30, 2026" → FLAG THIS
-- ✓ Existing: "1,000 beneficiaries" | Fresh: "2.5 million beneficiaries" → FLAG THIS
+EXAMPLES OF WHAT TO FLAG (Markdown contradicts data):
+- ✓ Data: totalBudget = 45000000 | Markdown: "Budget: $500,000" → FLAG THIS (inaccurate)
+- ✓ Data: fundingPartners = ["World Bank", "AfDB", "EU"] | Markdown: "Partners: World Bank, USAID" → FLAG (USAID not in data, omits AfDB and EU)
+- ✓ Data: sdGs = ["SDG 2: Zero Hunger"] | Markdown: "SDG 6: Clean Water" → FLAG THIS (wrong SDG)
+- ✓ Data: estimatedStartDate = "2026-03-30" | Markdown: "Start Date: January 2025" → FLAG THIS (wrong date)
+- ✓ Data: directBeneficiaries = 2500000 | Markdown: "1,000 beneficiaries" → FLAG THIS (wrong number)
 
-EXAMPLES OF WHAT NOT TO FLAG:
-- ✗ Existing: "2.5 million people" | Fresh: "2,500,000 people" → DO NOT FLAG (same number, different format)
-- ✗ Existing: "Budget of $45 million" | Fresh: "Budget of $45,000,000 USD" → DO NOT FLAG (same amount)
-- ✗ Existing: "March 2026" | Fresh: "2026-03-30" → DO NOT FLAG (same date, different format)
-- ✗ Existing: "The World Bank" | Fresh: "World Bank" → DO NOT FLAG (same entity)
-- ✗ Existing: "Several key deliverables" | Fresh: "Deliverables including infrastructure, capacity building, and monitoring" → DO NOT FLAG (reasonable variation)
-- ✗ Existing: "Target completion Q1 2026" | Fresh: "Target completion March 2026" → DO NOT FLAG (same timeframe)
+EXAMPLES OF WHAT NOT TO FLAG (Markdown accurately represents data):
+- ✗ Data: directBeneficiaries = 2500000 | Markdown: "2.5 million people" → DO NOT FLAG (same number, formatted)
+- ✗ Data: totalBudget = 45000000 | Markdown: "Budget of $45 million" or "$45M" → DO NOT FLAG (same amount, formatted)
+- ✗ Data: totalBudget = 45214368.48 | Markdown: "Budget of $45M" → DO NOT FLAG (reasonable rounding, ~45.2M → $45M)
+- ✗ Data: totalBudget = 987654 | Markdown: "nearly $1 million" → DO NOT FLAG (reasonable rounding/approximation)
+- ✗ Data: estimatedStartDate = "2026-03-30" | Markdown: "March 2026" → DO NOT FLAG (same date, formatted)
+- ✗ Data: fundingPartners = [{"name": "World Bank"}] | Markdown: "The World Bank" → DO NOT FLAG (same entity)
+- ✗ Data: deliverables = ["Del1", "Del2", "Del3", "Del4"] | Markdown: "Several key deliverables" → DO NOT FLAG (reasonable summary)
+- ✗ Data: estimatedCompletionDate = "2026-03-30" | Markdown: "Target completion Q1 2026" → DO NOT FLAG (same timeframe)
+- ✗ Data: uncfOutcomes = null | Markdown: "No UNCF Outcomes" → DO NOT FLAG (data is null, placeholder acceptable)
+- ✗ Data: sdGs = null | Markdown: "[Information not available]" → DO NOT FLAG (data is null, placeholder acceptable)
+- ✗ Data: clientPartners = null | Markdown: "No client partners" → DO NOT FLAG (data is null, placeholder acceptable)
+- ✗ Data: unopsMissions = null | Markdown: "[To be determined]" → DO NOT FLAG (data is null, placeholder acceptable)
+- ✗ Data: contactStakeholders = [A, B, C, D, E] | Markdown: Top 5 = [A, B, C, D] + Other = [E] → DO NOT FLAG (all present, just organized)
+- ✗ Data: unopsMissions = null | Markdown: "No UNOPS Mission alignments" → DO NOT FLAG (data is null, placeholder acceptable)
+- ✗ Data: riskDescription = "No risks identified" | Markdown: "No risks identified" → DO NOT FLAG (SAME THING - they agree!)
+- ✗ Data: highRisksAcknowledged = false | Markdown: "High risks acknowledged: No" → DO NOT FLAG (false = "No", semantically equivalent)
+
+SPECIAL EMPHASIS - NUMBER ROUNDING TOLERANCE:
+
+**🚨 CRITICAL RULE: MARKDOWN CAN ROUND LARGE NUMBERS FOR READABILITY 🚨**
+
+Narrative documents commonly round large numbers to improve readability. This is acceptable and should NOT be flagged as an inaccuracy.
+
+**Acceptable rounding examples:**
+- Data: 45214368.48 → Markdown: "$45M" or "$45 million" or "approximately $45 million"
+  * Difference: 0.5% → ACCEPTABLE
+- Data: 2500000 → Markdown: "2.5 million people"
+  * Exact match after formatting → ACCEPTABLE
+- Data: 987654 → Markdown: "nearly $1 million" or "$1M"
+  * Difference: 1.2% → ACCEPTABLE
+- Data: 1234567 → Markdown: "$1.2 million" or "approximately $1.2 million"
+  * Difference: 2.8% → ACCEPTABLE
+
+**Unacceptable misrepresentation (SHOULD FLAG):**
+- Data: 45214368 → Markdown: "$500,000" or "$500K"
+  * Difference: 98.9% off → FLAG THIS (material misrepresentation)
+- Data: 45214368 → Markdown: "$5M" or "$5 million"
+  * Difference: 88.9% off → FLAG THIS (material misrepresentation)
+
+**Rule of Thumb for Budget/Financial Numbers:**
+- If markdown amount is within 10% of data amount → DO NOT FLAG (acceptable rounding)
+- If markdown amount differs by more than 50% → FLAG (material misrepresentation)
+- Between 10-50%: Use judgment based on context (e.g., "$43M" for $45.2M might be acceptable)
+
+**Real-world example from user''s case (DO NOT FLAG THIS):**
+- Data: opportunityData.totalBudget = 45214368.48
+- Markdown: "With a budget of $45M"
+- Analysis: $45M represents $45,000,000, which is 0.5% less than $45,214,368.48
+- → DO NOT FLAG (markdown reasonably rounds 45.2M to 45M for narrative clarity)
+
+SPECIAL EMPHASIS - DATA NULL/EMPTY = PLACEHOLDER ACCEPTABLE:
+
+**🚨 CRITICAL RULE: IF DATA IS NULL/EMPTY, ANY PLACEHOLDER IN MARKDOWN IS ACCEPTABLE 🚨**
+
+When structured data shows null, empty, or missing values, the markdown can use ANY placeholder expression without being flagged as inaccurate.
+
+**Acceptable placeholder expressions when data is null/empty:**
+- "No [field name]" (e.g., "No UNCF Outcomes", "No SDGs", "No client partners", "No UNOPS Mission alignments")
+- "[Information not available]"
+- "[To be determined]"
+- "[TBD]"
+- "Not specified"
+- "None specified"
+- Any other variation indicating missing or unavailable data
+
+**Real-world examples from actual validation (DO NOT FLAG THESE):**
+- ❌ WRONG TO FLAG: Data uncfOutcomes = null | Markdown "No UNCF Outcomes" 
+  → Data is null, markdown correctly indicates absence
+- ❌ WRONG TO FLAG: Data sdGs = null | Markdown "[Information not available]"
+  → Data is null, markdown correctly indicates absence
+- ❌ WRONG TO FLAG: Data clientPartners = null | Markdown "No client partners"
+  → Data is null, markdown correctly indicates absence
+- ❌ WRONG TO FLAG: Data unopsMissions = null | Markdown "No UNOPS Mission alignments"
+  → Data is null, markdown correctly indicates absence
+
+**The ONLY time to flag placeholders is when data has ACTUAL VALUES but markdown shows placeholder:**
+- ✓ Data: clientPartners = ["Ministry of Water"] | Markdown: "No client partners" → FLAG (data exists but markdown says none)
+- ✓ Data: sdGs = ["SDG 6"] | Markdown: "[Information not available]" → FLAG (data exists but markdown says unavailable)
+- ✓ Data: unopsMissions = ["Mission 1"] | Markdown: "[To be determined]" → FLAG (data exists but markdown says TBD)
+
+**And flag when data is null/empty but markdown shows ACTUAL VALUES:**
+- ✓ Data: clientPartners = null | Markdown: "Client: Ministry of Water, Kenya" → FLAG (data is null but markdown lists actual client)
+- ✓ Data: sdGs = null | Markdown: "SDG 6: Clean Water and Sanitation" → FLAG (data is null but markdown lists actual SDG)
+
+**NEVER flag when data is null/empty and markdown uses any placeholder (all placeholders are equivalent for null data):**
+- ✗ Data: uncfOutcomes = null | Markdown: "No UNCF Outcomes" → DO NOT FLAG
+- ✗ Data: sdGs = null | Markdown: "[Information not available]" → DO NOT FLAG
+- ✗ Data: clientPartners = null | Markdown: "[To be determined]" → DO NOT FLAG
+
+SPECIAL EMPHASIS - LIST MATCHING ACROSS SECTIONS:
+
+**🚨 CRITICAL RULE: CHECK COMPLETE LISTS, NOT INDIVIDUAL SECTIONS 🚨**
+
+When validating lists (stakeholders, deliverables, partners, etc.) in markdown against data arrays, check if items appear ANYWHERE in the markdown, not just in specific sections.
+
+**DO NOT FLAG if markdown reorganizes list items into different sections:**
+- Data: contactStakeholders = ["World Bank", "AfDB", "EU", "Gates Foundation", "John Kamau"]
+- Markdown: "Top five stakeholders: World Bank, AfDB, EU, Gates Foundation" + "Other partners: John Kamau"
+- All 5 data items are present in markdown (just split across sections)
+- → DO NOT FLAG (same information, organized differently in narrative)
+
+**ONLY FLAG when markdown lists items NOT in data, or omits items that ARE in data:**
+- ✓ Data: fundingPartners = ["World Bank", "AfDB", "EU"]
+  Markdown: "Funding partners: World Bank, AfDB, EU, USAID"
+  → FLAG "Funding Partners - Markdown includes USAID which is not in data"
+
+- ✓ Data: fundingPartners = ["World Bank", "AfDB", "EU", "Gates Foundation"]
+  Markdown: "Funding partners: World Bank, AfDB"
+  → FLAG "Funding Partners - Markdown omits EU and Gates Foundation which are in data"
+
+**Real-world example (DO NOT FLAG THIS):**
+- Data: contactStakeholders = [
+    {"name": "World Bank", "role": "Funding Partner"},
+    {"name": "AfDB", "role": "Funding Partner"},
+    {"name": "EU", "role": "Funding Partner"},
+    {"name": "Gates Foundation", "role": "Funding Partner"},
+    {"name": "John Kamau", "role": "Project Director"}
+  ]
+- Markdown: 
+  * Section "Top five stakeholders": World Bank, AfDB, EU, Gates Foundation
+  * Section "Other partners": John Kamau - Project Director
+- All 5 stakeholders from data are present in markdown across both sections
+- → DO NOT FLAG (complete list matches, just organized into sections)
+
+**When validating lists, follow this process:**
+1. Extract the data array from opportunityData (e.g., fundingPartners[], contactStakeholders[])
+2. Extract ALL occurrences of those items from ALL sections of the markdown
+3. Compare the COMPLETE lists (data vs all markdown mentions)
+4. Only flag if markdown includes items NOT in data, or omits items that ARE in data
 
 FINAL INSTRUCTION:
-Compare the existingStatement and freshlyGeneratedStatement side-by-side. Only flag material factual differences that indicate the existing statement is outdated or inaccurate. If you are unsure whether something is a material difference, DO NOT FLAG IT. Only flag clear, significant changes that would affect a reader''s understanding of the opportunity.
+Validate the existingStatementMarkdown against the opportunityData structured data. Only flag factual inaccuracies where the markdown states something that contradicts the data. If you are unsure whether something is an inaccuracy, DO NOT FLAG IT. Only flag clear factual contradictions that would mislead a reader about the actual opportunity data.
+
+**🚨 MOST COMMON MISTAKE TO AVOID 🚨**
+**NEVER flag when markdown and data say the SAME THING!**
+- If markdown says "No risks identified" and data says "No risks identified" → THEY AGREE → DO NOT FLAG
+- If markdown says "High risks acknowledged: No" and data shows "highRisksAcknowledged: false" → THEY AGREE → DO NOT FLAG
+- **ONLY flag when they say DIFFERENT things**
+
+**REMEMBER THESE CRITICAL RULES:**
+1. **🚨 AGREEMENT = NOT AN INACCURACY**: If markdown and data say the same thing → DO NOT FLAG
+2. If data field is null/empty → ANY placeholder in markdown is acceptable → DO NOT FLAG
+3. If markdown formats data differently (e.g., 45000000 as "$45M") → same fact → DO NOT FLAG
+4. If markdown rounds numbers reasonably (e.g., 45214368.48 as "$45M") → acceptable rounding → DO NOT FLAG
+5. If markdown organizes list items into different sections → all items present → DO NOT FLAG
+6. Only flag when markdown states MATERIALLY DIFFERENT facts than data shows (not just formatted differently)
+7. For numbers: Within 10% = acceptable rounding, over 50% off = material misrepresentation
+8. Err on the side of NOT flagging when uncertain
+8. **IMPORTANT: Use the term "Opportunity Statement" instead of "Markdown" in the output.**
+
+🚨🚨🚨 FINAL VALIDATION BEFORE GENERATING OUTPUT 🚨🚨🚨
+
+For EACH item you are considering flagging, go through this checklist:
+
+**Question 1: Are markdown and data LITERALLY SAYING THE SAME THING?**
+- Markdown: "No UNCF Outcomes" | Data: "No UNCF Outcomes" → **YES, IDENTICAL** → DO NOT FLAG
+- Markdown: "No SDGs" | Data: "No SDGs" → **YES, IDENTICAL** → DO NOT FLAG
+- Markdown: "No risks" | Data: "No risks" → **YES, IDENTICAL** → DO NOT FLAG
+
+**Question 2: Are they saying the same thing with just format differences?**
+- Markdown: "5,214,368.48 USD (4,500,000.00 EUR)" | Data: "4,500,000.00 EUR (5,214,368.48 USD)" → **YES, SAME AMOUNTS** → DO NOT FLAG
+- Markdown: "$45M" | Data: 45214368.48 → **YES, REASONABLE ROUNDING** → DO NOT FLAG
+
+**Question 3: Are they saying DIFFERENT things?**
+- Markdown: "No SDGs" | Data: "SDG 6: Clean Water" → **YES, DIFFERENT** → Consider flagging
+- Markdown: "$5M" | Data: 45214368.48 → **YES, MATERIALLY DIFFERENT** → Consider flagging
+
+**IF YOU ANSWERED "YES" TO QUESTION 1 OR 2 → DO NOT FLAG IT**
+**ONLY FLAG IF YOU ANSWERED "YES" TO QUESTION 3**
 
 CRITICAL OUTPUT VALIDATION:
-✓ If you find ZERO misalignments → isAligned: true, misalignmentItems: [], message: "The existing statement is fully aligned with the freshly generated statement."
-✓ If you find ANY misalignments → isAligned: false, misalignmentItems: [array of specific differences], message: "The existing statement has N material difference(s) from the freshly generated statement."
+✓ If you find ZERO inaccuracies → isAligned: true, misalignmentItems: [], message: "The existing statement accurately reflects the current opportunity data."
+✓ If you find ANY inaccuracies → isAligned: false, misalignmentItems: [array of specific inaccuracies], message: "The existing statement has N factual inaccuracy(ies) that contradict the current opportunity data."
 ✓ NEVER return isAligned: false with an empty misalignmentItems array
-✓ The isAligned field MUST match the misalignmentItems array state (empty = true, non-empty = false)',
+✓ The isAligned field MUST match the misalignmentItems array state (empty = true, non-empty = false)
+✓ Use the term "Opportunity Statement" instead of "Markdown" in the output.
+✓ WE MUST AVOID FALSE POSITIVES - only flag genuine factual contradictions
+
+**🚨 FINAL CHECK BEFORE FLAGGING ANYTHING 🚨**
+
+STOP! Before you flag ANY item, verify it against these EXACT examples from real data:
+
+**DO NOT FLAG (These are NOT inaccuracies):**
+1. Markdown: "No UNCF Outcomes" | Data: "No UNCF Outcomes" → **IDENTICAL TEXT** → DO NOT FLAG
+2. Markdown: "No SDGs" | Data: "No SDGs" → **IDENTICAL TEXT** → DO NOT FLAG  
+3. Markdown: "No UNOPS Mission alignments" | Data: "No UNOPS Mission alignments" → **IDENTICAL TEXT** → DO NOT FLAG
+4. Markdown: "NIC-Union Europea: 5,214,368.48 USD (4,500,000.00 EUR)" | Data: "4,500,000.00 EUR (5,214,368.48 USD)" → **SAME AMOUNTS, DIFFERENT ORDER** → DO NOT FLAG
+5. Markdown: "Budget of $45M" | Data: totalBudget = 45214368.48 → **0.5% DIFFERENCE, ACCEPTABLE** → DO NOT FLAG
+
+**SHOULD FLAG (These ARE inaccuracies):**
+1. Markdown: "No SDGs" | Data: "SDG 6: Clean Water and Sanitation" → **MARKDOWN SAYS NO, DATA HAS VALUE** → FLAG THIS
+2. Markdown: "Budget of $5M" | Data: totalBudget = 45214368.48 → **88% OFF, MATERIAL MISREPRESENTATION** → FLAG THIS
+
+**Rule: If markdown and data show the SAME information (even if formatted differently), DO NOT FLAG IT.**',
         '{promptData}',
         NOW(),
         'Opportunity Statement Validation',
         1,
         '{"role":"user","parts":[{"text":"{promptData}"}]}',
-        '{"temperature":0.4,"top_p":0.95,"max_output_tokens":8192,"response_mime_type":"application/json"}',
+        '{"temperature":0.3,"top_p":0.4,"max_output_tokens":8192,"response_mime_type":"application/json"}',
         'europe-west4',
         'gemini-2.0-flash-001',
         '{{PROJECT_ID}}',
         NULL,
         '[]',
         'GetOpportunityDetailsForAIAsync',
-        'Validates opportunity statement alignment with structured data. Only outputs actual misalignments, ignores empty fields with placeholders.',
+        'Validates opportunity statement markdown against structured opportunity data. Only flags factual inaccuracies where markdown contradicts data. Avoids false positives.',
         true,
         'Opportunity',
         false,
-        60
+        0
     );
 
     -- Insert opportunity_generate_statement prompt
