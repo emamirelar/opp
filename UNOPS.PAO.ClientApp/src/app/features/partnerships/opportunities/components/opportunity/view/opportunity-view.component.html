@@ -275,6 +275,11 @@
             <app-opportunity-analysis-section
               [opportunity]="opportunity()!"
               [sectionSaveTrigger]="sectionSaveTrigger()"
+              [insights]="allInsights()"
+              [suggestions]="allSuggestions()"
+              [loadingInsights]="insightsLoading()"
+              [insightsError]="insightsError()"
+              (refreshRequested)="handleInsightsRefresh()"
             />
           </div>
 

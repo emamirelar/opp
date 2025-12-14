@@ -25,3 +25,17 @@ textarea {
   }
 }
 
+// Inviting border for new comment textarea
+.new-comment-textarea {
+  border: 2px solid var(--unops-primary-200, #b3e0f7);
+  transition: border-color 0.2s ease;
+
+  &:hover:not(:focus) {
+    border-color: var(--unops-primary-300, #73c3e6);
+  }
+
+  &:focus {
+    border-color: var(--unops-primary, #0092d1);
+  }
+}
+
