@@ -1535,6 +1535,22 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
                 
                 // User relationship fields through InteractionUsers junction table - using translation keys
                 new() { Field = "interactionusers.user.name", DisplayName = "label.user.name", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                
+                // Audit fields - User dropdowns
+                new() {
+                    Field = "createdBy",
+                    DisplayName = "label.common.createdBy",
+                    FieldType = "user",
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" }
+                },
+                new() {
+                    Field = "lastModifiedBy",
+                    DisplayName = "label.common.lastModifiedBy",
+                    FieldType = "user",
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" }
+                },
+                new() { Field = "createdDate", DisplayName = "label.common.createdDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
+                new() { Field = "lastModifiedDate", DisplayName = "label.common.lastModifiedDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
             };
             
             return fields;

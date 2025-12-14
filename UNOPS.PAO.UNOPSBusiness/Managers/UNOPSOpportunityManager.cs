@@ -4185,10 +4185,46 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 new() { Field = "createdDate", DisplayName = "label.common.createdDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
                 new() { Field = "lastModifiedDate", DisplayName = "label.common.lastModifiedDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
 
-                // Related entity fields
-                new() { Field = "workflowStage.name", DisplayName = "label.opportunity.workflowStage", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
-                new() { Field = "responsibleOrgUnit.name", DisplayName = "label.opportunity.responsibleOrgUnit", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
-                new() { Field = "proposedInitiativeType.name", DisplayName = "label.opportunity.proposedInitiativeType", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                // Related entity fields - using dropdowns for enum-like lookups
+                new() { 
+                    Field = "workflowStageId", 
+                    DisplayName = "label.opportunity.workflowStage", 
+                    FieldType = "enum", 
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" },
+                    DropdownOptions = new List<DropdownOption>() // Will be populated dynamically from API
+                },
+                new() { 
+                    Field = "responsibleOrgUnitId", 
+                    DisplayName = "label.opportunity.responsibleOrgUnit", 
+                    FieldType = "enum", 
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" },
+                    DropdownOptions = new List<DropdownOption>() // Will be populated dynamically from API
+                },
+                new() { 
+                    Field = "proposedInitiativeTypeId", 
+                    DisplayName = "label.opportunity.proposedInitiativeType", 
+                    FieldType = "enum", 
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" },
+                    DropdownOptions = new List<DropdownOption>() // Will be populated dynamically from API
+                },
+                
+                // Partner relationship fields - using partner dropdown
+                new() { Field = "fundingPartners.partnerId", DisplayName = "label.opportunity.fundingPartner", FieldType = "partner", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "clientPartners.partnerId", DisplayName = "label.opportunity.clientPartner", FieldType = "partner", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" } },
+                
+                // Audit fields - User dropdowns
+                new() {
+                    Field = "createdBy",
+                    DisplayName = "label.common.createdBy",
+                    FieldType = "user",
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" }
+                },
+                new() {
+                    Field = "lastModifiedBy",
+                    DisplayName = "label.common.lastModifiedBy",
+                    FieldType = "user",
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" }
+                },
             };
 
             return fields;

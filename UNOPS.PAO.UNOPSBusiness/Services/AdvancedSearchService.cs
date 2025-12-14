@@ -59,6 +59,8 @@ public class AdvancedSearchService
 
     /// <summary>
     /// Main search method that handles both structured filters and text query
+    /// NOTE: For regular text-only search, prefer SearchWithQueryAsync() which uses PostgreSQL functions
+    /// This method uses Entity Framework LINQ which doesn't have the same scoring capabilities
     /// </summary>
     /// <typeparam name="TEntity">Entity type (UNOPSPartner, UNOPSContact, UNOPSInteraction)</typeparam>
     /// <typeparam name="TModel">Model type (PartnerModel, ContactModel, InteractionModel)</typeparam>
@@ -99,6 +101,10 @@ public class AdvancedSearchService
 
             // Apply access control and global filters (respecting filterActive flag)
             query = await ApplyAccessControlAsync(query, user, request.FilterActive);
+
+            // 🔍 TEMPORARY DEBUG LOGGING - Count after global filters
+            var countAfterGlobalFilters = await query.CountAsync();
+            _logger.LogInformation("🔍 Count AFTER global filters: {Count}", countAfterGlobalFilters);
 
             // Get total count
             var totalCount = await query.CountAsync();
@@ -160,6 +166,8 @@ public class AdvancedSearchService
 
     /// <summary>
     /// Search method specifically for text query only (search endpoint)
+    /// NOW USES POSTGRESQL FUNCTIONS: Combines ILIKE (exact) + similarity (fuzzy) with proper scoring
+    /// Results ordered by relevance: exact matches first, then similar matches
     /// </summary>
     public async Task<PaginationResponse<TModel>> SearchWithQueryAsync<TEntity, TModel>(
         string query,
@@ -168,18 +176,10 @@ public class AdvancedSearchService
         where TEntity : class
         where TModel : class
     {
-        var request = new UnifiedSearchRequest
-        {
-            Query = query,
-            Filters = null, // No structured filters, only text search
-            PageIndex = pagination.PageIndex,
-            PageSize = pagination.PageSize,
-            OrderBy = pagination.OrderBy,
-            Ascending = pagination.Ascending ?? false,
-            FilterActive = pagination.FilterActive
-        };
-
-        return await SearchAsync<TEntity, TModel>(request, user);
+        // Use PostgreSQL-based search with metadata for proper relevance scoring
+        // This gives us: ILIKE matches (score 0.95-0.90) + similarity matches (score 0.3-0.8)
+        // Results automatically ordered by score DESC (best matches first)
+        return await SearchWithQueryAndMetadataAsync<TEntity, TModel>(query, pagination, user);
     }
 
     /// <summary>
@@ -337,6 +337,10 @@ public class AdvancedSearchService
             query = query.Where(e => ids.Contains(EF.Property<int>(e, "Id")));
         }
         else if (typeof(TEntity).Name.Contains("Interaction"))
+        {
+            query = query.Where(e => ids.Contains(EF.Property<int>(e, "Id")));
+        }
+        else if (typeof(TEntity).Name.Contains("Opportunity"))
         {
             query = query.Where(e => ids.Contains(EF.Property<int>(e, "Id")));
         }
@@ -852,6 +856,7 @@ public class AdvancedSearchService
 
     /// <summary>
     /// Get exact matches using Contains for fast initial filtering
+    /// OPTIMIZED: Only searches primary fields in priority order for better performance and relevance
     /// </summary>
     private async Task<List<TEntity>> GetExactMatchesAsync<TEntity>(
         IQueryable<TEntity> query,
@@ -859,107 +864,112 @@ public class AdvancedSearchService
         string entityType) where TEntity : class
     {
         var searchLower = searchText.ToLower();
+        
+        // Try parsing as integer for ID search
+        var isNumericSearch = int.TryParse(searchText, out var searchId);
 
         switch (entityType)
         {
             case "UNOPSPartner":
+                // PRIMARY FIELDS ONLY (In Priority Order):
+                // 1. Id, 2. Name, 3. PartnerShortDescription, 4. PartnerLongDescription
                 return await query.Where(p =>
-                    // Direct partner fields
-                    (EF.Property<string>(p, "Name") != null && EF.Property<string>(p, "Name").ToLower().Contains(searchLower)) ||
-                    (EF.Property<string>(p, "PartnerShortDescription") != null && EF.Property<string>(p, "PartnerShortDescription").ToLower().Contains(searchLower)) ||
-                    (EF.Property<string>(p, "PartnerLongDescription") != null && EF.Property<string>(p, "PartnerLongDescription").ToLower().Contains(searchLower)) ||
-                    (EF.Property<string>(p, "PartnerApprovalReference") != null && EF.Property<string>(p, "PartnerApprovalReference").ToLower().Contains(searchLower)) ||
-                    (EF.Property<string>(p, "ReasonForLevy") != null && EF.Property<string>(p, "ReasonForLevy").ToLower().Contains(searchLower)) ||
+                    // ID exact match (highest priority)
+                    (isNumericSearch && EF.Property<int>(p, "Id") == searchId) ||
                     
-                    // Enum fields - search by string representation and human-readable text
-                    EF.Property<object>(p, "Status").ToString().ToLower().Contains(searchLower) ||
-                    EF.Property<object>(p, "PartnerApprovalStatus").ToString().ToLower().Contains(searchLower) ||
-                    (searchLower.Contains("active") && EF.Property<object>(p, "Status").ToString() == "Active") ||
-                    (searchLower.Contains("inactive") && EF.Property<object>(p, "Status").ToString() == "Inactive") ||
-                    (searchLower.Contains("draft") && EF.Property<object>(p, "Status").ToString() == "Draft") ||
-                    (searchLower.Contains("closed") && EF.Property<object>(p, "Status").ToString() == "Closed") ||
-                    (searchLower.Contains("archived") && EF.Property<object>(p, "Status").ToString() == "Archived") ||
-                    (searchLower.Contains("approved") && EF.Property<object>(p, "PartnerApprovalStatus").ToString() == "Approved") ||
-                    (searchLower.Contains("not approved") && EF.Property<object>(p, "PartnerApprovalStatus").ToString() == "NotApproved") ||
+                    // Name (primary identifier)
+                    (EF.Property<string>(p, "Name") != null && 
+                     EF.Property<string>(p, "Name").ToLower().Contains(searchLower)) ||
                     
-                    // Navigation properties
-                    (EF.Property<object>(p, "PartnerGroup") != null && 
-                     EF.Property<string>(EF.Property<object>(p, "PartnerGroup"), "Name") != null && 
-                     EF.Property<string>(EF.Property<object>(p, "PartnerGroup"), "Name").ToLower().Contains(searchLower)) ||
+                    // PartnerShortDescription
+                    (EF.Property<string>(p, "PartnerShortDescription") != null && 
+                     EF.Property<string>(p, "PartnerShortDescription").ToLower().Contains(searchLower)) ||
                     
-                    (EF.Property<object>(p, "LiaisonOffice") != null && 
-                     EF.Property<string>(EF.Property<object>(p, "LiaisonOffice"), "Name") != null && 
-                     EF.Property<string>(EF.Property<object>(p, "LiaisonOffice"), "Name").ToLower().Contains(searchLower)) ||
-                    
-                    // Contact fields
-                    EF.Property<ICollection<object>>(p, "Contacts").Any(c =>
-                        (EF.Property<string>(c, "FirstName") != null && EF.Property<string>(c, "FirstName").ToLower().Contains(searchLower)) ||
-                        (EF.Property<string>(c, "LastName") != null && EF.Property<string>(c, "LastName").ToLower().Contains(searchLower)) ||
-                        (EF.Property<string>(c, "Email") != null && EF.Property<string>(c, "Email").ToLower().Contains(searchLower)) ||
-                        (EF.Property<string>(c, "Title") != null && EF.Property<string>(c, "Title").ToLower().Contains(searchLower)) ||
-                        (EF.Property<string>(c, "Department") != null && EF.Property<string>(c, "Department").ToLower().Contains(searchLower))
-                    )
+                    // PartnerLongDescription
+                    (EF.Property<string>(p, "PartnerLongDescription") != null && 
+                     EF.Property<string>(p, "PartnerLongDescription").ToLower().Contains(searchLower))
                 ).ToListAsync();
 
             case "UNOPSContact":
+                // PRIMARY FIELDS ONLY (In Priority Order):
+                // 1. Id, 2. FirstName, 3. MiddleName, 4. LastName, 5. Email, 6. Title
+                // NOTE: Searching each name field separately (NOT concatenated)
                 return await query.Where(c =>
-                    // Direct contact fields
-                    (EF.Property<string>(c, "FirstName") != null && EF.Property<string>(c, "FirstName").ToLower().Contains(searchLower)) ||
-                    (EF.Property<string>(c, "LastName") != null && EF.Property<string>(c, "LastName").ToLower().Contains(searchLower)) ||
-                    (EF.Property<string>(c, "Email") != null && EF.Property<string>(c, "Email").ToLower().Contains(searchLower)) ||
-                    (EF.Property<string>(c, "Title") != null && EF.Property<string>(c, "Title").ToLower().Contains(searchLower)) ||
-                    (EF.Property<string>(c, "Department") != null && EF.Property<string>(c, "Department").ToLower().Contains(searchLower)) ||
-                    (EF.Property<string>(c, "Phone") != null && EF.Property<string>(c, "Phone").ToLower().Contains(searchLower)) ||
-                    (EF.Property<string>(c, "Mobile") != null && EF.Property<string>(c, "Mobile").ToLower().Contains(searchLower)) ||
+                    // ID exact match (highest priority)
+                    (isNumericSearch && EF.Property<int>(c, "Id") == searchId) ||
                     
-                    // Enum fields - search by string representation and human-readable text
-                    EF.Property<object>(c, "Status").ToString().ToLower().Contains(searchLower) ||
-                    (searchLower.Contains("active") && EF.Property<object>(c, "Status").ToString() == "Active") ||
-                    (searchLower.Contains("inactive") && EF.Property<object>(c, "Status").ToString() == "Inactive") ||
-                    (searchLower.Contains("draft") && EF.Property<object>(c, "Status").ToString() == "Draft") ||
-                    (searchLower.Contains("closed") && EF.Property<object>(c, "Status").ToString() == "Closed") ||
-                    (searchLower.Contains("archived") && EF.Property<object>(c, "Status").ToString() == "Archived") ||
+                    // FirstName
+                    (EF.Property<string>(c, "FirstName") != null && 
+                     EF.Property<string>(c, "FirstName").ToLower().Contains(searchLower)) ||
                     
-                    // Partner fields
-                    (EF.Property<object>(c, "Partner") != null && 
-                     EF.Property<string>(EF.Property<object>(c, "Partner"), "Name") != null && 
-                     EF.Property<string>(EF.Property<object>(c, "Partner"), "Name").ToLower().Contains(searchLower))
+                    // MiddleName
+                    (EF.Property<string>(c, "MiddleName") != null && 
+                     EF.Property<string>(c, "MiddleName").ToLower().Contains(searchLower)) ||
+                    
+                    // LastName
+                    (EF.Property<string>(c, "LastName") != null && 
+                     EF.Property<string>(c, "LastName").ToLower().Contains(searchLower)) ||
+                    
+                    // Email
+                    (EF.Property<string>(c, "Email") != null && 
+                     EF.Property<string>(c, "Email").ToLower().Contains(searchLower)) ||
+                    
+                    // Title
+                    (EF.Property<string>(c, "Title") != null && 
+                     EF.Property<string>(c, "Title").ToLower().Contains(searchLower))
                 ).ToListAsync();
 
             case "UNOPSInteraction":
+                // PRIMARY FIELDS ONLY (In Priority Order):
+                // 1. Id, 2. Type (enum), 3. Subject, 4. Description, 5. Location
                 return await query.Where(i =>
-                    // Direct interaction fields
-                    (EF.Property<string>(i, "Subject") != null && EF.Property<string>(i, "Subject").ToLower().Contains(searchLower)) ||
-                    (EF.Property<string>(i, "Description") != null && EF.Property<string>(i, "Description").ToLower().Contains(searchLower)) ||
-                    (EF.Property<string>(i, "Location") != null && EF.Property<string>(i, "Location").ToLower().Contains(searchLower)) ||
+                    // ID exact match (highest priority)
+                    (isNumericSearch && EF.Property<int>(i, "Id") == searchId) ||
                     
-                    // Enum fields - search by string representation
+                    // Type (enum) - search by string representation
                     EF.Property<object>(i, "Type").ToString().ToLower().Contains(searchLower) ||
-                    EF.Property<object>(i, "Status").ToString().ToLower().Contains(searchLower) ||
                     
-                    // Enum fields - search by human-readable text (for text like "Virtual Meeting", "In Person", etc.)
+                    // Type (enum) - search by human-readable text (e.g., "Virtual Meeting", "In Person")
                     (searchLower.Contains("virtual") && EF.Property<object>(i, "Type").ToString() == "VirtualMeeting") ||
                     (searchLower.Contains("person") && EF.Property<object>(i, "Type").ToString() == "InPersonMeeting") ||
-                    (searchLower.Contains("meeting") && (EF.Property<object>(i, "Type").ToString() == "VirtualMeeting" || EF.Property<object>(i, "Type").ToString() == "InPersonMeeting")) ||
+                    (searchLower.Contains("meeting") && (
+                        EF.Property<object>(i, "Type").ToString() == "VirtualMeeting" || 
+                        EF.Property<object>(i, "Type").ToString() == "InPersonMeeting")) ||
                     (searchLower.Contains("email") && EF.Property<object>(i, "Type").ToString() == "Email") ||
                     (searchLower.Contains("chat") && EF.Property<object>(i, "Type").ToString() == "Chat") ||
                     (searchLower.Contains("call") && EF.Property<object>(i, "Type").ToString() == "Call") ||
-                    (searchLower.Contains("active") && EF.Property<object>(i, "Status").ToString() == "Active") ||
-                    (searchLower.Contains("inactive") && EF.Property<object>(i, "Status").ToString() == "Inactive") ||
-                    (searchLower.Contains("draft") && EF.Property<object>(i, "Status").ToString() == "Draft") ||
-                    (searchLower.Contains("closed") && EF.Property<object>(i, "Status").ToString() == "Closed") ||
-                    (searchLower.Contains("archived") && EF.Property<object>(i, "Status").ToString() == "Archived") ||
                     
-                    // Related contacts
-                    EF.Property<ICollection<object>>(i, "InteractionContacts").Any(ic =>
-                        EF.Property<string>(EF.Property<object>(ic, "Contact"), "FirstName").ToLower().Contains(searchLower) ||
-                        EF.Property<string>(EF.Property<object>(ic, "Contact"), "LastName").ToLower().Contains(searchLower)
-                    ) ||
+                    // Subject
+                    (EF.Property<string>(i, "Subject") != null && 
+                     EF.Property<string>(i, "Subject").ToLower().Contains(searchLower)) ||
                     
-                    // Related partners
-                    EF.Property<ICollection<object>>(i, "InteractionPartners").Any(ip =>
-                        EF.Property<string>(EF.Property<object>(ip, "Partner"), "Name").ToLower().Contains(searchLower)
-                    )
+                    // Description
+                    (EF.Property<string>(i, "Description") != null && 
+                     EF.Property<string>(i, "Description").ToLower().Contains(searchLower)) ||
+                    
+                    // Location
+                    (EF.Property<string>(i, "Location") != null && 
+                     EF.Property<string>(i, "Location").ToLower().Contains(searchLower))
+                ).ToListAsync();
+
+            case "Opportunity":
+                // PRIMARY FIELDS ONLY (In Priority Order):
+                // 1. Id, 2. Name, 3. Description, 4. Challenges
+                return await query.Where(o =>
+                    // ID exact match (highest priority)
+                    (isNumericSearch && EF.Property<int>(o, "Id") == searchId) ||
+                    
+                    // Name
+                    (EF.Property<string>(o, "Name") != null && 
+                     EF.Property<string>(o, "Name").ToLower().Contains(searchLower)) ||
+                    
+                    // Description
+                    (EF.Property<string>(o, "Description") != null && 
+                     EF.Property<string>(o, "Description").ToLower().Contains(searchLower)) ||
+                    
+                    // Challenges
+                    (EF.Property<string>(o, "Challenges") != null && 
+                     EF.Property<string>(o, "Challenges").ToLower().Contains(searchLower))
                 ).ToListAsync();
 
             default:
@@ -1255,7 +1265,7 @@ public class AdvancedSearchService
     #region Structured Filters
 
     /// <summary>
-    /// Apply structured filters using dynamic LINQ
+    /// Check if we have mixed filter types (regular + similarity) with OR operators
     /// </summary>
     private async Task<IQueryable<TEntity>> ApplyStructuredFilters<TEntity>(
         IQueryable<TEntity> query,
@@ -1282,6 +1292,7 @@ public class AdvancedSearchService
                 continue;
 
             // Separate similarity-based filters from regular ones
+            // Only text fields should use similarity search - exclude user, date, enum, etc.
             if ((filter.@operator.ToLower() == "like" || filter.@operator.ToLower() == "contains") && 
                 filter.fieldType == "text")
             {
@@ -1311,13 +1322,28 @@ public class AdvancedSearchService
             if (conditions.Any())
             {
                 var combinedCondition = CombineConditions(conditions, regularFilters);
-                _logger.LogDebug("Applying regular filters: {Condition}", combinedCondition);
+                
+                // 🔍 TEMPORARY DEBUG LOGGING
+                _logger.LogInformation("=== FILTER DEBUG ===");
+                _logger.LogInformation("Condition: {Condition}", combinedCondition);
+                _logger.LogInformation("Parameters Count: {Count}", parameters.Count);
+                for (int i = 0; i < parameters.Count; i++)
+                {
+                    _logger.LogInformation("Parameter[{Index}]: Value={Value}, Type={Type}", 
+                        i, parameters[i], parameters[i]?.GetType().Name ?? "null");
+                }
+                _logger.LogInformation("===================");
+                
                 query = query.Where(combinedCondition, parameters.ToArray());
             }
         }
 
         // Apply similarity filters using Entity Framework functions
         query = await ApplySimilarityFilters(query, similarityFilters);
+
+        // 🔍 TEMPORARY DEBUG LOGGING - Count before global filters
+        var countBeforeGlobalFilters = await query.CountAsync();
+        _logger.LogInformation("🔍 Count BEFORE global filters: {Count}", countBeforeGlobalFilters);
 
         return query;
     }
@@ -1508,6 +1534,26 @@ public class AdvancedSearchService
 
         foreach (var filter in similarityFilters)
         {
+            // Skip non-text fields - similarity search only works on text/string columns
+            // User fields should have been preprocessed to int type, but check just in case
+            var fieldLower = filter.field?.ToLower() ?? "";
+            var fieldTypeLower = filter.fieldType?.ToLower() ?? "text";
+            
+            // Explicitly skip audit fields (should have been preprocessed if fieldType="user")
+            if (fieldLower == "createdby" || fieldLower == "lastmodifiedby")
+            {
+                _logger.LogWarning("Skipping similarity search for audit field: {Field} - this should have been preprocessed", filter.field);
+                continue;
+            }
+            
+            // Skip non-text field types
+            if (fieldTypeLower != "text")
+            {
+                _logger.LogWarning("Skipping similarity filter for non-text field: {Field} (type: {FieldType})", 
+                    filter.field, filter.fieldType);
+                continue;
+            }
+
             var fieldInfo = GetFieldInfo<TEntity>(filter.field, fieldMappings, tableName);
             var searchValue = filter.value;
 
@@ -1611,12 +1657,12 @@ public class AdvancedSearchService
             return GetFullNameFieldInfo<TEntity>(fieldName);
         }
 
-        // Handle nested fields (e.g., partnerGroup.name, contacts.firstName)
+        // Handle nested fields (e.g., partnerGroup.name, contacts.firstName, partner.partnerGroup.name)
         if (fieldName.Contains('.'))
         {
             var parts = fieldName.Split('.');
             var navigationProperty = parts[0];
-            var targetField = parts[1];
+            var targetField = parts.Length > 1 ? parts[1] : "";
 
             // Determine the main table alias based on entity type
             var mainTableAlias = GetMainTableAlias<TEntity>();
@@ -1630,7 +1676,7 @@ public class AdvancedSearchService
                     break;
 
                 case "liaisonoffice":
-                    fieldInfo.RequiredJoins.Add($@"LEFT JOIN public.""LiaisonOffices"" lo ON {mainTableAlias}.""PartnerLiaisonOfficeId"" = lo.""Id""");
+                    fieldInfo.RequiredJoins.Add($@"LEFT JOIN public.""LiaisonOffices"" lo ON {mainTableAlias}.""LiaisonOfficeId"" = lo.""Id""");
                     fieldInfo.FullColumnName = $@"lo.""{GetColumnName(targetField)}""";
                     break;
 
@@ -1646,8 +1692,38 @@ public class AdvancedSearchService
                 case "partner":
                     if (typeof(TEntity).Name.Contains("Contact"))
                     {
+                        // Join Contact -> Partner
                         fieldInfo.RequiredJoins.Add($@"LEFT JOIN public.""Partners"" p ON {mainTableAlias}.""PartnerId"" = p.""Id""");
-                        fieldInfo.FullColumnName = $@"p.""{GetColumnName(targetField)}""";
+                        
+                        // Handle three-level navigation: partner.partnerGroup.name or partner.liaisonOffice.name
+                        if (parts.Length >= 3)
+                        {
+                            var secondLevelNav = parts[1].ToLower();
+                            var finalField = parts[2];
+                            
+                            switch (secondLevelNav)
+                            {
+                                case "partnergroup":
+                                    fieldInfo.RequiredJoins.Add($@"LEFT JOIN public.""PartnerTrees"" pg ON p.""PartnerGroupId"" = pg.""Id""");
+                                    fieldInfo.FullColumnName = $@"pg.""{GetColumnName(finalField)}""";
+                                    break;
+                                    
+                                case "liaisonoffice":
+                                    fieldInfo.RequiredJoins.Add($@"LEFT JOIN public.""LiaisonOffices"" lo ON p.""LiaisonOfficeId"" = lo.""Id""");
+                                    fieldInfo.FullColumnName = $@"lo.""{GetColumnName(finalField)}""";
+                                    break;
+                                    
+                                default:
+                                    // Two-level navigation: partner.name, partner.partnerShortDescription, etc.
+                                    fieldInfo.FullColumnName = $@"p.""{GetColumnName(targetField)}""";
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            // Two-level navigation: partner.name, partner.partnerShortDescription, etc.
+                            fieldInfo.FullColumnName = $@"p.""{GetColumnName(targetField)}""";
+                        }
                     }
                     break;
 
@@ -1879,7 +1955,7 @@ public class AdvancedSearchService
             
             if (allIdProperties.Length > 0)
             {
-                idProperty = allIdProperties[1]; // Use the first one found
+                idProperty = allIdProperties[0]; // BUG FIX: Use index [0], not [1]
             }
         }
         
@@ -1932,12 +2008,38 @@ public class AdvancedSearchService
         var field = ConvertFieldName(filter.field);
         var paramIndex = parameters.Count;
 
+        // Special handling for fullName - it's not a real property, so we need to search across FirstName, MiddleName, LastName
+        if (filter.field.ToLower() == "fullname")
+        {
+            return BuildFullNameFilterCondition(filter, parameters);
+        }
+
         switch (filter.@operator.ToLower())
         {
             case "like":
             case "contains":
-                // These are now handled by ApplySimilarityFilters method
+                // For integer/number fields with "like", convert to string and do contains
+                if (filter.fieldType == "int" || filter.fieldType == "number")
+                {
+                    parameters.Add(filter.value);
+                    // Convert integer field to string and check if it contains the value
+                    var nullSafeCondition = BuildNullSafeCondition(field, $"{field}.ToString().Contains(@{paramIndex})");
+                    return $"({field} != null && {nullSafeCondition})";
+                }
+                // Text fields are handled by ApplySimilarityFilters method
                 // Return empty to skip in regular filter processing
+                return string.Empty;
+
+            case "not like":
+            case "not contains":
+                // "Not contains" filter - check that field does NOT contain the search value
+                if (filter.fieldType == "text")
+                {
+                    parameters.Add(filter.value.ToLower());
+                    // Build null-safe condition for nested navigation properties
+                    var nullSafeCondition = BuildNullSafeCondition(field, $"!{field}.ToLower().Contains(@{paramIndex})");
+                    return $"({nullSafeCondition})";
+                }
                 return string.Empty;
 
             case "eq":
@@ -1945,12 +2047,23 @@ public class AdvancedSearchService
                 if (filter.fieldType == "text")
                 {
                     parameters.Add(filter.value.ToLower());
-                    return $"{field} != null && {field}.ToLower() == @{paramIndex}";
+                    // Build null-safe condition for nested navigation properties
+                    var nullSafeCondition = BuildNullSafeCondition(field, $"{field}.ToLower() == @{paramIndex}");
+                    return $"({nullSafeCondition})";
+                }
+                else if (filter.fieldType == "user")
+                {
+                    parameters.Add(ConvertValue(filter.value, filter.fieldType));
+                    // Build null-safe condition for nested navigation properties
+                    var nullSafeCondition = BuildNullSafeCondition(field, $"{field} == @{paramIndex}");
+                    return $"({nullSafeCondition})";
                 }
                 else
                 {
                     parameters.Add(ConvertValue(filter.value, filter.fieldType));
-                    return $"{field} == @{paramIndex}";
+                    // Build null-safe condition for nested navigation properties
+                    var nullSafeCondition = BuildNullSafeCondition(field, $"{field} == @{paramIndex}");
+                    return $"({nullSafeCondition})";
                 }
 
             case "neq":
@@ -1958,12 +2071,16 @@ public class AdvancedSearchService
                 if (filter.fieldType == "text")
                 {
                     parameters.Add(filter.value.ToLower());
-                    return $"{field} != null && {field}.ToLower() != @{paramIndex}";
+                    // Build null-safe condition for nested navigation properties
+                    var nullSafeCondition = BuildNullSafeCondition(field, $"{field}.ToLower() != @{paramIndex}");
+                    return $"({nullSafeCondition})";
                 }
                 else
                 {
                     parameters.Add(ConvertValue(filter.value, filter.fieldType));
-                    return $"{field} != @{paramIndex}";
+                    // Build null-safe condition for nested navigation properties
+                    var nullSafeCondition = BuildNullSafeCondition(field, $"{field} != @{paramIndex}");
+                    return $"({nullSafeCondition})";
                 }
 
             case "gt":
@@ -2068,6 +2185,53 @@ public class AdvancedSearchService
     /// <summary>
     /// Convert field name to proper property name
     /// </summary>
+    /// <summary>
+    /// Build filter condition for fullName field which needs to search across FirstName, MiddleName, and LastName
+    /// </summary>
+    private string BuildFullNameFilterCondition(SearchFilter filter, List<object> parameters)
+    {
+        var searchValue = filter.value.ToLower();
+        var paramIndex = parameters.Count;
+        
+        switch (filter.@operator.ToLower())
+        {
+            case "like":
+            case "contains":
+                // Search across all three name fields with OR logic
+                parameters.Add(searchValue);
+                return $@"((FirstName != null && FirstName.ToLower().Contains(@{paramIndex})) || 
+                          (MiddleName != null && MiddleName.ToLower().Contains(@{paramIndex})) || 
+                          (LastName != null && LastName.ToLower().Contains(@{paramIndex})))";
+            
+            case "not like":
+            case "not contains":
+                // Exclude if ANY of the name fields contain the value
+                parameters.Add(searchValue);
+                return $@"((FirstName == null || !FirstName.ToLower().Contains(@{paramIndex})) && 
+                          (MiddleName == null || !MiddleName.ToLower().Contains(@{paramIndex})) && 
+                          (LastName == null || !LastName.ToLower().Contains(@{paramIndex})))";
+            
+            case "eq":
+            case "equals":
+                // Concatenate all three fields and compare (handling nulls)
+                parameters.Add(searchValue);
+                return $@"((FirstName ?? """") + "" "" + (MiddleName ?? """") + "" "" + (LastName ?? """")).Trim().ToLower() == @{paramIndex}";
+            
+            case "neq":
+            case "not equals":
+                // Concatenate all three fields and compare for inequality
+                parameters.Add(searchValue);
+                return $@"((FirstName ?? """") + "" "" + (MiddleName ?? """") + "" "" + (LastName ?? """")).Trim().ToLower() != @{paramIndex}";
+            
+            default:
+                _logger.LogWarning("Unsupported operator for fullName field: {Operator}", filter.@operator);
+                return string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Convert field name to proper property name
+    /// </summary>
     private string ConvertFieldName(string field)
     {
         if (string.IsNullOrEmpty(field)) return field;
@@ -2083,6 +2247,57 @@ public class AdvancedSearchService
     }
 
     /// <summary>
+    /// Build null-safe condition for nested navigation properties
+    /// Converts: Partner.PartnerGroup.Name
+    /// To: (Partner != null && Partner.PartnerGroup != null && Partner.PartnerGroup.Name != null && [condition])
+    /// For simple fields, only adds null check if field type suggests it might be nullable
+    /// </summary>
+    private string BuildNullSafeCondition(string field, string condition)
+    {
+        // If field doesn't contain '.', it's not a navigation property
+        if (!field.Contains('.'))
+        {
+            // Don't add null check for known non-nullable fields
+            // CreatedBy (int), CreatedDate (DateTime), Id (int), PartnerId (int), Status (enum)
+            // DO add null check for: LastModifiedBy (int?), LastModifiedDate (DateTime?), strings
+            var nonNullableFields = new[] { "CreatedBy", "CreatedDate", "Id", "PartnerId", "Status", "Type", "Date" };
+            
+            if (nonNullableFields.Contains(field))
+            {
+                // Non-nullable field - no null check needed
+                return condition;
+            }
+            
+            // For nullable fields (LastModifiedBy, LastModifiedDate, strings, etc.)
+            // Only add null check for text fields in the condition itself
+            // For comparisons, the condition already handles the check appropriately
+            if (condition.Contains(".ToLower()"))
+            {
+                // Text field - needs null check
+                return $"{field} != null && ({condition})";
+            }
+            
+            // For numeric/date comparisons with nullable types, add null check
+            return $"{field} != null && ({condition})";
+        }
+
+        // Build null checks for each level of navigation
+        var parts = field.Split('.');
+        var nullChecks = new List<string>();
+        
+        // Build cumulative path for each level (all navigation properties need null checks)
+        for (int i = 0; i < parts.Length; i++)
+        {
+            var path = string.Join(".", parts.Take(i + 1));
+            nullChecks.Add($"{path} != null");
+        }
+
+        // Combine null checks with the actual condition
+        var allChecks = string.Join(" && ", nullChecks);
+        return $"{allChecks} && ({condition})";
+    }
+
+    /// <summary>
     /// Convert to PascalCase (capitalize first letter only, preserve the rest)
     /// </summary>
     private string ConvertToPascalCase(string input)
@@ -2092,24 +2307,52 @@ public class AdvancedSearchService
     }
 
     /// <summary>
+    /// Convert enum values, handling boolean strings specially
+    /// </summary>
+    private object ConvertEnumValue(string value)
+    {
+        // Check if it's a boolean string
+        if (value.Equals("true", StringComparison.OrdinalIgnoreCase) || 
+            value.Equals("false", StringComparison.OrdinalIgnoreCase))
+        {
+            return bool.Parse(value);
+        }
+        
+        // Otherwise keep as string for enum comparisons
+        return value;
+    }
+
+    /// <summary>
     /// Convert string value to appropriate type
     /// </summary>
     private object ConvertValue(string value, string? fieldType)
     {
         try
         {
-            return (fieldType ?? "text").ToLower() switch
+            // 🔍 TEMPORARY DEBUG LOGGING
+            _logger.LogInformation("ConvertValue CALLED: value='{Value}', fieldType='{FieldType}'", 
+                value, fieldType ?? "null");
+            
+            var result = (fieldType ?? "text").ToLower() switch
             {
-                "number" => decimal.Parse(value),
-                "int" => int.Parse(value),
-                "bool" => bool.Parse(value),
-                "date" => DateTime.SpecifyKind(DateTime.Parse(value), DateTimeKind.Utc),
-                "enum" => value, // Keep as string for enum comparisons (will be converted to enum during query execution)
-                _ => value
+                "number" => (object)decimal.Parse(value),
+                "int" => (object)int.Parse(value),
+                "user" => (object)int.Parse(value), // User IDs are integers
+                "bool" => (object)bool.Parse(value),
+                "date" => (object)DateTime.SpecifyKind(DateTime.Parse(value), DateTimeKind.Utc),
+                "enum" => ConvertEnumValue(value), // Convert enum value (handles boolean strings like "true"/"false")
+                _ => (object)value
             };
+            
+            // 🔍 TEMPORARY DEBUG LOGGING
+            _logger.LogInformation("ConvertValue RESULT: result={Result} ({ResultType})", 
+                result, result?.GetType().Name ?? "null");
+            
+            return result;
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogWarning(ex, "ConvertValue EXCEPTION: value='{Value}', fieldType='{FieldType}'", value, fieldType);
             return value;
         }
     }

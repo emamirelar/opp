@@ -2172,8 +2172,11 @@ public class UNOPSGeminiManager : IGeminiManager
         var apiUrl = $"/chat";
         HttpContent httpContent;
 
-        // Check if request has files
-        if (req.Files != null && req.Files.Any())
+        // Check if request has files or GCS files
+        var hasRawFiles = req.Files != null && req.Files.Any();
+        var hasGcsFiles = !string.IsNullOrEmpty(req.GcsFiles);
+        
+        if (hasRawFiles || hasGcsFiles)
         {
             // Use multipart form data for requests with files
             var multipartContent = new MultipartFormDataContent();
@@ -2187,14 +2190,24 @@ public class UNOPSGeminiManager : IGeminiManager
             multipartContent.Add(new StringContent("true"), "streaming"); // Enable streaming
             multipartContent.Add(new StringContent(enhancedState ?? ""), "state");
             
-            // Add files
-            foreach (var file in req.Files)
+            // Add GCS files if provided (preferred over raw files)
+            if (hasGcsFiles)
             {
-                if (file != null && file.Length > 0)
+                multipartContent.Add(new StringContent(req.GcsFiles!), "gcs_files");
+                _logger.LogDebug("ChatWithGeminiStreaming: Added GCS files to request");
+            }
+            
+            // Add raw files if provided
+            if (hasRawFiles)
+            {
+                foreach (var file in req.Files!)
                 {
-                    var streamContent = new StreamContent(file.OpenReadStream());
-                    streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType ?? "application/octet-stream");
-                    multipartContent.Add(streamContent, "files", file.FileName);
+                    if (file != null && file.Length > 0)
+                    {
+                        var streamContent = new StreamContent(file.OpenReadStream());
+                        streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType ?? "application/octet-stream");
+                        multipartContent.Add(streamContent, "files", file.FileName);
+                    }
                 }
             }
             

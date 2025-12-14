@@ -218,10 +218,12 @@ public class PreDefinedHighRiskSeeder
             },
 
             // 2.1.1 - SDG impact
+            // Note: Mapped to ENV_CLIMATE_CHANGE as the original category "SCL_CLTR_ENV_CLMT_ECO" doesn't exist
+            // This covers the sustainability/environmental dimensions mentioned in the description
             new PreDefinedHighRisk
             {
                 Name = "Negative SDG Impact",
-                CategoryCode = "SCL_CLTR_ENV_CLMT_ECO",
+                CategoryCode = "ENV_CLIMATE_CHANGE",
                 Level1 = 2,
                 Level2Code = "2.1",
                 OupQuestionId = 481,
@@ -232,7 +234,7 @@ public class PreDefinedHighRiskSeeder
                 IsAutoDetectable = false,
                 DetectionRuleType = null,
                 DisplayOrder = 10,
-                RiskCategoryId = categoryLookup.GetValueOrDefault("SCL_CLTR_ENV_CLMT_ECO"),
+                RiskCategoryId = categoryLookup.GetValueOrDefault("ENV_CLIMATE_CHANGE"),
                 Status = EntityStatus.Active,
                 CreatedBy = 0,
                 CreatedDate = DateTime.UtcNow

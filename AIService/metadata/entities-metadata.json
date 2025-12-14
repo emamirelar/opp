@@ -2119,19 +2119,21 @@
         {
           "endpoint": "/api/contact/search",
           "method": "GET",
-          "description": "Performs simple text search across multiple contact fields",
+          "description": "SIMPLE TEXT SEARCH: Use for quick keyword searches across contact name, email, title, and basic text fields. Supports fuzzy matching and typo correction. Use this when user asks to 'find', 'search for', or 'look up' contacts by name, email, or keywords. Example queries: 'Find John Smith', 'Search for contacts with email containing unicef', 'Look up program managers'. Do NOT use for partner relationship filtering, department filtering with specific values, or date-based searches - use advanced-search instead.",
+          "whenToUse": "Use for simple name/email/title keyword searches. User says: 'find contact named X', 'search for X', 'look up contacts with email X', 'find contacts with title manager'",
+          "whenNotToUse": "Do NOT use when user needs to filter by specific partner organization, department with exact match, dates, or multiple criteria combinations",
           "parameters": [
             {
               "name": "query",
               "dataType": "string",
               "required": true,
-              "description": "Text to search for"
+              "description": "Search text/keywords to find in contact name, email, title fields. Supports partial matches and fuzzy matching."
             },
             {
               "name": "pageIndex",
               "dataType": "integer",
               "required": false,
-              "description": "Page number (default: 1)"
+              "description": "Page number, 1-based (default: 1)"
             },
             {
               "name": "pageSize",
@@ -2143,38 +2145,64 @@
               "name": "orderBy",
               "dataType": "string",
               "required": false,
-              "description": "Field to sort by"
+              "description": "Field to sort by (default: FirstName)"
             },
             {
               "name": "ascending",
               "dataType": "boolean",
               "required": false,
-              "description": "Sort direction (default: true)"
+              "description": "Sort direction - true for A-Z, false for Z-A (default: true)"
+            },
+            {
+              "name": "partnerId",
+              "dataType": "integer",
+              "required": false,
+              "description": "Optional: Filter contacts to those belonging to a specific partner organization"
             },
             {
               "name": "export",
               "dataType": "boolean",
               "required": false,
-              "description": "Whether to export all results (default: false)"
+              "description": "Whether to export all results without pagination (default: false)"
+            },
+            {
+              "name": "filterActive",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Whether to filter only active contacts (default: true)"
             }
           ]
         },
         {
           "endpoint": "/api/contact/advanced-search",
           "method": "GET",
-          "description": "Performs advanced search with structured criteria including relationships",
+          "description": "STRUCTURED CRITERIA SEARCH: Use for complex searches with specific field filters, partner organization relationships, department filtering, date ranges, or multiple criteria combinations. REQUIRED when user wants to filter by: specific partner organization name, department, status, dates, or any combination of criteria. Example queries: 'Find contacts from UNICEF', 'Show contacts in Finance department', 'Get contacts created this month', 'Find contacts at Asian Development Bank with title Director'. **IMPORTANT**: Before using this endpoint, call /api/contact/search-fields to get all available fields, their data types, and allowed operators to properly construct the filters parameter.",
+          "whenToUse": "Use when user needs: partner relationship filtering (contacts FROM a specific partner), department filtering, date filtering, status filtering, or ANY combination of multiple criteria. Call /search-fields first to discover available fields.",
+          "whenNotToUse": "Do NOT use for simple name/email keyword searches where only text matching is needed - use /search instead",
+          "filtersFormat": {
+            "description": "JSON array of filter objects. Each filter specifies a field, operator, value, and how to combine with other filters.",
+            "structure": "[{\"field\": \"fieldName\", \"operator\": \"operatorName\", \"value\": \"filterValue\", \"logicalOperator\": \"AND|OR\"}]",
+            "availableOperators": ["is", "is not", "like", "not like", "greater than", "less than", "greater than or equal", "less than or equal", "this week", "this month", "this year"],
+            "commonFields": ["firstName", "lastName", "email", "title", "department", "phone", "mobile", "status", "partner.name", "partner.status", "createdDate", "lastModifiedDate"],
+            "examples": [
+              {"scenario": "Contacts from UNICEF", "filters": "[{\"field\": \"partner.name\", \"operator\": \"like\", \"value\": \"UNICEF\"}]"},
+              {"scenario": "Contacts in Finance department", "filters": "[{\"field\": \"department\", \"operator\": \"like\", \"value\": \"Finance\"}]"},
+              {"scenario": "Contacts created this month", "filters": "[{\"field\": \"createdDate\", \"operator\": \"this month\", \"value\": \"\"}]"},
+              {"scenario": "Directors at World Bank", "filters": "[{\"field\": \"partner.name\", \"operator\": \"like\", \"value\": \"World Bank\", \"logicalOperator\": \"AND\"}, {\"field\": \"title\", \"operator\": \"like\", \"value\": \"Director\"}]"}
+            ]
+          },
           "parameters": [
             {
               "name": "filters",
               "dataType": "string",
               "required": true,
-              "description": "JSON array of search criteria objects"
+              "description": "JSON array of search criteria objects. Format: [{\"field\": \"fieldName\", \"operator\": \"operatorName\", \"value\": \"filterValue\", \"logicalOperator\": \"AND\"}]. See filtersFormat for available fields and operators."
             },
             {
               "name": "pageIndex",
               "dataType": "integer",
               "required": false,
-              "description": "Page number (default: 1)"
+              "description": "Page number, 1-based (default: 1)"
             },
             {
               "name": "pageSize",
@@ -2186,15 +2214,40 @@
               "name": "orderBy",
               "dataType": "string",
               "required": false,
-              "description": "Field to sort by"
+              "description": "Field to sort by (default: FirstName)"
             },
             {
               "name": "ascending",
               "dataType": "boolean",
               "required": false,
-              "description": "Sort direction (default: true)"
+              "description": "Sort direction - true for A-Z, false for Z-A (default: true)"
+            },
+            {
+              "name": "partnerId",
+              "dataType": "integer",
+              "required": false,
+              "description": "Optional: Additional filter by partner ID (combines with filters using AND)"
+            },
+            {
+              "name": "export",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Whether to export all results without pagination (default: false)"
+            },
+            {
+              "name": "filterActive",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Whether to apply default active filtering in addition to explicit filters (default: true)"
             }
           ]
+        },
+        {
+          "endpoint": "/api/contact/search-fields",
+          "method": "GET",
+          "description": "Gets supported search fields for contacts. Returns list of all available fields with their data types, allowed operators, and dropdown options (for enum fields). Use this to understand what fields can be used in advanced-search filters and how to properly construct the filters parameter.",
+          "whenToUse": "Call this BEFORE using /api/contact/advanced-search to discover available searchable fields and their valid operators",
+          "parameters": []
         },
         {
           "endpoint": "/api/contact/{id}",
@@ -2437,19 +2490,21 @@
         {
           "endpoint": "/api/partner/search",
           "method": "GET",
-          "description": "Performs simple text search across multiple partner fields",
+          "description": "SIMPLE TEXT SEARCH: Use for quick keyword/name searches across partner name, short description, and basic text fields. Supports fuzzy matching and typo correction. Use this when user asks to 'find', 'search for', or 'look up' partners by name or keywords. Example queries: 'Find UNICEF', 'Search for World Bank', 'Look up partners containing infrastructure'. Do NOT use for status filtering, date ranges, or relationship-based searches - use advanced-search instead.",
+          "whenToUse": "Use for simple name/keyword searches. User says: 'find partners named X', 'search for X', 'look up X partners', 'partners with name like X'",
+          "whenNotToUse": "Do NOT use when user needs to filter by status, dates, partner category, contact relationships, or multiple criteria combinations",
           "parameters": [
             {
               "name": "query",
               "dataType": "string",
               "required": true,
-              "description": "Text to search for"
+              "description": "Search text/keywords to find in partner name and description fields. Supports partial matches and fuzzy matching."
             },
             {
               "name": "pageIndex",
               "dataType": "integer",
               "required": false,
-              "description": "Page number (default: 1)"
+              "description": "Page number, 1-based (default: 1)"
             },
             {
               "name": "pageSize",
@@ -2461,38 +2516,58 @@
               "name": "orderBy",
               "dataType": "string",
               "required": false,
-              "description": "Field to sort by (default: CreatedDate)"
+              "description": "Field to sort by (default: Name)"
             },
             {
               "name": "ascending",
               "dataType": "boolean",
               "required": false,
-              "description": "Sort direction (default: false)"
+              "description": "Sort direction - true for A-Z/oldest first, false for Z-A/newest first (default: true)"
             },
             {
               "name": "export",
               "dataType": "boolean",
               "required": false,
-              "description": "Whether to export all results (default: false)"
+              "description": "Whether to export all results without pagination (default: false)"
+            },
+            {
+              "name": "filterActive",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Whether to filter only active partners (default: true)"
             }
           ]
         },
         {
           "endpoint": "/api/partner/advanced-search",
           "method": "GET",
-          "description": "Performs advanced search with structured criteria",
+          "description": "STRUCTURED CRITERIA SEARCH: Use for complex searches with specific field filters, status conditions, date ranges, relationship-based queries, or multiple criteria combinations. REQUIRED when user wants to filter by: status (Active/Draft/Closed), partner category, partner group, approval status, key global partner flag, dates, or any combination of criteria. Example queries: 'Find active government partners', 'Show partners approved this year', 'Get key global partners in draft status'. **IMPORTANT**: Before using this endpoint, call /api/partner/search-fields to get all available fields, their data types, and allowed operators to properly construct the filters parameter.",
+          "whenToUse": "Use when user needs: status filtering, date filtering, partner category/group filtering, approval status, boolean flags (keyGlobalPartner, pooledFund), relationship queries (contacts, liaison offices), or ANY combination of multiple criteria. Call /search-fields first to discover available fields.",
+          "whenNotToUse": "Do NOT use for simple name/keyword searches where only text matching is needed - use /search instead",
+          "filtersFormat": {
+            "description": "JSON array of filter objects. Each filter specifies a field, operator, value, and how to combine with other filters.",
+            "structure": "[{\"field\": \"fieldName\", \"operator\": \"operatorName\", \"value\": \"filterValue\", \"logicalOperator\": \"AND|OR\"}]",
+            "availableOperators": ["is", "is not", "like", "not like", "greater than", "less than", "greater than or equal", "less than or equal", "this week", "this month", "this year"],
+            "commonFields": ["name", "status", "partnerShortDescription", "partnerCategoryId", "partnerGroupId", "keyGlobalPartner", "pooledFund", "partnerApprovalStatus", "createdDate", "lastModifiedDate", "partnerGroup.name", "liaisonOffice.name", "contacts.firstName", "contacts.lastName", "contacts.email"],
+            "examples": [
+              {"scenario": "Active partners", "filters": "[{\"field\": \"status\", \"operator\": \"is\", \"value\": \"Active\"}]"},
+              {"scenario": "Key global partners", "filters": "[{\"field\": \"keyGlobalPartner\", \"operator\": \"is\", \"value\": \"true\"}]"},
+              {"scenario": "Partners created this month", "filters": "[{\"field\": \"createdDate\", \"operator\": \"this month\", \"value\": \"\"}]"},
+              {"scenario": "Active key global partners", "filters": "[{\"field\": \"status\", \"operator\": \"is\", \"value\": \"Active\", \"logicalOperator\": \"AND\"}, {\"field\": \"keyGlobalPartner\", \"operator\": \"is\", \"value\": \"true\"}]"}
+            ]
+          },
           "parameters": [
             {
               "name": "filters",
               "dataType": "string",
               "required": true,
-              "description": "JSON array of search criteria objects"
+              "description": "JSON array of search criteria objects. Format: [{\"field\": \"fieldName\", \"operator\": \"operatorName\", \"value\": \"filterValue\", \"logicalOperator\": \"AND\"}]. See filtersFormat for available fields and operators."
             },
             {
               "name": "pageIndex",
               "dataType": "integer",
               "required": false,
-              "description": "Page number (default: 1)"
+              "description": "Page number, 1-based (default: 1)"
             },
             {
               "name": "pageSize",
@@ -2504,21 +2579,34 @@
               "name": "orderBy",
               "dataType": "string",
               "required": false,
-              "description": "Field to sort by (default: CreatedDate)"
+              "description": "Field to sort by (default: Name)"
             },
             {
               "name": "ascending",
               "dataType": "boolean",
               "required": false,
-              "description": "Sort direction (default: false)"
+              "description": "Sort direction - true for A-Z/oldest first, false for Z-A/newest first (default: true)"
             },
             {
               "name": "export",
               "dataType": "boolean",
               "required": false,
-              "description": "Whether to export all results (default: false)"
+              "description": "Whether to export all results without pagination (default: false)"
+            },
+            {
+              "name": "filterActive",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Whether to apply default active filtering in addition to explicit filters (default: true)"
             }
           ]
+        },
+        {
+          "endpoint": "/api/partner/search-fields",
+          "method": "GET",
+          "description": "Gets supported search fields for partners. Returns list of all available fields with their data types, allowed operators, and dropdown options (for enum fields). Use this to understand what fields can be used in advanced-search filters and how to properly construct the filters parameter.",
+          "whenToUse": "Call this BEFORE using /api/partner/advanced-search to discover available searchable fields and their valid operators",
+          "parameters": []
         },
         {
           "endpoint": "/api/partner/{id}",
@@ -2557,6 +2645,102 @@
               "dataType": "int",
               "required": true,
               "description": "Partner ID to delete"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/partner/{partnerId}/create-opportunity",
+          "method": "POST",
+          "description": "Creates a new opportunity directly from a partner record with the partner pre-populated as funding and/or client partner. Use this when the user wants to create an opportunity starting from a specific partner organization. The partner will automatically be added to the opportunity's funding partners and/or client partners based on the partnerRole specified.",
+          "whenToUse": "Use when user says: 'create opportunity for partner X', 'start new opportunity with partner X', 'create project from partner X'",
+          "parameters": [
+            {
+              "name": "partnerId",
+              "dataType": "int",
+              "required": true,
+              "description": "ID of the partner to create opportunity for (path parameter)"
+            },
+            {
+              "name": "name",
+              "dataType": "string",
+              "required": true,
+              "description": "Name/title of the new opportunity"
+            },
+            {
+              "name": "description",
+              "dataType": "string",
+              "required": false,
+              "description": "Description of the opportunity. If not provided, a default description mentioning the partner will be used."
+            },
+            {
+              "name": "partnerRole",
+              "dataType": "string",
+              "required": true,
+              "description": "Role of the partner in the opportunity. Must be one of: 'funding' (partner provides funding), 'client' (partner is the client/beneficiary), or 'both' (partner is both funding and client)."
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/partner/{partnerId}/opportunities",
+          "method": "GET",
+          "description": "Gets all opportunities related to a specific partner. Returns opportunities where the partner is either a funding partner or a client partner. Use this to see all opportunities associated with a particular organization.",
+          "whenToUse": "Use when user says: 'show opportunities for partner X', 'what opportunities does partner X have', 'list partner X opportunities', 'get projects with partner X'",
+          "parameters": [
+            {
+              "name": "partnerId",
+              "dataType": "int",
+              "required": true,
+              "description": "ID of the partner to get opportunities for (path parameter)"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/partner/{partnerId}/opportunities/search",
+          "method": "GET",
+          "description": "Searches opportunities related to a specific partner using text search. Filters results to only show opportunities where the partner is a funding or client partner, then applies text search on top. Use this when user wants to find specific opportunities for a partner by keyword.",
+          "whenToUse": "Use when user says: 'find opportunities about X for partner Y', 'search partner Y opportunities for keyword X', 'find partner Y projects matching X'",
+          "parameters": [
+            {
+              "name": "partnerId",
+              "dataType": "int",
+              "required": true,
+              "description": "ID of the partner to search opportunities for (path parameter)"
+            },
+            {
+              "name": "query",
+              "dataType": "string",
+              "required": true,
+              "description": "Search text to find in opportunity name and description"
+            },
+            {
+              "name": "pageIndex",
+              "dataType": "int",
+              "required": false,
+              "description": "Page number, 1-based (default: 1)"
+            },
+            {
+              "name": "pageSize",
+              "dataType": "int",
+              "required": false,
+              "description": "Number of items per page (default: 20)"
+            },
+            {
+              "name": "orderBy",
+              "dataType": "string",
+              "required": false,
+              "description": "Field to sort by (default: Name)"
+            },
+            {
+              "name": "ascending",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Sort direction (default: true)"
+            },
+            {
+              "name": "filterActive",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Whether to filter only active opportunities (default: true)"
             }
           ]
         }
@@ -2713,19 +2897,21 @@
         {
           "endpoint": "/api/interactions/search",
           "method": "GET",
-          "description": "Performs simple text search across interaction fields",
+          "description": "SIMPLE TEXT SEARCH: Use for quick keyword searches across interaction subject, description, and basic text fields. Supports fuzzy matching and typo correction. Use this when user asks to 'find', 'search for', or 'look up' interactions by topic or keywords. Example queries: 'Find meetings about project planning', 'Search for interactions mentioning climate', 'Look up emails about budget'. Do NOT use for partner/contact relationship filtering, interaction type filtering, date ranges, or complex criteria - use advanced-search instead.",
+          "whenToUse": "Use for simple keyword/topic searches in interaction content. User says: 'find interactions about X', 'search for meetings mentioning X', 'look up interactions with keyword X'",
+          "whenNotToUse": "Do NOT use when user needs to filter by specific partner, contact, interaction type (Meeting/Email/Call), date ranges, or multiple criteria combinations",
           "parameters": [
             {
               "name": "query",
               "dataType": "string",
               "required": true,
-              "description": "Text to search for"
+              "description": "Search text/keywords to find in interaction subject and description fields. Supports partial matches and fuzzy matching."
             },
             {
               "name": "pageIndex",
               "dataType": "integer",
               "required": false,
-              "description": "Page number (default: 1)"
+              "description": "Page number, 1-based (default: 1)"
             },
             {
               "name": "pageSize",
@@ -2737,38 +2923,71 @@
               "name": "orderBy",
               "dataType": "string",
               "required": false,
-              "description": "Field to sort by"
+              "description": "Field to sort by (default: Subject)"
             },
             {
               "name": "ascending",
               "dataType": "boolean",
               "required": false,
-              "description": "Sort direction (default: true)"
+              "description": "Sort direction - true for A-Z/oldest first, false for Z-A/newest first (default: true)"
+            },
+            {
+              "name": "partnerId",
+              "dataType": "integer",
+              "required": false,
+              "description": "Optional: Filter interactions to those involving a specific partner"
+            },
+            {
+              "name": "contactId",
+              "dataType": "integer",
+              "required": false,
+              "description": "Optional: Filter interactions to those involving a specific contact"
             },
             {
               "name": "export",
               "dataType": "boolean",
               "required": false,
-              "description": "Whether to export all results (default: false)"
+              "description": "Whether to export all results without pagination (default: false)"
+            },
+            {
+              "name": "filterActive",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Whether to filter only active interactions (default: true)"
             }
           ]
         },
         {
           "endpoint": "/api/interactions/advanced-search",
           "method": "GET",
-          "description": "Performs advanced search with structured criteria",
+          "description": "STRUCTURED CRITERIA SEARCH: Use for complex searches with specific field filters, partner/contact relationships, interaction types, date ranges, or multiple criteria combinations. REQUIRED when user wants to filter by: interaction type (Meeting/Email/Call/Conference), specific partner name, specific contact, date ranges, or any combination of criteria. Example queries: 'Find all meetings with UNICEF', 'Show emails from last month', 'Get conference calls with John Smith', 'Find interactions with World Bank this year'. **IMPORTANT**: Before using this endpoint, call /api/interactions/search-fields to get all available fields, their data types, and allowed operators to properly construct the filters parameter.",
+          "whenToUse": "Use when user needs: interaction type filtering (Meeting/Email/Call), partner name filtering, contact filtering, date ranges, or ANY combination of multiple criteria. Call /search-fields first to discover available fields.",
+          "whenNotToUse": "Do NOT use for simple keyword/topic searches where only text matching is needed - use /search instead",
+          "filtersFormat": {
+            "description": "JSON array of filter objects. Each filter specifies a field, operator, value, and how to combine with other filters.",
+            "structure": "[{\"field\": \"fieldName\", \"operator\": \"operatorName\", \"value\": \"filterValue\", \"logicalOperator\": \"AND|OR\"}]",
+            "availableOperators": ["is", "is not", "like", "not like", "greater than", "less than", "greater than or equal", "less than or equal", "this week", "this month", "this year"],
+            "commonFields": ["type", "date", "subject", "description", "location", "status", "contact.firstName", "contact.lastName", "partner.name", "partner.status", "createdDate", "lastModifiedDate"],
+            "interactionTypes": ["Meeting", "Email", "Call", "Conference", "Visit", "Other"],
+            "examples": [
+              {"scenario": "All meetings", "filters": "[{\"field\": \"type\", \"operator\": \"is\", \"value\": \"Meeting\"}]"},
+              {"scenario": "Interactions with UNICEF", "filters": "[{\"field\": \"partner.name\", \"operator\": \"like\", \"value\": \"UNICEF\"}]"},
+              {"scenario": "Emails this month", "filters": "[{\"field\": \"type\", \"operator\": \"is\", \"value\": \"Email\", \"logicalOperator\": \"AND\"}, {\"field\": \"date\", \"operator\": \"this month\", \"value\": \"\"}]"},
+              {"scenario": "Meetings with specific contact", "filters": "[{\"field\": \"type\", \"operator\": \"is\", \"value\": \"Meeting\", \"logicalOperator\": \"AND\"}, {\"field\": \"contact.lastName\", \"operator\": \"like\", \"value\": \"Smith\"}]"}
+            ]
+          },
           "parameters": [
             {
               "name": "filters",
               "dataType": "string",
               "required": true,
-              "description": "JSON array of search criteria objects"
+              "description": "JSON array of search criteria objects. Format: [{\"field\": \"fieldName\", \"operator\": \"operatorName\", \"value\": \"filterValue\", \"logicalOperator\": \"AND\"}]. See filtersFormat for available fields and operators."
             },
             {
               "name": "pageIndex",
               "dataType": "integer",
               "required": false,
-              "description": "Page number (default: 1)"
+              "description": "Page number, 1-based (default: 1)"
             },
             {
               "name": "pageSize",
@@ -2780,21 +2999,46 @@
               "name": "orderBy",
               "dataType": "string",
               "required": false,
-              "description": "Field to sort by"
+              "description": "Field to sort by (default: Subject)"
             },
             {
               "name": "ascending",
               "dataType": "boolean",
               "required": false,
-              "description": "Sort direction (default: true)"
+              "description": "Sort direction - true for A-Z/oldest first, false for Z-A/newest first (default: true)"
+            },
+            {
+              "name": "partnerId",
+              "dataType": "integer",
+              "required": false,
+              "description": "Optional: Additional filter by partner ID (combines with filters using AND)"
+            },
+            {
+              "name": "contactId",
+              "dataType": "integer",
+              "required": false,
+              "description": "Optional: Additional filter by contact ID (combines with filters using AND)"
             },
             {
               "name": "export",
               "dataType": "boolean",
               "required": false,
-              "description": "Whether to export all results (default: false)"
+              "description": "Whether to export all results without pagination (default: false)"
+            },
+            {
+              "name": "filterActive",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Whether to apply default active filtering in addition to explicit filters (default: true)"
             }
           ]
+        },
+        {
+          "endpoint": "/api/interactions/search-fields",
+          "method": "GET",
+          "description": "Gets supported search fields for interactions. Returns list of all available fields with their data types, allowed operators, and dropdown options (for enum fields). Use this to understand what fields can be used in advanced-search filters and how to properly construct the filters parameter.",
+          "whenToUse": "Call this BEFORE using /api/interactions/advanced-search to discover available searchable fields and their valid operators",
+          "parameters": []
         },
         {
           "endpoint": "/api/interactions/{id}",
@@ -2833,6 +3077,33 @@
               "dataType": "int",
               "required": true,
               "description": "Interaction ID to delete"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/interactions/deepSearch",
+          "method": "GET",
+          "description": "SEMANTIC AI-POWERED SEARCH: Performs semantic search on interactions using AI embeddings to find conceptually similar interactions based on natural language queries. Unlike regular search which matches keywords, this finds interactions with similar meaning/context. Use this when user wants to find interactions by concept, topic, or semantic similarity rather than exact keywords.",
+          "whenToUse": "Use when user says: 'find interactions similar to X', 'find meetings about topic X', 'search for emails related to concept X', 'find interactions like X'. Also use when regular search doesn't find good matches and user needs conceptual/semantic matching.",
+          "whenNotToUse": "Do NOT use for simple keyword searches or when user wants exact text matches - use /search instead",
+          "parameters": [
+            {
+              "name": "query",
+              "dataType": "string",
+              "required": true,
+              "description": "Natural language search query. Can be a phrase, sentence, or description of what you're looking for. The AI will find interactions with similar meaning/context."
+            },
+            {
+              "name": "threshold",
+              "dataType": "float",
+              "required": false,
+              "description": "Similarity threshold between 0.0 and 1.0. Higher values return only very similar results, lower values return more results with looser matching. (default: 0.7)"
+            },
+            {
+              "name": "limit",
+              "dataType": "int",
+              "required": false,
+              "description": "Maximum number of results to return, between 1 and 100. (default: 10)"
             }
           ]
         }
@@ -4158,19 +4429,21 @@
         {
           "endpoint": "/api/opportunity/search",
           "method": "GET",
-          "description": "Performs simple text search across multiple opportunity fields using PostgreSQL similarity search",
+          "description": "SIMPLE TEXT SEARCH: Use for quick keyword searches across opportunity name, description, and basic text fields. Supports fuzzy matching and typo correction. Use this when user asks to 'find', 'search for', or 'look up' opportunities by name or topic. Example queries: 'Find opportunities about water infrastructure', 'Search for climate projects', 'Look up healthcare initiatives'. Do NOT use for workflow stage filtering, partner filtering, date ranges, or complex criteria - use advanced-search instead.",
+          "whenToUse": "Use for simple name/description keyword searches. User says: 'find opportunities about X', 'search for X opportunities', 'look up projects with keyword X'",
+          "whenNotToUse": "Do NOT use when user needs to filter by workflow stage, specific partners (funding/client), org unit, initiative type, dates, SDGs, or multiple criteria combinations",
           "parameters": [
             {
               "name": "query",
               "dataType": "string",
               "required": true,
-              "description": "Text to search for"
+              "description": "Search text/keywords to find in opportunity name and description fields. Supports partial matches and fuzzy matching."
             },
             {
               "name": "pageIndex",
               "dataType": "int",
               "required": false,
-              "description": "Page number (default: 1)"
+              "description": "Page number, 1-based (default: 1)"
             },
             {
               "name": "pageSize",
@@ -4182,19 +4455,19 @@
               "name": "orderBy",
               "dataType": "string",
               "required": false,
-              "description": "Field to sort by"
+              "description": "Field to sort by (default: lastModifiedDate)"
             },
             {
               "name": "ascending",
               "dataType": "boolean",
               "required": false,
-              "description": "Sort direction (default: true)"
+              "description": "Sort direction - true for oldest first, false for newest first (default: false for most recent)"
             },
             {
               "name": "export",
               "dataType": "boolean",
               "required": false,
-              "description": "Whether to export all results (default: false)"
+              "description": "Whether to export all results without pagination (default: false)"
             },
             {
               "name": "filterActive",
@@ -4207,19 +4480,34 @@
         {
           "endpoint": "/api/opportunity/advanced-search",
           "method": "GET",
-          "description": "Performs advanced search with structured criteria including relationships and complex filters",
+          "description": "STRUCTURED CRITERIA SEARCH: Use for complex searches with specific field filters, workflow stage, partner relationships, org unit, initiative type, dates, SDGs, or multiple criteria combinations. REQUIRED when user wants to filter by: workflow stage (Prospecting/Pipeline/Negotiation/Won/Lost), specific funding or client partner, responsible org unit, initiative type, target dates, implementation countries, SDGs, or any combination of criteria. Example queries: 'Find opportunities in Pipeline stage', 'Show opportunities with UNICEF as funding partner', 'Get opportunities targeting 2024', 'Find healthcare opportunities in Africa'.",
+          "whenToUse": "Use when user needs: workflow stage filtering, partner filtering (funding/client), org unit filtering, initiative type, date ranges, country filtering, SDG alignment, or ANY combination of multiple criteria",
+          "whenNotToUse": "Do NOT use for simple name/description keyword searches where only text matching is needed - use /search instead",
+          "filtersFormat": {
+            "description": "JSON array of filter objects. Each filter specifies a field, operator, value, and how to combine with other filters.",
+            "structure": "[{\"field\": \"fieldName\", \"operator\": \"operatorName\", \"value\": \"filterValue\", \"logicalOperator\": \"AND|OR\"}]",
+            "availableOperators": ["is", "is not", "like", "not like", "greater than", "less than", "greater than or equal", "less than or equal", "this week", "this month", "this year"],
+            "commonFields": ["name", "description", "status", "workflowStageId", "workflowStageName", "responsibleOrgUnitId", "proposedInitiativeTypeId", "targetSigningDate", "targetDeliveryDate", "initiativeBudgetUSD", "isPooledFunding", "fundingPartners.partner.name", "clientPartners.partner.name", "countries.country.name", "sdGs.sdg.name", "createdDate", "lastModifiedDate"],
+            "workflowStages": ["Prospecting", "Pipeline", "Negotiation", "Won", "Lost"],
+            "examples": [
+              {"scenario": "Opportunities in Pipeline stage", "filters": "[{\"field\": \"workflowStageName\", \"operator\": \"is\", \"value\": \"Pipeline\"}]"},
+              {"scenario": "Opportunities with UNICEF as funding partner", "filters": "[{\"field\": \"fundingPartners.partner.name\", \"operator\": \"like\", \"value\": \"UNICEF\"}]"},
+              {"scenario": "Opportunities created this month", "filters": "[{\"field\": \"createdDate\", \"operator\": \"this month\", \"value\": \"\"}]"},
+              {"scenario": "Won opportunities with budget > $1M", "filters": "[{\"field\": \"workflowStageName\", \"operator\": \"is\", \"value\": \"Won\", \"logicalOperator\": \"AND\"}, {\"field\": \"initiativeBudgetUSD\", \"operator\": \"greater than\", \"value\": \"1000000\"}]"}
+            ]
+          },
           "parameters": [
             {
               "name": "filters",
               "dataType": "string",
               "required": true,
-              "description": "JSON array of search criteria objects with field, operator, value, and logicalOperator"
+              "description": "JSON array of search criteria objects. Format: [{\"field\": \"fieldName\", \"operator\": \"operatorName\", \"value\": \"filterValue\", \"logicalOperator\": \"AND\"}]. See filtersFormat for available fields and operators."
             },
             {
               "name": "pageIndex",
               "dataType": "int",
               "required": false,
-              "description": "Page number (default: 1)"
+              "description": "Page number, 1-based (default: 1)"
             },
             {
               "name": "pageSize",
@@ -4231,32 +4519,32 @@
               "name": "orderBy",
               "dataType": "string",
               "required": false,
-              "description": "Field to sort by (default: Name)"
+              "description": "Field to sort by (default: lastModifiedDate)"
             },
             {
               "name": "ascending",
               "dataType": "boolean",
               "required": false,
-              "description": "Sort direction (default: true)"
+              "description": "Sort direction - true for oldest first, false for newest first (default: false for most recent)"
             },
             {
               "name": "export",
               "dataType": "boolean",
               "required": false,
-              "description": "Whether to export all results (default: false)"
+              "description": "Whether to export all results without pagination (default: false)"
             },
             {
               "name": "filterActive",
               "dataType": "boolean",
               "required": false,
-              "description": "Whether to filter only active opportunities (default: true)"
+              "description": "Whether to apply default active filtering in addition to explicit filters (default: true)"
             }
           ]
         },
         {
           "endpoint": "/api/opportunity/search-fields",
           "method": "GET",
-          "description": "Gets supported search fields for opportunities to help build dynamic search forms",
+          "description": "Gets supported search fields for opportunities. Returns list of all available fields with their data types and allowed operators. Use this to understand what fields can be used in advanced-search filters.",
           "parameters": []
         },
         {
@@ -4691,13 +4979,40 @@
         {
           "endpoint": "/api/opportunity/{id}/extract-deliverables",
           "method": "POST",
-          "description": "Extracts products and services from Partner Results Framework and other documents using AI",
+          "description": "Extracts products and services from Partner Results Framework and other documents using AI. Analyzes attached documents to identify deliverables that can be added to the opportunity.",
+          "whenToUse": "Use when user wants to automatically extract/identify deliverables from opportunity documents using AI",
           "parameters": [
             {
               "name": "id",
               "dataType": "int",
               "required": true,
               "description": "Opportunity ID"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/opportunity/find-deliverable",
+          "method": "POST",
+          "description": "SEMANTIC SEARCH FOR DELIVERABLES: Performs semantic/AI-powered search to find the best matching product or service (output) from the system's catalog based on a text description. Returns the most relevant deliverable type that matches the user's description along with similarity scores. Use this when user describes a deliverable in natural language and you need to find the matching system output/product/service.",
+          "whenToUse": "Use when user describes a deliverable/product/service and you need to find the matching entry in the system. User says: 'find deliverable for X', 'what output matches X', 'search for product/service like X'",
+          "parameters": [
+            {
+              "name": "query",
+              "dataType": "string",
+              "required": true,
+              "description": "Text description of the deliverable/product/service to find. Can be a phrase or description like 'water treatment facility', 'training program for teachers', 'health clinic construction'"
+            },
+            {
+              "name": "topK",
+              "dataType": "int",
+              "required": false,
+              "description": "Number of top matching results to return (default: 5)"
+            },
+            {
+              "name": "threshold",
+              "dataType": "float",
+              "required": false,
+              "description": "Minimum similarity threshold between 0.0 and 1.0 (default: 0.5)"
             }
           ]
         }
