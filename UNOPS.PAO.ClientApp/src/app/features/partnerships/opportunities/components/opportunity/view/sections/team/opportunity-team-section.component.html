@@ -252,8 +252,8 @@
       <!-- Auto-populated stakeholders from OrgUnit (read-only) - Grouped by OrgUnit -->
       @if (autoPopulatedStakeholders().length > 0) {
         <div class="mb-4">
-          <div class="text-xs text-unops-neutral-600 mb-3 flex items-center gap-1">
-            <i class="pi pi-lock text-unops-neutral-500"></i>
+          <div class="text-xs text-unops-secondary mb-3 flex items-center gap-1">
+            <i class="pi pi-lock text-unops-secondary"></i>
             <span>{{ 'label.opportunity.autoPopulatedFromOrgUnit' | translate }}</span>
           </div>
 
@@ -278,9 +278,8 @@
                         styleClass="bg-emerald-100 text-emerald-600 flex-shrink-0"
                       />
                       <div class="min-w-0 flex-1">
-                        <div class="font-semibold text-unops-secondary text-sm flex items-center gap-1.5 flex-wrap">
-                          <span class="truncate">{{ getTranslatedRoleName(stakeholder) }}</span>
-                          <p-tag value="Auto" severity="info" styleClass="text-xs" />
+                        <div class="font-semibold text-unops-secondary text-sm truncate">
+                          <span>{{ getTranslatedRoleName(stakeholder) }}</span>
                         </div>
                         @if (stakeholder.userName) {
                           <div class="text-xs text-unops-neutral-600 truncate" [title]="stakeholder.userName">

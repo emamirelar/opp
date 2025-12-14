@@ -234,6 +234,8 @@ async def chat_endpoint(
     message: str = Form(None),
     streaming: str = Form(None),
     state: str = Form(None),
+    # GCS file paths (JSON string array)
+    gcs_files: str = Form(None),
     # File uploads
     files: List[UploadFile] = File(None)
 ):
@@ -316,6 +318,49 @@ async def chat_endpoint(
         uploaded_artifact_parts = []
         audio_files_for_artifacts = []
         
+        # Process GCS files first (preferred over raw file uploads)
+        # Handle case where gcs_files might be the string "null" or empty
+        if gcs_files and gcs_files.strip() and gcs_files.strip().lower() != 'null':
+            try:
+                gcs_file_list = json.loads(gcs_files)
+                if not isinstance(gcs_file_list, list):
+                    gcs_file_list = []
+                logger.info(f"Processing {len(gcs_file_list)} GCS file(s)")
+                
+                for gcs_file in gcs_file_list:
+                    gcs_path = gcs_file.get('gcsPath')
+                    file_name = gcs_file.get('name', 'unknown')
+                    mime_type = gcs_file.get('mimeType', 'application/pdf')
+                    
+                    if gcs_path:
+                        logger.info(f"Adding GCS file: {file_name} from {gcs_path}")
+                        
+                        # Create a types.Part with file_uri for GCS files
+                        file_part = types.Part.from_uri(
+                            file_uri=gcs_path,
+                            mime_type=mime_type
+                        )
+                        message_parts.append(file_part)
+                        
+                        # Check if this is an audio file for special handling
+                        is_audio = mime_type.startswith('audio/')
+                        if is_audio:
+                            audio_files_for_artifacts.append({
+                                "filename": file_name,
+                                "mime_type": mime_type,
+                                "gcs_path": gcs_path
+                            })
+                        
+                        uploaded_artifact_parts.append({
+                            "filename": file_name,
+                            "mime_type": mime_type,
+                            "gcs_path": gcs_path,
+                            "is_audio": is_audio
+                        })
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse gcs_files JSON: {e}")
+        
+        # Process raw file uploads as fallback
         if files:
             for uploaded_file in files:
                 if uploaded_file.filename:
@@ -347,11 +392,11 @@ async def chat_endpoint(
                         "is_audio": is_audio
                     })
                     
-            if uploaded_artifact_parts:
-                initial_state['uploaded_files_metadata'] = uploaded_artifact_parts
-            
-            if audio_files_for_artifacts:
-                initial_state['audio_files_metadata'] = audio_files_for_artifacts
+        if uploaded_artifact_parts:
+            initial_state['uploaded_files_metadata'] = uploaded_artifact_parts
+        
+        if audio_files_for_artifacts:
+            initial_state['audio_files_metadata'] = audio_files_for_artifacts
 
         # Get or create session
         logger.info(f"🔍 Session management: app={request_data.app_name}, user={request_data.user_id}, session={request_data.session_id}")
@@ -465,6 +510,9 @@ async def _handle_streaming_response(runner, request_data, session_id, user_mess
             logger.info(f"✅ Streaming completed with {event_count} events for session {session_id}")
             
             # Verify session has been updated with the conversation
+            # Note: This verification can fail due to Gemini response serialization issues
+            # (e.g., Transcription fields with string "null" instead of proper null)
+            # This is a non-critical error - the streaming has already completed successfully
             try:
                 session = await session_service.get_session(
                     app_name=request_data.app_name,
@@ -476,7 +524,9 @@ async def _handle_streaming_response(runner, request_data, session_id, user_mess
                 else:
                     logger.warning(f"⚠️ Session {session_id} not found or has no events after streaming")
             except Exception as verify_error:
-                logger.error(f"❌ Error verifying session persistence: {verify_error}")
+                # Log at warning level since this is a known issue with certain Gemini responses
+                # The session may still be persisted correctly, just can't be verified
+                logger.warning(f"⚠️ Could not verify session persistence (may be Gemini response serialization issue): {verify_error}")
                 
         except Exception as e:
             logger.error(f"Error in streaming: {e}")

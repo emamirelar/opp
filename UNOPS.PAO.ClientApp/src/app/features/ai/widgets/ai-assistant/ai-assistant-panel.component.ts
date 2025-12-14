@@ -25,6 +25,8 @@ import { ChatMessage, ChatFile } from './ai-assistant.model';
 import { DynamicContentService } from './dynamic-content.service';
 import { PageContextService } from '@shared/services/utils/page-context.service';
 import { DrivePickerService, DriveFile } from '@shared/services/integration/drive-picker.service';
+import { GoogleDriveService } from '@shared/services/google-drive.service';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-ai-assistant-panel',
@@ -87,8 +89,18 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
   
   firstScroll = signal(true);
   message = signal('');
-  selectedFiles = signal<{ file: File, name: string, content: string }[]>([]);
+  selectedFiles = signal<{ 
+    file: File, 
+    name: string, 
+    content: string, 
+    gcsPath?: string, 
+    driveFileId?: string,
+    driveFile?: DriveFile 
+  }[]>([]);
   isProcessingFile = signal(false);
+  isUploadingToGCS = signal(false);
+  uploadProgress = signal<string>('');
+  private googleDriveAuthAvailable = false;
   isDragging = signal(false);
   loading = signal(false);
   layoutService = inject(LayoutService);
@@ -159,7 +171,8 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     private authService: AuthService,
     private translateService: TranslateService,
     private pageContextService: PageContextService,
-    private drivePickerService: DrivePickerService
+    private drivePickerService: DrivePickerService,
+    private googleDriveService: GoogleDriveService
   ) {
     // Effects must be in constructor (injection context)
     
@@ -209,6 +222,9 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     this.message.set('');
     this.loadUserInfo();
     // this.initializeExamplePrompts();
+    
+    // Initialize Google Drive auth for file conversion
+    this.initializeGoogleDriveAuth();
     
     if (this.viewContainerRef) {
       this.aiAssistantService.setViewContainerRef(this.viewContainerRef);
@@ -575,6 +591,229 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     });
   }
 
+  /**
+   * Initialize Google Drive auth for file conversion
+   */
+  private initializeGoogleDriveAuth(): void {
+    this.googleDriveService.initializeAuth().subscribe({
+      next: (authAvailable) => {
+        this.googleDriveAuthAvailable = authAvailable;
+        if (!authAvailable) {
+          console.warn('⚠️ Google Drive auth not available - Office file conversion will not be possible');
+        }
+      },
+      error: (error) => {
+        console.error('❌ Failed to initialize Google Drive auth:', error);
+        this.googleDriveAuthAvailable = false;
+      }
+    });
+  }
+
+  /**
+   * Upload all selected files to GCS and return their GCS paths
+   * Handles both local files and Google Drive files
+   */
+  async uploadFilesToGCS(): Promise<{ gcsPath: string, mimeType: string, name: string }[]> {
+    const files = this.selectedFiles();
+    if (files.length === 0) {
+      return [];
+    }
+
+    this.isUploadingToGCS.set(true);
+    const uploadedFiles: { gcsPath: string, mimeType: string, name: string }[] = [];
+
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const fileData = files[i];
+        this.uploadProgress.set(`Processing file ${i + 1} of ${files.length}: ${fileData.name}...`);
+
+        // Check if this is a Google Drive file (has driveFileId)
+        if (fileData.driveFileId && fileData.driveFile) {
+          const result = await this.processGoogleDriveFile(fileData.driveFile);
+          if (result) {
+            uploadedFiles.push(result);
+          }
+        } else {
+          // Local file upload
+          const result = await this.processLocalFileForGCS(fileData.file);
+          if (result) {
+            uploadedFiles.push(result);
+          }
+        }
+      }
+
+      this.uploadProgress.set('');
+      return uploadedFiles;
+    } catch (error) {
+      console.error('Error uploading files to GCS:', error);
+      this.uploadProgress.set('');
+      throw error;
+    } finally {
+      this.isUploadingToGCS.set(false);
+    }
+  }
+
+  /**
+   * Process a local file for GCS upload
+   * Converts Office files to PDF if needed
+   */
+  private async processLocalFileForGCS(file: File): Promise<{ gcsPath: string, mimeType: string, name: string } | null> {
+    let fileToUpload = file;
+
+    // Check if Office file needs conversion to PDF
+    if (this.googleDriveService.isMicrosoftOfficeFile(file.type)) {
+      // Initialize auth if not available
+      if (!this.googleDriveAuthAvailable) {
+        try {
+          const authAvailable = await firstValueFrom(this.googleDriveService.initializeAuth());
+          this.googleDriveAuthAvailable = authAvailable;
+          if (!authAvailable) {
+            console.error('Google Drive auth not available for Office file conversion');
+            // Continue with original file - backend may handle it
+          }
+        } catch (error) {
+          console.error('Failed to initialize Google Drive auth:', error);
+        }
+      }
+
+      if (this.googleDriveAuthAvailable) {
+        this.uploadProgress.set(`Converting ${file.name} to PDF...`);
+        try {
+          const result = await firstValueFrom(
+            this.googleDriveService.convertLocalOfficeFileToPdf(file)
+          );
+          const blob = this.base64ToBlob(result.data, result.mimeType);
+          fileToUpload = new File([blob], result.name, { type: result.mimeType });
+        } catch (error) {
+          console.error('Failed to convert Office file to PDF:', error);
+          // Continue with original file
+        }
+      }
+    }
+
+    // Upload to GCS via backend
+    this.uploadProgress.set(`Uploading ${fileToUpload.name} to cloud storage...`);
+    const formData = new FormData();
+    formData.append('File', fileToUpload);
+    formData.append('Name', fileToUpload.name);
+    formData.append('UploadToGCS', 'true');
+    formData.append('SkipDatabaseSave', 'true'); // Don't create document entity
+
+    try {
+      const response = await firstValueFrom(
+        this.http.post<any>('/api/document/upload', formData)
+      );
+      if (response && response.storagePath) {
+        return {
+          gcsPath: response.storagePath,
+          mimeType: fileToUpload.type,
+          name: fileToUpload.name
+        };
+      }
+    } catch (error) {
+      console.error('Failed to upload file to GCS:', error);
+    }
+
+    return null;
+  }
+
+  /**
+   * Process a Google Drive file for GCS upload
+   * Exports to PDF if needed, then uploads to GCS
+   */
+  private async processGoogleDriveFile(driveFile: DriveFile): Promise<{ gcsPath: string, mimeType: string, name: string } | null> {
+    // Initialize auth if not available
+    if (!this.googleDriveAuthAvailable) {
+      try {
+        const authAvailable = await firstValueFrom(this.googleDriveService.initializeAuth());
+        this.googleDriveAuthAvailable = authAvailable;
+        if (!authAvailable) {
+          console.error('Google Drive auth not available');
+          return null;
+        }
+      } catch (error) {
+        console.error('Failed to initialize Google Drive auth:', error);
+        return null;
+      }
+    }
+
+    // Check if file needs PDF conversion
+    const needsConversion = this.googleDriveService.needsPdfConversion(driveFile.mimeType || '');
+
+    let pdfFile: File;
+
+    if (needsConversion) {
+      // Export as PDF from Google Drive
+      this.uploadProgress.set(`Exporting ${driveFile.name} from Drive as PDF...`);
+      try {
+        const result = await firstValueFrom(
+          this.googleDriveService.exportDriveFileAsPdf(driveFile.id, driveFile.name || '')
+        );
+        const blob = this.base64ToBlob(result.data, result.mimeType);
+        pdfFile = new File([blob], result.name, { type: result.mimeType });
+      } catch (error) {
+        console.error('Failed to export Drive file as PDF:', error);
+        return null;
+      }
+    } else {
+      // File is already PDF or compatible format - download it
+      this.uploadProgress.set(`Downloading ${driveFile.name} from Drive...`);
+      try {
+        const result = await firstValueFrom(
+          this.googleDriveService.downloadDriveFile(
+            driveFile.id, 
+            driveFile.name || '', 
+            driveFile.mimeType || 'application/pdf'
+          )
+        );
+        const blob = this.base64ToBlob(result.data, result.mimeType);
+        pdfFile = new File([blob], result.name, { type: result.mimeType });
+      } catch (error) {
+        console.error('Failed to download Drive file:', error);
+        return null;
+      }
+    }
+
+    // Upload to GCS via backend
+    this.uploadProgress.set(`Uploading ${pdfFile.name} to cloud storage...`);
+    const formData = new FormData();
+    formData.append('File', pdfFile);
+    formData.append('Name', pdfFile.name);
+    formData.append('UploadToGCS', 'true');
+    formData.append('SkipDatabaseSave', 'true'); // Don't create document entity
+    formData.append('GoogleId', driveFile.id); // Keep Google Drive ID
+
+    try {
+      const response = await firstValueFrom(
+        this.http.post<any>('/api/document/upload', formData)
+      );
+      if (response && response.storagePath) {
+        return {
+          gcsPath: response.storagePath,
+          mimeType: pdfFile.type,
+          name: pdfFile.name
+        };
+      }
+    } catch (error) {
+      console.error('Failed to upload file to GCS:', error);
+    }
+
+    return null;
+  }
+
+  /**
+   * Convert base64 string to Blob
+   */
+  private base64ToBlob(base64: string, mimeType: string): Blob {
+    const byteCharacters = atob(base64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    return new Blob([byteArray], { type: mimeType });
+  }
+
   removeFile(index: number): void {
     this.selectedFiles.update(files => files.filter((_, i) => i !== index));
   }
@@ -642,7 +881,7 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
   }
 
   // UNIFIED MESSAGE HANDLING - Works with ChatSession model
-  sendMessage(): void {
+  async sendMessage(): Promise<void> {
     // Ensure view container is available before processing
     if (!this.dynamicContentContainer) {
       console.warn('⚠️ Dynamic content container not available, cannot send message');
@@ -658,11 +897,26 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
         this.cdr.detectChanges();
       });
 
-      const chatFiles: ChatFile[] = currentFiles.map(f => ({
-        file: f.file,
-        name: f.name,
-        content: ''
-      }));
+      // Upload files to GCS first if there are any
+      let chatFiles: ChatFile[] = [];
+      if (currentFiles.length > 0) {
+        try {
+          const uploadedFiles = await this.uploadFilesToGCS();
+          chatFiles = uploadedFiles.map(f => ({
+            name: f.name,
+            gcsPath: f.gcsPath,
+            mediaType: f.mimeType
+          }));
+        } catch (error) {
+          console.error('Failed to upload files to GCS:', error);
+          // Create fallback chat files without GCS path
+          chatFiles = currentFiles.map(f => ({
+            file: f.file,
+            name: f.name,
+            content: ''
+          }));
+        }
+      }
 
       // Build enhanced state object with screen context parameters for the enhanced screen context agent
       const state = this.buildMessageState();

@@ -261,14 +261,31 @@ async def get_or_create_session(
         return session, actual_session_id, True
     else:
         logger.info(f"🔍 Getting existing session for app: {app_name}, user: {user_id}, session: {actual_session_id}")
-        session = await session_service.get_session(
-            app_name=app_name,
-            user_id=user_id,
-            session_id=actual_session_id
-        )
+        
+        session = None
+        session_load_error = None
+        
+        try:
+            session = await session_service.get_session(
+                app_name=app_name,
+                user_id=user_id,
+                session_id=actual_session_id
+            )
+        except Exception as e:
+            # Handle corrupted session data (e.g., Transcription validation errors from Gemini responses)
+            session_load_error = e
+            logger.warning(f"⚠️ Failed to load session {actual_session_id}: {e}")
+            logger.warning("⚠️ Session data may be corrupted. Will create a new session.")
+            session = None
 
         if not session:
-            logger.info("🆕 Session not found - creating new session...")
+            if session_load_error:
+                logger.warning(f"🔄 Creating new session due to corrupted session data: {session_load_error}")
+                # Generate a new session ID since the old one is corrupted
+                actual_session_id = str(uuid.uuid4())
+                logger.info(f"🆔 Generated new session ID: {actual_session_id}")
+            else:
+                logger.info("🆕 Session not found - creating new session...")
             
             # Generate a default title for new sessions
             if user_prompt and user_prompt.strip():

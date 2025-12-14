@@ -398,7 +398,7 @@ public class PartnerController : BaseController
         {
             var fields = new List<SearchFieldInfo>
             {
-                // Direct Partner fields - using translation keys
+                // TIER 1 - Core Partner Information
                 new() { Field = "name", DisplayName = "label.partner.name", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
                 new() { Field = "partnerShortDescription", DisplayName = "label.partner.shortDescription", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
                 new() { Field = "partnerLongDescription", DisplayName = "label.partner.longDescription", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
@@ -416,6 +416,8 @@ public class PartnerController : BaseController
                         new() { Value = "Archived", Label = "enums.entityStatus.archived" }
                     }
                 },
+
+                // TIER 2 - Approval & Status Fields
                 new() { 
                     Field = "partnerApprovalStatus", 
                     DisplayName = "label.partner.approvalStatus", 
@@ -428,20 +430,144 @@ public class PartnerController : BaseController
                     }
                 },
                 new() { Field = "partnerApprovalDate", DisplayName = "label.partner.approvalDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
-                new() { Field = "keyGlobalPartner", DisplayName = "label.partner.keyGlobalPartner", FieldType = "bool", AllowedOperators = new List<string> { "entityCards.operators.eq" } },
-                new() { Field = "unSecretariatPartner", DisplayName = "label.partner.unSecretariatPartner", FieldType = "bool", AllowedOperators = new List<string> { "entityCards.operators.eq" } },
-                new() { Field = "pooledFund", DisplayName = "label.partner.pooledFund", FieldType = "bool", AllowedOperators = new List<string> { "entityCards.operators.eq" } },
-                new() { Field = "createdDate", DisplayName = "label.common.createdDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
+                new() { Field = "partnerApprovalReference", DisplayName = "label.partner.approvalReference", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "partnerApprovedBy", DisplayName = "label.partner.approvedBy", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
 
-                // Navigation properties - using translation keys
+                // TIER 3 - Due Diligence Fields
+                new() { 
+                    Field = "dueDiligenceRequired", 
+                    DisplayName = "label.partner.dueDiligenceRequired", 
+                    FieldType = "enum", 
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" },
+                    DropdownOptions = new List<DropdownOption>
+                    {
+                        new() { Value = "Required", Label = "enums.dueDiligenceRequired.required" },
+                        new() { Value = "NotRequired", Label = "enums.dueDiligenceRequired.notRequired" }
+                    }
+                },
+                new() { 
+                    Field = "dueDiligenceApproval", 
+                    DisplayName = "label.partner.dueDiligenceApproval", 
+                    FieldType = "enum", 
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" },
+                    DropdownOptions = new List<DropdownOption>
+                    {
+                        new() { Value = "Approved", Label = "enums.dueDiligenceApproval.approved" },
+                        new() { Value = "NotApproved", Label = "enums.dueDiligenceApproval.notApproved" },
+                        new() { Value = "Pending", Label = "enums.dueDiligenceApproval.pending" }
+                    }
+                },
+                new() { Field = "dueDiligenceApprovalDate", DisplayName = "label.partner.dueDiligenceApprovalDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
+                new() { Field = "dueDiligenceExpiryDate", DisplayName = "label.partner.dueDiligenceExpiryDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
+
+                // TIER 4 - Levy Fields
+                new() { 
+                    Field = "partnerLevyStatus", 
+                    DisplayName = "label.partner.levyStatus", 
+                    FieldType = "enum", 
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" },
+                    DropdownOptions = new List<DropdownOption>
+                    {
+                        new() { Value = "DoesNotApply", Label = "enums.partnerLevyStatus.doesNotApply" },
+                        new() { Value = "PotentiallyNotApplied", Label = "enums.partnerLevyStatus.potentiallyNotApplied" },
+                        new() { Value = "Applied", Label = "enums.partnerLevyStatus.applied" }
+                    }
+                },
+                new() { Field = "reasonForLevy", DisplayName = "label.partner.reasonForLevy", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "levyTreatment", DisplayName = "label.partner.levyTreatment", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+
+                // TIER 5 - Boolean Flags & Operational Fields
+                new() { 
+                    Field = "keyGlobalPartner", 
+                    DisplayName = "label.partner.keyGlobalPartner", 
+                    FieldType = "enum", 
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" },
+                    DropdownOptions = new List<DropdownOption>
+                    {
+                        new() { Value = "true", Label = "label.common.yes" },
+                        new() { Value = "false", Label = "label.common.no" }
+                    }
+                },
+                new() { 
+                    Field = "unSecretariatPartner", 
+                    DisplayName = "label.partner.unSecretariatPartner", 
+                    FieldType = "enum", 
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" },
+                    DropdownOptions = new List<DropdownOption>
+                    {
+                        new() { Value = "true", Label = "label.common.yes" },
+                        new() { Value = "false", Label = "label.common.no" }
+                    }
+                },
+                new() { 
+                    Field = "uNAndStateEntity", 
+                    DisplayName = "label.partner.unAndStateEntity", 
+                    FieldType = "enum", 
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" },
+                    DropdownOptions = new List<DropdownOption>
+                    {
+                        new() { Value = "true", Label = "label.common.yes" },
+                        new() { Value = "false", Label = "label.common.no" }
+                    }
+                },
+                new() { 
+                    Field = "pooledFund", 
+                    DisplayName = "label.partner.pooledFund", 
+                    FieldType = "enum", 
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" },
+                    DropdownOptions = new List<DropdownOption>
+                    {
+                        new() { Value = "true", Label = "label.common.yes" },
+                        new() { Value = "false", Label = "label.common.no" }
+                    }
+                },
+                new() { 
+                    Field = "canCreateNewOpportunities", 
+                    DisplayName = "label.partner.canCreateNewOpportunities", 
+                    FieldType = "enum", 
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" },
+                    DropdownOptions = new List<DropdownOption>
+                    {
+                        new() { Value = "true", Label = "label.common.yes" },
+                        new() { Value = "false", Label = "label.common.no" }
+                    }
+                },
+                new() { Field = "reasonForNoNewOpportunity", DisplayName = "label.partner.reasonForNoNewOpportunity", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+
+                // TIER 6 - IDs & System Fields
+                new() { Field = "erpDimValue", DisplayName = "label.partner.erpDimValue", FieldType = "int", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq", "entityCards.operators.gt", "entityCards.operators.lt", "entityCards.operators.gte", "entityCards.operators.lte" } },
+                new() { 
+                    Field = "partnerFocalPointUserId", 
+                    DisplayName = "label.partner.focalPoint", 
+                    FieldType = "user", 
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" }
+                },
+
+                // TIER 7 - Audit Fields (User Dropdowns)
+                new() { Field = "createdDate", DisplayName = "label.common.createdDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
+                new() { Field = "lastModifiedDate", DisplayName = "label.common.lastModifiedDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
+                new() {
+                    Field = "createdBy",
+                    DisplayName = "label.common.createdBy",
+                    FieldType = "user",
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" }
+                },
+                new() {
+                    Field = "lastModifiedBy",
+                    DisplayName = "label.common.lastModifiedBy",
+                    FieldType = "user",
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" }
+                },
+
+                // TIER 8 - Navigation Properties (Related Entities)
                 new() { Field = "partnerGroup.name", DisplayName = "label.partnerGroup.name", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
                 new() { Field = "liaisonOffice.name", DisplayName = "label.liaisonOffice.name", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
 
-                // Contact properties - using translation keys
-                new() { Field = "contacts.fullName", DisplayName = "label.contact.fullName", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
-                new() { Field = "contacts.firstName", DisplayName = "label.contact.firstName", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
-                new() { Field = "contacts.lastName", DisplayName = "label.contact.lastName", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
-                new() { Field = "contacts.email", DisplayName = "label.contact.email", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                // TIER 9 - Contact Properties (Nested Navigation)
+                new() { Field = "contacts.fullName", DisplayName = "label.partner.contactFullName", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "contacts.firstName", DisplayName = "label.partner.contactFirstName", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "contacts.lastName", DisplayName = "label.partner.contactLastName", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "contacts.email", DisplayName = "label.partner.contactEmail", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
             };
             
             return Ok(fields);

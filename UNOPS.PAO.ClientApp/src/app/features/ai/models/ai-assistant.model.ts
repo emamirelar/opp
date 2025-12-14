@@ -34,6 +34,7 @@ export interface AiAssistantSessionRequest {
     message: string;
     sessionId?: string;
     files?: File[];
+    gcsFiles?: { gcsPath: string; name: string; mimeType?: string }[]; // GCS-uploaded files
     state?: any;
   }
 
