@@ -63,7 +63,32 @@ public class UserResolverService<TUserId>
             
         var user = context.User;
         
-        // First check if we have IAP headers, regardless of authentication state
+        // PRIORITY 1: Check for impersonation header from AI Assistant or other services
+        // This header contains the actual user email who initiated the request via AI Assistant
+        if (context.Request.Headers.TryGetValue("x-unops-impersonated-user", out var impersonatedUserEmail))
+        {
+            var email = impersonatedUserEmail.ToString();
+            if (!string.IsNullOrEmpty(email) && _userLookupService != null)
+            {
+                try
+                {
+                    // Console.WriteLine($"[UserResolverService] Found impersonated user email: {email}");
+                    var userId = _userLookupService.GetUserIdByEmailAsync(email).GetAwaiter().GetResult();
+                    if (userId > 0)
+                    {
+                        // Console.WriteLine($"[UserResolverService] Resolved impersonated user to ID: {userId}");
+                        return (TUserId)Convert.ChangeType(userId, typeof(TUserId));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Log but continue to other authentication methods
+                    // Console.WriteLine($"[UserResolverService] Error resolving impersonated user ID: {ex.Message}");
+                }
+            }
+        }
+        
+        // PRIORITY 2: Check if we have IAP headers, regardless of authentication state
         // This is critical for development mode where the authentication might not be fully processed
         if (context.Request.Headers.TryGetValue("X-Goog-Authenticated-User-Email", out var headerValue) ||
             context.Request.Headers.TryGetValue("X-Dev-IAP-Simulation", out _))
@@ -124,7 +149,7 @@ public class UserResolverService<TUserId>
             }
         }
         
-        // If there are no IAP headers, try standard claims-based authentication
+        // PRIORITY 3: If there are no IAP headers, try standard claims-based authentication
         if (user?.Identity?.IsAuthenticated == true)
         {
             // Try to get user ID from NameIdentifier claim
