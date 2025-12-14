@@ -1,50 +1,71 @@
 <!-- WHAT - Products & Services -->
 <p-panel [toggleable]="true" [collapsed]="false" class="{{isSaving() ? 'opacity-50 pointer-events-none' : ''}}">
   <ng-template pTemplate="header">
-    <div class="flex items-center justify-between w-full pr-4">
-      <div class="flex items-center gap-2">
-        <i class="pi pi-briefcase text-unops-secondary"></i>
-        <span class="font-semibold">{{ 'label.opportunity.whatProductsServices' | translate }}</span>
-      </div>
-      <div class="flex items-center gap-2">
-        @if (isSaving()) {
-          <i class="pi pi-spin pi-spinner text-xl text-primary"></i>
-        }
-        @if (canUpdate()) {
-          @if (!isEditing()) {
-            <p-button
-              icon="pi pi-pencil"
-              [text]="true"
-              [rounded]="true"
-              severity="secondary"
-              size="small"
-              (onClick)="startEditing()"
-              pTooltip="{{ 'button.edit' | translate }}"
-            />
-          } @else {
-            <p-button
-              icon="pi pi-check"
-              [text]="true"
-              [rounded]="true"
-              severity="success"
-              size="small"
-              (onClick)="saveSection()"
-              [disabled]="isSaving()"
-              pTooltip="{{ 'button.save' | translate }}"
-            />
-            <p-button
-              icon="pi pi-times"
-              [text]="true"
-              [rounded]="true"
-              severity="danger"
-              size="small"
-              (onClick)="cancelEditing()"
-              [disabled]="isSaving()"
-              pTooltip="{{ 'button.cancel' | translate }}"
-            />
+    <div class="flex flex-col w-full pr-4">
+      <div class="flex items-center justify-between w-full">
+        <div class="flex items-center gap-2">
+          <i class="pi pi-briefcase text-unops-secondary"></i>
+          <span class="font-semibold">{{ 'label.opportunity.whatProductsServices' | translate }}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          @if (isSaving()) {
+            <i class="pi pi-spin pi-spinner text-xl text-primary"></i>
           }
-        }
+          @if (canUpdate()) {
+            @if (!isEditing()) {
+              <p-button
+                icon="pi pi-pencil"
+                [text]="true"
+                [rounded]="true"
+                severity="secondary"
+                size="small"
+                (onClick)="startEditing()"
+                pTooltip="{{ 'button.edit' | translate }}"
+              />
+            }
+          }
+        </div>
       </div>
+      
+      <!-- Unsaved Changes Warning Bar (shown when editing with unsaved changes) -->
+      @if (isEditing() && hasUnsavedChangesSignal()) {
+        <div class="mt-3 bg-amber-100 border-l-4 border-amber-500 px-4 py-3 rounded">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div class="flex items-start gap-2 flex-1">
+              <i class="pi pi-exclamation-triangle text-amber-600 text-lg flex-shrink-0 mt-0.5"></i>
+              <div class="flex flex-col">
+                <span class="text-sm font-bold text-amber-900">
+                  {{ 'message.unsavedChanges' | translate }}
+                </span>
+                <span class="text-xs font-medium text-amber-800">
+                  {{ 'message.unsavedChangesSectionDetail' | translate }}
+                </span>
+              </div>
+            </div>
+            <div class="flex gap-2 w-full sm:w-auto">
+              <p-button
+                [label]="'button.discardChanges' | translate"
+                icon="pi pi-times"
+                severity="danger"
+                [outlined]="true"
+                (onClick)="cancelEditing()"
+                [disabled]="isSaving()"
+                styleClass="flex-1 sm:flex-none"
+                size="small"
+              />
+              <p-button
+                [label]="'button.saveChanges' | translate"
+                icon="pi pi-check"
+                severity="success"
+                (onClick)="saveSection()"
+                [disabled]="isSaving()"
+                styleClass="flex-1 sm:flex-none"
+                size="small"
+              />
+            </div>
+          </div>
+        </div>
+      }
     </div>
   </ng-template>
 
@@ -494,6 +515,48 @@
       </div>
     </div>
   </div>
+  
+  <!-- Footer with Unsaved Changes Warning -->
+  <ng-template pTemplate="footer">
+    @if (isEditing() && hasUnsavedChangesSignal()) {
+      <div class="bg-amber-100 border-t-4 border-amber-500 px-4 py-3 rounded-b">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div class="flex items-start gap-2 flex-1">
+            <i class="pi pi-exclamation-triangle text-amber-600 text-lg flex-shrink-0 mt-0.5"></i>
+            <div class="flex flex-col">
+              <span class="text-sm font-bold text-amber-900">
+                {{ 'message.unsavedChanges' | translate }}
+              </span>
+              <span class="text-xs font-medium text-amber-800">
+                {{ 'message.unsavedChangesSectionDetail' | translate }}
+              </span>
+            </div>
+          </div>
+          <div class="flex gap-2 w-full sm:w-auto">
+            <p-button
+              [label]="'button.discardChanges' | translate"
+              icon="pi pi-times"
+              severity="danger"
+              [outlined]="true"
+              (onClick)="cancelEditing()"
+              [disabled]="isSaving()"
+              styleClass="flex-1 sm:flex-none"
+              size="small"
+            />
+            <p-button
+              [label]="'button.saveChanges' | translate"
+              icon="pi pi-check"
+              severity="success"
+              (onClick)="saveSection()"
+              [disabled]="isSaving()"
+              styleClass="flex-1 sm:flex-none"
+              size="small"
+            />
+          </div>
+        </div>
+      </div>
+    }
+  </ng-template>
 </p-panel>
 
 <!-- Deliverables Dialog -->

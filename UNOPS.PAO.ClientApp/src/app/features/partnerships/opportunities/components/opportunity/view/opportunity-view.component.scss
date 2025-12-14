@@ -194,3 +194,42 @@ a:hover i {
   position: relative;
   z-index: 2;
 }
+
+// Height-based responsive banner styling - AGGRESSIVE hiding, GENEROUS on large screens
+// Banner visibility and sizing based on viewport HEIGHT (not width)
+// to accommodate laptops with landscape aspect ratios
+.opportunity-banner {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  transition: all 0.3s ease-in-out;
+  border-radius: 0 0 12px 12px;
+
+  // Default: Hide banner on screens with limited vertical space
+  display: none;
+
+  // Medium height screens (850px+): Show small banner
+  @media (min-height: 850px) {
+    display: block;
+    height: 3rem; // 48px - conservative for laptops
+    max-height: 3rem;
+  }
+
+  // Large height screens (950px+): Show medium banner
+  @media (min-height: 950px) {
+    height: 4rem; // 64px
+    max-height: 4rem;
+  }
+
+  // Full size banner (1024px+): Show full banner
+  @media (min-height: 1024px) {
+    height: 8rem; // 128px - full size for desktop monitors and comfortable displays
+    max-height: 8rem;
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
