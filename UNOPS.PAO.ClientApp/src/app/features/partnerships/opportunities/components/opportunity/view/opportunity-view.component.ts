@@ -362,8 +362,11 @@ export class OpportunityViewComponent
     return opp.stats?.sdgCount || opp.sdGs?.length || 0;
   });
 
-  // AI Suggestions state and filtering
+  // AI Insights and Suggestions state and filtering
+  allInsights = signal<any[]>([]);
   allSuggestions = signal<any[]>([]);
+  insightsLoading = signal<boolean>(false);
+  insightsError = signal<string | null>(null);
 
   // Computed suggestions filtered by section
   whoSuggestions = computed(() =>
@@ -458,6 +461,21 @@ export class OpportunityViewComponent
 
     // Initially show all chips (will be recalculated after view init)
     this.visibleChips.set(this.sections);
+
+    // Effect to reload insights when any section saves
+    effect(() => {
+      const trigger = this.sectionSaveTrigger();
+      
+      // Only reload if trigger has changed (skip initial value of 0)
+      if (trigger > 0) {
+        console.log('🔄 Parent: Section save detected, reloading insights');
+        
+        // Delay to prevent overwhelming the backend
+        setTimeout(() => {
+          this._loadInsights();
+        }, 3000);
+      }
+    });
   }
 
   ngOnInit() {
@@ -578,7 +596,7 @@ export class OpportunityViewComponent
    * Load opportunity record details
    * 
    * NOTE: This component coordinates multiple child sections that make AI-powered API calls:
-   * - Analysis Section: AI insights (delayed 2.5s)
+   * - Analysis Section: AI insights (delayed 2.5s) - handled by child component
    * - DST Section: Risks (immediate), Recommendations (0.5s), Similar Opportunities (1s), 
    *   Similar Projects (1.5s), Relevant People (2s)
    * 
@@ -598,8 +616,9 @@ export class OpportunityViewComponent
           this._generateBannerImages(data.id);
         }
 
-        // Load AI suggestions for sections
-        this._loadSuggestions();
+        // Load AI insights and suggestions once in parent, then pass to child components
+        // This prevents duplicate API calls - Analysis Section receives insights as input
+        this._loadInsights();
 
         // Only scroll after data loads if this is the initial page load with a section in the URL
         // This prevents scrolling on every data reload when navigating between sections
@@ -683,20 +702,32 @@ export class OpportunityViewComponent
   }
 
   /**
-   * Load AI suggestions for the opportunity
+   * Load AI insights and suggestions for the opportunity (SINGLE API CALL)
+   * This data is then passed to child components to avoid duplicate API requests
    */
-  private _loadSuggestions(): void {
+  private _loadInsights(): void {
     const opportunityId = this.opportunity()?.id;
     if (!opportunityId) return;
 
+    this.insightsLoading.set(true);
+    this.insightsError.set(null);
+
     this.opportunityService.getInsights(opportunityId).subscribe({
       next: (response) => {
-        // Extract suggestions and set them
+        // Store both insights and suggestions for use across child components
+        this.allInsights.set(response.insights || []);
         this.allSuggestions.set(response.suggestions || []);
+        this.insightsLoading.set(false);
+        console.log('✅ Insights loaded successfully:', {
+          insightCount: response.insights?.length || 0,
+          suggestionCount: response.suggestions?.length || 0
+        });
       },
       error: (error) => {
-        console.error('Error loading suggestions:', error);
-        // Silent failure - suggestions are optional enhancement
+        console.error('❌ Error loading insights:', error);
+        this.insightsError.set('Failed to load AI insights');
+        this.insightsLoading.set(false);
+        // Silent failure for user - insights/suggestions are optional enhancements
       },
     });
   }
@@ -808,6 +839,15 @@ export class OpportunityViewComponent
       this.shouldScrollAfterDataLoad = false;
       this._loadRecordDetails();
     }
+  }
+
+  /**
+   * @description Handle manual insights refresh request from Analysis Section
+   * @returns {void}
+   */
+  handleInsightsRefresh(): void {
+    console.log('🔄 Manual insights refresh requested');
+    this._loadInsights();
   }
 
   /**

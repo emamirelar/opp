@@ -3,7 +3,7 @@
  * @author UNOPS Opportunity+ System Development Team
  */
 
-import { Component, input, signal, inject, ChangeDetectionStrategy, effect } from '@angular/core';
+import { Component, input, output, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
@@ -14,10 +14,7 @@ import { DividerModule } from 'primeng/divider';
 import { TooltipModule } from 'primeng/tooltip';
 
 // Models
-import { Opportunity, InsightType, OpportunityInsight, OpportunitySuggestion, OpportunityInsightsResponse } from '@shared/models/opportunity.model';
-
-// Services
-import { OpportunityService } from '../../../../../services/opportunity.service';
+import { Opportunity, InsightType } from '@shared/models/opportunity.model';
 
 /**
  * @class OpportunityAnalysisSectionComponent
@@ -51,7 +48,6 @@ import { OpportunityService } from '../../../../../services/opportunity.service'
 export class OpportunityAnalysisSectionComponent {
   // Services
   private readonly translateService = inject(TranslateService);
-  private readonly opportunityService = inject(OpportunityService);
 
   /**
    * @description Input signal for opportunity data from parent
@@ -67,108 +63,57 @@ export class OpportunityAnalysisSectionComponent {
   readonly sectionSaveTrigger = input<number>(0);
 
   /**
-   * @description Loading state for insights
+   * @description AI-generated insights passed from parent (prevents duplicate API calls)
+   * @type {Signal<any[]>}
+   * @since 2.1.0
    */
-  readonly loadingInsights = signal<boolean>(false);
+  readonly insights = input<any[]>([]);
 
   /**
-   * @description AI-generated insights
+   * @description AI-generated suggestions passed from parent (prevents duplicate API calls)
+   * @type {Signal<any[]>}
+   * @since 2.1.0
    */
-  readonly insights = signal<OpportunityInsight[]>([]);
+  readonly suggestions = input<any[]>([]);
 
   /**
-   * @description AI-generated suggestions
+   * @description Loading state for insights passed from parent
+   * @type {Signal<boolean>}
+   * @since 2.1.0
    */
-  readonly suggestions = signal<OpportunitySuggestion[]>([]);
+  readonly loadingInsights = input<boolean>(false);
 
   /**
-   * @description Error message for insights loading
+   * @description Error message for insights loading passed from parent
+   * @type {Signal<string | null>}
+   * @since 2.1.0
    */
-  readonly insightsError = signal<string | null>(null);
+  readonly insightsError = input<string | null>(null);
 
   /**
-   * @description Track last loaded opportunity ID to prevent duplicate calls
+   * @description Output event to request parent component to refresh insights
+   * @type {OutputEmitterRef<void>}
+   * @since 2.1.0
    */
-  private lastLoadedOpportunityId: number | null = null;
-
-  /**
-   * @description Track the last processed section save trigger to prevent duplicate refreshes
-   * @type {number}
-   * @private
-   * @since 2.0.0
-   */
-  private lastSectionSaveTrigger: number = 0;
+  readonly refreshRequested = output<void>();
 
   constructor() {
-    // Use effect to reactively load insights when opportunity changes
-    effect(() => {
-      const opp = this.opportunity();
-      if (opp?.id && opp.id !== this.lastLoadedOpportunityId) {
-        this.lastLoadedOpportunityId = opp.id;
-        // Delay insights loading to allow critical data to load first
-        // This prevents connection exhaustion when multiple AI calls fire simultaneously
-        setTimeout(() => this.loadInsights(), 2500);
-      }
-    });
-
-    // Effect to refresh insights when sectionSaveTrigger changes (any section saves)
-    effect(() => {
-      const trigger = this.sectionSaveTrigger();
-
-      // Only refresh if trigger has changed and this isn't the initial load
-      if (trigger > 0 && trigger !== this.lastSectionSaveTrigger) {
-        this.lastSectionSaveTrigger = trigger;
-
-        console.log('🔄 Analysis Section: Section save detected, refreshing insights');
-
-        // Use setTimeout to avoid calling during signal computation
-        // Delay to prevent overwhelming the backend
-        setTimeout(() => {
-          this.loadInsights();
-        }, 3000);
-      }
-    });
+    // NOTE: Insights loading removed from child component to prevent duplicate API calls
+    // The parent component now loads insights once and passes them as input signals
+    // This eliminates the duplicate getInsights() API call that was occurring on every page load
+    
+    // TODO: In the future, add an output event to request parent to refresh insights
+    // when sectionSaveTrigger changes, so the parent can reload insights after saves
   }
 
   /**
-   * @description Load AI insights and suggestions for the opportunity
-   */
-  private loadInsights(): void {
-    const opportunityId = this.opportunity()?.id;
-    if (!opportunityId) return;
-
-    this.loadingInsights.set(true);
-    this.insightsError.set(null);
-
-    this.opportunityService.getInsights(opportunityId).subscribe({
-      next: (response: OpportunityInsightsResponse) => {
-        // Add unique IDs for tracking
-        const insightsWithIds = response.insights.map((insight, idx: number) => ({
-          ...insight,
-          id: idx
-        }));
-        const suggestionsWithIds = response.suggestions.map((suggestion, idx: number) => ({
-          ...suggestion,
-          id: idx
-        }));
-
-        this.insights.set(insightsWithIds as any);
-        this.suggestions.set(suggestionsWithIds as any);
-        this.loadingInsights.set(false);
-      },
-      error: (error: any) => {
-        console.error('Error loading insights:', error);
-        this.insightsError.set('Failed to load AI insights');
-        this.loadingInsights.set(false);
-      }
-    });
-  }
-
-  /**
-   * @description Manually refresh insights
+   * @description Request parent component to refresh insights
+   * Emits an event that tells the parent to reload insights from the API
+   * @returns {void}
+   * @since 2.1.0
    */
   refreshInsights(): void {
-    this.loadInsights();
+    this.refreshRequested.emit();
   }
 
   /**
@@ -245,9 +190,9 @@ export class OpportunityAnalysisSectionComponent {
 
   /**
    * @description Handle suggestion action click - clicks the appropriate section button
-   * @param {OpportunitySuggestion} suggestion - The suggestion with action target
+   * @param {any} suggestion - The suggestion with action target
    */
-  onSuggestionAction(suggestion: OpportunitySuggestion): void {
+  onSuggestionAction(suggestion: any): void {
     if (!suggestion.actionTarget) {
       console.warn('No action target specified for suggestion:', suggestion);
       return;
