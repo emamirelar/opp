@@ -50,16 +50,16 @@
 
   <!-- AI Suggestions -->
   @if (suggestions() && suggestions().length > 0) {
-    <div class="bg-unops-accent-yellow-soft rounded-unops-lg p-3 border border-unops-warning-light mb-6">
+    <div style="background-color: rgb(253, 250, 241);" class="rounded-unops-lg p-3 border border-unops-warning-light mb-6">
       <div class="flex items-start gap-2 mb-2">
         <i class="pi pi-lightbulb text-unops-warning-darker text-sm mt-0.5"></i>
-        <h4 class="text-xs font-semibold text-unops-secondary">{{ 'label.aiSuggestions' | translate }}</h4>
+        <h4 class="text-sm font-semibold text-unops-secondary">{{ 'label.aiSuggestions' | translate }}</h4>
       </div>
       <div class="space-y-2 pl-5">
         @for (suggestion of suggestions(); track $index) {
           <div class="bg-unops-surface-primary rounded p-2 border border-unops-warning-light shadow-unops-sm">
-            <div class="font-semibold text-xs text-unops-secondary mb-1">{{ suggestion.title }}</div>
-            <p class="text-xs text-unops-neutral-700">{{ suggestion.description }}</p>
+            <div class="font-semibold text-sm text-unops-secondary mb-1">{{ suggestion.title }}</div>
+            <p class="text-sm text-unops-neutral-800">{{ suggestion.description }}</p>
           </div>
         }
       </div>
@@ -69,9 +69,9 @@
   <div class="space-y-6">
     <!-- Warning Banner for Hub/Region/GPO Org Units -->
     @if (showOrgUnitWarningBanner()) {
-      <div class="p-3 bg-amber-50 border border-amber-300 rounded-lg flex items-start gap-3">
-        <i class="pi pi-exclamation-triangle text-amber-600 text-lg mt-0.5 flex-shrink-0"></i>
-        <div class="text-sm text-amber-800">
+      <div style="background-color: rgb(253, 250, 241);" class="p-3 border border-unops-warning-light rounded-lg flex items-start gap-3">
+        <i class="pi pi-exclamation-triangle text-unops-warning-darker text-lg mt-0.5 flex-shrink-0"></i>
+        <div class="text-sm text-unops-neutral-800">
           {{ 'message.opportunity.hubRegionOrgUnitWarning' | translate }}
         </div>
       </div>

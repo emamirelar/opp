@@ -5448,10 +5448,11 @@ public class UNOPSGeminiManager : IGeminiManager
                 // Step 2: Get comprehensive opportunity data
                 var opportunityDetails = await opportunityManager.GetOpportunityDetailsForAIAsync(opportunityId);
 
-                // Specifically remove the statementMarkdown, workflowStageName, and status field from the opportunity details
+                // Specifically remove the statementMarkdown, workflowStageName, status, and targetSigningDate fields from the opportunity details
                 opportunityDetails["opportunityStatementMarkdown"] = null;
                 opportunityDetails["workflowStageName"] = null;
                 opportunityDetails["status"] = null;
+                opportunityDetails["targetSigningDate"] = null;  // Sending in the target signing date seems to confuse the AI (uses targetSigningDate instead of implementationStartDate)
 
                 Console.WriteLine($"======================[OPPORTUNITY-STATEMENT] opportunityDetails: {JsonConvert.SerializeObject(opportunityDetails, Formatting.Indented)}");
 
@@ -5660,13 +5661,26 @@ public class UNOPSGeminiManager : IGeminiManager
 
                 _logger.LogInformation($"📊 [STATEMENT-VALIDATION] Retrieved existing statement (length: {opportunity.OpportunityStatementMarkdown.Length} chars)");
 
-                // Step 2: Generate a fresh opportunity statement WITHOUT saving to database
-                _logger.LogInformation($"🔄 [STATEMENT-VALIDATION] Generating fresh statement for comparison...");
-                var freshStatementMarkdown = await GenerateOpportunityStatementAsync(opportunityId, user, saveToDatabase: false);
-                
-                _logger.LogInformation($"✅ [STATEMENT-VALIDATION] Generated fresh statement (length: {freshStatementMarkdown.Length} chars)");
+                // Step 2: Get opportunity manager
+                var opportunityManager = _managerWrapper.OpportunityManager as UNOPSOpportunityManager;
+                if (opportunityManager == null)
+                {
+                    throw new InvalidOperationException("UNOPSOpportunityManager is required for statement validation");
+                }
 
-                // Step 3: Get the validation prompt
+                // Step 3: Get comprehensive opportunity data (same as generation)
+                _logger.LogInformation($"📊 [STATEMENT-VALIDATION] Retrieving opportunity details...");
+                var opportunityDetails = await opportunityManager.GetOpportunityDetailsForAIAsync(opportunityId);
+
+                // Specifically remove the statementMarkdown, workflowStageName, status, and targetSigningDate fields from the opportunity details
+                opportunityDetails["opportunityStatementMarkdown"] = null;
+                opportunityDetails["workflowStageName"] = null;
+                opportunityDetails["status"] = null;
+                opportunityDetails["targetSigningDate"] = null;  // Sending in the target signing date seems to confuse the AI (uses targetSigningDate instead of implementationStartDate)
+
+                _logger.LogInformation($"✅ [STATEMENT-VALIDATION] Retrieved opportunity details (keys: {opportunityDetails.Count})");
+
+                // Step 4: Get the validation prompt
                 var promptData = await _aiService.GetPromptData("opportunity_statement_validation");
                 var validationPrompt = promptData.FirstOrDefault();
 
@@ -5675,25 +5689,25 @@ public class UNOPSGeminiManager : IGeminiManager
                     throw new InvalidOperationException("Validation prompt 'opportunity_statement_validation' not found in database");
                 }
 
-                // Step 4: Prepare comparison data for Gemini
+                // Step 5: Prepare comparison data for Gemini (structured data vs markdown)
                 var comparisonData = new
                 {
-                    existingStatement = opportunity.OpportunityStatementMarkdown,
-                    freshlyGeneratedStatement = freshStatementMarkdown,
+                    existingStatementMarkdown = opportunity.OpportunityStatementMarkdown,
+                    opportunityData = opportunityDetails,
                     opportunityId = opportunityId
                 };
 
                 var comparisonDataJson = JsonConvert.SerializeObject(comparisonData, Formatting.Indented);
-                _logger.LogInformation($"📝 [STATEMENT-VALIDATION] Prepared comparison data (length: {comparisonDataJson.Length} chars)");
+                _logger.LogInformation($"📝 [STATEMENT-VALIDATION] Prepared comparison data (markdown length: {opportunity.OpportunityStatementMarkdown.Length} chars, data keys: {opportunityDetails.Count})");
 
-                // Step 5: Process placeholders in system instructions and user prompt
+                // Step 6: Process placeholders in system instructions and user prompt
                 var systemInstructionsTemplate = validationPrompt.SystemInstructions ?? string.Empty;
                 var fullyFormedSystemInstructions = _aiService.ProcessPlaceholders(systemInstructionsTemplate, comparisonDataJson);
                 
                 var userPromptTemplate = validationPrompt.UserPrompt ?? string.Empty;
                 var fullyFormedUserPrompt = _aiService.ProcessPlaceholders(userPromptTemplate, comparisonDataJson);
 
-                // Step 6: Call Gemini API for validation
+                // Step 7: Call Gemini API for validation
                 var userContent = new
                 {
                     role = "user",
@@ -5813,7 +5827,7 @@ public class UNOPSGeminiManager : IGeminiManager
                 }
 
                 validationResult.OpportunityId = opportunityId;
-                validationResult.FreshlyGeneratedStatement = freshStatementMarkdown;
+                validationResult.FreshlyGeneratedStatement = null; // No longer generating fresh markdown
 
                 // Defensive check: Ensure isAligned is consistent with misalignmentItems array
                 var hasNoMisalignments = validationResult.MisalignmentItems == null || validationResult.MisalignmentItems.Count == 0;
@@ -5825,7 +5839,7 @@ public class UNOPSGeminiManager : IGeminiManager
                     
                     if (string.IsNullOrEmpty(validationResult.Message))
                     {
-                        validationResult.Message = "The existing statement is fully aligned with the freshly generated statement.";
+                        validationResult.Message = "The existing statement is fully aligned with the current opportunity data.";
                     }
                 }
                 else if (!hasNoMisalignments && validationResult.IsAligned)
@@ -5836,7 +5850,7 @@ public class UNOPSGeminiManager : IGeminiManager
                     
                     if (string.IsNullOrEmpty(validationResult.Message))
                     {
-                        validationResult.Message = $"The existing statement has {misalignmentCount} material difference(s) from the freshly generated statement.";
+                        validationResult.Message = $"The existing statement has {misalignmentCount} material difference(s) from the current opportunity data.";
                     }
                 }
 
