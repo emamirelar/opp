@@ -400,6 +400,16 @@
                 ({{ visibleExtractedDeliverables().length }})
               </span>
             </h3>
+            <p-button
+              icon="pi pi-refresh"
+              [pTooltip]="'button.refresh' | translate"
+              tooltipPosition="top"
+              [rounded]="true"
+              [text]="true"
+              size="small"
+              (onClick)="refreshAiRecommendations()"
+              [disabled]="!hasRunExtraction()"
+            />
           </div>
 
           @if (!hasRunExtraction()) {

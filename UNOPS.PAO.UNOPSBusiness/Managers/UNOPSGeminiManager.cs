@@ -2962,10 +2962,36 @@ public class UNOPSGeminiManager : IGeminiManager
                 }
                 
                 var keywords = await _aiService.ExtractKeywordsForSemanticSearchAsync(opportunityContextJson, extractKeywordsPrompt);
-                _logger.LogInformation($"✅ [SIMILAR-PROJECTS] Extracted {keywords.Count} keywords: {string.Join(", ", keywords.Take(5))}...");
+                _logger.LogInformation($"✅ [SIMILAR-PROJECTS] Extracted {keywords?.Count ?? 0} keywords: {string.Join(", ", keywords?.Take(5) ?? Array.Empty<string>())}...");
+                
+                // Validate keywords were extracted
+                if (keywords == null || !keywords.Any())
+                {
+                    _logger.LogWarning($"⚠️ [SIMILAR-PROJECTS] No keywords extracted for opportunity {opportunityId}. Returning empty results. Please ensure the opportunity has sufficient details (title, description, country, sector, etc.).");
+                    return new UNOPS.PAO.Models.SimilarProjectsResponse
+                    {
+                        ExtractedKeywords = new List<string>(),
+                        SimilarProjects = new List<UNOPS.PAO.Models.SimilarProjectModel>(),
+                        TotalFound = 0,
+                        ExecutionTimeMs = (long)(DateTime.UtcNow - startTime).TotalMilliseconds
+                    };
+                }
                 
                 // Combine keywords into a single search query
-                var searchQuery = string.Join(" ", keywords);
+                var searchQuery = string.Join(" ", keywords.Where(k => !string.IsNullOrWhiteSpace(k)));
+                
+                // Validate search query is not empty
+                if (string.IsNullOrWhiteSpace(searchQuery))
+                {
+                    _logger.LogWarning($"⚠️ [SIMILAR-PROJECTS] Search query is empty after joining keywords for opportunity {opportunityId}. Returning empty results.");
+                    return new UNOPS.PAO.Models.SimilarProjectsResponse
+                    {
+                        ExtractedKeywords = keywords,
+                        SimilarProjects = new List<UNOPS.PAO.Models.SimilarProjectModel>(),
+                        TotalFound = 0,
+                        ExecutionTimeMs = (long)(DateTime.UtcNow - startTime).TotalMilliseconds
+                    };
+                }
                 
                 // Step 3: Search vector store for similar projects
                 _logger.LogInformation($"🔎 [SIMILAR-PROJECTS] Searching vector store with query: \"{searchQuery.Substring(0, Math.Min(100, searchQuery.Length))}...\"");

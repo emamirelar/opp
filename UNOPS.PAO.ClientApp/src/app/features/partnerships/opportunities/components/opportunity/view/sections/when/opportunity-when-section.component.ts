@@ -703,6 +703,32 @@ export class OpportunityWhenSectionComponent implements OnInit {
     return implStartDate || signingDate;
   }
 
+  /**
+   * @description Get minimum date for deliverable end date (cannot be before planned start date)
+   * @param {number} deliverableId - The ID of the deliverable
+   * @returns {Date | null} The minimum allowed date for planned end (planned start date if set)
+   */
+  getMinDeliverableEndDate(deliverableId: number): Date | null {
+    const dateMap = this.deliverableDates();
+    const dates = dateMap.get(deliverableId);
+    const startDate = dates?.start;
+    
+    // If start date is set in local state, use it
+    if (startDate) {
+      return startDate;
+    }
+    
+    // Otherwise, check the original deliverable data
+    const opp = this.opportunity();
+    const deliverable = opp?.deliverables?.find(d => d.id === deliverableId);
+    if (deliverable?.plannedStartDate) {
+      return new Date(deliverable.plannedStartDate);
+    }
+    
+    // If no start date is set, return null (no minimum restriction)
+    return null;
+  }
+
   // Local state for deliverable dates (to avoid signal reactivity issues)
   // Maps deliverableId -> { start: Date | null, end: Date | null }
   deliverableDates = signal<Map<number, { start: Date | null; end: Date | null }>>(new Map());

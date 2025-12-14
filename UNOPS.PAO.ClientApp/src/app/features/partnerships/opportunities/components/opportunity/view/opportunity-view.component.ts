@@ -146,6 +146,12 @@ export class OpportunityViewComponent
   // Unsaved changes tracking for sticky save bar (Option 2 UX)
   sectionsWithUnsavedChanges = signal<Set<string>>(new Set());
   readonly hasUnsavedChanges = computed(() => this.sectionsWithUnsavedChanges().size > 0);
+  
+  // Document upload trigger - incremented when documents are uploaded to notify WHAT section to refresh AI recommendations
+  documentUploadTrigger = signal<number>(0);
+  
+  // Section save trigger - incremented when any section saves to notify WHAT section to refresh framework status
+  sectionSaveTrigger = signal<number>(0);
 
   @ViewChild('contentScrollContainer', { read: ElementRef })
   contentScrollContainer?: ElementRef;
@@ -774,6 +780,9 @@ export class OpportunityViewComponent
     
     // Angular signals automatically notify ALL child components - no manual detectChanges() needed
     // All sections will re-render with latest data
+    
+    // Notify WHAT section and DST section to refresh AI-powered data (framework status, recommendations, etc.)
+    this.handleSectionSaveComplete();
   }
   
   /**
@@ -802,6 +811,19 @@ export class OpportunityViewComponent
   }
 
   /**
+   * @description Handle document upload/link events from the documents component
+   * Reloads the opportunity AND triggers AI recommendations refresh in the WHAT section
+   * @returns {void}
+   */
+  handleDocumentUploaded(): void {
+    // Increment the document upload trigger to notify WHAT section to refresh AI recommendations
+    this.documentUploadTrigger.update(v => v + 1);
+    
+    // Also reload the opportunity data
+    this.reloadOpportunity();
+  }
+
+  /**
    * @description Track when a section has unsaved changes
    * @param {string} sectionId - The section identifier (e.g., 'what', 'why', 'who')
    */
@@ -821,6 +843,15 @@ export class OpportunityViewComponent
     const updatedSections = new Set(currentSections);
     updatedSections.delete(sectionId);
     this.sectionsWithUnsavedChanges.set(updatedSections);
+  }
+
+  /**
+   * @description Handle section save completion - notifies WHAT section to refresh framework status
+   * Called when any section successfully saves data
+   */
+  handleSectionSaveComplete(): void {
+    // Increment the section save trigger to notify WHAT section to refresh framework status
+    this.sectionSaveTrigger.update(v => v + 1);
   }
 
   /**

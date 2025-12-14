@@ -65,7 +65,7 @@ export interface OpportunityUNOPSMission {
 
 /**
  * SME (Subject Matter Expert) selection for an opportunity
- * Loaded from EntityUserRoles table where EntityType = "Opportunity"
+ * Loaded from OpportunityStakeholder table where IsInternal = true and EntityRole.Type = "SME"
  */
 export interface SMESelection {
   entityRoleId: number;

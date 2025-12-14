@@ -104,7 +104,7 @@ public class OpportunityModel
     
     /// <summary>
     /// SME (Subject Matter Expert) selections for the opportunity.
-    /// Loaded from EntityUserRoles table where EntityType = "Opportunity".
+    /// Loaded from OpportunityStakeholder table where IsInternal = true and EntityRole.Type = "SME".
     /// </summary>
     public List<SMESelectionModel>? SMESelections { get; set; }
     

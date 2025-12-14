@@ -725,6 +725,7 @@
                         (ngModelChange)="updateDeliverableEndDate(deliverable, $event)"
                         dateFormat="yy-mm-dd"
                         [showIcon]="true"
+                        [minDate]="getMinDeliverableEndDate(deliverable.id)"
                         appendTo="body"
                         class="w-full"
                         [placeholder]="'placeholder.selectEndDate' | translate"

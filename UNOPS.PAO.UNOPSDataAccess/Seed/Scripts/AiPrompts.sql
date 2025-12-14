@@ -1638,7 +1638,7 @@ Create a comprehensive summary including their complete profile, interaction his
 **IMPORTANT**: Only extract and return the following fields. Do NOT include status, workflow stage, or system-generated fields.
 
 ### Basic Information (camelCase)
-- **name** (string): The ACTUAL PROJECT/OPPORTUNITY TITLE from the document (e.g., "Sustainable Water Infrastructure Development", "Education Reform Program")
+- **name** (string, max 255 characters): The ACTUAL PROJECT/OPPORTUNITY TITLE from the document (e.g., "Sustainable Water Infrastructure Development", "Education Reform Program"). MUST NOT exceed 255 characters.
 - **description** (string): Detailed description of the OPPORTUNITY/PROJECT itself - what the project does, its scope, objectives, and activities
 
 ### Organizational & Initiative Type (camelCase)
@@ -1666,7 +1666,7 @@ Create a comprehensive summary including their complete profile, interaction his
 - **partnershipAgreementReference** (string?): Partnership agreement reference number or code
 - **targetSigningDate** (DateTime?): Target date for signing (ISO 8601 format: YYYY-MM-DDTHH:mm:ss.sssZ)
 - **isTargetSigningDateFirm** (boolean?): Whether the signing date is a firm deadline from the partner
-- **signingDateNotes** (string?): Notes about the signing date (e.g., partner deadline, submission closing date)
+- **signingDateNotes** (string?, max 1000 characters): Notes about the signing date (e.g., partner deadline, submission closing date). MUST NOT exceed 1000 characters.
 - **submissionDeadline** (DateTime?): Partner submission or proposal deadline (ISO 8601 format)
 - **implementationStartDate** (DateTime?): When implementation is expected to start (ISO 8601 format)
 - **targetDeliveryDate** (DateTime?): Target delivery or completion date (ISO 8601 format: YYYY-MM-DDTHH:mm:ss.sssZ)
@@ -1674,18 +1674,18 @@ Create a comprehensive summary including their complete profile, interaction his
 ### Strategic Information (camelCase)
 - **challenges** (string?): Context and challenges that the opportunity aims to address
 - **strategicAlignment** (string?): How this opportunity aligns with strategic goals, organizational priorities, or regional development plans
-- **resultsFocus** (string?): Focus areas for results and key deliverables
-- **expectedImpact** (string?): Expected impact of the opportunity (max 200 characters)
-- **expectedOutcomes** (string?): Expected outcomes of the opportunity (max 200 characters)
-- **expectedBeneficiaries** (string?): Who will benefit from this opportunity (target population, communities, regions)
+- **resultsFocus** (string?, max 2000 characters): Focus areas for results and key deliverables. MUST NOT exceed 2000 characters.
+- **expectedImpact** (string?, max 200 characters): Expected impact of the opportunity. MUST NOT exceed 200 characters.
+- **expectedOutcomes** (string?, max 200 characters): Expected outcomes of the opportunity. MUST NOT exceed 200 characters.
+- **expectedBeneficiaries** (string?, max 1000 characters): Who will benefit from this opportunity (target population, communities, regions). MUST NOT exceed 1000 characters.
 - **estimatedDirectBeneficiaries** (int?): Estimated number of direct beneficiaries (extract numbers like "2 million beneficiaries" → 2000000)
 - **estimatedIndirectBeneficiaries** (int?): Estimated number of indirect beneficiaries
 - **beneficiariesToBeDetermined** (boolean?): Whether the number of beneficiaries is to be determined later (extract if mentioned as "TBD", "to be determined", "not yet determined", "beneficiaries pending assessment", etc.)
 
 ### Delivery & Stakeholders (camelCase)
 - **deliveryModality** (int?): How UNOPS will deliver products/services. Use numeric values: 1 = NotYetKnown, 2 = AllDirect (direct execution), 3 = AllGrantSupport (grant support), 4 = Mixed (combination of approaches). Extract and map to the appropriate value based on implementation approach mentioned in the document.
-- **miscExternalStakeholders** (string?): Free-text list of external stakeholders not in the contact list
-- **externalStakeholderNotes** (string?): Notes about external stakeholders (influence, capacity, role)
+- **miscExternalStakeholders** (string?, max 2000 characters): Free-text list of external stakeholders not in the contact list. MUST NOT exceed 2000 characters.
+- **externalStakeholderNotes** (string?, max 2000 characters): Notes about external stakeholders (influence, capacity, role). MUST NOT exceed 2000 characters.
 
 ### Related Entities (Arrays - camelCase)
 - **fundingPartners** (array): List of funding partner names as text strings (e.g., ["World Bank", "Asian Development Bank"])
@@ -1833,7 +1833,16 @@ Return a valid JSON object with the extracted opportunity data. **ALL property n
 - **ALWAYS return empty arrays [] for collections when no data found, NEVER null**
 - **ALWAYS include the "dependents" array** with all fields needing ID resolution
 - **stakeholders** MUST be an array of objects with userName and roleName (valid roles: "Opportunity Manager", "Partnership Lead", "Reviewer", "Internal Stakeholder")
-- External stakeholder free-text goes in **miscExternalStakeholders** and **externalStakeholderNotes** fields, NOT in stakeholders array',
+- External stakeholder free-text goes in **miscExternalStakeholders** and **externalStakeholderNotes** fields, NOT in stakeholders array
+- **CRITICAL FIELD LENGTH LIMITS** - Do NOT exceed these character limits:
+  * name: max 255 characters
+  * signingDateNotes: max 1000 characters
+  * resultsFocus: max 2000 characters
+  * expectedImpact: max 200 characters
+  * expectedOutcomes: max 200 characters
+  * expectedBeneficiaries: max 1000 characters
+  * miscExternalStakeholders: max 2000 characters
+  * externalStakeholderNotes: max 2000 characters',
         'Analyze this **{documentType}** document and extract opportunity information relevant to the following opportunity:
 
 **Current Opportunity Context:**
@@ -2865,7 +2874,7 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
 **IMPORTANT**: Only extract and return the following fields. Do NOT include status, workflow stage, or system-generated fields.
 
 ### Basic Information (camelCase)
-- **name** (string): Use the user-provided opportunity name exactly as given
+- **name** (string, max 255 characters): Use the user-provided opportunity name exactly as given. MUST NOT exceed 255 characters.
 - **description** (string): Expand and enhance the user-provided description by incorporating relevant details from interactions (discussion points, objectives, scope mentioned in meetings/emails) AND documents (key points from document names and descriptions)
 
 ### Organizational & Initiative Type (camelCase)
@@ -2893,7 +2902,7 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
 - **partnershipAgreementReference** (string?): Extract partnership or framework agreement references mentioned in interactions or document names
 - **targetSigningDate** (DateTime?): Extract or infer target signing dates from interactions or documents (ISO 8601 format: YYYY-MM-DDTHH:mm:ss.sssZ)
 - **isTargetSigningDateFirm** (boolean?): Whether the signing date is a firm deadline from the partner (extract if mentioned as "deadline", "firm date", etc.)
-- **signingDateNotes** (string?): Notes about the signing date (e.g., partner deadline, submission requirements)
+- **signingDateNotes** (string?, max 1000 characters): Notes about the signing date (e.g., partner deadline, submission requirements). MUST NOT exceed 1000 characters.
 - **submissionDeadline** (DateTime?): Partner submission or proposal deadline (ISO 8601 format)
 - **implementationStartDate** (DateTime?): When implementation is expected to start (ISO 8601 format)
 - **targetDeliveryDate** (DateTime?): Extract or infer target delivery/completion dates from interactions or documents (ISO 8601 format: YYYY-MM-DDTHH:mm:ss.sssZ)
@@ -2901,18 +2910,18 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
 ### Strategic Information (camelCase)
 - **challenges** (string?): Context and challenges that the opportunity aims to address - extract from discussions about problems, gaps, or needs
 - **strategicAlignment** (string?): Synthesize strategic alignment from interaction discussions AND document context - how does this align with SDGs, UNOPS mandate, partner priorities, and development goals mentioned
-- **resultsFocus** (string?): Extract and synthesize expected results, outcomes, and key focus areas discussed in interactions or referenced in documents
-- **expectedImpact** (string?): Generate a comprehensive impact statement based on benefits and impacts discussed across interactions and documents (max 200 characters)
-- **expectedOutcomes** (string?): Generate expected outcomes based on results and deliverables discussed across interactions and documents (max 200 characters)
-- **expectedBeneficiaries** (string?): Extract information about target beneficiaries, communities, regions, or populations that will benefit from interactions or documents
+- **resultsFocus** (string?, max 2000 characters): Extract and synthesize expected results, outcomes, and key focus areas discussed in interactions or referenced in documents. MUST NOT exceed 2000 characters.
+- **expectedImpact** (string?, max 200 characters): Generate a comprehensive impact statement based on benefits and impacts discussed across interactions and documents. MUST NOT exceed 200 characters.
+- **expectedOutcomes** (string?, max 200 characters): Generate expected outcomes based on results and deliverables discussed across interactions and documents. MUST NOT exceed 200 characters.
+- **expectedBeneficiaries** (string?, max 1000 characters): Extract information about target beneficiaries, communities, regions, or populations that will benefit from interactions or documents. MUST NOT exceed 1000 characters.
 - **estimatedDirectBeneficiaries** (int?): Estimated number of direct beneficiaries (extract numbers like "2 million beneficiaries" → 2000000)
 - **estimatedIndirectBeneficiaries** (int?): Estimated number of indirect beneficiaries
 - **beneficiariesToBeDetermined** (boolean?): Whether the number of beneficiaries is to be determined later (infer from context if beneficiary numbers are not yet finalized, extract if mentioned as "TBD", "to be determined", "pending assessment", etc.)
 
 ### Delivery & Stakeholders (camelCase)
 - **deliveryModality** (int?): How UNOPS will deliver products/services. Use numeric values: 1 = NotYetKnown, 2 = AllDirect (direct execution), 3 = AllGrantSupport (grant support), 4 = Mixed (combination of approaches). Infer from discussions about implementation approach.
-- **miscExternalStakeholders** (string?): Free-text list of external stakeholders not in the contact list
-- **externalStakeholderNotes** (string?): Notes about external stakeholders (influence, capacity, role)
+- **miscExternalStakeholders** (string?, max 2000 characters): Free-text list of external stakeholders not in the contact list. MUST NOT exceed 2000 characters.
+- **externalStakeholderNotes** (string?, max 2000 characters): Notes about external stakeholders (influence, capacity, role). MUST NOT exceed 2000 characters.
 
 ### Related Entities (Arrays - camelCase)
 
@@ -3105,7 +3114,16 @@ Return a valid JSON object with the proposed opportunity data. **ALL property na
 - **ALWAYS return empty arrays [] for collections when no data found, NEVER null**
 - **CRITICAL: ALWAYS include these fields in the "dependents" array** (even if you provide text values):
   ["responsibleOrgUnitName", "proposedInitiativeTypeName", "fundingPartners", "clientPartners", "stakeholders", "deliverables", "countries", "sdGs"]
-- The backend will convert text names to database IDs - you just provide the text values and list ALL fields in dependents',
+- The backend will convert text names to database IDs - you just provide the text values and list ALL fields in dependents
+- **CRITICAL FIELD LENGTH LIMITS** - Do NOT exceed these character limits:
+  * name: max 255 characters
+  * signingDateNotes: max 1000 characters
+  * resultsFocus: max 2000 characters
+  * expectedImpact: max 200 characters
+  * expectedOutcomes: max 200 characters
+  * expectedBeneficiaries: max 1000 characters
+  * miscExternalStakeholders: max 2000 characters
+  * externalStakeholderNotes: max 2000 characters',
         'Analyze the following interactions and documents with partner {partnerName} and generate a comprehensive opportunity proposal.
 
 **User-Provided Opportunity Context:**
@@ -4215,13 +4233,14 @@ Return a JSON array with this exact structure:
 - "Sustainable development goals achievement" → Outcome, not a deliverable
 
 **CRITICAL RULES**:
-1. **Minimum 3 extractions** if ANY relevant content is found that aligns with UNOPS taxonomy
-2. **Return empty array []** if NO products/services can be identified that match UNOPS taxonomy
-3. **FAVOR TAXONOMY ALIGNMENT**: Use partner wording but ensure it can be mapped to UNOPS services
-4. **ALWAYS include context** - WHERE in document this was found
-5. **Order by confidence** - highest confidence items first (taxonomy alignment is part of confidence)
-6. **ONLY extract items with confidence ≥ 0.7** - We need reasonable certainty and taxonomy alignment
-7. Return ONLY valid JSON, no additional text or explanation',
+1. **Maximum 10 extractions** - Limit output to top 10 most relevant items by confidence score
+2. **Minimum 3 extractions** if ANY relevant content is found that aligns with UNOPS taxonomy
+3. **Return empty array []** if NO products/services can be identified that match UNOPS taxonomy
+4. **FAVOR TAXONOMY ALIGNMENT**: Use partner wording but ensure it can be mapped to UNOPS services
+5. **ALWAYS include context** - WHERE in document this was found
+6. **Order by confidence** - highest confidence items first (taxonomy alignment is part of confidence)
+7. **ONLY extract items with confidence ≥ 0.7** - We need reasonable certainty and taxonomy alignment
+8. Return ONLY valid JSON, no additional text or explanation',
         'Analyze the following documents to extract products and services that the partner is requesting from UNOPS.
 
 **Opportunity Context:**

@@ -516,7 +516,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
         }
         
         /// <summary>
-        /// Checks if the current user is a stakeholder (team member) of an Opportunity
+        /// Checks if the current user is a stakeholder (team member) of an Opportunity.
+        /// This includes both directly assigned stakeholders and users related through OrgUnit role assignments (auto-populated).
         /// </summary>
         /// <param name="opportunityId">The opportunity ID to check</param>
         /// <returns>True if the user is a team member</returns>
@@ -542,11 +543,46 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
             
             try
             {
-                // Check if user is listed as a stakeholder (team member) for this opportunity
-                var isStakeholder = await _context.Set<UNOPS.PAO.Domain.Entities.OpportunityStakeholder>()
-                    .AnyAsync(os => os.OpportunityId == opportunityId && os.UserId == currentUserId);
+                // 1. Check if user is directly assigned as a stakeholder (UserId is set, OrganizationHierarchyId is null)
+                var isDirectStakeholder = await _context.Set<UNOPS.PAO.Domain.Entities.OpportunityStakeholder>()
+                    .AnyAsync(os => os.OpportunityId == opportunityId 
+                        && os.UserId == currentUserId 
+                        && os.OrganizationHierarchyId == null);
                 
-                return isStakeholder;
+                if (isDirectStakeholder)
+                {
+                    return true;
+                }
+                
+                // 2. Check if user is related through OrgUnit role assignments (auto-populated stakeholders)
+                // Get all auto-populated stakeholders for this opportunity (OrganizationHierarchyId is set)
+                var autoPopulatedStakeholders = await _context.Set<UNOPS.PAO.Domain.Entities.OpportunityStakeholder>()
+                    .Where(os => os.OpportunityId == opportunityId && os.OrganizationHierarchyId.HasValue)
+                    .Select(os => new { os.EntityRoleId, os.OrganizationHierarchyId })
+                    .ToListAsync();
+                
+                if (autoPopulatedStakeholders.Any())
+                {
+                    // Check if current user has an EntityUserRole that matches any auto-populated stakeholder
+                    // EntityUserRole links users to roles for specific entities (in this case, OrganizationHierarchy)
+                    foreach (var autoStakeholder in autoPopulatedStakeholders)
+                    {
+                        var hasMatchingRole = await _context.Set<UNOPS.PAO.Domain.Entities.EntityUserRole>()
+                            .AnyAsync(eur => 
+                                eur.UserId == currentUserId 
+                                && eur.EntityRoleId == autoStakeholder.EntityRoleId
+                                && eur.EntityType == "OrganizationHierarchy"
+                                && eur.EntityId == autoStakeholder.OrganizationHierarchyId.Value
+                                && !eur.IsDeleted);
+                        
+                        if (hasMatchingRole)
+                        {
+                            return true;
+                        }
+                    }
+                }
+                
+                return false;
             }
             catch (Exception ex)
             {

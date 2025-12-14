@@ -3,6 +3,7 @@ namespace UNOPS.PAO.Models.Opportunities;
 /// <summary>
 /// Model representing an SME (Subject Matter Expert) selection for an opportunity.
 /// Used to display and manage SME assignments.
+/// Loaded from OpportunityStakeholder table where IsInternal = true and EntityRole.Type = "SME".
 /// </summary>
 public class SMESelectionModel
 {

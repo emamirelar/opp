@@ -59,6 +59,14 @@ export class OpportunityAnalysisSectionComponent {
   readonly opportunity = input.required<Opportunity>();
 
   /**
+   * @description Input signal to trigger insights refresh when any section saves
+   * Parent should increment this value when any section saves successfully
+   * @type {Signal<number>}
+   * @since 2.0.0
+   */
+  readonly sectionSaveTrigger = input<number>(0);
+
+  /**
    * @description Loading state for insights
    */
   readonly loadingInsights = signal<boolean>(false);
@@ -83,6 +91,14 @@ export class OpportunityAnalysisSectionComponent {
    */
   private lastLoadedOpportunityId: number | null = null;
 
+  /**
+   * @description Track the last processed section save trigger to prevent duplicate refreshes
+   * @type {number}
+   * @private
+   * @since 2.0.0
+   */
+  private lastSectionSaveTrigger: number = 0;
+
   constructor() {
     // Use effect to reactively load insights when opportunity changes
     effect(() => {
@@ -92,6 +108,24 @@ export class OpportunityAnalysisSectionComponent {
         // Delay insights loading to allow critical data to load first
         // This prevents connection exhaustion when multiple AI calls fire simultaneously
         setTimeout(() => this.loadInsights(), 2500);
+      }
+    });
+
+    // Effect to refresh insights when sectionSaveTrigger changes (any section saves)
+    effect(() => {
+      const trigger = this.sectionSaveTrigger();
+
+      // Only refresh if trigger has changed and this isn't the initial load
+      if (trigger > 0 && trigger !== this.lastSectionSaveTrigger) {
+        this.lastSectionSaveTrigger = trigger;
+
+        console.log('🔄 Analysis Section: Section save detected, refreshing insights');
+
+        // Use setTimeout to avoid calling during signal computation
+        // Delay to prevent overwhelming the backend
+        setTimeout(() => {
+          this.loadInsights();
+        }, 3000);
       }
     });
   }

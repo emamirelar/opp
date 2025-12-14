@@ -107,7 +107,15 @@ export class OpportunityDstSectionComponent {
    * @since 1.0.0
    */
   readonly opportunity = input.required<Opportunity>();
-  
+
+  /**
+   * @description Input signal to trigger DST data refresh when any section saves
+   * Parent should increment this value when any section saves successfully
+   * @type {Signal<number>}
+   * @since 2.0.0
+   */
+  readonly sectionSaveTrigger = input<number>(0);
+
   /**
    * @description Input signal for update permission - controls visibility of edit button
    */
@@ -142,6 +150,14 @@ export class OpportunityDstSectionComponent {
    * @since 1.0.0
    */
   private lastLoadedOpportunityId: number | null = null;
+
+  /**
+   * @description Track the last processed section save trigger to prevent duplicate refreshes
+   * @type {number}
+   * @private
+   * @since 2.0.0
+   */
+  private lastSectionSaveTrigger: number = 0;
 
   /**
    * @description Signal for similar projects data
@@ -261,6 +277,20 @@ export class OpportunityDstSectionComponent {
    * @since 1.0.0
    */
   showAddRiskDialog = false;
+
+  /**
+   * @description Track whether dialog is in edit mode
+   * @type {boolean}
+   * @since 2.0.0
+   */
+  isEditMode = false;
+
+  /**
+   * @description Currently editing risk ID (null if adding new)
+   * @type {number | null}
+   * @since 2.0.0
+   */
+  editingRiskId: number | null = null;
 
   /**
    * @description Acknowledgement that user has reviewed all organizational high risks
@@ -568,12 +598,46 @@ export class OpportunityDstSectionComponent {
         // Load risks first (most important for user), then stagger AI-heavy calls
         // This prevents connection exhaustion and allows notifications endpoint to work
         this.loadDSTRisks();
-        
+
         // Stagger AI-powered calls with delays to prevent overwhelming the backend
         setTimeout(() => this.loadDSTRecommendations(), 500);
         setTimeout(() => this.loadSimilarOpportunities(), 1000);
         setTimeout(() => this.loadSimilarProjects(), 1500);
         setTimeout(() => this.loadRelevantPeople(), 2000);
+      }
+    });
+
+    // Effect to refresh AI data when sectionSaveTrigger changes (any section saves)
+    effect(() => {
+      const trigger = this.sectionSaveTrigger();
+
+      // Only refresh if trigger has changed and this isn't the initial load
+      if (trigger > 0 && trigger !== this.lastSectionSaveTrigger) {
+        this.lastSectionSaveTrigger = trigger;
+
+        console.log('🔄 DST Section: Section save detected, refreshing AI data');
+
+        // Use setTimeout to avoid calling during signal computation
+        // Stagger refreshes to prevent overwhelming the backend
+        setTimeout(() => {
+          // Refresh risk recommendations with cache invalidation
+          this.loadDSTRecommendations();
+        }, 500);
+        setTimeout(() => {
+          // Refresh similar opportunities with cache invalidation
+          this.similarOpportunitiesResponse.set(null);
+          this.loadSimilarOpportunities();
+        }, 1500);
+        setTimeout(() => {
+          // Refresh similar projects with cache invalidation
+          this.similarProjectsResponse.set(null);
+          this.loadSimilarProjects(true);
+        }, 2500);
+        setTimeout(() => {
+          // Refresh relevant people with cache invalidation
+          this.relevantPeopleResponse.set(null);
+          this.loadRelevantPeople(true);
+        }, 3500);
       }
     });
   }
@@ -836,6 +900,8 @@ export class OpportunityDstSectionComponent {
    * @since 1.0.0
    */
   addToRiskRegister(): void {
+    this.isEditMode = false;
+    this.editingRiskId = null;
     this.resetNewRiskForm();
     this.showDialogValidationError.set(false);
     this.showAddRiskDialog = true;
@@ -847,8 +913,52 @@ export class OpportunityDstSectionComponent {
    */
   cancelAddRisk(): void {
     this.showAddRiskDialog = false;
+    this.isEditMode = false;
+    this.editingRiskId = null;
     this.resetNewRiskForm();
     this.showDialogValidationError.set(false);
+  }
+
+  /**
+   * @description Open dialog to edit an existing risk
+   * @param {Risk} risk - The risk to edit
+   * @since 2.0.0
+   */
+  editRisk(risk: Risk): void {
+    this.isEditMode = true;
+    this.editingRiskId = risk.id;
+
+    // Pre-fill form with existing risk data
+    this.newRisk = {
+      title: risk.title,
+      description: risk.description || '',
+      recommendation: risk.recommendation || '',
+      riskTypeId: risk.riskTypeId || null,
+      riskCategoryId: risk.riskCategoryId || null,
+      riskProbabilityId: risk.riskProbabilityId || null,
+      riskProximityId: risk.riskProximityId || null,
+      riskImpactLevelId: risk.riskImpactLevelId || null,
+      riskResponseTypeId: risk.riskResponseTypeId || null,
+      preDefinedHighRiskId: risk.preDefinedHighRiskId || null,
+      impact: risk.impact || 2
+    };
+
+    // Update signal for reactive filtering
+    this.selectedRiskTypeId.set(risk.riskTypeId || null);
+
+    // Set the category tree node for the TreeSelect
+    if (risk.riskCategoryId) {
+      const foundNode = this.findCategoryNodeById(risk.riskCategoryId);
+      this.selectedCategoryNode = foundNode;
+    } else {
+      this.selectedCategoryNode = null;
+    }
+
+    // Set the pre-defined high risk if applicable
+    this.selectedPreDefinedHighRiskId = risk.preDefinedHighRiskId || null;
+
+    this.showDialogValidationError.set(false);
+    this.showAddRiskDialog = true;
   }
 
   /**
@@ -896,7 +1006,7 @@ export class OpportunityDstSectionComponent {
   }
 
   /**
-   * @description Confirm and save new risk
+   * @description Confirm and save new risk or update existing risk
    * @since 1.0.0
    */
   confirmAddRisk(): void {
@@ -922,29 +1032,57 @@ export class OpportunityDstSectionComponent {
       impact: this.newRisk.impact
     };
 
-    this.opportunityService.addDSTRisk(this.opportunity().id, request).subscribe({
-      next: (createdRisk: Risk) => {
-        this.isProcessingRisk.set(false);
-        this.showAddRiskDialog = false;
-        this.showDialogValidationError.set(false);
+    // Determine if we're editing or adding
+    if (this.isEditMode && this.editingRiskId) {
+      // Update existing risk
+      this.opportunityService.updateDSTRisk(this.opportunity().id, this.editingRiskId, request).subscribe({
+        next: (updatedRisk: Risk) => {
+          this.isProcessingRisk.set(false);
+          this.showAddRiskDialog = false;
+          this.showDialogValidationError.set(false);
 
-        // Add the new risk to the list
-        this.risks.update(risks => [...risks, createdRisk]);
+          // Update the risk in the list
+          this.risks.update(risks => risks.map(r => r.id === this.editingRiskId ? updatedRisk : r));
 
-        this.feedbackService.showSuccessToast({
-          summary: 'Success',
-          detail: 'Risk added to register successfully'
-        });
+          this.feedbackService.showSuccessToast({
+            summary: 'Success',
+            detail: 'Risk updated successfully'
+          });
 
-        // Reset form
-        this.resetNewRiskForm();
+          // Reset form and edit mode
+          this.isEditMode = false;
+          this.editingRiskId = null;
+          this.resetNewRiskForm();
 
-        // Refresh recommendations since existing risks have changed
-        // The cache will auto-invalidate because existing risk titles are part of the prompt
-        console.log('🔄 [DST] Refreshing recommendations after adding risk...');
-        this.loadDSTRecommendations();
-      }
-    });
+          console.log(`✏️ [DST] Updated risk: ${updatedRisk.title} (ID: ${updatedRisk.id})`);
+        }
+      });
+    } else {
+      // Add new risk
+      this.opportunityService.addDSTRisk(this.opportunity().id, request).subscribe({
+        next: (createdRisk: Risk) => {
+          this.isProcessingRisk.set(false);
+          this.showAddRiskDialog = false;
+          this.showDialogValidationError.set(false);
+
+          // Add the new risk to the list
+          this.risks.update(risks => [...risks, createdRisk]);
+
+          this.feedbackService.showSuccessToast({
+            summary: 'Success',
+            detail: 'Risk added to register successfully'
+          });
+
+          // Reset form
+          this.resetNewRiskForm();
+
+          // Refresh recommendations since existing risks have changed
+          // The cache will auto-invalidate because existing risk titles are part of the prompt
+          console.log('🔄 [DST] Refreshing recommendations after adding risk...');
+          this.loadDSTRecommendations();
+        }
+      });
+    }
   }
 
   /**
