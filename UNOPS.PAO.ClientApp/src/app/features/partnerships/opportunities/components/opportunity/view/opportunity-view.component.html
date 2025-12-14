@@ -163,6 +163,46 @@
           <div
             class="px-unops-md md:px-unops-2xl py-3 border-t border-unops-neutral-300 bg-unops-surface-secondary"
           >
+            <!-- Loading Progress Strip -->
+            @if (showProgressBar()) {
+              <div 
+                class="loading-progress-strip mb-3 transition-all duration-300"
+              >
+                <div class="flex items-center justify-between gap-4">
+                  <!-- Progress Bar -->
+                  <div class="flex-1 min-w-0">
+                    <div class="w-full bg-unops-neutral-200 rounded-full h-1.5 overflow-hidden">
+                      <div 
+                        class="bg-unops-primary h-1.5 rounded-full transition-all duration-500 ease-out"
+                        [style.width.%]="progressPercentage()"
+                      ></div>
+                    </div>
+                  </div>
+                  
+                  <!-- Progress Text -->
+                  <div class="flex items-center gap-3 text-sm text-unops-neutral-700 flex-shrink-0">
+                    <span class="flex items-center gap-2">
+                      <i class="pi pi-spin pi-spinner text-unops-primary text-sm"></i>
+                      <span class="font-medium hidden sm:inline">{{ progressMessage() }}</span>
+                    </span>
+                    <span class="text-unops-neutral-500 font-medium">
+                      {{ progressPercentage() }}%
+                    </span>
+                  </div>
+                </div>
+                
+                <!-- Accessibility: Screen reader announcement -->
+                <div 
+                  role="status" 
+                  aria-live="polite" 
+                  aria-atomic="true"
+                  class="sr-only"
+                >
+                  {{ progressMessage() }}
+                </div>
+              </div>
+            }
+
             <!-- Mobile/Tablet: Dropdown (hidden on lg and above) -->
             <div class="lg:hidden">
               <p-select
