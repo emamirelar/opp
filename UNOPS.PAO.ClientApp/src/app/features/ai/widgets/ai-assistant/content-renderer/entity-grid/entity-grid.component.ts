@@ -374,11 +374,38 @@ export class EntityGridComponent implements OnInit, AfterViewInit, OnDestroy {
       case 'partneragreement':
       case 'partnership':
         return `/partnerships/agreements/${entityId}`;
+      case 'opportunity':
+        return `/partnerships/opportunities/${entityId}`;
       default:
         // TAD: Defaulting to partner for now
         // const routeSegment = entityType.toLowerCase().replace(/\s+/g, '-');
         // return `/${routeSegment}s/${entityId}`;
         return `/partnerships/partners/${entityId}`;
     }
+  }
+  
+  /**
+   * Get properly pluralized entity type name for display
+   */
+  getPluralEntityType(): string {
+    const type = this.entityType?.toLowerCase() || '';
+    
+    // Handle special plural cases
+    const pluralMap: { [key: string]: string } = {
+      'opportunity': 'Opportunities',
+      'partner': 'Partners',
+      'contact': 'Contacts',
+      'interaction': 'Interactions',
+      'partneragreement': 'Partner Agreements',
+      'partnership': 'Partnerships'
+    };
+    
+    if (pluralMap[type]) {
+      return pluralMap[type];
+    }
+    
+    // Default: capitalize and add 's' (works for most cases)
+    const capitalizedType = this.entityType.charAt(0).toUpperCase() + this.entityType.slice(1);
+    return capitalizedType + 's';
   }
 } 
