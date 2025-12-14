@@ -4939,27 +4939,79 @@
         {
           "endpoint": "/api/opportunity/generate-proposal",
           "method": "POST",
-          "description": "Generates AI-powered opportunity proposal from multiple sources (interactions, documents)",
+          "description": "AI ANALYSIS STEP 1 OF 2: Generates AI-powered opportunity proposal by analyzing interactions and/or documents. The AI reads the content and extracts structured opportunity data across all sections (WHAT, WHY, WHO, WHERE, WHEN). Returns a proposal for user review - does NOT create the opportunity yet.",
+          "whenToUse": "Use this endpoint when you want the AI to analyze interactions (meetings, emails, calls) or documents (PDFs uploaded to GCS or existing documents in system) to generate a comprehensive opportunity proposal. This is the FIRST STEP in AI-assisted opportunity creation. The AI will read all sources and propose structured data that the user can review and modify before actual creation.",
           "parameters": [
             {
               "name": "request",
               "dataType": "OpportunityProposalRequest",
               "required": true,
-              "description": "Proposal request with source data and basic info",
-              "structure": "See OpportunityProposalRequest in requestModels section"
+              "description": "Request body containing opportunity name, description, and source data for AI analysis",
+              "structure": {
+                "opportunityName": "string (required) - Proposed opportunity name",
+                "opportunityDescription": "string (required) - Proposed opportunity description",
+                "partnerId": "int (optional) - Partner ID if creating from partner context",
+                "isFundingPartner": "bool - Whether partner is funding partner",
+                "isClientPartner": "bool - Whether partner is client partner",
+                "interactionIds": "int[] (optional) - List of interaction IDs to analyze",
+                "newDocumentStoragePaths": "string[] (optional) - GCS paths of newly uploaded documents (gs://bucket/path)",
+                "newDocumentMimeTypes": "string[] (optional) - MIME types matching newDocumentStoragePaths by index",
+                "newDocumentTypeIds": "int[] (optional) - Document type IDs matching newDocumentStoragePaths by index",
+                "existingDocumentIds": "int[] (optional) - IDs of existing documents in system to analyze"
+              },
+              "notes": "At least one source is required: interactionIds, newDocumentStoragePaths, or existingDocumentIds. The AI will analyze all provided sources to generate the proposal."
             }
           ]
         },
         {
           "endpoint": "/api/opportunity/create-from-proposal",
           "method": "POST",
-          "description": "Creates an opportunity from AI-generated proposal with user-accepted fields",
+          "description": "AI ANALYSIS STEP 2 OF 2: Creates an actual opportunity record from the AI-generated proposal after user review and acceptance. Takes the reviewed proposal data with user modifications and creates the opportunity in the database with all relationships.",
+          "whenToUse": "Use this endpoint AFTER calling /generate-proposal and AFTER the user has reviewed and accepted the AI proposal. This endpoint creates the actual opportunity record with all the user-accepted fields including partners, deliverables, SDGs, countries, timeline dates, etc. This is the SECOND STEP that persists the data.",
           "parameters": [
             {
               "name": "request",
               "dataType": "CreateOpportunityFromInteractionsRequest",
               "required": true,
-              "description": "Create request with accepted fields and resolved IDs"
+              "description": "Request body with user-accepted proposal data and resolved IDs",
+              "structure": {
+                "name": "string (required) - Opportunity name (user-accepted)",
+                "description": "string (optional) - Opportunity description (user-accepted)",
+                "partnerId": "int (optional) - Partner ID if created from partner context",
+                "isFundingPartner": "bool - Whether partner is funding partner (required if partnerId provided)",
+                "isClientPartner": "bool - Whether partner is client partner (required if partnerId provided)",
+                "sourceInteractionIds": "int[] (optional) - Original interaction IDs analyzed",
+                "documents": "NewDocumentRequest[] (optional) - Newly uploaded documents to persist",
+                "partnerReference": "string (optional) - Partner reference",
+                "responsibleOrgUnitId": "int (optional) - Responsible org unit ID",
+                "proposedInitiativeTypeId": "int (optional) - Proposed initiative type ID",
+                "deliveryModality": "int (optional) - Delivery modality",
+                "miscExternalStakeholders": "string (optional) - External stakeholders",
+                "externalStakeholderNotes": "string (optional) - Stakeholder notes",
+                "deliverables": "OpportunityDeliverableRequest[] (optional) - List of deliverables",
+                "challenges": "string (optional) - Challenges description",
+                "resultsFocus": "string (optional) - Results focus",
+                "expectedImpact": "string (optional, max 200 chars) - Expected impact",
+                "expectedOutcomes": "string (optional, max 200 chars) - Expected outcomes",
+                "expectedBeneficiaries": "string (optional) - Expected beneficiaries",
+                "estimatedDirectBeneficiaries": "int (optional) - Direct beneficiaries count",
+                "estimatedIndirectBeneficiaries": "int (optional) - Indirect beneficiaries count",
+                "beneficiariesToBeDetermined": "bool (optional) - Whether beneficiaries TBD",
+                "sdGs": "int[] (optional) - List of SDG IDs",
+                "fundingPartners": "OpportunityFundingPartnerRequest[] (optional) - Funding partners list",
+                "clientPartners": "OpportunityClientPartnerRequest[] (optional) - Client partners list",
+                "stakeholders": "OpportunityStakeholderRequest[] (optional) - Stakeholders list",
+                "countries": "int[] (optional) - List of country IDs",
+                "targetSigningDate": "datetime (optional) - Target signing date",
+                "targetDeliveryDate": "datetime (optional) - Target delivery date",
+                "implementationStartDate": "datetime (optional) - Implementation start date",
+                "submissionDeadline": "datetime (optional) - Submission deadline",
+                "isTargetSigningDateFirm": "bool (optional) - Whether signing date is firm",
+                "signingDateNotes": "string (optional) - Signing date notes",
+                "initiativeBudgetUSD": "decimal (optional) - Initiative budget in USD",
+                "partnershipAgreementReference": "string (optional) - Partnership agreement reference"
+              },
+              "notes": "This creates the opportunity record, assigns creator as Opportunity Manager, persists documents to database, and saves interaction relationships to OpportunityInteractions table."
             }
           ]
         },
