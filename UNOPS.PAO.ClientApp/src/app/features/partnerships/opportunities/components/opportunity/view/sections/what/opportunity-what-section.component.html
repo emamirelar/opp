@@ -51,7 +51,7 @@
   <div class="space-y-6">
     <!-- AI Suggestions -->
     @if (suggestions() && suggestions().length > 0) {
-      <div class="bg-unops-accent-yellow-soft rounded-unops-lg p-3 border border-unops-warning-light">
+      <div style="background-color: rgb(253, 250, 241);" class="rounded-unops-lg p-3 border border-unops-warning-light">
         <div class="flex items-start gap-2 mb-2">
           <i class="pi pi-lightbulb text-unops-warning-darker text-sm mt-0.5"></i>
           <h4 class="text-xs font-semibold text-unops-secondary">{{ 'label.aiSuggestions' | translate }}</h4>
@@ -60,7 +60,7 @@
           @for (suggestion of suggestions(); track $index) {
             <div class="bg-unops-surface-primary rounded p-2 border border-unops-warning-light shadow-unops-sm">
               <div class="font-semibold text-xs text-unops-secondary mb-1">{{ suggestion.title }}</div>
-              <p class="text-xs text-unops-neutral-700">{{ suggestion.description }}</p>
+              <p class="text-xs text-unops-neutral-800">{{ suggestion.description }}</p>
             </div>
           }
         </div>
@@ -149,19 +149,19 @@
     <div class="border-t border-gray-200 pt-6">
       <!-- Framework Status Warning (No frameworks tagged) -->
       @if (showFrameworkWarning()) {
-        <div class="bg-unops-surface-cream rounded-unops-lg p-4 border border-unops-warning-light mb-4">
-          <div class="flex items-start gap-3">
-            <i class="pi pi-exclamation-triangle text-unops-warning-darker text-lg mt-0.5"></i>
-            <div class="flex-1">
-              <h4 class="text-sm font-semibold text-unops-secondary mb-1">
-                {{ 'label.partnerFrameworkNotDefined' | translate }}
-              </h4>
-              <p class="text-sm text-unops-neutral-800">
-                {{ 'message.tagFrameworkFirst' | translate }}
-              </p>
-            </div>
+      <div style="background-color: rgb(253, 250, 241);" class="rounded-unops-lg p-4 border border-unops-warning-light mb-4">
+        <div class="flex items-start gap-3">
+          <i class="pi pi-exclamation-triangle text-unops-warning-darker text-lg mt-0.5"></i>
+          <div class="flex-1">
+            <h4 class="text-sm font-semibold text-unops-secondary mb-1">
+              {{ 'label.partnerFrameworkNotDefined' | translate }}
+            </h4>
+            <p class="text-sm text-unops-neutral-800">
+              {{ 'message.tagFrameworkFirst' | translate }}
+            </p>
           </div>
         </div>
+      </div>
       }
 
       <!-- Framework Status Info (Frameworks tagged) -->
@@ -203,16 +203,16 @@
 
       <!-- Procurement Expert Required Warning Banner -->
       @if (requiresProcurementExpert()) {
-        <div class="bg-unops-accent-orange-soft rounded-unops-lg p-4 border border-unops-warning-light mb-4">
-          <div class="flex items-start gap-3">
-            <i class="pi pi-exclamation-triangle text-unops-warning-darker text-lg mt-0.5"></i>
-            <div class="flex-1">
-              <h4 class="text-sm font-semibold text-unops-secondary mb-2">
-                {{ 'label.procurementExpertRequired' | translate }}
-              </h4>
-              <p class="text-sm text-unops-neutral-800 mb-2">
-                {{ 'message.procurementExpertNeededForDeliverables' | translate: {count: deliverablesRequiringProcurement().length} }}
-              </p>
+      <div style="background-color: rgb(253, 250, 241);" class="rounded-unops-lg p-4 border border-unops-warning-light mb-4">
+        <div class="flex items-start gap-3">
+          <i class="pi pi-exclamation-triangle text-unops-warning-darker text-lg mt-0.5"></i>
+          <div class="flex-1">
+            <h4 class="text-sm font-semibold text-unops-secondary mb-2">
+              {{ 'label.procurementExpertRequired' | translate }}
+            </h4>
+            <p class="text-sm text-unops-neutral-800 mb-2">
+              {{ 'message.procurementExpertNeededForDeliverables' | translate: {count: deliverablesRequiringProcurement().length} }}
+            </p>
               
               <!-- List of deliverables requiring procurement -->
               @if (deliverablesRequiringProcurement().length > 0) {
@@ -302,14 +302,15 @@
                         
                         <!-- Procurement Expert Required Indicator (case-insensitive check) -->
                         @if (deliverable.procurementComponent && deliverable.serviceLine?.toLowerCase() !== 'procurement') {
-                          <p-chip 
-                            [label]="'label.procurementExpertRequired' | translate" 
-                            icon="pi pi-exclamation-triangle"
-                            styleClass="text-xs"
-                            [style]="{ 'background-color': '#fef3c7', 'color': '#92400e', 'border': '1px solid #fbbf24' }"
+                          <span 
+                            class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium border-2 border-unops-warning-light"
+                            style="background-color: rgb(253, 250, 241);"
                             [pTooltip]="'message.procurementComponentDetected' | translate"
                             tooltipPosition="top"
-                          />
+                          >
+                            <i class="pi pi-exclamation-triangle text-unops-warning-darker"></i>
+                            <span class="text-unops-secondary">{{ 'label.procurementExpertRequired' | translate }}</span>
+                          </span>
                         }
                         
                         <!-- Level 0 Chip (if exists) -->
@@ -500,19 +501,19 @@
   <div class="space-y-6">
     <!-- Context Banner for Rejected Recommendation -->
     @if (rejectedItemContext()) {
-      <div class="bg-unops-surface-cream border border-unops-warning-light rounded-unops-lg p-3">
-        <div class="flex items-start gap-2">
-          <i class="pi pi-info-circle text-unops-warning-darker text-sm mt-0.5"></i>
-          <div class="flex-1">
-            <p class="text-xs font-semibold text-unops-secondary mb-1">
-              {{ 'label.searchingForAlternativeMatch' | translate }}
-            </p>
-            <p class="text-xs text-unops-neutral-800 italic">
-              "{{ rejectedItemContext() }}"
-            </p>
-          </div>
+    <div style="background-color: rgb(253, 250, 241);" class="border border-unops-warning-light rounded-unops-lg p-3">
+      <div class="flex items-start gap-2">
+        <i class="pi pi-info-circle text-unops-warning-darker text-sm mt-0.5"></i>
+        <div class="flex-1">
+          <p class="text-xs font-semibold text-unops-secondary mb-1">
+            {{ 'label.searchingForAlternativeMatch' | translate }}
+          </p>
+          <p class="text-xs text-unops-neutral-800 italic">
+            "{{ rejectedItemContext() }}"
+          </p>
         </div>
       </div>
+    </div>
     }
     
     <!-- Encouragement to Select at Lowest Level -->
@@ -786,11 +787,12 @@
                 <!-- Procurement Component Warning -->
                 @if (node.hasProcurementComponent && node.serviceLine?.toLowerCase() !== 'procurement') {
                   <span 
-                    class="flex-shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-yellow-100 text-yellow-700"
+                    class="flex-shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded border-2 border-unops-warning-light text-xs"
+                    style="background-color: rgb(253, 250, 241);"
                     [pTooltip]="'message.procurementComponentDetected' | translate"
                     tooltipPosition="top"
                   >
-                    <i class="pi pi-exclamation-triangle text-[10px]"></i>
+                    <i class="pi pi-exclamation-triangle text-[10px] text-unops-warning-darker"></i>
                   </span>
                 }
               </div>
