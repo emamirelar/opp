@@ -1688,15 +1688,33 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         {
             var fields = new List<SearchFieldInfo>
             {
-                // Direct Contact fields - using translation keys
+                // TIER 1 - Core Identity Fields
                 new() { Field = "fullName", DisplayName = "label.contact.fullName", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
                 new() { Field = "firstName", DisplayName = "label.contact.firstName", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "middleName", DisplayName = "label.contact.middleName", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
                 new() { Field = "lastName", DisplayName = "label.contact.lastName", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
                 new() { Field = "email", DisplayName = "label.contact.email", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
                 new() { Field = "title", DisplayName = "label.contact.title", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                
+                // TIER 2 - Additional Contact Details
+                new() { Field = "salutation", DisplayName = "label.contact.salutation", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "suffix", DisplayName = "label.contact.suffix", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
                 new() { Field = "department", DisplayName = "label.contact.department", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "description", DisplayName = "label.contact.description", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
                 new() { Field = "phone", DisplayName = "label.contact.phone", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
                 new() { Field = "mobile", DisplayName = "label.contact.mobile", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "assistant", DisplayName = "label.contact.assistant", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "assistantPhone", DisplayName = "label.contact.assistantPhone", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "assistantEmail", DisplayName = "label.contact.assistantEmail", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                
+                // TIER 3 - Nested/Related Fields (Partner Information)
+                new() { Field = "partner.name", DisplayName = "label.contact.partnerName", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "partner.partnerShortDescription", DisplayName = "label.partner.shortDescription", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "partner.partnerLongDescription", DisplayName = "label.partner.longDescription", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "partner.partnerGroup.name", DisplayName = "label.partnerGroup.name", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "partner.liaisonOffice.name", DisplayName = "label.liaisonOffice.name", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                
+                // TIER 4 - System/Audit Fields
                 new() { 
                     Field = "status", 
                     DisplayName = "label.common.status", 
@@ -1711,12 +1729,48 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
                         new() { Value = "Archived", Label = "enums.entityStatus.archived" }
                     }
                 },
-                new() { Field = "createdDate", DisplayName = "label.common.createdDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
-
-                // Partner relationship fields - using translation keys
-                new() { Field = "partner.name", DisplayName = "label.partner.name", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
-                new() { Field = "partner.partnerGroup.name", DisplayName = "label.partnerGroup.name", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
-                new() { Field = "partner.liaisonOffice.name", DisplayName = "label.liaisonOffice.name", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { 
+                    Field = "createdDate", 
+                    DisplayName = "label.common.createdDate", 
+                    FieldType = "date", 
+                    AllowedOperators = new List<string> { 
+                        "entityCards.operators.on", 
+                        "entityCards.operators.after", 
+                        "entityCards.operators.before", 
+                        "entityCards.operators.between",
+                        "entityCards.operators.gt",
+                        "entityCards.operators.lt",
+                        "entityCards.operators.gte",
+                        "entityCards.operators.lte"
+                    } 
+                },
+                new() { 
+                    Field = "createdBy", 
+                    DisplayName = "label.common.createdBy", 
+                    FieldType = "user", 
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" } 
+                },
+                new() { 
+                    Field = "lastModifiedDate", 
+                    DisplayName = "label.common.lastModifiedDate", 
+                    FieldType = "date", 
+                    AllowedOperators = new List<string> { 
+                        "entityCards.operators.on", 
+                        "entityCards.operators.after", 
+                        "entityCards.operators.before", 
+                        "entityCards.operators.between",
+                        "entityCards.operators.gt",
+                        "entityCards.operators.lt",
+                        "entityCards.operators.gte",
+                        "entityCards.operators.lte"
+                    } 
+                },
+                new() { 
+                    Field = "lastModifiedBy", 
+                    DisplayName = "label.common.lastModifiedBy", 
+                    FieldType = "user", 
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" } 
+                },
             };
             
             return fields;

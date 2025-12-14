@@ -81,6 +81,7 @@ export interface ChatFile {
   content?: string;
   mediaUrl?: string;
   mediaType?: string;
+  gcsPath?: string; // GCS storage path for uploaded files
 }
 
 export interface Source {

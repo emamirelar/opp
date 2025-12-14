@@ -17,6 +17,14 @@ public class GeminiAssistantRequest
     
     public IFormFile? File { get; set; }
     public IFormFileCollection? Files { get; set; }
+    
+    /// <summary>
+    /// JSON string containing array of GCS file paths
+    /// Each file object has: gcsPath, name, mimeType
+    /// </summary>
+    [Microsoft.AspNetCore.Mvc.FromForm(Name = "gcs_files")]
+    public string? GcsFiles { get; set; }
+    
     public string? ExtractedText { get; set; }
     public string? ScreenUrl { get; set; }
     public string? State { get; set; }

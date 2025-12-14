@@ -5,6 +5,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { ChipModule } from 'primeng/chip';
 import { DropdownModule } from 'primeng/dropdown';
+import { Select } from 'primeng/select';
 import { InputTextModule } from 'primeng/inputtext';
 import { IconField } from 'primeng/iconfield';
 import { InputIcon } from 'primeng/inputicon';
@@ -16,6 +17,8 @@ import { HttpClient } from '@angular/common/http';
 import { ListViewConfig, SearchCriteria, SearchParams, EntityType } from '../listview.model';
 import { SavedFilter } from '@shared/interfaces/saved-filter.interface';
 import { AdvancedSearchSavedFilterComponent } from './saved-filter/advanced-search-saved-filter.component';
+import { UserSearchService, UserSearchResult } from '@shared/services/user/user-search.service';
+import { PartnerSearchService, PartnerSearchResult } from '@shared/services/partner/partner-search.service';
 
 // Backend SearchFieldInfo interface to match the API response
 interface SearchFieldInfo {
@@ -42,6 +45,7 @@ interface DropdownOption {
     ButtonModule,
     ChipModule,
     DropdownModule,
+    Select,
     InputTextModule,
     IconField,
     InputIcon,
@@ -78,6 +82,8 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
   // Dependency injection
   private http = inject(HttpClient);
   private translate = inject(TranslateService);
+  private userSearchService = inject(UserSearchService);
+  private partnerSearchService = inject(PartnerSearchService);
 
   // Dynamic search fields from API
   searchFieldsFromAPI = signal<SearchFieldInfo[]>([]);
@@ -99,6 +105,16 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
 
   // Enum-specific UI state
   selectedEnumValue: string = '';
+
+  // User-specific UI state
+  selectedUser: UserSearchResult | null = null;
+  availableUsers = signal<UserSearchResult[]>([]);
+  isSearchingUsers = signal<boolean>(false);
+
+  // Partner-specific UI state
+  selectedPartner: PartnerSearchResult | null = null;
+  availablePartners = signal<PartnerSearchResult[]>([]);
+  isSearchingPartners = signal<boolean>(false);
 
   // Dropdown options
   logicalOperators = [
@@ -128,6 +144,14 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
       { label: 'entityCards.operators.lessThanOrEqual', value: '<=' }
     ],
     enum: [
+      { label: 'entityCards.operators.equals', value: 'eq' },
+      { label: 'entityCards.operators.notEquals', value: 'neq' }
+    ],
+    user: [
+      { label: 'entityCards.operators.equals', value: 'eq' },
+      { label: 'entityCards.operators.notEquals', value: 'neq' }
+    ],
+    partner: [
       { label: 'entityCards.operators.equals', value: 'eq' },
       { label: 'entityCards.operators.notEquals', value: 'neq' }
     ]
@@ -191,6 +215,20 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
   }
 
   /**
+   * Check if current field is a user field
+   */
+  isUserField(): boolean {
+    return this.selectedSearchField && this.getFieldType(this.selectedSearchField) === 'user';
+  }
+
+  /**
+   * Check if current field is a partner field
+   */
+  isPartnerField(): boolean {
+    return this.selectedSearchField && this.getFieldType(this.selectedSearchField) === 'partner';
+  }
+
+  /**
    * Get dropdown options for the current enum field
    */
   getDropdownOptions(): any[] {
@@ -210,7 +248,7 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
   /**
    * Map backend field types to frontend SearchField types
    */
-  private mapFieldTypeToSearchFieldType(backendType: string): 'string' | 'number' | 'date' | 'boolean' | 'enum' {
+  private mapFieldTypeToSearchFieldType(backendType: string): 'string' | 'number' | 'date' | 'boolean' | 'enum' | 'user' | 'partner' {
     switch (backendType.toLowerCase()) {
       case 'date':
       case 'datetime':
@@ -225,6 +263,10 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
         return 'boolean';
       case 'enum':
         return 'enum';
+      case 'user':
+        return 'user';
+      case 'partner':
+        return 'partner';
       default:
         return 'string';
     }
@@ -382,10 +424,10 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
   /**
    * Get field type based on the selected field
    */
-  private getFieldType(field: any): 'text' | 'date' | 'number' | 'enum' {
+  private getFieldType(field: any): 'text' | 'date' | 'number' | 'enum' | 'user' | 'partner' {
     // First check if the field has fieldType from API
     if (field.fieldType) {
-      return this.mapFieldTypeToSearchFieldType(field.fieldType) as 'text' | 'date' | 'number' | 'enum';
+      return this.mapFieldTypeToSearchFieldType(field.fieldType) as 'text' | 'date' | 'number' | 'enum' | 'user' | 'partner';
     }
     
     // Legacy support for field.type
@@ -398,6 +440,10 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
           return 'number';
         case 'enum':
           return 'enum';
+        case 'user':
+          return 'user';
+        case 'partner':
+          return 'partner';
         default:
           return 'text';
       }
@@ -442,6 +488,8 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
     this.selectedDate = null;
     this.selectedSecondDate = null;
     this.selectedEnumValue = '';
+    this.selectedUser = null;
+    this.selectedPartner = null;
 
     // Reset operator to appropriate default for field type
     const fieldType = this.getFieldType(field);
@@ -452,6 +500,14 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
       this.selectedComparisonOperator = 'is';
     } else if (fieldType === 'enum') {
       this.selectedComparisonOperator = 'eq';
+    } else if (fieldType === 'user') {
+      this.selectedComparisonOperator = 'eq';
+      // Load initial users for dropdown
+      this.loadInitialUsers();
+    } else if (fieldType === 'partner') {
+      this.selectedComparisonOperator = 'eq';
+      // Load initial partners for dropdown
+      this.loadInitialPartners();
     } else {
       this.selectedComparisonOperator = 'like';
     }
@@ -462,6 +518,7 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
     this.selectedDate = null;
     this.selectedSecondDate = null;
     this.selectedEnumValue = '';
+    this.selectedUser = null;
   }
 
   /**
@@ -490,6 +547,14 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
       return !!(this.selectedEnumValue && this.selectedEnumValue.trim().length > 0);
     }
 
+    if (fieldType === 'user') {
+      return this.selectedUser != null;
+    }
+
+    if (fieldType === 'partner') {
+      return this.selectedPartner != null;
+    }
+
     return !!(this.advancedSearchText && this.advancedSearchText.trim().length > 0);
   }
 
@@ -514,6 +579,7 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
     const fieldType = this.getFieldType(this.selectedSearchField);
     let value: string;
     let secondValue: string | undefined;
+    let displayValue: string | undefined;
 
     if (fieldType === 'date') {
       if (this.isBetweenOperator()) {
@@ -524,19 +590,34 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
       }
     } else if (fieldType === 'enum') {
       value = this.selectedEnumValue.trim();
+    } else if (fieldType === 'user') {
+      // For user fields, send the user ID as the value
+      value = this.selectedUser!.id.toString();
+      // Store the display name for showing in the chip
+      displayValue = this.selectedUser!.name;
+    } else if (fieldType === 'partner') {
+      // For partner fields, send the partner ID as the value
+      value = this.selectedPartner!.id.toString();
+      // Store the display name for showing in the chip
+      displayValue = this.selectedPartner!.name;
     } else {
       value = this.advancedSearchText.trim();
     }
 
     const criterion: SearchCriteria = {
       field: this.selectedSearchField.field,
-      value: value,
+      value: displayValue || value, // Use display name for chips, but store actual ID in separate property
       label: this.selectedSearchField.label,
       operator: this.selectedComparisonOperator,
       logicalOperator: this.selectedLogicalOperator,
       fieldType: fieldType,
       secondValue: secondValue
     };
+
+    // For user and partner fields, store the actual ID separately so backend receives the ID
+    if (fieldType === 'user' || fieldType === 'partner') {
+      criterion.value = value; // Override with actual ID for backend
+    }
 
     if (fieldType === 'enum') {
       if (criterion.operator === 'like') {
@@ -557,6 +638,8 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
     this.selectedDate = null;
     this.selectedSecondDate = null;
     this.selectedEnumValue = '';
+    this.selectedUser = null;
+    this.selectedPartner = null;
     this.selectedComparisonOperator = fieldType === 'date' ? 'after' : (fieldType === 'number' ? 'is' : 'like');
 
     // Automatically select the first search field again for convenience
@@ -611,6 +694,86 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
   isMyOfficeFilterAvailable(): boolean {
     return false;
     // return this.entityType === 'Partner' || this.entityType === 'Contact' || this.entityType === 'Interaction';
+  }
+
+  // ===== User Search Handlers =====
+
+  /**
+   * Load initial set of users for dropdown
+   */
+  loadInitialUsers(): void {
+    this.isSearchingUsers.set(true);
+    this.userSearchService.getInitialUsers().subscribe({
+      next: (users) => {
+        this.availableUsers.set(users);
+        this.isSearchingUsers.set(false);
+      },
+      error: () => {
+        this.isSearchingUsers.set(false);
+      }
+    });
+  }
+
+  /**
+   * Handle user search filtering
+   */
+  onUserSearch(event: any): void {
+    const query = event.filter || '';
+    
+    if (!query || query.length < 2) {
+      this.loadInitialUsers();
+      return;
+    }
+
+    this.isSearchingUsers.set(true);
+    this.userSearchService.searchUsers(query, 50).subscribe({
+      next: (users) => {
+        this.availableUsers.set(users);
+        this.isSearchingUsers.set(false);
+      },
+      error: () => {
+        this.isSearchingUsers.set(false);
+      }
+    });
+  }
+
+  /**
+   * Load initial partners for dropdown
+   */
+  loadInitialPartners(): void {
+    this.isSearchingPartners.set(true);
+    this.partnerSearchService.getInitialPartners().subscribe({
+      next: (partners) => {
+        this.availablePartners.set(partners);
+        this.isSearchingPartners.set(false);
+      },
+      error: () => {
+        this.isSearchingPartners.set(false);
+      }
+    });
+  }
+
+  /**
+   * Handle partner search filtering
+   */
+  onPartnerSearch(event: any): void {
+    const query = event.filter || '';
+    
+    if (!query || query.length < 2) {
+      this.loadInitialPartners();
+      return;
+    }
+
+    this.isSearchingPartners.set(true);
+    this.partnerSearchService.searchPartners(query, 50).subscribe({
+      next: (partners) => {
+        this.availablePartners.set(partners);
+        this.isSearchingPartners.set(false);
+      },
+      error: () => {
+        this.isSearchingPartners.set(false);
+      }
+    });
   }
 
   // ===== SavedFilter Event Handlers =====

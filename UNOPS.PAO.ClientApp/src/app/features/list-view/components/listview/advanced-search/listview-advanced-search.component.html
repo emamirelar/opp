@@ -165,6 +165,64 @@
             styleClass="w-48"
           ></p-calendar>
         }
+      } @else if (isUserField()) {
+        <!-- Searchable user dropdown -->
+        <p-select
+          id="userSearch"
+          [(ngModel)]="selectedUser"
+          [options]="availableUsers()"
+          optionLabel="name"
+          [filter]="true"
+          [filterMatchMode]="'contains'"
+          [showClear]="true"
+          [placeholder]="'search.selectUser' | translate"
+          [loading]="isSearchingUsers()"
+          (onFilter)="onUserSearch($event)"
+          [resetFilterOnHide]="true"
+          [lazy]="true"
+          [virtualScroll]="true"
+          [virtualScrollItemSize]="32"
+          [appendTo]="'body'"
+          styleClass="w-64"
+        >
+          <ng-template let-user #item>
+            <div class="flex items-center gap-2">
+              <span class="font-medium">{{ user.name }}</span>
+              @if (user.email !== user.name) {
+                <span class="text-sm text-gray-500">({{ user.email }})</span>
+              }
+            </div>
+          </ng-template>
+        </p-select>
+      } @else if (isPartnerField()) {
+        <!-- Searchable partner dropdown -->
+        <p-select
+          id="partnerSearch"
+          [(ngModel)]="selectedPartner"
+          [options]="availablePartners()"
+          optionLabel="name"
+          [filter]="true"
+          [filterMatchMode]="'contains'"
+          [showClear]="true"
+          [placeholder]="'search.selectPartner' | translate"
+          [loading]="isSearchingPartners()"
+          (onFilter)="onPartnerSearch($event)"
+          [resetFilterOnHide]="true"
+          [lazy]="true"
+          [virtualScroll]="true"
+          [virtualScrollItemSize]="32"
+          [appendTo]="'body'"
+          styleClass="w-64"
+        >
+          <ng-template let-partner #item>
+            <div class="flex flex-col">
+              <span class="font-medium">{{ partner.name }}</span>
+              @if (partner.partnerShortDescription) {
+                <span class="text-sm text-gray-500">{{ partner.partnerShortDescription }}</span>
+              }
+            </div>
+          </ng-template>
+        </p-select>
       } @else if (isDropdownField()) {
         <!-- Dropdown for enum fields -->
         <p-dropdown
