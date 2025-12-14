@@ -96,6 +96,11 @@ export class OpportunityWhatSectionComponent implements OnInit {
   private readonly feedbackService = inject(FeedbackDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
 
+  // State tracking properties to prevent duplicate processing in effects
+  private lastProcessedOpportunityId: number | undefined;
+  private lastDocumentUploadTrigger = 0;
+  private lastSectionSaveTrigger = 0;
+
   /**
    * @description Input signal for opportunity data from parent
    */

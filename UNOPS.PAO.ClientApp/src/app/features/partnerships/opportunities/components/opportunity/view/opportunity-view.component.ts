@@ -1049,57 +1049,64 @@ export class OpportunityViewComponent
    * @description Handle Escape key press to exit edit mode
    * @param {KeyboardEvent} event - The keyboard event
    */
-  @HostListener('document:keydown.escape', ['$event'])
-  handleEscapeKey(event: KeyboardEvent): void {
-    // Don't handle escape if user is in a dialog or modal
-    const target = event.target as HTMLElement;
-    if (target.closest('.p-dialog') || target.closest('[role="dialog"]')) {
-      return;
-    }
+  // TAD: DISABLED FOR NOW - WILL RE-ENABLE LATER IF NEEDED (MAY BE TOO CONFUSING FOR USERS - USERS MAY LOSE DATA IF THEY PRESS ESC BY MISTAKE)
+  // @HostListener('document:keydown.escape', ['$event'])
+  // handleEscapeKey(event: KeyboardEvent): void {
+  //   // Don't handle escape if user is in a dialog or modal
+  //   const target = event.target as HTMLElement;
+  //   if (target.closest('.p-dialog') || target.closest('[role="dialog"]')) {
+  //     return;
+  //   }
 
-    // Check each section component and cancel editing if in edit mode
-    if (this.overviewSectionComponent?.isEditing?.()) {
-      this.overviewSectionComponent.cancelEditing();
-      event.preventDefault();
-      return;
-    }
+  //   // Check each section component and cancel editing if in edit mode
+  //   if (this.overviewSectionComponent?.isEditing?.()) {
+  //     this.overviewSectionComponent.cancelEditing();
+  //     event.preventDefault();
+  //     return;
+  //   }
 
-    if (this.whatSectionComponent?.isEditing?.()) {
-      this.whatSectionComponent.cancelEditing();
-      event.preventDefault();
-      return;
-    }
+  //   if (this.whatSectionComponent?.isEditing?.()) {
+  //     this.whatSectionComponent.cancelEditing();
+  //     event.preventDefault();
+  //     return;
+  //   }
 
-    if (this.whySectionComponent?.isEditing?.()) {
-      this.whySectionComponent.cancelEditing();
-      event.preventDefault();
-      return;
-    }
+  //   if (this.whySectionComponent?.isEditing?.()) {
+  //     this.whySectionComponent.cancelEditing();
+  //     event.preventDefault();
+  //     return;
+  //   }
 
-    if (this.whoSectionComponent?.isEditing?.()) {
-      this.whoSectionComponent.cancelEditing();
-      event.preventDefault();
-      return;
-    }
+  //   if (this.whoSectionComponent?.isEditing?.()) {
+  //     this.whoSectionComponent.cancelEditing();
+  //     event.preventDefault();
+  //     return;
+  //   }
 
-    if (this.teamSectionComponent?.isEditing?.()) {
-      this.teamSectionComponent.cancelEditing();
-      event.preventDefault();
-      return;
-    }
+  //   if (this.teamSectionComponent?.isEditing?.()) {
+  //     this.teamSectionComponent.cancelEditing();
+  //     event.preventDefault();
+  //     return;
+  //   }
 
-    if (this.whereSectionComponent?.isEditing?.()) {
-      this.whereSectionComponent.cancelEditing();
-      event.preventDefault();
-      return;
-    }
+  //   if (this.whereSectionComponent?.isEditing?.()) {
+  //     this.whereSectionComponent.cancelEditing();
+  //     event.preventDefault();
+  //     return;
+  //   }
 
-    if (this.whenSectionComponent?.isEditing?.()) {
-      this.whenSectionComponent.cancelEditing();
-      event.preventDefault();
-      return;
-    }
-  }
+  //   if (this.whenSectionComponent?.isEditing?.()) {
+  //     this.whenSectionComponent.cancelEditing();
+  //     event.preventDefault();
+  //     return;
+  //   }
+
+  //   if (this.dstSectionComponent?.isEditing?.()) {
+  //     this.dstSectionComponent.cancelEditing();
+  //     event.preventDefault();
+  //     return;
+  //   }
+  // }
 
   /**
    * @description Handle window resize to update innerWidth signal
