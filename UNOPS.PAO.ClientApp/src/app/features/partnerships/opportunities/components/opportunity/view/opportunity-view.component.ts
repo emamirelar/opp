@@ -48,6 +48,12 @@ import { PermissionUtilityService } from '@core/services/auth';
 import { PageContextService } from '@shared/services/utils';
 import { OpportunityService } from '../../../services/opportunity.service';
 import { Opportunity } from '@shared/models/opportunity.model';
+import {
+  LoadingProgress,
+  LoadingSectionKey,
+  LoadingSectionStatus,
+  DEFAULT_LOADING_PROGRESS,
+} from '@shared/models/loading-progress.interface';
 import { OpportunityCollaborationComponent } from './sections/collaboration/opportunity-collaboration.component';
 import { OpportunityAnalysisSectionComponent } from './sections/analysis/opportunity-analysis-section.component';
 import { OpportunityOverviewSectionComponent } from './sections/overview/opportunity-overview-section.component';
@@ -137,6 +143,44 @@ export class OpportunityViewComponent
   isRegeneratingBanner = signal<boolean>(false);
   recordId: string = '';
   opportunity = signal<Opportunity | null>(null);
+
+  // Loading Progress State
+  readonly loadingProgress = signal<LoadingProgress>(DEFAULT_LOADING_PROGRESS);
+  
+  // Computed progress percentage (0-100)
+  readonly progressPercentage = computed(() => {
+    const progress = this.loadingProgress();
+    if (progress.total === 0) return 0;
+    return Math.round((progress.completed / progress.total) * 100);
+  });
+
+  // Computed progress message for display
+  readonly progressMessage = computed(() => {
+    const progress = this.loadingProgress();
+    if (progress.completed === progress.total) {
+      return this.translateService.instant('message.allDataLoaded');
+    }
+    const currentLabel = progress.currentSection
+      ? this.translateService.instant(progress.currentSection)
+      : '';
+    return this.translateService.instant('message.loadingProgress', {
+      current: progress.completed,
+      total: progress.total,
+      section: currentLabel,
+    });
+  });
+
+  // Show progress bar only while loading
+  readonly showProgressBar = computed(() => {
+    const progress = this.loadingProgress();
+    return progress.completed < progress.total;
+  });
+
+  // Track if all loading is complete
+  readonly allLoadingComplete = computed(() => {
+    const progress = this.loadingProgress();
+    return progress.completed === progress.total;
+  });
   showAIPanel = signal<boolean>(true); // AI Assistant panel toggle state
   documentsCollapsed = signal(true); // Document panel state
   activeSection = signal<string>(''); // Active section for navigation - will be set from route params
@@ -155,9 +199,13 @@ export class OpportunityViewComponent
 
   @ViewChild('contentScrollContainer', { read: ElementRef })
   contentScrollContainer?: ElementRef;
+  @ViewChild('chipsContainer', { read: ElementRef })
+  chipsContainer?: ElementRef;
+  @ViewChild('chipsSizerDiv', { read: ElementRef })
+  chipsSizerDiv?: ElementRef;
   @ViewChild('relatedItemsComponent')
   relatedItemsComponent?: OpportunityRelatedItemsComponent;
-  @ViewChild(OpportunityDstSectionComponent)
+  @ViewChild('risksSection')
   dstSectionComponent?: OpportunityDstSectionComponent;
   @ViewChild(OpportunityAnalysisSectionComponent)
   analysisSectionComponent?: OpportunityAnalysisSectionComponent;
@@ -187,6 +235,7 @@ export class OpportunityViewComponent
   private pendingScrollTarget: string | null = null; // Store pending scroll target
   private scrollCheckInterval?: number; // Interval to check if content is loaded
   private shouldScrollAfterDataLoad = false; // Flag to allow scrolling after data loads (only set on initial load with section in URL)
+  private resizeObserver?: ResizeObserver; // Observer for chip container resizing
 
   // Section navigation configuration
   sections = [
@@ -203,6 +252,11 @@ export class OpportunityViewComponent
     { id: 'collaboration', label: 'Comments', icon: 'pi-comments' },
     { id: 'statement', label: 'Statement', icon: 'pi-file-edit' },
   ];
+
+  // Chip overflow management
+  visibleChips = signal<typeof this.sections>([]);
+  overflowChips = signal<typeof this.sections>([]);
+  readonly hasOverflowChips = computed(() => this.overflowChips().length > 0);
 
   // Permission management using utility service
   private permissionUtils =
@@ -352,8 +406,11 @@ export class OpportunityViewComponent
     return opp.stats?.sdgCount || opp.sdGs?.length || 0;
   });
 
-  // AI Suggestions state and filtering
+  // AI Insights and Suggestions state and filtering
+  allInsights = signal<any[]>([]);
   allSuggestions = signal<any[]>([]);
+  insightsLoading = signal<boolean>(false);
+  insightsError = signal<string | null>(null);
 
   // Computed suggestions filtered by section
   whoSuggestions = computed(() =>
@@ -430,6 +487,110 @@ export class OpportunityViewComponent
         });
       }
     });
+
+    // Effect to recalculate chip overflow when data loads
+    effect(() => {
+      const isLoaded = !this.loading();
+      const opp = this.opportunity();
+
+      if (isLoaded && opp) {
+        untracked(() => {
+          // Recalculate chip overflow after data loads and DOM updates
+          setTimeout(() => {
+            this.calculateChipOverflow();
+          }, 200);
+        });
+      }
+    });
+
+    // Initially show all chips (will be recalculated after view init)
+    this.visibleChips.set(this.sections);
+
+    // Effect to reload insights when any section saves
+    effect(() => {
+      const trigger = this.sectionSaveTrigger();
+      
+      // Only reload if trigger has changed (skip initial value of 0)
+      if (trigger > 0) {
+        console.log('🔄 Parent: Section save detected, reloading insights');
+        
+        // Delay to prevent overwhelming the backend
+        setTimeout(() => {
+          this._loadInsights();
+        }, 3000);
+      }
+    });
+
+    // Effect to show completion notification and auto-hide progress bar
+    effect(() => {
+      const isComplete = this.allLoadingComplete();
+      
+      if (isComplete) {
+        console.log('✅ All sections loaded successfully');
+        // Progress bar will auto-hide after staying complete for 2 seconds
+        setTimeout(() => {
+          // The progress bar automatically hides due to showProgressBar computed property
+        }, 2000);
+      }
+    });
+
+    // Effect to watch DST section loading states and update progress
+    effect(() => {
+      const dstComponent = this.dstSectionComponent;
+      if (!dstComponent) return;
+
+      // Watch risks loading
+      const risksLoading = dstComponent.loadingRisks();
+      if (!risksLoading && this.loadingProgress().sections.dstRisks.status === 'loading') {
+        untracked(() => this.onDSTRisksLoaded());
+      }
+
+      // Watch recommendations loading
+      const recsLoading = dstComponent.loadingRecommendations();
+      if (!recsLoading && this.loadingProgress().sections.dstRecommendations.status === 'loading') {
+        untracked(() => this.onDSTRecommendationsLoaded());
+      }
+
+      // Watch similar opportunities loading
+      const simOpsLoading = dstComponent.loadingSimilarOpportunities();
+      if (!simOpsLoading && this.loadingProgress().sections.dstSimilarOpportunities.status === 'loading') {
+        untracked(() => this.onDSTSimilarOpportunitiesLoaded());
+      }
+
+      // Watch similar projects loading
+      const simProjsLoading = dstComponent.loadingSimilarProjects();
+      if (!simProjsLoading && this.loadingProgress().sections.dstSimilarProjects.status === 'loading') {
+        untracked(() => this.onDSTSimilarProjectsLoaded());
+      }
+
+      // Watch relevant people loading
+      const peopleLoading = dstComponent.loadingRelevantPeople();
+      if (!peopleLoading && this.loadingProgress().sections.dstRelevantPeople.status === 'loading') {
+        untracked(() => this.onDSTRelevantPeopleLoaded());
+      }
+    });
+
+    // Effect to watch related items component loading
+    effect(() => {
+      const relatedComponent = this.relatedItemsComponent;
+      if (!relatedComponent) return;
+
+      const isLoading = relatedComponent.isLoading();
+      if (!isLoading && this.loadingProgress().sections.relatedItems.status === 'loading') {
+        untracked(() => this.onRelatedItemsLoaded());
+      }
+    });
+
+    // Effect to watch documents component loading
+    effect(() => {
+      const docsComponent = this.documentsComponent;
+      if (!docsComponent) return;
+
+      const isLoading = docsComponent.loading();
+      if (!isLoading && this.loadingProgress().sections.documents.status === 'loading') {
+        untracked(() => this.onDocumentsLoaded());
+      }
+    });
   }
 
   ngOnInit() {
@@ -489,6 +650,12 @@ export class OpportunityViewComponent
 
   ngAfterViewInit(): void {
     // Observers will be set up via effect after data loads
+    
+    // Setup resize observer for chip overflow management
+    // Wait a bit to ensure the sizer div is rendered
+    setTimeout(() => {
+      this.setupChipOverflowObserver();
+    }, 50);
   }
 
   /**
@@ -526,6 +693,10 @@ export class OpportunityViewComponent
     if (this.intersectionObserver) {
       this.intersectionObserver.disconnect();
     }
+    // Cleanup resize observer
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+    }
     // Cleanup scroll check interval
     if (this.scrollCheckInterval) {
       clearInterval(this.scrollCheckInterval);
@@ -540,7 +711,7 @@ export class OpportunityViewComponent
    * Load opportunity record details
    * 
    * NOTE: This component coordinates multiple child sections that make AI-powered API calls:
-   * - Analysis Section: AI insights (delayed 2.5s)
+   * - Analysis Section: AI insights (delayed 2.5s) - handled by child component
    * - DST Section: Risks (immediate), Recommendations (0.5s), Similar Opportunities (1s), 
    *   Similar Projects (1.5s), Relevant People (2s)
    * 
@@ -549,19 +720,30 @@ export class OpportunityViewComponent
    */
   private _loadRecordDetails(targetSection?: string) {
     this.loading.set(true);
+
+    // Reset progress to initial state
+    this.resetLoadingProgress();
+
+    // STEP 1: Load main opportunity data
+    this.updateLoadingProgress('opportunity', 'loading');
+
     this.opportunityService.getOpportunityById(+this.recordId).subscribe({
       next: (data: Opportunity) => {
         this.opportunity.set(data);
         this.loading.set(false);
-        // Signal automatically triggers change detection - no manual call needed
+        this.updateLoadingProgress('opportunity', 'completed');
 
         // Generate banner images if name and description exist but no banner image yet
         if (data.name && data.description && !data.opportunityBannerImage) {
           this._generateBannerImages(data.id);
         }
 
-        // Load AI suggestions for sections
-        this._loadSuggestions();
+        // STEP 2: Load AI insights and suggestions (required by Analysis section)
+        this.updateLoadingProgress('insights', 'loading');
+        this._loadInsights();
+
+        // STEP 3: Trigger section data loading in visual order (top to bottom)
+        this._orchestrateSectionLoading();
 
         // Only scroll after data loads if this is the initial page load with a section in the URL
         // This prevents scrolling on every data reload when navigating between sections
@@ -581,8 +763,14 @@ export class OpportunityViewComponent
         }
       },
       error: (error) => {
-        console.error('Error loading opportunity details:', error);
+        console.error('❌ Error loading opportunity details:', error);
         this.loading.set(false);
+        this.updateLoadingProgress(
+          'opportunity',
+          'error',
+          undefined,
+          error.message
+        );
         this.feedbackDialogService.showErrorToast({
           detail: this.translateService.instant(
             'message.opportunity.loadFailed',
@@ -645,20 +833,47 @@ export class OpportunityViewComponent
   }
 
   /**
-   * Load AI suggestions for the opportunity
+   * Load AI insights and suggestions for the opportunity (SINGLE API CALL)
+   * This data is then passed to child components to avoid duplicate API requests
    */
-  private _loadSuggestions(): void {
+  private _loadInsights(): void {
     const opportunityId = this.opportunity()?.id;
-    if (!opportunityId) return;
+    if (!opportunityId) {
+      this.updateLoadingProgress('insights', 'error', undefined, 'No opportunity ID');
+      return;
+    }
+
+    this.insightsLoading.set(true);
+    this.insightsError.set(null);
 
     this.opportunityService.getInsights(opportunityId).subscribe({
       next: (response) => {
-        // Extract suggestions and set them
+        // Store both insights and suggestions for use across child components
+        this.allInsights.set(response.insights || []);
         this.allSuggestions.set(response.suggestions || []);
+        this.insightsLoading.set(false);
+        this.updateLoadingProgress('insights', 'completed');
+
+        // Mark analysis section as complete (it uses insights from parent)
+        this.updateLoadingProgress('analysis', 'completed');
+
+        console.log('✅ Insights loaded successfully:', {
+          insightCount: response.insights?.length || 0,
+          suggestionCount: response.suggestions?.length || 0,
+        });
       },
       error: (error) => {
-        console.error('Error loading suggestions:', error);
-        // Silent failure - suggestions are optional enhancement
+        console.error('❌ Error loading insights:', error);
+        this.insightsError.set('Failed to load AI insights');
+        this.insightsLoading.set(false);
+        this.updateLoadingProgress('insights', 'error', undefined, error.message);
+        this.updateLoadingProgress(
+          'analysis',
+          'error',
+          undefined,
+          'Insights failed to load'
+        );
+        // Silent failure for user - insights/suggestions are optional enhancements
       },
     });
   }
@@ -683,6 +898,227 @@ export class OpportunityViewComponent
       ),
       summary: this.translateService.instant('message.info'),
     });
+  }
+
+  /**
+   * @description Update loading progress for a section
+   * @param sectionKey The section to update
+   * @param status New status for the section
+   * @param label Optional updated label
+   * @param error Optional error message
+   */
+  private updateLoadingProgress(
+    sectionKey: LoadingSectionKey,
+    status: LoadingSectionStatus['status'],
+    label?: string,
+    error?: string
+  ): void {
+    this.loadingProgress.update((progress) => {
+      const updatedSections = { ...progress.sections };
+      const section = updatedSections[sectionKey];
+
+      // Update section status
+      updatedSections[sectionKey] = {
+        ...section,
+        status,
+        label: label || section.label,
+        error,
+        startTime: status === 'loading' ? Date.now() : section.startTime,
+        endTime:
+          status === 'completed' || status === 'error' ? Date.now() : undefined,
+      };
+
+      // Calculate completed count
+      const completed = Object.values(updatedSections).filter(
+        (s) => s.status === 'completed' || s.status === 'error'
+      ).length;
+
+      // Find currently loading section
+      const currentLoadingSection = Object.values(updatedSections).find(
+        (s) => s.status === 'loading'
+      );
+
+      return {
+        ...progress,
+        sections: updatedSections,
+        completed,
+        currentSection: currentLoadingSection?.label || '',
+      };
+    });
+
+    // Log progress update
+    const progress = this.loadingProgress();
+    console.log(
+      `📈 Progress: ${progress.completed}/${progress.total} | ${sectionKey}: ${status}${error ? ` (${error})` : ''}`
+    );
+  }
+
+  /**
+   * @description Reset loading progress to initial state
+   */
+  private resetLoadingProgress(): void {
+    this.loadingProgress.set(DEFAULT_LOADING_PROGRESS);
+    console.log('🔄 Loading progress reset');
+  }
+
+  /**
+   * @description Orchestrate section loading in visual order (top to bottom)
+   * Uses sequential delays to match section display order and prevent connection exhaustion
+   */
+  private _orchestrateSectionLoading(): void {
+    console.log('🎬 Starting orchestrated section loading...');
+
+    // Analysis section uses insights loaded above - mark as complete
+    setTimeout(() => {
+      this.updateLoadingProgress('analysis', 'completed');
+    }, 100);
+
+    // DST Section - Risks (immediate)
+    setTimeout(() => {
+      this.updateLoadingProgress('dstRisks', 'loading');
+      console.log('📊 Loading DST Risks...');
+      // Auto-complete after 5 seconds if not marked complete by effect
+      setTimeout(() => {
+        if (this.loadingProgress().sections.dstRisks.status === 'loading') {
+          console.log('⏱️ Auto-completing dstRisks (timeout)');
+          this.onDSTRisksLoaded();
+        }
+      }, 5000);
+    }, 200);
+
+    // DST Section - Recommendations (+500ms)
+    setTimeout(() => {
+      this.updateLoadingProgress('dstRecommendations', 'loading');
+      console.log('💡 Loading DST Recommendations...');
+      // Auto-complete after 5 seconds if not marked complete by effect
+      setTimeout(() => {
+        if (this.loadingProgress().sections.dstRecommendations.status === 'loading') {
+          console.log('⏱️ Auto-completing dstRecommendations (timeout)');
+          this.onDSTRecommendationsLoaded();
+        }
+      }, 5000);
+    }, 700);
+
+    // DST Section - Similar Opportunities (+1000ms)
+    setTimeout(() => {
+      this.updateLoadingProgress('dstSimilarOpportunities', 'loading');
+      console.log('🔍 Loading Similar Opportunities...');
+      // Auto-complete after 5 seconds if not marked complete by effect
+      setTimeout(() => {
+        if (this.loadingProgress().sections.dstSimilarOpportunities.status === 'loading') {
+          console.log('⏱️ Auto-completing dstSimilarOpportunities (timeout)');
+          this.onDSTSimilarOpportunitiesLoaded();
+        }
+      }, 5000);
+    }, 1200);
+
+    // DST Section - Similar Projects (+1500ms)
+    setTimeout(() => {
+      this.updateLoadingProgress('dstSimilarProjects', 'loading');
+      console.log('📁 Loading Similar Projects...');
+      // Auto-complete after 5 seconds if not marked complete by effect
+      setTimeout(() => {
+        if (this.loadingProgress().sections.dstSimilarProjects.status === 'loading') {
+          console.log('⏱️ Auto-completing dstSimilarProjects (timeout)');
+          this.onDSTSimilarProjectsLoaded();
+        }
+      }, 5000);
+    }, 1700);
+
+    // DST Section - Relevant People (+2000ms)
+    setTimeout(() => {
+      this.updateLoadingProgress('dstRelevantPeople', 'loading');
+      console.log('👥 Loading Relevant People...');
+      // Auto-complete after 5 seconds if not marked complete by effect
+      setTimeout(() => {
+        if (this.loadingProgress().sections.dstRelevantPeople.status === 'loading') {
+          console.log('⏱️ Auto-completing dstRelevantPeople (timeout)');
+          this.onDSTRelevantPeopleLoaded();
+        }
+      }, 5000);
+    }, 2200);
+
+    // Related Items Section (+2500ms)
+    setTimeout(() => {
+      this.updateLoadingProgress('relatedItems', 'loading');
+      console.log('🔗 Loading Related Items...');
+      // Auto-complete after 5 seconds if not marked complete by effect
+      setTimeout(() => {
+        if (this.loadingProgress().sections.relatedItems.status === 'loading') {
+          console.log('⏱️ Auto-completing relatedItems (timeout)');
+          this.onRelatedItemsLoaded();
+        }
+      }, 5000);
+    }, 2700);
+
+    // Documents Panel (+3000ms)
+    setTimeout(() => {
+      this.updateLoadingProgress('documents', 'loading');
+      console.log('📄 Loading Documents...');
+      // Auto-complete after 5 seconds if not marked complete by effect
+      setTimeout(() => {
+        if (this.loadingProgress().sections.documents.status === 'loading') {
+          console.log('⏱️ Auto-completing documents (timeout)');
+          this.onDocumentsLoaded();
+        }
+      }, 5000);
+    }, 3200);
+  }
+
+  /**
+   * @description Called by DST section when risks are loaded
+   */
+  onDSTRisksLoaded(): void {
+    this.updateLoadingProgress('dstRisks', 'completed');
+  }
+
+  /**
+   * @description Called by DST section when recommendations are loaded
+   */
+  onDSTRecommendationsLoaded(): void {
+    this.updateLoadingProgress('dstRecommendations', 'completed');
+  }
+
+  /**
+   * @description Called by DST section when similar opportunities are loaded
+   */
+  onDSTSimilarOpportunitiesLoaded(): void {
+    this.updateLoadingProgress('dstSimilarOpportunities', 'completed');
+  }
+
+  /**
+   * @description Called by DST section when similar projects are loaded
+   */
+  onDSTSimilarProjectsLoaded(): void {
+    this.updateLoadingProgress('dstSimilarProjects', 'completed');
+  }
+
+  /**
+   * @description Called by DST section when relevant people are loaded
+   */
+  onDSTRelevantPeopleLoaded(): void {
+    this.updateLoadingProgress('dstRelevantPeople', 'completed');
+  }
+
+  /**
+   * @description Called by related items component when data is loaded
+   */
+  onRelatedItemsLoaded(): void {
+    this.updateLoadingProgress('relatedItems', 'completed');
+  }
+
+  /**
+   * @description Called by documents component when data is loaded
+   */
+  onDocumentsLoaded(): void {
+    this.updateLoadingProgress('documents', 'completed');
+  }
+
+  /**
+   * @description Handle loading errors from child components
+   */
+  onSectionLoadError(sectionKey: LoadingSectionKey, error: string): void {
+    this.updateLoadingProgress(sectionKey, 'error', undefined, error);
   }
 
   /**
@@ -770,6 +1206,15 @@ export class OpportunityViewComponent
       this.shouldScrollAfterDataLoad = false;
       this._loadRecordDetails();
     }
+  }
+
+  /**
+   * @description Handle manual insights refresh request from Analysis Section
+   * @returns {void}
+   */
+  handleInsightsRefresh(): void {
+    console.log('🔄 Manual insights refresh requested');
+    this._loadInsights();
   }
 
   /**
@@ -864,6 +1309,11 @@ export class OpportunityViewComponent
             this.whenSectionComponent.saveSection();
           }
           break;
+        case 'risks':
+          if (this.dstSectionComponent) {
+            this.dstSectionComponent.saveSection();
+          }
+          break;
       }
     });
   }
@@ -921,6 +1371,11 @@ export class OpportunityViewComponent
             case 'when':
               if (this.whenSectionComponent) {
                 this.whenSectionComponent.cancelEditing();
+              }
+              break;
+            case 'risks':
+              if (this.dstSectionComponent) {
+                this.dstSectionComponent.cancelEditing();
               }
               break;
           }
@@ -991,6 +1446,9 @@ export class OpportunityViewComponent
       case 'when':
         this.whenSectionComponent?.startEditing();
         break;
+      case 'risks':
+        this.dstSectionComponent?.startEditing();
+        break;
     }
   }
 
@@ -998,57 +1456,64 @@ export class OpportunityViewComponent
    * @description Handle Escape key press to exit edit mode
    * @param {KeyboardEvent} event - The keyboard event
    */
-  @HostListener('document:keydown.escape', ['$event'])
-  handleEscapeKey(event: KeyboardEvent): void {
-    // Don't handle escape if user is in a dialog or modal
-    const target = event.target as HTMLElement;
-    if (target.closest('.p-dialog') || target.closest('[role="dialog"]')) {
-      return;
-    }
+  // TAD: DISABLED FOR NOW - WILL RE-ENABLE LATER IF NEEDED (MAY BE TOO CONFUSING FOR USERS - USERS MAY LOSE DATA IF THEY PRESS ESC BY MISTAKE)
+  // @HostListener('document:keydown.escape', ['$event'])
+  // handleEscapeKey(event: KeyboardEvent): void {
+  //   // Don't handle escape if user is in a dialog or modal
+  //   const target = event.target as HTMLElement;
+  //   if (target.closest('.p-dialog') || target.closest('[role="dialog"]')) {
+  //     return;
+  //   }
 
-    // Check each section component and cancel editing if in edit mode
-    if (this.overviewSectionComponent?.isEditing?.()) {
-      this.overviewSectionComponent.cancelEditing();
-      event.preventDefault();
-      return;
-    }
+  //   // Check each section component and cancel editing if in edit mode
+  //   if (this.overviewSectionComponent?.isEditing?.()) {
+  //     this.overviewSectionComponent.cancelEditing();
+  //     event.preventDefault();
+  //     return;
+  //   }
 
-    if (this.whatSectionComponent?.isEditing?.()) {
-      this.whatSectionComponent.cancelEditing();
-      event.preventDefault();
-      return;
-    }
+  //   if (this.whatSectionComponent?.isEditing?.()) {
+  //     this.whatSectionComponent.cancelEditing();
+  //     event.preventDefault();
+  //     return;
+  //   }
 
-    if (this.whySectionComponent?.isEditing?.()) {
-      this.whySectionComponent.cancelEditing();
-      event.preventDefault();
-      return;
-    }
+  //   if (this.whySectionComponent?.isEditing?.()) {
+  //     this.whySectionComponent.cancelEditing();
+  //     event.preventDefault();
+  //     return;
+  //   }
 
-    if (this.whoSectionComponent?.isEditing?.()) {
-      this.whoSectionComponent.cancelEditing();
-      event.preventDefault();
-      return;
-    }
+  //   if (this.whoSectionComponent?.isEditing?.()) {
+  //     this.whoSectionComponent.cancelEditing();
+  //     event.preventDefault();
+  //     return;
+  //   }
 
-    if (this.teamSectionComponent?.isEditing?.()) {
-      this.teamSectionComponent.cancelEditing();
-      event.preventDefault();
-      return;
-    }
+  //   if (this.teamSectionComponent?.isEditing?.()) {
+  //     this.teamSectionComponent.cancelEditing();
+  //     event.preventDefault();
+  //     return;
+  //   }
 
-    if (this.whereSectionComponent?.isEditing?.()) {
-      this.whereSectionComponent.cancelEditing();
-      event.preventDefault();
-      return;
-    }
+  //   if (this.whereSectionComponent?.isEditing?.()) {
+  //     this.whereSectionComponent.cancelEditing();
+  //     event.preventDefault();
+  //     return;
+  //   }
 
-    if (this.whenSectionComponent?.isEditing?.()) {
-      this.whenSectionComponent.cancelEditing();
-      event.preventDefault();
-      return;
-    }
-  }
+  //   if (this.whenSectionComponent?.isEditing?.()) {
+  //     this.whenSectionComponent.cancelEditing();
+  //     event.preventDefault();
+  //     return;
+  //   }
+
+  //   if (this.dstSectionComponent?.isEditing?.()) {
+  //     this.dstSectionComponent.cancelEditing();
+  //     event.preventDefault();
+  //     return;
+  //   }
+  // }
 
   /**
    * @description Handle window resize to update innerWidth signal
@@ -1057,6 +1522,7 @@ export class OpportunityViewComponent
   @HostListener('window:resize', ['$event'])
   onResize(event: Event): void {
     this.innerWidth.set((event.target as Window).innerWidth);
+    // Chip overflow is handled by ResizeObserver on the sizer div
   }
 
   /**
@@ -1506,5 +1972,142 @@ export class OpportunityViewComponent
   onFileUpload(event: any): void {
     console.log('File uploaded:', event);
     // TODO: Implement file upload
+  }
+
+  /**
+   * @description Setup resize observer for the sizer div to detect container width changes
+   * This approach ensures we respond to any container width changes, not just window resizes
+   */
+  private setupChipOverflowObserver(): void {
+    if (!this.chipsSizerDiv?.nativeElement) {
+      // If sizer div not ready, try again later
+      setTimeout(() => {
+        this.setupChipOverflowObserver();
+      }, 100);
+      return;
+    }
+
+    this.resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        // Only recalculate if the width actually changed
+        if (entry.contentRect.width > 0) {
+          this.calculateChipOverflow();
+        }
+      }
+    });
+
+    this.resizeObserver.observe(this.chipsSizerDiv.nativeElement);
+  }
+
+  /**
+   * @description Calculate which chips fit in the available width and which overflow
+   */
+  private calculateChipOverflow(): void {
+    if (!this.chipsSizerDiv?.nativeElement || !this.chipsContainer?.nativeElement) {
+      return;
+    }
+
+    // Use the sizer div width as the available container width
+    const sizerDiv = this.chipsSizerDiv.nativeElement as HTMLElement;
+    const containerWidth = sizerDiv.clientWidth;
+    
+    // If container has no width yet, try again later
+    if (containerWidth === 0) {
+      setTimeout(() => this.calculateChipOverflow(), 100);
+      return;
+    }
+    
+    const gap = 8; // gap-2 in Tailwind (0.5rem = 8px)
+    
+    // Create temporary elements to measure chip widths
+    const tempContainer = document.createElement('div');
+    tempContainer.style.visibility = 'hidden';
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.whiteSpace = 'nowrap';
+    document.body.appendChild(tempContainer);
+
+    const chipWidths: number[] = [];
+    
+    // Measure each chip's width
+    this.sections.forEach((section) => {
+      const tempChip = document.createElement('button');
+      tempChip.className = 'flex items-center gap-2 px-4 py-2 rounded-full bg-unops-surface-primary text-unops-neutral-700 font-medium text-sm whitespace-nowrap';
+      tempChip.innerHTML = `
+        <i class="pi ${section.icon} text-sm"></i>
+        <span>${this.translateService.instant(section.label)}</span>
+      `;
+      tempContainer.appendChild(tempChip);
+      chipWidths.push(tempChip.offsetWidth);
+      tempContainer.removeChild(tempChip);
+    });
+
+    // Measure the "More..." dropdown width
+    const moreDropdown = document.createElement('div');
+    moreDropdown.className = 'flex items-center gap-2 px-4 py-2 rounded-full bg-unops-surface-primary text-unops-neutral-700 font-medium text-sm whitespace-nowrap';
+    moreDropdown.innerHTML = `
+      <i class="pi pi-ellipsis-h text-sm"></i>
+      <span>More...</span>
+    `;
+    tempContainer.appendChild(moreDropdown);
+    const moreChipWidth = moreDropdown.offsetWidth;
+    tempContainer.removeChild(moreDropdown);
+
+    document.body.removeChild(tempContainer);
+
+    // First pass: Calculate how many chips fit WITHOUT the "More..." chip
+    let totalWidth = 0;
+    let visibleCount = 0;
+    
+    for (let i = 0; i < chipWidths.length; i++) {
+      const chipWidth = chipWidths[i];
+      const gapWidth = i > 0 ? gap : 0;
+      const newWidth = totalWidth + chipWidth + gapWidth;
+      
+      if (newWidth <= containerWidth) {
+        totalWidth = newWidth;
+        visibleCount++;
+      } else {
+        break;
+      }
+    }
+
+    // If all chips fit, we're done
+    if (visibleCount === chipWidths.length) {
+      this.visibleChips.set(this.sections);
+      this.overflowChips.set([]);
+      this.cdr.markForCheck();
+      return;
+    }
+
+    // Not all chips fit, so we need the "More..." dropdown
+    // Recalculate with space reserved for "More..." chip
+    totalWidth = 0;
+    visibleCount = 0;
+    const availableWidth = containerWidth - moreChipWidth - gap;
+    
+    for (let i = 0; i < chipWidths.length; i++) {
+      const chipWidth = chipWidths[i];
+      const gapWidth = i > 0 ? gap : 0;
+      const newWidth = totalWidth + chipWidth + gapWidth;
+      
+      if (newWidth <= availableWidth) {
+        totalWidth = newWidth;
+        visibleCount++;
+      } else {
+        break;
+      }
+    }
+
+    // Ensure at least one chip is always visible
+    if (visibleCount === 0) {
+      visibleCount = 1;
+    }
+
+    // Update visible and overflow chips
+    this.visibleChips.set(this.sections.slice(0, visibleCount));
+    this.overflowChips.set(this.sections.slice(visibleCount));
+    
+    // Trigger change detection
+    this.cdr.markForCheck();
   }
 }

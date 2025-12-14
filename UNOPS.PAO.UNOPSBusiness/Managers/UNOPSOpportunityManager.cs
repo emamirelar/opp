@@ -210,6 +210,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     public async Task<OpportunityModel?> GetOpportunityAsync(int id)
     {
         var entity = await context.Opportunities
+            .AsNoTracking() // Performance: No entity tracking needed for read-only operations
             .Include(o => o.WorkflowStage)
             .Include(o => o.ResponsibleOrgUnit)
             .Include(o => o.ProposedInitiativeType)
@@ -275,6 +276,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         {
             var now = DateTime.UtcNow;
             var orgUnitArtifacts = await context.EntityArtifacts
+                .AsNoTracking() // Performance: No entity tracking needed for read-only operations
                 .Where(a => a.EntityType == "OrganizationHierarchy"
                     && a.EntityId == entity.ResponsibleOrgUnit.Id
                     && !a.IsDeleted
@@ -410,6 +412,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         }
         
         // Enrich country models with organization unit hierarchy and UNCF status
+        // Note: Sequential execution required - DbContext is not thread-safe for parallel operations
         if (model.Countries != null && model.Countries.Any())
         {
             await EnrichCountriesWithOrgUnitHierarchyAsync(model.Countries);
@@ -441,6 +444,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             {
                 // Find the historical maximum budget for this org unit (excluding current opportunity)
                 var historicalMax = await context.Opportunities
+                    .AsNoTracking() // Performance: No entity tracking needed for read-only operations
                     .Where(o => o.ResponsibleOrgUnitId == model.ResponsibleOrgUnitId
                              && o.Id != id
                              && !o.IsDeleted)
@@ -489,6 +493,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         
         // Get entity for permission checking
         var entity = await context.Opportunities
+            .AsNoTracking() // Performance: No entity tracking needed for read-only operations
             .Include(o => o.Stakeholders)
             .FirstOrDefaultAsync(o => o.Id == id && !o.IsDeleted);
         
@@ -561,6 +566,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         {
             // Get documents from OpportunityFundingPartner table
             var fundingPartnerDocs = await context.OpportunityFundingPartners
+                .AsNoTracking() // Performance: No entity tracking needed for read-only operations
                 .Where(fp => fp.OpportunityId == opportunityId && fp.PartnerId == partnerId && fp.DocumentId != null)
                 .Include(fp => fp.Document)
                 .Select(fp => fp.Document)
@@ -587,6 +593,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         {
             // Get documents from OpportunityClientPartner table
             var clientPartnerDocs = await context.OpportunityClientPartners
+                .AsNoTracking() // Performance: No entity tracking needed for read-only operations
                 .Where(cp => cp.OpportunityId == opportunityId && cp.PartnerId == partnerId && cp.DocumentId != null)
                 .Include(cp => cp.Document)
                 .Select(cp => cp.Document)
@@ -636,6 +643,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     {
         // Find the organization unit relationship for this country
         var orgUnitRelationship = await context.Set<OrganizationUnitRelationship>()
+            .AsNoTracking() // Performance: No entity tracking needed for read-only operations
             .Include(r => r.OrganizationHierarchy)
                 .ThenInclude(oh => oh!.Parent)
             .FirstOrDefaultAsync(r => 
@@ -709,6 +717,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         
         // Check which countries have active UNCF metadata
         var countriesWithActiveUNCF = await context.UNCFMetadatas
+            .AsNoTracking() // Performance: No entity tracking needed for read-only operations
             .Where(m => m.Status == EntityStatus.Active 
                 && iso2Codes.Contains(m.Country!))
             .Select(m => m.Country!)
@@ -750,6 +759,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         
         // Check which countries have the Humanitarian_Peace_Security_Framework artifact
         var countriesWithFramework = await context.EntityArtifacts
+            .AsNoTracking() // Performance: No entity tracking needed for read-only operations
             .Where(ea => 
                 ea.EntityType == "Country" 
                 && countryIds.Contains(ea.EntityId)
@@ -788,6 +798,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         
         // Check which countries have the NDC artifact
         var countriesWithNdc = await context.EntityArtifacts
+            .AsNoTracking() // Performance: No entity tracking needed for read-only operations
             .Where(ea => 
                 ea.EntityType == "Country" 
                 && countryIds.Contains(ea.EntityId)
@@ -826,6 +837,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         
         // Check which countries have the NAP artifact
         var countriesWithNap = await context.EntityArtifacts
+            .AsNoTracking() // Performance: No entity tracking needed for read-only operations
             .Where(ea => 
                 ea.EntityType == "Country" 
                 && countryIds.Contains(ea.EntityId)
@@ -866,6 +878,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         
         // Get all org unit relationships for these countries
         var countryOrgRelationships = await context.Set<OrganizationUnitRelationship>()
+            .AsNoTracking() // Performance: No entity tracking needed for read-only operations
             .Where(r => 
                 r.EntityType == "Country" 
                 && countryIds.Contains(r.EntityId)
@@ -875,6 +888,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         
         // Get all org units with Strategy artifacts
         var orgUnitsWithStrategy = await context.EntityArtifacts
+            .AsNoTracking() // Performance: No entity tracking needed for read-only operations
             .Where(ea => 
                 ea.EntityType == "OrganizationHierarchy"
                 && ea.ArtifactType!.ArtifactTypeCode == "Strategy"
@@ -896,6 +910,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         // Load current org units details
         var currentOrgUnits = currentOrgUnitIds.Any()
             ? await context.Set<OrganizationHierarchy>()
+                .AsNoTracking() // Performance: No entity tracking needed for read-only operations
                 .Where(o => currentOrgUnitIds.Contains(o.Id) && !o.IsDeleted)
                 .ToListAsync()
             : new List<OrganizationHierarchy>();
@@ -1934,9 +1949,19 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         // Update Internal Stakeholders (Team & Stakeholders) using differential update
         if (request.Stakeholders != null)
         {
+            // Get SME role IDs first - SME stakeholders should NOT be in request.Stakeholders
+            // They are managed separately via request.SMESelections
+            var smeRoleIds = await context.Set<EntityRole>()
+                .Where(er => er.EntityType == "Opportunity" && er.Type == "SME" && !er.IsDeleted)
+                .Select(er => er.Id)
+                .ToListAsync();
+
             // Deduplicate user-based stakeholders by UserId + EntityRoleId combination (keep first occurrence)
+            // EXCLUDE SME roles - they should only be managed via SMESelections
             var requestedUserStakeholders = request.Stakeholders
-                .Where(s => s.UserId.HasValue && !s.OrganizationHierarchyId.HasValue)
+                .Where(s => s.UserId.HasValue 
+                    && !s.OrganizationHierarchyId.HasValue 
+                    && !smeRoleIds.Contains(s.EntityRoleId)) // EXCLUDE SME roles
                 .GroupBy(s => new { s.UserId, s.EntityRoleId })
                 .Select(g => g.First())
                 .ToList();
@@ -1965,9 +1990,12 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
             opportunity.Stakeholders ??= new List<OpportunityStakeholder>();
 
-            // Get existing user-based stakeholders (not auto-populated)
+            // Get existing user-based stakeholders (not auto-populated and NOT SME roles)
+            // SME stakeholders are managed separately and should not be touched by this logic
             var existingUserStakeholders = opportunity.Stakeholders
-                .Where(s => s.UserId.HasValue && !s.OrganizationHierarchyId.HasValue)
+                .Where(s => s.UserId.HasValue 
+                    && !s.OrganizationHierarchyId.HasValue 
+                    && !smeRoleIds.Contains(s.EntityRoleId)) // EXCLUDE SME roles
                 .ToList();
 
             // Find stakeholders to remove (exist in DB but not in request)
@@ -2083,7 +2111,13 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         if (isGpo)
         {
             // GPO: Get org units for implementation countries (with parent/grandparent)
+            // AND include the GPO org unit itself
             orgUnitIdsForRoles = await GetOrgUnitIdsForCountriesWithHierarchyAsync(entity.Id);
+            // Add the GPO org unit ID if not already included
+            if (!orgUnitIdsForRoles.Contains(orgUnitId))
+            {
+                orgUnitIdsForRoles.Add(orgUnitId);
+            }
         }
         else if (isHubOrRegion)
         {
@@ -2175,8 +2209,10 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     }
 
     /// <summary>
-    /// Updates SME (Subject Matter Expert) selections for an opportunity in the EntityUserRoles table.
+    /// Updates SME (Subject Matter Expert) selections for an opportunity in the OpportunityStakeholder table.
     /// Uses differential update - only adds/removes what's necessary.
+    /// IMPORTANT: Deselected SME roles are HARD DELETED (permanently removed) from the database.
+    /// Only currently selected SME assignments are retained.
     /// </summary>
     /// <param name="opportunityId">The opportunity ID</param>
     /// <param name="smeSelections">List of SME selection requests</param>
@@ -2191,14 +2227,14 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         if (!smeRoleIds.Any())
             return;
 
-        // Get existing SME EntityUserRoles for this opportunity
-        var existingSmeRoles = await context.Set<EntityUserRole>()
-            .Where(eur => 
-                eur.EntityType == "Opportunity" 
-                && eur.EntityId == opportunityId 
-                && eur.EntityRoleId.HasValue 
-                && smeRoleIds.Contains(eur.EntityRoleId.Value)
-                && !eur.IsDeleted)
+        // Get existing SME OpportunityStakeholders for this opportunity
+        // SMEs are OpportunityStakeholders with IsInternal=true and EntityRoleId in SME roles
+        var existingSmeStakeholders = await context.Set<OpportunityStakeholder>()
+            .Where(os => 
+                os.OpportunityId == opportunityId 
+                && os.IsInternal == true
+                && smeRoleIds.Contains(os.EntityRoleId)
+                && os.OrganizationHierarchyId == null) // Exclude auto-populated stakeholders
             .ToListAsync();
 
         // Get selected SME entries (IsSelected = true and UserId is provided)
@@ -2206,54 +2242,42 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             .Where(s => s.IsSelected && s.UserId.HasValue && smeRoleIds.Contains(s.EntityRoleId))
             .ToList();
 
-        // Find EntityUserRoles to remove (exist in DB but not in selected SMEs or deselected)
-        var rolesToRemove = existingSmeRoles
+        // Find OpportunityStakeholders to remove (exist in DB but not in selected SMEs or deselected)
+        var stakeholdersToRemove = existingSmeStakeholders
             .Where(existing => !selectedSmes.Any(req => 
                 req.EntityRoleId == existing.EntityRoleId && req.UserId == existing.UserId))
             .ToList();
 
-        // Find EntityUserRoles to add (exist in selected SMEs but not in DB)
-        var rolesToAdd = selectedSmes
-            .Where(req => !existingSmeRoles.Any(existing => 
+        // Find OpportunityStakeholders to add (exist in selected SMEs but not in DB)
+        var stakeholdersToAdd = selectedSmes
+            .Where(req => !existingSmeStakeholders.Any(existing => 
                 existing.EntityRoleId == req.EntityRoleId && existing.UserId == req.UserId))
             .ToList();
 
-        // Get EntityRole names for all roles being added (to populate Name field)
-        var entityRoles = new Dictionary<int, string>();
-        if (rolesToAdd.Any())
+        // HARD DELETE OpportunityStakeholders that are no longer selected (permanently removes from database)
+        foreach (var stakeholderToRemove in stakeholdersToRemove)
         {
-            var roleIdsToAdd = rolesToAdd.Select(r => r.EntityRoleId).Distinct().ToList();
-            entityRoles = await context.Set<EntityRole>()
-                .Where(er => roleIdsToAdd.Contains(er.Id))
-                .ToDictionaryAsync(er => er.Id, er => er.Code!);
+            context.Set<OpportunityStakeholder>().Remove(stakeholderToRemove);
         }
 
-        // Remove EntityUserRoles that are no longer selected
-        foreach (var roleToRemove in rolesToRemove)
+        // Add new OpportunityStakeholders
+        foreach (var req in stakeholdersToAdd)
         {
-            context.Set<EntityUserRole>().Remove(roleToRemove);
-        }
-
-        // Add new EntityUserRoles
-        foreach (var req in rolesToAdd)
-        {
-            var roleCode = entityRoles.ContainsKey(req.EntityRoleId) ? entityRoles[req.EntityRoleId] : "Unknown Role";
-            var name = $"{roleCode} - {opportunityId} - {req.UserId!.Value}";
-            
-            context.Set<EntityUserRole>().Add(new EntityUserRole
+            context.Set<OpportunityStakeholder>().Add(new OpportunityStakeholder
             {
-                Name = name,
-                UserId = req.UserId!.Value,
+                OpportunityId = opportunityId,
                 EntityRoleId = req.EntityRoleId,
-                EntityId = opportunityId,
-                EntityType = "Opportunity",
-                Status = EntityStatus.Active
+                UserId = req.UserId!.Value,
+                IsInternal = true,
+                StakeholderType = "Internal",
+                OrganizationHierarchyId = null, // User-assigned SMEs don't have org hierarchy
+                Notes = null
             });
         }
     }
 
     /// <summary>
-    /// Gets SME (Subject Matter Expert) selections for an opportunity from the EntityUserRoles table.
+    /// Gets SME (Subject Matter Expert) selections for an opportunity from the OpportunityStakeholder table.
     /// Returns all SME roles with their selection status and assigned user.
     /// </summary>
     /// <param name="opportunityId">The opportunity ID</param>
@@ -2273,23 +2297,23 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
         var smeRoleIds = smeRoles.Select(r => r.Id).ToList();
 
-        // Get existing SME EntityUserRoles for this opportunity
-        var existingSmeRoles = await context.Set<EntityUserRole>()
-            .Include(eur => eur.User)
+        // Get existing SME OpportunityStakeholders for this opportunity
+        // SMEs are OpportunityStakeholders with IsInternal=true and EntityRoleId in SME roles
+        var existingSmeStakeholders = await context.Set<OpportunityStakeholder>()
+            .Include(os => os.User)
                 .ThenInclude(u => u!.UserProfile)
-            .Where(eur => 
-                eur.EntityType == "Opportunity" 
-                && eur.EntityId == opportunityId 
-                && eur.EntityRoleId.HasValue 
-                && smeRoleIds.Contains(eur.EntityRoleId.Value)
-                && !eur.IsDeleted)
+            .Where(os => 
+                os.OpportunityId == opportunityId 
+                && os.IsInternal == true
+                && smeRoleIds.Contains(os.EntityRoleId)
+                && os.OrganizationHierarchyId == null) // Exclude auto-populated stakeholders
             .ToListAsync();
 
         // Build the result - all SME roles with their selection status
         var result = new List<SMESelectionModel>();
         foreach (var role in smeRoles)
         {
-            var existingAssignment = existingSmeRoles.FirstOrDefault(e => e.EntityRoleId == role.Id);
+            var existingAssignment = existingSmeStakeholders.FirstOrDefault(s => s.EntityRoleId == role.Id);
             
             result.Add(new SMESelectionModel
             {
@@ -4219,6 +4243,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             
             // Get partner's ERP dimension value to match with agreements
             var partner = await context.Partners
+                .AsNoTracking() // Performance: No entity tracking needed for read-only operations
                 .Where(p => p.Id == partnerId)
                 .Select(p => new { p.ErpDimValue })
                 .FirstOrDefaultAsync();
@@ -4230,6 +4255,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 
                 // Load all active agreements for this partner from BigQuery
                 var partnerAgreements = await context.PartnerAgreements
+                    .AsNoTracking() // Performance: No entity tracking needed for read-only operations
                     .Where(pa => pa.PartnerAgreementPartner == partnerNumber && !pa.IsDeleted)
                     .OrderByDescending(pa => pa.PartnerAgreementStartDate)
                     .ToListAsync();
