@@ -210,6 +210,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     public async Task<OpportunityModel?> GetOpportunityAsync(int id)
     {
         var entity = await context.Opportunities
+            .AsNoTracking() // Performance: No entity tracking needed for read-only operations
             .Include(o => o.WorkflowStage)
             .Include(o => o.ResponsibleOrgUnit)
             .Include(o => o.ProposedInitiativeType)
@@ -275,6 +276,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         {
             var now = DateTime.UtcNow;
             var orgUnitArtifacts = await context.EntityArtifacts
+                .AsNoTracking() // Performance: No entity tracking needed for read-only operations
                 .Where(a => a.EntityType == "OrganizationHierarchy"
                     && a.EntityId == entity.ResponsibleOrgUnit.Id
                     && !a.IsDeleted
@@ -410,6 +412,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         }
         
         // Enrich country models with organization unit hierarchy and UNCF status
+        // Note: Sequential execution required - DbContext is not thread-safe for parallel operations
         if (model.Countries != null && model.Countries.Any())
         {
             await EnrichCountriesWithOrgUnitHierarchyAsync(model.Countries);
@@ -441,6 +444,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             {
                 // Find the historical maximum budget for this org unit (excluding current opportunity)
                 var historicalMax = await context.Opportunities
+                    .AsNoTracking() // Performance: No entity tracking needed for read-only operations
                     .Where(o => o.ResponsibleOrgUnitId == model.ResponsibleOrgUnitId
                              && o.Id != id
                              && !o.IsDeleted)
@@ -489,6 +493,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         
         // Get entity for permission checking
         var entity = await context.Opportunities
+            .AsNoTracking() // Performance: No entity tracking needed for read-only operations
             .Include(o => o.Stakeholders)
             .FirstOrDefaultAsync(o => o.Id == id && !o.IsDeleted);
         
@@ -561,6 +566,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         {
             // Get documents from OpportunityFundingPartner table
             var fundingPartnerDocs = await context.OpportunityFundingPartners
+                .AsNoTracking() // Performance: No entity tracking needed for read-only operations
                 .Where(fp => fp.OpportunityId == opportunityId && fp.PartnerId == partnerId && fp.DocumentId != null)
                 .Include(fp => fp.Document)
                 .Select(fp => fp.Document)
@@ -587,6 +593,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         {
             // Get documents from OpportunityClientPartner table
             var clientPartnerDocs = await context.OpportunityClientPartners
+                .AsNoTracking() // Performance: No entity tracking needed for read-only operations
                 .Where(cp => cp.OpportunityId == opportunityId && cp.PartnerId == partnerId && cp.DocumentId != null)
                 .Include(cp => cp.Document)
                 .Select(cp => cp.Document)
@@ -636,6 +643,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     {
         // Find the organization unit relationship for this country
         var orgUnitRelationship = await context.Set<OrganizationUnitRelationship>()
+            .AsNoTracking() // Performance: No entity tracking needed for read-only operations
             .Include(r => r.OrganizationHierarchy)
                 .ThenInclude(oh => oh!.Parent)
             .FirstOrDefaultAsync(r => 
@@ -709,6 +717,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         
         // Check which countries have active UNCF metadata
         var countriesWithActiveUNCF = await context.UNCFMetadatas
+            .AsNoTracking() // Performance: No entity tracking needed for read-only operations
             .Where(m => m.Status == EntityStatus.Active 
                 && iso2Codes.Contains(m.Country!))
             .Select(m => m.Country!)
@@ -750,6 +759,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         
         // Check which countries have the Humanitarian_Peace_Security_Framework artifact
         var countriesWithFramework = await context.EntityArtifacts
+            .AsNoTracking() // Performance: No entity tracking needed for read-only operations
             .Where(ea => 
                 ea.EntityType == "Country" 
                 && countryIds.Contains(ea.EntityId)
@@ -788,6 +798,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         
         // Check which countries have the NDC artifact
         var countriesWithNdc = await context.EntityArtifacts
+            .AsNoTracking() // Performance: No entity tracking needed for read-only operations
             .Where(ea => 
                 ea.EntityType == "Country" 
                 && countryIds.Contains(ea.EntityId)
@@ -826,6 +837,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         
         // Check which countries have the NAP artifact
         var countriesWithNap = await context.EntityArtifacts
+            .AsNoTracking() // Performance: No entity tracking needed for read-only operations
             .Where(ea => 
                 ea.EntityType == "Country" 
                 && countryIds.Contains(ea.EntityId)
@@ -866,6 +878,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         
         // Get all org unit relationships for these countries
         var countryOrgRelationships = await context.Set<OrganizationUnitRelationship>()
+            .AsNoTracking() // Performance: No entity tracking needed for read-only operations
             .Where(r => 
                 r.EntityType == "Country" 
                 && countryIds.Contains(r.EntityId)
@@ -875,6 +888,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         
         // Get all org units with Strategy artifacts
         var orgUnitsWithStrategy = await context.EntityArtifacts
+            .AsNoTracking() // Performance: No entity tracking needed for read-only operations
             .Where(ea => 
                 ea.EntityType == "OrganizationHierarchy"
                 && ea.ArtifactType!.ArtifactTypeCode == "Strategy"
@@ -896,6 +910,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         // Load current org units details
         var currentOrgUnits = currentOrgUnitIds.Any()
             ? await context.Set<OrganizationHierarchy>()
+                .AsNoTracking() // Performance: No entity tracking needed for read-only operations
                 .Where(o => currentOrgUnitIds.Contains(o.Id) && !o.IsDeleted)
                 .ToListAsync()
             : new List<OrganizationHierarchy>();
@@ -4228,6 +4243,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             
             // Get partner's ERP dimension value to match with agreements
             var partner = await context.Partners
+                .AsNoTracking() // Performance: No entity tracking needed for read-only operations
                 .Where(p => p.Id == partnerId)
                 .Select(p => new { p.ErpDimValue })
                 .FirstOrDefaultAsync();
@@ -4239,6 +4255,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 
                 // Load all active agreements for this partner from BigQuery
                 var partnerAgreements = await context.PartnerAgreements
+                    .AsNoTracking() // Performance: No entity tracking needed for read-only operations
                     .Where(pa => pa.PartnerAgreementPartner == partnerNumber && !pa.IsDeleted)
                     .OrderByDescending(pa => pa.PartnerAgreementStartDate)
                     .ToListAsync();

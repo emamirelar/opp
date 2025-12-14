@@ -233,3 +233,40 @@ a:hover i {
     object-fit: cover;
   }
 }
+
+// Loading Progress Strip Styles
+.loading-progress-strip {
+  animation: fadeIn 0.3s ease-in-out;
+
+  // Smooth progress bar fill animation
+  .bg-unops-primary {
+    transition: width 0.5s ease-out;
+  }
+}
+
+// Fade in animation for progress strip
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+  .loading-progress-strip {
+    animation: none;
+  }
+
+  .loading-progress-strip .bg-unops-primary {
+    transition: none;
+  }
+
+  .pi-spinner {
+    animation: none;
+  }
+}
