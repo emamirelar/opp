@@ -105,7 +105,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
   // State signals
   readonly isEditing = signal(false);
   readonly isSaving = signal(false);
-  private hasUnsavedChanges = false;
+  readonly hasUnsavedChangesSignal = signal<boolean>(false);
   private originalData: {
     fundingPartners?: any[];
     clientPartners?: any[];
@@ -291,7 +291,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
     
     this.isEditing.set(false);
     this.originalData = null;
-    this.hasUnsavedChanges = false;
+    this.hasUnsavedChangesSignal.set(false);
     this.changesSavedOrDiscarded.emit();
   }
 
@@ -300,8 +300,8 @@ export class OpportunityWhoSectionComponent implements OnInit {
    * @private
    */
   private markAsChanged(): void {
-    if (!this.hasUnsavedChanges) {
-      this.hasUnsavedChanges = true;
+    if (!this.hasUnsavedChangesSignal()) {
+      this.hasUnsavedChangesSignal.set(true);
       this.changesDetected.emit();
     }
   }
@@ -364,7 +364,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
       next: (fullUpdatedOpportunity: Opportunity) => {
         this.isSaving.set(false);
         this.isEditing.set(false);
-        this.hasUnsavedChanges = false;
+        this.hasUnsavedChangesSignal.set(false);
         this.originalData = null;
         
         this.opportunityUpdated.emit(fullUpdatedOpportunity);

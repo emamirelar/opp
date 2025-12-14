@@ -141,13 +141,13 @@ export class OpportunityTeamSectionComponent implements OnInit {
   // Edit mode state
   readonly isEditing = signal<boolean>(false);
   readonly isSaving = signal<boolean>(false);
+  readonly hasUnsavedChangesSignal = signal<boolean>(false);
   private originalData: {
     responsibleOrgUnitId?: number;
     proposedInitiativeTypeId?: number;
     stakeholders?: OpportunityStakeholder[];
     smeSelections?: Map<number, { selected: boolean; userId: number | null }>;
   } | null = null;
-  private hasUnsavedChanges = false;
 
   // Form controls for Team section
   orgUnitControl = new FormControl<number | null>(null);
@@ -892,8 +892,8 @@ export class OpportunityTeamSectionComponent implements OnInit {
    * @description Mark section as having unsaved changes
    */
   private markAsChanged(): void {
-    if (!this.hasUnsavedChanges) {
-      this.hasUnsavedChanges = true;
+    if (!this.hasUnsavedChangesSignal()) {
+      this.hasUnsavedChangesSignal.set(true);
       this.changesDetected.emit();
     }
   }
@@ -945,7 +945,7 @@ export class OpportunityTeamSectionComponent implements OnInit {
         this.isSaving.set(false);
         this.isEditing.set(false);
         this.originalData = null;
-        this.hasUnsavedChanges = false;
+        this.hasUnsavedChangesSignal.set(false);
 
         this.opportunityUpdated.emit(fullUpdatedOpportunity);
         this.sectionSaved.emit();
@@ -1044,7 +1044,7 @@ export class OpportunityTeamSectionComponent implements OnInit {
 
     this.isEditing.set(false);
     this.originalData = null;
-    this.hasUnsavedChanges = false;
+    this.hasUnsavedChangesSignal.set(false);
     this.changesSavedOrDiscarded.emit();
     this.cdr.detectChanges();
   }

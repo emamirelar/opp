@@ -131,7 +131,7 @@ export class OpportunityWhySectionComponent implements OnInit {
   // Edit mode state
   readonly isEditing = signal<boolean>(false);
   readonly isSaving = signal<boolean>(false);
-  private hasUnsavedChanges = false;
+  readonly hasUnsavedChangesSignal = signal<boolean>(false);
   private originalData: {
     expectedBeneficiaries?: string | null;
     expectedImpact?: string | null;
@@ -815,8 +815,8 @@ export class OpportunityWhySectionComponent implements OnInit {
    * @private
    */
   private markAsChanged(): void {
-    if (!this.hasUnsavedChanges) {
-      this.hasUnsavedChanges = true;
+    if (!this.hasUnsavedChangesSignal()) {
+      this.hasUnsavedChangesSignal.set(true);
       this.changesDetected.emit();
     }
   }
@@ -901,7 +901,7 @@ export class OpportunityWhySectionComponent implements OnInit {
             next: (fullUpdatedOpportunity: Opportunity) => {
               this.isSaving.set(false);
               this.isEditing.set(false);
-              this.hasUnsavedChanges = false;
+              this.hasUnsavedChangesSignal.set(false);
               this.originalData = null;
 
               // Emit full updated opportunity to parent
@@ -1000,7 +1000,7 @@ export class OpportunityWhySectionComponent implements OnInit {
 
     this.isEditing.set(false);
     this.originalData = null;
-    this.hasUnsavedChanges = false;
+    this.hasUnsavedChangesSignal.set(false);
 
     // Clear unsaved changes tracking
     this.changesSavedOrDiscarded.emit();

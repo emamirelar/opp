@@ -101,7 +101,7 @@ export class OpportunityWhenSectionComponent implements OnInit {
   readonly isEditing = signal(false);
   readonly isSaving = signal(false);
   readonly isTimelineCollapsed = signal(false);
-  private hasUnsavedChanges = false;
+  readonly hasUnsavedChangesSignal = signal<boolean>(false);
 
   // Form controls
   targetSigningDateControl = new FormControl<Date | null>(null);
@@ -867,8 +867,8 @@ export class OpportunityWhenSectionComponent implements OnInit {
    * @private
    */
   private markAsChanged(): void {
-    if (!this.hasUnsavedChanges) {
-      this.hasUnsavedChanges = true;
+    if (!this.hasUnsavedChangesSignal()) {
+      this.hasUnsavedChangesSignal.set(true);
       this.changesDetected.emit();
     }
   }
@@ -972,7 +972,7 @@ export class OpportunityWhenSectionComponent implements OnInit {
       next: (fullUpdatedOpportunity) => {
         this.isSaving.set(false);
         this.isEditing.set(false);
-        this.hasUnsavedChanges = false;
+        this.hasUnsavedChangesSignal.set(false);
 
         // Clear local date state and reset duration selection
         this.deliverableDates.set(new Map());
@@ -1002,7 +1002,7 @@ export class OpportunityWhenSectionComponent implements OnInit {
    */
   cancelEditing(): void {
     this.isEditing.set(false);
-    this.hasUnsavedChanges = false;
+    this.hasUnsavedChangesSignal.set(false);
 
     // Reset duration selection
     this.resetDurationSelection();

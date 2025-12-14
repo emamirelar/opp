@@ -93,12 +93,12 @@ export class OpportunityOverviewSectionComponent {
   // Edit mode state
   readonly isEditing = signal<boolean>(false);
   readonly isSaving = signal<boolean>(false);
+  readonly hasUnsavedChangesSignal = signal<boolean>(false);
   private originalData: {
     name?: string;
     description?: string;
     initiativeBudgetUSD?: number | null;
   } | null = null;
-  private hasUnsavedChanges = false;
 
   // Form controls for Overview section
   nameControl = new FormControl<string | null>(null);
@@ -170,8 +170,8 @@ export class OpportunityOverviewSectionComponent {
    * @private
    */
   private markAsChanged(): void {
-    if (!this.hasUnsavedChanges) {
-      this.hasUnsavedChanges = true;
+    if (!this.hasUnsavedChangesSignal()) {
+      this.hasUnsavedChangesSignal.set(true);
       this.changesDetected.emit();
     }
   }
@@ -213,7 +213,7 @@ export class OpportunityOverviewSectionComponent {
         this.isSaving.set(false);
         this.isEditing.set(false);
         this.originalData = null;
-        this.hasUnsavedChanges = false;
+        this.hasUnsavedChangesSignal.set(false);
         
         // Emit full updated opportunity to parent
         this.opportunityUpdated.emit(fullUpdatedOpportunity);
@@ -246,7 +246,7 @@ export class OpportunityOverviewSectionComponent {
     
     this.isEditing.set(false);
     this.originalData = null;
-    this.hasUnsavedChanges = false;
+    this.hasUnsavedChangesSignal.set(false);
     
     // Clear unsaved changes tracking
     this.changesSavedOrDiscarded.emit();

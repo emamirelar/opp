@@ -3,9 +3,9 @@
  * @author UNOPS Opportunity+ System Development Team
  */
 
-import { Component, computed, inject, input, signal, ChangeDetectionStrategy, effect } from '@angular/core';
+import { Component, computed, inject, input, output, signal, ChangeDetectionStrategy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 // PrimeNG imports
 import { PanelModule } from 'primeng/panel';
@@ -99,6 +99,7 @@ export class OpportunityDstSectionComponent {
   // Injected services
   private readonly opportunityService = inject(OpportunityService);
   private readonly feedbackService = inject(FeedbackDialogService);
+  private readonly translateService = inject(TranslateService);
 
   /**
    * @description The opportunity data containing DST analysis
@@ -106,6 +107,33 @@ export class OpportunityDstSectionComponent {
    * @since 1.0.0
    */
   readonly opportunity = input.required<Opportunity>();
+  
+  /**
+   * @description Input signal for update permission - controls visibility of edit button
+   */
+  readonly canUpdate = input<boolean>(false);
+  
+  /**
+   * @description Output event when opportunity is updated
+   */
+  readonly opportunityUpdated = output<Opportunity>();
+  
+  /**
+   * @description Output event when changes are detected (for unsaved changes tracking)
+   */
+  readonly changesDetected = output<void>();
+
+  /**
+   * @description Output event when changes are saved or discarded (clear unsaved state)
+   */
+  readonly changesSavedOrDiscarded = output<void>();
+  
+  // Edit mode state for high risk acknowledgement
+  readonly isEditing = signal<boolean>(false);
+  readonly isSaving = signal<boolean>(false);
+  readonly hasUnsavedChangesSignal = signal<boolean>(false);
+  private tempHighRiskAcknowledged: boolean = false;
+  private originalHighRiskAcknowledged: boolean = false;
   
   /**
    * @description Track the last loaded opportunity ID to prevent duplicate API calls
@@ -237,16 +265,29 @@ export class OpportunityDstSectionComponent {
   /**
    * @description Acknowledgement that user has reviewed all organizational high risks
    * AC1: User must acknowledge they've reviewed all applicable high risks
-   * Loaded from and persisted to the Opportunity entity
+   * When in edit mode, returns the temporary value; otherwise returns the saved value
    * @type {boolean}
    * @since 2.0.0
    */
   get highRiskAcknowledged(): boolean {
+    if (this.isEditing()) {
+      return this.tempHighRiskAcknowledged;
+    }
     return this.opportunity()?.highRisksAcknowledged ?? false;
   }
 
   set highRiskAcknowledged(value: boolean) {
-    this.updateHighRiskAcknowledgement(value);
+    if (this.isEditing()) {
+      this.tempHighRiskAcknowledged = value;
+      if (value !== this.originalHighRiskAcknowledged) {
+        if (!this.hasUnsavedChangesSignal()) {
+          this.hasUnsavedChangesSignal.set(true);
+          this.changesDetected.emit();
+        }
+      } else {
+        this.hasUnsavedChangesSignal.set(false);
+      }
+    }
   }
 
   private isUpdatingAcknowledgement = false;
@@ -1225,7 +1266,71 @@ export class OpportunityDstSectionComponent {
   }
 
   /**
-   * @description Update the high risk acknowledgement status
+   * @description Enter edit mode for high risk acknowledgement
+   * @since 2.0.0
+   */
+  startEditing(): void {
+    this.originalHighRiskAcknowledged = this.opportunity()?.highRisksAcknowledged ?? false;
+    this.tempHighRiskAcknowledged = this.originalHighRiskAcknowledged;
+    this.isEditing.set(true);
+    this.hasUnsavedChangesSignal.set(false);
+  }
+
+  /**
+   * @description Save the high risk acknowledgement changes
+   * @since 2.0.0
+   */
+  saveSection(): void {
+    const opportunityId = this.opportunity()?.id;
+    if (!opportunityId) return;
+
+    this.isSaving.set(true);
+
+    this.opportunityService.acknowledgeHighRisks(opportunityId, this.tempHighRiskAcknowledged).subscribe({
+      next: () => {
+        console.log(`✅ [DST] High risk acknowledgement saved: ${this.tempHighRiskAcknowledged}`);
+        
+        // Update the local opportunity object
+        const opp = this.opportunity();
+        if (opp) {
+          opp.highRisksAcknowledged = this.tempHighRiskAcknowledged;
+          // Emit the updated opportunity to parent
+          this.opportunityUpdated.emit(opp);
+        }
+
+        this.isSaving.set(false);
+        this.isEditing.set(false);
+        this.hasUnsavedChangesSignal.set(false);
+        
+        // Clear unsaved changes tracking
+        this.changesSavedOrDiscarded.emit();
+
+        this.feedbackService.showSuccessToast({
+          summary: this.translateService.instant('message.success'),
+          detail: this.translateService.instant('message.opportunity.updatedSuccessfully')
+        });
+      },
+      error: () => {
+        this.isSaving.set(false);
+      }
+    });
+  }
+
+  /**
+   * @description Cancel editing and revert changes
+   * @since 2.0.0
+   */
+  cancelEditing(): void {
+    this.tempHighRiskAcknowledged = this.originalHighRiskAcknowledged;
+    this.isEditing.set(false);
+    this.hasUnsavedChangesSignal.set(false);
+    
+    // Clear unsaved changes tracking
+    this.changesSavedOrDiscarded.emit();
+  }
+
+  /**
+   * @description Update the high risk acknowledgement status (legacy method - no longer used in edit mode)
    * Persists to the backend when changed
    * @param {boolean} acknowledged - Whether the user has acknowledged the high risks
    * @since 2.0.0

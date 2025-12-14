@@ -149,9 +149,13 @@ export class OpportunityViewComponent
 
   @ViewChild('contentScrollContainer', { read: ElementRef })
   contentScrollContainer?: ElementRef;
+  @ViewChild('chipsContainer', { read: ElementRef })
+  chipsContainer?: ElementRef;
+  @ViewChild('chipsSizerDiv', { read: ElementRef })
+  chipsSizerDiv?: ElementRef;
   @ViewChild('relatedItemsComponent')
   relatedItemsComponent?: OpportunityRelatedItemsComponent;
-  @ViewChild(OpportunityDstSectionComponent)
+  @ViewChild('risksSection')
   dstSectionComponent?: OpportunityDstSectionComponent;
   @ViewChild(OpportunityAnalysisSectionComponent)
   analysisSectionComponent?: OpportunityAnalysisSectionComponent;
@@ -181,6 +185,7 @@ export class OpportunityViewComponent
   private pendingScrollTarget: string | null = null; // Store pending scroll target
   private scrollCheckInterval?: number; // Interval to check if content is loaded
   private shouldScrollAfterDataLoad = false; // Flag to allow scrolling after data loads (only set on initial load with section in URL)
+  private resizeObserver?: ResizeObserver; // Observer for chip container resizing
 
   // Section navigation configuration
   sections = [
@@ -197,6 +202,11 @@ export class OpportunityViewComponent
     { id: 'collaboration', label: 'Comments', icon: 'pi-comments' },
     { id: 'statement', label: 'Statement', icon: 'pi-file-edit' },
   ];
+
+  // Chip overflow management
+  visibleChips = signal<typeof this.sections>([]);
+  overflowChips = signal<typeof this.sections>([]);
+  readonly hasOverflowChips = computed(() => this.overflowChips().length > 0);
 
   // Permission management using utility service
   private permissionUtils =
@@ -424,6 +434,24 @@ export class OpportunityViewComponent
         });
       }
     });
+
+    // Effect to recalculate chip overflow when data loads
+    effect(() => {
+      const isLoaded = !this.loading();
+      const opp = this.opportunity();
+
+      if (isLoaded && opp) {
+        untracked(() => {
+          // Recalculate chip overflow after data loads and DOM updates
+          setTimeout(() => {
+            this.calculateChipOverflow();
+          }, 200);
+        });
+      }
+    });
+
+    // Initially show all chips (will be recalculated after view init)
+    this.visibleChips.set(this.sections);
   }
 
   ngOnInit() {
@@ -483,6 +511,12 @@ export class OpportunityViewComponent
 
   ngAfterViewInit(): void {
     // Observers will be set up via effect after data loads
+    
+    // Setup resize observer for chip overflow management
+    // Wait a bit to ensure the sizer div is rendered
+    setTimeout(() => {
+      this.setupChipOverflowObserver();
+    }, 50);
   }
 
   /**
@@ -519,6 +553,10 @@ export class OpportunityViewComponent
     // Cleanup scroll spy observer
     if (this.intersectionObserver) {
       this.intersectionObserver.disconnect();
+    }
+    // Cleanup resize observer
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
     }
     // Cleanup scroll check interval
     if (this.scrollCheckInterval) {
@@ -833,6 +871,11 @@ export class OpportunityViewComponent
             this.whenSectionComponent.saveSection();
           }
           break;
+        case 'risks':
+          if (this.dstSectionComponent) {
+            this.dstSectionComponent.saveSection();
+          }
+          break;
       }
     });
   }
@@ -890,6 +933,11 @@ export class OpportunityViewComponent
             case 'when':
               if (this.whenSectionComponent) {
                 this.whenSectionComponent.cancelEditing();
+              }
+              break;
+            case 'risks':
+              if (this.dstSectionComponent) {
+                this.dstSectionComponent.cancelEditing();
               }
               break;
           }
@@ -960,6 +1008,9 @@ export class OpportunityViewComponent
       case 'when':
         this.whenSectionComponent?.startEditing();
         break;
+      case 'risks':
+        this.dstSectionComponent?.startEditing();
+        break;
     }
   }
 
@@ -1026,6 +1077,7 @@ export class OpportunityViewComponent
   @HostListener('window:resize', ['$event'])
   onResize(event: Event): void {
     this.innerWidth.set((event.target as Window).innerWidth);
+    // Chip overflow is handled by ResizeObserver on the sizer div
   }
 
   /**
@@ -1475,5 +1527,142 @@ export class OpportunityViewComponent
   onFileUpload(event: any): void {
     console.log('File uploaded:', event);
     // TODO: Implement file upload
+  }
+
+  /**
+   * @description Setup resize observer for the sizer div to detect container width changes
+   * This approach ensures we respond to any container width changes, not just window resizes
+   */
+  private setupChipOverflowObserver(): void {
+    if (!this.chipsSizerDiv?.nativeElement) {
+      // If sizer div not ready, try again later
+      setTimeout(() => {
+        this.setupChipOverflowObserver();
+      }, 100);
+      return;
+    }
+
+    this.resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        // Only recalculate if the width actually changed
+        if (entry.contentRect.width > 0) {
+          this.calculateChipOverflow();
+        }
+      }
+    });
+
+    this.resizeObserver.observe(this.chipsSizerDiv.nativeElement);
+  }
+
+  /**
+   * @description Calculate which chips fit in the available width and which overflow
+   */
+  private calculateChipOverflow(): void {
+    if (!this.chipsSizerDiv?.nativeElement || !this.chipsContainer?.nativeElement) {
+      return;
+    }
+
+    // Use the sizer div width as the available container width
+    const sizerDiv = this.chipsSizerDiv.nativeElement as HTMLElement;
+    const containerWidth = sizerDiv.clientWidth;
+    
+    // If container has no width yet, try again later
+    if (containerWidth === 0) {
+      setTimeout(() => this.calculateChipOverflow(), 100);
+      return;
+    }
+    
+    const gap = 8; // gap-2 in Tailwind (0.5rem = 8px)
+    
+    // Create temporary elements to measure chip widths
+    const tempContainer = document.createElement('div');
+    tempContainer.style.visibility = 'hidden';
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.whiteSpace = 'nowrap';
+    document.body.appendChild(tempContainer);
+
+    const chipWidths: number[] = [];
+    
+    // Measure each chip's width
+    this.sections.forEach((section) => {
+      const tempChip = document.createElement('button');
+      tempChip.className = 'flex items-center gap-2 px-4 py-2 rounded-full bg-unops-surface-primary text-unops-neutral-700 font-medium text-sm whitespace-nowrap';
+      tempChip.innerHTML = `
+        <i class="pi ${section.icon} text-sm"></i>
+        <span>${this.translateService.instant(section.label)}</span>
+      `;
+      tempContainer.appendChild(tempChip);
+      chipWidths.push(tempChip.offsetWidth);
+      tempContainer.removeChild(tempChip);
+    });
+
+    // Measure the "More..." dropdown width
+    const moreDropdown = document.createElement('div');
+    moreDropdown.className = 'flex items-center gap-2 px-4 py-2 rounded-full bg-unops-surface-primary text-unops-neutral-700 font-medium text-sm whitespace-nowrap';
+    moreDropdown.innerHTML = `
+      <i class="pi pi-ellipsis-h text-sm"></i>
+      <span>More...</span>
+    `;
+    tempContainer.appendChild(moreDropdown);
+    const moreChipWidth = moreDropdown.offsetWidth;
+    tempContainer.removeChild(moreDropdown);
+
+    document.body.removeChild(tempContainer);
+
+    // First pass: Calculate how many chips fit WITHOUT the "More..." chip
+    let totalWidth = 0;
+    let visibleCount = 0;
+    
+    for (let i = 0; i < chipWidths.length; i++) {
+      const chipWidth = chipWidths[i];
+      const gapWidth = i > 0 ? gap : 0;
+      const newWidth = totalWidth + chipWidth + gapWidth;
+      
+      if (newWidth <= containerWidth) {
+        totalWidth = newWidth;
+        visibleCount++;
+      } else {
+        break;
+      }
+    }
+
+    // If all chips fit, we're done
+    if (visibleCount === chipWidths.length) {
+      this.visibleChips.set(this.sections);
+      this.overflowChips.set([]);
+      this.cdr.markForCheck();
+      return;
+    }
+
+    // Not all chips fit, so we need the "More..." dropdown
+    // Recalculate with space reserved for "More..." chip
+    totalWidth = 0;
+    visibleCount = 0;
+    const availableWidth = containerWidth - moreChipWidth - gap;
+    
+    for (let i = 0; i < chipWidths.length; i++) {
+      const chipWidth = chipWidths[i];
+      const gapWidth = i > 0 ? gap : 0;
+      const newWidth = totalWidth + chipWidth + gapWidth;
+      
+      if (newWidth <= availableWidth) {
+        totalWidth = newWidth;
+        visibleCount++;
+      } else {
+        break;
+      }
+    }
+
+    // Ensure at least one chip is always visible
+    if (visibleCount === 0) {
+      visibleCount = 1;
+    }
+
+    // Update visible and overflow chips
+    this.visibleChips.set(this.sections.slice(0, visibleCount));
+    this.overflowChips.set(this.sections.slice(visibleCount));
+    
+    // Trigger change detection
+    this.cdr.markForCheck();
   }
 }
