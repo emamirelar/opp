@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.UNOPSBusiness.Services;
@@ -72,9 +73,13 @@ public class UNOPSManagerWrapper : ManagerWrapper
 
         var notificationManager = serviceProvider.GetRequiredService<NotificationManager>();
 
+        // Create DbContextFactory for parallel query execution in InteractionManager and OpportunityManager
+        var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<UNOPSAppDbContext>>();
+
         systemAdminManager = new UNOPSSystemAdminManager(opsContext, configuration, serviceProvider);
         contactManager = new UNOPSContactManager(mapper, opsContext, configuration, permissionService, globalFilterService, httpContextAccessor, contactManagerLogger, serviceProvider);
-        interactionManager = new UNOPSInteractionManager(mapper, opsContext, configuration, partnerTreeService, permissionService, globalFilterService, httpContextAccessor, serviceProvider);
+        interactionManager = new UNOPSInteractionManager(mapper, opsContext, configuration, partnerTreeService, permissionService, globalFilterService, httpContextAccessor, serviceProvider, userProfileCacheService, dbContextFactory);
+        
         partnerTreeManager = new UNOPSPartnerTreeManager(mapper, opsContext, configuration, partnerTreeService, permissionService);
         partnerManager = new UNOPSPartnerManager(mapper, opsContext, configuration, partnerTreeService, partnerManagerLogger, permissionService, globalFilterService, httpContextAccessor, serviceProvider);
         linkManager = new LinkManager(mapper, opsContext);
@@ -100,8 +105,8 @@ public class UNOPSManagerWrapper : ManagerWrapper
         // Create BaseEngagementManager
         baseEngagementManager = new BaseEngagementManager(mapper, opsContext, configuration, permissionService, httpContextAccessor);
         
-        // Create OpportunityManager
-        opportunityManager = new UNOPSOpportunityManager(mapper, opsContext, configuration, permissionService, httpContextAccessor, serviceProvider);
+        // Create OpportunityManager with DbContextFactory for parallel query execution
+        opportunityManager = new UNOPSOpportunityManager(mapper, opsContext, configuration, dbContextFactory, permissionService, httpContextAccessor, serviceProvider);
         
         // Create CommentManager
         commentManager = new CommentManager(mapper, opsContext, this);

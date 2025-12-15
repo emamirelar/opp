@@ -43,10 +43,12 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
 
         /// <summary>
         /// Gets all risks for a specific entity with full lookup data
+        /// OPTIMIZED: Uses AsNoTracking for read-only query (Priority 2)
         /// </summary>
         public async Task<DSTRisksResponse> GetRisksByEntityAsync(string entityType, int entityId, ClaimsPrincipal? user = null)
         {
             var risks = await _context.Risks
+                .AsNoTracking() // ✅ Read-only query optimization
                 .Include(r => r.RiskTypeEntity)
                 .Include(r => r.RiskCategory)
                 .Include(r => r.RiskProbabilityEntity)
@@ -128,7 +130,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             await _context.SaveChangesAsync();
 
             // Reload with includes to get navigation properties
+            // ✅ AsNoTracking for read-only reload after save
             var createdRisk = await _context.Risks
+                .AsNoTracking()
                 .Include(r => r.RiskTypeEntity)
                 .Include(r => r.RiskCategory)
                 .Include(r => r.RiskProbabilityEntity)
@@ -181,7 +185,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             await _context.SaveChangesAsync();
 
             // Reload with includes
+            // ✅ AsNoTracking for read-only reload after save
             var updatedRisk = await _context.Risks
+                .AsNoTracking()
                 .Include(r => r.RiskTypeEntity)
                 .Include(r => r.RiskCategory)
                 .Include(r => r.RiskProbabilityEntity)
@@ -219,10 +225,12 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
 
         /// <summary>
         /// Gets all risk lookup data
+        /// OPTIMIZED: Uses AsNoTracking for all read-only queries (Priority 2)
         /// </summary>
         public async Task<RiskLookupsResponse> GetRiskLookupsAsync()
         {
             var riskTypes = await _context.RiskTypes
+                .AsNoTracking() // ✅ Read-only lookup query
                 .Where(r => !r.IsDeleted && r.Status == EntityStatus.Active)
                 .OrderBy(r => r.DisplayOrder)
                 .Select(r => new RiskTypeModel
@@ -237,6 +245,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 .ToListAsync();
 
             var probabilities = await _context.RiskProbabilities
+                .AsNoTracking() // ✅ Read-only lookup query
                 .Where(r => !r.IsDeleted && r.Status == EntityStatus.Active)
                 .OrderBy(r => r.DisplayOrder)
                 .Select(r => new RiskProbabilityModel
@@ -251,6 +260,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 .ToListAsync();
 
             var proximities = await _context.RiskProximities
+                .AsNoTracking() // ✅ Read-only lookup query
                 .Where(r => !r.IsDeleted && r.Status == EntityStatus.Active)
                 .OrderBy(r => r.DisplayOrder)
                 .Select(r => new RiskProximityModel
@@ -264,6 +274,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 .ToListAsync();
 
             var impactLevels = await _context.RiskImpactLevels
+                .AsNoTracking() // ✅ Read-only lookup query
                 .Where(r => !r.IsDeleted && r.Status == EntityStatus.Active)
                 .OrderBy(r => r.DisplayOrder)
                 .Select(r => new RiskImpactLevelModel
@@ -278,6 +289,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 .ToListAsync();
 
             var responseTypes = await _context.RiskResponseTypes
+                .AsNoTracking() // ✅ Read-only lookup query
                 .Where(r => !r.IsDeleted && r.Status == EntityStatus.Active)
                 .OrderBy(r => r.DisplayOrder)
                 .Select(r => new RiskResponseTypeModel
@@ -304,10 +316,12 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
 
         /// <summary>
         /// Gets risk categories in hierarchical format
+        /// OPTIMIZED: Uses AsNoTracking for read-only query (Priority 2)
         /// </summary>
         public async Task<RiskCategoryHierarchyResponse> GetRiskCategoriesAsync()
         {
             var allCategories = await _context.RiskCategories
+                .AsNoTracking() // ✅ Read-only lookup query
                 .Where(c => !c.IsDeleted && c.Status == EntityStatus.Active)
                 .OrderBy(c => c.Level)
                 .ThenBy(c => c.DisplayOrder)
@@ -348,11 +362,13 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         /// <summary>
         /// Gets all predefined high risks
         /// Includes fallback lookup for RiskCategoryId using CategoryCode if not set
+        /// OPTIMIZED: Uses AsNoTracking for read-only queries (Priority 2)
         /// </summary>
         public async Task<List<PreDefinedHighRiskModel>> GetPreDefinedHighRisksAsync()
         {
             // First, get the raw data from PreDefinedHighRisks
             var highRisks = await _context.PreDefinedHighRisks
+                .AsNoTracking() // ✅ Read-only query
                 .Include(r => r.RiskCategory)
                 .Where(r => !r.IsDeleted && r.Status == EntityStatus.Active)
                 .OrderBy(r => r.DisplayOrder)
@@ -382,6 +398,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             {
                 // Get category lookup by ShortCode (Level 3 categories only)
                 var categoryLookup = await _context.RiskCategories
+                    .AsNoTracking() // ✅ Read-only lookup query
                     .Where(c => c.Level == 3 && !c.IsDeleted)
                     .ToDictionaryAsync(c => c.ShortCode, c => new { c.Id, c.Name });
 
@@ -404,6 +421,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
 
         /// <summary>
         /// Analyzes an opportunity and returns high risk recommendations
+        /// OPTIMIZED: Uses AsNoTracking for all read-only queries (Priority 2)
         /// </summary>
         public async Task<HighRiskAnalysisResponse> GetHighRiskAnalysisAsync(int opportunityId, ClaimsPrincipal? user = null)
         {
@@ -412,6 +430,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
 
             // Get existing risks for this opportunity to find already added high risks
             var existingRisks = await _context.Risks
+                .AsNoTracking() // ✅ Read-only query
                 .Where(r => r.EntityType == "Opportunity" && r.EntityId == opportunityId && !r.IsDeleted)
                 .Select(r => r.PreDefinedHighRiskId)
                 .Where(id => id.HasValue)
@@ -420,6 +439,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
 
             // Get opportunity data for auto-detection
             var opportunity = await _context.Set<Opportunity>()
+                .AsNoTracking() // ✅ Read-only query for analysis
                 .Include(o => o.FundingPartners)
                     .ThenInclude(fp => fp.Partner)
                 .Include(o => o.Countries)
@@ -628,10 +648,12 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
 
         /// <summary>
         /// Implementation of abstract method from BaseUNOPSManager
+        /// OPTIMIZED: Uses AsNoTracking for read-only query (Priority 2)
         /// </summary>
         public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal user = null)
         {
             var risk = await _context.Risks
+                .AsNoTracking() // ✅ Read-only query
                 .Include(r => r.RiskTypeEntity)
                 .Include(r => r.RiskCategory)
                 .Include(r => r.RiskProbabilityEntity)

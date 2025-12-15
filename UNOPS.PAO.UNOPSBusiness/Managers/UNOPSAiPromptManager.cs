@@ -69,6 +69,7 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
             {
                 // Look up the AI prompt configuration by type to get entity information
                 var aiPrompt = await _promptRepository.GetAll()
+                    .AsNoTracking() // ✅ Read-only query - no updates after loading
                     .Where(p => p.Type == request.Type)
                     .FirstOrDefaultAsync();
                     
@@ -93,6 +94,7 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
             
             // If no ID provided, use the first available AI prompt for this type (testData mode)
             var promptConfig = await _promptRepository.GetAll()
+                .AsNoTracking() // ✅ Read-only query - configuration lookup
                 .Where(p => p.Type == request.Type)
                 .FirstOrDefaultAsync();
                 
@@ -235,7 +237,9 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
     public async Task<PaginationResponse<AiPromptModel>> GetPromptsAsync(ClaimsPrincipal user, AiPromptFilterRequest request)
     {
         // RBAC interceptor handles security enforcement
-        var query = _promptRepository.GetAll().AsQueryable();
+        var query = _promptRepository.GetAll()
+            .AsNoTracking() // ✅ Read-only query - pagination for display
+            .AsQueryable();
 
         // Only show prompts that can be changed by admins
         query = query.Where(p => p.AdminCanChange == true);
@@ -288,7 +292,9 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
     public async Task<AiPromptModel?> GetPromptByIdAsync(ClaimsPrincipal user, int id)
     {
         // RBAC interceptor handles security enforcement
-        var prompt = await _promptRepository.GetByIdAsync(id);
+        var prompt = await _promptRepository.GetAll()
+            .AsNoTracking() // ✅ Read-only query - display only
+            .FirstOrDefaultAsync(p => p.Id == id);
         return prompt != null ? _mapper.Map<AiPromptModel>(prompt) : null;
     }
 
@@ -306,6 +312,7 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
         if (!string.IsNullOrEmpty(entity.Type))
         {
             var existingPrompt = await _promptRepository.GetAll()
+                .AsNoTracking() // ✅ Read-only query - duplicate check
                 .Where(p => p.Type == entity.Type)
                 .FirstOrDefaultAsync();
                 
@@ -413,6 +420,7 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
         // RBAC interceptor handles security enforcement
         var prompts = await _promptRepository
             .GetAll()
+            .AsNoTracking() // ✅ Read-only query - filtering by type
             .Where(p => p.Type == type)
             .ToListAsync();
 
@@ -427,6 +435,7 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
         // RBAC interceptor handles security enforcement
         return await _promptRepository
             .GetAll()
+            .AsNoTracking() // ✅ Read-only query - dropdown data
             .Select(p => p.Type)
             .Distinct()
             .OrderBy(t => t)
@@ -441,6 +450,7 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
         // RBAC interceptor handles security enforcement
         return await _promptRepository
             .GetAll()
+            .AsNoTracking() // ✅ Read-only query - dropdown data
             .Select(p => p.Model)
             .Distinct()
             .OrderBy(m => m)
@@ -455,6 +465,7 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
         // RBAC interceptor handles security enforcement
         return await _promptRepository
             .GetAll()
+            .AsNoTracking() // ✅ Read-only query - dropdown data
             .Select(p => p.Project)
             .Distinct()
             .OrderBy(p => p)
@@ -469,6 +480,7 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
         // RBAC interceptor handles security enforcement
         return await _promptRepository
             .GetAll()
+            .AsNoTracking() // ✅ Read-only query - dropdown data
             .Select(p => p.Location)
             .Distinct()
             .OrderBy(l => l)
@@ -486,7 +498,9 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
         }
         
         // Fallback for cases without user context
-        var prompt = await _promptRepository.GetByIdAsync(entityId);
+        var prompt = await _promptRepository.GetAll()
+            .AsNoTracking() // ✅ Read-only query - display only
+            .FirstOrDefaultAsync(p => p.Id == entityId);
         return prompt != null ? _mapper.Map<AiPromptModel>(prompt) : null;
     }
 
@@ -589,7 +603,9 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
     public async Task<string> ExportAiPromptsAsSqlAsync(ClaimsPrincipal user)
     {
         // RBAC interceptor handles security enforcement
-        var allPrompts = await _promptRepository.GetAll().ToListAsync();
+        var allPrompts = await _promptRepository.GetAll()
+            .AsNoTracking() // ✅ Read-only query - export operation
+            .ToListAsync();
         
         var sqlBuilder = new StringBuilder();
         sqlBuilder.AppendLine("-- AI Prompts configuration");

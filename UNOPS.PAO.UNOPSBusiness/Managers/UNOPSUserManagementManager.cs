@@ -159,6 +159,7 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
 
         // Step 2: Get full UserProfile data for the filtered and paginated UserIds
         var pagedUserProfiles = await _context.UserProfile
+            .AsNoTracking() // ✅ Read-only query - no updates needed
             .Where(u => pagedUserIds.Contains(u.UserId))
             .ToListAsync();
 
@@ -182,6 +183,7 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
         // Get organization hierarchy data
         var orgUnitCodes = pagedUserProfiles.Select(x => x.OrgUnit).Distinct().ToList();
         var orgHierarchies = await _context.OrganizationHierarchies
+            .AsNoTracking() // ✅ Read-only query - no updates needed
             .Where(o => orgUnitCodes.Contains(o.Code) && o.Type == OrganizationUnitType.OrgUnit)
             .GroupBy(o => o.Code)
             .ToDictionaryAsync(g => g.Key, g => g.First());
@@ -268,10 +270,11 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
             return null; // Invalid userId format
         }
         
-        var userProfileWithOrg = await (from up in _context.UserProfile.Where(u => u.UserId == userIdInt && !u.IsDeleted)
-                                        join oh in _context.OrganizationHierarchies on up.OrgUnit equals oh.Code into orgJoin
+        var userProfileWithOrg = await (from up in _context.UserProfile.AsNoTracking().Where(u => u.UserId == userIdInt && !u.IsDeleted)
+                                        join oh in _context.OrganizationHierarchies.AsNoTracking() on up.OrgUnit equals oh.Code into orgJoin
                                         from org in orgJoin.DefaultIfEmpty()
                                         select new { UserProfile = up, OrgHierarchy = org })
+                                        .AsNoTracking() // ✅ Read-only query - no updates needed
                                         .FirstOrDefaultAsync();
 
         if (userProfileWithOrg?.UserProfile == null) return null;
@@ -429,7 +432,9 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
     public async Task<IEnumerable<RoleModel>> GetAvailableRolesAsync(ClaimsPrincipal user)
     {
         // RBAC interceptor handles security enforcement
-        var roles = await _roleManager.Roles.ToListAsync();
+        var roles = await _roleManager.Roles
+            .AsNoTracking() // ✅ Read-only query - no updates needed
+            .ToListAsync();
 
         // Filter roles based on user permissions (business logic)
         if (user.IsInRole("ORG_UNIT_ADMIN") && !user.IsInRole("PARTNER_GLOB_ADMIN"))
@@ -451,6 +456,7 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
     {
         // RBAC interceptor handles security enforcement
         var orgUnits = await _context.OrganizationHierarchies
+            .AsNoTracking() // ✅ Read-only query - no updates needed
             .Where(o => !o.IsDeleted && o.Status == EntityStatus.Active && o.Type == OrganizationUnitType.OrgUnit)
             .OrderBy(o => o.Name)
             .ToListAsync();
@@ -469,6 +475,7 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
         // RBAC interceptor handles security enforcement
         // Find the organization unit
         var orgUnit = await _context.OrganizationHierarchies
+            .AsNoTracking() // ✅ Read-only query - no updates needed
             .Where(o => o.Code == orgUnitCode && !o.IsDeleted && o.Type == OrganizationUnitType.OrgUnit)
             .FirstOrDefaultAsync();
 
@@ -542,6 +549,7 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
         }
         
         var userProfile = await _context.UserProfile
+            .AsNoTracking() // ✅ Read-only query - no updates needed
             .Where(u => u.UserId == userIdInt && !u.IsDeleted)
             .FirstOrDefaultAsync();
 
@@ -664,13 +672,18 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
     {
         var result = new Dictionary<int, object>();
         
+        // ✅ OPTIMIZATION: Batch query to eliminate N+1 pattern
+        // Instead of querying each user individually in a loop, load all users at once
+        var userProfiles = await _context.UserProfile
+            .AsNoTracking() // ✅ Read-only query - no updates needed
+            .Where(u => request.UserIds.Contains(u.UserId))
+            .ToDictionaryAsync(u => u.UserId, u => u);
+        
         foreach (var userId in request.UserIds)
         {
             try
             {
-                var userProfile = await _context.UserProfile
-                    .Where(u => u.UserId == userId)
-                    .FirstOrDefaultAsync();
+                var userProfile = userProfiles.GetValueOrDefault(userId);
                 
                 if (userProfile != null)
                 {
