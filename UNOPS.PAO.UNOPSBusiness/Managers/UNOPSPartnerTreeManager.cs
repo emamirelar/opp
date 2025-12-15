@@ -334,8 +334,11 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
     /// </summary>
     public async Task<object> GetBasicPartnerCategoryDetailsAsync(ClaimsPrincipal user, int entityId)
     {
-        // Get the partner category (PartnerTree) details
+        // ==========================================
+        // QUERY 1: Main entity - Partner Category
+        // ==========================================
         var partnerCategory = await _context.PartnerTrees
+            .AsNoTracking() // ✅ Read-only query optimization
             .FirstOrDefaultAsync(pt => pt.Id == entityId && !pt.IsDeleted);
         
         if (partnerCategory == null)
@@ -346,8 +349,11 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
         // Get all PartnerGroups that are descendants of this PartnerCategory (recursive)
         var partnerGroupIds = await partnerTreeService.GetAllDescendantsAsync(partnerCategory.Code);
 
-        // Get Partners that belong to these PartnerGroups with full details
+        // ==========================================
+        // QUERY 2: Partners with simple navigation properties
+        // ==========================================
         var partners = await _context.Partners
+            .AsNoTracking() // ✅ Read-only query optimization
             .Where(p => partnerGroupIds.Contains(p.PartnerGroupId.Value) && !p.IsDeleted)
             .Include(p => p.PartnerGroup)
             .Include(p => p.LiaisonOffice)
@@ -355,40 +361,103 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
 
         var partnerIds = partners.Select(p => p.Id).ToList();
 
-        // Get comprehensive interactions for partners in this category (last 30 days)
+        // ==========================================
+        // QUERY 3: Interactions (main entity only) - SPLIT QUERY OPTIMIZATION
+        // Eliminates Cartesian product from multiple ThenInclude() chains
+        // ==========================================
         var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
         var recentInteractions = await _context.Interactions
+            .AsNoTracking() // ✅ Read-only query optimization
             .Where(i => i.InteractionPartners.Any(ip => partnerIds.Contains(ip.PartnerId)) && 
                        !i.IsDeleted && 
                        i.Date >= thirtyDaysAgo)
-            .Include(i => i.InteractionPartners)
-                .ThenInclude(ip => ip.Partner)
-            .Include(i => i.InteractionContacts)
-                .ThenInclude(ic => ic.Contact)
-            .Include(i => i.InteractionUsers)
-                .ThenInclude(iu => iu.User)
-            .Include(i => i.InteractionUsers)
-                .ThenInclude(iu => iu.User.UserProfile)
             .OrderByDescending(i => i.Date)
             .ToListAsync();
 
-        // Get all interactions (not just recent) for statistics
-        var allInteractions = await _context.Interactions
-            .Where(i => i.InteractionPartners.Any(ip => partnerIds.Contains(ip.PartnerId)) && !i.IsDeleted)
-            .Include(i => i.InteractionPartners)
-                .ThenInclude(ip => ip.Partner)
+        var recentInteractionIds = recentInteractions.Select(i => i.Id).ToList();
+
+        // ==========================================
+        // QUERY 4: InteractionPartners collection - SPLIT QUERY OPTIMIZATION
+        // Load separately to avoid Cartesian product
+        // ==========================================
+        var interactionPartners = await _context.Set<Domain.Entities.InteractionPartner>()
+            .AsNoTracking()
+            .Where(ip => recentInteractionIds.Contains(ip.InteractionId))
+            .Include(ip => ip.Partner)
             .ToListAsync();
 
+        // ==========================================
+        // QUERY 5: InteractionContacts collection - SPLIT QUERY OPTIMIZATION
+        // Load separately to avoid Cartesian product
+        // ==========================================
+        var interactionContacts = await _context.Set<Domain.Entities.InteractionContact>()
+            .AsNoTracking()
+            .Where(ic => recentInteractionIds.Contains(ic.InteractionId))
+            .Include(ic => ic.Contact)
+            .ToListAsync();
+
+        // ==========================================
+        // QUERY 6: InteractionUsers collection - SPLIT QUERY OPTIMIZATION
+        // Load separately to avoid Cartesian product
+        // ==========================================
+        var interactionUsers = await _context.Set<Domain.Entities.InteractionUser>()
+            .AsNoTracking()
+            .Where(iu => recentInteractionIds.Contains(iu.InteractionId))
+            .Include(iu => iu.User)
+                .ThenInclude(u => u.UserProfile)
+            .ToListAsync();
+
+        // Assign collections back to interactions for processing
+        var interactionPartnersLookup = interactionPartners.GroupBy(ip => ip.InteractionId).ToDictionary(g => g.Key, g => g.ToList());
+        var interactionContactsLookup = interactionContacts.GroupBy(ic => ic.InteractionId).ToDictionary(g => g.Key, g => g.ToList());
+        var interactionUsersLookup = interactionUsers.GroupBy(iu => iu.InteractionId).ToDictionary(g => g.Key, g => g.ToList());
+
+        foreach (var interaction in recentInteractions)
+        {
+            interaction.InteractionPartners = interactionPartnersLookup.TryGetValue(interaction.Id, out var partners_) 
+                ? partners_ : new List<Domain.Entities.InteractionPartner>();
+            interaction.InteractionContacts = interactionContactsLookup.TryGetValue(interaction.Id, out var contacts) 
+                ? contacts : new List<Domain.Entities.InteractionContact>();
+            interaction.InteractionUsers = interactionUsersLookup.TryGetValue(interaction.Id, out var users) 
+                ? users : new List<Domain.Entities.InteractionUser>();
+        }
+
+        // ==========================================
+        // QUERY 7: All interactions for statistics - SPLIT QUERY OPTIMIZATION
+        // ==========================================
+        var allInteractions = await _context.Interactions
+            .AsNoTracking() // ✅ Read-only query optimization
+            .Where(i => i.InteractionPartners.Any(ip => partnerIds.Contains(ip.PartnerId)) && !i.IsDeleted)
+            .ToListAsync();
+
+        var allInteractionIds = allInteractions.Select(i => i.Id).ToList();
+        
+        var allInteractionPartners = await _context.Set<Domain.Entities.InteractionPartner>()
+            .AsNoTracking()
+            .Where(ip => allInteractionIds.Contains(ip.InteractionId))
+            .Include(ip => ip.Partner)
+            .ToListAsync();
+
+        var allInteractionPartnersLookup = allInteractionPartners.GroupBy(ip => ip.InteractionId).ToDictionary(g => g.Key, g => g.ToList());
+        
+        foreach (var interaction in allInteractions)
+        {
+            interaction.InteractionPartners = allInteractionPartnersLookup.TryGetValue(interaction.Id, out var partners_) 
+                ? partners_ : new List<Domain.Entities.InteractionPartner>();
+        }
+
         // Get unique org unit codes from interaction users
-        var orgUnitCodes = recentInteractions
-            .SelectMany(i => i.InteractionUsers ?? new List<Domain.Entities.InteractionUser>())
+        var orgUnitCodes = interactionUsers
             .Select(iu => iu.User?.UserProfile?.OrgUnit)
             .Where(code => !string.IsNullOrEmpty(code))
             .Distinct()
             .ToList();
 
-        // Load organization hierarchy data for these codes
+        // ==========================================
+        // QUERY 8: Organization hierarchy lookup
+        // ==========================================
         var orgUnitLookup = await _context.OrganizationHierarchies
+            .AsNoTracking() // ✅ Read-only query optimization
             .Where(oh => orgUnitCodes.Contains(oh.Code) && oh.Type == OrganizationUnitType.OrgUnit)
             .GroupBy(oh => oh.Code)
             .ToDictionaryAsync(g => g.Key, g => g.First().Name);
@@ -491,8 +560,11 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
     /// </summary>
     public async Task<object> GetBasicPartnerGroupDetailsAsync(ClaimsPrincipal user, int entityId)
     {
-        // Get the partner group (PartnerTree) details
+        // ==========================================
+        // QUERY 1: Main entity - Partner Group
+        // ==========================================
         var partnerGroup = await _context.PartnerTrees
+            .AsNoTracking() // ✅ Read-only query optimization
             .FirstOrDefaultAsync(pt => pt.Id == entityId && !pt.IsDeleted);
         
         if (partnerGroup == null)
@@ -500,8 +572,11 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
             return new { Error = "Partner group not found" };
         }
 
-        // Get Partners that belong to this PartnerGroup with full details
+        // ==========================================
+        // QUERY 2: Partners with simple navigation properties
+        // ==========================================
         var partners = await _context.Partners
+            .AsNoTracking() // ✅ Read-only query optimization
             .Where(p => p.PartnerGroupId == entityId && !p.IsDeleted)
             .Include(p => p.PartnerGroup)
             .Include(p => p.LiaisonOffice)
@@ -509,40 +584,103 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
 
         var partnerIds = partners.Select(p => p.Id).ToList();
 
-        // Get comprehensive interactions for partners in this group (last 30 days)
+        // ==========================================
+        // QUERY 3: Interactions (main entity only) - SPLIT QUERY OPTIMIZATION
+        // Eliminates Cartesian product from multiple ThenInclude() chains
+        // ==========================================
         var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
         var recentInteractions = await _context.Interactions
+            .AsNoTracking() // ✅ Read-only query optimization
             .Where(i => i.InteractionPartners.Any(ip => partnerIds.Contains(ip.PartnerId)) && 
                        !i.IsDeleted && 
                        i.Date >= thirtyDaysAgo)
-            .Include(i => i.InteractionPartners)
-                .ThenInclude(ip => ip.Partner)
-            .Include(i => i.InteractionContacts)
-                .ThenInclude(ic => ic.Contact)
-            .Include(i => i.InteractionUsers)
-                .ThenInclude(iu => iu.User)
-            .Include(i => i.InteractionUsers)
-                .ThenInclude(iu => iu.User.UserProfile)
             .OrderByDescending(i => i.Date)
             .ToListAsync();
 
-        // Get all interactions (not just recent) for statistics
-        var allInteractions = await _context.Interactions
-            .Where(i => i.InteractionPartners.Any(ip => partnerIds.Contains(ip.PartnerId)) && !i.IsDeleted)
-            .Include(i => i.InteractionPartners)
-                .ThenInclude(ip => ip.Partner)
+        var recentInteractionIds = recentInteractions.Select(i => i.Id).ToList();
+
+        // ==========================================
+        // QUERY 4: InteractionPartners collection - SPLIT QUERY OPTIMIZATION
+        // Load separately to avoid Cartesian product
+        // ==========================================
+        var interactionPartners = await _context.Set<Domain.Entities.InteractionPartner>()
+            .AsNoTracking()
+            .Where(ip => recentInteractionIds.Contains(ip.InteractionId))
+            .Include(ip => ip.Partner)
             .ToListAsync();
 
+        // ==========================================
+        // QUERY 5: InteractionContacts collection - SPLIT QUERY OPTIMIZATION
+        // Load separately to avoid Cartesian product
+        // ==========================================
+        var interactionContacts = await _context.Set<Domain.Entities.InteractionContact>()
+            .AsNoTracking()
+            .Where(ic => recentInteractionIds.Contains(ic.InteractionId))
+            .Include(ic => ic.Contact)
+            .ToListAsync();
+
+        // ==========================================
+        // QUERY 6: InteractionUsers collection - SPLIT QUERY OPTIMIZATION
+        // Load separately to avoid Cartesian product
+        // ==========================================
+        var interactionUsers = await _context.Set<Domain.Entities.InteractionUser>()
+            .AsNoTracking()
+            .Where(iu => recentInteractionIds.Contains(iu.InteractionId))
+            .Include(iu => iu.User)
+                .ThenInclude(u => u.UserProfile)
+            .ToListAsync();
+
+        // Assign collections back to interactions for processing
+        var interactionPartnersLookup = interactionPartners.GroupBy(ip => ip.InteractionId).ToDictionary(g => g.Key, g => g.ToList());
+        var interactionContactsLookup = interactionContacts.GroupBy(ic => ic.InteractionId).ToDictionary(g => g.Key, g => g.ToList());
+        var interactionUsersLookup = interactionUsers.GroupBy(iu => iu.InteractionId).ToDictionary(g => g.Key, g => g.ToList());
+
+        foreach (var interaction in recentInteractions)
+        {
+            interaction.InteractionPartners = interactionPartnersLookup.TryGetValue(interaction.Id, out var partners_) 
+                ? partners_ : new List<Domain.Entities.InteractionPartner>();
+            interaction.InteractionContacts = interactionContactsLookup.TryGetValue(interaction.Id, out var contacts) 
+                ? contacts : new List<Domain.Entities.InteractionContact>();
+            interaction.InteractionUsers = interactionUsersLookup.TryGetValue(interaction.Id, out var users) 
+                ? users : new List<Domain.Entities.InteractionUser>();
+        }
+
+        // ==========================================
+        // QUERY 7: All interactions for statistics - SPLIT QUERY OPTIMIZATION
+        // ==========================================
+        var allInteractions = await _context.Interactions
+            .AsNoTracking() // ✅ Read-only query optimization
+            .Where(i => i.InteractionPartners.Any(ip => partnerIds.Contains(ip.PartnerId)) && !i.IsDeleted)
+            .ToListAsync();
+
+        var allInteractionIds = allInteractions.Select(i => i.Id).ToList();
+        
+        var allInteractionPartners = await _context.Set<Domain.Entities.InteractionPartner>()
+            .AsNoTracking()
+            .Where(ip => allInteractionIds.Contains(ip.InteractionId))
+            .Include(ip => ip.Partner)
+            .ToListAsync();
+
+        var allInteractionPartnersLookup = allInteractionPartners.GroupBy(ip => ip.InteractionId).ToDictionary(g => g.Key, g => g.ToList());
+        
+        foreach (var interaction in allInteractions)
+        {
+            interaction.InteractionPartners = allInteractionPartnersLookup.TryGetValue(interaction.Id, out var partners_) 
+                ? partners_ : new List<Domain.Entities.InteractionPartner>();
+        }
+
         // Get unique org unit codes from interaction users
-        var orgUnitCodes = recentInteractions
-            .SelectMany(i => i.InteractionUsers ?? new List<Domain.Entities.InteractionUser>())
+        var orgUnitCodes = interactionUsers
             .Select(iu => iu.User?.UserProfile?.OrgUnit)
             .Where(code => !string.IsNullOrEmpty(code))
             .Distinct()
             .ToList();
 
-        // Load organization hierarchy data for these codes
+        // ==========================================
+        // QUERY 8: Organization hierarchy lookup
+        // ==========================================
         var orgUnitLookup = await _context.OrganizationHierarchies
+            .AsNoTracking() // ✅ Read-only query optimization
             .Where(oh => orgUnitCodes.Contains(oh.Code) && oh.Type == OrganizationUnitType.OrgUnit)
             .GroupBy(oh => oh.Code)
             .ToDictionaryAsync(g => g.Key, g => g.First().Name);
@@ -648,6 +786,7 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
     {
         // Get the partner category (PartnerTree) details
         var partnerCategory = await _context.PartnerTrees
+            .AsNoTracking() // ✅ Read-only query optimization
             .FirstOrDefaultAsync(pt => pt.Id == entityId && !pt.IsDeleted);
         
         if (partnerCategory == null)
@@ -660,6 +799,7 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
 
         // Get Partners that belong to these PartnerGroups with additional details
         var partners = await _context.Partners
+            .AsNoTracking() // ✅ Read-only query optimization
             .Where(p => partnerGroupIds.Contains(p.PartnerGroupId.Value) && !p.IsDeleted)
             .Include(p => p.PartnerGroup)
             .Include(p => p.LiaisonOffice)
@@ -740,6 +880,7 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
     {
         // Get the partner group (PartnerTree) details
         var partnerGroup = await _context.PartnerTrees
+            .AsNoTracking() // ✅ Read-only query optimization
             .FirstOrDefaultAsync(pt => pt.Id == entityId && !pt.IsDeleted);
         
         if (partnerGroup == null)
@@ -749,6 +890,7 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
 
         // Get Partners that belong to this PartnerGroup with additional details
         var partners = await _context.Partners
+            .AsNoTracking() // ✅ Read-only query optimization
             .Where(p => p.PartnerGroupId == entityId && !p.IsDeleted)
             .Include(p => p.PartnerGroup)
             .Include(p => p.LiaisonOffice)

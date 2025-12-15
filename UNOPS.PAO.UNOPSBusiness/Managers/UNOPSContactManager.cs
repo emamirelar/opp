@@ -258,7 +258,8 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     {
         var query = contactRepository
             .GetAll(["Partner", "Partner.PartnerGroup"])
-            .AsQueryable();
+            .AsQueryable()
+            .AsNoTracking(); // ✅ Read-only query optimization
 
         // Custom pagination with efficient user lookup
         var totalCount = query.Count();
@@ -315,7 +316,8 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     {
         var query = contactRepository
             .GetAll(["Partner", "Partner.PartnerGroup"])
-            .AsQueryable();
+            .AsQueryable()
+            .AsNoTracking(); // ✅ Read-only query optimization
 
         // Apply access control filters (row and column filtering) BEFORE pagination
         var filteredData = await ApplyAccessControlFilters(query, user, "read");
@@ -393,8 +395,9 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         // Create a single-item query and apply access control filters
         var query = contactRepository
             .GetAll(["Partner", "Partner.PartnerGroup"])
-            .Where(x => x.Id == id)
-            .AsQueryable();
+            .AsQueryable()
+            .AsNoTracking() // ✅ Read-only query optimization
+            .Where(x => x.Id == id);
 
         // Apply access control filters (row and column filtering)
         var filteredData = await ApplyAccessControlFilters(query, user, "read");
@@ -467,7 +470,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     public PaginationResponse<ContactModel> GetContactsWithSpecification(int userId, ISpecification<Contact> specification, PaginationRequest pagination)
     {
         // Apply the specification to the query
-        var query = contactRepository.GetAll(["Partner"]).AsQueryable();
+        var query = contactRepository.GetAll(["Partner"]).AsQueryable().AsNoTracking(); // ✅ Read-only query optimization
 
         // Cast to base type to apply specification, then cast back to derived type
         var baseQuery = query.Cast<Contact>();
@@ -546,7 +549,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 
     public IEnumerable<ExternalContactModel> GetPostedContacts()
     {
-        var contacts = contactRepository.GetAll();
+        var contacts = contactRepository.GetAll().AsQueryable().AsNoTracking().ToList(); // ✅ Read-only query optimization
         // Note: IsPosted property may not exist, commenting out for now
         // return contacts.Where(c => c.IsPosted).Select(c => MapEntityToExternalModel(c, mapper));
 
@@ -579,7 +582,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 
     public IEnumerable<ContactModel> GetPartnerContacts(int partnerId)
     {
-        var contacts = contactRepository.GetAll(["Partner", "Partner.PartnerGroup"]).Where(c => c.PartnerId == partnerId).ToList();
+        var contacts = contactRepository.GetAll(["Partner", "Partner.PartnerGroup"]).AsQueryable().AsNoTracking().Where(c => c.PartnerId == partnerId).ToList(); // ✅ Read-only query optimization
 
         // Load OrganizationUnitRelationships manually for all contacts and their partners
         contacts.LoadOrganizationUnitRelationshipsAsync(_context).Wait();
@@ -604,7 +607,8 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         // Apply the specification directly to the UNOPSContact query
         var query = contactRepository
             .GetAll(["Partner", "Partner.PartnerGroup"])
-            .AsQueryable();
+            .AsQueryable()
+            .AsNoTracking(); // ✅ Read-only query optimization
 
         var filteredQuery = query.ApplySpecification(specification);
         
@@ -720,20 +724,27 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     /// </summary>
     public async Task<object> GetContactWithInteractionsAsync(ClaimsPrincipal user, int id)
     {
-        // Load contact with interactions through the junction table
+        // ==========================================
+        // QUERY 1: Main contact with navigation properties (optimized with AsNoTracking)
+        // ==========================================
         var entity = await _context.Contacts
+            .AsNoTracking() // ✅ Read-only query optimization
             .Where(c => c.Id == id && !c.IsDeleted)
             .Include(c => c.Partner)
                 .ThenInclude(p => p.PartnerGroup)
             .Include(c => c.Partner)
                 .ThenInclude(p => p.LiaisonOffice)
             .Include(c => c.Documents)
+                .ThenInclude(d => d.DocumentType)
             .FirstOrDefaultAsync();
             
         if (entity == null) return new { error = "Contact not found" };
         
-        // Get interactions for this contact through the junction table
+        // ==========================================
+        // QUERY 2: Load Interactions separately to avoid Cartesian product with Documents
+        // ==========================================
         var interactions = await _context.Interactions
+            .AsNoTracking() // ✅ Read-only query optimization
             .Where(i => i.InteractionContacts.Any(ic => ic.ContactId == id) && !i.IsDeleted)
             .Include(i => i.InteractionUsers)
                 .ThenInclude(iu => iu.User)
@@ -875,7 +886,8 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         // Apply the specification to the query
         var query = contactRepository
             .GetAll(["Partner", "Partner.PartnerGroup"])
-            .AsQueryable();
+            .AsQueryable()
+            .AsNoTracking(); // ✅ Read-only query optimization
 
         // Cast to base type to apply specification, then cast back to derived type
         var baseQuery = query.Cast<Contact>();
@@ -1026,6 +1038,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         var lowercaseEmailAddresses = input.EmailAddresses.Select(e => e.ToLower()).ToList();
         
         var contacts = await _context.Contacts
+                                    .AsNoTracking() // ✅ Read-only query optimization
                                     .Where(c => (c.Email != null && lowercaseEmailAddresses.Contains(c.Email.ToLower())))
                                     .Include(c => c.Partner)
                                     .ToListAsync();
@@ -1035,6 +1048,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 
         // Get interactions through the InteractionContacts junction table with full interaction entities for permission checking
         var interactionContacts = await _context.InteractionContacts
+            .AsNoTracking() // ✅ Read-only query optimization
             .Where(ic => allContactIds.Contains(ic.ContactId))
             .Include(ic => ic.Interaction)
             .Select(ic => new
@@ -1106,10 +1120,10 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 
             // Query for contact with the specified email (case-insensitive)
             var contact = await _context.Contacts
+                                .AsNoTracking() // ✅ Read-only query optimization
                                 .Where(c => c.Email.ToLower() == email.ToLower() && !c.IsDeleted)
                                 .Include(c => c.Partner)
                                     .ThenInclude(cp => cp.PartnerGroup)
-                                .AsQueryable()
                                 .FirstOrDefaultAsync();
 
             if (contact == null)
@@ -1126,6 +1140,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 
             // Apply access control filters to ensure user has permission to access this contact
             var query = _context.Contacts
+                                .AsNoTracking() // ✅ Read-only query optimization
                                 .Where(c => c.Id == contact.Id)
                                 .Include(c => c.Partner)
                                     .ThenInclude(cp => cp.PartnerGroup)
@@ -1178,9 +1193,9 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
             
             // Look up contacts with the same domain
             var contactsWithSameDomain = await _context.Contacts
+                                                        .AsNoTracking() // ✅ Read-only query optimization
                                                         .Where(c => !string.IsNullOrEmpty(c.Email) && c.Email.Contains($"@{emailDomain}"))
                                                         .Include(c => c.Partner)
-                                                        .AsQueryable()
                                                         .ToListAsync();
 
             if (contactsWithSameDomain.Any())
@@ -1633,6 +1648,8 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 
         var contacts = contactRepository
             .GetAll(["Partner", "Partner.PartnerGroup"])
+            .AsQueryable()
+            .AsNoTracking() // ✅ Read-only query optimization
             .Where(c => ids.Contains(c.Id))
             .ToList();
 

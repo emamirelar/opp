@@ -53,7 +53,10 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
     /// </summary>
     public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal user = null)
     {
-        var document = await _documentRepository.GetByIdAsync(entityId);
+        // ✅ OPTIMIZED: Added AsNoTracking for read-only query
+        var document = await _context.Set<UNOPSDocument>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(d => d.Id == entityId);
         if (document == null) return null;
         
         return MapDocumentModel(document);
@@ -73,11 +76,11 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
 
     private async Task EnsureFolderDocument(string googleId, string link, string folderName, string entityType, int entityId)
     {
-        var folderDocument = _documentRepository
-            .GetAll()
-            //.NotDeleted()
+        // ✅ OPTIMIZED: Added AsNoTracking for read-only check
+        var folderDocument = await _context.Set<UNOPSDocument>()
+            .AsNoTracking()
             .Where(x => x.Type == "folder" && x.GoogleId == googleId && !x.IsDeleted)
-            .FirstOrDefault();
+            .FirstOrDefaultAsync();
 
         if (folderDocument != null)
         {
@@ -167,7 +170,11 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
         switch (entityType)
         {
             case "Contact":
-                var contact = await _contactRepository.GetByIdAsync(entityId, ["Partner"]);
+                // ✅ OPTIMIZED: Added AsNoTracking for read-only query
+                var contact = await _context.Set<UNOPSContact>()
+                    .AsNoTracking()
+                    .Include(c => c.Partner)
+                    .FirstOrDefaultAsync(c => c.Id == entityId);
                 if (contact == null)
                 {
                     throw new Exception("Contact not found.");
@@ -201,7 +208,10 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
                 return project.Name;*/
 
             case "Contact":
-                var contact = await _contactRepository.GetByIdAsync(entityId);
+                // ✅ OPTIMIZED: Added AsNoTracking for read-only query
+                var contact = await _context.Set<UNOPSContact>()
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(c => c.Id == entityId);
                 if (contact == null)
                 {
                     throw new Exception("Contact not found.");
@@ -209,7 +219,10 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
                 return contact.Name;
 
             case "Partner":
-                var partner = await _partnerRepository.GetByIdAsync(entityId);
+                // ✅ OPTIMIZED: Added AsNoTracking for read-only query
+                var partner = await _context.Set<UNOPSPartner>()
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(p => p.Id == entityId);
                 if (partner == null)
                 {
                     throw new Exception("Partner not found.");
@@ -217,7 +230,10 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
                 return partner.Name;
 
             case "PartnerTree":
-                var partnerTree = await _partnerTreeRepository.GetByIdAsync(entityId);
+                // ✅ OPTIMIZED: Added AsNoTracking for read-only query
+                var partnerTree = await _context.Set<UNOPSPartnerTree>()
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(pt => pt.Id == entityId);
                 if (partnerTree == null)
                 {
                     throw new Exception("PartnerTree not found.");
@@ -329,18 +345,26 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
 
     public IEnumerable<DocumentModel> ListDocumentsAsync(string entityName, int entityId)
     {
-        return _documentRepository
-            .GetAll(["DocumentRelationships", "DocumentType"])
+        // ✅ OPTIMIZED: Added AsNoTracking for read-only query
+        return _context.Set<UNOPSDocument>()
+            .AsNoTracking()
+            .Include(d => d.DocumentRelationships)
+            .Include(d => d.DocumentType)
             .Where(x =>
                 !x.IsDeleted &&
                 x.Type != "folder" &&
                 x.DocumentRelationships.Any(y => y.EntityType == entityName && y.EntityId == entityId))
+            .AsEnumerable()
             .Select(MapDocumentModel);
     }
 
     public async Task<(int EntityId, string EntityType)?> GetDocumentParentEntityByIdAsync(int documentId)
     {
-        var item = await _documentRepository.GetByIdAsync(documentId, new[] { "DocumentRelationships" });
+        // ✅ OPTIMIZED: Added AsNoTracking for read-only query
+        var item = await _context.Set<UNOPSDocument>()
+            .AsNoTracking()
+            .Include(d => d.DocumentRelationships)
+            .FirstOrDefaultAsync(d => d.Id == documentId);
 
         if (item == null)
         {
@@ -359,7 +383,11 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
 
     public async Task<DocumentModel?> GetDocumentByIdAsync(int documentId)
     {
-        var item = await _documentRepository.GetByIdAsync(documentId, ["DocumentType"]);
+        // ✅ OPTIMIZED: Added AsNoTracking for read-only query
+        var item = await _context.Set<UNOPSDocument>()
+            .AsNoTracking()
+            .Include(d => d.DocumentType)
+            .FirstOrDefaultAsync(d => d.Id == documentId);
 
         if (item == null)
         {
@@ -412,8 +440,11 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
 
     public UNOPSDocument? GetEntityFolderDocument(string entityName, int entityId)
     {
-        return _documentRepository
-            .GetAll(["DocumentRelationships", "DocumentType"])
+        // ✅ OPTIMIZED: Added AsNoTracking for read-only query
+        return _context.Set<UNOPSDocument>()
+            .AsNoTracking()
+            .Include(d => d.DocumentRelationships)
+            .Include(d => d.DocumentType)
             .Where(x =>
                 !x.IsDeleted &&
                 x.Type == "folder" &&
@@ -423,13 +454,16 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
 
     public async Task<IEnumerable<DocumentModel>> GetDocumentsByEntityAsync(string entityName, int entityId)
     {
-        var documents = _documentRepository
-            .GetAll(["DocumentRelationships", "DocumentType"])
+        // ✅ OPTIMIZED: Added AsNoTracking for read-only query
+        var documents = await _context.Set<UNOPSDocument>()
+            .AsNoTracking()
+            .Include(d => d.DocumentRelationships)
+            .Include(d => d.DocumentType)
             .Where(x =>
                 !x.IsDeleted &&
                 x.Type != "folder" &&
                 x.DocumentRelationships.Any(y => y.EntityType == entityName && y.EntityId == entityId))
-            .ToList();
+            .ToListAsync();
 
         return documents.Select(doc => MapDocumentModel(doc));
     }
@@ -547,7 +581,10 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
     /// <returns>The email address of the creator.</returns>
     public async Task<string> GetCreatorEmailAsync(int documentId)
     {
-        var document = await _documentRepository.GetByIdAsync(documentId);
+        // ✅ OPTIMIZED: Added AsNoTracking for read-only query
+        var document = await _context.Set<UNOPSDocument>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(d => d.Id == documentId);
         if (document == null)
         {
             throw new Exception("Document not found.");
@@ -563,10 +600,11 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
 
     public async Task<byte[]> GetFileContentAsync(string docGoogleId, string userToImpersonate)
     {
+        // ✅ OPTIMIZED: Added AsNoTracking for read-only query
         // First check if document has blob data (local storage)
-        var document = _documentRepository
-            .GetAll()
-            .FirstOrDefault(d => d.GoogleId == docGoogleId);
+        var document = await _context.Set<UNOPSDocument>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(d => d.GoogleId == docGoogleId);
 
         if (document?.Blob != null && document.Blob.Length > 0)
         {
@@ -580,7 +618,10 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
 
     public async Task<byte[]> GetFileContentByIdAsync(int documentId)
     {
-        var document = await _documentRepository.GetByIdAsync(documentId);
+        // ✅ OPTIMIZED: Added AsNoTracking for read-only query
+        var document = await _context.Set<UNOPSDocument>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(d => d.Id == documentId);
         
         if (document == null)
         {
@@ -613,7 +654,11 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
     /// <returns>Object containing document type and blob data (or GCS path for cloud-stored documents)</returns>
     public async Task<object> GetDocumentDetailsForAiAsync(int id)
     {
-        var document = await _documentRepository.GetByIdAsync(id, new[] { "DocumentType" });
+        // ✅ OPTIMIZED: Added AsNoTracking for read-only AI query
+        var document = await _context.Set<UNOPSDocument>()
+            .AsNoTracking()
+            .Include(d => d.DocumentType)
+            .FirstOrDefaultAsync(d => d.Id == id);
         
         if (document == null)
         {
@@ -685,7 +730,9 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
     /// <returns>Dictionary containing all document details formatted for AI prompt placeholders</returns>
     public async Task<Dictionary<string, object>> GetDocumentDetailsForOpportunityCreationAsync(int id)
     {
+        // ✅ OPTIMIZED: Added AsNoTracking for read-only AI query
         var document = await _context.Set<UNOPSDocument>()
+            .AsNoTracking()
             .Include(d => d.DocumentType)
             .Include(d => d.DocumentRelationships)
             .FirstOrDefaultAsync(d => d.Id == id && !d.IsDeleted);

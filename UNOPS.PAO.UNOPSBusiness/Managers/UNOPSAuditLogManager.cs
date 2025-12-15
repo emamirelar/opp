@@ -29,6 +29,7 @@ public class UNOPSAuditLogManager : BaseUNOPSManager, IAuditLogManager
     public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal user = null)
     {
         var auditLog = await _context.AuditLogs
+            .AsNoTracking() // ✅ Read-only query - no updates needed
             .FirstOrDefaultAsync(a => a.Id == entityId && !a.IsDeleted);
 
         return auditLog != null ? _mapper.Map<AuditLogModel>(auditLog) : null;
@@ -57,6 +58,7 @@ public class UNOPSAuditLogManager : BaseUNOPSManager, IAuditLogManager
     public async Task<AuditLogModel?> GetLatestAuditLogAsync(string entityType, int entityId)
     {
         var auditLog = await _context.AuditLogs
+            .AsNoTracking() // ✅ Read-only query - audit logs are immutable
             .Where(a => a.EntityType == entityType && a.EntityId == entityId && !a.IsDeleted)
             .OrderByDescending(a => a.Timestamp)
             .FirstOrDefaultAsync();
@@ -67,6 +69,7 @@ public class UNOPSAuditLogManager : BaseUNOPSManager, IAuditLogManager
     public async Task<IEnumerable<AuditLogModel>> GetAuditLogsAsync(string entityType, int entityId)
     {
         var auditLogs = await _context.AuditLogs
+            .AsNoTracking() // ✅ Read-only query - audit logs used for display only
             .Where(a => a.EntityType == entityType && a.EntityId == entityId && !a.IsDeleted)
             .OrderByDescending(a => a.Timestamp)
             .ToListAsync();

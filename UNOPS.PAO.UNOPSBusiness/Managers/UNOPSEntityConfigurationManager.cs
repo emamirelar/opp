@@ -36,6 +36,7 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
     {
         
         return await _context.EntityManagers
+            .AsNoTracking() // ✅ Read-only query - no updates will be made
             .Include(em => em.EntityFields.Where(f => !f.IsDeleted))
             .Where(em => !em.IsDeleted)
             .OrderBy(em => em.EntityName)
@@ -46,6 +47,7 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
     {
         
         return await _context.EntityManagers
+            .AsNoTracking() // ✅ Read-only query - no updates will be made
             .Include(em => em.EntityFields.Where(f => !f.IsDeleted))
             .FirstOrDefaultAsync(em => em.Id == id && !em.IsDeleted);
     }
@@ -54,6 +56,7 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
     {
         
         return await _context.EntityManagers
+            .AsNoTracking() // ✅ Read-only query - no updates will be made
             .Include(em => em.EntityFields.Where(f => !f.IsDeleted))
             .FirstOrDefaultAsync(em => em.EntityName == entityName && !em.IsDeleted);
     }
@@ -155,6 +158,7 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
     {
         
         return await _context.EntityFieldManagers
+            .AsNoTracking() // ✅ Read-only query - no updates will be made
             .Where(ef => ef.EntityManagerId == entityManagerId && !ef.IsDeleted)
             .OrderBy(ef => ef.DisplayOrder)
             .ThenBy(ef => ef.FieldName)
@@ -165,6 +169,7 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
     {
         
         return await _context.EntityFieldManagers
+            .AsNoTracking() // ✅ Read-only query - no updates will be made
             .Include(ef => ef.EntityManager)
             .FirstOrDefaultAsync(ef => ef.Id == fieldId && !ef.IsDeleted);
     }
@@ -319,6 +324,7 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
     {
         
         var entityConfig = await _context.EntityManagers
+            .AsNoTracking() // ✅ Read-only query - no updates will be made
             .Include(em => em.EntityFields.Where(f => !f.IsDeleted))
             .FirstOrDefaultAsync(em => em.EntityName == entityName && !em.IsDeleted);
 
@@ -532,6 +538,7 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
     public async Task<IEnumerable<RelatedFieldOptionDto>> GetRelatedEntityFieldsAsync(ClaimsPrincipal user, string entityType)
     {   
         var entityConfig = await _context.EntityManagers
+            .AsNoTracking() // ✅ Read-only query - no updates will be made
             .Include(em => em.EntityFields.Where(f => !f.IsDeleted && f.IsActive))
             .FirstOrDefaultAsync(em => em.EntityName == entityType && !em.IsDeleted);
 
@@ -653,6 +660,7 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
     {
         
         var entityConfig = await _context.EntityManagers
+            .AsNoTracking() // ✅ Read-only query - no updates will be made
             .Include(em => em.EntityFields.Where(f => !f.IsDeleted && f.IsActive && f.ShowInListView))
             .FirstOrDefaultAsync(em => em.EntityName == entityName && !em.IsDeleted);
 
@@ -691,12 +699,14 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
     {
         // RBAC interceptor handles security enforcement
         var allEntityManagers = await _context.EntityManagers
+            .AsNoTracking() // ✅ Read-only query - generating SQL export
             .Include(em => em.EntityFields.Where(f => !f.IsDeleted))
             .Where(em => !em.IsDeleted)
             .OrderBy(em => em.EntityName)
             .ToListAsync();
 
         var allEntityFields = await _context.EntityFieldManagers
+            .AsNoTracking() // ✅ Read-only query - generating SQL export
             .Include(efm => efm.EntityManager)
             .Where(efm => !efm.IsDeleted && !efm.EntityManager.IsDeleted)
             .OrderBy(efm => efm.EntityManager.EntityName)
