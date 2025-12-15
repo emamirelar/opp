@@ -26,6 +26,9 @@ environments:
     ai_min_instances: "1"
     ai_max_instances: "10"
     ai_memory: "2Gi"
+    ai_cpu: "1"
+    main_concurrency: "160"
+    ai_concurrency: "80"
 
   test:
     branch_pattern: "^test$"
@@ -48,12 +51,15 @@ environments:
     port_main: "7123"
     main_min_instances: "0"
     main_max_instances: "3"
-    main_memory: "512Mi"
-    main_cpu: "1"
+    main_memory: "2Gi"
+    main_cpu: "2"
     port_ai: "8080"
     ai_min_instances: "1"
     ai_max_instances: "10"
     ai_memory: "2Gi"
+    ai_cpu: "1"
+    main_concurrency: "160"
+    ai_concurrency: "80"
     
   qa:
     branch_pattern: "^development$"
@@ -76,12 +82,15 @@ environments:
     port_main: "7123"
     main_min_instances: "0"
     main_max_instances: "3"
-    main_memory: "512Mi"
-    main_cpu: "1"
+    main_memory: "2Gi"
+    main_cpu: "2"
     port_ai: "8080"
     ai_min_instances: "1"
     ai_max_instances: "10"
     ai_memory: "2Gi"
+    ai_cpu: "1"
+    main_concurrency: "160"
+    ai_concurrency: "80"
 
   development:
     branch_pattern: "^dev-deploy$"
@@ -110,3 +119,6 @@ environments:
     ai_min_instances: "1"
     ai_max_instances: "10"
     ai_memory: "2Gi"
+    ai_cpu: "1"
+    main_concurrency: "80"
+    ai_concurrency: "80"
