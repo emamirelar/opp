@@ -4,6 +4,7 @@ using Lamar;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Npgsql;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Managers;
 using UNOPS.PAO.DataAccess.Context;
@@ -521,6 +522,23 @@ public class Startup
                                 $"Please set it up under in appsettings.{CurrentEnvironment.EnvironmentName}.json under ConnectionStrings. " +
                                 $"Current environment: {CurrentEnvironment.EnvironmentName}.");
 
+        // OPTIMIZE: Configure connection pool for better concurrency
+        var connectionStringBuilder = new NpgsqlConnectionStringBuilder(connectionString)
+        {
+            MinPoolSize = 10,              // Keep connections warm
+            MaxPoolSize = 100,             // Allow more concurrent connections
+            ConnectionLifetime = 300,       // 5 minutes
+            ConnectionIdleLifetime = 60,    // 1 minute idle timeout
+            CommandTimeout = 60,            // Increase timeout for complex queries
+            Timeout = 30,                   // Connection timeout
+            KeepAlive = 10,                // Keep connections alive
+            Multiplexing = true,           // Enable connection multiplexing for better throughput
+            ReadBufferSize = 16384,        // 16KB read buffer
+            WriteBufferSize = 16384        // 16KB write buffer
+        };
+        
+        var optimizedConnectionString = connectionStringBuilder.ToString();
+        
         // Core DB context
         services.AddDbContext<DataAccess.Context.AppDbContext>(options =>
             options
