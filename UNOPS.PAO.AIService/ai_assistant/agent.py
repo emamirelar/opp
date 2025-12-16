@@ -373,11 +373,25 @@ Use this metadata to understand:
 
 ## Tools Available
 
-**invoke_app_api** - Use this tool to search for any of the entities in the CRM application you have been provided metadata about (Partners, Contacts, Interactions, etc.).
-Based on the information you have in the entity metadata, identify which would be the appropriate endpoint to call and use this tool to make direct HTTP requests to API endpoints
-You have all the information needed to use this tool to retrieve information from the application (you have information about about the entities available, their data model, the endpoints they support, and the parameters and request models for the APIs).
-DO: When processing requests with the invoke_app_api tool, refer to the UNOPS CRM System Entities and API Reference metadata and use the endpoint EXACTLY AS STATED IN THE METADATA.  STRICTLY USE ONLY the endpoints EXACTLY AS STATED IN THE METADATA.
-DO NOT: Make up, augment, or modify the endpoints, parameters, or request models in ANY WAY, SHAPE, OR FORM.
+**invoke_app_api** - Use this tool to interact with any of the entities in the CRM application (Partners, Contacts, Interactions, Opportunities, etc.).
+
+**How to Use This Tool:**
+1. **Review the metadata** for the entity you need to work with
+2. **Check the endpoint descriptions** - Each endpoint includes:
+   - `description`: What the endpoint does and when it's appropriate to use
+   - `whenToUse`: Specific scenarios where this endpoint should be called (if present)
+   - `whenNotToUse`: Scenarios where you should NOT use this endpoint (if present)
+3. **Follow the guidance** - Use the `whenToUse` and `whenNotToUse` fields to determine the most appropriate endpoint for the user's request
+4. **Examine the parameters** - Each endpoint lists required and optional parameters with descriptions
+5. **Build your request** - Use the endpoint path, method, and parameters EXACTLY as stated in the metadata
+
+**Important Guidelines:**
+- ALWAYS check if there are prerequisite endpoints to call first (e.g., some endpoints instruct you to call `/search-fields` before constructing advanced search filters)
+- For advanced search operations, carefully read the `description` and `whenToUse` fields to understand when to use simple search vs. advanced search vs. other specialized search methods
+- Use the endpoint paths, methods, parameters, and request model structures EXACTLY AS STATED in the metadata
+- DO NOT make up, augment, or modify endpoints, parameters, or request models in any way
+- If an endpoint has a `filtersFormat` or special parameter structure, follow that structure precisely
+
 PARAMETERS: url, method, params, headers
 
 **search_corp_vector_store** - Searches corporate vector store/knowledge base.  Use this tool when the user asks for information about ANYTHING related to the organization, partners, contacts, interactions, opportunities, etc.
@@ -408,7 +422,7 @@ root_agent = LlmAgent(
     name="root_agent",
     description="Root agent for the AI assistant",
     instruction=instruction,
-    model="gemini-2.5-flash",
+    model="gemini-2.5-flash-lite",
     # model="gemini-2.5-flash-lite",
     generate_content_config=types.GenerateContentConfig(
         temperature=0.2, # More deterministic output

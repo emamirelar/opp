@@ -3,7 +3,7 @@
   <div #widthTracker class="w-full h-px opacity-0 pointer-events-none relative"></div>
   
   <div class="entity-grid-header" *ngIf="entityType">
-    <h4>{{ entityType }}s ({{ gridData.length || 0 }})</h4>
+    <h4>{{ getPluralEntityType() }} ({{ gridData.length || 0 }})</h4>
   </div>
   
   <div class="entity-grid-loading" *ngIf="isLoading()">

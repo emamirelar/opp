@@ -12,8 +12,8 @@ node("app-build") {
     def environment, PROJECT_ID, REPO_NAME, IMAGE_NAME_MAIN, IMAGE_NAME_AI, IMAGE_TAG
     def SERVICE_NAME_MAIN, SERVICE_NAME_AI, REGION, SQL_CONN_STRING, VPC_CONNECTOR
     def SECRETS_MAIN, ENV_VARS_AI, CREDENTIALS_ID, DOCKERFILE_MAIN, PORT_MAIN, PORT_AI
-    def AI_MIN_INSTANCES, AI_MAX_INSTANCES, AI_MEMORY, INVOKER_SERVICE_ACCOUNTS_MAIN, INVOKER_SERVICE_ACCOUNTS_AI
-    def MAIN_MIN_INSTANCES, MAIN_MAX_INSTANCES, MAIN_MEMORY, MAIN_CPU
+    def AI_MIN_INSTANCES, AI_MAX_INSTANCES, AI_MEMORY, AI_CPU, AI_CONCURRENCY, INVOKER_SERVICE_ACCOUNTS_MAIN, INVOKER_SERVICE_ACCOUNTS_AI
+    def MAIN_MIN_INSTANCES, MAIN_MAX_INSTANCES, MAIN_MEMORY, MAIN_CPU, MAIN_CONCURRENCY
     
     try {
         stage('Checkout Code') {
@@ -66,18 +66,21 @@ node("app-build") {
             AI_MIN_INSTANCES = envConfig.ai_min_instances
             AI_MAX_INSTANCES = envConfig.ai_max_instances
             AI_MEMORY = envConfig.ai_memory
+            AI_CPU = envConfig.ai_cpu
+            AI_CONCURRENCY = envConfig.ai_concurrency
             MAIN_MIN_INSTANCES = envConfig.main_min_instances
             MAIN_MAX_INSTANCES = envConfig.main_max_instances
             MAIN_MEMORY = envConfig.main_memory
             MAIN_CPU = envConfig.main_cpu
+            MAIN_CONCURRENCY = envConfig.main_concurrency
             INVOKER_SERVICE_ACCOUNTS_MAIN = envConfig.invoker_service_accounts_main
             INVOKER_SERVICE_ACCOUNTS_AI = envConfig.invoker_service_accounts_ai
             
             echo "Configuration loaded for environment: ${environment}"
             echo "Project ID: ${PROJECT_ID}"
             echo "Branch: ${currentBranch}"
-            echo "Main Service Scaling: ${MAIN_MIN_INSTANCES}-${MAIN_MAX_INSTANCES} instances, ${MAIN_MEMORY} memory"
-            echo "AI Service Scaling: ${AI_MIN_INSTANCES}-${AI_MAX_INSTANCES} instances, ${AI_MEMORY} memory"
+            echo "Main Service Scaling: ${MAIN_MIN_INSTANCES}-${MAIN_MAX_INSTANCES} instances, ${MAIN_MEMORY} memory, ${MAIN_CPU} cpu, ${MAIN_CONCURRENCY} concurrency"
+            echo "AI Service Scaling: ${AI_MIN_INSTANCES}-${AI_MAX_INSTANCES} instances, ${AI_MEMORY} memory, ${AI_CPU} cpu, ${AI_CONCURRENCY} concurrency"
             echo "Main Service Invoker Accounts: ${INVOKER_SERVICE_ACCOUNTS_MAIN}"
             echo "AI Service Invoker Accounts: ${INVOKER_SERVICE_ACCOUNTS_AI}"
         }
@@ -156,6 +159,7 @@ node("app-build") {
                                     --memory ${MAIN_MEMORY} \\
                                     --cpu ${MAIN_CPU} \\
                                     --timeout=900 \\
+                                    --concurrency=${MAIN_CONCURRENCY} \\
                                     --quiet; then
                                 echo "Main application deployment successful on attempt \$attempt"
                                 DEPLOY_SUCCESS=true
@@ -238,7 +242,9 @@ node("app-build") {
                                     --min-instances ${AI_MIN_INSTANCES} \\
                                     --max-instances ${AI_MAX_INSTANCES} \\
                                     --memory ${AI_MEMORY} \\
+                                    --cpu ${AI_CPU} \\
                                     --timeout=900 \\
+                                    --concurrency=${AI_CONCURRENCY} \\
                                     --quiet; then
                                 echo "AI service deployment successful on attempt \$attempt"
                                 DEPLOY_SUCCESS=true

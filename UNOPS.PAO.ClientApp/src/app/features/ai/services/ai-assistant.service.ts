@@ -184,10 +184,21 @@ export class AiAssistantService {
     files?: ChatFile[], 
     state?: any
   ): Observable<{ data: any, complete: boolean }> {
+    // Separate files with GCS paths from raw files
+    const gcsFiles = files
+      ?.filter(f => f.gcsPath)
+      .map(f => ({ gcsPath: f.gcsPath!, name: f.name || '', mimeType: f.mediaType })) || [];
+    
+    const rawFiles = files
+      ?.filter(f => !f.gcsPath && f.file)
+      .map(f => f.file!)
+      .filter(file => file != null) || [];
+    
     const formData = this.createStreamingChatFormData({
       message: userMessage.content.parts[0]?.text || '', // Extract text from unified model
       sessionId,
-      files: files?.map(f => f.file).filter(file => file != null),
+      files: rawFiles.length > 0 ? rawFiles : undefined,
+      gcsFiles: gcsFiles.length > 0 ? gcsFiles : undefined,
       state,
       streaming: true
     });
@@ -376,8 +387,13 @@ export class AiAssistantService {
       formData.append('state', stateString);
     }
     
-    // Add files if provided
-    if (requestData.files && requestData.files.length > 0) {
+    // Add GCS file paths if provided (preferred over raw files)
+    if (requestData.gcsFiles && requestData.gcsFiles.length > 0) {
+      // Send GCS paths as JSON array for backend to process
+      formData.append('gcs_files', JSON.stringify(requestData.gcsFiles));
+    }
+    // Add raw files as fallback if no GCS files
+    else if (requestData.files && requestData.files.length > 0) {
       // Validate files first
       const validation = this.validateFiles(requestData.files);
       
