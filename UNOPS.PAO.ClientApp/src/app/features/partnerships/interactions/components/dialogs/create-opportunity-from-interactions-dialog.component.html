@@ -1328,17 +1328,9 @@
                           <h4 class="font-semibold text-gray-900">
                             {{ country.country?.name || country.countryName || 'Unknown Country' }}
                           </h4>
-                          @if (country.country && (country.country.continent || country.country.region)) {
+                          @if (country.country && country.country.continent) {
                             <p class="text-sm text-gray-600">
-                              @if (country.country.continent) {
-                                <span>{{ country.country.continent }}</span>
-                              }
-                              @if (country.country.continent && country.country.region) {
-                                <span>, </span>
-                              }
-                              @if (country.country.region) {
-                                <span>{{ country.country.region }}</span>
-                              }
+                              <span>{{ country.country.continent }}</span>
                             </p>
                           }
                           @if (country.specificAreas) {
