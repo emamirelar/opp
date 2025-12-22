@@ -96,13 +96,41 @@
           <span>{{ 'label.opportunity.implementationCountries' | translate }} ({{ countryCount() }})</span>
         </h3>
         @if (isEditing()) {
-          <p-button
-            [label]="'button.add' | translate"
-            icon="pi pi-plus"
-            size="small"
-            [text]="true"
-            (onClick)="openAddCountryDialog()"
-          />
+          <div class="flex items-center gap-2">
+            @if (selectedCountriesForDeletion().size > 0) {
+              <p-button
+                [label]="'button.removeSelected' | translate: { count: selectedCountriesForDeletion().size }"
+                icon="pi pi-trash"
+                size="small"
+                severity="danger"
+                [outlined]="true"
+                (onClick)="removeSelectedCountries()"
+              />
+              <p-button
+                [label]="'button.clearSelection' | translate"
+                icon="pi pi-times"
+                size="small"
+                severity="secondary"
+                [text]="true"
+                (onClick)="clearCountrySelection()"
+              />
+            } @else if (countryCount() > 1) {
+              <p-button
+                [label]="'button.selectAll' | translate"
+                icon="pi pi-check-square"
+                size="small"
+                [text]="true"
+                (onClick)="selectAllCountriesForDeletion()"
+              />
+            }
+            <p-button
+              [label]="'button.add' | translate"
+              icon="pi pi-plus"
+              size="small"
+              [text]="true"
+              (onClick)="openAddCountryDialog()"
+            />
+          </div>
         }
       </div>
       
@@ -120,8 +148,22 @@
       
       @if (countryCount() > 0) {
         @for (country of opportunity().countries; track country.id; let i = $index) {
-          <div class="bg-unops-surface-secondary rounded-unops-lg p-3 border border-unops-neutral-300 mb-2 shadow-unops-sm">
+          <div class="bg-unops-surface-secondary rounded-unops-lg p-3 border border-unops-neutral-300 mb-2 shadow-unops-sm"
+               [class.bg-blue-50]="isEditing() && selectedCountriesForDeletion().has(i)"
+               [class.border-blue-400]="isEditing() && selectedCountriesForDeletion().has(i)">
             <div class="flex items-start gap-3">
+              <!-- Checkbox for bulk deletion (only show in edit mode) -->
+              @if (isEditing()) {
+                <div class="flex items-center pt-1 flex-shrink-0">
+                  <input
+                    type="checkbox"
+                    [checked]="selectedCountriesForDeletion().has(i)"
+                    (change)="toggleCountryForDeletion(i)"
+                    class="w-4 h-4 cursor-pointer"
+                  />
+                </div>
+              }
+              
               <!-- Country ISO Code Badge (like Partner logo) -->
               <div class="w-10 h-10 bg-unops-primary-container rounded flex items-center justify-center flex-shrink-0">
                 <span class="text-sm font-bold text-unops-primary-on-container">{{ country.country?.iso2Code || 'XX' }}</span>
@@ -146,12 +188,6 @@
                   <div class="text-sm text-unops-neutral-700">
                     @if (country.country.continent) {
                       <span>{{ country.country.continent }}</span>
-                    }
-                    @if (country.country.continent && country.country.region) {
-                      <span>, </span>
-                    }
-                    @if (country.country.region) {
-                      <span>{{ country.country.region }}</span>
                     }
                   </div>
                 }
