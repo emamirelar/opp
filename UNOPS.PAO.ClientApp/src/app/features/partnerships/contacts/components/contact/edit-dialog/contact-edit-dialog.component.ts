@@ -200,6 +200,10 @@ export class ContactEditDialogComponent implements OnInit {
         this.setOrganizationHierarchyIds(orgIds);
         delete formData.organizationUnitRelationships; // Remove from formData to avoid patch conflict
       }
+      // Handle selectedOrgUnitId from import data (when editing import row)
+      else if (formData.selectedOrgUnitId) {
+        this.setOrganizationHierarchyIds([formData.selectedOrgUnitId]);
+      }
       
       this.formGroup.patchValue(formData);
       
@@ -348,6 +352,11 @@ export class ContactEditDialogComponent implements OnInit {
 
     // Handle Organization Unit relationships
     requestJsonObj['organizationHierarchyIds'] = formValue['organizationHierarchyIds'] || [];
+    
+    // Include selectedOrgUnitId and selectedOrgUnitName for import dialog compatibility
+    const orgIds = formValue['organizationHierarchyIds'] || [];
+    requestJsonObj['selectedOrgUnitId'] = orgIds.length > 0 ? orgIds[0] : null;
+    requestJsonObj['selectedOrgUnitName'] = formValue['organizationHierarchyNames'] || '';
 
     return requestJsonObj;
   }

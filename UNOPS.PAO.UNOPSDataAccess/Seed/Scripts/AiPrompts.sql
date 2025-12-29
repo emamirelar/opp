@@ -659,26 +659,28 @@ Return compact single-line JSON. If more input needed, set ResponseType to "Info
 "Company"/"Organization"/"Partner"/"Employer" → partnerId (string, add to dependents)
 "Job Title"/"Position"/"Role" → title
 "Department"/"Division"/"Unit" → department
+"Contact Organization Unit"/"Contact Org Unit"/"Org Unit"/"UNOPS Org Unit" → selectedOrgUnitId (string, add to dependents if present)
 
 **SALUTATION DETECTION:**
 Auto-detect from: Mr., Ms., Mrs., Dr., Prof., Sir, Madam
 
 **ESSENTIAL CONTACT JSON FORMAT:**
-{"id": <number if exists>, "salutation": "", "firstName": "", "lastName": "", "name": "", "title": "", "department": "", "email": "", "phone": "", "mobile": "", "partnerId": "", "dependents": ["partnerId"], "validationError": ""}
+{"id": <number if exists>, "salutation": "", "firstName": "", "lastName": "", "name": "", "title": "", "department": "", "email": "", "phone": "", "mobile": "", "partnerId": "", "selectedOrgUnitId": "", "dependents": ["partnerId", "selectedOrgUnitId"], "validationError": ""}
 
 **RULES:**
 - Set validationError for missing required fields (lastName, email, title, partnerId)
 - Validate email format
 - Set partnerId as string name, include "partnerId" in dependents for ID resolution
-- Omit null/empty fields from JSON to keep it compact
+- Set selectedOrgUnitId as string name (optional field), include "selectedOrgUnitId" in dependents if present
+- Omit null/empty fields from JSON to keep it compact (including selectedOrgUnitId if not present)
 - Compute name field as concatenation of salutation + firstName + lastName
 - Only include "id" field in JSON output if ID column is present in source data
-- Focus on essential fields only: name components, title, email, phone, partnerId, department
+- Focus on essential fields only: name components, title, email, phone, partnerId, department, selectedOrgUnitId
 
 **RESPONSE FORMAT:**
 {"Message":"Contact data processed successfully.","Category":"Contact","ResponseType":"Action","records":[...]}
 
-Return compact single-line JSON. If more input needed, set ResponseType to "Information". The "dependents" property is used to indicate which property in the JSON is an ID and is required to map. In this case, it is only the partnerId. Hence, DONOT update the dependents value. Send the dependents property''s value as-is ("dependents": ["partnerId"] -> do not replace partnerId). Also, include "id" only if it is present.',
+Return compact single-line JSON. If more input needed, set ResponseType to "Information". The "dependents" property is used to indicate which property in the JSON is an ID and is required to map. In this case, it is partnerId and selectedOrgUnitId (if present). Hence, DONOT update the dependents value. Send the dependents property''s value as-is ("dependents": ["partnerId", "selectedOrgUnitId"] -> do not replace these values). Also, include "id" only if it is present. Only include "selectedOrgUnitId" in the dependents array if the field has a value.',
         '',
         NOW(),
         'Contact',
@@ -2933,12 +2935,14 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
   - **Example**: ["World Bank", "Asian Development Bank", "{partnerName}"]
   - **MUST add "fundingPartners" to dependents array**
 
-- **clientPartners** (array): List of client partner names as text strings
+- **clientPartners** (array): List of client partner names as text strings (organizations that receive services, implement, or benefit)
+  - **TYPICAL CLIENT PARTNERS**: Government ministries, national agencies, local governments, implementing NGOs, beneficiary organizations
   - **Extract from THREE SOURCES**:
     * **CONTEXT PARTNER** (if `{partnerRole}` includes "Client"): If `{partnerId}` > 0 AND `{partnerRole}` contains "Client", you **MUST** include the context partner `{partnerName}` as a client partner
-    * **INTERACTION PARTNERS**: Analyze ALL partners from the `{interactions}` array - each interaction has a `partners` field. Review all partners across all interactions and determine if they are client/implementing partners based on context
-    * **DOCUMENT CONTENT**: Extract organizations mentioned as clients, implementing partners, or beneficiaries from document text
-  - **Example**: ["Ministry of Health - Kenya", "Local Government", "{partnerName}"]
+    * **INTERACTION PARTNERS**: Analyze ALL partners from the `{interactions}` array - each interaction has a `partners` field. Look for government entities, ministries, agencies, or organizations that will implement or benefit from the project
+    * **DOCUMENT CONTENT**: Extract organizations mentioned as clients, implementing partners, counterparts, or beneficiaries from document text
+  - **Example**: ["Ministry of Health - Kenya", "Ministry of Water - Tanzania", "National Water Authority", "{partnerName}"]
+  - **CRITICAL**: Do NOT confuse with funding partners - client partners are those who receive UNOPS services or implement projects, NOT those providing funding
   - **MUST add "clientPartners" to dependents array**
 
 - **stakeholders** (array of objects): List of UNOPS internal stakeholders involved in the opportunity. Each stakeholder MUST be an object with:
@@ -3015,12 +3019,26 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
 2. **INTERACTION PARTNERS (from selected interactions):**
    - Each interaction in `{interactions}` has a `partners` array with `{ id, name }` objects
    - **Analyze ALL partners** across ALL selected interactions
-   - **Determine role based on:**
-     * Partner type/name (e.g., "World Bank", "AfDB", "UNDP" → typically funding)
-     * Interaction context (funding discussions vs implementation discussions)
-     * Document content (funding agreements vs implementation plans)
+   - **Determine role based on partner type and context:**
+     
+     **FUNDING PARTNERS** (provide financial resources):
+     * Multilateral Development Banks: World Bank, AfDB, ADB, IDB, EBRD, AIIB
+     * UN Agencies: UNDP, UNICEF, WHO, FAO, WFP, UNFPA
+     * Bilateral Donors: USAID, DFID/FCDO, GIZ, JICA, SIDA, NORAD, KOICA
+     * Foundations: Gates Foundation, Rockefeller, Ford Foundation
+     * Private Sector: Companies providing funding/CSR contributions
+     * Context clues: "funding", "grant", "contribution", "donor", "financing"
+     
+     **CLIENT PARTNERS** (receive services, implement projects, or benefit):
+     * Government Ministries: Ministry of Health, Ministry of Water, Ministry of Education
+     * Government Agencies: National authorities, regulatory bodies, public institutions
+     * Local Governments: Municipalities, counties, regional governments
+     * Implementing Partners: NGOs implementing on the ground
+     * Beneficiary Organizations: Communities, cooperatives, associations
+     * Context clues: "client", "implementing partner", "beneficiary", "recipient", "counterpart"
+     
    - Add to fundingPartners or clientPartners arrays based on analysis
-   - **Note**: A partner can appear in BOTH funding and client arrays if appropriate
+   - **Note**: A partner can appear in BOTH funding and client arrays if they provide funding AND receive services
 
 3. **DOCUMENT-MENTIONED PARTNERS:**
    - Extract partner names from document text and metadata
