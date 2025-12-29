@@ -5,7 +5,12 @@ properties(
 )
 
 timestamps {
-node("app-build") {
+    def branchName = env.BRANCH_NAME ?: 'test'
+    def agentLabel = "opportunityplus-agent-${branchName}"
+
+    echo "Using Jenkins dynamic agent: ${agentLabel}"
+
+node(agentLabel) {
     def CHECK_NAME = 'External Data Service CI'
     def BUILD_URL = env.BUILD_URL ?: ''
 

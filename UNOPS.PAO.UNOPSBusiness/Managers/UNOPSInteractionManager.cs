@@ -34,6 +34,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     private readonly IUserProfileCacheService userProfileCacheService;
     private readonly PartnerTreeService partnerTreeService;
     private readonly GlobalFilterService _globalFilterService;
+    private readonly IDbContextFactory<UNOPSAppDbContext>? _dbContextFactory; // ⚡ PERFORMANCE: Enable parallel query execution
 
     private InteractionModel MapEntityToModel(UNOPSInteraction entity, IMapper mapper)
     {
@@ -240,13 +241,14 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         await context.SaveChangesAsync();
     }
 
-    public UNOPSInteractionManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, PartnerTreeService partnerTreeService, IPermissionService permissionService, GlobalFilterService globalFilterService, IHttpContextAccessor httpContextAccessor = null, IServiceProvider serviceProvider = null, IUserProfileCacheService userProfileCacheService = null)
+    public UNOPSInteractionManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, PartnerTreeService partnerTreeService, IPermissionService permissionService, GlobalFilterService globalFilterService, IHttpContextAccessor httpContextAccessor = null, IServiceProvider serviceProvider = null, IUserProfileCacheService userProfileCacheService = null, IDbContextFactory<UNOPSAppDbContext>? dbContextFactory = null)
         : base(mapper, context, configuration, null, "Interaction", permissionService, httpContextAccessor)
     {
         this.mapper = mapper;
         this.context = context;
         this.partnerTreeService = partnerTreeService;
         _globalFilterService = globalFilterService;
+        _dbContextFactory = dbContextFactory; // ⚡ PERFORMANCE: Store factory for parallel execution
         interactionRepository = new BaseRepository<UNOPSInteraction>(context, configuration, serviceProvider);
         contactRepository = new BaseRepository<UNOPSContact>(context, configuration, serviceProvider);
         OrganizationHierarchyRepository = new BaseRepository<OrganizationHierarchy>(context, configuration, serviceProvider);
@@ -817,30 +819,28 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
     /// <summary>
     /// Gets all interactions with row-level security applied
+    /// ⚡ OPTIMIZED: Split queries + AsNoTracking + Batch loading for optimal performance
     /// </summary>
     public async Task<PaginationResponse<InteractionModel>> GetInteractionsAsync(ClaimsPrincipal user, PaginationRequest request)
     {
-        // RBAC interceptor handles security enforcement
-        var query = interactionRepository
-            .GetAll([
-                "InteractionContacts", 
-                "InteractionContacts.Contact", 
-                "InteractionContacts.Contact.Partner",
-                "InteractionPartners",
-                "InteractionPartners.Partner",
-                "InteractionUsers",
-                "InteractionUsers.User",
-                "InteractionUsers.User.UserProfile"
-            ])
-            .AsQueryable();
-
-        // First get the paginated entities without mapping to avoid N+1 queries
         var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
         var excludedRows = (pageIndex - 1) * request.PageSize;
+
+        // ==========================================
+        // QUERY 1: Main interactions only (no collections to avoid Cartesian product)
+        // ⚡ OPTIMIZATION: AsNoTracking for read-only operation
+        // ==========================================
+        var query = context.Set<UNOPSInteraction>()
+            .AsNoTracking()
+            .Where(i => !i.IsDeleted);
 
         if (request.OrderBy != null)
         {
             query = query.OrderByColumnName(request.OrderBy, request.Ascending ?? true);
+        }
+        else
+        {
+            query = query.OrderByDescending(i => i.Date);
         }
 
         // Get total count first
@@ -851,6 +851,61 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             .Skip(excludedRows)
             .Take(request.PageSize)
             .ToListAsync();
+
+        if (!pagedEntities.Any())
+        {
+            return new PaginationResponse<InteractionModel>
+            {
+                Records = new List<InteractionModel>(),
+                TotalCount = 0,
+                PageIndex = pageIndex,
+                PageSize = request.PageSize,
+                TotalPages = 0
+            };
+        }
+
+        var interactionIds = pagedEntities.Select(i => i.Id).ToList();
+
+        // ==========================================
+        // QUERY 2-4: Batch load collections for ALL paginated interactions
+        // ⚡ OPTIMIZATION: Load in 3 separate queries instead of N+1 pattern
+        // ==========================================
+        
+        // Batch load InteractionContacts with Contact and Partner
+        var allInteractionContacts = await context.Set<InteractionContact>()
+            .AsNoTracking()
+            .Where(ic => interactionIds.Contains(ic.InteractionId))
+            .Include(ic => ic.Contact)
+                .ThenInclude(c => c.Partner)
+            .ToListAsync();
+        
+        // Batch load InteractionPartners with Partner
+        var allInteractionPartners = await context.Set<InteractionPartner>()
+            .AsNoTracking()
+            .Where(ip => interactionIds.Contains(ip.InteractionId))
+            .Include(ip => ip.Partner)
+            .ToListAsync();
+        
+        // Batch load InteractionUsers with User and UserProfile
+        var allInteractionUsers = await context.Set<InteractionUser>()
+            .AsNoTracking()
+            .Where(iu => interactionIds.Contains(iu.InteractionId))
+            .Include(iu => iu.User)
+                .ThenInclude(u => u.UserProfile)
+            .ToListAsync();
+
+        // Group collections by interaction ID for fast assignment
+        var contactsByInteraction = allInteractionContacts.GroupBy(ic => ic.InteractionId).ToDictionary(g => g.Key, g => g.ToList());
+        var partnersByInteraction = allInteractionPartners.GroupBy(ip => ip.InteractionId).ToDictionary(g => g.Key, g => g.ToList());
+        var usersByInteraction = allInteractionUsers.GroupBy(iu => iu.InteractionId).ToDictionary(g => g.Key, g => g.ToList());
+
+        // Assign collections to entities
+        foreach (var entity in pagedEntities)
+        {
+            entity.InteractionContacts = contactsByInteraction.TryGetValue(entity.Id, out var contacts) ? contacts : new List<InteractionContact>();
+            entity.InteractionPartners = partnersByInteraction.TryGetValue(entity.Id, out var partners) ? partners : new List<InteractionPartner>();
+            entity.InteractionUsers = usersByInteraction.TryGetValue(entity.Id, out var users) ? users : new List<InteractionUser>();
+        }
 
         // ⚡ PERFORMANCE FIX: Load organization unit relationships ONLY for paginated items
         await pagedEntities.LoadOrganizationUnitRelationshipsAsync(context);
@@ -885,21 +940,52 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
     /// <summary>
     /// Gets a specific interaction with row-level security applied
+    /// ⚡ OPTIMIZED: Split queries + AsNoTracking for better performance
     /// </summary>
     public async Task<InteractionModel?> GetInteractionAsync(ClaimsPrincipal user, int id)
     {
-        // RBAC interceptor handles security enforcement
-        var item = await interactionRepository.GetByIdAsync(id, [
-            "InteractionContacts", 
-            "InteractionContacts.Contact", 
-            "InteractionContacts.Contact.Partner",
-            "InteractionPartners",
-            "InteractionPartners.Partner", 
-            "InteractionUsers",
-            "InteractionUsers.User",
-            "InteractionUsers.User.UserProfile"
-        ]);
+        // ==========================================
+        // QUERY 1: Main interaction entity only (no collections)
+        // ⚡ OPTIMIZATION: AsNoTracking for read-only operation
+        // ==========================================
+        var item = await context.Set<UNOPSInteraction>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(i => i.Id == id && !i.IsDeleted);
+            
         if (item == null) return null;
+
+        // ==========================================
+        // QUERY 2-4: Load collections independently to avoid Cartesian product
+        // Each query loads only what it needs with AsNoTracking
+        // ==========================================
+        
+        // Load InteractionContacts with Contact and Partner
+        var interactionContacts = await context.Set<InteractionContact>()
+            .AsNoTracking()
+            .Where(ic => ic.InteractionId == id)
+            .Include(ic => ic.Contact)
+                .ThenInclude(c => c.Partner)
+            .ToListAsync();
+        
+        // Load InteractionPartners with Partner
+        var interactionPartners = await context.Set<InteractionPartner>()
+            .AsNoTracking()
+            .Where(ip => ip.InteractionId == id)
+            .Include(ip => ip.Partner)
+            .ToListAsync();
+        
+        // Load InteractionUsers with User and UserProfile
+        var interactionUsers = await context.Set<InteractionUser>()
+            .AsNoTracking()
+            .Where(iu => iu.InteractionId == id)
+            .Include(iu => iu.User)
+                .ThenInclude(u => u.UserProfile)
+            .ToListAsync();
+
+        // Assign collections to entity
+        item.InteractionContacts = interactionContacts;
+        item.InteractionPartners = interactionPartners;
+        item.InteractionUsers = interactionUsers;
 
         // Load organization unit relationships for single interaction
         await item.LoadOrganizationUnitRelationshipsAsync(context);
@@ -909,24 +995,48 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
     /// <summary>
     /// Updates an interaction with permission validation
+    /// ⚡ OPTIMIZED: Split queries for loading, tracked entity for updates
     /// </summary>
     public async Task<InteractionModel?> UpdateInteractionAsync(ClaimsPrincipal user, UpdateInteractionRequest model)
     {
-        // RBAC interceptor handles security enforcement
-        var entity = await interactionRepository.GetByIdAsync(model.Id, [
-            "InteractionContacts", 
-            "InteractionContacts.Contact", 
-            "InteractionContacts.Contact.Partner",
-            "InteractionPartners",
-            "InteractionPartners.Partner",
-            "InteractionUsers",
-            "InteractionUsers.User",
-            "InteractionUsers.User.UserProfile"
-        ]);
+        // ==========================================
+        // QUERY 1: Load main interaction WITH TRACKING (needed for update)
+        // NOTE: No AsNoTracking here since we're updating the entity
+        // ==========================================
+        var entity = await context.Set<UNOPSInteraction>()
+            .FirstOrDefaultAsync(i => i.Id == model.Id && !i.IsDeleted);
+            
         if (entity == null)
         {
             throw new BusinessException($"Interaction {model.Id} does not exist.");
         }
+
+        // ==========================================
+        // QUERY 2-4: Load collections separately for reference
+        // ⚡ OPTIMIZATION: Split queries to avoid Cartesian product
+        // ==========================================
+        
+        var interactionContacts = await context.Set<InteractionContact>()
+            .Where(ic => ic.InteractionId == model.Id)
+            .Include(ic => ic.Contact)
+                .ThenInclude(c => c.Partner)
+            .ToListAsync();
+        
+        var interactionPartners = await context.Set<InteractionPartner>()
+            .Where(ip => ip.InteractionId == model.Id)
+            .Include(ip => ip.Partner)
+            .ToListAsync();
+        
+        var interactionUsers = await context.Set<InteractionUser>()
+            .Where(iu => iu.InteractionId == model.Id)
+            .Include(iu => iu.User)
+                .ThenInclude(u => u.UserProfile)
+            .ToListAsync();
+
+        // Assign collections to entity
+        entity.InteractionContacts = interactionContacts;
+        entity.InteractionPartners = interactionPartners;
+        entity.InteractionUsers = interactionUsers;
 
         // Load organization unit relationships for single interaction
         await entity.LoadOrganizationUnitRelationshipsAsync(context);
@@ -952,20 +1062,17 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
     /// <summary>
     /// Deletes an interaction with permission validation
+    /// ⚡ OPTIMIZED: Minimal query for delete operation (no unnecessary includes)
     /// </summary>
     public async Task DeleteInteractionAsync(ClaimsPrincipal user, int id)
     {
-        // RBAC interceptor handles security enforcement
-        var entity = await interactionRepository.GetByIdAsync(id, [
-            "InteractionContacts", 
-            "InteractionContacts.Contact", 
-            "InteractionContacts.Contact.Partner",
-            "InteractionPartners",
-            "InteractionPartners.Partner",
-            "InteractionUsers",
-            "InteractionUsers.User",
-            "InteractionUsers.User.UserProfile"
-        ]);
+        // ==========================================
+        // QUERY 1: Load only main entity for delete (no collections needed)
+        // ⚡ OPTIMIZATION: Don't load unnecessary related data for delete operation
+        // ==========================================
+        var entity = await context.Set<UNOPSInteraction>()
+            .FirstOrDefaultAsync(i => i.Id == id && !i.IsDeleted);
+            
         if (entity == null) return;
 
         // Soft delete associated OrganizationUnitRelationship records
@@ -976,25 +1083,101 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
     /// <summary>
     /// Gets comprehensive interaction details with security checks for AI prompts
+    /// ⚡ OPTIMIZED: Split queries + AsNoTracking + Parallel execution
     /// </summary>
     public async Task<InteractionModel?> GetInteractionDetailsAsync(ClaimsPrincipal user, int id)
     {
-        // RBAC interceptor handles security enforcement
-        var item = await interactionRepository.GetByIdAsync(id,
-            includes: new[]
-            {
-                "InteractionContacts",
-                "InteractionPartners", 
-                "InteractionUsers",
-                "InteractionContacts.Contact",
-                "InteractionContacts.Contact.Partner",
-                "InteractionPartners.Partner",
-                "InteractionUsers.User",
-                "InteractionUsers.User.UserProfile",
-                "Documents"
-            });
+        // ==========================================
+        // QUERY 1: Main interaction with Documents navigation property
+        // ⚡ OPTIMIZATION: AsNoTracking for read-only operation
+        // ==========================================
+        var item = await context.Set<UNOPSInteraction>()
+            .AsNoTracking()
+            .Include(i => i.Documents)
+                .ThenInclude(d => d.DocumentType)
+            .FirstOrDefaultAsync(i => i.Id == id && !i.IsDeleted);
 
         if (item == null) return null;
+
+        // ==========================================
+        // PARALLEL WAVE 1: Load junction table collections concurrently if DbContextFactory available
+        // ⚡ OPTIMIZATION: Parallel execution for better performance
+        // ==========================================
+        
+        List<InteractionContact> interactionContacts;
+        List<InteractionPartner> interactionPartners;
+        List<InteractionUser> interactionUsers;
+
+        if (_dbContextFactory != null)
+        {
+            // Execute queries in parallel using separate DbContext instances
+            var task1 = Task.Run(async () =>
+            {
+                await using var ctx = await _dbContextFactory.CreateDbContextAsync();
+                return await ctx.Set<InteractionContact>()
+                    .AsNoTracking()
+                    .Where(ic => ic.InteractionId == id)
+                    .Include(ic => ic.Contact)
+                        .ThenInclude(c => c.Partner)
+                    .ToListAsync();
+            });
+
+            var task2 = Task.Run(async () =>
+            {
+                await using var ctx = await _dbContextFactory.CreateDbContextAsync();
+                return await ctx.Set<InteractionPartner>()
+                    .AsNoTracking()
+                    .Where(ip => ip.InteractionId == id)
+                    .Include(ip => ip.Partner)
+                    .ToListAsync();
+            });
+
+            var task3 = Task.Run(async () =>
+            {
+                await using var ctx = await _dbContextFactory.CreateDbContextAsync();
+                return await ctx.Set<InteractionUser>()
+                    .AsNoTracking()
+                    .Where(iu => iu.InteractionId == id)
+                    .Include(iu => iu.User)
+                        .ThenInclude(u => u.UserProfile)
+                    .ToListAsync();
+            });
+
+            // Wait for all parallel tasks to complete
+            await Task.WhenAll(task1, task2, task3);
+
+            interactionContacts = await task1;
+            interactionPartners = await task2;
+            interactionUsers = await task3;
+        }
+        else
+        {
+            // Fallback to sequential execution if DbContextFactory not available
+            interactionContacts = await context.Set<InteractionContact>()
+                .AsNoTracking()
+                .Where(ic => ic.InteractionId == id)
+                .Include(ic => ic.Contact)
+                    .ThenInclude(c => c.Partner)
+                .ToListAsync();
+
+            interactionPartners = await context.Set<InteractionPartner>()
+                .AsNoTracking()
+                .Where(ip => ip.InteractionId == id)
+                .Include(ip => ip.Partner)
+                .ToListAsync();
+
+            interactionUsers = await context.Set<InteractionUser>()
+                .AsNoTracking()
+                .Where(iu => iu.InteractionId == id)
+                .Include(iu => iu.User)
+                    .ThenInclude(u => u.UserProfile)
+                .ToListAsync();
+        }
+
+        // Assign collections to entity
+        item.InteractionContacts = interactionContacts;
+        item.InteractionPartners = interactionPartners;
+        item.InteractionUsers = interactionUsers;
 
         // Load organization unit relationships for single interaction
         await item.LoadOrganizationUnitRelationshipsAsync(context);
@@ -1002,14 +1185,14 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         var result = await MapEntityToModelAsync(item, mapper, user);
         
         // Populate junction table IDs
-        if (item.InteractionContacts != null)
+        if (interactionContacts != null)
         {
-            result.ContactIds = item.InteractionContacts.Select(ic => ic.ContactId).ToList();
+            result.ContactIds = interactionContacts.Select(ic => ic.ContactId).ToList();
         }
 
-        if (item.InteractionPartners != null)
+        if (interactionPartners != null)
         {
-            result.PartnerIds = item.InteractionPartners.Select(ip => ip.PartnerId).ToList();
+            result.PartnerIds = interactionPartners.Select(ip => ip.PartnerId).ToList();
         }
 
         return result;
@@ -1017,24 +1200,102 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
     /// <summary>
     /// Gets interaction with comprehensive details formatted for AI prompt processing
+    /// ⚡ OPTIMIZED: Split queries + AsNoTracking + Parallel execution for AI operations
     /// </summary>
     public async Task<object> GetInteractionDetailsForAIAsync(ClaimsPrincipal user, int id)
     {
-        var entity = await interactionRepository.GetByIdAsync(id,
-            includes: new[]
-            {
-                "InteractionContacts",
-                "InteractionPartners", 
-                "InteractionUsers",
-                "InteractionContacts.Contact",
-                "InteractionContacts.Contact.Partner",
-                "InteractionPartners.Partner",
-                "InteractionUsers.User",
-                "InteractionUsers.User.UserProfile",
-                "Documents"
-            });
+        // ==========================================
+        // QUERY 1: Main interaction with Documents navigation property
+        // ⚡ OPTIMIZATION: AsNoTracking for read-only AI operation
+        // ==========================================
+        var entity = await context.Set<UNOPSInteraction>()
+            .AsNoTracking()
+            .Include(i => i.Documents)
+                .ThenInclude(d => d.DocumentType)
+            .FirstOrDefaultAsync(i => i.Id == id && !i.IsDeleted);
 
         if (entity == null) return new { error = "Interaction not found" };
+
+        // ==========================================
+        // PARALLEL WAVE 1: Load all junction table collections concurrently if DbContextFactory available
+        // Otherwise execute sequentially
+        // ⚡ OPTIMIZATION: Parallel execution for maximum performance
+        // ==========================================
+        
+        List<InteractionContact> interactionContacts;
+        List<InteractionPartner> interactionPartners;
+        List<InteractionUser> interactionUsers;
+
+        if (_dbContextFactory != null)
+        {
+            // Execute queries in parallel using separate DbContext instances
+            var task1 = Task.Run(async () =>
+            {
+                await using var ctx = await _dbContextFactory.CreateDbContextAsync();
+                return await ctx.Set<InteractionContact>()
+                    .AsNoTracking()
+                    .Where(ic => ic.InteractionId == id)
+                    .Include(ic => ic.Contact)
+                        .ThenInclude(c => c.Partner)
+                    .ToListAsync();
+            });
+
+            var task2 = Task.Run(async () =>
+            {
+                await using var ctx = await _dbContextFactory.CreateDbContextAsync();
+                return await ctx.Set<InteractionPartner>()
+                    .AsNoTracking()
+                    .Where(ip => ip.InteractionId == id)
+                    .Include(ip => ip.Partner)
+                    .ToListAsync();
+            });
+
+            var task3 = Task.Run(async () =>
+            {
+                await using var ctx = await _dbContextFactory.CreateDbContextAsync();
+                return await ctx.Set<InteractionUser>()
+                    .AsNoTracking()
+                    .Where(iu => iu.InteractionId == id)
+                    .Include(iu => iu.User)
+                        .ThenInclude(u => u.UserProfile)
+                    .ToListAsync();
+            });
+
+            // Wait for all parallel tasks to complete
+            await Task.WhenAll(task1, task2, task3);
+
+            interactionContacts = await task1;
+            interactionPartners = await task2;
+            interactionUsers = await task3;
+        }
+        else
+        {
+            // Fallback to sequential execution if DbContextFactory not available
+            interactionContacts = await context.Set<InteractionContact>()
+                .AsNoTracking()
+                .Where(ic => ic.InteractionId == id)
+                .Include(ic => ic.Contact)
+                    .ThenInclude(c => c.Partner)
+                .ToListAsync();
+
+            interactionPartners = await context.Set<InteractionPartner>()
+                .AsNoTracking()
+                .Where(ip => ip.InteractionId == id)
+                .Include(ip => ip.Partner)
+                .ToListAsync();
+
+            interactionUsers = await context.Set<InteractionUser>()
+                .AsNoTracking()
+                .Where(iu => iu.InteractionId == id)
+                .Include(iu => iu.User)
+                    .ThenInclude(u => u.UserProfile)
+                .ToListAsync();
+        }
+
+        // Assign collections to entity for organization unit loading
+        entity.InteractionContacts = interactionContacts;
+        entity.InteractionPartners = interactionPartners;
+        entity.InteractionUsers = interactionUsers;
 
         // Load organization unit relationships
         await entity.LoadOrganizationUnitRelationshipsAsync(context);
@@ -1052,7 +1313,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             status = "Active", // Default status for interactions
 
             // Contact information
-            contacts = entity.InteractionContacts?.Select(ic => new
+            contacts = interactionContacts?.Select(ic => new
             {
                 id = ic.Contact.Id,
                 name = $"{ic.Contact.FirstName} {ic.Contact.LastName}".Trim(),
@@ -1070,7 +1331,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
 
             // Partner information
-            partners = entity.InteractionPartners?.Select(ip => new
+            partners = interactionPartners?.Select(ip => new
             {
                 id = ip.Partner.Id,
                 name = ip.Partner.Name,
@@ -1078,7 +1339,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
 
             // User information (UNOPS staff)
-            users = entity.InteractionUsers?.Select(iu => new
+            users = interactionUsers?.Select(iu => new
             {
                 id = iu.User.Id,
                 name = iu.User.Name,
@@ -1098,7 +1359,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
                 }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
 
             // Documents and attachments
-            documents = entity.Documents?.Select(d => new
+            documents = entity.Documents?.Where(d => d != null).Select(d => new
             {
                 id = d.Id,
                 link = d.Link,
@@ -1111,16 +1372,16 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             emailAddresses = entity.EmailAddresses ?? new List<string>(),
 
             // Computed names for easy access
-            contactNames = string.Join(", ", entity.InteractionContacts?.Select(ic => $"{ic.Contact.FirstName} {ic.Contact.LastName}".Trim()) ?? new List<string>()),
-            partnerNames = string.Join(", ", entity.InteractionPartners?.Select(ip => ip.Partner.Name) ?? new List<string>()),
-            userNames = string.Join(", ", entity.InteractionUsers?.Select(iu => iu.User.Name) ?? new List<string>()),
+            contactNames = string.Join(", ", interactionContacts?.Select(ic => $"{ic.Contact.FirstName} {ic.Contact.LastName}".Trim()) ?? new List<string>()),
+            partnerNames = string.Join(", ", interactionPartners?.Select(ip => ip.Partner.Name) ?? new List<string>()),
+            userNames = string.Join(", ", interactionUsers?.Select(iu => iu.User.Name) ?? new List<string>()),
 
             // Summary statistics
             summary = new
             {
-                totalContacts = entity.InteractionContacts?.Count ?? 0,
-                totalPartners = entity.InteractionPartners?.Count ?? 0,
-                totalUsers = entity.InteractionUsers?.Count ?? 0,
+                totalContacts = interactionContacts?.Count ?? 0,
+                totalPartners = interactionPartners?.Count ?? 0,
+                totalUsers = interactionUsers?.Count ?? 0,
                 totalDocuments = entity.Documents?.Count ?? 0,
                 hasDocuments = entity.Documents?.Any() ?? false,
                 hasEmailAddresses = entity.EmailAddresses?.Any() ?? false
@@ -1422,25 +1683,67 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
     /// <summary>
     /// Gets multiple interactions by their IDs for search results
+    /// ⚡ OPTIMIZED: Split queries + AsNoTracking + Batch loading
     /// </summary>
     public override async Task<List<object>> GetByIdsAsync(int[] ids, ClaimsPrincipal user = null)
     {
         if (ids == null || ids.Length == 0)
             return new List<object>();
 
-        var interactions = interactionRepository
-            .GetAll([
-                "InteractionContacts", 
-                "InteractionContacts.Contact", 
-                "InteractionContacts.Contact.Partner",
-                "InteractionPartners",
-                "InteractionPartners.Partner",
-                "InteractionUsers",
-                "InteractionUsers.User",
-                "InteractionUsers.User.UserProfile"
-            ])
-            .Where(i => ids.Contains(i.Id))
-            .ToList();
+        // ==========================================
+        // QUERY 1: Main interactions only (no collections to avoid Cartesian product)
+        // ⚡ OPTIMIZATION: AsNoTracking for read-only operation
+        // ==========================================
+        var interactions = await context.Set<UNOPSInteraction>()
+            .AsNoTracking()
+            .Where(i => ids.Contains(i.Id) && !i.IsDeleted)
+            .ToListAsync();
+
+        if (!interactions.Any())
+            return new List<object>();
+
+        var interactionIds = interactions.Select(i => i.Id).ToList();
+
+        // ==========================================
+        // QUERY 2-4: Batch load collections for ALL interactions
+        // ⚡ OPTIMIZATION: Load in 3 separate queries instead of N+1 pattern
+        // ==========================================
+        
+        // Batch load InteractionContacts with Contact and Partner
+        var allInteractionContacts = await context.Set<InteractionContact>()
+            .AsNoTracking()
+            .Where(ic => interactionIds.Contains(ic.InteractionId))
+            .Include(ic => ic.Contact)
+                .ThenInclude(c => c.Partner)
+            .ToListAsync();
+        
+        // Batch load InteractionPartners with Partner
+        var allInteractionPartners = await context.Set<InteractionPartner>()
+            .AsNoTracking()
+            .Where(ip => interactionIds.Contains(ip.InteractionId))
+            .Include(ip => ip.Partner)
+            .ToListAsync();
+        
+        // Batch load InteractionUsers with User and UserProfile
+        var allInteractionUsers = await context.Set<InteractionUser>()
+            .AsNoTracking()
+            .Where(iu => interactionIds.Contains(iu.InteractionId))
+            .Include(iu => iu.User)
+                .ThenInclude(u => u.UserProfile)
+            .ToListAsync();
+
+        // Group collections by interaction ID for fast assignment
+        var contactsByInteraction = allInteractionContacts.GroupBy(ic => ic.InteractionId).ToDictionary(g => g.Key, g => g.ToList());
+        var partnersByInteraction = allInteractionPartners.GroupBy(ip => ip.InteractionId).ToDictionary(g => g.Key, g => g.ToList());
+        var usersByInteraction = allInteractionUsers.GroupBy(iu => iu.InteractionId).ToDictionary(g => g.Key, g => g.ToList());
+
+        // Assign collections to entities
+        foreach (var interaction in interactions)
+        {
+            interaction.InteractionContacts = contactsByInteraction.TryGetValue(interaction.Id, out var contacts) ? contacts : new List<InteractionContact>();
+            interaction.InteractionPartners = partnersByInteraction.TryGetValue(interaction.Id, out var partners) ? partners : new List<InteractionPartner>();
+            interaction.InteractionUsers = usersByInteraction.TryGetValue(interaction.Id, out var users) ? users : new List<InteractionUser>();
+        }
 
         // Load organization unit relationships
         await interactions.LoadOrganizationUnitRelationshipsAsync(context);
@@ -1588,19 +1891,18 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     /// <summary>
     /// Data retrieval method for AI prompts - Gets comprehensive interaction details for opportunity creation
     /// This method is called via reflection by the Gemini Manager
+    /// ⚡ OPTIMIZED: Split queries + AsNoTracking + Parallel execution for AI operations
     /// </summary>
     /// <param name="id">Interaction ID</param>
     /// <returns>Dictionary containing all interaction details formatted for AI prompt placeholders</returns>
     public async Task<Dictionary<string, object>> GetInteractionDetailsForOpportunityCreationAsync(int id)
     {
+        // ==========================================
+        // QUERY 1: Main interaction with Documents navigation property
+        // ⚡ OPTIMIZATION: AsNoTracking for read-only AI operation
+        // ==========================================
         var interaction = await context.Set<Interaction>()
-            .Include(i => i.InteractionContacts)
-                .ThenInclude(ic => ic.Contact)
-            .Include(i => i.InteractionPartners)
-                .ThenInclude(ip => ip.Partner)
-            .Include(i => i.InteractionUsers)
-                .ThenInclude(iu => iu.User)
-                    .ThenInclude(u => u.UserProfile)
+            .AsNoTracking()
             .Include(i => i.Documents)
                 .ThenInclude(d => d.DocumentType)
             .FirstOrDefaultAsync(i => i.Id == id && !i.IsDeleted);
@@ -1608,6 +1910,79 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         if (interaction == null)
         {
             return null;
+        }
+
+        // ==========================================
+        // PARALLEL WAVE 1: Load junction table collections concurrently if DbContextFactory available
+        // ⚡ OPTIMIZATION: Parallel execution for maximum AI processing performance
+        // ==========================================
+        
+        List<InteractionContact> interactionContacts;
+        List<InteractionPartner> interactionPartners;
+        List<InteractionUser> interactionUsers;
+
+        if (_dbContextFactory != null)
+        {
+            // Execute queries in parallel using separate DbContext instances
+            var task1 = Task.Run(async () =>
+            {
+                await using var ctx = await _dbContextFactory.CreateDbContextAsync();
+                return await ctx.Set<InteractionContact>()
+                    .AsNoTracking()
+                    .Where(ic => ic.InteractionId == id)
+                    .Include(ic => ic.Contact)
+                    .ToListAsync();
+            });
+
+            var task2 = Task.Run(async () =>
+            {
+                await using var ctx = await _dbContextFactory.CreateDbContextAsync();
+                return await ctx.Set<InteractionPartner>()
+                    .AsNoTracking()
+                    .Where(ip => ip.InteractionId == id)
+                    .Include(ip => ip.Partner)
+                    .ToListAsync();
+            });
+
+            var task3 = Task.Run(async () =>
+            {
+                await using var ctx = await _dbContextFactory.CreateDbContextAsync();
+                return await ctx.Set<InteractionUser>()
+                    .AsNoTracking()
+                    .Where(iu => iu.InteractionId == id)
+                    .Include(iu => iu.User)
+                        .ThenInclude(u => u.UserProfile)
+                    .ToListAsync();
+            });
+
+            // Wait for all parallel tasks to complete
+            await Task.WhenAll(task1, task2, task3);
+
+            interactionContacts = await task1;
+            interactionPartners = await task2;
+            interactionUsers = await task3;
+        }
+        else
+        {
+            // Fallback to sequential execution if DbContextFactory not available
+            interactionContacts = await context.Set<InteractionContact>()
+                .AsNoTracking()
+                .Where(ic => ic.InteractionId == id)
+                .Include(ic => ic.Contact)
+                .ToListAsync();
+
+            interactionPartners = await context.Set<InteractionPartner>()
+                .AsNoTracking()
+                .Where(ip => ip.InteractionId == id)
+                .Include(ip => ip.Partner)
+                .ToListAsync();
+
+            interactionUsers = await context.Set<InteractionUser>()
+                .AsNoTracking()
+                .Where(iu => iu.InteractionId == id)
+                .Include(iu => iu.User)
+                    .ThenInclude(u => u.UserProfile)
+                .ToListAsync();
         }
 
         // Build comprehensive interaction details
@@ -1622,7 +1997,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             ["status"] = interaction.Status.ToString(),
             
             // UNOPS participants with org units
-            ["users"] = interaction.InteractionUsers?.Select(iu => new
+            ["users"] = interactionUsers?.Select(iu => new
             {
                 id = iu.User?.Id ?? 0,
                 name = iu.User?.Name ?? string.Empty,
@@ -1631,7 +2006,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             }).ToList() ?? (object)new List<object>(),
             
             // Partner contacts
-            ["contacts"] = interaction.InteractionContacts?.Select(ic => new
+            ["contacts"] = interactionContacts?.Select(ic => new
             {
                 id = ic.Contact?.Id ?? 0,
                 name = $"{ic.Contact?.FirstName ?? string.Empty} {ic.Contact?.LastName ?? string.Empty}".Trim(),
@@ -1640,14 +2015,14 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             }).ToList() ?? (object)new List<object>(),
             
             // Partner organizations
-            ["partners"] = interaction.InteractionPartners?.Select(ip => new
+            ["partners"] = interactionPartners?.Select(ip => new
             {
                 id = ip.Partner?.Id ?? 0,
                 name = ip.Partner?.Name ?? string.Empty
             }).ToList() ?? (object)new List<object>(),
             
             // Documents
-            ["documents"] = interaction.Documents?.Select(d => new
+            ["documents"] = interaction.Documents?.Where(d => d != null).Select(d => new
             {
                 id = d.Id,
                 name = d.Name ?? string.Empty,

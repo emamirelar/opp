@@ -184,7 +184,7 @@ Design Requirements:
 - CRITICAL: Use thick, bold shapes (nothing thinner than 15% of canvas width)
 - CRITICAL: Logo should FILL THE CANVAS with NO PADDING - maximize logo size to use entire square
 - CRITICAL: The logo design must extend close to all edges of the canvas for maximum visibility
-- IMPORTANT: Background MUST be fully transparent (PNG with alpha channel)
+- IMPORTANT: Background MUST be ISOLATED on SOLID WHITE BACKGROUND with no other elements or colors
 - IMPORTANT: Use EXACTLY 3 colors - one primary base color + two accent colors
 - IMPORTANT: Each shape should be large enough to be clearly distinguished at 48px
 - IMPORTANT: NO empty space or padding around the logo - fill the entire 1:1 canvas

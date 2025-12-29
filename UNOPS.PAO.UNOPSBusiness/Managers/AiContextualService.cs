@@ -1436,6 +1436,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             if (dependent.Equals("organizationUnitRelationships", StringComparison.OrdinalIgnoreCase)
                     // Special case for organizationHierarchyIds - should look at OrganizationHierarchies table
                     || dependent.Equals("organizationHierarchyIds", StringComparison.OrdinalIgnoreCase)
+                    // Special case for selectedOrgUnitId (Contact specific) - should look at OrganizationHierarchies table
+                    || dependent.Equals("selectedOrgUnitId", StringComparison.OrdinalIgnoreCase)
                     || entityName.Equals("Orgunit", StringComparison.OrdinalIgnoreCase))
             {
                 entityName = "OrganizationHierarchies";
@@ -1552,6 +1554,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 // Apply the same mapping logic as GetEntityIdFromText
                 if (dependent.Equals("organizationUnitRelationships", StringComparison.OrdinalIgnoreCase)
                         || dependent.Equals("organizationHierarchyIds", StringComparison.OrdinalIgnoreCase)
+                        // Special case for selectedOrgUnitId (Contact specific) - should look at OrganizationHierarchies table
+                        || dependent.Equals("selectedOrgUnitId", StringComparison.OrdinalIgnoreCase)
                         || entityName.Equals("Orgunit", StringComparison.OrdinalIgnoreCase))
                 {
                     name = await _context.OrganizationHierarchies

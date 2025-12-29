@@ -1226,72 +1226,6 @@
               </div>
             }
 
-            <!-- Expected Beneficiaries -->
-            @if (proposedOpportunity()!.opportunity.expectedBeneficiaries) {
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                  <i class="pi pi-users text-orange-600"></i>
-                  {{ 'label.opportunity.expectedBeneficiaries' | translate }}
-                </label>
-                <textarea
-                  pTextarea
-                  [(ngModel)]="proposedOpportunity()!.opportunity.expectedBeneficiaries"
-                  rows="3"
-                  class="w-full bg-yellow-50 border-yellow-200"
-                  maxlength="1000">
-                </textarea>
-              </div>
-            }
-
-            <!-- Expected Impact -->
-            @if (proposedOpportunity()!.opportunity.expectedImpact) {
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                  <i class="pi pi-chart-line text-blue-600"></i>
-                  {{ 'label.opportunity.expectedImpact' | translate }}
-                </label>
-                <textarea
-                  pTextarea
-                  [(ngModel)]="proposedOpportunity()!.opportunity.expectedImpact"
-                  rows="3"
-                  class="w-full bg-yellow-50 border-yellow-200"
-                  maxlength="200">
-                </textarea>
-              </div>
-            }
-
-            <!-- Expected Outcomes -->
-            @if (proposedOpportunity()!.opportunity.expectedOutcomes) {
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                  <i class="pi pi-chart-line text-blue-600"></i>
-                  {{ 'label.opportunity.expectedOutcomes' | translate }}
-                </label>
-                <textarea
-                  pTextarea
-                  [(ngModel)]="proposedOpportunity()!.opportunity.expectedOutcomes"
-                  rows="3"
-                  class="w-full bg-yellow-50 border-yellow-200"
-                  maxlength="200">
-                </textarea>
-              </div>
-            }
-
-            <!-- Results Focus -->
-            @if (proposedOpportunity()!.opportunity.resultsFocus) {
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                  <i class="pi pi-flag text-indigo-600"></i>
-                  {{ 'label.resultsFocus' | translate }}
-                </label>
-                <textarea
-                  pTextarea
-                  [(ngModel)]="proposedOpportunity()!.opportunity.resultsFocus"
-                  rows="3"
-                  class="w-full bg-yellow-50 border-yellow-200">
-                </textarea>
-              </div>
-            }
           </div>
         </div>
 
@@ -1366,7 +1300,7 @@
         }
 
           <!-- ⏰ WHEN Section -->
-          @if ($any(proposedOpportunity()!.opportunity).targetSigningDate || $any(proposedOpportunity()!.opportunity).targetDeliveryDate || $any(proposedOpportunity()!.opportunity).submissionDeadline || $any(proposedOpportunity()!.opportunity).implementationStartDate || $any(proposedOpportunity()!.opportunity).isTargetSigningDateFirm !== undefined || $any(proposedOpportunity()!.opportunity).signingDateNotes || $any(proposedOpportunity()!.opportunity).isPooledFunding !== undefined || $any(proposedOpportunity()!.opportunity).partnershipAgreementReference) {
+          @if ($any(proposedOpportunity()!.opportunity).targetSigningDate || $any(proposedOpportunity()!.opportunity).targetDeliveryDate || $any(proposedOpportunity()!.opportunity).submissionDeadline || $any(proposedOpportunity()!.opportunity).implementationStartDate || $any(proposedOpportunity()!.opportunity).isPooledFunding !== undefined || $any(proposedOpportunity()!.opportunity).partnershipAgreementReference) {
           <div class="border border-gray-200 rounded-lg overflow-hidden">
             <div class="bg-gray-100 px-4 py-3 border-b border-gray-200">
               <h3 class="font-semibold text-gray-900 flex items-center gap-2">
@@ -1430,36 +1364,6 @@
                   </div>
                 }
 
-                <!-- Firm Partner Deadline Flag -->
-                @if ($any(proposedOpportunity()!.opportunity).isTargetSigningDateFirm !== undefined) {
-                  <div 
-                    class="border rounded-lg p-4 transition-all"
-                    [ngClass]="{
-                      'bg-blue-50 border-blue-300': isFieldSelected('isTargetSigningDateFirm'),
-                      'hover:shadow-sm bg-white border-gray-200': !isFieldSelected('isTargetSigningDateFirm')
-                    }">
-                    <div class="flex items-start gap-3">
-                      <p-checkbox
-                        [binary]="true"
-                        [ngModel]="isFieldSelected('isTargetSigningDateFirm')"
-                        (ngModelChange)="toggleField('isTargetSigningDateFirm')"
-                      />
-                      <div class="flex-1">
-                        <label class="block text-sm font-semibold text-gray-700">
-                          {{ 'label.firmDeadline' | translate }}
-                        </label>
-                        <div class="mt-2 flex items-center gap-2">
-                          <p-checkbox
-                            [binary]="true"
-                            [(ngModel)]="$any(proposedOpportunity()!.opportunity).isTargetSigningDateFirm"
-                          />
-                          <span class="text-sm text-gray-600">{{ 'label.isTargetSigningDateFirm' | translate }}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                }
-
                 <!-- Implementation Start Date -->
                 @if ($any(proposedOpportunity()!.opportunity).implementationStartDate) {
                   <div 
@@ -1514,36 +1418,6 @@
                   </div>
                 }
               </div>
-
-              <!-- Signing Date Notes -->
-              @if ($any(proposedOpportunity()!.opportunity).signingDateNotes) {
-                <div 
-                  class="border rounded-lg p-4 transition-all cursor-pointer"
-                  [ngClass]="{
-                    'bg-blue-50 border-blue-300': isFieldSelected('signingDateNotes'),
-                    'hover:shadow-sm bg-white border-gray-200': !isFieldSelected('signingDateNotes')
-                  }"
-                  (click)="toggleField('signingDateNotes')">
-                  <div class="flex items-start gap-3 mb-2">
-                    <p-checkbox
-                      [binary]="true"
-                      [ngModel]="isFieldSelected('signingDateNotes')"
-                      (ngModelChange)="toggleField('signingDateNotes')"
-                      (click)="$event.stopPropagation()"
-                    />
-                    <label class="block text-sm font-semibold text-gray-700 flex-1">
-                      {{ 'label.signingDateNotes' | translate }}
-                    </label>
-                  </div>
-                  <textarea
-                    pTextarea
-                    [(ngModel)]="$any(proposedOpportunity()!.opportunity).signingDateNotes"
-                    rows="2"
-                    class="w-full bg-yellow-50 border-yellow-200"
-                    (click)="$event.stopPropagation()">
-                  </textarea>
-                </div>
-              }
             </div>
           </div>
         }
