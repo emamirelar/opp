@@ -189,6 +189,7 @@ export class ImportDialogComponent implements OnInit, OnDestroy {
     { field: 'pronouns', header: 'contact.pronouns', required: false, label: 'Pronouns', type: 'text', sortable: false },
     { field: 'birthDate', header: 'contact.birthDate', required: false, label: 'Birth Date', type: 'text', sortable: false },
     { field: 'partnerName', header: 'contact.partner', required: true, label: 'Partner', type: 'text', sortable: false },
+    { field: 'selectedOrgUnitName', header: 'contact.contactOrgUnit', required: false, label: 'Contact Organization Unit', type: 'text', sortable: false },
     { field: 'email', header: 'contact.email', required: true, label: 'Email', type: 'text', sortable: false },
     { field: 'phone', header: 'contact.phone', required: false, label: 'Phone', type: 'text', sortable: false },
     { field: 'mobile', header: 'contact.mobile', required: false, label: 'Mobile', type: 'text', sortable: false },

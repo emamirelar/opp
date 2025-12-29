@@ -659,26 +659,28 @@ Return compact single-line JSON. If more input needed, set ResponseType to "Info
 "Company"/"Organization"/"Partner"/"Employer" → partnerId (string, add to dependents)
 "Job Title"/"Position"/"Role" → title
 "Department"/"Division"/"Unit" → department
+"Contact Organization Unit"/"Contact Org Unit"/"Org Unit"/"UNOPS Org Unit" → selectedOrgUnitId (string, add to dependents if present)
 
 **SALUTATION DETECTION:**
 Auto-detect from: Mr., Ms., Mrs., Dr., Prof., Sir, Madam
 
 **ESSENTIAL CONTACT JSON FORMAT:**
-{"id": <number if exists>, "salutation": "", "firstName": "", "lastName": "", "name": "", "title": "", "department": "", "email": "", "phone": "", "mobile": "", "partnerId": "", "dependents": ["partnerId"], "validationError": ""}
+{"id": <number if exists>, "salutation": "", "firstName": "", "lastName": "", "name": "", "title": "", "department": "", "email": "", "phone": "", "mobile": "", "partnerId": "", "selectedOrgUnitId": "", "dependents": ["partnerId", "selectedOrgUnitId"], "validationError": ""}
 
 **RULES:**
 - Set validationError for missing required fields (lastName, email, title, partnerId)
 - Validate email format
 - Set partnerId as string name, include "partnerId" in dependents for ID resolution
-- Omit null/empty fields from JSON to keep it compact
+- Set selectedOrgUnitId as string name (optional field), include "selectedOrgUnitId" in dependents if present
+- Omit null/empty fields from JSON to keep it compact (including selectedOrgUnitId if not present)
 - Compute name field as concatenation of salutation + firstName + lastName
 - Only include "id" field in JSON output if ID column is present in source data
-- Focus on essential fields only: name components, title, email, phone, partnerId, department
+- Focus on essential fields only: name components, title, email, phone, partnerId, department, selectedOrgUnitId
 
 **RESPONSE FORMAT:**
 {"Message":"Contact data processed successfully.","Category":"Contact","ResponseType":"Action","records":[...]}
 
-Return compact single-line JSON. If more input needed, set ResponseType to "Information". The "dependents" property is used to indicate which property in the JSON is an ID and is required to map. In this case, it is only the partnerId. Hence, DONOT update the dependents value. Send the dependents property''s value as-is ("dependents": ["partnerId"] -> do not replace partnerId). Also, include "id" only if it is present.',
+Return compact single-line JSON. If more input needed, set ResponseType to "Information". The "dependents" property is used to indicate which property in the JSON is an ID and is required to map. In this case, it is partnerId and selectedOrgUnitId (if present). Hence, DONOT update the dependents value. Send the dependents property''s value as-is ("dependents": ["partnerId", "selectedOrgUnitId"] -> do not replace these values). Also, include "id" only if it is present. Only include "selectedOrgUnitId" in the dependents array if the field has a value.',
         '',
         NOW(),
         'Contact',
@@ -2933,12 +2935,14 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
   - **Example**: ["World Bank", "Asian Development Bank", "{partnerName}"]
   - **MUST add "fundingPartners" to dependents array**
 
-- **clientPartners** (array): List of client partner names as text strings
+- **clientPartners** (array): List of client partner names as text strings (organizations that receive services, implement, or benefit)
+  - **TYPICAL CLIENT PARTNERS**: Government ministries, national agencies, local governments, implementing NGOs, beneficiary organizations
   - **Extract from THREE SOURCES**:
     * **CONTEXT PARTNER** (if `{partnerRole}` includes "Client"): If `{partnerId}` > 0 AND `{partnerRole}` contains "Client", you **MUST** include the context partner `{partnerName}` as a client partner
-    * **INTERACTION PARTNERS**: Analyze ALL partners from the `{interactions}` array - each interaction has a `partners` field. Review all partners across all interactions and determine if they are client/implementing partners based on context
-    * **DOCUMENT CONTENT**: Extract organizations mentioned as clients, implementing partners, or beneficiaries from document text
-  - **Example**: ["Ministry of Health - Kenya", "Local Government", "{partnerName}"]
+    * **INTERACTION PARTNERS**: Analyze ALL partners from the `{interactions}` array - each interaction has a `partners` field. Look for government entities, ministries, agencies, or organizations that will implement or benefit from the project
+    * **DOCUMENT CONTENT**: Extract organizations mentioned as clients, implementing partners, counterparts, or beneficiaries from document text
+  - **Example**: ["Ministry of Health - Kenya", "Ministry of Water - Tanzania", "National Water Authority", "{partnerName}"]
+  - **CRITICAL**: Do NOT confuse with funding partners - client partners are those who receive UNOPS services or implement projects, NOT those providing funding
   - **MUST add "clientPartners" to dependents array**
 
 - **stakeholders** (array of objects): List of UNOPS internal stakeholders involved in the opportunity. Each stakeholder MUST be an object with:
@@ -2948,7 +2952,12 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
   - **MUST add "stakeholders" to dependents array**
 - **deliverables** (array): List of deliverable descriptions as text strings - extract outputs, deliverables, or project components mentioned in interactions or document names (e.g., ["Feasibility Study", "Infrastructure Design", "Training Program"]) - **MUST add "deliverables" to dependents array**
 - **countries** (array): List of country names as text strings - extract all countries mentioned in interactions or documents (e.g., ["Kenya", "Tanzania", "Uganda"]) - **MUST add "countries" to dependents array**
-- **sdGs** (array): List of SDG references as text strings - identify relevant SDGs based on interaction topics, themes, and document content (e.g., ["Goal 3", "Goal 6", "Goal 9", "Goal 17"]) - **MUST add "sdGs" to dependents array**
+- **sdGs** (array of objects): List of SDG references with primary flag - identify relevant SDGs based on interaction topics, themes, and document content. **CRITICAL: Exactly ONE SDG must be marked as isPrimary=true (the most relevant/central SDG), all others must be isPrimary=false**. Each SDG object has:
+  - **sdgNumber** (int): SDG number 1-17 (e.g., 6 for Clean Water)
+  - **sdgName** (string): Full SDG name (e.g., "Clean Water and Sanitation")
+  - **isPrimary** (boolean): true for the single most important/central SDG, false for all others
+  - Example: [{"sdgNumber": 6, "sdgName": "Clean Water and Sanitation", "isPrimary": true}, {"sdgNumber": 9, "sdgName": "Industry, Innovation and Infrastructure", "isPrimary": false}]
+  - **MUST add "sdGs" to dependents array**
 
 ## ID Field Mapping Rules
 
@@ -3010,12 +3019,26 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
 2. **INTERACTION PARTNERS (from selected interactions):**
    - Each interaction in `{interactions}` has a `partners` array with `{ id, name }` objects
    - **Analyze ALL partners** across ALL selected interactions
-   - **Determine role based on:**
-     * Partner type/name (e.g., "World Bank", "AfDB", "UNDP" → typically funding)
-     * Interaction context (funding discussions vs implementation discussions)
-     * Document content (funding agreements vs implementation plans)
+   - **Determine role based on partner type and context:**
+     
+     **FUNDING PARTNERS** (provide financial resources):
+     * Multilateral Development Banks: World Bank, AfDB, ADB, IDB, EBRD, AIIB
+     * UN Agencies: UNDP, UNICEF, WHO, FAO, WFP, UNFPA
+     * Bilateral Donors: USAID, DFID/FCDO, GIZ, JICA, SIDA, NORAD, KOICA
+     * Foundations: Gates Foundation, Rockefeller, Ford Foundation
+     * Private Sector: Companies providing funding/CSR contributions
+     * Context clues: "funding", "grant", "contribution", "donor", "financing"
+     
+     **CLIENT PARTNERS** (receive services, implement projects, or benefit):
+     * Government Ministries: Ministry of Health, Ministry of Water, Ministry of Education
+     * Government Agencies: National authorities, regulatory bodies, public institutions
+     * Local Governments: Municipalities, counties, regional governments
+     * Implementing Partners: NGOs implementing on the ground
+     * Beneficiary Organizations: Communities, cooperatives, associations
+     * Context clues: "client", "implementing partner", "beneficiary", "recipient", "counterpart"
+     
    - Add to fundingPartners or clientPartners arrays based on analysis
-   - **Note**: A partner can appear in BOTH funding and client arrays if appropriate
+   - **Note**: A partner can appear in BOTH funding and client arrays if they provide funding AND receive services
 
 3. **DOCUMENT-MENTIONED PARTNERS:**
    - Extract partner names from document text and metadata
@@ -3078,8 +3101,6 @@ Return a valid JSON object with the proposed opportunity data. **ALL property na
   "isPooledFunding": true,
   "partnershipAgreementReference": null,
   "targetSigningDate": "2026-06-30T00:00:00.000Z",
-  "isTargetSigningDateFirm": false,
-  "signingDateNotes": "Tentative date based on discussions; may adjust based on funding confirmation",
   "submissionDeadline": "2026-03-31T00:00:00.000Z",
   "implementationStartDate": "2026-07-01T00:00:00.000Z",
   "targetDeliveryDate": "2029-12-31T00:00:00.000Z",
@@ -3100,7 +3121,14 @@ Return a valid JSON object with the proposed opportunity data. **ALL property na
   "stakeholders": [{"userName": "John Omondi", "roleName": "Opportunity Manager"}, {"userName": "Sarah Mwangi", "roleName": "Partnership Lead"}],
   "deliverables": ["Feasibility Study and Environmental Assessment", "Water Treatment Plant Construction (5 facilities)", "Pipeline Network Rehabilitation (300 km)", "Operations and Maintenance Training Program", "Community Engagement Strategy"],
   "countries": ["Kenya", "Tanzania", "Uganda"],
-  "sdGs": ["Goal 3", "Goal 6", "Goal 9", "Goal 11", "Goal 13", "Goal 17"],
+  "sdGs": [
+    {"sdgNumber": 6, "sdgName": "Clean Water and Sanitation", "isPrimary": true},
+    {"sdgNumber": 3, "sdgName": "Good Health and Well-being", "isPrimary": false},
+    {"sdgNumber": 9, "sdgName": "Industry, Innovation and Infrastructure", "isPrimary": false},
+    {"sdgNumber": 11, "sdgName": "Sustainable Cities and Communities", "isPrimary": false},
+    {"sdgNumber": 13, "sdgName": "Climate Action", "isPrimary": false},
+    {"sdgNumber": 17, "sdgName": "Partnerships for the Goals", "isPrimary": false}
+  ],
   "dependents": ["responsibleOrgUnitName", "proposedInitiativeTypeName", "fundingPartners", "clientPartners", "stakeholders", "deliverables", "countries", "sdGs"]
 }
 ```
@@ -3117,7 +3145,6 @@ Return a valid JSON object with the proposed opportunity data. **ALL property na
 - The backend will convert text names to database IDs - you just provide the text values and list ALL fields in dependents
 - **CRITICAL FIELD LENGTH LIMITS** - Do NOT exceed these character limits:
   * name: max 255 characters
-  * signingDateNotes: max 1000 characters
   * resultsFocus: max 2000 characters
   * expectedImpact: max 200 characters
   * expectedOutcomes: max 200 characters
