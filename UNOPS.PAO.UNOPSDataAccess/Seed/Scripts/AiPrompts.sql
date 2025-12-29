@@ -2948,7 +2948,12 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
   - **MUST add "stakeholders" to dependents array**
 - **deliverables** (array): List of deliverable descriptions as text strings - extract outputs, deliverables, or project components mentioned in interactions or document names (e.g., ["Feasibility Study", "Infrastructure Design", "Training Program"]) - **MUST add "deliverables" to dependents array**
 - **countries** (array): List of country names as text strings - extract all countries mentioned in interactions or documents (e.g., ["Kenya", "Tanzania", "Uganda"]) - **MUST add "countries" to dependents array**
-- **sdGs** (array): List of SDG references as text strings - identify relevant SDGs based on interaction topics, themes, and document content (e.g., ["Goal 3", "Goal 6", "Goal 9", "Goal 17"]) - **MUST add "sdGs" to dependents array**
+- **sdGs** (array of objects): List of SDG references with primary flag - identify relevant SDGs based on interaction topics, themes, and document content. **CRITICAL: Exactly ONE SDG must be marked as isPrimary=true (the most relevant/central SDG), all others must be isPrimary=false**. Each SDG object has:
+  - **sdgNumber** (int): SDG number 1-17 (e.g., 6 for Clean Water)
+  - **sdgName** (string): Full SDG name (e.g., "Clean Water and Sanitation")
+  - **isPrimary** (boolean): true for the single most important/central SDG, false for all others
+  - Example: [{"sdgNumber": 6, "sdgName": "Clean Water and Sanitation", "isPrimary": true}, {"sdgNumber": 9, "sdgName": "Industry, Innovation and Infrastructure", "isPrimary": false}]
+  - **MUST add "sdGs" to dependents array**
 
 ## ID Field Mapping Rules
 
@@ -3078,8 +3083,6 @@ Return a valid JSON object with the proposed opportunity data. **ALL property na
   "isPooledFunding": true,
   "partnershipAgreementReference": null,
   "targetSigningDate": "2026-06-30T00:00:00.000Z",
-  "isTargetSigningDateFirm": false,
-  "signingDateNotes": "Tentative date based on discussions; may adjust based on funding confirmation",
   "submissionDeadline": "2026-03-31T00:00:00.000Z",
   "implementationStartDate": "2026-07-01T00:00:00.000Z",
   "targetDeliveryDate": "2029-12-31T00:00:00.000Z",
@@ -3100,7 +3103,14 @@ Return a valid JSON object with the proposed opportunity data. **ALL property na
   "stakeholders": [{"userName": "John Omondi", "roleName": "Opportunity Manager"}, {"userName": "Sarah Mwangi", "roleName": "Partnership Lead"}],
   "deliverables": ["Feasibility Study and Environmental Assessment", "Water Treatment Plant Construction (5 facilities)", "Pipeline Network Rehabilitation (300 km)", "Operations and Maintenance Training Program", "Community Engagement Strategy"],
   "countries": ["Kenya", "Tanzania", "Uganda"],
-  "sdGs": ["Goal 3", "Goal 6", "Goal 9", "Goal 11", "Goal 13", "Goal 17"],
+  "sdGs": [
+    {"sdgNumber": 6, "sdgName": "Clean Water and Sanitation", "isPrimary": true},
+    {"sdgNumber": 3, "sdgName": "Good Health and Well-being", "isPrimary": false},
+    {"sdgNumber": 9, "sdgName": "Industry, Innovation and Infrastructure", "isPrimary": false},
+    {"sdgNumber": 11, "sdgName": "Sustainable Cities and Communities", "isPrimary": false},
+    {"sdgNumber": 13, "sdgName": "Climate Action", "isPrimary": false},
+    {"sdgNumber": 17, "sdgName": "Partnerships for the Goals", "isPrimary": false}
+  ],
   "dependents": ["responsibleOrgUnitName", "proposedInitiativeTypeName", "fundingPartners", "clientPartners", "stakeholders", "deliverables", "countries", "sdGs"]
 }
 ```
@@ -3117,7 +3127,6 @@ Return a valid JSON object with the proposed opportunity data. **ALL property na
 - The backend will convert text names to database IDs - you just provide the text values and list ALL fields in dependents
 - **CRITICAL FIELD LENGTH LIMITS** - Do NOT exceed these character limits:
   * name: max 255 characters
-  * signingDateNotes: max 1000 characters
   * resultsFocus: max 2000 characters
   * expectedImpact: max 200 characters
   * expectedOutcomes: max 200 characters
