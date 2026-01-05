@@ -385,18 +385,18 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
 
             var promptData = (await contextService.GetPromptData(msg.PromptType)).FirstOrDefault();
 
-            // Create an initial notification
-            Notification notification = new Notification
-            {
-                UserId = msg.UserId,
-                Message = "Starting import process... 0% complete",
-                Category = promptData?.Type ?? "BulkImport",
-                ResponseType = "Progress",
-                RecordData = JsonConvert.SerializeObject(new List<object> { msg.BatchData }),
-                IsRead = false,
-                Status = NotificationStatus.Progress,
-                CreatedAt = DateTime.UtcNow
-            }; ;
+// Create an initial notification
+                Notification notification = new Notification
+                {
+                    UserId = msg.UserId,
+                    Message = "Analyzing file... 0% complete",
+                    Category = promptData?.Type ?? "BulkImport",
+                    ResponseType = "Progress",
+                    RecordData = JsonConvert.SerializeObject(new List<object> { msg.BatchData }),
+                    IsRead = false,
+                    Status = NotificationStatus.Progress,
+                    CreatedAt = DateTime.UtcNow
+                };
 
             try
             {   
@@ -419,33 +419,11 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                     processedRecords = currentBatch;
                     int progressPercentage = totalRecords > 0 ? (int)((processedRecords * 100.0) / totalRecords) : 0;
                     
-                    // Only update every 5% to avoid too many database writes
-                    if (progressPercentage >= lastProgressPercentage + 5 || progressPercentage == 100)
-                    {
-                        lastProgressPercentage = progressPercentage;
-                        
-                        // Create a progress message with a visual indicator
-                        string progressBar = "[" + new string('■', progressPercentage / 5) + new string('□', 20 - (progressPercentage / 5)) + "]";
-                        string progressMessage = $"Processing import... {progressPercentage}% complete {progressBar}";
-                        
-                        // Update the notification with progress
-                        notification.Message = progressMessage;
-                        notification.Status = progressPercentage < 100 ? NotificationStatus.Progress : NotificationStatus.Done;
-                        
-                        // If we're at 100%, store the results
-                        if (progressPercentage == 100 && currentResults != null)
-                        {
-                            notification.RecordData = JsonConvert.SerializeObject(currentResults);
-                            notification.Message = $"Import complete! {totalItems} records processed and ready to import.";
-                        }
-                        
-                        await dbContext.SaveChangesAsync();
-                    }
-                    
                     return true; // Continue processing
                 }
                 
                 // Call the processing method with progress tracking
+                // Pass the notification ID so it can be updated instead of creating a new notification
                 var results = await contextService.ProcessBulkImportWithProgress(
                     msg.BatchData,
                     promptData,
@@ -453,17 +431,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                     msg.EntityName,
                     true, 
                     progressCallback,
-                    msg.FileId // Pass the Google Sheet ID for identification
+                    msg.FileId, // Pass the Google Sheet ID for identification
+                    notification.Id // Pass notification ID to update the same notification
                 );
-                
-                // Final update if it wasn't already updated at 100%
-                if (lastProgressPercentage < 100 && results != null && results.Count > 0)
-                {
-                    notification.Status = NotificationStatus.Done;
-                    notification.Message = $"Import complete! {results.Count} records are ready to import.";
-                    notification.RecordData = JsonConvert.SerializeObject(results);
-                    await dbContext.SaveChangesAsync();
-                }
             }
             catch (Exception ex)
             {

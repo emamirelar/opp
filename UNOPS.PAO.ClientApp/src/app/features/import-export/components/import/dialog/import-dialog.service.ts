@@ -320,10 +320,17 @@ export class ImportDialogService {
     // Apply defaults to each record
     return records.map(record => {
       // Create a new object with default values for any fields not in the record
-      return {
+      const processedRecord = {
         ...defaultValues,  // Start with all default values
         ...record          // Override with values from the record
       };
+      
+      // For contacts, convert selectedOrgUnitId to organizationHierarchyIds array if set
+      if (type.toLowerCase() === 'contact' && processedRecord.selectedOrgUnitId) {
+        processedRecord.organizationHierarchyIds = [processedRecord.selectedOrgUnitId];
+      }
+      
+      return processedRecord;
     });
   }
 
@@ -373,7 +380,10 @@ export class ImportDialogService {
       mailingCity: '',
       mailingStateProvince: '',
       mailingPostalCode: '',
-      mailingCountry: ''
+      mailingCountry: '',
+      organizationHierarchyIds: [],
+      selectedOrgUnitId: null,
+      selectedOrgUnitName: ''
     };
   }
 
