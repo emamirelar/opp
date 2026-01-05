@@ -253,13 +253,10 @@ namespace UNOPS.PAO.Business.Services
             // Step 1: Find countries by name
             var nameMatches = await SearchByCountryNameAsync(countries, searchTerm, request);
             
-            // Step 2: Find countries by region
-            var regionMatches = await SearchByRegionAsync(countries, searchTerm, request);
-            
-            // Step 3: Find countries by continent
+            // Step 2: Find countries by continent
             var continentMatches = await SearchByContinentAsync(countries, searchTerm, request);
             
-            // Step 4: Find countries by artifact values (if enabled)
+            // Step 3: Find countries by artifact values (if enabled)
             var artifactMatches = new Dictionary<string, List<CountrySearchResultModel>>();
             var artifactTypesSearched = 0;
             
@@ -273,10 +270,9 @@ namespace UNOPS.PAO.Business.Services
                 artifactTypesSearched = artifactSearchResult.TypesSearched;
             }
             
-            // Step 5: Combine results and remove duplicates
+            // Step 4: Combine results and remove duplicates
             var allResults = CombineAndDeduplicateResults(
                 nameMatches, 
-                regionMatches, 
                 continentMatches, 
                 artifactMatches);
             
@@ -297,7 +293,7 @@ namespace UNOPS.PAO.Business.Services
                 Groups = new CountrySearchGroups
                 {
                     NameMatches = nameMatches,
-                    RegionMatches = regionMatches,
+                    RegionMatches = new List<CountrySearchResultModel>(),
                     ContinentMatches = continentMatches,
                     ArtifactMatches = artifactMatches
                 },
@@ -350,68 +346,6 @@ namespace UNOPS.PAO.Business.Services
                         HighlightedValue = request.HighlightMatches 
                             ? HighlightMatchedText(country.Name, searchTerm) 
                             : country.Name
-                    };
-                    
-                    results.Add(new CountrySearchResultModel
-                    {
-                        Country = new CountrySearchInfo
-                        {
-                            Id = country.Id,
-                            Name = country.Name,
-                            Iso2Code = country.Iso2Code,
-                            Continent = country.ContinentDescription,
-                            Region = country.RegionDescription
-                        },
-                        MatchReasons = new List<SearchMatchReason> { matchReason },
-                        RelevanceScore = relevanceScore
-                    });
-                }
-            }
-            
-            return results;
-        }
-
-        /// <summary>
-        /// Search countries by region description with relevance scoring
-        /// </summary>
-        private async Task<List<CountrySearchResultModel>> SearchByRegionAsync(
-            List<Country> countries,
-            string searchTerm,
-            CountryDynamicSearchRequest request)
-        {
-            var results = new List<CountrySearchResultModel>();
-            var comparison = request.CaseSensitive 
-                ? StringComparison.Ordinal 
-                : StringComparison.OrdinalIgnoreCase;
-            
-            foreach (var country in countries)
-            {
-                if (string.IsNullOrWhiteSpace(country.RegionDescription))
-                    continue;
-                
-                var regionDescription = request.CaseSensitive 
-                    ? country.RegionDescription 
-                    : country.RegionDescription.ToLowerInvariant();
-                
-                bool matches = request.ExactMatch
-                    ? regionDescription.Equals(searchTerm, comparison)
-                    : regionDescription.Contains(searchTerm, comparison);
-                
-                if (matches)
-                {
-                    // Calculate relevance score
-                    decimal relevanceScore = CalculateNameRelevanceScore(
-                        country.RegionDescription, 
-                        searchTerm, 
-                        request.ExactMatch);
-                    
-                    var matchReason = new SearchMatchReason
-                    {
-                        MatchType = "Region",
-                        MatchedValue = country.RegionDescription,
-                        HighlightedValue = request.HighlightMatches 
-                            ? HighlightMatchedText(country.RegionDescription, searchTerm) 
-                            : country.RegionDescription
                     };
                     
                     results.Add(new CountrySearchResultModel
@@ -630,7 +564,6 @@ namespace UNOPS.PAO.Business.Services
         /// </summary>
         private List<CountrySearchResultModel> CombineAndDeduplicateResults(
             List<CountrySearchResultModel> nameMatches,
-            List<CountrySearchResultModel> regionMatches,
             List<CountrySearchResultModel> continentMatches,
             Dictionary<string, List<CountrySearchResultModel>> artifactMatches)
         {
@@ -640,22 +573,6 @@ namespace UNOPS.PAO.Business.Services
             foreach (var match in nameMatches)
             {
                 allResults[match.Country.Id] = match;
-            }
-            
-            // Add region matches
-            foreach (var match in regionMatches)
-            {
-                if (allResults.ContainsKey(match.Country.Id))
-                {
-                    // Merge match reasons and update relevance score
-                    var existing = allResults[match.Country.Id];
-                    existing.MatchReasons.AddRange(match.MatchReasons);
-                    existing.RelevanceScore += match.RelevanceScore;
-                }
-                else
-                {
-                    allResults[match.Country.Id] = match;
-                }
             }
             
             // Add continent matches
