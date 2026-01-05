@@ -120,6 +120,19 @@ export class OpportunityWhereSectionComponent implements OnInit {
   // Available countries from API
   readonly availableCountries = signal<SimpleValue[]>([]);
 
+  // Bulk delete state
+  readonly selectedCountriesForDeletion = signal<Set<number>>(new Set());
+  
+  /**
+   * @description Tracks countries removed during the current edit session.
+   * When a user removes a country but then re-adds it before saving,
+   * this allows us to restore the original OpportunityCountry (with its ID and data)
+   * instead of creating a new entry with ID = 0.
+   * This prevents duplicate entries and maintains referential integrity.
+   * Array is cleared when: entering edit mode, saving changes, or canceling edits.
+   */
+  private removedCountries: OpportunityCountry[] = [];
+
   // Dynamic search state
   readonly searchTerm = new FormControl<string>('');
   readonly searchResults = signal<CountryDynamicSearchResponse | null>(null);
@@ -304,15 +317,27 @@ export class OpportunityWhereSectionComponent implements OnInit {
    * @description Enable edit mode
    */
   startEditing(): void {
-    const opp = this.opportunity();
-    
-    // Backup original data for cancel
-    this.originalData = {
-      countries: opp.countries ? [...opp.countries] : []
-    };
-    
-    this.isEditing.set(true);
-    this.cdr.detectChanges();
+    if(!this.isEditing()) {
+      const opp = this.opportunity();
+      
+      // Backup original data for cancel
+      this.originalData = {
+        countries: opp.countries ? [...opp.countries] : []
+      };
+      
+      // Clear any previous bulk delete selections
+      this.selectedCountriesForDeletion.set(new Set());
+      
+      // Clear any previously tracked removed countries
+      this.removedCountries = [];
+      
+      this.isEditing.set(true);
+      this.cdr.detectChanges();
+    }
+    else
+    {  
+      this.markAsChanged();
+    }
   }
 
   /**
@@ -332,6 +357,12 @@ export class OpportunityWhereSectionComponent implements OnInit {
       // Emit the reverted opportunity to parent
       this.opportunityUpdated.emit(updatedOpportunity);
     }
+    
+    // Clear bulk delete selections
+    this.selectedCountriesForDeletion.set(new Set());
+    
+    // Clear any tracked removed countries
+    this.removedCountries = [];
     
     this.isEditing.set(false);
     this.originalData = null;
@@ -373,6 +404,8 @@ export class OpportunityWhereSectionComponent implements OnInit {
         this.isEditing.set(false);
         this.hasUnsavedChangesSignal.set(false);
         this.originalData = null;
+        this.selectedCountriesForDeletion.set(new Set());
+        this.removedCountries = []; // Clear tracked removed countries after save
         this.opportunityUpdated.emit(updated);
         this.changesSavedOrDiscarded.emit();
         this.feedbackService.showSuccessToast({
@@ -465,36 +498,49 @@ export class OpportunityWhereSectionComponent implements OnInit {
     const opp = this.opportunity();
     const currentCountries = [...(opp.countries || [])];
 
-    const newCountries: OpportunityCountry[] = countries.map(country => ({
-      id: 0,
-      opportunityId: opp.id!,
-      countryId: country.id,
-      specificAreas: null,
-      contextWarning: null,
-      riskScore: null,
-      humanitarianFrameworkAlignment: null,
-      hasHumanitarianFramework: false,
-      ndcAlignment: null,
-      hasNdc: false,
-      napAlignment: null,
-      hasNap: false,
-      orgUnitStrategyAlignment: null,
-      hasOrgUnitStrategy: false,
-      orgUnitWithStrategyId: null,
-      orgUnitWithStrategyName: null,
-      orgUnitWithStrategyCode: null,
-      currentOrgUnitWithStrategyId: null,
-      currentOrgUnitWithStrategyName: null,
-      currentOrgUnitWithStrategyCode: null,
-      hasMoreLocalStrategyAvailable: false,
-      country: {
-        id: country.id,
-        name: country.name,
-        iso2Code: country.code || '',
-        continent: country.continent || null,
-        region: country.region || null
+    const newCountries: OpportunityCountry[] = countries.map(country => {
+      // Check if this country was previously removed (and has an ID > 0)
+      const removedIndex = this.removedCountries.findIndex(rc => rc.countryId === country.id);
+      
+      if (removedIndex !== -1) {
+        // Restore the previously removed country (preserves ID and other data)
+        const restoredCountry = this.removedCountries[removedIndex];
+        this.removedCountries.splice(removedIndex, 1); // Remove from tracking
+        return restoredCountry;
       }
-    }));
+      
+      // Create new country entry
+      return {
+        id: 0,
+        opportunityId: opp.id!,
+        countryId: country.id,
+        specificAreas: null,
+        contextWarning: null,
+        riskScore: null,
+        humanitarianFrameworkAlignment: null,
+        hasHumanitarianFramework: false,
+        ndcAlignment: null,
+        hasNdc: false,
+        napAlignment: null,
+        hasNap: false,
+        orgUnitStrategyAlignment: null,
+        hasOrgUnitStrategy: false,
+        orgUnitWithStrategyId: null,
+        orgUnitWithStrategyName: null,
+        orgUnitWithStrategyCode: null,
+        currentOrgUnitWithStrategyId: null,
+        currentOrgUnitWithStrategyName: null,
+        currentOrgUnitWithStrategyCode: null,
+        hasMoreLocalStrategyAvailable: false,
+        country: {
+          id: country.id,
+          name: country.name,
+          iso2Code: country.code || '',
+          continent: country.continent || null,
+          region: country.region || null
+        }
+      };
+    });
 
     currentCountries.push(...newCountries);
 
@@ -531,6 +577,13 @@ export class OpportunityWhereSectionComponent implements OnInit {
       () => {
         const opp = this.opportunity();
         const currentCountries = [...(opp.countries || [])];
+        
+        // Store removed country in case user adds it back before saving
+        const removedCountry = currentCountries[index];
+        if (removedCountry && removedCountry.id > 0) {
+          this.removedCountries.push(removedCountry);
+        }
+        
         currentCountries.splice(index, 1);
 
         const updatedOpportunity = {
@@ -541,6 +594,96 @@ export class OpportunityWhereSectionComponent implements OnInit {
         this.opportunityUpdated.emit(updatedOpportunity);
         this.markAsChanged();
         this.cdr.detectChanges();
+      }
+    );
+  }
+
+  /**
+   * @description Toggle country selection for bulk deletion
+   */
+  toggleCountryForDeletion(index: number): void {
+    const selected = this.selectedCountriesForDeletion();
+    const newSelected = new Set(selected);
+    
+    if (newSelected.has(index)) {
+      newSelected.delete(index);
+    } else {
+      newSelected.add(index);
+    }
+    
+    this.selectedCountriesForDeletion.set(newSelected);
+  }
+
+  /**
+   * @description Select all countries for bulk deletion
+   */
+  selectAllCountriesForDeletion(): void {
+    const opp = this.opportunity();
+    const allIndices = new Set<number>();
+    
+    opp.countries?.forEach((_, index) => {
+      allIndices.add(index);
+    });
+    
+    this.selectedCountriesForDeletion.set(allIndices);
+  }
+
+  /**
+   * @description Clear country selection for bulk deletion
+   */
+  clearCountrySelection(): void {
+    this.selectedCountriesForDeletion.set(new Set());
+  }
+
+  /**
+   * @description Remove selected countries
+   */
+  removeSelectedCountries(): void {
+    const selectedIndices = this.selectedCountriesForDeletion();
+    
+    if (selectedIndices.size === 0) {
+      return;
+    }
+
+    this.feedbackService.showConfirmDialog(
+      {
+        summary: this.translateService.instant('confirmation.removeCountries'),
+        detail: this.translateService.instant('message.confirmRemoveCountries', { count: selectedIndices.size })
+      },
+      () => {
+        const opp = this.opportunity();
+        const currentCountries = [...(opp.countries || [])];
+        
+        // Sort indices in descending order to avoid index shifting issues
+        const sortedIndices = Array.from(selectedIndices).sort((a, b) => b - a);
+        
+        // Store removed countries in case user adds them back before saving
+        sortedIndices.forEach(index => {
+          const removedCountry = currentCountries[index];
+          if (removedCountry && removedCountry.id > 0) {
+            this.removedCountries.push(removedCountry);
+          }
+        });
+        
+        // Remove countries from highest index to lowest
+        sortedIndices.forEach(index => {
+          currentCountries.splice(index, 1);
+        });
+
+        const updatedOpportunity = {
+          ...opp,
+          countries: currentCountries
+        };
+
+        this.opportunityUpdated.emit(updatedOpportunity);
+        this.markAsChanged();
+        this.selectedCountriesForDeletion.set(new Set());
+        this.cdr.detectChanges();
+
+        this.feedbackService.showSuccessToast({
+          summary: this.translateService.instant('message.success'),
+          detail: this.translateService.instant('message.countriesRemoved', { count: selectedIndices.size })
+        });
       }
     );
   }
