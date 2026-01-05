@@ -918,7 +918,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             string entityName, 
             bool isAsync = false,
             Func<int, int, List<dynamic>, Task<bool>> progressCallback = null,
-            string fileId = null)
+            string fileId = null,
+            int? notificationId = null)
         {
             var finalResponse = new List<dynamic>();
 
@@ -1099,20 +1100,54 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                     }
                 }
                 
-                var notification = new Notification
+                // Update existing notification if ID provided, otherwise create new one
+                if (notificationId.HasValue)
                 {
-                    UserId = userId,
-                    Message = successMessage,
-                    Category = promptData.Type,
-                    ResponseType = hasInternalDuplicates ? "SuccessWithWarnings" : "Success",
-                    RecordData = JsonConvert.SerializeObject(finalResponse),
-                    IsRead = false,
-                    Status = NotificationStatus.Done,
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                await _context.Notifications.AddAsync(notification);
-                await _context.SaveChangesAsync();
+                    var existingNotification = await _context.Notifications.FindAsync(notificationId.Value);
+                    if (existingNotification != null)
+                    {
+                        existingNotification.Message = successMessage;
+                        existingNotification.ResponseType = hasInternalDuplicates ? "SuccessWithWarnings" : "Success";
+                        existingNotification.RecordData = JsonConvert.SerializeObject(finalResponse);
+                        existingNotification.Status = NotificationStatus.Done;
+                        _context.Notifications.Update(existingNotification);
+                        await _context.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        // Fallback: create new notification if existing one not found
+                        var notification = new Notification
+                        {
+                            UserId = userId,
+                            Message = successMessage,
+                            Category = promptData.Type,
+                            ResponseType = hasInternalDuplicates ? "SuccessWithWarnings" : "Success",
+                            RecordData = JsonConvert.SerializeObject(finalResponse),
+                            IsRead = false,
+                            Status = NotificationStatus.Done,
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        await _context.Notifications.AddAsync(notification);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+                else
+                {
+                    // No notification ID provided - create new notification
+                    var notification = new Notification
+                    {
+                        UserId = userId,
+                        Message = successMessage,
+                        Category = promptData.Type,
+                        ResponseType = hasInternalDuplicates ? "SuccessWithWarnings" : "Success",
+                        RecordData = JsonConvert.SerializeObject(finalResponse),
+                        IsRead = false,
+                        Status = NotificationStatus.Done,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    await _context.Notifications.AddAsync(notification);
+                    await _context.SaveChangesAsync();
+                }
             }
 
             // Publish entity processing messages to PubSub after the bulk import is completed
