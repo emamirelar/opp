@@ -66,6 +66,24 @@ interface OrgUnitRecentUpdatesResponse {
   orgUnitId?: number;
 }
 
+/**
+ * Response model for the combined dashboard endpoint.
+ * Returns all dashboard data in a single request to avoid DbContext threading issues.
+ */
+interface DashboardCombinedResponse {
+  myPartners: Partner[];
+  myContacts: Contact[];
+  myInteractions: Interaction[];
+  myOpportunities: Opportunity[];
+  draftPartners: Partner[];
+  draftContacts: Contact[];
+  draftInteractions: Interaction[];
+  draftOpportunities: Opportunity[];
+  orgUnitRecentUpdates: RecentUpdate[];
+  orgUnitName: string;
+  orgUnitId?: number;
+}
+
 interface DashboardSummary {
   totalMyPartners: number;
   totalMyContacts: number;
@@ -322,7 +340,7 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
     const types = this.getOrgUnitUpdateTypes();
     return types.map(type => ({
       id: type,
-      label: `${this.getOrgUnitUpdateCount(type)} ${type}${this.getOrgUnitUpdateCount(type) === 1 ? '' : 's'}`,
+      label: `${this.getOrgUnitUpdateCount(type)} ${this.pluralize(type, this.getOrgUnitUpdateCount(type))}`,
       count: this.getOrgUnitUpdateCount(type),
       active: this.selectedOrgUnitUpdateType() === type
     }));
@@ -333,12 +351,13 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
     if (!data) return [];
     
     // Don't show filters if there are no items to filter
-    const totalItems = data.myPartners.length + data.myContacts.length;
+    const totalItems = data.myPartners.length + data.myContacts.length + data.myOpportunities.length;
     if (totalItems === 0) return [];
     
     // Only show filters if there are multiple types of items or multiple items of one type
     const hasPartners = data.myPartners.length > 0;
     const hasContacts = data.myContacts.length > 0;
+    const hasOpportunities = data.myOpportunities.length > 0;
     
     // If only one type exists and it has only one item, don't show filters
     if (totalItems === 1) return [];
@@ -361,6 +380,15 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
         label: `${data.myContacts.length} Contacts`,
         count: data.myContacts.length,
         active: this.selectedOrgUnitUpdateType() === 'Contact'
+      });
+    }
+    
+    if (hasOpportunities) {
+      filters.push({
+        id: 'Opportunity',
+        label: `${data.myOpportunities.length} Opportunities`,
+        count: data.myOpportunities.length,
+        active: this.selectedOrgUnitUpdateType() === 'Opportunity'
       });
     }
     
@@ -574,159 +602,54 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
     //   return;
     // }
 
-    // Load user's partners using dedicated dashboard API
-    const myPartners$ = this.http.get<any>(`/api/dashboard/my-partners`, {
-      params: {
-        pageSize: '1000'
-      }
-    }).pipe(
-      map(response => response.records || []),
-      catchError(err => {
-        console.error('Error loading my partners:', err);
-        return of([]);
+    // Use the combined dashboard endpoint to avoid DbContext threading issues
+    // This single request returns all dashboard data at once instead of 9 concurrent requests
+    this.http
+      .get<DashboardCombinedResponse>('/api/dashboard/combined', {
+        params: {
+          pageSize: '1000',
+          recentUpdatesPageSize: '10',
+        },
       })
-    );
+      .pipe(
+        catchError((err) => {
+          console.error('Error loading combined dashboard data:', err);
+          this.error.set('Failed to load dashboard data. Please try again.');
+          this.loading.set(false);
+          this.updateTimestamp();
+          return of(null);
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          if (!response) return;
 
-    // Load user's contacts using dedicated dashboard API
-    const myContacts$ = this.http.get<any>(`/api/dashboard/my-contacts`, {
-      params: {
-        pageSize: '1000'
-      }
-    }).pipe(
-      map(response => response.records || []),
-      catchError(err => {
-        console.error('Error loading my contacts:', err);
-        return of([]);
-      })
-    );
+          const dashboardData: DashboardData = {
+            myPartners: response.myPartners || [],
+            myContacts: response.myContacts || [],
+            myInteractions: response.myInteractions || [],
+            myOpportunities: response.myOpportunities || [],
+            draftActions: {
+              partners: response.draftPartners || [],
+              contacts: response.draftContacts || [],
+              interactions: response.draftInteractions || [],
+              opportunities: response.draftOpportunities || [],
+            },
+            orgUnitRecentUpdates: response.orgUnitRecentUpdates || [],
+            orgUnitName: response.orgUnitName || 'your organization unit',
+          };
 
-    // Load user's interactions using dedicated dashboard API
-    const myInteractions$ = this.http.get<any>(`/api/dashboard/my-interactions`, {
-      params: { pageSize: '1000' }
-    }).pipe(
-      map(response => response.records || []),
-      catchError(err => {
-        console.error('Error loading my interactions:', err);
-        return of([]);
-      })
-    );
+          this.dashboardData.set(dashboardData);
+          
+          this.updateSummary(dashboardData);
+          this.updateInteractionsChart(dashboardData);
+          this.updateActionableChart(dashboardData);
+          this.loading.set(false);
 
-    // Load user's draft partners using dedicated dashboard API
-    const draftPartners$ = this.http.get<any>(`/api/dashboard/my-draft-partners`, {
-      params: {
-        pageSize: '1000'
-      }
-    }).pipe(
-      map(response => response.records || []),
-      catchError(err => {
-        console.error('Error loading draft partners:', err);
-        return of([]);
-      })
-    );
-
-    // Load user's draft contacts using dedicated dashboard API
-    const draftContacts$ = this.http.get<any>(`/api/dashboard/my-draft-contacts`, {
-      params: {
-        pageSize: '1000'
-      }
-    }).pipe(
-      map(response => response.records || []),
-      catchError(err => {
-        console.error('Error loading draft contacts:', err);
-        return of([]);
-      })
-    );
-
-    // Load user's draft interactions using dedicated dashboard API
-    const draftInteractions$ = this.http.get<any>(`/api/dashboard/my-draft-interactions`, {
-      params: { pageSize: '1000' }
-    }).pipe(
-      map(response => response.records || []),
-      catchError(err => {
-        console.error('Error loading draft interactions:', err);
-        return of([]);
-      })
-    );
-
-    // Load user's opportunities using dedicated dashboard API
-    const myOpportunities$ = this.http.get<any>(`/api/dashboard/my-opportunities`, {
-      params: { pageSize: '1000' }
-    }).pipe(
-      map(response => response.records || []),
-      catchError(err => {
-        console.error('Error loading my opportunities:', err);
-        return of([]);
-      })
-    );
-
-    // Load user's draft opportunities using dedicated dashboard API
-    const draftOpportunities$ = this.http.get<any>(`/api/dashboard/my-draft-opportunities`, {
-      params: { pageSize: '1000' }
-    }).pipe(
-      map(response => response.records || []),
-      catchError(err => {
-        console.error('Error loading draft opportunities:', err);
-        return of([]);
-      })
-    );
-
-    // Load recent updates from current organization unit (top 10)
-    const orgUnitRecentUpdates$ = this.getOrgUnitRecentUpdates().pipe(
-      catchError(err => {
-        console.error('Error loading org unit recent updates:', err);
-        return of({
-          updates: [],
-          orgUnitName: 'your organization unit'
-        });
-      })
-    );
-
-    // Combine all requests
-    forkJoin({
-      myPartners: myPartners$,
-      myContacts: myContacts$,
-      myInteractions: myInteractions$,
-      myOpportunities: myOpportunities$,
-      draftPartners: draftPartners$,
-      draftContacts: draftContacts$,
-      draftInteractions: draftInteractions$,
-      draftOpportunities: draftOpportunities$,
-      orgUnitRecentUpdates: orgUnitRecentUpdates$
-    }).subscribe({
-      next: (data) => {
-        const dashboardData: DashboardData = {
-          myPartners: data.myPartners,
-          myContacts: data.myContacts,
-          myInteractions: data.myInteractions,
-          myOpportunities: data.myOpportunities,
-          draftActions: {
-            partners: data.draftPartners,
-            contacts: data.draftContacts,
-            interactions: data.draftInteractions,
-            opportunities: data.draftOpportunities
-          },
-          orgUnitRecentUpdates: data.orgUnitRecentUpdates.updates,
-          orgUnitName: data.orgUnitRecentUpdates.orgUnitName
-        };
-
-        this.dashboardData.set(dashboardData);
-        this.updateSummary(dashboardData);
-        this.updateInteractionsChart(dashboardData);
-        this.updateActionableChart(dashboardData);
-        this.loading.set(false);
-        
-        // Update timestamp immediately after data loads
-        this.updateTimestamp();
-      },
-      error: (err) => {
-        console.error('Error loading dashboard data:', err);
-        this.error.set('Failed to load dashboard data. Please try again.');
-        this.loading.set(false);
-        
-        // Update timestamp even on error since we attempted to refresh
-        this.updateTimestamp();
-      }
-    });
+          // Update timestamp immediately after data loads
+          this.updateTimestamp();
+        },
+      });
   }
 
   /* UNCOMMENT BELOW TO ENABLE DUMMY DATA TESTING FOR "VIEW ALL" FUNCTIONALITY
@@ -1007,6 +930,11 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
     return this.isMobile() ? items : items.slice(0, limit);
   }
 
+  getTruncatedOpportunities(limit: number = 3) {
+    const items = this.dashboardData()?.myOpportunities || [];
+    return this.isMobile() ? items : items.slice(0, limit);
+  }
+
   getTruncatedInteractions(limit: number = 3) {
     const items = this.getDisplayedInteractions();
     return this.isMobile() ? items : items.slice(0, limit);
@@ -1029,13 +957,17 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
     return Math.max(0, (this.dashboardData()?.myContacts.length || 0) - 3);
   }
 
+  getRemainingOpportunitiesCount(): number {
+    return Math.max(0, (this.dashboardData()?.myOpportunities.length || 0) - 3);
+  }
+
   getRemainingInteractionsCount(): number {
     return Math.max(0, this.getDisplayedInteractions().length - 3);
   }
 
-  // Get combined remaining count for workspace (partners + contacts)
+  // Get combined remaining count for workspace (partners + contacts + opportunities)
   getRemainingWorkspaceCount(): number {
-    return this.getRemainingPartnersCount() + this.getRemainingContactsCount();
+    return this.getRemainingPartnersCount() + this.getRemainingContactsCount() + this.getRemainingOpportunitiesCount();
   }
 
   navigateToInteractions() {
@@ -1486,6 +1418,27 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
     if (!dashboardData || !dashboardData.orgUnitRecentUpdates) return 0;
     
     return dashboardData.orgUnitRecentUpdates.filter(update => update.type === type).length;
+  }
+
+  /**
+   * Properly pluralizes entity type names
+   * Handles irregular plurals like "Opportunity" -> "Opportunities"
+   */
+  private pluralize(word: string, count: number): string {
+    if (count === 1) return word;
+    
+    // Handle irregular plurals
+    const irregulars: { [key: string]: string } = {
+      'Opportunity': 'Opportunities',
+      'opportunity': 'opportunities',
+    };
+    
+    if (irregulars[word]) {
+      return irregulars[word];
+    }
+    
+    // Default: just add 's'
+    return word + 's';
   }
 
   setOrgUnitUpdateFilter(type: string) {

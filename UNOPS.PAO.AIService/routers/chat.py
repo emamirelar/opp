@@ -19,7 +19,7 @@ from google.genai import types
 from pydantic import BaseModel
 
 from ai_assistant.utils.config import get_database_url, get_config
-from ai_assistant.utils.session_management import get_or_create_session, parse_request_state
+from ai_assistant.utils.session_management import get_or_create_session, parse_request_state, update_session_state_in_database
 from ai_assistant.utils.iap_validation import validate_iap_headers, extract_iap_headers_for_forwarding
 
 logger = logging.getLogger(__name__)
@@ -261,6 +261,9 @@ async def chat_endpoint(
         is_multipart = "multipart/form-data" in content_type
         logger.info(f"Processing {'multipart' if is_multipart else 'JSON'} request")
         
+        # DEBUG: Log the incoming session_id to verify frontend is sending it correctly
+        logger.info(f"📥 INCOMING REQUEST - session_id parameter: '{session_id}' (type: {type(session_id).__name__}, empty: {not session_id})")
+        
         if is_multipart:
             request_data = ChatRequest(
                 app_name=app_name,
@@ -399,7 +402,8 @@ async def chat_endpoint(
             initial_state['audio_files_metadata'] = audio_files_for_artifacts
 
         # Get or create session
-        logger.info(f"🔍 Session management: app={request_data.app_name}, user={request_data.user_id}, session={request_data.session_id}")
+        logger.info(f"🔍 Session management: app={request_data.app_name}, user={request_data.user_id}")
+        logger.info(f"📋 Session ID from request: '{request_data.session_id}' (is_empty: {not request_data.session_id or request_data.session_id.strip() == ''})")
         session, actual_session_id, is_new_session = await get_or_create_session(
             session_service = session_service,
             app_name = request_data.app_name,
@@ -412,14 +416,19 @@ async def chat_endpoint(
         # Log session context for debugging
         logger.info(f"📋 Session context: id={actual_session_id}, is_new={is_new_session}")
         if hasattr(session, 'events') and session.events:
-            logger.info(f"📝 Session has {len(session.events)} existing events")
+            logger.info(f"📝 Session has {len(session.events)} existing events (conversation continuity OK)")
             # Log the last few events for context
             recent_events = session.events[-3:] if len(session.events) > 3 else session.events
             for i, event in enumerate(recent_events):
                 author = getattr(event, 'author', 'unknown')
                 logger.info(f"   Event {i+1}: author={author}")
         else:
-            logger.info("📝 Session has no existing events (new conversation)")
+            if is_new_session:
+                logger.info("📝 Session has no existing events (new conversation)")
+            else:
+                # This is concerning - existing session with no events might indicate recovery from corruption
+                logger.warning(f"⚠️ Existing session {actual_session_id} has NO events - may have been recovered from corruption")
+                logger.warning("⚠️ Conversation history may be lost - agent will not have previous context")
 
         # Ensure state is properly set before creating runner
         if not hasattr(session, 'state') or session.state is None:
@@ -427,11 +436,61 @@ async def chat_endpoint(
 
         # Title is now set during session creation using the user prompt
 
+        # IMPORTANT: Merge current request state with existing session state
+        # This ensures uploaded_files_metadata from previous requests is preserved
+        # The session.state already contains persisted data from get_or_create_session
+        agent_context_state = dict(session.state)  # Start with existing session state
+        
+        # Merge current request's initial_state (current request takes precedence for non-file fields)
+        # But for uploaded_files_metadata, we want to ACCUMULATE, not replace
+        existing_files = agent_context_state.get('uploaded_files_metadata', [])
+        current_files = initial_state.get('uploaded_files_metadata', [])
+        
+        # Update with current request state
+        agent_context_state.update(initial_state)
+        
+        # Accumulate files from both existing session and current request
+        if existing_files or current_files:
+            # Combine files, avoiding duplicates based on gcs_path or filename
+            combined_files = []
+            seen_paths = set()
+            
+            # Add existing files first
+            for f in existing_files:
+                path_key = f.get('gcs_path') or f.get('filename', '')
+                if path_key and path_key not in seen_paths:
+                    combined_files.append(f)
+                    seen_paths.add(path_key)
+            
+            # Add current files (new ones only)
+            for f in current_files:
+                path_key = f.get('gcs_path') or f.get('filename', '')
+                if path_key and path_key not in seen_paths:
+                    combined_files.append(f)
+                    seen_paths.add(path_key)
+            
+            agent_context_state['uploaded_files_metadata'] = combined_files
+            logger.info(f"📎 Session files context: {len(existing_files)} existing + {len(current_files)} new = {len(combined_files)} total files")
+            
+            # Persist accumulated files to session for future requests in this conversation
+            if not is_new_session and combined_files:
+                try:
+                    await update_session_state_in_database(
+                        session_service,
+                        request_data.app_name,
+                        request_data.user_id,
+                        actual_session_id,
+                        {'uploaded_files_metadata': combined_files}
+                    )
+                    logger.info(f"💾 Persisted {len(combined_files)} accumulated files to session state")
+                except Exception as persist_error:
+                    logger.warning(f"⚠️ Could not persist accumulated files: {persist_error}")
+        
         # Create agent with dynamic state context (injected into instruction, not user message)
         # This keeps context out of conversation history while making it available to the agent
-        if initial_state:
-            agent = create_agent_with_context(initial_state)
-            logger.info("Created agent with state instruction")
+        if agent_context_state:
+            agent = create_agent_with_context(agent_context_state)
+            logger.info(f"Created agent with session state context (keys: {list(agent_context_state.keys())})")
         else:
             agent = root_agent
             logger.info("Using root agent without state")

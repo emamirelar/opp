@@ -504,25 +504,22 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
 
   /**
    * Handle files selected from Google Drive
-   * Downloads the file content and adds to selectedFiles
+   * Adds ALL selected Drive files to selectedFiles (supports multi-select)
    */
   private handleDriveFiles(driveFiles: DriveFile[]): void {
     this.isProcessingFile.set(true);
     
-    // Process the first file (single file selection for now)
-    const driveFile = driveFiles[0];
-    
-    // Create a File object from Drive file data
-    // For now, we'll store the Drive file info and handle GCS upload later
-    const fileData = {
+    // Process ALL selected files (multi-file support)
+    const newFileData = driveFiles.map(driveFile => ({
       file: new File([], driveFile.name, { type: driveFile.mimeType }),
       name: driveFile.name,
       content: '',
       driveFileId: driveFile.id,
       driveFile: driveFile // Store the full Drive file info for later processing
-    };
+    }));
     
-    this.selectedFiles.set([fileData]);
+    // APPEND to existing files (don't replace)
+    this.selectedFiles.update(existing => [...existing, ...newFileData]);
     this.isProcessingFile.set(false);
   }
 
@@ -535,7 +532,8 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
       return;
     }
 
-    this.processFiles([files[0]]);
+    // Process ALL selected files (multi-file support)
+    this.processFiles(Array.from(files));
 
     if (event.target?.value) {
       event.target.value = '';
@@ -557,14 +555,9 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
         // Prevent default paste behavior for images
         event.preventDefault();
         
-        // Process the first image file
+        // Process ALL pasted image files (multi-file support)
         this.isProcessingFile.set(true);
-        this.processFiles([imageFiles[0]]);
-        
-        // Clear any existing message text since we're sending an image
-        if (this.message().trim() === '') {
-          // Optionally show a placeholder message that an image was pasted
-        }
+        this.processFiles(imageFiles);
       }
     }
     
@@ -573,8 +566,15 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
 
   private async processFiles(files: File[]): Promise<void> {
     try {
-      const contents = await Promise.all(files.map(file => this.readFileAsBase64(file)));
-      this.selectedFiles.set([{ file: files[0], name: files[0].name, content: '' }]);
+      // Process ALL files (multi-file support)
+      const newFileData = files.map(file => ({
+        file: file,
+        name: file.name,
+        content: ''
+      }));
+      
+      // APPEND to existing files (don't replace)
+      this.selectedFiles.update(existing => [...existing, ...newFileData]);
     } catch (error) {
       console.error('Error processing files:', error);
     } finally {
@@ -983,6 +983,13 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
 
       // 4. Send to server directly (service will handle streaming response)
       const sessionId = this.aiAssistantService.currentSessionId() || '';
+      // DEBUG: Log the session ID being used for this message
+      console.log(`🔵 [PANEL sendMessage] About to send message with sessionId: '${sessionId}'`);
+      console.log(`🔵 [PANEL sendMessage] currentSessionId() value: '${this.aiAssistantService.currentSessionId()}'`);
+      console.log(`🔵 [PANEL sendMessage] User message:`, userMessage);
+      console.log(`🔵 [PANEL sendMessage] Chat files being sent:`, chatFiles);
+      console.log(`🔵 [PANEL sendMessage] State being sent:`, state);
+      
       this.aiAssistantService.isLoading.set(true);
       this.aiAssistantService.sendMessageToServer(sessionId, userMessage, chatFiles, state).subscribe({
         next: () => {

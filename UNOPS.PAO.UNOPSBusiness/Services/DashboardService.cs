@@ -90,7 +90,7 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
 
     /// <summary>
     /// Gets partners that are related to the current user (created by or last modified by)
-    /// and excludes Draft status partners with RBAC filtering
+    /// including ALL statuses (Active, Draft, etc.) with RBAC filtering
     /// </summary>
     public async Task<PaginationResponse<PartnerModel>> GetMyPartnersAsync(ClaimsPrincipal user, int pageSize = 1000)
     {
@@ -103,10 +103,10 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
 
         _logger.LogInformation("Getting dashboard partners for user {UserId} with RBAC filtering", userId.Value);
 
+        // Include ALL statuses (including Draft) in My Workspace
         var query = _context.Set<UNOPSPartner>()
             .Include(p => p.PartnerGroup)
-            .Where(p => (p.CreatedBy == userId.Value || p.LastModifiedBy == userId.Value) 
-                       && p.Status != Domain.Entities.EntityStatus.Draft)
+            .Where(p => p.CreatedBy == userId.Value || p.LastModifiedBy == userId.Value)
             .OrderByDescending(p => p.LastModifiedDate ?? p.CreatedDate);
 
         // Apply RBAC access control filters before counting and pagination
@@ -132,7 +132,7 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
 
     /// <summary>
     /// Gets contacts that are related to the current user (created by or last modified by)
-    /// and excludes Draft status contacts with RBAC filtering
+    /// including ALL statuses (Active, Draft, etc.) with RBAC filtering
     /// </summary>
     public async Task<PaginationResponse<ContactModel>> GetMyContactsAsync(ClaimsPrincipal user, int pageSize = 1000)
     {
@@ -145,10 +145,10 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
 
         _logger.LogInformation("Getting dashboard contacts for user {UserId} with RBAC filtering", userId.Value);
 
+        // Include ALL statuses (including Draft) in My Workspace
         var query = _context.Set<UNOPSContact>()
             .Include(c => c.Partner)
-            .Where(c => (c.CreatedBy == userId.Value || c.LastModifiedBy == userId.Value) 
-                       && c.Status != EntityStatus.Draft)
+            .Where(c => c.CreatedBy == userId.Value || c.LastModifiedBy == userId.Value)
             .OrderByDescending(c => c.LastModifiedDate ?? c.CreatedDate);
 
         // Apply RBAC access control filters before counting and pagination
@@ -256,7 +256,7 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
 
     /// <summary>
     /// Gets interactions that are related to the current user (created by or last modified by)
-    /// and excludes Draft status interactions with RBAC filtering
+    /// including ALL statuses (Active, Draft, etc.) with RBAC filtering
     /// </summary>
     public async Task<PaginationResponse<InteractionModel>> GetMyInteractionsAsync(ClaimsPrincipal user, int pageSize = 1000)
     {
@@ -269,11 +269,11 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
 
         _logger.LogInformation("Getting dashboard interactions for user {UserId} with RBAC filtering", userId.Value);
 
+        // Include ALL statuses (including Draft) in My Workspace
         var query = _context.Set<Interaction>()
             .Include(i => i.InteractionContacts)
             .Include(i => i.InteractionPartners)
-            .Where(i => (i.CreatedBy == userId.Value || i.LastModifiedBy == userId.Value) 
-                       && i.Status != EntityStatus.Draft)
+            .Where(i => i.CreatedBy == userId.Value || i.LastModifiedBy == userId.Value)
             .OrderByDescending(i => i.LastModifiedDate ?? i.CreatedDate);
 
         // Apply RBAC access control filters before counting and pagination
@@ -340,8 +340,8 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
     }
 
     /// <summary>
-    /// Gets opportunities where the current user is a stakeholder (not just created/modified by)
-    /// and excludes Draft status opportunities with RBAC filtering
+    /// Gets opportunities where the current user is a stakeholder, creator, or last modifier
+    /// including ALL statuses (Active, Draft, etc.) with RBAC filtering
     /// </summary>
     public async Task<PaginationResponse<OpportunityModel>> GetMyOpportunitiesAsync(ClaimsPrincipal user, int pageSize = 1000)
     {
@@ -352,7 +352,7 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
             return new PaginationResponse<OpportunityModel> { Records = new List<OpportunityModel>(), TotalCount = 0 };
         }
 
-        _logger.LogInformation("Getting dashboard opportunities for user {UserId} (stakeholder-based) with RBAC filtering", userId.Value);
+        _logger.LogInformation("Getting dashboard opportunities for user {UserId} (stakeholder/creator/modifier) with RBAC filtering", userId.Value);
 
         // Get opportunities where user is a stakeholder, including their role information
         var userStakeholderRoles = await _context.Set<OpportunityStakeholder>()
@@ -365,6 +365,11 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
             .Select(os => os.OpportunityId)
             .Distinct()
             .ToList();
+        
+        _logger.LogInformation("DEBUG: User {UserId} is stakeholder on {Count} opportunities: [{Ids}]", 
+            userId.Value, 
+            opportunityIdsFromStakeholders.Count,
+            string.Join(", ", opportunityIdsFromStakeholders.Take(10)));
 
         // Create a lookup dictionary for roles by opportunity ID
         var rolesByOpportunityId = userStakeholderRoles
@@ -375,16 +380,36 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
                 g => string.Join(", ", g.Select(x => x.RoleName).Distinct())
             );
 
+        // Check how many opportunities user created or modified (including drafts)
+        var createdByUser = await _context.Set<Opportunity>()
+            .Where(o => o.CreatedBy == userId.Value)
+            .CountAsync();
+        var modifiedByUser = await _context.Set<Opportunity>()
+            .Where(o => o.LastModifiedBy == userId.Value)
+            .CountAsync();
+        
+        _logger.LogInformation("DEBUG: User {UserId} created {Created} opportunities, modified {Modified} opportunities (all statuses)", 
+            userId.Value, createdByUser, modifiedByUser);
+
+        // Query opportunities where user is stakeholder, creator, or last modifier
+        // Include ALL statuses (including Draft) in My Workspace
         var query = _context.Set<Opportunity>()
             .Include(o => o.FundingPartners)
             .Include(o => o.ClientPartners)
             .Include(o => o.WorkflowStage)
             .Where(o => opportunityIdsFromStakeholders.Contains(o.Id) 
-                       && o.Status != EntityStatus.Draft)
+                        || o.CreatedBy == userId.Value 
+                        || o.LastModifiedBy == userId.Value)
             .OrderByDescending(o => o.LastModifiedDate ?? o.CreatedDate);
+
+        // Count before RBAC filtering
+        var countBeforeRbac = await query.CountAsync();
+        _logger.LogInformation("DEBUG: Found {Count} opportunities BEFORE RBAC filtering", countBeforeRbac);
 
         // Apply RBAC access control filters before counting and pagination
         var filteredData = await ApplyAccessControlFiltersWithEntityName(query, user, "read", "Opportunity");
+        
+        _logger.LogInformation("DEBUG: Found {Count} opportunities AFTER RBAC filtering", filteredData.Count());
         
         var opportunityArray = filteredData.ToArray();
         var totalCount = opportunityArray.Length;
@@ -404,7 +429,7 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
             }
         }
 
-        _logger.LogInformation("Found {Count} dashboard opportunities for user {UserId} (stakeholder-based) after RBAC filtering", records.Count, userId.Value);
+        _logger.LogInformation("Found {Count} dashboard opportunities for user {UserId} (stakeholder/creator/modifier) after RBAC filtering", records.Count, userId.Value);
 
         return new PaginationResponse<OpportunityModel>
         {
@@ -416,7 +441,7 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
     }
 
     /// <summary>
-    /// Gets draft opportunities where the current user is a stakeholder with RBAC filtering
+    /// Gets draft opportunities where the current user is a stakeholder, creator, or last modifier with RBAC filtering
     /// </summary>
     public async Task<PaginationResponse<OpportunityModel>> GetMyDraftOpportunitiesAsync(ClaimsPrincipal user, int pageSize = 1000)
     {
@@ -427,7 +452,7 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
             return new PaginationResponse<OpportunityModel> { Records = new List<OpportunityModel>(), TotalCount = 0 };
         }
 
-        _logger.LogInformation("Getting draft opportunities for user {UserId} (stakeholder-based) with RBAC filtering", userId.Value);
+        _logger.LogInformation("Getting draft opportunities for user {UserId} (stakeholder/creator/modifier) with RBAC filtering", userId.Value);
 
         // Get opportunities where user is a stakeholder, including their role information
         var userStakeholderRoles = await _context.Set<OpportunityStakeholder>()
@@ -450,11 +475,11 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
                 g => string.Join(", ", g.Select(x => x.RoleName).Distinct())
             );
 
+        // Query draft opportunities where user is stakeholder, creator, or last modifier
         var query = _context.Set<Opportunity>()
-            .Include(o => o.FundingPartners)
-            .Include(o => o.ClientPartners)
-            .Include(o => o.WorkflowStage)
-            .Where(o => opportunityIdsFromStakeholders.Contains(o.Id) 
+            .Where(o => (opportunityIdsFromStakeholders.Contains(o.Id) 
+                        || o.CreatedBy == userId.Value 
+                        || o.LastModifiedBy == userId.Value)
                        && o.Status == EntityStatus.Draft)
             .OrderByDescending(o => o.CreatedDate);
 
@@ -477,7 +502,7 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
             }
         }
 
-        _logger.LogInformation("Found {Count} draft opportunities for user {UserId} (stakeholder-based) after RBAC filtering", records.Count, userId.Value);
+        _logger.LogInformation("Found {Count} draft opportunities for user {UserId} (stakeholder/creator/modifier) after RBAC filtering", records.Count, userId.Value);
 
         return new PaginationResponse<OpportunityModel>
         {
@@ -759,6 +784,91 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
         {
             _logger.LogError(ex, "Error retrieving org unit recent updates for user {UserId}", userId.Value);
             return new OrgUnitRecentUpdatesResponse();
+        }
+    }
+
+    /// <summary>
+    /// Gets all dashboard data in a single request to avoid DbContext threading issues
+    /// from concurrent API calls. Executes all queries sequentially on the same DbContext.
+    /// </summary>
+    public async Task<DashboardCombinedResponse> GetAllDashboardDataAsync(ClaimsPrincipal user, int pageSize = 1000, int recentUpdatesPageSize = 10)
+    {
+        var userId = GetCurrentUserId(user);
+        if (!userId.HasValue)
+        {
+            _logger.LogWarning("No valid user ID found for combined dashboard request");
+            return new DashboardCombinedResponse();
+        }
+
+        _logger.LogInformation("Getting combined dashboard data for user {UserId}", userId.Value);
+
+        var response = new DashboardCombinedResponse();
+
+        try
+        {
+            // Execute all queries SEQUENTIALLY to avoid DbContext threading issues
+            // Each query completes before the next one starts
+
+            // 1. My Partners (non-draft)
+            var partnersResult = await GetMyPartnersAsync(user, pageSize);
+            response.MyPartners = partnersResult.Records?.ToList() ?? new List<PartnerModel>();
+
+            // 2. My Contacts (non-draft)
+            var contactsResult = await GetMyContactsAsync(user, pageSize);
+            response.MyContacts = contactsResult.Records?.ToList() ?? new List<ContactModel>();
+
+            // 3. My Interactions (non-draft)
+            var interactionsResult = await GetMyInteractionsAsync(user, pageSize);
+            response.MyInteractions = interactionsResult.Records?.ToList() ?? new List<InteractionModel>();
+
+            // 4. My Opportunities (non-draft)
+            var opportunitiesResult = await GetMyOpportunitiesAsync(user, pageSize);
+            response.MyOpportunities = opportunitiesResult.Records?.ToList() ?? new List<OpportunityModel>();
+
+            // 5. Draft Partners
+            var draftPartnersResult = await GetMyDraftPartnersAsync(user, pageSize);
+            response.DraftPartners = draftPartnersResult.Records?.ToList() ?? new List<PartnerModel>();
+
+            // 6. Draft Contacts
+            var draftContactsResult = await GetMyDraftContactsAsync(user, pageSize);
+            response.DraftContacts = draftContactsResult.Records?.ToList() ?? new List<ContactModel>();
+
+            // 7. Draft Interactions
+            var draftInteractionsResult = await GetMyDraftInteractionsAsync(user, pageSize);
+            response.DraftInteractions = draftInteractionsResult.Records?.ToList() ?? new List<InteractionModel>();
+
+            // 8. Draft Opportunities
+            var draftOpportunitiesResult = await GetMyDraftOpportunitiesAsync(user, pageSize);
+            response.DraftOpportunities = draftOpportunitiesResult.Records?.ToList() ?? new List<OpportunityModel>();
+
+            // 9. Org Unit Recent Updates
+            var recentUpdatesResult = await GetOrgUnitRecentUpdatesAsync(user, recentUpdatesPageSize);
+            response.OrgUnitRecentUpdates = recentUpdatesResult.Updates?.ToList() ?? new List<RecentUpdateModel>();
+            response.OrgUnitName = recentUpdatesResult.OrgUnitName ?? "your organization unit";
+            response.OrgUnitId = recentUpdatesResult.OrgUnitId;
+
+            _logger.LogInformation(
+                "Combined dashboard data loaded for user {UserId}: {Partners} partners, {Contacts} contacts, " +
+                "{Interactions} interactions, {Opportunities} opportunities, {DraftPartners} draft partners, " +
+                "{DraftContacts} draft contacts, {DraftInteractions} draft interactions, {DraftOpportunities} draft opportunities, " +
+                "{RecentUpdates} recent updates",
+                userId.Value,
+                response.MyPartners.Count,
+                response.MyContacts.Count,
+                response.MyInteractions.Count,
+                response.MyOpportunities.Count,
+                response.DraftPartners.Count,
+                response.DraftContacts.Count,
+                response.DraftInteractions.Count,
+                response.DraftOpportunities.Count,
+                response.OrgUnitRecentUpdates.Count);
+
+            return response;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting combined dashboard data for user {UserId}", userId.Value);
+            throw;
         }
     }
 

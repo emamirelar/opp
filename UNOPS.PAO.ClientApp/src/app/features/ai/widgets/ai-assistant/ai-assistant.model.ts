@@ -70,6 +70,7 @@ export interface ContentPart {
   invocationId?: string; // Invocation ID for component tracking
   renderingId?: string; // Rendering ID for component management
   isUserMessage?: boolean; // Flag to indicate if this is a user message
+  files?: ChatFile[]; // Attached files for user messages
   
   // NOTE: ContentPart does NOT have a role - only the content object has a role
 }

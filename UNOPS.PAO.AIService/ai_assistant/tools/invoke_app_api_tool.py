@@ -12,6 +12,105 @@ from typing import Optional
 from google.adk.tools.tool_context import ToolContext
 
 
+def _merge_with_stored_proposal(params: Optional[dict], tool_context: Optional[ToolContext]) -> dict:
+    """
+    Merge params with stored proposal data for create-from-proposal calls.
+    This ensures that extracted data from generate-proposal is not lost.
+    """
+    params = params or {}
+    
+    if not tool_context:
+        return params
+    
+    # Try to get stored proposal from tool context state
+    stored_proposal = None
+    if hasattr(tool_context, 'state') and tool_context.state:
+        stored_proposal = tool_context.state.get('last_generated_proposal')
+    
+    if not stored_proposal:
+        print("⚠️ No stored proposal found in tool context - using params as-is")
+        return params
+    
+    print(f"📋 Found stored proposal with keys: {list(stored_proposal.keys())}")
+    
+    # Fields that should be merged from stored proposal if missing/empty in params
+    proposal_fields = [
+        'deliverables', 'countries', 'sdGs', 'fundingPartners', 'clientPartners', 
+        'stakeholders', 'targetSigningDate', 'targetDeliveryDate', 'initiativeBudgetUSD',
+        'responsibleOrgUnitId', 'proposedInitiativeTypeId', 'strategicAlignment',
+        'resultsFocus', 'expectedImpact', 'expectedOutcomes', 'expectedBeneficiaries', 
+        'challenges', 'deliveryModality', 'partnerReference'
+    ]
+    
+    merged_count = 0
+    for field in proposal_fields:
+        # Check if param is missing or empty (None, [], {}, '')
+        param_value = params.get(field)
+        proposal_value = stored_proposal.get(field)
+        
+        is_param_empty = (
+            param_value is None or 
+            param_value == [] or 
+            param_value == {} or 
+            param_value == ''
+        )
+        
+        is_proposal_has_value = (
+            proposal_value is not None and 
+            proposal_value != [] and 
+            proposal_value != {} and 
+            proposal_value != ''
+        )
+        
+        if is_param_empty and is_proposal_has_value:
+            params[field] = proposal_value
+            merged_count += 1
+            print(f"  ✅ Merged '{field}' from stored proposal")
+    
+    if merged_count > 0:
+        print(f"📋 Merged {merged_count} fields from stored proposal into create-from-proposal request")
+    else:
+        print("📋 No fields needed merging from stored proposal")
+    
+    return params
+
+
+def _store_proposal_from_response(response_data: dict, tool_context: Optional[ToolContext]):
+    """
+    Store proposal data from generate-proposal response for later use in create-from-proposal.
+    The response_data here is the RAW API response (before our wrapper is added).
+    """
+    if not tool_context:
+        print("⚠️ No tool_context available to store proposal")
+        return
+    
+    # Ensure state exists
+    if not hasattr(tool_context, 'state') or tool_context.state is None:
+        tool_context.state = {}
+    
+    # The response_data is the RAW API response from generate-proposal
+    # It should contain the proposal fields directly (name, description, deliverables, etc.)
+    proposal = response_data
+    
+    # Check if proposal is nested (some APIs wrap the response)
+    if isinstance(response_data, dict):
+        if 'proposal' in response_data:
+            proposal = response_data.get('proposal', {})
+        elif 'data' in response_data:
+            proposal = response_data.get('data', {})
+        # Otherwise use response_data directly as the proposal
+    
+    if proposal and isinstance(proposal, dict) and len(proposal) > 0:
+        tool_context.state['last_generated_proposal'] = proposal
+        print(f"💾 Stored proposal with {len(proposal)} fields for later use in create-from-proposal")
+        # Log meaningful fields that were extracted
+        meaningful_fields = ['name', 'description', 'deliverables', 'countries', 'sdGs', 'fundingPartners', 'clientPartners']
+        found_fields = [f for f in meaningful_fields if proposal.get(f)]
+        print(f"💾 Proposal contains: {found_fields}")
+    else:
+        print(f"⚠️ Could not extract valid proposal from response: {type(proposal)}")
+
+
 def prepare_api_url(url: str) -> str:
     """
     Prepare the final URL for API calls by ensuring the base URL comes from config manager.
@@ -89,6 +188,11 @@ def invoke_app_api(url: str, method: str, params: Optional[dict] = None, headers
         # Prepare the final URL using the dedicated function
         final_url = prepare_api_url(url)
         
+        # WORKFLOW SUPPORT: For create-from-proposal, merge with stored proposal if params are mostly empty
+        if 'create-from-proposal' in url.lower() and method.upper() == 'POST':
+            params = _merge_with_stored_proposal(params, tool_context)
+            print(f"📋 After merge with stored proposal, params keys: {list(params.keys()) if params else 'None'}")
+        
         # Use the common utility to build request headers
         from ..utils.auth_helpers import build_request_headers
         request_headers = build_request_headers(
@@ -136,6 +240,8 @@ def invoke_app_api(url: str, method: str, params: Optional[dict] = None, headers
         elif method.upper() == 'POST':
             # Make POST request with JSON body
             print(f"🌐 Making POST request to: {final_url}")
+            print(f"📤 REQUEST BODY BEING SENT:")
+            print(f"📤 {json.dumps(body, indent=2, default=str)}")
             
             try:
                 response = requests.post(final_url, json=body, headers=request_headers, timeout=api_timeout, verify=False)
@@ -171,6 +277,10 @@ def invoke_app_api(url: str, method: str, params: Optional[dict] = None, headers
         if response.status_code >= 200 and response.status_code < 300:
             try:
                 response_data = response.json()
+                
+                # WORKFLOW SUPPORT: Store proposal data from generate-proposal for later use
+                if 'generate-proposal' in url.lower() and method.upper() == 'POST':
+                    _store_proposal_from_response(response_data, tool_context)
                 
                 return {
                     "status": "success",

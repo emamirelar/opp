@@ -112,20 +112,22 @@ export class DynamicContentService {
     // PRIORITY 2: Check for text content (streaming or stored format)
     // Handle both streaming format (part.text) and stored format (part might be a string or have content property)
     const textContent = part.text || (typeof part === 'string' ? part : null) || part.content;
-    if (textContent && !part.functionCall && !part.thought) {
-      // Check if this is a user message - use special user-message type
-      const isUserMessage = chunk.role === 'user' || chunk.isUser === true || chunk.author === 'user';
+    const isUserMessage = chunk.role === 'user' || chunk.isUser === true || chunk.author === 'user';
+    
+    // For user messages, create content part even if text is empty but files exist
+    if ((textContent || (isUserMessage && chunk.files?.length > 0)) && !part.functionCall && !part.thought) {
       const contentType = isUserMessage ? 'user-message' : 'markdown';
       
       return {
-        text: textContent,
+        text: textContent || '', // Empty string if no text but has files
         type: contentType,
-        content: textContent,
+        content: textContent || '',
         partial: isUserMessage ? false : isPartial, // User messages are always complete, AI messages use actual partial flag
         invocationId: chunk.invocationId,
         renderingId: `${renderingIdBase}-${contentType}`,
         timestamp: chunk.timestamp || Date.now(),
-        isUserMessage: isUserMessage
+        isUserMessage: isUserMessage,
+        files: isUserMessage ? chunk.files : undefined // Include files for user messages
       };
     }
     

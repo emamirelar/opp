@@ -1,8 +1,28 @@
 {
   "metadata": {
-    "version": "1.1",
+    "version": "1.2",
     "generatedDate": "2024-09-24T00:00:00Z",
     "description": "Comprehensive entity metadata for UNOPS PAO system including data models and API endpoints with deconstructed parameter structures"
+  },
+  "workflows": {
+    "description": "Multi-step API workflows where Step 1 generates/extracts data and Step 2 creates the entity using that data",
+    "dataPassthrough": "CRITICAL: The response from Step 1 contains ALL the structured data needed for Step 2. When user confirms, pass the COMPLETE Step 1 response as the request body for Step 2. Do NOT construct a new empty request - reuse the extracted data.",
+    "patterns": [
+      {
+        "name": "Opportunity Creation from Documents",
+        "step1": {
+          "endpoint": "/api/opportunity/generate-proposal",
+          "purpose": "Analyzes documents using AI and returns structured proposal data",
+          "returns": "Complete proposal object with: name, description, deliverables, countries, sdGs, fundingPartners, clientPartners, stakeholders, targetSigningDate, targetDeliveryDate, initiativeBudgetUSD, strategicAlignment, resultsFocus, expectedImpact, expectedOutcomes, expectedBeneficiaries, challenges, documents"
+        },
+        "step2": {
+          "endpoint": "/api/opportunity/create-from-proposal",
+          "purpose": "Creates the opportunity record in the system",
+          "receives": "The SAME data object returned by Step 1 - pass through all fields without modification"
+        },
+        "userConfirmation": "After Step 1, show results to user. When they confirm (yes/create/proceed/go ahead), call Step 2 with Step 1's response data"
+      }
+    ]
   },
   "requestModels": {
     "PaginationRequest": {
@@ -4939,8 +4959,10 @@
         {
           "endpoint": "/api/opportunity/generate-proposal",
           "method": "POST",
-          "description": "AI ANALYSIS STEP 1 OF 2: Generates AI-powered opportunity proposal by analyzing interactions and/or documents. The AI reads the content and extracts structured opportunity data across all sections (WHAT, WHY, WHO, WHERE, WHEN). Returns a proposal for user review - does NOT create the opportunity yet.",
-          "whenToUse": "Use this endpoint when you want the AI to analyze interactions (meetings, emails, calls) or documents (PDFs uploaded to GCS or existing documents in system) to generate a comprehensive opportunity proposal. This is the FIRST STEP in AI-assisted opportunity creation. The AI will read all sources and propose structured data that the user can review and modify before actual creation.",
+          "description": "Step 1 of workflow: AI analyzes documents and extracts structured proposal data for user review. Does NOT create the opportunity - just generates a preview.",
+          "workflowStep": 1,
+          "whenToUse": "Use when user wants to create an opportunity from documents. AI will analyze and extract structured data.",
+          "responseNote": "Returns complete proposal with: name, description, deliverables[], countries[], sdGs[], fundingPartners[], clientPartners[], stakeholders[], targetSigningDate, targetDeliveryDate, initiativeBudgetUSD, strategicAlignment, resultsFocus, expectedImpact, expectedOutcomes, expectedBeneficiaries, challenges, documents[]. SAVE this response to pass to create-from-proposal.",
           "parameters": [
             {
               "name": "request",
@@ -4966,8 +4988,11 @@
         {
           "endpoint": "/api/opportunity/create-from-proposal",
           "method": "POST",
-          "description": "AI ANALYSIS STEP 2 OF 2: Creates an actual opportunity record from the AI-generated proposal after user review and acceptance. Takes the reviewed proposal data with user modifications and creates the opportunity in the database with all relationships.",
-          "whenToUse": "Use this endpoint AFTER calling /generate-proposal and AFTER the user has reviewed and accepted the AI proposal. This endpoint creates the actual opportunity record with all the user-accepted fields including partners, deliverables, SDGs, countries, timeline dates, etc. This is the SECOND STEP that persists the data.",
+          "description": "Step 2 of workflow: Creates opportunity using data from generate-proposal. This endpoint expects to receive the COMPLETE response object from generate-proposal as its request body. The system will automatically merge any missing fields from the stored proposal.",
+          "workflowStep": 2,
+          "prerequisite": "/api/opportunity/generate-proposal",
+          "whenToUse": "Call ONLY after: (1) generate-proposal has been called and (2) user has confirmed they want to create the opportunity",
+          "requestSource": "Pass the entire response object from generate-proposal as this request's body. All fields (name, description, deliverables, countries, sdGs, fundingPartners, clientPartners, stakeholders, dates, budget, etc.) should come from the generate-proposal response.",
           "parameters": [
             {
               "name": "request",

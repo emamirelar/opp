@@ -124,6 +124,10 @@ export class AiAssistantService {
     files?: ChatFile[], 
     state?: any
   ): Observable<void> {
+    // DEBUG: Log incoming session ID for this request
+    console.log(`🔵 [AI-SERVICE sendMessageToServer] Called with sessionId: '${sessionId}' (empty: ${!sessionId})`);
+    console.log(`🔵 [AI-SERVICE sendMessageToServer] currentSessionId signal value: '${this.currentSessionId()}'`);
+    
     // Track if we've created a streaming message for this conversation
     let streamingMessage: ChatMessage | null = null;
     let messageIndex = -1;
@@ -203,6 +207,9 @@ export class AiAssistantService {
       streaming: true
     });
     
+    // DEBUG: Log what session_id we're sending to the server
+    console.log(`🔵 [AI-SERVICE] Sending chat request with session_id: '${sessionId}' (empty: ${!sessionId})`);
+    
     // Use FetchStreamService to handle streaming with interceptor support
     return this.fetchStreamService.streamRequest(`${this.aiAssistantUrl}/chat`, {
       method: 'POST',
@@ -213,11 +220,16 @@ export class AiAssistantService {
         // Handle session ID from first chunk BEFORE processing content
         // The backend sends a special first chunk with just session_id and timestamp
         const sessionIdFromServer = data?.session_id || data?.sessionId;
+        
+        // DEBUG: Log every chunk that has a session_id
         if (sessionIdFromServer) {
+          console.log(`🟢 [AI-SERVICE] Received session_id from server: '${sessionIdFromServer}'`);
           const currentStoredId = this.currentSessionId();
+          console.log(`🟢 [AI-SERVICE] Current stored session_id: '${currentStoredId}' (will update: ${!currentStoredId})`);
           
           if (!currentStoredId) {
             this.currentSessionId.set(sessionIdFromServer);
+            console.log(`✅ [AI-SERVICE] Session ID stored: '${sessionIdFromServer}'`);
             
             // Also update the current chat session's ID and sync the title signal
             const currentSession = this.currentChatSession();

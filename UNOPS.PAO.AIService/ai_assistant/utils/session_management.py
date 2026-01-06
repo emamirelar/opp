@@ -197,6 +197,44 @@ async def update_session_state_in_database(
         logger.error(f"❌ State updates: {state_updates}")
         raise
 
+async def _recover_session_state_from_db(
+    session_service: DatabaseSessionService,
+    app_name: str,
+    user_id: str,
+    session_id: str
+) -> Dict[str, Any]:
+    """
+    Attempt to recover session STATE directly from database, bypassing event deserialization.
+    This is useful when get_session() fails due to corrupted event data.
+    
+    Args:
+        session_service: The database session service instance
+        app_name: Application name
+        user_id: User ID
+        session_id: Session ID
+        
+    Returns:
+        dict: The recovered session state, or empty dict if recovery fails
+    """
+    try:
+        async with session_service.database_session_factory() as db_session:
+            from google.adk.sessions.database_session_service import StorageSession
+            
+            # Get the raw storage session (this bypasses event deserialization)
+            storage_session = await db_session.get(StorageSession, (app_name, user_id, session_id))
+            
+            if storage_session and storage_session.state:
+                logger.info(f"🔧 Recovered session state from database: {list(storage_session.state.keys())}")
+                return dict(storage_session.state)
+            else:
+                logger.info(f"🔧 No state found in database for session {session_id}")
+                return {}
+                
+    except Exception as e:
+        logger.error(f"❌ Error recovering session state from database: {e}")
+        return {}
+
+
 async def get_or_create_session(
     session_service: DatabaseSessionService,
     app_name: str,
@@ -275,15 +313,45 @@ async def get_or_create_session(
             # Handle corrupted session data (e.g., Transcription validation errors from Gemini responses)
             session_load_error = e
             logger.warning(f"⚠️ Failed to load session {actual_session_id}: {e}")
-            logger.warning("⚠️ Session data may be corrupted. Will create a new session.")
+            logger.warning("⚠️ Attempting to recover session state from database...")
             session = None
+            
+            # Try to recover at least the session STATE from the database directly
+            # This preserves uploaded_files_metadata and other state even if events are corrupted
+            try:
+                recovered_state = await _recover_session_state_from_db(
+                    session_service, app_name, user_id, actual_session_id
+                )
+                if recovered_state:
+                    # Merge recovered state into initial_state so it's preserved
+                    initial_state.update(recovered_state)
+                    logger.info(f"✅ Recovered session state with keys: {list(recovered_state.keys())}")
+            except Exception as recover_error:
+                logger.warning(f"⚠️ Could not recover session state: {recover_error}")
 
         if not session:
             if session_load_error:
-                logger.warning(f"🔄 Creating new session due to corrupted session data: {session_load_error}")
-                # Generate a new session ID since the old one is corrupted
-                actual_session_id = str(uuid.uuid4())
-                logger.info(f"🆔 Generated new session ID: {actual_session_id}")
+                # CRITICAL: Don't generate new session ID - this loses all conversation history!
+                # Instead, try to recover the session by recreating it with the SAME ID
+                logger.warning(f"🔄 Session {actual_session_id} failed to load due to: {session_load_error}")
+                logger.warning("🔄 Attempting to recover session with same ID (conversation history may be partial)")
+                
+                # Try to delete the corrupted session first, then recreate
+                try:
+                    await session_service.delete_session(
+                        app_name=app_name,
+                        user_id=user_id,
+                        session_id=actual_session_id
+                    )
+                    logger.info(f"🗑️ Deleted corrupted session {actual_session_id}")
+                except Exception as delete_error:
+                    logger.warning(f"⚠️ Could not delete corrupted session: {delete_error}")
+                
+                # Keep the SAME session ID so frontend maintains continuity
+                # The user's conversation will continue with the same session ID
+                # even though some events may have been lost
+                logger.warning(f"⚠️ IMPORTANT: Session {actual_session_id} events may have been lost due to serialization error")
+                logger.warning(f"⚠️ Original error: {session_load_error}")
             else:
                 logger.info("🆕 Session not found - creating new session...")
             
@@ -310,7 +378,12 @@ async def get_or_create_session(
                 session_id=actual_session_id,
                 state=initial_state_with_title
             )
-            logger.info(f"✅ New session created with initial state including title: {default_title}")
+            
+            if session_load_error:
+                logger.warning(f"✅ Session {actual_session_id} recovered (events may be partial)")
+            else:
+                logger.info(f"✅ New session created with initial state including title: {default_title}")
+            
             return session, actual_session_id, True
         else:
             logger.info("📋 Found existing session")

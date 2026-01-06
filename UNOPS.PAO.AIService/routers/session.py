@@ -146,8 +146,32 @@ async def get_session_with_chats(
         db_url = get_database_url()
         session_service = DatabaseSessionService(db_url=db_url)
         
-        # Get the specific session
-        session = await session_service.get_session(app_name=app_name, user_id=user_id, session_id=session_id)
+        # Get the specific session with error handling for serialization issues
+        session = None
+        session_load_error = None
+        try:
+            session = await session_service.get_session(app_name=app_name, user_id=user_id, session_id=session_id)
+        except Exception as e:
+            session_load_error = e
+            logger.warning(f"⚠️ Failed to load session {session_id} due to serialization error: {e}")
+            logger.warning("⚠️ Attempting to recover session state only...")
+            
+            # Try to recover at least the session state from database directly
+            try:
+                async with session_service.database_session_factory() as db_session:
+                    from google.adk.sessions.database_session_service import StorageSession
+                    storage_session = await db_session.get(StorageSession, (app_name, user_id, session_id))
+                    if storage_session:
+                        # Create a minimal session-like object with just the state
+                        class MinimalSession:
+                            def __init__(self, state, session_id):
+                                self.state = state
+                                self.id = session_id
+                                self.events = []  # Events couldn't be loaded
+                        session = MinimalSession(storage_session.state or {}, session_id)
+                        logger.info(f"✅ Recovered session state for {session_id}")
+            except Exception as recover_error:
+                logger.error(f"❌ Could not recover session state: {recover_error}")
         
         if not session:
             raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
