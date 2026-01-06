@@ -599,6 +599,7 @@
   "dashboard.orgUnitRecentUpdates": "Mises à jour Récentes de l'Unité d'Organisation",
   "dashboard.orgUnitUpdatesSubtitle": "Top 10 des modifications récentes pour {{orgUnitName}}",
   "dashboard.opportunity": "Opportunité",
+  "dashboard.opportunities": "Opportunités",
   "dashboard.partner": "Partenaire",
   "dashboard.partners": "Partenaires",
   "dashboard.quickActions": "Actions Rapides",

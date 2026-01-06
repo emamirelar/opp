@@ -164,4 +164,23 @@ public class DashboardController : BaseController
             return result;
         });
     }
+
+    /// <summary>
+    /// Gets all dashboard data in a single combined request.
+    /// This is the preferred endpoint to avoid DbContext threading issues from concurrent API calls.
+    /// Returns: MyPartners, MyContacts, MyInteractions, MyOpportunities, DraftPartners, DraftContacts,
+    /// DraftInteractions, DraftOpportunities, and OrgUnitRecentUpdates in a single response.
+    /// </summary>
+    /// <param name="pageSize">Number of records per entity type (default: 1000)</param>
+    /// <param name="recentUpdatesPageSize">Number of recent updates to return (default: 10)</param>
+    /// <returns>Combined dashboard data</returns>
+    [HttpGet(APIDictionary.DashboardCombined)]
+    public async Task<ActionResult> GetCombinedDashboardData([FromQuery] int pageSize = 1000, [FromQuery] int recentUpdatesPageSize = 10)
+    {
+        return await HandleOperationAsync(async () =>
+        {
+            var result = await _dashboardService.GetAllDashboardDataAsync(User, pageSize, recentUpdatesPageSize);
+            return result;
+        });
+    }
 }

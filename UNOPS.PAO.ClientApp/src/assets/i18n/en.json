@@ -621,6 +621,7 @@
   "dashboard.orgUnitRecentUpdates": "Org Unit Recent Updates",
   "dashboard.orgUnitUpdatesSubtitle": "Top 10 recent changes for {{orgUnitName}}",
   "dashboard.opportunity": "Opportunity",
+  "dashboard.opportunities": "Opportunities",
   "dashboard.partner": "Partner",
   "dashboard.partners": "Partners",
   "dashboard.quickActions": "Quick Actions",

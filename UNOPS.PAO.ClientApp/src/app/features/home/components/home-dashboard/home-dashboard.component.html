@@ -624,6 +624,40 @@
                       </div>
                     </div>
                   }
+                  
+                  <!-- All Opportunities -->
+                  @if (dashboardData()!.myOpportunities.length > 0) {
+                    <div>
+                      <h4 class="font-unops-body text-unops-body-large font-unops-semibold text-unops-neutral-900 mb-unops-md flex items-center">
+                        <i class="material-symbols-outlined text-unops-lg text-unops-accent-purple mr-unops-sm">business_center</i>
+                        {{ 'dashboard.myOpportunities' | translate }} ({{ dashboardData()!.myOpportunities.length }})
+                      </h4>
+                      <div class="grid grid-cols-1 gap-unops-sm">
+                        @for (opportunity of dashboardData()!.myOpportunities; track opportunity.id) {
+                          <div class="flex items-center space-x-unops-sm p-unops-md rounded-unops-lg border border-unops-neutral-200 hover:border-unops-accent-purple/50 hover:shadow-unops-sm cursor-pointer transition-all duration-unops-short"
+                               (click)="navigateToEntity('Opportunity', getEntityId(opportunity.id))">
+                            <div class="w-3 h-3 bg-unops-accent-purple rounded-full flex-shrink-0"></div>
+                            <div class="flex-1 min-w-0">
+                              <div class="font-unops-body text-unops-body-medium font-unops-medium text-unops-neutral-900 truncate">
+                                {{ opportunity.name }}
+                              </div>
+                              <div class="text-unops-body-small text-unops-neutral-600">
+                                {{ opportunity.workflowStageName || opportunity.status || ('dashboard.unknownStatus' | translate) }}
+                              </div>
+                            </div>
+                            <span class="inline-flex items-center px-unops-sm py-1 rounded-unops-sm text-unops-label-small font-unops-medium"
+                                  [ngClass]="{
+                                    'bg-unops-success/10 text-unops-success': opportunity.status === 'Active',
+                                    'bg-unops-warning/10 text-unops-warning': opportunity.status === 'Draft',
+                                    'bg-unops-neutral-200 text-unops-neutral-600': !opportunity.status || opportunity.status === 'Unknown'
+                                  }">
+                              {{ opportunity.status || ('dashboard.unknownStatus' | translate) }}
+                            </span>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
                 </div>
                 </div>
             </div>
@@ -878,9 +912,9 @@
             [config]="myWorkspaceConfig"
             [filters]="myWorkspaceFilters"
             [isExpanded]="false"
-            [showViewAllButton]="getRemainingPartnersCount() > 0 || getRemainingContactsCount() > 0"
+            [showViewAllButton]="getRemainingPartnersCount() > 0 || getRemainingContactsCount() > 0 || getRemainingOpportunitiesCount() > 0"
             [remainingCount]="getRemainingWorkspaceCount()"
-            [hasContent]="dashboardData()!.myPartners.length > 0 || dashboardData()!.myContacts.length > 0"
+            [hasContent]="dashboardData()!.myPartners.length > 0 || dashboardData()!.myContacts.length > 0 || dashboardData()!.myOpportunities.length > 0"
             [isMobile]="isMobile()"
             (filterClick)="onWorkspaceFilterClick($event)"
             (clearFilter)="clearOrgUnitUpdateFilter()"
@@ -932,6 +966,32 @@
                           </div>
                           <div class="text-unops-label-small text-unops-neutral-600 line-clamp-1">
                             {{ contact.title || ('dashboard.noTitle' | translate) }}
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+              
+              <!-- My Opportunities -->
+              @if (dashboardData()!.myOpportunities.length > 0 && (!selectedOrgUnitUpdateType() || selectedOrgUnitUpdateType() === 'Opportunity')) {
+                <div>
+                  <h4 class="font-unops-body text-unops-body-small font-unops-semibold text-unops-neutral-900 mb-unops-xs flex items-center">
+                    <i class="material-symbols-outlined text-unops-sm text-unops-accent-purple mr-unops-xs">business_center</i>
+                    {{ 'dashboard.opportunities' | translate }} ({{ dashboardData()!.myOpportunities.length }})
+                  </h4>
+                  <div class="space-y-unops-xs">
+                    @for (opportunity of getTruncatedOpportunities(); track opportunity.id) {
+                      <div class="flex items-center space-x-unops-sm p-unops-xs rounded-unops-sm hover:bg-unops-surface-cool/30 cursor-pointer transition-colors"
+                           (click)="navigateToEntity('Opportunity', getEntityId(opportunity.id))">
+                        <div class="w-2 h-2 bg-unops-accent-purple rounded-full flex-shrink-0"></div>
+                        <div class="flex-1 min-w-0">
+                          <div class="font-unops-body text-unops-body-small font-unops-medium text-unops-neutral-900 line-clamp-1">
+                            {{ opportunity.name }}
+                          </div>
+                          <div class="text-unops-label-small text-unops-neutral-600 line-clamp-1">
+                            {{ opportunity.workflowStageName || opportunity.status || ('dashboard.unknownStatus' | translate) }}
                           </div>
                         </div>
                       </div>
