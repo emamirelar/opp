@@ -90,7 +90,7 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
 
     /// <summary>
     /// Gets partners that are related to the current user (created by or last modified by)
-    /// and excludes Draft status partners with RBAC filtering
+    /// including ALL statuses (Active, Draft, etc.) with RBAC filtering
     /// </summary>
     public async Task<PaginationResponse<PartnerModel>> GetMyPartnersAsync(ClaimsPrincipal user, int pageSize = 1000)
     {
@@ -103,10 +103,10 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
 
         _logger.LogInformation("Getting dashboard partners for user {UserId} with RBAC filtering", userId.Value);
 
+        // Include ALL statuses (including Draft) in My Workspace
         var query = _context.Set<UNOPSPartner>()
             .Include(p => p.PartnerGroup)
-            .Where(p => (p.CreatedBy == userId.Value || p.LastModifiedBy == userId.Value) 
-                       && p.Status != Domain.Entities.EntityStatus.Draft)
+            .Where(p => p.CreatedBy == userId.Value || p.LastModifiedBy == userId.Value)
             .OrderByDescending(p => p.LastModifiedDate ?? p.CreatedDate);
 
         // Apply RBAC access control filters before counting and pagination
@@ -132,7 +132,7 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
 
     /// <summary>
     /// Gets contacts that are related to the current user (created by or last modified by)
-    /// and excludes Draft status contacts with RBAC filtering
+    /// including ALL statuses (Active, Draft, etc.) with RBAC filtering
     /// </summary>
     public async Task<PaginationResponse<ContactModel>> GetMyContactsAsync(ClaimsPrincipal user, int pageSize = 1000)
     {
@@ -145,10 +145,10 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
 
         _logger.LogInformation("Getting dashboard contacts for user {UserId} with RBAC filtering", userId.Value);
 
+        // Include ALL statuses (including Draft) in My Workspace
         var query = _context.Set<UNOPSContact>()
             .Include(c => c.Partner)
-            .Where(c => (c.CreatedBy == userId.Value || c.LastModifiedBy == userId.Value) 
-                       && c.Status != EntityStatus.Draft)
+            .Where(c => c.CreatedBy == userId.Value || c.LastModifiedBy == userId.Value)
             .OrderByDescending(c => c.LastModifiedDate ?? c.CreatedDate);
 
         // Apply RBAC access control filters before counting and pagination
@@ -256,7 +256,7 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
 
     /// <summary>
     /// Gets interactions that are related to the current user (created by or last modified by)
-    /// and excludes Draft status interactions with RBAC filtering
+    /// including ALL statuses (Active, Draft, etc.) with RBAC filtering
     /// </summary>
     public async Task<PaginationResponse<InteractionModel>> GetMyInteractionsAsync(ClaimsPrincipal user, int pageSize = 1000)
     {
@@ -269,11 +269,11 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
 
         _logger.LogInformation("Getting dashboard interactions for user {UserId} with RBAC filtering", userId.Value);
 
+        // Include ALL statuses (including Draft) in My Workspace
         var query = _context.Set<Interaction>()
             .Include(i => i.InteractionContacts)
             .Include(i => i.InteractionPartners)
-            .Where(i => (i.CreatedBy == userId.Value || i.LastModifiedBy == userId.Value) 
-                       && i.Status != EntityStatus.Draft)
+            .Where(i => i.CreatedBy == userId.Value || i.LastModifiedBy == userId.Value)
             .OrderByDescending(i => i.LastModifiedDate ?? i.CreatedDate);
 
         // Apply RBAC access control filters before counting and pagination
@@ -341,7 +341,7 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
 
     /// <summary>
     /// Gets opportunities where the current user is a stakeholder, creator, or last modifier
-    /// and excludes Draft status opportunities with RBAC filtering
+    /// including ALL statuses (Active, Draft, etc.) with RBAC filtering
     /// </summary>
     public async Task<PaginationResponse<OpportunityModel>> GetMyOpportunitiesAsync(ClaimsPrincipal user, int pageSize = 1000)
     {
@@ -380,26 +380,26 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
                 g => string.Join(", ", g.Select(x => x.RoleName).Distinct())
             );
 
-        // Check how many opportunities user created or modified
+        // Check how many opportunities user created or modified (including drafts)
         var createdByUser = await _context.Set<Opportunity>()
-            .Where(o => o.CreatedBy == userId.Value && o.Status != EntityStatus.Draft)
+            .Where(o => o.CreatedBy == userId.Value)
             .CountAsync();
         var modifiedByUser = await _context.Set<Opportunity>()
-            .Where(o => o.LastModifiedBy == userId.Value && o.Status != EntityStatus.Draft)
+            .Where(o => o.LastModifiedBy == userId.Value)
             .CountAsync();
         
-        _logger.LogInformation("DEBUG: User {UserId} created {Created} opportunities, modified {Modified} opportunities (non-draft)", 
+        _logger.LogInformation("DEBUG: User {UserId} created {Created} opportunities, modified {Modified} opportunities (all statuses)", 
             userId.Value, createdByUser, modifiedByUser);
 
         // Query opportunities where user is stakeholder, creator, or last modifier
+        // Include ALL statuses (including Draft) in My Workspace
         var query = _context.Set<Opportunity>()
             .Include(o => o.FundingPartners)
             .Include(o => o.ClientPartners)
             .Include(o => o.WorkflowStage)
-            .Where(o => (opportunityIdsFromStakeholders.Contains(o.Id) 
+            .Where(o => opportunityIdsFromStakeholders.Contains(o.Id) 
                         || o.CreatedBy == userId.Value 
                         || o.LastModifiedBy == userId.Value)
-                       && o.Status != EntityStatus.Draft)
             .OrderByDescending(o => o.LastModifiedDate ?? o.CreatedDate);
 
         // Count before RBAC filtering
