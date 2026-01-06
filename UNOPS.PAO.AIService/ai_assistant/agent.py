@@ -112,6 +112,46 @@ def format_entities_metadata_as_markdown(metadata):
         markdown_content.append(f"**Description:** {meta_info.get('description', 'N/A')}")
         markdown_content.append("")
     
+    # Handle workflows section (multi-step API patterns)
+    if 'workflows' in metadata:
+        workflows = metadata['workflows']
+        markdown_content.append("## Multi-Step Workflows")
+        if 'description' in workflows:
+            markdown_content.append(f"{workflows['description']}")
+        if 'dataPassthrough' in workflows:
+            markdown_content.append(f"**DATA PASSTHROUGH:** {workflows['dataPassthrough']}")
+        markdown_content.append("")
+        
+        if 'patterns' in workflows:
+            for pattern in workflows['patterns']:
+                markdown_content.append(f"### {pattern.get('name', 'Workflow')}")
+                
+                # Handle step1 and step2 structure
+                if 'step1' in pattern:
+                    step1 = pattern['step1']
+                    markdown_content.append(f"- **Step 1**: `{step1.get('endpoint', '')}` - {step1.get('purpose', '')}")
+                    if 'returns' in step1:
+                        markdown_content.append(f"  - **Returns:** {step1['returns']}")
+                
+                if 'step2' in pattern:
+                    step2 = pattern['step2']
+                    markdown_content.append(f"- **Step 2**: `{step2.get('endpoint', '')}` - {step2.get('purpose', '')}")
+                    if 'receives' in step2:
+                        markdown_content.append(f"  - **Receives:** {step2['receives']}")
+                
+                if 'userConfirmation' in pattern:
+                    markdown_content.append(f"- **User Confirmation:** {pattern['userConfirmation']}")
+                
+                # Also handle legacy 'steps' array if present
+                if 'steps' in pattern:
+                    for step in pattern['steps']:
+                        step_num = step.get('step', '')
+                        endpoint = step.get('endpoint', '')
+                        purpose = step.get('purpose', '')
+                        markdown_content.append(f"- **Step {step_num}**: `{endpoint}` - {purpose}")
+                
+                markdown_content.append("")
+    
     # Handle request models section
     if 'requestModels' in metadata:
         markdown_content.append("## Request Models")
@@ -172,6 +212,22 @@ def format_entities_metadata_as_markdown(metadata):
                         endpoint_line += f" - {endpoint['description']}"
                     markdown_content.append(endpoint_line)
                     markdown_content.append(f"  **Method:** {endpoint.get('method', 'GET')}")
+                    
+                    # Add workflow indicators if present
+                    if 'workflowStep' in endpoint:
+                        markdown_content.append(f"  **Workflow Step:** {endpoint['workflowStep']}")
+                    if 'prerequisite' in endpoint:
+                        markdown_content.append(f"  **Prerequisite:** {endpoint['prerequisite']}")
+                    
+                    # Add whenToUse, responseNote, importantNote, requestSource if present
+                    if 'whenToUse' in endpoint:
+                        markdown_content.append(f"  **When To Use:** {endpoint['whenToUse']}")
+                    if 'requestSource' in endpoint:
+                        markdown_content.append(f"  **Request Source:** {endpoint['requestSource']}")
+                    if 'responseNote' in endpoint:
+                        markdown_content.append(f"  **Response Note:** {endpoint['responseNote']}")
+                    if 'importantNote' in endpoint:
+                        markdown_content.append(f"  **IMPORTANT:** {endpoint['importantNote']}")
                     
                     if 'parameters' in endpoint and endpoint['parameters']:
                         markdown_content.append("  **Parameters:**")
@@ -329,6 +385,59 @@ def format_page_context_for_instruction(page_context: dict) -> str:
     return ""
 
 
+def format_uploaded_files_for_instruction(state: dict) -> str:
+    """Format uploaded files metadata into instruction context with GCS paths.
+    
+    This allows the agent to know about uploaded files and their GCS storage paths,
+    which is essential for passing file references to API endpoints like /generate-proposal.
+    These files persist throughout the conversation session.
+    
+    Args:
+        state: State dictionary containing uploaded_files_metadata
+        
+    Returns:
+        Formatted string with file information including GCS paths
+    """
+    if not state:
+        return ""
+    
+    uploaded_files = state.get('uploaded_files_metadata', [])
+    if not uploaded_files:
+        return ""
+    
+    context_parts = []
+    context_parts.append(f"**{len(uploaded_files)} file(s) available in this conversation session:**")
+    context_parts.append("(These files persist across all messages in this conversation - you can reference them anytime)")
+    context_parts.append("")
+    
+    gcs_paths = []
+    mime_types = []
+    
+    for i, file_info in enumerate(uploaded_files, 1):
+        filename = file_info.get('filename', 'Unknown')
+        mime_type = file_info.get('mime_type', 'application/octet-stream')
+        gcs_path = file_info.get('gcs_path', '')
+        
+        file_line = f"{i}. **{filename}** (Type: {mime_type})"
+        if gcs_path:
+            file_line += f"\n   - GCS Path: `{gcs_path}`"
+            gcs_paths.append(gcs_path)
+            mime_types.append(mime_type)
+        
+        context_parts.append(file_line)
+    
+    # Add summary of GCS paths for easy API usage
+    if gcs_paths:
+        context_parts.append("")
+        context_parts.append("**Ready-to-use for API calls:**")
+        context_parts.append(f"- newDocumentStoragePaths: {gcs_paths}")
+        context_parts.append(f"- newDocumentMimeTypes: {mime_types}")
+    
+    if context_parts:
+        return "\n\n---\n**UPLOADED FILES CONTEXT (Session-Persistent):**\n" + "\n".join(context_parts) + "\n---\n"
+    return ""
+
+
 google_search_agent = LlmAgent(
     model="gemini-2.0-flash",
     name="google_search_agent",
@@ -407,6 +516,29 @@ Make sure to return the results in well-formed markdown along with links to the 
 When you decide to use a tool, first explain your reasoning step-by-step. In your explanation, describe the *action* you are taking in plain language (e.g., 'I will look up the partner'). **Do not mention the specific internal tool name** (e.g., do not say 'I will use the `invoke_app_api` tool').
 Don't talk about endpoints, parameters, or request models in your explanation.
 
+**Working with Uploaded Files (Session-Persistent):**
+Files uploaded in this conversation are **remembered throughout the entire session**. When the user uploads files (documents, PDFs, etc.):
+
+1. The **UPLOADED FILES CONTEXT** section shows ALL files uploaded during this conversation session (not just the current message)
+2. You can reference files from earlier messages in the same conversation - they persist across turns
+3. If the user says "analyze the document" or "use those files" without uploading new ones, check the UPLOADED FILES CONTEXT for previously uploaded files
+4. When calling APIs that need document references (like creating opportunities), use the GCS paths from the context
+5. Always use the exact GCS paths provided (starting with `gs://`) - do not ask the user for paths if they're already in the context
+6. If files were uploaded earlier in the conversation but the user's current message doesn't include them, they're still available in UPLOADED FILES CONTEXT
+
+**Multi-Step Workflows:**
+Some operations follow a multi-step pattern defined in the "workflows" section of the metadata. When you see:
+- **workflowStep**: Indicates this endpoint is part of a workflow sequence
+- **prerequisite**: Another endpoint that must be called first
+- **requestSource**: Where to get the data for this request
+
+For these workflows:
+1. Call Step 1 endpoint first (generates/extracts data)
+2. Present results to user and ask for confirmation
+3. When user confirms, call Step 2 with the COMPLETE response data from Step 1
+
+The system automatically handles data passthrough, but always aim to pass the full response from Step 1 to Step 2.
+
 Respond in WELL-FORMED MARKDOWN making proper use of different heading levels, bold text, and lists.
 
 """
@@ -446,32 +578,35 @@ root_agent = LlmAgent(
 
 def create_agent_with_context(state: dict = None) -> LlmAgent:
     """
-    Create an agent instance with optional user, page, and geo context injected into the instruction.
+    Create an agent instance with optional user, page, geo, and file context injected into the instruction.
     This allows dynamic context without polluting the conversation history.
     
     Args:
-        state: Optional state dictionary containing user_profile, page_context_auto, and user_geo_stats
+        state: Optional state dictionary containing user_profile, page_context_auto, user_geo_stats, 
+               and uploaded_files_metadata
         
     Returns:
         LlmAgent instance with context-aware instruction
     """
-    # Build the instruction with optional user, page, and geo context
+    # Build the instruction with optional user, page, geo, and file context
     user_context_instruction = ""
     page_context_instruction = ""
     geo_context_instruction = ""
+    files_context_instruction = ""
     
     if state:
         user_context_instruction = format_user_context_for_instruction(state)
         geo_context_instruction = format_geo_context_for_instruction(state)
+        files_context_instruction = format_uploaded_files_for_instruction(state)
         page_context = state.get('page_context_auto')
         if page_context:
             page_context_instruction = format_page_context_for_instruction(page_context)
     
-    # Combine base instruction with context (user context, geo context, then page context)
+    # Combine base instruction with context (user context, geo context, files context, then page context)
     full_instruction = instruction
-    if user_context_instruction or geo_context_instruction or page_context_instruction:
+    if user_context_instruction or geo_context_instruction or page_context_instruction or files_context_instruction:
         # Insert context right after the Page Context Awareness section
-        combined_context = user_context_instruction + geo_context_instruction + page_context_instruction
+        combined_context = user_context_instruction + geo_context_instruction + files_context_instruction + page_context_instruction
         full_instruction = instruction.replace(
             "<**DO NOT ask the user to clarify which entity they mean if the context already provides it.**>",
             f"**DO NOT ask the user to clarify which entity they mean if the context already provides it.**\n\n{combined_context}"

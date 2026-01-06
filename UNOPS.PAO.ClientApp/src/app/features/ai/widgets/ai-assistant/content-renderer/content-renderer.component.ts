@@ -257,4 +257,28 @@ export class ContentRendererComponent implements OnInit, OnChanges, AfterViewIni
     this.timeoutIds.forEach(timeoutId => clearTimeout(timeoutId));
     this.timeoutIds = [];
   }
+  
+  /**
+   * Check if a file is an image based on its media type
+   */
+  isImageFile(file: any): boolean {
+    const mediaType = file.mediaType || file.mimeType || '';
+    return mediaType.startsWith('image/');
+  }
+  
+  /**
+   * Get the appropriate icon class for a file based on its type
+   */
+  getFileIcon(file: any): string {
+    const mediaType = file.mediaType || file.mimeType || '';
+    
+    if (mediaType.includes('pdf')) return 'pi pi-file-pdf text-red-500';
+    if (mediaType.includes('word') || mediaType.includes('document')) return 'pi pi-file-word text-blue-600';
+    if (mediaType.includes('excel') || mediaType.includes('sheet')) return 'pi pi-file-excel text-green-600';
+    if (mediaType.includes('powerpoint') || mediaType.includes('presentation')) return 'pi pi-file text-orange-600';
+    if (mediaType.startsWith('audio/')) return 'pi pi-volume-up text-purple-500';
+    if (mediaType.startsWith('text/')) return 'pi pi-file-edit text-gray-600';
+    
+    return 'pi pi-file text-gray-500';
+  }
 } 
