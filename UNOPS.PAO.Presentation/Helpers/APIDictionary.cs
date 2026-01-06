@@ -186,6 +186,7 @@ public class APIDictionary
     public const string DashboardMyDraftInteractions = Dashboard + "/my-draft-interactions";
     public const string DashboardMyDraftOpportunities = Dashboard + "/my-draft-opportunities";
     public const string DashboardOrgUnitRecentUpdates = Dashboard + "/org-unit-recent-updates";
+    public const string DashboardCombined = Dashboard + "/combined";
 
     // Opportunity
     public const string Opportunity = APIPrefix + "opportunity";

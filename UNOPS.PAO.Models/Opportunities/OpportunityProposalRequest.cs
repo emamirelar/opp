@@ -13,9 +13,9 @@ public class OpportunityProposalRequest
     public required string OpportunityName { get; set; }
 
     /// <summary>
-    /// Proposed opportunity description (required)
+    /// Proposed opportunity description (optional)
     /// </summary>
-    public required string OpportunityDescription { get; set; }
+    public string? OpportunityDescription { get; set; }
 
     /// <summary>
     /// Partner ID (optional - can be inferred from interactions or selected by user)

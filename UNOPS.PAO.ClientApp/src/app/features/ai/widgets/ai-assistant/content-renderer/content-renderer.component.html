@@ -1,7 +1,23 @@
 <div class="content-item" [ngSwitch]="item.type" *ngIf="shouldShow" [class.user-message]="isUserMessage" [class.ai-message]="!isUserMessage">
-  <!-- User message content - special handling for user messages -->
+  <!-- User message content - special handling for user messages with files -->
   <div *ngSwitchCase="'user-message'" class="content-markdown user-message">
-    <div class="user-message-text">{{ getStringMessage() }}</div>
+    <!-- Display attached files first -->
+    <div *ngIf="item.files && item.files.length > 0" class="user-message-files">
+      <div *ngFor="let file of item.files" class="user-message-file">
+        <!-- Image preview -->
+        <div *ngIf="isImageFile(file)" class="file-image-preview">
+          <img *ngIf="file.gcsPath" [src]="file.gcsPath" [alt]="file.name" class="file-thumbnail" />
+          <span class="file-name">{{ file.name }}</span>
+        </div>
+        <!-- Non-image file preview -->
+        <div *ngIf="!isImageFile(file)" class="file-document-preview">
+          <i [class]="getFileIcon(file)" class="file-icon"></i>
+          <span class="file-name">{{ file.name }}</span>
+        </div>
+      </div>
+    </div>
+    <!-- Display message text -->
+    <div *ngIf="getStringMessage()" class="user-message-text">{{ getStringMessage() }}</div>
   </div>
   
   <!-- Markdown content - AI messages only -->
