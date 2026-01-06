@@ -340,7 +340,7 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
     const types = this.getOrgUnitUpdateTypes();
     return types.map(type => ({
       id: type,
-      label: `${this.getOrgUnitUpdateCount(type)} ${type}${this.getOrgUnitUpdateCount(type) === 1 ? '' : 's'}`,
+      label: `${this.getOrgUnitUpdateCount(type)} ${this.pluralize(type, this.getOrgUnitUpdateCount(type))}`,
       count: this.getOrgUnitUpdateCount(type),
       active: this.selectedOrgUnitUpdateType() === type
     }));
@@ -1418,6 +1418,27 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
     if (!dashboardData || !dashboardData.orgUnitRecentUpdates) return 0;
     
     return dashboardData.orgUnitRecentUpdates.filter(update => update.type === type).length;
+  }
+
+  /**
+   * Properly pluralizes entity type names
+   * Handles irregular plurals like "Opportunity" -> "Opportunities"
+   */
+  private pluralize(word: string, count: number): string {
+    if (count === 1) return word;
+    
+    // Handle irregular plurals
+    const irregulars: { [key: string]: string } = {
+      'Opportunity': 'Opportunities',
+      'opportunity': 'opportunities',
+    };
+    
+    if (irregulars[word]) {
+      return irregulars[word];
+    }
+    
+    // Default: just add 's'
+    return word + 's';
   }
 
   setOrgUnitUpdateFilter(type: string) {
