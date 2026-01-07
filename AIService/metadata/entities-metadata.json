@@ -1936,7 +1936,7 @@
             "name": "Id",
             "dataType": "int",
             "required": true,
-            "description": "Unique identifier for the contact"
+            "description": "System ID for the contact"
           },
           {
             "name": "Salutation",
@@ -2082,16 +2082,76 @@
         {
           "endpoint": "/api/contact",
           "method": "POST",
-          "description": "Creates a new contact with comprehensive personal and professional details",
+          "description": "Creates a new contact with comprehensive personal and professional details. Send all fields directly in the request body (no wrapper).",
           "parameters": [
             {
-              "name": "req",
-              "dataType": "ContactRequest",
+              "name": "firstName",
+              "dataType": "string",
+              "required": false,
+              "description": "Contact's first name"
+            },
+            {
+              "name": "lastName",
+              "dataType": "string",
               "required": true,
-              "description": "Contact creation request with required fields",
-              "structure": "See ContactRequest in requestModels section"
+              "description": "Contact's last name"
+            },
+            {
+              "name": "title",
+              "dataType": "string",
+              "required": true,
+              "description": "Contact's job title or position"
+            },
+            {
+              "name": "email",
+              "dataType": "string",
+              "required": true,
+              "description": "Primary email address"
+            },
+            {
+              "name": "phone",
+              "dataType": "string",
+              "required": false,
+              "description": "Primary phone number"
+            },
+            {
+              "name": "partnerId",
+              "dataType": "int",
+              "required": false,
+              "description": "Partner organization ID to associate the contact with"
+            },
+            {
+              "name": "department",
+              "dataType": "string",
+              "required": false,
+              "description": "Department or division within the organization"
+            },
+            {
+              "name": "description",
+              "dataType": "string",
+              "required": false,
+              "description": "Additional description or notes about the contact"
+            },
+            {
+              "name": "salutation",
+              "dataType": "string",
+              "required": false,
+              "description": "Contact salutation (Mr., Ms., Dr., etc.)"
+            },
+            {
+              "name": "middleName",
+              "dataType": "string",
+              "required": false,
+              "description": "Contact's middle name"
+            },
+            {
+              "name": "suffix",
+              "dataType": "string",
+              "required": false,
+              "description": "Contact name suffix (Jr., Sr., III, etc.)"
             }
-          ]
+          ],
+          "importantNote": "Send fields directly in the request body. Do NOT wrap in a 'req' object."
         },
         {
           "endpoint": "/api/contact",
@@ -2285,16 +2345,64 @@
         {
           "endpoint": "/api/contact",
           "method": "PUT",
-          "description": "Updates an existing contact's information",
+          "description": "Updates an existing contact's information. Send all fields directly in the request body (no wrapper).",
           "parameters": [
             {
-              "name": "req",
-              "dataType": "ContactRequest",
+              "name": "id",
+              "dataType": "int",
               "required": true,
-              "description": "Contact update request containing modified fields",
-              "structure": "See ContactRequest in requestModels section"
+              "description": "ID of the contact to update"
+            },
+            {
+              "name": "firstName",
+              "dataType": "string",
+              "required": false,
+              "description": "Contact's first name"
+            },
+            {
+              "name": "lastName",
+              "dataType": "string",
+              "required": false,
+              "description": "Contact's last name"
+            },
+            {
+              "name": "title",
+              "dataType": "string",
+              "required": false,
+              "description": "Contact's job title or position"
+            },
+            {
+              "name": "email",
+              "dataType": "string",
+              "required": false,
+              "description": "Primary email address"
+            },
+            {
+              "name": "phone",
+              "dataType": "string",
+              "required": false,
+              "description": "Primary phone number"
+            },
+            {
+              "name": "partnerId",
+              "dataType": "int",
+              "required": false,
+              "description": "Partner organization ID"
+            },
+            {
+              "name": "department",
+              "dataType": "string",
+              "required": false,
+              "description": "Department or division"
+            },
+            {
+              "name": "description",
+              "dataType": "string",
+              "required": false,
+              "description": "Additional description or notes"
             }
-          ]
+          ],
+          "importantNote": "Send fields directly in the request body. Do NOT wrap in a 'req' object."
         },
         {
           "endpoint": "/api/contact/{id}",
@@ -2319,7 +2427,7 @@
             "name": "Id",
             "dataType": "int",
             "required": true,
-            "description": "Unique identifier for the partner"
+            "description": "System ID for the partner"
           },
           {
             "name": "Name",
@@ -2453,16 +2561,52 @@
         {
           "endpoint": "/api/partner",
           "method": "POST",
-          "description": "Creates a new partner organization with complete details",
+          "description": "Creates a new partner organization with complete details. Send all fields directly in the request body (no wrapper).",
           "parameters": [
             {
-              "name": "req",
-              "dataType": "PartnerRequest",
+              "name": "name",
+              "dataType": "string",
               "required": true,
-              "description": "Partner creation request with required fields",
-              "structure": "See PartnerRequest in requestModels section"
+              "description": "Partner organization name - primary identifier"
+            },
+            {
+              "name": "partnerShortDescription",
+              "dataType": "string",
+              "required": false,
+              "description": "Short name or acronym"
+            },
+            {
+              "name": "partnerLongDescription",
+              "dataType": "string",
+              "required": false,
+              "description": "Optional long description"
+            },
+            {
+              "name": "partnerCategoryId",
+              "dataType": "int",
+              "required": false,
+              "description": "Foreign key to Partner Category"
+            },
+            {
+              "name": "liaisonOfficeId",
+              "dataType": "int",
+              "required": false,
+              "description": "Foreign key to LiaisonOffice"
+            },
+            {
+              "name": "partnerFocalPointUserId",
+              "dataType": "int",
+              "required": false,
+              "description": "Business Developer User ID"
+            },
+            {
+              "name": "erpDimValue",
+              "dataType": "int",
+              "required": false,
+              "description": "ERP dimension value"
             }
-          ]
+          ],
+          "importantNote": "Send fields directly in the request body. Do NOT wrap in a 'req' object."
         },
         {
           "endpoint": "/api/partner",
@@ -2644,16 +2788,58 @@
         {
           "endpoint": "/api/partner",
           "method": "PUT",
-          "description": "Updates an existing partner's information",
+          "description": "Updates an existing partner's information. Send all fields directly in the request body (no wrapper).",
           "parameters": [
             {
-              "name": "req",
-              "dataType": "PartnerRequest",
+              "name": "id",
+              "dataType": "int",
               "required": true,
-              "description": "Partner update request containing modified fields",
-              "structure": "See PartnerRequest in requestModels section"
+              "description": "ID of the partner to update"
+            },
+            {
+              "name": "name",
+              "dataType": "string",
+              "required": false,
+              "description": "Partner organization name"
+            },
+            {
+              "name": "partnerShortDescription",
+              "dataType": "string",
+              "required": false,
+              "description": "Short name or acronym"
+            },
+            {
+              "name": "partnerLongDescription",
+              "dataType": "string",
+              "required": false,
+              "description": "Optional long description"
+            },
+            {
+              "name": "partnerCategoryId",
+              "dataType": "int",
+              "required": false,
+              "description": "Foreign key to Partner Category"
+            },
+            {
+              "name": "liaisonOfficeId",
+              "dataType": "int",
+              "required": false,
+              "description": "Foreign key to LiaisonOffice"
+            },
+            {
+              "name": "partnerFocalPointUserId",
+              "dataType": "int",
+              "required": false,
+              "description": "Business Developer User ID"
+            },
+            {
+              "name": "erpDimValue",
+              "dataType": "int",
+              "required": false,
+              "description": "ERP dimension value"
             }
-          ]
+          ],
+          "importantNote": "Send fields directly in the request body. Do NOT wrap in a 'req' object."
         },
         {
           "endpoint": "/api/partner/{id}",
@@ -2774,7 +2960,7 @@
             "name": "Id",
             "dataType": "int",
             "required": true,
-            "description": "Unique identifier for the interaction"
+            "description": "System ID for the interaction"
           },
           {
             "name": "Type",
@@ -2854,16 +3040,70 @@
         {
           "endpoint": "/api/interactions",
           "method": "POST",
-          "description": "Creates a new interaction record with complete details",
+          "description": "Creates a new interaction record with complete details. Send all fields directly in the request body (no wrapper).",
           "parameters": [
             {
-              "name": "req",
-              "dataType": "InteractionRequest",
+              "name": "type",
+              "dataType": "string",
               "required": true,
-              "description": "Interaction creation request with all required details",
-              "structure": "See InteractionRequest in requestModels section"
+              "description": "Type of interaction: 'Email', 'Meeting', 'Call', 'Conference', 'Site Visit', etc."
+            },
+            {
+              "name": "date",
+              "dataType": "datetime",
+              "required": true,
+              "description": "Date and time of the interaction (ISO 8601 format)"
+            },
+            {
+              "name": "subject",
+              "dataType": "string",
+              "required": true,
+              "description": "Subject or title of the interaction"
+            },
+            {
+              "name": "description",
+              "dataType": "string",
+              "required": false,
+              "description": "Detailed description of the interaction"
+            },
+            {
+              "name": "emailAddresses",
+              "dataType": "string[]",
+              "required": false,
+              "description": "List of email addresses involved"
+            },
+            {
+              "name": "contactIds",
+              "dataType": "int[]",
+              "required": false,
+              "description": "List of contact IDs to associate with the interaction"
+            },
+            {
+              "name": "partnerIds",
+              "dataType": "int[]",
+              "required": false,
+              "description": "List of partner IDs to associate with the interaction"
+            },
+            {
+              "name": "userIds",
+              "dataType": "int[]",
+              "required": false,
+              "description": "List of user IDs associated with interaction"
+            },
+            {
+              "name": "location",
+              "dataType": "string",
+              "required": false,
+              "description": "Location where interaction took place"
+            },
+            {
+              "name": "status",
+              "dataType": "string",
+              "required": false,
+              "description": "Status of the interaction (default: 'Active')"
             }
-          ]
+          ],
+          "importantNote": "Send fields directly in the request body. Do NOT wrap in a 'req' object."
         },
         {
           "endpoint": "/api/interactions",
@@ -3076,16 +3316,76 @@
         {
           "endpoint": "/api/interactions",
           "method": "PUT",
-          "description": "Updates an existing interaction's information",
+          "description": "Updates an existing interaction's information. Send all fields directly in the request body (no wrapper).",
           "parameters": [
             {
-              "name": "req",
-              "dataType": "InteractionRequest",
+              "name": "id",
+              "dataType": "int",
               "required": true,
-              "description": "Interaction update request containing modified fields",
-              "structure": "See InteractionRequest in requestModels section"
+              "description": "ID of the interaction to update"
+            },
+            {
+              "name": "type",
+              "dataType": "string",
+              "required": false,
+              "description": "Type of interaction: 'Email', 'Meeting', 'Call', 'Conference', 'Site Visit', etc."
+            },
+            {
+              "name": "date",
+              "dataType": "datetime",
+              "required": false,
+              "description": "Date and time of the interaction (ISO 8601 format)"
+            },
+            {
+              "name": "subject",
+              "dataType": "string",
+              "required": false,
+              "description": "Subject or title of the interaction"
+            },
+            {
+              "name": "description",
+              "dataType": "string",
+              "required": false,
+              "description": "Detailed description of the interaction"
+            },
+            {
+              "name": "emailAddresses",
+              "dataType": "string[]",
+              "required": false,
+              "description": "List of email addresses involved"
+            },
+            {
+              "name": "contactIds",
+              "dataType": "int[]",
+              "required": false,
+              "description": "List of contact IDs to associate with the interaction"
+            },
+            {
+              "name": "partnerIds",
+              "dataType": "int[]",
+              "required": false,
+              "description": "List of partner IDs to associate with the interaction"
+            },
+            {
+              "name": "userIds",
+              "dataType": "int[]",
+              "required": false,
+              "description": "List of user IDs associated with interaction"
+            },
+            {
+              "name": "location",
+              "dataType": "string",
+              "required": false,
+              "description": "Location where interaction took place"
+            },
+            {
+              "name": "status",
+              "dataType": "string",
+              "required": false,
+              "description": "Status of the interaction"
             }
-          ]
+          ],
+          "importantNote": "Send fields directly in the request body. Do NOT wrap in a 'req' object."
         },
         {
           "endpoint": "/api/interactions/{id}",
@@ -3137,7 +3437,7 @@
             "name": "Id",
             "dataType": "int",
             "required": true,
-            "description": "Unique identifier for the country"
+            "description": "System ID for the country"
           },
           {
             "name": "Name",
@@ -3223,7 +3523,7 @@
             "name": "Id",
             "dataType": "int",
             "required": true,
-            "description": "Unique identifier for the liaison office"
+            "description": "System ID for the liaison office"
           },
           {
             "name": "Code",
@@ -3327,7 +3627,7 @@
             "name": "Id",
             "dataType": "int",
             "required": true,
-            "description": "Unique identifier for the organizational unit"
+            "description": "System ID for the organizational unit"
           },
           {
             "name": "Code",
@@ -3433,7 +3733,7 @@
             "name": "Id",
             "dataType": "int",
             "required": true,
-            "description": "Unique identifier for the partner group"
+            "description": "System ID for the partner group"
           },
           {
             "name": "Name",
@@ -3609,7 +3909,7 @@
             "name": "Id",
             "dataType": "int",
             "required": true,
-            "description": "Unique identifier for the partner category"
+            "description": "System ID for the partner category"
           },
           {
             "name": "Name",
@@ -3748,7 +4048,7 @@
             "name": "Id",
             "dataType": "int",
             "required": true,
-            "description": "Unique identifier for the partner tree node"
+            "description": "System ID for the partner tree node"
           },
           {
             "name": "Name",
@@ -3975,7 +4275,7 @@
             "name": "Id",
             "dataType": "int",
             "required": true,
-            "description": "Unique identifier for the engagement"
+            "description": "System ID for the engagement"
           },
           {
             "name": "EngagementNumber",
@@ -4162,7 +4462,7 @@
             "name": "Id",
             "dataType": "int",
             "required": true,
-            "description": "Unique identifier for the opportunity"
+            "description": "System ID for the opportunity"
           },
           {
             "name": "Name",
@@ -4398,16 +4698,124 @@
         {
           "endpoint": "/api/opportunity",
           "method": "POST",
-          "description": "Creates a new opportunity with comprehensive details including partners, deliverables, and stakeholders",
+          "description": "Creates a new opportunity with comprehensive details. Send all fields directly in the request body (no wrapper).",
           "parameters": [
             {
-              "name": "req",
-              "dataType": "OpportunityRequest",
+              "name": "name",
+              "dataType": "string",
               "required": true,
-              "description": "Opportunity creation request with required fields",
-              "structure": "See OpportunityRequest in requestModels section"
+              "description": "Opportunity name (max 255 characters)"
+            },
+            {
+              "name": "description",
+              "dataType": "string",
+              "required": true,
+              "description": "Detailed description of the opportunity"
+            },
+            {
+              "name": "responsibleOrgUnitId",
+              "dataType": "int",
+              "required": false,
+              "description": "Foreign key to responsible organization unit"
+            },
+            {
+              "name": "initiativeBudgetUSD",
+              "dataType": "decimal",
+              "required": false,
+              "description": "Initiative budget in USD"
+            },
+            {
+              "name": "targetSigningDate",
+              "dataType": "datetime",
+              "required": false,
+              "description": "Target date for signing the agreement"
+            },
+            {
+              "name": "targetDeliveryDate",
+              "dataType": "datetime",
+              "required": false,
+              "description": "Target date for delivery completion"
+            },
+            {
+              "name": "proposedInitiativeTypeId",
+              "dataType": "int",
+              "required": false,
+              "description": "Foreign key to proposed initiative type"
+            },
+            {
+              "name": "strategicAlignment",
+              "dataType": "string",
+              "required": false,
+              "description": "Strategic alignment description"
+            },
+            {
+              "name": "resultsFocus",
+              "dataType": "string",
+              "required": false,
+              "description": "Results focus description"
+            },
+            {
+              "name": "expectedImpact",
+              "dataType": "string",
+              "required": false,
+              "description": "Expected impact description"
+            },
+            {
+              "name": "expectedOutcomes",
+              "dataType": "string",
+              "required": false,
+              "description": "Expected outcomes description"
+            },
+            {
+              "name": "expectedBeneficiaries",
+              "dataType": "string",
+              "required": false,
+              "description": "Expected beneficiaries description"
+            },
+            {
+              "name": "challenges",
+              "dataType": "string",
+              "required": false,
+              "description": "Challenges description"
+            },
+            {
+              "name": "countries",
+              "dataType": "int[]",
+              "required": false,
+              "description": "List of country IDs"
+            },
+            {
+              "name": "sdGs",
+              "dataType": "int[]",
+              "required": false,
+              "description": "List of Sustainable Development Goal IDs"
+            },
+            {
+              "name": "fundingPartners",
+              "dataType": "object[]",
+              "required": false,
+              "description": "List of funding partner objects"
+            },
+            {
+              "name": "clientPartners",
+              "dataType": "object[]",
+              "required": false,
+              "description": "List of client partner objects"
+            },
+            {
+              "name": "stakeholders",
+              "dataType": "object[]",
+              "required": false,
+              "description": "List of stakeholder objects"
+            },
+            {
+              "name": "deliverables",
+              "dataType": "object[]",
+              "required": false,
+              "description": "List of deliverable objects"
             }
-          ]
+          ],
+          "importantNote": "Send fields directly in the request body. Do NOT wrap in a 'req' object."
         },
         {
           "endpoint": "/api/opportunity",
@@ -4583,21 +4991,82 @@
         {
           "endpoint": "/api/opportunity/{id}",
           "method": "PUT",
-          "description": "Updates an existing opportunity with complete replacement of data",
+          "description": "Updates an existing opportunity. The {id} is in the URL path. Send other fields directly in the request body (no wrapper).",
           "parameters": [
             {
               "name": "id",
               "dataType": "int",
               "required": true,
-              "description": "Opportunity ID"
+              "description": "Opportunity ID (in URL path)"
             },
             {
-              "name": "req",
-              "dataType": "UpdateOpportunityRequest",
-              "required": true,
-              "description": "Opportunity update request containing modified fields"
+              "name": "name",
+              "dataType": "string",
+              "required": false,
+              "description": "Opportunity name"
+            },
+            {
+              "name": "description",
+              "dataType": "string",
+              "required": false,
+              "description": "Detailed description of the opportunity"
+            },
+            {
+              "name": "responsibleOrgUnitId",
+              "dataType": "int",
+              "required": false,
+              "description": "Foreign key to responsible organization unit"
+            },
+            {
+              "name": "initiativeBudgetUSD",
+              "dataType": "decimal",
+              "required": false,
+              "description": "Initiative budget in USD"
+            },
+            {
+              "name": "targetSigningDate",
+              "dataType": "datetime",
+              "required": false,
+              "description": "Target date for signing"
+            },
+            {
+              "name": "targetDeliveryDate",
+              "dataType": "datetime",
+              "required": false,
+              "description": "Target date for delivery"
+            },
+            {
+              "name": "strategicAlignment",
+              "dataType": "string",
+              "required": false,
+              "description": "Strategic alignment description"
+            },
+            {
+              "name": "resultsFocus",
+              "dataType": "string",
+              "required": false,
+              "description": "Results focus description"
+            },
+            {
+              "name": "expectedImpact",
+              "dataType": "string",
+              "required": false,
+              "description": "Expected impact description"
+            },
+            {
+              "name": "countries",
+              "dataType": "int[]",
+              "required": false,
+              "description": "List of country IDs"
+            },
+            {
+              "name": "sdGs",
+              "dataType": "int[]",
+              "required": false,
+              "description": "List of SDG IDs"
             }
-          ]
+          ],
+          "importantNote": "Send fields directly in the request body. Do NOT wrap in a 'req' object. The id is passed in the URL."
         },
         {
           "endpoint": "/api/opportunity/{id}",

@@ -495,8 +495,10 @@ public class AdvancedSearchService
         {
             _logger.LogInformation("Searching Partners with nested properties: '{SearchText}'", searchText);
 
-            using var connection = new NpgsqlConnection(_context.Database.GetConnectionString());
-            await connection.OpenAsync();
+            // Use DbContext's connection which has IAM authentication configured
+            var connection = (NpgsqlConnection)_context.Database.GetDbConnection();
+            if (connection.State != ConnectionState.Open)
+                await connection.OpenAsync();
 
             using var command = connection.CreateCommand();
             command.CommandText = "SELECT * FROM public.search_partners_with_nested($1, $2, $3)";
@@ -541,8 +543,10 @@ public class AdvancedSearchService
         {
             _logger.LogInformation("Searching Contacts with nested properties: '{SearchText}'", searchText);
 
-            using var connection = new NpgsqlConnection(_context.Database.GetConnectionString());
-            await connection.OpenAsync();
+            // Use DbContext's connection which has IAM authentication configured
+            var connection = (NpgsqlConnection)_context.Database.GetDbConnection();
+            if (connection.State != ConnectionState.Open)
+                await connection.OpenAsync();
 
             using var command = connection.CreateCommand();
             command.CommandText = "SELECT * FROM public.search_contacts_with_nested($1, $2, $3)";
@@ -587,8 +591,10 @@ public class AdvancedSearchService
         {
             _logger.LogInformation("Searching Interactions with nested properties: '{SearchText}'", searchText);
 
-            using var connection = new NpgsqlConnection(_context.Database.GetConnectionString());
-            await connection.OpenAsync();
+            // Use DbContext's connection which has IAM authentication configured
+            var connection = (NpgsqlConnection)_context.Database.GetDbConnection();
+            if (connection.State != ConnectionState.Open)
+                await connection.OpenAsync();
 
             using var command = connection.CreateCommand();
             command.CommandText = "SELECT * FROM public.search_interactions_with_nested($1, $2, $3)";
@@ -633,8 +639,10 @@ public class AdvancedSearchService
         {
             _logger.LogInformation("Searching Opportunities with nested properties: '{SearchText}'", searchText);
 
-            using var connection = new NpgsqlConnection(_context.Database.GetConnectionString());
-            await connection.OpenAsync();
+            // Use DbContext's connection which has IAM authentication configured
+            var connection = (NpgsqlConnection)_context.Database.GetDbConnection();
+            if (connection.State != ConnectionState.Open)
+                await connection.OpenAsync();
 
             using var command = connection.CreateCommand();
             command.CommandText = "SELECT * FROM public.search_opportunities_with_nested($1, $2, $3)";
@@ -1042,8 +1050,10 @@ public class AdvancedSearchService
     {
         try
         {
-            using var connection = new NpgsqlConnection(_context.Database.GetConnectionString());
-            await connection.OpenAsync();
+            // Use DbContext's connection which has IAM authentication configured
+            var connection = (NpgsqlConnection)_context.Database.GetDbConnection();
+            if (connection.State != ConnectionState.Open)
+                await connection.OpenAsync();
 
             using var command = connection.CreateCommand();
             
