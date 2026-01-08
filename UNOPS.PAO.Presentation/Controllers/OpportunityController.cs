@@ -90,14 +90,43 @@ public class OpportunityController : BaseController
         {
             validationErrors.Add("Description is required for opportunity creation");
         }
+        
+        // Validate FundingPartner IDs if provided
+        if (req.FundingPartners != null && req.FundingPartners.Any())
+        {
+            foreach (var fp in req.FundingPartners)
+            {
+                if (fp.PartnerId <= 0)
+                {
+                    validationErrors.Add($"Invalid FundingPartner PartnerId: {fp.PartnerId}. Partner IDs must be positive integers from the system.");
+                }
+            }
+        }
+        
+        // Validate ClientPartner IDs if provided
+        if (req.ClientPartners != null && req.ClientPartners.Any())
+        {
+            foreach (var cp in req.ClientPartners)
+            {
+                if (cp.PartnerId <= 0)
+                {
+                    validationErrors.Add($"Invalid ClientPartner PartnerId: {cp.PartnerId}. Partner IDs must be positive integers from the system.");
+                }
+            }
+        }
 
         if (validationErrors.Any())
         {
-            var errorMessage = $"Missing required fields for opportunity creation: {string.Join(", ", validationErrors)}";
+            var errorMessage = $"Validation failed for opportunity creation: {string.Join("; ", validationErrors)}";
+            _logger.LogWarning("Opportunity creation validation failed: {Errors}", errorMessage);
             return BadRequest(new
             {
+                success = false,
                 error = errorMessage,
-                missingFields = validationErrors
+                validationErrors = validationErrors,
+                requiredFields = new[] { "Name", "Description" },
+                optionalButRecommended = new[] { "FundingPartners", "ClientPartners", "Countries", "SDGs", "Deliverables", "ResponsibleOrgUnitId", "TargetSigningDate", "TargetDeliveryDate", "InitiativeBudgetUSD" },
+                hint = "Ensure Name and Description are provided. Use valid system IDs for partners, countries, and SDGs. Partner IDs must exist in the system - search for partners first if needed."
             });
         }
 

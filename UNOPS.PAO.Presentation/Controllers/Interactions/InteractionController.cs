@@ -32,6 +32,7 @@ namespace UNOPS.PAO.Presentation.Controllers.Interactions
     public class InteractionController : BaseController
     {
         private readonly IInteractionManager _manager;
+        private readonly IContactManager _contactManager;
         private readonly ISecureSpecificationFactory _secureSpecificationFactory;
         private readonly IGeminiManager _geminiManager;
         private readonly IUNOPSEntityConfigurationManager _entityConfigurationManager;
@@ -49,11 +50,87 @@ namespace UNOPS.PAO.Presentation.Controllers.Interactions
             : base(logger, authorizationService, userResolverService)
         {
             _manager = manager.InteractionManager;
+            _contactManager = manager.ContactManager;
             _secureSpecificationFactory = secureSpecificationFactory;
             _geminiManager = manager.GeminiManager;
             _entityConfigurationManager = ((UNOPSManagerWrapper)manager).EntityConfigurationManager;
             _aiContextualService = aiContextualService;
             _advancedSearchService = advancedSearchService;
+        }
+        
+        /// <summary>
+        /// Auto-populates EmailAddresses and PartnerIds from ContactIds if they are not provided.
+        /// This ensures interactions always have the relevant partner and email information based on selected contacts.
+        /// </summary>
+        private async Task AutoPopulateFromContactsAsync(InteractionRequest req)
+        {
+            if (req.ContactIds == null || !req.ContactIds.Any())
+            {
+                return; // No contacts to populate from
+            }
+            
+            var contactEmails = new List<string>();
+            var contactPartnerIds = new List<int>();
+            
+            foreach (var contactId in req.ContactIds)
+            {
+                try
+                {
+                    var contact = await _contactManager.GetContactAsync(contactId);
+                    if (contact != null)
+                    {
+                        // Collect email if available
+                        if (!string.IsNullOrWhiteSpace(contact.Email))
+                        {
+                            contactEmails.Add(contact.Email);
+                        }
+                        
+                        // Collect partnerId if available (Partner is a navigation property)
+                        if (contact.Partner?.Id > 0)
+                        {
+                            contactPartnerIds.Add(contact.Partner.Id);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to retrieve contact {ContactId} for auto-population", contactId);
+                }
+            }
+            
+            // Auto-populate EmailAddresses if empty
+            if ((req.EmailAddresses == null || !req.EmailAddresses.Any()) && contactEmails.Any())
+            {
+                req.EmailAddresses = contactEmails.Distinct().ToList();
+                _logger.LogInformation("Auto-populated {Count} email addresses from contacts", req.EmailAddresses.Count);
+            }
+            
+            // Auto-populate PartnerIds if empty
+            if ((req.PartnerIds == null || !req.PartnerIds.Any()) && contactPartnerIds.Any())
+            {
+                req.PartnerIds = contactPartnerIds.Distinct().ToList();
+                _logger.LogInformation("Auto-populated {Count} partner IDs from contacts", req.PartnerIds.Count);
+            }
+        }
+        
+        /// <summary>
+        /// Normalizes DateTime values in the request to UTC format.
+        /// PostgreSQL requires DateTime values to be in UTC for 'timestamp with time zone' columns.
+        /// </summary>
+        private void NormalizeDateTimeToUtc(InteractionRequest req)
+        {
+            if (req.Date.Kind == DateTimeKind.Unspecified)
+            {
+                // Treat unspecified as UTC to avoid PostgreSQL errors
+                req.Date = DateTime.SpecifyKind(req.Date, DateTimeKind.Utc);
+                _logger.LogDebug("Normalized interaction Date from Unspecified to UTC: {Date}", req.Date);
+            }
+            else if (req.Date.Kind == DateTimeKind.Local)
+            {
+                // Convert local time to UTC
+                req.Date = req.Date.ToUniversalTime();
+                _logger.LogDebug("Converted interaction Date from Local to UTC: {Date}", req.Date);
+            }
         }
 
         /// <summary>
@@ -88,6 +165,71 @@ namespace UNOPS.PAO.Presentation.Controllers.Interactions
             {
                 return validationResult;
             }
+
+            // Validate required fields for interaction creation
+            var validationErrors = new List<string>();
+            
+            if (string.IsNullOrWhiteSpace(req.Subject))
+            {
+                validationErrors.Add("Subject is required for interaction creation");
+            }
+            
+            // Validate that at least one participant is specified
+            // Note: If ContactIds are provided, PartnerIds and EmailAddresses will be auto-populated from contacts
+            var hasParticipants = (req.ContactIds != null && req.ContactIds.Any()) || 
+                                  (req.PartnerIds != null && req.PartnerIds.Any()) ||
+                                  (req.UserIds != null && req.UserIds.Any()) ||
+                                  (req.EmailAddresses != null && req.EmailAddresses.Any());
+            
+            if (!hasParticipants)
+            {
+                validationErrors.Add("At least one participant is required (ContactIds, PartnerIds, UserIds, or EmailAddresses). Tip: If you provide ContactIds, PartnerIds and EmailAddresses will be auto-populated from the contacts.");
+            }
+            
+            // Validate PartnerIds exist (if provided)
+            if (req.PartnerIds != null && req.PartnerIds.Any())
+            {
+                foreach (var partnerId in req.PartnerIds)
+                {
+                    if (partnerId <= 0)
+                    {
+                        validationErrors.Add($"Invalid PartnerId: {partnerId}. Partner IDs must be positive integers from the system.");
+                    }
+                }
+            }
+            
+            // Validate ContactIds exist (if provided)
+            if (req.ContactIds != null && req.ContactIds.Any())
+            {
+                foreach (var contactId in req.ContactIds)
+                {
+                    if (contactId <= 0)
+                    {
+                        validationErrors.Add($"Invalid ContactId: {contactId}. Contact IDs must be positive integers from the system.");
+                    }
+                }
+            }
+            
+            // Return validation errors if any
+            if (validationErrors.Any())
+            {
+                var errorMessage = $"Validation failed for interaction creation: {string.Join("; ", validationErrors)}";
+                _logger.LogWarning("Interaction creation validation failed: {Errors}", errorMessage);
+                return BadRequest(new {
+                    success = false,
+                    error = errorMessage,
+                    validationErrors = validationErrors,
+                    requiredFields = new[] { "Subject" },
+                    optionalButRecommended = new[] { "ContactIds", "PartnerIds", "Description", "Date", "Type", "Location" },
+                    hint = "Ensure Subject is provided and at least one participant (ContactIds, PartnerIds, UserIds, or EmailAddresses) is specified. If you provide ContactIds, PartnerIds and EmailAddresses will be automatically populated from the contacts' data."
+                });
+            }
+            
+            // Auto-populate EmailAddresses and PartnerIds from ContactIds if not provided
+            await AutoPopulateFromContactsAsync(req);
+            
+            // Normalize DateTime to UTC for PostgreSQL compatibility
+            NormalizeDateTimeToUtc(req);
 
             // Check for duplicates ONLY if user hasn't confirmed duplicate creation
             if (!req.ConfirmDuplicateCreation)
@@ -535,6 +677,12 @@ namespace UNOPS.PAO.Presentation.Controllers.Interactions
         [AccessControlled(EntityTypes.Interaction, "update")]
         public async Task<ActionResult> Update([FromBody] UpdateInteractionRequest req)
         {
+            // Auto-populate EmailAddresses and PartnerIds from ContactIds if not provided
+            await AutoPopulateFromContactsAsync(req);
+            
+            // Normalize DateTime to UTC for PostgreSQL compatibility
+            NormalizeDateTimeToUtc(req);
+            
             return await HandleOperationAsync(async () =>
             {
                 await _manager.UpdateInteractionAsync(CurrentUserId, req);
