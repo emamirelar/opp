@@ -66,6 +66,9 @@ public class CreateOpportunityFromInteractionsRequest
     public int? EstimatedDirectBeneficiaries { get; set; }
     public int? EstimatedIndirectBeneficiaries { get; set; }
     public bool? BeneficiariesToBeDetermined { get; set; }
+    /// <summary>
+    /// SDGs - plain integer array of SDG IDs, e.g. [3, 7, 9, 13]
+    /// </summary>
     public List<int>? SdGs { get; set; }
 
     // WHO Section Properties (AI-proposed, user-accepted)
@@ -75,6 +78,9 @@ public class CreateOpportunityFromInteractionsRequest
     public List<OpportunityStakeholderRequest>? Stakeholders { get; set; }
 
     // WHERE Section Properties (AI-proposed, user-accepted)
+    /// <summary>
+    /// Countries - plain integer array of country IDs, e.g. [1, 2, 3]
+    /// </summary>
     public List<int>? Countries { get; set; }
 
     // WHEN Section Properties (AI-proposed, user-accepted)

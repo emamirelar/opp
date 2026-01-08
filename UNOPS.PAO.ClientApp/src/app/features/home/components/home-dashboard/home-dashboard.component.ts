@@ -27,59 +27,24 @@ import { PartnerEditDialogFooterComponent } from '@partnerships/partners/compone
 import { ContactEditDialogComponent } from '@partnerships/contacts/components/contact/edit-dialog/contact-edit-dialog.component';
 import { InteractionModalComponent } from '@partnerships/interactions/components/interaction/modal/interaction-modal.component';
 import { CreateOpportunityFromInteractionsDialogComponent } from '@partnerships/interactions/components/dialogs/create-opportunity-from-interactions-dialog.component';
-import { Partner } from '@partnerships/partners/models/partner.model';
-import { Contact } from '@partnerships/contacts/models/contact.model';
-import { Interaction } from '@partnerships/interactions/models/interaction.model';
-import { Opportunity } from '@shared/models/opportunity.model';
 import { CreateOpportunityFromInteractionsConfig } from '@partnerships/interactions/models/interaction-selection.model';
 import { DashboardCardComponent, DashboardCardConfig, DashboardCardFilter } from '@app/shared/components/data-display/dashboard-card';
+import {
+  DashboardPartner,
+  DashboardContact,
+  DashboardInteraction,
+  DashboardOpportunity,
+  DashboardRecentUpdate,
+  DashboardCombinedResponse,
+  DashboardData
+} from '@features/home/models/dashboard.model';
 
-interface DashboardData {
-  myPartners: Partner[];
-  myContacts: Contact[];
-  myInteractions: Interaction[];
-  myOpportunities: Opportunity[];
-  draftActions: {
-    partners: Partner[];
-    contacts: Contact[];
-    interactions: Interaction[];
-    opportunities: Opportunity[];
-  };
-  orgUnitRecentUpdates: RecentUpdate[];
-  orgUnitName: string;
-}
+// Re-export RecentUpdate type for backward compatibility
+type RecentUpdate = DashboardRecentUpdate;
 
-interface RecentUpdate {
-  id: number;
-  name: string;
-  type: 'Partner' | 'Contact' | 'Interaction' | 'Opportunity';
-  lastModifiedDate: string;
-  lastModifiedBy: number;
-  lastModifiedByName?: string;
-  status: string;
-  entityData?: any; // Additional entity-specific data
-}
-
+// Interface for org unit recent updates endpoint (used in fallback)
 interface OrgUnitRecentUpdatesResponse {
   updates: RecentUpdate[];
-  orgUnitName: string;
-  orgUnitId?: number;
-}
-
-/**
- * Response model for the combined dashboard endpoint.
- * Returns all dashboard data in a single request to avoid DbContext threading issues.
- */
-interface DashboardCombinedResponse {
-  myPartners: Partner[];
-  myContacts: Contact[];
-  myInteractions: Interaction[];
-  myOpportunities: Opportunity[];
-  draftPartners: Partner[];
-  draftContacts: Contact[];
-  draftInteractions: Interaction[];
-  draftOpportunities: Opportunity[];
-  orgUnitRecentUpdates: RecentUpdate[];
   orgUnitName: string;
   orgUnitId?: number;
 }
@@ -204,7 +169,7 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
 
   // Interaction chart filtering
   selectedInteractionType = signal<string | null>(null);
-  filteredInteractions = signal<Interaction[]>([]);
+  filteredInteractions = signal<DashboardInteraction[]>([]);
   selectedInteractionColor = signal<string | null>(null);
 
   // Draft actions chart filtering
@@ -602,10 +567,10 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
     //   return;
     // }
 
-    // Use the combined dashboard endpoint to avoid DbContext threading issues
-    // This single request returns all dashboard data at once instead of 9 concurrent requests
+    // Use the dashboard content endpoint for optimized performance
+    // This single request returns all dashboard data at once with lightweight projections
     this.http
-      .get<DashboardCombinedResponse>('/api/dashboard/combined', {
+      .get<DashboardCombinedResponse>('/api/dashboard/content', {
         params: {
           pageSize: '1000',
           recentUpdatesPageSize: '10',
@@ -613,7 +578,7 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
       })
       .pipe(
         catchError((err) => {
-          console.error('Error loading combined dashboard data:', err);
+          console.error('Error loading dashboard content:', err);
           this.error.set('Failed to load dashboard data. Please try again.');
           this.loading.set(false);
           this.updateTimestamp();
