@@ -364,13 +364,23 @@ async def chat_endpoint(
                 logger.error(f"Failed to parse gcs_files JSON: {e}")
         
         # Process raw file uploads as fallback
+        # NOTE: Gemini API has a 1MB (1024KB) limit for inline_data parts
+        MAX_INLINE_FILE_SIZE = 1024 * 1024  # 1MB in bytes
+        
         if files:
             for uploaded_file in files:
                 if uploaded_file.filename:
                     file_content = await uploaded_file.read()
                     mime_type = uploaded_file.content_type or "application/octet-stream"
                     
-                    # Create a types.Part for each file
+                    # Check file size - Gemini has 1MB limit for inline data
+                    if len(file_content) > MAX_INLINE_FILE_SIZE:
+                        logger.warning(f"⚠️ File '{uploaded_file.filename}' ({len(file_content)/1024:.1f}KB) exceeds 1MB limit for inline upload. Please upload to GCS first.")
+                        # Add a text message indicating the file was too large
+                        message_parts.append(types.Part(text=f"[File '{uploaded_file.filename}' was too large ({len(file_content)/1024:.1f}KB) for direct upload. Maximum is 1024KB. Please use GCS upload instead.]"))
+                        continue
+                    
+                    # Create a types.Part for each file (under 1MB)
                     file_part = types.Part(
                         inline_data=types.Blob(
                             mime_type=mime_type,

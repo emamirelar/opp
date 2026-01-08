@@ -240,6 +240,31 @@ def format_entities_metadata_as_markdown(metadata):
                             if 'structure' in param:
                                 param_line += f" (Structure: {param['structure']})"
                             markdown_content.append(param_line)
+                    
+                    # Handle requestBody section (for endpoints without 'parameters')
+                    if 'requestBody' in endpoint:
+                        rb = endpoint['requestBody']
+                        markdown_content.append("  **Request Body:**")
+                        if 'description' in rb:
+                            markdown_content.append(f"    {rb['description']}")
+                        if 'fields' in rb:
+                            for field in rb['fields']:
+                                field_line = f"    - {field.get('name', '')} ({field.get('dataType', 'string')})"
+                                if field.get('required', False):
+                                    field_line += " *required*"
+                                if 'description' in field:
+                                    field_line += f" - {field['description']}"
+                                markdown_content.append(field_line)
+                        if 'importantNotes' in rb:
+                            markdown_content.append("  **IMPORTANT NOTES:**")
+                            for note in rb['importantNotes']:
+                                markdown_content.append(f"    - {note}")
+                        if 'exampleRequest' in rb:
+                            markdown_content.append("  **EXAMPLE REQUEST (use this format!):**")
+                            import json
+                            example_json = json.dumps(rb['exampleRequest'], indent=4)
+                            for line in example_json.split('\n'):
+                                markdown_content.append(f"    {line}")
                 markdown_content.append("")
             elif 'apiEndpoints' in entity_info and not entity_info['apiEndpoints']:
                 markdown_content.append("**API Endpoints:** None (read-only or derived entity)")

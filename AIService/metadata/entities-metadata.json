@@ -4758,13 +4758,13 @@
               "name": "expectedImpact",
               "dataType": "string",
               "required": false,
-              "description": "Expected impact description"
+              "description": "Expected impact description (max 200 characters)"
             },
             {
               "name": "expectedOutcomes",
               "dataType": "string",
               "required": false,
-              "description": "Expected outcomes description"
+              "description": "Expected outcomes description (max 200 characters)"
             },
             {
               "name": "expectedBeneficiaries",
@@ -5051,7 +5051,7 @@
               "name": "expectedImpact",
               "dataType": "string",
               "required": false,
-              "description": "Expected impact description"
+              "description": "Expected impact description (max 200 characters)"
             },
             {
               "name": "countries",
@@ -5432,27 +5432,26 @@
           "workflowStep": 1,
           "whenToUse": "Use when user wants to create an opportunity from documents. AI will analyze and extract structured data.",
           "responseNote": "Returns complete proposal with: name, description, deliverables[], countries[], sdGs[], fundingPartners[], clientPartners[], stakeholders[], targetSigningDate, targetDeliveryDate, initiativeBudgetUSD, strategicAlignment, resultsFocus, expectedImpact, expectedOutcomes, expectedBeneficiaries, challenges, documents[]. SAVE this response to pass to create-from-proposal.",
-          "parameters": [
-            {
-              "name": "request",
-              "dataType": "OpportunityProposalRequest",
-              "required": true,
-              "description": "Request body containing opportunity name, description, and source data for AI analysis",
-              "structure": {
-                "opportunityName": "string (required) - Proposed opportunity name",
-                "opportunityDescription": "string (required) - Proposed opportunity description",
-                "partnerId": "int (optional) - Partner ID if creating from partner context",
-                "isFundingPartner": "bool - Whether partner is funding partner",
-                "isClientPartner": "bool - Whether partner is client partner",
-                "interactionIds": "int[] (optional) - List of interaction IDs to analyze",
-                "newDocumentStoragePaths": "string[] (optional) - GCS paths of newly uploaded documents (gs://bucket/path)",
-                "newDocumentMimeTypes": "string[] (optional) - MIME types matching newDocumentStoragePaths by index",
-                "newDocumentTypeIds": "int[] (optional) - Document type IDs matching newDocumentStoragePaths by index",
-                "existingDocumentIds": "int[] (optional) - IDs of existing documents in system to analyze"
-              },
-              "notes": "At least one source is required: interactionIds, newDocumentStoragePaths, or existingDocumentIds. The AI will analyze all provided sources to generate the proposal."
-            }
-          ]
+          "requestBody": {
+            "description": "Request body for generating proposal from documents. Send fields directly in body, NOT wrapped in 'request' property.",
+            "contentType": "application/json",
+            "fields": [
+              { "name": "opportunityName", "dataType": "string", "required": true, "description": "Proposed opportunity name" },
+              { "name": "opportunityDescription", "dataType": "string", "required": false, "description": "Proposed opportunity description" },
+              { "name": "partnerId", "dataType": "int", "required": false, "description": "Partner ID if creating from partner context" },
+              { "name": "isFundingPartner", "dataType": "bool", "required": false, "description": "Whether partner is funding partner" },
+              { "name": "isClientPartner", "dataType": "bool", "required": false, "description": "Whether partner is client partner" },
+              { "name": "interactionIds", "dataType": "int[]", "required": false, "description": "List of interaction IDs to analyze" },
+              { "name": "newDocumentStoragePaths", "dataType": "string[]", "required": false, "description": "GCS paths of newly uploaded documents (gs://bucket/path)" },
+              { "name": "newDocumentMimeTypes", "dataType": "string[]", "required": false, "description": "MIME types matching newDocumentStoragePaths by index" },
+              { "name": "newDocumentTypeIds", "dataType": "int[]", "required": false, "description": "Document type IDs matching newDocumentStoragePaths by index" },
+              { "name": "existingDocumentIds", "dataType": "int[]", "required": false, "description": "IDs of existing documents in system to analyze" }
+            ],
+            "importantNotes": [
+              "Send fields DIRECTLY in body - do NOT wrap in 'request' property!",
+              "At least one source is required: interactionIds, newDocumentStoragePaths, or existingDocumentIds"
+            ]
+          }
         },
         {
           "endpoint": "/api/opportunity/create-from-proposal",
@@ -5462,52 +5461,67 @@
           "prerequisite": "/api/opportunity/generate-proposal",
           "whenToUse": "Call ONLY after: (1) generate-proposal has been called and (2) user has confirmed they want to create the opportunity",
           "requestSource": "Pass the entire response object from generate-proposal as this request's body. All fields (name, description, deliverables, countries, sdGs, fundingPartners, clientPartners, stakeholders, dates, budget, etc.) should come from the generate-proposal response.",
-          "parameters": [
-            {
-              "name": "request",
-              "dataType": "CreateOpportunityFromInteractionsRequest",
-              "required": true,
-              "description": "Request body with user-accepted proposal data and resolved IDs",
-              "structure": {
-                "name": "string (required) - Opportunity name (user-accepted)",
-                "description": "string (optional) - Opportunity description (user-accepted)",
-                "partnerId": "int (optional) - Partner ID if created from partner context",
-                "isFundingPartner": "bool - Whether partner is funding partner (required if partnerId provided)",
-                "isClientPartner": "bool - Whether partner is client partner (required if partnerId provided)",
-                "sourceInteractionIds": "int[] (optional) - Original interaction IDs analyzed",
-                "documents": "NewDocumentRequest[] (optional) - Newly uploaded documents to persist",
-                "partnerReference": "string (optional) - Partner reference",
-                "responsibleOrgUnitId": "int (optional) - Responsible org unit ID",
-                "proposedInitiativeTypeId": "int (optional) - Proposed initiative type ID",
-                "deliveryModality": "int (optional) - Delivery modality",
-                "miscExternalStakeholders": "string (optional) - External stakeholders",
-                "externalStakeholderNotes": "string (optional) - Stakeholder notes",
-                "deliverables": "OpportunityDeliverableRequest[] (optional) - List of deliverables",
-                "challenges": "string (optional) - Challenges description",
-                "resultsFocus": "string (optional) - Results focus",
-                "expectedImpact": "string (optional, max 200 chars) - Expected impact",
-                "expectedOutcomes": "string (optional, max 200 chars) - Expected outcomes",
-                "expectedBeneficiaries": "string (optional) - Expected beneficiaries",
-                "estimatedDirectBeneficiaries": "int (optional) - Direct beneficiaries count",
-                "estimatedIndirectBeneficiaries": "int (optional) - Indirect beneficiaries count",
-                "beneficiariesToBeDetermined": "bool (optional) - Whether beneficiaries TBD",
-                "sdGs": "int[] (optional) - List of SDG IDs",
-                "fundingPartners": "OpportunityFundingPartnerRequest[] (optional) - Funding partners list",
-                "clientPartners": "OpportunityClientPartnerRequest[] (optional) - Client partners list",
-                "stakeholders": "OpportunityStakeholderRequest[] (optional) - Stakeholders list",
-                "countries": "int[] (optional) - List of country IDs",
-                "targetSigningDate": "datetime (optional) - Target signing date",
-                "targetDeliveryDate": "datetime (optional) - Target delivery date",
-                "implementationStartDate": "datetime (optional) - Implementation start date",
-                "submissionDeadline": "datetime (optional) - Submission deadline",
-                "isTargetSigningDateFirm": "bool (optional) - Whether signing date is firm",
-                "signingDateNotes": "string (optional) - Signing date notes",
-                "initiativeBudgetUSD": "decimal (optional) - Initiative budget in USD",
-                "partnershipAgreementReference": "string (optional) - Partnership agreement reference"
-              },
-              "notes": "This creates the opportunity record, assigns creator as Opportunity Manager, persists documents to database, and saves interaction relationships to OpportunityInteractions table."
+          "requestBody": {
+            "description": "Request body with user-accepted proposal data and resolved IDs. Send fields directly in body, NOT wrapped in 'request' property.",
+            "contentType": "application/json",
+            "fields": [
+              { "name": "name", "dataType": "string", "required": true, "description": "Opportunity name (user-accepted)" },
+              { "name": "description", "dataType": "string", "required": false, "description": "Opportunity description" },
+              { "name": "partnerId", "dataType": "int", "required": false, "description": "Partner ID if created from partner context" },
+              { "name": "isFundingPartner", "dataType": "bool", "required": false, "description": "Whether partner is funding partner" },
+              { "name": "isClientPartner", "dataType": "bool", "required": false, "description": "Whether partner is client partner" },
+              { "name": "sourceInteractionIds", "dataType": "int[]", "required": false, "description": "Original interaction IDs analyzed" },
+              { "name": "documents", "dataType": "NewDocumentRequest[]", "required": false, "description": "Newly uploaded documents to persist" },
+              { "name": "partnerReference", "dataType": "string", "required": false, "description": "Partner reference" },
+              { "name": "responsibleOrgUnitId", "dataType": "int", "required": false, "description": "Responsible org unit ID" },
+              { "name": "proposedInitiativeTypeId", "dataType": "int", "required": false, "description": "Proposed initiative type ID" },
+              { "name": "deliveryModality", "dataType": "int", "required": false, "description": "Delivery modality" },
+              { "name": "miscExternalStakeholders", "dataType": "string", "required": false, "description": "External stakeholders" },
+              { "name": "externalStakeholderNotes", "dataType": "string", "required": false, "description": "Stakeholder notes" },
+              { "name": "deliverables", "dataType": "OpportunityDeliverableRequest[]", "required": false, "description": "List of deliverables with outputId, quantity, notes" },
+              { "name": "challenges", "dataType": "string", "required": false, "description": "Challenges description" },
+              { "name": "resultsFocus", "dataType": "string", "required": false, "description": "Results focus" },
+              { "name": "expectedImpact", "dataType": "string", "required": false, "description": "Expected impact (max 200 chars)" },
+              { "name": "expectedOutcomes", "dataType": "string", "required": false, "description": "Expected outcomes (max 200 chars)" },
+              { "name": "expectedBeneficiaries", "dataType": "string", "required": false, "description": "Expected beneficiaries" },
+              { "name": "estimatedDirectBeneficiaries", "dataType": "int", "required": false, "description": "Direct beneficiaries count" },
+              { "name": "estimatedIndirectBeneficiaries", "dataType": "int", "required": false, "description": "Indirect beneficiaries count" },
+              { "name": "beneficiariesToBeDetermined", "dataType": "bool", "required": false, "description": "Whether beneficiaries TBD" },
+              { "name": "sdGs", "dataType": "int[]", "required": false, "description": "PLAIN INTEGER ARRAY of SDG IDs. Must be [3, 7, 9, 13] NOT [{sdgId:3}]" },
+              { "name": "fundingPartners", "dataType": "OpportunityFundingPartnerRequest[]", "required": false, "description": "Funding partners with partnerId, amount, percentage" },
+              { "name": "clientPartners", "dataType": "OpportunityClientPartnerRequest[]", "required": false, "description": "Client partners with partnerId" },
+              { "name": "stakeholders", "dataType": "OpportunityStakeholderRequest[]", "required": false, "description": "Stakeholders with entityRoleId, userId" },
+              { "name": "countries", "dataType": "int[]", "required": false, "description": "PLAIN INTEGER ARRAY of country IDs. Must be [1, 2, 3] NOT [{countryId:1}]" },
+              { "name": "targetSigningDate", "dataType": "datetime", "required": false, "description": "Target signing date (ISO 8601 UTC)" },
+              { "name": "targetDeliveryDate", "dataType": "datetime", "required": false, "description": "Target delivery date (ISO 8601 UTC)" },
+              { "name": "implementationStartDate", "dataType": "datetime", "required": false, "description": "Implementation start date" },
+              { "name": "submissionDeadline", "dataType": "datetime", "required": false, "description": "Submission deadline" },
+              { "name": "isTargetSigningDateFirm", "dataType": "bool", "required": false, "description": "Whether signing date is firm" },
+              { "name": "signingDateNotes", "dataType": "string", "required": false, "description": "Signing date notes" },
+              { "name": "initiativeBudgetUSD", "dataType": "decimal", "required": false, "description": "Initiative budget in USD" },
+              { "name": "partnershipAgreementReference", "dataType": "string", "required": false, "description": "Partnership agreement reference" },
+              { "name": "strategicAlignment", "dataType": "string", "required": false, "description": "Strategic alignment description" }
+            ],
+            "importantNotes": [
+              "CRITICAL: 'sdGs' must be plain integers like [3, 7, 9, 13] - NOT objects!",
+              "CRITICAL: 'countries' must be plain integers like [1, 2, 3] - NOT objects!",
+              "This creates the opportunity record, assigns creator as Opportunity Manager, persists documents to database"
+            ],
+            "exampleRequest": {
+              "name": "Test Opportunity",
+              "description": "A test opportunity description",
+              "sdGs": [3, 7, 9, 13],
+              "countries": [1, 2],
+              "deliverables": [{"outputId": 1, "quantity": 1, "notes": "Test deliverable"}],
+              "fundingPartners": [{"partnerId": 1, "fundedAmount": 5000000, "percentage": 100}],
+              "clientPartners": [{"partnerId": 370}],
+              "stakeholders": [{"userId": 101, "entityRoleId": 1}],
+              "documents": [{"gcsPath": "gs://bucket/file.pdf", "mimeType": "application/pdf", "documentTypeId": 1}],
+              "initiativeBudgetUSD": 5000000,
+              "targetSigningDate": "2026-03-01T00:00:00Z",
+              "targetDeliveryDate": "2028-12-31T00:00:00Z"
             }
-          ]
+          }
         },
         {
           "endpoint": "/api/opportunity/{id}/framework-status",
