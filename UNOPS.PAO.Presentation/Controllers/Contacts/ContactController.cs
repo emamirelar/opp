@@ -112,10 +112,15 @@ public class ContactController : BaseController
         // Return validation errors if any
         if (validationErrors.Any())
         {
-            var errorMessage = $"Missing required fields for contact creation: {string.Join(", ", validationErrors)}";
+            var errorMessage = $"Validation failed for contact creation: {string.Join("; ", validationErrors)}";
+            _logger.LogWarning("Contact creation validation failed: {Errors}", errorMessage);
             return BadRequest(new { 
+                success = false,
                 error = errorMessage,
-                missingFields = validationErrors
+                validationErrors = validationErrors,
+                requiredFields = new[] { "LastName", "Title", "Email", "PartnerId" },
+                optionalButRecommended = new[] { "FirstName", "MiddleName", "Phone", "Mobile", "Department", "MailingCity", "MailingCountry" },
+                hint = "Ensure LastName, Title, Email, and PartnerId are provided. PartnerId must be a valid partner ID from the system - search for partners first if needed."
             });
         }
         

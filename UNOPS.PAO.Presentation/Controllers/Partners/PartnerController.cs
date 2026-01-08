@@ -102,19 +102,39 @@ public class PartnerController : BaseController
     [AccessControlled(EntityTypes.Partner, "create")]
     public async Task<IActionResult> Create([FromBody] PartnerRequest req)
     {
-        // Validate minimum required fields for creation
+        // Validate required fields for partner creation
+        var validationErrors = new List<string>();
+        
         if (string.IsNullOrWhiteSpace(req.Name))
         {
-            return BadRequest(new { error = "Partner Name is required for creation" });
+            validationErrors.Add("Name is required for partner creation");
         }
-
+        
         // Validate Partner Levy business rules
         if (req.PartnerLevyStatus == "DoesNotApply" || req.PartnerLevyStatus == "PotentiallyNotApplied")
         {
             if (string.IsNullOrWhiteSpace(req.ReasonForLevy))
             {
-                return BadRequest(new { error = "Reason for Levy is required when Partner Levy status is 'Does Not Apply' or 'Potentially Not Applied'." });
+                validationErrors.Add("ReasonForLevy is required when PartnerLevyStatus is 'DoesNotApply' or 'PotentiallyNotApplied'");
             }
+        }
+        
+        // Return validation errors if any
+        if (validationErrors.Any())
+        {
+            var errorMessage = $"Validation failed for partner creation: {string.Join("; ", validationErrors)}";
+            _logger.LogWarning("Partner creation validation failed: {Errors}", errorMessage);
+            return BadRequest(new {
+                success = false,
+                error = errorMessage,
+                validationErrors = validationErrors,
+                requiredFields = new[] { "Name" },
+                conditionallyRequired = new { 
+                    ReasonForLevy = "Required when PartnerLevyStatus is 'DoesNotApply' or 'PotentiallyNotApplied'" 
+                },
+                optionalButRecommended = new[] { "ShortName", "Website", "Phone", "Address1Street", "Address1City", "Address1Country" },
+                hint = "Ensure Name is provided. If PartnerLevyStatus is set to 'DoesNotApply' or 'PotentiallyNotApplied', also provide ReasonForLevy."
+            });
         }
         
         // Check for duplicates ONLY if user hasn't confirmed duplicate creation
