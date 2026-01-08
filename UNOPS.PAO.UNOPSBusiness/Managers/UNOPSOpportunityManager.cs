@@ -1364,12 +1364,18 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
         if (request.ExpectedImpact != null)
         {
-            entity.ExpectedImpact = request.ExpectedImpact;
+            // Truncate to 200 characters (database column limit)
+            entity.ExpectedImpact = request.ExpectedImpact.Length > 200 
+                ? request.ExpectedImpact[..200] 
+                : request.ExpectedImpact;
         }
 
         if (request.ExpectedOutcomes != null)
         {
-            entity.ExpectedOutcomes = request.ExpectedOutcomes;
+            // Truncate to 200 characters (database column limit)
+            entity.ExpectedOutcomes = request.ExpectedOutcomes.Length > 200 
+                ? request.ExpectedOutcomes[..200] 
+                : request.ExpectedOutcomes;
         }
 
         if (request.Challenges != null)
@@ -2772,12 +2778,18 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
         if (request.ExpectedImpact != null)
         {
-            entity.ExpectedImpact = request.ExpectedImpact;
+            // Truncate to 200 characters (database column limit)
+            entity.ExpectedImpact = request.ExpectedImpact.Length > 200 
+                ? request.ExpectedImpact[..200] 
+                : request.ExpectedImpact;
         }
 
         if (request.ExpectedOutcomes != null)
         {
-            entity.ExpectedOutcomes = request.ExpectedOutcomes;
+            // Truncate to 200 characters (database column limit)
+            entity.ExpectedOutcomes = request.ExpectedOutcomes.Length > 200 
+                ? request.ExpectedOutcomes[..200] 
+                : request.ExpectedOutcomes;
         }
 
         if (request.ExpectedBeneficiaries != null)
@@ -3103,10 +3115,10 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         CreateOpportunityFromInteractionsRequest request,
         int currentUserId)
     {
-        // Deduplicate SDGs by SDGId
+        // Deduplicate SDGs by ID (plain integer array)
         var uniqueSdGs = request.SdGs?.Distinct().ToList() ?? new List<int>();
         
-        // Deduplicate Countries by CountryId
+        // Deduplicate Countries by ID (plain integer array)
         var uniqueCountries = request.Countries?.Distinct().ToList() ?? new List<int>();
         
         // Deduplicate Stakeholders by UserId + EntityRoleId combination
@@ -3129,8 +3141,13 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             TargetDeliveryDate = request.TargetDeliveryDate,
             Challenges = request.Challenges,
             ResultsFocus = request.ResultsFocus,
-            ExpectedImpact = request.ExpectedImpact,
-            ExpectedOutcomes = request.ExpectedOutcomes,
+            // Truncate to 200 characters (database column limit)
+            ExpectedImpact = request.ExpectedImpact?.Length > 200 
+                ? request.ExpectedImpact[..200] 
+                : request.ExpectedImpact,
+            ExpectedOutcomes = request.ExpectedOutcomes?.Length > 200 
+                ? request.ExpectedOutcomes[..200] 
+                : request.ExpectedOutcomes,
             ExpectedBeneficiaries = request.ExpectedBeneficiaries,
             EstimatedDirectBeneficiaries = request.EstimatedDirectBeneficiaries,
             EstimatedIndirectBeneficiaries = request.EstimatedIndirectBeneficiaries,

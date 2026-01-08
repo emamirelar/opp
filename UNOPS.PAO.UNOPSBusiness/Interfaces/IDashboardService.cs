@@ -5,6 +5,7 @@ using UNOPS.PAO.Models.Interactions;
 using UNOPS.PAO.Models.OrganizationUnits;
 using UNOPS.PAO.Models.Partners;
 using UNOPS.PAO.Models.Opportunities;
+using UNOPS.PAO.Models.Dashboard;
 using UNOPS.PAO.Models.Shared;
 
 namespace UNOPS.PAO.UNOPSBusiness.Interfaces;

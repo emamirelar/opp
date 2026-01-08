@@ -166,20 +166,28 @@ public class DashboardController : BaseController
     }
 
     /// <summary>
-    /// Gets all dashboard data in a single combined request.
-    /// This is the preferred endpoint to avoid DbContext threading issues from concurrent API calls.
+    /// Gets all dashboard content in a single optimized request.
     /// Returns: MyPartners, MyContacts, MyInteractions, MyOpportunities, DraftPartners, DraftContacts,
     /// DraftInteractions, DraftOpportunities, and OrgUnitRecentUpdates in a single response.
+    /// 
+    /// Uses lightweight projection models and optimized queries for high performance.
     /// </summary>
-    /// <param name="pageSize">Number of records per entity type (default: 1000)</param>
+    /// <param name="pageSize">Number of records per entity type (default: 50)</param>
     /// <param name="recentUpdatesPageSize">Number of recent updates to return (default: 10)</param>
-    /// <returns>Combined dashboard data</returns>
-    [HttpGet(APIDictionary.DashboardCombined)]
-    public async Task<ActionResult> GetCombinedDashboardData([FromQuery] int pageSize = 1000, [FromQuery] int recentUpdatesPageSize = 10)
+    /// <returns>Dashboard content data</returns>
+    [HttpGet(APIDictionary.DashboardContent)]
+    public async Task<ActionResult> GetDashboardContent([FromQuery] int pageSize = 50, [FromQuery] int recentUpdatesPageSize = 10)
     {
         return await HandleOperationAsync(async () =>
         {
-            var result = await _dashboardService.GetAllDashboardDataAsync(User, pageSize, recentUpdatesPageSize);
+            // Cap page sizes at reasonable limits for dashboard display
+            var effectivePageSize = Math.Min(pageSize, 100); // Dashboard only shows ~3-5 items per section
+            var effectiveRecentUpdatesPageSize = Math.Min(recentUpdatesPageSize, 20);
+            
+            var result = await _dashboardService.GetAllDashboardDataAsync(
+                User, 
+                effectivePageSize, 
+                effectiveRecentUpdatesPageSize);
             return result;
         });
     }
