@@ -7,11 +7,11 @@ using UNOPS.PAO.Models.Partners;
 namespace UNOPS.PAO.Models.Shared;
 
 /// <summary>
-/// Combined response model for all dashboard data.
+/// Response model for all dashboard data.
 /// This combines all dashboard data into a single response to avoid
 /// multiple concurrent API calls which can cause DbContext threading issues.
 /// </summary>
-public class DashboardCombinedResponse
+public class DashboardResponse
 {
     /// <summary>
     /// Partners created or modified by the current user (non-draft)

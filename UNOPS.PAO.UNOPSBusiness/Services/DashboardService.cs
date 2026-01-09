@@ -15,10 +15,11 @@ using Microsoft.Extensions.Configuration;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Models.OrganizationUnits;
 using UNOPS.PAO.Models.Partners;
-using UNOPS.PAO.Models.Shared;
 using UNOPS.PAO.Models.Contacts;
 using UNOPS.PAO.Models.Interactions;
 using UNOPS.PAO.Models.Opportunities;
+using UNOPS.PAO.Models.Dashboard;
+using UNOPS.PAO.Models.Shared;
 
 namespace UNOPS.PAO.UNOPSBusiness.Services;
 
@@ -788,88 +789,534 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
     }
 
     /// <summary>
-    /// Gets all dashboard data in a single request to avoid DbContext threading issues
-    /// from concurrent API calls. Executes all queries sequentially on the same DbContext.
+    /// Gets all dashboard data in a single optimized request.
+    /// Uses lightweight projections and .AsNoTracking() for high performance.
+    /// Executes queries sequentially (simpler and fast enough with projections).
     /// </summary>
-    public async Task<DashboardCombinedResponse> GetAllDashboardDataAsync(ClaimsPrincipal user, int pageSize = 1000, int recentUpdatesPageSize = 10)
+    public async Task<DashboardCombinedResponse> GetAllDashboardDataAsync(ClaimsPrincipal user, int pageSize = 50, int recentUpdatesPageSize = 10)
     {
         var userId = GetCurrentUserId(user);
         if (!userId.HasValue)
         {
-            _logger.LogWarning("No valid user ID found for combined dashboard request");
+            _logger.LogWarning("No valid user ID found for dashboard request");
             return new DashboardCombinedResponse();
         }
 
-        _logger.LogInformation("Getting combined dashboard data for user {UserId}", userId.Value);
+        _logger.LogInformation("Getting dashboard data for user {UserId}", userId.Value);
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         var response = new DashboardCombinedResponse();
 
         try
         {
-            // Execute all queries SEQUENTIALLY to avoid DbContext threading issues
-            // Each query completes before the next one starts
+            // ==========================================
+            // BATCH 1: Get all user's opportunity stakeholder info in ONE query
+            // ==========================================
+            var userStakeholderInfo = await _context.Set<OpportunityStakeholder>()
+                .AsNoTracking()
+                .Where(os => os.UserId == userId.Value)
+                .Select(os => new 
+                { 
+                    os.OpportunityId, 
+                    RoleName = os.EntityRole != null ? os.EntityRole.Name : null 
+                })
+                .ToListAsync();
 
-            // 1. My Partners (non-draft)
-            var partnersResult = await GetMyPartnersAsync(user, pageSize);
-            response.MyPartners = partnersResult.Records?.ToList() ?? new List<PartnerModel>();
+            var opportunityIdsFromStakeholders = userStakeholderInfo
+                .Select(os => os.OpportunityId)
+                .Distinct()
+                .ToList();
 
-            // 2. My Contacts (non-draft)
-            var contactsResult = await GetMyContactsAsync(user, pageSize);
-            response.MyContacts = contactsResult.Records?.ToList() ?? new List<ContactModel>();
+            var rolesByOpportunityId = userStakeholderInfo
+                .Where(os => !string.IsNullOrEmpty(os.RoleName))
+                .GroupBy(os => os.OpportunityId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => string.Join(", ", g.Select(x => x.RoleName).Distinct())
+                );
 
-            // 3. My Interactions (non-draft)
-            var interactionsResult = await GetMyInteractionsAsync(user, pageSize);
-            response.MyInteractions = interactionsResult.Records?.ToList() ?? new List<InteractionModel>();
+            // ==========================================
+            // BATCH 2: Execute all entity queries with projections sequentially
+            // Using projections (~90% smaller than full entities)
+            // Sequential execution is simpler and fast enough with projections
+            // ==========================================
 
-            // 4. My Opportunities (non-draft)
-            var opportunitiesResult = await GetMyOpportunitiesAsync(user, pageSize);
-            response.MyOpportunities = opportunitiesResult.Records?.ToList() ?? new List<OpportunityModel>();
+            // Partners (all statuses for My Workspace)
+            response.MyPartners = await _context.Set<UNOPSPartner>()
+                .AsNoTracking()
+                .Where(p => p.CreatedBy == userId.Value || p.LastModifiedBy == userId.Value)
+                .OrderByDescending(p => p.LastModifiedDate ?? p.CreatedDate)
+                .Take(pageSize)
+                .Select(p => new DashboardPartnerModel
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Status = p.Status.ToString(),
+                    CreatedDate = p.CreatedDate,
+                    LastModifiedDate = p.LastModifiedDate
+                })
+                .ToListAsync();
 
-            // 5. Draft Partners
-            var draftPartnersResult = await GetMyDraftPartnersAsync(user, pageSize);
-            response.DraftPartners = draftPartnersResult.Records?.ToList() ?? new List<PartnerModel>();
+            // Draft Partners
+            response.DraftPartners = await _context.Set<UNOPSPartner>()
+                .AsNoTracking()
+                .Where(p => (p.CreatedBy == userId.Value || p.LastModifiedBy == userId.Value) 
+                           && p.Status == Domain.Entities.EntityStatus.Draft)
+                .OrderByDescending(p => p.CreatedDate)
+                .Take(pageSize)
+                .Select(p => new DashboardPartnerModel
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Status = p.Status.ToString(),
+                    CreatedDate = p.CreatedDate,
+                    LastModifiedDate = p.LastModifiedDate
+                })
+                .ToListAsync();
 
-            // 6. Draft Contacts
-            var draftContactsResult = await GetMyDraftContactsAsync(user, pageSize);
-            response.DraftContacts = draftContactsResult.Records?.ToList() ?? new List<ContactModel>();
+            // Contacts (all statuses for My Workspace)
+            response.MyContacts = await _context.Set<UNOPSContact>()
+                .AsNoTracking()
+                .Where(c => c.CreatedBy == userId.Value || c.LastModifiedBy == userId.Value)
+                .OrderByDescending(c => c.LastModifiedDate ?? c.CreatedDate)
+                .Take(pageSize)
+                .Select(c => new DashboardContactModel
+                {
+                    Id = c.Id,
+                    FirstName = c.FirstName,
+                    LastName = c.LastName,
+                    Title = c.Title,
+                    Status = c.Status.ToString(),
+                    CreatedDate = c.CreatedDate,
+                    LastModifiedDate = c.LastModifiedDate
+                })
+                .ToListAsync();
 
-            // 7. Draft Interactions
-            var draftInteractionsResult = await GetMyDraftInteractionsAsync(user, pageSize);
-            response.DraftInteractions = draftInteractionsResult.Records?.ToList() ?? new List<InteractionModel>();
+            // Draft Contacts
+            response.DraftContacts = await _context.Set<UNOPSContact>()
+                .AsNoTracking()
+                .Where(c => (c.CreatedBy == userId.Value || c.LastModifiedBy == userId.Value) 
+                           && c.Status == EntityStatus.Draft)
+                .OrderByDescending(c => c.CreatedDate)
+                .Take(pageSize)
+                .Select(c => new DashboardContactModel
+                {
+                    Id = c.Id,
+                    FirstName = c.FirstName,
+                    LastName = c.LastName,
+                    Title = c.Title,
+                    Status = c.Status.ToString(),
+                    CreatedDate = c.CreatedDate,
+                    LastModifiedDate = c.LastModifiedDate
+                })
+                .ToListAsync();
 
-            // 8. Draft Opportunities
-            var draftOpportunitiesResult = await GetMyDraftOpportunitiesAsync(user, pageSize);
-            response.DraftOpportunities = draftOpportunitiesResult.Records?.ToList() ?? new List<OpportunityModel>();
+            // Interactions (all statuses for My Workspace)
+            response.MyInteractions = await _context.Set<Interaction>()
+                .AsNoTracking()
+                .Where(i => i.CreatedBy == userId.Value || i.LastModifiedBy == userId.Value)
+                .OrderByDescending(i => i.LastModifiedDate ?? i.CreatedDate)
+                .Take(pageSize)
+                .Select(i => new DashboardInteractionModel
+                {
+                    Id = i.Id,
+                    Type = i.Type.ToString(),
+                    Subject = i.Subject,
+                    Description = i.Description,
+                    Date = i.Date,
+                    Status = i.Status.ToString(),
+                    CreatedDate = i.CreatedDate,
+                    LastModifiedDate = i.LastModifiedDate
+                })
+                .ToListAsync();
 
-            // 9. Org Unit Recent Updates
-            var recentUpdatesResult = await GetOrgUnitRecentUpdatesAsync(user, recentUpdatesPageSize);
-            response.OrgUnitRecentUpdates = recentUpdatesResult.Updates?.ToList() ?? new List<RecentUpdateModel>();
-            response.OrgUnitName = recentUpdatesResult.OrgUnitName ?? "your organization unit";
+            // Draft Interactions
+            response.DraftInteractions = await _context.Set<Interaction>()
+                .AsNoTracking()
+                .Where(i => (i.CreatedBy == userId.Value || i.LastModifiedBy == userId.Value) 
+                           && i.Status == EntityStatus.Draft)
+                .OrderByDescending(i => i.CreatedDate)
+                .Take(pageSize)
+                .Select(i => new DashboardInteractionModel
+                {
+                    Id = i.Id,
+                    Type = i.Type.ToString(),
+                    Subject = i.Subject,
+                    Description = i.Description,
+                    Date = i.Date,
+                    Status = i.Status.ToString(),
+                    CreatedDate = i.CreatedDate,
+                    LastModifiedDate = i.LastModifiedDate
+                })
+                .ToListAsync();
+
+            // Opportunities (all statuses for My Workspace)
+            response.MyOpportunities = await _context.Set<Opportunity>()
+                .AsNoTracking()
+                .Where(o => opportunityIdsFromStakeholders.Contains(o.Id) 
+                           || o.CreatedBy == userId.Value 
+                           || o.LastModifiedBy == userId.Value)
+                .OrderByDescending(o => o.LastModifiedDate ?? o.CreatedDate)
+                .Take(pageSize)
+                .Select(o => new DashboardOpportunityModel
+                {
+                    Id = o.Id,
+                    Name = o.Name,
+                    Status = o.Status.ToString(),
+                    WorkflowStageName = o.WorkflowStage != null ? o.WorkflowStage.Name : null,
+                    CreatedDate = o.CreatedDate,
+                    LastModifiedDate = o.LastModifiedDate
+                })
+                .ToListAsync();
+
+            // Draft Opportunities
+            response.DraftOpportunities = await _context.Set<Opportunity>()
+                .AsNoTracking()
+                .Where(o => (opportunityIdsFromStakeholders.Contains(o.Id) 
+                           || o.CreatedBy == userId.Value 
+                           || o.LastModifiedBy == userId.Value)
+                           && o.Status == EntityStatus.Draft)
+                .OrderByDescending(o => o.CreatedDate)
+                .Take(pageSize)
+                .Select(o => new DashboardOpportunityModel
+                {
+                    Id = o.Id,
+                    Name = o.Name,
+                    Status = o.Status.ToString(),
+                    WorkflowStageName = o.WorkflowStage != null ? o.WorkflowStage.Name : null,
+                    CreatedDate = o.CreatedDate,
+                    LastModifiedDate = o.LastModifiedDate
+                })
+                .ToListAsync();
+
+            // Add user roles to opportunities
+            foreach (var opp in response.MyOpportunities)
+            {
+                if (rolesByOpportunityId.TryGetValue(opp.Id, out var roleName))
+                {
+                    opp.UserRole = roleName;
+                }
+            }
+            foreach (var opp in response.DraftOpportunities)
+            {
+                if (rolesByOpportunityId.TryGetValue(opp.Id, out var roleName))
+                {
+                    opp.UserRole = roleName;
+                }
+            }
+
+            // ==========================================
+            // BATCH 3: Get recent updates (optimized)
+            // ==========================================
+            var recentUpdatesResult = await GetOrgUnitRecentUpdatesOptimizedAsync(
+                userId.Value.ToString(), 
+                recentUpdatesPageSize);
+            
+            response.OrgUnitRecentUpdates = recentUpdatesResult.Updates;
+            response.OrgUnitName = recentUpdatesResult.OrgUnitName;
             response.OrgUnitId = recentUpdatesResult.OrgUnitId;
 
+            stopwatch.Stop();
             _logger.LogInformation(
-                "Combined dashboard data loaded for user {UserId}: {Partners} partners, {Contacts} contacts, " +
-                "{Interactions} interactions, {Opportunities} opportunities, {DraftPartners} draft partners, " +
-                "{DraftContacts} draft contacts, {DraftInteractions} draft interactions, {DraftOpportunities} draft opportunities, " +
+                "Dashboard data loaded in {ElapsedMs}ms for user {UserId}: " +
+                "{Partners}/{DraftPartners} partners, {Contacts}/{DraftContacts} contacts, " +
+                "{Interactions}/{DraftInteractions} interactions, {Opportunities}/{DraftOpportunities} opportunities, " +
                 "{RecentUpdates} recent updates",
+                stopwatch.ElapsedMilliseconds,
                 userId.Value,
-                response.MyPartners.Count,
-                response.MyContacts.Count,
-                response.MyInteractions.Count,
-                response.MyOpportunities.Count,
-                response.DraftPartners.Count,
-                response.DraftContacts.Count,
-                response.DraftInteractions.Count,
-                response.DraftOpportunities.Count,
+                response.MyPartners.Count, response.DraftPartners.Count,
+                response.MyContacts.Count, response.DraftContacts.Count,
+                response.MyInteractions.Count, response.DraftInteractions.Count,
+                response.MyOpportunities.Count, response.DraftOpportunities.Count,
                 response.OrgUnitRecentUpdates.Count);
 
             return response;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting combined dashboard data for user {UserId}", userId.Value);
+            _logger.LogError(ex, "Error getting dashboard data for user {UserId}", userId.Value);
             throw;
         }
+    }
+
+    /// <summary>
+    /// Optimized recent updates query that doesn't load all UserProfiles into memory.
+    /// Uses a single query per entity type with efficient user name lookups.
+    /// </summary>
+    private async Task<DashboardOrgUnitRecentUpdatesResponse> GetOrgUnitRecentUpdatesOptimizedAsync(
+        string userIdString, 
+        int pageSize)
+    {
+        var response = new DashboardOrgUnitRecentUpdatesResponse();
+        
+        try
+        {
+            // Get user's global filters for org unit filtering
+            var globalFilters = await _userPreferenceService.GetGlobalFiltersAsync(userIdString);
+            List<int>? orgUnitIds = null;
+
+            if (globalFilters?.OrgUnitId.HasValue == true)
+            {
+                response.OrgUnitId = globalFilters.OrgUnitId.Value;
+                orgUnitIds = await _hierarchyService.GetDescendantIdsAsync(globalFilters.OrgUnitId.Value);
+
+                // Get org unit name efficiently
+                var orgUnitName = await _context.Set<OrganizationHierarchy>()
+                    .AsNoTracking()
+                    .Where(oh => oh.Id == globalFilters.OrgUnitId.Value)
+                    .Select(oh => oh.Name)
+                    .FirstOrDefaultAsync();
+
+                response.OrgUnitName = !string.IsNullOrEmpty(orgUnitName) 
+                    ? orgUnitName 
+                    : $"Org Unit {globalFilters.OrgUnitId.Value}";
+            }
+
+            var allUpdates = new List<DashboardRecentUpdateModel>();
+
+            // Get valid entity IDs if org unit filtering is enabled
+            HashSet<int>? validPartnerIds = null;
+            HashSet<int>? validContactPartnerIds = null;
+            HashSet<int>? validInteractionIds = null;
+            HashSet<int>? validOpportunityIds = null;
+
+            if (orgUnitIds != null && orgUnitIds.Any())
+            {
+                // Batch query for all org unit relationships
+                var orgUnitRelationships = await _context.Set<OrganizationUnitRelationship>()
+                    .AsNoTracking()
+                    .Where(orgRel => orgUnitIds.Contains(orgRel.OrganizationHierarchyId))
+                    .Select(orgRel => new { orgRel.EntityType, orgRel.EntityId })
+                    .ToListAsync();
+
+                validPartnerIds = orgUnitRelationships
+                    .Where(r => r.EntityType == "Partner")
+                    .Select(r => r.EntityId)
+                    .ToHashSet();
+
+                validContactPartnerIds = validPartnerIds; // Contacts filtered by partner
+                
+                validInteractionIds = orgUnitRelationships
+                    .Where(r => r.EntityType == "Interaction")
+                    .Select(r => r.EntityId)
+                    .ToHashSet();
+
+                validOpportunityIds = orgUnitRelationships
+                    .Where(r => r.EntityType == "Opportunity")
+                    .Select(r => r.EntityId)
+                    .ToHashSet();
+            }
+
+            // Collect all user IDs we need to look up (more efficient than loading all UserProfiles)
+            var userIdsToLookup = new HashSet<int>();
+
+            // Partners - with projection
+            var partnersQuery = _context.Set<UNOPSPartner>()
+                .AsNoTracking()
+                .Where(p => p.LastModifiedDate.HasValue);
+
+            if (validPartnerIds != null)
+            {
+                partnersQuery = partnersQuery.Where(p => validPartnerIds.Contains(p.Id));
+            }
+
+            var recentPartners = await partnersQuery
+                .OrderByDescending(p => p.LastModifiedDate)
+                .Take(pageSize)
+                .Select(p => new
+                {
+                    p.Id,
+                    p.Name,
+                    p.LastModifiedDate,
+                    ModifiedBy = p.LastModifiedBy != 0 ? p.LastModifiedBy : p.CreatedBy,
+                    Status = p.Status.ToString()
+                })
+                .ToListAsync();
+
+            foreach (var p in recentPartners)
+            {
+                userIdsToLookup.Add(p.ModifiedBy);
+            }
+
+            // Contacts - with projection
+            var contactsQuery = _context.Set<UNOPSContact>()
+                .AsNoTracking()
+                .Where(c => c.LastModifiedDate.HasValue);
+
+            if (validContactPartnerIds != null)
+            {
+                contactsQuery = contactsQuery.Where(c => validContactPartnerIds.Contains(c.PartnerId));
+            }
+
+            var recentContacts = await contactsQuery
+                .OrderByDescending(c => c.LastModifiedDate)
+                .Take(pageSize)
+                .Select(c => new
+                {
+                    c.Id,
+                    Name = (!string.IsNullOrEmpty(c.FirstName) && !string.IsNullOrEmpty(c.LastName))
+                        ? $"{c.FirstName} {c.LastName}".Trim()
+                        : (!string.IsNullOrEmpty(c.FirstName) ? c.FirstName : c.LastName ?? "Unnamed Contact"),
+                    c.LastModifiedDate,
+                    ModifiedBy = c.LastModifiedBy != 0 ? c.LastModifiedBy : c.CreatedBy,
+                    Status = c.Status.ToString()
+                })
+                .ToListAsync();
+
+            foreach (var c in recentContacts)
+            {
+                userIdsToLookup.Add(c.ModifiedBy);
+            }
+
+            // Interactions - with projection
+            var interactionsQuery = _context.Set<Interaction>()
+                .AsNoTracking()
+                .Where(i => i.LastModifiedDate.HasValue);
+
+            if (validInteractionIds != null)
+            {
+                interactionsQuery = interactionsQuery.Where(i => validInteractionIds.Contains(i.Id));
+            }
+
+            var recentInteractions = await interactionsQuery
+                .OrderByDescending(i => i.LastModifiedDate)
+                .Take(pageSize)
+                .Select(i => new
+                {
+                    i.Id,
+                    Name = i.Subject ?? "Untitled Interaction",
+                    i.LastModifiedDate,
+                    ModifiedBy = i.LastModifiedBy != 0 ? i.LastModifiedBy : i.CreatedBy,
+                    Status = i.Status.ToString()
+                })
+                .ToListAsync();
+
+            foreach (var i in recentInteractions)
+            {
+                userIdsToLookup.Add(i.ModifiedBy);
+            }
+
+            // Opportunities - with projection
+            var opportunitiesQuery = _context.Set<Opportunity>()
+                .AsNoTracking()
+                .Where(o => o.LastModifiedDate.HasValue);
+
+            if (validOpportunityIds != null)
+            {
+                opportunitiesQuery = opportunitiesQuery.Where(o => validOpportunityIds.Contains(o.Id));
+            }
+
+            var recentOpportunities = await opportunitiesQuery
+                .OrderByDescending(o => o.LastModifiedDate)
+                .Take(pageSize)
+                .Select(o => new
+                {
+                    o.Id,
+                    Name = o.Name ?? "Untitled Opportunity",
+                    o.LastModifiedDate,
+                    ModifiedBy = o.LastModifiedBy != 0 ? o.LastModifiedBy : o.CreatedBy,
+                    Status = o.Status.ToString()
+                })
+                .ToListAsync();
+
+            foreach (var o in recentOpportunities)
+            {
+                userIdsToLookup.Add(o.ModifiedBy);
+            }
+
+            // SINGLE query for user names (instead of loading ALL UserProfiles)
+            var userNameLookup = await _context.Set<UserProfile>()
+                .AsNoTracking()
+                .Where(up => userIdsToLookup.Contains(up.UserId))
+                .Select(up => new { up.UserId, up.FirstName, up.LastName })
+                .ToDictionaryAsync(
+                    up => up.UserId,
+                    up => BuildUserName(up.FirstName, up.LastName, up.UserId)
+                );
+
+            // Build final results
+            foreach (var p in recentPartners)
+            {
+                allUpdates.Add(new DashboardRecentUpdateModel
+                {
+                    Id = p.Id,
+                    Name = p.Name ?? "Unnamed Partner",
+                    Type = "Partner",
+                    LastModifiedDate = p.LastModifiedDate,
+                    LastModifiedBy = p.ModifiedBy,
+                    LastModifiedByName = userNameLookup.TryGetValue(p.ModifiedBy, out var name) ? name : $"User {p.ModifiedBy}",
+                    Status = p.Status
+                });
+            }
+
+            foreach (var c in recentContacts)
+            {
+                var contactName = !string.IsNullOrWhiteSpace(c.Name) ? c.Name.Trim() : "Unnamed Contact";
+                allUpdates.Add(new DashboardRecentUpdateModel
+                {
+                    Id = c.Id,
+                    Name = contactName,
+                    Type = "Contact",
+                    LastModifiedDate = c.LastModifiedDate,
+                    LastModifiedBy = c.ModifiedBy,
+                    LastModifiedByName = userNameLookup.TryGetValue(c.ModifiedBy, out var name) ? name : $"User {c.ModifiedBy}",
+                    Status = c.Status
+                });
+            }
+
+            foreach (var i in recentInteractions)
+            {
+                allUpdates.Add(new DashboardRecentUpdateModel
+                {
+                    Id = i.Id,
+                    Name = i.Name,
+                    Type = "Interaction",
+                    LastModifiedDate = i.LastModifiedDate,
+                    LastModifiedBy = i.ModifiedBy,
+                    LastModifiedByName = userNameLookup.TryGetValue(i.ModifiedBy, out var name) ? name : $"User {i.ModifiedBy}",
+                    Status = i.Status
+                });
+            }
+
+            foreach (var o in recentOpportunities)
+            {
+                allUpdates.Add(new DashboardRecentUpdateModel
+                {
+                    Id = o.Id,
+                    Name = o.Name,
+                    Type = "Opportunity",
+                    LastModifiedDate = o.LastModifiedDate,
+                    LastModifiedBy = o.ModifiedBy,
+                    LastModifiedByName = userNameLookup.TryGetValue(o.ModifiedBy, out var name) ? name : $"User {o.ModifiedBy}",
+                    Status = o.Status
+                });
+            }
+
+            // Sort and limit
+            response.Updates = allUpdates
+                .Where(u => u.LastModifiedDate.HasValue)
+                .OrderByDescending(u => u.LastModifiedDate)
+                .Take(pageSize)
+                .ToList();
+
+            return response;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting optimized org unit recent updates");
+            return response;
+        }
+    }
+
+    private static string BuildUserName(string? firstName, string? lastName, int userId)
+    {
+        if (!string.IsNullOrEmpty(firstName) && !string.IsNullOrEmpty(lastName))
+            return $"{firstName} {lastName}".Trim();
+        if (!string.IsNullOrEmpty(firstName))
+            return firstName;
+        if (!string.IsNullOrEmpty(lastName))
+            return lastName;
+        return $"User {userId}";
     }
 
     /// <summary>
