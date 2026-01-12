@@ -5461,11 +5461,11 @@ public class UNOPSGeminiManager : IGeminiManager
                 // Step 2: Get comprehensive opportunity data
                 var opportunityDetails = await opportunityManager.GetOpportunityDetailsForAIAsync(opportunityId);
 
-                // Specifically remove the statementMarkdown, workflowStageName, status, and targetSigningDate fields from the opportunity details
+                // Specifically remove the statementMarkdown, workflowStageName, and status fields from the opportunity details
+                // NOTE: targetSigningDate is now included for Timeline section in UNOPS Value Proposition
                 opportunityDetails["opportunityStatementMarkdown"] = null;
                 opportunityDetails["workflowStageName"] = null;
                 opportunityDetails["status"] = null;
-                opportunityDetails["targetSigningDate"] = null;  // Sending in the target signing date seems to confuse the AI (uses targetSigningDate instead of implementationStartDate)
 
                 Console.WriteLine($"======================[OPPORTUNITY-STATEMENT] opportunityDetails: {JsonConvert.SerializeObject(opportunityDetails, Formatting.Indented)}");
 
@@ -5685,11 +5685,11 @@ public class UNOPSGeminiManager : IGeminiManager
                 _logger.LogInformation($"📊 [STATEMENT-VALIDATION] Retrieving opportunity details...");
                 var opportunityDetails = await opportunityManager.GetOpportunityDetailsForAIAsync(opportunityId);
 
-                // Specifically remove the statementMarkdown, workflowStageName, status, and targetSigningDate fields from the opportunity details
+                // Specifically remove the statementMarkdown, workflowStageName, and status fields from the opportunity details
+                // NOTE: targetSigningDate is now included for Timeline section validation
                 opportunityDetails["opportunityStatementMarkdown"] = null;
                 opportunityDetails["workflowStageName"] = null;
                 opportunityDetails["status"] = null;
-                opportunityDetails["targetSigningDate"] = null;  // Sending in the target signing date seems to confuse the AI (uses targetSigningDate instead of implementationStartDate)
 
                 _logger.LogInformation($"✅ [STATEMENT-VALIDATION] Retrieved opportunity details (keys: {opportunityDetails.Count})");
 
