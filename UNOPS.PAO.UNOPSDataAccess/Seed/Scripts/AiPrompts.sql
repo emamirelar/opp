@@ -659,7 +659,7 @@ Return compact single-line JSON. If more input needed, set ResponseType to "Info
 "Company"/"Organization"/"Partner"/"Employer" → partnerId (string, add to dependents)
 "Job Title"/"Position"/"Role" → title
 "Department"/"Division"/"Unit" → department
-"Contact Organization Unit"/"Contact Org Unit"/"Org Unit"/"UNOPS Org Unit" → selectedOrgUnitId (string, add to dependents if present)
+"Contact Organization Unit"/"Contact Org Unit"/"Org Unit"/"UNOPS Org Unit"/"Contact Organization Unit Description" → selectedOrgUnitId (string, add to dependents if present)
 
 **SALUTATION DETECTION:**
 Auto-detect from: Mr., Ms., Mrs., Dr., Prof., Sir, Madam
@@ -671,16 +671,33 @@ Auto-detect from: Mr., Ms., Mrs., Dr., Prof., Sir, Madam
 - Set validationError for missing required fields (lastName, email, title, partnerId)
 - Validate email format
 - Set partnerId as string name, include "partnerId" in dependents for ID resolution
-- Set selectedOrgUnitId as string name (optional field), include "selectedOrgUnitId" in dependents if present
-- Omit null/empty fields from JSON to keep it compact (including selectedOrgUnitId if not present)
+- Set selectedOrgUnitId as string name (optional field). CRITICAL: Always check for org unit data in columns like "Contact Organization Unit Description", "Contact Organization Unit", "Contact Org Unit", "Org Unit", "UNOPS Org Unit" - extract the org unit name/value even if the column name varies slightly
+- Omit null/empty fields from JSON to keep it compact (including selectedOrgUnitId if not present in the data)
 - Compute name field as concatenation of salutation + firstName + lastName
 - Only include "id" field in JSON output if ID column is present in source data
 - Focus on essential fields only: name components, title, email, phone, partnerId, department, selectedOrgUnitId
+- CRITICAL FOR DEPENDENTS: Always return dependents as ["partnerId", "selectedOrgUnitId"] regardless of whether selectedOrgUnitId has a value in the current record. The dependents array structure must be consistent across all records. Only omit selectedOrgUnitId from the JSON object itself if it has no value, but always include "selectedOrgUnitId" in the dependents array.
 
 **RESPONSE FORMAT:**
 {"Message":"Contact data processed successfully.","Category":"Contact","ResponseType":"Action","records":[...]}
 
-Return compact single-line JSON. If more input needed, set ResponseType to "Information". The "dependents" property is used to indicate which property in the JSON is an ID and is required to map. In this case, it is partnerId and selectedOrgUnitId (if present). Hence, DONOT update the dependents value. Send the dependents property''s value as-is ("dependents": ["partnerId", "selectedOrgUnitId"] -> do not replace these values). Also, include "id" only if it is present. Only include "selectedOrgUnitId" in the dependents array if the field has a value.',
+Return compact single-line JSON. If more input needed, set ResponseType to "Information". 
+
+**CRITICAL - DEPENDENTS ARRAY RULES:**
+- The "dependents" property is used to indicate which properties in the JSON are IDs and require mapping
+- ALWAYS return dependents as ["partnerId", "selectedOrgUnitId"] for EVERY record, regardless of whether selectedOrgUnitId has a value
+- DO NOT modify the dependents array structure - it must be consistent across all records
+- DO NOT conditionally include/exclude "selectedOrgUnitId" from the dependents array based on data presence
+- The dependents array structure is fixed: ["partnerId", "selectedOrgUnitId"]
+- Only omit the selectedOrgUnitId FIELD from the JSON object itself if it has no value, but the dependents array must always include both "partnerId" and "selectedOrgUnitId"
+
+**CRITICAL - SELECTEDORGUNITID EXTRACTION:**
+- Always check for org unit information in the data, even if column names vary
+- Look for columns containing: "Contact Organization Unit", "Contact Org Unit", "Org Unit", "UNOPS Org Unit", "Contact Organization Unit Description"
+- Extract the org unit value even if the column header is slightly different
+- Include selectedOrgUnitId in the JSON object if any org unit information is found
+
+Also, include "id" only if it is present in the source data.',
         '',
         NOW(),
         'Contact',
