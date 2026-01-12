@@ -2501,8 +2501,8 @@ Return a JSON object with this exact structure (NO actionLabel field):
       "actionTarget": "WHEN"
     },
     {
-      "title": "Assign Responsible Org Unit and Team Members",
-      "description": "Add responsible organization unit and assign internal UNOPS stakeholders to TEAM section to establish clear ownership and accountability.",
+      "title": "Add Responsible Org Unit",
+      "description": "Assign a Responsible Org Unit in TEAM section. This will automatically populate Internal Stakeholders (like Director of Administration) relevant to that org unit. These stakeholders appear automatically based on org unit structure.",
       "actionTarget": "TEAM"
     }
   ],
@@ -2607,11 +2607,17 @@ Return a JSON object with this exact structure (NO actionLabel field):
 4. **CHECK TIMELINE CONSISTENCY**: If submission deadline is after target signing date, flag as warning. Check if implementation dates are realistic.
 5. **CHECK BENEFICIARY DATA**: If beneficiaries to be determined is false but estimated counts are missing, flag as incomplete
 6. **CHECK HIGH RISKS**: If high risks not acknowledged and opportunity is in advanced workflow stage, flag as warning
-7. Generate 3-7 insights covering strengths, concerns, and observations
-8. Generate 3-7 actionable suggestions with specific recommendations
-9. **CRITICAL FOR SUGGESTIONS**: Aim to provide at least ONE suggestion per section (WHAT, WHY, WHO, WHEN, WHERE, TEAM) if improvement opportunities exist in those sections. Not all sections are mandatory, but cover the sections that need attention.
-10. Reference actual data values in your analysis
-11. Return ONLY valid JSON with the specified structure',
+7. **CRITICAL - TEAM SECTION ANALYSIS**:
+   - **DO NOT suggest adding Opportunity Manager** - It defaults to the creator and can be edited by users. Do not generate insights or suggestions about Opportunity Manager assignment.
+   - **DO NOT suggest adding roles that already exist** - Check stakeholdersCount and stakeholders field. If roles like "Opportunity Manager", "Partnership Lead", "Reviewer", or "Internal Stakeholder" are already present, DO NOT suggest adding them.
+   - **FOCUS ON RESPONSIBLE ORG UNIT**: If responsibleOrgUnitName is empty, missing, or "-", generate HIGH PRIORITY suggestion with actionTarget "TEAM" to add Responsible Org Unit. Explain that adding an Org Unit will automatically populate Internal Stakeholders (like Director of Administration/DoA) that are relevant to that org unit. These auto-populated stakeholders cannot be manually edited but appear based on the org unit structure.
+   - **PERSONNEL IDENTIFICATION**: If Responsible Org Unit exists, identify if additional personnel (likely from that org unit) may be needed to support Opportunity Development post Go. Consider the opportunity scope, complexity, and delivery modality when suggesting personnel needs.
+   - **TEAM COMPLETENESS**: Only suggest adding Responsible Org Unit if it''s missing. Do not suggest adding individual stakeholders if they already exist in the stakeholders list.
+8. Generate 3-7 insights covering strengths, concerns, and observations
+9. Generate 3-7 actionable suggestions with specific recommendations
+10. **CRITICAL FOR SUGGESTIONS**: Aim to provide at least ONE suggestion per section (WHAT, WHY, WHO, WHEN, WHERE, TEAM) if improvement opportunities exist in those sections. Not all sections are mandatory, but cover the sections that need attention.
+11. Reference actual data values in your analysis
+12. Return ONLY valid JSON with the specified structure',
         NOW(),
         'Opportunity',
         1,
@@ -3577,8 +3583,14 @@ WHAT TO FLAG AS INACCURACIES (Markdown contradicts data):
 - Markdown shows funding amounts that don''t match opportunityData.fundingPartners[].amount
 
 **2. Timeline Inaccuracies**
-- Markdown shows start/end dates that differ from opportunityData.targetSigningDate or opportunityData.estimatedStartDate or opportunityData.estimatedCompletionDate
+- Markdown shows start/end dates that differ from opportunityData.targetSigningDate or opportunityData.implementationStartDate or opportunityData.targetDeliveryDate
 - Markdown shows duration that contradicts calculated duration from data dates
+- **CRITICAL DATE VALIDATION**: Dates in opportunityData are in ISO format (yyyy-MM-dd, e.g., "2025-12-12"). The markdown may display dates in readable format (e.g., "December 12, 2025" or "12 December 2025"). When validating:
+  * Extract the actual date from markdown (e.g., "December 12, 2025" → 2025-12-12)
+  * Compare the extracted date with the ISO date in opportunityData
+  * **FLAG if dates differ by even ONE day** (e.g., data: "2025-12-12" but markdown: "December 11, 2025" or "11 December 2025" → FLAG THIS)
+  * **FLAG if dates differ by even ONE day** (e.g., data: "2025-05-15" but markdown: "May 14, 2025" or "14 May 2025" → FLAG THIS)
+  * Do NOT adjust for timezones - the date in opportunityData is the correct date
 
 **3. Geographic Inaccuracies**
 - Markdown mentions countries not in opportunityData.countries[]
@@ -3605,7 +3617,8 @@ WHAT TO FLAG AS INACCURACIES (Markdown contradicts data):
 **8. Basic Information Inaccuracies**
 - Markdown shows opportunity name that differs from opportunityData.name
 - Markdown shows org unit that differs from opportunityData.responsibleOrgUnitName
-- Markdown shows opportunity manager different from opportunityData.contactStakeholders[] where role is opportunity manager
+- Markdown shows org unit code that differs from opportunityData.responsibleOrgUnitCode
+- **Opportunity Manager Inaccuracy**: Markdown shows Opportunity Manager name/email that differs from the stakeholder in opportunityData.stakeholders where RoleName equals "Opportunity Manager". The stakeholders list format is: "- UserName (UserEmail): RoleName [Auto-assigned/Manually assigned]". Extract the UserName and UserEmail from the entry where RoleName is "Opportunity Manager" and compare with what''s shown in the markdown. If data has an Opportunity Manager but markdown shows "[Information not available]" → FLAG THIS. If data has no Opportunity Manager (stakeholders list doesn''t contain RoleName "Opportunity Manager") but markdown shows a name → FLAG THIS.
 
 WHAT NOT TO FLAG (DO NOT REPORT AS INACCURACIES):
 
@@ -3682,14 +3695,24 @@ Markdown: "Funded by The World Bank"
 → DO NOT FLAG (same entity, markdown adds article "The")
 
 **Example 5: SHOULD FLAG - Date inaccuracy**
-Data: opportunityData.estimatedStartDate = "2026-03-30"
-Markdown: "Project starts January 2025"
-→ FLAG: "Start Date - Markdown shows January 2025 but data indicates March 30, 2026"
+Data: opportunityData.targetSigningDate = "2025-12-12"
+Markdown: "Target signing date: December 11, 2025"
+→ FLAG: "Target Signing Date - Opportunity Statement shows December 11, 2025 but data indicates December 12, 2025"
+
+**Example 5b: SHOULD FLAG - Date off by one day**
+Data: opportunityData.targetDeliveryDate = "2025-05-15"
+Markdown: "Target delivery date: May 14, 2025"
+→ FLAG: "Target Delivery Date - Opportunity Statement shows May 14, 2025 but data indicates May 15, 2025"
 
 **Example 6: SHOULD NOT FLAG - Date format variation**
-Data: opportunityData.estimatedStartDate = "2026-03-30"
+Data: opportunityData.targetSigningDate = "2026-03-30"
 Markdown: "Project starts March 2026"
 → DO NOT FLAG (same date, markdown shows month/year format)
+
+**Example 6b: SHOULD NOT FLAG - Same date, different format**
+Data: opportunityData.targetSigningDate = "2025-12-12"
+Markdown: "Target signing date: December 12, 2025" or "12 December 2025"
+→ DO NOT FLAG (same date, just formatted differently)
 
 **Example 7: SHOULD FLAG - Beneficiaries inaccuracy**
 Data: opportunityData.directBeneficiaries = 2500000
@@ -3700,6 +3723,23 @@ Markdown: "Direct beneficiaries: 1,000 people"
 Data: opportunityData.directBeneficiaries = 2500000
 Markdown: "Direct beneficiaries: 2.5 million people"
 → DO NOT FLAG (same number, formatted as millions in markdown)
+
+**Example 8b: SHOULD FLAG - Opportunity Manager missing**
+Data: opportunityData.stakeholders = "- John Doe (john.doe@unops.org): Opportunity Manager [Manually assigned]"
+Markdown: "Unit and opportunity manager: [Information not available], [Information not available]"
+→ FLAG: "Opportunity Manager - Opportunity Statement shows [Information not available] but data indicates John Doe (john.doe@unops.org) is the Opportunity Manager"
+
+**Example 8c: SHOULD FLAG - Opportunity Manager incorrect**
+Data: opportunityData.stakeholders = "- John Doe (john.doe@unops.org): Opportunity Manager [Manually assigned]"
+Markdown: "Unit and opportunity manager: Global Infrastructure Unit (B5507), Jane Smith (jane.smith@unops.org)"
+→ FLAG: "Opportunity Manager - Opportunity Statement shows Jane Smith (jane.smith@unops.org) but data indicates John Doe (john.doe@unops.org) is the Opportunity Manager"
+
+**Example 8d: SHOULD NOT FLAG - Opportunity Manager correct**
+Data: opportunityData.stakeholders = "- John Doe (john.doe@unops.org): Opportunity Manager [Manually assigned]"
+Data: opportunityData.responsibleOrgUnitName = "Global Infrastructure Unit"
+Data: opportunityData.responsibleOrgUnitCode = "B5507"
+Markdown: "Unit and opportunity manager: Global Infrastructure Unit (B5507), John Doe (john.doe@unops.org)"
+→ DO NOT FLAG (Opportunity Manager matches data)
 
 **Example 9: SHOULD NOT FLAG - Missing in both data and markdown**
 Data: opportunityData.uncfOutcomes = null
@@ -4081,6 +4121,7 @@ STOP! Before you flag ANY item, verify it against these EXACT examples from real
 - DO NOT include markdown code fences (```) in your response
 - Return only the formatted markdown content
 - Do not invent or hallucinate information
+- **DATE FORMATTING**: Dates in the data are provided in ISO format (yyyy-MM-dd, e.g., "2025-12-12"). When displaying dates in the statement, convert them to readable format (e.g., "December 12, 2025" or "12 December 2025"). CRITICAL: Use the EXACT date from the data - do not adjust for timezones or convert dates. If data shows "2025-12-12", display it as "December 12, 2025" or "12 December 2025" - NOT "December 11, 2025" or "11 December 2025". The date in the data is already the correct date - just format it for readability.
 
 **OUTPUT FORMAT (STRICTLY FOLLOW THIS STRUCTURE):**
 
@@ -4090,7 +4131,7 @@ STOP! Before you flag ANY item, verify it against these EXACT examples from real
 
 ## 1. Context and challenge(s)
 
-- **(a) Unit and opportunity manager:** [[responsibleOrgUnitName, responsibleOrgUnitCode. Extract Opportunity Manager name and email from stakeholders list. DO NOT ASSUME ANYTHING. ONLY LIST THE UNIT AND OPPORTUNITY MANAGER THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]]  
+- **(a) Unit and opportunity manager:** [Format: "[responsibleOrgUnitName] ([responsibleOrgUnitCode]), [Opportunity Manager Name] ([Opportunity Manager Email])". Extract the Opportunity Manager by finding the stakeholder in the stakeholders list where RoleName equals exactly "Opportunity Manager". The stakeholders list format is: "- UserName (UserEmail): RoleName [Auto-assigned/Manually assigned]". Look for the entry where RoleName is "Opportunity Manager" and extract the UserName and UserEmail from that entry. If responsibleOrgUnitName or responsibleOrgUnitCode is missing, use [Information not available]. If no stakeholder with RoleName "Opportunity Manager" exists in the stakeholders list, use [Information not available] for the Opportunity Manager. DO NOT ASSUME ANYTHING. ONLY LIST THE UNIT AND OPPORTUNITY MANAGER THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
 - **(b) Location:** [Extract country names and regions from countries field. Describe the context from the description field. DO NOT ASSUME ANYTHING. ONLY LIST THE LOCATIONS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
 - **(c) Context and Challenge(s):** [xtract from challenges field and relevant parts of description field. Be specific and quantify the problem where possible. DO NOT ASSUME ANYTHING. ONLY LIST THE CHALLENGES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
 
@@ -4111,17 +4152,17 @@ STOP! Before you flag ANY item, verify it against these EXACT examples from real
 - **(f) Indirect Beneficiaries:** [Extract from estimatedIndirectBeneficiaries field. DO NOT ASSUME ANYTHING. ONLY LIST THE INDIRECT BENEFICIARIES COUNT THAT IS ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
 -**(g) Beneficiary Institutions:** [Extract from expectedBeneficiaries field. DO NOT ASSUME ANYTHING. ONLY LIST THE BENEFICIARY INSTITUTIONS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
 
-## 4. Initiative that UNOPS will be responsible and/or accountable for [What are the outputs and what opportunities exist to enhance their impact?]
+## 4. UNOPS Value Proposition
 
-- **(a) Scope:** [Extract from deliveryModality and deliverables fields. DO NOT ASSUME ANYTHING. ONLY LIST THE DELIVERY MODALITY AND DELIVERABLES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(b) Success criteria:** [Extract from resultsFocus field and any SMART targets mentioned. If not available, note [Information not available].]  
-- **(c) Scale and complexity:** [Extract from initiativeBudgetUSD, implementation timeline (implementationStartDate to targetDeliveryDate), and description and provide a brief explanation. DO NOT ASSUME ANYTHING. ONLY LIST THE SCALE AND COMPLEXITY INFORMATION THAT IS ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(d) Additionality:** [Extract additionality information from description if mentioned, otherwise mark as [Information not available]. DO NOT ASSUME ANYTHING.]  
+- **(a) Services:** [Extract from deliveryModality and deliverables fields. Describe UNOPS services based on opportunity type, deliverables, and service lines from stats.serviceLines. List specific services that UNOPS will provide. DO NOT ASSUME ANYTHING. ONLY LIST THE SERVICES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+- **(b) Implementation Approach:** [Extract from deliveryModality, description, and relevant opportunity fields. Describe the approach UNOPS will take to implement the initiative. Include methodology, phases, or key implementation strategies if mentioned in the description. DO NOT ASSUME ANYTHING. ONLY LIST THE IMPLEMENTATION APPROACH INFORMATION THAT IS ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+- **(c) Timeline:** [Format: "Target Signing Date: [targetSigningDate formatted as readable date], Target Delivery Date: [targetDeliveryDate formatted as readable date]". Extract from targetSigningDate and targetDeliveryDate fields. Use DATE FORMATTING rules: convert ISO dates (yyyy-MM-dd) to readable format (e.g., "December 12, 2025" or "12 December 2025"). Use the EXACT dates from the data - do not adjust for timezones. CRITICAL: If targetSigningDate is empty string ("") or null, use [Information not available] for Target Signing Date. If targetDeliveryDate is empty string ("") or null, use [Information not available] for Target Delivery Date. DO NOT ASSUME ANYTHING. ONLY LIST THE DATES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+- **(d) Budget:** [Format: "USD [stats.totalFundingUSD]" where stats.totalFundingUSD is the total funding amount from all funding partners. Extract from stats.totalFundingUSD field (NOT from initiativeBudgetUSD). This represents the total committed funding from all funding partners. If stats.totalFundingUSD is missing, zero, or "0.00", use [Information not available]. DO NOT ASSUME ANYTHING. ONLY LIST THE BUDGET THAT IS ACTUALLY LISTED IN THE OPPORTUNITY DATA. DO NOT use initiativeBudgetUSD or any other budget field - ONLY use stats.totalFundingUSD.]  
 
-## 5. Outcome and impact level assumptions and risks [What is required to ensure that the outputs/outcomes provided contribute to the realization of the objective(s) and what are the risks? Notably, this is the critical foundation upon which real success rests.]
+## 5. Risk Analysis
 
-- **(a) Assumptions:** [List the main assumptions that underpin successful achievement of outcomes and impact. Extract from description or related fields if mentioned. If not available, note [Information not available]. While these assumptions may be outside UNOPS control we can still: i) monitor and seek to influence them together with partners, and ii) bring assumptions under the control of the initiative by including them in the project scope.]  
-- **(b) Risk:** [Extract from highRisksAcknowledged field and any risk mentions in description or other fields. Include country risk information from countries field if available. DO NOT ASSUME ANYTHING. ONLY LIST THE KEY RISKS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+- **(a) Key Risks:** [Extract from the risks field. The risks field contains a formatted list of all identified risks for this opportunity. Each risk includes: Risk Type (Threat or Opportunity), Title, Description, Recommendation, Category, Probability, Impact, Proximity, Response Type, and Pre-Defined High Risk information if applicable. Format the risks clearly, listing each risk with its key details. If the risks field shows "No risks identified" or is empty, use [Information not available]. DO NOT ASSUME ANYTHING. ONLY LIST THE RISKS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA. DO NOT extract risks from description or other fields - ONLY use the risks field.]  
+- **(b) Mitigation Strategies:** [Extract mitigation strategies from the Recommendation field within each risk entry in the risks field. If risks have recommendations listed, summarize the key mitigation strategies. If no recommendations are available in the risks field, use [Information not available]. DO NOT ASSUME ANYTHING. ONLY LIST THE MITIGATION STRATEGIES THAT ARE ACTUALLY LISTED IN THE RISKS DATA.]  
 
 ## 6. UNOPS capabilities:
 - **(a) Capabilities:** [Outline what UNOPS brings based on unopsMissions, deliverables, and deliveryModality fields. Reference service lines from stats.serviceLines. If specific project IDs or expert names are mentioned in stakeholders or description, include them.]  
