@@ -567,12 +567,18 @@ namespace UNOPS.PAO.Business.Tests.Services
         private class TestCountry
         {
             public int Id { get; set; }
-            public string Code { get; set; } = "";
-            public string Code3 { get; set; } = "";
+            public string Iso2Code { get; set; } = "";
+            public string Iso3Code { get; set; } = "";
             public string Name { get; set; } = "";
-            public string Region { get; set; } = "";
-            public string Continent { get; set; } = "";
+            public string RegionDescription { get; set; } = "";
+            public string ContinentDescription { get; set; } = "";
             public bool IsDeleted { get; set; }
+            
+            // Backwards compatibility properties (mapped to new names)
+            public string Code { get => Iso2Code; set => Iso2Code = value; }
+            public string Code3 { get => Iso3Code; set => Iso3Code = value; }
+            public string Region { get => RegionDescription; set => RegionDescription = value; }
+            public string Continent { get => ContinentDescription; set => ContinentDescription = value; }
         }
     }
 }

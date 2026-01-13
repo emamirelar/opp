@@ -42,10 +42,10 @@ namespace UNOPS.PAO.Business.Tests.Managers
             // Seed Countries
             var countries = new List<Country>
             {
-                new Country { Id = 1, Code = "KE", Code3 = "KEN", Name = "Kenya", Region = "East Africa", Continent = "Africa", Status = EntityStatus.Active },
-                new Country { Id = 2, Code = "UG", Code3 = "UGA", Name = "Uganda", Region = "East Africa", Continent = "Africa", Status = EntityStatus.Active },
-                new Country { Id = 3, Code = "US", Code3 = "USA", Name = "United States", Region = "North America", Continent = "North America", Status = EntityStatus.Active },
-                new Country { Id = 4, Code = "GB", Code3 = "GBR", Name = "United Kingdom", Region = "Europe", Continent = "Europe", Status = EntityStatus.Inactive }
+                new Country { Id = 1, Iso2Code = "KE", Iso3Code = "KEN", Name = "Kenya", RegionDescription = "East Africa", ContinentDescription = "Africa", Status = EntityStatus.Active },
+                new Country { Id = 2, Iso2Code = "UG", Iso3Code = "UGA", Name = "Uganda", RegionDescription = "East Africa", ContinentDescription = "Africa", Status = EntityStatus.Active },
+                new Country { Id = 3, Iso2Code = "US", Iso3Code = "USA", Name = "United States", RegionDescription = "North America", ContinentDescription = "North America", Status = EntityStatus.Active },
+                new Country { Id = 4, Iso2Code = "GB", Iso3Code = "GBR", Name = "United Kingdom", RegionDescription = "Europe", ContinentDescription = "Europe", Status = EntityStatus.Inactive }
             };
             _context.Countries.AddRange(countries);
 
@@ -70,9 +70,9 @@ namespace UNOPS.PAO.Business.Tests.Managers
             // Seed OrganizationHierarchy
             var orgUnits = new List<OrganizationHierarchy>
             {
-                new OrganizationHierarchy { Id = 1, Name = "Global HQ", Code = "GHQ", Description = "Global Headquarters", Type = OrganizationUnitType.HeadQuarter, ParentId = null, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow, Status = EntityStatus.Active },
-                new OrganizationHierarchy { Id = 2, Name = "Africa Region", Code = "AFR", Description = "Africa Regional Office", Type = OrganizationUnitType.OrgUnit, ParentId = 1, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow, Status = EntityStatus.Active },
-                new OrganizationHierarchy { Id = 3, Name = "Asia Region", Code = "ASI", Description = "Asia Regional Office", Type = OrganizationUnitType.OrgUnit, ParentId = 1, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow, Status = EntityStatus.Active }
+                new OrganizationHierarchy { Id = 1, Name = "Global HQ", Code = "GHQ", Description = "Global Headquarters", Type = OrganizationUnitType.Office, ParentId = null, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow, Status = EntityStatus.Active },
+                new OrganizationHierarchy { Id = 2, Name = "Africa Region", Code = "AFR", Description = "Africa Regional Office", Type = OrganizationUnitType.Region, ParentId = 1, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow, Status = EntityStatus.Active },
+                new OrganizationHierarchy { Id = 3, Name = "Asia Region", Code = "ASI", Description = "Asia Regional Office", Type = OrganizationUnitType.Region, ParentId = 1, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow, Status = EntityStatus.Active }
             };
             _context.OrganizationHierarchies.AddRange(orgUnits);
 
@@ -108,7 +108,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         public async Task TC_VM_002_GetCountries_FilterByRegion()
         {
             var eastAfricaCountries = await _context.Countries
-                .Where(c => c.Region == "East Africa" && c.Status == EntityStatus.Active && !c.IsDeleted)
+                .Where(c => c.RegionDescription == "East Africa" && c.Status == EntityStatus.Active && !c.IsDeleted)
                 .ToListAsync();
 
             Assert.Equal(2, eastAfricaCountries.Count);
@@ -120,7 +120,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         public async Task TC_VM_003_GetCountries_FilterByContinent()
         {
             var africanCountries = await _context.Countries
-                .Where(c => c.Continent == "Africa" && c.Status == EntityStatus.Active && !c.IsDeleted)
+                .Where(c => c.ContinentDescription == "Africa" && c.Status == EntityStatus.Active && !c.IsDeleted)
                 .ToListAsync();
 
             Assert.Equal(2, africanCountries.Count);
@@ -130,7 +130,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         public async Task TC_VM_004_GetCountryByCode_ValidCode_ReturnsCountry()
         {
             var country = await _context.Countries
-                .FirstOrDefaultAsync(c => c.Code == "KE" && !c.IsDeleted);
+                .FirstOrDefaultAsync(c => c.Iso2Code == "KE" && !c.IsDeleted);
 
             Assert.NotNull(country);
             Assert.Equal("Kenya", country.Name);
@@ -149,7 +149,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         public async Task TC_VM_006_GetCountryByCode3_ValidCode_ReturnsCountry()
         {
             var country = await _context.Countries
-                .FirstOrDefaultAsync(c => c.Code3 == "KEN" && !c.IsDeleted);
+                .FirstOrDefaultAsync(c => c.Iso3Code == "KEN" && !c.IsDeleted);
 
             Assert.NotNull(country);
             Assert.Equal("Kenya", country.Name);

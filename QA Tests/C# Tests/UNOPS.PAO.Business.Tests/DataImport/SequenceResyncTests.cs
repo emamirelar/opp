@@ -92,9 +92,9 @@ public class SequenceResyncTests : IDisposable
         // Arrange - Create partner trees with specific IDs (simulating data import)
         var partnerTrees = new List<PartnerTree>
         {
-            new PartnerTree { Name = "Category 1", Code = "CAT1", Level = 1 },
-            new PartnerTree { Name = "Category 2", Code = "CAT2", Level = 1 },
-            new PartnerTree { Name = "Category 3", Code = "CAT3", Level = 1 }
+            new PartnerTree { Name = "Category 1", Description = "Category 1 Description", Code = "CAT1", Type = "CATEGORY" },
+            new PartnerTree { Name = "Category 2", Description = "Category 2 Description", Code = "CAT2", Type = "CATEGORY" },
+            new PartnerTree { Name = "Category 3", Description = "Category 3 Description", Code = "CAT3", Type = "CATEGORY" }
         };
 
         await _context.PartnerTrees.AddRangeAsync(partnerTrees);
@@ -107,7 +107,7 @@ public class SequenceResyncTests : IDisposable
         maxId.Should().BeGreaterThan(0, "PartnerTrees should have been created");
 
         // Verify new entity can be added without conflict
-        var newTree = new PartnerTree { Name = "New Category", Code = "NEW1", Level = 1 };
+        var newTree = new PartnerTree { Name = "New Category", Description = "New Category Description", Code = "NEW1", Type = "CATEGORY" };
         await _context.PartnerTrees.AddAsync(newTree);
         
         // This should not throw - if sequence is properly synced
@@ -180,7 +180,7 @@ public class SequenceResyncTests : IDisposable
     {
         // Arrange - Create data in multiple tables
         var partnerTrees = Enumerable.Range(1, 5)
-            .Select(i => new PartnerTree { Name = $"Tree {i}", Code = $"T{i}", Level = 1 })
+            .Select(i => new PartnerTree { Name = $"Tree {i}", Description = $"Tree {i} Description", Code = $"T{i}", Type = "GROUP" })
             .ToList();
 
         var interactions = Enumerable.Range(1, 10)
@@ -207,7 +207,7 @@ public class SequenceResyncTests : IDisposable
         partnerMaxId.Should().Be(3);
 
         // Verify new entities can be added to all tables
-        var newTree = new PartnerTree { Name = "New Tree", Code = "NT", Level = 1 };
+        var newTree = new PartnerTree { Name = "New Tree", Description = "New Tree Description", Code = "NT", Type = "GROUP" };
         var newInteraction = new Interaction { Subject = "New Interaction", Date = DateTime.UtcNow };
         var newPartner = new Partner { Name = "New Partner", PartnerShortDescription = "New Desc" };
 
