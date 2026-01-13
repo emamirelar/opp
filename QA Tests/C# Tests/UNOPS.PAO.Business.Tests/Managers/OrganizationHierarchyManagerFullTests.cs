@@ -38,11 +38,11 @@ namespace UNOPS.PAO.Business.Tests.Managers
         {
             var orgs = new[]
             {
-                new OrganizationHierarchy { Id = 1, Name = "Root HQ", Code = "HQ", Description = "Headquarters", Type = OrganizationUnitType.HeadQuarter, ParentId = null, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new OrganizationHierarchy { Id = 1, Name = "Root HQ", Code = "HQ", Description = "Headquarters", Type = OrganizationUnitType.Office, ParentId = null, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
                 new OrganizationHierarchy { Id = 2, Name = "Region A", Code = "RA", Description = "Region A Office", Type = OrganizationUnitType.Region, ParentId = 1, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
                 new OrganizationHierarchy { Id = 3, Name = "Region B", Code = "RB", Description = "Region B Office", Type = OrganizationUnitType.Region, ParentId = 1, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new OrganizationHierarchy { Id = 4, Name = "Country X", Code = "CX", Description = "Country X Office", Type = OrganizationUnitType.Country, ParentId = 2, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new OrganizationHierarchy { Id = 5, Name = "Country Y", Code = "CY", Description = "Country Y Office", Type = OrganizationUnitType.Country, ParentId = 2, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow }
+                new OrganizationHierarchy { Id = 4, Name = "Country X", Code = "CX", Description = "Country X Office", Type = OrganizationUnitType.Office, ParentId = 2, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new OrganizationHierarchy { Id = 5, Name = "Country Y", Code = "CY", Description = "Country Y Office", Type = OrganizationUnitType.Office, ParentId = 2, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow }
             };
             _context.OrganizationHierarchies.AddRange(orgs);
             _context.SaveChanges();

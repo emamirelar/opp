@@ -510,7 +510,7 @@ namespace UNOPS.PAO.Business.Tests.Services
             var country = new UNOPS.PAO.Domain.Entities.Country
             {
                 Name = "Test Country",
-                Code = "TC",
+                Iso2Code = "TC",
                 Status = UNOPS.PAO.Domain.Entities.EntityStatus.Active
             };
 
@@ -533,13 +533,13 @@ namespace UNOPS.PAO.Business.Tests.Services
             var activeCountry = new UNOPS.PAO.Domain.Entities.Country
             {
                 Name = "Active Country",
-                Code = "AC",
+                Iso2Code = "AC",
                 Status = UNOPS.PAO.Domain.Entities.EntityStatus.Active
             };
             var inactiveCountry = new UNOPS.PAO.Domain.Entities.Country
             {
                 Name = "Inactive Country",
-                Code = "IC",
+                Iso2Code = "IC",
                 Status = UNOPS.PAO.Domain.Entities.EntityStatus.Inactive
             };
 

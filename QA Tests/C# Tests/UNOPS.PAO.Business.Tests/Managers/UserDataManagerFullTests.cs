@@ -50,14 +50,15 @@ namespace UNOPS.PAO.Business.Tests.Managers
             {
                 Id = i,
                 UserId = i,
-                Name = $"User {i}",
-                Email = $"user{i}@example.com",
+                FirstName = $"User",
+                LastName = $"{i}",
+                UserEmail = $"user{i}@example.com",
                 CreatedBy = 1,
                 LastModifiedBy = 1,
                 CreatedDate = DateTime.UtcNow,
                 LastModifiedDate = DateTime.UtcNow
             }).ToList();
-            _context.UserProfiles.AddRange(profiles);
+            _context.UserProfile.AddRange(profiles);
             _context.SaveChanges();
         }
 
@@ -117,7 +118,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         [Fact]
         public async Task TC_UD_F021_GetUserProfile_ById_ReturnsProfile()
         {
-            var profile = await _context.UserProfiles.FirstOrDefaultAsync(p => p.UserId == 1);
+            var profile = await _context.UserProfile.FirstOrDefaultAsync(p => p.UserId == 1);
             Assert.NotNull(profile);
             Assert.Equal("User 1", profile.Name);
         }
@@ -125,11 +126,12 @@ namespace UNOPS.PAO.Business.Tests.Managers
         [Fact]
         public async Task TC_UD_F022_UpdateUserProfile_ChangeName_Succeeds()
         {
-            var profile = await _context.UserProfiles.FirstAsync();
-            profile.Name = "Updated User Name";
+            var profile = await _context.UserProfile.FirstAsync();
+            profile.FirstName = "Updated";
+            profile.LastName = "User Name";
             profile.LastModifiedDate = DateTime.UtcNow;
             await _context.SaveChangesAsync();
-            var updated = await _context.UserProfiles.FindAsync(profile.Id);
+            var updated = await _context.UserProfile.FindAsync(profile.Id);
             Assert.Equal("Updated User Name", updated!.Name);
         }
 

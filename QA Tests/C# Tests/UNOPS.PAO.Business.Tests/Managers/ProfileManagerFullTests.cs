@@ -48,14 +48,15 @@ namespace UNOPS.PAO.Business.Tests.Managers
             {
                 Id = i,
                 UserId = i,
-                Name = $"User Profile {i}",
-                Email = $"user{i}@example.com",
+                FirstName = $"User Profile",
+                LastName = $"{i}",
+                UserEmail = $"user{i}@example.com",
                 CreatedBy = 1,
                 LastModifiedBy = 1,
                 CreatedDate = DateTime.UtcNow,
                 LastModifiedDate = DateTime.UtcNow
             }).ToList();
-            _context.UserProfiles.AddRange(profiles);
+            _context.UserProfile.AddRange(profiles);
             _context.SaveChanges();
         }
 
@@ -64,7 +65,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         [Fact]
         public async Task TC_PR_F001_GetProfile_ById_ReturnsProfile()
         {
-            var profile = await _context.UserProfiles.FirstOrDefaultAsync(p => p.UserId == 1);
+            var profile = await _context.UserProfile.FirstOrDefaultAsync(p => p.UserId == 1);
             Assert.NotNull(profile);
             Assert.Equal("User Profile 1", profile.Name);
         }
@@ -72,7 +73,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         [Fact]
         public async Task TC_PR_F002_GetProfile_ByUserId_ReturnsProfile()
         {
-            var profile = await _context.UserProfiles.FirstOrDefaultAsync(p => p.UserId == 2);
+            var profile = await _context.UserProfile.FirstOrDefaultAsync(p => p.UserId == 2);
             Assert.NotNull(profile);
             Assert.Equal(2, profile.UserId);
         }
@@ -80,7 +81,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         [Fact]
         public async Task TC_PR_F003_GetProfiles_All_ReturnsCorrectCount()
         {
-            var count = await _context.UserProfiles.CountAsync();
+            var count = await _context.UserProfile.CountAsync();
             Assert.Equal(5, count);
         }
 
@@ -104,22 +105,23 @@ namespace UNOPS.PAO.Business.Tests.Managers
         [Fact]
         public async Task TC_PR_F016_UpdateProfile_ChangeName_Succeeds()
         {
-            var profile = await _context.UserProfiles.FirstAsync();
-            profile.Name = "Updated Profile Name";
+            var profile = await _context.UserProfile.FirstAsync();
+            profile.FirstName = "Updated Profile";
+            profile.LastName = "Name";
             profile.LastModifiedDate = DateTime.UtcNow;
             await _context.SaveChangesAsync();
-            var updated = await _context.UserProfiles.FindAsync(profile.Id);
+            var updated = await _context.UserProfile.FindAsync(profile.Id);
             Assert.Equal("Updated Profile Name", updated!.Name);
         }
 
         [Fact]
         public async Task TC_PR_F017_UpdateProfile_ChangeEmail_Succeeds()
         {
-            var profile = await _context.UserProfiles.FirstAsync();
-            profile.Email = "updated@example.com";
+            var profile = await _context.UserProfile.FirstAsync();
+            profile.UserEmail = "updated@example.com";
             await _context.SaveChangesAsync();
-            var updated = await _context.UserProfiles.FindAsync(profile.Id);
-            Assert.Equal("updated@example.com", updated!.Email);
+            var updated = await _context.UserProfile.FindAsync(profile.Id);
+            Assert.Equal("updated@example.com", updated!.UserEmail);
         }
 
         [Fact] public void TC_PR_F018_UpdateProfile_ChangePhoto_Succeeds() => Assert.True(true);

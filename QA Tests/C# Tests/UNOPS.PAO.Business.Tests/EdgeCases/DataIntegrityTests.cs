@@ -56,7 +56,7 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
                 Name = "Test Org Unit",
                 Code = "TOU",
                 Description = "Test Organization Unit",
-                Type = OrganizationUnitType.Country,
+                Type = OrganizationUnitType.Office,
                 CreatedBy = 1,
                 LastModifiedBy = 1,
                 CreatedDate = DateTime.UtcNow,

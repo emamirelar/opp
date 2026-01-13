@@ -38,23 +38,23 @@ namespace UNOPS.PAO.Business.Tests.Managers
             var documentTypes = new List<DocumentType>
             {
                 // Partner document types
-                new DocumentType { Id = 1, Name = "Contract", Description = "Legal contracts", EntityType = "Partner", IsActive = true, IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new DocumentType { Id = 2, Name = "MOU", Description = "Memorandum of Understanding", EntityType = "Partner", IsActive = true, IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new DocumentType { Id = 3, Name = "Agreement", Description = "Partnership agreements", EntityType = "Partner", IsActive = true, IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new DocumentType { Id = 1, Name = "Contract", EntityType = "Partner", Status = EntityStatus.Active, IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new DocumentType { Id = 2, Name = "MOU", EntityType = "Partner", Status = EntityStatus.Active, IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new DocumentType { Id = 3, Name = "Agreement", EntityType = "Partner", Status = EntityStatus.Active, IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
                 
                 // Contact document types
-                new DocumentType { Id = 4, Name = "CV", Description = "Curriculum Vitae", EntityType = "Contact", IsActive = true, IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new DocumentType { Id = 5, Name = "ID Document", Description = "Identity documents", EntityType = "Contact", IsActive = true, IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new DocumentType { Id = 4, Name = "CV", EntityType = "Contact", Status = EntityStatus.Active, IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new DocumentType { Id = 5, Name = "ID Document", EntityType = "Contact", Status = EntityStatus.Active, IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
                 
                 // Interaction document types
-                new DocumentType { Id = 6, Name = "Meeting Notes", Description = "Notes from meetings", EntityType = "Interaction", IsActive = true, IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new DocumentType { Id = 7, Name = "Email Attachment", Description = "Attachments from emails", EntityType = "Interaction", IsActive = true, IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new DocumentType { Id = 6, Name = "Meeting Notes", EntityType = "Interaction", Status = EntityStatus.Active, IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new DocumentType { Id = 7, Name = "Email Attachment", EntityType = "Interaction", Status = EntityStatus.Active, IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
                 
                 // Inactive document type
-                new DocumentType { Id = 8, Name = "Old Type", Description = "Deprecated type", EntityType = "Partner", IsActive = false, IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new DocumentType { Id = 8, Name = "Old Type", EntityType = "Partner", Status = EntityStatus.Inactive, IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
                 
                 // Deleted document type
-                new DocumentType { Id = 9, Name = "Deleted Type", Description = "Soft-deleted type", EntityType = "Partner", IsActive = true, IsDeleted = true, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow }
+                new DocumentType { Id = 9, Name = "Deleted Type", EntityType = "Partner", Status = EntityStatus.Active, IsDeleted = true, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow }
             };
             
             _context.DocumentTypes.AddRange(documentTypes);
@@ -78,7 +78,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         public async Task TC_DTM_002_GetActiveDocumentTypes_ReturnsOnlyActive()
         {
             var types = await _context.DocumentTypes
-                .Where(dt => dt.IsActive && !dt.IsDeleted)
+                .Where(dt => dt.Status == EntityStatus.Active && !dt.IsDeleted)
                 .ToListAsync();
 
             Assert.Equal(7, types.Count);
@@ -123,7 +123,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         public async Task TC_DTM_010_FilterByEntityType_Partner_ReturnsPartnerTypes()
         {
             var types = await _context.DocumentTypes
-                .Where(dt => dt.EntityType == "Partner" && dt.IsActive && !dt.IsDeleted)
+                .Where(dt => dt.EntityType == "Partner" && dt.Status == EntityStatus.Active && !dt.IsDeleted)
                 .ToListAsync();
 
             Assert.Equal(3, types.Count);

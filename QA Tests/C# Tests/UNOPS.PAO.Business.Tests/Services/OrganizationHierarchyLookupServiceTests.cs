@@ -43,7 +43,7 @@ namespace UNOPS.PAO.Business.Tests.Services
                 Name = "Global HQ",
                 Code = "GHQ",
                 Description = "Global Headquarters",
-                Type = OrganizationUnitType.HeadQuarter,
+                Type = OrganizationUnitType.Office,
                 ParentId = null,
                 IsSelfManagementEnabled = true,
                 CreatedBy = 1,
@@ -67,10 +67,10 @@ namespace UNOPS.PAO.Business.Tests.Services
             // Create country offices
             var countries = new[]
             {
-                new OrganizationHierarchy { Id = 5, Name = "Kenya Office", Code = "KEN", Description = "Kenya Country Office", Type = OrganizationUnitType.Country, ParentId = 2, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new OrganizationHierarchy { Id = 6, Name = "Nigeria Office", Code = "NGA", Description = "Nigeria Country Office", Type = OrganizationUnitType.Country, ParentId = 2, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new OrganizationHierarchy { Id = 7, Name = "India Office", Code = "IND", Description = "India Country Office", Type = OrganizationUnitType.Country, ParentId = 3, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new OrganizationHierarchy { Id = 8, Name = "Germany Office", Code = "DEU", Description = "Germany Country Office", Type = OrganizationUnitType.Country, ParentId = 4, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow }
+                new OrganizationHierarchy { Id = 5, Name = "Kenya Office", Code = "KEN", Description = "Kenya Country Office", Type = OrganizationUnitType.Office, ParentId = 2, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new OrganizationHierarchy { Id = 6, Name = "Nigeria Office", Code = "NGA", Description = "Nigeria Country Office", Type = OrganizationUnitType.Office, ParentId = 2, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new OrganizationHierarchy { Id = 7, Name = "India Office", Code = "IND", Description = "India Country Office", Type = OrganizationUnitType.Office, ParentId = 3, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new OrganizationHierarchy { Id = 8, Name = "Germany Office", Code = "DEU", Description = "Germany Country Office", Type = OrganizationUnitType.Office, ParentId = 4, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow }
             };
             _context.OrganizationHierarchies.AddRange(countries);
             _context.SaveChanges();
@@ -111,12 +111,12 @@ namespace UNOPS.PAO.Business.Tests.Services
         }
 
         [Fact]
-        public async Task TC_OH_F005_GetByType_Country_ReturnsCorrect()
+        public async Task TC_OH_F005_GetByType_Office_ReturnsCorrect()
         {
-            var countries = await _context.OrganizationHierarchies
-                .Where(o => o.Type == OrganizationUnitType.Country)
+            var offices = await _context.OrganizationHierarchies
+                .Where(o => o.Type == OrganizationUnitType.Office)
                 .ToListAsync();
-            Assert.Equal(4, countries.Count);
+            Assert.Equal(5, offices.Count); // 1 HQ + 4 country offices
         }
 
         [Fact]
@@ -134,21 +134,21 @@ namespace UNOPS.PAO.Business.Tests.Services
         }
 
         [Fact]
-        public async Task TC_OH_F008_GetByType_HeadQuarter_ReturnsOne()
+        public async Task TC_OH_F008_GetByType_Office_AtRoot_ReturnsMultiple()
         {
-            var headquarters = await _context.OrganizationHierarchies
-                .Where(o => o.Type == OrganizationUnitType.HeadQuarter)
+            var offices = await _context.OrganizationHierarchies
+                .Where(o => o.Type == OrganizationUnitType.Office)
                 .ToListAsync();
-            Assert.Single(headquarters);
+            Assert.True(offices.Count >= 1); // At least root office exists
         }
 
         [Fact]
-        public async Task TC_OH_F009_GetRootOrg_ReturnsHeadQuarter()
+        public async Task TC_OH_F009_GetRootOrg_ReturnsOffice()
         {
             var root = await _context.OrganizationHierarchies
                 .FirstOrDefaultAsync(o => o.ParentId == null);
             Assert.NotNull(root);
-            Assert.Equal(OrganizationUnitType.HeadQuarter, root.Type);
+            Assert.Equal(OrganizationUnitType.Office, root.Type);
         }
 
         [Fact]

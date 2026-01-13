@@ -140,7 +140,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         public async Task TC_VM_005_GetCountryByCode_InvalidCode_ReturnsNull()
         {
             var country = await _context.Countries
-                .FirstOrDefaultAsync(c => c.Code == "XX" && !c.IsDeleted);
+                .FirstOrDefaultAsync(c => c.Iso2Code == "XX" && !c.IsDeleted);
 
             Assert.Null(country);
         }
@@ -261,12 +261,12 @@ namespace UNOPS.PAO.Business.Tests.Managers
         [Fact]
         public async Task TC_VM_032_GetOrganizationUnits_FilterByType()
         {
-            var hqs = await _context.OrganizationHierarchies
-                .Where(o => o.Type == OrganizationUnitType.HeadQuarter && !o.IsDeleted)
+            var offices = await _context.OrganizationHierarchies
+                .Where(o => o.Type == OrganizationUnitType.Office && !o.IsDeleted)
                 .ToListAsync();
 
-            Assert.Single(hqs);
-            Assert.Equal("Global HQ", hqs.First().Name);
+            Assert.Single(offices);
+            Assert.Equal("Global HQ", offices.First().Name);
         }
 
         #endregion
