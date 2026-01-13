@@ -206,11 +206,18 @@ def _parse_connection_string_to_url(connection_string: str) -> str:
 
 def get_database_url() -> str:
     """Get the database URL"""
+    # PRIORITY 1: Check environment variable first (set by batch scripts with IAM token)
+    env_db_url = os.getenv('DATABASE_URL')
+    if env_db_url:
+        logger.info("Using DATABASE_URL from environment variable (IAM authentication)")
+        return env_db_url
+    
     config = get_config()
     database_config = config.get('database', {})
     
-    # For local development, use direct URL
+    # PRIORITY 2: For local development without IAM, use direct URL from config
     if 'url' in database_config:
+        logger.info("Using database URL from config file")
         return database_config['url']
     
     # For dev/test/qa environments, get from secrets manager

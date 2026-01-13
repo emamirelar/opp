@@ -10,6 +10,11 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            // COMMENTED OUT: Google ADK creates the 'events' table with all required columns
+            // These migrations were attempting to add columns to a table that may not exist yet
+            // Let Google ADK handle the table creation on first use
+            
+            /* 
             // Add new columns required by Google ADK 1.3.0+
             // These columns are used by the DatabaseSessionService for session management
             
@@ -36,6 +41,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 UPDATE events SET output_transcription = NULL WHERE output_transcription = '';
                 UPDATE events SET custom_metadata = NULL WHERE custom_metadata::text = 'null';
             ");
+            */
         }
 
         /// <inheritdoc />
