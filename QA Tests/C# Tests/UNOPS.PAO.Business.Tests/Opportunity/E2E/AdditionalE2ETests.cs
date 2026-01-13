@@ -967,7 +967,7 @@ namespace UNOPS.PAO.Business.Tests.Opportunity.E2E
         [Trait("Category", "P2")]
         [Trait("Type", "E2E")]
         [Trait("TestId", "TC-OPP-E2E-ADD-016")]
-        public async Task MigrateLegacyData_Transform AndImport_Success()
+        public async Task MigrateLegacyData_TransformAndImport_Success()
         {
             // Arrange - Legacy data format
             var legacyData = new LegacyOpportunity

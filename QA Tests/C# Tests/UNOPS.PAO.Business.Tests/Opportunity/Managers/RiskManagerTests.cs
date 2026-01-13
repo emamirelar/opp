@@ -21,7 +21,7 @@ namespace UNOPS.PAO.Business.Tests.Opportunity.Managers
         private readonly DbContextOptions<UNOPSAppDbContext> _dbContextOptions;
         private readonly UNOPSAppDbContext _context;
         private readonly Mock<IMapper> _mockMapper;
-        private readonly Risk Manager _manager;
+        private readonly RiskManager _manager;
 
         public RiskManagerTests()
         {

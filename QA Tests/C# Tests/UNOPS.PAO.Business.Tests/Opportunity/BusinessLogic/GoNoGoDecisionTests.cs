@@ -99,7 +99,7 @@ namespace UNOPS.PAO.Business.Tests.Opportunity.BusinessLogic
         [Trait("Category", "P0")]
         [Trait("Type", "BusinessRule")]
         [Trait("TestId", "TC-OPP-GONOGO-F-002")]
-        public async Task RouteTo DetermineDOALevel_BasedOnBudget_CorrectRouting()
+        public async Task RouteToDetermineDOALevel_BasedOnBudget_CorrectRouting()
         {
             // Arrange
             var smallOpportunity = new Domain.Entities.Opportunity

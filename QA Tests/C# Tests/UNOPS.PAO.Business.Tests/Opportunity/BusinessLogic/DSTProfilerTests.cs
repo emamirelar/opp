@@ -293,7 +293,7 @@ namespace UNOPS.PAO.Business.Tests.Opportunity.BusinessLogic
             var profileScores = new DSTParameterScores
             {
                 Complexity = 6.5m,
-                Strategic Alignment = 8.0m,
+                StrategicAlignment = 8.0m,
                 PartnerCapacity = 7.5m,
                 Context = 6.0m,
                 Feasibility = 7.0m,

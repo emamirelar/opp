@@ -389,7 +389,7 @@ namespace UNOPS.PAO.Business.Tests.Opportunity.BusinessLogic
         [Trait("Category", "P2")]
         [Trait("Type", "Functional")]
         [Trait("TestId", "TC-OPP-DOC-F-006")]
-        public async Task ExtractFromDocument_MultipleLang uages_DetectsAndExtracts()
+        public async Task ExtractFromDocument_MultipleLanguages_DetectsAndExtracts()
         {
             // Arrange
             var multiLangContent = @"
