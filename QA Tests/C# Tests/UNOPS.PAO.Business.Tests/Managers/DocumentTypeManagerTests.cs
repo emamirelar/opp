@@ -374,9 +374,8 @@ namespace UNOPS.PAO.Business.Tests.Managers
             var newType = new DocumentType
             {
                 Name = "New Document Type",
-                Description = "A new type for testing",
                 EntityType = "Partner",
-                IsActive = true,
+                Status = EntityStatus.Active,
                 IsDeleted = false,
                 CreatedBy = 1,
                 LastModifiedBy = 1,
@@ -457,9 +456,8 @@ namespace UNOPS.PAO.Business.Tests.Managers
             var newType = new DocumentType
             {
                 Name = null!,
-                Description = "Missing name",
                 EntityType = "Partner",
-                IsActive = true,
+                Status = EntityStatus.Active,
                 IsDeleted = false,
                 CreatedBy = 1,
                 LastModifiedBy = 1,

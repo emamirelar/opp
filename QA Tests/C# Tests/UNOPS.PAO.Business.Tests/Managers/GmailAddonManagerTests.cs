@@ -62,8 +62,8 @@ namespace UNOPS.PAO.Business.Tests.Managers
             // Seed Interactions for matching
             var interactions = new List<Interaction>
             {
-                new Interaction { Id = 1, Subject = "Meeting with John Doe", Date = DateTime.UtcNow.AddDays(-5), InteractionType = InteractionType.Meeting, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new Interaction { Id = 2, Subject = "Email correspondence with Jane", Date = DateTime.UtcNow.AddDays(-3), InteractionType = InteractionType.Email, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow }
+                new Interaction { Id = 1, Subject = "Meeting with John Doe", Date = DateTime.UtcNow.AddDays(-5), Type = InteractionType.InPersonMeeting, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new Interaction { Id = 2, Subject = "Email correspondence with Jane", Date = DateTime.UtcNow.AddDays(-3), Type = InteractionType.Email, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow }
             };
             _context.Interactions.AddRange(interactions);
 

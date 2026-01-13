@@ -72,7 +72,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
                 Id = i,
                 Name = $"Interaction {i}",
                 Subject = $"Subject for interaction {i}",
-                Type = InteractionType.Meeting,
+                Type = InteractionType.InPersonMeeting,
                 Date = DateTime.UtcNow.AddDays(-i),
                 Description = $"Description for interaction {i}",
                 CreatedBy = 1,
@@ -93,7 +93,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
             {
                 Name = "New Interaction",
                 Subject = "New Subject",
-                Type = InteractionType.Meeting,
+                Type = InteractionType.InPersonMeeting,
                 Date = DateTime.UtcNow,
                 Description = "Test description",
                 CreatedBy = 1,
@@ -113,7 +113,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
             {
                 Name = "Meeting Interaction",
                 Subject = "Meeting Subject",
-                Type = InteractionType.Meeting,
+                Type = InteractionType.InPersonMeeting,
                 Date = DateTime.UtcNow,
                 CreatedBy = 1,
                 LastModifiedBy = 1,
@@ -122,7 +122,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
             };
             _context.Interactions.Add(interaction);
             await _context.SaveChangesAsync();
-            Assert.Equal(InteractionType.Meeting, interaction.Type);
+            Assert.Equal(InteractionType.InPersonMeeting, interaction.Type);
         }
 
         [Fact]
