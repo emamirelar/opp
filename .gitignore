@@ -249,6 +249,8 @@ env/
 ENV/
 env.bak/
 venv.bak/
+vendor/
+Thumbs.db
 
 # Python cache files
 __pycache__/
@@ -294,11 +296,19 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 
+# Angular test results (temporary output files)
+**/test-results*.txt
+**/test-results-*.txt
+**/coverage/
+**/.nyc_output/
+
 # mypy
 .mypy_cache/
 .dmypy.json
 dmypy.json
 .claude/
+.DS_Store
+.vscode
 
 UNOPS.PAO.Server/appsettings.Development.json
 UNOPS.PAO.Server/appsettings.Local.json
