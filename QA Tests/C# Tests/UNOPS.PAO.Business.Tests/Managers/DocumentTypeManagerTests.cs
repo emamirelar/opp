@@ -136,7 +136,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         public async Task TC_DTM_011_FilterByEntityType_Contact_ReturnsContactTypes()
         {
             var types = await _context.DocumentTypes
-                .Where(dt => dt.EntityType == "Contact" && dt.IsActive && !dt.IsDeleted)
+                .Where(dt => dt.EntityType == "Contact" && dt.Status == EntityStatus.Active && !dt.IsDeleted)
                 .ToListAsync();
 
             Assert.Equal(2, types.Count);
@@ -148,7 +148,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         public async Task TC_DTM_012_FilterByEntityType_Interaction_ReturnsInteractionTypes()
         {
             var types = await _context.DocumentTypes
-                .Where(dt => dt.EntityType == "Interaction" && dt.IsActive && !dt.IsDeleted)
+                .Where(dt => dt.EntityType == "Interaction" && dt.Status == EntityStatus.Active && !dt.IsDeleted)
                 .ToListAsync();
 
             Assert.Equal(2, types.Count);
@@ -161,7 +161,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         {
             var entityType = "partner";
             var types = await _context.DocumentTypes
-                .Where(dt => dt.EntityType.ToLower() == entityType.ToLower() && dt.IsActive && !dt.IsDeleted)
+                .Where(dt => dt.EntityType.ToLower() == entityType.ToLower() && dt.Status == EntityStatus.Active && !dt.IsDeleted)
                 .ToListAsync();
 
             Assert.Equal(3, types.Count);
@@ -258,7 +258,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
             var pageSize = 2;
             var pageIndex = 0;
             var types = await _context.DocumentTypes
-                .Where(dt => dt.EntityType == entityType && dt.IsActive && !dt.IsDeleted)
+                .Where(dt => dt.EntityType == entityType && dt.Status == EntityStatus.Active && !dt.IsDeleted)
                 .OrderBy(dt => dt.Name)
                 .Skip(pageIndex * pageSize)
                 .Take(pageSize)
@@ -301,7 +301,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         public async Task TC_DTM_032_SortByEntityType_ThenByName()
         {
             var types = await _context.DocumentTypes
-                .Where(dt => !dt.IsDeleted && dt.IsActive)
+                .Where(dt => !dt.IsDeleted && dt.Status == EntityStatus.Active)
                 .OrderBy(dt => dt.EntityType)
                 .ThenBy(dt => dt.Name)
                 .ToListAsync();
@@ -327,11 +327,12 @@ namespace UNOPS.PAO.Business.Tests.Managers
         }
 
         [Fact]
-        public async Task TC_DTM_041_SearchByDescription_ReturnsMatches()
+        public async Task TC_DTM_041_SearchByName_ReturnsMatches()
         {
-            var searchTerm = "Legal";
+            // NOTE: DocumentType no longer has Description property - searching by Name only
+            var searchTerm = "Contract";
             var types = await _context.DocumentTypes
-                .Where(dt => dt.Description.Contains(searchTerm) && !dt.IsDeleted)
+                .Where(dt => dt.Name.Contains(searchTerm) && !dt.IsDeleted)
                 .ToListAsync();
 
             Assert.Single(types);
@@ -339,12 +340,12 @@ namespace UNOPS.PAO.Business.Tests.Managers
         }
 
         [Fact]
-        public async Task TC_DTM_042_SearchByNameOrDescription_ReturnsMatches()
+        public async Task TC_DTM_042_SearchByName_CaseInsensitive_ReturnsMatches()
         {
+            // NOTE: DocumentType no longer has Description property - searching by Name only
             var searchTerm = "meeting";
             var types = await _context.DocumentTypes
-                .Where(dt => (dt.Name.ToLower().Contains(searchTerm.ToLower()) 
-                           || dt.Description.ToLower().Contains(searchTerm.ToLower())) 
+                .Where(dt => dt.Name.ToLower().Contains(searchTerm.ToLower()) 
                           && !dt.IsDeleted)
                 .ToListAsync();
 
@@ -395,13 +396,14 @@ namespace UNOPS.PAO.Business.Tests.Managers
         [Fact]
         public async Task TC_DTM_051_UpdateDocumentType_ValidData_Succeeds()
         {
+            // NOTE: DocumentType no longer has Description property - testing Name update
             var type = await _context.DocumentTypes.FirstAsync(dt => dt.Id == 1);
-            type.Description = "Updated description";
+            type.Name = "Updated Contract Type";
             type.LastModifiedDate = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
             var updated = await _context.DocumentTypes.FindAsync(1);
-            Assert.Equal("Updated description", updated!.Description);
+            Assert.Equal("Updated Contract Type", updated!.Name);
         }
 
         [Fact]
@@ -422,27 +424,27 @@ namespace UNOPS.PAO.Business.Tests.Managers
         }
 
         [Fact]
-        public async Task TC_DTM_053_DeactivateDocumentType_SetsIsActiveFalse()
+        public async Task TC_DTM_053_DeactivateDocumentType_SetsStatusInactive()
         {
             var type = await _context.DocumentTypes.FirstAsync(dt => dt.Id == 3);
-            type.IsActive = false;
+            type.Status = EntityStatus.Inactive;
             type.LastModifiedDate = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
             var deactivated = await _context.DocumentTypes.FindAsync(3);
-            Assert.False(deactivated!.IsActive);
+            Assert.Equal(EntityStatus.Inactive, deactivated!.Status);
         }
 
         [Fact]
-        public async Task TC_DTM_054_ReactivateDocumentType_SetsIsActiveTrue()
+        public async Task TC_DTM_054_ReactivateDocumentType_SetsStatusActive()
         {
             var type = await _context.DocumentTypes.FirstAsync(dt => dt.Id == 8); // Old Type (inactive)
-            type.IsActive = true;
+            type.Status = EntityStatus.Active;
             type.LastModifiedDate = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
             var reactivated = await _context.DocumentTypes.FindAsync(8);
-            Assert.True(reactivated!.IsActive);
+            Assert.Equal(EntityStatus.Active, reactivated!.Status);
         }
 
         #endregion
@@ -473,7 +475,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         public async Task TC_DTM_061_GetDocumentTypeCount_ByEntityType()
         {
             var counts = await _context.DocumentTypes
-                .Where(dt => dt.IsActive && !dt.IsDeleted)
+                .Where(dt => dt.Status == EntityStatus.Active && !dt.IsDeleted)
                 .GroupBy(dt => dt.EntityType)
                 .Select(g => new { EntityType = g.Key, Count = g.Count() })
                 .ToListAsync();
