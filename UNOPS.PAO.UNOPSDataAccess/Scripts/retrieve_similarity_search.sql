@@ -2,7 +2,7 @@
 DROP FUNCTION IF EXISTS public.retrieve_similarity_search(TEXT, TEXT, REAL, TEXT);
 
 -- Ensure pg_trgm extension is available
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
+--CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- Create the similarity search function (pg_trgm based)
 CREATE OR REPLACE FUNCTION public.retrieve_similarity_search(
@@ -57,6 +57,3 @@ BEGIN
     END IF;
 END;
 $BODY$;
-
--- Set function owner
-ALTER FUNCTION public.retrieve_similarity_search(text, text, real, text) OWNER TO postgres;

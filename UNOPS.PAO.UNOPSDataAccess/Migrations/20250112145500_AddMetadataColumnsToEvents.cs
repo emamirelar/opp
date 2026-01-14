@@ -10,7 +10,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql(@"
+           /* migrationBuilder.Sql(@"
                 DO $$
                 BEGIN
                     IF NOT EXISTS (
@@ -27,7 +27,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         ALTER TABLE events ADD COLUMN citation_metadata JSONB;
                     END IF;
                 END $$;
-            ");
+            "); */
         }
 
         /// <inheritdoc />

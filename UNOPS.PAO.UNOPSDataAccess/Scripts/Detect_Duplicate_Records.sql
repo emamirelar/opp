@@ -32,7 +32,7 @@
 -- ============================================================================
 
 -- Enable required extensions
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
+--CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- Drop existing function versions
 DROP FUNCTION IF EXISTS public.detect_duplicate_records(TEXT, JSON);
