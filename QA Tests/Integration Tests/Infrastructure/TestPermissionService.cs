@@ -112,5 +112,24 @@ namespace UNOPS.PAO.IntegrationTests.Infrastructure
             
             return false; // Default for tests - no import unless explicitly granted
         }
+
+        public Task<object> GetEntityInstancePermissionsAsync(string entityName, int entityId)
+        {
+            // For testing, return all permissions as true
+            var permissions = new Dictionary<string, bool>
+            {
+                { "read", true },
+                { "create", true },
+                { "update", true },
+                { "delete", true }
+            };
+            return Task.FromResult<object>(permissions);
+        }
+
+        public Task<bool> IsOpportunityTeamMemberAsync(int opportunityId)
+        {
+            // For testing, always return true
+            return Task.FromResult(true);
+        }
     }
 }
