@@ -198,6 +198,121 @@ Scripts\run-ai-service-adk.bat
 
 ---
 
+## Database Setup and Data Population
+
+### Running Database Migrations
+
+Once your database is configured, run Entity Framework migrations:
+
+```bash
+# Navigate to server directory
+cd UNOPS.PAO.Server
+
+# Run migrations
+dotnet ef database update
+```
+
+**Important Notes:**
+- Migrations create all required tables and schema
+- The `events` and `sessions` tables are created by Google ADK on first AI Service use
+- If migrations fail with permission errors, verify your IAM user has schema modification permissions
+
+### Populating External Data (EDS)
+
+After migrations complete, populate your database with external data:
+
+#### Configure EDS (First Time Only)
+
+**Update `ExternalDataService/appsettings.Local.json`**:
+
+```json
+{
+    "ConnectionStrings": {
+        "DbSchema": "public"
+    },
+    
+    "BigQuery": {
+      "ProjectId": "unops-opportunityplus-dev",
+      "UseDefaultCredentials": true,
+      "CredentialsPath": ""
+    },
+    
+    "ExternalDataService": {
+      "ConfigurationPath": "../ExternalDataService/config",
+      "Enabled": true,
+      "CheckIntervalMinutes": 1,
+      "AutoCreateTables": true,
+      "TestMode": false,
+      "LogLevel": "Information",
+      "CommandTimeoutSeconds": 300
+    }
+}
+```
+
+**Important Configuration Notes:**
+- ✅ **Do NOT add database connection strings** - the batch file provides them with IAM token
+- ✅ Ensure `BigQuery.ProjectId` is set to `unops-opportunityplus-dev`
+- ✅ Keep `UseDefaultCredentials: true` for BigQuery
+- ✅ Set `TestMode: false` for production-like behavior
+- ✅ The batch file automatically injects connection strings with your database name and IAM authentication
+
+#### Option A: Using Batch File (Recommended)
+
+```batch
+Scripts\run-external-data-service.bat
+```
+
+**The batch file automatically:**
+1. ✅ Initializes Git submodules
+2. ✅ Gets fresh IAM access token
+3. ✅ Injects token into connection string
+4. ✅ Runs the service with Local environment
+5. ✅ Populates data from external sources
+
+#### Option B: Manual Commands
+
+```bash
+# From project root
+git submodule update --init --recursive
+cd UNOPS.PAO.ExternalDataService
+dotnet run --environment Local
+```
+
+**Prerequisites:**
+- ✅ Cloud SQL tunnel running (`connect-cloud-sql-tunnel.bat`)
+- ✅ Database migrations completed (`dotnet ef database update`)
+- ✅ **EDS configuration file updated** (see "Configure EDS" section above)
+- ✅ Network access to external data sources (BigQuery)
+- ✅ Google Cloud authentication configured (`gcloud auth application-default login`)
+
+**What EDS Populates:**
+- 📊 Reference data (countries, regions, SDGs, etc.)
+- 🏢 Organization master data
+- 👥 User profiles and permissions
+- 📋 Lookup tables and configurations
+- 🔄 Synchronization with external systems
+
+**Expected Behavior:**
+- Service logs data fetching progress to console
+- May take several minutes depending on data volume
+- Exits automatically when complete
+- Check console output for any errors or warnings
+
+**Troubleshooting EDS:**
+
+| Issue | Solution |
+|-------|----------|
+| Connection timeout | Verify tunnel is running on port 6364 |
+| Permission denied | Check IAM user has INSERT/UPDATE permissions |
+| Submodule errors | Run `git submodule update --init --recursive --force` |
+| Service not found | Verify `UNOPS.PAO.ExternalDataService` directory exists |
+| Build errors | Run `dotnet restore` and `dotnet build` first |
+| Config errors | **Update `ExternalDataService/appsettings.Local.json`** with your database name and email |
+| BigQuery errors | Verify `BigQuery.ProjectId` is `unops-opportunityplus-dev` in config |
+| Password missing error | Don't add password to config - batch file injects IAM token automatically |
+
+---
+
 ## Complete Workflow Example
 
 Here's a typical development session:
@@ -209,22 +324,45 @@ Here's a typical development session:
    Scripts\connect-cloud-sql-tunnel.bat
    ```
 
-2. **Get Access Token** (for pgAdmin):
+2. **First Time Only - Run Migrations**:
+   ```bash
+   cd UNOPS.PAO.Server
+   dotnet ef database update
+   ```
+
+3. **First Time Only - Configure & Populate Data**:
+   
+   **⚠️ IMPORTANT**: Before running EDS, update `ExternalDataService/appsettings.Local.json`:
+   - Ensure `BigQuery.ProjectId` is `unops-opportunityplus-dev`
+   - **Do NOT add database connection strings** - the batch file handles them
+   - See "Database Setup and Data Population" section for full config example
+   
+   Then run:
+   ```batch
+   Scripts\run-external-data-service.bat
+   ```
+   
+   The batch file will automatically:
+   - Use your current Google Cloud credentials
+   - Set your database name based on your email (e.g., `unops-opportunityplus-dev-db-anushas`)
+   - Inject IAM authentication token
+
+4. **Get Access Token** (for pgAdmin):
    ```batch
    Scripts\get-db-access-token.bat
    ```
 
-3. **Connect pgAdmin**:
+5. **Connect pgAdmin**:
    - Click your server
    - Paste token when prompted
    - Start working with database
 
-4. **Run .NET Application**:
+6. **Run .NET Application**:
    - SSH tunnel already running ✅
    - Application gets tokens automatically ✅
    - Just hit F5 in Visual Studio
 
-5. **Run AI Service** (if needed):
+7. **Run AI Service** (if needed):
    ```batch
    Scripts\run-ai-service-uvicorn.bat
    ```
@@ -386,6 +524,14 @@ gcloud config set account yourname@unops.org # Switch account
 Scripts\connect-cloud-sql-tunnel.bat        # Start SSH tunnel
 Scripts\get-db-access-token.bat            # Get token for pgAdmin
 Scripts\connect-cloud-sql-full.bat         # All-in-one setup
+
+# ====================================
+# Database Setup (First Time Only)
+# ====================================
+cd UNOPS.PAO.Server
+dotnet ef database update                   # Run migrations
+cd ..
+Scripts\run-external-data-service.bat       # Populate external data
 
 # ====================================
 # AI Service
