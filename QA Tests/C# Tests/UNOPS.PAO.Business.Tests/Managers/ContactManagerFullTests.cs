@@ -52,6 +52,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
             var contacts = Enumerable.Range(1, 30).Select(i => new Contact
             {
                 Id = i,
+                Name = $"First{i} Last{i}",  // Base class property
                 FirstName = $"First{i}",
                 LastName = $"Last{i}",
                 Title = $"Title {i}",
@@ -74,6 +75,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         {
             var contact = new Contact
             {
+                Name = "New Contact",  // Base class property
                 FirstName = "New",
                 LastName = "Contact",
                 Title = "Manager",
@@ -94,6 +96,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         {
             var contact = new Contact
             {
+                Name = "MinimalContact",  // Base class property
                 LastName = "MinimalContact",
                 Title = "Staff",
                 Email = "minimal@example.com",
@@ -113,6 +116,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         {
             var contact = new Contact
             {
+                Name = "John Q Public Jr.",  // Base class property
                 Salutation = "Mr.",
                 FirstName = "John",
                 MiddleName = "Q",

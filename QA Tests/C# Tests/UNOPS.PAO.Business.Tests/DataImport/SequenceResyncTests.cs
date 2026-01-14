@@ -137,9 +137,9 @@ public class SequenceResyncTests : IDisposable
         // Arrange - Create interactions
         var interactions = new List<Interaction>
         {
-            new Interaction { Subject = "Meeting 1", Date = DateTime.UtcNow.AddDays(-10) },
-            new Interaction { Subject = "Call 2", Date = DateTime.UtcNow.AddDays(-5) },
-            new Interaction { Subject = "Email 3", Date = DateTime.UtcNow }
+            new Interaction { Name = "Meeting 1", Subject = "Meeting 1", Date = DateTime.UtcNow.AddDays(-10) },
+            new Interaction { Name = "Call 2", Subject = "Call 2", Date = DateTime.UtcNow.AddDays(-5) },
+            new Interaction { Name = "Email 3", Subject = "Email 3", Date = DateTime.UtcNow }
         };
 
         await _context.Interactions.AddRangeAsync(interactions);
@@ -152,7 +152,7 @@ public class SequenceResyncTests : IDisposable
         maxId.Should().BeGreaterThan(0);
 
         // Verify new entity can be added without conflict
-        var newInteraction = new Interaction { Subject = "New Interaction", Date = DateTime.UtcNow };
+        var newInteraction = new Interaction { Name = "New Interaction", Subject = "New Interaction", Date = DateTime.UtcNow };
         await _context.Interactions.AddAsync(newInteraction);
         
         var saveAction = async () => await _context.SaveChangesAsync();
@@ -184,7 +184,7 @@ public class SequenceResyncTests : IDisposable
             .ToList();
 
         var interactions = Enumerable.Range(1, 10)
-            .Select(i => new Interaction { Subject = $"Interaction {i}", Date = DateTime.UtcNow })
+            .Select(i => new Interaction { Name = $"Interaction {i}", Subject = $"Interaction {i}", Date = DateTime.UtcNow })
             .ToList();
 
         var partners = Enumerable.Range(1, 3)
@@ -208,7 +208,7 @@ public class SequenceResyncTests : IDisposable
 
         // Verify new entities can be added to all tables
         var newTree = new PartnerTree { Name = "New Tree", Description = "New Tree Description", Code = "NT", Type = "GROUP" };
-        var newInteraction = new Interaction { Subject = "New Interaction", Date = DateTime.UtcNow };
+        var newInteraction = new Interaction { Name = "New Interaction", Subject = "New Interaction", Date = DateTime.UtcNow };
         var newPartner = new Partner { Name = "New Partner", PartnerShortDescription = "New Desc" };
 
         await _context.PartnerTrees.AddAsync(newTree);

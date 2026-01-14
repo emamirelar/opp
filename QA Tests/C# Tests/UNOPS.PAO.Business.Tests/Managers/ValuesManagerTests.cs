@@ -49,12 +49,24 @@ namespace UNOPS.PAO.Business.Tests.Managers
             };
             _context.Countries.AddRange(countries);
 
+            // Seed Partner first (required for Contacts)
+            var partner = new Partner
+            {
+                Id = 1,
+                Name = "Test Partner",
+                CreatedBy = 1,
+                LastModifiedBy = 1,
+                CreatedDate = DateTime.UtcNow,
+                LastModifiedDate = DateTime.UtcNow
+            };
+            _context.Partners.Add(partner);
+
             // Seed Contacts
             var contacts = new List<Contact>
             {
-                new Contact { Id = 1, FirstName = "John", LastName = "Doe", Title = "Mr.", Email = "john.doe@test.com", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new Contact { Id = 2, FirstName = "Jane", LastName = "Smith", Title = "Ms.", Email = "jane.smith@test.com", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new Contact { Id = 3, FirstName = "Bob", LastName = "Wilson", Title = "Mr.", Email = "bob.wilson@test.com", Status = EntityStatus.Inactive, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow }
+                new Contact { Id = 1, Name = "John Doe", FirstName = "John", LastName = "Doe", Title = "Mr.", Email = "john.doe@test.com", PartnerId = 1, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new Contact { Id = 2, Name = "Jane Smith", FirstName = "Jane", LastName = "Smith", Title = "Ms.", Email = "jane.smith@test.com", PartnerId = 1, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new Contact { Id = 3, Name = "Bob Wilson", FirstName = "Bob", LastName = "Wilson", Title = "Mr.", Email = "bob.wilson@test.com", PartnerId = 1, Status = EntityStatus.Inactive, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow }
             };
             _context.Contacts.AddRange(contacts);
 

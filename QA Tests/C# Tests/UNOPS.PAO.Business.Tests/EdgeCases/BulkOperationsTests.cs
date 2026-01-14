@@ -55,6 +55,7 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
             var contacts = Enumerable.Range(1, 100).Select(i => new Contact
             {
                 Id = i,
+                Name = $"Contact {i} Last {i}",  // Base class property
                 FirstName = $"Contact {i}",
                 LastName = $"Last {i}",
                 Title = $"Title {i}",
@@ -77,6 +78,7 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
             using var context = CreateContext();
             var newContacts = Enumerable.Range(101, 100).Select(i => new Contact
             {
+                Name = $"Bulk {i} Create {i}",  // Base class property
                 FirstName = $"Bulk {i}",
                 LastName = $"Create {i}",
                 Title = $"Title {i}",
@@ -103,6 +105,7 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
             
             var newContacts = Enumerable.Range(1001, 1000).Select(i => new Contact
             {
+                Name = $"Performance {i} Test {i}",  // Base class property
                 FirstName = $"Performance {i}",
                 LastName = $"Test {i}",
                 Title = $"Title {i}",
@@ -127,9 +130,9 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
             using var context = CreateContext();
             var validContacts = new List<Contact>
             {
-                new Contact { FirstName = "Valid1", LastName = "Contact1", Title = "Title1", Email = "valid1@example.com", PartnerId = 1, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new Contact { FirstName = "Valid2", LastName = "Contact2", Title = "Title2", Email = "valid2@example.com", PartnerId = 1, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new Contact { FirstName = "Valid3", LastName = "Contact3", Title = "Title3", Email = "valid3@example.com", PartnerId = 1, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow }
+                new Contact { Name = "Valid1 Contact1", FirstName = "Valid1", LastName = "Contact1", Title = "Title1", Email = "valid1@example.com", PartnerId = 1, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new Contact { Name = "Valid2 Contact2", FirstName = "Valid2", LastName = "Contact2", Title = "Title2", Email = "valid2@example.com", PartnerId = 1, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new Contact { Name = "Valid3 Contact3", FirstName = "Valid3", LastName = "Contact3", Title = "Title3", Email = "valid3@example.com", PartnerId = 1, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow }
             };
             
             context.Contacts.AddRange(validContacts);

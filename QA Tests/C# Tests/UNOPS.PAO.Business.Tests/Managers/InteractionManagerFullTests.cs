@@ -53,6 +53,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
             var contact = new Contact
             {
                 Id = 1,
+                Name = "Test Contact",  // Base class property
                 FirstName = "Test",
                 LastName = "Contact",
                 Title = "Manager",

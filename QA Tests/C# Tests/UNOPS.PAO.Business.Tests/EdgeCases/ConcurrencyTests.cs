@@ -54,6 +54,7 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
             var contacts = Enumerable.Range(1, 10).Select(i => new Contact
             {
                 Id = i,
+                Name = $"Contact {i} Last {i}",  // Base class property
                 FirstName = $"Contact {i}",
                 LastName = $"Last {i}",
                 Title = $"Title {i}",
@@ -138,6 +139,7 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
                 using var context = CreateContext();
                 var contact = new Contact
                 {
+                    Name = $"Concurrent {i} Write {i}",  // Base class property
                     FirstName = $"Concurrent {i}",
                     LastName = $"Write {i}",
                     Title = $"Title {i}",

@@ -42,11 +42,11 @@ namespace UNOPS.PAO.Business.Tests.Managers
             // Seed Contacts with email addresses for matching
             var contacts = new List<Contact>
             {
-                new Contact { Id = 1, FirstName = "John", LastName = "Doe", Title = "Mr.", Email = "john.doe@example.com", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new Contact { Id = 2, FirstName = "Jane", LastName = "Smith", Title = "Ms.", Email = "jane.smith@partner.org", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new Contact { Id = 3, FirstName = "Bob", LastName = "Wilson", Title = "Mr.", Email = "bob.wilson@contractor.com", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new Contact { Id = 4, FirstName = "Alice", LastName = "Brown", Title = "Ms.", Email = "alice.brown@example.com", Status = EntityStatus.Inactive, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new Contact { Id = 5, FirstName = "Charlie", LastName = "Davis", Title = "Mr.", Email = "charlie.davis@example.com", IsDeleted = true, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow }
+                new Contact { Id = 1, Name = "John Doe", FirstName = "John", LastName = "Doe", Title = "Mr.", Email = "john.doe@example.com", PartnerId = 1, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new Contact { Id = 2, Name = "Jane Smith", FirstName = "Jane", LastName = "Smith", Title = "Ms.", Email = "jane.smith@partner.org", PartnerId = 2, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new Contact { Id = 3, Name = "Bob Wilson", FirstName = "Bob", LastName = "Wilson", Title = "Mr.", Email = "bob.wilson@contractor.com", PartnerId = 3, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new Contact { Id = 4, Name = "Alice Brown", FirstName = "Alice", LastName = "Brown", Title = "Ms.", Email = "alice.brown@example.com", PartnerId = 1, Status = EntityStatus.Inactive, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new Contact { Id = 5, Name = "Charlie Davis", FirstName = "Charlie", LastName = "Davis", Title = "Mr.", Email = "charlie.davis@example.com", PartnerId = 1, IsDeleted = true, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow }
             };
             _context.Contacts.AddRange(contacts);
 
@@ -62,8 +62,8 @@ namespace UNOPS.PAO.Business.Tests.Managers
             // Seed Interactions for matching
             var interactions = new List<Interaction>
             {
-                new Interaction { Id = 1, Subject = "Meeting with John Doe", Date = DateTime.UtcNow.AddDays(-5), Type = InteractionType.InPersonMeeting, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new Interaction { Id = 2, Subject = "Email correspondence with Jane", Date = DateTime.UtcNow.AddDays(-3), Type = InteractionType.Email, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow }
+                new Interaction { Id = 1, Name = "Meeting with John Doe", Subject = "Meeting with John Doe", Date = DateTime.UtcNow.AddDays(-5), Type = InteractionType.InPersonMeeting, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new Interaction { Id = 2, Name = "Email correspondence with Jane", Subject = "Email correspondence with Jane", Date = DateTime.UtcNow.AddDays(-3), Type = InteractionType.Email, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow }
             };
             _context.Interactions.AddRange(interactions);
 
