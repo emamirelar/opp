@@ -541,7 +541,7 @@
             display: none;
         }
 
-        /* Steps Component */
+        /* Steps Component - 3 Stage Workflow */
         .steps {
             display: flex;
             justify-content: space-between;
@@ -599,7 +599,7 @@
             font-weight: 500;
             color: var(--unops-neutral-500);
             text-align: center;
-            max-width: 80px;
+            max-width: 100px;
         }
 
         .step.active .step-label,
@@ -948,7 +948,7 @@
             border-radius: var(--unops-radius-lg);
             box-shadow: var(--unops-shadow-lg);
             z-index: 50;
-            max-width: 300px;
+            max-width: 320px;
         }
 
         .demo-controls-title {
@@ -1142,9 +1142,10 @@
                 <div class="content-sections">
 
                     <!-- ========================================== -->
-                    <!-- WORKFLOW COMPONENT - Based on GMS Implementation -->
-                    <!-- Based on stage-workflow.component.html from GMS -->
-                    <!-- "Approval Pending" only shows when isInWorkflow == true -->
+                    <!-- WORKFLOW COMPONENT - 3-Stage Approval Workflow -->
+                    <!-- Stages: IDENTIFY & PROFILE → GO / NO GO -->
+                    <!-- Transitions to GO and NO GO require DOA approval -->
+                    <!-- NO GO can be reopened back to IDENTIFY & PROFILE -->
                     <!-- ========================================== -->
                     <div id="section-workflow" class="panel">
                         <div class="panel-header">
@@ -1155,7 +1156,7 @@
                                 <div class="workflow-stage-info" id="workflow-stage-info" style="display: none;">
                                     <div>
                                         <span class="workflow-stage-label">Current Stage :</span>
-                                        <span class="workflow-stage-value" id="current-stage-display">DECIDE</span>
+                                        <span class="workflow-stage-value" id="current-stage-display">IDENTIFY & PROFILE</span>
                                     </div>
                                     <div>
                                         <span class="workflow-stage-label">Next Stage :</span>
@@ -1381,7 +1382,7 @@
     <div class="dialog-overlay hidden" id="comment-dialog">
         <div class="dialog">
             <div class="dialog-header">
-                <span class="dialog-title">Comment</span>
+                <span class="dialog-title" id="dialog-title">Comment</span>
                 <button class="dialog-close" onclick="hideDialog()">
                     <i class="pi pi-times"></i>
                 </button>
@@ -1389,96 +1390,136 @@
             <div class="dialog-content">
                 <div class="form-field">
                     <label class="form-label">
-                        Comment <span id="required-marker" style="color: var(--unops-danger); display: none;">*</span>
+                        Comment <span id="required-marker" style="color: var(--unops-danger);">*</span>
                     </label>
                     <textarea class="form-textarea" rows="5" placeholder="Enter your comment here..."></textarea>
                 </div>
             </div>
             <div class="dialog-footer">
                 <button class="btn btn-secondary" onclick="hideDialog()">Cancel</button>
-                <button class="btn btn-primary" onclick="hideDialog()">Save</button>
+                <button class="btn btn-primary" id="dialog-submit-btn" onclick="hideDialog()">Submit</button>
             </div>
         </div>
     </div>
 
     <!-- Demo Controls -->
     <div class="demo-controls">
-        <div class="demo-controls-title">Workflow States</div>
-        <button class="btn btn-secondary" onclick="setWorkflowState('normal')">1. Identify & Profile</button>
-        <button class="btn btn-secondary" onclick="setWorkflowState('decide_opp_manager')">2. Decide (Opp Mgr)</button>
-        <button class="btn btn-secondary" onclick="setWorkflowState('decide_doa')">2. Decide (DOA Holder)</button>
-        <button class="btn btn-secondary" onclick="setWorkflowState('completed')">3a. Go ★ FINAL</button>
-        <button class="btn btn-secondary" onclick="setWorkflowState('nogo')">3b. No Go</button>
+        <div class="demo-controls-title">3-Stage Approval Workflow</div>
+        <button class="btn btn-secondary" onclick="setWorkflowState('identify_profile')">1. Identify & Profile</button>
+        <button class="btn btn-secondary" onclick="setWorkflowState('pending_go')">2a. Pending GO Approval</button>
+        <button class="btn btn-secondary" onclick="setWorkflowState('pending_nogo')">2b. Pending NO GO Approval</button>
+        <button class="btn btn-secondary" onclick="setWorkflowState('go')">3a. GO ★ FINAL</button>
+        <button class="btn btn-secondary" onclick="setWorkflowState('nogo')">3b. NO GO (can reopen)</button>
         <div class="demo-state">
-            Current: <strong id="state-display">Identify & Profile (Draft)</strong>
+            Current: <strong id="state-display">Identify & Profile</strong>
         </div>
         <div style="font-size: 0.65rem; margin-top: 0.5rem; opacity: 0.7; line-height: 1.4;">
-            <strong>Opp Manager:</strong> Move to Decide, Reopen<br>
-            <strong>DOA Holder:</strong> Go, No Go, Back<br>
-            ★ Go is FINAL
+            <strong>Opp Manager:</strong> Submit for Go/No Go, Recall, Reopen<br>
+            <strong>DOA Holder:</strong> Approve, Reject<br>
+            ★ GO is FINAL (no further actions)
         </div>
     </div>
 
     <script>
-        // Workflow states and history data
-        // Correct workflow: 
-        // - Identify & Profile (Draft) → Decide (Draft) → Go (Active, FINAL) or No Go (Closed)
-        // - No Go can be reopened back to Identify & Profile
-        // - Go is the ONLY final stage
-        // - Rejections return to Identify & Profile
+        // 3-Stage Workflow Configuration
+        // Stages: IDENTIFY & PROFILE → GO (requires approval) or NO GO (requires approval)
+        // NO GO can be reopened back to IDENTIFY & PROFILE
+        // GO is FINAL - no further transitions
         const stages = [
-            { id: 'identify', label: 'Identify & Profile', status: 'Draft' },
-            { id: 'decide', label: 'Decide', status: 'Draft' },
+            { id: 'identify_profile', label: 'Identify & Profile', status: 'Draft' },
             { id: 'go', label: 'Go', status: 'Active', isFinal: true },
             { id: 'nogo', label: 'No Go', status: 'Closed', isFinal: false }
         ];
 
         const historyData = {
             // Initial stage - no stage changes yet
-            normal: [],
-            decide: [
-                { from: 'Identify & Profile', to: 'Decide', date: '15-Jan-2024 10:30', action: 'Move to Decide', comment: 'Profile information complete', user: 'Jane Smith (Opp Manager)' }
+            identify_profile: [],
+            // Pending approval for GO
+            pending_go: [
+                { from: 'Identify & Profile', to: 'Go', date: '—', action: 'Submit for Go', comment: 'Budget confirmed, partners aligned. Ready to proceed.', user: 'Jane Smith (Opp Manager)', isPending: true }
             ],
-            pending: [
-                { from: 'Decide', to: 'Go', date: '—', action: 'Submit for Go', comment: 'Budget confirmed, partners aligned', user: 'Jane Smith (Opp Manager)' },
-                { from: 'Identify & Profile', to: 'Decide', date: '15-Jan-2024 10:30', action: 'Move to Decide', comment: 'Profile information complete', user: 'Jane Smith (Opp Manager)' }
+            // Pending approval for NO GO
+            pending_nogo: [
+                { from: 'Identify & Profile', to: 'No Go', date: '—', action: 'Submit for No Go', comment: 'Partner funding fell through. Recommending closure.', user: 'Jane Smith (Opp Manager)', isPending: true }
             ],
-            completed: [
-                { from: 'Decide', to: 'Go', date: '17-Jan-2024 09:15', action: 'Approve', comment: 'Approved. Proceed with implementation.', user: 'Sarah Johnson (DOA Holder)' },
-                { from: 'Decide', to: 'Go', date: '16-Jan-2024 15:45', action: 'Submit for Go', comment: 'Budget confirmed, partners aligned', user: 'Jane Smith (Opp Manager)' },
-                { from: 'Identify & Profile', to: 'Decide', date: '15-Jan-2024 10:30', action: 'Move to Decide', comment: 'Profile information complete', user: 'Jane Smith (Opp Manager)' }
+            // Completed GO workflow
+            go: [
+                { from: 'Identify & Profile', to: 'Go', date: '17-Jan-2024 09:15', action: 'Approve', comment: 'Approved. Proceed with implementation.', user: 'Sarah Johnson (DOA Holder)' },
+                { from: 'Identify & Profile', to: 'Go', date: '16-Jan-2024 15:45', action: 'Submit for Go', comment: 'Budget confirmed, partners aligned.', user: 'Jane Smith (Opp Manager)' }
             ],
+            // Completed NO GO workflow
             nogo: [
-                { from: 'Decide', to: 'No Go', date: '17-Jan-2024 11:00', action: 'Approve', comment: 'Partner withdrew. Cannot proceed.', user: 'Sarah Johnson (DOA Holder)' },
-                { from: 'Decide', to: 'No Go', date: '16-Jan-2024 16:00', action: 'Submit for No Go', comment: 'Partner funding fell through', user: 'Jane Smith (Opp Manager)' },
-                { from: 'Identify & Profile', to: 'Decide', date: '15-Jan-2024 10:30', action: 'Move to Decide', comment: 'Profile information complete', user: 'Jane Smith (Opp Manager)' }
+                { from: 'Identify & Profile', to: 'No Go', date: '17-Jan-2024 11:00', action: 'Approve', comment: 'Partner withdrew. Cannot proceed.', user: 'Sarah Johnson (DOA Holder)' },
+                { from: 'Identify & Profile', to: 'No Go', date: '16-Jan-2024 16:00', action: 'Submit for No Go', comment: 'Partner funding fell through', user: 'Jane Smith (Opp Manager)' }
             ],
+            // Reopened from NO GO
+            reopened: [
+                { from: 'No Go', to: 'Identify & Profile', date: '20-Jan-2024 10:00', action: 'Reopen', comment: 'New funding source identified. Reopening opportunity.', user: 'Jane Smith (Opp Manager)' },
+                { from: 'Identify & Profile', to: 'No Go', date: '17-Jan-2024 11:00', action: 'Approve', comment: 'Partner withdrew.', user: 'Sarah Johnson (DOA Holder)' },
+                { from: 'Identify & Profile', to: 'No Go', date: '16-Jan-2024 16:00', action: 'Submit for No Go', comment: 'Partner funding fell through', user: 'Jane Smith (Opp Manager)' }
+            ],
+            // Rejected workflow (back to Identify & Profile)
             rejected: [
-                { from: 'Decide', to: 'Identify & Profile', date: '17-Jan-2024 09:00', action: 'Reject', comment: 'Need more partner commitments before proceeding', user: 'Sarah Johnson (DOA Holder)' },
-                { from: 'Decide', to: 'Go', date: '16-Jan-2024 15:45', action: 'Submit for Go', comment: 'Budget confirmed', user: 'Jane Smith (Opp Manager)' },
-                { from: 'Identify & Profile', to: 'Decide', date: '15-Jan-2024 10:30', action: 'Move to Decide', comment: 'Profile complete', user: 'Jane Smith (Opp Manager)' }
+                { from: 'Identify & Profile', to: 'Identify & Profile', date: '17-Jan-2024 09:00', action: 'Reject', comment: 'Need more partner commitments before proceeding.', user: 'Sarah Johnson (DOA Holder)' },
+                { from: 'Identify & Profile', to: 'Go', date: '16-Jan-2024 15:45', action: 'Submit for Go', comment: 'Budget confirmed', user: 'Jane Smith (Opp Manager)' }
             ]
         };
 
-        function renderSteps(activeIndex, completedUpTo = -1) {
+        function renderSteps(activeStage, isInWorkflow = false, targetStage = null) {
             const container = document.getElementById('workflow-steps');
-            container.innerHTML = stages.map((stage, idx) => {
-                let className = 'step';
-                // Mark as completed if index is less than or equal to completedUpTo
-                if (idx <= completedUpTo) className += ' completed';
-                // Mark as active if this is the current stage
-                if (idx === activeIndex) className += ' active';
-                
-                // Show checkmark for completed steps, number for others
-                const number = (idx < activeIndex && idx <= completedUpTo) ? '✓' : (idx + 1);
-                
-                return `
-                    <div class="${className}">
-                        <div class="step-number">${number}</div>
-                        <span class="step-label">${stage.label}</span>
+            
+            if (activeStage === 'nogo') {
+                // Special rendering for No Go - show branching path
+                container.innerHTML = `
+                    <div class="step completed">
+                        <div class="step-number">✓</div>
+                        <span class="step-label">Identify & Profile</span>
+                    </div>
+                    <div class="step" style="opacity: 0.4;">
+                        <div class="step-number">2</div>
+                        <span class="step-label">Go</span>
+                    </div>
+                    <div class="step active">
+                        <div class="step-number">✓</div>
+                        <span class="step-label">No Go</span>
                     </div>
                 `;
-            }).join('');
+            } else if (activeStage === 'go') {
+                // GO is final
+                container.innerHTML = `
+                    <div class="step completed">
+                        <div class="step-number">✓</div>
+                        <span class="step-label">Identify & Profile</span>
+                    </div>
+                    <div class="step active">
+                        <div class="step-number">✓</div>
+                        <span class="step-label">Go</span>
+                    </div>
+                    <div class="step" style="opacity: 0.4;">
+                        <div class="step-number">3</div>
+                        <span class="step-label">No Go</span>
+                    </div>
+                `;
+            } else {
+                // Identify & Profile (with potential pending indicator)
+                const goClass = isInWorkflow && targetStage === 'go' ? 'step active' : 'step';
+                const nogoClass = isInWorkflow && targetStage === 'nogo' ? 'step active' : 'step';
+                
+                container.innerHTML = `
+                    <div class="step active">
+                        <div class="step-number">1</div>
+                        <span class="step-label">Identify & Profile</span>
+                    </div>
+                    <div class="${goClass}">
+                        <div class="step-number">2</div>
+                        <span class="step-label">Go</span>
+                    </div>
+                    <div class="${nogoClass}">
+                        <div class="step-number">3</div>
+                        <span class="step-label">No Go</span>
+                    </div>
+                `;
+            }
         }
 
         function renderHistory(state) {
@@ -1495,11 +1536,11 @@
                 `;
             } else {
                 body.innerHTML = data.map(row => `
-                    <tr>
+                    <tr${row.isPending ? ' style="background: var(--unops-warning-bg);"' : ''}>
                         <td>${row.from}</td>
                         <td>${row.to}</td>
                         <td>${row.date}</td>
-                        <td>${row.action}</td>
+                        <td>${row.action}${row.isPending ? ' <span class="workflow-tag workflow-tag-pending" style="margin-left: 0.5rem;">Pending</span>' : ''}</td>
                         <td>${row.comment}</td>
                         <td>${row.user}</td>
                     </tr>
@@ -1507,52 +1548,53 @@
             }
         }
 
-        function renderActions(state) {
+        function renderActions(state, userRole = 'opp_manager') {
             const container = document.getElementById('workflow-actions');
             
             switch(state) {
-                case 'normal':
-                    // Identify & Profile: Opp Manager can Move to Decide
-                    container.innerHTML = `
-                        <button class="btn btn-primary" onclick="showDialog()">Move to Decide</button>
-                    `;
-                    break;
-                case 'decide_opp_manager':
-                    // Decide: Opp Manager view - no actions (doesn't have DOA role)
-                    container.innerHTML = `
-                        <span style="color: var(--unops-neutral-500); font-size: 0.875rem;">
-                            <i class="pi pi-info-circle"></i> DOA Holder action required
-                        </span>
-                    `;
-                    break;
-                case 'decide':
-                case 'decide_doa':
-                    // Decide: DOA Holder can perform all three actions directly
+                case 'identify_profile':
+                    // Identify & Profile: Opp Manager can Submit for Go or No Go
                     container.innerHTML = `
                         <div class="split-button-container">
                             <div class="split-button">
-                                <button class="btn btn-primary btn-main" onclick="showDialog(true)">Move to Go</button>
+                                <button class="btn btn-primary btn-main" onclick="showDialog('Submit for Go', true)">Submit for Go</button>
                                 <button class="btn btn-primary btn-dropdown" onclick="toggleDropdown(event)"><i class="pi pi-chevron-down"></i></button>
                             </div>
-                            <div class="split-button-dropdown" id="doa-actions-dropdown">
-                                <button class="split-button-dropdown-item" onclick="showDialog(true); closeDropdown();">
+                            <div class="split-button-dropdown" id="submit-dropdown">
+                                <button class="split-button-dropdown-item" onclick="showDialog('Submit for Go', true); closeDropdown();">
                                     <i class="pi pi-check-circle" style="color: var(--unops-success); margin-right: 0.5rem;"></i>
-                                    Move to Go
+                                    Submit for Go
                                 </button>
-                                <button class="split-button-dropdown-item" onclick="showDialog(true); closeDropdown();">
+                                <button class="split-button-dropdown-item" onclick="showDialog('Submit for No Go', true); closeDropdown();">
                                     <i class="pi pi-times-circle" style="color: var(--unops-danger); margin-right: 0.5rem;"></i>
-                                    Move to No Go
-                                </button>
-                                <div class="split-button-dropdown-divider"></div>
-                                <button class="split-button-dropdown-item" onclick="showDialog(); closeDropdown();">
-                                    <i class="pi pi-arrow-left" style="color: var(--unops-neutral-500); margin-right: 0.5rem;"></i>
-                                    Back to Identify & Profile
+                                    Submit for No Go
                                 </button>
                             </div>
                         </div>
                     `;
                     break;
-                case 'completed':
+                case 'pending_go':
+                case 'pending_nogo':
+                    if (userRole === 'opp_manager') {
+                        // Opp Manager can Recall their pending request
+                        container.innerHTML = `
+                            <button class="btn btn-secondary" onclick="showDialog('Recall', false)">
+                                <i class="pi pi-undo"></i> Recall
+                            </button>
+                        `;
+                    } else {
+                        // DOA Holder can Approve or Reject
+                        container.innerHTML = `
+                            <button class="btn btn-success" onclick="showDialog('Approve', true)">
+                                <i class="pi pi-check"></i> Approve
+                            </button>
+                            <button class="btn btn-danger" onclick="showDialog('Reject', true)">
+                                <i class="pi pi-times"></i> Reject
+                            </button>
+                        `;
+                    }
+                    break;
+                case 'go':
                     // Go is FINAL - no actions available
                     container.innerHTML = `
                         <span style="color: var(--unops-neutral-500); font-size: 0.875rem;">
@@ -1563,7 +1605,9 @@
                 case 'nogo':
                     // No Go: Opp Manager can Reopen (back to Identify & Profile)
                     container.innerHTML = `
-                        <button class="btn btn-primary" onclick="showDialog()">Reopen</button>
+                        <button class="btn btn-primary" onclick="showDialog('Reopen', false)">
+                            <i class="pi pi-refresh"></i> Reopen
+                        </button>
                     `;
                     break;
             }
@@ -1585,7 +1629,6 @@
         }
 
         function setWorkflowState(state) {
-            // Update header badge
             const headerBadge = document.getElementById('header-stage-badge');
             const pendingTag = document.getElementById('workflow-pending-tag');
             const stageInfo = document.getElementById('workflow-stage-info');
@@ -1594,93 +1637,84 @@
             const nextStageDisplay = document.getElementById('next-stage-display');
             
             // Reset - hide all "in workflow" UI elements by default
-            // These should ONLY show when isInWorkflow == true (pending approval)
             headerBadge.className = 'badge badge-warning';
             pendingTag.style.display = 'none';
             stageInfo.style.display = 'none';
             approversTab.style.display = 'none';
             
             // Determine if we're in a workflow state (pending approval)
-            const isInWorkflow = (state === 'pending' || state === 'approver');
+            const isInWorkflow = (state === 'pending_go' || state === 'pending_nogo');
             
             switch(state) {
-                case 'normal':
-                    // Identify & Profile - Opp Manager can Move to Decide
+                case 'identify_profile':
+                    // Identify & Profile - Opp Manager can Submit for Go or No Go
                     headerBadge.textContent = 'Identify & Profile';
                     updateStatusBadge('Draft');
-                    renderSteps(0);
-                    renderHistory('normal');
+                    renderSteps('identify_profile');
+                    renderHistory('identify_profile');
+                    renderActions('identify_profile');
                     break;
-                case 'decide_opp_manager':
-                    // Decide - Opp Manager view (no DOA role, can't perform actions)
-                    headerBadge.textContent = 'Decide';
+                    
+                case 'pending_go':
+                    // Pending GO approval
+                    headerBadge.textContent = 'Identify & Profile';
                     updateStatusBadge('Draft');
-                    renderSteps(1, 0);
-                    renderHistory('decide');
+                    pendingTag.style.display = 'inline-block';
+                    stageInfo.style.display = 'flex';
+                    approversTab.style.display = 'block';
+                    currentStageDisplay.textContent = 'IDENTIFY & PROFILE';
+                    nextStageDisplay.textContent = 'GO';
+                    renderSteps('identify_profile', true, 'go');
+                    renderHistory('pending_go');
+                    renderActions('pending_go', 'doa_holder'); // Show DOA actions for demo
                     break;
-                case 'decide':
-                case 'decide_doa':
-                    // Decide - DOA Holder view (can Move to Go, No Go, or back)
-                    headerBadge.textContent = 'Decide';
+                    
+                case 'pending_nogo':
+                    // Pending NO GO approval
+                    headerBadge.textContent = 'Identify & Profile';
                     updateStatusBadge('Draft');
-                    renderSteps(1, 0);
-                    renderHistory('decide');
+                    pendingTag.style.display = 'inline-block';
+                    stageInfo.style.display = 'flex';
+                    approversTab.style.display = 'block';
+                    currentStageDisplay.textContent = 'IDENTIFY & PROFILE';
+                    nextStageDisplay.textContent = 'NO GO';
+                    renderSteps('identify_profile', true, 'nogo');
+                    renderHistory('pending_nogo');
+                    renderActions('pending_nogo', 'doa_holder'); // Show DOA actions for demo
                     break;
-                case 'completed':
+                    
+                case 'go':
                     // Go - Final stage (no actions)
                     headerBadge.textContent = 'Go';
                     headerBadge.className = 'badge badge-success';
                     updateStatusBadge('Active');
-                    renderSteps(2, 1);
-                    renderHistory('completed');
+                    renderSteps('go');
+                    renderHistory('go');
+                    renderActions('go');
                     break;
+                    
                 case 'nogo':
-                    // No Go - Opp Manager can Reopen
+                    // No Go - Can be reopened
                     headerBadge.textContent = 'No Go';
                     headerBadge.className = 'badge badge-info';
                     updateStatusBadge('Closed');
-                    renderStepsNoGo();
+                    renderSteps('nogo');
                     renderHistory('nogo');
+                    renderActions('nogo');
                     break;
             }
             
-            renderActions(state);
-            
             const stateLabels = {
-                'normal': 'Identify & Profile (Draft) - Opp Manager',
-                'decide_opp_manager': 'Decide (Draft) - Opp Manager view',
-                'decide': 'Decide (Draft) - DOA Holder view',
-                'decide_doa': 'Decide (Draft) - DOA Holder view',
-                'completed': 'Go (Active) ★ FINAL',
-                'nogo': 'No Go (Closed) - Opp Manager can Reopen'
+                'identify_profile': 'Identify & Profile (Draft)',
+                'pending_go': 'Pending GO Approval (DOA view)',
+                'pending_nogo': 'Pending NO GO Approval (DOA view)',
+                'go': 'Go (Active) ★ FINAL',
+                'nogo': 'No Go (Closed) - Can Reopen'
             };
             document.getElementById('state-display').textContent = stateLabels[state] || state;
             
             // Reset to overview tab
             switchWorkflowTab('overview');
-        }
-        
-        function renderStepsNoGo() {
-            // Special rendering for No Go path
-            const container = document.getElementById('workflow-steps');
-            container.innerHTML = `
-                <div class="step completed">
-                    <div class="step-number">✓</div>
-                    <span class="step-label">Identify & Profile</span>
-                </div>
-                <div class="step completed">
-                    <div class="step-number">✓</div>
-                    <span class="step-label">Decide</span>
-                </div>
-                <div class="step" style="opacity: 0.5;">
-                    <div class="step-number">3</div>
-                    <span class="step-label">Go</span>
-                </div>
-                <div class="step active">
-                    <div class="step-number">✓</div>
-                    <span class="step-label">No Go</span>
-                </div>
-            `;
         }
 
         function switchWorkflowTab(tabId) {
@@ -1696,14 +1730,14 @@
         // Dropdown toggle functions
         function toggleDropdown(event) {
             event.stopPropagation();
-            const dropdown = document.getElementById('doa-actions-dropdown');
+            const dropdown = document.getElementById('submit-dropdown');
             if (dropdown) {
                 dropdown.classList.toggle('show');
             }
         }
 
         function closeDropdown() {
-            const dropdown = document.getElementById('doa-actions-dropdown');
+            const dropdown = document.getElementById('submit-dropdown');
             if (dropdown) {
                 dropdown.classList.remove('show');
             }
@@ -1711,15 +1745,17 @@
 
         // Close dropdown when clicking outside
         document.addEventListener('click', function(event) {
-            const dropdown = document.getElementById('doa-actions-dropdown');
+            const dropdown = document.getElementById('submit-dropdown');
             if (dropdown && !event.target.closest('.split-button-container')) {
                 dropdown.classList.remove('show');
             }
         });
 
-        function showDialog(required = false) {
-            document.getElementById('comment-dialog').classList.remove('hidden');
+        function showDialog(action, required = true) {
+            document.getElementById('dialog-title').textContent = action;
+            document.getElementById('dialog-submit-btn').textContent = action;
             document.getElementById('required-marker').style.display = required ? 'inline' : 'none';
+            document.getElementById('comment-dialog').classList.remove('hidden');
         }
 
         function hideDialog() {
@@ -1736,7 +1772,7 @@
         });
 
         // Initialize
-        setWorkflowState('normal');
+        setWorkflowState('identify_profile');
     </script>
 </body>
 </html>

@@ -21,8 +21,6 @@ The Partnerships and Opportunities (PAO) application currently uses a basic data
 
 **Solution:** Integrate UNOPS.Workflow as a Git submodule, delete the existing `WorkflowStage` system, and migrate to the state machine pattern used successfully in GMS.
 
-**Reference:** This PRD follows the **Migration-Guide-WorkflowStage-To-StateMachine.md** document which provides detailed implementation steps.
-
 **Goal:** Establish production-ready workflow infrastructure that enables implementation of any future approval process without rebuilding workflow logic.
 
 ---
@@ -62,10 +60,11 @@ The Partnerships and Opportunities (PAO) application currently uses a basic data
 
 **Q8: Testing & Validation**
 - Include test/example workflow for Opportunity
-- Stages: Identify & Profile → Decide → Go (final) or No Go
-- Transitions are role-based (no approval workflow):
-  * Opportunity Manager: Move to Decide, Reopen (from No Go)
-  * DOA Holder: Move to Go, Move to No Go, Back to Identify & Profile
+- Stages: Identify & Profile → Go (final) or No Go
+- Transitions use approval workflow:
+  * IDENTIFY & PROFILE → GO (requires approval by DOA Holder)
+  * IDENTIFY & PROFILE → NO GO (requires approval by DOA Holder)
+  * NO GO → IDENTIFY & PROFILE (Reopen, no approval required, Opportunity Manager)
 - Go is the final stage (no changes possible)
 - No Go can be reopened back to Identify & Profile
 - Include unit tests
@@ -75,7 +74,7 @@ The Partnerships and Opportunities (PAO) application currently uses a basic data
 - Include: API endpoints (WorkflowController)
 - Include: Angular components integration
 - Include: Example Opportunity workflow
-- Follow Migration-Guide-WorkflowStage-To-StateMachine.md
+- Follow GMS implementation patterns
 
 **Q10: Future Extensibility**
 - Design for multiple entities (Partner, Contact, etc.)
@@ -176,14 +175,24 @@ UNOPS.PAO.ClientApp/src/app/shared/
    - Add: `Opportunity.Stage` (string property)
    - Remove: `Opportunity.WorkflowStage` navigation property
 
-2. **Database Schema:**
+2. **Base Entity Changes (ModifiableDeletableEntity):**
+   Following GMS pattern, add workflow tracking to base entity:
+   - Add: `WorkflowStatus` enum property (None, InWorkflow) to `ModifiableDeletableEntity`
+   - Add: `IsInWorkflow` computed property (`=> WorkflowStatus == WorkflowStatus.InWorkflow`)
+   - Create: `UNOPS.PAO.Domain/Enums/WorkflowStatus.cs` enum
+   - This allows any entity inheriting from ModifiableDeletableEntity to participate in approval workflows
+
+3. **Database Schema:**
    - **Delete:** `WorkflowStages` table (create migration to drop)
    - Add: `workflow` schema (auto-created by submodule with 3 tables)
+   - Add: `WorkflowStatus` column to entities that inherit from `ModifiableDeletableEntity`
 
-3. **Code Organization:**
+4. **Code Organization:**
    - Add: `UNOPS.Workflow/` submodule folder at solution root
-   - Add: `UNOPS.PAO.Business/Workflow/` for PAO adapters (interface implementations)
-   - Add: `UNOPS.PAO.Business/Workflow/StateMachines/` for entity workflow definitions
+   - Add: `UNOPS.PAO.Business/Workflow/` for PAO adapters and workflow definitions
+   - Add: `UNOPS.PAO.Business/Workflow/Adapters/` for interface implementations
+   - Add: `UNOPS.PAO.Business/Workflow/Interfaces/` for PAO-specific interfaces (e.g., IPaoWorkflowApproverProvider)
+   - Add: `UNOPS.PAO.Business/Workflow/Seeders/` for seeder classes
    - **Delete:** `UNOPS.PAO.Business/Managers/WorkflowManager.cs` (~100 lines, no entity-specific logic)
    - **Delete:** `UNOPS.PAO.Business/Interfaces/IWorkflowManager.cs`
    - **Delete:** `UNOPS.PAO.Models/Workflow/` folder (7 files)
@@ -252,17 +261,16 @@ UNOPS.PAO.ClientApp/src/app/shared/
 **So that** I can verify all components are correctly integrated
 
 **Acceptance Criteria:**
-- Example Opportunity workflow is implemented:
-  * IDENTIFY & PROFILE → DECIDE (Opportunity Manager)
-  * DECIDE → GO (DOA Holder, final stage)
-  * DECIDE → NO GO (DOA Holder)
-  * DECIDE → IDENTIFY & PROFILE (DOA Holder)
-  * NO GO → IDENTIFY & PROFILE (Opportunity Manager, reopen)
+- Example Opportunity workflow is implemented with 3 stages:
+  * IDENTIFY & PROFILE → GO (requires approval by DOA Holder, final stage)
+  * IDENTIFY & PROFILE → NO GO (requires approval by DOA Holder)
+  * NO GO → IDENTIFY & PROFILE (Opportunity Manager, reopen, no approval)
 - GO stage is final - no transitions out
-- Role-based permissions control action availability
+- Approval workflow controls transitions to GO and NO GO
 - Status changes correctly: Draft → Active (GO) or Draft → Closed (NO GO)
 - Workflow actions are visible in UI
 - Stage changes are logged in workflow.WorkflowLogs table
+- Approval requests trigger email notifications
 - Unit tests validate workflow operations
 
 ---
@@ -344,6 +352,23 @@ UNOPS.PAO.ClientApp/src/app/shared/
 6. Create EF Core migration for these changes
 7. Add data migration script to populate Stage from existing WorkflowStageId
 
+#### FR-2.5: Add WorkflowStatus to Base Entity (Following GMS Pattern)
+1. Create `WorkflowStatus` enum in `UNOPS.PAO.Domain/Enums/`:
+   ```csharp
+   public enum WorkflowStatus
+   {
+       None,
+       InWorkflow
+   }
+   ```
+2. Update `ModifiableDeletableEntity` base class in `UNOPS.PAO.Domain/Infrastructure/Audit/`:
+   - Add `WorkflowStatus` property with default `WorkflowStatus.None`
+   - Add computed `IsInWorkflow` property: `public bool IsInWorkflow => WorkflowStatus == WorkflowStatus.InWorkflow;`
+3. Create EF Core migration to add `WorkflowStatus` column to applicable tables
+4. **Purpose:** This allows entities to track when they have a pending approval workflow
+5. **Usage:** When user initiates approval (e.g., "Submit for Go"), set `WorkflowStatus = InWorkflow`
+6. **Usage:** When approval completes/rejects/recalls, set `WorkflowStatus = None`
+
 #### FR-3: Delete Old Workflow System
 **Per User Requirement:** Delete (not deprecate) existing PAO workflow entities that are replaced by the submodule.
 
@@ -398,25 +423,37 @@ Frontend (Angular) - **DELETE** the following:
 7. Filter by !IsDeleted in all queries
 
 #### FR-6: Implement IWorkflowApproverProvider
-**Per Migration Guide Phase 3.4:** Leverage PAO's existing EntityRole/EntityRolePerson system for approvals.
+**Following GMS pattern:** Leverage PAO's existing EntityRole/EntityRolePerson system for approvals.
 
-1. Create `PaoWorkflowApproverProvider` class in `UNOPS.PAO.Business/Workflow/`
-2. Implement `IWorkflowApproverProvider` interface from submodule
-3. Methods to implement:
+1. Create `IPaoWorkflowApproverProvider` interface in `UNOPS.PAO.Business/Workflow/Interfaces/`
+   - Extend `IWorkflowApproverProvider` from submodule
+   - Keep empty initially as placeholder for future PAO-specific methods
+   - Example structure:
+   ```csharp
+   public interface IPaoWorkflowApproverProvider : IWorkflowApproverProvider
+   {
+       // Placeholder for future PAO-specific approval methods
+       // e.g., Task<bool> CanUserApproveOpportunityAsync(int opportunityId, int userId);
+   }
+   ```
+2. Create `PaoWorkflowApproverProvider` class in `UNOPS.PAO.Business/Workflow/Adapters/`
+3. Implement `IPaoWorkflowApproverProvider` interface (which extends base)
+4. Methods to implement from base interface:
    - `GetApproversAsync(entityName, entityId, fromStage, toStage)` - Return list of users who can approve
    - `GetApprovalConfigurationAsync(entityName, entityId, fromStage, toStage)` - Return approval config with roles
    - `GetTriggerConfigurationAsync(entityName, entityId, fromStage, toStage)` - Return trigger config with roles
    - `CanUserApproveAsync(entityName, entityId, userId, fromStage, toStage)` - Check specific user permission
-4. Query PAO's existing tables:
+5. Query PAO's existing tables:
    - `EntityRolePerson` - Users assigned to entity-specific roles (respects EffectiveDate/EndDate)
    - `EntityUserRole` - Organization-level roles for fallback approvals
    - `EntityRole` - Role definitions (e.g., "Opportunity_Manager", "DOA_Holder")
-5. Query `StateMachineStageChangeRoles` from workflow schema for role permissions
-6. Join entity role assignments with workflow role permissions
-7. Return empty lists for unconfigured transitions (no approvers = can't start workflow)
+6. Query `StateMachineStageChangeRoles` from workflow schema for role permissions
+7. Join entity role assignments with workflow role permissions
+8. Return empty lists for unconfigured transitions (no approvers = can't start workflow)
+9. Register as `IPaoWorkflowApproverProvider` AND `IWorkflowApproverProvider` in DI
 
 #### FR-7: Implement IWorkflowNotificationService
-**Per Migration Guide Phase 3.3:** Use PAO's existing `IEmailSender` from `UNOPS.PAO.MailSender`.
+**Following GMS pattern:** Use PAO's existing `IEmailSender` from `UNOPS.PAO.MailSender`.
 
 1. Create `PaoWorkflowNotificationService` class in `UNOPS.PAO.Business/Workflow/`
 2. Implement `IWorkflowNotificationService` interface from submodule
@@ -464,57 +501,64 @@ Frontend (Angular) - **DELETE** the following:
 4. Verify IHttpContextAccessor is registered
 
 #### FR-10: Create Opportunity Workflow State Machine
-1. Create `OpportunityWorkflow` class in `UNOPS.PAO.Business/Workflow/StateMachines/`
+1. Create `OpportunityWorkflow` class in `UNOPS.PAO.Business/Workflow/`
 2. Define static StateMachine property
-3. Include states:
+3. Include 3 states:
    - "Identify & Profile" (Sequence: 1, Status: Draft)
-   - "Decide" (Sequence: 2, Status: Draft)
-   - "Go" (Sequence: 3, IsFinalStage: true, Status: Active)
-   - "No Go" (Sequence: 4, IsFinalStage: false, Status: Closed)
+   - "Go" (Sequence: 2, IsFinalStage: true, Status: Active)
+   - "No Go" (Sequence: 3, IsFinalStage: false, Status: Closed)
 4. Set EntityType = "Opportunity"
 5. Configure facing (Internal) for all states
 6. Note: Go is the ONLY final stage - No Go can be reopened
-7. Role-based permissions (no approval workflow):
-   - Opportunity Manager: Move to Decide, Reopen
-   - DOA Holder: Move to Go, Move to No Go, Back to Identify & Profile
+7. Approval-based transitions:
+   - DOA Holder: Can approve transitions to Go or No Go
+   - Opportunity Manager: Can trigger transitions to Go/No Go (initiates approval), Can Reopen
 8. Follow GMS pattern for structure
 
 #### FR-11: Seed Opportunity Stage Transitions
 1. Create `OpportunityWorkflowSeeder` in `UNOPS.PAO.Business/Workflow/Seeders/`
-2. Seed stage changes (role-based, no approval workflow):
-   - IDENTIFY & PROFILE → DECIDE (Action: "Move to Decide")
-     * Role Required: Opportunity Manager
-     * Status: remains Draft
-   - DECIDE → GO (Action: "Move to Go")
-     * Role Required: DOA Holder
+2. Seed stage changes (with approval workflow):
+   - IDENTIFY & PROFILE → GO (Action: "Submit for Go")
+     * ApprovalRequired: true
+     * Trigger Role: Opportunity Manager
+     * Approval Role: DOA Holder
      * Status changes to Active
+     * CommentRequired: true
      * Note: GO is FINAL - no transitions out
-   - DECIDE → NO GO (Action: "Move to No Go")
-     * Role Required: DOA Holder
+   - IDENTIFY & PROFILE → NO GO (Action: "Submit for No Go")
+     * ApprovalRequired: true
+     * Trigger Role: Opportunity Manager
+     * Approval Role: DOA Holder
      * Status changes to Closed
-   - DECIDE → IDENTIFY & PROFILE (Action: "Back to Identify & Profile")
-     * Role Required: DOA Holder
-     * Status: remains Draft
+     * CommentRequired: true
    - NO GO → IDENTIFY & PROFILE (Action: "Reopen")
+     * ApprovalRequired: false
      * Role Required: Opportunity Manager
      * Status changes to Draft
-3. Note: No approval workflow - role determines action availability
-4. Configure comment requirements for Go/No Go transitions
+3. Note: Go and No Go transitions require DOA Holder approval
+4. Configure comment requirements for all transitions to Go/No Go
 5. Set Internal access flags (all internal only)
 6. Create seeder runner in Program.cs or seed controller
 7. Make seeder idempotent (check existing records)
 
 #### FR-12: Create API Endpoints
 1. Create `WorkflowController` in `UNOPS.PAO.Presentation/Controllers/`
-2. Implement endpoints:
+2. Follow GMS `WorkflowController` pattern for comprehensive workflow handling
+3. Implement endpoints:
    - `GET /api/workflow/{entityName}` - Get workflow stages for entity type
    - `GET /api/workflow/{entityName}/{id}` - Get current state and available actions
-   - `POST /api/workflow` - Execute workflow action (stage change)
    - `GET /api/workflow/{entityName}/{id}/history` - Get stage change history
-3. Use authorization attributes for permission checks
-4. Return DTOs, never entities directly
-5. Add to APIDictionary constants
-6. Follow PAO controller patterns exactly
+   - `GET /api/workflow/{entityName}/{id}/details` - Get workflow details including approval status
+   - `POST /api/workflow/submit` - Submit/initiate workflow action (may start approval)
+   - `POST /api/workflow/approve` - Approve pending workflow action
+   - `POST /api/workflow/reject` - Reject pending workflow action
+   - `POST /api/workflow/recall` - Recall pending workflow action
+4. Use authorization attributes for permission checks
+5. Include switch statement pattern for routing entity-specific logic (anticipate multiple entities)
+6. Return DTOs, never entities directly
+7. Add to APIDictionary constants
+8. Follow PAO controller patterns (inherit from BaseController)
+9. Handle approval workflow state machine (Initiate → Approve/Reject/Recall)
 
 #### FR-13: Update OpportunityManager
 1. Inject IWorkflowManager via IManagerWrapper
@@ -649,7 +693,6 @@ Import using project paths after updating imports in copied files.
 4. Document seeder usage
 5. Add troubleshooting guide
 6. Include example workflow diagrams
-7. Reference Migration-Guide-WorkflowStage-To-StateMachine.md
 
 ---
 
@@ -686,9 +729,9 @@ This PRD specifically does NOT include:
 ```
 Current Stage: IDENTIFY & PROFILE
 
-● IDENTIFY & PROFILE ──────○ DECIDE ──────○ GO/NO GO
+● IDENTIFY & PROFILE ──────○ GO ──────○ NO GO
 
-Available Actions: [Move to Decide]
+Available Actions: [Submit for Go ▼]  (dropdown includes "Submit for No Go")
 ```
 
 **Workflow History:**
@@ -749,26 +792,50 @@ export class OpportunityDetailComponent {
 ```
 GET    /api/workflow/opportunity              → Get all stages for Opportunity entity
 GET    /api/workflow/opportunity/123          → Get current state and actions for Opportunity #123
-POST   /api/workflow                          → Execute stage change
+GET    /api/workflow/opportunity/123/details  → Get workflow details including approval status
 GET    /api/workflow/opportunity/123/history  → Get stage change history
+POST   /api/workflow/submit                   → Submit/initiate workflow action (may start approval)
+POST   /api/workflow/approve                  → Approve pending workflow action
+POST   /api/workflow/reject                   → Reject pending workflow action
+POST   /api/workflow/recall                   → Recall pending workflow action
 ```
 
-**POST Request Body:**
+**POST /submit Request Body (starts approval):**
 ```json
 {
   "entityName": "opportunity",
   "entityId": "123",
-  "newStage": "DECIDE",
-  "comment": "Moving to decision stage"
+  "newStage": "GO",
+  "comment": "Ready for Go decision"
 }
 ```
 
-**Response:**
+**Response (approval started):**
 ```json
 {
   "success": true,
-  "newStage": "DECIDE",
-  "message": "Stage changed successfully"
+  "requiresApproval": true,
+  "workflowStatus": "InWorkflow",
+  "message": "Approval workflow initiated"
+}
+```
+
+**POST /approve Request Body:**
+```json
+{
+  "entityName": "opportunity",
+  "entityId": "123",
+  "comment": "Approved - opportunity meets all criteria"
+}
+```
+
+**Response (approval completed):**
+```json
+{
+  "success": true,
+  "newStage": "GO",
+  "workflowStatus": "None",
+  "message": "Stage changed to GO"
 }
 ```
 
@@ -931,8 +998,7 @@ UNOPS.PAO.Business/Workflow/
 ├── PaoEntityStageProvider.cs
 ├── PaoWorkflowApproverProvider.cs
 ├── PaoWorkflowNotificationService.cs
-├── StateMachines/
-│   └── OpportunityWorkflow.cs
+├── OpportunityWorkflow.cs
 └── Seeders/
     └── OpportunityWorkflowSeeder.cs
 ```
@@ -949,20 +1015,19 @@ UNOPS.PAO.Business/Workflow/
 5. ✅ Code coverage > 80% for new workflow code
 
 **Functional Metrics:**
-1. ✅ Opportunity can change stage via API
+1. ✅ Opportunity can initiate workflow via API
 2. ✅ Stage changes logged in workflow.WorkflowLogs table
 3. ✅ Workflow history displays correctly in UI
-4. ✅ Example workflow works end-to-end:
-   - IDENTIFY & PROFILE → DECIDE (Opportunity Manager)
-   - DECIDE → GO (DOA Holder, final stage)
-   - DECIDE → NO GO (DOA Holder)
-   - DECIDE → IDENTIFY & PROFILE (DOA Holder)
-   - NO GO → IDENTIFY & PROFILE (Opportunity Manager, reopen)
+4. ✅ Example workflow works end-to-end with approval:
+   - IDENTIFY & PROFILE → GO (requires DOA Holder approval, final stage)
+   - IDENTIFY & PROFILE → NO GO (requires DOA Holder approval)
+   - NO GO → IDENTIFY & PROFILE (Opportunity Manager, reopen, no approval)
 5. ✅ GO stage is final - no transitions out
-6. ✅ Role-based permissions enforce correct access
+6. ✅ Approval workflow enforces correct access (submit → approve/reject/recall)
 7. ✅ Status changes correctly with stage transitions
-5. ✅ User with permissions can change stage
-6. ✅ User without permissions cannot change stage
+8. ✅ User with trigger permissions can initiate workflow
+9. ✅ User with approval permissions can approve/reject
+10. ✅ Email notifications sent on approval requests
 
 **Quality Metrics:**
 1. ✅ Code review approved by senior developer
@@ -996,30 +1061,30 @@ The following mockups are based on the **actual GMS workflow component implement
 Based on `stage-workflow.component.html` - Uses `p-panel`, `p-tabs`, and `p-steps`.
 
 ```
-┌─ Stage ─────────────────────────────────────────────────────────────────────────────────┬─────────────────────────┐
-│                                                                                         │                         │
-│  Stage                                                                  [Move to Decide ▼]                        │
-│                                                                                                                   │
-├───────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                                                   │
-│  ┌─ Overview ─────────┬─ Stage Change History ─┐                                                                 │
-│  └────────────────────┴────────────────────────┘                                                                 │
-│                                                                                                                   │
-│     ┌─────────────────────┐      ┌─────────────────────┐      ┌─────────────────────┐      ┌─────────────────────┐│
-│     │                     │      │                     │      │                     │      │                     ││
-│     │   (●) IDENTIFY      │──────│   ( ) DECIDE        │──────│   ( ) GO            │──────│   ( ) NO GO         ││
-│     │       & PROFILE     │      │                     │      │                     │      │                     ││
-│     │                     │      │                     │      │                     │      │                     ││
-│     └─────────────────────┘      └─────────────────────┘      └─────────────────────┘      └─────────────────────┘│
-│                                                                                                                   │
-└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+┌─ Stage ─────────────────────────────────────────────────────────────────────────────────┬───────────────────────────┐
+│                                                                                         │                           │
+│  Stage                                                                  [Submit for Go ▼]                          │
+│                                                                                                                     │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                                     │
+│  ┌─ Overview ─────────┬─ Stage Change History ─┐                                                                   │
+│  └────────────────────┴────────────────────────┘                                                                   │
+│                                                                                                                     │
+│        ┌─────────────────────────┐          ┌─────────────────────┐          ┌─────────────────────┐               │
+│        │                         │          │                     │          │                     │               │
+│        │   (●) IDENTIFY          │──────────│   ( ) GO            │──────────│   ( ) NO GO         │               │
+│        │       & PROFILE         │          │                     │          │                     │               │
+│        │                         │          │                     │          │                     │               │
+│        └─────────────────────────┘          └─────────────────────┘          └─────────────────────┘               │
+│                                                                                                                     │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Key Elements (from actual code):**
 - Header shows "Stage" title
-- Action buttons via `p-splitButton` in header icons area
+- Action buttons via `p-splitButton` in header icons area (shows "Submit for Go" with dropdown for "Submit for No Go")
 - `p-tabs` with "Overview" and "Stage Change History" tabs
-- `p-steps` component shows stage progression (NOT custom dots/lines)
+- `p-steps` component shows stage progression (3 stages: IDENTIFY & PROFILE, GO, NO GO)
 
 ---
 
@@ -1030,7 +1095,7 @@ When `workflowData()?.isInWorkflow == true`, shows approval pending tag and appr
 ```
 ┌─ Stage ─────────────────────────────────────────────────────────────────────────────────────────────────────┬─────┐
 │                                                                                                             │     │
-│  Stage    ┌──────────────────────┐   Current Stage : DECIDE    Next Stage : GO                              │[Recall]
+│  Stage    ┌──────────────────────┐   Current Stage : IDENTIFY & PROFILE    Next Stage : GO                  │[Recall]
 │           │ ⚠ Approval Pending   │                                                                          │     │
 │           └──────────────────────┘                                                                          │     │
 │                                                                                                             │     │
@@ -1039,12 +1104,12 @@ When `workflowData()?.isInWorkflow == true`, shows approval pending tag and appr
 │  ┌─ Overview ─────────┬─ Approvers ──────────────┬─ Stage Change History ─┐                                      │
 │  └────────────────────┴──────────────────────────┴────────────────────────┘                                      │
 │                                                                                                                   │
-│     ┌─────────────────────┐      ┌─────────────────────┐      ┌─────────────────────┐      ┌─────────────────────┐│
-│     │                     │      │                     │      │                     │      │                     ││
-│     │   (●) IDENTIFY      │──────│   (●) DECIDE        │──────│   ( ) GO            │──────│   ( ) NO GO         ││
-│     │       & PROFILE     │      │                     │      │                     │      │                     ││
-│     │                     │      │                     │      │                     │      │                     ││
-│     └─────────────────────┘      └─────────────────────┘      └─────────────────────┘      └─────────────────────┘│
+│        ┌─────────────────────────┐          ┌─────────────────────┐          ┌─────────────────────┐             │
+│        │                         │          │                     │          │                     │             │
+│        │   (●) IDENTIFY          │──────────│   ( ) GO            │──────────│   ( ) NO GO         │             │
+│        │       & PROFILE         │          │   ⏳ pending        │          │                     │             │
+│        │                         │          │                     │          │                     │             │
+│        └─────────────────────────┘          └─────────────────────┘          └─────────────────────┘             │
 │                                                                                                                   │
 └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -1064,7 +1129,7 @@ Based on approvers table from `stage-workflow.component.html` lines 96-118.
 ```
 ┌─ Stage ─────────────────────────────────────────────────────────────────────────────────────────────────────┬─────┐
 │                                                                                                             │     │
-│  Stage    ┌──────────────────────┐   Current Stage : DECIDE    Next Stage : GO                              │[Recall]
+│  Stage    ┌──────────────────────┐   Current Stage : IDENTIFY & PROFILE    Next Stage : GO                  │[Recall]
 │           │ ⚠ Approval Pending   │                                                                          │     │
 │           └──────────────────────┘                                                                          │     │
 │                                                                                                             │     │
@@ -1076,9 +1141,9 @@ Based on approvers table from `stage-workflow.component.html` lines 96-118.
 │  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────┐│
 │  │ User                                              │ Role                                                      ││
 │  ├───────────────────────────────────────────────────┼───────────────────────────────────────────────────────────┤│
-│  │ Sarah Johnson                                     │ Regional Director                                         ││
+│  │ Sarah Johnson                                     │ DOA Holder                                                ││
 │  ├───────────────────────────────────────────────────┼───────────────────────────────────────────────────────────┤│
-│  │ Michael Chen                                      │ Senior Manager                                            ││
+│  │ Michael Chen                                      │ DOA Holder                                                ││
 │  └───────────────────────────────────────────────────┴───────────────────────────────────────────────────────────┘│
 │                                                                                                                   │
 └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
@@ -1091,37 +1156,41 @@ Based on approvers table from `stage-workflow.component.html` lines 96-118.
 
 ---
 
-#### Mockup 4: Stage Change History Tab
+#### Mockup 4: Stage Change History Tab (with approval workflow history)
 
 Based on stage change history table from `stage-workflow.component.html` lines 154-182.
 
 ```
-┌─ Stage ─────────────────────────────────────────────────────────────────────────────────────────────────────┬───────────────────┐
-│                                                                                                             │                   │
-│  Stage                                                                                                      │[Move to Decide ▼] │
-│                                                                                                             │                   │
-├─────────────────────────────────────────────────────────────────────────────────────────────────────────────┴───────────────────┤
-│                                                                                                                                 │
-│  ┌─ Overview ─────────┬─ Stage Change History ─┐                                                                               │
-│                       └────────────────────────┘                                                                               │
-│                                                                                                                                 │
+┌─ Stage ─────────────────────────────────────────────────────────────────────────────────────────────────────┬─────────────────────┐
+│                                                                                                             │                     │
+│  Stage: GO (Active)                                                                                         │  (no actions - final)│
+│                                                                                                             │                     │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────┴─────────────────────┤
+│                                                                                                                                   │
+│  ┌─ Overview ─────────┬─ Stage Change History ─┐                                                                                 │
+│                       └────────────────────────┘                                                                                 │
+│                                                                                                                                   │
 │  ┌────────────────┬───────────────┬────────────────────────┬───────────────┬──────────────────────────┬─────────────────────────┐│
 │  │ From Stage     │ To Stage      │ Completed On           │ Action        │ Comment                  │ User                    ││
 │  ├────────────────┼───────────────┼────────────────────────┼───────────────┼──────────────────────────┼─────────────────────────┤│
-│  │ IDENTIFY &     │ DECIDE        │ 15-Jan-2026 10:30      │ Move to       │ All profile info         │ Jane Smith              ││
-│  │ PROFILE        │               │                        │ Decide        │ collected                │                         ││
+│  │ IDENTIFY &     │ GO            │ 15-Jan-2026 14:30      │ Approve       │ Opportunity approved     │ Sarah Johnson           ││
+│  │ PROFILE        │               │                        │               │                          │ (DOA Holder)            ││
+│  ├────────────────┼───────────────┼────────────────────────┼───────────────┼──────────────────────────┼─────────────────────────┤│
+│  │ IDENTIFY &     │ GO            │ 15-Jan-2026 10:30      │ Submit for    │ Ready for Go decision    │ Jane Smith              ││
+│  │ PROFILE        │ (pending)     │                        │ Go            │                          │ (Opp Manager)           ││
 │  ├────────────────┼───────────────┼────────────────────────┼───────────────┼──────────────────────────┼─────────────────────────┤│
 │  │ --             │ IDENTIFY &    │ 10-Jan-2026 14:15      │ Created       │ Initial creation         │ John Doe                ││
 │  │                │ PROFILE       │                        │               │                          │                         ││
 │  └────────────────┴───────────────┴────────────────────────┴───────────────┴──────────────────────────┴─────────────────────────┘│
-│                                                                                                                                 │
-└─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+│                                                                                                                                   │
+└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Key Elements (from actual code):**
 - `p-table` with six columns: From Stage, To Stage, Completed On, Action, Comment, User
 - Date format: `dd-MMM-yyyy HH:mm`
 - User displayed via `getUserNameToDisplay(historyItem.user)`
+- Shows both Submit and Approve actions for approval workflow
 
 ---
 
@@ -1129,18 +1198,16 @@ Based on stage change history table from `stage-workflow.component.html` lines 1
 
 Based on `workflow.component.html` - shows different states.
 
-**State A: Not In Workflow - Actions Available**
+**State A: Not In Workflow - Actions Available (at IDENTIFY & PROFILE stage)**
 ```
 ┌───────────────────────────────────────────┐
 │                                           │
 │  ┌─────────────────────┬───┐              │
-│  │ Move to Decide      │ ▼ │              │   ← p-splitButton
+│  │ Submit for Go       │ ▼ │              │   ← p-splitButton
 │  └─────────────────────┴───┘              │
 │                                           │
 │  Dropdown items:                          │
-│  ├── Go                                   │
-│  ├── No Go                                │
-│  └── Back to Profile                      │
+│  └── Submit for No Go                     │
 │                                           │
 └───────────────────────────────────────────┘
 ```
@@ -1276,7 +1343,7 @@ Applying GMS pattern to PAO's existing opportunity-view layout.
 │                                                                                                                 │
 │  South Sudan Water Infrastructure Development Project                                                           │
 │  ══════════════════════════════════════════════════════                     ┌─────────┐ ┌─────────────────────┐ │
-│  ID: 123  |  Manager: Jane Smith  |  Org Unit: AFRO  |  Jan 10, 2026       │ Active  │ │ IDENTIFY & PROFILE  │ │
+│  ID: 123  |  Manager: Jane Smith  |  Org Unit: AFRO  |  Jan 10, 2026       │ Draft   │ │ IDENTIFY & PROFILE  │ │
 │                                                                             └─────────┘ └─────────────────────┘ │
 │                                                                                                                 │
 │  ┌──────────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌───────────┐  │
@@ -1287,21 +1354,21 @@ Applying GMS pattern to PAO's existing opportunity-view layout.
 │                                                                                                                 │
 │ ┌──────────┐ ┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
 │ │          │ │                                                                                                  │
-│ │ 📁       │ │┌─ Stage ───────────────────────────────────────────────────────────────────────┬───────────────┐│
-│ │Documents │ ││                                                                               │               ││
-│ │          │ ││ Stage                                                                         │[Move to Decide ▼]│
-│ │──────────│ ││                                                                               │               ││
-│ │          │ │├───────────────────────────────────────────────────────────────────────────────┴───────────────┤│
-│ │📄 ToR.pdf│ ││                                                                                               ││
-│ │          │ ││ ┌─ Overview ─────────┬─ Stage Change History ─┐                                              ││
-│ │📄 Budget │ ││ └────────────────────┴────────────────────────┘                                              ││
-│ │ .xlsx    │ ││                                                                                               ││
-│ │          │ ││ ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐           ││
-│ │[📎Upload]│ ││ │(●) IDENTIFY     │──│( ) DECIDE       │──│( ) GO           │──│( ) NO GO        │           ││
-│ │[🔗 Link] │ ││ │    & PROFILE    │  │                 │  │                 │  │                 │           ││
-│ │          │ ││ └─────────────────┘  └─────────────────┘  └─────────────────┘  └─────────────────┘           ││
-│ │  « Hide  │ ││                                                                                               ││
-│ │          │ │└───────────────────────────────────────────────────────────────────────────────────────────────┘│
+│ │ 📁       │ │┌─ Stage ───────────────────────────────────────────────────────────────────────┬─────────────────┐│
+│ │Documents │ ││                                                                               │                 ││
+│ │          │ ││ Stage                                                                         │[Submit for Go ▼]││
+│ │──────────│ ││                                                                               │                 ││
+│ │          │ │├───────────────────────────────────────────────────────────────────────────────┴─────────────────┤│
+│ │📄 ToR.pdf│ ││                                                                                                 ││
+│ │          │ ││ ┌─ Overview ─────────┬─ Stage Change History ─┐                                                ││
+│ │📄 Budget │ ││ └────────────────────┴────────────────────────┘                                                ││
+│ │ .xlsx    │ ││                                                                                                 ││
+│ │          │ ││      ┌─────────────────────┐     ┌─────────────────────┐     ┌─────────────────────┐           ││
+│ │[📎Upload]│ ││      │(●) IDENTIFY         │─────│( ) GO               │─────│( ) NO GO            │           ││
+│ │[🔗 Link] │ ││      │    & PROFILE        │     │                     │     │                     │           ││
+│ │          │ ││      └─────────────────────┘     └─────────────────────┘     └─────────────────────┘           ││
+│ │  « Hide  │ ││                                                                                                 ││
+│ │          │ │└─────────────────────────────────────────────────────────────────────────────────────────────────┘│
 │ └──────────┘ │                                                                                                  │
 │              │┌─ 📊 Analysis ─────────────────────────────────────────────────────────────────────────────────┐│
 │              ││ (Analysis section content)                                                                     ││
@@ -1435,11 +1502,10 @@ After PRD approval:
 
 ### A. Reference Documents
 
-1. **Migration-Guide-WorkflowStage-To-StateMachine.md** - Comprehensive migration guide (2607 lines)
-2. **GMS Workflow Implementation** - Production reference in business-gms-plus
-3. **UNOPS.Workflow README.md** - Submodule documentation
-4. **PAO Component Development Guide** - `.cursor/rules/component-development.mdc`
-5. **PAO .NET Implementation Guide** - `.cursor/rules/dotnet-implementation.mdc`
+1. **GMS Workflow Implementation** - Production reference in business-gms-plus (primary reference)
+2. **UNOPS.Workflow README.md** - Submodule documentation
+3. **PAO Component Development Guide** - `.cursor/rules/component-development.mdc`
+4. **PAO .NET Implementation Guide** - `.cursor/rules/dotnet-implementation.mdc`
 
 ### B. Key Submodule Files to Review
 
@@ -1612,36 +1678,26 @@ public static StateMachine StateMachine => new()
             StageCode = "IDENTIFY & PROFILE",
             DisplayName = "Identify & Profile",
             Sequence = 1,
-            Facing = Facing.Internal,
-            IsFinalStage = false
-            // Status: Draft
-        },
-        new State 
-        { 
-            StageCode = "DECIDE",
-            DisplayName = "Decide",
-            Sequence = 2,
-            Facing = Facing.Internal,
-            IsFinalStage = false
+            Facing = Facing.Internal
             // Status: Draft
         },
         new State 
         { 
             StageCode = "GO",
             DisplayName = "Go",
-            Sequence = 3,
-            Facing = Facing.Internal,
-            IsFinalStage = true  // FINAL - No transitions out
+            Sequence = 2,
+            Facing = Facing.Internal
             // Status: Active
+            // FINAL - No transitions out
         },
         new State 
         { 
             StageCode = "NO GO",
             DisplayName = "No Go",
-            Sequence = 4,
-            Facing = Facing.Internal,
-            IsFinalStage = false  // Can be reopened
+            Sequence = 3,
+            Facing = Facing.Internal
             // Status: Closed
+            // Can be reopened
         }
     }
 };
@@ -1649,33 +1705,26 @@ public static StateMachine StateMachine => new()
 
 **Stage Transitions** (Seeded data):
 ```
-1. IDENTIFY & PROFILE → DECIDE
-   Action: "Move to Decide"
-   Role Required: Opportunity Manager
-   CommentRequired: false
-   Status Change: None (remains Draft)
-
-2. DECIDE → GO
-   Action: "Move to Go"
-   Role Required: DOA Holder
+1. IDENTIFY & PROFILE → GO
+   Action: "Submit for Go"
+   ApprovalRequired: true
+   Trigger Role: Opportunity Manager
+   Approval Role: DOA Holder
    CommentRequired: true
    Status Change: Draft → Active
    Note: GO is FINAL - no further transitions
 
-3. DECIDE → NO GO
-   Action: "Move to No Go"
-   Role Required: DOA Holder
+2. IDENTIFY & PROFILE → NO GO
+   Action: "Submit for No Go"
+   ApprovalRequired: true
+   Trigger Role: Opportunity Manager
+   Approval Role: DOA Holder
    CommentRequired: true
    Status Change: Draft → Closed
 
-4. DECIDE → IDENTIFY & PROFILE
-   Action: "Back to Identify & Profile"
-   Role Required: DOA Holder
-   CommentRequired: false
-   Status Change: None (remains Draft)
-
-5. NO GO → IDENTIFY & PROFILE
+3. NO GO → IDENTIFY & PROFILE
    Action: "Reopen"
+   ApprovalRequired: false
    Role Required: Opportunity Manager
    CommentRequired: false
    Status Change: Closed → Draft
@@ -1683,79 +1732,88 @@ public static StateMachine StateMachine => new()
 
 **Workflow Diagram:**
 ```
-                    ┌────────────────────────┐
-        ┌──────────►│  IDENTIFY & PROFILE    │◄────────────────┐
-        │           │      (Draft)           │                 │
-        │           └───────────┬────────────┘                 │
-        │                       │                              │
-        │                       │ Move to Decide               │
-        │                       │ [Opp Manager]                │
-        │                       ▼                              │
-        │               ┌───────────────┐                      │
-        │               │    DECIDE     │──────────────────────┘
-        │               │    (Draft)    │  Back to Identify & Profile
-        │               └───────┬───────┘  [DOA Holder]
-        │                       │
-        │           ┌───────────┴───────────┐
-        │           │                       │
-        │           │ Move to Go            │ Move to No Go
-        │           │ [DOA Holder]          │ [DOA Holder]
-        │           ▼                       ▼
-        │   ┌───────────────┐       ┌───────────────┐
-        │   │      GO       │       │    NO GO      │
-        │   │   (Active)    │       │   (Closed)    │
-        │   │   ★ FINAL ★   │       └───────┬───────┘
-        │   └───────────────┘               │
-        │                                   │ Reopen
-        │                                   │ [Opp Manager]
-        └───────────────────────────────────┘
+        ┌────────────────────────┐
+        │  IDENTIFY & PROFILE    │◄──────────────────────────────┐
+        │      (Draft)           │                               │
+        └─────────┬──────────────┘                               │
+                  │                                              │
+      ┌───────────┴───────────┐                                  │
+      │                       │                                  │
+      │ Submit for Go         │ Submit for No Go                 │
+      │ [Opp Mgr triggers]    │ [Opp Mgr triggers]               │
+      │ ⏳ Awaits Approval    │ ⏳ Awaits Approval               │
+      │ [DOA Holder approves] │ [DOA Holder approves]            │
+      ▼                       ▼                                  │
+┌───────────────┐       ┌───────────────┐                        │
+│      GO       │       │    NO GO      │                        │
+│   (Active)    │       │   (Closed)    │                        │
+│   ★ FINAL ★   │       └───────┬───────┘                        │
+└───────────────┘               │                                │
+                                │ Reopen                         │
+                                │ [Opp Manager]                  │
+                                │ (no approval)                  │
+                                └────────────────────────────────┘
 
 Legend:
-  ★ FINAL ★    = No transitions possible from this stage
-  [Role]       = Role required to perform the action
-  Opp Manager  = Opportunity Manager
-  DOA Holder   = Delegation of Authority holder
+  ★ FINAL ★        = No transitions possible from this stage
+  ⏳ Awaits Approval = Transition requires approval before completing
+  [Role]           = Role required to perform the action
+  Opp Mgr/Manager  = Opportunity Manager
+  DOA Holder       = Delegation of Authority holder
 ```
 
 **Status Mapping:**
 | Stage               | Opportunity.Status |
 |---------------------|-------------------|
 | Identify & Profile  | Draft             |
-| Decide              | Draft             |
 | Go                  | Active            |
 | No Go               | Closed            |
 
-**Role Permissions (No Approval Workflow):**
-| Transition                        | Role Required       |
-|-----------------------------------|---------------------|
-| Identify & Profile → Decide       | Opportunity Manager |
-| Decide → Go                       | DOA Holder          |
-| Decide → No Go                    | DOA Holder          |
-| Decide → Identify & Profile       | DOA Holder          |
-| No Go → Identify & Profile        | Opportunity Manager |
-| Go → (none)                       | N/A (final stage)   |
+**Role Permissions (With Approval Workflow):**
+| Transition                        | Trigger Role        | Approval Role       | ApprovalRequired |
+|-----------------------------------|---------------------|---------------------|------------------|
+| Identify & Profile → Go           | Opportunity Manager | DOA Holder          | Yes              |
+| Identify & Profile → No Go        | Opportunity Manager | DOA Holder          | Yes              |
+| No Go → Identify & Profile        | Opportunity Manager | N/A                 | No               |
+| Go → (none)                       | N/A (final stage)   | N/A                 | N/A              |
 
-**Note:** There is no approval workflow. The user's role determines which actions they can perform directly.
+**Approval Workflow Flow:**
+1. **Opportunity Manager** clicks "Submit for Go" or "Submit for No Go"
+2. System creates pending approval request in `workflow.WorkflowLogs`
+3. **DOA Holder(s)** receive email notification about pending approval
+4. Entity shows "Approval Pending" status in UI
+5. **DOA Holder** can:
+   - **Approve**: Completes transition, updates Stage, sends completion notification
+   - **Reject**: Cancels transition, entity stays at current stage, sends rejection notification
+6. **Opportunity Manager** can:
+   - **Recall**: Cancels their own pending approval request
+
+**Note:** Transitions to Go and No Go require DOA Holder approval. The Reopen action does not require approval.
 
 ### F. Glossary
 
 - **StateMachine**: Code-based definition of all possible states/stages for an entity type
-- **State**: A stage in the workflow (e.g., "IDENTIFY & PROFILE", "DECIDE")
+- **State**: A stage in the workflow (e.g., "IDENTIFY & PROFILE", "GO", "NO GO")
 - **StateMachineStageChange**: Database record defining an allowed transition between states
 - **WorkflowLog**: Audit trail entry recording a stage change action
 - **Facing**: Enum defining whether a state/action is visible to Internal users, External users, or TwoFace (both)
 - **ApprovalRequired**: Flag indicating a transition needs approval workflow (Initiate → Approve/Reject/Recall)
+- **WorkflowStatus**: Enum (None, InWorkflow) indicating if entity has pending approval
+- **IsInWorkflow**: Computed property that returns true when WorkflowStatus == InWorkflow
 - **EntityStageProvider**: PAO implementation that reads/updates Stage property on entities
 - **WorkflowApproverProvider**: PAO implementation that determines who can approve transitions
 - **WorkflowUserContext**: PAO implementation providing current user information
 - **WorkflowNotificationService**: PAO implementation that sends workflow emails
 - **Submodule**: Git feature to include another repository within a repository as a folder
+- **Trigger Role**: Role that can initiate/start a workflow action (may start approval process)
+- **Approval Role**: Role that can approve/reject a pending workflow action
 
 ---
 
-**Document Version:** 1.1  
+**Document Version:** 2.0  
 **Created:** 2026-01-12  
+**Updated:** 2026-01-14  
 **Author:** AI Assistant  
 **Status:** Draft - Pending Review  
-**Reference:** Migration-Guide-WorkflowStage-To-StateMachine.md  
-**Estimated Effort:** 9-13 hours (per Migration Guide)
+**Reference:** GMS Workflow Implementation (business-gms-plus)  
+**Estimated Effort:** 14-20 hours (2-3 days)

@@ -3,26 +3,38 @@
 ## Relevant Files
 
 **Backend Files (.NET Core) - NEW:**
+- `UNOPS.PAO.Domain/Enums/WorkflowStatus.cs` - WorkflowStatus enum (None, InWorkflow)
+- `UNOPS.PAO.Business/Workflow/Interfaces/IPaoWorkflowApproverProvider.cs` - Extended approver interface
 - `UNOPS.PAO.Business/Workflow/Adapters/PaoWorkflowUserContext.cs` - IWorkflowUserContext implementation
 - `UNOPS.PAO.Business/Workflow/Adapters/PaoEntityStageProvider.cs` - IEntityStageProvider implementation
-- `UNOPS.PAO.Business/Workflow/Adapters/PaoWorkflowApproverProvider.cs` - IWorkflowApproverProvider implementation
+- `UNOPS.PAO.Business/Workflow/Adapters/PaoWorkflowApproverProvider.cs` - IPaoWorkflowApproverProvider implementation
 - `UNOPS.PAO.Business/Workflow/Adapters/PaoWorkflowNotificationService.cs` - IWorkflowNotificationService implementation
 - `UNOPS.PAO.Business/Workflow/Adapters/WorkflowServiceExtensions.cs` - DI registration extension method
-- `UNOPS.PAO.Business/Workflow/OpportunityWorkflow.cs` - Opportunity state machine definition
+- `UNOPS.PAO.Business/Workflow/OpportunityWorkflow.cs` - Opportunity state machine definition (3 stages)
 - `UNOPS.PAO.Business/Workflow/Seeders/StateMachineStageChangeSeeder.cs` - Stage transition seeder
+- `UNOPS.PAO.Business/Workflow/Seeders/StateMachineStageChangeRoleSeeder.cs` - Role permission seeder
 - `UNOPS.PAO.Business/EmailTemplates/WorkflowApprovalRequest.html` - Email template
 - `UNOPS.PAO.Business/EmailTemplates/WorkflowCompleted.html` - Email template
 - `UNOPS.PAO.Business/EmailTemplates/WorkflowRejected.html` - Email template
-- `UNOPS.PAO.Presentation/Controllers/WorkflowController.cs` - Workflow API endpoints (inherits from `BaseController`)
+- `UNOPS.PAO.Business/EmailTemplates/WorkflowRecalled.html` - Email template
+- `UNOPS.PAO.Presentation/Controllers/WorkflowController.cs` - Workflow API endpoints (comprehensive)
 
 **Backend Files (.NET Core) - MODIFY:**
+- `UNOPS.PAO.Domain/Infrastructure/Audit/ModifiableDeletableEntity.cs` - Add WorkflowStatus property and IsInWorkflow computed property
 - `UNOPS.PAO.Domain/Entities/Opportunity.cs` - Add Stage property, remove WorkflowStageId
-- `UNOPS.PAO.Models/Opportunities/OpportunityModel.cs` - Add Stage property (note: models are in feature subfolders)
-- `UNOPS.PAO.Business/Managers/OpportunityManager.cs` - Integrate workflow methods
-- `UNOPS.PAO.Business/Mapping/MappingProfile.cs` - Update Opportunity mapping
+- `UNOPS.PAO.Models/Opportunities/OpportunityModel.cs` - Add Stage, WorkflowStatus, IsInWorkflow; remove WorkflowStageId/Name
+- `UNOPS.PAO.Models/Opportunities/OpportunityListModel.cs` - Add Stage, WorkflowStatus, IsInWorkflow; remove WorkflowStageId/Name
+- `UNOPS.PAO.Models/Opportunities/OpportunityRequest.cs` - Remove WorkflowStageId
+- `UNOPS.PAO.Models/Opportunities/UpdateOpportunityRequest.cs` - Remove WorkflowStageId
+- `UNOPS.PAO.Models/Opportunities/ApplyOpportunityAiChangesRequest.cs` - Remove WorkflowStageId
+- `UNOPS.PAO.Models/Dashboard/DashboardModels.cs` - Replace WorkflowStageName with Stage
+- `UNOPS.PAO.Business/Managers/OpportunityManager.cs` - Integrate workflow methods (StartWorkflow, EndWorkflow, UpdateStageAsync)
+- `UNOPS.PAO.Business/Mapping/OpportunityMappingProfile.cs` - Update mapping (remove WorkflowStageName, add Stage)
+- `UNOPS.PAO.UNOPSBusiness/Managers/UNOPSOpportunityManager.cs` - Update WorkflowStageId references to use Stage
+- `UNOPS.PAO.UNOPSBusiness/Managers/Mapping/OpportunityMappingProfile.cs` - Update mapping (remove WorkflowStageName, add Stage)
 - `UNOPS.PAO.Server/Startup.cs` - Register workflow services in `ConfigureContainer()` method
-- `UNOPS.PAO.Business/Interfaces/IManagerWrapper.cs` - Remove IWorkflowManager property
-- `UNOPS.PAO.Business/Managers/ManagerWrapper.cs` - Remove WorkflowManager instantiation
+- `UNOPS.PAO.Business/Interfaces/IManagerWrapper.cs` - Remove old IWorkflowManager property (submodule's IWorkflowManager injected via DI)
+- `UNOPS.PAO.Business/Managers/ManagerWrapper.cs` - Remove old WorkflowManager instantiation and property
 - `UNOPS.PAO.DataAccess/Context/AppDbContext.cs` - Remove WorkflowStage and WorkflowLog DbSets
 
 **Backend Files (.NET Core) - DELETE:**
@@ -32,13 +44,15 @@
 - `UNOPS.PAO.Business/Interfaces/IWorkflowManager.cs`
 - `UNOPS.PAO.Models/Workflow/` - Entire folder (submodule provides these in `UNOPS.Workflow.Models`)
 
-**Backend - Unit Tests:**
+**Backend - Unit Tests (NEW):**
 - `UNOPS.PAO.IntegrationTests/UnitTests/Workflow/PaoWorkflowUserContextTests.cs`
 - `UNOPS.PAO.IntegrationTests/UnitTests/Workflow/PaoEntityStageProviderTests.cs`
 - `UNOPS.PAO.IntegrationTests/UnitTests/Workflow/PaoWorkflowApproverProviderTests.cs`
 - `UNOPS.PAO.IntegrationTests/UnitTests/Workflow/OpportunityWorkflowTests.cs`
 - `UNOPS.PAO.IntegrationTests/UnitTests/Workflow/OpportunityWorkflowSeederTests.cs`
 - `UNOPS.PAO.IntegrationTests/Controllers/WorkflowControllerTests.cs`
+
+**Note on test patterns:** Follow existing test structure (see `UnitTests/Managers/UNOPSPartnerManagerTests.cs` for example)
 
 **Frontend Files (Angular) - MODIFY:**
 - `UNOPS.PAO.ClientApp/tsconfig.json` - Add @unops/workflow path alias
@@ -61,13 +75,16 @@
 - Backend unit tests are in `UNOPS.PAO.IntegrationTests/UnitTests/` folder (NOT `UNOPS.PAO.Tests/`)
 - Backend tests use xUnit, Moq, FluentAssertions, Microsoft.EntityFrameworkCore.InMemory
 - Frontend tests use Jasmine, TestBed, HttpTestingController
+- PAO uses Lamar DI (ServiceRegistry is compatible with IServiceCollection extension methods)
 - PAO does NOT have `ServiceExtensions.cs` - services are registered in `Startup.cs.ConfigureContainer()`
-- PAO managers are instantiated directly in `ManagerWrapper.cs`, NOT via DI
+- PAO managers are instantiated directly in `ManagerWrapper.cs`, NOT via DI (except IWorkflowManager from submodule)
 - Controllers inherit from `BaseController` and use `APIDictionary` for route constants
+- Controllers use `[Route("/")]` at class level and `[HttpGet(APIDictionary.Xxx)]` for methods
 - Angular components are in `features/partnerships/opportunities/` (not `features/opportunities/`)
+- Mapping profiles are separate files (e.g., `OpportunityMappingProfile.cs`), not in main `MappingProfile.cs`
 - Follow PAO coding standards and naming conventions
-- Reference Migration-Guide-WorkflowStage-To-StateMachine.md for detailed guidance
 - **Use `UNOPS.Workflow.Models` (submodule) directly** - do NOT duplicate models locally
+- **Opportunity Workflow**: 3 stages (IDENTIFY & PROFILE → GO/NO GO) with approval workflow
 
 ---
 
@@ -113,10 +130,13 @@ Each unit test task MUST include:
   - [ ] 1.4 Delete old PAO workflow files from Business layer
     - Delete `UNOPS.PAO.Business/Managers/WorkflowManager.cs`
     - Delete `UNOPS.PAO.Business/Interfaces/IWorkflowManager.cs`
-    - Remove `IWorkflowManager WorkflowManager { get; }` from `UNOPS.PAO.Business/Interfaces/IManagerWrapper.cs`
-    - Remove `private IWorkflowManager workflowManager;` field from `UNOPS.PAO.Business/Managers/ManagerWrapper.cs`
-    - Remove `workflowManager = new WorkflowManager(context);` from ManagerWrapper constructor
-    - Remove `public virtual IWorkflowManager WorkflowManager => workflowManager;` property
+    - Edit `UNOPS.PAO.Business/Interfaces/IManagerWrapper.cs`:
+      * Remove `IWorkflowManager WorkflowManager { get; }` property
+    - Edit `UNOPS.PAO.Business/Managers/ManagerWrapper.cs`:
+      * Remove `private IWorkflowManager workflowManager;` field (line 19)
+      * Remove `workflowManager = new WorkflowManager(context);` from constructor (line 48)
+      * Remove `public virtual IWorkflowManager WorkflowManager => workflowManager;` property (line 85)
+    - **Note:** The submodule's IWorkflowManager will be injected via DI, NOT through ManagerWrapper
   - [ ] 1.5 Delete PAO workflow models folder
     - Delete entire `UNOPS.PAO.Models/Workflow/` folder
     - **Reason:** The submodule provides these models in `UNOPS.Workflow.Models`
@@ -132,45 +152,87 @@ Each unit test task MUST include:
     - Verify project references are correct
 
 - [ ] 2.0 Database Migration & Entity Changes
-  - [ ] 2.1 Modify Opportunity entity to add Stage property
-    - Add `public string? Stage { get; set; }` property
-    - Add `[MaxLength(100)]` attribute
-    - Keep WorkflowStageId temporarily for data migration
-  - [ ] 2.2 Create EF Core migration for Stage column
-    - Run: `dotnet ef migrations add AddStageToOpportunity`
+  - [ ] 2.1 Create WorkflowStatus enum
+    - Create `UNOPS.PAO.Domain/Enums/WorkflowStatus.cs`:
+    ```csharp
+    public enum WorkflowStatus
+    {
+        None,
+        InWorkflow
+    }
+    ```
+  - [ ] 2.2 Update ModifiableDeletableEntity base class
+    - Edit `UNOPS.PAO.Domain/Infrastructure/Audit/ModifiableDeletableEntity.cs`
+    - Add `public WorkflowStatus WorkflowStatus { get; set; } = WorkflowStatus.None;`
+    - Add `public bool IsInWorkflow => WorkflowStatus == WorkflowStatus.InWorkflow;`
+    - This enables entities to track pending approval workflows
+  - [ ] 2.3 Modify Opportunity entity to add Stage property
+    - Edit `UNOPS.PAO.Domain/Entities/Opportunity.cs`
+    - Add new property after line 18:
+      ```csharp
+      [MaxLength(100)]
+      public string? Stage { get; set; }
+      ```
+    - Keep `WorkflowStageId` (line 19) and `WorkflowStage` (line 20) temporarily for data migration
+  - [ ] 2.4 Create EF Core migration for Stage and WorkflowStatus columns
+    - Run: `dotnet ef migrations add AddWorkflowPropertiesToEntities`
     - Verify migration adds Stage column to Opportunities table
-  - [ ] 2.3 Create data migration script to populate Stage from WorkflowStageId
+    - Verify migration adds WorkflowStatus column to entities inheriting ModifiableDeletableEntity
+  - [ ] 2.5 Create data migration script to populate Stage from WorkflowStageId
     - Write SQL to copy WorkflowStage.Name to Opportunity.Stage
+    - Map old stage names to new 3-stage workflow (IDENTIFY & PROFILE is default)
     - Handle null WorkflowStageId values
     - Test script in development database
-  - [ ] 2.4 Remove WorkflowStageId from Opportunity entity
-    - Remove `WorkflowStageId` property
-    - Remove `WorkflowStage` navigation property
-    - Remove any `[ForeignKey]` attributes
-  - [ ] 2.5 Create migration to drop WorkflowStages table
+  - [ ] 2.6 Remove WorkflowStageId from Opportunity entity
+    - Edit `UNOPS.PAO.Domain/Entities/Opportunity.cs`
+    - **Remove:** `public int? WorkflowStageId { get; set; }` (line 19)
+    - **Remove:** `public virtual WorkflowStage? WorkflowStage { get; set; }` (line 20)
+    - Make Stage non-nullable: change `public string? Stage` to `public string Stage { get; set; } = "IDENTIFY & PROFILE";`
+  - [ ] 2.7 Create migration to drop WorkflowStages table
     - Run: `dotnet ef migrations add DropWorkflowStagesTable`
     - Verify migration drops the table and FK constraint
-  - [ ] 2.6 Configure WorkflowDbContext in Startup.cs
+  - [ ] 2.8 Configure WorkflowDbContext in Startup.cs
     - In `ConfigureContainer(ServiceRegistry services)` method
     - Add workflow DbContext with same connection string but `workflow` schema
     - Register `AddWorkflowServices()` with PostgreSQL storage
     - Configure schema name as "workflow"
     - Follow existing DbContext registration pattern (see `AppDbContext` registration)
-  - [ ] 2.7 Verify workflow schema is auto-created on startup
+  - [ ] 2.9 Verify workflow schema is auto-created on startup
     - Run application and check database
     - Verify `workflow.StateMachineStageChanges` table exists
     - Verify `workflow.StateMachineStageChangeRoles` table exists
     - Verify `workflow.WorkflowLogs` table exists
-  - [ ] 2.8 Review implementation
+  - [ ] 2.10 Review implementation
     - Verify all migrations apply cleanly
     - Verify data migration preserves existing Stage data
     - Verify workflow schema is properly isolated
+    - Verify WorkflowStatus defaults to None
 
 - [ ] 3.0 Backend Interface Implementations & Service Registration
   - [ ] 3.1 Create Workflow folder structure in Business project
     - Create `UNOPS.PAO.Business/Workflow/` folder (for workflow definitions)
+    - Create `UNOPS.PAO.Business/Workflow/Interfaces/` subfolder (for PAO-specific interfaces)
     - Create `UNOPS.PAO.Business/Workflow/Adapters/` subfolder (for interface implementations)
     - Create `UNOPS.PAO.Business/Workflow/Seeders/` subfolder (for seeder classes)
+  - [ ] 3.1.5 Create IPaoWorkflowApproverProvider interface
+    - Create `UNOPS.PAO.Business/Workflow/Interfaces/IPaoWorkflowApproverProvider.cs`
+    - Extend base `IWorkflowApproverProvider` from submodule
+    - Keep empty initially as placeholder for future PAO-specific methods:
+    ```csharp
+    using UNOPS.Workflow.Business.Interfaces;
+    
+    namespace UNOPS.PAO.Business.Workflow.Interfaces;
+    
+    /// <summary>
+    /// PAO-specific workflow approver provider interface.
+    /// Extends base interface for future PAO-specific methods.
+    /// </summary>
+    public interface IPaoWorkflowApproverProvider : IWorkflowApproverProvider
+    {
+        // Placeholder for future PAO-specific approval methods
+        // e.g., Task<bool> CanUserApproveOpportunityAsync(int opportunityId, int userId);
+    }
+    ```
   - [ ] 3.2 Implement PaoWorkflowUserContext class
     - Create `UNOPS.PAO.Business/Workflow/Adapters/PaoWorkflowUserContext.cs`
     - Implement `IWorkflowUserContext` from submodule
@@ -267,8 +329,12 @@ Each unit test task MUST include:
     - Include entity name, URL, performer, comment placeholders
   - [ ] 3.7 Create WorkflowServiceExtensions.cs
     - Create `UNOPS.PAO.Business/Workflow/Adapters/WorkflowServiceExtensions.cs`
+    - Follow GMS pattern - use `IServiceCollection` (compatible with Lamar's ServiceRegistry)
     - Create extension method for PAO-specific workflow registration:
     ```csharp
+    using Microsoft.Extensions.DependencyInjection;
+    using UNOPS.Workflow.DataAccess;
+    
     public static class WorkflowServiceExtensions
     {
         public static IServiceCollection AddPaoWorkflowServices(
@@ -291,7 +357,7 @@ Each unit test task MUST include:
   - [ ] 3.8 Register workflow services in Startup.cs
     - In `UNOPS.PAO.Server/Startup.cs` `ConfigureContainer(ServiceRegistry services)` method
     - Add: `services.AddPaoWorkflowServices(options => options.UsePostgreSqlStorage(connectionString));`
-    - Place after database context registration
+    - Place after existing DbContext registration (around line 183)
     - Note: IHttpContextAccessor is already registered in Startup.cs
   - [ ] 3.9 Create unit tests for PaoWorkflowUserContext (MANDATORY)
     - Create `UNOPS.PAO.IntegrationTests/UnitTests/Workflow/PaoWorkflowUserContextTests.cs`
@@ -332,37 +398,40 @@ Each unit test task MUST include:
 - [ ] 4.0 Opportunity Workflow Configuration (State Machine & Seeder)
   - [ ] 4.1 Create OpportunityWorkflow state machine class
     - Create `UNOPS.PAO.Business/Workflow/OpportunityWorkflow.cs`
-    - Use submodule's models directly:
+    - Use submodule's models directly with **3 stages** (no Decide stage):
     ```csharp
     using UNOPS.Workflow.Models;  // Use submodule's models
     
     namespace UNOPS.PAO.Business.Workflow;
     
-    public class OpportunityWorkflow
+    public static class OpportunityWorkflow
     {
-        public static StateMachine StateMachine
+        public const string EntityName = "Opportunity";
+        
+        public static class Stages
         {
-            get
-            {
-                return new StateMachine()
-                {
-                    EntityType = "Opportunity",
-                    States =
-                    [
-                        new State() { Sequence = 1, StageCode = "Identify & Profile", Facing = Facing.Internal },
-                        new State() { Sequence = 2, StageCode = "Decide", Facing = Facing.Internal },
-                        new State() { Sequence = 3, StageCode = "Go", Facing = Facing.Internal },
-                        new State() { Sequence = 4, StageCode = "No Go", Facing = Facing.Internal }
-                    ]
-                };
-            }
+            public const string IdentifyAndProfile = "IDENTIFY & PROFILE";
+            public const string Go = "GO";
+            public const string NoGo = "NO GO";
         }
+        
+        public static StateMachine StateMachine => new()
+        {
+            EntityType = EntityName,
+            States =
+            [
+                new State() { Sequence = 1, StageCode = Stages.IdentifyAndProfile, Facing = Facing.Internal },
+                new State() { Sequence = 2, StageCode = Stages.Go, Facing = Facing.Internal },
+                new State() { Sequence = 3, StageCode = Stages.NoGo, Facing = Facing.Internal }
+            ]
+        };
     }
     ```
-    - Note: IsFinalStage logic is handled in seeder/business logic, not in State class
+    - Note: GO is final stage (no transitions out), NO GO can be reopened
   - [ ] 4.2 Create StateMachineStageChangeSeeder class
     - Create `UNOPS.PAO.Business/Workflow/Seeders/StateMachineStageChangeSeeder.cs`
     - Create as static class with extension method:
+    - **3 transitions with approval workflow**:
     ```csharp
     public static class StateMachineStageChangeSeeder
     {
@@ -370,18 +439,42 @@ Each unit test task MUST include:
         {
             return new List<StateMachineStageChange>
             {
+                // Transition 1: IDENTIFY & PROFILE → GO (requires approval)
                 new StateMachineStageChange {
                     EntityName = "Opportunity",
-                    FromStage = "Identify & Profile",
-                    ToStage = "Decide",
+                    FromStage = "IDENTIFY & PROFILE",
+                    ToStage = "GO",
                     Sequence = 1,
-                    CommentRequired = false, CommentOptional = true,
-                    ApprovalRequired = false,
+                    CommentRequired = true, CommentOptional = false,
+                    ApprovalRequired = true,  // Requires DOA Holder approval
                     Internal = true, External = false,
-                    Name = "Move to Decide",
+                    Name = "Submit for Go",
                     Status = EntityStatus.Active
                 },
-                // ... add all 5 transitions per PRD
+                // Transition 2: IDENTIFY & PROFILE → NO GO (requires approval)
+                new StateMachineStageChange {
+                    EntityName = "Opportunity",
+                    FromStage = "IDENTIFY & PROFILE",
+                    ToStage = "NO GO",
+                    Sequence = 2,
+                    CommentRequired = true, CommentOptional = false,
+                    ApprovalRequired = true,  // Requires DOA Holder approval
+                    Internal = true, External = false,
+                    Name = "Submit for No Go",
+                    Status = EntityStatus.Active
+                },
+                // Transition 3: NO GO → IDENTIFY & PROFILE (reopen, no approval)
+                new StateMachineStageChange {
+                    EntityName = "Opportunity",
+                    FromStage = "NO GO",
+                    ToStage = "IDENTIFY & PROFILE",
+                    Sequence = 1,
+                    CommentRequired = false, CommentOptional = true,
+                    ApprovalRequired = false,  // No approval needed for reopen
+                    Internal = true, External = false,
+                    Name = "Reopen",
+                    Status = EntityStatus.Active
+                }
             };
         }
         
@@ -393,16 +486,21 @@ Each unit test task MUST include:
         }
     }
     ```
-    - Add all 5 transitions per PRD workflow definition
+    - Add all 3 transitions per PRD workflow definition (with approval)
     - Make seeder idempotent (check existing records, handle duplicates, reactivate deleted)
   - [ ] 4.3 Create StateMachineStageChangeRoleSeeder class
     - Create `UNOPS.PAO.Business/Workflow/Seeders/StateMachineStageChangeRoleSeeder.cs`
     - Create as static class with async method
     - Look up PAO roles (Opportunity Manager, DOA Holder) from database
-    - Create `StateMachineStageChangeRole` entries:
-      - Opportunity Manager: Can trigger "Identify & Profile → Decide"
-      - DOA Holder: Can trigger "Decide → Go", "Decide → No Go", "Decide → Identify & Profile"
-      - Opportunity Manager: Can trigger "No Go → Identify & Profile"
+    - Create `StateMachineStageChangeRole` entries for **approval workflow**:
+      - **IDENTIFY & PROFILE → GO:**
+        * Opportunity Manager: CanTrigger = true, CanApprove = false
+        * DOA Holder: CanTrigger = false, CanApprove = true
+      - **IDENTIFY & PROFILE → NO GO:**
+        * Opportunity Manager: CanTrigger = true, CanApprove = false
+        * DOA Holder: CanTrigger = false, CanApprove = true
+      - **NO GO → IDENTIFY & PROFILE (Reopen):**
+        * Opportunity Manager: CanTrigger = true, CanApprove = false (no approval needed)
     - Create `SeedStateMachineStageChangeRolesAsync(this IServiceProvider services)` extension method
     - Make seeder idempotent
   - [ ] 4.4 Register seeders to run on application startup
@@ -417,17 +515,17 @@ Each unit test task MUST include:
   - [ ] 4.5 Create unit tests for OpportunityWorkflow (MANDATORY)
     - Create `UNOPS.PAO.IntegrationTests/UnitTests/Workflow/OpportunityWorkflowTests.cs`
     - Test StateMachine has correct EntityType = "Opportunity"
-    - Test StateMachine has 4 states (Identify & Profile, Decide, Go, No Go)
-    - Test state sequences are correct (1, 2, 3, 4)
+    - Test StateMachine has 3 states (IDENTIFY & PROFILE, GO, NO GO)
+    - Test state sequences are correct (1, 2, 3)
     - Test all states have correct Facing configuration (Facing.Internal)
     - Verify all tests compile and run successfully with no errors
   - [ ] 4.6 Create unit tests for StateMachineStageChangeSeeder (MANDATORY)
     - Create `UNOPS.PAO.IntegrationTests/UnitTests/Workflow/StateMachineStageChangeSeederTests.cs`
     - Use InMemory database for testing
-    - Test seeder creates all 5 transitions
+    - Test seeder creates all 3 transitions
     - Test seeder is idempotent (running twice creates same result)
-    - Test transitions have correct role requirements
-    - Test comment requirements are set correctly for GO/NO GO transitions
+    - Test transitions have correct ApprovalRequired flags (true for Go/No Go, false for Reopen)
+    - Test comment requirements are set correctly
     - Verify all tests compile and run successfully with no errors
   - [ ] 4.7 (OPTIONAL) Create OpportunityStageRequirements class
     - Create `UNOPS.PAO.Business/Workflow/StageRequirements/OpportunityStageRequirements.cs` if needed
@@ -435,7 +533,7 @@ Each unit test task MUST include:
     - Return list of required fields, validation rules, error messages
     - This is OPTIONAL for initial implementation - can be added when requirements are clear
   - [ ] 4.8 Review implementation
-    - Verify state machine matches PRD workflow diagram
+    - Verify state machine matches PRD workflow diagram (3 stages, approval workflow)
     - Verify all transitions are seeded correctly
     - Verify role permissions are correct
     - Run seeder and verify database records
@@ -462,48 +560,117 @@ Each unit test task MUST include:
     - Query entity's current stage
     - Calculate available transitions based on user role
     - Return 404 if entity not found
-  - [ ] 5.4 Implement POST /api/workflow endpoint
+  - [ ] 5.4 Implement GET /api/workflow/{entityName}/{id}/details endpoint
+    - Return workflow details including approval status
+    - Return current stage, next stage (if pending), approvers list
+    - Return `isInWorkflow` flag indicating pending approval
+  - [ ] 5.5 Implement POST /api/workflow/submit endpoint
     - Accept entityName, entityId, newStage, comment in body
     - Validate transition is allowed
-    - Check user has permission for transition
-    - Execute stage change via IWorkflowManager
-    - Return success response with new stage
-  - [ ] 5.5 Implement GET /api/workflow/{entityName}/{id}/history endpoint
+    - Check user has trigger permission for transition
+    - If ApprovalRequired = true:
+      * Set entity.WorkflowStatus = InWorkflow
+      * Call IWorkflowManager.Initiate() to start approval
+      * Send notification to approvers
+    - If ApprovalRequired = false:
+      * Execute stage change directly
+    - Return success response with workflow status
+  - [ ] 5.6 Implement POST /api/workflow/approve endpoint
+    - Accept entityName, entityId, comment in body
+    - Check user has approval permission
+    - Call IWorkflowManager.Approve() to complete workflow
+    - Set entity.WorkflowStatus = None
+    - Update entity Stage to target stage
+    - Send completion notification
+    - Return success response
+  - [ ] 5.7 Implement POST /api/workflow/reject endpoint
+    - Accept entityName, entityId, comment in body
+    - Check user has approval permission
+    - Call IWorkflowManager.Reject() to cancel workflow
+    - Set entity.WorkflowStatus = None
+    - Entity Stage stays at current stage
+    - Send rejection notification
+    - Return success response
+  - [ ] 5.8 Implement POST /api/workflow/recall endpoint
+    - Accept entityName, entityId in body
+    - Check user is the one who initiated the workflow
+    - Call IWorkflowManager.Recall() to cancel
+    - Set entity.WorkflowStatus = None
+    - Return success response
+  - [ ] 5.9 Implement GET /api/workflow/{entityName}/{id}/history endpoint
     - Return stage change history from WorkflowLogs
     - Order by CompletedOn descending
     - Include user, action, comment, dates
-  - [ ] 5.6 Verify APIDictionary workflow constant
-    - Verify `Workflow = APIPrefix + "workflow"` exists in `UNOPS.PAO.Presentation/Helpers/APIDictionary.cs`
-    - Add any additional endpoint path constants if needed
-  - [ ] 5.7 Update OpportunityManager to integrate workflow
-    - Update GetById to include Stage in response model
-    - Add `GetWorkflowState(id)` method
-    - Add `ChangeStage(id, newStage, comment)` method
+  - [ ] 5.10 Verify APIDictionary workflow constant
+    - **Already exists:** `Workflow = APIPrefix + "workflow"` on line 57 of `UNOPS.PAO.Presentation/Helpers/APIDictionary.cs`
+    - No action needed unless additional endpoint path constants are required
+  - [ ] 5.11 Update OpportunityManager to integrate workflow
+    - Update GetById to include Stage, WorkflowStatus in response model
+    - Add `StartWorkflow(id)` method to set WorkflowStatus = InWorkflow
+    - Add `EndWorkflow(id)` method to set WorkflowStatus = None
+    - Add `UpdateStageAsync(id, newStage, baseUri)` method for stage changes
     - Remove old WorkflowStage navigation property usage
-  - [ ] 5.8 Update OpportunityModel DTO
-    - Edit `UNOPS.PAO.Models/Opportunities/OpportunityModel.cs`
-    - Add `public string? Stage { get; set; }` property
-    - Add `WorkflowState` property (optional, for current state details)
-    - Remove `WorkflowStageId` property if present
-  - [ ] 5.9 Update AutoMapper OpportunityMappingProfile
-    - Edit `UNOPS.PAO.Business/Mapping/OpportunityMappingProfile.cs`
-    - Map `Opportunity.Stage` to `OpportunityModel.Stage`
-    - Remove `WorkflowStageId` mapping if present
-  - [ ] 5.10 Create unit tests for WorkflowController (MANDATORY)
+    - Integrate with IWorkflowManager from submodule
+  - [ ] 5.12 Update Opportunity-related DTOs
+    - Edit `UNOPS.PAO.Models/Opportunities/OpportunityModel.cs`:
+      - **Remove:** `public int? WorkflowStageId { get; set; }` (line 14)
+      - **Remove:** `public string? WorkflowStageName { get; set; }` (line 15)
+      - **Add:** `public string? Stage { get; set; }` property
+      - **Add:** `public WorkflowStatus WorkflowStatus { get; set; }` property
+      - **Add:** `public bool IsInWorkflow { get; set; }` property
+      - **Update** `CalculateConditionalTags()` method (lines 168, 172): replace `WorkflowStageName` with `Stage`
+    - Edit `UNOPS.PAO.Models/Opportunities/OpportunityListModel.cs`:
+      - **Remove:** `public int? WorkflowStageId { get; set; }` (line 30)
+      - **Remove:** `public string? WorkflowStageName { get; set; }` (line 31)
+      - **Add:** `public string? Stage { get; set; }` property
+      - **Add:** `public WorkflowStatus WorkflowStatus { get; set; }` property
+      - **Add:** `public bool IsInWorkflow { get; set; }` property
+      - **Update** `CalculateConditionalTags()` method (lines 82, 85): replace `WorkflowStageName` with `Stage`
+    - Edit `UNOPS.PAO.Models/Opportunities/OpportunityRequest.cs`:
+      - **Remove:** `public int? WorkflowStageId { get; set; }` (line 8)
+    - Edit `UNOPS.PAO.Models/Opportunities/UpdateOpportunityRequest.cs`:
+      - **Remove:** `public int? WorkflowStageId { get; set; }` (line 9)
+    - Edit `UNOPS.PAO.Models/Opportunities/ApplyOpportunityAiChangesRequest.cs`:
+      - **Remove:** `public int? WorkflowStageId { get; set; }` (line 62)
+    - Edit `UNOPS.PAO.Models/Dashboard/DashboardModels.cs`:
+      - **Remove:** `public string? WorkflowStageName { get; set; }` (line 83)
+      - **Add:** `public string? Stage { get; set; }` property
+  - [ ] 5.13 Update AutoMapper OpportunityMappingProfiles
+    - Edit `UNOPS.PAO.Business/Mapping/OpportunityMappingProfile.cs`:
+      - **Remove:** `.ForMember(dest => dest.WorkflowStageName, opt => opt.MapFrom(src => src.WorkflowStage != null ? src.WorkflowStage.Name : null))`
+      - **Add:** `.ForMember(dest => dest.Stage, opt => opt.MapFrom(src => src.Stage))`
+      - **Add:** `.ForMember(dest => dest.WorkflowStatus, opt => opt.MapFrom(src => src.WorkflowStatus))`
+      - **Add:** `.ForMember(dest => dest.IsInWorkflow, opt => opt.MapFrom(src => src.IsInWorkflow))`
+      - Remove any `WorkflowStageId` mapping if present
+    - Edit `UNOPS.PAO.UNOPSBusiness/Managers/Mapping/OpportunityMappingProfile.cs`:
+      - **Remove:** `.ForMember(dest => dest.WorkflowStageName, ...)` mappings (lines 18, 42)
+      - **Add:** `.ForMember(dest => dest.Stage, opt => opt.MapFrom(src => src.Stage))`
+      - **Add:** `.ForMember(dest => dest.WorkflowStatus, opt => opt.MapFrom(src => src.WorkflowStatus))`
+      - **Add:** `.ForMember(dest => dest.IsInWorkflow, opt => opt.MapFrom(src => src.IsInWorkflow))`
+  - [ ] 5.13.1 Update UNOPSOpportunityManager
+    - Edit `UNOPS.PAO.UNOPSBusiness/Managers/UNOPSOpportunityManager.cs`:
+      - **Update lines 99-101:** Replace `WorkflowStageId` logic with `Stage` initialization
+        - Change: `if (entity.WorkflowStageId == null || entity.WorkflowStageId == 0) { entity.WorkflowStageId = 1; }`
+        - To: `if (string.IsNullOrEmpty(entity.Stage)) { entity.Stage = "IDENTIFY & PROFILE"; }`
+      - **Update lines 3090-3092:** Remove `WorkflowStageId` update logic (stage changes via workflow API now)
+      - **Update lines 3988-3989:** Replace `workflowStageId` and `workflowStageName` with `stage` in AI context
+  - [ ] 5.14 Create unit tests for WorkflowController (MANDATORY)
     - Create `UNOPS.PAO.IntegrationTests/Controllers/WorkflowControllerTests.cs`
     - Follow existing controller test pattern
     - Use Moq to mock IWorkflowManager and IEntityStageProvider
-    - Test GET `/api/workflow/{entityName}` returns correct stages
-    - Test GET `/api/workflow/{entityName}/{id}` returns current state and actions
-    - Test POST `/api/workflow` validates and executes transitions
-    - Test POST endpoint returns 400 for invalid transitions
-    - Test POST endpoint returns 403 for unauthorized users
-    - Test GET `/api/workflow/{entityName}/{id}/history` returns ordered history
+    - Test GET endpoints return correct data
+    - Test POST /submit initiates approval workflow correctly
+    - Test POST /approve completes workflow and updates stage
+    - Test POST /reject cancels workflow and keeps current stage
+    - Test POST /recall allows user to cancel their own pending approval
+    - Test 400 returned for invalid transitions
+    - Test 403 returned for unauthorized users
     - Test 404 returned for non-existent entities
     - Verify all tests compile and run successfully with no errors
-  - [ ] 5.11 Review implementation
+  - [ ] 5.15 Review implementation
     - Verify all endpoints follow PAO controller patterns
     - Verify authorization is correctly applied
+    - Verify approval workflow works end-to-end
     - Verify DTOs are returned, never entities
     - Test endpoints manually using Swagger/Postman
 
@@ -522,10 +689,14 @@ Each unit test task MUST include:
     }
     ```
     - **Why path alias:** No build step needed, direct source access, easy debugging
-  - [ ] 6.2 Delete old PAO workflow Angular components (if exist)
-    - Delete `src/app/shared/components/workflows/` folder if it exists
-    - Delete `src/app/shared/services/domain/workflow.service.ts` if it exists
-    - Update `src/app/shared/services/domain/index.ts` to remove workflow exports
+  - [ ] 6.2 Delete old PAO workflow Angular components
+    - **Delete files that exist:**
+      - `src/app/shared/services/domain/workflow.service.ts`
+      - `src/app/shared/services/domain/workflow.service.spec.ts`
+      - `src/app/shared/components/workflows/workflow/workflow.component.ts`
+      - `src/app/shared/components/workflows/workflow/workflow.component.spec.ts`
+    - Delete entire `src/app/shared/components/workflows/` folder
+    - Update `src/app/shared/services/domain/index.ts` to remove workflow exports (if present)
   - [ ] 6.3 Add workflow translation keys to i18n files
     - Edit `UNOPS.PAO.ClientApp/src/assets/i18n/en.json`
     - Add `title.stage`, `label.workflow.currentStage`, `label.workflow.nextStage`
@@ -594,28 +765,46 @@ Each unit test task MUST include:
     - Execute: `ng test`
     - Verify all tests pass
     - Fix any failing tests
-  - [ ] 7.3 Perform integration testing
-    - Create test opportunity
-    - Change stage via API: IDENTIFY & PROFILE → DECIDE
-    - Change stage via API: DECIDE → GO
-    - Verify Stage property updated in database
-    - Verify WorkflowLog created in workflow schema
-    - Test NO GO → IDENTIFY & PROFILE (reopen)
-  - [ ] 7.4 Test permission-based access
-    - Test Opportunity Manager can move to DECIDE
-    - Test DOA Holder can move to GO/NO GO
-    - Test unauthorized user cannot change stage
+  - [ ] 7.3 Perform integration testing (3-stage approval workflow)
+    - Create test opportunity (starts at IDENTIFY & PROFILE)
+    - **Test approval workflow to GO:**
+      1. Login as Opportunity Manager
+      2. Submit for Go via API (starts approval workflow)
+      3. Verify entity.WorkflowStatus = InWorkflow
+      4. Verify WorkflowLog created with RequiresApproval = true
+      5. Login as DOA Holder
+      6. Approve via API
+      7. Verify Stage changed to GO
+      8. Verify entity.WorkflowStatus = None
+    - **Test approval workflow to NO GO:**
+      1. Create new opportunity
+      2. Submit for No Go (starts approval workflow)
+      3. DOA Holder approves
+      4. Verify Stage changed to NO GO
+    - **Test reopen (no approval):**
+      1. From NO GO stage, click Reopen
+      2. Verify Stage changed directly to IDENTIFY & PROFILE (no approval needed)
+    - Verify GO is final stage (no further transitions)
+  - [ ] 7.4 Test approval workflow edge cases
+    - **Test Reject:** DOA Holder rejects → Stage stays at IDENTIFY & PROFILE
+    - **Test Recall:** Opportunity Manager recalls their own pending request
+    - Test unauthorized user cannot approve/reject
     - Verify 403 returned for unauthorized attempts
+    - Test email notifications are sent (check logs or mock email service)
   - [ ] 7.5 Test workflow UI end-to-end
     - Login as Opportunity Manager
     - Navigate to opportunity detail page
-    - Verify workflow component displays
-    - Click "Move to Decide" and verify success
-    - Check workflow history shows the change
+    - Verify workflow component displays current stage
+    - Click "Submit for Go" and verify approval pending indicator
+    - Login as DOA Holder
+    - Navigate to same opportunity
+    - Verify Approve/Reject buttons appear
+    - Click Approve and verify stage change
+    - Check workflow history shows all actions
   - [ ] 7.6 Update README with workflow integration instructions
     - Document Git submodule setup commands
     - Document how to run seeders
-    - Document API endpoints
+    - Document API endpoints (including approval workflow endpoints)
     - Include troubleshooting section
   - [ ] 7.7 Document how to add workflow to new entities
     - Create step-by-step guide
