@@ -322,3 +322,12 @@ ExternalDataService/appsettings.Local.json
 ExternalDataService/logs/
 
 db_dump/
+
+# Katalon Studio artifacts (not used in this project)
+.classpath
+.settings/
+.project
+Keywords/
+Test Listeners/
+Libs/
+Include/
