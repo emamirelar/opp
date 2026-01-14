@@ -78,9 +78,9 @@
           pInputText
           [formControl]="nameControl"
           class="w-full"
-          [class.border-red-500]="nameControl.value?.trim() === '' || (nameControl.value?.length ?? 0) > 255"
+          [class.border-red-500]="nameControl.value?.trim() === '' || (nameControl.value?.length ?? 0) > 120"
           [placeholder]="'label.opportunity.namePlaceholder' | translate"
-          maxlength="255"
+          maxlength="120"
         />
         <div class="flex items-center justify-between mt-1">
           <small 
@@ -89,7 +89,7 @@
           >
             {{ 'message.validation.opportunityNameRequired' | translate }}
           </small>
-          <small class="text-unops-neutral-600 ml-auto">{{ (nameControl.value?.length || 0) }} / 255</small>
+          <small class="text-unops-neutral-600 ml-auto">{{ (nameControl.value?.length || 0) }} / 120</small>
         </div>
       } @else {
         <p class="text-unops-secondary font-medium text-lg">

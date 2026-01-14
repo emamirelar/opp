@@ -504,9 +504,9 @@ public class OpportunityController : BaseController
                 return BadRequest(new { error = "Opportunity name is required and cannot be empty" });
             }
 
-            if (req.Name.Length > 255)
+            if (req.Name.Length > 120)
             {
-                return BadRequest(new { error = "Opportunity name cannot exceed 255 characters" });
+                return BadRequest(new { error = "Opportunity name cannot exceed 120 characters" });
             }
 
             var result = await _manager.UpdateOverviewSectionAsync(id, req);
@@ -913,9 +913,9 @@ public class OpportunityController : BaseController
                     return BadRequest(new { error = "Opportunity name is required and cannot be empty" });
                 }
 
-                if (req.Name.Length > 255)
+                if (req.Name.Length > 120)
                 {
-                    return BadRequest(new { error = "Opportunity name cannot exceed 255 characters" });
+                    return BadRequest(new { error = "Opportunity name cannot exceed 120 characters" });
                 }
             }
 
@@ -1595,9 +1595,9 @@ public class OpportunityController : BaseController
             {
                 validationErrors.Add("Opportunity name is required and cannot be empty");
             }
-            else if (request.Name.Length > 255)
+            else if (request.Name.Length > 120)
             {
-                validationErrors.Add("Opportunity name cannot exceed 255 characters");
+                validationErrors.Add("Opportunity name cannot exceed 120 characters");
             }
 
             // Partner validation: only required if partnerId is provided (creating from partner context)
