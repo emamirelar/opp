@@ -19,7 +19,9 @@ The Partnerships and Opportunities (PAO) application currently uses a basic data
 - Workflow action history (approve, reject, recall)
 - Separation of internal vs external user workflows
 
-**Solution:** Integrate UNOPS.Workflow as a Git submodule, deprecate the existing `WorkflowStage` system, and migrate to the state machine pattern used successfully in GMS.
+**Solution:** Integrate UNOPS.Workflow as a Git submodule, delete the existing `WorkflowStage` system, and migrate to the state machine pattern used successfully in GMS.
+
+**Reference:** This PRD follows the **Migration-Guide-WorkflowStage-To-StateMachine.md** document which provides detailed implementation steps.
 
 **Goal:** Establish production-ready workflow infrastructure that enables implementation of any future approval process without rebuilding workflow logic.
 
@@ -36,7 +38,7 @@ The Partnerships and Opportunities (PAO) application currently uses a basic data
 - Keep WorkflowDbContext separate from AppDbContext
 
 **Q3: Existing PAO Workflow Infrastructure**
-- Deprecate/remove existing WorkflowStage and WorkflowLog (Option A)
+- Delete existing WorkflowStage and WorkflowLog entities (Option A)
 - Use GMS migration strategy for workflow data
 
 **Q4: PAO-Specific Interface Implementations**
@@ -84,12 +86,12 @@ The Partnerships and Opportunities (PAO) application currently uses a basic data
 ### 3. Goals
 
 1. **Successfully integrate UNOPS.Workflow submodule** into PAO codebase as a Git submodule
-2. **Deprecate existing WorkflowStage system** and migrate to state machine pattern
+2. **Replace existing WorkflowStage system** with the submodule's state machine pattern (delete old, use new)
 3. **Implement 4 required interfaces** to connect PAO-specific logic with the generic workflow engine
 4. **Establish separate workflow database schema** auto-managed by the submodule
 5. **Create example Opportunity workflow** to validate the integration
-6. **Provide comprehensive documentation** for future workflow implementations
-7. **Maintain zero breaking changes** to existing PAO functionality during migration
+6. **Replace existing Angular workflow components** with submodule's pre-built components
+7. **Maintain zero breaking changes** to existing PAO functionality during transition
 8. **Enable future approval workflows** for any PAO entity without rebuilding infrastructure
 
 ---
@@ -98,22 +100,43 @@ The Partnerships and Opportunities (PAO) application currently uses a basic data
 
 #### Current Architecture (Before Migration)
 
+**Verified PAO Architecture (as of 2026-01-12):**
 ```
-PAO Application
-├── Entities
-│   └── Opportunity
-│       └── WorkflowStageId (FK) → WorkflowStages table
-├── WorkflowStages table (Database-driven stages)
-├── WorkflowLog table (Basic audit)
-└── WorkflowManager (Basic stage tracking)
+UNOPS.PAO.Domain/Entities/
+├── Opportunity.cs
+│   └── WorkflowStageId (int?, FK) → WorkflowStages table
+│   └── WorkflowStage (navigation property)
+├── WorkflowStage.cs (EntityType, Name, Order, IsFinalStage)
+└── WorkflowLog.cs (EntityName, EntityId, Stage, NewStage, Comment)
+
+UNOPS.PAO.Business/Managers/
+└── WorkflowManager.cs (Uses StateMachine, State, Facing from Models)
+
+UNOPS.PAO.Models/Workflow/
+├── StateMachine.cs (Stage, States[], StateAction)
+├── State.cs (StageCode, DisplayName, Sequence, Actions, Facing)
+├── StateAction.cs
+├── Facing.cs (enum: Internal, External, TwoFace)
+├── WorkflowStageModel.cs
+├── WorkflowStateModel.cs
+└── WorkflowActionModel.cs
+
+UNOPS.PAO.ClientApp/src/app/shared/
+├── components/workflows/workflow/
+│   ├── workflow.component.ts (uses p-splitButton)
+│   ├── workflow.component.html
+│   └── workflow.component.scss
+└── services/domain/
+    └── workflow.service.ts (calls /api/workflow/*)
 ```
 
-**Limitations:**
-- No approval workflow support
-- No role-based permissions for transitions
-- Limited audit trail
-- Manual validation in code
-- Not reusable across projects
+**Limitations (to be replaced by submodule):**
+- Uses FK to WorkflowStage table (submodule uses string Stage)
+- No approval workflow support (submodule has built-in approvals)
+- No role-based permissions for transitions (submodule has StateMachineStageChangeRoles)
+- Limited audit trail (submodule has comprehensive WorkflowLogs)
+- PAO-specific, not reusable (submodule is shared across UNOPS projects)
+- Custom frontend components (submodule has pre-built Angular components)
 
 #### Target Architecture (After Migration)
 
@@ -154,25 +177,30 @@ PAO Application
    - Remove: `Opportunity.WorkflowStage` navigation property
 
 2. **Database Schema:**
-   - Deprecate: `WorkflowStages` table
-   - Deprecate: `WorkflowLog` table in public schema
+   - **Delete:** `WorkflowStages` table (create migration to drop)
    - Add: `workflow` schema (auto-created by submodule with 3 tables)
 
 3. **Code Organization:**
    - Add: `UNOPS.Workflow/` submodule folder at solution root
-   - Add: `UNOPS.PAO.Business/Workflow/` for PAO adapters
+   - Add: `UNOPS.PAO.Business/Workflow/` for PAO adapters (interface implementations)
    - Add: `UNOPS.PAO.Business/Workflow/StateMachines/` for entity workflow definitions
-   - Deprecate: `UNOPS.PAO.Business/Managers/WorkflowManager.cs` (replaced by submodule)
+   - **Delete:** `UNOPS.PAO.Business/Managers/WorkflowManager.cs` (~100 lines, no entity-specific logic)
+   - **Delete:** `UNOPS.PAO.Business/Interfaces/IWorkflowManager.cs`
+   - **Delete:** `UNOPS.PAO.Models/Workflow/` folder (7 files)
+   - **Delete:** `UNOPS.PAO.Domain/Entities/WorkflowStage.cs` and `WorkflowLog.cs`
 
 4. **Service Registration:**
-   - Register workflow services in DI container
+   - Register workflow services from submodule in DI container
    - Register PAO-specific interface implementations
-   - Configure WorkflowDbContext with connection string
+   - Configure WorkflowDbContext with connection string and schema
 
-5. **Angular Integration:**
-   - Add workflow Angular component library
-   - Update existing components to use new workflow API
-   - Add workflow history display
+5. **Angular Integration (Per Submodule README - 3 Options):**
+   - **Option 1 (Recommended):** TypeScript path alias in `tsconfig.json`
+   - **Option 2:** Build as Angular library with ng-packagr
+   - **Option 3:** Copy source files to project
+   - Use: `StageWorkflowComponent` and `WorkflowService` from submodule
+   - **Delete:** `shared/components/workflows/workflow/` folder
+   - **Delete:** `shared/services/domain/workflow.service.ts`
 
 ---
 
@@ -316,12 +344,32 @@ PAO Application
 6. Create EF Core migration for these changes
 7. Add data migration script to populate Stage from existing WorkflowStageId
 
-#### FR-3: Deprecate Old Workflow System
-1. Mark `WorkflowStage` entity with `[Obsolete]` attribute
-2. Mark old `WorkflowLog` entity with `[Obsolete]` attribute
-3. Mark `WorkflowManager` class with `[Obsolete]` attribute
-4. Add deprecation comments with migration instructions
-5. Do NOT delete old entities (maintain backward compatibility temporarily)
+#### FR-3: Delete Old Workflow System
+**Per User Requirement:** Delete (not deprecate) existing PAO workflow entities that are replaced by the submodule.
+
+Backend (C#) - **DELETE** the following files:
+1. `UNOPS.PAO.Domain/Entities/WorkflowStage.cs` - Replaced by submodule's `StateMachineStageChange`
+2. `UNOPS.PAO.Domain/Entities/WorkflowLog.cs` - Replaced by submodule's `WorkflowLog`
+3. `UNOPS.PAO.Business/Managers/WorkflowManager.cs` - Replaced by submodule's `IWorkflowManager`
+4. `UNOPS.PAO.Business/Interfaces/IWorkflowManager.cs` - Replaced by submodule's interface
+5. All files in `UNOPS.PAO.Models/Workflow/` folder:
+   - `StateMachine.cs`, `State.cs`, `StateAction.cs`, `Facing.cs`
+   - `WorkflowStageModel.cs`, `WorkflowStateModel.cs`, `WorkflowActionModel.cs`
+
+**Why DELETE PAO's WorkflowManager (not keep like GMS):**
+- PAO's `WorkflowManager` is only ~100 lines with basic functionality (GetWorkflowPath, GetWorkflowState, AddLog)
+- GMS's `WorkflowManager` is 1900+ lines with entity-specific approver methods (FundingOpportunityApprovalUsers, RequestForAwardApprovals, etc.) that query GMS-specific entities
+- GMS keeps its manager because it has irreplaceable entity-specific business logic
+- PAO has no such entity-specific logic - the submodule's generic `IWorkflowManager` suffices
+
+Database Migration:
+6. Create migration to drop `WorkflowStages` table
+7. Remove `WorkflowStageId` FK from Opportunity entity
+8. Add `Stage` (string) property to Opportunity entity
+
+Frontend (Angular) - **DELETE** the following:
+9. `shared/components/workflows/workflow/` folder - Replaced by submodule's `StageWorkflowComponent`
+10. `shared/services/domain/workflow.service.ts` - Replaced by submodule's `WorkflowService`
 
 #### FR-4: Implement IWorkflowUserContext
 1. Create `PaoWorkflowUserContext` class in `UNOPS.PAO.Business/Workflow/`
@@ -350,6 +398,8 @@ PAO Application
 7. Filter by !IsDeleted in all queries
 
 #### FR-6: Implement IWorkflowApproverProvider
+**Per Migration Guide Phase 3.4:** Leverage PAO's existing EntityRole/EntityRolePerson system for approvals.
+
 1. Create `PaoWorkflowApproverProvider` class in `UNOPS.PAO.Business/Workflow/`
 2. Implement `IWorkflowApproverProvider` interface from submodule
 3. Methods to implement:
@@ -357,12 +407,17 @@ PAO Application
    - `GetApprovalConfigurationAsync(entityName, entityId, fromStage, toStage)` - Return approval config with roles
    - `GetTriggerConfigurationAsync(entityName, entityId, fromStage, toStage)` - Return trigger config with roles
    - `CanUserApproveAsync(entityName, entityId, userId, fromStage, toStage)` - Check specific user permission
-4. Leverage PAO's existing EntityRole and EntityRolePerson tables
-5. Query StateMachineStageChangeRoles from workflow schema
+4. Query PAO's existing tables:
+   - `EntityRolePerson` - Users assigned to entity-specific roles (respects EffectiveDate/EndDate)
+   - `EntityUserRole` - Organization-level roles for fallback approvals
+   - `EntityRole` - Role definitions (e.g., "Opportunity_Manager", "DOA_Holder")
+5. Query `StateMachineStageChangeRoles` from workflow schema for role permissions
 6. Join entity role assignments with workflow role permissions
 7. Return empty lists for unconfigured transitions (no approvers = can't start workflow)
 
 #### FR-7: Implement IWorkflowNotificationService
+**Per Migration Guide Phase 3.3:** Use PAO's existing `IEmailSender` from `UNOPS.PAO.MailSender`.
+
 1. Create `PaoWorkflowNotificationService` class in `UNOPS.PAO.Business/Workflow/`
 2. Implement `IWorkflowNotificationService` interface from submodule
 3. Methods to implement:
@@ -370,8 +425,11 @@ PAO Application
    - `NotifyWorkflowCompletedAsync(notification)` - Email submitter about approval
    - `NotifyWorkflowRejectedAsync(notification)` - Email submitter about rejection
    - `NotifyWorkflowRecalledAsync(notification)` - Email approvers about recall
-4. Use PAO's existing email service (IEmailService or similar)
-5. Create email templates for each notification type
+4. Inject `IEmailSender` from `UNOPS.PAO.MailSender`
+5. Create email templates in `UNOPS.PAO.Business/EmailTemplates/`:
+   - `WorkflowApprovalRequest.html`
+   - `WorkflowCompleted.html`
+   - `WorkflowRejected.html`
 6. Include entity name, URL, performer, comment in emails
 7. Handle multiple recipients gracefully
 
@@ -467,24 +525,91 @@ PAO Application
 6. Remove old WorkflowStage navigation property usage
 7. Add workflow validation before stage changes
 
-#### FR-14: Create Angular Workflow Component
-1. Copy workflow Angular components from `UNOPS.Workflow/unops-workflow-angular/`
-2. Place in `ClientApp/src/app/shared/reusables/components/workflow/`
-3. Components needed:
-   - `workflow.component.ts` - Main workflow display and actions
-   - `workflow-history.component.ts` - Stage change history
-   - `workflow.service.ts` - API service
-4. Update API endpoints to match PAO's base URL
-5. Add translation keys to i18n files
+#### FR-14: Integrate Submodule's Angular Workflow Library
+**Per Submodule README:** Three integration options are available. Choose based on project needs.
+
+**Option 1: TypeScript Path Alias (Recommended)**
+Configure `tsconfig.json` in `UNOPS.PAO.ClientApp`:
+```json
+{
+  "compilerOptions": {
+    "paths": {
+      "@unops/workflow": ["../UNOPS.Workflow/unops-workflow-angular/src/public-api.ts"],
+      "@unops/workflow/*": ["../UNOPS.Workflow/unops-workflow-angular/src/*"]
+    }
+  }
+}
+```
+Import: `import { StageWorkflowComponent, WorkflowService } from '@unops/workflow';`
+
+| Pros | Cons |
+|------|------|
+| No build step required | Must ensure Angular versions match |
+| Changes reflect immediately | Path configuration required |
+
+**Option 2: Build as Angular Library**
+```bash
+cd UNOPS.Workflow/unops-workflow-angular
+npm install ng-packagr --save-dev
+ng build
+cd ../../UNOPS.PAO.ClientApp
+npm install ../UNOPS.Workflow/unops-workflow-angular/dist
+```
+Import: `import { StageWorkflowComponent, WorkflowService } from '@unops/workflow';`
+
+| Pros | Cons |
+|------|------|
+| Proper library packaging | Requires build pipeline |
+| Versioned releases possible | Must rebuild after changes |
+
+**Option 3: Copy Files (Simple)**
+```bash
+cp -r UNOPS.Workflow/unops-workflow-angular/src/lib/* \
+      UNOPS.PAO.ClientApp/src/app/shared/components/workflow-submodule/
+```
+Import using project paths after updating imports in copied files.
+
+| Pros | Cons |
+|------|------|
+| Simple setup | Manual sync required |
+| Full control | Easy to get out of sync |
+
+**After Integration:**
+1. Delete PAO's existing `shared/components/workflows/workflow/` folder
+2. Delete PAO's existing `shared/services/domain/workflow.service.ts`
+3. Add translation keys to i18n files (see README for full list)
+4. Update any existing workflow usages to use the new components
 
 #### FR-15: Integrate Workflow in Opportunity UI
-1. Update `opportunity-item.component.ts`
-2. Import WorkflowComponent
-3. Add workflow section to template
-4. Pass entityName="opportunity" and entityId
-5. Handle onStageChangeSuccess event (reload opportunity)
-6. Show workflow based on permissions
-7. Add beforeStageChange hook for validation (optional)
+**Per Submodule README - Component Inputs/Outputs:**
+
+1. Update `opportunity-view.component.ts`:
+   ```typescript
+   // Use import path based on chosen FR-14 option
+   import { StageWorkflowComponent } from '@unops/workflow';
+   
+   @Component({
+     imports: [StageWorkflowComponent, ...],
+   })
+   ```
+2. Add workflow section to template:
+   ```html
+   <app-stage-workflow
+     [entityName]="'Opportunity'"
+     [entityId]="opportunityId().toString()"
+     [canChangeStage]="canChangeStage()"
+     [beforeStageChange]="beforeStageChange"
+     (onStageChangeSuccess)="handleStageChangeSuccess()"
+   />
+   ```
+3. **Component Inputs:**
+   - `entityName` (string) - Entity type identifier
+   - `entityId` (string) - Entity ID (must be string)
+   - `canChangeStage` (boolean) - Whether user can perform workflow actions
+   - `beforeStageChange` ((nextStage: string) => Promise<boolean>) - Optional validation hook
+4. **Component Output:**
+   - `onStageChangeSuccess` - Emitted when stage change completes (reload data here)
+5. Show workflow based on user permissions
 
 #### FR-16: Update Opportunity Models
 1. Add `Stage` property to OpportunityModel DTO
@@ -570,36 +695,51 @@ Available Actions: [Move to Decide]
 ```
 ┌─ Workflow History ──────────────────────────┐
 │ Date         User          Action     Stage │
-│ 2024-01-15   John Doe      Created    IDENTIFY & PROFILE │
+│ 2026-01-10   John Doe      Created    IDENTIFY & PROFILE │
 └─────────────────────────────────────────────┘
 ```
 
 #### 8.2 Component Integration Pattern
 
-Follow PAO's established workflow component pattern (from component-development.mdc):
+**Per Submodule README:** Use `StageWorkflowComponent` from the submodule.
 
 ```typescript
-@Component({
-  selector: 'app-opportunity-item',
-  imports: [WorkflowComponent]
-})
-export class OpportunityItemComponent {
-  opportunityId = signal<number>(0);
-  canChangeStage = signal<boolean>(false);
+import { Component, input } from '@angular/core';
+// Import path depends on chosen integration option:
+// Option 1 (path alias): import { StageWorkflowComponent } from '@unops/workflow';
+// Option 2 (built lib):  import { StageWorkflowComponent } from '@unops/workflow';
+// Option 3 (copied):     import { StageWorkflowComponent } from '@shared/components/workflow-submodule';
+import { StageWorkflowComponent } from '@unops/workflow';
 
-  handleStageChangeSuccess(): void {
-    this.loadOpportunity(); // Reload after stage change
+@Component({
+  selector: 'app-opportunity-detail',
+  standalone: true,
+  imports: [StageWorkflowComponent],
+  template: `
+    <app-stage-workflow
+      [entityName]="'Opportunity'"
+      [entityId]="opportunityId()"
+      [canChangeStage]="canChangeStage()"
+      [beforeStageChange]="beforeStageChange"
+      (onStageChangeSuccess)="onStageChanged($event)"
+    />
+  `
+})
+export class OpportunityDetailComponent {
+  opportunityId = input.required<string>();
+  canChangeStage = input<boolean>(false);
+
+  // Optional validation before stage change
+  beforeStageChange = async (nextStage: string): Promise<boolean> => {
+    // Return true to allow, false to cancel
+    return true;
+  };
+
+  onStageChanged(event: any): void {
+    // Reload opportunity after stage change
+    this.loadOpportunity();
   }
 }
-```
-
-```html
-<app-workflow
-  [entityName]="'opportunity'"
-  [entityId]="opportunityId().toString()"
-  [canChangeStage]="canChangeStage()"
-  (onStageChangeSuccess)="handleStageChangeSuccess()"
-/>
 ```
 
 #### 8.3 API Design
@@ -968,10 +1108,10 @@ Based on stage change history table from `stage-workflow.component.html` lines 1
 │  ┌────────────────┬───────────────┬────────────────────────┬───────────────┬──────────────────────────┬─────────────────────────┐│
 │  │ From Stage     │ To Stage      │ Completed On           │ Action        │ Comment                  │ User                    ││
 │  ├────────────────┼───────────────┼────────────────────────┼───────────────┼──────────────────────────┼─────────────────────────┤│
-│  │ IDENTIFY &     │ DECIDE        │ 15-Jan-2024 10:30      │ Move to       │ All profile info         │ Jane Smith              ││
+│  │ IDENTIFY &     │ DECIDE        │ 15-Jan-2026 10:30      │ Move to       │ All profile info         │ Jane Smith              ││
 │  │ PROFILE        │               │                        │ Decide        │ collected                │                         ││
 │  ├────────────────┼───────────────┼────────────────────────┼───────────────┼──────────────────────────┼─────────────────────────┤│
-│  │ --             │ IDENTIFY &    │ 10-Jan-2024 14:15      │ Created       │ Initial creation         │ John Doe                ││
+│  │ --             │ IDENTIFY &    │ 10-Jan-2026 14:15      │ Created       │ Initial creation         │ John Doe                ││
 │  │                │ PROFILE       │                        │               │                          │                         ││
 │  └────────────────┴───────────────┴────────────────────────┴───────────────┴──────────────────────────┴─────────────────────────┘│
 │                                                                                                                                 │
@@ -1073,7 +1213,7 @@ Based on `fundingOpportunityItem.component.html` showing how the workflow is pla
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                                                                                                                 │
-│  💰 FO-2024-001 - South Sudan Water Infrastructure Development                                                  │
+│  💰 FO-2026-001 - South Sudan Water Infrastructure Development                                                  │
 │     Funding Opportunity                                                                             [Clone]    │
 │                                                                                                                 │
 ├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
@@ -1136,7 +1276,7 @@ Applying GMS pattern to PAO's existing opportunity-view layout.
 │                                                                                                                 │
 │  South Sudan Water Infrastructure Development Project                                                           │
 │  ══════════════════════════════════════════════════════                     ┌─────────┐ ┌─────────────────────┐ │
-│  ID: 123  |  Manager: Jane Smith  |  Org Unit: AFRO  |  Mar 15, 2024       │ Active  │ │ IDENTIFY & PROFILE  │ │
+│  ID: 123  |  Manager: Jane Smith  |  Org Unit: AFRO  |  Jan 10, 2026       │ Active  │ │ IDENTIFY & PROFILE  │ │
 │                                                                             └─────────┘ └─────────────────────┘ │
 │                                                                                                                 │
 │  ┌──────────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌───────────┐  │
@@ -1180,11 +1320,13 @@ Applying GMS pattern to PAO's existing opportunity-view layout.
 
 ---
 
-**Implementation Notes - Based on Actual GMS Code:**
+**Implementation Notes - Based on GMS Code and UNOPS.Workflow Submodule:**
+
+**Important:** These components come from `unops-workflow-angular` in the UNOPS.Workflow submodule. See FR-14 for three integration options (path alias, build library, or copy files).
 
 1. **Component Structure:**
-   - `app-stage-workflow` is the main component (wrapper)
-   - Contains `app-workflow` internally for action buttons
+   - `StageWorkflowComponent` (`app-stage-workflow`) is the main component
+   - Contains `WorkflowComponent` internally for action buttons
    - Uses `p-panel`, `p-tabs`, `p-steps`, `p-table` from PrimeNG
 
 2. **Workflow States:**
@@ -1327,39 +1469,77 @@ UNOPS.Workflow/
     └── WorkflowNotification.cs                 ← Email notification model
 ```
 
-### C. PAO Implementation Files to Create
+### C. PAO Implementation Files to Create/Modify
 
+**Files to Create/Modify/Delete:**
 ```
 business-partners-and-opportunities/
-├── UNOPS.Workflow/                             ← Git submodule (new)
+├── UNOPS.Workflow/                             ← Git submodule (NEW)
 ├── UNOPS.PAO.Business/
-│   └── Workflow/                               ← New folder
-│       ├── PaoWorkflowUserContext.cs           ← New
-│       ├── PaoEntityStageProvider.cs           ← New
-│       ├── PaoWorkflowApproverProvider.cs      ← New
-│       ├── PaoWorkflowNotificationService.cs   ← New
-│       ├── StateMachines/                      ← New folder
-│       │   └── OpportunityWorkflow.cs          ← New
-│       └── Seeders/                            ← New folder
-│           └── OpportunityWorkflowSeeder.cs    ← New
+│   ├── Workflow/                               ← NEW folder
+│   │   ├── PaoWorkflowUserContext.cs           ← NEW (implements IWorkflowUserContext)
+│   │   ├── PaoEntityStageProvider.cs           ← NEW (implements IEntityStageProvider)
+│   │   ├── PaoWorkflowApproverProvider.cs      ← NEW (implements IWorkflowApproverProvider)
+│   │   ├── PaoWorkflowNotificationService.cs   ← NEW (implements IWorkflowNotificationService)
+│   │   ├── StateMachines/
+│   │   │   └── OpportunityWorkflow.cs          ← NEW (defines stages)
+│   │   └── Seeders/
+│   │       └── OpportunityWorkflowSeeder.cs    ← NEW (seeds transitions)
+│   ├── EmailTemplates/
+│   │   ├── WorkflowApprovalRequest.html        ← NEW
+│   │   ├── WorkflowCompleted.html              ← NEW
+│   │   └── WorkflowRejected.html               ← NEW
+│   ├── Managers/
+│   │   └── WorkflowManager.cs                  ← DELETE (only ~100 lines, no entity-specific logic)
+│   └── Interfaces/
+│       └── IWorkflowManager.cs                 ← DELETE (replaced by submodule interface)
 ├── UNOPS.PAO.Presentation/
 │   └── Controllers/
-│       └── WorkflowController.cs               ← New
+│       └── WorkflowController.cs               ← NEW (or extend existing)
 ├── UNOPS.PAO.Domain/
 │   └── Entities/
-│       ├── Opportunity.cs                      ← Modify (add Stage)
-│       ├── WorkflowStage.cs                    ← Mark [Obsolete]
-│       └── WorkflowLog.cs                      ← Mark [Obsolete]
+│       ├── Opportunity.cs                      ← MODIFY (add Stage string, remove WorkflowStageId)
+│       ├── WorkflowStage.cs                    ← DELETE (replaced by StateMachineStageChange)
+│       └── WorkflowLog.cs                      ← DELETE (replaced by submodule's WorkflowLog)
 ├── UNOPS.PAO.Models/
-│   └── OpportunityModel.cs                     ← Modify (add Stage)
-└── ClientApp/
-    └── src/app/
-        └── shared/reusables/components/
-            └── workflow/                        ← Copy from submodule
-                ├── workflow.component.ts        ← New
-                ├── workflow-history.component.ts ← New
-                └── workflow.service.ts          ← New
+│   ├── OpportunityModel.cs                     ← MODIFY (add Stage)
+│   └── Workflow/                               ← DELETE entire folder (7 files)
+│       ├── StateMachine.cs                     ← DELETE
+│       ├── State.cs                            ← DELETE
+│       ├── StateAction.cs                      ← DELETE
+│       ├── Facing.cs                           ← DELETE
+│       ├── WorkflowStageModel.cs               ← DELETE
+│       ├── WorkflowStateModel.cs               ← DELETE
+│       └── WorkflowActionModel.cs              ← DELETE
+└── UNOPS.PAO.ClientApp/
+    ├── tsconfig.json                           ← MODIFY (add path alias - Option 1)
+    └── src/app/shared/
+        ├── components/workflows/workflow/      ← DELETE folder (replaced by submodule)
+        └── services/domain/
+            └── workflow.service.ts             ← DELETE (replaced by submodule)
 ```
+
+**Angular Integration (per Submodule README - choose one):**
+
+**Option 1 - Path Alias (Recommended):** Add to `tsconfig.json`:
+```json
+"paths": {
+  "@unops/workflow": ["../UNOPS.Workflow/unops-workflow-angular/src/public-api.ts"]
+}
+```
+
+**Option 2 - Build Library:**
+```bash
+cd UNOPS.Workflow/unops-workflow-angular && ng build
+cd ../../UNOPS.PAO.ClientApp && npm install ../UNOPS.Workflow/unops-workflow-angular/dist
+```
+
+**Option 3 - Copy Files:**
+```bash
+cp -r UNOPS.Workflow/unops-workflow-angular/src/lib/* UNOPS.PAO.ClientApp/src/app/shared/components/workflow-submodule/
+```
+
+**Usage:** Import `StageWorkflowComponent` and `WorkflowService` from chosen path
 
 ### D. Database Schema After Migration
 
@@ -1369,7 +1549,7 @@ public."Opportunities"
   - Id (int, PK)
   - Name (varchar)
   - Stage (varchar(100))  ← NEW!
-  - WorkflowStageId (int) ← DEPRECATED, will remove later
+  - WorkflowStageId (int) ← DELETE (migrate data first, then drop column)
   - Status (int)
   - IsDeleted (bool)
   - ...
@@ -1573,8 +1753,9 @@ Legend:
 
 ---
 
-**Document Version:** 1.0  
-**Created:** 2024-01-16  
+**Document Version:** 1.1  
+**Created:** 2026-01-12  
 **Author:** AI Assistant  
 **Status:** Draft - Pending Review  
-**Estimated Effort:** 14-20 hours (2-3 days)
+**Reference:** Migration-Guide-WorkflowStage-To-StateMachine.md  
+**Estimated Effort:** 9-13 hours (per Migration Guide)
