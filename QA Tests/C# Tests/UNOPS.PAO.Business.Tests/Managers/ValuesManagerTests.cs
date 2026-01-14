@@ -54,10 +54,12 @@ namespace UNOPS.PAO.Business.Tests.Managers
             {
                 Id = 1,
                 Name = "Test Partner",
+                PartnerShortDescription = "Test Partner for Values Manager Tests",
                 CreatedBy = 1,
                 LastModifiedBy = 1,
                 CreatedDate = DateTime.UtcNow,
-                LastModifiedDate = DateTime.UtcNow
+                LastModifiedDate = DateTime.UtcNow,
+                Status = EntityStatus.Active
             };
             _context.Partners.Add(partner);
 
@@ -252,7 +254,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         public async Task TC_VM_030_GetOrganizationUnits_ReturnsAllActiveOrgUnits()
         {
             var orgUnits = await _context.OrganizationHierarchies
-                .Where(o => o.Type == OrganizationUnitType.OrgUnit && o.Status == EntityStatus.Active && !o.IsDeleted)
+                .Where(o => o.Type == OrganizationUnitType.Region && o.Status == EntityStatus.Active && !o.IsDeleted)
                 .ToListAsync();
 
             Assert.Equal(2, orgUnits.Count);

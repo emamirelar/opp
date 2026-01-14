@@ -74,6 +74,7 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
             using var context = CreateContext();
             var contact = new Contact
             {
+                Name = "Test Contact",
                 FirstName = "Test",
                 LastName = "Contact",
                 Title = "Manager",
@@ -82,7 +83,8 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
                 CreatedBy = 1,
                 LastModifiedBy = 1,
                 CreatedDate = DateTime.UtcNow,
-                LastModifiedDate = DateTime.UtcNow
+                LastModifiedDate = DateTime.UtcNow,
+                Status = EntityStatus.Active
             };
             context.Contacts.Add(contact);
             await context.SaveChangesAsync();

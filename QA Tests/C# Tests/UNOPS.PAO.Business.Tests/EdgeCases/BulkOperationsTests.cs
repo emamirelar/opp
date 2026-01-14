@@ -44,10 +44,12 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
             {
                 Id = 1,
                 Name = "Bulk Test Partner",
+                PartnerShortDescription = "Test Partner for Bulk Operations",
                 CreatedBy = 1,
                 LastModifiedBy = 1,
                 CreatedDate = DateTime.UtcNow,
-                LastModifiedDate = DateTime.UtcNow
+                LastModifiedDate = DateTime.UtcNow,
+                Status = EntityStatus.Active
             };
             context.Partners.Add(partner);
             context.SaveChanges();
@@ -215,14 +217,30 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
         public async Task TC_BO_F031_BulkDelete_50Records_Succeeds()
         {
             using var context = CreateContext();
-            var initialCount = await context.Contacts.CountAsync();
+            var initialActiveCount = await context.Contacts.Where(c => !c.IsDeleted).CountAsync();
             
-            var contactsToDelete = await context.Contacts.Take(50).ToListAsync();
+            // Ensure we have at least 50 active contacts to delete
+            Assert.True(initialActiveCount >= 50, $"Should have at least 50 active contacts, but found {initialActiveCount}");
+            
+            // Get contacts to delete (soft delete via RemoveRange triggers IsDeleted flag)
+            var contactsToDelete = await context.Contacts
+                .Where(c => !c.IsDeleted)
+                .OrderBy(c => c.Id)
+                .Take(50)
+                .ToListAsync();
+            
+            Assert.Equal(50, contactsToDelete.Count); // Verify we selected 50
+            
+            // RemoveRange triggers soft delete (sets IsDeleted = true) via AuditableDbContext interceptor
             context.Contacts.RemoveRange(contactsToDelete);
             await context.SaveChangesAsync();
             
-            var finalCount = await context.Contacts.CountAsync();
-            Assert.Equal(initialCount - 50, finalCount);
+            // Verify soft deletion occurred (contacts marked as deleted, not physically removed)
+            var finalActiveCount = await context.Contacts.Where(c => !c.IsDeleted).CountAsync();
+            var deletedCount = await context.Contacts.Where(c => c.IsDeleted).CountAsync();
+            
+            Assert.Equal(initialActiveCount - 50, finalActiveCount);
+            Assert.True(deletedCount >= 50, $"At least 50 contacts should be soft-deleted, but found {deletedCount}");
         }
 
         [Fact]
