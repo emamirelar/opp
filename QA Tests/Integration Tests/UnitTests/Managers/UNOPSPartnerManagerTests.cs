@@ -47,6 +47,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
         private readonly IPermissionService _permissionService;
         private readonly Mock<IHttpContextAccessor> _mockHttpContextAccessor;
         private readonly Mock<IDbContextSchema> _mockDbContextSchema;
+        private readonly Mock<IDbContextFactory<UNOPSAppDbContext>> _mockDbContextFactory;
         private readonly UNOPSAppDbContext _dbContext;
         private readonly UNOPSPartnerManager _manager;
         private readonly ServiceCollection _services;
@@ -93,6 +94,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             _mockLogger = new Mock<ILogger<UNOPSPartnerManager>>();
             _mockHierarchyService = new Mock<IOrgUnitHierarchyService>();
             _mockOrgUnitFilterService = new Mock<IOrgUnitFilterService>();
+            _mockDbContextFactory = new Mock<IDbContextFactory<UNOPSAppDbContext>>();
             _permissionService = new TestPermissionService();
 
             // Setup service collection for dependency injection
@@ -116,11 +118,8 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
                     PartnerGroupId = source.PartnerGroupId
                 });
 
-            // Create manager instance using reflection to access private constructor
-            var managerType = typeof(UNOPSPartnerManager);
-            var constructor = managerType.GetConstructors(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance).First();
-            _manager = (UNOPSPartnerManager)constructor.Invoke(new object[]
-            {
+            // Create manager instance with all required parameters
+            _manager = new UNOPSPartnerManager(
                 _mockMapper.Object,
                 _dbContext,
                 _configuration,
@@ -129,8 +128,9 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
                 _permissionService,
                 null, // GlobalFilterService is not used in these tests
                 _mockHttpContextAccessor.Object,
-                _serviceProvider
-            });
+                _serviceProvider,
+                _mockDbContextFactory.Object // Added missing parameter
+            );
         }
 
         [Fact]
