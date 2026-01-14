@@ -6,6 +6,344 @@ Integrate the UNOPS.Workflow submodule (used in GMS) into PAO to provide a reusa
 
 ---
 
+## Executive Summary
+
+### Business Context
+
+PAO currently uses a simple database-driven `WorkflowStage` system that lacks:
+- Multi-step approval workflows
+- Role-based approval permissions
+- Comprehensive audit trails
+- Workflow action history (approve, reject, recall)
+
+The UNOPS.Workflow submodule, already battle-tested in GMS, provides all these capabilities as a reusable library.
+
+### Goal
+
+Establish production-ready workflow infrastructure that enables implementation of any future approval process (Opportunities, Partners, Projects) without rebuilding workflow logic.
+
+---
+
+### Architecture Overview
+
+#### Current State (Before)
+
+```mermaid
+flowchart TB
+    subgraph PAO["PAO Application (Current)"]
+        subgraph Entities["Domain Entities"]
+            Opp[Opportunity<br/>WorkflowStageId FK]
+            WS[WorkflowStages Table]
+            WL[WorkflowLog]
+            Opp -->|FK| WS
+            WS <--> WL
+        end
+        
+        subgraph Business["Business Layer"]
+            WM[WorkflowManager.cs<br/>Custom Implementation]
+        end
+        
+        subgraph Frontend["Angular"]
+            WC[workflow.component.ts<br/>Custom Component]
+        end
+    end
+    
+    style PAO fill:#ffcccc
+    style Entities fill:#ffe6e6
+    style Business fill:#ffe6e6
+    style Frontend fill:#ffe6e6
+```
+
+**Limitations:**
+- ✗ No approval workflow support
+- ✗ No role-based permissions for transitions
+- ✗ Limited audit trail
+- ✗ PAO-specific, not reusable
+
+#### Target State (After)
+
+```mermaid
+flowchart TB
+    subgraph PAO["PAO Application Layer"]
+        subgraph Adapters["PAO Workflow Adapters"]
+            UC[PaoWorkflowUserContext]
+            ESP[PaoEntityStageProvider]
+            WAP[PaoWorkflowApproverProvider]
+            WNS[PaoWorkflowNotificationService]
+        end
+    end
+    
+    subgraph Submodule["UNOPS.Workflow Submodule"]
+        WB[UNOPS.Workflow.Business<br/>WorkflowManager]
+        WDA[UNOPS.Workflow.DataAccess<br/>WorkflowDbContext]
+        WD[UNOPS.Workflow.Domain<br/>Entities]
+        WM[UNOPS.Workflow.Models<br/>DTOs, StateMachine]
+        WA[unops-workflow-angular<br/>Angular Components]
+    end
+    
+    subgraph Database["PostgreSQL Database"]
+        subgraph Public["public schema"]
+            OppTable[Opportunities<br/>• Stage string<br/>• WorkflowStatus]
+        end
+        subgraph Workflow["workflow schema"]
+            SMSC[StateMachineStageChanges]
+            SMSCR[StateMachineStageChangeRoles]
+            WLogs[WorkflowLogs]
+        end
+    end
+    
+    Adapters --> Submodule
+    Submodule --> Database
+    
+    style PAO fill:#e6ffe6
+    style Submodule fill:#e6f3ff
+    style Database fill:#fff2e6
+```
+
+**Benefits:**
+- ✓ Built-in approval workflows (submit → approve/reject)
+- ✓ Role-based permissions (who can trigger, who can approve)
+- ✓ Complete audit trail with user denormalization
+- ✓ Reusable across UNOPS projects
+- ✓ Pre-built Angular components
+
+---
+
+### Adapter Pattern (Interface Implementations)
+
+```mermaid
+flowchart TB
+    subgraph Submodule["Workflow Submodule (Interfaces)"]
+        IWM[IWorkflowManager<br/>• Initiate<br/>• Approve<br/>• Reject<br/>• Recall]
+        IWM --> IWUC[IWorkflowUserContext]
+        IWM --> IESP[IEntityStageProvider]
+        IWM --> IWAP[IWorkflowApproverProvider]
+        IWM --> IWNS[IWorkflowNotificationService]
+    end
+    
+    subgraph PAOAdapters["PAO Adapters (Implementations)"]
+        PWUC[PaoWorkflowUserContext<br/>• CurrentUserId<br/>• CurrentUserRoles<br/>• Environment]
+        PESP[PaoEntityStageProvider<br/>• GetCurrentStageAsync<br/>• UpdateStageAsync<br/>• GetEntityDisplayName]
+        PWAP[PaoWorkflowApproverProvider<br/>• GetApproversAsync<br/>• CanUserApproveAsync<br/>• GetTriggersAsync]
+        PWNS[PaoWorkflowNotificationService<br/>• NotifyApprovalRequest<br/>• NotifyCompleted<br/>• NotifyRejected]
+    end
+    
+    subgraph PAOData["PAO Data Sources"]
+        HC[HttpContext<br/>User Claims]
+        DB[AppDbContext<br/>Opportunities]
+        EUR[EntityUserRoles<br/>Permissions]
+        Email[IEmailSender<br/>Notifications]
+    end
+    
+    IWUC -.->|implements| PWUC
+    IESP -.->|implements| PESP
+    IWAP -.->|implements| PWAP
+    IWNS -.->|implements| PWNS
+    
+    PWUC --> HC
+    PESP --> DB
+    PWAP --> EUR
+    PWNS --> Email
+    
+    style Submodule fill:#e6f3ff
+    style PAOAdapters fill:#e6ffe6
+    style PAOData fill:#fff2e6
+```
+
+---
+
+### Opportunity Workflow (Initial Implementation)
+
+```mermaid
+flowchart TD
+    Start((Start)) --> IP
+
+    IP[IDENTIFY & PROFILE<br/>Sequence: 1]
+    GO[GO<br/>Sequence: 2<br/>FINAL STAGE]
+    NOGO[NO GO<br/>Sequence: 3]
+
+    IP -->|Submit for Go<br/>Approval Required<br/>Trigger: Opp Manager<br/>Approve: DOA Holder| GO
+    IP -->|Submit for No Go<br/>Approval Required<br/>Trigger: Opp Manager<br/>Approve: DOA Holder| NOGO
+    NOGO -->|Reopen<br/>No Approval<br/>Trigger: Opp Manager| IP
+
+    GO --> End((End))
+
+    style IP fill:#fff2cc
+    style GO fill:#d5e8d4
+    style NOGO fill:#f8cecc
+```
+
+#### Transition Summary
+
+| # | From → To | Approval | Trigger | Approve |
+|---|-----------|----------|---------|---------|
+| 1 | IDENTIFY & PROFILE → GO | Required | Opp Manager | DOA Holder |
+| 2 | IDENTIFY & PROFILE → NO GO | Required | Opp Manager | DOA Holder |
+| 3 | NO GO → IDENTIFY & PROFILE | None | Opp Manager | N/A |
+
+> **Note:** GO is the final stage (no transitions out)
+
+---
+
+### Approval Workflow Flow
+
+```mermaid
+sequenceDiagram
+    participant OM as Opportunity Manager
+    participant API as Workflow API
+    participant DB as Database
+    participant DOA as DOA Holder
+    
+    Note over OM,DOA: Submit for Approval
+    OM->>API: POST /workflow/submit<br/>{entityName, entityId, newStage: "GO"}
+    API->>DB: Set WorkflowStatus = InWorkflow
+    API->>DB: Create WorkflowLog (Pending)
+    API->>DOA: 📧 Send Approval Request Email
+    API-->>OM: ✓ Submitted for approval
+    
+    Note over OM,DOA: DOA Reviews
+    
+    alt Approve
+        DOA->>API: POST /workflow/approve<br/>{entityName, entityId, comment}
+        API->>DB: Update Stage = "GO"
+        API->>DB: Set WorkflowStatus = None
+        API->>DB: Update WorkflowLog (Approved)
+        API->>OM: 📧 Send Completion Email
+        API-->>DOA: ✓ Approved
+    else Reject
+        DOA->>API: POST /workflow/reject<br/>{entityName, entityId, comment}
+        API->>DB: Stage unchanged
+        API->>DB: Set WorkflowStatus = None
+        API->>DB: Update WorkflowLog (Rejected)
+        API->>OM: 📧 Send Rejection Email
+        API-->>DOA: ✓ Rejected
+    else Recall (by Opportunity Manager)
+        OM->>API: POST /workflow/recall<br/>{entityName, entityId}
+        API->>DB: Set WorkflowStatus = None
+        API->>DB: Update WorkflowLog (Recalled)
+        API-->>OM: ✓ Recalled
+    end
+```
+
+---
+
+### Database Schema
+
+```mermaid
+erDiagram
+    OPPORTUNITIES ||--o{ WORKFLOW_LOGS : "has history"
+    
+    OPPORTUNITIES {
+        int Id PK
+        string Stage "IDENTIFY_PROFILE|GO|NO_GO"
+        int WorkflowStatus "None=0|InWorkflow=1"
+        bool IsInWorkflow "computed"
+        string Name
+        datetime CreatedDate
+        datetime LastModifiedDate
+    }
+    
+    STATEMACHINE_STAGE_CHANGES {
+        int Id PK
+        string EntityName "Opportunity"
+        string FromStage
+        string ToStage
+        int Sequence
+        bool ApprovalRequired
+        bool CommentRequired
+        string Name "action label"
+        int Status "Active|Inactive"
+    }
+    
+    STATEMACHINE_STAGE_CHANGE_ROLES {
+        int Id PK
+        string EntityType
+        string FromStage
+        string ToStage
+        int RoleId FK
+        string RoleName
+        bool CanTrigger
+        bool CanApprove
+    }
+    
+    WORKFLOW_LOGS {
+        int Id PK
+        string EntityName
+        int EntityId
+        string FromStage
+        string ToStage
+        string Action "Submit|Approve|Reject|Recall"
+        string Comment
+        int UserId
+        string UserName "denormalized"
+        datetime CompletedOn
+        bool RequiresApproval
+    }
+    
+    STATEMACHINE_STAGE_CHANGES ||--o{ STATEMACHINE_STAGE_CHANGE_ROLES : "has permissions"
+```
+
+---
+
+### High-Level Tasks
+
+| # | Task | Description |
+|---|------|-------------|
+| 1 | **Project Setup** | Add UNOPS.Workflow Git submodule, configure project references, delete old workflow files |
+| 2 | **Database Migration** | Create WorkflowStatus enum, update ModifiableDeletableEntity, add Stage to Opportunity, drop WorkflowStages table, configure workflow schema |
+| 3 | **Interface Implementations** | Implement 4 PAO adapters: UserContext, EntityStageProvider, ApproverProvider, NotificationService |
+| 4 | **Workflow Configuration** | Create OpportunityWorkflow state machine, seed transitions and role permissions |
+| 5 | **API Endpoints** | Create WorkflowController with submit/approve/reject/recall/history endpoints |
+| 6 | **Frontend Integration** | Configure Angular path alias, integrate StageWorkflowComponent, add translations |
+| 7 | **Testing & Documentation** | Unit tests, integration tests, documentation |
+
+---
+
+### Acceptance Criteria
+
+- [ ] UNOPS.Workflow submodule added and compiling
+- [ ] Old WorkflowStage/WorkflowLog entities deleted
+- [ ] Workflow schema auto-created with 3 tables
+- [ ] 4 PAO adapter interfaces implemented and registered
+- [ ] Opportunity workflow seeded (3 stages, 3 transitions)
+- [ ] API endpoints working (submit/approve/reject/recall)
+- [ ] Angular workflow component displaying on Opportunity page
+- [ ] Approval workflow functional end-to-end
+- [ ] All unit tests passing (80% coverage)
+- [ ] No breaking changes to existing functionality
+
+---
+
+### Frontend Component Integration
+
+```mermaid
+flowchart LR
+    subgraph PAOApp["PAO Angular App"]
+        OV[OpportunityViewComponent]
+        OV --> SWC
+    end
+    
+    subgraph Submodule["@unops/workflow"]
+        SWC[StageWorkflowComponent]
+        SWC --> WC[WorkflowComponent]
+        SWC --> WS[WorkflowService]
+    end
+    
+    subgraph API["Backend API"]
+        WS -->|GET /workflow/opportunity| Stages[Get Stages]
+        WS -->|GET /workflow/opportunity/id| Actions[Get Actions]
+        WS -->|POST /workflow/submit| Submit[Submit]
+        WS -->|POST /workflow/approve| Approve[Approve]
+        WS -->|POST /workflow/reject| Reject[Reject]
+    end
+    
+    style PAOApp fill:#e6ffe6
+    style Submodule fill:#e6f3ff
+    style API fill:#fff2e6
+```
+
+---
+
 ## PRD
 
 ### 1. Introduction/Overview
