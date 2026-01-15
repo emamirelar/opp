@@ -50,7 +50,7 @@ namespace UNOPS.PAO.IntegrationTests.Database
             canConnect.Should().BeTrue("database connection should work with password authentication");
         }
 
-        [Fact(Skip = "Requires Google Cloud credentials in test environment")]
+        [Fact]
         public async Task DatabaseConnection_WithIamAuthEnabled_ConnectsSuccessfully()
         {
             // Arrange: Enable IAM auth
@@ -86,7 +86,7 @@ namespace UNOPS.PAO.IntegrationTests.Database
             exception.Should().BeNull("query should execute without errors");
         }
 
-        [Fact(Skip = "Requires Google Cloud credentials in test environment")]
+        [Fact]
         public async Task SimpleQuery_WithIamAuth_ExecutesSuccessfully()
         {
             // Arrange: Enable IAM auth
@@ -105,7 +105,7 @@ namespace UNOPS.PAO.IntegrationTests.Database
             exception.Should().BeNull("query should execute without errors with IAM auth");
         }
 
-        [Fact(Skip = "Requires Google Cloud credentials in test environment")]
+        [Fact]
         public async Task ParallelQueries_WithIamAuth_AllSucceed()
         {
             // Arrange: Enable IAM auth
@@ -142,7 +142,7 @@ namespace UNOPS.PAO.IntegrationTests.Database
             results.Should().AllBeOfType<int>("all queries should return counts");
         }
 
-        [Fact(Skip = "Requires Google Cloud credentials in test environment")]
+        [Fact]
         public async Task ConnectionPooling_WithIamAuth_HandlesMultipleConnections()
         {
             // Arrange: Enable IAM auth
@@ -177,7 +177,7 @@ namespace UNOPS.PAO.IntegrationTests.Database
             count.Should().BeGreaterThanOrEqualTo(0, "count should be a valid non-negative number");
         }
 
-        [Fact(Skip = "Requires Google Cloud credentials in test environment")]
+        [Fact]
         public async Task DatabaseQuery_WithIamAuth_ReturnsValidData()
         {
             // Arrange: Enable IAM auth

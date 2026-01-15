@@ -161,7 +161,7 @@ public class PartnerControllerTests : IntegrationTestBase
 
     #region Basic Filtering Tests
 
-    [Fact(Skip = "Skipping due to authorization issues in test environment")]
+    [Fact]
     public async Task GetAll_NoFilters_ReturnsAllPartners()
     {
         // Act
@@ -175,7 +175,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.PageSize.Should().Be(20);
     }
 
-    [Fact(Skip = "Skipping due to authorization issues in test environment")]
+    [Fact]
     public async Task GetAll_FilterByStatus_Active_ReturnsOnlyActivePartners()
     {
         // Act
@@ -191,7 +191,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.Records.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
     }
 
-    [Fact(Skip = "Skipping due to authorization issues in test environment")]
+    [Fact]
     public async Task GetAll_FilterByStatus_Inactive_ReturnsOnlyInactivePartners()
     {
         // Act
@@ -207,7 +207,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.Records.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
     }
 
-    [Fact(Skip = "Skipping due to authorization issues in test environment")]
+    [Fact]
     public async Task GetAll_FilterByName_ReturnsMatchingPartners()
     {
         // Act
@@ -222,7 +222,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.Records.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
     }
 
-    [Fact(Skip = "Skipping due to authorization issues in test environment")]
+    [Fact]
     public async Task GetAll_FilterBySearchText_SearchesNameAndShortName()
     {
         // Act - search for "Global" which appears in multiple partner names
@@ -237,7 +237,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.Records.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
     }
 
-    [Fact(Skip = "Skipping due to authorization issues in test environment")]
+    [Fact]
     public async Task GetAll_FilterBySearchText_ShortName_ReturnsMatchingPartner()
     {
         // Act - search for "GTS" which is the short name of Global Tech Solutions
@@ -250,7 +250,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.Records.Single().PartnerShortDescription.Should().Be("GTS");
     }
 
-    [Fact(Skip = "Skipping due to authorization issues in test environment")]
+    [Fact]
     public async Task GetAll_FilterByOrgUnitId_ReturnsPartnersInOrgUnit()
     {
         // Note: This test assumes OrgUnitId filtering is implemented in the backend
@@ -269,7 +269,7 @@ public class PartnerControllerTests : IntegrationTestBase
 
     #region Multiple Filter Tests
 
-    [Fact(Skip = "Skipping due to authorization issues in test environment")]
+    [Fact]
     public async Task GetAll_MultipleFilters_AppliesAllFilters()
     {
         // Act - Active status AND name contains "Global"
@@ -285,7 +285,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.Records.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
     }
 
-    [Fact(Skip = "Skipping due to authorization issues in test environment")]
+    [Fact]
     public async Task GetAll_StatusAndName_ReturnsIntersection()
     {
         // Act - Active status AND name = "ACME"
@@ -302,7 +302,7 @@ public class PartnerControllerTests : IntegrationTestBase
 
     #region Pagination Tests
 
-    [Fact(Skip = "Skipping due to authorization issues in test environment")]
+    [Fact]
     public async Task GetAll_Pagination_FirstPage_ReturnsCorrectResults()
     {
         // Act
@@ -320,7 +320,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.Records.First().Name.Should().Be("ACME Corporation");
     }
 
-    [Fact(Skip = "Skipping due to authorization issues in test environment")]
+    [Fact]
     public async Task GetAll_Pagination_SecondPage_ReturnsCorrectResults()
     {
         // Act
@@ -335,7 +335,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.TotalPages.Should().Be(2);
     }
 
-    [Fact(Skip = "Skipping due to authorization issues in test environment")]
+    [Fact]
     public async Task GetAll_Pagination_PageSizeLargerThanTotal_ReturnsAllResults()
     {
         // Act
@@ -354,7 +354,7 @@ public class PartnerControllerTests : IntegrationTestBase
 
     #region Sorting Tests
 
-    [Fact(Skip = "Skipping due to authorization issues in test environment")]
+    [Fact]
     public async Task GetAll_OrderByName_Ascending_ReturnsSortedResults()
     {
         // Act
@@ -367,7 +367,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.Records.Last().Name.Should().Be("Tech Innovations Ltd");
     }
 
-    [Fact(Skip = "Skipping due to authorization issues in test environment")]
+    [Fact]
     public async Task GetAll_OrderByName_Descending_ReturnsSortedResults()
     {
         // Act
@@ -380,7 +380,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.Records.Last().Name.Should().Be("ACME Corporation");
     }
 
-    [Fact(Skip = "Skipping due to authorization issues in test environment")]
+    [Fact]
     public async Task GetAll_OrderByStatus_ReturnsSortedResults()
     {
         // Act
@@ -395,7 +395,7 @@ public class PartnerControllerTests : IntegrationTestBase
 
     #region Advanced Search Tests
 
-    [Fact(Skip = "Skipping due to authorization issues in test environment")]
+    [Fact]
     public async Task GetAll_SimpleTextSearch_WithSearchTextParameter_ReturnsFilteredResults()
     {
         // Act - use the searchText query parameter (not in PartnerFilterRequest)
@@ -409,7 +409,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.Records.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
     }
 
-    [Fact(Skip = "Skipping due to authorization issues in test environment")]
+    [Fact]
     public async Task GetAll_AdvancedSearch_WithSearchCriteria_ReturnsFilteredResults()
     {
         // Act - use advanced search with specific criteria
@@ -426,7 +426,7 @@ public class PartnerControllerTests : IntegrationTestBase
 
     #region Edge Cases
 
-    [Fact(Skip = "Skipping due to authorization issues in test environment")]
+    [Fact]
     public async Task GetAll_NonExistentStatus_ReturnsEmptyResults()
     {
         // Act
@@ -438,7 +438,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.TotalCount.Should().Be(0);
     }
 
-    [Fact(Skip = "Skipping due to authorization issues in test environment")]
+    [Fact]
     public async Task GetAll_EmptySearchText_ReturnsAllResults()
     {
         // Act
@@ -450,7 +450,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.TotalCount.Should().Be(10);
     }
 
-    [Fact(Skip = "Skipping due to authorization issues in test environment")]
+    [Fact]
     public async Task GetAll_InvalidPageIndex_ReturnsError()
     {
         // Act
@@ -460,7 +460,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = "Skipping due to authorization issues in test environment")]
+    [Fact]
     public async Task GetAll_InvalidPageSize_ReturnsError()
     {
         // Act
@@ -470,7 +470,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = "Skipping due to authorization issues in test environment")]
+    [Fact]
     public async Task GetAll_NoMatchingResults_ReturnsEmptyList()
     {
         // Act - search for something that doesn't exist
@@ -487,7 +487,7 @@ public class PartnerControllerTests : IntegrationTestBase
 
     #region Other Endpoint Tests
 
-    [Fact(Skip = "Skipping non-GetAll tests for now")]
+    [Fact]
     public async Task Get_ExistingPartner_ReturnsPartner()
     {
         // Act
@@ -499,7 +499,7 @@ public class PartnerControllerTests : IntegrationTestBase
         content.Should().Contain("ACME Corporation");
     }
 
-    [Fact(Skip = "Skipping non-GetAll tests for now")]
+    [Fact]
     public async Task Get_NonExistentPartner_ReturnsNotFound()
     {
         // Act
@@ -509,7 +509,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
-    [Fact(Skip = "Skipping non-GetAll tests for now")]
+    [Fact]
     public async Task Create_ValidPartner_ReturnsCreated()
     {
         // Arrange
@@ -530,7 +530,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.Created);
     }
 
-    [Fact(Skip = "Skipping non-GetAll tests for now")]
+    [Fact]
     public async Task Update_ExistingPartner_ReturnsOk()
     {
         // Arrange
@@ -550,7 +550,7 @@ public class PartnerControllerTests : IntegrationTestBase
         result.Status.Should().Be("Closed");
     }
 
-    [Fact(Skip = "Skipping non-GetAll tests for now")]
+    [Fact]
     public async Task Delete_ExistingPartner_ReturnsNoContent()
     {
         // Act
@@ -564,7 +564,7 @@ public class PartnerControllerTests : IntegrationTestBase
 
     #region New Advanced Search Tests
 
-    [Fact(Skip = "Requires GeminiManager credential mocking in production code")]
+    [Fact]
     public async Task NewAdvancedSearch_BasicTextSearch_ReturnsMatchingPartners()
     {
         // Arrange
@@ -591,7 +591,7 @@ public class PartnerControllerTests : IntegrationTestBase
         result.Records.Should().OnlyContain(p => p.Name.Contains("ACME", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact(Skip = "Requires GeminiManager credential mocking")]
+    [Fact]
     public async Task NewAdvancedSearch_MultipleAndConditions_ReturnsCorrectResults()
     {
         // Arrange
@@ -626,7 +626,7 @@ public class PartnerControllerTests : IntegrationTestBase
             p.Status == "Active");
     }
 
-    [Fact(Skip = "Requires GeminiManager credential mocking")]
+    [Fact]
     public async Task NewAdvancedSearch_OrConditions_ReturnsUnionOfResults()
     {
         // Arrange
@@ -662,7 +662,7 @@ public class PartnerControllerTests : IntegrationTestBase
             p.Name.Contains("Beta", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact(Skip = "Requires GeminiManager credential mocking")]
+    [Fact]
     public async Task NewAdvancedSearch_NavigationPropertySearch_ReturnsCorrectResults()
     {
         // Arrange
@@ -689,7 +689,7 @@ public class PartnerControllerTests : IntegrationTestBase
         // we just verify the request doesn't fail
     }
 
-    [Fact(Skip = "Requires GeminiManager credential mocking")]
+    [Fact]
     public async Task NewAdvancedSearch_ContactsSearch_ReturnsPartnersWithMatchingContacts()
     {
         // Arrange
@@ -716,7 +716,7 @@ public class PartnerControllerTests : IntegrationTestBase
         // we just verify the request processes without errors
     }
 
-    [Fact(Skip = "Requires GeminiManager credential mocking")]
+    [Fact]
     public async Task NewAdvancedSearch_DateRangeSearch_ReturnsCorrectResults()
     {
         // Arrange
@@ -746,7 +746,7 @@ public class PartnerControllerTests : IntegrationTestBase
         }
     }
 
-    [Fact(Skip = "Requires GeminiManager credential mocking")]
+    [Fact]
     public async Task NewAdvancedSearch_BooleanSearch_ReturnsCorrectResults()
     {
         // Arrange
@@ -776,7 +776,7 @@ public class PartnerControllerTests : IntegrationTestBase
         }
     }
 
-    [Fact(Skip = "Requires GeminiManager credential mocking")]
+    [Fact]
     public async Task NewAdvancedSearch_SimilaritySearch_FindsTypos()
     {
         // Arrange - intentionally misspell "ACME" as "ACMEE" to test similarity
@@ -803,7 +803,7 @@ public class PartnerControllerTests : IntegrationTestBase
         // Note: This depends on the similarity threshold being appropriate
     }
 
-    [Fact(Skip = "Requires GeminiManager credential mocking")]
+    [Fact]
     public async Task NewAdvancedSearch_ComplexMixedCriteria_ReturnsCorrectResults()
     {
         // Arrange
@@ -843,7 +843,7 @@ public class PartnerControllerTests : IntegrationTestBase
         // Complex logic: (name contains "Global" AND keyGlobalPartner = true) OR (status = 1)
     }
 
-    [Fact(Skip = "Requires GeminiManager credential mocking")]
+    [Fact]
     public async Task NewAdvancedSearch_EmptySearchCriteria_ReturnsAllPartners()
     {
         // Arrange
@@ -859,7 +859,7 @@ public class PartnerControllerTests : IntegrationTestBase
         result.Records.Should().NotBeEmpty(); // Should return all partners (up to page size)
     }
 
-    [Fact(Skip = "Requires GeminiManager credential mocking")]
+    [Fact]
     public async Task NewAdvancedSearch_InvalidSearchCriteria_ReturnsBadRequest()
     {
         // Arrange
@@ -872,7 +872,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = "Requires GeminiManager credential mocking")]
+    [Fact]
     public async Task NewAdvancedSearch_InvalidFieldName_ReturnsError()
     {
         // Arrange
@@ -895,7 +895,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = "Requires GeminiManager credential mocking")]
+    [Fact]
     public async Task NewAdvancedSearch_PaginationWorks_ReturnsCorrectPage()
     {
         // Arrange
@@ -924,7 +924,7 @@ public class PartnerControllerTests : IntegrationTestBase
         }
     }
 
-    [Fact(Skip = "Requires GeminiManager credential mocking")]
+    [Fact]
     public async Task NewAdvancedSearch_CaseInsensitiveSearch_ReturnsResults()
     {
         // Arrange - test with lowercase when data might be uppercase
@@ -954,7 +954,7 @@ public class PartnerControllerTests : IntegrationTestBase
         }
     }
 
-    [Fact(Skip = "Requires GeminiManager credential mocking")]
+    [Fact]
     public async Task NewAdvancedSearch_PartnerDescriptionSearch_ReturnsResults()
     {
         // Arrange
@@ -980,7 +980,7 @@ public class PartnerControllerTests : IntegrationTestBase
         // Should work without errors even if no matches found
     }
 
-    [Fact(Skip = "Requires GeminiManager credential mocking")]
+    [Fact]
     public async Task NewAdvancedSearch_NumericComparisons_ReturnsCorrectResults()
     {
         // Arrange - test greater than operator
@@ -1012,7 +1012,7 @@ public class PartnerControllerTests : IntegrationTestBase
 
     #region Nested Properties and Similarity Search Tests
 
-    [Fact(Skip = "Requires GeminiManager credential mocking")]
+    [Fact]
     public async Task NewAdvancedSearch_NestedPropertySimilarity_FindsTyposInPartnerGroupName()
     {
         // Arrange - intentionally misspell "Corporate" as "Corporat" to test similarity on nested property
@@ -1039,7 +1039,7 @@ public class PartnerControllerTests : IntegrationTestBase
         // Note: This tests similarity search on navigation properties
     }
 
-    [Fact(Skip = "Requires GeminiManager credential mocking")]
+    [Fact]
     public async Task NewAdvancedSearch_CollectionPropertySimilarity_FindsTyposInContactNames()
     {
         // Arrange - intentionally misspell "John" as "Jon" to test similarity on collection property
@@ -1065,7 +1065,7 @@ public class PartnerControllerTests : IntegrationTestBase
         // With smart search enabled, it should still find partners with "John" in contacts despite the typo
     }
 
-    [Fact(Skip = "Requires GeminiManager credential mocking")]
+    [Fact]
     public async Task NewAdvancedSearch_NestedPropertyExactMatch_WorksCorrectly()
     {
         // Arrange - exact match on partner group code
@@ -1091,7 +1091,7 @@ public class PartnerControllerTests : IntegrationTestBase
         // Should find partners in Corporate group
     }
 
-    [Fact(Skip = "Requires GeminiManager credential mocking")]
+    [Fact]
     public async Task NewAdvancedSearch_DeepNestedPropertySimilarity_HandlesComplexPaths()
     {
         // Arrange - test similarity on multiple nested levels (if available in schema)
@@ -1124,7 +1124,7 @@ public class PartnerControllerTests : IntegrationTestBase
         // Should find partners through similarity on both "Government" and "Smith" despite typos
     }
 
-    [Fact(Skip = "Requires GeminiManager credential mocking")]
+    [Fact]
     public async Task NewAdvancedSearch_CollectionPropertyEmail_SimilaritySearch()
     {
         // Arrange - test similarity on email addresses in collections
@@ -1155,7 +1155,7 @@ public class PartnerControllerTests : IntegrationTestBase
         }
     }
 
-    [Fact(Skip = "Requires GeminiManager credential mocking")]
+    [Fact]
     public async Task NewAdvancedSearch_CombinedNestedAndDirectSimilarity_ComplexSearch()
     {
         // Arrange - complex search combining direct field similarity with nested property similarity
@@ -1188,7 +1188,7 @@ public class PartnerControllerTests : IntegrationTestBase
         // Should find ACME partners in Corporate group despite typos in both fields
     }
 
-    [Fact(Skip = "Requires GeminiManager credential mocking")]
+    [Fact]
     public async Task NewAdvancedSearch_MultipleCollectionPropertiesSimilarity_TestsAllContactFields()
     {
         // Arrange - test similarity across multiple collection properties
@@ -1228,7 +1228,7 @@ public class PartnerControllerTests : IntegrationTestBase
         // Should find partners through similarity on Jane/Doe/globaltech.com combinations
     }
 
-    [Fact(Skip = "Requires GeminiManager credential mocking")]
+    [Fact]
     public async Task NewAdvancedSearch_NestedPropertyCaseInsensitive_WithSimilarity()
     {
         // Arrange - test case insensitive + similarity on nested properties
@@ -1254,7 +1254,7 @@ public class PartnerControllerTests : IntegrationTestBase
         // Should find "Corporate" partners despite lowercase input and missing letter
     }
 
-    [Fact(Skip = "Requires GeminiManager credential mocking")]
+    [Fact]
     public async Task NewAdvancedSearch_NestedPropertiesWithSpecialCharacters_SimilarityHandling()
     {
         // Arrange - test similarity with special characters in nested properties

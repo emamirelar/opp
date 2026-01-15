@@ -264,7 +264,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             _mockHierarchyService.Verify(x => x.GetDescendantIdsAsync(It.IsAny<int>()), Times.Never);
         }
 
-        [Fact(Skip = "Specification filtering returns different count than expected - needs business logic review")]
+        [Fact]
         public async Task GetPartnersWithSpecificationAsync_WithOrgUnitIdAndOtherFilters_AppliesSpecificationOnly()
         {
             // Note: The org unit filtering is now handled at the controller level
@@ -325,7 +325,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             partnerIds.Should().BeEquivalentTo(new[] { 1, 2, 3 });
         }
 
-        [Fact(Skip = "Specification filtering returns different count than expected - needs business logic review")]
+        [Fact]
         public async Task GetPartnersWithSpecificationAsync_WithOrgUnitIdButNoHierarchy_IncludesIndirectRelations()
         {
             // Note: Even with a single org unit, indirect relations through contacts are included

@@ -205,7 +205,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             return partner;
         }
 
-        [Fact(Skip = "Skipping due to complex dependencies - OrgUnit filter logic has been validated manually")]
+        [Fact]
         public async Task GetPartnersWithSpecification_WithOrgUnitId_FiltersCorrectly()
         {
             // Arrange
@@ -240,7 +240,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             _mockHierarchyService.Verify(x => x.GetDescendantIdsAsync(2), Times.Once);
         }
 
-        [Fact(Skip = "Skipping due to complex dependencies - OrgUnit filter logic has been validated manually")]
+        [Fact]
         public async Task GetPartnersWithSpecification_WithoutOrgUnitId_ReturnsAll()
         {
             // Arrange
@@ -265,7 +265,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             _mockHierarchyService.Verify(x => x.GetDescendantIdsAsync(It.IsAny<int>()), Times.Never);
         }
 
-        [Fact(Skip = "Skipping due to complex dependencies - OrgUnit filter logic has been validated manually")]
+        [Fact]
         public async Task GetPartnersWithSpecification_WithLeafOrgUnitId_ReturnsOnlyLeafPartners()
         {
             // Arrange
@@ -294,7 +294,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             response.Records.Should().Contain(p => p.Name == "Partner Thailand");
         }
 
-        [Fact(Skip = "Skipping due to complex dependencies - OrgUnit filter logic has been validated manually")]
+        [Fact]
         public async Task GetPartnersWithSpecification_WithInvalidOrgUnitId_ReturnsEmpty()
         {
             // Arrange
@@ -323,7 +323,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             response.TotalCount.Should().Be(0);
         }
 
-        [Fact(Skip = "Skipping due to complex dependencies - OrgUnit filter logic has been validated manually")]
+        [Fact]
         public async Task GetPartnersWithSpecification_OrgUnitHierarchyServiceNull_LogsWarningAndReturnsAll()
         {
             // Arrange
@@ -361,7 +361,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
                 Times.Once);
         }
 
-        [Fact(Skip = "Skipping due to complex dependencies - OrgUnit filter logic has been validated manually")]
+        [Fact]
         public async Task GetPartnersWithSpecification_WithOrgUnitIdAndOtherFilters_AppliesAllFilters()
         {
             // Arrange

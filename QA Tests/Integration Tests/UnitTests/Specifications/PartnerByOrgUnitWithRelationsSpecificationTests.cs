@@ -70,7 +70,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             specification.Should().NotBeNull();
         }
 
-        [Fact(Skip = "Specification filtering logic has been updated - test needs review")]
+        [Fact]
         public async Task Criteria_FiltersPartnersByDirectOrgUnitLink()
         {
             // Arrange
@@ -98,7 +98,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             results.Should().NotContain(p => p.Id == partner3.Id);
         }
 
-        [Fact(Skip = "Skipping due to entity configuration mismatch - Interaction and Contact entities require properties not present in domain model")]
+        [Fact]
         public async Task Criteria_FiltersPartnersByIndirectContactRelation()
         {
             // Arrange
@@ -211,7 +211,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             results.Should().NotContain(p => p.Id == partner2.Id);
         }
 
-        [Fact(Skip = "Skipping due to entity configuration mismatch - Interaction and Contact entities require properties not present in domain model")]
+        [Fact]
         public async Task Criteria_FiltersPartnersByBothDirectAndIndirectRelations()
         {
             // Arrange
@@ -375,7 +375,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             results.Should().BeEmpty();
         }
 
-        [Fact(Skip = "Specification filtering logic has been updated - test needs review")]
+        [Fact]
         public async Task Criteria_WithMultipleOrgUnitIds_FiltersCorrectly()
         {
             // Arrange
@@ -403,7 +403,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             results.Select(p => p.Id).Should().BeEquivalentTo(new[] { 1, 2, 3 });
         }
 
-        [Fact(Skip = "Skipping due to entity configuration mismatch - Interaction and Contact entities require properties not present in domain model")]
+        [Fact]
         public async Task Criteria_WithMultipleUserIds_FiltersCorrectly()
         {
             // Arrange

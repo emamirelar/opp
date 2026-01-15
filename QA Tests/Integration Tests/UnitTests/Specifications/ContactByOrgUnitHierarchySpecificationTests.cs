@@ -68,7 +68,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             // Note: OrganizationUnitRelationships filtering is now handled via ApplyOrgUnitFilter method
         }
 
-        [Fact(Skip = "Specification filtering logic has been updated - test needs review")]
+        [Fact]
         public async Task Criteria_FiltersContactsByPartnerOrgUnit()
         {
             // Arrange
@@ -105,7 +105,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             results.Should().NotContain(c => c.Id == contact3.Id);
         }
 
-        [Fact(Skip = "Specification filtering logic has been updated - test needs review")]
+        [Fact]
         public async Task Criteria_WithMultipleOrgUnitIds_FiltersCorrectly()
         {
             // Arrange
@@ -219,7 +219,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             results.Should().NotContain(c => c.Id == contactWithoutPartner.Id);
         }
 
-        [Fact(Skip = "Specification filtering logic has been updated - test needs review")]
+        [Fact]
         public async Task Criteria_ExcludesContactsWherePartnerHasNullOfficeId()
         {
             // Arrange
