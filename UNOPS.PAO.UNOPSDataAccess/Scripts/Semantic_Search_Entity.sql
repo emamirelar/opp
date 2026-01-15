@@ -13,7 +13,7 @@
 -- ============================================================================
 
 -- Enable required extensions
-CREATE EXTENSION IF NOT EXISTS vector;
+--CREATE EXTENSION IF NOT EXISTS vector;
 
 -- Drop existing functions to ensure clean recreation
 DROP FUNCTION IF EXISTS public.search_opportunities_semantic(INTEGER, INTEGER, REAL);

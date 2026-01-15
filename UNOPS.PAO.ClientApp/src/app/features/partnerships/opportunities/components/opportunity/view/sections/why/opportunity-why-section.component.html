@@ -119,8 +119,12 @@
           [formControl]="challengesControl"
           rows="4"
           class="w-full"
+          maxlength="1020"
           [placeholder]="'label.opportunity.challengesPlaceholder' | translate"
         ></textarea>
+        <div class="flex justify-end mt-1">
+          <small class="text-unops-neutral-600">{{ (challengesControl.value?.length || 0) }} / 1020</small>
+        </div>
       } @else {
         <p class="text-unops-neutral-800 leading-relaxed">
           {{ opportunity().challenges || "-" }}

@@ -12,20 +12,20 @@
   @if (currentStep() === 'select') {
     
     <!-- Validation Error Message -->
-    @if (showValidationError()) {
-      <p-message 
-        severity="error" 
-        icon="pi pi-info-circle" 
-        styleClass="mb-4 w-full">
-        @if (!opportunityName().trim()) {
-          {{ 'message.validation.opportunityNameRequired' | translate }}
-        } @else if (opportunityName().trim().length > 255) {
-          {{ 'message.validation.opportunityNameTooLong' | translate }}
-        } @else if (showPartnerFields() && !isFundingPartner() && !isClientPartner()) {
-          {{ 'message.validation.selectAtLeastOnePartnerRole' | translate }}
-        }
-      </p-message>
-    }
+      @if (showValidationError()) {
+        <p-message 
+          severity="error" 
+          icon="pi pi-info-circle" 
+          styleClass="mb-4 w-full">
+          @if (!opportunityName().trim()) {
+            {{ 'message.validation.opportunityNameRequired' | translate }}
+          } @else if (opportunityName().trim().length > 120) {
+            {{ 'message.validation.opportunityNameTooLong' | translate }}
+          } @else if (showPartnerFields() && !isFundingPartner() && !isClientPartner()) {
+            {{ 'message.validation.selectAtLeastOnePartnerRole' | translate }}
+          }
+        </p-message>
+      }
 
     <!-- Opportunity Basic Info -->
     <div class="mb-4">
@@ -42,11 +42,11 @@
               id="opp-name"
               [(ngModel)]="opportunityName"
               class="w-full"
-              maxlength="255"
+              maxlength="120"
               [disabled]="generating()">
             <label for="opp-name">{{ 'label.opportunityName' | translate }} *</label>
           </p-floatlabel>
-          <small class="text-gray-500">{{ opportunityName().length }} / 255</small>
+          <small class="text-gray-500">{{ opportunityName().length }} / 120</small>
         </div>
 
         <!-- Opportunity Description -->
@@ -965,14 +965,18 @@
                     {{ 'label.contextAndChallenges' | translate }}
                   </label>
                 </div>
-                <textarea
-                  pTextarea
-                  [(ngModel)]="$any(proposedOpportunity()!.opportunity).challenges"
-                  rows="4"
-                  class="w-full bg-yellow-50 border-yellow-200"
-                  (click)="$event.stopPropagation()">
-                </textarea>
+              <textarea
+                pTextarea
+                [(ngModel)]="$any(proposedOpportunity()!.opportunity).challenges"
+                rows="4"
+                class="w-full bg-yellow-50 border-yellow-200"
+                maxlength="1020"
+                (click)="$event.stopPropagation()">
+              </textarea>
+              <div class="flex justify-end mt-1" (click)="$event.stopPropagation()">
+                <small class="text-gray-500">{{ ($any(proposedOpportunity()!.opportunity).challenges?.length || 0) }} / 1020</small>
               </div>
+            </div>
             }
 
             <!-- Results Focus - Always shown -->

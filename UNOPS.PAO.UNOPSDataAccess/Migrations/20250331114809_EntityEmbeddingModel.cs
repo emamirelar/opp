@@ -11,7 +11,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql("CREATE EXTENSION IF NOT EXISTS vector;");
+            //migrationBuilder.Sql("CREATE EXTENSION IF NOT EXISTS vector;");
             migrationBuilder.CreateTable(
                 name: "EntityEmbeddings",
                 schema: "public",

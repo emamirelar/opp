@@ -1657,7 +1657,7 @@ Create a comprehensive summary including their complete profile, interaction his
 **IMPORTANT**: Only extract and return the following fields. Do NOT include status, workflow stage, or system-generated fields.
 
 ### Basic Information (camelCase)
-- **name** (string, max 255 characters): The ACTUAL PROJECT/OPPORTUNITY TITLE from the document (e.g., "Sustainable Water Infrastructure Development", "Education Reform Program"). MUST NOT exceed 255 characters.
+- **name** (string, max 120 characters): The ACTUAL PROJECT/OPPORTUNITY TITLE from the document (e.g., "Sustainable Water Infrastructure Development", "Education Reform Program"). MUST NOT exceed 120 characters.
 - **description** (string): Detailed description of the OPPORTUNITY/PROJECT itself - what the project does, its scope, objectives, and activities
 
 ### Organizational & Initiative Type (camelCase)
@@ -1691,7 +1691,7 @@ Create a comprehensive summary including their complete profile, interaction his
 - **targetDeliveryDate** (DateTime?): Target delivery or completion date (ISO 8601 format: YYYY-MM-DDTHH:mm:ss.sssZ)
 
 ### Strategic Information (camelCase)
-- **challenges** (string?): Context and challenges that the opportunity aims to address
+- **challenges** (string?, max 1020 characters): Context and challenges that the opportunity aims to address. MUST NOT exceed 1020 characters.
 - **strategicAlignment** (string?): How this opportunity aligns with strategic goals, organizational priorities, or regional development plans
 - **resultsFocus** (string?, max 2000 characters): Focus areas for results and key deliverables. MUST NOT exceed 2000 characters.
 - **expectedImpact** (string?, max 200 characters): Expected impact of the opportunity. MUST NOT exceed 200 characters.
@@ -2899,7 +2899,7 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
 **IMPORTANT**: Only extract and return the following fields. Do NOT include status, workflow stage, or system-generated fields.
 
 ### Basic Information (camelCase)
-- **name** (string, max 255 characters): Use the user-provided opportunity name exactly as given. MUST NOT exceed 255 characters.
+- **name** (string, max 120 characters): Use the user-provided opportunity name exactly as given. MUST NOT exceed 120 characters.
 - **description** (string): Expand and enhance the user-provided description by incorporating relevant details from interactions (discussion points, objectives, scope mentioned in meetings/emails) AND documents (key points from document names and descriptions)
 
 ### Organizational & Initiative Type (camelCase)
@@ -2933,7 +2933,7 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
 - **targetDeliveryDate** (DateTime?): Extract or infer target delivery/completion dates from interactions or documents (ISO 8601 format: YYYY-MM-DDTHH:mm:ss.sssZ)
 
 ### Strategic Information (camelCase)
-- **challenges** (string?): Context and challenges that the opportunity aims to address - extract from discussions about problems, gaps, or needs
+- **challenges** (string?, max 1020 characters): Context and challenges that the opportunity aims to address - extract from discussions about problems, gaps, or needs. MUST NOT exceed 1020 characters.
 - **strategicAlignment** (string?): Synthesize strategic alignment from interaction discussions AND document context - how does this align with SDGs, UNOPS mandate, partner priorities, and development goals mentioned
 - **resultsFocus** (string?, max 2000 characters): Extract and synthesize expected results, outcomes, and key focus areas discussed in interactions or referenced in documents. MUST NOT exceed 2000 characters.
 - **expectedImpact** (string?, max 200 characters): Generate a comprehensive impact statement based on benefits and impacts discussed across interactions and documents. MUST NOT exceed 200 characters.
