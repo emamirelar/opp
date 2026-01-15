@@ -86,7 +86,7 @@ When PRs triggered the CI/CD pipeline, tests were failing with:
   if: always()
   with:
     name: FastTests Results
-    path: '${{ github.workspace }}/TestResults/*.trx'  # ✅ EXPLICIT PATH
+    path: '**/TestResults/*.trx'  # ✅ GLOB PATTERN (platform-independent)
     reporter: dotnet-trx
     fail-on-error: false  # ✅ GRACEFUL HANDLING
 ```
@@ -95,6 +95,36 @@ When PRs triggered the CI/CD pipeline, tests were failing with:
 - ✅ Processes results when available
 - ✅ Fails gracefully if no results
 - ✅ Provides detailed test reports
+- ✅ Works on both Windows and Linux runners
+
+---
+
+### **4b. Windows Path Handling** 🔧 **CRITICAL FIX**
+```yaml
+- name: Run FastTests
+  run: |
+    $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
+    New-Item -ItemType Directory -Force -Path $testResultsDir | Out-Null
+    dotnet test ... --results-directory $testResultsDir
+```
+
+**Why This Is Needed:**
+On Windows runners, `${{ github.workspace }}` returns paths with backslashes:
+- Example: `D:\a\opportunityplus\opportunityplus`
+
+Simply appending `/TestResults` creates **mixed separators**:
+- Result: `D:\a\opportunityplus\opportunityplus/TestResults` ❌
+
+**Solution:**
+- Use PowerShell's `Join-Path` for proper path construction
+- Explicitly create directory before test execution
+- Use glob pattern `**/TestResults/*.trx` in test reporter
+
+**Benefits:**
+- ✅ Correct path separators on Windows
+- ✅ Directory always exists
+- ✅ Test reporter can find files
+- ✅ Platform-independent approach
 
 ---
 
@@ -396,6 +426,15 @@ fail-on-error: false      # Don't fail on missing results
 ---
 
 ## 📈 **RECENT CHANGES**
+
+### **January 15, 2026 - e41de2a1** 🔧 **LATEST FIX**
+- ✅ Fixed Windows path handling (PowerShell Join-Path)
+- ✅ Explicit TestResults directory creation
+- ✅ Changed to glob pattern (**/TestResults/*.trx)
+- ✅ Enhanced debug output with file counts
+- ✅ Proper path separator handling for Windows runners
+
+**Issue Resolved**: Mixed path separators (D:\path/TestResults) on Windows
 
 ### **January 15, 2026 - fa5e583b**
 - ✅ Fixed test results directory (explicit path)
