@@ -523,8 +523,9 @@ public class Startup
                                 $"Please set it up under in appsettings.{CurrentEnvironment.EnvironmentName}.json under ConnectionStrings. " +
                                 $"Current environment: {CurrentEnvironment.EnvironmentName}.");
 
-        // Check if IAM authentication is enabled
-        var useIamAuth = Configuration.GetValue<bool>("ConnectionStrings:UseIamAuthentication");
+        // Check if IAM authentication is enabled (ONLY for local development)
+        // In Dev/QA/Prod, connection strings from Secret Manager already have proper credentials
+        var useIamAuth = CurrentEnvironment.IsDevelopment() && Configuration.GetValue<bool>("ConnectionStrings:UseIamAuthentication");
         DataAccess.Services.CloudSqlIamAuthProvider.IsEnabled = useIamAuth;
 
         // OPTIMIZE: Configure connection pool for better concurrency
@@ -540,6 +541,13 @@ public class Startup
             WriteBufferSize = 16384        // 16KB write buffer
             // Note: Multiplexing and KeepAlive are incompatible, disabled for IAM auth compatibility
         };
+        
+        // CRITICAL: Remove password from connection string when using IAM authentication
+        // Npgsql requires no password set when using periodic password provider
+        if (useIamAuth)
+        {
+            connectionStringBuilder.Password = null;
+        }
         
         var optimizedConnectionString = connectionStringBuilder.ToString();
 
