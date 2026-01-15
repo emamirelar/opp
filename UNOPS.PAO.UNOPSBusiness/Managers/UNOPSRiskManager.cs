@@ -71,31 +71,111 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
 
         /// <summary>
         /// Creates a new risk with oUP-aligned fields
+        /// Mode A (Predefined High Risk): All oUP fields mandatory
+        /// Mode B (Manual Entry): Only Title mandatory, oUP fields get defaults
         /// </summary>
         public async Task<RiskModel> CreateRiskAsync(RiskCreateRequest request, ClaimsPrincipal? user = null)
         {
-            // Validate mandatory FK fields exist
-            await ValidateRiskForeignKeysAsync(request);
-
-            // Validate ResponseType is provided for Opportunity type
-            var riskType = await _context.RiskTypes.FindAsync(request.RiskTypeId);
-            if (riskType?.IsResponseTypeMandatory == true && !request.RiskResponseTypeId.HasValue)
+            // Title is ALWAYS required
+            if (string.IsNullOrWhiteSpace(request.Title))
             {
-                throw new ArgumentException("ResponseType is mandatory for Opportunity risk type");
+                throw new ArgumentException("Risk title is required");
             }
 
-            // Validate ResponseType compatibility with RiskType
-            if (request.RiskResponseTypeId.HasValue)
+            // Determine mode: Predefined High Risk OR Manual Entry
+            bool isPredefinedHighRisk = request.PreDefinedHighRiskId.HasValue;
+
+            if (isPredefinedHighRisk)
             {
-                var responseType = await _context.RiskResponseTypes.FindAsync(request.RiskResponseTypeId.Value);
-                if (responseType != null)
+                // MODE A: Predefined High Risk - All oUP fields are mandatory
+                if (!request.RiskTypeId.HasValue)
+                    throw new ArgumentException("Risk type is required for predefined high risks");
+                if (!request.RiskCategoryId.HasValue)
+                    throw new ArgumentException("Risk category is required for predefined high risks");
+                if (!request.RiskProbabilityId.HasValue)
+                    throw new ArgumentException("Risk probability is required for predefined high risks");
+                if (!request.RiskProximityId.HasValue)
+                    throw new ArgumentException("Risk proximity is required for predefined high risks");
+                if (!request.RiskImpactLevelId.HasValue)
+                    throw new ArgumentException("Risk impact level is required for predefined high risks");
+
+                // Validate all FK fields exist
+                await ValidateRiskForeignKeysAsync(request);
+
+                // Validate ResponseType for Opportunity type risks
+                var riskType = await _context.RiskTypes.FindAsync(request.RiskTypeId.Value);
+                if (riskType?.IsResponseTypeMandatory == true && !request.RiskResponseTypeId.HasValue)
                 {
-                    var isValidForType = riskType?.Code == "THREAT" ? responseType.ValidForThreat : responseType.ValidForOpportunity;
-                    if (!isValidForType)
+                    throw new ArgumentException("ResponseType is mandatory for Opportunity risk type");
+                }
+
+                // Validate ResponseType compatibility with RiskType
+                if (request.RiskResponseTypeId.HasValue)
+                {
+                    var responseType = await _context.RiskResponseTypes.FindAsync(request.RiskResponseTypeId.Value);
+                    if (responseType != null)
                     {
-                        throw new ArgumentException($"ResponseType '{responseType.Name}' is not valid for RiskType '{riskType?.Name}'");
+                        var isValidForType = riskType?.Code == "THREAT" ? responseType.ValidForThreat : responseType.ValidForOpportunity;
+                        if (!isValidForType)
+                        {
+                            throw new ArgumentException($"ResponseType '{responseType.Name}' is not valid for RiskType '{riskType?.Name}'");
+                        }
                     }
                 }
+            }
+            else
+            {
+                // MODE B: Manual Entry - Apply defaults for missing oUP fields
+                // Users can quickly add risks with just a title; fields will be populated with sensible defaults
+
+                // Default to THREAT type if not provided
+                if (!request.RiskTypeId.HasValue)
+                {
+                    var defaultType = await _context.RiskTypes
+                        .Where(rt => rt.Code == "THREAT" && !rt.IsDeleted && rt.Status == EntityStatus.Active)
+                        .FirstOrDefaultAsync();
+                    request.RiskTypeId = defaultType?.Id ?? throw new InvalidOperationException("Default THREAT risk type not found in system");
+                }
+
+                // Default to MEDIUM probability if not provided
+                if (!request.RiskProbabilityId.HasValue)
+                {
+                    var defaultProbability = await _context.RiskProbabilities
+                        .Where(rp => rp.Code == "MEDIUM" && !rp.IsDeleted && rp.Status == EntityStatus.Active)
+                        .FirstOrDefaultAsync();
+                    request.RiskProbabilityId = defaultProbability?.Id ?? throw new InvalidOperationException("Default MEDIUM probability not found in system");
+                }
+
+                // Default to MEDIUM impact if not provided
+                if (!request.RiskImpactLevelId.HasValue)
+                {
+                    var defaultImpact = await _context.RiskImpactLevels
+                        .Where(ril => ril.Code == "MEDIUM" && !ril.IsDeleted && ril.Status == EntityStatus.Active)
+                        .FirstOrDefaultAsync();
+                    request.RiskImpactLevelId = defaultImpact?.Id ?? throw new InvalidOperationException("Default MEDIUM impact level not found in system");
+                }
+
+                // Default to WITHIN_SIX_MONTHS proximity if not provided
+                if (!request.RiskProximityId.HasValue)
+                {
+                    var defaultProximity = await _context.RiskProximities
+                        .Where(rp => rp.Code == "WITHIN_SIX_MONTHS" && !rp.IsDeleted && rp.Status == EntityStatus.Active)
+                        .FirstOrDefaultAsync();
+                    request.RiskProximityId = defaultProximity?.Id ?? throw new InvalidOperationException("Default WITHIN_SIX_MONTHS proximity not found in system");
+                }
+
+                // Default to a general category if not provided (use first active Level 3 category as fallback)
+                if (!request.RiskCategoryId.HasValue)
+                {
+                    var defaultCategory = await _context.RiskCategories
+                        .Where(rc => rc.Level == 3 && !rc.IsDeleted && rc.Status == EntityStatus.Active)
+                        .OrderBy(rc => rc.DisplayOrder)
+                        .FirstOrDefaultAsync();
+                    request.RiskCategoryId = defaultCategory?.Id ?? throw new InvalidOperationException("No Level 3 risk categories found in system");
+                }
+
+                // Response type remains optional for manual entry (will be null for Threat type)
+                // No validation needed for manual entry mode
             }
 
             var risk = new Risk
@@ -107,12 +187,12 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 Description = request.Description ?? string.Empty,
                 Recommendation = request.Recommendation ?? string.Empty,
 
-                // New oUP-aligned fields
-                RiskTypeId = request.RiskTypeId,
-                RiskCategoryId = request.RiskCategoryId,
-                RiskProbabilityId = request.RiskProbabilityId,
-                RiskProximityId = request.RiskProximityId,
-                RiskImpactLevelId = request.RiskImpactLevelId,
+                // New oUP-aligned fields (now guaranteed to have values after default logic)
+                RiskTypeId = request.RiskTypeId!.Value,
+                RiskCategoryId = request.RiskCategoryId!.Value,
+                RiskProbabilityId = request.RiskProbabilityId!.Value,
+                RiskProximityId = request.RiskProximityId!.Value,
+                RiskImpactLevelId = request.RiskImpactLevelId!.Value,
                 RiskResponseTypeId = request.RiskResponseTypeId,
                 PreDefinedHighRiskId = request.PreDefinedHighRiskId,
 
@@ -159,26 +239,94 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 throw new KeyNotFoundException($"Risk with ID {id} not found");
             }
 
-            // Validate FK fields
-            await ValidateRiskForeignKeysAsync(request);
-
-            // Validate ResponseType for Opportunity type
-            var riskType = await _context.RiskTypes.FindAsync(request.RiskTypeId);
-            if (riskType?.IsResponseTypeMandatory == true && !request.RiskResponseTypeId.HasValue)
+            // Title is ALWAYS required
+            if (string.IsNullOrWhiteSpace(request.Title))
             {
-                throw new ArgumentException("ResponseType is mandatory for Opportunity risk type");
+                throw new ArgumentException("Risk title is required");
             }
 
-            // Update all fields
+            // Determine mode: Predefined High Risk OR Manual Entry
+            bool isPredefinedHighRisk = request.PreDefinedHighRiskId.HasValue || risk.PreDefinedHighRiskId.HasValue;
+
+            if (isPredefinedHighRisk)
+            {
+                // MODE A: Predefined High Risk - All oUP fields are mandatory
+                if (!request.RiskTypeId.HasValue)
+                    throw new ArgumentException("Risk type is required for predefined high risks");
+                if (!request.RiskCategoryId.HasValue)
+                    throw new ArgumentException("Risk category is required for predefined high risks");
+                if (!request.RiskProbabilityId.HasValue)
+                    throw new ArgumentException("Risk probability is required for predefined high risks");
+                if (!request.RiskProximityId.HasValue)
+                    throw new ArgumentException("Risk proximity is required for predefined high risks");
+                if (!request.RiskImpactLevelId.HasValue)
+                    throw new ArgumentException("Risk impact level is required for predefined high risks");
+
+                // Validate FK fields
+                await ValidateRiskForeignKeysAsync(request);
+
+                // Validate ResponseType for Opportunity type
+                var riskType = await _context.RiskTypes.FindAsync(request.RiskTypeId.Value);
+                if (riskType?.IsResponseTypeMandatory == true && !request.RiskResponseTypeId.HasValue)
+                {
+                    throw new ArgumentException("ResponseType is mandatory for Opportunity risk type");
+                }
+            }
+            else
+            {
+                // MODE B: Manual Entry - Apply defaults for missing oUP fields (same logic as Create)
+                if (!request.RiskTypeId.HasValue)
+                {
+                    var defaultType = await _context.RiskTypes
+                        .Where(rt => rt.Code == "THREAT" && !rt.IsDeleted && rt.Status == EntityStatus.Active)
+                        .FirstOrDefaultAsync();
+                    request.RiskTypeId = defaultType?.Id ?? throw new InvalidOperationException("Default THREAT risk type not found in system");
+                }
+
+                if (!request.RiskProbabilityId.HasValue)
+                {
+                    var defaultProbability = await _context.RiskProbabilities
+                        .Where(rp => rp.Code == "MEDIUM" && !rp.IsDeleted && rp.Status == EntityStatus.Active)
+                        .FirstOrDefaultAsync();
+                    request.RiskProbabilityId = defaultProbability?.Id ?? throw new InvalidOperationException("Default MEDIUM probability not found in system");
+                }
+
+                if (!request.RiskImpactLevelId.HasValue)
+                {
+                    var defaultImpact = await _context.RiskImpactLevels
+                        .Where(ril => ril.Code == "MEDIUM" && !ril.IsDeleted && ril.Status == EntityStatus.Active)
+                        .FirstOrDefaultAsync();
+                    request.RiskImpactLevelId = defaultImpact?.Id ?? throw new InvalidOperationException("Default MEDIUM impact level not found in system");
+                }
+
+                if (!request.RiskProximityId.HasValue)
+                {
+                    var defaultProximity = await _context.RiskProximities
+                        .Where(rp => rp.Code == "WITHIN_SIX_MONTHS" && !rp.IsDeleted && rp.Status == EntityStatus.Active)
+                        .FirstOrDefaultAsync();
+                    request.RiskProximityId = defaultProximity?.Id ?? throw new InvalidOperationException("Default WITHIN_SIX_MONTHS proximity not found in system");
+                }
+
+                if (!request.RiskCategoryId.HasValue)
+                {
+                    var defaultCategory = await _context.RiskCategories
+                        .Where(rc => rc.Level == 3 && !rc.IsDeleted && rc.Status == EntityStatus.Active)
+                        .OrderBy(rc => rc.DisplayOrder)
+                        .FirstOrDefaultAsync();
+                    request.RiskCategoryId = defaultCategory?.Id ?? throw new InvalidOperationException("No Level 3 risk categories found in system");
+                }
+            }
+
+            // Update all fields (now guaranteed to have values after default logic)
             risk.Name = request.Title;
             risk.Title = request.Title;
             risk.Description = request.Description ?? string.Empty;
             risk.Recommendation = request.Recommendation ?? string.Empty;
-            risk.RiskTypeId = request.RiskTypeId;
-            risk.RiskCategoryId = request.RiskCategoryId;
-            risk.RiskProbabilityId = request.RiskProbabilityId;
-            risk.RiskProximityId = request.RiskProximityId;
-            risk.RiskImpactLevelId = request.RiskImpactLevelId;
+            risk.RiskTypeId = request.RiskTypeId!.Value;
+            risk.RiskCategoryId = request.RiskCategoryId!.Value;
+            risk.RiskProbabilityId = request.RiskProbabilityId!.Value;
+            risk.RiskProximityId = request.RiskProximityId!.Value;
+            risk.RiskImpactLevelId = request.RiskImpactLevelId!.Value;
             risk.RiskResponseTypeId = request.RiskResponseTypeId;
             risk.Impact = (RiskImpact)Math.Min(Math.Max(request.Impact, 1), 3);
 
@@ -558,48 +706,48 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
 
         private async Task ValidateRiskForeignKeysAsync(RiskCreateRequest request)
         {
-            // Validate RiskType exists
-            if (!await _context.RiskTypes.AnyAsync(r => r.Id == request.RiskTypeId && !r.IsDeleted))
+            // Validate RiskType exists (if provided)
+            if (request.RiskTypeId.HasValue && !await _context.RiskTypes.AnyAsync(r => r.Id == request.RiskTypeId.Value && !r.IsDeleted))
             {
                 throw new ArgumentException($"Invalid RiskTypeId: {request.RiskTypeId}");
             }
 
-            // Validate RiskCategory exists and is Level 3 (leaf)
-            var category = await _context.RiskCategories.FirstOrDefaultAsync(r => r.Id == request.RiskCategoryId && !r.IsDeleted);
-            if (category == null)
+            // Validate RiskCategory exists and is Level 3 (leaf) - if provided
+            if (request.RiskCategoryId.HasValue)
             {
-                throw new ArgumentException($"Invalid RiskCategoryId: {request.RiskCategoryId}");
-            }
-            if (category.Level != 3)
-            {
-                throw new ArgumentException("Only Level 3 (leaf) categories can be selected for risks");
+                var category = await _context.RiskCategories.FirstOrDefaultAsync(r => r.Id == request.RiskCategoryId.Value && !r.IsDeleted);
+                if (category == null)
+                {
+                    throw new ArgumentException($"Invalid RiskCategoryId: {request.RiskCategoryId}");
+                }
+                if (category.Level != 3)
+                {
+                    throw new ArgumentException("Only Level 3 (leaf) categories can be selected for risks");
+                }
             }
 
-            // Validate RiskProbability exists
-            if (!await _context.RiskProbabilities.AnyAsync(r => r.Id == request.RiskProbabilityId && !r.IsDeleted))
+            // Validate RiskProbability exists (if provided)
+            if (request.RiskProbabilityId.HasValue && !await _context.RiskProbabilities.AnyAsync(r => r.Id == request.RiskProbabilityId.Value && !r.IsDeleted))
             {
                 throw new ArgumentException($"Invalid RiskProbabilityId: {request.RiskProbabilityId}");
             }
 
-            // Validate RiskProximity exists
-            if (!await _context.RiskProximities.AnyAsync(r => r.Id == request.RiskProximityId && !r.IsDeleted))
+            // Validate RiskProximity exists (if provided)
+            if (request.RiskProximityId.HasValue && !await _context.RiskProximities.AnyAsync(r => r.Id == request.RiskProximityId.Value && !r.IsDeleted))
             {
                 throw new ArgumentException($"Invalid RiskProximityId: {request.RiskProximityId}");
             }
 
-            // Validate RiskImpactLevel exists
-            if (!await _context.RiskImpactLevels.AnyAsync(r => r.Id == request.RiskImpactLevelId && !r.IsDeleted))
+            // Validate RiskImpactLevel exists (if provided)
+            if (request.RiskImpactLevelId.HasValue && !await _context.RiskImpactLevels.AnyAsync(r => r.Id == request.RiskImpactLevelId.Value && !r.IsDeleted))
             {
                 throw new ArgumentException($"Invalid RiskImpactLevelId: {request.RiskImpactLevelId}");
             }
 
-            // Validate RiskResponseType if provided
-            if (request.RiskResponseTypeId.HasValue)
+            // Validate RiskResponseType exists (if provided)
+            if (request.RiskResponseTypeId.HasValue && !await _context.RiskResponseTypes.AnyAsync(r => r.Id == request.RiskResponseTypeId.Value && !r.IsDeleted))
             {
-                if (!await _context.RiskResponseTypes.AnyAsync(r => r.Id == request.RiskResponseTypeId.Value && !r.IsDeleted))
-                {
-                    throw new ArgumentException($"Invalid RiskResponseTypeId: {request.RiskResponseTypeId}");
-                }
+                throw new ArgumentException($"Invalid RiskResponseTypeId: {request.RiskResponseTypeId}");
             }
 
             // Validate PreDefinedHighRisk if provided

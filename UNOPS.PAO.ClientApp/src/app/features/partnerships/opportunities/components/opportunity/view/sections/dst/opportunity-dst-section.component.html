@@ -604,7 +604,7 @@
     <!-- Validation error message -->
     @if (showDialogValidationError()) {
       <p-message severity="error" icon="pi pi-info-circle" styleClass="mb-4 w-full">
-        {{ 'message.validation.allFieldsRequired' | translate }}
+        {{ 'message.validation.titleRequired' | translate }}
       </p-message>
     }
 
@@ -629,11 +629,18 @@
       <small class="text-gray-500 mt-1 block">
         {{ 'helpText.dst.selectHighRiskOrManual' | translate }}
       </small>
+      
+      <!-- Info message when predefined risk is selected -->
+      @if (selectedPreDefinedHighRiskId) {
+        <p-message severity="info" styleClass="mt-2 w-full">
+          {{ 'message.dst.predefinedRiskFieldsLocked' | translate }}
+        </p-message>
+      }
     </div>
 
     <p-divider />
 
-    <!-- Risk Title -->
+    <!-- Risk Title - ALWAYS EDITABLE & REQUIRED -->
     <div class="mb-6">
       <p-floatlabel variant="on">
         <input
@@ -651,151 +658,130 @@
       }
     </div>
 
-    <!-- Two-column grid for mandatory dropdowns -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-      <!-- Risk Type -->
-      <div>
-        <p-floatlabel variant="on">
-          <p-select
-            id="riskType"
-            [(ngModel)]="newRisk.riskTypeId"
-            [options]="riskLookups()?.riskTypes || []"
-            optionLabel="name"
-            optionValue="id"
-            appendTo="body"
-            class="w-full"
-            (onChange)="onRiskTypeChange()"
-          />
-          <label for="riskType">{{ 'label.dst.riskType' | translate }} *</label>
-        </p-floatlabel>
-        @if (!newRisk.riskTypeId && showDialogValidationError()) {
-          <p-message severity="error" variant="simple" styleClass="mt-2">
-            {{ 'message.validation.required' | translate }}
-          </p-message>
-        }
+    <!-- CONDITIONAL: Show oUP fields ONLY when predefined high risk is selected -->
+    <!-- These fields are DISABLED to maintain organizational standards -->
+    @if (showOupFields()) {
+      <div class="mb-4 p-3 bg-slate-50 border border-slate-200 rounded">
+        <div class="flex items-start gap-2 mb-3">
+          <i class="pi pi-lock text-slate-600 mt-0.5"></i>
+          <span class="text-sm text-slate-700 font-medium">
+            {{ 'label.dst.organizationalRiskProfile' | translate }}
+          </span>
+        </div>
+        
+        <!-- Two-column grid for mandatory dropdowns (DISABLED) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <!-- Risk Type (DISABLED) -->
+          <div>
+            <p-floatlabel variant="on">
+              <p-select
+                id="riskType"
+                [(ngModel)]="newRisk.riskTypeId"
+                [options]="riskLookups()?.riskTypes || []"
+                optionLabel="name"
+                optionValue="id"
+                appendTo="body"
+                class="w-full"
+                [disabled]="oupFieldsDisabled()"
+              />
+              <label for="riskType">{{ 'label.dst.riskType' | translate }}</label>
+            </p-floatlabel>
+          </div>
+
+          <!-- Risk Category (DISABLED) -->
+          <div>
+            <p-floatlabel variant="on" class="w-full">
+              <p-treeselect
+                id="riskCategory"
+                [(ngModel)]="selectedCategoryNode"
+                [options]="categoryTreeNodes()"
+                appendTo="body"
+                class="w-full"
+                styleClass="w-full"
+                selectionMode="single"
+                [panelStyle]="{ minWidth: '500px' }"
+                [style]="{ width: '100%' }"
+                [disabled]="oupFieldsDisabled()"
+              />
+              <label for="riskCategory">{{ 'label.dst.category' | translate }}</label>
+            </p-floatlabel>
+          </div>
+        </div>
+
+        <!-- Two-column grid for remaining mandatory dropdowns (DISABLED) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Probability (DISABLED) -->
+          <div>
+            <p-floatlabel variant="on">
+              <p-select
+                id="riskProbability"
+                [(ngModel)]="newRisk.riskProbabilityId"
+                [options]="riskLookups()?.probabilities || []"
+                optionLabel="name"
+                optionValue="id"
+                appendTo="body"
+                class="w-full"
+                [disabled]="oupFieldsDisabled()"
+              />
+              <label for="riskProbability">{{ 'label.dst.probability' | translate }}</label>
+            </p-floatlabel>
+          </div>
+
+          <!-- Proximity (DISABLED) -->
+          <div>
+            <p-floatlabel variant="on">
+              <p-select
+                id="riskProximity"
+                [(ngModel)]="newRisk.riskProximityId"
+                [options]="riskLookups()?.proximities || []"
+                optionLabel="name"
+                optionValue="id"
+                appendTo="body"
+                class="w-full"
+                [disabled]="oupFieldsDisabled()"
+              />
+              <label for="riskProximity">{{ 'label.dst.proximity' | translate }}</label>
+            </p-floatlabel>
+          </div>
+
+          <!-- Impact Level (DISABLED) -->
+          <div>
+            <p-floatlabel variant="on">
+              <p-select
+                id="riskImpactLevel"
+                [(ngModel)]="newRisk.riskImpactLevelId"
+                [options]="riskLookups()?.impactLevels || []"
+                optionLabel="name"
+                optionValue="id"
+                appendTo="body"
+                class="w-full"
+                [disabled]="oupFieldsDisabled()"
+              />
+              <label for="riskImpactLevel">{{ 'label.dst.impactLevel' | translate }}</label>
+            </p-floatlabel>
+          </div>
+
+          <!-- Response Type (DISABLED) -->
+          <div>
+            <p-floatlabel variant="on">
+              <p-select
+                id="riskResponseType"
+                [(ngModel)]="newRisk.riskResponseTypeId"
+                [options]="filteredResponseTypes()"
+                optionLabel="name"
+                optionValue="id"
+                appendTo="body"
+                class="w-full"
+                [disabled]="oupFieldsDisabled()"
+              />
+              <label for="riskResponseType">{{ 'label.dst.responseType' | translate }}</label>
+            </p-floatlabel>
+          </div>
+        </div>
       </div>
+    }
 
-      <!-- Risk Category (Hierarchical - Only Level 3 selectable) -->
-      <div>
-        <p-floatlabel variant="on" class="w-full">
-          <p-treeselect
-            id="riskCategory"
-            [(ngModel)]="selectedCategoryNode"
-            [options]="categoryTreeNodes()"
-            [filter]="true"
-            [filterInputAutoFocus]="true"
-            filterPlaceholder="Search categories..."
-            appendTo="body"
-            class="w-full"
-            styleClass="w-full"
-            selectionMode="single"
-            [panelStyle]="{ minWidth: '500px' }"
-            [style]="{ width: '100%' }"
-            (onNodeSelect)="onCategorySelect($event)"
-          />
-          <label for="riskCategory">{{ 'label.dst.category' | translate }} *</label>
-        </p-floatlabel>
-        @if (!newRisk.riskCategoryId && showDialogValidationError()) {
-          <p-message severity="error" variant="simple" styleClass="mt-2">
-            {{ 'message.validation.required' | translate }}
-          </p-message>
-        }
-      </div>
-    </div>
-
-    <!-- Two-column grid for remaining mandatory dropdowns -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-
-      <!-- Probability -->
-      <div>
-        <p-floatlabel variant="on">
-          <p-select
-            id="riskProbability"
-            [(ngModel)]="newRisk.riskProbabilityId"
-            [options]="riskLookups()?.probabilities || []"
-            optionLabel="name"
-            optionValue="id"
-            appendTo="body"
-            class="w-full"
-          />
-          <label for="riskProbability">{{ 'label.dst.probability' | translate }} *</label>
-        </p-floatlabel>
-        @if (!newRisk.riskProbabilityId && showDialogValidationError()) {
-          <p-message severity="error" variant="simple" styleClass="mt-2">
-            {{ 'message.validation.required' | translate }}
-          </p-message>
-        }
-      </div>
-
-      <!-- Proximity -->
-      <div>
-        <p-floatlabel variant="on">
-          <p-select
-            id="riskProximity"
-            [(ngModel)]="newRisk.riskProximityId"
-            [options]="riskLookups()?.proximities || []"
-            optionLabel="name"
-            optionValue="id"
-            appendTo="body"
-            class="w-full"
-          />
-          <label for="riskProximity">{{ 'label.dst.proximity' | translate }} *</label>
-        </p-floatlabel>
-        @if (!newRisk.riskProximityId && showDialogValidationError()) {
-          <p-message severity="error" variant="simple" styleClass="mt-2">
-            {{ 'message.validation.required' | translate }}
-          </p-message>
-        }
-      </div>
-
-      <!-- Impact Level -->
-      <div>
-        <p-floatlabel variant="on">
-          <p-select
-            id="riskImpactLevel"
-            [(ngModel)]="newRisk.riskImpactLevelId"
-            [options]="riskLookups()?.impactLevels || []"
-            optionLabel="name"
-            optionValue="id"
-            appendTo="body"
-            class="w-full"
-          />
-          <label for="riskImpactLevel">{{ 'label.dst.impactLevel' | translate }} *</label>
-        </p-floatlabel>
-        @if (!newRisk.riskImpactLevelId && showDialogValidationError()) {
-          <p-message severity="error" variant="simple" styleClass="mt-2">
-            {{ 'message.validation.required' | translate }}
-          </p-message>
-        }
-      </div>
-
-      <!-- Response Type (conditional mandatory based on risk type) -->
-      <div>
-        <p-floatlabel variant="on">
-          <p-select
-            id="riskResponseType"
-            [(ngModel)]="newRisk.riskResponseTypeId"
-            [options]="filteredResponseTypes()"
-            optionLabel="name"
-            optionValue="id"
-            appendTo="body"
-            class="w-full"
-            [disabled]="!newRisk.riskTypeId"
-          />
-          <label for="riskResponseType">
-            {{ 'label.dst.responseType' | translate }}
-            @if (isResponseTypeMandatory()) { * }
-          </label>
-        </p-floatlabel>
-        @if (isResponseTypeMandatory() && !newRisk.riskResponseTypeId && showDialogValidationError()) {
-          <p-message severity="error" variant="simple" styleClass="mt-2">
-            {{ 'message.validation.required' | translate }}
-          </p-message>
-        }
-      </div>
-    </div>
-
-    <!-- Risk Description (optional) -->
+    <!-- Risk Description - ALWAYS EDITABLE & OPTIONAL -->
     <div class="mb-6">
       <p-floatlabel variant="on">
         <textarea
@@ -809,7 +795,7 @@
       </p-floatlabel>
     </div>
 
-    <!-- Risk Recommendation (optional) -->
+    <!-- Risk Recommendation - ALWAYS EDITABLE & OPTIONAL -->
     <div class="mb-6">
       <p-floatlabel variant="on">
         <textarea
