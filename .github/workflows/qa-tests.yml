@@ -37,20 +37,28 @@ jobs:
       id: run-fast-tests
       continue-on-error: true
       run: |
+        $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
+        New-Item -ItemType Directory -Force -Path $testResultsDir | Out-Null
         dotnet test "QA Tests/C# Tests/UNOPS.PAO.FastTests/UNOPS.PAO.FastTests.csproj" `
           --no-build `
           --configuration Release `
           --verbosity normal `
           --logger "trx;LogFileName=fast-tests.trx" `
-          --results-directory "${{ github.workspace }}/TestResults"
+          --results-directory $testResultsDir
     
     - name: List Test Results (Debug)
       if: always()
       run: |
-        echo "Looking for test results in:"
-        Get-ChildItem -Path "${{ github.workspace }}/TestResults" -Recurse -Filter "*.trx" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_.FullName }
-        if (-not (Test-Path "${{ github.workspace }}/TestResults")) {
-          echo "TestResults directory does not exist!"
+        $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
+        echo "Looking for test results in: $testResultsDir"
+        if (Test-Path $testResultsDir) {
+          Get-ChildItem -Path $testResultsDir -Recurse -Filter "*.trx" -ErrorAction SilentlyContinue | ForEach-Object { 
+            Write-Host "Found: $($_.FullName)"
+          }
+          $trxCount = (Get-ChildItem -Path $testResultsDir -Filter "*.trx" -Recurse -ErrorAction SilentlyContinue).Count
+          echo "Total .trx files found: $trxCount"
+        } else {
+          echo "ERROR: TestResults directory does not exist at $testResultsDir"
         }
     
     - name: Publish Test Results
@@ -58,7 +66,7 @@ jobs:
       if: always()
       with:
         name: FastTests Results
-        path: '${{ github.workspace }}/TestResults/*.trx'
+        path: '**/TestResults/*.trx'
         reporter: dotnet-trx
         fail-on-error: false
     
@@ -91,20 +99,28 @@ jobs:
       id: run-business-tests
       continue-on-error: true
       run: |
+        $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
+        New-Item -ItemType Directory -Force -Path $testResultsDir | Out-Null
         dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj" `
           --no-build `
           --configuration Release `
           --verbosity normal `
           --logger "trx;LogFileName=business-tests.trx" `
-          --results-directory "${{ github.workspace }}/TestResults"
+          --results-directory $testResultsDir
     
     - name: List Test Results (Debug)
       if: always()
       run: |
-        echo "Looking for test results in:"
-        Get-ChildItem -Path "${{ github.workspace }}/TestResults" -Recurse -Filter "*.trx" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_.FullName }
-        if (-not (Test-Path "${{ github.workspace }}/TestResults")) {
-          echo "TestResults directory does not exist!"
+        $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
+        echo "Looking for test results in: $testResultsDir"
+        if (Test-Path $testResultsDir) {
+          Get-ChildItem -Path $testResultsDir -Recurse -Filter "*.trx" -ErrorAction SilentlyContinue | ForEach-Object { 
+            Write-Host "Found: $($_.FullName)"
+          }
+          $trxCount = (Get-ChildItem -Path $testResultsDir -Filter "*.trx" -Recurse -ErrorAction SilentlyContinue).Count
+          echo "Total .trx files found: $trxCount"
+        } else {
+          echo "ERROR: TestResults directory does not exist at $testResultsDir"
         }
     
     - name: Publish Test Results
@@ -112,7 +128,7 @@ jobs:
       if: always()
       with:
         name: Business Tests Results
-        path: '${{ github.workspace }}/TestResults/*.trx'
+        path: '**/TestResults/*.trx'
         reporter: dotnet-trx
         fail-on-error: false
     
