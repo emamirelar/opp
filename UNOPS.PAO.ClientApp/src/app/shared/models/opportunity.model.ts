@@ -793,24 +793,28 @@ export interface Risk {
 }
 
 /**
- * Request model for creating/updating a risk (oUP aligned mandatory fields)
+ * Request model for creating/updating a risk
+ * For predefined high risks: All oUP fields are mandatory
+ * For manual entry: Only title is mandatory, oUP fields will get defaults
  */
 export interface RiskCreateRequest {
   entityId: number;
   
-  // Mandatory fields
+  // Always mandatory
   title: string;
-  riskTypeId: number;
-  riskCategoryId: number; // Must be Level 3 (leaf) category
-  riskProbabilityId: number;
-  riskProximityId: number;
-  riskImpactLevelId: number;
-  riskResponseTypeId?: number | null; // Required if riskType = Opportunity
+  
+  // oUP fields - Mandatory for predefined high risks, optional with defaults for manual entry
+  riskTypeId?: number; // MANDATORY if preDefinedHighRiskId is set, OPTIONAL for manual (defaults to THREAT)
+  riskCategoryId?: number; // MANDATORY if preDefinedHighRiskId is set, OPTIONAL for manual (gets default category)
+  riskProbabilityId?: number; // MANDATORY if preDefinedHighRiskId is set, OPTIONAL for manual (defaults to MEDIUM)
+  riskProximityId?: number; // MANDATORY if preDefinedHighRiskId is set, OPTIONAL for manual (defaults to WITHIN_SIX_MONTHS)
+  riskImpactLevelId?: number; // MANDATORY if preDefinedHighRiskId is set, OPTIONAL for manual (defaults to MEDIUM)
+  riskResponseTypeId?: number | null; // CONDITIONAL - mandatory if preDefinedHighRiskId is set AND riskType = Opportunity
   
   // Optional fields
   description?: string;
   recommendation?: string;
-  preDefinedHighRiskId?: number | null;
+  preDefinedHighRiskId?: number | null; // If set, indicates predefined mode; if null, manual mode
   
   // Legacy field (backward compatibility)
   impact?: number; // 1=Low, 2=Medium, 3=High
