@@ -10,6 +10,13 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            // Truncate existing names longer than 120 characters before altering column
+            migrationBuilder.Sql(@"
+                UPDATE public.""Opportunities""
+                SET ""Name"" = SUBSTRING(""Name"", 1, 120)
+                WHERE LENGTH(""Name"") > 120;
+            ");
+
             migrationBuilder.AlterColumn<string>(
                 name: "Name",
                 schema: "public",
@@ -20,6 +27,13 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 oldClrType: typeof(string),
                 oldType: "character varying(255)",
                 oldMaxLength: 255);
+
+            // Truncate existing challenges longer than 1020 characters before altering column
+            migrationBuilder.Sql(@"
+                UPDATE public.""Opportunities""
+                SET ""Challenges"" = SUBSTRING(""Challenges"", 1, 1020)
+                WHERE ""Challenges"" IS NOT NULL AND LENGTH(""Challenges"") > 1020;
+            ");
 
             migrationBuilder.AlterColumn<string>(
                 name: "Challenges",
