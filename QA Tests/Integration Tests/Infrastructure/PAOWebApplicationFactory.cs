@@ -43,7 +43,16 @@ public class PAOWebApplicationFactory<TStartup> : WebApplicationFactory<TStartup
         // Add test configuration
         builder.ConfigureAppConfiguration((context, config) =>
         {
-            config.AddJsonFile("appsettings.Testing.json", optional: false, reloadOnChange: false);
+            config.AddJsonFile("appsettings.Testing.json", optional: true, reloadOnChange: false);
+            
+            // Add in-memory configuration for tests
+            config.AddInMemoryCollection(new Dictionary<string, string>
+            {
+                ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=test;Username=test;Password=test",
+                ["ConnectionStrings:UseIamAuthentication"] = "false",
+                ["GOOGLE_CLOUD_PROJECT"] = "test-project",
+                ["Vertex AI Model"] = "gemini-1.5-pro-002"
+            });
         });
         
         // Configure services BEFORE Startup to prevent authentication conflicts

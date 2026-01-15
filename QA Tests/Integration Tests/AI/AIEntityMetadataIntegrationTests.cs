@@ -23,7 +23,7 @@ namespace UNOPS.PAO.IntegrationTests.AI
             _factory = factory;
         }
 
-        [Fact]
+        [Fact(Skip = "Requires AI service running - start with: cd UNOPS.PAO.AIService && uvicorn main:app --reload")]
         public async Task AIAgent_AsksForOpportunityDetails_ProvidesMetadata()
         {
             // Arrange: Create HTTP client
@@ -51,7 +51,7 @@ namespace UNOPS.PAO.IntegrationTests.AI
             content.Should().Contain("Opportunity", "AI should mention the Opportunity entity");
         }
 
-        [Fact]
+        [Fact(Skip = "Requires AI service running - start with: cd UNOPS.PAO.AIService && uvicorn main:app --reload")]
         public async Task AIAgent_AsksForSpecificEndpoint_ProvidesEndpointDetails()
         {
             // Arrange: Create HTTP client
@@ -76,7 +76,7 @@ namespace UNOPS.PAO.IntegrationTests.AI
             content.Should().Contain("create", "AI should mention creating opportunities");
         }
 
-        [Fact]
+        [Fact(Skip = "Requires AI service running - start with: cd UNOPS.PAO.AIService && uvicorn main:app --reload")]
         public async Task AIAgent_AsksAboutNonExistentEntity_HandlesGracefully()
         {
             // Arrange: Create HTTP client
