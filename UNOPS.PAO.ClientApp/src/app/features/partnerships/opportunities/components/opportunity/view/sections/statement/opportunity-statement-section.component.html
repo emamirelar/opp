@@ -98,6 +98,9 @@
 
         @if (canUpdate()) {
           <div class="flex justify-end gap-2">
+            <!-- Export to Google Doc button hidden due to data integrity concerns
+                 Risk: Teams may collaborate on exported doc, then content gets overwritten when statement is regenerated
+                 Decision: Hide export functionality to maintain alignment between opportunity record and exported statements
             <p-button
               [label]="isExporting() ? ('button.exporting' | translate) : ('button.exportToGoogleDoc' | translate)"
               icon="pi pi-google"
@@ -107,6 +110,7 @@
               severity="secondary"
               [outlined]="true"
             />
+            -->
             <p-button
               [label]="generatingStatement() ? ('button.regenerating' | translate) : ('button.regenerateOpportunityStatement' | translate)"
               icon="pi pi-refresh"
