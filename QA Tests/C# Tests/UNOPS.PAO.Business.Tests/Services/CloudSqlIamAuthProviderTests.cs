@@ -119,7 +119,7 @@ namespace UNOPS.PAO.Business.Tests.Services
 
             // Act: Make 10 concurrent requests
             var tasks = Enumerable.Range(0, 10)
-                .Select(_ => CloudSqlIamAuthProvider.ProvidePasswordAsync(
+                .Select(async _ => await CloudSqlIamAuthProvider.ProvidePasswordAsync(
                     "host", 5432, "database", "user", CancellationToken.None));
 
             var results = await Task.WhenAll(tasks);

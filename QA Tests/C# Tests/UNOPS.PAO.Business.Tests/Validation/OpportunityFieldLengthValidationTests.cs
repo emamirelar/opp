@@ -1,5 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Collections.Generic;
 using FluentAssertions;
 using UNOPS.PAO.Domain.Entities;
 using Xunit;
@@ -20,7 +22,7 @@ namespace UNOPS.PAO.Business.Tests.Validation
             {
                 Name = new string('A', 120),
                 Description = "Test description",
-                Status = Domain.Enums.EntityStatus.Active
+                Status = EntityStatus.Active
             };
 
             // Act: Validate using data annotations
@@ -38,7 +40,7 @@ namespace UNOPS.PAO.Business.Tests.Validation
             {
                 Name = new string('A', 121),
                 Description = "Test description",
-                Status = Domain.Enums.EntityStatus.Active
+                Status = EntityStatus.Active
             };
 
             // Act: Validate using data annotations
@@ -58,7 +60,7 @@ namespace UNOPS.PAO.Business.Tests.Validation
             {
                 Name = new string('A', 119),
                 Description = "Test description",
-                Status = Domain.Enums.EntityStatus.Active
+                Status = EntityStatus.Active
             };
 
             // Act: Validate using data annotations
@@ -76,7 +78,7 @@ namespace UNOPS.PAO.Business.Tests.Validation
             {
                 Name = "Test Opportunity",
                 Description = "Test description",
-                Status = Domain.Enums.EntityStatus.Active,
+                Status = EntityStatus.Active,
                 Challenges = new string('B', 1020)
             };
 
@@ -95,7 +97,7 @@ namespace UNOPS.PAO.Business.Tests.Validation
             {
                 Name = "Test Opportunity",
                 Description = "Test description",
-                Status = Domain.Enums.EntityStatus.Active,
+                Status = EntityStatus.Active,
                 Challenges = new string('B', 1021)
             };
 
@@ -116,7 +118,7 @@ namespace UNOPS.PAO.Business.Tests.Validation
             {
                 Name = "Test Opportunity",
                 Description = "Test description",
-                Status = Domain.Enums.EntityStatus.Active,
+                Status = EntityStatus.Active,
                 Challenges = new string('B', 1019)
             };
 
@@ -143,7 +145,7 @@ namespace UNOPS.PAO.Business.Tests.Validation
             {
                 Name = new string('X', nameLength),
                 Description = "Test description",
-                Status = Domain.Enums.EntityStatus.Active
+                Status = EntityStatus.Active
             };
 
             // Act: Validate using data annotations
@@ -176,7 +178,7 @@ namespace UNOPS.PAO.Business.Tests.Validation
             {
                 Name = "Test Opportunity",
                 Description = "Test description",
-                Status = Domain.Enums.EntityStatus.Active,
+                Status = EntityStatus.Active,
                 Challenges = new string('Y', challengesLength)
             };
 
