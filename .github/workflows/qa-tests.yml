@@ -34,15 +34,39 @@ jobs:
       run: dotnet build --no-restore --configuration Release
     
     - name: Run FastTests
-      run: dotnet test "QA Tests/C# Tests/UNOPS.PAO.FastTests/UNOPS.PAO.FastTests.csproj" --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=fast-tests.trx"
+      id: run-fast-tests
+      continue-on-error: true
+      run: |
+        dotnet test "QA Tests/C# Tests/UNOPS.PAO.FastTests/UNOPS.PAO.FastTests.csproj" `
+          --no-build `
+          --configuration Release `
+          --verbosity normal `
+          --logger "trx;LogFileName=fast-tests.trx" `
+          --results-directory "${{ github.workspace }}/TestResults"
+    
+    - name: List Test Results (Debug)
+      if: always()
+      run: |
+        echo "Looking for test results in:"
+        Get-ChildItem -Path "${{ github.workspace }}/TestResults" -Recurse -Filter "*.trx" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_.FullName }
+        if (-not (Test-Path "${{ github.workspace }}/TestResults")) {
+          echo "TestResults directory does not exist!"
+        }
     
     - name: Publish Test Results
       uses: dorny/test-reporter@v1
       if: always()
       with:
         name: FastTests Results
-        path: '**/fast-tests.trx'
+        path: '${{ github.workspace }}/TestResults/*.trx'
         reporter: dotnet-trx
+        fail-on-error: false
+    
+    - name: Check FastTests Result
+      if: steps.run-fast-tests.outcome != 'success'
+      run: |
+        echo "::error::FastTests failed or encountered errors"
+        exit 1
 
   business-tests:
     name: Business Logic Tests
@@ -64,15 +88,39 @@ jobs:
       run: dotnet build --no-restore --configuration Release
     
     - name: Run Business Tests
-      run: dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj" --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=business-tests.trx"
+      id: run-business-tests
+      continue-on-error: true
+      run: |
+        dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj" `
+          --no-build `
+          --configuration Release `
+          --verbosity normal `
+          --logger "trx;LogFileName=business-tests.trx" `
+          --results-directory "${{ github.workspace }}/TestResults"
+    
+    - name: List Test Results (Debug)
+      if: always()
+      run: |
+        echo "Looking for test results in:"
+        Get-ChildItem -Path "${{ github.workspace }}/TestResults" -Recurse -Filter "*.trx" -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_.FullName }
+        if (-not (Test-Path "${{ github.workspace }}/TestResults")) {
+          echo "TestResults directory does not exist!"
+        }
     
     - name: Publish Test Results
       uses: dorny/test-reporter@v1
       if: always()
       with:
         name: Business Tests Results
-        path: '**/business-tests.trx'
+        path: '${{ github.workspace }}/TestResults/*.trx'
         reporter: dotnet-trx
+        fail-on-error: false
+    
+    - name: Check Business Tests Result
+      if: steps.run-business-tests.outcome != 'success'
+      run: |
+        echo "::error::Business Tests failed or encountered errors"
+        exit 1
 
   # ============================================================================
   # INTEGRATION TESTS - Run manually or in staging environment
@@ -208,18 +256,41 @@ jobs:
         echo "# QA Tests Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "## Automated Test Results (PR Checks)" >> $GITHUB_STEP_SUMMARY
-        echo "- Fast Logic Tests: ${{ needs.fast-tests.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- Business Logic Tests: ${{ needs.business-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Fast Logic Tests (78 tests): ${{ needs.fast-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Business Logic Tests (2,135 tests): ${{ needs.business-tests.result }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "## Overall Status" >> $GITHUB_STEP_SUMMARY
         if [[ "${{ needs.fast-tests.result }}" == "success" ]] && [[ "${{ needs.business-tests.result }}" == "success" ]]; then
           echo "✅ All critical tests passing (2,213 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Permission Logic (6 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Workflow Logic (7 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Notification Logic (7 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Export Logic (6 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Document Validation (11 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Partner Manager (1,127 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Other Business Logic (1,049 tests)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "ℹ️ **Note**: Integration tests must be run manually or in staging" >> $GITHUB_STEP_SUMMARY
           echo "- See: QA Tests/ENVIRONMENT_SETUP_GUIDE.md" >> $GITHUB_STEP_SUMMARY
           echo "- Run: dotnet test \"QA Tests/Integration Tests/UNOPS.PAO.IntegrationTests.csproj\"" >> $GITHUB_STEP_SUMMARY
         else
           echo "❌ Critical tests failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ needs.fast-tests.result }}" != "success" ]]; then
+            echo "- ❌ Fast Logic Tests: ${{ needs.fast-tests.result }}" >> $GITHUB_STEP_SUMMARY
+            echo "  - Check the FastTests Results for detailed failure information" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [[ "${{ needs.business-tests.result }}" != "success" ]]; then
+            echo "- ❌ Business Logic Tests: ${{ needs.business-tests.result }}" >> $GITHUB_STEP_SUMMARY
+            echo "  - Check the Business Tests Results for detailed failure information" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Troubleshooting" >> $GITHUB_STEP_SUMMARY
+          echo "1. Review test logs above for specific failures" >> $GITHUB_STEP_SUMMARY
+          echo "2. Run tests locally: dotnet test --configuration Release" >> $GITHUB_STEP_SUMMARY
+          echo "3. Check for environment-specific issues (paths, configuration)" >> $GITHUB_STEP_SUMMARY
         fi
     
     - name: Check Critical Tests
