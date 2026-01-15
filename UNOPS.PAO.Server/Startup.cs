@@ -414,6 +414,7 @@ public class Startup
         services.AddScoped<IGeoTimeCacheService, GeoTimeCacheService>();
         
         // Register Dashboard service for user-specific filtering
+        // Uses lightweight projection models and optimized queries for high performance
         services.AddScoped<IDashboardService, DashboardService>();
 
         // Register OrganizationHierarchy manager
@@ -522,6 +523,11 @@ public class Startup
                                 $"Please set it up under in appsettings.{CurrentEnvironment.EnvironmentName}.json under ConnectionStrings. " +
                                 $"Current environment: {CurrentEnvironment.EnvironmentName}.");
 
+        // Check if IAM authentication is enabled (ONLY for local development)
+        // In Dev/QA/Prod, connection strings from Secret Manager already have proper credentials
+        var useIamAuth = CurrentEnvironment.IsDevelopment() && Configuration.GetValue<bool>("ConnectionStrings:UseIamAuthentication");
+        DataAccess.Services.CloudSqlIamAuthProvider.IsEnabled = useIamAuth;
+
         // OPTIMIZE: Configure connection pool for better concurrency
         var connectionStringBuilder = new NpgsqlConnectionStringBuilder(connectionString)
         {
@@ -531,33 +537,55 @@ public class Startup
             ConnectionIdleLifetime = 60,    // 1 minute idle timeout
             CommandTimeout = 60,            // Increase timeout for complex queries
             Timeout = 30,                   // Connection timeout
-            KeepAlive = 10,                // Keep connections alive
-            Multiplexing = true,           // Enable connection multiplexing for better throughput
             ReadBufferSize = 16384,        // 16KB read buffer
             WriteBufferSize = 16384        // 16KB write buffer
+            // Note: Multiplexing and KeepAlive are incompatible, disabled for IAM auth compatibility
         };
         
+        // CRITICAL: Remove password from connection string when using IAM authentication
+        // Npgsql requires no password set when using periodic password provider
+        if (useIamAuth)
+        {
+            connectionStringBuilder.Password = null;
+        }
+        
         var optimizedConnectionString = connectionStringBuilder.ToString();
+
+        // Configure Npgsql data source with optional IAM authentication
+        var dataSourceBuilder = new NpgsqlDataSourceBuilder(optimizedConnectionString);
+        if (useIamAuth)
+        {
+            // Use IAM authentication - password is generated dynamically via OAuth2 token
+            dataSourceBuilder.UsePeriodicPasswordProvider(
+                async (_, ct) => await DataAccess.Services.CloudSqlIamAuthProvider.ProvidePasswordAsync("", 0, "", "", ct) ?? "",
+                TimeSpan.FromMinutes(55),  // Refresh token every 55 minutes (tokens expire in 60)
+                TimeSpan.FromSeconds(10)   // Retry interval on failure
+            );
+        }
+        var dataSource = dataSourceBuilder.Build();
         
         // Core DB context
         services.AddDbContext<DataAccess.Context.AppDbContext>(options =>
             options
-                .UseNpgsql(connectionString)
+                .UseNpgsql(dataSource)
                 .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
 
         // Override / UNOPS DB context
         services.AddDbContext<UNOPSAppDbContext>(options =>
             options
-                .UseNpgsql(connectionString)
+                .UseNpgsql(dataSource)
                 .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
 
         // Register IDbContextFactory for UNOPSAppDbContext
+        // Used for parallel query execution (thread-safe DbContext instances)
         services.AddDbContextFactory<UNOPSAppDbContext>(options =>
-            options.UseNpgsql(connectionString));
+            options
+                .UseNpgsql(dataSource)
+                .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
 
         services.AddDbContext<PAOIdentityDbContext>(options =>
             options
-                .UseNpgsql(connectionString)
+                .UseNpgsql(dataSource)
                 .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
 
     }

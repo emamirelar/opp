@@ -425,8 +425,32 @@ async def chat_endpoint(
         
         # Log session context for debugging
         logger.info(f"📋 Session context: id={actual_session_id}, is_new={is_new_session}")
+        
+        # CRITICAL: Truncate events to prevent token limit exceeded errors
+        # Keep only the most recent events to stay within context window limits
+        # Note: Each event can be large (tool results, API responses), so we limit aggressively
+        # Model limit: ~1M tokens (1,048,576). With ~2K instruction + ~20K per event average = ~30-40 events max
+        MAX_EVENTS_TO_KEEP = 30  # Keep last 30 events (conservative to prevent token overflow)
+        
         if hasattr(session, 'events') and session.events:
-            logger.info(f"📝 Session has {len(session.events)} existing events (conversation continuity OK)")
+            original_event_count = len(session.events)
+            logger.info(f"📝 Session has {original_event_count} existing events")
+            
+            # Truncate events if too many
+            if original_event_count > MAX_EVENTS_TO_KEEP:
+                # Keep only the most recent events
+                session.events = session.events[-MAX_EVENTS_TO_KEEP:]
+                logger.warning(
+                    f"⚠️ Truncated session events: {original_event_count} → {len(session.events)} "
+                    f"(kept last {MAX_EVENTS_TO_KEEP} events to prevent token limit exceeded)"
+                )
+                logger.warning(
+                    f"⚠️ Older events ({original_event_count - len(session.events)} events) "
+                    f"will not be included in context to prevent exceeding model token limit"
+                )
+            else:
+                logger.info(f"📝 Session has {len(session.events)} events (within limit)")
+            
             # Log the last few events for context
             recent_events = session.events[-3:] if len(session.events) > 3 else session.events
             for i, event in enumerate(recent_events):

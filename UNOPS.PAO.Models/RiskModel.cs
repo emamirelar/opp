@@ -174,7 +174,9 @@ namespace UNOPS.PAO.Models
     }
 
     /// <summary>
-    /// Request model for creating a new risk (aligned with oUP mandatory fields)
+    /// Request model for creating a new risk
+    /// For predefined high risks: All oUP fields are mandatory
+    /// For manual entry: Only Title is mandatory, oUP fields will get defaults
     /// </summary>
     public class RiskCreateRequest
     {
@@ -183,40 +185,56 @@ namespace UNOPS.PAO.Models
         /// </summary>
         public int EntityId { get; set; }
 
-        #region Mandatory Fields
+        #region Always Mandatory Fields
 
         /// <summary>
-        /// Risk title (MANDATORY)
+        /// Risk title (ALWAYS MANDATORY - for both predefined and manual entry)
         /// </summary>
         public string Title { get; set; } = string.Empty;
 
-        /// <summary>
-        /// Risk type ID (MANDATORY) - FK to RiskType
-        /// </summary>
-        public int RiskTypeId { get; set; }
+        #endregion
+
+        #region oUP Fields (Mandatory for predefined high risks, optional with defaults for manual entry)
 
         /// <summary>
-        /// Risk category ID (MANDATORY) - FK to RiskCategory (Level 3 leaf)
+        /// Risk type ID - FK to RiskType
+        /// MANDATORY if PreDefinedHighRiskId is set (predefined mode)
+        /// OPTIONAL for manual entry (will default to THREAT if not provided)
         /// </summary>
-        public int RiskCategoryId { get; set; }
+        public int? RiskTypeId { get; set; }
 
         /// <summary>
-        /// Risk probability ID (MANDATORY) - FK to RiskProbability
+        /// Risk category ID - FK to RiskCategory (Level 3 leaf)
+        /// MANDATORY if PreDefinedHighRiskId is set (predefined mode)
+        /// OPTIONAL for manual entry (will get default category if not provided)
         /// </summary>
-        public int RiskProbabilityId { get; set; }
+        public int? RiskCategoryId { get; set; }
 
         /// <summary>
-        /// Risk proximity ID (MANDATORY) - FK to RiskProximity
+        /// Risk probability ID - FK to RiskProbability
+        /// MANDATORY if PreDefinedHighRiskId is set (predefined mode)
+        /// OPTIONAL for manual entry (will default to MEDIUM if not provided)
         /// </summary>
-        public int RiskProximityId { get; set; }
+        public int? RiskProbabilityId { get; set; }
 
         /// <summary>
-        /// Risk impact level ID (MANDATORY) - FK to RiskImpactLevel
+        /// Risk proximity ID - FK to RiskProximity
+        /// MANDATORY if PreDefinedHighRiskId is set (predefined mode)
+        /// OPTIONAL for manual entry (will default to WITHIN_SIX_MONTHS if not provided)
         /// </summary>
-        public int RiskImpactLevelId { get; set; }
+        public int? RiskProximityId { get; set; }
 
         /// <summary>
-        /// Risk response type ID (CONDITIONAL - REQUIRED if RiskType = Opportunity)
+        /// Risk impact level ID - FK to RiskImpactLevel
+        /// MANDATORY if PreDefinedHighRiskId is set (predefined mode)
+        /// OPTIONAL for manual entry (will default to MEDIUM if not provided)
+        /// </summary>
+        public int? RiskImpactLevelId { get; set; }
+
+        /// <summary>
+        /// Risk response type ID (CONDITIONAL)
+        /// MANDATORY if PreDefinedHighRiskId is set AND RiskType = Opportunity
+        /// OPTIONAL for manual entry
         /// </summary>
         public int? RiskResponseTypeId { get; set; }
 
@@ -225,17 +243,19 @@ namespace UNOPS.PAO.Models
         #region Optional Fields
 
         /// <summary>
-        /// Detailed description of the risk (OPTIONAL)
+        /// Detailed description of the risk (ALWAYS OPTIONAL)
         /// </summary>
         public string? Description { get; set; }
 
         /// <summary>
-        /// Recommendation for mitigating the risk (OPTIONAL)
+        /// Recommendation for mitigating the risk (ALWAYS OPTIONAL)
         /// </summary>
         public string? Recommendation { get; set; }
 
         /// <summary>
-        /// PreDefined High Risk ID (when adding from checklist)
+        /// PreDefined High Risk ID (when adding from organizational checklist)
+        /// If set, all oUP fields become mandatory and cannot be changed
+        /// If null, this is manual entry mode with simplified requirements
         /// </summary>
         public int? PreDefinedHighRiskId { get; set; }
 

@@ -1,58 +1,58 @@
 {
-    "environment": "local",
-    "description": "Local environment configuration for the AI Agent Framework",
-    "google_cloud": {
-      "use_vertex_ai": true,
-      "project": "unops-partneropportunity",
-      "location": "europe-west4",
-      "oauth": {
-        "identity_toolkit_api_key_secret": "IdentityToolkitAPIKey",
-        "client_id": "1069310298210-ubl2naqi5bjeqlqrroiqb4qdm482aans.apps.googleusercontent.com",
-        "target_principal": "pno-ai-service@unops-partneropportunity.iam.gserviceaccount.com",
-        "tenant_id": "Personnel-ylvvz"
-      }
-    },
-    "database": {
-      "url": "postgresql+asyncpg://postgres:0Y%2FX3YNxHLL0fL4T@localhost:5433/anusha"
-    },
-    "artifacts": {
-      "service_type": "GcsArtifactService",
-      "gcs_bucket_name": "pno-file-storage"
-    },
-    "server": {
-      "serve_web_interface": true,
-      "api_base_url": "https://localhost:44426/api/",
-      "is_development": true,
-      "host": "0.0.0.0",
-      "port": 8000,
-      "allow_origins": [
-        "http://localhost:3000",
-        "http://localhost:8000",
-        "http://localhost:8080",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:8000",
-        "http://127.0.0.1:8080",
-        "https://localhost:44426/"
-      ]
-    },
-    "developer": {
-      "email": "tushard@unops.org"
-    },
-    "branding": {
-      "application_name": "Opportunity",
-      "project_name": "Opportunity",
-      "organization": "UNOPS",
-      "organization_full": "United Nations Office for Project Services",
-      "description": "A comprehensive partner and opportunity management system"
-    },
-    "runtime": {
-      "gemini_model": "gemini-2.5-flash",
-      "gemini_adhoc_model": "gemini-2.0-flash-001",
-      "api_timeout": 300,
-      "max_retries": 3,
-      "default_agent_timeout": 60,
-      "default_host": "0.0.0.0",
-      "default_port": 8000,
-      "default_page_size": 10
+  "environment": "local",
+  "description": "Local environment configuration for the AI Agent Framework",
+  "google_cloud": {
+    "use_vertex_ai": true,
+    "project": "unops-opportunityplus-dev",
+    "location": "europe-west4",
+    "oauth": {
+      "identity_toolkit_api_key_secret": "IdentityToolkitAPIKey",
+      "client_id": "11994381361-9n974ebjfsjsb3rc5ejaidgm7jgdoqbt.apps.googleusercontent.com",
+      "target_principal": "pno-ai-service@unops-opportunityplus-dev.iam.gserviceaccount.com",
+      "tenant_id": "Personnel-ylvvz"
     }
-  } 
+  },
+  "database": {
+    "url": "postgresql+asyncpg://anushas%40unops.org@localhost:6364/unops-opportunityplus-dev-db-anushas"
+  },
+  "artifacts": {
+    "service_type": "GcsArtifactService",
+    "gcs_bucket_name": "pno-file-storage-dev"
+  },
+  "server": {
+    "serve_web_interface": true,
+    "api_base_url": "https://localhost:44426/api/",
+    "is_development": true,
+    "host": "0.0.0.0",
+    "port": 8000,
+    "allow_origins": [
+      "http://localhost:3000",
+      "http://localhost:8000",
+      "http://localhost:8080",
+      "http://127.0.0.1:3000",
+      "http://127.0.0.1:8000",
+      "http://127.0.0.1:8080",
+      "https://localhost:44426/"
+    ]
+  },
+  "developer": {
+    "email": "anushas@unops.org"
+  },
+  "branding": {
+    "application_name": "Opportunity",
+    "project_name": "Opportunity",
+    "organization": "UNOPS",
+    "organization_full": "United Nations Office for Project Services",
+    "description": "A comprehensive partner and opportunity management system"
+  },
+  "runtime": {
+    "gemini_model": "gemini-2.5-flash",
+    "gemini_adhoc_model": "gemini-2.0-flash-001",
+    "api_timeout": 300,
+    "max_retries": 3,
+    "default_agent_timeout": 60,
+    "default_host": "0.0.0.0",
+    "default_port": 8000,
+    "default_page_size": 10
+  }
+} 

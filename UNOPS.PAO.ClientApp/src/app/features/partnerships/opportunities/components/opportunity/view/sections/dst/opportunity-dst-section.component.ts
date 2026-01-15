@@ -436,6 +436,22 @@ export class OpportunityDstSectionComponent {
   selectedPreDefinedHighRiskId: number | null = null;
 
   /**
+   * @description Computed signal to determine if oUP fields should be visible
+   * Visible when predefined high risk is selected, hidden for manual entry
+   * @type {Signal<boolean>}
+   * @since 3.0.0
+   */
+  readonly showOupFields = computed(() => !!this.selectedPreDefinedHighRiskId);
+
+  /**
+   * @description Computed signal to determine if oUP fields should be disabled
+   * Disabled when predefined high risk is selected (to maintain organizational standards)
+   * @type {Signal<boolean>}
+   * @since 3.0.0
+   */
+  readonly oupFieldsDisabled = computed(() => !!this.selectedPreDefinedHighRiskId);
+
+  /**
    * @description Computed: filtered response types based on selected risk type
    * @since 2.0.0
    */
@@ -985,32 +1001,33 @@ export class OpportunityDstSectionComponent {
 
   /**
    * @description Validate new risk form fields
+   * Title is ALWAYS required (both modes)
+   * For predefined risks: oUP fields must be present (already auto-filled and disabled)
+   * For manual entry: oUP fields are hidden and will get defaults from backend
    * @returns {boolean} True if form is valid
    * @since 2.0.0
    */
   private validateNewRiskForm(): boolean {
-    // Check mandatory fields
-    if (!this.newRisk.title) return false;
-    if (!this.newRisk.riskTypeId) return false;
-    if (!this.newRisk.riskCategoryId) return false;
-    if (!this.newRisk.riskProbabilityId) return false;
-    if (!this.newRisk.riskProximityId) return false;
-    if (!this.newRisk.riskImpactLevelId) return false;
+    // Title is ALWAYS required (both modes)
+    if (!this.newRisk.title?.trim()) return false;
 
-    // Check conditional mandatory field (response type)
-    if (this.isResponseTypeMandatory() && !this.newRisk.riskResponseTypeId) {
-      return false;
-    }
-
+    // Description and Recommendation are always optional
+    
+    // For predefined high risks: Validate oUP fields are present (should always be true since they're auto-filled)
+    // For manual entry: oUP fields are hidden - no validation needed (backend will apply defaults)
+    // This simplified validation means we only check for title!
+    
     return true;
   }
 
   /**
    * @description Confirm and save new risk or update existing risk
+   * For predefined high risks: All oUP fields are sent (already populated and validated)
+   * For manual entry: Only title is required; backend will apply defaults for oUP fields
    * @since 1.0.0
    */
   confirmAddRisk(): void {
-    // Validate required fields
+    // Validate required fields (only title for both modes)
     if (!this.validateNewRiskForm()) {
       this.showDialogValidationError.set(true);
       return;
@@ -1020,15 +1037,16 @@ export class OpportunityDstSectionComponent {
 
     const request: RiskCreateRequest = {
       entityId: this.opportunity().id,
-      title: this.newRisk.title,
-      riskTypeId: this.newRisk.riskTypeId!,
-      riskCategoryId: this.newRisk.riskCategoryId!,
-      riskProbabilityId: this.newRisk.riskProbabilityId!,
-      riskProximityId: this.newRisk.riskProximityId!,
-      riskImpactLevelId: this.newRisk.riskImpactLevelId!,
-      riskResponseTypeId: this.newRisk.riskResponseTypeId,
-      description: this.newRisk.description || undefined,
-      recommendation: this.newRisk.recommendation || undefined,
+      title: this.newRisk.title.trim(),
+      riskTypeId: this.newRisk.riskTypeId ?? undefined,
+      riskCategoryId: this.newRisk.riskCategoryId ?? undefined,
+      riskProbabilityId: this.newRisk.riskProbabilityId ?? undefined,
+      riskProximityId: this.newRisk.riskProximityId ?? undefined,
+      riskImpactLevelId: this.newRisk.riskImpactLevelId ?? undefined,
+      riskResponseTypeId: this.newRisk.riskResponseTypeId ?? undefined,
+      description: this.newRisk.description?.trim() || undefined,
+      recommendation: this.newRisk.recommendation?.trim() || undefined,
+      preDefinedHighRiskId: this.selectedPreDefinedHighRiskId ?? undefined,
       impact: this.newRisk.impact
     };
 

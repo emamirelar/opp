@@ -64,7 +64,3 @@ BEGIN
     RETURN QUERY EXECUTE dynamic_sql;
 END;
 $BODY$;
-
--- Set function owners
-ALTER FUNCTION public.retrieve_embedding_search(text, text, real, text) OWNER TO postgres;
-ALTER FUNCTION public.retrieve_embedding_search_multiple(text, text, real, integer, text) OWNER TO postgres;
