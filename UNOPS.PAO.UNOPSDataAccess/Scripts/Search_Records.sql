@@ -13,8 +13,8 @@
 -- ============================================================================
 
 -- Enable required extensions
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
-CREATE EXTENSION IF NOT EXISTS vector;
+--CREATE EXTENSION IF NOT EXISTS pg_trgm;
+--CREATE EXTENSION IF NOT EXISTS vector;
 
 -- Drop existing functions to ensure clean recreation
 DROP FUNCTION IF EXISTS public.search_partners_with_nested(TEXT, REAL, INTEGER);

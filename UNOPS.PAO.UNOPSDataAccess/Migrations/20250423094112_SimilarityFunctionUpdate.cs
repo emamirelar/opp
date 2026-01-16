@@ -11,11 +11,11 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql(@"DROP FUNCTION IF EXISTS public.RetrieveSimilarityId(TEXT, TEXT);");
-            migrationBuilder.Sql(@"CREATE EXTENSION IF NOT EXISTS pg_trgm;");
+            //migrationBuilder.Sql(@"CREATE EXTENSION IF NOT EXISTS pg_trgm;");
             migrationBuilder.Sql(@"
         DROP FUNCTION IF EXISTS public.retrieve_similarity_results(TEXT, TEXT, TEXT, INTEGER, TEXT);
 
-        CREATE EXTENSION IF NOT EXISTS pg_trgm;
+        --CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
         CREATE OR REPLACE FUNCTION public.retrieve_similarity_results(
             entity_name text,
@@ -89,8 +89,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
             END IF;
         END;
         $BODY$;
-
-        ALTER FUNCTION public.retrieve_similarity_results(text, text, text, real, real, text) OWNER TO postgres;");
+");
         }
 
         /// <inheritdoc />

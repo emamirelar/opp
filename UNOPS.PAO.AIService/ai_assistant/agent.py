@@ -23,77 +23,11 @@ from google.adk.tools.tool_context import ToolContext
 
 from .tools.search_corp_vector_store_tool import search_corp_vector_store
 from .tools.invoke_app_api_tool import invoke_app_api
+from .tools.lookup_entity_metadata_tool import get_json_for_entity
+from .utils.metadata_utils import load_entities_metadata
 
 logger = logging.getLogger(__name__)
 
-
-class MetadataError(Exception):
-    """Raised when metadata loading fails"""
-    pass
-
-
-def _find_entities_metadata_file() -> str:
-    """
-    Find the entities-metadata.json file by checking multiple possible locations.
-    
-    Returns:
-        str: Path to the entities-metadata.json file
-        
-    Raises:
-        MetadataError: If entities-metadata.json file is not found
-    """
-    current_dir = Path(__file__).parent.absolute()
-    
-    # Possible locations to check for entities-metadata.json
-    possible_paths = [
-        # Jenkins deployment: AIService copied into UNOPS.PAO.AIService directory
-        current_dir.parent.parent / "AIService" / "metadata" / "entities-metadata.json",  # /app/AIService/metadata/entities-metadata.json
-        # Same level as current directory (for deployment scenarios)
-        current_dir / "AIService" / "metadata" / "entities-metadata.json",
-        # One level up from current directory (development scenario)
-        current_dir.parent / "AIService" / "metadata" / "entities-metadata.json",
-        # Two levels up (from utils -> ai_assistant -> UNOPS.PAO.AIService -> root)
-        current_dir.parent.parent.parent / "AIService" / "metadata" / "entities-metadata.json",
-        # Three levels up (alternative structure)
-        current_dir.parent.parent.parent.parent / "AIService" / "metadata" / "entities-metadata.json"
-    ]
-    
-    for path in possible_paths:
-        if path.exists() and path.is_file():
-            logger.debug(f"Found entities-metadata.json at: {path}")
-            return str(path)
-    
-    # If not found, raise an error with helpful information
-    searched_paths = [str(p) for p in possible_paths]
-    raise MetadataError(
-        f"entities-metadata.json file not found. Searched locations:\n" + 
-        "\n".join(f"  - {p}" for p in searched_paths)
-    )
-
-
-def load_entities_metadata():
-    """Load the entities metadata JSON file"""
-    try:
-        metadata_path = _find_entities_metadata_file()
-        
-        with open(metadata_path, 'r', encoding='utf-8') as f:
-            metadata = json.load(f)
-        
-        logger.info(f"Entities metadata loaded successfully from: {metadata_path}")
-        return metadata
-        
-    except MetadataError as e:
-        logger.error(f"Metadata file not found: {e}")
-        print(f"Warning: {e}")
-        return {}
-    except json.JSONDecodeError as e:
-        logger.error(f"Error parsing entities-metadata.json: {e}")
-        print(f"Warning: Error parsing entities-metadata.json: {e}")
-        return {}
-    except Exception as e:
-        logger.error(f"Unexpected error loading entities metadata: {e}")
-        print(f"Warning: Unexpected error loading entities metadata: {e}")
-        return {}
 
 
 def format_entities_metadata_as_markdown(metadata):
@@ -492,39 +426,65 @@ The user's messages will include **CURRENT PAGE CONTEXT** information that tells
 
 <**DO NOT ask the user to clarify which entity they mean if the context already provides it.**>
 
-## UNOPS CRM System Entities and API Reference
+## UNOPS CRM System Overview
 
-You have access to a comprehensive UNOPS CRM system with the following entities and capabilities:
+You have access to a comprehensive UNOPS CRM system with entities including:
+- **Partners** - Partner organizations
+- **Contacts** - Individual contacts within partner organizations
+- **Interactions** - Interactions/meetings with partners and contacts
+- **Opportunities** - Business opportunities and proposals
+- **Documents** - Document management
+- **And more** - Additional entities for managing partnerships and opportunities
 
-{entities_metadata}
+**To get detailed information about any entity or endpoint, use the `get_json_for_entity` tool.**
+This tool provides:
+- Entity data models and field definitions
+- Available API endpoints and their parameters
+- Request/response structures
+- Workflow patterns and multi-step operations
 
-Use this metadata to understand:
-- Available entities and their data models
-- Supported API endpoints and HTTP methods
-- Required and optional parameters for each operation
-- Request model structures for complex operations
-- Relationships between entities
+**When to use `get_json_for_entity`:**
+- Before calling an API endpoint, lookup the entity to understand required parameters
+- When user asks about available operations for an entity
+- When you need to understand the data structure of an entity
+- When you need to find a specific endpoint's parameters
+
+**Examples:**
+- `get_json_for_entity(entity_name="Opportunity")` - Get all Opportunity entity details
+- `get_json_for_entity(entity_name="Partner")` - Get all Partner entity details
+- `get_json_for_entity(endpoint_path="/api/opportunity/create")` - Find specific endpoint details
+
+## Multi-Step Workflows
+
+Some operations follow a multi-step pattern:
+- **Opportunity Creation from Documents**: 
+  1. Step 1: `/api/opportunity/generate-proposal` - Analyzes documents and returns structured proposal data
+  2. Step 2: `/api/opportunity/create-from-proposal` - Creates the opportunity using Step 1's response data
+  - **CRITICAL**: When user confirms creation, pass the COMPLETE Step 1 response to Step 2. Do NOT construct a new empty request.
+
+For workflow details, use `get_json_for_entity()` to get the full workflow patterns.
 
 ## Tools Available
 
+**get_json_for_entity** - Lookup entity metadata and API endpoint details on-demand.
+- Use this tool when user asks anything about a particular entity or its data.
+- Use this tool BEFORE calling APIs to understand required parameters and request structures
+- PARAMETERS: entity_name (e.g., "Opportunity", "Partner"), endpoint_path (e.g., "/api/opportunity/create"), or leave empty for summary
+
 **invoke_app_api** - Use this tool to interact with any of the entities in the CRM application (Partners, Contacts, Interactions, Opportunities, etc.).
 
-**How to Use This Tool:**
-1. **Review the metadata** for the entity you need to work with
-2. **Check the endpoint descriptions** - Each endpoint includes:
-   - `description`: What the endpoint does and when it's appropriate to use
-   - `whenToUse`: Specific scenarios where this endpoint should be called (if present)
-   - `whenNotToUse`: Scenarios where you should NOT use this endpoint (if present)
-3. **Follow the guidance** - Use the `whenToUse` and `whenNotToUse` fields to determine the most appropriate endpoint for the user's request
-4. **Examine the parameters** - Each endpoint lists required and optional parameters with descriptions
-5. **Build your request** - Use the endpoint path, method, and parameters EXACTLY as stated in the metadata
+**How to Use invoke_app_api:**
+1. **First, lookup the entity** using `get_json_for_entity(entity_name="EntityName")` to understand available endpoints
+2. **Review the endpoint details** - Check description, whenToUse, parameters, and request body structure
+3. **Check for prerequisites** - Some endpoints require calling other endpoints first (e.g., `/search-fields` before advanced search)
+4. **Build your request** - Use the endpoint path, method, and parameters EXACTLY as stated in the metadata
+5. **Call the API** - Use invoke_app_api with the correct url, method, and params
 
 **Important Guidelines:**
-- ALWAYS check if there are prerequisite endpoints to call first (e.g., some endpoints instruct you to call `/search-fields` before constructing advanced search filters)
-- For advanced search operations, carefully read the `description` and `whenToUse` fields to understand when to use simple search vs. advanced search vs. other specialized search methods
+- ALWAYS use `get_json_for_entity` first to understand endpoint requirements
 - Use the endpoint paths, methods, parameters, and request model structures EXACTLY AS STATED in the metadata
 - DO NOT make up, augment, or modify endpoints, parameters, or request models in any way
-- If an endpoint has a `filtersFormat` or special parameter structure, follow that structure precisely
+- For workflows, pass the COMPLETE Step 1 response to Step 2 without modification
 
 PARAMETERS: url, method, params, headers
 
@@ -568,11 +528,8 @@ Respond in WELL-FORMED MARKDOWN making proper use of different heading levels, b
 
 """
 
-# Create the final instruction by substituting the metadata
-entities_metadata = load_entities_metadata()  # Load the metadata
-instruction = instruction_template.format(
-    entities_metadata=format_entities_metadata_as_markdown(entities_metadata)
-)
+# Create the final instruction (no longer includes full metadata - agent uses get_json_for_entity tool instead)
+instruction = instruction_template
 
 
 root_agent = LlmAgent(
@@ -590,15 +547,15 @@ root_agent = LlmAgent(
                 threshold=types.HarmBlockThreshold.BLOCK_LOW_AND_ABOVE
             )
         ]
-    ),
-    planner=BuiltInPlanner(
-        thinking_config=types.ThinkingConfig(
-            include_thoughts=True,
-            thinking_budget=1024,
-        )
-    ),
-    tools=[invoke_app_api, search_corp_vector_store, AgentTool(google_search_agent)]
-)
+        ),
+        planner=BuiltInPlanner(
+            thinking_config=types.ThinkingConfig(
+                include_thoughts=True,
+                thinking_budget=1024,
+            )
+        ),
+        tools=[get_json_for_entity, invoke_app_api, search_corp_vector_store, AgentTool(google_search_agent)]
+    )
 
 
 def create_agent_with_context(state: dict = None) -> LlmAgent:
@@ -657,5 +614,5 @@ def create_agent_with_context(state: dict = None) -> LlmAgent:
                 thinking_budget=1024,
             )
         ),
-        tools=[invoke_app_api, search_corp_vector_store, AgentTool(google_search_agent)]
+        tools=[get_json_for_entity, invoke_app_api, search_corp_vector_store, AgentTool(google_search_agent)]
     )

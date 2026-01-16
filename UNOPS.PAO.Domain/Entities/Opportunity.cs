@@ -8,7 +8,7 @@ public class Opportunity : ModifiableDeletableEntity
 {
     public new int Id { get; set; }
 
-    [MaxLength(255)]
+    [MaxLength(120)]
     public new required string Name { get; set; }
     
     public required string Description { get; set; }
@@ -89,6 +89,7 @@ public class Opportunity : ModifiableDeletableEntity
     /// </summary>
     public bool BeneficiariesToBeDetermined { get; set; } = false;
     
+    [MaxLength(1020)]
     public string? Challenges { get; set; }
     
     /// <summary>
