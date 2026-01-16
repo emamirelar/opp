@@ -256,7 +256,11 @@ describe('PictureEditorComponent', () => {
         const event: ImageCroppedEvent = {
           blob: mockBlob,
           objectUrl: 'blob:test-url',
-          base64: 'base64-string'
+          base64: 'base64-string',
+          width: 100,
+          height: 100,
+          cropperPosition: { x1: 0, y1: 0, x2: 100, y2: 100 },
+          imagePosition: { x1: 0, y1: 0, x2: 100, y2: 100 }
         };
 
         component.imageCropped(event);
@@ -269,7 +273,11 @@ describe('PictureEditorComponent', () => {
         const event: ImageCroppedEvent = {
           blob: null,
           objectUrl: 'blob:test-url',
-          base64: 'base64-string'
+          base64: 'base64-string',
+          width: 100,
+          height: 100,
+          cropperPosition: { x1: 0, y1: 0, x2: 100, y2: 100 },
+          imagePosition: { x1: 0, y1: 0, x2: 100, y2: 100 }
         };
 
         component.imageCropped(event);
@@ -282,7 +290,11 @@ describe('PictureEditorComponent', () => {
         const event: ImageCroppedEvent = {
           blob: mockBlob,
           objectUrl: undefined,
-          base64: 'base64-string'
+          base64: 'base64-string',
+          width: 100,
+          height: 100,
+          cropperPosition: { x1: 0, y1: 0, x2: 100, y2: 100 },
+          imagePosition: { x1: 0, y1: 0, x2: 100, y2: 100 }
         };
 
         component.imageCropped(event);
@@ -431,7 +443,7 @@ describe('PictureEditorComponent', () => {
       spyOn(FileReader.prototype, 'readAsDataURL').and.callFake(function(this: FileReader) {
         setTimeout(() => {
           if (this.onerror) {
-            this.onerror(new ProgressEvent('error'));
+            this.onerror(new ProgressEvent('error') as ProgressEvent<FileReader>);
           }
         }, 0);
       });

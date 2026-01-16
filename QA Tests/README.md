@@ -9,6 +9,8 @@ This folder contains all QA test artifacts including:
 - **Executable C# Tests** (xUnit test code)
 - **Integration Tests** (API-level testing)
 - **Test Execution Results** (Reports and analysis)
+- **Summary Reports** (Session, delivery, implementation summaries)
+- **Opportunity Tests Phased Plan** (`Summary Reports/OPPORTUNITY_TESTS_PHASED_PLAN.md`)
 
 ## Quick Start
 
@@ -105,6 +107,11 @@ QA Tests/
 │   └── UNOPS.PAO.IntegrationTests/
 │       ├── Controllers/                   # Controller tests
 │       └── Infrastructure/                # Test infrastructure
+│
+├── Summary Reports/                       # Session and delivery summaries
+│   ├── DELIVERY_SUMMARY.md
+│   ├── QUICK_TEST_SUMMARY.md
+│   └── *_SUMMARY_*.md
 │
 └── Test Execution Results/                # Test run outputs
     ├── REQUIREMENTS_GAP_ANALYSIS.md

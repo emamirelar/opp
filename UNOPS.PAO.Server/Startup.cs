@@ -435,6 +435,9 @@ public class Startup
         // Register Secure Specification Factory for RBAC-aware database filtering
         services.AddScoped<ISecureSpecificationFactory, SecureSpecificationFactory>();
         
+        // Register Exchange Rate Service for currency conversion
+        services.AddScoped<IExchangeRateService, ExchangeRateService>();
+        
         // Register Google Credential for AI services
         services.AddSingleton<GoogleCredential>(provider =>
         {

@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { of } from 'rxjs';
 import { DocumentListComponent } from './document-list.component';
 import { FeedbackDialogService } from '@shared/services/ui/feedback-dialog.service';
 
@@ -11,8 +12,13 @@ describe('DocumentListComponent', () => {
 
   beforeEach(async () => {
     mockMessageService = jasmine.createSpyObj('FeedbackDialogService', ['showErrorDialog']);
-    mockTranslateService = jasmine.createSpyObj('TranslateService', ['instant']);
+    mockTranslateService = jasmine.createSpyObj('TranslateService', ['instant', 'get'], {
+      onLangChange: of({ lang: 'en' }),
+      onTranslationChange: of({ lang: 'en', translations: {} }),
+      onDefaultLangChange: of({ lang: 'en', translations: {} })
+    });
     mockTranslateService.instant.and.returnValue('Translated text');
+    mockTranslateService.get.and.returnValue(of('Translated text'));
 
     await TestBed.configureTestingModule({
       imports: [

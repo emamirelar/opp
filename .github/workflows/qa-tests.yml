@@ -66,9 +66,17 @@ jobs:
       if: always()
       with:
         name: FastTests Results
-        path: '**/TestResults/*.trx'
+        path: '**/TestResults/**/*.trx'
         reporter: dotnet-trx
         fail-on-error: false
+
+    - name: Upload Test Results Artifact
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: fast-tests-results
+        path: TestResults
+        if-no-files-found: warn
     
     - name: Check FastTests Result
       if: steps.run-fast-tests.outcome != 'success'
@@ -128,9 +136,17 @@ jobs:
       if: always()
       with:
         name: Business Tests Results
-        path: '**/TestResults/*.trx'
+        path: '**/TestResults/**/*.trx'
         reporter: dotnet-trx
         fail-on-error: false
+
+    - name: Upload Test Results Artifact
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: business-tests-results
+        path: TestResults
+        if-no-files-found: warn
     
     - name: Check Business Tests Result
       if: steps.run-business-tests.outcome != 'success'
@@ -214,7 +230,7 @@ jobs:
   #     if: always()
   #     with:
   #       name: Integration Tests Results
-  #       path: '**/integration-tests.trx'
+  #       path: '**/TestResults/**/*.trx'
   #       reporter: dotnet-trx
 
   # python-tests:

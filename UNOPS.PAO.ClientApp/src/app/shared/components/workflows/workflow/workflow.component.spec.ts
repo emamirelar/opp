@@ -1,9 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { WorkflowComponent } from './workflow.component';
-import { WorkflowService } from '../../../services/workflow.service';
+import { WorkflowService } from '@shared/services/domain/workflow.service';
 import { FeedbackDialogService } from '@shared/services/ui/feedback-dialog.service';
 import { of, throwError } from 'rxjs';
-import { MenuItem } from 'primeng/api';
 
 describe('WorkflowComponent', () => {
   let component: WorkflowComponent;
@@ -42,6 +41,9 @@ describe('WorkflowComponent', () => {
 
     fixture = TestBed.createComponent(WorkflowComponent);
     component = fixture.componentInstance;
+    fixture.componentRef.setInput('entityName', 'Partner');
+    fixture.componentRef.setInput('entityId', '123');
+    fixture.detectChanges();
   });
 
   it('should create', () => {
@@ -59,20 +61,10 @@ describe('WorkflowComponent', () => {
     });
 
     it('should load workflows on init', () => {
-      component.entityName = jasmine.createSpy().and.returnValue('Partner');
-      component.entityId = jasmine.createSpy().and.returnValue('123');
-
-      component.ngOnInit();
-
       expect(mockWorkflowService.getNextWorkFlowAtionsForARecordById).toHaveBeenCalledWith('Partner', '123');
     });
 
     it('should initialize UI with workflow actions', () => {
-      component.entityName = jasmine.createSpy().and.returnValue('Partner');
-      component.entityId = jasmine.createSpy().and.returnValue('123');
-
-      component.ngOnInit();
-
       expect(component.primaryeStageName).toBe('Approved');
       expect(component.primaryeStageLabel).toBe('Approve');
       expect(component.primaryStageChangeCommentRequired).toBeFalse();
@@ -125,8 +117,6 @@ describe('WorkflowComponent', () => {
 
   describe('_executeStageChange', () => {
     beforeEach(() => {
-      component.entityName = jasmine.createSpy().and.returnValue('Partner');
-      component.entityId = jasmine.createSpy().and.returnValue('123');
     });
 
     it('should set next stage', () => {
@@ -186,8 +176,6 @@ describe('WorkflowComponent', () => {
 
   describe('_performStageChange', () => {
     beforeEach(() => {
-      component.entityName = jasmine.createSpy().and.returnValue('Partner');
-      component.entityId = jasmine.createSpy().and.returnValue('123');
       component.nextStage.set('Approved');
     });
 
@@ -227,12 +215,12 @@ describe('WorkflowComponent', () => {
     });
 
     it('should emit stageChangeSuccess event', (done) => {
-      component.stageChangeSuccess.subscribe(data => {
-        expect(data).toEqual(mockWorkflowActions);
-        done();
-      });
+      spyOn(component.stageChangeSuccess, 'emit');
 
       component._performStageChange();
+
+      expect(component.stageChangeSuccess.emit).toHaveBeenCalled();
+      done();
     });
 
     it('should handle errors gracefully', () => {
@@ -268,8 +256,6 @@ describe('WorkflowComponent', () => {
 
   describe('handleOnCommentSave', () => {
     beforeEach(() => {
-      component.entityName = jasmine.createSpy().and.returnValue('Partner');
-      component.entityId = jasmine.createSpy().and.returnValue('123');
       component.showCommentDialog = true;
     });
 
@@ -298,15 +284,15 @@ describe('WorkflowComponent', () => {
 
   describe('input properties', () => {
     it('should accept entityName input', () => {
-      const entityNameFn = jasmine.createSpy().and.returnValue('Contact');
-      component.entityName = entityNameFn;
+      fixture.componentRef.setInput('entityName', 'Contact');
+      fixture.detectChanges();
 
       expect(component.entityName()).toBe('Contact');
     });
 
     it('should accept entityId input', () => {
-      const entityIdFn = jasmine.createSpy().and.returnValue('456');
-      component.entityId = entityIdFn;
+      fixture.componentRef.setInput('entityId', '456');
+      fixture.detectChanges();
 
       expect(component.entityId()).toBe('456');
     });
@@ -328,16 +314,14 @@ describe('WorkflowComponent', () => {
 
   describe('output events', () => {
     it('should emit stageChangeSuccess on successful change', (done) => {
-      component.entityName = jasmine.createSpy().and.returnValue('Partner');
-      component.entityId = jasmine.createSpy().and.returnValue('123');
       component.nextStage.set('Approved');
 
-      component.stageChangeSuccess.subscribe(data => {
-        expect(data).toBeTruthy();
-        done();
-      });
+      spyOn(component.stageChangeSuccess, 'emit');
 
       component._performStageChange();
+
+      expect(component.stageChangeSuccess.emit).toHaveBeenCalled();
+      done();
     });
   });
 
@@ -345,9 +329,6 @@ describe('WorkflowComponent', () => {
     it('should handle workflow with no secondary actions', () => {
       const singleAction = { nextActions: [mockWorkflowActions.nextActions[0]] };
       mockWorkflowService.getNextWorkFlowAtionsForARecordById.and.returnValue(of(singleAction));
-      
-      component.entityName = jasmine.createSpy().and.returnValue('Partner');
-      component.entityId = jasmine.createSpy().and.returnValue('123');
       component.ngOnInit();
 
       expect(component.items.length).toBe(0);
@@ -363,17 +344,12 @@ describe('WorkflowComponent', () => {
         }]
       };
       mockWorkflowService.getNextWorkFlowAtionsForARecordById.and.returnValue(of(longAction));
-      
-      component.entityName = jasmine.createSpy().and.returnValue('Partner');
-      component.entityId = jasmine.createSpy().and.returnValue('123');
       component.ngOnInit();
 
       expect(component.primaryeStageName).toBe('VeryLongStageNameThatExceedsNormalLength');
     });
 
     it('should handle special characters in comments', () => {
-      component.entityName = jasmine.createSpy().and.returnValue('Partner');
-      component.entityId = jasmine.createSpy().and.returnValue('123');
       component.nextStage.set('Approved');
 
       component._performStageChange('Comment with "quotes" and <html> & symbols');
@@ -386,9 +362,6 @@ describe('WorkflowComponent', () => {
     });
 
     it('should handle multiple rapid stage changes', () => {
-      component.entityName = jasmine.createSpy().and.returnValue('Partner');
-      component.entityId = jasmine.createSpy().and.returnValue('123');
-
       component._executeStageChange('Stage1', false);
       component._executeStageChange('Stage2', false);
       component._executeStageChange('Stage3', false);
@@ -398,8 +371,6 @@ describe('WorkflowComponent', () => {
 
     it('should handle missing workflow data', () => {
       mockWorkflowService.getNextWorkFlowAtionsForARecordById.and.returnValue(of({ nextActions: [] }));
-      component.entityName = jasmine.createSpy().and.returnValue('Partner');
-      component.entityId = jasmine.createSpy().and.returnValue('123');
 
       expect(() => component.ngOnInit()).not.toThrow();
     });

@@ -299,6 +299,7 @@ public class DateSearchTests
                 return DateTime.Today;
             case "yesterday":
             case "yesterday_fr": // French: hier
+            case "hier":
                 return DateTime.Today.AddDays(-1);
             case "tomorrow":
             case "tomorrow_fr": // French: demain

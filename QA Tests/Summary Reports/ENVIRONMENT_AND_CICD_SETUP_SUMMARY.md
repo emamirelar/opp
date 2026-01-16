@@ -266,7 +266,6 @@ python -m pytest tests/ -v
 ---
 
 #### **Step 2: Google Cloud Credentials** (10 minutes)
-
 ```bash
 # Follow Section 2 of ENVIRONMENT_SETUP_GUIDE.md
 gcloud auth login
@@ -278,7 +277,6 @@ gcloud auth login
 ---
 
 #### **Step 3: Deploy CI/CD Pipeline** (5 minutes)
-
 ```bash
 # The .github/workflows/qa-tests.yml file is ready
 # Just push and it will activate
@@ -290,7 +288,6 @@ git push origin QA-Tests
 ---
 
 #### **Step 4: Python Tests** (Already in progress)
-
 ```bash
 # Wait for pip install to complete (was timing out)
 # Then run: python -m pytest tests/ -v
@@ -301,7 +298,6 @@ git push origin QA-Tests
 ## 📊 Expected Final Results
 
 ### **After All Setup Complete:**
-
 ```
 Total Tests: 3,700+
 Passing: 3,684 (99.6%+)

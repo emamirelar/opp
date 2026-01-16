@@ -27,8 +27,8 @@ describe('PhoneInputComponent', () => {
   });
 
   it('should initialize with default values', () => {
-    expect(component.phone()).toBeDefined();
-    expect(component.disabled()).toBe(false);
+    expect(component.phoneNumbers()).toEqual([]);
+    expect(component.disabled).toBe(false);
   });
 
   it('should validate phone number format', () => {

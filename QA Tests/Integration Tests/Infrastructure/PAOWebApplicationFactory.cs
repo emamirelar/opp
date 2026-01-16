@@ -51,7 +51,8 @@ public class PAOWebApplicationFactory<TStartup> : WebApplicationFactory<TStartup
                 ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=test;Username=test;Password=test",
                 ["ConnectionStrings:UseIamAuthentication"] = "false",
                 ["GOOGLE_CLOUD_PROJECT"] = "test-project",
-                ["Vertex AI Model"] = "gemini-1.5-pro-002"
+                ["Vertex AI Model"] = "gemini-1.5-pro-002",
+                ["AISettings:DisableExternalCalls"] = "true"
             });
         });
         
@@ -94,6 +95,8 @@ public class PAOWebApplicationFactory<TStartup> : WebApplicationFactory<TStartup
             RemoveService<DbContextOptions<UNOPSAppDbContext>>(services);
             RemoveService<DbContextOptions<AppDbContext>>(services);
             RemoveService<DbContextOptions<PAOIdentityDbContext>>(services);
+            services.RemoveAll<IDbContextFactory<UNOPSAppDbContext>>();
+            services.RemoveAll<IDbContextFactory<AppDbContext>>();
             
             // Add in-memory database for testing
             var dbName = $"TestDb_{Guid.NewGuid()}";
@@ -105,6 +108,18 @@ public class PAOWebApplicationFactory<TStartup> : WebApplicationFactory<TStartup
             });
 
             services.AddDbContext<AppDbContext>(options =>
+            {
+                options.UseInMemoryDatabase($"{dbName}_Core");
+                options.EnableSensitiveDataLogging();
+            });
+
+            services.AddDbContextFactory<UNOPSAppDbContext>(options =>
+            {
+                options.UseInMemoryDatabase(dbName);
+                options.EnableSensitiveDataLogging();
+            });
+
+            services.AddDbContextFactory<AppDbContext>(options =>
             {
                 options.UseInMemoryDatabase($"{dbName}_Core");
                 options.EnableSensitiveDataLogging();

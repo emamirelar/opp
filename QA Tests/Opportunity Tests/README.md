@@ -348,6 +348,7 @@ Test execution results are stored in `Test Execution Results/Opportunity/`:
 - **CRM Tests:** `QA Tests/CRM Enhancement Tests/`
 - **Partnership Tests:** `QA Tests/Business Manager Functional Test List/PartnerManager/`
 - **Gap Analysis:** `QA Tests/REQUIREMENTS_GAP_ANALYSIS.md`
+- **Phased Implementation Plan:** `QA Tests/Summary Reports/OPPORTUNITY_TESTS_PHASED_PLAN.md`
 
 ---
 

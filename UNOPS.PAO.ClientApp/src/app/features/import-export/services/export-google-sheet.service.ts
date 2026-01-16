@@ -59,7 +59,7 @@ export class ExportGoogleSheetService {
   }
 
   private initTokenClient() {
-    if (google && google.accounts && google.accounts.oauth2) {
+    if (typeof google !== 'undefined' && google?.accounts?.oauth2) {
       this.tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: this.clientId,
         scope: this.scope,
@@ -70,8 +70,12 @@ export class ExportGoogleSheetService {
             
             // Store token and expiration in localStorage
             if (this.oauthToken) {
-              localStorage.setItem('google_oauth_token_export', this.oauthToken as string);
-              localStorage.setItem('google_oauth_token_export_expiration', this.tokenExpirationTime.toString());
+              try {
+                localStorage.setItem('google_oauth_token_export', this.oauthToken as string);
+                localStorage.setItem('google_oauth_token_export_expiration', this.tokenExpirationTime.toString());
+              } catch (error) {
+                console.warn('Unable to store Google OAuth export token in localStorage.', error);
+              }
             }
             
             // Set the token for gapi client
@@ -88,20 +92,24 @@ export class ExportGoogleSheetService {
   }
 
   private checkExistingToken(): void {
-    // Check for Google OAuth token in localStorage
-    const storedToken = localStorage.getItem('google_oauth_token_export');
-    const storedExpiration = localStorage.getItem('google_oauth_token_export_expiration');
+    try {
+      // Check for Google OAuth token in localStorage
+      const storedToken = localStorage.getItem('google_oauth_token_export');
+      const storedExpiration = localStorage.getItem('google_oauth_token_export_expiration');
 
-    if (storedToken && storedExpiration) {
-      const expirationTime = parseInt(storedExpiration, 10);
-      if (Date.now() < expirationTime) {
-        this.oauthToken = storedToken;
-        this.tokenExpirationTime = expirationTime;
-      } else {
-        // Clear expired token
-        localStorage.removeItem('google_oauth_token_export');
-        localStorage.removeItem('google_oauth_token_export_expiration');
+      if (storedToken && storedExpiration) {
+        const expirationTime = parseInt(storedExpiration, 10);
+        if (Date.now() < expirationTime) {
+          this.oauthToken = storedToken;
+          this.tokenExpirationTime = expirationTime;
+        } else {
+          // Clear expired token
+          localStorage.removeItem('google_oauth_token_export');
+          localStorage.removeItem('google_oauth_token_export_expiration');
+        }
       }
+    } catch (error) {
+      console.warn('Unable to access localStorage for Google OAuth export token.', error);
     }
   }
 

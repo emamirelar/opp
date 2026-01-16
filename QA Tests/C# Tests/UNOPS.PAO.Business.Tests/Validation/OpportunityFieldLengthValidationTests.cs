@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using FluentAssertions;
 using UNOPS.PAO.Domain.Entities;
 using Xunit;
+using OpportunityEntity = UNOPS.PAO.Domain.Entities.Opportunity;
 
 namespace UNOPS.PAO.Business.Tests.Validation
 {
@@ -18,7 +19,7 @@ namespace UNOPS.PAO.Business.Tests.Validation
         public void CreateOpportunity_NameExactly120Characters_ShouldSucceed()
         {
             // Arrange: Name with exactly 120 characters
-            var opportunity = new Opportunity
+            var opportunity = new OpportunityEntity
             {
                 Name = new string('A', 120),
                 Description = "Test description",
@@ -36,7 +37,7 @@ namespace UNOPS.PAO.Business.Tests.Validation
         public void CreateOpportunity_Name121Characters_ShouldFailValidation()
         {
             // Arrange: Name with 121 characters (exceeds limit)
-            var opportunity = new Opportunity
+            var opportunity = new OpportunityEntity
             {
                 Name = new string('A', 121),
                 Description = "Test description",
@@ -56,7 +57,7 @@ namespace UNOPS.PAO.Business.Tests.Validation
         public void CreateOpportunity_Name119Characters_ShouldSucceed()
         {
             // Arrange: Name with 119 characters (under limit)
-            var opportunity = new Opportunity
+            var opportunity = new OpportunityEntity
             {
                 Name = new string('A', 119),
                 Description = "Test description",
@@ -74,7 +75,7 @@ namespace UNOPS.PAO.Business.Tests.Validation
         public void CreateOpportunity_ChallengesExactly1020Characters_ShouldSucceed()
         {
             // Arrange: Challenges with exactly 1,020 characters
-            var opportunity = new Opportunity
+            var opportunity = new OpportunityEntity
             {
                 Name = "Test Opportunity",
                 Description = "Test description",
@@ -93,7 +94,7 @@ namespace UNOPS.PAO.Business.Tests.Validation
         public void CreateOpportunity_Challenges1021Characters_ShouldFailValidation()
         {
             // Arrange: Challenges with 1,021 characters (exceeds limit)
-            var opportunity = new Opportunity
+            var opportunity = new OpportunityEntity
             {
                 Name = "Test Opportunity",
                 Description = "Test description",
@@ -114,7 +115,7 @@ namespace UNOPS.PAO.Business.Tests.Validation
         public void CreateOpportunity_Challenges1019Characters_ShouldSucceed()
         {
             // Arrange: Challenges with 1,019 characters (under limit)
-            var opportunity = new Opportunity
+            var opportunity = new OpportunityEntity
             {
                 Name = "Test Opportunity",
                 Description = "Test description",
@@ -141,7 +142,7 @@ namespace UNOPS.PAO.Business.Tests.Validation
             int nameLength, bool shouldSucceed)
         {
             // Arrange: Create opportunity with specified name length
-            var opportunity = new Opportunity
+            var opportunity = new OpportunityEntity
             {
                 Name = new string('X', nameLength),
                 Description = "Test description",
@@ -174,7 +175,7 @@ namespace UNOPS.PAO.Business.Tests.Validation
             int challengesLength, bool shouldSucceed)
         {
             // Arrange: Create opportunity with specified challenges length
-            var opportunity = new Opportunity
+            var opportunity = new OpportunityEntity
             {
                 Name = "Test Opportunity",
                 Description = "Test description",
@@ -201,7 +202,7 @@ namespace UNOPS.PAO.Business.Tests.Validation
         public void OpportunityName_AtMaxLength_HasCorrectMaxLengthAttribute()
         {
             // Arrange: Get Name property info
-            var nameProperty = typeof(Opportunity).GetProperty("Name");
+            var nameProperty = typeof(OpportunityEntity).GetProperty("Name");
             
             // Act: Get MaxLength attribute
             var maxLengthAttr = nameProperty?.GetCustomAttributes(typeof(MaxLengthAttribute), true)
