@@ -137,22 +137,22 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                     request.RiskTypeId = defaultType?.Id ?? throw new InvalidOperationException("Default THREAT risk type not found in system");
                 }
 
-                // Default to MEDIUM probability if not provided
+                // Default to LOW_TO_MEDIUM probability if not provided
                 if (!request.RiskProbabilityId.HasValue)
                 {
                     var defaultProbability = await _context.RiskProbabilities
-                        .Where(rp => rp.Code == "MEDIUM" && !rp.IsDeleted && rp.Status == EntityStatus.Active)
+                        .Where(rp => rp.Code == "LOW_TO_MEDIUM" && !rp.IsDeleted && rp.Status == EntityStatus.Active)
                         .FirstOrDefaultAsync();
-                    request.RiskProbabilityId = defaultProbability?.Id ?? throw new InvalidOperationException("Default MEDIUM probability not found in system");
+                    request.RiskProbabilityId = defaultProbability?.Id ?? throw new InvalidOperationException("Default LOW_TO_MEDIUM probability not found in system");
                 }
 
-                // Default to MEDIUM impact if not provided
+                // Default to LOW_TO_MEDIUM impact if not provided
                 if (!request.RiskImpactLevelId.HasValue)
                 {
                     var defaultImpact = await _context.RiskImpactLevels
-                        .Where(ril => ril.Code == "MEDIUM" && !ril.IsDeleted && ril.Status == EntityStatus.Active)
+                        .Where(ril => ril.Code == "LOW_TO_MEDIUM" && !ril.IsDeleted && ril.Status == EntityStatus.Active)
                         .FirstOrDefaultAsync();
-                    request.RiskImpactLevelId = defaultImpact?.Id ?? throw new InvalidOperationException("Default MEDIUM impact level not found in system");
+                    request.RiskImpactLevelId = defaultImpact?.Id ?? throw new InvalidOperationException("Default LOW_TO_MEDIUM impact level not found in system");
                 }
 
                 // Default to WITHIN_SIX_MONTHS proximity if not provided
@@ -286,17 +286,17 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 if (!request.RiskProbabilityId.HasValue)
                 {
                     var defaultProbability = await _context.RiskProbabilities
-                        .Where(rp => rp.Code == "MEDIUM" && !rp.IsDeleted && rp.Status == EntityStatus.Active)
+                        .Where(rp => rp.Code == "LOW_TO_MEDIUM" && !rp.IsDeleted && rp.Status == EntityStatus.Active)
                         .FirstOrDefaultAsync();
-                    request.RiskProbabilityId = defaultProbability?.Id ?? throw new InvalidOperationException("Default MEDIUM probability not found in system");
+                    request.RiskProbabilityId = defaultProbability?.Id ?? throw new InvalidOperationException("Default LOW_TO_MEDIUM probability not found in system");
                 }
 
                 if (!request.RiskImpactLevelId.HasValue)
                 {
                     var defaultImpact = await _context.RiskImpactLevels
-                        .Where(ril => ril.Code == "MEDIUM" && !ril.IsDeleted && ril.Status == EntityStatus.Active)
+                        .Where(ril => ril.Code == "LOW_TO_MEDIUM" && !ril.IsDeleted && ril.Status == EntityStatus.Active)
                         .FirstOrDefaultAsync();
-                    request.RiskImpactLevelId = defaultImpact?.Id ?? throw new InvalidOperationException("Default MEDIUM impact level not found in system");
+                    request.RiskImpactLevelId = defaultImpact?.Id ?? throw new InvalidOperationException("Default LOW_TO_MEDIUM impact level not found in system");
                 }
 
                 if (!request.RiskProximityId.HasValue)
