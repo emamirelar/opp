@@ -108,8 +108,9 @@ describe('PictureComponent', () => {
 
       expect(mockDialogService.open).toHaveBeenCalled();
       const callArgs = mockDialogService.open.calls.mostRecent().args;
-      expect(callArgs[1].width).toBe('40vw');
-      expect(callArgs[1].data.uploadUrl).toBe('/api/upload');
+      const dialogConfig = callArgs[1] as any;
+      expect(dialogConfig.width).toBe('40vw');
+      expect(dialogConfig.data.uploadUrl).toBe('/api/upload');
     });
 
     it('should update imageUrl when dialog closes with result', (done) => {

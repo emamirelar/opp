@@ -1,9 +1,10 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Business.Repositories.Generic;
+using UNOPS.PAO.Business.Services;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSBusiness.Helpers;
@@ -106,7 +107,8 @@ public class UNOPSManagerWrapper : ManagerWrapper
         baseEngagementManager = new BaseEngagementManager(mapper, opsContext, configuration, permissionService, httpContextAccessor);
         
         // Create OpportunityManager with DbContextFactory for parallel query execution
-        opportunityManager = new UNOPSOpportunityManager(mapper, opsContext, configuration, dbContextFactory, permissionService, httpContextAccessor, serviceProvider);
+        var exchangeRateService = serviceProvider.GetRequiredService<IExchangeRateService>();
+        opportunityManager = new UNOPSOpportunityManager(mapper, opsContext, configuration, dbContextFactory, exchangeRateService, permissionService, httpContextAccessor, serviceProvider);
         
         // Create CommentManager
         commentManager = new CommentManager(mapper, opsContext, this);

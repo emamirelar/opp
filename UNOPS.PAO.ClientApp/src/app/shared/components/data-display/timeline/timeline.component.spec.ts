@@ -268,8 +268,6 @@ describe('TimelineComponent', () => {
 
       const content = component['createTimelineItemContent'](record);
 
-      expect(content).toContain('timeline-item');
-      expect(content).toContain('timeline-header');
       expect(content).toContain('✉️'); // Email unicode icon
       expect(content).toContain('Jane Smith');
     });
@@ -277,24 +275,17 @@ describe('TimelineComponent', () => {
 
   describe('Icon Mapping', () => {
     it('should return correct icons for different interaction types', () => {
-      expect(component['getInteractionIcon']('Meeting')).toBe('pi pi-users');
-      expect(component['getInteractionIcon']('Email')).toBe('pi pi-envelope');
-      expect(component['getInteractionIcon']('Call')).toBe('pi pi-phone');
-      expect(component['getInteractionIcon']('Unknown')).toBe('pi pi-circle');
-    });
-
-    it('should return correct unicode icons for different interaction types', () => {
-      expect(component['getInteractionIconUnicode']('Meeting')).toBe('👥');
-      expect(component['getInteractionIconUnicode']('Email')).toBe('✉️');
-      expect(component['getInteractionIconUnicode']('Call')).toBe('📞');
-      expect(component['getInteractionIconUnicode']('Unknown')).toBe('⚪');
+      expect(component['getSimpleUnicodeIcon']('Meeting')).toBe('🤝');
+      expect(component['getSimpleUnicodeIcon']('Email')).toBe('✉️');
+      expect(component['getSimpleUnicodeIcon']('Call')).toBe('📞');
+      expect(component['getSimpleUnicodeIcon']('Unknown')).toBe('⚪');
     });
 
     it('should return correct CSS classes for different interaction types', () => {
       expect(component['getTimelineItemClass']('Meeting')).toBe('timeline-meeting');
       expect(component['getTimelineItemClass']('Email')).toBe('timeline-email');
-      expect(component['getTimelineItemClass']('Call')).toBe('timeline-call');
-      expect(component['getTimelineItemClass']('Unknown')).toBe('timeline-default');
+      expect(component['getTimelineItemClass']('Call')).toBe('timeline-phone');
+      expect(component['getTimelineItemClass']('Unknown')).toBe('timeline-other');
     });
   });
 

@@ -1,0 +1,332 @@
+name: QA Tests
+
+on:
+  push:
+    branches: [ main, dev-deploy, QA-Tests ]
+  pull_request:
+    branches: [ main, dev-deploy ]
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  fast-tests:
+    name: Fast Logic Tests
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
+    
+    - name: Run FastTests
+      id: run-fast-tests
+      continue-on-error: true
+      run: |
+        $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
+        New-Item -ItemType Directory -Force -Path $testResultsDir | Out-Null
+        dotnet test "QA Tests/C# Tests/UNOPS.PAO.FastTests/UNOPS.PAO.FastTests.csproj" `
+          --no-build `
+          --configuration Release `
+          --verbosity normal `
+          --logger "trx;LogFileName=fast-tests.trx" `
+          --results-directory $testResultsDir
+    
+    - name: List Test Results (Debug)
+      if: always()
+      run: |
+        $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
+        echo "Looking for test results in: $testResultsDir"
+        if (Test-Path $testResultsDir) {
+          Get-ChildItem -Path $testResultsDir -Recurse -Filter "*.trx" -ErrorAction SilentlyContinue | ForEach-Object { 
+            Write-Host "Found: $($_.FullName)"
+          }
+          $trxCount = (Get-ChildItem -Path $testResultsDir -Filter "*.trx" -Recurse -ErrorAction SilentlyContinue).Count
+          echo "Total .trx files found: $trxCount"
+        } else {
+          echo "ERROR: TestResults directory does not exist at $testResultsDir"
+        }
+    
+    - name: Publish Test Results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: FastTests Results
+        path: '**/TestResults/**/*.trx'
+        reporter: dotnet-trx
+        fail-on-error: false
+
+    - name: Upload Test Results Artifact
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: fast-tests-results
+        path: TestResults
+        if-no-files-found: warn
+    
+    - name: Check FastTests Result
+      if: steps.run-fast-tests.outcome != 'success'
+      run: |
+        echo "::error::FastTests failed or encountered errors"
+        exit 1
+
+  business-tests:
+    name: Business Logic Tests
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
+    
+    - name: Run Business Tests
+      id: run-business-tests
+      continue-on-error: true
+      run: |
+        $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
+        New-Item -ItemType Directory -Force -Path $testResultsDir | Out-Null
+        dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj" `
+          --no-build `
+          --configuration Release `
+          --verbosity normal `
+          --logger "trx;LogFileName=business-tests.trx" `
+          --results-directory $testResultsDir
+    
+    - name: List Test Results (Debug)
+      if: always()
+      run: |
+        $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
+        echo "Looking for test results in: $testResultsDir"
+        if (Test-Path $testResultsDir) {
+          Get-ChildItem -Path $testResultsDir -Recurse -Filter "*.trx" -ErrorAction SilentlyContinue | ForEach-Object { 
+            Write-Host "Found: $($_.FullName)"
+          }
+          $trxCount = (Get-ChildItem -Path $testResultsDir -Filter "*.trx" -Recurse -ErrorAction SilentlyContinue).Count
+          echo "Total .trx files found: $trxCount"
+        } else {
+          echo "ERROR: TestResults directory does not exist at $testResultsDir"
+        }
+    
+    - name: Publish Test Results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Business Tests Results
+        path: '**/TestResults/**/*.trx'
+        reporter: dotnet-trx
+        fail-on-error: false
+
+    - name: Upload Test Results Artifact
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: business-tests-results
+        path: TestResults
+        if-no-files-found: warn
+    
+    - name: Check Business Tests Result
+      if: steps.run-business-tests.outcome != 'success'
+      run: |
+        echo "::error::Business Tests failed or encountered errors"
+        exit 1
+
+  # ============================================================================
+  # INTEGRATION TESTS - Run manually or in staging environment
+  # ============================================================================
+  # Integration tests are commented out for PR checks because they require:
+  # - Database connection with seed data
+  # - Google Cloud credentials (for IAM auth tests)
+  # - AI service running (for AI integration tests)
+  # - Complex authorization setup
+  #
+  # To run integration tests:
+  # 1. Locally: Follow QA Tests/ENVIRONMENT_SETUP_GUIDE.md
+  # 2. Staging: Configure staging environment with required services
+  # 3. Manual: Run "dotnet test QA Tests/Integration Tests/UNOPS.PAO.IntegrationTests.csproj"
+  # ============================================================================
+  
+  # integration-tests:
+  #   name: Integration Tests
+  #   runs-on: windows-latest
+  #   
+  #   services:
+  #     postgres:
+  #       image: postgres:15
+  #       env:
+  #         POSTGRES_DB: unops_pao_test
+  #         POSTGRES_USER: test_user
+  #         POSTGRES_PASSWORD: test_password
+  #       ports:
+  #         - 5432:5432
+  #       options: >-
+  #         --health-cmd pg_isready
+  #         --health-interval 10s
+  #         --health-timeout 5s
+  #         --health-retries 5
+  #   
+  #   steps:
+  #   - name: Checkout code
+  #     uses: actions/checkout@v4
+  #   
+  #   - name: Setup .NET
+  #     uses: actions/setup-dotnet@v4
+  #     with:
+  #       dotnet-version: ${{ env.DOTNET_VERSION }}
+  #   
+  #   - name: Restore dependencies
+  #     run: dotnet restore
+  #   
+  #   - name: Build
+  #     run: dotnet build --no-restore --configuration Release
+  #   
+  #   - name: Install EF Core tools
+  #     run: dotnet tool install --global dotnet-ef
+  #   
+  #   - name: Run Migrations
+  #     run: dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess/UNOPS.PAO.UNOPSDataAccess.csproj --startup-project UNOPS.PAO.Server/UNOPS.PAO.Server.csproj
+  #     env:
+  #       ConnectionStrings__DefaultConnection: 'Host=localhost;Port=5432;Database=unops_pao_test;Username=test_user;Password=test_password;'
+  #   
+  #   - name: Run Seed Scripts
+  #     run: |
+  #       $env:PGPASSWORD='test_password'
+  #       psql -h localhost -p 5432 -U test_user -d unops_pao_test -f "UNOPS.PAO.UNOPSDataAccess/Scripts/seed-entities.sql" || echo "Seed script execution attempted"
+  #       psql -h localhost -p 5432 -U test_user -d unops_pao_test -f "UNOPS.PAO.UNOPSDataAccess/Scripts/seed-entity-field-managers.sql" || echo "Seed script execution attempted"
+  #       psql -h localhost -p 5432 -U test_user -d unops_pao_test -f "UNOPS.PAO.UNOPSDataAccess/Scripts/seed-liaison-offices.sql" || echo "Seed script execution attempted"
+  #     shell: pwsh
+  #   
+  #   - name: Run Integration Tests
+  #     run: dotnet test "QA Tests/Integration Tests/UNOPS.PAO.IntegrationTests.csproj" --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=integration-tests.trx"
+  #     env:
+  #       ConnectionStrings__DefaultConnection: 'Host=localhost;Port=5432;Database=unops_pao_test;Username=test_user;Password=test_password;'
+  #       ConnectionStrings__UseIamAuthentication: 'false'
+  #   
+  #   - name: Publish Test Results
+  #     uses: dorny/test-reporter@v1
+  #     if: always()
+  #     with:
+  #       name: Integration Tests Results
+  #       path: '**/TestResults/**/*.trx'
+  #       reporter: dotnet-trx
+
+  # python-tests:
+  #   name: Python AI Tests
+  #   runs-on: ubuntu-latest
+  #   
+  #   steps:
+  #   - name: Checkout code
+  #     uses: actions/checkout@v4
+  #   
+  #   - name: Setup Python
+  #     uses: actions/setup-python@v5
+  #     with:
+  #       python-version: ${{ env.PYTHON_VERSION }}
+  #       cache: 'pip'
+  #   
+  #   - name: Install dependencies
+  #     run: |
+  #       cd UNOPS.PAO.AIService
+  #       pip install pytest pytest-asyncio pytest-cov
+  #       pip install -r requirements.txt || echo "No requirements.txt found"
+  #   
+  #   - name: Run Python tests
+  #     run: |
+  #       cd UNOPS.PAO.AIService
+  #       pytest tests/ -v --junitxml=test-results.xml --cov=ai_assistant --cov-report=xml --cov-report=html
+  #   
+  #   - name: Publish Test Results
+  #     uses: dorny/test-reporter@v1
+  #     if: always()
+  #     with:
+  #       name: Python Tests Results
+  #       path: '**/test-results.xml'
+  #       reporter: java-junit
+  #   
+  #   - name: Upload Coverage to Codecov
+  #     uses: codecov/codecov-action@v4
+  #     with:
+  #       files: ./UNOPS.PAO.AIService/coverage.xml
+  #       flags: python-tests
+  #       name: python-coverage
+
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [fast-tests, business-tests]
+    if: always()
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Generate Summary
+      run: |
+        echo "# QA Tests Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Automated Test Results (PR Checks)" >> $GITHUB_STEP_SUMMARY
+        echo "- Fast Logic Tests (78 tests): ${{ needs.fast-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Business Logic Tests (2,135 tests): ${{ needs.business-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Overall Status" >> $GITHUB_STEP_SUMMARY
+        if [[ "${{ needs.fast-tests.result }}" == "success" ]] && [[ "${{ needs.business-tests.result }}" == "success" ]]; then
+          echo "✅ All critical tests passing (2,213 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Permission Logic (6 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Workflow Logic (7 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Notification Logic (7 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Export Logic (6 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Document Validation (11 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Partner Manager (1,127 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Other Business Logic (1,049 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "ℹ️ **Note**: Integration tests must be run manually or in staging" >> $GITHUB_STEP_SUMMARY
+          echo "- See: QA Tests/ENVIRONMENT_SETUP_GUIDE.md" >> $GITHUB_STEP_SUMMARY
+          echo "- Run: dotnet test \"QA Tests/Integration Tests/UNOPS.PAO.IntegrationTests.csproj\"" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ Critical tests failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ needs.fast-tests.result }}" != "success" ]]; then
+            echo "- ❌ Fast Logic Tests: ${{ needs.fast-tests.result }}" >> $GITHUB_STEP_SUMMARY
+            echo "  - Check the FastTests Results for detailed failure information" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [[ "${{ needs.business-tests.result }}" != "success" ]]; then
+            echo "- ❌ Business Logic Tests: ${{ needs.business-tests.result }}" >> $GITHUB_STEP_SUMMARY
+            echo "  - Check the Business Tests Results for detailed failure information" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Troubleshooting" >> $GITHUB_STEP_SUMMARY
+          echo "1. Review test logs above for specific failures" >> $GITHUB_STEP_SUMMARY
+          echo "2. Run tests locally: dotnet test --configuration Release" >> $GITHUB_STEP_SUMMARY
+          echo "3. Check for environment-specific issues (paths, configuration)" >> $GITHUB_STEP_SUMMARY
+        fi
+    
+    - name: Check Critical Tests
+      if: needs.fast-tests.result != 'success' || needs.business-tests.result != 'success'
+      run: |
+        echo "Critical tests failed!"
+        exit 1

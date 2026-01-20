@@ -93,7 +93,10 @@ export class FileUploadComponent {
       // Generate preview for images
       if (this.aiService.isImageFile(file)) {
         try {
-          fileUpload.preview = await this.aiService.getFilePreview(file);
+          const preview = await this.aiService.getFilePreview(file);
+          if (preview) {
+            fileUpload.preview = preview;
+          }
         } catch (error) {
           console.warn('Failed to generate preview for', file.name, error);
         }

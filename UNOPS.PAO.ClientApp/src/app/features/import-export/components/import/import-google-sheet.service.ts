@@ -22,20 +22,24 @@ export class ImportGoogleSheetService {
   private sheetsApiReady = false;
 
   private checkExistingToken(): void {
-    // Check for Google OAuth token in localStorage
-    const storedToken = localStorage.getItem('google_oauth_token');
-    const storedExpiration = localStorage.getItem('google_oauth_token_expiration');
+    try {
+      // Check for Google OAuth token in localStorage
+      const storedToken = localStorage.getItem('google_oauth_token');
+      const storedExpiration = localStorage.getItem('google_oauth_token_expiration');
 
-    if (storedToken && storedExpiration) {
-      const expirationTime = parseInt(storedExpiration, 10);
-      if (Date.now() < expirationTime) {
-        this.oauthToken = storedToken;
-        this.tokenExpirationTime = expirationTime;
-      } else {
-        // Clear expired token
-        localStorage.removeItem('google_oauth_token');
-        localStorage.removeItem('google_oauth_token_expiration');
+      if (storedToken && storedExpiration) {
+        const expirationTime = parseInt(storedExpiration, 10);
+        if (Date.now() < expirationTime) {
+          this.oauthToken = storedToken;
+          this.tokenExpirationTime = expirationTime;
+        } else {
+          // Clear expired token
+          localStorage.removeItem('google_oauth_token');
+          localStorage.removeItem('google_oauth_token_expiration');
+        }
       }
+    } catch (error) {
+      console.warn('Unable to access localStorage for Google OAuth token.', error);
     }
   }
 
@@ -81,8 +85,12 @@ export class ImportGoogleSheetService {
 
             // Store token and expiration in localStorage
             if (this.oauthToken) {
-              localStorage.setItem('google_oauth_token', this.oauthToken);
-              localStorage.setItem('google_oauth_token_expiration', this.tokenExpirationTime.toString());
+              try {
+                localStorage.setItem('google_oauth_token', this.oauthToken);
+                localStorage.setItem('google_oauth_token_expiration', this.tokenExpirationTime.toString());
+              } catch (error) {
+                console.warn('Unable to store Google OAuth token in localStorage.', error);
+              }
             }
             observer.next();
             observer.complete();

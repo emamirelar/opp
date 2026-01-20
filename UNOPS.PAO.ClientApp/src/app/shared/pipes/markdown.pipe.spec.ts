@@ -1,10 +1,14 @@
+import { DomSanitizer } from '@angular/platform-browser';
 import { MarkdownPipe } from './markdown.pipe';
 
 describe('MarkdownPipe', () => {
   let pipe: MarkdownPipe;
+  let sanitizer: jasmine.SpyObj<DomSanitizer>;
 
   beforeEach(() => {
-    pipe = new MarkdownPipe();
+    sanitizer = jasmine.createSpyObj('DomSanitizer', ['bypassSecurityTrustHtml']);
+    sanitizer.bypassSecurityTrustHtml.and.returnValue('safe-html' as any);
+    pipe = new MarkdownPipe(sanitizer);
   });
 
   it('create an instance', () => {

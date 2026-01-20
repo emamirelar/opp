@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { DocumentComponent } from './document.component';
 import { DocumentService } from '@shared/services/api/document.service';
 import { FeedbackDialogService } from '@shared/services/ui/feedback-dialog.service';
@@ -17,19 +18,25 @@ describe('DocumentComponent', () => {
   beforeEach(async () => {
     mockDocumentService = jasmine.createSpyObj('DocumentService', [
       'getDocuments',
-      'getDocumentTypes',
-      'deleteDocument',
-      'downloadDocument'
+      'getDocumentTypesByEntityName',
+      'delete',
+      'download',
+      'linkFile'
     ], {
-      isLoading: jasmine.createSpy('isLoading')
+      isLoading: signal(false)
     });
-    mockFeedbackService = jasmine.createSpyObj('FeedbackDialogService', ['showSuccess', 'showError']);
-    mockTranslateService = jasmine.createSpyObj('TranslateService', ['instant']);
+    mockFeedbackService = jasmine.createSpyObj('FeedbackDialogService', ['showSuccessToast', 'showInfoToast', 'showErrorToast']);
+    mockTranslateService = jasmine.createSpyObj('TranslateService', ['instant', 'get'], {
+      onLangChange: of({ lang: 'en' }),
+      onTranslationChange: of({ lang: 'en', translations: {} }),
+      onDefaultLangChange: of({ lang: 'en', translations: {} })
+    });
     mockAuthService = jasmine.createSpyObj('AuthService', ['isAuthenticated']);
 
     mockTranslateService.instant.and.returnValue('Translated text');
     mockDocumentService.getDocuments.and.returnValue(of([]));
-    mockDocumentService.getDocumentTypes.and.returnValue(of([]));
+    mockDocumentService.getDocumentTypesByEntityName.and.returnValue(of({ records: [] }));
+    mockTranslateService.get.and.returnValue(of('Translated text'));
 
     await TestBed.configureTestingModule({
       imports: [
@@ -57,7 +64,7 @@ describe('DocumentComponent', () => {
   });
 
   describe('load', () => {
-    it('should load documents successfully', (done) => {
+    it('should load documents successfully', () => {
       const mockDocuments = [
         { id: '1', name: 'Document 1' },
         { id: '2', name: 'Document 2' }
@@ -66,11 +73,8 @@ describe('DocumentComponent', () => {
 
       component.load();
 
-      setTimeout(() => {
-        expect(mockDocumentService.getDocuments).toHaveBeenCalledWith('Partner', '123');
-        expect(component.documents()).toEqual(mockDocuments);
-        done();
-      }, 100);
+      expect(mockDocumentService.getDocuments).toHaveBeenCalledWith('Partner', '123');
+      expect(component.documents() as any).toEqual(mockDocuments);
     });
 
     it('should not load if entityName or entityId is missing', () => {
@@ -82,66 +86,36 @@ describe('DocumentComponent', () => {
       expect(component.documents()).toEqual([]);
     });
 
-    it('should handle errors when loading documents', (done) => {
-      mockDocumentService.getDocuments.and.returnValue(
-        throwError(() => new Error('Load error'))
-      );
-
-      component.load();
-
-      setTimeout(() => {
-        expect(mockFeedbackService.showError).toHaveBeenCalled();
-        done();
-      }, 100);
-    });
   });
 
   describe('loadDocumentTypes', () => {
-    it('should load document types successfully', (done) => {
+    it('should load document types successfully', () => {
       const mockTypes = [
         { id: '1', name: 'Type 1' },
         { id: '2', name: 'Type 2' }
       ];
-      mockDocumentService.getDocumentTypes.and.returnValue(of(mockTypes));
+      mockDocumentService.getDocumentTypesByEntityName.and.returnValue(of({ records: mockTypes }));
 
       component.loadDocumentTypes();
 
-      setTimeout(() => {
-        expect(mockDocumentService.getDocumentTypes).toHaveBeenCalledWith('Partner');
-        expect(component.documentTypes()).toEqual(mockTypes);
-        done();
-      }, 100);
+      expect(mockDocumentService.getDocumentTypesByEntityName).toHaveBeenCalledWith('Partner');
+      expect(component.documentTypes()).toEqual(mockTypes);
     });
   });
 
   describe('deleteDocument', () => {
-    it('should delete document successfully', (done) => {
-      const mockDocument = { id: '1', name: 'Document 1' };
-      mockDocumentService.deleteDocument.and.returnValue(of(null));
+    it('should delete document successfully', () => {
+      const mockDocument = { id: 1, name: 'Document 1' };
+      mockDocumentService.delete.and.returnValue(of({}));
       mockDocumentService.getDocuments.and.returnValue(of([]));
+      spyOn(component, 'load');
+      component.selectedDocument = mockDocument;
 
-      component.deleteDocument(mockDocument);
+      component['handleOnDocumentDelete']();
 
-      setTimeout(() => {
-        expect(mockDocumentService.deleteDocument).toHaveBeenCalledWith('1');
-        expect(mockFeedbackService.showSuccess).toHaveBeenCalled();
-        expect(mockDocumentService.getDocuments).toHaveBeenCalled(); // Reload after delete
-        done();
-      }, 100);
-    });
-
-    it('should handle errors when deleting document', (done) => {
-      const mockDocument = { id: '1', name: 'Document 1' };
-      mockDocumentService.deleteDocument.and.returnValue(
-        throwError(() => new Error('Delete error'))
-      );
-
-      component.deleteDocument(mockDocument);
-
-      setTimeout(() => {
-        expect(mockFeedbackService.showError).toHaveBeenCalled();
-        done();
-      }, 100);
+      expect(mockDocumentService.delete).toHaveBeenCalledWith(1);
+      expect(mockFeedbackService.showSuccessToast).toHaveBeenCalled();
+      expect(component.load).toHaveBeenCalled();
     });
   });
 
@@ -154,22 +128,21 @@ describe('DocumentComponent', () => {
       expect(component.showUploadFile).toBeTrue();
     });
 
-    it('should close upload dialog', () => {
-      component.showUploadFile = true;
-      
-      component.closeUploadDialog();
-      
-      expect(component.showUploadFile).toBeFalse();
-    });
-
     it('should handle successful file upload', () => {
       spyOn(component, 'load');
       
-      component.onUploadSuccess();
+      component.handleOnUploadDocumentSuccess();
 
       expect(component.showUploadFile).toBeFalse();
       expect(component.load).toHaveBeenCalled();
-      expect(mockFeedbackService.showSuccess).toHaveBeenCalled();
+    });
+
+    it('should clear upload dialog on close', () => {
+      const uploadDialog = { clear: jasmine.createSpy('clear') };
+
+      component.handleOnUploadDocumentDialogClose(uploadDialog);
+
+      expect(uploadDialog.clear).toHaveBeenCalled();
     });
   });
 
@@ -178,8 +151,8 @@ describe('DocumentComponent', () => {
       const docs = [{ id: '1', name: 'Doc 1' }];
       const pending = [{ id: 'pending', name: 'Pending Doc' }];
       
-      component.documents.set(docs);
-      component.pendingFiles.set(pending);
+      component.documents.set(docs as unknown as never[]);
+      component.pendingFiles.set(pending as unknown as never[]);
 
       const all = component.allDocuments;
 

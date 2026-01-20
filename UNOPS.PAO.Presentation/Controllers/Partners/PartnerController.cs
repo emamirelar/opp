@@ -391,10 +391,19 @@ public class PartnerController : BaseController
                 FilterActive = filterActive
             };
 
-            var result = await _advancedSearchService.SearchWithFiltersAsync<UNOPSPartner, PartnerModel>(
-                searchFilters,
-                paginationRequest,
-                User);
+            PaginationResponse<PartnerModel> result;
+            try
+            {
+                result = await _advancedSearchService.SearchWithFiltersAsync<UNOPSPartner, PartnerModel>(
+                    searchFilters,
+                    paginationRequest,
+                    User);
+            }
+            catch (System.Linq.Dynamic.Core.Exceptions.ParseException ex)
+            {
+                _logger.LogWarning(ex, "Invalid search filter field or operator");
+                return BadRequest(new { error = "Invalid search filter field or operator." });
+            }
             
             _logger.LogInformation("Advanced search completed: Found {TotalCount} results", result.TotalCount);
             return Ok(result);
@@ -402,6 +411,77 @@ public class PartnerController : BaseController
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in advanced partner search");
+            return StatusCode(500, new { error = "An error occurred during advanced search" });
+        }
+    }
+
+    /// <summary>
+    /// Backward-compatible advanced search endpoint for legacy clients using searchCriteria and pageNumber.
+    /// </summary>
+    [HttpGet(APIDictionary.Partner + "/new-advanced-search")]
+    [AccessControlled(EntityTypes.Partner, "read")]
+    public async Task<ActionResult<PaginationResponse<PartnerModel>>> NewAdvancedSearchPartners(
+        [FromQuery] string searchCriteria,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? orderBy = "Name",
+        [FromQuery] bool ascending = true,
+        [FromQuery] bool export = false,
+        [FromQuery] bool filterActive = true)
+    {
+        try
+        {
+            _logger.LogInformation("=== NEW ADVANCED SEARCH (LEGACY) ===");
+            _logger.LogInformation("SearchCriteria: {SearchCriteria}, Page: {PageNumber}, Size: {PageSize}, Export: {Export}",
+                searchCriteria, pageNumber, pageSize, export);
+
+            if (string.IsNullOrWhiteSpace(searchCriteria))
+            {
+                return BadRequest(new { error = "Search criteria are required" });
+            }
+
+            List<UNOPS.PAO.UNOPSBusiness.Services.SearchFilter> searchFilters;
+            try
+            {
+                searchFilters = JsonSerializer.Deserialize<List<UNOPS.PAO.UNOPSBusiness.Services.SearchFilter>>(searchCriteria) ??
+                    new List<UNOPS.PAO.UNOPSBusiness.Services.SearchFilter>();
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogWarning(ex, "Failed to parse search criteria: {SearchCriteria}", searchCriteria);
+                return BadRequest(new { error = "Invalid search criteria format. Expected JSON array of filter objects." });
+            }
+
+            var allowedFields = GetPartnerSearchFields().Value?
+                .Select(field => field.Field)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            if (allowedFields != null && allowedFields.Count > 0 &&
+                searchFilters.Any(filter => !string.IsNullOrWhiteSpace(filter.field) && !allowedFields.Contains(filter.field)))
+            {
+                return BadRequest(new { error = "Invalid search filter field." });
+            }
+
+            var paginationRequest = new PaginationRequest
+            {
+                PageIndex = pageNumber,
+                PageSize = export ? int.MaxValue : pageSize,
+                OrderBy = orderBy,
+                Ascending = ascending,
+                FilterActive = filterActive
+            };
+
+            var result = await _advancedSearchService.SearchWithFiltersAsync<UNOPSPartner, PartnerModel>(
+                searchFilters,
+                paginationRequest,
+                User);
+
+            _logger.LogInformation("Legacy advanced search completed: Found {TotalCount} results", result.TotalCount);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in legacy advanced partner search");
             return StatusCode(500, new { error = "An error occurred during advanced search" });
         }
     }

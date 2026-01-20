@@ -4,8 +4,6 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ResponsiveTabsComponent } from './responsive-tabs.component';
 import { ResponsiveTabItem } from './responsive-tabs.model';
 import { Subject } from 'rxjs';
-import { DebugElement } from '@angular/core';
-import { By } from '@angular/platform-browser';
 
 describe('ResponsiveTabsComponent', () => {
   let component: ResponsiveTabsComponent;
@@ -14,6 +12,12 @@ describe('ResponsiveTabsComponent', () => {
   let mockTranslateService: jasmine.SpyObj<TranslateService>;
   let routerEventsSubject: Subject<any>;
   let langChangeSubject: Subject<any>;
+  const setRouterUrl = (url: string) => {
+    Object.defineProperty(mockRouter, 'url', {
+      get: () => url,
+      configurable: true
+    });
+  };
 
   const mockTabs: ResponsiveTabItem[] = [
     { route: '/tab1', label: 'tab.one', icon: 'home', disabled: false },
@@ -26,9 +30,9 @@ describe('ResponsiveTabsComponent', () => {
     langChangeSubject = new Subject();
 
     mockRouter = jasmine.createSpyObj('Router', ['navigate'], {
-      events: routerEventsSubject.asObservable(),
-      url: '/tab1'
+      events: routerEventsSubject.asObservable()
     });
+    setRouterUrl('/tab1');
 
     mockTranslateService = jasmine.createSpyObj('TranslateService', ['instant'], {
       onLangChange: langChangeSubject.asObservable()
@@ -77,7 +81,7 @@ describe('ResponsiveTabsComponent', () => {
     });
 
     it('should set active tab based on current route', () => {
-      mockRouter.url = '/tab2';
+      setRouterUrl('/tab2');
       component.tabs = mockTabs;
       fixture.detectChanges();
 
@@ -85,7 +89,7 @@ describe('ResponsiveTabsComponent', () => {
     });
 
     it('should default to first non-disabled tab if no match', () => {
-      mockRouter.url = '/unknown';
+      setRouterUrl('/unknown');
       component.tabs = mockTabs;
       fixture.detectChanges();
 
@@ -152,7 +156,7 @@ describe('ResponsiveTabsComponent', () => {
 
     it('should handle navigation to child routes', () => {
       component.tabs = mockTabs;
-      mockRouter.url = '/tab1/details';
+      setRouterUrl('/tab1/details');
       fixture.detectChanges();
 
       routerEventsSubject.next(new NavigationEnd(1, '/tab1/details', '/tab1/details'));
@@ -162,7 +166,7 @@ describe('ResponsiveTabsComponent', () => {
 
     it('should ignore query parameters in route matching', () => {
       component.tabs = mockTabs;
-      mockRouter.url = '/tab1?param=value';
+      setRouterUrl('/tab1?param=value');
       fixture.detectChanges();
 
       expect(component.activeRoute).toBe('/tab1');
@@ -174,7 +178,7 @@ describe('ResponsiveTabsComponent', () => {
         { route: '/tab/specific', label: 'Specific', disabled: false }
       ];
       component.tabs = specificTabs;
-      mockRouter.url = '/tab/specific';
+      setRouterUrl('/tab/specific');
       fixture.detectChanges();
 
       expect(component.activeRoute).toBe('/tab/specific');
@@ -432,7 +436,7 @@ describe('ResponsiveTabsComponent', () => {
       const longRoute = '/very/long/route/path/with/many/segments';
       const longTab: ResponsiveTabItem = { route: longRoute, label: 'Long', disabled: false };
       component.tabs = [longTab];
-      mockRouter.url = longRoute;
+      setRouterUrl(longRoute);
       fixture.detectChanges();
 
       expect(component.activeRoute).toBe(longRoute);
@@ -445,7 +449,7 @@ describe('ResponsiveTabsComponent', () => {
         disabled: false 
       };
       component.tabs = [specialTab];
-      mockRouter.url = '/tab-1_special%20char';
+      setRouterUrl('/tab-1_special%20char');
       fixture.detectChanges();
 
       expect(component.activeRoute).toBe('/tab-1_special%20char');

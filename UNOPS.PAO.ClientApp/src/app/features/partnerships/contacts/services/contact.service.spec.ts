@@ -21,7 +21,10 @@ describe('ContactService', () => {
 
   const mockContactResponse = {
     records: [mockContact],
-    totalCount: 1
+    totalCount: 1,
+    pageIndex: 1,
+    pageSize: 10,
+    totalPages: 1
   };
 
   beforeEach(() => {

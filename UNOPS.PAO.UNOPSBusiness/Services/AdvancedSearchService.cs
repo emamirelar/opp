@@ -1,3 +1,4 @@
+using System;
 using System.Linq.Dynamic.Core;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -1510,6 +1511,11 @@ public class AdvancedSearchService
 
         try
         {
+            if (IsInMemoryProvider())
+            {
+                return ApplyInMemorySimilarityFilters(query, similarityFilters);
+            }
+
             // Get matching IDs using PostgreSQL similarity function
             var matchingIds = await GetSimilarityMatchingIds<TEntity>(similarityFilters);
             
@@ -2008,6 +2014,198 @@ public class AdvancedSearchService
         }
 
         return query;
+    }
+
+    /// <summary>
+    /// In-memory similarity filters for test environments without PostgreSQL similarity support.
+    /// </summary>
+    private IQueryable<TEntity> ApplyInMemorySimilarityFilters<TEntity>(IQueryable<TEntity> query, List<SearchFilter> similarityFilters)
+        where TEntity : class
+    {
+        var entities = query.ToList();
+        var filtered = entities
+            .Where(entity => MatchesSimilarityFilters(entity, similarityFilters))
+            .ToList();
+
+        return filtered.AsQueryable();
+    }
+
+    private bool MatchesSimilarityFilters<TEntity>(TEntity entity, List<SearchFilter> similarityFilters)
+        where TEntity : class
+    {
+        if (!similarityFilters.Any())
+        {
+            return true;
+        }
+
+        var result = MatchesSimilarityFilter(entity, similarityFilters[0]);
+        for (int i = 1; i < similarityFilters.Count; i++)
+        {
+            var logicalOperator = similarityFilters[i].logicalOperator?.ToUpper() ?? "AND";
+            var current = MatchesSimilarityFilter(entity, similarityFilters[i]);
+
+            if (logicalOperator == "OR")
+            {
+                result = result || current;
+            }
+            else
+            {
+                result = result && current;
+            }
+        }
+
+        return result;
+    }
+
+    private bool MatchesSimilarityFilter<TEntity>(TEntity entity, SearchFilter filter)
+        where TEntity : class
+    {
+        if (entity == null || string.IsNullOrWhiteSpace(filter.field) || string.IsNullOrWhiteSpace(filter.value))
+        {
+            return false;
+        }
+
+        var fieldPath = ConvertFieldName(filter.field);
+        var values = GetFieldValues(entity, fieldPath.Split('.'));
+        var searchValue = filter.value;
+
+        return values.Any(value => IsSimilarMatch(value, searchValue));
+    }
+
+    private IEnumerable<string> GetFieldValues(object instance, string[] pathParts)
+    {
+        return GetFieldValuesRecursive(instance, pathParts, 0);
+    }
+
+    private IEnumerable<string> GetFieldValuesRecursive(object instance, string[] pathParts, int index)
+    {
+        if (instance == null)
+        {
+            yield break;
+        }
+
+        if (index >= pathParts.Length)
+        {
+            if (instance is string stringValue)
+            {
+                yield return stringValue;
+                yield break;
+            }
+
+            yield return instance.ToString();
+            yield break;
+        }
+
+        var property = instance.GetType().GetProperty(
+            pathParts[index],
+            BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+
+        if (property == null)
+        {
+            yield break;
+        }
+
+        var value = property.GetValue(instance);
+        if (value == null)
+        {
+            yield break;
+        }
+
+        if (value is string)
+        {
+            foreach (var item in GetFieldValuesRecursive(value, pathParts, index + 1))
+            {
+                yield return item;
+            }
+
+            yield break;
+        }
+
+        if (value is System.Collections.IEnumerable enumerable)
+        {
+            foreach (var item in enumerable)
+            {
+                foreach (var nested in GetFieldValuesRecursive(item, pathParts, index + 1))
+                {
+                    yield return nested;
+                }
+            }
+
+            yield break;
+        }
+
+        foreach (var nested in GetFieldValuesRecursive(value, pathParts, index + 1))
+        {
+            yield return nested;
+        }
+    }
+
+    private bool IsSimilarMatch(string source, string searchValue)
+    {
+        if (string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(searchValue))
+        {
+            return false;
+        }
+
+        var normalizedSource = source.ToLowerInvariant();
+        var normalizedSearch = searchValue.ToLowerInvariant();
+
+        if (normalizedSource.Contains(normalizedSearch) || normalizedSearch.Contains(normalizedSource))
+        {
+            return true;
+        }
+
+        var similarityPercent = CalculateSimilarityPercent(normalizedSource, normalizedSearch);
+        return similarityPercent >= SIMILARITY_THRESHOLD_PERCENT;
+    }
+
+    private int CalculateSimilarityPercent(string source, string searchValue)
+    {
+        var maxLength = Math.Max(source.Length, searchValue.Length);
+        if (maxLength == 0)
+        {
+            return 100;
+        }
+
+        var distance = CalculateLevenshteinDistance(source, searchValue);
+        var similarity = (1.0 - (double)distance / maxLength) * 100;
+        return (int)Math.Round(similarity);
+    }
+
+    private int CalculateLevenshteinDistance(string source, string target)
+    {
+        if (source.Length == 0) return target.Length;
+        if (target.Length == 0) return source.Length;
+
+        var distances = new int[source.Length + 1, target.Length + 1];
+
+        for (int i = 0; i <= source.Length; i++)
+        {
+            distances[i, 0] = i;
+        }
+
+        for (int j = 0; j <= target.Length; j++)
+        {
+            distances[0, j] = j;
+        }
+
+        for (int i = 1; i <= source.Length; i++)
+        {
+            for (int j = 1; j <= target.Length; j++)
+            {
+                var cost = source[i - 1] == target[j - 1] ? 0 : 1;
+                distances[i, j] = Math.Min(
+                    Math.Min(distances[i - 1, j] + 1, distances[i, j - 1] + 1),
+                    distances[i - 1, j - 1] + cost);
+            }
+        }
+
+        return distances[source.Length, target.Length];
+    }
+
+    private bool IsInMemoryProvider()
+    {
+        return _context.Database.ProviderName?.Contains("InMemory", StringComparison.OrdinalIgnoreCase) == true;
     }
 
     /// <summary>
