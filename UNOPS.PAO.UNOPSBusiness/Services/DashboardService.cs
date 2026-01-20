@@ -397,7 +397,6 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
         var query = _context.Set<Opportunity>()
             .Include(o => o.FundingPartners)
             .Include(o => o.ClientPartners)
-            .Include(o => o.WorkflowStage)
             .Where(o => opportunityIdsFromStakeholders.Contains(o.Id) 
                         || o.CreatedBy == userId.Value 
                         || o.LastModifiedBy == userId.Value)
@@ -963,7 +962,7 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
                     Id = o.Id,
                     Name = o.Name,
                     Status = o.Status.ToString(),
-                    WorkflowStageName = o.WorkflowStage != null ? o.WorkflowStage.Name : null,
+                    WorkflowStageName = o.Stage, // Use Stage property instead of WorkflowStage navigation
                     CreatedDate = o.CreatedDate,
                     LastModifiedDate = o.LastModifiedDate
                 })
@@ -983,7 +982,7 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
                     Id = o.Id,
                     Name = o.Name,
                     Status = o.Status.ToString(),
-                    WorkflowStageName = o.WorkflowStage != null ? o.WorkflowStage.Name : null,
+                    WorkflowStageName = o.Stage, // Use Stage property instead of WorkflowStage navigation
                     CreatedDate = o.CreatedDate,
                     LastModifiedDate = o.LastModifiedDate
                 })

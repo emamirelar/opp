@@ -1,4 +1,5 @@
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Domain.Interfaces;
 
 namespace UNOPS.PAO.Domain.Infrastructure;
@@ -8,6 +9,17 @@ public class ModifiableDeletableEntity<TId, TUserId>: IModifiableEntity<TId, TUs
     public TId Id { get; set; }
     public string Name { get; set; }
     public EntityStatus Status { get; set; }
+    
+    /// <summary>
+    /// Indicates whether this entity is currently in an approval workflow
+    /// </summary>
+    public WorkflowStatus WorkflowStatus { get; set; } = WorkflowStatus.None;
+    
+    /// <summary>
+    /// Computed property - returns true if entity is in an active approval workflow
+    /// </summary>
+    public bool IsInWorkflow => WorkflowStatus == WorkflowStatus.InWorkflow;
+    
     public TUserId CreatedBy { get; set; }
     public DateTime CreatedDate { get; set; }
     public TUserId? LastModifiedBy { get; set; }

@@ -95,10 +95,11 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     {
         var entity = mapper.Map<Opportunity>(model);
 
-        // Set default workflow stage to 1 if not provided
-        if (entity.WorkflowStageId == null || entity.WorkflowStageId == 0)
+        // Set default workflow stage if not provided
+        // Stage defaults to "IDENTIFY & PROFILE" in entity definition
+        if (string.IsNullOrEmpty(entity.Stage))
         {
-            entity.WorkflowStageId = 1;
+            entity.Stage = "IDENTIFY & PROFILE";
         }
 
         // Handle child entities
@@ -214,7 +215,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     {
         var entity = await context.Opportunities
             .AsNoTracking() // Performance: No entity tracking needed for read-only operations
-            .Include(o => o.WorkflowStage)
             .Include(o => o.ResponsibleOrgUnit)
             .Include(o => o.ProposedInitiativeType)
             .Include(o => o.FundingPartners)
@@ -1120,7 +1120,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     public async Task<IEnumerable<OpportunityModel>> GetAllOpportunitiesAsync()
     {
         var entities = await context.Opportunities
-            .Include(o => o.WorkflowStage)
             .Include(o => o.ResponsibleOrgUnit)
             .Include(o => o.ProposedInitiativeType)
             .Where(o => !o.IsDeleted)
@@ -3087,9 +3086,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }
         }
 
-        if (request.WorkflowStageId.HasValue)
+        if (!string.IsNullOrEmpty(request.Stage))
         {
-            entity.WorkflowStageId = request.WorkflowStageId.Value;
+            entity.Stage = request.Stage;
         }
 
         if (request.InitiativeBudgetUSD.HasValue)
@@ -3366,7 +3365,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             .AsNoTracking() // No change tracking needed for AI data processing
             .Include(o => o.ResponsibleOrgUnit)
             .Include(o => o.ProposedInitiativeType)
-            .Include(o => o.WorkflowStage)
             .Include(o => o.CreatedByUser)
             .Include(o => o.LastModifiedByUser)
             .FirstOrDefaultAsync(o => o.Id == id);
@@ -3985,8 +3983,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             ["description"] = opportunity.Description ?? "",
             ["partnerReference"] = opportunity.PartnerReference ?? "",
             ["status"] = opportunity.Status.ToString(),
-            ["workflowStageId"] = opportunity.WorkflowStageId?.ToString() ?? "",
-            ["workflowStageName"] = opportunity.WorkflowStage?.Name ?? "",
+            ["stage"] = opportunity.Stage ?? "", // Use Stage property instead of WorkflowStage navigation
             
             // Organizational Information
             ["responsibleOrgUnitId"] = opportunity.ResponsibleOrgUnitId?.ToString() ?? "",
@@ -4152,7 +4149,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     public override async Task<object> GetBasicEntityDataAsync(int id)
     {
         var opportunity = await context.Opportunities
-            .Include(o => o.WorkflowStage)
             .Include(o => o.ResponsibleOrgUnit)
             .Include(o => o.ProposedInitiativeType)
             .Include(o => o.FundingPartners)
@@ -4243,7 +4239,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                     if (entityIds.Any())
                     {
                         var opportunities = await context.Opportunities
-                            .Include(o => o.WorkflowStage)
                             .Where(o => entityIds.Contains(o.Id) && !o.IsDeleted)
                             .ToListAsync();
                         
@@ -4265,7 +4260,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                                 Budget = opp.InitiativeBudgetUSD,
                                 DurationMonths = durationMonths,
                                 RelevanceScore = relevanceScores.GetValueOrDefault(opp.Id, 0),
-                                WorkflowStage = opp.WorkflowStage?.Name
+                                WorkflowStage = opp.Stage // Use Stage property
                             });
                         }
                         
@@ -4364,7 +4359,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         {
             // Query opportunities where the partner is either a funding partner or client partner
             var opportunities = await uNOPSAppDbContext.Opportunities
-                .Include(o => o.WorkflowStage)
                 .Include(o => o.ResponsibleOrgUnit)
                 .Include(o => o.ProposedInitiativeType)
                 .Include(o => o.FundingPartners).ThenInclude(fp => fp.Partner)

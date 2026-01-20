@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using UNOPS.PAO.Identity.Entities;
 
 namespace UNOPS.PAO.Business.Interfaces;
@@ -6,8 +6,6 @@ namespace UNOPS.PAO.Business.Interfaces;
 public interface IManagerWrapper
 {
     ISystemAdminManager SystemAdminManager { get; }
-
-    IWorkflowManager WorkflowManager { get; }
 
     IContactManager ContactManager { get; }
 

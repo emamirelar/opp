@@ -1,3 +1,6 @@
 [submodule "UNOPS.PAO.ExternalDataService"]
 	path = UNOPS.PAO.ExternalDataService
 	url = https://github.com/UNOPS-ITG/unops-external-dataservice.git
+[submodule "UNOPS.Workflow"]
+	path = UNOPS.Workflow
+	url = https://github.com/UNOPS-ITG/unops-workflow.git

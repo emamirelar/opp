@@ -42,6 +42,7 @@ using System.IO;
 using UNOPS.PAO.Presentation.Security;
 using UNOPS.PAO.Business.Services;
 using Google.Apis.Auth.OAuth2;
+using UNOPS.PAO.Business.Workflow.Adapters;
 
 namespace UNOPS.PAO.Server;
 
@@ -587,6 +588,22 @@ public class Startup
             options
                 .UseNpgsql(dataSource)
                 .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
+
+        // ==========================================
+        // Workflow Submodule - DbContext and Services
+        // ==========================================
+        // Registers WorkflowDbContext with a separate "workflow" schema.
+        // Auto-creates schema and applies migrations on startup (like Hangfire).
+        // Uses the same connection string as the main AppDbContext.
+        // Also registers PAO-specific implementations:
+        // - PaoWorkflowUserContext (IWorkflowUserContext)
+        // - PaoEntityStageProvider (IEntityStageProvider)
+        // - PaoWorkflowApproverProvider (IWorkflowApproverProvider)
+        // - PaoWorkflowNotificationService (IWorkflowNotificationService)
+        services.AddPaoWorkflowServices(options =>
+        {
+            options.UsePostgreSqlStorage(optimizedConnectionString, "workflow");
+        });
 
     }
     private string? GetConnectionStringFromSecretManager()

@@ -11,8 +11,11 @@ public class OpportunityModel
     public string? Description { get; set; }
     public string? PartnerReference { get; set; }
     public string? Status { get; set; }
-    public int? WorkflowStageId { get; set; }
-    public string? WorkflowStageName { get; set; }
+    
+    /// <summary>
+    /// Current workflow stage. Values: "IDENTIFY &amp; PROFILE", "GO", "NO GO"
+    /// </summary>
+    public string? Stage { get; set; }
     public int? ResponsibleOrgUnitId { get; set; }
     public string? ResponsibleOrgUnitName { get; set; }
     
@@ -165,11 +168,11 @@ public class OpportunityModel
         }
         
         // Workflow Stage Tag (if exists and status is not Closed/Archived)  
-        if (!string.IsNullOrEmpty(WorkflowStageName) && !string.IsNullOrEmpty(Status) && Status != "Closed" && Status != "Archived")
+        if (!string.IsNullOrEmpty(Stage) && !string.IsNullOrEmpty(Status) && Status != "Closed" && Status != "Archived")
         {
             // UNOPS warning color (amber/golden) for opportunity workflow stages - matches p-badge severity="warn"
             var workflowColor = "bg-badge-warn text-badge-warn";
-            tags.Add(new EntityTagModel { Tag = WorkflowStageName, Color = workflowColor });
+            tags.Add(new EntityTagModel { Tag = Stage, Color = workflowColor });
         }
         
         return tags;

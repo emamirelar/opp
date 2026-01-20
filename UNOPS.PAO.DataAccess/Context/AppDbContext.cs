@@ -29,7 +29,6 @@ public class AppDbContext : AuditableDbContext<int, int>
 
     public DbSet<EligibleEntity> EligibleEntities { get; set; }
 
-    public DbSet<WorkflowLog> WorkflowLogs { get; set; }
     public DbSet<EntityUserRole> EntityUserRoles { get; set; }
 
     public DbSet<Contact> Contacts { get; set; }
@@ -70,7 +69,6 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<OpportunityInteraction> OpportunityInteractions { get; set; }
 
     // Infrastructure entities
-    public DbSet<WorkflowStage> WorkflowStages { get; set; }
     public DbSet<EntityRole> EntityRoles { get; set; }
     public DbSet<EntityRolePerson> EntityRolePersons { get; set; }
     public DbSet<AuditLog> AuditLogs { get; set; }
@@ -368,11 +366,6 @@ public class AppDbContext : AuditableDbContext<int, int>
         // Opportunity entity configuration
         modelBuilder.Entity<Opportunity>(entity =>
         {
-            entity.HasOne(x => x.WorkflowStage)
-                .WithMany()
-                .HasForeignKey(x => x.WorkflowStageId)
-                .IsRequired(false);
-                
             entity.HasOne(x => x.ResponsibleOrgUnit)
                 .WithMany()
                 .HasForeignKey(x => x.ResponsibleOrgUnitId)
@@ -388,7 +381,6 @@ public class AppDbContext : AuditableDbContext<int, int>
                 
             entity.HasIndex(x => x.Name);
             entity.HasIndex(x => x.Status);
-            entity.HasIndex(x => x.WorkflowStageId);
         });
 
         // OpportunityFundingPartner configuration
@@ -575,12 +567,6 @@ public class AppDbContext : AuditableDbContext<int, int>
             entity.HasIndex(x => x.OpportunityId);
             entity.HasIndex(x => x.OpportunityUNCFOutcomeId);
             entity.HasIndex(x => x.UNCFIndicatorId);
-        });
-
-        // WorkflowStage configuration
-        modelBuilder.Entity<WorkflowStage>(entity =>
-        {
-            entity.HasIndex(x => new { x.EntityType, x.Order });
         });
 
         // EntityRole configuration

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using UNOPS.PAO.Business.Workflow.Seeders;
 
 namespace UNOPS.PAO.Server;
 
@@ -75,13 +76,17 @@ public class Program
             });
     }
 
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var app = CreateHostBuilder(args).Build();
         
         // Data seeding is now triggered manually via API endpoint: POST /api/system-admin/seeding/run
         // Role/permission seeding still happens automatically in Startup.cs
         
-        app.Run();
+        // Seed workflow configuration data (idempotent - safe to run on every startup)
+        await app.Services.SeedStateMachineStageChangesAsync();
+        await app.Services.SeedStateMachineStageChangeRolesAsync();
+        
+        await app.RunAsync();
     }
 }
