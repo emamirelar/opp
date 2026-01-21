@@ -29,6 +29,10 @@
     <ProjectReference Include="..\..\UNOPS.PAO.Server\UNOPS.PAO.Server.csproj" />
     <ProjectReference Include="..\..\UNOPS.PAO.UNOPSDataAccess\UNOPS.PAO.UNOPSDataAccess.csproj" />
     <ProjectReference Include="..\..\UNOPS.PAO.UNOPSDomain\UNOPS.PAO.UNOPSDomain.csproj" />
+    <ProjectReference Include="..\..\UNOPS.PAO.Business\UNOPS.PAO.Business.csproj" />
+    <ProjectReference Include="..\..\UNOPS.Workflow\UNOPS.Workflow.DataAccess\UNOPS.Workflow.DataAccess.csproj" />
+    <ProjectReference Include="..\..\UNOPS.Workflow\UNOPS.Workflow.Models\UNOPS.Workflow.Models.csproj" />
+    <ProjectReference Include="..\..\UNOPS.Workflow\UNOPS.Workflow.Domain\UNOPS.Workflow.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>

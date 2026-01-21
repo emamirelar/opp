@@ -199,6 +199,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<int>("WorkflowStatus")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Name")
@@ -270,6 +273,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("WorkflowStatus")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -361,6 +367,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<int>("WorkflowStatus")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ArtifactDataTypeId");
@@ -434,6 +443,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<int>("UserId")
                         .HasColumnType("integer");
 
+                    b.Property<int>("WorkflowStatus")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Timestamp");
@@ -500,6 +512,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("WorkflowStatus")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -624,6 +639,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("WorkflowStatus")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -807,6 +825,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<string>("Type")
                         .HasColumnType("text");
 
+                    b.Property<int>("WorkflowStatus")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ContactId");
@@ -872,6 +893,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<int>("WorkflowStatus")
+                        .HasColumnType("integer");
+
                     b.HasKey("DocumentId", "EntityId", "EntityType");
 
                     b.HasIndex("EntityId", "EntityType");
@@ -917,6 +941,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("text");
 
                     b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("WorkflowStatus")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -1100,6 +1127,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<string>("ValueText")
                         .HasColumnType("text");
 
+                    b.Property<int>("WorkflowStatus")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ArtifactTypeId");
@@ -1218,6 +1248,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<string>("Type")
                         .HasColumnType("text");
 
+                    b.Property<int>("WorkflowStatus")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Code")
@@ -1286,6 +1319,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<int?>("UserId")
                         .HasColumnType("integer");
 
+                    b.Property<int>("WorkflowStatus")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ContactId");
@@ -1349,6 +1385,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("WorkflowStatus")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -1471,6 +1510,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<int>("Type")
                         .HasColumnType("integer");
 
+                    b.Property<int>("WorkflowStatus")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ContactId");
@@ -1584,6 +1626,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<int>("WorkflowStatus")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Code")
@@ -1643,6 +1688,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<string>("Url")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("WorkflowStatus")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -1816,6 +1864,11 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<string>("Stage")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
@@ -1828,7 +1881,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<DateTime?>("TargetSigningDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("WorkflowStageId")
+                    b.Property<int>("WorkflowStatus")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -1844,8 +1897,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.HasIndex("ResponsibleOrgUnitId");
 
                     b.HasIndex("Status");
-
-                    b.HasIndex("WorkflowStageId");
 
                     b.ToTable("Opportunities", "public");
                 });
@@ -2390,6 +2441,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("WorkflowStatus")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ParentId");
@@ -2442,6 +2496,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("WorkflowStatus")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -2545,6 +2602,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("character varying(255)");
 
                     b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("WorkflowStatus")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -2712,6 +2772,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     b.Property<Guid>("UniqueKey")
                         .HasColumnType("uuid");
+
+                    b.Property<int>("WorkflowStatus")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -2895,6 +2958,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("WorkflowStatus")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Code")
@@ -2993,6 +3059,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<int>("WorkflowStatus")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryCode");
@@ -3054,6 +3123,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<int>("WorkflowStatus")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.ToTable("ProjectCategories", "public");
@@ -3099,6 +3171,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("WorkflowStatus")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -3198,6 +3273,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<int>("WorkflowStatus")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("PreDefinedHighRiskId");
@@ -3278,6 +3356,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("character varying(50)");
 
                     b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("WorkflowStatus")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -3988,6 +4069,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<int>("WorkflowStatus")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.ToTable("Units", "public");
@@ -4036,6 +4120,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("WorkflowStatus")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -4105,131 +4192,15 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<int>("WorkflowStatus")
+                        .HasColumnType("integer");
+
                     b.HasKey("UserId");
 
                     b.HasIndex("UserId")
                         .IsUnique();
 
                     b.ToTable("UserProfile", "public");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.WorkflowLog", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Comment")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("DeletedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("DeletedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("EntityId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("EntityName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("LastModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("LastModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("NewStage")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Stage")
-                        .HasColumnType("text");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("WorkflowLogs", "public");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.WorkflowStage", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("AllowsParallelProcessing")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("DeletedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("DeletedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<string>("EntityType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsFinalStage")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("LastModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("LastModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Order")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EntityType", "Order");
-
-                    b.ToTable("WorkflowStages", "public");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Authorization.EntityPermission", b =>
@@ -4462,6 +4433,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<int>("WorkflowStatus")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("EntityName")
@@ -4601,6 +4575,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<int>("WorkflowStatus")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("EntityManagerId");
@@ -4663,6 +4640,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<int>("WorkflowStatus")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -5014,10 +4994,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .WithMany()
                         .HasForeignKey("ResponsibleOrgUnitId");
 
-                    b.HasOne("UNOPS.PAO.Domain.Entities.WorkflowStage", "WorkflowStage")
-                        .WithMany()
-                        .HasForeignKey("WorkflowStageId");
-
                     b.Navigation("CreatedByUser");
 
                     b.Navigation("LastModifiedByUser");
@@ -5025,8 +5001,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Navigation("ProposedInitiativeType");
 
                     b.Navigation("ResponsibleOrgUnit");
-
-                    b.Navigation("WorkflowStage");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunityClientPartner", b =>

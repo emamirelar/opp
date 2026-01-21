@@ -1,0 +1,206 @@
+<p-panel #mainPanel>
+  <ng-template #header>
+    <div class="flex">
+      <div class="grow flex items-center gap-2">
+        <div class="font-semibold">{{ 'title.stage' | translate }}</div>
+        @if (workflowDataLoading()) {
+          <div class="flex flex-wrap gap-6 items-center">
+            <p-skeleton height="1.5rem" width="8rem" class="ml-3 mr-3"></p-skeleton>
+            <div>
+              <label class="font-semibold">{{ 'label.workflow.currentStage' | translate }} :</label>
+              <p-skeleton height="1rem" width="6rem" class="inline-block ml-2"></p-skeleton>
+            </div>
+            <div>
+              <label class="font-semibold">{{ 'label.workflow.nextStage' | translate }} :</label>
+              <p-skeleton height="1rem" width="6rem" class="inline-block ml-2"></p-skeleton>
+            </div>
+          </div>
+        } @else if (workflowData()?.isInWorkflow == true) {
+          <p-tag
+            class="ml-3 mr-3"
+            severity="warn"
+            value="{{ 'label.workflow.approvalPending' | translate }}"
+            [rounded]="true"
+          />
+          <div class="flex flex-wrap gap-6">
+            <div>
+              <label class="font-semibold">{{ 'label.workflow.currentStage' | translate }} :</label>
+              {{ workflowData()?.displayName || workflowData()?.currentStage || '' }}
+            </div>
+            <div>
+              <label class="font-semibold">{{ 'label.workflow.nextStage' | translate }} :</label>
+              {{ workflowData()?.workflow?.nextStage || workflowData()?.pendingStage || '' }}
+            </div>
+          </div>
+        } @else if (workflowData()) {
+          <div class="flex flex-wrap gap-6">
+            <div>
+              <label class="font-semibold">{{ 'label.workflow.currentStage' | translate }} :</label>
+              {{ workflowData()?.displayName || workflowData()?.currentStageDisplayName || workflowData()?.currentStage || currentStageName() || '' }}
+            </div>
+            @if (workflowData()?.availableActions && workflowData()?.availableActions.length > 0) {
+              <div>
+                <label class="font-semibold">{{ 'label.workflow.nextStage' | translate }} :</label>
+                {{ workflowData()?.availableActions[0]?.targetStage || workflowData()?.availableActions[0]?.displayName || '' }}
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </ng-template>
+  <ng-template #icons>
+    <div>
+      <app-workflow
+        #workFlowComponent
+        [autoload]="false"
+        [entityName]="entityName()"
+        [entityId]="entityId()"
+        [isReadOnly]="!canChangeStage()"
+        [feedbackDialogService]="feedbackDialogService"
+        [beforeStageChange]="beforeStageChange.bind(this)"
+        [customStageChangeHandler]="customStageChangeHandler"
+        (stageChangeSuccess)="handleOnStageChangeSuccess($event)"
+      ></app-workflow>
+    </div>
+  </ng-template>
+
+  <p-tabs value="overview" class="grow" scrollable>
+    <p-tablist>
+      <p-tab value="overview"> {{ 'label.workflow.overview' | translate }} </p-tab>
+      @if (workflowData()?.isInWorkflow == true) {
+        <p-tab value="approvers"> {{ 'label.workflow.approvers' | translate }} </p-tab>
+      }
+      <p-tab value="stageChangeHistory"> {{ 'label.workflow.stageChangeHistory' | translate }} </p-tab>
+    </p-tablist>
+    <p-tabpanels class="grow flex flex-col">
+      <p-tabpanel value="overview">
+        @if (stagesLoading()) {
+          <div class="flex gap-4 items-center justify-center py-8">
+            <p-skeleton height="3rem" width="8rem" shape="circle"></p-skeleton>
+            <p-skeleton height="0.25rem" width="3rem"></p-skeleton>
+            <p-skeleton height="3rem" width="8rem" shape="circle"></p-skeleton>
+            <p-skeleton height="0.25rem" width="3rem"></p-skeleton>
+            <p-skeleton height="3rem" width="8rem" shape="circle"></p-skeleton>
+          </div>
+        } @else {
+          <p-steps [activeIndex]="currentStageIndex" [model]="stages()" [readonly]="true" />
+        }
+      </p-tabpanel>
+      @if (workflowData()?.isInWorkflow == true) {
+        <p-tabpanel value="approvers" class="grow">
+          <div class="table-container">
+            @if (workflowDataLoading()) {
+              <div class="space-y-4">
+                <div class="flex gap-4 border-b pb-2">
+                  <p-skeleton height="2rem" width="8rem"></p-skeleton>
+                  <p-skeleton height="2rem" width="6rem"></p-skeleton>
+                </div>
+                <div class="space-y-2">
+                  @for (item of [1,2,3]; track $index) {
+                    <div class="flex gap-4">
+                      <p-skeleton height="1.5rem" width="12rem"></p-skeleton>
+                      <p-skeleton height="1.5rem" width="8rem"></p-skeleton>
+                    </div>
+                  }
+                </div>
+              </div>
+            } @else {
+              <p-table
+                [value]="approvers()"
+                [scrollable]="true"
+                [scrollHeight]="scrollHeightValue"
+                [loading]="isLoading()"
+              >
+                <ng-template #header>
+                  <tr>
+                    <th>{{ 'label.workflow.user' | translate }}</th>
+                    <th>{{ 'label.role' | translate }}</th>
+                  </tr>
+                </ng-template>
+                @if (approvers().length > 0) {
+                  <ng-template #body let-approver>
+                    <tr>
+                      <td>
+                        {{ getUserNameToDisplay(approver) }}
+                      </td>
+                      <td>{{ approver.role }}</td>
+                    </tr>
+                  </ng-template>
+                }
+              </p-table>
+              @if (isLoading() == false && approvers().length <= 0) {
+                <div class="no-data">
+                  <label>{{ 'message.noRecordsFound' | translate }}</label>
+                </div>
+              }
+            }
+          </div>
+        </p-tabpanel>
+      }
+      <p-tabpanel value="stageChangeHistory">
+        <div class="table-container">
+          @if (historyLoading()) {
+            <div class="space-y-4">
+              <div class="flex gap-4 border-b pb-2">
+                <p-skeleton height="2rem" width="6rem"></p-skeleton>
+                <p-skeleton height="2rem" width="6rem"></p-skeleton>
+                <p-skeleton height="2rem" width="8rem"></p-skeleton>
+                <p-skeleton height="2rem" width="6rem"></p-skeleton>
+                <p-skeleton height="2rem" width="10rem"></p-skeleton>
+                <p-skeleton height="2rem" width="8rem"></p-skeleton>
+              </div>
+              <div class="space-y-2">
+                @for (item of [1,2,3]; track $index) {
+                  <div class="flex gap-4">
+                    <p-skeleton height="1.5rem" width="6rem"></p-skeleton>
+                    <p-skeleton height="1.5rem" width="6rem"></p-skeleton>
+                    <p-skeleton height="1.5rem" width="8rem"></p-skeleton>
+                    <p-skeleton height="1.5rem" width="6rem"></p-skeleton>
+                    <p-skeleton height="1.5rem" width="10rem"></p-skeleton>
+                    <p-skeleton height="1.5rem" width="8rem"></p-skeleton>
+                  </div>
+                }
+              </div>
+            </div>
+          } @else {
+            <p-table
+              [value]="stageChangeHistory()"
+              [scrollable]="true"
+              [scrollHeight]="stageChangeScrollHeightValue"
+              [loading]="isLoading()"
+            >
+              <ng-template #header>
+                <tr>
+                  <th>{{ 'label.workflow.fromStage' | translate }}</th>
+                  <th>{{ 'label.workflow.toStage' | translate }}</th>
+                  <th>{{ 'label.workflow.completedOn' | translate }}</th>
+                  <th>{{ 'label.workflow.action' | translate }}</th>
+                  <th>{{ 'label.workflow.comment' | translate }}</th>
+                  <th>{{ 'label.workflow.user' | translate }}</th>
+                </tr>
+              </ng-template>
+              @if (stageChangeHistory().length > 0) {
+                <ng-template #body let-historyItem>
+                  <tr>
+                    <td>{{ historyItem.fromStageDisplayName || historyItem.fromStage }}</td>
+                    <td>{{ historyItem.toStageDisplayName || historyItem.toStage }}</td>
+                    <td>{{ historyItem.performedOn | date: 'dd-MMM-yyyy HH:mm' }}</td>
+                    <td>{{ historyItem.action }}</td>
+                    <td>{{ historyItem.comment }}</td>
+                    <td>{{ historyItem.performedBy?.userName || historyItem.performedBy?.userEmail || '' }}</td>
+                  </tr>
+                </ng-template>
+              }
+            </p-table>
+            @if (isLoading() == false && stageChangeHistory().length <= 0) {
+              <div class="no-data">
+                <label>{{ 'message.noRecordsFound' | translate }}</label>
+              </div>
+            }
+          }
+        </div>
+      </p-tabpanel>
+    </p-tabpanels>
+  </p-tabs>
+</p-panel>

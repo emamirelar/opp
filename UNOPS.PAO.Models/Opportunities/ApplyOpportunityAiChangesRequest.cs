@@ -59,7 +59,12 @@ public class ApplyOpportunityAiChangesRequest
     // OTHER Properties
     public string? PartnerReference { get; set; }
     public string? Status { get; set; }
-    public int? WorkflowStageId { get; set; }
+    
+    /// <summary>
+    /// Current workflow stage. Values: "IDENTIFY &amp; PROFILE", "GO", "NO GO"
+    /// </summary>
+    public string? Stage { get; set; }
+    
     public decimal? InitiativeBudgetUSD { get; set; }
     public string? PartnershipAgreementReference { get; set; }
 }

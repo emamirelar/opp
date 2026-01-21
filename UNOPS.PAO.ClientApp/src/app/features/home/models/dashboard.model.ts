@@ -57,7 +57,7 @@ export interface DashboardOpportunity {
   id: number;
   name: string;
   status: string | null;
-  workflowStageName: string | null;
+  stage: string | null;
   userRole: string | null;
   createdDate: string | null;
   lastModifiedDate: string | null;

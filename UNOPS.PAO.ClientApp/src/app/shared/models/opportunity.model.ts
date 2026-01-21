@@ -94,8 +94,9 @@ export interface Opportunity {
   description: string | null;
   partnerReference: string | null;
   status: string;
-  workflowStageId: number | null;
-  workflowStageName: string | null;
+  stage: string | null;
+  workflowStatus: string | null;
+  isInWorkflow: boolean;
   responsibleOrgUnitId: number | null;
   responsibleOrgUnitName: string | null;
   proposedInitiativeTypeId: number | null;
@@ -473,7 +474,6 @@ export interface OpportunityRequest {
   name: string;
   description: string;
   partnerReference?: string;
-  workflowStageId?: number;
   responsibleOrgUnitId?: number;
   partnershipAgreementReference?: string;
   initiativeBudgetUSD?: number;

@@ -1238,11 +1238,8 @@ public class AdvancedSearchService
                     AddFieldIfNotNull(fields, "ExpectedOutcomes", opportunity.ExpectedOutcomes);
                     AddFieldIfNotNull(fields, "ExpectedBeneficiaries", opportunity.ExpectedBeneficiaries);
 
-                    // Related entities
-                    if (opportunity.WorkflowStage != null)
-                    {
-                        AddFieldIfNotNull(fields, "WorkflowStage.Name", opportunity.WorkflowStage.Name);
-                    }
+                    // Related entities - Use Stage property instead of WorkflowStage navigation
+                    AddFieldIfNotNull(fields, "Stage", opportunity.Stage);
 
                     if (opportunity.ResponsibleOrgUnit != null)
                     {

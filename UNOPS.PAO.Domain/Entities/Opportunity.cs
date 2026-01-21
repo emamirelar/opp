@@ -16,8 +16,12 @@ public class Opportunity : ModifiableDeletableEntity
     [MaxLength(255)]
     public string? PartnerReference { get; set; }
     
-    public int? WorkflowStageId { get; set; }
-    public virtual WorkflowStage? WorkflowStage { get; set; }
+    /// <summary>
+    /// Current workflow stage. Default is "IDENTIFY &amp; PROFILE".
+    /// Valid values: "IDENTIFY &amp; PROFILE", "GO", "NO GO"
+    /// </summary>
+    [MaxLength(100)]
+    public string Stage { get; set; } = "IDENTIFY & PROFILE";
     
     public int? ResponsibleOrgUnitId { get; set; }
     public virtual OrganizationHierarchy? ResponsibleOrgUnit { get; set; }

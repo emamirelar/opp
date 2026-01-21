@@ -9,25 +9,143 @@ Comprehensive development guidelines for Angular components in the UNOPS Opportu
 
 This application (`UNOPS.PAO.ClientApp`) is a comprehensive partnership management platform built with Angular 19, featuring:
 - **Partnership Management**: Organizations, contacts, interactions, and relationship tracking
+- **Opportunity Management**: Business opportunity pipeline and tracking
 - **Administration**: Entity management, user management, translation workbench
 - **AI Integration**: AI assistant with prompt management and content generation
 - **Advanced Search**: Cross-entity search capabilities
 
 The application is built using modern Angular 19 signals architecture with Tailwind-first styling and PrimeNG components.
 
-Based on the actual project structure and established patterns.
+Based on established patterns and the actual project structure.
 
 ## Component Creation & Structure
 
+### **Naming Convention & Folder Structure**
+
+**MANDATORY**: Follow this consistent naming and folder organization pattern for all entity components.
+
+**CRITICAL**: All folder and file names MUST use **kebab-case** (Angular 19 convention).
+
+**Pattern Structure:**
+```
+entity-name/                                  # Main entity folder (kebab-case)
+├── entity-name.component.ts                  # List/overview component
+├── entity-name.component.html
+├── entity-name.component.scss
+├── entity-name-item/                         # Detail component folder
+│   ├── entity-name-item.component.ts
+│   ├── entity-name-item.component.html
+│   └── entity-name-item.component.scss
+├── new-entity-name/                          # Create dialog component folder
+│   ├── new-entity-name.component.ts
+│   ├── new-entity-name.component.html
+│   └── new-entity-name.component.scss
+├── delete-entity-name/                       # Other dialog components (directly in entity folder)
+│   ├── delete-entity-name.component.ts       # Dialog names include entity name
+│   ├── delete-entity-name.component.html
+│   └── delete-entity-name.component.scss
+├── custom-action-entity-name/                # Custom action dialogs with entity name
+│   ├── custom-action-entity-name.component.ts
+│   ├── custom-action-entity-name.component.html
+│   └── custom-action-entity-name.component.scss
+└── child-entity/                             # Child entities (recursive pattern, kebab-case)
+    ├── child-entity.component.ts             # Child list component
+    ├── child-entity.component.html
+    ├── child-entity-item/                    # Child detail component
+    │   └── child-entity-item.component.ts
+    ├── new-child-entity/                     # Child create dialog
+    │   └── new-child-entity.component.ts
+    └── delete-child-entity/                  # Child entity dialogs (directly in child folder)
+        └── delete-child-entity.component.ts
+```
+
+**Real-World Example - Partner Entity:**
+```
+partner/
+├── partner.component.ts                      # Partner list component
+├── partner.component.html
+├── partner.component.scss
+├── partner-item/                             # Partner detail component
+│   ├── partner-item.component.ts
+│   ├── partner-item.component.html
+│   └── partner-item.component.scss
+├── new-partner/                              # Create partner dialog
+│   ├── new-partner.component.ts
+│   ├── new-partner.component.html
+│   └── new-partner.component.scss
+├── delete-partner/
+│   ├── delete-partner.component.ts
+│   └── delete-partner.component.html
+└── contacts/                                 # Child entity (recursive)
+    ├── contacts.component.ts                 # Contact list component
+    ├── contacts.component.html
+    ├── contact-item/                         # Contact detail component
+    │   ├── contact-item.component.ts
+    │   └── contact-item.component.html
+    ├── new-contact/                          # Create contact dialog
+    │   └── new-contact.component.ts
+    └── delete-contact/                       # Contact dialogs (directly in contact folder)
+        └── delete-contact.component.ts
+```
+
+**Naming Rules:**
+
+**CRITICAL**: All names use **kebab-case** format (lowercase with hyphens).
+
+1. **List Component**: `entity-name.component.ts`
+   - Same name as parent folder (kebab-case)
+   - Example: `partner/partner.component.ts`
+   - Example: `opportunity/opportunity.component.ts`
+   - Selector: `app-entity-name` (e.g., `app-partner`, `app-opportunity`)
+
+2. **Detail Component**: `entity-name-item/entity-name-item.component.ts`
+   - Folder name: `entity-name-item` (kebab-case)
+   - Component name: `entity-name-item.component.ts`
+   - Example: `partner/partner-item/partner-item.component.ts`
+   - Example: `opportunity/opportunity-item/opportunity-item.component.ts`
+   - Selector: `app-entity-name-item` (e.g., `app-partner-item`)
+
+3. **Create Dialog**: `new-entity-name/new-entity-name.component.ts`
+   - Folder name: `new-entity-name` (kebab-case with 'new-' prefix)
+   - Component name: `new-entity-name.component.ts`
+   - Example: `partner/new-partner/new-partner.component.ts`
+   - Selector: `app-new-entity-name` (e.g., `app-new-partner`)
+
+4. **Other Dialogs**: `action-entity-name/action-entity-name.component.ts`
+   - **CRITICAL**: Dialog names MUST include the entity name (not generic names)
+   - Folder directly in entity folder (not in `dialogs/` subfolder)
+   - Pattern: `{action}-{entity-name}` in kebab-case
+   - Example: `partner/delete-partner/delete-partner.component.ts` (NOT `delete-confirmation-dialog`)
+   - Selector: `app-action-entity-name` (e.g., `app-delete-partner`)
+   - **Note**: Edit functionality is handled by `entity-name-item` component, not a separate dialog
+
+5. **Child Entities**: Follow same pattern recursively inside parent folder (kebab-case)
+   - Example: `partner/contacts/` follows full pattern
+   - Example: `opportunity/opportunity-documents/` follows full pattern
+
+**Component Selector Naming:**
+- Always prefix with `app-`
+- Use kebab-case matching folder/file name
+- Examples:
+  - `partner.component.ts` → selector: `app-partner`
+  - `partner-item.component.ts` → selector: `app-partner-item`
+  - `new-partner.component.ts` → selector: `app-new-partner`
+  - `delete-partner.component.ts` → selector: `app-delete-partner`
+  - `opportunity.component.ts` → selector: `app-opportunity`
+
 ### **New Components Workflow**
 
-Create component folder in appropriate location based on the application structure:
+**CRITICAL**: Always use **kebab-case** for all folder and file names (Angular 19 convention).
+
+* Create component folder in appropriate location based on application structure:
 
 **Feature Modules** (`UNOPS.PAO.ClientApp/src/app/features/`):
   - **partnerships/** - Partnership management features:
     - `contacts/components/` - Contact management components
     - `interactions/components/` - Interaction tracking components
     - `partners/components/` - Partner/organization components
+  - **opportunities/** - Opportunity management features:
+    - `components/` - Opportunity components
   - **admin/** - Administrative features:
     - `entity-manager/` - Entity configuration management
     - `user-management/` - User administration
@@ -71,35 +189,409 @@ Create component folder in appropriate location based on the application structu
   - `interceptors/` - HTTP interceptors
   - `services/` - Core services (auth, configuration, permissions)
 
-**Required Files for Each Component:**
-  - `[component-name].component.ts` - Main component with signals
-  - `[component-name].component.html` - Tailwind-first template
-  - `[component-name].component.scss` - Minimal SCSS for complex patterns only
-  - `[component-name].component.spec.ts` - Test specifications (optional but recommended)
-
-**Component Placement Guidelines:**
-- **Feature-specific components** → `app/features/[feature-name]/components/`
-- **Layout components** → `app/layouts/components/`
-- **Page components** → `app/shared/pages/components/`
-- **Reusable components** → `app/shared/reusables/components/` or `app/shared/components/`
-- Component declarations must be added to the appropriate feature module or shared module
-- **CRITICAL**: We are Tailwind-first - use Tailwind classes directly in HTML templates
-
-**Examples:**
-- Contact list component → `features/partnerships/contacts/components/contact/list/`
-- Partner view component → `features/partnerships/partners/components/partner/view/`
-- User management component → `features/admin/user-management/`
-- AI prompt component → `features/ai/components/ai-prompt/`
-- Document upload component → `shared/reusables/components/document-upload/`
-- Generic listview → `shared/pages/components/listview/`
+* Required files:
+  - `[entity-name].component.ts` - Main component with signals (e.g., `partner.component.ts`)
+  - `[entity-name].component.html` - Tailwind-first template
+  - `[entity-name].component.scss` - Minimal SCSS for complex patterns only
+  - `[entity-name].component.spec.ts` - Test specifications
+* **CRITICAL**: We are Tailwind-first - use Tailwind classes directly in HTML templates
 
 ### **Component Updates Workflow**
 
 * Modify existing component files as needed
-* Update test specifications if they exist
+* Update test specifications
 * Update feature module routing and declarations as needed
-* Ensure component is properly registered in the appropriate module (feature module or shared module)
 * **CRITICAL**: Maintain Tailwind-first approach
+
+---
+
+## 🔐 Permission Handling
+
+### **MANDATORY: Server-Side Permission Checks Only**
+
+**CRITICAL**: NEVER manually handle permissions on the client side. ALL permission checks must be performed server-side via dedicated permission endpoints.
+
+**Why This Matters:**
+- ✅ **Security**: Client-side checks can be bypassed - server is the source of truth
+- ✅ **Consistency**: Same permission logic across all features
+- ✅ **Maintainability**: Permission logic changes in one place (backend)
+- ✅ **Authorization**: Permissions respect user roles, entity state, and business rules
+
+### **Correct Pattern - Server-Side Permission Endpoint**
+
+```typescript
+// ✅ CORRECT - Component TypeScript
+export class PartnerItemComponent implements OnInit {
+  // Permission state from server
+  readonly recordPermissions = signal<any>(null);
+  readonly permissionsLoading = signal<boolean>(false);
+  
+  // Computed permissions for UI
+  readonly canEdit = computed(() => this.recordPermissions()?.canEdit === true);
+  readonly canDelete = computed(() => this.recordPermissions()?.canDelete === true);
+  readonly canChangeStage = computed(() => {
+    const permissions = this.recordPermissions();
+    return permissions?.canActivate === true || permissions?.canCancel === true;
+  });
+  
+  ngOnInit(): void {
+    this.loadRecord();
+    this.loadPermissions();  // Load permissions from server
+  }
+  
+  /**
+   * @description Load permissions from server endpoint
+   */
+  private loadPermissions(): void {
+    this.permissionsLoading.set(true);
+    
+    this.partnerService.getRecordDetailPermissionsById(this.recordId).subscribe({
+      next: (data: any) => {
+        this.recordPermissions.set(data);
+        this.permissionsLoading.set(false);
+      },
+      error: () => {
+        this.permissionsLoading.set(false);
+      }
+    });
+  }
+}
+```
+
+```typescript
+// ✅ CORRECT - Service with permission endpoint
+export class PartnerService {
+  /**
+   * @description Get record-level permissions from server
+   * @param {string} recordId - Record ID
+   * @returns {Observable<any>} Observable of permissions object
+   */
+  getRecordDetailPermissionsById(recordId: string): Observable<any> {
+    this.isLoading.set(true);
+    return this.http.get(`/api/partner/${recordId}/permissions`).pipe(
+      tap({
+        next: () => this.isLoading.set(false),
+        error: () => this.isLoading.set(false)
+      })
+    );
+  }
+}
+```
+
+```html
+<!-- ✅ CORRECT - Use computed permissions in template -->
+<div class="flex gap-2">
+  @if (canEdit()) {
+    <p-button
+      [label]="'button.edit' | translate"
+      icon="pi pi-pencil"
+      severity="primary"
+      (onClick)="onEdit()"
+    />
+  }
+  
+  @if (canDelete()) {
+    <p-button
+      [label]="'button.delete' | translate"
+      icon="pi pi-trash"
+      severity="danger"
+      (onClick)="onDelete()"
+    />
+  }
+</div>
+```
+
+### **Incorrect Patterns - DO NOT DO THIS**
+
+```typescript
+// ❌ WRONG - Manual client-side permission logic
+export class MyComponent {
+  canEdit = computed(() => {
+    // ❌ Never manually check roles or status client-side
+    const currentUser = this.authService.currentUser();
+    const isOwner = this.record()?.createdBy === currentUser.id;
+    const isDraft = this.record()?.stage === 'Draft';
+    return isOwner && isDraft;  // ❌ This bypasses server authorization
+  });
+}
+
+// ❌ WRONG - Hardcoded permission flags
+export class MyComponent {
+  canEdit = signal(true);  // ❌ Never hardcode permissions
+  canDelete = signal(false);
+}
+
+// ❌ WRONG - Role-based checks in component
+export class MyComponent {
+  canApprove = computed(() => {
+    // ❌ Don't check roles directly in components
+    return this.authService.hasRole('Administrator');
+  });
+}
+```
+
+### **Permission Endpoint Pattern**
+
+**Standard Permission Endpoint URL:**
+```
+GET /api/{entity-name}/{recordId}/permissions
+```
+
+**Examples:**
+- `/api/partner/{id}/permissions`
+- `/api/contact/{id}/permissions`
+- `/api/opportunity/{id}/permissions`
+- `/api/interaction/{id}/permissions`
+
+**Standard Permission Response:**
+```json
+{
+  "canEdit": true,
+  "canDelete": false,
+  "canSubmit": true,
+  "canApprove": false,
+  "canActivate": true,
+  "canCancel": false,
+  "canReview": true
+}
+```
+
+**Permission flags vary by entity** - each entity defines its own permission structure based on business rules.
+
+### **Permission Loading Best Practices**
+
+1. **Load on Component Init**: Call `loadPermissions()` in `ngOnInit()`
+2. **Reload After Actions**: Reload permissions after state-changing actions (submit, approve, etc.)
+3. **Use Computed Signals**: Create computed signals for cleaner template usage
+4. **Handle Loading States**: Show loading skeletons while permissions load
+5. **Cache on Signal**: Store permissions in a signal for reactive updates
+
+### **Permission Integration Checklist**
+
+When adding permissions to a component:
+
+- [ ] Add `recordPermissions` signal to store server response
+- [ ] Add `permissionsLoading` signal for loading state
+- [ ] Create computed signals for each permission flag (`canEdit`, `canDelete`, etc.)
+- [ ] Add service method `getRecordDetailPermissionsById(recordId: string)`
+- [ ] Call `loadPermissions()` in `ngOnInit()`
+- [ ] Reload permissions after state-changing actions
+- [ ] Use computed permission signals in template with `@if` conditions
+- [ ] **NEVER** manually check roles, user ID, or entity state for permissions
+- [ ] **NEVER** hardcode permission flags
+- [ ] **ALWAYS** get permissions from server endpoint
+
+---
+
+## 🔄 Workflow Component Usage
+
+### **MANDATORY: Use Workflow Component for All Workflow-Related UI**
+
+**CRITICAL**: Always use the `app-workflow` component for displaying workflow stages and actions. NEVER create separate buttons or display stage status independently.
+
+**Why This Matters:**
+- ✅ **Consistency**: All workflow UI follows the same pattern across the application
+- ✅ **Maintainability**: Workflow logic centralized in one component
+- ✅ **User Experience**: Users see familiar workflow patterns everywhere
+- ✅ **Permission Handling**: Workflow component handles permission checks automatically
+- ✅ **Action Integration**: Stage display and available actions are coupled correctly
+
+### **Correct Pattern - Use app-workflow Component**
+
+```typescript
+// ✅ CORRECT - Component TypeScript
+import { WorkflowComponent } from '@/shared/reusables/components/workflow/workflow.component';
+
+@Component({
+  selector: 'app-opportunity-item',
+  standalone: true,
+  imports: [
+    // ... other imports
+    WorkflowComponent,  // Import workflow component
+  ],
+  templateUrl: './opportunity-item.component.html',
+})
+export class OpportunityItemComponent implements OnInit {
+  // Entity identifiers
+  opportunityId = signal<number>(0);
+  
+  // Permission flags
+  readonly canChangeStage = signal<boolean>(false);
+  
+  ngOnInit(): void {
+    // Load entity data
+    this.loadOpportunity();
+  }
+  
+  // Handle successful stage change
+  handleStageChangeSuccess(): void {
+    // Reload entity data after workflow action
+    this.loadOpportunity();
+  }
+  
+  // Optional: Hook before stage change for validation
+  beforeStageChange = async (nextStage: string): Promise<boolean> => {
+    // Perform validation or checks before allowing stage change
+    if (this.hasUnsavedChanges()) {
+      const confirmed = await this.feedbackService.confirm({
+        title: 'Unsaved Changes',
+        message: 'You have unsaved changes. Do you want to continue?'
+      });
+      return confirmed;
+    }
+    return true;
+  };
+}
+```
+
+```html
+<!-- ✅ CORRECT - Component Template -->
+@if (!isLoading()) {
+  <app-workflow
+    [entityName]="'opportunity'"
+    [entityId]="opportunityId().toString()"
+    [canChangeStage]="canChangeStage()"
+    [beforeStageChange]="beforeStageChange"
+    (onStageChangeSuccess)="handleStageChangeSuccess()"
+  />
+}
+```
+
+### **Component Inputs and Outputs**
+
+**Required Inputs:**
+- `entityName` (string): The entity type identifier (e.g., `'opportunity'`, `'partner'`)
+- `entityId` (string): The unique identifier of the entity instance (must be converted to string)
+
+**Optional Inputs:**
+- `canChangeStage` (boolean): Whether the user can perform workflow actions (default: `true`)
+- `beforeStageChange` (function): Async callback hook executed before stage change for validation
+  - Signature: `(nextStage: string) => Promise<boolean>`
+  - Return `true` to allow stage change, `false` to prevent it
+
+**Outputs:**
+- `onStageChangeSuccess`: Event emitted when a workflow stage change is completed successfully
+
+### **When to Use Workflow Component**
+
+Use `app-workflow` for any entity that has:
+- ✅ Multiple workflow stages (Draft, Active, Inactive, etc.)
+- ✅ Workflow actions (Activate, Deactivate, Archive, etc.)
+- ✅ Permission-based access to workflow actions
+- ✅ Status tracking
+
+### **Dialog Components - Separation Pattern**
+
+**MANDATORY**: All dialogs (`p-dialog`) must be extracted into separate dedicated dialog components.
+
+**Why Separate Dialog Components:**
+- ✅ **Single Responsibility**: Each component has one clear purpose
+- ✅ **Reusability**: Dialog logic can be reused across multiple parent components
+- ✅ **Testability**: Dialogs can be tested in isolation
+- ✅ **Maintainability**: Easier to locate and modify dialog-specific logic
+- ✅ **Code Organization**: Cleaner parent components with less clutter
+
+**Pattern:**
+
+```typescript
+// ❌ WRONG - Dialog embedded in parent component
+@Component({
+  selector: 'app-partner-list',
+  template: `
+    <div>
+      <!-- List content -->
+      <p-button (onClick)="showDialog = true" />
+      
+      <!-- ❌ Dialog inline in parent component -->
+      <p-dialog [(visible)]="showDialog">
+        <form>
+          <!-- Complex dialog content -->
+        </form>
+      </p-dialog>
+    </div>
+  `
+})
+export class PartnerListComponent {
+  showDialog = false;
+  formData = {};
+  // Dialog-specific logic mixed with list logic
+}
+
+// ✅ CORRECT - Dialog in separate component
+@Component({
+  selector: 'app-new-partner',
+  template: `
+    <p-dialog 
+      [(visible)]="visible" 
+      (onHide)="visibleChange.emit(false)">
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <!-- Dialog content -->
+      </form>
+    </p-dialog>
+  `
+})
+export class NewPartnerComponent {
+  readonly visible = model<boolean>(false);
+  readonly partnerCreated = output<PartnerModel>();
+  
+  // Dialog-specific logic isolated
+}
+
+// Parent component
+@Component({
+  selector: 'app-partner-list',
+  template: `
+    <div>
+      <!-- List content -->
+      <p-button (onClick)="showCreateDialog = true" />
+      
+      <!-- ✅ Dialog as separate component -->
+      <app-new-partner
+        [(visible)]="showCreateDialog"
+        (partnerCreated)="onPartnerCreated($event)"
+      />
+    </div>
+  `
+})
+export class PartnerListComponent {
+  showCreateDialog = false;
+  
+  onPartnerCreated(partner: PartnerModel) {
+    // Handle successful creation
+    this.loadPartners();
+    this.navigateTo(partner.id);
+  }
+}
+```
+
+**Dialog Component Structure:**
+
+```
+feature-folder/
+├── entity-name/
+│   ├── entity-name.component.ts
+│   ├── entity-name.component.html
+│   ├── entity-name.component.scss
+│   ├── new-entity-name/                      # Dialog components directly in entity folder
+│   │   ├── new-entity-name.component.ts     # Dialog names include entity name
+│   │   ├── new-entity-name.component.html
+│   │   └── new-entity-name.component.scss
+│   └── delete-entity-name/
+│       ├── delete-entity-name.component.ts
+│       ├── delete-entity-name.component.html
+│       └── delete-entity-name.component.scss
+```
+
+**When to Create Separate Dialog Components:**
+- ✅ Always - every `p-dialog` should be in its own component
+- ✅ Create, Edit, Delete confirmation dialogs
+- ✅ Complex forms in dialogs
+- ✅ Multi-step wizards
+- ✅ Any dialog with validation logic
+- ✅ Dialogs that may be reused elsewhere
+
+**Exception:**
+- ❌ Very simple confirmation dialogs that just call a method (use FeedbackService instead)
 
 ---
 
@@ -181,6 +673,124 @@ readonly inputClasses = computed(() => {
 
 ---
 
+## 🎯 PrimeNG Component Imports
+
+### **CRITICAL: Module Import Pattern**
+
+**MANDATORY**: Per the official PrimeNG documentation (https://primeng.org/), always import **PrimeNG Modules**, not standalone components.
+
+### **Correct Import Patterns**
+
+```typescript
+// ✅ CORRECT - Import PrimeNG Modules (per official docs)
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { SelectModule } from 'primeng/select';
+import { MultiSelectModule } from 'primeng/multiselect';
+import { DatePickerModule } from 'primeng/datepicker';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { CheckboxModule } from 'primeng/checkbox';
+import { RadioButtonModule } from 'primeng/radiobutton';
+import { PanelModule } from 'primeng/panel';
+import { TableModule } from 'primeng/table';
+import { MessageModule } from 'primeng/message';
+import { TagModule } from 'primeng/tag';
+import { DialogModule } from 'primeng/dialog';
+import { FloatLabelModule } from 'primeng/floatlabel';
+
+// ❌ WRONG - Don't import standalone components
+import { Button } from 'primeng/button';
+import { InputText } from 'primeng/inputtext';
+import { Textarea } from 'primeng/textarea';
+```
+
+### **Component Imports Array**
+
+```typescript
+// ✅ CORRECT - Use PrimeNG Modules in imports array
+@Component({
+  selector: 'app-my-component',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    TranslateModule,
+    ButtonModule,        // ✅ Module import
+    InputTextModule,     // ✅ Module import
+    TextareaModule,      // ✅ Module import
+    SelectModule,        // ✅ Module import
+    InputNumberModule,   // ✅ Module import
+    PanelModule,         // ✅ Module import
+    MessageModule,       // ✅ Module import
+    TagModule,           // ✅ Module import
+  ],
+  templateUrl: './my-component.component.html',
+  styleUrl: './my-component.component.scss',
+})
+export class MyComponent {
+  // Component logic
+}
+
+// ❌ WRONG - Don't use standalone component imports
+@Component({
+  selector: 'app-my-component',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    Button,         // ❌ Wrong - use ButtonModule
+    InputText,      // ❌ Wrong - use InputTextModule
+    Textarea,       // ❌ Wrong - use TextareaModule
+  ],
+})
+export class MyComponent {}
+```
+
+### **Common PrimeNG Components Reference**
+
+| Template Directive | Module Import Statement | Source |
+|-------------------|------------------------|--------|
+| `<p-button>` | `import { ButtonModule } from 'primeng/button';` | https://primeng.org/button |
+| `pInputText` | `import { InputTextModule } from 'primeng/inputtext';` | https://primeng.org/inputtext |
+| `pTextarea` | `import { TextareaModule } from 'primeng/textarea';` | https://primeng.org/textarea |
+| `<p-select>` | `import { SelectModule } from 'primeng/select';` | https://primeng.org/select |
+| `<p-multiselect>` | `import { MultiSelectModule } from 'primeng/multiselect';` | https://primeng.org/multiselect |
+| `<p-datepicker>` | `import { DatePickerModule } from 'primeng/datepicker';` | https://primeng.org/datepicker |
+| `<p-inputnumber>` | `import { InputNumberModule } from 'primeng/inputnumber';` | https://primeng.org/inputnumber |
+| `<p-checkbox>` | `import { CheckboxModule } from 'primeng/checkbox';` | https://primeng.org/checkbox |
+| `<p-radiobutton>` | `import { RadioButtonModule } from 'primeng/radiobutton';` | https://primeng.org/radiobutton |
+| `<p-panel>` | `import { PanelModule } from 'primeng/panel';` | https://primeng.org/panel |
+| `<p-table>` | `import { TableModule } from 'primeng/table';` | https://primeng.org/table |
+| `<p-message>` | `import { MessageModule } from 'primeng/message';` | https://primeng.org/message |
+| `<p-tag>` | `import { TagModule } from 'primeng/tag';` | https://primeng.org/tag |
+| `<p-dialog>` | `import { DialogModule } from 'primeng/dialog';` | https://primeng.org/dialog |
+| `<p-floatlabel>` | `import { FloatLabelModule } from 'primeng/floatlabel';` | https://primeng.org/floatlabel |
+| `<p-tabs>` | `import { TabsModule } from 'primeng/tabs';` | https://primeng.org/tabs |
+| `<p-fieldset>` | `import { FieldsetModule } from 'primeng/fieldset';` | https://primeng.org/fieldset |
+
+### **Panel with Header Template**
+
+**IMPORTANT**: In PrimeNG v19, `<p-panel>` no longer accepts `[header]` binding. Use `ng-template` with `pTemplate="header"`:
+
+```html
+<!-- ✅ CORRECT - Use ng-template for header -->
+<p-panel>
+  <ng-template pTemplate="header">
+    <span>{{ 'title.myPanel' | translate }}</span>
+  </ng-template>
+  <!-- Panel content -->
+</p-panel>
+
+<!-- ❌ WRONG - Don't use [header] attribute -->
+<p-panel [header]="'title.myPanel' | translate">
+  <!-- Panel content -->
+</p-panel>
+```
+
+---
+
 ## 🏗️ Interface & Type Management
 
 ### **1. Create Union Types for Input Signals**
@@ -189,6 +799,7 @@ Define union types in appropriate interface files:
 - **Shared/Common types**: `UNOPS.PAO.ClientApp/src/app/shared/interfaces/` (e.g., `feedback.ts`, `document.interface.ts`)
 - **Feature-specific types**: 
   - Partnerships: `UNOPS.PAO.ClientApp/src/app/features/partnerships/[subfeature]/models/`
+  - Opportunities: `UNOPS.PAO.ClientApp/src/app/features/opportunities/models/`
   - Admin: `UNOPS.PAO.ClientApp/src/app/features/admin/[subfeature]/models/`
   - AI: `UNOPS.PAO.ClientApp/src/app/features/ai/models/`
   - Shared features: `UNOPS.PAO.ClientApp/src/app/features/shared/models/`
@@ -204,113 +815,11 @@ export type InteractionType = 'meeting' | 'email' | 'call' | 'visit' | 'other';
 
 ### **2. Decompose Complex Interfaces**
 
-Break complex interfaces into constituent parts and provide both individual and complex interface input approaches:
-
-```typescript
-// ✅ CORRECT Pattern - Decomposed interfaces with dual input approach
-export interface CardMedia {
-  src: string;
-  alt: string;
-  type?: MediaType;
-  aspectRatio?: MediaAspectRatio;
-  position?: MediaPosition;
-  size?: MediaSize;
-  radius?: MediaRadius;
-  maintainAspectRatio?: boolean;
-  maxHeight?: number;
-  maxWidth?: number;
-  loading?: MediaLoadingStrategy;
-}
-
-export type MediaType = 'image' | 'video';
-export type MediaAspectRatio = '16:9' | '4:3' | '1:1' | 'auto';
-export type MediaPosition = 'top' | 'left' | 'right' | 'bottom' | 'background';
-export type MediaSize = 'small' | 'medium' | 'large' | 'full' | 'auto';
-
-// Individual input signals for each property (decomposed approach)
-readonly mediaSrc = input<string | undefined>();
-readonly mediaAlt = input<string | undefined>();
-readonly mediaType = input<MediaType, MediaType | null | undefined>('image', {
-  transform: (value: MediaType | null | undefined) => {
-    const validTypes: MediaType[] = ['image', 'video'];
-    return value && validTypes.includes(value) ? value : 'image';
-  }
-});
-readonly mediaAspectRatio = input<MediaAspectRatio, MediaAspectRatio | null | undefined>('16:9', {
-  transform: (value: MediaAspectRatio | null | undefined) => {
-    const validRatios: MediaAspectRatio[] = ['16:9', '4:3', '1:1', 'auto'];
-    return value && validRatios.includes(value) ? value : '16:9';
-  }
-});
-readonly mediaPosition = input<MediaPosition, MediaPosition | null | undefined>('top', {
-  transform: (value: MediaPosition | null | undefined) => {
-    const validPositions: MediaPosition[] = ['top', 'left', 'right', 'bottom', 'background'];
-    return value && validPositions.includes(value) ? value : 'top';
-  }
-});
-
-// Single complex interface input signal (object approach)
-readonly media = input<CardMedia | undefined>();
-
-// Computed signal that resolves between individual properties and complex object
-readonly resolvedMedia = computed<CardMedia | undefined>(() => {
-  // Check if individual media properties are provided
-  const hasSrc = !!this.mediaSrc();
-  const hasAlt = !!this.mediaAlt();
-  
-  // If individual properties are provided, use them (takes precedence)
-  if (hasSrc && hasAlt) {
-    return {
-      src: this.mediaSrc()!,
-      alt: this.mediaAlt()!,
-      type: this.mediaType(),
-      aspectRatio: this.mediaAspectRatio(),
-      position: this.mediaPosition(),
-      // ... other individual properties
-    };
-  }
-  
-  // Otherwise, use the single media object if provided
-  return this.media();
-});
-
-// ❌ INCORRECT - Complex nested interface without decomposition
-export interface ComplexBannerInterface {
-  actions: {
-    label: string;
-    icon?: string;
-    action: () => void;
-    disabled?: boolean;
-    variant?: 'primary' | 'secondary' | 'tertiary' | 'danger';
-  }[];
-  actionVariant?: 'primary' | 'secondary' | 'tertiary' | 'danger';
-}
-```
+Break complex interfaces into constituent parts and provide both individual and complex interface input approaches.
 
 ### **3. Maintain input signals that receive primitive types**
 
 The intent is to only create interfaces for union types (for enums and choices) and any object interfaces needed. Use primitives for input signals that just receive a primitive.
-
-
-### **4. Component-Specific Transform Functions**
-
-Create custom transforms in `ComponentUtilsService` for complex types:
-
-```typescript
-// In ComponentUtilsService
-static createButtonVariantTransform(defaultValue: ButtonVariant = 'primary') {
-  return (value: ButtonVariant | null | undefined): ButtonVariant => {
-    if (value == null) return defaultValue;
-    const validVariants: ButtonVariant[] = ['primary', 'secondary', 'tertiary', 'danger'];
-    return validVariants.includes(value) ? value : defaultValue;
-  };
-}
-
-// Use in component
-readonly variant = input<ButtonVariant, ButtonVariant | null | undefined>('primary', {
-  transform: ComponentUtilsService.createButtonVariantTransform('primary')
-});
-```
 
 ---
 
@@ -340,41 +849,16 @@ import { Component, input, output } from '@angular/core';
  * @class ButtonComponent
  * @description Comprehensive button component with multiple variants, sizes, and interaction states.
  * Built with Angular 19 signals and Tailwind-first approach for optimal performance and styling.
- * Supports accessibility features, loading states, and extensive customization options.
  * 
  * @example
  * ```html
  * <!-- Basic button -->
  * <app-button text="Click Me" variant="primary" size="normal"></app-button>
- * 
- * <!-- Button with icon and loading state -->
- * <app-button 
- *   text="Save Changes"
- *   variant="primary"
- *   icon="save"
- *   [loading]="isSaving()"
- *   [disabled]="!isValid()"
- *   (buttonClick)="handleSave($event)">
- * </app-button>
  * ```
  * 
- * @example
- * ```typescript
- * // Component usage
- * export class MyComponent {
- *   isLoading = signal(false);
- *   
- *   handleButtonClick(event: MouseEvent) {
- *     console.log('Button clicked:', event);
- *   }
- * }
- * ```
- * 
- * @extends BaseComponent
- * @implements OnInit
  * @since 1.0.0
  */
-export class ButtonComponent extends BaseComponent implements OnInit {
+export class ButtonComponent {
 ```
 
 ### **Input Signal Documentation (Required)**
@@ -393,38 +877,6 @@ export class ButtonComponent extends BaseComponent implements OnInit {
 readonly text = input<string | undefined, string | null | undefined>(undefined, {
   transform: ComponentUtilsService.createOptionalStringTransform()
 });
-
-/**
- * @description Button visual variant determining styling theme
- * @type {Signal<ButtonVariant>}
- * @default 'primary'
- * @example
- * ```html
- * <app-button variant="secondary" text="Cancel"></app-button>
- * ```
- * @since 1.0.0
- */
-readonly variant = input<ButtonVariant, ButtonVariant | null | undefined>('primary', {
-  transform: ComponentUtilsService.createButtonVariantTransform('primary')
-});
-
-/**
- * @description Whether the button is in a loading state
- * @type {Signal<boolean>}
- * @default false
- * @example
- * ```html
- * <app-button 
- *   text="Saving..." 
- *   [loading]="isSaving()"
- *   [disabled]="isSaving()">
- * </app-button>
- * ```
- * @since 1.0.0
- */
-readonly loading = input<boolean, boolean | null | undefined>(false, {
-  transform: ComponentUtilsService.createBooleanTransform(false)
-});
 ```
 
 ### **Output Signal Documentation (Required)**
@@ -434,158 +886,10 @@ readonly loading = input<boolean, boolean | null | undefined>(false, {
  * @description Event emitted when the button is clicked
  * @type {OutputEmitterRef<MouseEvent>}
  * @param {MouseEvent} event - The native click event object
- * @example
- * ```html
- * <app-button 
- *   text="Submit" 
- *   (buttonClick)="handleSubmit($event)">
- * </app-button>
- * ```
- * @example
- * ```typescript
- * handleSubmit(event: MouseEvent) {
- *   console.log('Button clicked:', event);
- *   // Handle submission logic
- * }
- * ```
  * @since 1.0.0
  */
 readonly buttonClick = output<MouseEvent>();
-
-/**
- * @description Event emitted when button receives focus
- * @type {OutputEmitterRef<FocusEvent>}
- * @param {FocusEvent} event - The native focus event object
- * @example
- * ```html
- * <app-button 
- *   text="Focus Me" 
- *   (focusEvent)="onButtonFocus($event)">
- * </app-button>
- * ```
- * @since 1.0.0
- */
-readonly focusEvent = output<FocusEvent>();
 ```
-
-### **Public Method Documentation (Required)**
-
-```typescript
-/**
- * @description Programmatically focus the button element
- * @returns {void}
- * @example
- * ```typescript
- * @ViewChild(ButtonComponent) button!: ButtonComponent;
- * 
- * ngAfterViewInit() {
- *   this.button.focus();
- * }
- * ```
- * @since 1.0.0
- */
-public focus(): void {
-  this.elementRef.nativeElement.focus();
-}
-
-/**
- * @description Get the computed CSS classes for the button
- * @param {boolean} includeState - Whether to include state-based classes
- * @returns {string[]} Array of CSS class names
- * @example
- * ```typescript
- * const classes = this.getButtonClasses(true);
- * console.log(classes); // ['unops-button', 'unops-button--primary', 'unops-button--loading']
- * ```
- * @since 1.0.0
- */
-public getButtonClasses(includeState: boolean = true): string[] {
-  // Implementation
-}
-```
-
-### Behavior JSDoc Tags (Optional)
-
-These JSDoc tags are used by the `component-metadata-extractor.js` script to generate metadata. While the extractor can infer many behaviors automatically, these tags allow for explicit overrides and clearer definitions. Add these tags to the class-level JSDoc block.
-
-#### **Complex Behavior Definition**
-
--   `@behavior {key=value ...}`: Defines multiple behaviors in one tag.
-    -   **Description**: A flexible tag for specifying multiple behaviors.
-    -   **Parameters**:
-        -   `needsTrigger`: `true`|`false` - If the component requires a user or programmatic action to become active.
-        -   `triggerType`: `'click'`|`'hover'`|`'focus'`|`'programmatic'` - The type of event that triggers the component.
-        -   `needsAssociatedComponent`: `true`|`false` - If the component needs another element to be associated with (e.g., a button that opens a dropdown).
-        -   `associatedComponentType`: `'trigger-element'`|`'content-projection'` - The nature of the associated component.
-        -   `isOverlay`: `true`|`false` - If the component renders in an overlay (e.g., modals).
-        -   `renderingMode`: `'standalone'`|`'with-trigger'`|`'triggered'`|`'associated'`|`'contextual'` - How the component should be rendered.
-    -   **Example**:
-        ```typescript
-        /**
-         
-         * ...
-         * @behavior needsTrigger=true triggerType=click isOverlay=true renderingMode=with-trigger
-         */
-        ```
-
-#### **Shorthand Behavior Tags**
-
--   `@needsTrigger [type]`: Shorthand for `@behavior needsTrigger=true`.
-    -   **Description**: Indicates the component requires a trigger.
-    -   **Parameter**: `[type]` (optional) - The `triggerType` (e.g., `click`, `hover`). Defaults to `programmatic`.
-    -   **Example**:
-        ```typescript
-        /**
-         * @class TooltipComponent
-         * ...
-         * @needsTrigger hover
-         */
-        ```
-
--   `@needsAssociatedComponent [type]`: Shorthand for `@behavior needsAssociatedComponent=true`.
-    -   **Description**: Indicates the component is associated with another element.
-    -   **Parameter**: `[type]` (optional) - The `associatedComponentType` (e.g., `trigger-element`).
-    -   **Example**:
-        ```typescript
-        /**
-         * @class DropdownComponent
-         * ...
-         * @needsAssociatedComponent trigger-element
-         */
-        ```
-
--   `@overlayComponent`: Shorthand for `@behavior isOverlay=true`.
-    -   **Description**: Marks the component as an overlay.
-    -   **Example**:
-        ```typescript
-        /**
-         * @class ModalComponent
-         * ...
-         * @overlayComponent
-         */
-        ```
-
--   `@requiresService`: Indicates the component has a critical service dependency.
-    -   **Description**: Flags that a component's core functionality depends on an injected service (e.g., `ToastService`).
-    -   **Example**:
-        ```typescript
-        /**
-         * @class ToastComponent
-         * ...
-         * @requiresService
-         */
-        ```
-
--   `@contextualComponent`: Indicates the component's behavior is highly dependent on its context.
-    -   **Description**: Used for components that don't fit typical patterns, like a loading indicator managed by a global service.
-    -   **Example**:
-        ```typescript
-        /**
-         * @class LoadingSpinnerComponent
-         * ...
-         * @contextualComponent
-         */
-        ```
 
 ---
 
@@ -602,96 +906,11 @@ These JSDoc tags are used by the `component-metadata-extractor.js` script to gen
     {{ text() }}
   </button>
 </div>
-
-<!-- Conditional classes -->
-<div [class]="containerClasses()" 
-     [ngClass]="{
-       'opacity-50': disabled(),
-       'cursor-not-allowed': disabled(),
-       'cursor-pointer': !disabled() && clickable(),
-       'shadow-lg': elevated(),
-       'w-full': fluid(),
-       'w-auto': !fluid()
-     }">
-```
-
-### **Computed CSS Classes Pattern**
-
-Use computed signals for complex class logic:
-
-```typescript
-readonly containerClasses = computed(() => {
-  const classes = [
-    'relative',
-    'flex',
-    'items-center',
-    'justify-center',
-    'transition-all',
-    'duration-200'
-  ];
-  
-  // Size classes
-  switch (this.size()) {
-    case 'small':
-      classes.push('px-unops-sm', 'py-unops-xs', 'text-unops-sm');
-      break;
-    case 'large':
-      classes.push('px-unops-xl', 'py-unops-lg', 'text-unops-lg');
-      break;
-    default:
-      classes.push('px-unops-md', 'py-unops-sm', 'text-unops-base');
-  }
-  
-  // State classes
-  if (this.disabled()) {
-    classes.push('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
-  }
-  
-  if (this.variant() === 'primary') {
-    classes.push('bg-unops-primary', 'text-white', 'hover:bg-unops-primary-light');
-  }
-  
-  return classes.join(' ');
-});
 ```
 
 ### **SCSS Only for Complex Patterns**
 
-Use SCSS sparingly, only for patterns that can't be achieved with Tailwind:
-
-```scss
-// ✅ CORRECT - Complex pseudo-elements
-.component::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 24px;
-  background-color: var(--unops-primary);
-}
-
-// ✅ CORRECT - Custom animations
-@keyframes component-slide-in {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(0); }
-}
-
-// ✅ CORRECT - Browser-specific styling
-.component::-webkit-scrollbar {
-  width: 6px;
-  background: rgba(var(--unops-neutral-grey), 0.1);
-}
-
-// ❌ INCORRECT - Use Tailwind classes instead
-.my-component {
-  display: flex;
-  background-color: var(--unops-primary);
-  padding: var(--unops-spacing-md);
-  border-radius: 8px;
-}
-```
+Use SCSS sparingly, only for patterns that can't be achieved with Tailwind.
 
 ---
 
@@ -701,22 +920,6 @@ Use SCSS sparingly, only for patterns that can't be achieved with Tailwind:
 
 **MANDATORY**: Use `p-floatlabel` with `variant="on"` for all form inputs and dropdowns in the application.
 
-### **Float Label with Text Inputs**
-
-```html
-<!-- ✅ CORRECT - Text input with floating label -->
-<p-floatlabel variant="on">
-  <input
-    pInputText
-    id="name"
-    formControlName="name"
-    class="w-full"
-    [disabled]="isSubmitting()"
-  />
-  <label for="name">{{ 'label.name' | translate }} *</label>
-</p-floatlabel>
-```
-
 ### **Float Label with Dropdowns (p-select)**
 
 **CRITICAL**: When using `p-select` with `p-floatlabel`, **DO NOT** include a `placeholder` attribute. The floating label handles both the placeholder and label functionality.
@@ -725,366 +928,18 @@ Use SCSS sparingly, only for patterns that can't be achieved with Tailwind:
 <!-- ✅ CORRECT - Dropdown with floating label (NO placeholder) -->
 <p-floatlabel variant="on">
   <p-select
-    id="fundingOpportunity"
-    formControlName="fundingOpportunityId"
-    [options]="eligibleFundingOpportunities()"
+    id="partner"
+    formControlName="partnerId"
+    [options]="partners()"
     optionLabel="name"
     optionValue="id"
     [filter]="true"
-    filterBy="name,referenceNumber"
+    filterBy="name"
     [disabled]="isSubmitting()"
     class="w-full"
   />
-  <label for="fundingOpportunity">{{ 'title.fundingOpportunity' | translate }} *</label>
+  <label for="partner">{{ 'title.partner' | translate }} *</label>
 </p-floatlabel>
-
-<!-- ❌ WRONG - Dropdown with placeholder causes label overlap -->
-<p-floatlabel variant="on">
-  <p-select
-    id="fundingOpportunity"
-    formControlName="fundingOpportunityId"
-    [options]="eligibleFundingOpportunities()"
-    optionLabel="name"
-    optionValue="id"
-    [placeholder]="'label.fundingOpportunity.select' | translate"  <!-- ❌ Remove this -->
-    class="w-full"
-  />
-  <label for="fundingOpportunity">{{ 'title.fundingOpportunity' | translate }} *</label>
-</p-floatlabel>
-```
-
-### **Float Label Behavior**
-
-1. **Initial State (Empty)**: Label appears inside the field at normal position
-2. **Focused State**: Label animates up and becomes smaller
-3. **Filled State**: Label remains in the elevated position
-4. **Required Fields**: Add asterisk (*) to the label text for required fields
-
-### **Common Float Label Patterns**
-
-```html
-<!-- Text Input -->
-<div class="mb-6">
-  <p-floatlabel variant="on">
-    <input
-      pInputText
-      id="email"
-      formControlName="email"
-      class="w-full"
-    />
-    <label for="email">{{ 'label.email' | translate }} *</label>
-  </p-floatlabel>
-  @if (formGroup.get('email')?.invalid && formGroup.get('email')?.touched) {
-    <p-message severity="error" variant="simple" styleClass="mt-2">
-      {{ 'message.validation.emailRequired' | translate }}
-    </p-message>
-  }
-</div>
-
-<!-- Textarea -->
-<div class="mb-6">
-  <p-floatlabel variant="on">
-    <textarea
-      pTextarea
-      id="description"
-      formControlName="description"
-      rows="5"
-      class="w-full"
-    ></textarea>
-    <label for="description">{{ 'label.description' | translate }}</label>
-  </p-floatlabel>
-</div>
-
-<!-- Dropdown with Filter -->
-<div class="mb-6">
-  <p-floatlabel variant="on">
-    <p-select
-      id="country"
-      formControlName="countryId"
-      [options]="countries()"
-      optionLabel="name"
-      optionValue="id"
-      [filter]="true"
-      filterBy="name"
-      [showClear]="true"
-      class="w-full"
-    />
-    <label for="country">{{ 'label.country' | translate }} *</label>
-  </p-floatlabel>
-</div>
-
-<!-- Multi-Select Dropdown -->
-<div class="mb-6">
-  <p-floatlabel variant="on">
-    <p-multiselect
-      id="tags"
-      formControlName="tags"
-      [options]="availableTags()"
-      optionLabel="name"
-      optionValue="id"
-      [filter]="true"
-      class="w-full"
-    />
-    <label for="tags">{{ 'label.tags' | translate }}</label>
-  </p-floatlabel>
-</div>
-
-<!-- Date Picker -->
-<div class="mb-6">
-  <p-floatlabel variant="on">
-    <p-datepicker
-      id="startDate"
-      formControlName="startDate"
-      dateFormat="yy-mm-dd"
-      [showIcon]="true"
-      class="w-full"
-    />
-    <label for="startDate">{{ 'label.startDate' | translate }} *</label>
-  </p-floatlabel>
-</div>
-
-<!-- Number Input -->
-<div class="mb-6">
-  <p-floatlabel variant="on">
-    <p-inputnumber
-      id="amount"
-      formControlName="amount"
-      mode="currency"
-      currency="USD"
-      [minFractionDigits]="2"
-      class="w-full"
-    />
-    <label for="amount">{{ 'label.amount' | translate }} *</label>
-  </p-floatlabel>
-</div>
-```
-
-### **Float Label Best Practices**
-
-1. **Consistent Spacing**: Use `mb-6` class on the container div for consistent spacing between fields
-2. **ID Matching**: Ensure the input/select `id` matches the label's `for` attribute
-3. **Full Width**: Apply `class="w-full"` to form controls for consistent width
-4. **Required Indicators**: Add asterisk (*) directly in the label text for required fields
-5. **Validation Messages**: Place error messages below the float label using `p-message` component
-6. **Disabled State**: Use `[disabled]="condition"` on the form control, not on the label
-7. **Read-Only Inputs**: For display-only fields, use disabled text inputs instead of dropdowns
-
-### **Float Label Anti-Patterns**
-
-```html
-<!-- ❌ WRONG - Placeholder on p-select with float label -->
-<p-floatlabel variant="on">
-  <p-select
-    [placeholder]="'Select option' | translate"  <!-- ❌ Causes overlap -->
-    [options]="options()"
-  />
-  <label>{{ 'label.option' | translate }}</label>
-</p-floatlabel>
-
-<!-- ❌ WRONG - Missing variant="on" -->
-<p-floatlabel>  <!-- ❌ Should specify variant="on" -->
-  <input pInputText id="name" />
-  <label for="name">Name</label>
-</p-floatlabel>
-
-<!-- ❌ WRONG - Hardcoded text instead of translation keys -->
-<p-floatlabel variant="on">
-  <input pInputText id="name" />
-  <label for="name">Name</label>  <!-- ❌ Use translation keys -->
-</p-floatlabel>
-
-<!-- ❌ WRONG - Mismatched id and for attributes -->
-<p-floatlabel variant="on">
-  <input pInputText id="userName" />
-  <label for="name">{{ 'label.name' | translate }}</label>  <!-- ❌ IDs don't match -->
-</p-floatlabel>
-
-<!-- ✅ CORRECT - All best practices followed -->
-<div class="mb-6">
-  <p-floatlabel variant="on">
-    <p-select
-      id="status"
-      formControlName="status"
-      [options]="statusOptions()"
-      optionLabel="name"
-      optionValue="id"
-      class="w-full"
-    />
-    <label for="status">{{ 'label.status' | translate }} *</label>
-  </p-floatlabel>
-  @if (formGroup.get('status')?.invalid && formGroup.get('status')?.touched) {
-    <p-message severity="error" variant="simple" styleClass="mt-2">
-      {{ 'message.validation.statusRequired' | translate }}
-    </p-message>
-  }
-</div>
-```
-
-### **Float Label with Reactive Forms Integration**
-
-```typescript
-// Component TypeScript
-export class MyFormComponent {
-  private readonly fb = inject(FormBuilder);
-  
-  formGroup = this.fb.group({
-    name: ['', [Validators.required, Validators.maxLength(255)]],
-    email: ['', [Validators.required, Validators.email]],
-    countryId: [null as number | null, [Validators.required]],
-    startDate: [null as Date | null, [Validators.required]],
-    description: [''],
-  });
-  
-  showValidationErrors = signal(false);
-  
-  countries = signal<Country[]>([]);
-  
-  onSubmit() {
-    this.showValidationErrors.set(true);
-    if (this.formGroup.invalid) {
-      return;
-    }
-    // Process form data
-  }
-}
-```
-
-```html
-<!-- Component Template -->
-<form [formGroup]="formGroup" (ngSubmit)="onSubmit()">
-  <!-- Name Field -->
-  <div class="mb-6">
-    <p-floatlabel variant="on">
-      <input
-        pInputText
-        id="name"
-        formControlName="name"
-        class="w-full"
-      />
-      <label for="name">{{ 'label.name' | translate }} *</label>
-    </p-floatlabel>
-    @if (formGroup.get('name')?.invalid && (formGroup.get('name')?.touched || showValidationErrors())) {
-      <p-message severity="error" variant="simple" styleClass="mt-2">
-        {{ 'message.validation.nameRequired' | translate }}
-      </p-message>
-    }
-  </div>
-
-  <!-- Email Field -->
-  <div class="mb-6">
-    <p-floatlabel variant="on">
-      <input
-        pInputText
-        id="email"
-        type="email"
-        formControlName="email"
-        class="w-full"
-      />
-      <label for="email">{{ 'label.email' | translate }} *</label>
-    </p-floatlabel>
-    @if (formGroup.get('email')?.invalid && (formGroup.get('email')?.touched || showValidationErrors())) {
-      <p-message severity="error" variant="simple" styleClass="mt-2">
-        {{ 'message.validation.emailInvalid' | translate }}
-      </p-message>
-    }
-  </div>
-
-  <!-- Country Dropdown -->
-  <div class="mb-6">
-    <p-floatlabel variant="on">
-      <p-select
-        id="country"
-        formControlName="countryId"
-        [options]="countries()"
-        optionLabel="name"
-        optionValue="id"
-        [filter]="true"
-        filterBy="name"
-        class="w-full"
-      />
-      <label for="country">{{ 'label.country' | translate }} *</label>
-    </p-floatlabel>
-    @if (formGroup.get('countryId')?.invalid && (formGroup.get('countryId')?.touched || showValidationErrors())) {
-      <p-message severity="error" variant="simple" styleClass="mt-2">
-        {{ 'message.validation.countryRequired' | translate }}
-      </p-message>
-    }
-  </div>
-
-  <!-- Submit Button -->
-  <div class="flex justify-end gap-2">
-    <p-button
-      [label]="'button.cancel' | translate"
-      severity="secondary"
-      type="button"
-    />
-    <p-button
-      [label]="'button.save' | translate"
-      severity="primary"
-      type="submit"
-    />
-  </div>
-</form>
-```
-
----
-
-## 🔄 Component Transform Functions
-
-### **Standard Transform Usage**
-
-Use established ComponentUtilsService transforms for common types:
-
-```typescript
-// Boolean transforms
-readonly disabled = input<boolean, boolean | null | undefined>(false, { 
-  transform: ComponentUtilsService.createBooleanTransform(false) 
-});
-
-// String transforms
-readonly label = input<string, string | null | undefined>('', {
-  transform: ComponentUtilsService.createStringTransform('')
-});
-
-readonly tooltip = input<string | undefined, string | null | undefined>(undefined, {
-  transform: ComponentUtilsService.createOptionalStringTransform()
-});
-
-// Number transforms
-readonly maxLength = input<number | undefined, number | string | null | undefined>(undefined, {
-  transform: ComponentUtilsService.createNumberTransform()
-});
-
-readonly tabIndex = input<number, number | string | null | undefined>(0, {
-  transform: ComponentUtilsService.createNumberWithDefaultTransform(0)
-});
-
-// Array transforms
-readonly options = input<SelectOption[]>([]), {
-  transform: ComponentUtilsService.createArrayTransform<SelectOption>()
-});
-```
-
-
-
-### **Custom Transform Creation**
-
-For complex types, create custom transforms:
-
-```typescript
-// In component or service
-static createInputTypeTransform(defaultValue: InputType = 'text') {
-  return (value: InputType | null | undefined): InputType => {
-    if (value == null) return defaultValue;
-    const validTypes: InputType[] = ['text', 'email', 'password', 'number', 'tel', 'url', 'search', 'decimal'];
-    return validTypes.includes(value) ? value : defaultValue;
-  };
-}
-
-// Usage in component
-readonly type = input<InputType, InputType | null | undefined>('text', {
-  transform: createInputTypeTransform('text')
-});
 ```
 
 ---
@@ -1120,18 +975,6 @@ export class MyComponent {
       }
     );
   }
-  
-  handleSave() {
-    this.saveChanges().subscribe({
-      next: () => {
-        this.feedbackService.showSuccessToast({
-          summary: 'Success',
-          detail: 'Changes saved successfully'
-        });
-      }
-      // Error handling done by global HTTP interceptor
-    });
-  }
 }
 
 // ❌ WRONG - Don't use browser dialogs
@@ -1143,277 +986,34 @@ handleDelete() {
 }
 ```
 
-### **Dialog Validation Pattern**
-
-**MANDATORY**: For custom dialogs (p-dialog), follow this validation pattern:
-
-1. **Do NOT disable submit button** - Let users click to trigger validation
-2. **Show validation errors on click** - Use a signal flag to control error display
-3. **Validate in confirm method** - Check all required fields when user clicks submit
-4. **Clear validation on cancel/open** - Reset validation state when dialog opens or closes
-
-```typescript
-// ✅ CORRECT - Dialog validation pattern
-export class MyComponent {
-  // Dialog state
-  showMyDialog = false;
-  readonly showDialogValidationError = signal<boolean>(false);
-  selectedValue: string | null = null;
-
-  // Open dialog - reset validation
-  openDialog(): void {
-    this.selectedValue = null;
-    this.showDialogValidationError.set(false);
-    this.showMyDialog = true;
-  }
-
-  // Cancel dialog - reset state
-  cancelDialog(): void {
-    this.showMyDialog = false;
-    this.selectedValue = null;
-    this.showDialogValidationError.set(false);
-  }
-
-  // Confirm dialog - validate on click
-  confirmDialog(): void {
-    // Validate required fields
-    if (!this.selectedValue) {
-      this.showDialogValidationError.set(true);
-      return;
-    }
-
-    // Proceed with action
-    this.isProcessing.set(true);
-    this.myService.doAction(this.selectedValue).subscribe({
-      next: (response) => {
-        this.isProcessing.set(false);
-        this.showMyDialog = false;
-        this.selectedValue = null;
-        this.showDialogValidationError.set(false);
-        this.feedbackService.showSuccessToast({
-          summary: 'Success',
-          detail: 'Action completed successfully'
-        });
-      }
-    });
-  }
-}
-```
-
-```html
-<!-- ✅ CORRECT - Dialog template with validation -->
-<p-dialog
-  header="{{ 'title.myDialog' | translate }}"
-  [(visible)]="showMyDialog"
-  [modal]="true"
-  [style]="{ width: '35rem' }"
->
-  <!-- Validation error message -->
-  @if (showDialogValidationError()) {
-    <p-message severity="error" icon="pi pi-info-circle" styleClass="mb-4 w-full">
-      {{ 'message.validation.required' | translate }}
-    </p-message>
-  }
-
-  <!-- Dialog content -->
-  <div class="mb-6">
-    <p-floatlabel variant="on">
-      <p-select
-        id="myField"
-        [(ngModel)]="selectedValue"
-        [options]="options()"
-        optionLabel="name"
-        optionValue="id"
-        [filter]="true"
-        class="w-full"
-      />
-      <label for="myField">{{ 'label.myField' | translate }} *</label>
-    </p-floatlabel>
-    @if (!selectedValue && showDialogValidationError()) {
-      <p-message severity="error" variant="simple" styleClass="mt-2">
-        {{ 'message.validation.myFieldRequired' | translate }}
-      </p-message>
-    }
-  </div>
-
-  <!-- Dialog footer -->
-  <ng-template pTemplate="footer">
-    <p-button
-      [label]="'button.cancel' | translate"
-      severity="secondary"
-      (onClick)="cancelDialog()"
-      [disabled]="isProcessing()"
-    />
-    <p-button
-      [label]="'button.confirm' | translate"
-      severity="primary"
-      (onClick)="confirmDialog()"
-      [loading]="isProcessing()"
-    />
-  </ng-template>
-</p-dialog>
-
-<!-- ❌ WRONG - Button disabled initially -->
-<p-button
-  [label]="'button.confirm' | translate"
-  (onClick)="confirmDialog()"
-  [disabled]="!selectedValue"  <!-- ❌ Don't disable based on validation -->
-/>
-```
-
-**Key Points:**
-- ✅ Submit button is always enabled (except during processing)
-- ✅ Validation triggered on button click, not real-time
-- ✅ Validation errors shown only after user attempts to submit
-- ✅ Validation state cleared when dialog opens/closes
-- ✅ Use appropriate dialog size for content (not too large)
-- ✅ Add virtual scrolling for long dropdowns
-
-### **Feedback Types**
-
-Use appropriate feedback methods based on the situation:
-
-```typescript
-// Success feedback
-this.feedbackService.showSuccessToast({
-  summary: 'Success',
-  detail: 'Operation completed successfully'
-});
-
-// Error feedback
-this.feedbackService.showErrorToast({
-  summary: 'Error',
-  detail: 'An error occurred. Please try again.'
-});
-
-// Warning feedback
-this.feedbackService.showWarningToast({
-  summary: 'Warning',
-  detail: 'Please review your changes before proceeding'
-});
-
-// Info feedback
-this.feedbackService.showInfoToast({
-  summary: 'Information',
-  detail: 'Your session will expire in 5 minutes'
-});
-
-// Confirmation dialog with callback
-this.feedbackService.showConfirmDialog(
-  {
-    summary: 'Confirm Action',
-    detail: 'Are you sure you want to proceed?'
-  },
-  () => {
-    // User confirmed - proceed with action
-    this.performAction();
-  }
-);
-
-// Custom toast with options
-this.feedbackService.showInfoToast({
-  summary: 'Choose Action',
-  detail: 'How would you like to proceed?',
-  life: 5000, // Display for 5 seconds
-  closable: true,
-  sticky: false
-});
-```
-
-## Common Anti-Patterns to Avoid
-
-### **❌ DON'T Use Browser Dialog Functions**
-
-```typescript
-// ❌ WRONG - Browser dialogs
-alert('Success!');
-const confirmed = confirm('Are you sure?');
-const input = prompt('Enter name:');
-
-// ✅ CORRECT - Feedback service
-this.feedbackService.showSuccessToast({
-  summary: 'Success',
-  detail: 'Success!'
-});
-this.feedbackService.showConfirmDialog(
-  {
-    summary: 'Confirmation',
-    detail: 'Are you sure?'
-  },
-  () => {
-    // Handle confirmation
-  }
-);
-// For input, use proper form components with p-dialog
-```
-
-### **❌ DON'T Use Console for User Feedback**
-
-```typescript
-// ❌ WRONG - Console messages for user feedback
-console.log('Item saved successfully');
-console.error('Failed to save item');
-
-// ✅ CORRECT - Proper user feedback
-this.feedbackService.showSuccessToast({
-  summary: 'Success',
-  detail: 'Item saved successfully'
-});
-this.feedbackService.showErrorToast({
-  summary: 'Error',
-  detail: 'Failed to save item'
-});
-// Console should only be used for debugging
-```
-
 ### **❌ DON'T Handle HTTP Errors Locally**
 
 **MANDATORY**: Use the global HTTP error handler instead of local error handling in components.
 
 ```typescript
 // ❌ WRONG - Local HTTP error handling
-this.organizationService.inviteContact(requestJson).subscribe({
+this.partnerService.createPartner(requestJson).subscribe({
   next: (data: any) => {
-    this.feedbackService.showSuccessToast({
-      summary: 'Success',
-      detail: 'Invitation sent successfully!'
-    });
+    this.feedbackService.showSuccessToast({ summary: 'Success', detail: 'Partner created!' });
     this.loadData();
-    this.showDialog = false;
   },
   error: (error: any) => {
-    console.error('Error sending invitation:', error);
-    this.feedbackService.showErrorToast({
-      summary: 'Error',
-      detail: 'Failed to send invitation. Please try again.'
-    });
+    console.error('Error creating partner:', error);
+    this.feedbackService.showErrorToast({ summary: 'Error', detail: 'Failed to create partner.' });
   }
 });
 
 // ✅ CORRECT - Let global error handler manage HTTP errors
-this.organizationService.inviteContact(requestJson).subscribe({
+this.partnerService.createPartner(requestJson).subscribe({
   next: (data: any) => {
-    this.feedbackService.showSuccessToast({
-      summary: 'Success',
-      detail: 'Invitation sent successfully!'
-    });
+    this.feedbackService.showSuccessToast({ summary: 'Success', detail: 'Partner created!' });
     this.loadData();
-    this.showDialog = false;
   }
   // No error handler - global HTTP interceptor handles all HTTP errors
 });
 ```
 
-**Why Use Global Error Handler:**
-- ✅ **Consistent Error Handling**: All HTTP errors handled uniformly across the application
-- ✅ **Centralized Error Logic**: Authentication errors, network issues, server errors handled in one place
-- ✅ **Cleaner Components**: Components focus on success flows, not error management
-- ✅ **Better UX**: Standardized error messages and retry mechanisms
-- ✅ **Easier Maintenance**: Error handling changes made in one location
-- ✅ **Automatic Logging**: Global handler can log errors for monitoring and debugging
-
-**Exception**: Only handle HTTP errors locally when you need specific business logic that differs from the global handler (e.g., custom validation error display).
-
+---
 
 ## 📋 Component Development Checklist
 
@@ -1452,13 +1052,13 @@ this.organizationService.inviteContact(requestJson).subscribe({
 - ✅ Array inputs use `ComponentUtilsService.createArrayTransform<T>()`
 - ✅ Enum/Union type inputs have custom validation transforms
 - ✅ All inputs with default values have transforms
-- ✅ Confirmations use `feedbackService.confirm()` with clear title and message
+- ✅ Confirmations use `feedbackService.showConfirmDialog()` with clear title and message
 - ✅ Success operations show `feedbackService.showSuccessToast()` feedback
 - ✅ Error conditions show `feedbackService.showErrorToast()` feedback
 - ✅ Warning conditions show `feedbackService.showWarningToast()` feedback
 - ✅ No usage of `alert()`, `confirm()`, or `prompt()` browser functions
 - ✅ Console methods only used for debugging, not user feedback
-- ✅ **HTTP errors handled globally**: No local error handlers in HTTP subscribe calls (let global interceptor handle all HTTP errors)
+- ✅ **HTTP errors handled globally**: No local error handlers in HTTP subscribe calls
 
 ### **Interface Requirements**
 
@@ -1468,6 +1068,7 @@ this.organizationService.inviteContact(requestJson).subscribe({
 - ✅ Common interfaces exported from `shared/interfaces/` directory
 - ✅ Feature-specific interfaces/models exported from appropriate feature directories:
   - Partnerships: `features/partnerships/[subfeature]/models/`
+  - Opportunities: `features/opportunities/models/`
   - Admin: `features/admin/[subfeature]/models/`
   - AI: `features/ai/models/`
   - Shared features: `features/shared/models/`
@@ -1502,28 +1103,6 @@ readonly buttonClick = output<MouseEvent>();
 class="flex bg-unops-primary p-unops-md"
 ```
 
-### **❌ DON'T Use Complex Nested Interfaces**
-
-```typescript
-// ❌ WRONG
-interface ComplexInterface {
-  config: {
-    button: {
-      variant: 'primary' | 'secondary';
-      size: 'small' | 'large';
-    };
-  };
-}
-
-// ✅ CORRECT - Decomposed
-type ButtonVariant = 'primary' | 'secondary';
-type ButtonSize = 'small' | 'large';
-interface ButtonConfig {
-  variant: ButtonVariant;
-  size: ButtonSize;
-}
-```
-
 ### **❌ DON'T Skip Transform Functions**
 
 ```typescript
@@ -1544,22 +1123,6 @@ readonly size = input<ComponentSize, ComponentSize | null | undefined>('normal',
 
 **MANDATORY**: All modified files must pass ESLint checks before submission.
 
-**ESLint Configuration:**
-- Uses `@typescript-eslint/parser` for TypeScript files
-- Uses `@angular-eslint/template-parser` for HTML templates  
-- Integrates `eslint-plugin-prettier` for consistent formatting
-- Angular-specific rules: component selectors use kebab-case with 'app' prefix
-- Disabled rules: `@typescript-eslint/no-explicit-any`, `member-ordering`, `naming-convention`
-
-**Prettier Configuration:**
-- Semi-colons: true
-- Trailing commas: es5 style
-- Single quotes: true (except in SCSS files which use double quotes)
-- Print width: 120 characters
-- Tab width: 2 spaces
-- End of line: auto
-- Bracket spacing: true
-
 **Commands for fixing styling:**
 ```bash
 # TypeScript files
@@ -1570,9 +1133,6 @@ npx eslint --fix src/app/**/*.html
 
 # Specific files
 npx eslint --fix path/to/your/file.ts
-
-# Manual Prettier formatting
-npx prettier --write path/to/your/file.ts
 ```
 
 **Requirements:**
@@ -1583,19 +1143,6 @@ npx prettier --write path/to/your/file.ts
 - ✅ **Maintain 120 character line limit**
 - ✅ **Use 2-space indentation** consistently
 
-**Example Workflow:**
-```bash
-# 1. Make your code changes
-# 2. Run ESLint to fix formatting and catch issues
-npx eslint --fix src/app/features/internal/components/your-component/
-
-# 3. Verify no remaining errors
-npx eslint src/app/features/internal/components/your-component/
-
-# 4. If needed, run Prettier manually
-npx prettier --write src/app/features/internal/components/your-component/
-```
-
 ---
 
 ## 🌍 Internationalization & Translation Requirements
@@ -1604,27 +1151,11 @@ npx prettier --write src/app/features/internal/components/your-component/
 
 **MANDATORY**: Use translation keys instead of hardcoded English text in templates and components.
 
-```typescript
-// ✅ CORRECT - Use translation keys
-export class MyComponent {
-  readonly title = computed(() => this.translateService.instant('page.title'));
-  readonly confirmMessage = computed(() => 
-    this.translateService.instant('confirmation.deleteItem', { itemName: this.itemName() })
-  );
-}
-```
-
 ```html
 <!-- ✅ CORRECT - Translation keys in templates -->
 <h1>{{ 'page.title' | translate }}</h1>
 <p>{{ 'page.description' | translate }}</p>
 <button>{{ 'button.save' | translate }}</button>
-
-<!-- ✅ CORRECT - Translation with parameters -->
-<p>{{ 'message.welcome' | translate: { username: currentUser().name } }}</p>
-
-<!-- ✅ CORRECT - Conditional translations -->
-<span>{{ items().length === 1 ? ('label.item' | translate) : ('label.items' | translate) }}</span>
 
 <!-- ❌ WRONG - Hardcoded English text -->
 <h1>Dashboard</h1>
@@ -1648,31 +1179,4 @@ UNOPS.PAO.ClientApp/public/assets/i18n/en.json    # English (Primary)
 UNOPS.PAO.ClientApp/public/assets/i18n/fr.json    # French 
 UNOPS.PAO.ClientApp/public/assets/i18n/es.json    # Spanish
 UNOPS.PAO.ClientApp/public/assets/i18n/pt.json    # Portuguese
-```
-
-**Translation Key Requirements:**
-- Use nested object structure for organization: `"feature.section.key"`
-- Support parameterized translations: `"message": "Hello {{username}}"`
-- Provide professional translations appropriate for UN/UNOPS context
-- Ensure consistent terminology across all languages
-- Include accessibility text for screen readers
-- Cover all user feedback messages (success, error, warning, info)
-
-**Examples:**
-```json
-{
-  "delegation": {
-    "actOnBehalf": "Act on Behalf",
-    "dialog": {
-      "title": "Act on Behalf of Organization"
-    },
-    "success": {
-      "started": "Delegation started successfully for {{organizationName}}"
-    },
-    "validation": {
-      "justificationRequired": "Justification is required",
-      "justificationTooShort": "Justification must be at least {{minLength}} characters"
-    }
-  }
-}
 ```

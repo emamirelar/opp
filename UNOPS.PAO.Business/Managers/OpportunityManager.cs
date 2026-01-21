@@ -255,7 +255,6 @@ public class OpportunityManager : IOpportunityManager
     public async Task<IEnumerable<OpportunityModel>> GetAllOpportunitiesAsync()
     {
         var entities = await context.Opportunities
-            .Include(o => o.WorkflowStage)
             .Include(o => o.ResponsibleOrgUnit)
             .Where(o => !o.IsDeleted)
             .ToListAsync();

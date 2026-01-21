@@ -49,7 +49,8 @@ State the original prompt from the user.
 8.  **Design Considerations (Optional):** Link to mockups, describe UI/UX requirements, or mention relevant components/styles if applicable.
 9.  **Technical Considerations:** Mention any known technical constraints, dependencies, or suggestions (e.g., "Should integrate with the existing Auth module").  Also include any specific implementation details for the PRD as a whole or for any specific user story.  Include sample code if necessary.  Also include suggestions for changes that would make implementation of the PRD better.
 10.  **Success Metrics:** How will the success of this feature be measured? (e.g., "Increase user engagement by 10%", "Reduce support tickets related to X").
-11.  **Open Questions:** List any remaining questions or areas needing further clarification.
+11.  **User Interface Mockups:** Create ASCII art mockups that visualize the feature's user interface. **IMPORTANT**: Follow the guidelines in the `prd-mockups.mdc` rule. Research existing implementation patterns first, use ASCII art only (NO CODE), and match the established UI patterns from the codebase.
+12.  **Open Questions:** List any remaining questions or areas needing further clarification.
 
 ## Target Audience
 
