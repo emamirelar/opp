@@ -49,7 +49,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
 {
     public class AiContextualService
     {
-        private readonly PredictionServiceClient _predictionClient;
+        private readonly PredictionServiceClient? _predictionClient;
         private readonly string _endpoint;
         private readonly IConfiguration _configuration;
         public readonly UNOPSAppDbContext _context;
@@ -59,8 +59,14 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         private readonly string _connectionString;
         private readonly IAiPromptCacheService _aiPromptCacheService;
         private readonly ILogger _logger;
+        private readonly bool _disableExternalCalls;
 
-        public AiContextualService(IConfiguration configuration, UNOPSAppDbContext context, GoogleCredential credentials, IAiPromptCacheService aiPromptCacheService = null, ILogger logger = null)
+        public AiContextualService(
+            IConfiguration configuration,
+            UNOPSAppDbContext context,
+            GoogleCredential credentials,
+            IAiPromptCacheService aiPromptCacheService = null,
+            ILogger logger = null)
         {
             _configuration = configuration;
             _context = context;
@@ -70,11 +76,13 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             _pubSubPublisher = new PubSubPublisher(configuration);
             _aiPromptCacheService = aiPromptCacheService; // Optional dependency for backward compatibility
             _logger = logger; // Optional logger for keyword generation
+            _disableExternalCalls = configuration.GetValue<bool>("AISettings:DisableExternalCalls") ||
+                string.Equals(configuration["ASPNETCORE_ENVIRONMENT"], "Testing", StringComparison.OrdinalIgnoreCase);
             var projectId = _configuration.GetValue<string>("AISettings:ProjectId");
             var location = _configuration.GetValue<string>("AISettings:Location");
             var model = _configuration.GetValue<string>("AISettings:EmbeddingModelName");
             _endpoint = $"projects/{projectId}/locations/{location}/publishers/google/models/{model}";
-            _predictionClient = PredictionServiceClient.Create(); // gRPC Client
+            _predictionClient = _disableExternalCalls ? null : PredictionServiceClient.Create(); // gRPC Client
         }
 
         /// <summary>
@@ -197,6 +205,11 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
 
         public async Task<string> CreateEmbeddingForText(string text)
         {
+            if (_disableExternalCalls)
+            {
+                return string.Empty;
+            }
+
             // Reuse the batch embedding function for single text
             var embeddings = await CreateBatchEmbeddingsAsync(new List<string> { text });
             return embeddings.FirstOrDefault() ?? string.Empty;
@@ -707,6 +720,11 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
     // Common function to handle Gemini API calls
     public async Task<string> CallGeminiApi(dynamic prompt, AiPrompt promptData, string systemInstructions = null)
     {
+        if (_disableExternalCalls)
+        {
+            return string.Empty;
+        }
+
         string accessToken = await GetAccessTokenAsync();
         var requestBody = await GetRequestBody(prompt, promptData, systemInstructions);
         string url = await GetURL(promptData);
@@ -743,8 +761,13 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             return await response.Content.ReadAsStringAsync();
         }
 
-        private static async Task<string> GetAccessTokenAsync()
+        private async Task<string> GetAccessTokenAsync()
         {
+            if (_disableExternalCalls)
+            {
+                return string.Empty;
+            }
+
             GoogleCredential credential = await GoogleCredential.GetApplicationDefaultAsync();
             credential = credential.CreateScoped("https://www.googleapis.com/auth/cloud-platform");
             return await credential.UnderlyingCredential.GetAccessTokenForRequestAsync();
@@ -2156,6 +2179,10 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         {
             if (texts == null || !texts.Any())
                 return new List<string>();
+            if (_disableExternalCalls)
+            {
+                return texts.Select(_ => string.Empty).ToList();
+            }
 
             var embeddings = new List<string>();
             var batchSize = 100; // Gemini Embedding API supports up to 100 requests per batch
@@ -2182,6 +2209,10 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         {
             if (texts == null || !texts.Any())
                 return new Dictionary<string, string>();
+            if (_disableExternalCalls)
+            {
+                return texts.ToDictionary(text => text, _ => string.Empty);
+            }
 
             var keywords = new Dictionary<string, string>();
             var batchSize = 10; // Process 10 at a time for keyword generation
@@ -2220,6 +2251,11 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         /// </summary>
         private async Task<string> GenerateKeywordsForTextAsync(string text)
         {
+            if (_disableExternalCalls)
+            {
+                return string.Empty;
+            }
+
             var projectId = _configuration.GetValue<string>("AISettings:ProjectId");
             var location = _configuration.GetValue<string>("AISettings:Location");
             var model = _configuration.GetValue<string>("AISettings:Model") ?? "gemini-2.0-flash-exp";
@@ -2298,6 +2334,11 @@ Keywords:";
         {
             try
             {
+                if (_disableExternalCalls)
+                {
+                    return texts.Select(_ => string.Empty).ToList();
+                }
+
                 var projectId = _configuration.GetValue<string>("AISettings:ProjectId");
                 var location = _configuration.GetValue<string>("AISettings:Location");
                 

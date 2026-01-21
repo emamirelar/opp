@@ -232,12 +232,21 @@ public class Startup
         // Register authorization handlers
         ConfigureAuthorization(services);
 
-        // Get JWT secret from Secret Manager
-        var projectId = Configuration["AppConfig:ProjectId"];
-        var secretManager = SecretManagerServiceClient.Create();
-        var secretName = $"projects/{projectId}/secrets/Bearer_Auth_Secret/versions/latest";
-        var secret = secretManager.AccessSecretVersion(secretName);
-        var jwtSecret = secret.Payload.Data.ToStringUtf8();
+        // Get JWT secret from Secret Manager (skip in Testing environment)
+        string jwtSecret;
+        if (CurrentEnvironment.IsEnvironment("Testing"))
+        {
+            // Use a test JWT secret for testing environment
+            jwtSecret = "test-jwt-secret-key-for-integration-tests-minimum-32-characters-long";
+        }
+        else
+        {
+            var projectId = Configuration["AppConfig:ProjectId"];
+            var secretManager = SecretManagerServiceClient.Create();
+            var secretName = $"projects/{projectId}/secrets/Bearer_Auth_Secret/versions/latest";
+            var secret = secretManager.AccessSecretVersion(secretName);
+            jwtSecret = secret.Payload.Data.ToStringUtf8();
+        }
 
         // Configure authentication with support for both IAP and cookies
         // Skip IAP configuration in Testing environment - tests will configure their own
@@ -427,6 +436,9 @@ public class Startup
         
         // Register Secure Specification Factory for RBAC-aware database filtering
         services.AddScoped<ISecureSpecificationFactory, SecureSpecificationFactory>();
+        
+        // Register Exchange Rate Service for currency conversion
+        services.AddScoped<IExchangeRateService, ExchangeRateService>();
         
         // Register Google Credential for AI services
         services.AddSingleton<GoogleCredential>(provider =>

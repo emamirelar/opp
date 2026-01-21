@@ -31,12 +31,14 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     private readonly IServiceProvider _serviceProvider;
     private readonly IConfiguration configuration;
     private readonly IDbContextFactory<UNOPSAppDbContext> _dbContextFactory;
+    private readonly IExchangeRateService _exchangeRateService;
 
     public UNOPSOpportunityManager(
         IMapper mapper,
         AppDbContext context,
         IConfiguration configuration,
         IDbContextFactory<UNOPSAppDbContext> dbContextFactory,
+        IExchangeRateService exchangeRateService,
         IPermissionService permissionService = null,
         IHttpContextAccessor httpContextAccessor = null,
         IServiceProvider serviceProvider = null)
@@ -48,6 +50,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         this._serviceProvider = serviceProvider;
         this.configuration = configuration;
         this._dbContextFactory = dbContextFactory;
+        this._exchangeRateService = exchangeRateService;
         this.opportunityRepository = new BaseRepository<Opportunity>(this.uNOPSAppDbContext, configuration, serviceProvider);
     }
 
@@ -120,7 +123,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }
 
             // Use exchange rate service for currency conversion (same as ApplyAiChangesAsync)
-            var exchangeRateService = new ExchangeRateService(uNOPSAppDbContext);
             var fundingPartners = new List<OpportunityFundingPartner>();
             
             foreach (var fp in model.FundingPartners)
@@ -139,7 +141,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 {
                     try
                     {
-                        var conversionResult = await exchangeRateService.ConvertToUSDAsync(
+                        var conversionResult = await _exchangeRateService.ConvertToUSDAsync(
                             amount.Value, 
                             currency.Code ?? "USD"
                         );
@@ -1762,7 +1764,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }
 
             // Add new funding partners
-            var exchangeRateService = new ExchangeRateService(context);
             var fundingPartners = new List<OpportunityFundingPartner>();
             
             foreach (var fp in uniqueFundingPartners)
@@ -1793,7 +1794,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 {
                     try
                     {
-                        var conversionResult = await exchangeRateService.ConvertToUSDAsync(
+                        var conversionResult = await _exchangeRateService.ConvertToUSDAsync(
                             fp.Amount.Value, 
                             currency.Code ?? "USD"
                         );
@@ -2854,7 +2855,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }
 
             // Add new funding partners with amounts if provided - using exchange rate conversion
-            var exchangeRateService = new ExchangeRateService(context);
             var fundingPartners = new List<OpportunityFundingPartner>();
             
             foreach (var fp in request.FundingPartners)
@@ -2885,7 +2885,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 {
                     try
                     {
-                        var conversionResult = await exchangeRateService.ConvertToUSDAsync(
+                        var conversionResult = await _exchangeRateService.ConvertToUSDAsync(
                             amount.Value, 
                             currency.Code ?? "USD"
                         );

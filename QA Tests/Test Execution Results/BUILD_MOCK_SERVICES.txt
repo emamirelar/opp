@@ -1,0 +1,24 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  UNOPS.PAO.GoogleServices -> C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.GoogleServices\bin\Debug\net9.0\UNOPS.PAO.GoogleServices.dll
+  UNOPS.PAO.Identity -> C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Identity\bin\Debug\net9.0\UNOPS.PAO.Identity.dll
+  UNOPS.PAO.Domain -> C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Domain\bin\Debug\net9.0\UNOPS.PAO.Domain.dll
+  UNOPS.PAO.MailSender -> C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.MailSender\bin\Debug\net9.0\UNOPS.PAO.MailSender.dll
+  UNOPS.PAO.Models -> C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Models\bin\Debug\net9.0\UNOPS.PAO.Models.dll
+  UNOPS.PAO.UNOPSIdentity -> C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\bin\Debug\net9.0\UNOPS.PAO.UNOPSIdentity.dll
+  UNOPS.PAO.UNOPSDomain -> C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSDomain\bin\Debug\net9.0\UNOPS.PAO.UNOPSDomain.dll
+  UNOPS.PAO.DataAccess -> C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.DataAccess\bin\Debug\net9.0\UNOPS.PAO.DataAccess.dll
+  UNOPS.PAO.UNOPSDataAccess -> C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSDataAccess\bin\Debug\net9.0\UNOPS.PAO.UNOPSDataAccess.dll
+  UNOPS.PAO.Utilities -> C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Utilities\bin\Debug\net9.0\UNOPS.PAO.Utilities.dll
+  UNOPS.PAO.Business -> C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Business\bin\Debug\net9.0\UNOPS.PAO.Business.dll
+  UNOPS.PAO.UNOPSBusiness -> C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\bin\Debug\net9.0\UNOPS.PAO.UNOPSBusiness.dll
+  UNOPS.PAO.Presentation -> C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Presentation\bin\Debug\net9.0\UNOPS.PAO.Presentation.dll
+  UNOPS.PAO.UNOPSPresentation -> C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSPresentation\bin\Debug\net9.0\UNOPS.PAO.UNOPSPresentation.dll
+  UNOPS.PAO.Server -> C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\bin\Debug\net9.0\UNOPS.PAO.Server.dll
+  UNOPS.PAO.IntegrationTests -> C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\bin\Debug\net9.0\UNOPS.PAO.IntegrationTests.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:32.38

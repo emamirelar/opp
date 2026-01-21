@@ -1,0 +1,1206 @@
+Test run for C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\bin\Debug\net9.0\UNOPS.PAO.IntegrationTests.dll (.NETCoreApp,Version=v9.0)
+VSTest version 17.14.1 (x64)
+
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:05.22]     UNOPS.PAO.IntegrationTests.UnitTests.Managers.UNOPSPartnerManagerOrgUnitTests.GetPartnersWithSpecification_WithLeafOrgUnitId_ReturnsOnlyLeafPartners [SKIP]
+[xUnit.net 00:00:05.23]     UNOPS.PAO.IntegrationTests.UnitTests.Managers.UNOPSPartnerManagerOrgUnitTests.GetPartnersWithSpecification_WithoutOrgUnitId_ReturnsAll [SKIP]
+[xUnit.net 00:00:05.23]     UNOPS.PAO.IntegrationTests.UnitTests.Managers.UNOPSPartnerManagerOrgUnitTests.GetPartnersWithSpecification_OrgUnitHierarchyServiceNull_LogsWarningAndReturnsAll [SKIP]
+[xUnit.net 00:00:05.23]     UNOPS.PAO.IntegrationTests.UnitTests.Managers.UNOPSPartnerManagerOrgUnitTests.GetPartnersWithSpecification_WithInvalidOrgUnitId_ReturnsEmpty [SKIP]
+[xUnit.net 00:00:05.23]     UNOPS.PAO.IntegrationTests.UnitTests.Managers.UNOPSPartnerManagerOrgUnitTests.GetPartnersWithSpecification_WithOrgUnitIdAndOtherFilters_AppliesAllFilters [SKIP]
+[xUnit.net 00:00:05.23]     UNOPS.PAO.IntegrationTests.UnitTests.Managers.UNOPSPartnerManagerOrgUnitTests.GetPartnersWithSpecification_WithOrgUnitId_FiltersCorrectly [SKIP]
+[xUnit.net 00:00:05.23]     UNOPS.PAO.IntegrationTests.Controllers.AuthenticationBypassTest.TestRootEndpoint_Works [SKIP]
+[xUnit.net 00:00:05.23]     UNOPS.PAO.IntegrationTests.Controllers.AuthenticationBypassTest.TestAuthenticationBypass_ReturnsNotFound_NotUnauthorized [SKIP]
+  Skipped UNOPS.PAO.IntegrationTests.UnitTests.Managers.UNOPSPartnerManagerOrgUnitTests.GetPartnersWithSpecification_WithLeafOrgUnitId_ReturnsOnlyLeafPartners [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.UnitTests.Managers.UNOPSPartnerManagerOrgUnitTests.GetPartnersWithSpecification_WithoutOrgUnitId_ReturnsAll [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.UnitTests.Managers.UNOPSPartnerManagerOrgUnitTests.GetPartnersWithSpecification_OrgUnitHierarchyServiceNull_LogsWarningAndReturnsAll [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.UnitTests.Managers.UNOPSPartnerManagerOrgUnitTests.GetPartnersWithSpecification_WithInvalidOrgUnitId_ReturnsEmpty [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.UnitTests.Managers.UNOPSPartnerManagerOrgUnitTests.GetPartnersWithSpecification_WithOrgUnitIdAndOtherFilters_AppliesAllFilters [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.UnitTests.Managers.UNOPSPartnerManagerOrgUnitTests.GetPartnersWithSpecification_WithOrgUnitId_FiltersCorrectly [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.AuthenticationBypassTest.TestRootEndpoint_Works [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.AuthenticationBypassTest.TestAuthenticationBypass_ReturnsNotFound_NotUnauthorized [1 ms]
+[xUnit.net 00:00:05.27]     UNOPS.PAO.IntegrationTests.Controllers.InteractionControllerOrgUnitTests.GetInteractions_WithOrgUnitIdFilter_ShouldAcceptParameter [SKIP]
+[xUnit.net 00:00:05.27]     UNOPS.PAO.IntegrationTests.Controllers.InteractionControllerOrgUnitTests.GetInteractions_WithOrgUnitIdAndSearchText_ShouldAcceptBothParameters [SKIP]
+[xUnit.net 00:00:05.28]     UNOPS.PAO.IntegrationTests.Controllers.InteractionControllerOrgUnitTests.GetInteractions_WithOrgUnitIdInAdvancedSearch_ShouldWork [SKIP]
+[xUnit.net 00:00:05.28]     UNOPS.PAO.IntegrationTests.UnitTests.Specifications.ContactByOrgUnitHierarchySpecificationTests.Criteria_FiltersContactsByPartnerOrgUnit [SKIP]
+[xUnit.net 00:00:05.28]     UNOPS.PAO.IntegrationTests.UnitTests.Specifications.ContactByOrgUnitHierarchySpecificationTests.Criteria_ExcludesContactsWherePartnerHasNullOfficeId [SKIP]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.InteractionControllerOrgUnitTests.GetInteractions_WithOrgUnitIdFilter_ShouldAcceptParameter [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.InteractionControllerOrgUnitTests.GetInteractions_WithOrgUnitIdAndSearchText_ShouldAcceptBothParameters [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.InteractionControllerOrgUnitTests.GetInteractions_WithOrgUnitIdInAdvancedSearch_ShouldWork [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.UnitTests.Specifications.ContactByOrgUnitHierarchySpecificationTests.Criteria_FiltersContactsByPartnerOrgUnit [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.UnitTests.Specifications.ContactByOrgUnitHierarchySpecificationTests.Criteria_ExcludesContactsWherePartnerHasNullOfficeId [1 ms]
+[xUnit.net 00:00:06.56]     UNOPS.PAO.IntegrationTests.UnitTests.Specifications.PartnerByOrgUnitWithRelationsSpecificationTests.Criteria_FiltersPartnersByBothDirectAndIndirectRelations [SKIP]
+[xUnit.net 00:00:06.56]     UNOPS.PAO.IntegrationTests.UnitTests.Specifications.PartnerByOrgUnitWithRelationsSpecificationTests.Criteria_FiltersPartnersByIndirectContactRelation [SKIP]
+  Skipped UNOPS.PAO.IntegrationTests.UnitTests.Specifications.PartnerByOrgUnitWithRelationsSpecificationTests.Criteria_FiltersPartnersByBothDirectAndIndirectRelations [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.UnitTests.Specifications.PartnerByOrgUnitWithRelationsSpecificationTests.Criteria_FiltersPartnersByIndirectContactRelation [1 ms]
+[xUnit.net 00:00:15.92]     UNOPS.PAO.IntegrationTests.UnitTests.Specifications.ContactByOrgUnitHierarchySpecificationTests.Criteria_WithMultipleOrgUnitIds_FiltersCorrectly [SKIP]
+[xUnit.net 00:00:16.00]     UNOPS.PAO.IntegrationTests.UnitTests.Specifications.PartnerByOrgUnitWithRelationsSpecificationTests.Criteria_FiltersPartnersByDirectOrgUnitLink [SKIP]
+[xUnit.net 00:00:16.00]     UNOPS.PAO.IntegrationTests.UnitTests.Specifications.PartnerByOrgUnitWithRelationsSpecificationTests.Criteria_WithMultipleUserIds_FiltersCorrectly [SKIP]
+[xUnit.net 00:00:16.00]     UNOPS.PAO.IntegrationTests.UnitTests.Specifications.PartnerByOrgUnitWithRelationsSpecificationTests.Criteria_WithMultipleOrgUnitIds_FiltersCorrectly [SKIP]
+  Skipped UNOPS.PAO.IntegrationTests.UnitTests.Specifications.ContactByOrgUnitHierarchySpecificationTests.Criteria_WithMultipleOrgUnitIds_FiltersCorrectly [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.UnitTests.Specifications.PartnerByOrgUnitWithRelationsSpecificationTests.Criteria_FiltersPartnersByDirectOrgUnitLink [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.UnitTests.Specifications.PartnerByOrgUnitWithRelationsSpecificationTests.Criteria_WithMultipleUserIds_FiltersCorrectly [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.UnitTests.Specifications.PartnerByOrgUnitWithRelationsSpecificationTests.Criteria_WithMultipleOrgUnitIds_FiltersCorrectly [1 ms]
+[xUnit.net 00:00:16.21]     UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers.PartnerControllerOrgUnitFilterTests.GetAll_WithOrgUnitHierarchy_IncludesChildOrgUnits [SKIP]
+[xUnit.net 00:00:16.21]     UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers.PartnerControllerOrgUnitFilterTests.GetAll_WithOrgUnitId_FiltersPartnersByOrgUnit [SKIP]
+[xUnit.net 00:00:16.21]     UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers.PartnerControllerOrgUnitFilterTests.GetAll_WithoutOrgUnitId_ReturnsAllAccessiblePartners [SKIP]
+[xUnit.net 00:00:16.21]     UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers.PartnerControllerOrgUnitFilterTests.GetAll_WithTextSearchAndOrgUnitId_CombinesFilters [SKIP]
+[xUnit.net 00:00:16.21]     UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers.PartnerControllerOrgUnitFilterTests.GetAll_WithAdvancedSearchAndOrgUnitId_CombinesFilters [SKIP]
+[xUnit.net 00:00:16.21]     UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers.PartnerControllerOrgUnitFilterTests.GetAll_WithIndirectRelations_IncludesPartnersViaContacts [SKIP]
+  Skipped UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers.PartnerControllerOrgUnitFilterTests.GetAll_WithOrgUnitHierarchy_IncludesChildOrgUnits [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers.PartnerControllerOrgUnitFilterTests.GetAll_WithOrgUnitId_FiltersPartnersByOrgUnit [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers.PartnerControllerOrgUnitFilterTests.GetAll_WithoutOrgUnitId_ReturnsAllAccessiblePartners [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers.PartnerControllerOrgUnitFilterTests.GetAll_WithTextSearchAndOrgUnitId_CombinesFilters [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers.PartnerControllerOrgUnitFilterTests.GetAll_WithAdvancedSearchAndOrgUnitId_CombinesFilters [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers.PartnerControllerOrgUnitFilterTests.GetAll_WithIndirectRelations_IncludesPartnersViaContacts [1 ms]
+[xUnit.net 00:00:19.64]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerOrgUnitTests.GetAll_WithOrgUnitIdFilter_ReturnsPartnersFromOrgUnitAndDescendants [SKIP]
+[xUnit.net 00:00:19.64]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerOrgUnitTests.GetAll_WithOrgUnitIdAndNameFilter_AppliesBothFilters [SKIP]
+[xUnit.net 00:00:19.64]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerOrgUnitTests.GetAll_WithNonExistentOrgUnitId_ReturnsEmptyResult [SKIP]
+[xUnit.net 00:00:19.64]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerOrgUnitTests.GetAll_WithOrgUnitIdFilter_LeafNode_ReturnsOnlyLeafPartners [SKIP]
+[xUnit.net 00:00:19.64]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerOrgUnitTests.GetAll_WithOrgUnitIdButNoPartners_ReturnsEmptyResult [SKIP]
+[xUnit.net 00:00:19.64]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerOrgUnitTests.GetAll_WithOrgUnitIdFilter_MiddleLevel_ReturnsPartnersFromSubtree [SKIP]
+[xUnit.net 00:00:19.64]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerOrgUnitTests.GetAll_WithOrgUnitIdAndSearchText_FiltersCorrectly [SKIP]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerOrgUnitTests.GetAll_WithOrgUnitIdFilter_ReturnsPartnersFromOrgUnitAndDescendants [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerOrgUnitTests.GetAll_WithOrgUnitIdAndNameFilter_AppliesBothFilters [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerOrgUnitTests.GetAll_WithNonExistentOrgUnitId_ReturnsEmptyResult [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerOrgUnitTests.GetAll_WithOrgUnitIdFilter_LeafNode_ReturnsOnlyLeafPartners [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerOrgUnitTests.GetAll_WithOrgUnitIdButNoPartners_ReturnsEmptyResult [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerOrgUnitTests.GetAll_WithOrgUnitIdFilter_MiddleLevel_ReturnsPartnersFromSubtree [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerOrgUnitTests.GetAll_WithOrgUnitIdAndSearchText_FiltersCorrectly [1 ms]
+[xUnit.net 00:00:19.64]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerOrgUnitTests.GetAll_WithOrgUnitIdAndStatusFilter_AppliesBothFilters [SKIP]
+[xUnit.net 00:00:19.64]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerOrgUnitTests.GetAll_WithOrgUnitIdAndPagination_ReturnsCorrectPage [SKIP]
+[xUnit.net 00:00:19.64]     UNOPS.PAO.IntegrationTests.Controllers.ContactControllerOrgUnitTests.GetAll_WithOrgUnitIdAndPagination_ReturnsCorrectPage [SKIP]
+[xUnit.net 00:00:19.65]     UNOPS.PAO.IntegrationTests.Controllers.ContactControllerOrgUnitTests.GetAll_WithOrgUnitIdAndNameFilter_AppliesBothFilters [SKIP]
+[xUnit.net 00:00:19.65]     UNOPS.PAO.IntegrationTests.Controllers.ContactControllerOrgUnitTests.GetAll_WithOrgUnitIdFilter_ReturnsContactsFromOrgUnitAndDescendants [SKIP]
+[xUnit.net 00:00:19.65]     UNOPS.PAO.IntegrationTests.Controllers.ContactControllerOrgUnitTests.GetAll_WithOrgUnitIdFilter_LeafNode_ReturnsOnlyLeafContacts [SKIP]
+[xUnit.net 00:00:19.65]     UNOPS.PAO.IntegrationTests.Controllers.ContactControllerOrgUnitTests.GetAll_WithNonExistentOrgUnitId_ReturnsEmptyResult [SKIP]
+[xUnit.net 00:00:19.65]     UNOPS.PAO.IntegrationTests.Controllers.ContactControllerOrgUnitTests.GetAll_WithOrgUnitIdAndStatusFilter_AppliesBothFilters [SKIP]
+[xUnit.net 00:00:19.65]     UNOPS.PAO.IntegrationTests.Controllers.ContactControllerOrgUnitTests.GetAll_WithOrgUnitIdAndAdvancedSearch_FiltersCorrectly [SKIP]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerOrgUnitTests.GetAll_WithOrgUnitIdAndStatusFilter_AppliesBothFilters [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerOrgUnitTests.GetAll_WithOrgUnitIdAndPagination_ReturnsCorrectPage [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.ContactControllerOrgUnitTests.GetAll_WithOrgUnitIdAndPagination_ReturnsCorrectPage [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.ContactControllerOrgUnitTests.GetAll_WithOrgUnitIdAndNameFilter_AppliesBothFilters [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.ContactControllerOrgUnitTests.GetAll_WithOrgUnitIdFilter_ReturnsContactsFromOrgUnitAndDescendants [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.ContactControllerOrgUnitTests.GetAll_WithOrgUnitIdFilter_LeafNode_ReturnsOnlyLeafContacts [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.ContactControllerOrgUnitTests.GetAll_WithNonExistentOrgUnitId_ReturnsEmptyResult [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.ContactControllerOrgUnitTests.GetAll_WithOrgUnitIdAndStatusFilter_AppliesBothFilters [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.ContactControllerOrgUnitTests.GetAll_WithOrgUnitIdAndAdvancedSearch_FiltersCorrectly [1 ms]
+[xUnit.net 00:00:19.66]     UNOPS.PAO.IntegrationTests.Controllers.ContactControllerOrgUnitTests.GetAll_WithOrgUnitIdButNoContacts_ReturnsEmptyResult [SKIP]
+[xUnit.net 00:00:19.66]     UNOPS.PAO.IntegrationTests.Controllers.ContactControllerOrgUnitTests.GetAll_WithOrgUnitIdFilter_MiddleLevel_ReturnsContactsFromSubtree [SKIP]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.ContactControllerOrgUnitTests.GetAll_WithOrgUnitIdButNoContacts_ReturnsEmptyResult [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.ContactControllerOrgUnitTests.GetAll_WithOrgUnitIdFilter_MiddleLevel_ReturnsContactsFromSubtree [1 ms]
+[xUnit.net 00:00:25.76]     UNOPS.PAO.IntegrationTests.UnitTests.Managers.UNOPSPartnerManagerTests.GetPartnersWithSpecificationAsync_WithOrgUnitIdButNoHierarchy_IncludesIndirectRelations [FAIL]
+[xUnit.net 00:00:26.14]     UNOPS.PAO.IntegrationTests.UnitTests.Managers.UNOPSPartnerManagerTests.GetPartnersWithSpecificationAsync_WithOrgUnitIdAndOtherFilters_AppliesSpecificationOnly [FAIL]
+  Failed UNOPS.PAO.IntegrationTests.UnitTests.Managers.UNOPSPartnerManagerTests.GetPartnersWithSpecificationAsync_WithOrgUnitIdButNoHierarchy_IncludesIndirectRelations [825 ms]
+  Error Message:
+   Expected response!.TotalCount to be 1, but found 2.
+  Stack Trace:
+     at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+   at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+   at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+   at FluentAssertions.Numeric.NumericAssertions`2.Be(T expected, String because, Object[] becauseArgs)
+   at UNOPS.PAO.IntegrationTests.UnitTests.Managers.UNOPSPartnerManagerTests.GetPartnersWithSpecificationAsync_WithOrgUnitIdButNoHierarchy_IncludesIndirectRelations() in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\UnitTests\Managers\UNOPSPartnerManagerTests.cs:line 376
+--- End of stack trace from previous location ---
+  Failed UNOPS.PAO.IntegrationTests.UnitTests.Managers.UNOPSPartnerManagerTests.GetPartnersWithSpecificationAsync_WithOrgUnitIdAndOtherFilters_AppliesSpecificationOnly [17 ms]
+  Error Message:
+   Expected response!.TotalCount to be 3, but found 4.
+  Stack Trace:
+     at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+   at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+   at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+   at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+   at FluentAssertions.Numeric.NumericAssertions`2.Be(T expected, String because, Object[] becauseArgs)
+   at UNOPS.PAO.IntegrationTests.UnitTests.Managers.UNOPSPartnerManagerTests.GetPartnersWithSpecificationAsync_WithOrgUnitIdAndOtherFilters_AppliesSpecificationOnly() in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\UnitTests\Managers\UNOPSPartnerManagerTests.cs:line 320
+--- End of stack trace from previous location ---
+[xUnit.net 00:00:30.86]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_BooleanSearch_ReturnsCorrectResults [FAIL]
+  Failed UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_BooleanSearch_ReturnsCorrectResults [1 ms]
+  Error Message:
+   System.AggregateException : One or more errors occurred. (Required properties '{'Name'}' are missing for the instance of entity type 'Contact' with the key value '{Id: 3}'.)
+---- Microsoft.EntityFrameworkCore.DbUpdateException : Required properties '{'Name'}' are missing for the instance of entity type 'Contact' with the key value '{Id: 3}'.
+  Stack Trace:
+     at System.Threading.Tasks.Task.ThrowIfExceptional(Boolean includeTaskCanceledExceptions)
+   at System.Threading.Tasks.Task.Wait(Int32 millisecondsTimeout, CancellationToken cancellationToken)
+   at System.Threading.Tasks.Task.Wait()
+   at UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests..ctor(PAOWebApplicationFactory`1 factory) in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Controllers\PartnerControllerTests.cs:line 29
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+----- Inner Stack Trace -----
+   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryTable`1.ThrowNullabilityErrorException(IUpdateEntry entry, IList`1 nullabilityErrors)
+   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryTable`1.Create(IUpdateEntry entry, IDiagnosticsLogger`1 updateLogger)
+   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryStore.ExecuteTransaction(IList`1 entries, IDiagnosticsLogger`1 updateLogger)
+   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at UNOPS.PAO.DataAccess.Context.AuditableDbContext`2.SaveChangesAsync(CancellationToken cancellationToken) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.DataAccess\Context\AuditableDbContext.cs:line 35
+   at UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.SeedTestPartners() in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Controllers\PartnerControllerTests.cs:line 111
+[xUnit.net 00:00:33.54]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_CombinedNestedAndDirectSimilarity_ComplexSearch [FAIL]
+  Failed UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_CombinedNestedAndDirectSimilarity_ComplexSearch [2 s]
+  Error Message:
+   System.ArgumentNullException : Value cannot be null. (Parameter 'credentialParameters')
+  Stack Trace:
+     at Google.Apis.Util.Utilities.ThrowIfNull[T](T obj, String paramName)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromParameters(JsonCredentialParameters credentialParameters)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromJson(String json)
+   at Google.Apis.Auth.OAuth2.GoogleCredential.FromJson(String json)
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager.GetCredentials() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 191
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager..ctor(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger`1 logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager`1 userManager, RoleManager`1 roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 108
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSManagerWrapper..ctor(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration, UserManager`1 userManager, RoleManager`1 roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSManagerWrapper.cs:line 74
+   at (ArrayClosure, Scope)
+   at Lamar.IoC.Instances.GeneratedInstance.<>c__DisplayClass9_1.<BuildFuncResolver>b__0(Scope s)
+   at Lamar.IoC.Scope.TryGetInstance(Type serviceType)
+   at Lamar.IoC.Scope.GetService(Type serviceType)
+   at lambda_method4719(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at UNOPS.PAO.Server.Startup.<>c.<<Configure>b__7_6>d.MoveNext() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Startup.cs:line 159
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at UNOPS.PAO.UNOPSIdentity.Authentication.IAPVerificationMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\Authentication\IAPVerificationMiddleware.cs:line 373
+   at UNOPS.PAO.Server.Infrastructure.AuthenticationLoggingMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Infrastructure\AuthenticationLoggingMiddleware.cs:line 77
+   at Microsoft.AspNetCore.TestHost.HttpContextBuilder.<>c__DisplayClass23_0.<<SendAsync>g__RunRequestAsync|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.TestHost.ClientHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Mvc.Testing.Handlers.CookieContainerHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at UNOPS.PAO.IntegrationTests.Infrastructure.IntegrationTestBase.GetAsync(String url) in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Infrastructure\IntegrationTestBase.cs:line 53
+   at UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_CombinedNestedAndDirectSimilarity_ComplexSearch() in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Controllers\PartnerControllerTests.cs:line 1182
+--- End of stack trace from previous location ---
+[xUnit.net 00:00:33.54]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_StatusAndName_ReturnsIntersection [SKIP]
+[xUnit.net 00:00:33.78]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_CollectionPropertySimilarity_FindsTyposInContactNames [FAIL]
+[xUnit.net 00:00:33.98]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_PaginationWorks_ReturnsCorrectPage [FAIL]
+[xUnit.net 00:00:34.05]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_MultipleAndConditions_ReturnsCorrectResults [FAIL]
+[xUnit.net 00:00:34.05]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_InvalidPageIndex_ReturnsError [SKIP]
+[xUnit.net 00:00:34.13]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_MultipleCollectionPropertiesSimilarity_TestsAllContactFields [FAIL]
+[xUnit.net 00:00:34.31]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_DeepNestedPropertySimilarity_HandlesComplexPaths [FAIL]
+[xUnit.net 00:00:34.35]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_CollectionPropertyEmail_SimilaritySearch [FAIL]
+[xUnit.net 00:00:34.50]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_InvalidFieldName_ReturnsError [FAIL]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_StatusAndName_ReturnsIntersection [1 ms]
+  Failed UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_CollectionPropertySimilarity_FindsTyposInContactNames [235 ms]
+  Error Message:
+   System.ArgumentNullException : Value cannot be null. (Parameter 'credentialParameters')
+  Stack Trace:
+     at Google.Apis.Util.Utilities.ThrowIfNull[T](T obj, String paramName)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromParameters(JsonCredentialParameters credentialParameters)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromJson(String json)
+   at Google.Apis.Auth.OAuth2.GoogleCredential.FromJson(String json)
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager.GetCredentials() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 191
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager..ctor(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger`1 logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager`1 userManager, RoleManager`1 roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 108
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSManagerWrapper..ctor(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration, UserManager`1 userManager, RoleManager`1 roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSManagerWrapper.cs:line 74
+   at (ArrayClosure, Scope)
+   at Lamar.IoC.Instances.GeneratedInstance.<>c__DisplayClass9_1.<BuildFuncResolver>b__0(Scope s)
+   at Lamar.IoC.Scope.TryGetInstance(Type serviceType)
+   at Lamar.IoC.Scope.GetService(Type serviceType)
+   at lambda_method4719(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at UNOPS.PAO.Server.Startup.<>c.<<Configure>b__7_6>d.MoveNext() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Startup.cs:line 159
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at UNOPS.PAO.UNOPSIdentity.Authentication.IAPVerificationMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\Authentication\IAPVerificationMiddleware.cs:line 373
+   at UNOPS.PAO.Server.Infrastructure.AuthenticationLoggingMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Infrastructure\AuthenticationLoggingMiddleware.cs:line 77
+   at Microsoft.AspNetCore.TestHost.HttpContextBuilder.<>c__DisplayClass23_0.<<SendAsync>g__RunRequestAsync|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.TestHost.ClientHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Mvc.Testing.Handlers.CookieContainerHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at UNOPS.PAO.IntegrationTests.Infrastructure.IntegrationTestBase.GetAsync(String url) in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Infrastructure\IntegrationTestBase.cs:line 53
+   at UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_CollectionPropertySimilarity_FindsTyposInContactNames() in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Controllers\PartnerControllerTests.cs:line 1059
+--- End of stack trace from previous location ---
+  Failed UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_PaginationWorks_ReturnsCorrectPage [199 ms]
+  Error Message:
+   System.ArgumentNullException : Value cannot be null. (Parameter 'credentialParameters')
+  Stack Trace:
+     at Google.Apis.Util.Utilities.ThrowIfNull[T](T obj, String paramName)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromParameters(JsonCredentialParameters credentialParameters)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromJson(String json)
+   at Google.Apis.Auth.OAuth2.GoogleCredential.FromJson(String json)
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager.GetCredentials() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 191
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager..ctor(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger`1 logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager`1 userManager, RoleManager`1 roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 108
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSManagerWrapper..ctor(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration, UserManager`1 userManager, RoleManager`1 roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSManagerWrapper.cs:line 74
+   at (ArrayClosure, Scope)
+   at Lamar.IoC.Instances.GeneratedInstance.<>c__DisplayClass9_1.<BuildFuncResolver>b__0(Scope s)
+   at Lamar.IoC.Scope.TryGetInstance(Type serviceType)
+   at Lamar.IoC.Scope.GetService(Type serviceType)
+   at lambda_method4719(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at UNOPS.PAO.Server.Startup.<>c.<<Configure>b__7_6>d.MoveNext() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Startup.cs:line 159
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at UNOPS.PAO.UNOPSIdentity.Authentication.IAPVerificationMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\Authentication\IAPVerificationMiddleware.cs:line 373
+   at UNOPS.PAO.Server.Infrastructure.AuthenticationLoggingMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Infrastructure\AuthenticationLoggingMiddleware.cs:line 77
+   at Microsoft.AspNetCore.TestHost.HttpContextBuilder.<>c__DisplayClass23_0.<<SendAsync>g__RunRequestAsync|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.TestHost.ClientHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Mvc.Testing.Handlers.CookieContainerHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at UNOPS.PAO.IntegrationTests.Infrastructure.IntegrationTestBase.GetAsync(String url) in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Infrastructure\IntegrationTestBase.cs:line 53
+   at UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_PaginationWorks_ReturnsCorrectPage() in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Controllers\PartnerControllerTests.cs:line 905
+--- End of stack trace from previous location ---
+  Failed UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_MultipleAndConditions_ReturnsCorrectResults [64 ms]
+  Error Message:
+   System.ArgumentNullException : Value cannot be null. (Parameter 'credentialParameters')
+  Stack Trace:
+     at Google.Apis.Util.Utilities.ThrowIfNull[T](T obj, String paramName)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromParameters(JsonCredentialParameters credentialParameters)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromJson(String json)
+   at Google.Apis.Auth.OAuth2.GoogleCredential.FromJson(String json)
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager.GetCredentials() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 191
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager..ctor(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger`1 logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager`1 userManager, RoleManager`1 roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 108
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSManagerWrapper..ctor(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration, UserManager`1 userManager, RoleManager`1 roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSManagerWrapper.cs:line 74
+   at (ArrayClosure, Scope)
+   at Lamar.IoC.Instances.GeneratedInstance.<>c__DisplayClass9_1.<BuildFuncResolver>b__0(Scope s)
+   at Lamar.IoC.Scope.TryGetInstance(Type serviceType)
+   at Lamar.IoC.Scope.GetService(Type serviceType)
+   at lambda_method4719(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at UNOPS.PAO.Server.Startup.<>c.<<Configure>b__7_6>d.MoveNext() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Startup.cs:line 159
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at UNOPS.PAO.UNOPSIdentity.Authentication.IAPVerificationMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\Authentication\IAPVerificationMiddleware.cs:line 373
+   at UNOPS.PAO.Server.Infrastructure.AuthenticationLoggingMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Infrastructure\AuthenticationLoggingMiddleware.cs:line 77
+   at Microsoft.AspNetCore.TestHost.HttpContextBuilder.<>c__DisplayClass23_0.<<SendAsync>g__RunRequestAsync|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.TestHost.ClientHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Mvc.Testing.Handlers.CookieContainerHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at UNOPS.PAO.IntegrationTests.Infrastructure.IntegrationTestBase.GetAsync(String url) in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Infrastructure\IntegrationTestBase.cs:line 53
+   at UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_MultipleAndConditions_ReturnsCorrectResults() in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Controllers\PartnerControllerTests.cs:line 618
+--- End of stack trace from previous location ---
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_InvalidPageIndex_ReturnsError [1 ms]
+  Failed UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_MultipleCollectionPropertiesSimilarity_TestsAllContactFields [80 ms]
+  Error Message:
+   System.ArgumentNullException : Value cannot be null. (Parameter 'credentialParameters')
+  Stack Trace:
+     at Google.Apis.Util.Utilities.ThrowIfNull[T](T obj, String paramName)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromParameters(JsonCredentialParameters credentialParameters)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromJson(String json)
+   at Google.Apis.Auth.OAuth2.GoogleCredential.FromJson(String json)
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager.GetCredentials() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 191
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager..ctor(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger`1 logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager`1 userManager, RoleManager`1 roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 108
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSManagerWrapper..ctor(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration, UserManager`1 userManager, RoleManager`1 roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSManagerWrapper.cs:line 74
+   at (ArrayClosure, Scope)
+   at Lamar.IoC.Instances.GeneratedInstance.<>c__DisplayClass9_1.<BuildFuncResolver>b__0(Scope s)
+   at Lamar.IoC.Scope.TryGetInstance(Type serviceType)
+   at Lamar.IoC.Scope.GetService(Type serviceType)
+   at lambda_method4719(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at UNOPS.PAO.Server.Startup.<>c.<<Configure>b__7_6>d.MoveNext() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Startup.cs:line 159
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at UNOPS.PAO.UNOPSIdentity.Authentication.IAPVerificationMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\Authentication\IAPVerificationMiddleware.cs:line 373
+   at UNOPS.PAO.Server.Infrastructure.AuthenticationLoggingMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Infrastructure\AuthenticationLoggingMiddleware.cs:line 77
+   at Microsoft.AspNetCore.TestHost.HttpContextBuilder.<>c__DisplayClass23_0.<<SendAsync>g__RunRequestAsync|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.TestHost.ClientHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Mvc.Testing.Handlers.CookieContainerHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at UNOPS.PAO.IntegrationTests.Infrastructure.IntegrationTestBase.GetAsync(String url) in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Infrastructure\IntegrationTestBase.cs:line 53
+   at UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_MultipleCollectionPropertiesSimilarity_TestsAllContactFields() in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Controllers\PartnerControllerTests.cs:line 1222
+--- End of stack trace from previous location ---
+  Failed UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_DeepNestedPropertySimilarity_HandlesComplexPaths [179 ms]
+  Error Message:
+   System.ArgumentNullException : Value cannot be null. (Parameter 'credentialParameters')
+  Stack Trace:
+     at Google.Apis.Util.Utilities.ThrowIfNull[T](T obj, String paramName)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromParameters(JsonCredentialParameters credentialParameters)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromJson(String json)
+   at Google.Apis.Auth.OAuth2.GoogleCredential.FromJson(String json)
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager.GetCredentials() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 191
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager..ctor(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger`1 logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager`1 userManager, RoleManager`1 roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 108
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSManagerWrapper..ctor(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration, UserManager`1 userManager, RoleManager`1 roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSManagerWrapper.cs:line 74
+   at (ArrayClosure, Scope)
+   at Lamar.IoC.Instances.GeneratedInstance.<>c__DisplayClass9_1.<BuildFuncResolver>b__0(Scope s)
+   at Lamar.IoC.Scope.TryGetInstance(Type serviceType)
+   at Lamar.IoC.Scope.GetService(Type serviceType)
+   at lambda_method4719(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at UNOPS.PAO.Server.Startup.<>c.<<Configure>b__7_6>d.MoveNext() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Startup.cs:line 159
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at UNOPS.PAO.UNOPSIdentity.Authentication.IAPVerificationMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\Authentication\IAPVerificationMiddleware.cs:line 373
+   at UNOPS.PAO.Server.Infrastructure.AuthenticationLoggingMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Infrastructure\AuthenticationLoggingMiddleware.cs:line 77
+   at Microsoft.AspNetCore.TestHost.HttpContextBuilder.<>c__DisplayClass23_0.<<SendAsync>g__RunRequestAsync|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.TestHost.ClientHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Mvc.Testing.Handlers.CookieContainerHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at UNOPS.PAO.IntegrationTests.Infrastructure.IntegrationTestBase.GetAsync(String url) in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Infrastructure\IntegrationTestBase.cs:line 53
+   at UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_DeepNestedPropertySimilarity_HandlesComplexPaths() in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Controllers\PartnerControllerTests.cs:line 1118
+--- End of stack trace from previous location ---
+  Failed UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_CollectionPropertyEmail_SimilaritySearch [37 ms]
+  Error Message:
+   System.ArgumentNullException : Value cannot be null. (Parameter 'credentialParameters')
+  Stack Trace:
+     at Google.Apis.Util.Utilities.ThrowIfNull[T](T obj, String paramName)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromParameters(JsonCredentialParameters credentialParameters)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromJson(String json)
+   at Google.Apis.Auth.OAuth2.GoogleCredential.FromJson(String json)
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager.GetCredentials() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 191
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager..ctor(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger`1 logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager`1 userManager, RoleManager`1 roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 108
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSManagerWrapper..ctor(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration, UserManager`1 userManager, RoleManager`1 roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSManagerWrapper.cs:line 74
+   at (ArrayClosure, Scope)
+   at Lamar.IoC.Instances.GeneratedInstance.<>c__DisplayClass9_1.<BuildFuncResolver>b__0(Scope s)
+   at Lamar.IoC.Scope.TryGetInstance(Type serviceType)
+   at Lamar.IoC.Scope.GetService(Type serviceType)
+   at lambda_method4719(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at UNOPS.PAO.Server.Startup.<>c.<<Configure>b__7_6>d.MoveNext() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Startup.cs:line 159
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at UNOPS.PAO.UNOPSIdentity.Authentication.IAPVerificationMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\Authentication\IAPVerificationMiddleware.cs:line 373
+   at UNOPS.PAO.Server.Infrastructure.AuthenticationLoggingMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Infrastructure\AuthenticationLoggingMiddleware.cs:line 77
+   at Microsoft.AspNetCore.TestHost.HttpContextBuilder.<>c__DisplayClass23_0.<<SendAsync>g__RunRequestAsync|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.TestHost.ClientHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Mvc.Testing.Handlers.CookieContainerHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at UNOPS.PAO.IntegrationTests.Infrastructure.IntegrationTestBase.GetAsync(String url) in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Infrastructure\IntegrationTestBase.cs:line 53
+   at UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_CollectionPropertyEmail_SimilaritySearch() in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Controllers\PartnerControllerTests.cs:line 1144
+--- End of stack trace from previous location ---
+  Failed UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_InvalidFieldName_ReturnsError [147 ms]
+  Error Message:
+   System.ArgumentNullException : Value cannot be null. (Parameter 'credentialParameters')
+  Stack Trace:
+     at Google.Apis.Util.Utilities.ThrowIfNull[T](T obj, String paramName)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromParameters(JsonCredentialParameters credentialParameters)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromJson(String json)
+   at Google.Apis.Auth.OAuth2.GoogleCredential.FromJson(String json)
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager.GetCredentials() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 191
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager..ctor(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger`1 logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager`1 userManager, RoleManager`1 roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 108
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSManagerWrapper..ctor(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration, UserManager`1 userManager, RoleManager`1 roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSManagerWrapper.cs:line 74
+   at (ArrayClosure, Scope)
+   at Lamar.IoC.Instances.GeneratedInstance.<>c__DisplayClass9_1.<BuildFuncResolver>b__0(Scope s)
+   at Lamar.IoC.Scope.TryGetInstance(Type serviceType)
+   at Lamar.IoC.Scope.GetService(Type serviceType)
+   at lambda_method4719(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at UNOPS.PAO.Server.Startup.<>c.<<Configure>b__7_6>d.MoveNext() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Startup.cs:line 159
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at UNOPS.PAO.UNOPSIdentity.Authentication.IAPVerificationMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\Authentication\IAPVerificationMiddleware.cs:line 373
+   at UNOPS.PAO.Server.Infrastructure.AuthenticationLoggingMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Infrastructure\AuthenticationLoggingMiddleware.cs:line 77
+   at Microsoft.AspNetCore.TestHost.HttpContextBuilder.<>c__DisplayClass23_0.<<SendAsync>g__RunRequestAsync|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.TestHost.ClientHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Mvc.Testing.Handlers.CookieContainerHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at UNOPS.PAO.IntegrationTests.Infrastructure.IntegrationTestBase.GetAsync(String url) in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Infrastructure\IntegrationTestBase.cs:line 53
+   at UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_InvalidFieldName_ReturnsError() in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Controllers\PartnerControllerTests.cs:line 892
+--- End of stack trace from previous location ---
+[xUnit.net 00:00:34.60]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_NoFilters_ReturnsAllPartners [SKIP]
+[xUnit.net 00:00:34.60]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_InvalidPageSize_ReturnsError [SKIP]
+[xUnit.net 00:00:34.68]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_InvalidSearchCriteria_ReturnsBadRequest [FAIL]
+[xUnit.net 00:00:34.88]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_NestedPropertySimilarity_FindsTyposInPartnerGroupName [FAIL]
+[xUnit.net 00:00:34.96]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_NestedPropertyExactMatch_WorksCorrectly [FAIL]
+[xUnit.net 00:00:35.06]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_NestedPropertiesWithSpecialCharacters_SimilarityHandling [FAIL]
+[xUnit.net 00:00:35.13]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_SimilaritySearch_FindsTypos [FAIL]
+[xUnit.net 00:00:35.13]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_Pagination_SecondPage_ReturnsCorrectResults [SKIP]
+[xUnit.net 00:00:35.22]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_BasicTextSearch_ReturnsMatchingPartners [FAIL]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_NoFilters_ReturnsAllPartners [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_InvalidPageSize_ReturnsError [1 ms]
+  Failed UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_InvalidSearchCriteria_ReturnsBadRequest [179 ms]
+  Error Message:
+   System.ArgumentNullException : Value cannot be null. (Parameter 'credentialParameters')
+  Stack Trace:
+     at Google.Apis.Util.Utilities.ThrowIfNull[T](T obj, String paramName)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromParameters(JsonCredentialParameters credentialParameters)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromJson(String json)
+   at Google.Apis.Auth.OAuth2.GoogleCredential.FromJson(String json)
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager.GetCredentials() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 191
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager..ctor(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger`1 logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager`1 userManager, RoleManager`1 roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 108
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSManagerWrapper..ctor(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration, UserManager`1 userManager, RoleManager`1 roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSManagerWrapper.cs:line 74
+   at (ArrayClosure, Scope)
+   at Lamar.IoC.Instances.GeneratedInstance.<>c__DisplayClass9_1.<BuildFuncResolver>b__0(Scope s)
+   at Lamar.IoC.Scope.TryGetInstance(Type serviceType)
+   at Lamar.IoC.Scope.GetService(Type serviceType)
+   at lambda_method4719(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at UNOPS.PAO.Server.Startup.<>c.<<Configure>b__7_6>d.MoveNext() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Startup.cs:line 159
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at UNOPS.PAO.UNOPSIdentity.Authentication.IAPVerificationMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\Authentication\IAPVerificationMiddleware.cs:line 373
+   at UNOPS.PAO.Server.Infrastructure.AuthenticationLoggingMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Infrastructure\AuthenticationLoggingMiddleware.cs:line 77
+   at Microsoft.AspNetCore.TestHost.HttpContextBuilder.<>c__DisplayClass23_0.<<SendAsync>g__RunRequestAsync|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.TestHost.ClientHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Mvc.Testing.Handlers.CookieContainerHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at UNOPS.PAO.IntegrationTests.Infrastructure.IntegrationTestBase.GetAsync(String url) in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Infrastructure\IntegrationTestBase.cs:line 53
+   at UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_InvalidSearchCriteria_ReturnsBadRequest() in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Controllers\PartnerControllerTests.cs:line 869
+--- End of stack trace from previous location ---
+  Failed UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_NestedPropertySimilarity_FindsTyposInPartnerGroupName [195 ms]
+  Error Message:
+   System.ArgumentNullException : Value cannot be null. (Parameter 'credentialParameters')
+  Stack Trace:
+     at Google.Apis.Util.Utilities.ThrowIfNull[T](T obj, String paramName)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromParameters(JsonCredentialParameters credentialParameters)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromJson(String json)
+   at Google.Apis.Auth.OAuth2.GoogleCredential.FromJson(String json)
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager.GetCredentials() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 191
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager..ctor(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger`1 logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager`1 userManager, RoleManager`1 roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 108
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSManagerWrapper..ctor(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration, UserManager`1 userManager, RoleManager`1 roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSManagerWrapper.cs:line 74
+   at (ArrayClosure, Scope)
+   at Lamar.IoC.Instances.GeneratedInstance.<>c__DisplayClass9_1.<BuildFuncResolver>b__0(Scope s)
+   at Lamar.IoC.Scope.TryGetInstance(Type serviceType)
+   at Lamar.IoC.Scope.GetService(Type serviceType)
+   at lambda_method4719(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at UNOPS.PAO.Server.Startup.<>c.<<Configure>b__7_6>d.MoveNext() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Startup.cs:line 159
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at UNOPS.PAO.UNOPSIdentity.Authentication.IAPVerificationMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\Authentication\IAPVerificationMiddleware.cs:line 373
+   at UNOPS.PAO.Server.Infrastructure.AuthenticationLoggingMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Infrastructure\AuthenticationLoggingMiddleware.cs:line 77
+   at Microsoft.AspNetCore.TestHost.HttpContextBuilder.<>c__DisplayClass23_0.<<SendAsync>g__RunRequestAsync|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.TestHost.ClientHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Mvc.Testing.Handlers.CookieContainerHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at UNOPS.PAO.IntegrationTests.Infrastructure.IntegrationTestBase.GetAsync(String url) in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Infrastructure\IntegrationTestBase.cs:line 53
+   at UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_NestedPropertySimilarity_FindsTyposInPartnerGroupName() in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Controllers\PartnerControllerTests.cs:line 1032
+--- End of stack trace from previous location ---
+  Failed UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_NestedPropertyExactMatch_WorksCorrectly [75 ms]
+  Error Message:
+   System.ArgumentNullException : Value cannot be null. (Parameter 'credentialParameters')
+  Stack Trace:
+     at Google.Apis.Util.Utilities.ThrowIfNull[T](T obj, String paramName)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromParameters(JsonCredentialParameters credentialParameters)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromJson(String json)
+   at Google.Apis.Auth.OAuth2.GoogleCredential.FromJson(String json)
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager.GetCredentials() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 191
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager..ctor(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger`1 logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager`1 userManager, RoleManager`1 roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 108
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSManagerWrapper..ctor(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration, UserManager`1 userManager, RoleManager`1 roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSManagerWrapper.cs:line 74
+   at (ArrayClosure, Scope)
+   at Lamar.IoC.Instances.GeneratedInstance.<>c__DisplayClass9_1.<BuildFuncResolver>b__0(Scope s)
+   at Lamar.IoC.Scope.TryGetInstance(Type serviceType)
+   at Lamar.IoC.Scope.GetService(Type serviceType)
+   at lambda_method4719(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at UNOPS.PAO.Server.Startup.<>c.<<Configure>b__7_6>d.MoveNext() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Startup.cs:line 159
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at UNOPS.PAO.UNOPSIdentity.Authentication.IAPVerificationMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\Authentication\IAPVerificationMiddleware.cs:line 373
+   at UNOPS.PAO.Server.Infrastructure.AuthenticationLoggingMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Infrastructure\AuthenticationLoggingMiddleware.cs:line 77
+   at Microsoft.AspNetCore.TestHost.HttpContextBuilder.<>c__DisplayClass23_0.<<SendAsync>g__RunRequestAsync|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.TestHost.ClientHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Mvc.Testing.Handlers.CookieContainerHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at UNOPS.PAO.IntegrationTests.Infrastructure.IntegrationTestBase.GetAsync(String url) in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Infrastructure\IntegrationTestBase.cs:line 53
+   at UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_NestedPropertyExactMatch_WorksCorrectly() in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Controllers\PartnerControllerTests.cs:line 1085
+--- End of stack trace from previous location ---
+  Failed UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_NestedPropertiesWithSpecialCharacters_SimilarityHandling [103 ms]
+  Error Message:
+   System.ArgumentNullException : Value cannot be null. (Parameter 'credentialParameters')
+  Stack Trace:
+     at Google.Apis.Util.Utilities.ThrowIfNull[T](T obj, String paramName)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromParameters(JsonCredentialParameters credentialParameters)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromJson(String json)
+   at Google.Apis.Auth.OAuth2.GoogleCredential.FromJson(String json)
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager.GetCredentials() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 191
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager..ctor(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger`1 logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager`1 userManager, RoleManager`1 roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 108
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSManagerWrapper..ctor(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration, UserManager`1 userManager, RoleManager`1 roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSManagerWrapper.cs:line 74
+   at (ArrayClosure, Scope)
+   at Lamar.IoC.Instances.GeneratedInstance.<>c__DisplayClass9_1.<BuildFuncResolver>b__0(Scope s)
+   at Lamar.IoC.Scope.TryGetInstance(Type serviceType)
+   at Lamar.IoC.Scope.GetService(Type serviceType)
+   at lambda_method4719(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at UNOPS.PAO.Server.Startup.<>c.<<Configure>b__7_6>d.MoveNext() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Startup.cs:line 159
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at UNOPS.PAO.UNOPSIdentity.Authentication.IAPVerificationMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\Authentication\IAPVerificationMiddleware.cs:line 373
+   at UNOPS.PAO.Server.Infrastructure.AuthenticationLoggingMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Infrastructure\AuthenticationLoggingMiddleware.cs:line 77
+   at Microsoft.AspNetCore.TestHost.HttpContextBuilder.<>c__DisplayClass23_0.<<SendAsync>g__RunRequestAsync|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.TestHost.ClientHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Mvc.Testing.Handlers.CookieContainerHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at UNOPS.PAO.IntegrationTests.Infrastructure.IntegrationTestBase.GetAsync(String url) in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Infrastructure\IntegrationTestBase.cs:line 53
+   at UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_NestedPropertiesWithSpecialCharacters_SimilarityHandling() in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Controllers\PartnerControllerTests.cs:line 1274
+--- End of stack trace from previous location ---
+  Failed UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_SimilaritySearch_FindsTypos [61 ms]
+  Error Message:
+   System.ArgumentNullException : Value cannot be null. (Parameter 'credentialParameters')
+  Stack Trace:
+     at Google.Apis.Util.Utilities.ThrowIfNull[T](T obj, String paramName)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromParameters(JsonCredentialParameters credentialParameters)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromJson(String json)
+   at Google.Apis.Auth.OAuth2.GoogleCredential.FromJson(String json)
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager.GetCredentials() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 191
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager..ctor(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger`1 logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager`1 userManager, RoleManager`1 roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 108
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSManagerWrapper..ctor(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration, UserManager`1 userManager, RoleManager`1 roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSManagerWrapper.cs:line 74
+   at (ArrayClosure, Scope)
+   at Lamar.IoC.Instances.GeneratedInstance.<>c__DisplayClass9_1.<BuildFuncResolver>b__0(Scope s)
+   at Lamar.IoC.Scope.TryGetInstance(Type serviceType)
+   at Lamar.IoC.Scope.GetService(Type serviceType)
+   at lambda_method4719(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at UNOPS.PAO.Server.Startup.<>c.<<Configure>b__7_6>d.MoveNext() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Startup.cs:line 159
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at UNOPS.PAO.UNOPSIdentity.Authentication.IAPVerificationMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\Authentication\IAPVerificationMiddleware.cs:line 373
+   at UNOPS.PAO.Server.Infrastructure.AuthenticationLoggingMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Infrastructure\AuthenticationLoggingMiddleware.cs:line 77
+   at Microsoft.AspNetCore.TestHost.HttpContextBuilder.<>c__DisplayClass23_0.<<SendAsync>g__RunRequestAsync|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.TestHost.ClientHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Mvc.Testing.Handlers.CookieContainerHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at UNOPS.PAO.IntegrationTests.Infrastructure.IntegrationTestBase.GetAsync(String url) in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Infrastructure\IntegrationTestBase.cs:line 53
+   at UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_SimilaritySearch_FindsTypos() in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Controllers\PartnerControllerTests.cs:line 796
+--- End of stack trace from previous location ---
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_Pagination_SecondPage_ReturnsCorrectResults [1 ms]
+  Failed UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_BasicTextSearch_ReturnsMatchingPartners [87 ms]
+  Error Message:
+   System.ArgumentNullException : Value cannot be null. (Parameter 'credentialParameters')
+  Stack Trace:
+     at Google.Apis.Util.Utilities.ThrowIfNull[T](T obj, String paramName)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromParameters(JsonCredentialParameters credentialParameters)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromJson(String json)
+   at Google.Apis.Auth.OAuth2.GoogleCredential.FromJson(String json)
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager.GetCredentials() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 191
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager..ctor(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger`1 logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager`1 userManager, RoleManager`1 roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 108
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSManagerWrapper..ctor(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration, UserManager`1 userManager, RoleManager`1 roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSManagerWrapper.cs:line 74
+   at (ArrayClosure, Scope)
+   at Lamar.IoC.Instances.GeneratedInstance.<>c__DisplayClass9_1.<BuildFuncResolver>b__0(Scope s)
+   at Lamar.IoC.Scope.TryGetInstance(Type serviceType)
+   at Lamar.IoC.Scope.GetService(Type serviceType)
+   at lambda_method4719(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at UNOPS.PAO.Server.Startup.<>c.<<Configure>b__7_6>d.MoveNext() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Startup.cs:line 159
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at UNOPS.PAO.UNOPSIdentity.Authentication.IAPVerificationMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\Authentication\IAPVerificationMiddleware.cs:line 373
+   at UNOPS.PAO.Server.Infrastructure.AuthenticationLoggingMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Infrastructure\AuthenticationLoggingMiddleware.cs:line 77
+   at Microsoft.AspNetCore.TestHost.HttpContextBuilder.<>c__DisplayClass23_0.<<SendAsync>g__RunRequestAsync|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.TestHost.ClientHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Mvc.Testing.Handlers.CookieContainerHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at UNOPS.PAO.IntegrationTests.Infrastructure.IntegrationTestBase.GetAsync(String url) in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Infrastructure\IntegrationTestBase.cs:line 53
+   at UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_BasicTextSearch_ReturnsMatchingPartners() in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Controllers\PartnerControllerTests.cs:line 584
+--- End of stack trace from previous location ---
+[xUnit.net 00:00:35.22]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_FilterByStatus_Active_ReturnsOnlyActivePartners [SKIP]
+[xUnit.net 00:00:35.27]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_DateRangeSearch_ReturnsCorrectResults [FAIL]
+[xUnit.net 00:00:35.39]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.Create_ValidPartner_ReturnsCreated [SKIP]
+[xUnit.net 00:00:35.39]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_FilterBySearchText_SearchesNameAndShortName [SKIP]
+[xUnit.net 00:00:35.39]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_FilterByStatus_Inactive_ReturnsOnlyInactivePartners [SKIP]
+[xUnit.net 00:00:35.45]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_ContactsSearch_ReturnsPartnersWithMatchingContacts [FAIL]
+[xUnit.net 00:00:35.52]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_CaseInsensitiveSearch_ReturnsResults [FAIL]
+[xUnit.net 00:00:35.56]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_PartnerDescriptionSearch_ReturnsResults [FAIL]
+[xUnit.net 00:00:35.56]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.Get_ExistingPartner_ReturnsPartner [SKIP]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_FilterByStatus_Active_ReturnsOnlyActivePartners [1 ms]
+  Failed UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_DateRangeSearch_ReturnsCorrectResults [45 ms]
+  Error Message:
+   System.ArgumentNullException : Value cannot be null. (Parameter 'credentialParameters')
+  Stack Trace:
+     at Google.Apis.Util.Utilities.ThrowIfNull[T](T obj, String paramName)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromParameters(JsonCredentialParameters credentialParameters)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromJson(String json)
+   at Google.Apis.Auth.OAuth2.GoogleCredential.FromJson(String json)
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager.GetCredentials() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 191
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager..ctor(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger`1 logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager`1 userManager, RoleManager`1 roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 108
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSManagerWrapper..ctor(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration, UserManager`1 userManager, RoleManager`1 roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSManagerWrapper.cs:line 74
+   at (ArrayClosure, Scope)
+   at Lamar.IoC.Instances.GeneratedInstance.<>c__DisplayClass9_1.<BuildFuncResolver>b__0(Scope s)
+   at Lamar.IoC.Scope.TryGetInstance(Type serviceType)
+   at Lamar.IoC.Scope.GetService(Type serviceType)
+   at lambda_method4719(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at UNOPS.PAO.Server.Startup.<>c.<<Configure>b__7_6>d.MoveNext() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Startup.cs:line 159
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at UNOPS.PAO.UNOPSIdentity.Authentication.IAPVerificationMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\Authentication\IAPVerificationMiddleware.cs:line 373
+   at UNOPS.PAO.Server.Infrastructure.AuthenticationLoggingMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Infrastructure\AuthenticationLoggingMiddleware.cs:line 77
+   at Microsoft.AspNetCore.TestHost.HttpContextBuilder.<>c__DisplayClass23_0.<<SendAsync>g__RunRequestAsync|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.TestHost.ClientHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Mvc.Testing.Handlers.CookieContainerHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at UNOPS.PAO.IntegrationTests.Infrastructure.IntegrationTestBase.GetAsync(String url) in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Infrastructure\IntegrationTestBase.cs:line 53
+   at UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_DateRangeSearch_ReturnsCorrectResults() in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Controllers\PartnerControllerTests.cs:line 736
+--- End of stack trace from previous location ---
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.Create_ValidPartner_ReturnsCreated [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_FilterBySearchText_SearchesNameAndShortName [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_FilterByStatus_Inactive_ReturnsOnlyInactivePartners [1 ms]
+  Failed UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_ContactsSearch_ReturnsPartnersWithMatchingContacts [180 ms]
+  Error Message:
+   System.ArgumentNullException : Value cannot be null. (Parameter 'credentialParameters')
+  Stack Trace:
+     at Google.Apis.Util.Utilities.ThrowIfNull[T](T obj, String paramName)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromParameters(JsonCredentialParameters credentialParameters)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromJson(String json)
+   at Google.Apis.Auth.OAuth2.GoogleCredential.FromJson(String json)
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager.GetCredentials() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 191
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager..ctor(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger`1 logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager`1 userManager, RoleManager`1 roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 108
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSManagerWrapper..ctor(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration, UserManager`1 userManager, RoleManager`1 roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSManagerWrapper.cs:line 74
+   at (ArrayClosure, Scope)
+   at Lamar.IoC.Instances.GeneratedInstance.<>c__DisplayClass9_1.<BuildFuncResolver>b__0(Scope s)
+   at Lamar.IoC.Scope.TryGetInstance(Type serviceType)
+   at Lamar.IoC.Scope.GetService(Type serviceType)
+   at lambda_method4719(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at UNOPS.PAO.Server.Startup.<>c.<<Configure>b__7_6>d.MoveNext() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Startup.cs:line 159
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at UNOPS.PAO.UNOPSIdentity.Authentication.IAPVerificationMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\Authentication\IAPVerificationMiddleware.cs:line 373
+   at UNOPS.PAO.Server.Infrastructure.AuthenticationLoggingMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Infrastructure\AuthenticationLoggingMiddleware.cs:line 77
+   at Microsoft.AspNetCore.TestHost.HttpContextBuilder.<>c__DisplayClass23_0.<<SendAsync>g__RunRequestAsync|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.TestHost.ClientHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Mvc.Testing.Handlers.CookieContainerHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at UNOPS.PAO.IntegrationTests.Infrastructure.IntegrationTestBase.GetAsync(String url) in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Infrastructure\IntegrationTestBase.cs:line 53
+   at UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_ContactsSearch_ReturnsPartnersWithMatchingContacts() in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Controllers\PartnerControllerTests.cs:line 709
+--- End of stack trace from previous location ---
+  Failed UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_CaseInsensitiveSearch_ReturnsResults [63 ms]
+  Error Message:
+   System.ArgumentNullException : Value cannot be null. (Parameter 'credentialParameters')
+  Stack Trace:
+     at Google.Apis.Util.Utilities.ThrowIfNull[T](T obj, String paramName)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromParameters(JsonCredentialParameters credentialParameters)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromJson(String json)
+   at Google.Apis.Auth.OAuth2.GoogleCredential.FromJson(String json)
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager.GetCredentials() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 191
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager..ctor(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger`1 logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager`1 userManager, RoleManager`1 roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 108
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSManagerWrapper..ctor(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration, UserManager`1 userManager, RoleManager`1 roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSManagerWrapper.cs:line 74
+   at (ArrayClosure, Scope)
+   at Lamar.IoC.Instances.GeneratedInstance.<>c__DisplayClass9_1.<BuildFuncResolver>b__0(Scope s)
+   at Lamar.IoC.Scope.TryGetInstance(Type serviceType)
+   at Lamar.IoC.Scope.GetService(Type serviceType)
+   at lambda_method4719(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at UNOPS.PAO.Server.Startup.<>c.<<Configure>b__7_6>d.MoveNext() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Startup.cs:line 159
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at UNOPS.PAO.UNOPSIdentity.Authentication.IAPVerificationMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\Authentication\IAPVerificationMiddleware.cs:line 373
+   at UNOPS.PAO.Server.Infrastructure.AuthenticationLoggingMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Infrastructure\AuthenticationLoggingMiddleware.cs:line 77
+   at Microsoft.AspNetCore.TestHost.HttpContextBuilder.<>c__DisplayClass23_0.<<SendAsync>g__RunRequestAsync|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.TestHost.ClientHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Mvc.Testing.Handlers.CookieContainerHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at UNOPS.PAO.IntegrationTests.Infrastructure.IntegrationTestBase.GetAsync(String url) in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Infrastructure\IntegrationTestBase.cs:line 53
+   at UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_CaseInsensitiveSearch_ReturnsResults() in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Controllers\PartnerControllerTests.cs:line 944
+--- End of stack trace from previous location ---
+  Failed UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_PartnerDescriptionSearch_ReturnsResults [40 ms]
+  Error Message:
+   System.ArgumentNullException : Value cannot be null. (Parameter 'credentialParameters')
+  Stack Trace:
+     at Google.Apis.Util.Utilities.ThrowIfNull[T](T obj, String paramName)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromParameters(JsonCredentialParameters credentialParameters)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromJson(String json)
+   at Google.Apis.Auth.OAuth2.GoogleCredential.FromJson(String json)
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager.GetCredentials() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 191
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager..ctor(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger`1 logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager`1 userManager, RoleManager`1 roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 108
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSManagerWrapper..ctor(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration, UserManager`1 userManager, RoleManager`1 roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSManagerWrapper.cs:line 74
+   at (ArrayClosure, Scope)
+   at Lamar.IoC.Instances.GeneratedInstance.<>c__DisplayClass9_1.<BuildFuncResolver>b__0(Scope s)
+   at Lamar.IoC.Scope.TryGetInstance(Type serviceType)
+   at Lamar.IoC.Scope.GetService(Type serviceType)
+   at lambda_method4719(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at UNOPS.PAO.Server.Startup.<>c.<<Configure>b__7_6>d.MoveNext() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Startup.cs:line 159
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at UNOPS.PAO.UNOPSIdentity.Authentication.IAPVerificationMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\Authentication\IAPVerificationMiddleware.cs:line 373
+   at UNOPS.PAO.Server.Infrastructure.AuthenticationLoggingMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Infrastructure\AuthenticationLoggingMiddleware.cs:line 77
+   at Microsoft.AspNetCore.TestHost.HttpContextBuilder.<>c__DisplayClass23_0.<<SendAsync>g__RunRequestAsync|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.TestHost.ClientHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Mvc.Testing.Handlers.CookieContainerHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at UNOPS.PAO.IntegrationTests.Infrastructure.IntegrationTestBase.GetAsync(String url) in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Infrastructure\IntegrationTestBase.cs:line 53
+   at UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_PartnerDescriptionSearch_ReturnsResults() in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Controllers\PartnerControllerTests.cs:line 974
+--- End of stack trace from previous location ---
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.Get_ExistingPartner_ReturnsPartner [1 ms]
+[xUnit.net 00:00:35.56]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_FilterByName_ReturnsMatchingPartners [SKIP]
+[xUnit.net 00:00:35.57]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.Delete_ExistingPartner_ReturnsNoContent [SKIP]
+[xUnit.net 00:00:35.57]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_MultipleFilters_AppliesAllFilters [SKIP]
+[xUnit.net 00:00:35.80]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_OrConditions_ReturnsUnionOfResults [FAIL]
+[xUnit.net 00:00:35.81]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_NoMatchingResults_ReturnsEmptyList [SKIP]
+[xUnit.net 00:00:35.81]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_OrderByName_Ascending_ReturnsSortedResults [SKIP]
+[xUnit.net 00:00:35.81]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_OrderByStatus_ReturnsSortedResults [SKIP]
+[xUnit.net 00:00:35.85]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_EmptySearchCriteria_ReturnsAllPartners [FAIL]
+[xUnit.net 00:00:35.86]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_AdvancedSearch_WithSearchCriteria_ReturnsFilteredResults [SKIP]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_FilterByName_ReturnsMatchingPartners [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.Delete_ExistingPartner_ReturnsNoContent [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_MultipleFilters_AppliesAllFilters [1 ms]
+  Failed UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_OrConditions_ReturnsUnionOfResults [242 ms]
+  Error Message:
+   System.ArgumentNullException : Value cannot be null. (Parameter 'credentialParameters')
+  Stack Trace:
+     at Google.Apis.Util.Utilities.ThrowIfNull[T](T obj, String paramName)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromParameters(JsonCredentialParameters credentialParameters)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromJson(String json)
+   at Google.Apis.Auth.OAuth2.GoogleCredential.FromJson(String json)
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager.GetCredentials() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 191
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager..ctor(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger`1 logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager`1 userManager, RoleManager`1 roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 108
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSManagerWrapper..ctor(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration, UserManager`1 userManager, RoleManager`1 roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSManagerWrapper.cs:line 74
+   at (ArrayClosure, Scope)
+   at Lamar.IoC.Instances.GeneratedInstance.<>c__DisplayClass9_1.<BuildFuncResolver>b__0(Scope s)
+   at Lamar.IoC.Scope.TryGetInstance(Type serviceType)
+   at Lamar.IoC.Scope.GetService(Type serviceType)
+   at lambda_method4719(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at UNOPS.PAO.Server.Startup.<>c.<<Configure>b__7_6>d.MoveNext() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Startup.cs:line 159
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at UNOPS.PAO.UNOPSIdentity.Authentication.IAPVerificationMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\Authentication\IAPVerificationMiddleware.cs:line 373
+   at UNOPS.PAO.Server.Infrastructure.AuthenticationLoggingMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Infrastructure\AuthenticationLoggingMiddleware.cs:line 77
+   at Microsoft.AspNetCore.TestHost.HttpContextBuilder.<>c__DisplayClass23_0.<<SendAsync>g__RunRequestAsync|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.TestHost.ClientHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Mvc.Testing.Handlers.CookieContainerHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at UNOPS.PAO.IntegrationTests.Infrastructure.IntegrationTestBase.GetAsync(String url) in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Infrastructure\IntegrationTestBase.cs:line 53
+   at UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_OrConditions_ReturnsUnionOfResults() in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Controllers\PartnerControllerTests.cs:line 653
+--- End of stack trace from previous location ---
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_NoMatchingResults_ReturnsEmptyList [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_OrderByName_Ascending_ReturnsSortedResults [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_OrderByStatus_ReturnsSortedResults [1 ms]
+  Failed UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_EmptySearchCriteria_ReturnsAllPartners [46 ms]
+  Error Message:
+   System.ArgumentNullException : Value cannot be null. (Parameter 'credentialParameters')
+  Stack Trace:
+     at Google.Apis.Util.Utilities.ThrowIfNull[T](T obj, String paramName)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromParameters(JsonCredentialParameters credentialParameters)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromJson(String json)
+   at Google.Apis.Auth.OAuth2.GoogleCredential.FromJson(String json)
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager.GetCredentials() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 191
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager..ctor(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger`1 logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager`1 userManager, RoleManager`1 roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 108
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSManagerWrapper..ctor(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration, UserManager`1 userManager, RoleManager`1 roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSManagerWrapper.cs:line 74
+   at (ArrayClosure, Scope)
+   at Lamar.IoC.Instances.GeneratedInstance.<>c__DisplayClass9_1.<BuildFuncResolver>b__0(Scope s)
+   at Lamar.IoC.Scope.TryGetInstance(Type serviceType)
+   at Lamar.IoC.Scope.GetService(Type serviceType)
+   at lambda_method4719(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at UNOPS.PAO.Server.Startup.<>c.<<Configure>b__7_6>d.MoveNext() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Startup.cs:line 159
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at UNOPS.PAO.UNOPSIdentity.Authentication.IAPVerificationMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\Authentication\IAPVerificationMiddleware.cs:line 373
+   at UNOPS.PAO.Server.Infrastructure.AuthenticationLoggingMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Infrastructure\AuthenticationLoggingMiddleware.cs:line 77
+   at Microsoft.AspNetCore.TestHost.HttpContextBuilder.<>c__DisplayClass23_0.<<SendAsync>g__RunRequestAsync|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.TestHost.ClientHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Mvc.Testing.Handlers.CookieContainerHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at UNOPS.PAO.IntegrationTests.Infrastructure.IntegrationTestBase.GetAsync(String url) in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Infrastructure\IntegrationTestBase.cs:line 53
+   at UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_EmptySearchCriteria_ReturnsAllPartners() in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Controllers\PartnerControllerTests.cs:line 853
+--- End of stack trace from previous location ---
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_AdvancedSearch_WithSearchCriteria_ReturnsFilteredResults [1 ms]
+[xUnit.net 00:00:35.86]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_FilterBySearchText_ShortName_ReturnsMatchingPartner [SKIP]
+[xUnit.net 00:00:35.86]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.Update_ExistingPartner_ReturnsOk [SKIP]
+[xUnit.net 00:00:35.86]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_Pagination_PageSizeLargerThanTotal_ReturnsAllResults [SKIP]
+[xUnit.net 00:00:35.86]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_OrderByName_Descending_ReturnsSortedResults [SKIP]
+[xUnit.net 00:00:35.91]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_NestedPropertyCaseInsensitive_WithSimilarity [FAIL]
+[xUnit.net 00:00:35.92]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_FilterByOrgUnitId_ReturnsPartnersInOrgUnit [SKIP]
+[xUnit.net 00:00:35.92]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_EmptySearchText_ReturnsAllResults [SKIP]
+[xUnit.net 00:00:35.97]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_NavigationPropertySearch_ReturnsCorrectResults [FAIL]
+[xUnit.net 00:00:35.98]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_Pagination_FirstPage_ReturnsCorrectResults [SKIP]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_FilterBySearchText_ShortName_ReturnsMatchingPartner [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.Update_ExistingPartner_ReturnsOk [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_Pagination_PageSizeLargerThanTotal_ReturnsAllResults [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_OrderByName_Descending_ReturnsSortedResults [1 ms]
+  Failed UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_NestedPropertyCaseInsensitive_WithSimilarity [43 ms]
+  Error Message:
+   System.ArgumentNullException : Value cannot be null. (Parameter 'credentialParameters')
+  Stack Trace:
+     at Google.Apis.Util.Utilities.ThrowIfNull[T](T obj, String paramName)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromParameters(JsonCredentialParameters credentialParameters)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromJson(String json)
+   at Google.Apis.Auth.OAuth2.GoogleCredential.FromJson(String json)
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager.GetCredentials() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 191
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager..ctor(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger`1 logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager`1 userManager, RoleManager`1 roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 108
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSManagerWrapper..ctor(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration, UserManager`1 userManager, RoleManager`1 roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSManagerWrapper.cs:line 74
+   at (ArrayClosure, Scope)
+   at Lamar.IoC.Instances.GeneratedInstance.<>c__DisplayClass9_1.<BuildFuncResolver>b__0(Scope s)
+   at Lamar.IoC.Scope.TryGetInstance(Type serviceType)
+   at Lamar.IoC.Scope.GetService(Type serviceType)
+   at lambda_method4719(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at UNOPS.PAO.Server.Startup.<>c.<<Configure>b__7_6>d.MoveNext() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Startup.cs:line 159
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at UNOPS.PAO.UNOPSIdentity.Authentication.IAPVerificationMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\Authentication\IAPVerificationMiddleware.cs:line 373
+   at UNOPS.PAO.Server.Infrastructure.AuthenticationLoggingMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Infrastructure\AuthenticationLoggingMiddleware.cs:line 77
+   at Microsoft.AspNetCore.TestHost.HttpContextBuilder.<>c__DisplayClass23_0.<<SendAsync>g__RunRequestAsync|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.TestHost.ClientHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Mvc.Testing.Handlers.CookieContainerHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at UNOPS.PAO.IntegrationTests.Infrastructure.IntegrationTestBase.GetAsync(String url) in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Infrastructure\IntegrationTestBase.cs:line 53
+   at UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_NestedPropertyCaseInsensitive_WithSimilarity() in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Controllers\PartnerControllerTests.cs:line 1248
+--- End of stack trace from previous location ---
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_FilterByOrgUnitId_ReturnsPartnersInOrgUnit [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_EmptySearchText_ReturnsAllResults [1 ms]
+  Failed UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_NavigationPropertySearch_ReturnsCorrectResults [70 ms]
+  Error Message:
+   System.ArgumentNullException : Value cannot be null. (Parameter 'credentialParameters')
+  Stack Trace:
+     at Google.Apis.Util.Utilities.ThrowIfNull[T](T obj, String paramName)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromParameters(JsonCredentialParameters credentialParameters)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromJson(String json)
+   at Google.Apis.Auth.OAuth2.GoogleCredential.FromJson(String json)
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager.GetCredentials() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 191
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager..ctor(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger`1 logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager`1 userManager, RoleManager`1 roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 108
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSManagerWrapper..ctor(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration, UserManager`1 userManager, RoleManager`1 roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSManagerWrapper.cs:line 74
+   at (ArrayClosure, Scope)
+   at Lamar.IoC.Instances.GeneratedInstance.<>c__DisplayClass9_1.<BuildFuncResolver>b__0(Scope s)
+   at Lamar.IoC.Scope.TryGetInstance(Type serviceType)
+   at Lamar.IoC.Scope.GetService(Type serviceType)
+   at lambda_method4719(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at UNOPS.PAO.Server.Startup.<>c.<<Configure>b__7_6>d.MoveNext() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Startup.cs:line 159
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at UNOPS.PAO.UNOPSIdentity.Authentication.IAPVerificationMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\Authentication\IAPVerificationMiddleware.cs:line 373
+   at UNOPS.PAO.Server.Infrastructure.AuthenticationLoggingMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Infrastructure\AuthenticationLoggingMiddleware.cs:line 77
+   at Microsoft.AspNetCore.TestHost.HttpContextBuilder.<>c__DisplayClass23_0.<<SendAsync>g__RunRequestAsync|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.TestHost.ClientHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Mvc.Testing.Handlers.CookieContainerHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at UNOPS.PAO.IntegrationTests.Infrastructure.IntegrationTestBase.GetAsync(String url) in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Infrastructure\IntegrationTestBase.cs:line 53
+   at UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_NavigationPropertySearch_ReturnsCorrectResults() in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Controllers\PartnerControllerTests.cs:line 682
+--- End of stack trace from previous location ---
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_Pagination_FirstPage_ReturnsCorrectResults [1 ms]
+[xUnit.net 00:00:36.06]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_NumericComparisons_ReturnsCorrectResults [FAIL]
+[xUnit.net 00:00:36.06]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_SimpleTextSearch_WithSearchTextParameter_ReturnsFilteredResults [SKIP]
+[xUnit.net 00:00:36.06]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.Get_NonExistentPartner_ReturnsNotFound [SKIP]
+[xUnit.net 00:00:36.06]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_NonExistentStatus_ReturnsEmptyResults [SKIP]
+[xUnit.net 00:00:36.13]     UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_ComplexMixedCriteria_ReturnsCorrectResults [FAIL]
+  Failed UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_NumericComparisons_ReturnsCorrectResults [81 ms]
+  Error Message:
+   System.ArgumentNullException : Value cannot be null. (Parameter 'credentialParameters')
+  Stack Trace:
+     at Google.Apis.Util.Utilities.ThrowIfNull[T](T obj, String paramName)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromParameters(JsonCredentialParameters credentialParameters)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromJson(String json)
+   at Google.Apis.Auth.OAuth2.GoogleCredential.FromJson(String json)
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager.GetCredentials() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 191
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager..ctor(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger`1 logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager`1 userManager, RoleManager`1 roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 108
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSManagerWrapper..ctor(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration, UserManager`1 userManager, RoleManager`1 roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSManagerWrapper.cs:line 74
+   at (ArrayClosure, Scope)
+   at Lamar.IoC.Instances.GeneratedInstance.<>c__DisplayClass9_1.<BuildFuncResolver>b__0(Scope s)
+   at Lamar.IoC.Scope.TryGetInstance(Type serviceType)
+   at Lamar.IoC.Scope.GetService(Type serviceType)
+   at lambda_method4719(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at UNOPS.PAO.Server.Startup.<>c.<<Configure>b__7_6>d.MoveNext() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Startup.cs:line 159
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at UNOPS.PAO.UNOPSIdentity.Authentication.IAPVerificationMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\Authentication\IAPVerificationMiddleware.cs:line 373
+   at UNOPS.PAO.Server.Infrastructure.AuthenticationLoggingMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Infrastructure\AuthenticationLoggingMiddleware.cs:line 77
+   at Microsoft.AspNetCore.TestHost.HttpContextBuilder.<>c__DisplayClass23_0.<<SendAsync>g__RunRequestAsync|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.TestHost.ClientHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Mvc.Testing.Handlers.CookieContainerHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at UNOPS.PAO.IntegrationTests.Infrastructure.IntegrationTestBase.GetAsync(String url) in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Infrastructure\IntegrationTestBase.cs:line 53
+   at UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_NumericComparisons_ReturnsCorrectResults() in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Controllers\PartnerControllerTests.cs:line 1000
+--- End of stack trace from previous location ---
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_SimpleTextSearch_WithSearchTextParameter_ReturnsFilteredResults [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.Get_NonExistentPartner_ReturnsNotFound [1 ms]
+  Skipped UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.GetAll_NonExistentStatus_ReturnsEmptyResults [1 ms]
+  Failed UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_ComplexMixedCriteria_ReturnsCorrectResults [73 ms]
+  Error Message:
+   System.ArgumentNullException : Value cannot be null. (Parameter 'credentialParameters')
+  Stack Trace:
+     at Google.Apis.Util.Utilities.ThrowIfNull[T](T obj, String paramName)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromParameters(JsonCredentialParameters credentialParameters)
+   at Google.Apis.Auth.OAuth2.DefaultCredentialProvider.CreateDefaultCredentialFromJson(String json)
+   at Google.Apis.Auth.OAuth2.GoogleCredential.FromJson(String json)
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager.GetCredentials() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 191
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSGeminiManager..ctor(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger`1 logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager`1 userManager, RoleManager`1 roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSGeminiManager.cs:line 108
+   at UNOPS.PAO.UNOPSBusiness.Managers.UNOPSManagerWrapper..ctor(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration, UserManager`1 userManager, RoleManager`1 roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\Managers\UNOPSManagerWrapper.cs:line 74
+   at (ArrayClosure, Scope)
+   at Lamar.IoC.Instances.GeneratedInstance.<>c__DisplayClass9_1.<BuildFuncResolver>b__0(Scope s)
+   at Lamar.IoC.Scope.TryGetInstance(Type serviceType)
+   at Lamar.IoC.Scope.GetService(Type serviceType)
+   at lambda_method4719(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at UNOPS.PAO.Server.Startup.<>c.<<Configure>b__7_6>d.MoveNext() in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Startup.cs:line 159
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.HandleException(HttpContext context, ExceptionDispatchInfo edi)
+   at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at UNOPS.PAO.UNOPSIdentity.Authentication.IAPVerificationMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\Authentication\IAPVerificationMiddleware.cs:line 373
+   at UNOPS.PAO.Server.Infrastructure.AuthenticationLoggingMiddleware.InvokeAsync(HttpContext context) in C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Server\Infrastructure\AuthenticationLoggingMiddleware.cs:line 77
+   at Microsoft.AspNetCore.TestHost.HttpContextBuilder.<>c__DisplayClass23_0.<<SendAsync>g__RunRequestAsync|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.TestHost.ClientHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Mvc.Testing.Handlers.CookieContainerHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at UNOPS.PAO.IntegrationTests.Infrastructure.IntegrationTestBase.GetAsync(String url) in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Infrastructure\IntegrationTestBase.cs:line 53
+   at UNOPS.PAO.IntegrationTests.Controllers.PartnerControllerTests.NewAdvancedSearch_ComplexMixedCriteria_ReturnsCorrectResults() in C:\Users\Leonardc\git\opportunityplus\QA Tests\Integration Tests\Controllers\PartnerControllerTests.cs:line 837
+--- End of stack trace from previous location ---
+
+Failed!  - Failed:    27, Passed:   127, Skipped:    70, Total:   224, Duration: 30 s - UNOPS.PAO.IntegrationTests.dll (net9.0)

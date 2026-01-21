@@ -3,8 +3,7 @@ import { TourControlComponent } from './tour-control.component';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { Router } from '@angular/router';
-import { WelcomeTourService } from '../../../services/welcome-tour.service';
-import { of } from 'rxjs';
+import { WelcomeTourService } from '@shared/services/ui/welcome-tour.service';
 
 describe('TourControlComponent', () => {
   let component: TourControlComponent;

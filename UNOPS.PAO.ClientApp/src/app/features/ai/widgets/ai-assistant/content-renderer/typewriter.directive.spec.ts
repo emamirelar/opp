@@ -1,10 +1,28 @@
+import { Component } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { TypewriterDirective } from './typewriter.directive';
-import { ElementRef } from '@angular/core';
 
 describe('TypewriterDirective', () => {
+  @Component({
+    template: '<div appTypewriter></div>',
+    imports: [TypewriterDirective]
+  })
+  class HostComponent {}
+
+  let fixture: ComponentFixture<HostComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [HostComponent]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(HostComponent);
+    fixture.detectChanges();
+  });
+
   it('should create an instance', () => {
-    const elementRef = {} as ElementRef;
-    const directive = new TypewriterDirective(elementRef);
+    const directive = fixture.debugElement.query(By.directive(TypewriterDirective));
     expect(directive).toBeTruthy();
   });
 

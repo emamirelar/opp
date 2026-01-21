@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.12.35527.113
@@ -39,8 +39,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UNOPS.PAO.UNOPSPresentation", "UNOPS.PAO.UNOPSPresentation\UNOPS.PAO.UNOPSPresentation.csproj", "{6D713A80-C696-4902-B87A-962623187D3D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UNOPS.PAO.Presentation", "UNOPS.PAO.Presentation\UNOPS.PAO.Presentation.csproj", "{5DFBCBED-87B5-4F60-9F7A-938B66F31F25}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UNOPS.PAO.IntegrationTests", "UNOPS.PAO.IntegrationTests\UNOPS.PAO.IntegrationTests.csproj", "{27AB8DA8-DD5F-4922-A19C-64FAB561F388}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestSpecification", "TestSpecification\TestSpecification.csproj", "{94AFCCE2-04DE-4630-9A87-9B191394B9BF}"
 EndProject
@@ -224,18 +222,6 @@ Global
 		{5DFBCBED-87B5-4F60-9F7A-938B66F31F25}.Release|x64.Build.0 = Release|Any CPU
 		{5DFBCBED-87B5-4F60-9F7A-938B66F31F25}.Release|x86.ActiveCfg = Release|Any CPU
 		{5DFBCBED-87B5-4F60-9F7A-938B66F31F25}.Release|x86.Build.0 = Release|Any CPU
-		{27AB8DA8-DD5F-4922-A19C-64FAB561F388}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{27AB8DA8-DD5F-4922-A19C-64FAB561F388}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{27AB8DA8-DD5F-4922-A19C-64FAB561F388}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{27AB8DA8-DD5F-4922-A19C-64FAB561F388}.Debug|x64.Build.0 = Debug|Any CPU
-		{27AB8DA8-DD5F-4922-A19C-64FAB561F388}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{27AB8DA8-DD5F-4922-A19C-64FAB561F388}.Debug|x86.Build.0 = Debug|Any CPU
-		{27AB8DA8-DD5F-4922-A19C-64FAB561F388}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{27AB8DA8-DD5F-4922-A19C-64FAB561F388}.Release|Any CPU.Build.0 = Release|Any CPU
-		{27AB8DA8-DD5F-4922-A19C-64FAB561F388}.Release|x64.ActiveCfg = Release|Any CPU
-		{27AB8DA8-DD5F-4922-A19C-64FAB561F388}.Release|x64.Build.0 = Release|Any CPU
-		{27AB8DA8-DD5F-4922-A19C-64FAB561F388}.Release|x86.ActiveCfg = Release|Any CPU
-		{27AB8DA8-DD5F-4922-A19C-64FAB561F388}.Release|x86.Build.0 = Release|Any CPU
 		{94AFCCE2-04DE-4630-9A87-9B191394B9BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{94AFCCE2-04DE-4630-9A87-9B191394B9BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{94AFCCE2-04DE-4630-9A87-9B191394B9BF}.Debug|x64.ActiveCfg = Debug|Any CPU

@@ -9,7 +9,7 @@ namespace UNOPS.PAO.Server;
 
 using Lamar.Microsoft.DependencyInjection;
 
-public class Program
+public partial class Program
 {
     public static IHostBuilder CreateHostBuilder(string[] args)
     {
@@ -100,3 +100,6 @@ public class Program
         await app.RunAsync();
     }
 }
+
+// Make Program class accessible to integration tests
+public partial class Program { }
