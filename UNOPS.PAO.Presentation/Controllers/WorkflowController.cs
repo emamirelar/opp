@@ -81,6 +81,9 @@ public class WorkflowController : BaseController
             return NotFound(new { error = $"Workflow not found for entity type '{entityName}'" });
         }
 
+        // Normalize entity name to match database format (e.g., "opportunity" -> "Opportunity")
+        var normalizedEntityName = NormalizeEntityNameForWorkflow(entityName);
+
         // Verify entity exists
         var entityValid = await _entityStageProvider.IsEntityValidAsync(entityName, id.ToString());
         if (!entityValid)
@@ -96,7 +99,7 @@ public class WorkflowController : BaseController
         }
 
         // Get pending workflow task
-        var pendingTask = _workflowManager.PendingTask(entityName, id);
+        var pendingTask = _workflowManager.PendingTask(normalizedEntityName, id);
         var isInWorkflow = pendingTask != null;
 
         // Get current state object
@@ -107,18 +110,22 @@ public class WorkflowController : BaseController
         var availableActions = new List<UNOPS.PAO.Models.Workflow.WorkflowActionModel>();
         if (!isInWorkflow && currentState != null)
         {
-            var actions = _workflowManager.NextActions(entityName, currentState, Facing.Internal);
+            var actions = _workflowManager.NextActions(normalizedEntityName, currentState, Facing.Internal);
             foreach (var action in actions)
             {
-                // Check if user can trigger this transition
-                var canTrigger = await _approverProvider.CanUserApproveAsync(entityName, id, CurrentUserId, currentStage, action.NewStage);
+                // Check if user can trigger this transition (not approve)
+                // Use GetTriggerConfigurationAsync to check CanTrigger permissions
+                var triggerConfig = await _approverProvider.GetTriggerConfigurationAsync(normalizedEntityName, id, currentStage, action.NewStage);
+                var canTrigger = triggerConfig.HasValue && 
+                                 triggerConfig.Value.triggers.Any(t => t.UserId == CurrentUserId);
+                
                 if (canTrigger)
                 {
                     availableActions.Add(new UNOPS.PAO.Models.Workflow.WorkflowActionModel
                     {
                         TargetStage = action.NewStage,
                         DisplayName = action.ActionName ?? action.NewStage,
-                        RequiresApproval = _workflowManager.ApprovalNeeded(entityName, currentStage, action.NewStage),
+                        RequiresApproval = _workflowManager.ApprovalNeeded(normalizedEntityName, currentStage, action.NewStage),
                         CommentRequired = action.Comment?.Equals("mandatory", StringComparison.OrdinalIgnoreCase) == true,
                         CommentOptional = action.Comment?.Equals("optional", StringComparison.OrdinalIgnoreCase) == true
                     });
@@ -151,6 +158,9 @@ public class WorkflowController : BaseController
             return NotFound(new { error = $"Workflow not found for entity type '{entityName}'" });
         }
 
+        // Normalize entity name for workflow manager consistency
+        var normalizedEntityName = NormalizeEntityNameForWorkflow(entityName);
+
         // Verify entity exists
         var entityValid = await _entityStageProvider.IsEntityValidAsync(entityName, id.ToString());
         if (!entityValid)
@@ -167,8 +177,8 @@ public class WorkflowController : BaseController
 
         var stageDisplayName = stateMachine.StageNames.TryGetValue(currentStage, out var name) ? name : currentStage;
 
-        // Get pending workflow task
-        var pendingTask = _workflowManager.PendingTask(entityName, id);
+        // Get pending workflow task (use normalized entity name)
+        var pendingTask = _workflowManager.PendingTask(normalizedEntityName, id);
         var isInWorkflow = pendingTask != null;
 
         var response = new WorkflowDetailsResponse
@@ -202,8 +212,8 @@ public class WorkflowController : BaseController
                 }
             }
 
-            // Get approvers
-            var approvers = await _approverProvider.GetApproversAsync(entityName, id, currentStage, pendingTask.NewStage ?? "");
+            // Get approvers (use normalized entity name)
+            var approvers = await _approverProvider.GetApproversAsync(normalizedEntityName, id, currentStage, pendingTask.NewStage ?? "");
             response.Approvers = approvers.Select(a => new WorkflowApproverResponse
             {
                 UserId = a.UserId,
@@ -212,8 +222,8 @@ public class WorkflowController : BaseController
                 RoleName = a.Role
             }).ToList();
 
-            // Check if current user can approve
-            response.CanApprove = await _approverProvider.CanUserApproveAsync(entityName, id, CurrentUserId, currentStage, pendingTask.NewStage ?? "");
+            // Check if current user can approve (use normalized entity name)
+            response.CanApprove = await _approverProvider.CanUserApproveAsync(normalizedEntityName, id, CurrentUserId, currentStage, pendingTask.NewStage ?? "");
             
             // Check if current user can recall (must be the initiator)
             response.CanRecall = pendingTask.UserId == CurrentUserId;
@@ -230,28 +240,31 @@ public class WorkflowController : BaseController
     [HttpPost(APIDictionary.Workflow + "/submit")]
     public async Task<ActionResult<WorkflowSubmitResponse>> Submit([FromBody] WorkflowSubmitRequest request)
     {
-        var stateMachine = GetStateMachine(request.EntityName);
+        // Normalize entity name for workflow manager consistency
+        var normalizedEntityName = NormalizeEntityNameForWorkflow(request.EntityName);
+        
+        var stateMachine = GetStateMachine(normalizedEntityName);
         if (stateMachine == null)
         {
-            return NotFound(new { error = $"Workflow not found for entity type '{request.EntityName}'" });
+            return NotFound(new { error = $"Workflow not found for entity type '{normalizedEntityName}'" });
         }
 
         // Verify entity exists
-        var entityValid = await _entityStageProvider.IsEntityValidAsync(request.EntityName, request.EntityId.ToString());
+        var entityValid = await _entityStageProvider.IsEntityValidAsync(normalizedEntityName, request.EntityId.ToString());
         if (!entityValid)
         {
-            return NotFound(new { error = $"{request.EntityName} with ID {request.EntityId} not found" });
+            return NotFound(new { error = $"{normalizedEntityName} with ID {request.EntityId} not found" });
         }
 
         // Get current stage
-        var currentStage = await _entityStageProvider.GetCurrentStageAsync(request.EntityName, request.EntityId.ToString());
+        var currentStage = await _entityStageProvider.GetCurrentStageAsync(normalizedEntityName, request.EntityId.ToString());
         if (string.IsNullOrEmpty(currentStage))
         {
             return BadRequest(new { error = "Entity has no workflow stage" });
         }
 
         // Check if already in workflow
-        var pendingTask = _workflowManager.PendingTask(request.EntityName, request.EntityId);
+        var pendingTask = _workflowManager.PendingTask(normalizedEntityName, request.EntityId);
         if (pendingTask != null)
         {
             return BadRequest(new { error = "Entity is already in a workflow approval process" });
@@ -264,7 +277,7 @@ public class WorkflowController : BaseController
             return BadRequest(new { error = $"Invalid current stage '{currentStage}'" });
         }
 
-        var actions = _workflowManager.NextActions(request.EntityName, currentState, Facing.Internal);
+        var actions = _workflowManager.NextActions(normalizedEntityName, currentState, Facing.Internal);
         var targetAction = actions.FirstOrDefault(a => a.NewStage.Equals(request.NewStage, StringComparison.OrdinalIgnoreCase));
         if (targetAction == null)
         {
@@ -279,19 +292,37 @@ public class WorkflowController : BaseController
         }
 
         // Check if approval is needed
-        var approvalRequired = _workflowManager.ApprovalNeeded(request.EntityName, currentStage, request.NewStage);
+        var approvalRequired = _workflowManager.ApprovalNeeded(normalizedEntityName, currentStage, request.NewStage);
         
         // Get entity display name for notifications
-        var entityDisplayName = await _entityStageProvider.GetEntityDisplayNameAsync(request.EntityName, request.EntityId.ToString());
+        var entityDisplayName = await _entityStageProvider.GetEntityDisplayNameAsync(normalizedEntityName, request.EntityId.ToString());
         var entityUrl = $"/opportunity/{request.EntityId}"; // TODO: Make dynamic based on entity type
 
         if (approvalRequired)
         {
-            // Initiate approval workflow
+            // Create pending workflow log entry
+            await _workflowManager.AddLog(new WorkflowLogModel
+            {
+                EntityName = normalizedEntityName,
+                EntityId = request.EntityId.ToString(),
+                Stage = currentStage,
+                NewStage = request.NewStage,
+                Comment = request.Comment ?? string.Empty,
+                Action = "Submit",
+                Status = UNOPS.Workflow.Domain.Enums.EntityStatus.Active, // Active with CompletedOn=null indicates pending
+                UserId = CurrentUserId,
+                RequiresApproval = true,
+                CompletedOn = null // Not completed yet
+            });
+
+            // Update entity WorkflowStatus to InWorkflow
+            await UpdateEntityWorkflowStatus(normalizedEntityName, request.EntityId, isInWorkflow: true);
+
+            // Send approval notifications
             await _workflowManager.Initiate(
                 new UNOPS.Workflow.Models.WorkflowActionModel
                 {
-                    EntityName = request.EntityName,
+                    EntityName = normalizedEntityName,
                     Id = request.EntityId,
                     Action = "Submit",
                     NewStage = request.NewStage,
@@ -312,7 +343,7 @@ public class WorkflowController : BaseController
         else
         {
             // Direct transition (no approval needed)
-            var success = await _entityStageProvider.UpdateStageAsync(request.EntityName, request.EntityId.ToString(), request.NewStage, CurrentUserId);
+            var success = await _entityStageProvider.UpdateStageAsync(normalizedEntityName, request.EntityId.ToString(), request.NewStage, CurrentUserId);
             if (!success)
             {
                 return StatusCode(500, new { error = "Failed to update entity stage" });
@@ -321,7 +352,7 @@ public class WorkflowController : BaseController
             // Log the transition
             await _workflowManager.AddLog(new WorkflowLogModel
             {
-                EntityName = request.EntityName,
+                EntityName = normalizedEntityName,
                 EntityId = request.EntityId.ToString(),
                 Stage = currentStage,
                 NewStage = request.NewStage,
@@ -349,29 +380,32 @@ public class WorkflowController : BaseController
     [HttpPost(APIDictionary.Workflow + "/approve")]
     public async Task<ActionResult> Approve([FromBody] WorkflowActionRequest request)
     {
+        // Normalize entity name for workflow manager consistency
+        var normalizedEntityName = NormalizeEntityNameForWorkflow(request.EntityName);
+        
         // Get pending task
-        var pendingTask = _workflowManager.PendingTask(request.EntityName, request.EntityId);
+        var pendingTask = _workflowManager.PendingTask(normalizedEntityName, request.EntityId);
         if (pendingTask == null)
         {
             return BadRequest(new { error = "No pending workflow found for this entity" });
         }
 
         // Check if user can approve
-        var currentStage = await _entityStageProvider.GetCurrentStageAsync(request.EntityName, request.EntityId.ToString());
-        var canApprove = await _approverProvider.CanUserApproveAsync(request.EntityName, request.EntityId, CurrentUserId, currentStage ?? "", pendingTask.NewStage ?? "");
+        var currentStage = await _entityStageProvider.GetCurrentStageAsync(normalizedEntityName, request.EntityId.ToString());
+        var canApprove = await _approverProvider.CanUserApproveAsync(normalizedEntityName, request.EntityId, CurrentUserId, currentStage ?? "", pendingTask.NewStage ?? "");
         if (!canApprove)
         {
             return StatusCode(403, new { error = "You do not have permission to approve this workflow" });
         }
 
         // Get entity display name for notifications
-        var entityDisplayName = await _entityStageProvider.GetEntityDisplayNameAsync(request.EntityName, request.EntityId.ToString());
+        var entityDisplayName = await _entityStageProvider.GetEntityDisplayNameAsync(normalizedEntityName, request.EntityId.ToString());
         var entityUrl = $"/opportunity/{request.EntityId}";
 
         // Approve the workflow
         var newStage = await _workflowManager.Approve(
             pendingTask,
-            request.EntityName,
+            normalizedEntityName,
             request.EntityId,
             entityDisplayName,
             request.Comment ?? "",
@@ -383,7 +417,10 @@ public class WorkflowController : BaseController
         }
 
         // Update entity stage
-        await _entityStageProvider.UpdateStageAsync(request.EntityName, request.EntityId.ToString(), newStage, CurrentUserId);
+        await _entityStageProvider.UpdateStageAsync(normalizedEntityName, request.EntityId.ToString(), newStage, CurrentUserId);
+
+        // Update entity WorkflowStatus back to None (approval complete)
+        await UpdateEntityWorkflowStatus(normalizedEntityName, request.EntityId, isInWorkflow: false);
 
         return Ok(new { success = true, message = "Workflow approved", newStage });
     }
@@ -401,29 +438,32 @@ public class WorkflowController : BaseController
             return BadRequest(new { error = "Comment is required when rejecting a workflow" });
         }
 
+        // Normalize entity name for workflow manager consistency
+        var normalizedEntityName = NormalizeEntityNameForWorkflow(request.EntityName);
+        
         // Get pending task
-        var pendingTask = _workflowManager.PendingTask(request.EntityName, request.EntityId);
+        var pendingTask = _workflowManager.PendingTask(normalizedEntityName, request.EntityId);
         if (pendingTask == null)
         {
             return BadRequest(new { error = "No pending workflow found for this entity" });
         }
 
         // Check if user can approve/reject
-        var currentStage = await _entityStageProvider.GetCurrentStageAsync(request.EntityName, request.EntityId.ToString());
-        var canApprove = await _approverProvider.CanUserApproveAsync(request.EntityName, request.EntityId, CurrentUserId, currentStage ?? "", pendingTask.NewStage ?? "");
+        var currentStage = await _entityStageProvider.GetCurrentStageAsync(normalizedEntityName, request.EntityId.ToString());
+        var canApprove = await _approverProvider.CanUserApproveAsync(normalizedEntityName, request.EntityId, CurrentUserId, currentStage ?? "", pendingTask.NewStage ?? "");
         if (!canApprove)
         {
             return StatusCode(403, new { error = "You do not have permission to reject this workflow" });
         }
 
         // Get entity display name for notifications
-        var entityDisplayName = await _entityStageProvider.GetEntityDisplayNameAsync(request.EntityName, request.EntityId.ToString());
+        var entityDisplayName = await _entityStageProvider.GetEntityDisplayNameAsync(normalizedEntityName, request.EntityId.ToString());
         var entityUrl = $"/opportunity/{request.EntityId}";
 
         // Reject the workflow
         var success = await _workflowManager.Reject(
             pendingTask,
-            request.EntityName,
+            normalizedEntityName,
             request.EntityId,
             entityDisplayName,
             request.Comment,
@@ -433,6 +473,9 @@ public class WorkflowController : BaseController
         {
             return StatusCode(500, new { error = "Failed to reject workflow" });
         }
+
+        // Update entity WorkflowStatus back to None (rejection complete)
+        await UpdateEntityWorkflowStatus(normalizedEntityName, request.EntityId, isInWorkflow: false);
 
         return Ok(new { success = true, message = "Workflow rejected" });
     }
@@ -445,8 +488,11 @@ public class WorkflowController : BaseController
     [HttpPost(APIDictionary.Workflow + "/recall")]
     public async Task<ActionResult> Recall([FromBody] WorkflowRecallRequest request)
     {
+        // Normalize entity name for workflow manager consistency
+        var normalizedEntityName = NormalizeEntityNameForWorkflow(request.EntityName);
+        
         // Get pending task
-        var pendingTask = _workflowManager.PendingTask(request.EntityName, request.EntityId);
+        var pendingTask = _workflowManager.PendingTask(normalizedEntityName, request.EntityId);
         if (pendingTask == null)
         {
             return BadRequest(new { error = "No pending workflow found for this entity" });
@@ -459,13 +505,13 @@ public class WorkflowController : BaseController
         }
 
         // Get entity display name for notifications
-        var entityDisplayName = await _entityStageProvider.GetEntityDisplayNameAsync(request.EntityName, request.EntityId.ToString());
+        var entityDisplayName = await _entityStageProvider.GetEntityDisplayNameAsync(normalizedEntityName, request.EntityId.ToString());
         var entityUrl = $"/opportunity/{request.EntityId}";
 
         // Recall the workflow
         var success = await _workflowManager.Recall(
             pendingTask,
-            request.EntityName,
+            normalizedEntityName,
             request.EntityId,
             entityDisplayName,
             request.Comment ?? "",
@@ -475,6 +521,9 @@ public class WorkflowController : BaseController
         {
             return StatusCode(500, new { error = "Failed to recall workflow" });
         }
+
+        // Update entity WorkflowStatus back to None (recall complete)
+        await UpdateEntityWorkflowStatus(normalizedEntityName, request.EntityId, isInWorkflow: false);
 
         return Ok(new { success = true, message = "Workflow recalled" });
     }
@@ -494,6 +543,9 @@ public class WorkflowController : BaseController
             return NotFound(new { error = $"Workflow not found for entity type '{entityName}'" });
         }
 
+        // Normalize entity name for workflow manager consistency
+        var normalizedEntityName = NormalizeEntityNameForWorkflow(entityName);
+
         // Verify entity exists
         var entityValid = await _entityStageProvider.IsEntityValidAsync(entityName, id.ToString());
         if (!entityValid)
@@ -501,8 +553,8 @@ public class WorkflowController : BaseController
             return NotFound(new { error = $"{entityName} with ID {id} not found" });
         }
 
-        // Get workflow history
-        var history = _workflowManager.GetWorkflowHistory(stateMachine, entityName, id);
+        // Get workflow history (use normalized entity name)
+        var history = _workflowManager.GetWorkflowHistory(stateMachine, normalizedEntityName, id);
 
         // Map to response with user details
         var response = new List<WorkflowHistoryResponse>();
@@ -554,5 +606,47 @@ public class WorkflowController : BaseController
             "opportunity" => OpportunityWorkflow.StateMachine,
             _ => null
         };
+    }
+
+    /// <summary>
+    /// Normalizes entity name to match database storage format.
+    /// Database stores entity names with proper casing (e.g., "Opportunity" not "opportunity").
+    /// </summary>
+    private static string NormalizeEntityNameForWorkflow(string entityName)
+    {
+        return entityName.ToLowerInvariant() switch
+        {
+            "opportunity" => "Opportunity",
+            _ => entityName
+        };
+    }
+
+    /// <summary>
+    /// Updates the WorkflowStatus property of an entity.
+    /// </summary>
+    /// <param name="entityName">The entity type name (normalized, e.g., "Opportunity")</param>
+    /// <param name="entityId">The entity ID</param>
+    /// <param name="isInWorkflow">True to set WorkflowStatus to InWorkflow, false for None</param>
+    private async Task UpdateEntityWorkflowStatus(string entityName, int entityId, bool isInWorkflow)
+    {
+        switch (entityName)
+        {
+            case "Opportunity":
+                var opportunity = await _context.Opportunities
+                    .FirstOrDefaultAsync(o => o.Id == entityId && !o.IsDeleted);
+                if (opportunity != null)
+                {
+                    opportunity.WorkflowStatus = isInWorkflow 
+                        ? UNOPS.PAO.Domain.Enums.WorkflowStatus.InWorkflow 
+                        : UNOPS.PAO.Domain.Enums.WorkflowStatus.None;
+                    opportunity.LastModifiedBy = CurrentUserId;
+                    opportunity.LastModifiedDate = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+                }
+                break;
+            // Add other entity types here as needed
+            default:
+                throw new NotImplementedException($"WorkflowStatus update not implemented for entity type: {entityName}");
+        }
     }
 }

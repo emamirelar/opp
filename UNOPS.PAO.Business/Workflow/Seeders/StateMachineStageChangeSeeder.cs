@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using UNOPS.PAO.Business.Workflow;
 using UNOPS.Workflow.DataAccess;
 using UNOPS.Workflow.Domain.Entities;
 using UNOPS.Workflow.Domain.Enums;
@@ -9,7 +10,7 @@ namespace UNOPS.PAO.Business.Workflow.Seeders;
 
 /// <summary>
 /// Seeds workflow stage transitions for Opportunity entities.
-/// Defines 3 transitions: IDENTIFY & PROFILE → GO, IDENTIFY & PROFILE → NO GO, NO GO → IDENTIFY & PROFILE.
+/// Includes all 3 transitions: Go, No Go, and Reopen (No Go → Identify & Profile).
 /// </summary>
 public static class StateMachineStageChangeSeeder
 {
@@ -94,6 +95,7 @@ public static class StateMachineStageChangeSeeder
 
     /// <summary>
     /// Returns the seed data for Opportunity workflow transitions.
+    /// Includes all 3 transitions: Go, No Go, and Reopen.
     /// </summary>
     private static List<StateMachineStageChange> GetSeedStageChanges()
     {
@@ -131,7 +133,7 @@ public static class StateMachineStageChangeSeeder
                 Status = EntityStatus.Active
             },
 
-            // Transition 3: NO GO → IDENTIFY & PROFILE (reopen, no approval)
+            // Transition 3: NO GO → IDENTIFY & PROFILE (reopen, no approval needed)
             new StateMachineStageChange
             {
                 EntityName = OpportunityWorkflow.EntityName,

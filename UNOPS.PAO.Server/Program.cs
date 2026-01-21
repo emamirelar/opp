@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using UNOPS.PAO.Business.Workflow.Seeders;
+using UNOPS.Workflow.DataAccess;
 
 namespace UNOPS.PAO.Server;
 
@@ -83,7 +85,15 @@ public class Program
         // Data seeding is now triggered manually via API endpoint: POST /api/system-admin/seeding/run
         // Role/permission seeding still happens automatically in Startup.cs
         
-        // Seed workflow configuration data (idempotent - safe to run on every startup)
+        // Ensure workflow schema is created and migrations are applied FIRST (before seeders)
+        // This handles IAM auth case where schema creation was skipped during service registration
+        using (var scope = app.Services.CreateScope())
+        {
+            var workflowContext = scope.ServiceProvider.GetRequiredService<WorkflowDbContext>();
+            workflowContext.EnsureWorkflowSchemaCreated(); // Creates schema AND applies migrations
+        }
+        
+        // Seed workflow configuration data AFTER migrations (idempotent - safe to run on every startup)
         await app.Services.SeedStateMachineStageChangesAsync();
         await app.Services.SeedStateMachineStageChangeRolesAsync();
         

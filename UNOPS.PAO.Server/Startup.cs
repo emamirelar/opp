@@ -43,6 +43,7 @@ using UNOPS.PAO.Presentation.Security;
 using UNOPS.PAO.Business.Services;
 using Google.Apis.Auth.OAuth2;
 using UNOPS.PAO.Business.Workflow.Adapters;
+using UNOPS.Workflow.DataAccess;
 
 namespace UNOPS.PAO.Server;
 
@@ -526,7 +527,9 @@ public class Startup
 
         // Check if IAM authentication is enabled (ONLY for local development)
         // In Dev/QA/Prod, connection strings from Secret Manager already have proper credentials
-        var useIamAuth = CurrentEnvironment.IsDevelopment() && Configuration.GetValue<bool>("ConnectionStrings:UseIamAuthentication");
+        var connectionStringsSection = Configuration.GetSection("ConnectionStrings");
+        var useIamAuth = CurrentEnvironment.IsDevelopment() && 
+                         connectionStringsSection.GetValue<bool>("UseIamAuthentication", false);
         DataAccess.Services.CloudSqlIamAuthProvider.IsEnabled = useIamAuth;
 
         // OPTIMIZE: Configure connection pool for better concurrency
@@ -545,9 +548,20 @@ public class Startup
         
         // CRITICAL: Remove password from connection string when using IAM authentication
         // Npgsql requires no password set when using periodic password provider
+        // Setting Password to null ensures it's not included in the connection string
+        // Also handle case where Password might be empty string in original connection string
         if (useIamAuth)
         {
+            // Explicitly set to null to ensure it's removed from connection string
             connectionStringBuilder.Password = null;
+        }
+        else if (string.IsNullOrEmpty(connectionStringBuilder.Password))
+        {
+            // If IAM auth is not enabled but no password is provided, this is an error
+            throw new InvalidOperationException(
+                "No password provided in connection string and IAM authentication is disabled. " +
+                "Either provide a password in the connection string or enable IAM authentication " +
+                "by setting ConnectionStrings:UseIamAuthentication to true in appsettings.json");
         }
         
         var optimizedConnectionString = connectionStringBuilder.ToString();
@@ -557,8 +571,26 @@ public class Startup
         if (useIamAuth)
         {
             // Use IAM authentication - password is generated dynamically via OAuth2 token
+            // The callback receives connection parameters but we use the static provider
             dataSourceBuilder.UsePeriodicPasswordProvider(
-                async (_, ct) => await DataAccess.Services.CloudSqlIamAuthProvider.ProvidePasswordAsync("", 0, "", "", ct) ?? "",
+                async (connStringBuilder, ct) =>
+                {
+                    var password = await DataAccess.Services.CloudSqlIamAuthProvider.ProvidePasswordAsync(
+                        connStringBuilder.Host ?? "",
+                        connStringBuilder.Port,
+                        connStringBuilder.Database ?? "",
+                        connStringBuilder.Username ?? "",
+                        ct);
+                    
+                    if (string.IsNullOrEmpty(password))
+                    {
+                        throw new InvalidOperationException(
+                            "IAM authentication is enabled but failed to obtain access token. " +
+                            "Ensure Application Default Credentials are configured (run 'gcloud auth application-default login').");
+                    }
+                    
+                    return password;
+                },
                 TimeSpan.FromMinutes(55),  // Refresh token every 55 minutes (tokens expire in 60)
                 TimeSpan.FromSeconds(10)   // Retry interval on failure
             );
@@ -604,6 +636,15 @@ public class Startup
         {
             options.UsePostgreSqlStorage(optimizedConnectionString, "workflow");
         });
+
+        // Override WorkflowDbContext registration to use dataSource (with IAM auth support)
+        // This ensures WorkflowDbContext uses the same IAM authentication as other DbContexts
+        services.AddDbContext<UNOPS.Workflow.DataAccess.WorkflowDbContext>(options =>
+            options
+                .UseNpgsql(dataSource, npgsql =>
+                {
+                    npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "workflow");
+                }));
 
     }
     private string? GetConnectionStringFromSecretManager()

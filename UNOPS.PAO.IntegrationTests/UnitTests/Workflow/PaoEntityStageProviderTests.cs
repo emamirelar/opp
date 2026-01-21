@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -88,7 +89,7 @@ public class PaoEntityStageProviderTests : IDisposable
         await _dbContext.SaveChangesAsync();
 
         // Act
-        var result = await _stageProvider.GetCurrentStageAsync("opportunity", "2");
+        var result = await _stageProvider.GetCurrentStageAsync("Opportunity", "2");
 
         // Assert
         result.Should().BeNull();
@@ -98,7 +99,7 @@ public class PaoEntityStageProviderTests : IDisposable
     public async Task GetCurrentStageAsync_WithNonExistentOpportunity_ReturnsNull()
     {
         // Act
-        var result = await _stageProvider.GetCurrentStageAsync("opportunity", "99999");
+        var result = await _stageProvider.GetCurrentStageAsync("Opportunity", "99999");
 
         // Assert
         result.Should().BeNull();
@@ -108,7 +109,7 @@ public class PaoEntityStageProviderTests : IDisposable
     public async Task GetCurrentStageAsync_WithInvalidEntityId_ReturnsNull()
     {
         // Act
-        var result = await _stageProvider.GetCurrentStageAsync("opportunity", "invalid-id");
+        var result = await _stageProvider.GetCurrentStageAsync("Opportunity", "invalid-id");
 
         // Assert
         result.Should().BeNull();
@@ -124,11 +125,8 @@ public class PaoEntityStageProviderTests : IDisposable
         result.Should().BeNull();
     }
 
-    [Theory]
-    [InlineData("Opportunity")]
-    [InlineData("OPPORTUNITY")]
-    [InlineData("opportunity")]
-    public async Task GetCurrentStageAsync_WithDifferentCaseEntityNames_ReturnsStage(string entityName)
+    [Fact]
+    public async Task GetCurrentStageAsync_CaseInsensitiveEntityName_ReturnsStage()
     {
         // Arrange
         var opportunity = new Opportunity
@@ -143,11 +141,15 @@ public class PaoEntityStageProviderTests : IDisposable
         _dbContext.Opportunities.Add(opportunity);
         await _dbContext.SaveChangesAsync();
 
-        // Act
-        var result = await _stageProvider.GetCurrentStageAsync(entityName, "10");
+        // Act - Test that provider handles case-insensitive entity names
+        var resultLower = await _stageProvider.GetCurrentStageAsync("opportunity", "10");
+        var resultUpper = await _stageProvider.GetCurrentStageAsync("OPPORTUNITY", "10");
+        var resultMixed = await _stageProvider.GetCurrentStageAsync("Opportunity", "10");
 
-        // Assert
-        result.Should().Be("NO GO");
+        // Assert - All should return the same result
+        resultLower.Should().Be("NO GO");
+        resultUpper.Should().Be("NO GO");
+        resultMixed.Should().Be("NO GO");
     }
 
     #endregion
@@ -158,6 +160,29 @@ public class PaoEntityStageProviderTests : IDisposable
     public async Task UpdateStageAsync_WithValidOpportunity_UpdatesStageAndAuditFields()
     {
         // Arrange
+        var userId = 123;
+        
+        // Set up HttpContext with user claim so UserResolverService returns correct userId
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, userId.ToString())
+        };
+        var identity = new ClaimsIdentity(claims, "TestAuth");
+        var principal = new ClaimsPrincipal(identity);
+        var httpContext = new DefaultHttpContext { User = principal };
+        
+        // Create a new DbContext with the user context set up
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+        var mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
+        mockHttpContextAccessor.Setup(x => x.HttpContext).Returns(httpContext);
+        var mockDbContextSchema = new Mock<IDbContextSchema>();
+        mockDbContextSchema.Setup(x => x.Schema).Returns("public");
+        var userResolverService = new UserResolverService<int>(mockHttpContextAccessor.Object);
+        var testDbContext = new AppDbContext(options, userResolverService, mockDbContextSchema.Object);
+        var testStageProvider = new PaoEntityStageProvider(testDbContext);
+        
         var opportunity = new Opportunity
         {
             Id = 3,
@@ -167,22 +192,22 @@ public class PaoEntityStageProviderTests : IDisposable
             Status = EntityStatus.Active,
             IsDeleted = false
         };
-        _dbContext.Opportunities.Add(opportunity);
-        await _dbContext.SaveChangesAsync();
-        _dbContext.Entry(opportunity).State = EntityState.Detached;
-
-        var userId = 123;
+        testDbContext.Opportunities.Add(opportunity);
+        await testDbContext.SaveChangesAsync();
+        testDbContext.Entry(opportunity).State = EntityState.Detached;
 
         // Act
-        var result = await _stageProvider.UpdateStageAsync("opportunity", "3", "GO", userId);
+        var result = await testStageProvider.UpdateStageAsync("opportunity", "3", "GO", userId);
 
         // Assert
         result.Should().BeTrue();
 
-        var updatedOpportunity = await _dbContext.Opportunities.FindAsync(3);
+        var updatedOpportunity = await testDbContext.Opportunities.FindAsync(3);
         updatedOpportunity!.Stage.Should().Be("GO");
         updatedOpportunity.LastModifiedBy.Should().Be(userId);
         updatedOpportunity.LastModifiedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+        
+        testDbContext.Dispose();
     }
 
     [Fact]
@@ -202,7 +227,7 @@ public class PaoEntityStageProviderTests : IDisposable
         await _dbContext.SaveChangesAsync();
 
         // Act
-        var result = await _stageProvider.UpdateStageAsync("opportunity", "4", "GO", 123);
+        var result = await _stageProvider.UpdateStageAsync("Opportunity", "4", "GO", 123);
 
         // Assert
         result.Should().BeFalse();
@@ -212,7 +237,7 @@ public class PaoEntityStageProviderTests : IDisposable
     public async Task UpdateStageAsync_WithNonExistentOpportunity_ReturnsFalse()
     {
         // Act
-        var result = await _stageProvider.UpdateStageAsync("opportunity", "99999", "GO", 123);
+        var result = await _stageProvider.UpdateStageAsync("Opportunity", "99999", "GO", 123);
 
         // Assert
         result.Should().BeFalse();
@@ -259,7 +284,7 @@ public class PaoEntityStageProviderTests : IDisposable
         await _dbContext.SaveChangesAsync();
 
         // Act
-        var result = await _stageProvider.IsEntityValidAsync("opportunity", "5");
+        var result = await _stageProvider.IsEntityValidAsync("Opportunity", "5");
 
         // Assert
         result.Should().BeTrue();
@@ -282,7 +307,7 @@ public class PaoEntityStageProviderTests : IDisposable
         await _dbContext.SaveChangesAsync();
 
         // Act
-        var result = await _stageProvider.IsEntityValidAsync("opportunity", "6");
+        var result = await _stageProvider.IsEntityValidAsync("Opportunity", "6");
 
         // Assert
         result.Should().BeFalse();
@@ -302,7 +327,7 @@ public class PaoEntityStageProviderTests : IDisposable
     public async Task IsEntityValidAsync_WithInvalidEntityId_ReturnsFalse()
     {
         // Act
-        var result = await _stageProvider.IsEntityValidAsync("opportunity", "invalid");
+        var result = await _stageProvider.IsEntityValidAsync("Opportunity", "invalid");
 
         // Assert
         result.Should().BeFalse();
@@ -349,7 +374,7 @@ public class PaoEntityStageProviderTests : IDisposable
     public async Task GetEntityDisplayNameAsync_WithNonExistentOpportunity_ReturnsDefaultName()
     {
         // Act
-        var result = await _stageProvider.GetEntityDisplayNameAsync("opportunity", "99999");
+        var result = await _stageProvider.GetEntityDisplayNameAsync("Opportunity", "99999");
 
         // Assert
         result.Should().Be("Unknown Opportunity");
@@ -359,7 +384,7 @@ public class PaoEntityStageProviderTests : IDisposable
     public async Task GetEntityDisplayNameAsync_WithInvalidEntityId_ReturnsUnknown()
     {
         // Act
-        var result = await _stageProvider.GetEntityDisplayNameAsync("opportunity", "invalid");
+        var result = await _stageProvider.GetEntityDisplayNameAsync("Opportunity", "invalid");
 
         // Assert
         result.Should().Be("Unknown");
@@ -420,7 +445,7 @@ public class PaoEntityStageProviderTests : IDisposable
         _dbContext.Entry(opportunity).State = EntityState.Detached;
 
         // Act 1 - Verify entity is valid
-        var isValid = await _stageProvider.IsEntityValidAsync("opportunity", "100");
+        var isValid = await _stageProvider.IsEntityValidAsync("Opportunity", "100");
         isValid.Should().BeTrue();
 
         // Act 2 - Get current stage
@@ -428,11 +453,11 @@ public class PaoEntityStageProviderTests : IDisposable
         currentStage.Should().Be("IDENTIFY & PROFILE");
 
         // Act 3 - Get display name
-        var displayName = await _stageProvider.GetEntityDisplayNameAsync("opportunity", "100");
+        var displayName = await _stageProvider.GetEntityDisplayNameAsync("Opportunity", "100");
         displayName.Should().Be("End-to-End Test");
 
         // Act 4 - Update stage to GO
-        var updateResult = await _stageProvider.UpdateStageAsync("opportunity", "100", "GO", 1);
+        var updateResult = await _stageProvider.UpdateStageAsync("Opportunity", "100", "GO", 1);
         updateResult.Should().BeTrue();
 
         // Act 5 - Verify new stage

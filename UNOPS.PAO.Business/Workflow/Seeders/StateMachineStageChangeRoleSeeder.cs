@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using UNOPS.PAO.Business.Workflow;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.Workflow.DataAccess;
 using UNOPS.Workflow.Domain.Entities;
@@ -10,7 +11,7 @@ namespace UNOPS.PAO.Business.Workflow.Seeders;
 
 /// <summary>
 /// Seeds workflow role permissions for Opportunity workflow transitions.
-/// Defines which roles can trigger and approve stage changes.
+/// Includes role permissions for all 3 transitions: Go, No Go, and Reopen.
 /// </summary>
 public static class StateMachineStageChangeRoleSeeder
 {
@@ -21,7 +22,7 @@ public static class StateMachineStageChangeRoleSeeder
     public static class RoleNames
     {
         public const string OpportunityManager = "Opportunity Manager";
-        public const string DoaHolder = "DOA Holder";
+        public const string PartnershipLead = "Partnership Lead"; // Approver role for testing
     }
 
     /// <summary>
@@ -41,25 +42,25 @@ public static class StateMachineStageChangeRoleSeeder
             var entityRoles = await appContext.EntityRoles
                 .Where(r => !r.IsDeleted &&
                            r.EntityType == "Opportunity" &&
-                           (r.Name == RoleNames.OpportunityManager || r.Name == RoleNames.DoaHolder))
+                           (r.Name == RoleNames.OpportunityManager || r.Name == RoleNames.PartnershipLead))
                 .ToListAsync();
 
             var opportunityManagerRole = entityRoles.FirstOrDefault(r => r.Name == RoleNames.OpportunityManager);
-            var doaHolderRole = entityRoles.FirstOrDefault(r => r.Name == RoleNames.DoaHolder);
+            var partnershipLeadRole = entityRoles.FirstOrDefault(r => r.Name == RoleNames.PartnershipLead);
 
             if (opportunityManagerRole == null)
             {
                 logger.LogWarning("EntityRole '{RoleName}' not found in database. Skipping role seeding.", RoleNames.OpportunityManager);
             }
 
-            if (doaHolderRole == null)
+            if (partnershipLeadRole == null)
             {
-                logger.LogWarning("EntityRole '{RoleName}' not found in database. Skipping role seeding.", RoleNames.DoaHolder);
+                logger.LogWarning("EntityRole '{RoleName}' not found in database. Skipping role seeding.", RoleNames.PartnershipLead);
             }
 
             var seedData = GetSeedStageChangeRoles(
                 opportunityManagerRole?.Id ?? 0,
-                doaHolderRole?.Id ?? 0);
+                partnershipLeadRole?.Id ?? 0);
 
             foreach (var rolePermission in seedData)
             {
@@ -135,10 +136,11 @@ public static class StateMachineStageChangeRoleSeeder
 
     /// <summary>
     /// Returns the seed data for Opportunity workflow role permissions.
+    /// Includes permissions for all 3 transitions: Go, No Go, and Reopen.
     /// </summary>
     private static List<StateMachineStageChangeRole> GetSeedStageChangeRoles(
         int opportunityManagerRoleId,
-        int doaHolderRoleId)
+        int partnershipLeadRoleId)
     {
         return new List<StateMachineStageChangeRole>
         {
@@ -160,17 +162,17 @@ public static class StateMachineStageChangeRoleSeeder
                 Status = EntityStatus.Active
             },
 
-            // DOA Holder can approve
+            // Partnership Lead can approve
             new StateMachineStageChangeRole
             {
                 EntityType = OpportunityWorkflow.EntityName,
                 FromStage = OpportunityWorkflow.Stages.IdentifyAndProfile,
                 ToStage = OpportunityWorkflow.Stages.Go,
-                RoleId = doaHolderRoleId,
-                RoleName = RoleNames.DoaHolder,
+                RoleId = partnershipLeadRoleId,
+                RoleName = RoleNames.PartnershipLead,
                 CanTrigger = false,
                 CanApprove = true,
-                Name = "DOA Holder - Approve Go",
+                Name = "Partnership Lead - Approve Go",
                 Status = EntityStatus.Active
             },
 
@@ -192,17 +194,17 @@ public static class StateMachineStageChangeRoleSeeder
                 Status = EntityStatus.Active
             },
 
-            // DOA Holder can approve
+            // Partnership Lead can approve
             new StateMachineStageChangeRole
             {
                 EntityType = OpportunityWorkflow.EntityName,
                 FromStage = OpportunityWorkflow.Stages.IdentifyAndProfile,
                 ToStage = OpportunityWorkflow.Stages.NoGo,
-                RoleId = doaHolderRoleId,
-                RoleName = RoleNames.DoaHolder,
+                RoleId = partnershipLeadRoleId,
+                RoleName = RoleNames.PartnershipLead,
                 CanTrigger = false,
                 CanApprove = true,
-                Name = "DOA Holder - Approve No Go",
+                Name = "Partnership Lead - Approve No Go",
                 Status = EntityStatus.Active
             },
 
@@ -210,7 +212,7 @@ public static class StateMachineStageChangeRoleSeeder
             // Transition: NO GO → IDENTIFY & PROFILE (Reopen)
             // ========================================
 
-            // Opportunity Manager can trigger (no approval needed)
+            // Opportunity Manager can trigger (reopen, no approval needed)
             new StateMachineStageChangeRole
             {
                 EntityType = OpportunityWorkflow.EntityName,

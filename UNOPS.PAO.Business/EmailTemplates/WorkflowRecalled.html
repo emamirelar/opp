@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workflow Recalled</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #6c757d;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+        }
+        .recall-box {
+            background-color: #e2e3e5;
+            border: 1px solid #6c757d;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        .recall-icon {
+            font-size: 48px;
+            color: #6c757d;
+        }
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        .info-table td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .info-table td:first-child {
+            font-weight: bold;
+            width: 150px;
+            color: #666;
+        }
+        .button {
+            display: inline-block;
+            background-color: #0077be;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 10px 5px 10px 0;
+        }
+        .footer {
+            background-color: #f1f1f1;
+            padding: 15px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            border-radius: 0 0 8px 8px;
+        }
+        .comment-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #6c757d;
+            padding: 10px 15px;
+            margin: 15px 0;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Workflow Recalled</h1>
+    </div>
+    
+    <div class="content">
+        <p>Hello {{RecipientName}},</p>
+        
+        <div class="recall-box">
+            <div class="recall-icon">&#8634;</div>
+            <strong>A workflow approval request has been recalled.</strong>
+        </div>
+        
+        <p>This is to inform you that the following workflow request has been cancelled by the initiator:</p>
+        
+        <table class="info-table">
+            <tr>
+                <td>Entity Type:</td>
+                <td>{{EntityType}}</td>
+            </tr>
+            <tr>
+                <td>Entity Name:</td>
+                <td>{{EntityName}}</td>
+            </tr>
+            <tr>
+                <td>Current Stage:</td>
+                <td>{{CurrentStage}}</td>
+            </tr>
+            <tr>
+                <td>Requested Stage:</td>
+                <td>{{RequestedStage}}</td>
+            </tr>
+            <tr>
+                <td>Recalled By:</td>
+                <td>{{RecalledByName}}</td>
+            </tr>
+            <tr>
+                <td>Recalled On:</td>
+                <td>{{RecalledOn}}</td>
+            </tr>
+        </table>
+        
+        {{#if Comment}}
+        <div class="comment-box">
+            <strong>Reason for Recall:</strong><br>
+            {{Comment}}
+        </div>
+        {{/if}}
+        
+        <p>No further action is required from you at this time.</p>
+        
+        <p>
+            <a href="{{EntityUrl}}" class="button">View Details</a>
+        </p>
+    </div>
+    
+    <div class="footer">
+        <p>This is an automated notification from UNOPS Opportunity+ System.</p>
+        <p>If you have any questions, please contact your system administrator.</p>
+    </div>
+</body>
+</html>

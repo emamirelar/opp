@@ -46,21 +46,21 @@ public static class OpportunityWorkflow
             { 
                 Sequence = 1, 
                 StageCode = Stages.IdentifyAndProfile, 
-                DisplayName = "Identify & Profile",
+                DisplayName = Stages.IdentifyAndProfile,  // Match database uppercase
                 Facing = Facing.Internal 
             },
             new State 
             { 
                 Sequence = 2, 
                 StageCode = Stages.Go, 
-                DisplayName = "Go",
+                DisplayName = Stages.Go,  // Match database uppercase
                 Facing = Facing.Internal 
             },
             new State 
             { 
                 Sequence = 3, 
                 StageCode = Stages.NoGo, 
-                DisplayName = "No Go",
+                DisplayName = Stages.NoGo,  // Match database uppercase
                 Facing = Facing.Internal 
             }
         ]

@@ -1,3 +1,4 @@
+using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Models.Shared;
 
 namespace UNOPS.PAO.Models;
@@ -32,6 +33,16 @@ public class OpportunityListModel
     /// Current workflow stage. Values: "IDENTIFY &amp; PROFILE", "GO", "NO GO"
     /// </summary>
     public string? Stage { get; set; }
+    
+    /// <summary>
+    /// Workflow status for approval tracking.
+    /// </summary>
+    public WorkflowStatus WorkflowStatus { get; set; }
+    
+    /// <summary>
+    /// Indicates if the opportunity is in an approval workflow.
+    /// </summary>
+    public bool IsInWorkflow { get; set; }
     
     // ========== ORGANIZATION ==========
     public int? ResponsibleOrgUnitId { get; set; }

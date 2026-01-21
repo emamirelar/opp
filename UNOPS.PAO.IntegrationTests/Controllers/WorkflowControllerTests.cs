@@ -12,10 +12,11 @@ using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.DataAccess.Interfaces;
 using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.Domain.Entities;
-using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Models.Workflow;
 using UNOPS.PAO.Presentation.Controllers;
 using UNOPS.Workflow.Business.Interfaces;
+using UNOPS.Workflow.Domain.Entities; // Added for WorkflowLog entity
+using UNOPS.Workflow.Domain.Enums; // Added for Facing enum
 using UNOPS.Workflow.Models;
 using Xunit;
 
@@ -98,7 +99,7 @@ public class WorkflowControllerTests : IDisposable
     public void GetWorkflowStages_ForOpportunity_ReturnsStageList()
     {
         // Act
-        var result = _controller.GetWorkflowStages("opportunity");
+        var result = _controller.GetWorkflowStages("Opportunity");
 
         // Assert
         var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
@@ -140,21 +141,25 @@ public class WorkflowControllerTests : IDisposable
     {
         // Arrange
         var entityId = 1;
-        _mockEntityStageProvider.Setup(x => x.IsEntityValidAsync("opportunity", "1"))
+        _mockEntityStageProvider.Setup(x => x.IsEntityValidAsync("Opportunity", "1"))
             .ReturnsAsync(true);
-        _mockEntityStageProvider.Setup(x => x.GetCurrentStageAsync("opportunity", "1"))
+        _mockEntityStageProvider.Setup(x => x.GetCurrentStageAsync("Opportunity", "1"))
             .ReturnsAsync("IDENTIFY & PROFILE");
-        _mockWorkflowManager.Setup(x => x.PendingTask("opportunity", entityId))
-            .Returns((WorkflowLogModel?)null);
+        _mockWorkflowManager.Setup(x => x.PendingTask("Opportunity", entityId))
+            .Returns((WorkflowLog?)null);
         _mockWorkflowManager.Setup(x => x.WorkflowStateByStage(
                 It.IsAny<StateMachine>(), "IDENTIFY & PROFILE", Facing.Internal))
-            .Returns(new WorkflowStateModel { Stage = "IDENTIFY & PROFILE" });
+            .Returns(new State 
+            { 
+                StageCode = "IDENTIFY & PROFILE",
+                DisplayName = "Identify & Profile"
+            });
         _mockWorkflowManager.Setup(x => x.NextActions(
-                "opportunity", It.IsAny<WorkflowStateModel>(), Facing.Internal))
-            .Returns(new List<WorkflowStateActionModel>());
+                "Opportunity", It.IsAny<State>(), Facing.Internal))
+            .Returns(Array.Empty<WorkflowStateActionModel>());
 
         // Act
-        var result = await _controller.GetWorkflowState("opportunity", entityId);
+        var result = await _controller.GetWorkflowState("Opportunity", entityId);
 
         // Assert
         var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
@@ -168,11 +173,11 @@ public class WorkflowControllerTests : IDisposable
     public async Task GetWorkflowState_WithNonExistentEntity_Returns404()
     {
         // Arrange
-        _mockEntityStageProvider.Setup(x => x.IsEntityValidAsync("opportunity", "999"))
+        _mockEntityStageProvider.Setup(x => x.IsEntityValidAsync("Opportunity", "999"))
             .ReturnsAsync(false);
 
         // Act
-        var result = await _controller.GetWorkflowState("opportunity", 999);
+        var result = await _controller.GetWorkflowState("Opportunity", 999);
 
         // Assert
         result.Result.Should().BeOfType<NotFoundObjectResult>();
@@ -193,27 +198,31 @@ public class WorkflowControllerTests : IDisposable
     {
         // Arrange
         var entityId = 1;
-        var pendingTask = new WorkflowLogModel
+        var pendingTask = new WorkflowLog
         {
             EntityName = "opportunity",
-            EntityId = entityId,
+            EntityId = "1", // EntityId is string type
             NewStage = "GO",
-            CreatedBy = 1,
-            CreatedOn = DateTime.UtcNow
+            UserId = 1,
+            CompletedOn = null // Pending tasks have null CompletedOn
         };
 
-        _mockEntityStageProvider.Setup(x => x.IsEntityValidAsync("opportunity", "1"))
+        _mockEntityStageProvider.Setup(x => x.IsEntityValidAsync("Opportunity", "1"))
             .ReturnsAsync(true);
-        _mockEntityStageProvider.Setup(x => x.GetCurrentStageAsync("opportunity", "1"))
+        _mockEntityStageProvider.Setup(x => x.GetCurrentStageAsync("Opportunity", "1"))
             .ReturnsAsync("IDENTIFY & PROFILE");
-        _mockWorkflowManager.Setup(x => x.PendingTask("opportunity", entityId))
+        _mockWorkflowManager.Setup(x => x.PendingTask("Opportunity", entityId))
             .Returns(pendingTask);
         _mockWorkflowManager.Setup(x => x.WorkflowStateByStage(
                 It.IsAny<StateMachine>(), "IDENTIFY & PROFILE", Facing.Internal))
-            .Returns(new WorkflowStateModel { Stage = "IDENTIFY & PROFILE" });
+            .Returns(new State 
+            { 
+                StageCode = "IDENTIFY & PROFILE",
+                DisplayName = "Identify & Profile"
+            });
 
         // Act
-        var result = await _controller.GetWorkflowState("opportunity", entityId);
+        var result = await _controller.GetWorkflowState("Opportunity", entityId);
 
         // Assert
         var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
@@ -232,15 +241,15 @@ public class WorkflowControllerTests : IDisposable
     {
         // Arrange
         var entityId = 1;
-        _mockEntityStageProvider.Setup(x => x.IsEntityValidAsync("opportunity", "1"))
+        _mockEntityStageProvider.Setup(x => x.IsEntityValidAsync("Opportunity", "1"))
             .ReturnsAsync(true);
-        _mockEntityStageProvider.Setup(x => x.GetCurrentStageAsync("opportunity", "1"))
+        _mockEntityStageProvider.Setup(x => x.GetCurrentStageAsync("Opportunity", "1"))
             .ReturnsAsync("IDENTIFY & PROFILE");
-        _mockWorkflowManager.Setup(x => x.PendingTask("opportunity", entityId))
-            .Returns((WorkflowLogModel?)null);
+        _mockWorkflowManager.Setup(x => x.PendingTask("Opportunity", entityId))
+            .Returns((WorkflowLog?)null);
 
         // Act
-        var result = await _controller.GetWorkflowDetails("opportunity", entityId);
+        var result = await _controller.GetWorkflowDetails("Opportunity", entityId);
 
         // Assert
         var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
@@ -253,11 +262,11 @@ public class WorkflowControllerTests : IDisposable
     public async Task GetWorkflowDetails_WithNonExistentEntity_Returns404()
     {
         // Arrange
-        _mockEntityStageProvider.Setup(x => x.IsEntityValidAsync("opportunity", "999"))
+        _mockEntityStageProvider.Setup(x => x.IsEntityValidAsync("Opportunity", "999"))
             .ReturnsAsync(false);
 
         // Act
-        var result = await _controller.GetWorkflowDetails("opportunity", 999);
+        var result = await _controller.GetWorkflowDetails("Opportunity", 999);
 
         // Assert
         result.Result.Should().BeOfType<NotFoundObjectResult>();
@@ -279,29 +288,33 @@ public class WorkflowControllerTests : IDisposable
             Comment = "Submitting for approval"
         };
 
-        _mockEntityStageProvider.Setup(x => x.IsEntityValidAsync("opportunity", "1"))
+        _mockEntityStageProvider.Setup(x => x.IsEntityValidAsync("Opportunity", "1"))
             .ReturnsAsync(true);
-        _mockEntityStageProvider.Setup(x => x.GetCurrentStageAsync("opportunity", "1"))
+        _mockEntityStageProvider.Setup(x => x.GetCurrentStageAsync("Opportunity", "1"))
             .ReturnsAsync("IDENTIFY & PROFILE");
-        _mockEntityStageProvider.Setup(x => x.GetEntityDisplayNameAsync("opportunity", "1"))
+        _mockEntityStageProvider.Setup(x => x.GetEntityDisplayNameAsync("Opportunity", "1"))
             .ReturnsAsync("Test Opportunity");
-        _mockWorkflowManager.Setup(x => x.PendingTask("opportunity", 1))
-            .Returns((WorkflowLogModel?)null);
+        _mockWorkflowManager.Setup(x => x.PendingTask("Opportunity", 1))
+            .Returns((WorkflowLog?)null);
         _mockWorkflowManager.Setup(x => x.WorkflowStateByStage(
                 It.IsAny<StateMachine>(), "IDENTIFY & PROFILE", Facing.Internal))
-            .Returns(new WorkflowStateModel { Stage = "IDENTIFY & PROFILE" });
+            .Returns(new State 
+            { 
+                StageCode = "IDENTIFY & PROFILE",
+                DisplayName = "Identify & Profile"
+            });
         _mockWorkflowManager.Setup(x => x.NextActions(
-                "opportunity", It.IsAny<WorkflowStateModel>(), Facing.Internal))
-            .Returns(new List<WorkflowStateActionModel>
+                "Opportunity", It.IsAny<State>(), Facing.Internal))
+            .Returns(new WorkflowStateActionModel[]
             {
                 new WorkflowStateActionModel 
                 { 
-                    TargetStage = "GO",
-                    CommentRequired = false,
-                    CommentOptional = true
+                    NewStage = "GO",
+                    Comment = "optional", // Comment mode: "none", "optional", "mandatory"
+                    RequiresApproval = true
                 }
             });
-        _mockWorkflowManager.Setup(x => x.ApprovalNeeded("opportunity", "IDENTIFY & PROFILE", "GO"))
+        _mockWorkflowManager.Setup(x => x.ApprovalNeeded("Opportunity", "IDENTIFY & PROFILE", "GO"))
             .Returns(true);
         _mockWorkflowManager.Setup(x => x.Initiate(
                 It.IsAny<UNOPS.Workflow.Models.WorkflowActionModel>(),
@@ -332,18 +345,18 @@ public class WorkflowControllerTests : IDisposable
             NewStage = "GO"
         };
 
-        var pendingTask = new WorkflowLogModel
+        var pendingTask = new WorkflowLog
         {
             EntityName = "opportunity",
-            EntityId = 1,
+            EntityId = "1", // EntityId is string type
             NewStage = "GO"
         };
 
-        _mockEntityStageProvider.Setup(x => x.IsEntityValidAsync("opportunity", "1"))
+        _mockEntityStageProvider.Setup(x => x.IsEntityValidAsync("Opportunity", "1"))
             .ReturnsAsync(true);
-        _mockEntityStageProvider.Setup(x => x.GetCurrentStageAsync("opportunity", "1"))
+        _mockEntityStageProvider.Setup(x => x.GetCurrentStageAsync("Opportunity", "1"))
             .ReturnsAsync("IDENTIFY & PROFILE");
-        _mockWorkflowManager.Setup(x => x.PendingTask("opportunity", 1))
+        _mockWorkflowManager.Setup(x => x.PendingTask("Opportunity", 1))
             .Returns(pendingTask);
 
         // Act
@@ -364,18 +377,22 @@ public class WorkflowControllerTests : IDisposable
             NewStage = "INVALID_STAGE"
         };
 
-        _mockEntityStageProvider.Setup(x => x.IsEntityValidAsync("opportunity", "1"))
+        _mockEntityStageProvider.Setup(x => x.IsEntityValidAsync("Opportunity", "1"))
             .ReturnsAsync(true);
-        _mockEntityStageProvider.Setup(x => x.GetCurrentStageAsync("opportunity", "1"))
+        _mockEntityStageProvider.Setup(x => x.GetCurrentStageAsync("Opportunity", "1"))
             .ReturnsAsync("IDENTIFY & PROFILE");
-        _mockWorkflowManager.Setup(x => x.PendingTask("opportunity", 1))
-            .Returns((WorkflowLogModel?)null);
+        _mockWorkflowManager.Setup(x => x.PendingTask("Opportunity", 1))
+            .Returns((WorkflowLog?)null);
         _mockWorkflowManager.Setup(x => x.WorkflowStateByStage(
                 It.IsAny<StateMachine>(), "IDENTIFY & PROFILE", Facing.Internal))
-            .Returns(new WorkflowStateModel { Stage = "IDENTIFY & PROFILE" });
+            .Returns(new State 
+            { 
+                StageCode = "IDENTIFY & PROFILE",
+                DisplayName = "Identify & Profile"
+            });
         _mockWorkflowManager.Setup(x => x.NextActions(
-                "opportunity", It.IsAny<WorkflowStateModel>(), Facing.Internal))
-            .Returns(new List<WorkflowStateActionModel>()); // No valid actions
+                "Opportunity", It.IsAny<State>(), Facing.Internal))
+            .Returns(Array.Empty<WorkflowStateActionModel>()); // No valid actions
 
         // Act
         var result = await _controller.Submit(request);
@@ -395,7 +412,7 @@ public class WorkflowControllerTests : IDisposable
             NewStage = "GO"
         };
 
-        _mockEntityStageProvider.Setup(x => x.IsEntityValidAsync("opportunity", "999"))
+        _mockEntityStageProvider.Setup(x => x.IsEntityValidAsync("Opportunity", "999"))
             .ReturnsAsync(false);
 
         // Act
@@ -420,27 +437,27 @@ public class WorkflowControllerTests : IDisposable
             Comment = "Approved"
         };
 
-        var pendingTask = new WorkflowLogModel
+        var pendingTask = new WorkflowLog
         {
             EntityName = "opportunity",
-            EntityId = 1,
+            EntityId = "1", // EntityId is string type
             NewStage = "GO",
-            OldStage = "IDENTIFY & PROFILE"
+            Stage = "IDENTIFY & PROFILE"
         };
 
-        _mockWorkflowManager.Setup(x => x.PendingTask("opportunity", 1))
+        _mockWorkflowManager.Setup(x => x.PendingTask("Opportunity", 1))
             .Returns(pendingTask);
-        _mockEntityStageProvider.Setup(x => x.GetCurrentStageAsync("opportunity", "1"))
+        _mockEntityStageProvider.Setup(x => x.GetCurrentStageAsync("Opportunity", "1"))
             .ReturnsAsync("IDENTIFY & PROFILE");
-        _mockEntityStageProvider.Setup(x => x.GetEntityDisplayNameAsync("opportunity", "1"))
+        _mockEntityStageProvider.Setup(x => x.GetEntityDisplayNameAsync("Opportunity", "1"))
             .ReturnsAsync("Test Opportunity");
-        _mockEntityStageProvider.Setup(x => x.UpdateStageAsync("opportunity", "1", "GO", It.IsAny<int>()))
+        _mockEntityStageProvider.Setup(x => x.UpdateStageAsync("Opportunity", "1", "GO", It.IsAny<int>()))
             .ReturnsAsync(true);
         _mockApproverProvider.Setup(x => x.CanUserApproveAsync(
-                "opportunity", 1, It.IsAny<int>(), "IDENTIFY & PROFILE", "GO"))
+                "Opportunity", 1, It.IsAny<int>(), "IDENTIFY & PROFILE", "GO"))
             .ReturnsAsync(true);
         _mockWorkflowManager.Setup(x => x.Approve(
-                pendingTask, "opportunity", 1, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                pendingTask, "Opportunity", 1, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync("GO");
 
         // Act
@@ -460,8 +477,8 @@ public class WorkflowControllerTests : IDisposable
             EntityId = 1
         };
 
-        _mockWorkflowManager.Setup(x => x.PendingTask("opportunity", 1))
-            .Returns((WorkflowLogModel?)null);
+        _mockWorkflowManager.Setup(x => x.PendingTask("Opportunity", 1))
+            .Returns((WorkflowLog?)null);
 
         // Act
         var result = await _controller.Approve(request);
@@ -480,19 +497,19 @@ public class WorkflowControllerTests : IDisposable
             EntityId = 1
         };
 
-        var pendingTask = new WorkflowLogModel
+        var pendingTask = new WorkflowLog
         {
             EntityName = "opportunity",
-            EntityId = 1,
+            EntityId = "1", // EntityId is string type
             NewStage = "GO"
         };
 
-        _mockWorkflowManager.Setup(x => x.PendingTask("opportunity", 1))
+        _mockWorkflowManager.Setup(x => x.PendingTask("Opportunity", 1))
             .Returns(pendingTask);
-        _mockEntityStageProvider.Setup(x => x.GetCurrentStageAsync("opportunity", "1"))
+        _mockEntityStageProvider.Setup(x => x.GetCurrentStageAsync("Opportunity", "1"))
             .ReturnsAsync("IDENTIFY & PROFILE");
         _mockApproverProvider.Setup(x => x.CanUserApproveAsync(
-                "opportunity", 1, It.IsAny<int>(), "IDENTIFY & PROFILE", "GO"))
+                "Opportunity", 1, It.IsAny<int>(), "IDENTIFY & PROFILE", "GO"))
             .ReturnsAsync(false);
 
         // Act
@@ -518,24 +535,24 @@ public class WorkflowControllerTests : IDisposable
             Comment = "Rejecting due to missing information"
         };
 
-        var pendingTask = new WorkflowLogModel
+        var pendingTask = new WorkflowLog
         {
             EntityName = "opportunity",
-            EntityId = 1,
+            EntityId = "1", // EntityId is string type
             NewStage = "GO"
         };
 
-        _mockWorkflowManager.Setup(x => x.PendingTask("opportunity", 1))
+        _mockWorkflowManager.Setup(x => x.PendingTask("Opportunity", 1))
             .Returns(pendingTask);
-        _mockEntityStageProvider.Setup(x => x.GetCurrentStageAsync("opportunity", "1"))
+        _mockEntityStageProvider.Setup(x => x.GetCurrentStageAsync("Opportunity", "1"))
             .ReturnsAsync("IDENTIFY & PROFILE");
-        _mockEntityStageProvider.Setup(x => x.GetEntityDisplayNameAsync("opportunity", "1"))
+        _mockEntityStageProvider.Setup(x => x.GetEntityDisplayNameAsync("Opportunity", "1"))
             .ReturnsAsync("Test Opportunity");
         _mockApproverProvider.Setup(x => x.CanUserApproveAsync(
-                "opportunity", 1, It.IsAny<int>(), "IDENTIFY & PROFILE", "GO"))
+                "Opportunity", 1, It.IsAny<int>(), "IDENTIFY & PROFILE", "GO"))
             .ReturnsAsync(true);
         _mockWorkflowManager.Setup(x => x.Reject(
-                pendingTask, "opportunity", 1, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                pendingTask, "Opportunity", 1, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(true);
 
         // Act
@@ -574,8 +591,8 @@ public class WorkflowControllerTests : IDisposable
             Comment = "Rejecting"
         };
 
-        _mockWorkflowManager.Setup(x => x.PendingTask("opportunity", 1))
-            .Returns((WorkflowLogModel?)null);
+        _mockWorkflowManager.Setup(x => x.PendingTask("Opportunity", 1))
+            .Returns((WorkflowLog?)null);
 
         // Act
         var result = await _controller.Reject(request);
@@ -599,20 +616,20 @@ public class WorkflowControllerTests : IDisposable
             Comment = "Recalling for updates"
         };
 
-        var pendingTask = new WorkflowLogModel
+        var pendingTask = new WorkflowLog
         {
             EntityName = "opportunity",
-            EntityId = 1,
+            EntityId = "1", // EntityId is string type
             NewStage = "GO",
-            CreatedBy = 1 // Same as current user
+            UserId = 1 // Use UserId instead of CreatedBy (same as current user)
         };
 
-        _mockWorkflowManager.Setup(x => x.PendingTask("opportunity", 1))
+        _mockWorkflowManager.Setup(x => x.PendingTask("Opportunity", 1))
             .Returns(pendingTask);
-        _mockEntityStageProvider.Setup(x => x.GetEntityDisplayNameAsync("opportunity", "1"))
+        _mockEntityStageProvider.Setup(x => x.GetEntityDisplayNameAsync("Opportunity", "1"))
             .ReturnsAsync("Test Opportunity");
         _mockWorkflowManager.Setup(x => x.Recall(
-                pendingTask, "opportunity", 1, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                pendingTask, "Opportunity", 1, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(true);
 
         // Act
@@ -632,8 +649,8 @@ public class WorkflowControllerTests : IDisposable
             EntityId = 1
         };
 
-        _mockWorkflowManager.Setup(x => x.PendingTask("opportunity", 1))
-            .Returns((WorkflowLogModel?)null);
+        _mockWorkflowManager.Setup(x => x.PendingTask("Opportunity", 1))
+            .Returns((WorkflowLog?)null);
 
         // Act
         var result = await _controller.Recall(request);
@@ -652,15 +669,15 @@ public class WorkflowControllerTests : IDisposable
             EntityId = 1
         };
 
-        var pendingTask = new WorkflowLogModel
+        var pendingTask = new WorkflowLog
         {
             EntityName = "opportunity",
-            EntityId = 1,
+            EntityId = "1", // EntityId is string type
             NewStage = "GO",
-            CreatedBy = 999 // Different user
+            UserId = 999 // Use UserId instead of CreatedBy (different user)
         };
 
-        _mockWorkflowManager.Setup(x => x.PendingTask("opportunity", 1))
+        _mockWorkflowManager.Setup(x => x.PendingTask("Opportunity", 1))
             .Returns(pendingTask);
 
         // Act
@@ -684,23 +701,28 @@ public class WorkflowControllerTests : IDisposable
         {
             new WorkflowHistoryModel
             {
-                OldStage = "IDENTIFY & PROFILE",
-                NewStage = "GO",
+                FromStage = "IDENTIFY & PROFILE", // Use FromStage instead of OldStage
+                ToStage = "GO", // Use ToStage instead of NewStage
                 Action = "Approved",
-                CompletedBy = 1,
                 CompletedOn = DateTime.UtcNow,
-                Comment = "Approved"
+                Comment = "Approved",
+                User = new WorkflowUserModel // Use User instead of CompletedBy
+                {
+                    Id = 1,
+                    Name = "Test User",
+                    Email = "test@test.com"
+                }
             }
         };
 
-        _mockEntityStageProvider.Setup(x => x.IsEntityValidAsync("opportunity", "1"))
+        _mockEntityStageProvider.Setup(x => x.IsEntityValidAsync("Opportunity", "1"))
             .ReturnsAsync(true);
         _mockWorkflowManager.Setup(x => x.GetWorkflowHistory(
-                It.IsAny<StateMachine>(), "opportunity", entityId))
+                It.IsAny<StateMachine>(), "Opportunity", entityId))
             .Returns(historyEntries);
 
         // Act
-        var result = await _controller.GetWorkflowHistory("opportunity", entityId);
+        var result = await _controller.GetWorkflowHistory("Opportunity", entityId);
 
         // Assert
         var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
@@ -712,7 +734,7 @@ public class WorkflowControllerTests : IDisposable
     public async Task GetWorkflowHistory_WithNonExistentEntity_Returns404()
     {
         // Arrange
-        _mockEntityStageProvider.Setup(x => x.IsEntityValidAsync("opportunity", "999"))
+        _mockEntityStageProvider.Setup(x => x.IsEntityValidAsync("Opportunity", "999"))
             .ReturnsAsync(false);
 
         // Act

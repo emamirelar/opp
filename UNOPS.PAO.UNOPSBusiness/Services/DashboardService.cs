@@ -962,7 +962,7 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
                     Id = o.Id,
                     Name = o.Name,
                     Status = o.Status.ToString(),
-                    WorkflowStageName = o.Stage, // Use Stage property instead of WorkflowStage navigation
+                    Stage = o.Stage, // Use Stage property instead of WorkflowStage navigation
                     CreatedDate = o.CreatedDate,
                     LastModifiedDate = o.LastModifiedDate
                 })
@@ -982,7 +982,7 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
                     Id = o.Id,
                     Name = o.Name,
                     Status = o.Status.ToString(),
-                    WorkflowStageName = o.Stage, // Use Stage property instead of WorkflowStage navigation
+                    Stage = o.Stage, // Use Stage property instead of WorkflowStage navigation
                     CreatedDate = o.CreatedDate,
                     LastModifiedDate = o.LastModifiedDate
                 })

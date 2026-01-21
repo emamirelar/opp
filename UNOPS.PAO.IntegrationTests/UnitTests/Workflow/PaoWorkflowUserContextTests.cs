@@ -20,7 +20,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Workflow;
 public class PaoWorkflowUserContextTests : IDisposable
 {
     private readonly Mock<IHttpContextAccessor> _mockHttpContextAccessor;
-    private readonly Mock<IConfiguration> _mockConfiguration;
+    private readonly IConfiguration _configuration;
     private readonly AppDbContext _dbContext;
     private readonly PaoWorkflowUserContext _userContext;
 
@@ -38,13 +38,16 @@ public class PaoWorkflowUserContextTests : IDisposable
         var userResolverService = new UserResolverService<int>(_mockHttpContextAccessor.Object);
         _dbContext = new AppDbContext(options, userResolverService, mockDbContextSchema.Object);
 
-        _mockConfiguration = new Mock<IConfiguration>();
-        _mockConfiguration.Setup(c => c.GetValue<string>("AppConfig:Environment", It.IsAny<string>()))
-            .Returns("Development");
+        _configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                { "AppConfig:Environment", "Development" }
+            })
+            .Build();
 
         _userContext = new PaoWorkflowUserContext(
             _mockHttpContextAccessor.Object,
-            _mockConfiguration.Object,
+            _configuration,
             _dbContext);
     }
 
@@ -140,8 +143,10 @@ public class PaoWorkflowUserContextTests : IDisposable
         var userProfile = new UserProfile
         {
             UserId = userId,
-            Name = "John Doe",
-            Status = Domain.Enums.EntityStatus.Active
+            FirstName = "John",
+            LastName = "Doe",
+            Status = EntityStatus.Active
+            // Note: Name is a computed property (FirstName + LastName)
         };
         _dbContext.UserProfile.Add(userProfile);
         _dbContext.SaveChanges();
@@ -238,8 +243,9 @@ public class PaoWorkflowUserContextTests : IDisposable
         {
             Id = userId,
             Email = email,
-            Status = Domain.Enums.EntityStatus.Active,
-            Name = "DB User"
+            IsInternal = true
+            // Note: PAOUser.Name is computed from UserProfile, not settable
+            // Note: PAOUser does not have Status or IsDeleted properties
         };
         _dbContext.PAOUsers.Add(user);
         _dbContext.SaveChanges();
@@ -472,15 +478,19 @@ public class PaoWorkflowUserContextTests : IDisposable
     public void Environment_ReturnsValueFromConfiguration()
     {
         // Arrange
-        var mockConfigSection = new Mock<IConfigurationSection>();
-        mockConfigSection.Setup(x => x.Value).Returns("Production");
-        _mockConfiguration.Setup(c => c.GetSection("AppConfig:Environment"))
-            .Returns(mockConfigSection.Object);
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                { "AppConfig:Environment", "Production" }
+            })
+            .Build();
+        var userContext = new PaoWorkflowUserContext(
+            _mockHttpContextAccessor.Object,
+            configuration,
+            _dbContext);
 
         // Act & Assert
-        // Note: The actual implementation uses GetValue<string> which we've mocked to return "Development"
-        // In a real scenario, this would return the configured environment
-        _userContext.Environment.Should().NotBeNullOrEmpty();
+        userContext.Environment.Should().Be("Production");
     }
 
     #endregion

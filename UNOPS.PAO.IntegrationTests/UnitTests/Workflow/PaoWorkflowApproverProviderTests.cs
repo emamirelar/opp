@@ -66,6 +66,7 @@ public class PaoWorkflowApproverProviderTests : IDisposable
         var doaHolderRole = new EntityRole
         {
             Id = 1,
+            EntityType = "Opportunity", // Required property
             Name = "DOA Holder",
             Code = "DOA_HOLDER",
             Status = EntityStatus.Active,
@@ -76,6 +77,7 @@ public class PaoWorkflowApproverProviderTests : IDisposable
         var opportunityManagerRole = new EntityRole
         {
             Id = 2,
+            EntityType = "Opportunity", // Required property
             Name = "Opportunity Manager",
             Code = "OPP_MANAGER",
             Status = EntityStatus.Active,
@@ -88,9 +90,8 @@ public class PaoWorkflowApproverProviderTests : IDisposable
         {
             Id = 100,
             Email = "approver@test.com",
-            Name = "Approver User",
-            Status = EntityStatus.Active,
-            IsDeleted = false
+            IsInternal = true
+            // Note: Name is computed from UserProfile, not settable
         };
         _appDbContext.PAOUsers.Add(approverUser);
 
@@ -98,9 +99,11 @@ public class PaoWorkflowApproverProviderTests : IDisposable
         {
             Id = 100,
             UserId = 100,
-            Name = "John Approver",
+            FirstName = "John",
+            LastName = "Approver",
             Status = EntityStatus.Active,
             IsDeleted = false
+            // Note: Name is a computed property (FirstName + LastName)
         };
         _appDbContext.UserProfile.Add(approverUserProfile);
 
@@ -108,9 +111,8 @@ public class PaoWorkflowApproverProviderTests : IDisposable
         {
             Id = 101,
             Email = "trigger@test.com",
-            Name = "Trigger User",
-            Status = EntityStatus.Active,
-            IsDeleted = false
+            IsInternal = true
+            // Note: Name is computed from UserProfile, not settable
         };
         _appDbContext.PAOUsers.Add(triggerUser);
 
@@ -118,9 +120,11 @@ public class PaoWorkflowApproverProviderTests : IDisposable
         {
             Id = 101,
             UserId = 101,
-            Name = "Jane Trigger",
+            FirstName = "Jane",
+            LastName = "Trigger",
             Status = EntityStatus.Active,
             IsDeleted = false
+            // Note: Name is a computed property (FirstName + LastName)
         };
         _appDbContext.UserProfile.Add(triggerUserProfile);
 
@@ -143,10 +147,8 @@ public class PaoWorkflowApproverProviderTests : IDisposable
             OpportunityId = 1,
             UserId = 100,
             EntityRoleId = 1, // DOA Holder
-            IsInternal = true,
-            Status = EntityStatus.Active,
-            Name = "DOA Holder Stakeholder",
-            IsDeleted = false
+            IsInternal = true
+            // Note: OpportunityStakeholder does not have Status, Name, or IsDeleted properties
         };
         _appDbContext.Set<OpportunityStakeholder>().Add(approverStakeholder);
 
@@ -156,10 +158,8 @@ public class PaoWorkflowApproverProviderTests : IDisposable
             OpportunityId = 1,
             UserId = 101,
             EntityRoleId = 2, // Opportunity Manager
-            IsInternal = true,
-            Status = EntityStatus.Active,
-            Name = "Opportunity Manager Stakeholder",
-            IsDeleted = false
+            IsInternal = true
+            // Note: OpportunityStakeholder does not have Status, Name, or IsDeleted properties
         };
         _appDbContext.Set<OpportunityStakeholder>().Add(triggerStakeholder);
 
@@ -169,7 +169,7 @@ public class PaoWorkflowApproverProviderTests : IDisposable
         var approverRoleConfig = new StateMachineStageChangeRole
         {
             Id = 1,
-            EntityType = "opportunity",
+            EntityType = "Opportunity",
             FromStage = "IDENTIFY & PROFILE",
             ToStage = "GO",
             RoleId = 1,
@@ -185,7 +185,7 @@ public class PaoWorkflowApproverProviderTests : IDisposable
         var triggerRoleConfig = new StateMachineStageChangeRole
         {
             Id = 2,
-            EntityType = "opportunity",
+            EntityType = "Opportunity",
             FromStage = "IDENTIFY & PROFILE",
             ToStage = "GO",
             RoleId = 2,
@@ -213,7 +213,7 @@ public class PaoWorkflowApproverProviderTests : IDisposable
 
         // Act
         var result = await _approverProvider.GetApproversAsync(
-            "opportunity", 1, "IDENTIFY & PROFILE", "GO");
+            "Opportunity", 1, "IDENTIFY & PROFILE", "GO");
 
         // Assert
         result.Should().NotBeEmpty();
@@ -229,7 +229,7 @@ public class PaoWorkflowApproverProviderTests : IDisposable
 
         // Act
         var result = await _approverProvider.GetApproversAsync(
-            "opportunity", 1, "IDENTIFY & PROFILE", "UNCONFIGURED_STAGE");
+            "Opportunity", 1, "IDENTIFY & PROFILE", "UNCONFIGURED_STAGE");
 
         // Assert
         result.Should().BeEmpty();
@@ -261,7 +261,7 @@ public class PaoWorkflowApproverProviderTests : IDisposable
 
         // Act
         var result = await _approverProvider.GetApprovalConfigurationAsync(
-            "opportunity", 1, "IDENTIFY & PROFILE", "GO");
+            "Opportunity", 1, "IDENTIFY & PROFILE", "GO");
 
         // Assert
         result.Should().NotBeNull();
@@ -276,7 +276,7 @@ public class PaoWorkflowApproverProviderTests : IDisposable
 
         // Act
         var result = await _approverProvider.GetApprovalConfigurationAsync(
-            "opportunity", 1, "UNCONFIGURED_FROM", "UNCONFIGURED_TO");
+            "Opportunity", 1, "UNCONFIGURED_FROM", "UNCONFIGURED_TO");
 
         // Assert
         result.Should().BeNull();
@@ -294,7 +294,7 @@ public class PaoWorkflowApproverProviderTests : IDisposable
 
         // Act
         var result = await _approverProvider.GetTriggerConfigurationAsync(
-            "opportunity", 1, "IDENTIFY & PROFILE", "GO");
+            "Opportunity", 1, "IDENTIFY & PROFILE", "GO");
 
         // Assert
         result.Should().NotBeNull();
@@ -309,7 +309,7 @@ public class PaoWorkflowApproverProviderTests : IDisposable
 
         // Act
         var result = await _approverProvider.GetTriggerConfigurationAsync(
-            "opportunity", 1, "UNCONFIGURED_FROM", "UNCONFIGURED_TO");
+            "Opportunity", 1, "UNCONFIGURED_FROM", "UNCONFIGURED_TO");
 
         // Assert
         result.Should().BeNull();
@@ -327,7 +327,7 @@ public class PaoWorkflowApproverProviderTests : IDisposable
 
         // Act
         var result = await _approverProvider.CanUserApproveAsync(
-            "opportunity", 1, 100, "IDENTIFY & PROFILE", "GO");
+            "Opportunity", 1, 100, "IDENTIFY & PROFILE", "GO");
 
         // Assert
         result.Should().BeTrue();
@@ -341,7 +341,7 @@ public class PaoWorkflowApproverProviderTests : IDisposable
 
         // Act - User 999 is not a stakeholder
         var result = await _approverProvider.CanUserApproveAsync(
-            "opportunity", 1, 999, "IDENTIFY & PROFILE", "GO");
+            "Opportunity", 1, 999, "IDENTIFY & PROFILE", "GO");
 
         // Assert
         result.Should().BeFalse();
@@ -355,7 +355,7 @@ public class PaoWorkflowApproverProviderTests : IDisposable
 
         // Act - User 101 has trigger role, not approve role
         var result = await _approverProvider.CanUserApproveAsync(
-            "opportunity", 1, 101, "IDENTIFY & PROFILE", "GO");
+            "Opportunity", 1, 101, "IDENTIFY & PROFILE", "GO");
 
         // Assert
         result.Should().BeFalse();
@@ -369,7 +369,7 @@ public class PaoWorkflowApproverProviderTests : IDisposable
 
         // Act
         var result = await _approverProvider.CanUserApproveAsync(
-            "opportunity", 1, 100, "GO", "UNCONFIGURED_STAGE");
+            "Opportunity", 1, 100, "GO", "UNCONFIGURED_STAGE");
 
         // Assert
         result.Should().BeFalse();
@@ -383,7 +383,7 @@ public class PaoWorkflowApproverProviderTests : IDisposable
 
         // Act - Opportunity 999 doesn't have user 100 as stakeholder
         var result = await _approverProvider.CanUserApproveAsync(
-            "opportunity", 999, 100, "IDENTIFY & PROFILE", "GO");
+            "Opportunity", 999, 100, "IDENTIFY & PROFILE", "GO");
 
         // Assert
         result.Should().BeFalse();
@@ -400,7 +400,7 @@ public class PaoWorkflowApproverProviderTests : IDisposable
         var deletedRoleConfig = new StateMachineStageChangeRole
         {
             Id = 10,
-            EntityType = "opportunity",
+            EntityType = "Opportunity",
             FromStage = "IDENTIFY & PROFILE",
             ToStage = "NO GO",
             RoleId = 1,
@@ -416,7 +416,7 @@ public class PaoWorkflowApproverProviderTests : IDisposable
 
         // Act
         var result = await _approverProvider.GetApproversAsync(
-            "opportunity", 1, "IDENTIFY & PROFILE", "NO GO");
+            "Opportunity", 1, "IDENTIFY & PROFILE", "NO GO");
 
         // Assert - Should not return the deleted config
         result.Should().BeEmpty();
@@ -428,7 +428,8 @@ public class PaoWorkflowApproverProviderTests : IDisposable
         // Arrange
         await SeedTestDataAsync();
 
-        // Act - Use different case
+        // Act - Use different case (test case-insensitive comparison)
+        // Note: Seed data uses "Opportunity", but provider should handle case-insensitive matching
         var resultLower = await _approverProvider.GetApproversAsync(
             "opportunity", 1, "IDENTIFY & PROFILE", "GO");
         var resultUpper = await _approverProvider.GetApproversAsync(
@@ -452,9 +453,8 @@ public class PaoWorkflowApproverProviderTests : IDisposable
         {
             Id = 200,
             Email = "approver2@test.com",
-            Name = "Second Approver",
-            Status = EntityStatus.Active,
-            IsDeleted = false
+            IsInternal = true
+            // Note: Name is computed from UserProfile, not settable
         };
         _appDbContext.PAOUsers.Add(secondApproverUser);
 
@@ -462,9 +462,11 @@ public class PaoWorkflowApproverProviderTests : IDisposable
         {
             Id = 200,
             UserId = 200,
-            Name = "Second Approver Name",
+            FirstName = "Second",
+            LastName = "Approver",
             Status = EntityStatus.Active,
             IsDeleted = false
+            // Note: Name is a computed property (FirstName + LastName)
         };
         _appDbContext.UserProfile.Add(secondApproverProfile);
 
@@ -474,17 +476,15 @@ public class PaoWorkflowApproverProviderTests : IDisposable
             OpportunityId = 1,
             UserId = 200,
             EntityRoleId = 1, // DOA Holder
-            IsInternal = true,
-            Status = EntityStatus.Active,
-            Name = "Second DOA Holder Stakeholder",
-            IsDeleted = false
+            IsInternal = true
+            // Note: OpportunityStakeholder does not have Status, Name, or IsDeleted properties
         };
         _appDbContext.Set<OpportunityStakeholder>().Add(secondApproverStakeholder);
         await _appDbContext.SaveChangesAsync();
 
         // Act
         var result = await _approverProvider.GetApproversAsync(
-            "opportunity", 1, "IDENTIFY & PROFILE", "GO");
+            "Opportunity", 1, "IDENTIFY & PROFILE", "GO");
 
         // Assert
         result.Should().HaveCount(2);

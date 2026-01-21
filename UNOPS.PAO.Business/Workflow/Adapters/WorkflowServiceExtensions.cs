@@ -1,6 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 using UNOPS.PAO.Business.Workflow.Interfaces;
 using UNOPS.Workflow.Business.Interfaces;
+using UNOPS.Workflow.Business.Managers;
 using UNOPS.Workflow.DataAccess;
 
 namespace UNOPS.PAO.Business.Workflow.Adapters;
@@ -21,8 +23,36 @@ public static class WorkflowServiceExtensions
         this IServiceCollection services,
         Action<WorkflowOptions> configure)
     {
-        // Register the submodule's core workflow services (DbContext, IWorkflowManager, IWorkflowRepository)
-        services.AddWorkflowServices(configure);
+        var options = new WorkflowOptions();
+        configure(options);
+
+        // Check if IAM authentication is being used (connection string has no password)
+        var useIamAuth = false;
+        if (!string.IsNullOrEmpty(options.ConnectionString))
+        {
+            var connStringBuilder = new NpgsqlConnectionStringBuilder(options.ConnectionString);
+            useIamAuth = string.IsNullOrEmpty(connStringBuilder.Password);
+        }
+
+        if (useIamAuth)
+        {
+            // IAM authentication detected - skip submodule's AddWorkflowServices
+            // because it tries to register DbContext with connection string (which fails)
+            // Instead, manually register only the services we need
+            // DbContext will be registered separately in Startup.cs with dataSource
+            
+            // Register the core workflow manager
+            services.AddScoped<IWorkflowManager, WorkflowManager>();
+
+            // Register the repository implementation
+            services.AddScoped<IWorkflowRepository, WorkflowRepository>();
+        }
+        else
+        {
+            // Traditional authentication - use submodule's registration
+            // Register the submodule's core workflow services (DbContext, IWorkflowManager, IWorkflowRepository)
+            services.AddWorkflowServices(configure);
+        }
 
         // Register PAO-specific interface implementations
         services.AddScoped<IWorkflowUserContext, PaoWorkflowUserContext>();

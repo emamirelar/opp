@@ -4486,8 +4486,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
                 // Related entity fields - using dropdowns for enum-like lookups
                 new() { 
-                    Field = "workflowStageId", 
-                    DisplayName = "label.opportunity.workflowStage", 
+                    Field = "stage", 
+                    DisplayName = "label.opportunity.stage", 
                     FieldType = "enum", 
                     AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" },
                     DropdownOptions = new List<DropdownOption>() // Will be populated dynamically from API

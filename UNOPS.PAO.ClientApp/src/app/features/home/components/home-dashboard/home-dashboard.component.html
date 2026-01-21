@@ -642,7 +642,7 @@
                                 {{ opportunity.name }}
                               </div>
                               <div class="text-unops-body-small text-unops-neutral-600">
-                                {{ opportunity.workflowStageName || opportunity.status || ('dashboard.unknownStatus' | translate) }}
+                                {{ opportunity.stage || opportunity.status || ('dashboard.unknownStatus' | translate) }}
                               </div>
                             </div>
                             <span class="inline-flex items-center px-unops-sm py-1 rounded-unops-sm text-unops-label-small font-unops-medium"
@@ -991,7 +991,7 @@
                             {{ opportunity.name }}
                           </div>
                           <div class="text-unops-label-small text-unops-neutral-600 line-clamp-1">
-                            {{ opportunity.workflowStageName || opportunity.status || ('dashboard.unknownStatus' | translate) }}
+                            {{ opportunity.stage || opportunity.status || ('dashboard.unknownStatus' | translate) }}
                           </div>
                         </div>
                       </div>
