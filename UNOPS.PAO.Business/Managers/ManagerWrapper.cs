@@ -1,4 +1,4 @@
-﻿namespace UNOPS.PAO.Business.Managers;
+namespace UNOPS.PAO.Business.Managers;
 
 using System;
 using AutoMapper;
@@ -16,7 +16,6 @@ public class ManagerWrapper : IManagerWrapper
 {
     public UserManager<PAOIdentityUser> UserManager { get; }
     private ISystemAdminManager systemAdminManager;
-    private IWorkflowManager workflowManager;
     private IContactManager contactManager;
     private IInteractionManager interactionManager;
     private IPartnerTreeManager partnerTreeManager;
@@ -45,7 +44,6 @@ public class ManagerWrapper : IManagerWrapper
                           IServiceProvider serviceProvider)
     {
         this.UserManager = userManager;
-        workflowManager = new WorkflowManager(context);
 
         systemAdminManager = new SystemAdminManager(context, configuration, serviceProvider);
 
@@ -81,8 +79,6 @@ public class ManagerWrapper : IManagerWrapper
     }
 
     public virtual ISystemAdminManager SystemAdminManager => systemAdminManager;
-
-    public virtual IWorkflowManager WorkflowManager => workflowManager;
 
     public virtual IContactManager ContactManager => contactManager;
 

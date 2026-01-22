@@ -1,4 +1,4 @@
-﻿namespace UNOPS.PAO.DataAccess.Context;
+namespace UNOPS.PAO.DataAccess.Context;
 
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +12,7 @@ public class PAOIdentityDbContext : IdentityDbContext<PAOIdentityUser, PAOIdenti
 {
     private readonly IServiceProvider _serviceProvider;
     
-    public PAOIdentityDbContext(DbContextOptions options, IServiceProvider serviceProvider) : base(options)
+    public PAOIdentityDbContext(DbContextOptions<PAOIdentityDbContext> options, IServiceProvider serviceProvider) : base(options)
     {
         _serviceProvider = serviceProvider;
     }

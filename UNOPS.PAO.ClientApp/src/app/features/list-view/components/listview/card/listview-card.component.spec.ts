@@ -14,7 +14,8 @@ describe('ListviewCardComponent', () => {
 
     fixture = TestBed.createComponent(ListviewCardComponent);
     component = fixture.componentInstance;
-    component.config = { pageSize: 20 };
+    fixture.componentRef.setInput('config', { pageSize: 20 });
+    fixture.detectChanges();
   });
 
   describe('ngOnChanges', () => {
@@ -72,9 +73,9 @@ describe('ListviewCardComponent', () => {
       const spy = spyOn<any>(component, 'scheduleObserveSentinel');
       const testData = [{ id: 1, name: 'Test' }];
 
-      component.data = testData;
+      fixture.componentRef.setInput('data', testData);
 
-      expect(component.data).toEqual(testData);
+      expect(component.data()).toEqual(testData);
       expect(spy).toHaveBeenCalled();
     });
 
@@ -83,9 +84,9 @@ describe('ListviewCardComponent', () => {
       const spy = spyOn<any>(component, 'scheduleObserveSentinel');
       const testData = [{ id: 1, name: 'Test' }];
 
-      component.data = testData;
+      fixture.componentRef.setInput('data', testData);
 
-      expect(component.data).toEqual(testData);
+      expect(component.data()).toEqual(testData);
       expect(spy).not.toHaveBeenCalled();
     });
   });

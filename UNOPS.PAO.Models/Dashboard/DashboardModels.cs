@@ -80,7 +80,7 @@ public class DashboardOpportunityModel
     public int Id { get; set; }
     public required string Name { get; set; }
     public string? Status { get; set; }
-    public string? WorkflowStageName { get; set; }
+    public string? Stage { get; set; }
     
     /// <summary>
     /// The current user's role(s) for this opportunity (populated from stakeholder lookup)

@@ -150,8 +150,8 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
           operators: ['is', 'is not', 'like', 'not like'],
         },
         {
-          field: 'workflowStage.name',
-          label: 'label.opportunity.workflowStage',
+          field: 'stage',
+          label: 'label.opportunity.stage',
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like'],
         },
@@ -363,8 +363,8 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
         width: '10%',
       },
       {
-        field: 'workflowStageName',
-        label: 'label.opportunity.workflowStage',
+        field: 'stage',
+        label: 'label.opportunity.stage',
         type: 'text',
         sortable: false,
         width: '15%',

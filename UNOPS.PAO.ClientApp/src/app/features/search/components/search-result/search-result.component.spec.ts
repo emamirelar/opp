@@ -24,19 +24,19 @@ describe('SearchResultComponent', () => {
   let mockGlobalFiltersDialogService: jasmine.SpyObj<GlobalFiltersDialogService>;
   let mockTranslateService: jasmine.SpyObj<TranslateService>;
   let queryParamsSubject: Subject<any>;
-  let activeOrgUnitIdSubject: BehaviorSubject<string | null>;
+  let activeOrgUnitIdSubject: BehaviorSubject<number | null>;
   let filtersChangedSubject: Subject<void>;
 
   const mockSearchResponse = {
-    availableEntities: ['Partner', 'Contact', 'Interaction'],
+    availableEntities: ['partners', 'contacts', 'interactions'],
     results: {
-      Partner: [
+      partners: [
         { id: 1, name: 'Test Partner', _searchMetadata: { matchedField: 'name', score: 0.95 } }
       ],
-      Contact: [
+      contacts: [
         { id: 2, name: 'Test Contact', _searchMetadata: { matchedField: 'name', score: 0.90 } }
       ],
-      Interaction: [
+      interactions: [
         { id: 3, subject: 'Test Interaction', _searchMetadata: { matchedField: 'subject', score: 0.85 } }
       ]
     }
@@ -49,7 +49,7 @@ describe('SearchResultComponent', () => {
 
   beforeEach(async () => {
     queryParamsSubject = new Subject();
-    activeOrgUnitIdSubject = new BehaviorSubject<string | null>(null);
+    activeOrgUnitIdSubject = new BehaviorSubject<number | null>(null);
     filtersChangedSubject = new Subject();
 
     mockRouter = jasmine.createSpyObj('Router', ['navigate']);
@@ -58,21 +58,29 @@ describe('SearchResultComponent', () => {
     mockUserPreferenceService = jasmine.createSpyObj('UserPreferenceService', 
       ['getGlobalFilters']);
     mockOrganizationHierarchyService = jasmine.createSpyObj('OrganizationHierarchyService', 
-      ['getOrgUnitById']);
-    mockAuthService = jasmine.createSpyObj('AuthService', ['getUserId']);
+      ['getOrganizationHierarchy']);
+    mockAuthService = jasmine.createSpyObj('AuthService', ['user']);
     mockGlobalFiltersDialogService = jasmine.createSpyObj('GlobalFiltersDialogService', 
-      ['open']);
+      ['openDialog']);
     mockTranslateService = jasmine.createSpyObj('TranslateService', ['instant']);
 
     mockGlobalFilterService = {
       activeOrgUnitId$: activeOrgUnitIdSubject.asObservable(),
       filtersChanged$: filtersChangedSubject.asObservable(),
-      getActiveFilters: jasmine.createSpy('getActiveFilters').and.returnValue(null)
+      getActiveOrgUnitId: jasmine.createSpy('getActiveOrgUnitId').and.returnValue(null),
+      setFilterEnabled: jasmine.createSpy('setFilterEnabled')
     };
 
     mockEntityConfigService.getEntityListViewConfiguration.and.returnValue(of(mockColumns));
-    mockUserPreferenceService.getGlobalFilters.and.returnValue(of(null));
-    mockAuthService.getUserId.and.returnValue('user123');
+    mockUserPreferenceService.getGlobalFilters.and.returnValue(of({
+      orgUnitId: null,
+      orgUnitName: null,
+      relatedToMe: false,
+      dateOn: null,
+      dateFrom: null,
+      dateTo: null
+    }));
+    mockAuthService.user.and.returnValue(of([{ type: 'userId', value: 'user123' }]));
     mockTranslateService.instant.and.returnValue('Translated');
 
     await TestBed.configureTestingModule({
@@ -124,13 +132,14 @@ describe('SearchResultComponent', () => {
       expect(mockEntityConfigService.getEntityListViewConfiguration).toHaveBeenCalledWith('Contact');
       expect(mockEntityConfigService.getEntityListViewConfiguration).toHaveBeenCalledWith('Partner');
       expect(mockEntityConfigService.getEntityListViewConfiguration).toHaveBeenCalledWith('Interaction');
+      expect(mockEntityConfigService.getEntityListViewConfiguration).toHaveBeenCalledWith('Opportunity');
     });
 
     it('should load global filter info on init', () => {
       fixture.detectChanges();
 
       expect(mockUserPreferenceService.getGlobalFilters).toHaveBeenCalled();
-      expect(mockAuthService.getUserId).toHaveBeenCalled();
+      expect(mockAuthService.user).toHaveBeenCalled();
     });
 
     it('should set columns from entity configuration service', () => {
@@ -177,9 +186,10 @@ describe('SearchResultComponent', () => {
       fixture.detectChanges();
       component['performUnifiedSearch']('test');
 
-      const req = httpMock.expectOne(req => req.url.includes('/api/search/unified'));
+      const req = httpMock.expectOne(req => req.url.includes('/api/global/search'));
       expect(req.request.method).toBe('GET');
-      expect(req.request.params.get('query')).toBe('test');
+      expect(req.request.params.get('q')).toBe('test');
+      expect(req.request.params.get('fullResults')).toBe('true');
       req.flush(mockSearchResponse);
     });
 
@@ -189,7 +199,7 @@ describe('SearchResultComponent', () => {
 
       expect(component.isLoading()).toBeTrue();
 
-      const req = httpMock.expectOne(req => req.url.includes('/api/search/unified'));
+      const req = httpMock.expectOne(req => req.url.includes('/api/global/search'));
       req.flush(mockSearchResponse);
 
       expect(component.isLoading()).toBeFalse();
@@ -199,11 +209,11 @@ describe('SearchResultComponent', () => {
       fixture.detectChanges();
       component['performUnifiedSearch']('test');
 
-      const req = httpMock.expectOne(req => req.url.includes('/api/search/unified'));
+      const req = httpMock.expectOne(req => req.url.includes('/api/global/search'));
       req.flush(mockSearchResponse);
 
       expect(component.entityTabs.length).toBeGreaterThan(0);
-      expect(component.entityTabs.some(tab => tab.key === 'all')).toBeTrue();
+      expect(component.entityTabs.some(tab => tab.key === 'partners')).toBeTrue();
     });
 
     it('should handle search errors gracefully', () => {
@@ -212,7 +222,7 @@ describe('SearchResultComponent', () => {
 
       component['performUnifiedSearch']('test');
 
-      const req = httpMock.expectOne(req => req.url.includes('/api/search/unified'));
+      const req = httpMock.expectOne(req => req.url.includes('/api/global/search'));
       req.error(new ProgressEvent('error'));
 
       expect(component.isLoading()).toBeFalse();
@@ -224,24 +234,29 @@ describe('SearchResultComponent', () => {
     it('should update isGlobalFilterActive when org unit changes', () => {
       fixture.detectChanges();
 
-      activeOrgUnitIdSubject.next('org123');
+      mockGlobalFilterService.getActiveOrgUnitId.and.returnValue(123);
+      activeOrgUnitIdSubject.next(123);
 
       expect(component.isGlobalFilterActive()).toBeTrue();
     });
 
     it('should load org unit name when active org unit is set', () => {
-      mockOrganizationHierarchyService.getOrgUnitById.and.returnValue(of({ name: 'Test Org' }));
+      mockOrganizationHierarchyService.getOrganizationHierarchy.and.returnValue(of([
+        { data: { id: 123, name: 'Test Org' }, children: [] }
+      ]));
       fixture.detectChanges();
 
-      activeOrgUnitIdSubject.next('org123');
+      mockGlobalFilterService.getActiveOrgUnitId.and.returnValue(123);
+      activeOrgUnitIdSubject.next(123);
 
-      expect(mockOrganizationHierarchyService.getOrgUnitById).toHaveBeenCalledWith('org123');
+      expect(mockOrganizationHierarchyService.getOrganizationHierarchy).toHaveBeenCalled();
     });
 
     it('should clear org unit name when active org unit is null', () => {
       fixture.detectChanges();
       component.activeOrgUnitName.set('Previous Org');
 
+      mockGlobalFilterService.getActiveOrgUnitId.and.returnValue(null);
       activeOrgUnitIdSubject.next(null);
 
       expect(component.activeOrgUnitName()).toBe('');
@@ -298,7 +313,7 @@ describe('SearchResultComponent', () => {
 
   describe('entity tab management', () => {
     it('should set activeTabKey correctly', () => {
-      component.activeTabKey = 'Partner';
+      component.activeTabKey = 'partners';
 
       expect(component.activeTabKey).toBe('Partner');
     });
@@ -307,10 +322,10 @@ describe('SearchResultComponent', () => {
       fixture.detectChanges();
       component['performUnifiedSearch']('test');
 
-      const req = httpMock.expectOne(req => req.url.includes('/api/search/unified'));
+      const req = httpMock.expectOne(req => req.url.includes('/api/global/search'));
       req.flush(mockSearchResponse);
 
-      component.activeTabKey = 'Partner';
+      component.activeTabKey = 'partners';
 
       // Component should have logic to filter by active tab
       expect(component.entityTabs.length).toBeGreaterThan(0);
@@ -375,7 +390,8 @@ describe('SearchResultComponent', () => {
     it('should update filter labels when filters change', () => {
       fixture.detectChanges();
 
-      activeOrgUnitIdSubject.next('org123');
+      mockGlobalFilterService.getActiveOrgUnitId.and.returnValue(123);
+      activeOrgUnitIdSubject.next(123);
 
       // Component should update labels
       expect(component.activeFilterLabels).toBeDefined();
@@ -388,7 +404,14 @@ describe('SearchResultComponent', () => {
     });
 
     it('should load global filters from user preferences', () => {
-      const mockFilters = { orgUnitId: 'org123', startDate: new Date() };
+      const mockFilters = {
+        orgUnitId: 123,
+        orgUnitName: null,
+        relatedToMe: false,
+        dateOn: null,
+        dateFrom: null,
+        dateTo: null
+      };
       mockUserPreferenceService.getGlobalFilters.and.returnValue(of(mockFilters));
 
       fixture.detectChanges();
@@ -420,7 +443,7 @@ describe('SearchResultComponent', () => {
       fixture.detectChanges();
       component['performUnifiedSearch']('test');
 
-      const req = httpMock.expectOne(req => req.url.includes('/api/search/unified'));
+      const req = httpMock.expectOne(req => req.url.includes('/api/global/search'));
       req.flush({ availableEntities: [], results: {} });
 
       expect(component.isLoading()).toBeFalse();

@@ -1,0 +1,15 @@
+:host {
+  display: block;
+}
+
+.table-container {
+  min-height: 100px;
+}
+
+.no-data {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  color: var(--text-color-secondary);
+}

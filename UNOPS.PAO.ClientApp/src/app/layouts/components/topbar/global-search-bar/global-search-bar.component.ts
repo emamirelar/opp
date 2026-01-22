@@ -776,12 +776,12 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
       const date = entity['date'] ? new Date(entity['date']).toLocaleDateString() : '';
       return date ? `${interactionType} • ${date}` : interactionType;
     } else if (this.activeTabKey === 'opportunities') {
-      const workflowStageName = entity['workflowStage']?.['name'] || entity['workflowStageName'] || '';
+      const stage = entity['stage'] || entity['workflowStage']?.['name'] || '';
       const partnerReference = entity['partnerReference'] || '';
-      if (workflowStageName && partnerReference) {
-        return `${workflowStageName} • ${partnerReference}`;
+      if (stage && partnerReference) {
+        return `${stage} • ${partnerReference}`;
       }
-      return workflowStageName || partnerReference || null;
+      return stage || partnerReference || null;
     }
     return null;
   }

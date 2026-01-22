@@ -1,10 +1,14 @@
+import { DomSanitizer } from '@angular/platform-browser';
 import { FilePipe } from './file.pipe';
 
 describe('FilePipe', () => {
   let pipe: FilePipe;
+  let sanitizer: jasmine.SpyObj<DomSanitizer>;
 
   beforeEach(() => {
-    pipe = new FilePipe();
+    sanitizer = jasmine.createSpyObj('DomSanitizer', ['bypassSecurityTrustUrl']);
+    sanitizer.bypassSecurityTrustUrl.and.returnValue('safe-url' as any);
+    pipe = new FilePipe(sanitizer);
   });
 
   it('create an instance', () => {

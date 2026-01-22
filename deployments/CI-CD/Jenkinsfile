@@ -22,7 +22,22 @@ node(agentLabel) {
     
     try {
         stage('Checkout Code') {
-            checkout scm
+            // Checkout with submodules using parent credentials
+            checkout([
+                $class: 'GitSCM',
+                branches: scm.branches,
+                doGenerateSubmoduleConfigurations: false,
+                extensions: [
+                    [$class: 'SubmoduleOption',
+                     disableSubmodules: false,
+                     parentCredentials: true,
+                     recursiveSubmodules: true,
+                     reference: '',
+                     trackingSubmodules: false]
+                ],
+                submoduleCfg: [],
+                userRemoteConfigs: scm.userRemoteConfigs
+            ])
 
             publishChecks name: CHECK_NAME,
                           status: 'IN_PROGRESS',

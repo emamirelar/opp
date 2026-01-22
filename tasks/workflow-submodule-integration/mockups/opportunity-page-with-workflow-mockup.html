@@ -1,0 +1,1778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PAO Opportunity Record Page with Workflow - High Fidelity Mockup</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/primeicons@6.0.1/primeicons.css">
+    <style>
+        :root {
+            /* UNOPS Brand Colors */
+            --unops-primary: #0072BC;
+            --unops-primary-dark: #005a94;
+            --unops-primary-light: #e6f2fa;
+            --unops-secondary: #1e3a5f;
+            --unops-primary-on: #ffffff;
+            
+            /* Status Colors */
+            --unops-success: #22c55e;
+            --unops-success-bg: #dcfce7;
+            --unops-warning: #f59e0b;
+            --unops-warning-bg: #fef3c7;
+            --unops-warning-text: #92400e;
+            --unops-danger: #ef4444;
+            --unops-danger-bg: #fee2e2;
+            --unops-info: #3b82f6;
+            --unops-info-bg: #dbeafe;
+            
+            /* Neutral Colors */
+            --unops-neutral-50: #f8fafc;
+            --unops-neutral-100: #f1f5f9;
+            --unops-neutral-200: #e2e8f0;
+            --unops-neutral-300: #cbd5e1;
+            --unops-neutral-400: #94a3b8;
+            --unops-neutral-500: #64748b;
+            --unops-neutral-600: #475569;
+            --unops-neutral-700: #334155;
+            --unops-neutral-800: #1e293b;
+            --unops-neutral-900: #0f172a;
+            
+            /* Surface Colors */
+            --unops-surface-primary: #ffffff;
+            --unops-surface-secondary: #f8fafc;
+            
+            /* Spacing */
+            --unops-md: 1rem;
+            --unops-2xl: 2rem;
+            
+            /* Border Radius */
+            --unops-radius-md: 0.375rem;
+            --unops-radius-lg: 0.5rem;
+            --unops-radius-full: 9999px;
+            
+            /* Shadows */
+            --unops-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --unops-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --unops-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--unops-surface-secondary);
+            color: var(--unops-neutral-800);
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        /* Top Navigation Bar */
+        .top-nav {
+            height: 64px;
+            background: var(--unops-secondary);
+            display: flex;
+            align-items: center;
+            padding: 0 1.5rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+
+        .top-nav-brand {
+            color: white;
+            font-weight: 600;
+            font-size: 1.125rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .top-nav-brand img {
+            height: 32px;
+        }
+
+        .top-nav-spacer {
+            flex: 1;
+        }
+
+        .top-nav-user {
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        /* Main Container */
+        .main-container {
+            margin-top: 64px;
+            height: calc(100vh - 64px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Header Section */
+        .page-header {
+            flex-shrink: 0;
+            background: var(--unops-surface-secondary);
+            border-bottom: 1px solid var(--unops-neutral-300);
+        }
+
+        .header-content-wrapper {
+            display: flex;
+        }
+
+        .header-spacer-left {
+            width: 320px;
+            flex-shrink: 0;
+        }
+
+        .header-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .header-spacer-right {
+            width: var(--unops-2xl);
+            flex-shrink: 0;
+        }
+
+        /* Banner Image */
+        .banner-container {
+            padding: var(--unops-md) var(--unops-2xl);
+        }
+
+        .banner-image {
+            width: 100%;
+            height: 120px;
+            background: linear-gradient(135deg, #0072BC 0%, #1e3a5f 50%, #0072BC 100%);
+            border-radius: var(--unops-radius-lg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .banner-image::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .banner-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to right, rgba(248, 250, 252, 0.3) 0%, transparent 15%, transparent 85%, rgba(248, 250, 252, 0.3) 100%);
+        }
+
+        .banner-hover {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+            cursor: pointer;
+        }
+
+        .banner-image:hover .banner-hover {
+            opacity: 1;
+        }
+
+        .banner-hover i {
+            color: white;
+            font-size: 2rem;
+        }
+
+        /* Header Title Area */
+        .header-title-area {
+            padding: 1.5rem var(--unops-2xl);
+        }
+
+        .header-title-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .header-title-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .back-button {
+            color: var(--unops-neutral-600);
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+
+        .back-button:hover {
+            color: var(--unops-secondary);
+        }
+
+        .page-title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--unops-secondary);
+            line-height: 1.2;
+        }
+
+        .header-badges {
+            display: flex;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--unops-radius-full);
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .badge-success {
+            background: var(--unops-success-bg);
+            color: #166534;
+        }
+
+        .badge-warning {
+            background: var(--unops-warning-bg);
+            color: var(--unops-warning-text);
+        }
+
+        .badge-info {
+            background: var(--unops-info-bg);
+            color: #1e40af;
+        }
+
+        /* Metadata Row */
+        .metadata-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem 0.75rem;
+            margin-top: 1rem;
+            font-size: 0.875rem;
+            color: var(--unops-neutral-600);
+        }
+
+        .metadata-item strong {
+            color: var(--unops-neutral-700);
+        }
+
+        .metadata-separator {
+            color: var(--unops-neutral-300);
+        }
+
+        /* Section Navigation */
+        .section-nav {
+            padding: 0.75rem var(--unops-2xl);
+            border-top: 1px solid var(--unops-neutral-300);
+            background: var(--unops-surface-secondary);
+        }
+
+        .section-chips {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .section-chip {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: var(--unops-radius-full);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            background: var(--unops-surface-primary);
+            color: var(--unops-neutral-700);
+        }
+
+        .section-chip:hover {
+            background: var(--unops-neutral-200);
+        }
+
+        .section-chip.active {
+            background: var(--unops-primary);
+            color: var(--unops-primary-on);
+            box-shadow: var(--unops-shadow-sm);
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Documents Panel */
+        .documents-panel {
+            width: 320px;
+            flex-shrink: 0;
+            background: var(--unops-surface-primary);
+            border-right: 1px solid var(--unops-neutral-300);
+            overflow-y: auto;
+            padding: 1.5rem 1rem;
+        }
+
+        .documents-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .documents-panel-title {
+            font-weight: 600;
+            color: var(--unops-neutral-800);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .document-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: var(--unops-radius-md);
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .document-item:hover {
+            background: var(--unops-neutral-100);
+        }
+
+        .document-icon {
+            width: 2rem;
+            height: 2rem;
+            background: var(--unops-primary-light);
+            border-radius: var(--unops-radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--unops-primary);
+        }
+
+        .document-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .document-name {
+            font-weight: 500;
+            color: var(--unops-neutral-800);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .document-meta {
+            font-size: 0.75rem;
+            color: var(--unops-neutral-500);
+        }
+
+        .documents-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .btn-small {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.75rem;
+            border-radius: var(--unops-radius-md);
+            border: 1px solid var(--unops-neutral-300);
+            background: var(--unops-surface-primary);
+            color: var(--unops-neutral-700);
+            cursor: pointer;
+        }
+
+        .btn-small:hover {
+            background: var(--unops-neutral-100);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem var(--unops-2xl);
+        }
+
+        .content-sections {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            max-width: 1000px;
+        }
+
+        /* Panel/Card Component */
+        .panel {
+            background: var(--unops-surface-primary);
+            border: 1px solid var(--unops-neutral-300);
+            border-radius: var(--unops-radius-lg);
+            box-shadow: var(--unops-shadow-sm);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--unops-neutral-200);
+        }
+
+        .panel-header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .panel-title {
+            font-weight: 600;
+            color: var(--unops-neutral-800);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .panel-title i {
+            color: var(--unops-primary);
+        }
+
+        .panel-content {
+            padding: 1.25rem;
+        }
+
+        .panel-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Workflow Specific Styles */
+        .workflow-tag {
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--unops-radius-full);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .workflow-tag-pending {
+            background: var(--unops-warning-bg);
+            color: var(--unops-warning-text);
+        }
+
+        .workflow-tag-complete {
+            background: var(--unops-success-bg);
+            color: #166534;
+        }
+
+        .workflow-stage-info {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.875rem;
+        }
+
+        .workflow-stage-label {
+            font-weight: 600;
+            color: var(--unops-neutral-700);
+        }
+
+        .workflow-stage-value {
+            color: var(--unops-neutral-600);
+        }
+
+        /* Tabs */
+        .tabs {
+            border-bottom: 2px solid var(--unops-neutral-200);
+            display: flex;
+        }
+
+        .tab {
+            padding: 0.75rem 1.25rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--unops-neutral-500);
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: var(--unops-primary);
+        }
+
+        .tab.active {
+            color: var(--unops-primary);
+            border-bottom-color: var(--unops-primary);
+        }
+
+        .tab-panel {
+            padding: 1.25rem 0;
+        }
+
+        .tab-panel.hidden {
+            display: none;
+        }
+
+        /* Steps Component - 3 Stage Workflow */
+        .steps {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem 0;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            position: relative;
+        }
+
+        .step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 1.25rem;
+            left: calc(50% + 1.5rem);
+            width: calc(100% - 3rem);
+            height: 2px;
+            background: var(--unops-neutral-300);
+        }
+
+        .step.completed:not(:last-child)::after {
+            background: var(--unops-primary);
+        }
+
+        .step-number {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+            border: 2px solid var(--unops-neutral-300);
+            background: var(--unops-surface-primary);
+            color: var(--unops-neutral-500);
+            position: relative;
+            z-index: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .step.active .step-number,
+        .step.completed .step-number {
+            background: var(--unops-primary);
+            border-color: var(--unops-primary);
+            color: white;
+        }
+
+        .step-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--unops-neutral-500);
+            text-align: center;
+            max-width: 100px;
+        }
+
+        .step.active .step-label,
+        .step.completed .step-label {
+            color: var(--unops-primary);
+            font-weight: 600;
+        }
+
+        /* Table */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        .table th {
+            background: var(--unops-neutral-50);
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--unops-neutral-700);
+            border-bottom: 1px solid var(--unops-neutral-200);
+        }
+
+        .table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--unops-neutral-200);
+            color: var(--unops-neutral-700);
+        }
+
+        .table tr:hover {
+            background: var(--unops-neutral-50);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: var(--unops-radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--unops-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--unops-primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--unops-surface-primary);
+            color: var(--unops-neutral-700);
+            border: 1px solid var(--unops-neutral-300);
+        }
+
+        .btn-secondary:hover {
+            background: var(--unops-neutral-100);
+        }
+
+        .btn-success {
+            background: var(--unops-success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #16a34a;
+        }
+
+        .btn-danger {
+            background: var(--unops-danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        /* Split Button */
+        .split-button {
+            display: inline-flex;
+            border-radius: var(--unops-radius-md);
+            overflow: hidden;
+        }
+
+        .split-button .btn-main {
+            border-radius: var(--unops-radius-md) 0 0 var(--unops-radius-md);
+            border-right: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .split-button .btn-dropdown {
+            border-radius: 0 var(--unops-radius-md) var(--unops-radius-md) 0;
+            padding: 0.5rem 0.625rem;
+        }
+
+        /* Split Button Container with Dropdown */
+        .split-button-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .split-button-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 4px;
+            min-width: 200px;
+            background: white;
+            border: 1px solid var(--unops-neutral-200);
+            border-radius: var(--unops-radius-md);
+            box-shadow: var(--unops-shadow-lg);
+            z-index: 1000;
+            display: none;
+        }
+
+        .split-button-dropdown.show {
+            display: block;
+        }
+
+        .split-button-dropdown-item {
+            display: block;
+            width: 100%;
+            padding: 0.625rem 1rem;
+            text-align: left;
+            background: none;
+            border: none;
+            font-size: 0.875rem;
+            color: var(--unops-neutral-700);
+            cursor: pointer;
+            transition: background-color 0.15s;
+        }
+
+        .split-button-dropdown-item:hover {
+            background-color: var(--unops-neutral-100);
+        }
+
+        .split-button-dropdown-item:first-child {
+            border-radius: var(--unops-radius-md) var(--unops-radius-md) 0 0;
+        }
+
+        .split-button-dropdown-item:last-child {
+            border-radius: 0 0 var(--unops-radius-md) var(--unops-radius-md);
+        }
+
+        .split-button-dropdown-divider {
+            height: 1px;
+            background: var(--unops-neutral-200);
+            margin: 0.25rem 0;
+        }
+
+        /* Section Content */
+        .section-content {
+            padding: 1rem;
+        }
+
+        .section-field {
+            margin-bottom: 1rem;
+        }
+
+        .section-field:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-field-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--unops-neutral-500);
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            margin-bottom: 0.25rem;
+        }
+
+        .section-field-value {
+            color: var(--unops-neutral-800);
+        }
+
+        .section-field-value.text-lg {
+            font-size: 1.125rem;
+            font-weight: 500;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+
+        .stat-card {
+            background: var(--unops-neutral-50);
+            border-radius: var(--unops-radius-md);
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--unops-primary);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--unops-neutral-600);
+            margin-top: 0.25rem;
+        }
+
+        /* Footer Bar */
+        .footer-bar {
+            background: var(--unops-surface-primary);
+            border: 1px solid var(--unops-neutral-300);
+            border-radius: var(--unops-radius-lg);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .audit-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            font-size: 0.75rem;
+            color: var(--unops-neutral-600);
+        }
+
+        .audit-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .audit-item i {
+            color: var(--unops-neutral-400);
+        }
+
+        /* Dialog */
+        .dialog-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .dialog-overlay.hidden {
+            display: none;
+        }
+
+        .dialog {
+            background: var(--unops-surface-primary);
+            border-radius: var(--unops-radius-lg);
+            box-shadow: var(--unops-shadow-lg);
+            width: 400px;
+            max-width: 90vw;
+        }
+
+        .dialog-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--unops-neutral-200);
+        }
+
+        .dialog-title {
+            font-weight: 600;
+        }
+
+        .dialog-close {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: var(--unops-neutral-500);
+            padding: 0.25rem;
+            border-radius: var(--unops-radius-md);
+        }
+
+        .dialog-close:hover {
+            background: var(--unops-neutral-100);
+        }
+
+        .dialog-content {
+            padding: 1.25rem;
+        }
+
+        .dialog-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            padding: 1rem 1.25rem;
+            border-top: 1px solid var(--unops-neutral-200);
+        }
+
+        .form-field {
+            margin-bottom: 1rem;
+        }
+
+        .form-field:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--unops-neutral-300);
+            border-radius: var(--unops-radius-md);
+            font-family: inherit;
+            font-size: 0.875rem;
+            resize: vertical;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--unops-primary);
+            box-shadow: 0 0 0 2px var(--unops-primary-light);
+        }
+
+        /* Demo Controls */
+        .demo-controls {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            background: var(--unops-secondary);
+            color: white;
+            padding: 1rem;
+            border-radius: var(--unops-radius-lg);
+            box-shadow: var(--unops-shadow-lg);
+            z-index: 50;
+            max-width: 320px;
+        }
+
+        .demo-controls-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+            opacity: 0.8;
+        }
+
+        .demo-controls .btn {
+            font-size: 0.75rem;
+            padding: 0.375rem 0.625rem;
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+
+        .demo-controls .btn:last-child {
+            margin-bottom: 0;
+        }
+
+        .demo-state {
+            font-size: 0.75rem;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* Edit button for sections */
+        .edit-button {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .panel:hover .edit-button {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Navigation -->
+    <nav class="top-nav">
+        <div class="top-nav-brand">
+            <i class="pi pi-building" style="font-size: 1.5rem;"></i>
+            <span>Partnerships and Opportunities</span>
+        </div>
+        <div class="top-nav-spacer"></div>
+        <div class="top-nav-user">
+            <i class="pi pi-user"></i>
+            <span>John Doe</span>
+            <i class="pi pi-chevron-down" style="font-size: 0.75rem;"></i>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Header Section -->
+        <div class="page-header">
+            <div class="header-content-wrapper">
+                <div class="header-spacer-left"></div>
+                <div class="header-main">
+                    <!-- Banner -->
+                    <div class="banner-container">
+                        <div class="banner-image">
+                            <div class="banner-overlay"></div>
+                            <div class="banner-hover">
+                                <i class="pi pi-refresh"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Title Area -->
+                    <div class="header-title-area">
+                        <div class="header-title-row">
+                            <div class="header-title-left">
+                                <a href="#" class="back-button">
+                                    <i class="pi pi-arrow-left" style="font-size: 1.25rem;"></i>
+                                </a>
+                                <h1 class="page-title">South Sudan Water Infrastructure Development Project</h1>
+                            </div>
+                            <div class="header-badges">
+                                <span class="badge badge-warning" id="header-status-badge">Draft</span>
+                                <span class="badge badge-warning" id="header-stage-badge">Identify & Profile</span>
+                            </div>
+                        </div>
+                        <div class="metadata-row">
+                            <span><strong>ID:</strong> 123</span>
+                            <span class="metadata-separator">|</span>
+                            <span><strong>Manager:</strong> Jane Smith</span>
+                            <span class="metadata-separator">|</span>
+                            <span><strong>Org Unit:</strong> AFRO</span>
+                            <span class="metadata-separator">|</span>
+                            <span><strong>Target Signing:</strong> Mar 15, 2024</span>
+                        </div>
+                    </div>
+
+                    <!-- Section Navigation -->
+                    <div class="section-nav">
+                        <div class="section-chips">
+                            <button class="section-chip" onclick="scrollToSection('workflow')">
+                                <i class="pi pi-sync"></i> Workflow
+                            </button>
+                            <button class="section-chip active">
+                                <i class="pi pi-chart-bar"></i> Analysis
+                            </button>
+                            <button class="section-chip">
+                                <i class="pi pi-file"></i> Overview
+                            </button>
+                            <button class="section-chip">
+                                <i class="pi pi-bullseye"></i> What
+                            </button>
+                            <button class="section-chip">
+                                <i class="pi pi-question-circle"></i> Why
+                            </button>
+                            <button class="section-chip">
+                                <i class="pi pi-users"></i> Who
+                            </button>
+                            <button class="section-chip">
+                                <i class="pi pi-user"></i> Team
+                            </button>
+                            <button class="section-chip">
+                                <i class="pi pi-map-marker"></i> Where
+                            </button>
+                            <button class="section-chip">
+                                <i class="pi pi-calendar"></i> When
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-spacer-right"></div>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Documents Panel -->
+            <div class="documents-panel">
+                <div class="documents-panel-header">
+                    <div class="documents-panel-title">
+                        <i class="pi pi-folder"></i>
+                        Documents
+                    </div>
+                    <button class="btn-small">
+                        <i class="pi pi-chevron-left"></i>
+                    </button>
+                </div>
+
+                <div class="document-item">
+                    <div class="document-icon">
+                        <i class="pi pi-file-pdf"></i>
+                    </div>
+                    <div class="document-info">
+                        <div class="document-name">Terms_of_Reference.pdf</div>
+                        <div class="document-meta">Updated Jan 10, 2024</div>
+                    </div>
+                </div>
+
+                <div class="document-item">
+                    <div class="document-icon">
+                        <i class="pi pi-file-excel"></i>
+                    </div>
+                    <div class="document-info">
+                        <div class="document-name">Budget_Estimate_v2.xlsx</div>
+                        <div class="document-meta">Updated Jan 12, 2024</div>
+                    </div>
+                </div>
+
+                <div class="document-item">
+                    <div class="document-icon">
+                        <i class="pi pi-file-word"></i>
+                    </div>
+                    <div class="document-info">
+                        <div class="document-name">Partner_Agreement_Draft.docx</div>
+                        <div class="document-meta">Updated Jan 8, 2024</div>
+                    </div>
+                </div>
+
+                <div class="documents-actions">
+                    <button class="btn-small">
+                        <i class="pi pi-upload"></i> Upload
+                    </button>
+                    <button class="btn-small">
+                        <i class="pi pi-link"></i> Link
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <div class="content-sections">
+
+                    <!-- ========================================== -->
+                    <!-- WORKFLOW COMPONENT - 3-Stage Approval Workflow -->
+                    <!-- Stages: IDENTIFY & PROFILE → GO / NO GO -->
+                    <!-- Transitions to GO and NO GO require DOA approval -->
+                    <!-- NO GO can be reopened back to IDENTIFY & PROFILE -->
+                    <!-- ========================================== -->
+                    <div id="section-workflow" class="panel">
+                        <div class="panel-header">
+                            <div class="panel-header-left">
+                                <span class="panel-title">Stage</span>
+                                <!-- These elements ONLY show when isInWorkflow == true (pending approval) -->
+                                <span class="workflow-tag workflow-tag-pending" id="workflow-pending-tag" style="display: none;">Approval Pending</span>
+                                <div class="workflow-stage-info" id="workflow-stage-info" style="display: none;">
+                                    <div>
+                                        <span class="workflow-stage-label">Current Stage :</span>
+                                        <span class="workflow-stage-value" id="current-stage-display">IDENTIFY & PROFILE</span>
+                                    </div>
+                                    <div>
+                                        <span class="workflow-stage-label">Next Stage :</span>
+                                        <span class="workflow-stage-value" id="next-stage-display">GO</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="panel-actions" id="workflow-actions">
+                                <!-- Actions will be populated by JS -->
+                            </div>
+                        </div>
+                        <div class="panel-content">
+                            <!-- Tabs - Approvers tab ONLY shows when isInWorkflow == true -->
+                            <div class="tabs" id="workflow-tabs">
+                                <button class="tab active" onclick="switchWorkflowTab('overview')">Overview</button>
+                                <button class="tab" id="approvers-tab" onclick="switchWorkflowTab('approvers')" style="display: none;">Approvers</button>
+                                <button class="tab" onclick="switchWorkflowTab('history')">Stage Change History</button>
+                            </div>
+
+                            <!-- Overview Tab -->
+                            <div class="tab-panel" id="tab-overview">
+                                <div class="steps" id="workflow-steps">
+                                    <!-- Steps will be populated by JS -->
+                                </div>
+                            </div>
+
+                            <!-- Approvers Tab -->
+                            <div class="tab-panel hidden" id="tab-approvers">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Role</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Sarah Johnson</td>
+                                            <td>DOA Holder</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <div style="margin-top: 1rem; padding: 0.75rem; background: var(--unops-neutral-50); border-radius: var(--unops-radius-md); font-size: 0.875rem;">
+                                    <strong>Note:</strong> The DOA (Delegation of Authority) Holder linked to this opportunity can approve or reject the Go/No Go transition.
+                                </div>
+                            </div>
+
+                            <!-- History Tab -->
+                            <div class="tab-panel hidden" id="tab-history">
+                                <table class="table" id="history-table">
+                                    <thead>
+                                        <tr>
+                                            <th>From Stage</th>
+                                            <th>To Stage</th>
+                                            <th>Completed On</th>
+                                            <th>Action</th>
+                                            <th>Comment</th>
+                                            <th>User</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="history-body">
+                                        <!-- History will be populated by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- END WORKFLOW COMPONENT -->
+
+                    <!-- Analysis Section -->
+                    <div id="section-analysis" class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">
+                                <i class="pi pi-chart-bar"></i>
+                                Analysis
+                            </div>
+                        </div>
+                        <div class="panel-content">
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-value">$2.5M</div>
+                                    <div class="stat-label">Total Budget</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">3</div>
+                                    <div class="stat-label">Partners</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">5</div>
+                                    <div class="stat-label">Countries</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value">Mar 15</div>
+                                    <div class="stat-label">Target Date</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Overview Section -->
+                    <div id="section-overview" class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">
+                                <i class="pi pi-file"></i>
+                                Overview
+                            </div>
+                            <button class="btn btn-secondary btn-small edit-button">
+                                <i class="pi pi-pencil"></i> Edit
+                            </button>
+                        </div>
+                        <div class="panel-content">
+                            <div class="section-field">
+                                <div class="section-field-label">Name</div>
+                                <div class="section-field-value text-lg">South Sudan Water Infrastructure Development Project</div>
+                            </div>
+                            <div class="section-field">
+                                <div class="section-field-label">Description</div>
+                                <div class="section-field-value">
+                                    This initiative aims to improve access to clean and safe drinking water for 
+                                    communities in South Sudan through the construction and rehabilitation of water 
+                                    infrastructure including boreholes, water treatment plants, and distribution networks.
+                                </div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem;">
+                                <div class="section-field">
+                                    <div class="section-field-label">Proposed Budget</div>
+                                    <div class="section-field-value text-lg">$2,500,000.00</div>
+                                </div>
+                                <div class="section-field">
+                                    <div class="section-field-label">Total Budget</div>
+                                    <div class="section-field-value text-lg">$1,800,000.00</div>
+                                </div>
+                                <div class="section-field">
+                                    <div class="section-field-label">Unfunded Amount</div>
+                                    <div class="section-field-value text-lg" style="color: var(--unops-danger);">$700,000.00 (28%)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- What Section -->
+                    <div id="section-what" class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">
+                                <i class="pi pi-bullseye"></i>
+                                What We Will Deliver
+                            </div>
+                            <button class="btn btn-secondary btn-small edit-button">
+                                <i class="pi pi-pencil"></i> Edit
+                            </button>
+                        </div>
+                        <div class="panel-content">
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem;">
+                                <div class="section-field">
+                                    <div class="section-field-label">Initiative Type</div>
+                                    <div class="section-field-value">Infrastructure Development</div>
+                                </div>
+                                <div class="section-field">
+                                    <div class="section-field-label">Delivery Modality</div>
+                                    <div class="section-field-value">Direct Implementation</div>
+                                </div>
+                            </div>
+                            <div class="section-field">
+                                <div class="section-field-label">Deliverables</div>
+                                <table class="table" style="margin-top: 0.5rem;">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Deliverable</th>
+                                            <th>Category</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>1</td>
+                                            <td>20 new boreholes constructed</td>
+                                            <td>Infrastructure</td>
+                                        </tr>
+                                        <tr>
+                                            <td>2</td>
+                                            <td>5 water treatment facilities rehabilitated</td>
+                                            <td>Infrastructure</td>
+                                        </tr>
+                                        <tr>
+                                            <td>3</td>
+                                            <td>Community water management training</td>
+                                            <td>Capacity Building</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer Bar -->
+                    <div class="footer-bar">
+                        <div class="audit-info">
+                            <div class="audit-item">
+                                <i class="pi pi-user-plus"></i>
+                                <span><strong>Created by:</strong> John Doe</span>
+                            </div>
+                            <div class="audit-item">
+                                <i class="pi pi-calendar-plus"></i>
+                                <span><strong>Created:</strong> Jan 10, 2024</span>
+                            </div>
+                            <div class="audit-item">
+                                <i class="pi pi-user-edit"></i>
+                                <span><strong>Modified by:</strong> Jane Smith</span>
+                            </div>
+                            <div class="audit-item">
+                                <i class="pi pi-calendar"></i>
+                                <span><strong>Modified:</strong> Jan 14, 2024</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comment Dialog -->
+    <div class="dialog-overlay hidden" id="comment-dialog">
+        <div class="dialog">
+            <div class="dialog-header">
+                <span class="dialog-title" id="dialog-title">Comment</span>
+                <button class="dialog-close" onclick="hideDialog()">
+                    <i class="pi pi-times"></i>
+                </button>
+            </div>
+            <div class="dialog-content">
+                <div class="form-field">
+                    <label class="form-label">
+                        Comment <span id="required-marker" style="color: var(--unops-danger);">*</span>
+                    </label>
+                    <textarea class="form-textarea" rows="5" placeholder="Enter your comment here..."></textarea>
+                </div>
+            </div>
+            <div class="dialog-footer">
+                <button class="btn btn-secondary" onclick="hideDialog()">Cancel</button>
+                <button class="btn btn-primary" id="dialog-submit-btn" onclick="hideDialog()">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Demo Controls -->
+    <div class="demo-controls">
+        <div class="demo-controls-title">3-Stage Approval Workflow</div>
+        <button class="btn btn-secondary" onclick="setWorkflowState('identify_profile')">1. Identify & Profile</button>
+        <button class="btn btn-secondary" onclick="setWorkflowState('pending_go')">2a. Pending GO Approval</button>
+        <button class="btn btn-secondary" onclick="setWorkflowState('pending_nogo')">2b. Pending NO GO Approval</button>
+        <button class="btn btn-secondary" onclick="setWorkflowState('go')">3a. GO ★ FINAL</button>
+        <button class="btn btn-secondary" onclick="setWorkflowState('nogo')">3b. NO GO (can reopen)</button>
+        <div class="demo-state">
+            Current: <strong id="state-display">Identify & Profile</strong>
+        </div>
+        <div style="font-size: 0.65rem; margin-top: 0.5rem; opacity: 0.7; line-height: 1.4;">
+            <strong>Opp Manager:</strong> Submit for Go/No Go, Recall, Reopen<br>
+            <strong>DOA Holder:</strong> Approve, Reject<br>
+            ★ GO is FINAL (no further actions)
+        </div>
+    </div>
+
+    <script>
+        // 3-Stage Workflow Configuration
+        // Stages: IDENTIFY & PROFILE → GO (requires approval) or NO GO (requires approval)
+        // NO GO can be reopened back to IDENTIFY & PROFILE
+        // GO is FINAL - no further transitions
+        const stages = [
+            { id: 'identify_profile', label: 'Identify & Profile', status: 'Draft' },
+            { id: 'go', label: 'Go', status: 'Active', isFinal: true },
+            { id: 'nogo', label: 'No Go', status: 'Closed', isFinal: false }
+        ];
+
+        const historyData = {
+            // Initial stage - no stage changes yet
+            identify_profile: [],
+            // Pending approval for GO
+            pending_go: [
+                { from: 'Identify & Profile', to: 'Go', date: '—', action: 'Submit for Go', comment: 'Budget confirmed, partners aligned. Ready to proceed.', user: 'Jane Smith (Opp Manager)', isPending: true }
+            ],
+            // Pending approval for NO GO
+            pending_nogo: [
+                { from: 'Identify & Profile', to: 'No Go', date: '—', action: 'Submit for No Go', comment: 'Partner funding fell through. Recommending closure.', user: 'Jane Smith (Opp Manager)', isPending: true }
+            ],
+            // Completed GO workflow
+            go: [
+                { from: 'Identify & Profile', to: 'Go', date: '17-Jan-2024 09:15', action: 'Approve', comment: 'Approved. Proceed with implementation.', user: 'Sarah Johnson (DOA Holder)' },
+                { from: 'Identify & Profile', to: 'Go', date: '16-Jan-2024 15:45', action: 'Submit for Go', comment: 'Budget confirmed, partners aligned.', user: 'Jane Smith (Opp Manager)' }
+            ],
+            // Completed NO GO workflow
+            nogo: [
+                { from: 'Identify & Profile', to: 'No Go', date: '17-Jan-2024 11:00', action: 'Approve', comment: 'Partner withdrew. Cannot proceed.', user: 'Sarah Johnson (DOA Holder)' },
+                { from: 'Identify & Profile', to: 'No Go', date: '16-Jan-2024 16:00', action: 'Submit for No Go', comment: 'Partner funding fell through', user: 'Jane Smith (Opp Manager)' }
+            ],
+            // Reopened from NO GO
+            reopened: [
+                { from: 'No Go', to: 'Identify & Profile', date: '20-Jan-2024 10:00', action: 'Reopen', comment: 'New funding source identified. Reopening opportunity.', user: 'Jane Smith (Opp Manager)' },
+                { from: 'Identify & Profile', to: 'No Go', date: '17-Jan-2024 11:00', action: 'Approve', comment: 'Partner withdrew.', user: 'Sarah Johnson (DOA Holder)' },
+                { from: 'Identify & Profile', to: 'No Go', date: '16-Jan-2024 16:00', action: 'Submit for No Go', comment: 'Partner funding fell through', user: 'Jane Smith (Opp Manager)' }
+            ],
+            // Rejected workflow (back to Identify & Profile)
+            rejected: [
+                { from: 'Identify & Profile', to: 'Identify & Profile', date: '17-Jan-2024 09:00', action: 'Reject', comment: 'Need more partner commitments before proceeding.', user: 'Sarah Johnson (DOA Holder)' },
+                { from: 'Identify & Profile', to: 'Go', date: '16-Jan-2024 15:45', action: 'Submit for Go', comment: 'Budget confirmed', user: 'Jane Smith (Opp Manager)' }
+            ]
+        };
+
+        function renderSteps(activeStage, isInWorkflow = false, targetStage = null) {
+            const container = document.getElementById('workflow-steps');
+            
+            if (activeStage === 'nogo') {
+                // Special rendering for No Go - show branching path
+                container.innerHTML = `
+                    <div class="step completed">
+                        <div class="step-number">✓</div>
+                        <span class="step-label">Identify & Profile</span>
+                    </div>
+                    <div class="step" style="opacity: 0.4;">
+                        <div class="step-number">2</div>
+                        <span class="step-label">Go</span>
+                    </div>
+                    <div class="step active">
+                        <div class="step-number">✓</div>
+                        <span class="step-label">No Go</span>
+                    </div>
+                `;
+            } else if (activeStage === 'go') {
+                // GO is final
+                container.innerHTML = `
+                    <div class="step completed">
+                        <div class="step-number">✓</div>
+                        <span class="step-label">Identify & Profile</span>
+                    </div>
+                    <div class="step active">
+                        <div class="step-number">✓</div>
+                        <span class="step-label">Go</span>
+                    </div>
+                    <div class="step" style="opacity: 0.4;">
+                        <div class="step-number">3</div>
+                        <span class="step-label">No Go</span>
+                    </div>
+                `;
+            } else {
+                // Identify & Profile (with potential pending indicator)
+                const goClass = isInWorkflow && targetStage === 'go' ? 'step active' : 'step';
+                const nogoClass = isInWorkflow && targetStage === 'nogo' ? 'step active' : 'step';
+                
+                container.innerHTML = `
+                    <div class="step active">
+                        <div class="step-number">1</div>
+                        <span class="step-label">Identify & Profile</span>
+                    </div>
+                    <div class="${goClass}">
+                        <div class="step-number">2</div>
+                        <span class="step-label">Go</span>
+                    </div>
+                    <div class="${nogoClass}">
+                        <div class="step-number">3</div>
+                        <span class="step-label">No Go</span>
+                    </div>
+                `;
+            }
+        }
+
+        function renderHistory(state) {
+            const body = document.getElementById('history-body');
+            const data = historyData[state] || [];
+            
+            if (data.length === 0) {
+                body.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--unops-neutral-500); padding: 2rem; font-style: italic;">
+                            No stage changes yet
+                        </td>
+                    </tr>
+                `;
+            } else {
+                body.innerHTML = data.map(row => `
+                    <tr${row.isPending ? ' style="background: var(--unops-warning-bg);"' : ''}>
+                        <td>${row.from}</td>
+                        <td>${row.to}</td>
+                        <td>${row.date}</td>
+                        <td>${row.action}${row.isPending ? ' <span class="workflow-tag workflow-tag-pending" style="margin-left: 0.5rem;">Pending</span>' : ''}</td>
+                        <td>${row.comment}</td>
+                        <td>${row.user}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        function renderActions(state, userRole = 'opp_manager') {
+            const container = document.getElementById('workflow-actions');
+            
+            switch(state) {
+                case 'identify_profile':
+                    // Identify & Profile: Opp Manager can Submit for Go or No Go
+                    container.innerHTML = `
+                        <div class="split-button-container">
+                            <div class="split-button">
+                                <button class="btn btn-primary btn-main" onclick="showDialog('Submit for Go', true)">Submit for Go</button>
+                                <button class="btn btn-primary btn-dropdown" onclick="toggleDropdown(event)"><i class="pi pi-chevron-down"></i></button>
+                            </div>
+                            <div class="split-button-dropdown" id="submit-dropdown">
+                                <button class="split-button-dropdown-item" onclick="showDialog('Submit for Go', true); closeDropdown();">
+                                    <i class="pi pi-check-circle" style="color: var(--unops-success); margin-right: 0.5rem;"></i>
+                                    Submit for Go
+                                </button>
+                                <button class="split-button-dropdown-item" onclick="showDialog('Submit for No Go', true); closeDropdown();">
+                                    <i class="pi pi-times-circle" style="color: var(--unops-danger); margin-right: 0.5rem;"></i>
+                                    Submit for No Go
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'pending_go':
+                case 'pending_nogo':
+                    if (userRole === 'opp_manager') {
+                        // Opp Manager can Recall their pending request
+                        container.innerHTML = `
+                            <button class="btn btn-secondary" onclick="showDialog('Recall', false)">
+                                <i class="pi pi-undo"></i> Recall
+                            </button>
+                        `;
+                    } else {
+                        // DOA Holder can Approve or Reject
+                        container.innerHTML = `
+                            <button class="btn btn-success" onclick="showDialog('Approve', true)">
+                                <i class="pi pi-check"></i> Approve
+                            </button>
+                            <button class="btn btn-danger" onclick="showDialog('Reject', true)">
+                                <i class="pi pi-times"></i> Reject
+                            </button>
+                        `;
+                    }
+                    break;
+                case 'go':
+                    // Go is FINAL - no actions available
+                    container.innerHTML = `
+                        <span style="color: var(--unops-neutral-500); font-size: 0.875rem;">
+                            <i class="pi pi-lock"></i> Final Stage - No actions available
+                        </span>
+                    `;
+                    break;
+                case 'nogo':
+                    // No Go: Opp Manager can Reopen (back to Identify & Profile)
+                    container.innerHTML = `
+                        <button class="btn btn-primary" onclick="showDialog('Reopen', false)">
+                            <i class="pi pi-refresh"></i> Reopen
+                        </button>
+                    `;
+                    break;
+            }
+        }
+
+        function updateStatusBadge(status) {
+            const statusBadge = document.getElementById('header-status-badge');
+            if (statusBadge) {
+                statusBadge.textContent = status;
+                statusBadge.className = 'badge';
+                if (status === 'Active') {
+                    statusBadge.classList.add('badge-success');
+                } else if (status === 'Draft') {
+                    statusBadge.classList.add('badge-warning');
+                } else if (status === 'Closed') {
+                    statusBadge.classList.add('badge-info');
+                }
+            }
+        }
+
+        function setWorkflowState(state) {
+            const headerBadge = document.getElementById('header-stage-badge');
+            const pendingTag = document.getElementById('workflow-pending-tag');
+            const stageInfo = document.getElementById('workflow-stage-info');
+            const approversTab = document.getElementById('approvers-tab');
+            const currentStageDisplay = document.getElementById('current-stage-display');
+            const nextStageDisplay = document.getElementById('next-stage-display');
+            
+            // Reset - hide all "in workflow" UI elements by default
+            headerBadge.className = 'badge badge-warning';
+            pendingTag.style.display = 'none';
+            stageInfo.style.display = 'none';
+            approversTab.style.display = 'none';
+            
+            // Determine if we're in a workflow state (pending approval)
+            const isInWorkflow = (state === 'pending_go' || state === 'pending_nogo');
+            
+            switch(state) {
+                case 'identify_profile':
+                    // Identify & Profile - Opp Manager can Submit for Go or No Go
+                    headerBadge.textContent = 'Identify & Profile';
+                    updateStatusBadge('Draft');
+                    renderSteps('identify_profile');
+                    renderHistory('identify_profile');
+                    renderActions('identify_profile');
+                    break;
+                    
+                case 'pending_go':
+                    // Pending GO approval
+                    headerBadge.textContent = 'Identify & Profile';
+                    updateStatusBadge('Draft');
+                    pendingTag.style.display = 'inline-block';
+                    stageInfo.style.display = 'flex';
+                    approversTab.style.display = 'block';
+                    currentStageDisplay.textContent = 'IDENTIFY & PROFILE';
+                    nextStageDisplay.textContent = 'GO';
+                    renderSteps('identify_profile', true, 'go');
+                    renderHistory('pending_go');
+                    renderActions('pending_go', 'doa_holder'); // Show DOA actions for demo
+                    break;
+                    
+                case 'pending_nogo':
+                    // Pending NO GO approval
+                    headerBadge.textContent = 'Identify & Profile';
+                    updateStatusBadge('Draft');
+                    pendingTag.style.display = 'inline-block';
+                    stageInfo.style.display = 'flex';
+                    approversTab.style.display = 'block';
+                    currentStageDisplay.textContent = 'IDENTIFY & PROFILE';
+                    nextStageDisplay.textContent = 'NO GO';
+                    renderSteps('identify_profile', true, 'nogo');
+                    renderHistory('pending_nogo');
+                    renderActions('pending_nogo', 'doa_holder'); // Show DOA actions for demo
+                    break;
+                    
+                case 'go':
+                    // Go - Final stage (no actions)
+                    headerBadge.textContent = 'Go';
+                    headerBadge.className = 'badge badge-success';
+                    updateStatusBadge('Active');
+                    renderSteps('go');
+                    renderHistory('go');
+                    renderActions('go');
+                    break;
+                    
+                case 'nogo':
+                    // No Go - Can be reopened
+                    headerBadge.textContent = 'No Go';
+                    headerBadge.className = 'badge badge-info';
+                    updateStatusBadge('Closed');
+                    renderSteps('nogo');
+                    renderHistory('nogo');
+                    renderActions('nogo');
+                    break;
+            }
+            
+            const stateLabels = {
+                'identify_profile': 'Identify & Profile (Draft)',
+                'pending_go': 'Pending GO Approval (DOA view)',
+                'pending_nogo': 'Pending NO GO Approval (DOA view)',
+                'go': 'Go (Active) ★ FINAL',
+                'nogo': 'No Go (Closed) - Can Reopen'
+            };
+            document.getElementById('state-display').textContent = stateLabels[state] || state;
+            
+            // Reset to overview tab
+            switchWorkflowTab('overview');
+        }
+
+        function switchWorkflowTab(tabId) {
+            // Update tabs
+            document.querySelectorAll('#workflow-tabs .tab').forEach(tab => tab.classList.remove('active'));
+            event?.target?.classList.add('active');
+            
+            // Update panels
+            document.querySelectorAll('#section-workflow .tab-panel').forEach(panel => panel.classList.add('hidden'));
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+        }
+
+        // Dropdown toggle functions
+        function toggleDropdown(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('submit-dropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+            }
+        }
+
+        function closeDropdown() {
+            const dropdown = document.getElementById('submit-dropdown');
+            if (dropdown) {
+                dropdown.classList.remove('show');
+            }
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('submit-dropdown');
+            if (dropdown && !event.target.closest('.split-button-container')) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        function showDialog(action, required = true) {
+            document.getElementById('dialog-title').textContent = action;
+            document.getElementById('dialog-submit-btn').textContent = action;
+            document.getElementById('required-marker').style.display = required ? 'inline' : 'none';
+            document.getElementById('comment-dialog').classList.remove('hidden');
+        }
+
+        function hideDialog() {
+            document.getElementById('comment-dialog').classList.add('hidden');
+        }
+
+        function scrollToSection(id) {
+            document.getElementById('section-' + id)?.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Close dialog on overlay click
+        document.getElementById('comment-dialog').addEventListener('click', function(e) {
+            if (e.target === this) hideDialog();
+        });
+
+        // Initialize
+        setWorkflowState('identify_profile');
+    </script>
+</body>
+</html>
