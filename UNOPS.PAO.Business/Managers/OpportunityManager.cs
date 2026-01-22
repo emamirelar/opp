@@ -83,7 +83,7 @@ public class OpportunityManager : IOpportunityManager
     {
         var includes = new[]
         {
-            "WorkflowStage",
+            // "WorkflowStage" removed - now using Stage property instead
             "ResponsibleOrgUnit",
             "ProposedInitiativeType",
             "FundingPartners.Partner",
