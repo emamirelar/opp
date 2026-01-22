@@ -4396,7 +4396,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
         var opportunities = opportunityRepository
             .GetAll([
-                "WorkflowStage",
+                // "WorkflowStage" removed - now using Stage property instead
                 "ResponsibleOrgUnit",
                 "ProposedInitiativeType",
                 "FundingPartners",
