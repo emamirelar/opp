@@ -21,8 +21,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        submodules: true
+      # Note: Private submodules (UNOPS.Workflow, ExternalDataService) are excluded from CI
+      # Conditional compilation in .csproj files handles missing submodules gracefully
     
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -44,11 +44,11 @@ jobs:
     
     - name: Restore dependencies
       if: steps.check-fast-tests.outputs.exists == 'true'
-      run: dotnet restore
+      run: dotnet restore "QA Tests/C# Tests/UNOPS.PAO.FastTests/UNOPS.PAO.FastTests.csproj"
     
     - name: Build
       if: steps.check-fast-tests.outputs.exists == 'true'
-      run: dotnet build --no-restore --configuration Release
+      run: dotnet build "QA Tests/C# Tests/UNOPS.PAO.FastTests/UNOPS.PAO.FastTests.csproj" --no-restore --configuration Release
     
     - name: Run FastTests
       id: run-fast-tests
@@ -116,8 +116,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        submodules: true
+      # Note: Private submodules (UNOPS.Workflow, ExternalDataService) are excluded from CI
+      # Conditional compilation in .csproj files handles missing submodules gracefully
     
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -139,11 +139,11 @@ jobs:
     
     - name: Restore dependencies
       if: steps.check-business-tests.outputs.exists == 'true'
-      run: dotnet restore
+      run: dotnet restore "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj"
     
     - name: Build
       if: steps.check-business-tests.outputs.exists == 'true'
-      run: dotnet build --no-restore --configuration Release
+      run: dotnet build "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj" --no-restore --configuration Release
     
     - name: Run Business Tests
       id: run-business-tests
@@ -332,8 +332,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        submodules: true
     
     - name: Check if test projects exist
       id: check-projects
