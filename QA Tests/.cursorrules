@@ -40,6 +40,23 @@ npx ng test --no-watch --browsers=ChromeHeadlessCI
 
 **NEVER** run Angular tests without these flags unless explicitly requested by the user.
 
+# Communication Protocol
+**CRITICAL: Report results IMMEDIATELY. No exceptions.**
+
+When executing ANY task (build, test, analysis, file operation):
+1. **Report completion status IMMEDIATELY** - Success, Failure, Timeout, Error
+2. **NEVER proceed to next step without reporting current step result**
+3. **NEVER try alternative approaches silently after a failure**
+4. **NEVER analyze or troubleshoot before telling user what happened**
+
+Examples:
+- ✅ "Build completed successfully"
+- ❌ "Build FAILED with 3 compilation errors"
+- ⏱️ "Command TIMED OUT after 30 seconds"
+- ⚠️ "Test run was CANCELED"
+
+**Then STOP and ask user what to do next.**
+
 ## 1. Context Analysis
 - Analyze `@PRD`, `@Design Document`, and `@Defect List` to identify field types, constraints, and business logic.
 - Reference the `@Codebase` to ensure tests match the existing architecture and patterns.
