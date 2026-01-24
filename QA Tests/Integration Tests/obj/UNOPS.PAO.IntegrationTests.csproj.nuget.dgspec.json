@@ -1,0 +1,2182 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\Users\\Leonardc\\git\\opportunityplus\\QA Tests\\Integration Tests\\UNOPS.PAO.IntegrationTests.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\Leonardc\\git\\opportunityplus\\QA Tests\\Integration Tests\\UNOPS.PAO.IntegrationTests.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Leonardc\\git\\opportunityplus\\QA Tests\\Integration Tests\\UNOPS.PAO.IntegrationTests.csproj",
+        "projectName": "UNOPS.PAO.IntegrationTests",
+        "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\QA Tests\\Integration Tests\\UNOPS.PAO.IntegrationTests.csproj",
+        "packagesPath": "C:\\Users\\Leonardc\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\QA Tests\\Integration Tests\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Leonardc\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Business\\UNOPS.PAO.Business.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Business\\UNOPS.PAO.Business.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Server\\UNOPS.PAO.Server.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Server\\UNOPS.PAO.Server.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSDataAccess\\UNOPS.PAO.UNOPSDataAccess.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSDataAccess\\UNOPS.PAO.UNOPSDataAccess.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSDomain\\UNOPS.PAO.UNOPSDomain.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSDomain\\UNOPS.PAO.UNOPSDomain.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.DataAccess\\UNOPS.Workflow.DataAccess.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.DataAccess\\UNOPS.Workflow.DataAccess.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Domain\\UNOPS.Workflow.Domain.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Domain\\UNOPS.Workflow.Domain.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Models\\UNOPS.Workflow.Models.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Models\\UNOPS.Workflow.Models.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "BenchmarkDotNet": {
+              "target": "Package",
+              "version": "[0.13.12, )"
+            },
+            "Bogus": {
+              "target": "Package",
+              "version": "[35.4.0, )"
+            },
+            "FluentAssertions": {
+              "target": "Package",
+              "version": "[6.12.0, )"
+            },
+            "Microsoft.AspNetCore.Mvc.Testing": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
+            "Microsoft.EntityFrameworkCore.InMemory": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
+            "Microsoft.Extensions.Configuration": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.NET.Test.Sdk": {
+              "target": "Package",
+              "version": "[17.8.0, )"
+            },
+            "Moq": {
+              "target": "Package",
+              "version": "[4.20.70, )"
+            },
+            "Testcontainers.PostgreSql": {
+              "target": "Package",
+              "version": "[3.7.0, )"
+            },
+            "xunit": {
+              "target": "Package",
+              "version": "[2.6.6, )"
+            },
+            "xunit.runner.visualstudio": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[2.5.6, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.309/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Business\\UNOPS.PAO.Business.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Business\\UNOPS.PAO.Business.csproj",
+        "projectName": "UNOPS.PAO.Business",
+        "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Business\\UNOPS.PAO.Business.csproj",
+        "packagesPath": "C:\\Users\\Leonardc\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Business\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Leonardc\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.DataAccess\\UNOPS.PAO.DataAccess.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.DataAccess\\UNOPS.PAO.DataAccess.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Domain\\UNOPS.PAO.Domain.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Domain\\UNOPS.PAO.Domain.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.GoogleServices\\UNOPS.PAO.GoogleServices.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.GoogleServices\\UNOPS.PAO.GoogleServices.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.MailSender\\UNOPS.PAO.MailSender.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.MailSender\\UNOPS.PAO.MailSender.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Models\\UNOPS.PAO.Models.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Models\\UNOPS.PAO.Models.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Utilities\\UNOPS.PAO.Utilities.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Utilities\\UNOPS.PAO.Utilities.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Business\\UNOPS.Workflow.Business.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Business\\UNOPS.Workflow.Business.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.DataAccess\\UNOPS.Workflow.DataAccess.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.DataAccess\\UNOPS.Workflow.DataAccess.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Domain\\UNOPS.Workflow.Domain.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Domain\\UNOPS.Workflow.Domain.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Models\\UNOPS.Workflow.Models.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Models\\UNOPS.Workflow.Models.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "AutoMapper": {
+              "target": "Package",
+              "version": "[13.0.1, )"
+            },
+            "Google.Cloud.PubSub.V1": {
+              "target": "Package",
+              "version": "[3.24.0, )"
+            },
+            "Google.Cloud.Speech.V1": {
+              "target": "Package",
+              "version": "[3.8.0, )"
+            },
+            "Google.Cloud.Storage.V1": {
+              "target": "Package",
+              "version": "[4.11.0, )"
+            },
+            "Google.Cloud.TextToSpeech.V1": {
+              "target": "Package",
+              "version": "[3.10.0, )"
+            },
+            "Google.Cloud.Vision.V1": {
+              "target": "Package",
+              "version": "[3.7.0, )"
+            },
+            "Humanizer": {
+              "target": "Package",
+              "version": "[2.14.1, )"
+            },
+            "Microsoft.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Z.EntityFramework.Plus.EFCore": {
+              "target": "Package",
+              "version": "[9.103.6.4, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.309/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.DataAccess\\UNOPS.PAO.DataAccess.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.DataAccess\\UNOPS.PAO.DataAccess.csproj",
+        "projectName": "UNOPS.PAO.DataAccess",
+        "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.DataAccess\\UNOPS.PAO.DataAccess.csproj",
+        "packagesPath": "C:\\Users\\Leonardc\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.DataAccess\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Leonardc\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Domain\\UNOPS.PAO.Domain.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Domain\\UNOPS.PAO.Domain.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Identity\\UNOPS.PAO.Identity.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Identity\\UNOPS.PAO.Identity.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSDomain\\UNOPS.PAO.UNOPSDomain.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSDomain\\UNOPS.PAO.UNOPSDomain.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Google.Apis.Auth": {
+              "target": "Package",
+              "version": "[1.73.0, )"
+            },
+            "Google.Cloud.PubSub.V1": {
+              "target": "Package",
+              "version": "[3.24.0, )"
+            },
+            "Google.Cloud.SecretManager.V1": {
+              "target": "Package",
+              "version": "[2.0.0, )"
+            },
+            "Google.Cloud.Speech.V1": {
+              "target": "Package",
+              "version": "[3.8.0, )"
+            },
+            "Google.Cloud.Storage.V1": {
+              "target": "Package",
+              "version": "[4.11.0, )"
+            },
+            "Google.Cloud.TextToSpeech.V1": {
+              "target": "Package",
+              "version": "[3.10.0, )"
+            },
+            "Google.Cloud.Vision.V1": {
+              "target": "Package",
+              "version": "[3.7.0, )"
+            },
+            "Humanizer": {
+              "target": "Package",
+              "version": "[2.14.1, )"
+            },
+            "Microsoft.AspNetCore.Authentication.JwtBearer": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.EntityFrameworkCore.Design": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.IdentityModel.Tokens": {
+              "target": "Package",
+              "version": "[8.12.1, )"
+            },
+            "Npgsql.EntityFrameworkCore.PostgreSQL": {
+              "target": "Package",
+              "version": "[9.0.2, )"
+            },
+            "System.IdentityModel.Tokens.Jwt": {
+              "target": "Package",
+              "version": "[8.12.1, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.309/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Domain\\UNOPS.PAO.Domain.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Domain\\UNOPS.PAO.Domain.csproj",
+        "projectName": "UNOPS.PAO.Domain",
+        "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Domain\\UNOPS.PAO.Domain.csproj",
+        "packagesPath": "C:\\Users\\Leonardc\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Domain\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Leonardc\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Identity\\UNOPS.PAO.Identity.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Identity\\UNOPS.PAO.Identity.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Google.Cloud.PubSub.V1": {
+              "target": "Package",
+              "version": "[3.24.0, )"
+            },
+            "Google.Cloud.Speech.V1": {
+              "target": "Package",
+              "version": "[3.8.0, )"
+            },
+            "Google.Cloud.Storage.V1": {
+              "target": "Package",
+              "version": "[4.11.0, )"
+            },
+            "Google.Cloud.TextToSpeech.V1": {
+              "target": "Package",
+              "version": "[3.10.0, )"
+            },
+            "Google.Cloud.Vision.V1": {
+              "target": "Package",
+              "version": "[3.7.0, )"
+            },
+            "Humanizer": {
+              "target": "Package",
+              "version": "[2.14.1, )"
+            },
+            "Npgsql": {
+              "target": "Package",
+              "version": "[9.0.2, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.309/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.GoogleServices\\UNOPS.PAO.GoogleServices.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.GoogleServices\\UNOPS.PAO.GoogleServices.csproj",
+        "projectName": "UNOPS.PAO.GoogleServices",
+        "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.GoogleServices\\UNOPS.PAO.GoogleServices.csproj",
+        "packagesPath": "C:\\Users\\Leonardc\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.GoogleServices\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Leonardc\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Models\\UNOPS.PAO.Models.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Models\\UNOPS.PAO.Models.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Google.Api.Gax": {
+              "target": "Package",
+              "version": "[4.9.0, )"
+            },
+            "Google.Apis.Auth": {
+              "target": "Package",
+              "version": "[1.73.0, )"
+            },
+            "Google.Apis.Drive.v3": {
+              "target": "Package",
+              "version": "[1.72.0.3970, )"
+            },
+            "Google.Apis.IAMCredentials.v1": {
+              "target": "Package",
+              "version": "[1.69.0.3759, )"
+            },
+            "Google.Cloud.BigQuery.V2": {
+              "target": "Package",
+              "version": "[3.10.0, )"
+            },
+            "Google.Cloud.PubSub.V1": {
+              "target": "Package",
+              "version": "[3.24.0, )"
+            },
+            "Google.Cloud.SecretManager.V1": {
+              "target": "Package",
+              "version": "[2.5.0, )"
+            },
+            "Google.Cloud.Speech.V1": {
+              "target": "Package",
+              "version": "[3.8.0, )"
+            },
+            "Google.Cloud.Storage.V1": {
+              "target": "Package",
+              "version": "[4.11.0, )"
+            },
+            "Google.Cloud.TextToSpeech.V1": {
+              "target": "Package",
+              "version": "[3.10.0, )"
+            },
+            "Google.Cloud.Vision.V1": {
+              "target": "Package",
+              "version": "[3.7.0, )"
+            },
+            "Humanizer": {
+              "target": "Package",
+              "version": "[2.14.1, )"
+            },
+            "Microsoft.Extensions.Configuration": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.309/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Identity\\UNOPS.PAO.Identity.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Identity\\UNOPS.PAO.Identity.csproj",
+        "projectName": "UNOPS.PAO.Identity",
+        "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Identity\\UNOPS.PAO.Identity.csproj",
+        "packagesPath": "C:\\Users\\Leonardc\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Identity\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Leonardc\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Google.Apis.Auth": {
+              "target": "Package",
+              "version": "[1.68.0, )"
+            },
+            "Google.Cloud.PubSub.V1": {
+              "target": "Package",
+              "version": "[3.24.0, )"
+            },
+            "Google.Cloud.SecretManager.V1": {
+              "target": "Package",
+              "version": "[2.0.0, )"
+            },
+            "Google.Cloud.Speech.V1": {
+              "target": "Package",
+              "version": "[3.8.0, )"
+            },
+            "Google.Cloud.Storage.V1": {
+              "target": "Package",
+              "version": "[4.11.0, )"
+            },
+            "Google.Cloud.TextToSpeech.V1": {
+              "target": "Package",
+              "version": "[3.10.0, )"
+            },
+            "Google.Cloud.Vision.V1": {
+              "target": "Package",
+              "version": "[3.7.0, )"
+            },
+            "Humanizer": {
+              "target": "Package",
+              "version": "[2.14.1, )"
+            },
+            "Microsoft.AspNetCore.Authentication.JwtBearer": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.AspNetCore.Identity.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.IdentityModel.Tokens": {
+              "target": "Package",
+              "version": "[8.12.1, )"
+            },
+            "System.IdentityModel.Tokens.Jwt": {
+              "target": "Package",
+              "version": "[8.12.1, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.309/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.MailSender\\UNOPS.PAO.MailSender.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.MailSender\\UNOPS.PAO.MailSender.csproj",
+        "projectName": "UNOPS.PAO.MailSender",
+        "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.MailSender\\UNOPS.PAO.MailSender.csproj",
+        "packagesPath": "C:\\Users\\Leonardc\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.MailSender\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Leonardc\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Google.Cloud.SecretManager.V1": {
+              "target": "Package",
+              "version": "[2.5.0, )"
+            },
+            "MailKit": {
+              "target": "Package",
+              "version": "[4.10.0, )"
+            },
+            "Microsoft.AspNetCore.Http": {
+              "target": "Package",
+              "version": "[2.3.0, )"
+            },
+            "Microsoft.Extensions.Configuration": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.3, )"
+            },
+            "RazorLight": {
+              "target": "Package",
+              "version": "[2.3.1, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.309/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Models\\UNOPS.PAO.Models.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Models\\UNOPS.PAO.Models.csproj",
+        "projectName": "UNOPS.PAO.Models",
+        "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Models\\UNOPS.PAO.Models.csproj",
+        "packagesPath": "C:\\Users\\Leonardc\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Models\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Leonardc\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Domain\\UNOPS.PAO.Domain.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Domain\\UNOPS.PAO.Domain.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Identity\\UNOPS.PAO.Identity.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Identity\\UNOPS.PAO.Identity.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Google.Cloud.PubSub.V1": {
+              "target": "Package",
+              "version": "[3.24.0, )"
+            },
+            "Google.Cloud.Speech.V1": {
+              "target": "Package",
+              "version": "[3.8.0, )"
+            },
+            "Google.Cloud.Storage.V1": {
+              "target": "Package",
+              "version": "[4.11.0, )"
+            },
+            "Google.Cloud.TextToSpeech.V1": {
+              "target": "Package",
+              "version": "[3.10.0, )"
+            },
+            "Google.Cloud.Vision.V1": {
+              "target": "Package",
+              "version": "[3.7.0, )"
+            },
+            "Humanizer": {
+              "target": "Package",
+              "version": "[2.14.1, )"
+            },
+            "Microsoft.AspNetCore.Http.Features": {
+              "target": "Package",
+              "version": "[5.0.17, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.309/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Presentation\\UNOPS.PAO.Presentation.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Presentation\\UNOPS.PAO.Presentation.csproj",
+        "projectName": "UNOPS.PAO.Presentation",
+        "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Presentation\\UNOPS.PAO.Presentation.csproj",
+        "packagesPath": "C:\\Users\\Leonardc\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Presentation\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Leonardc\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Business\\UNOPS.PAO.Business.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Business\\UNOPS.PAO.Business.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.DataAccess\\UNOPS.PAO.DataAccess.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.DataAccess\\UNOPS.PAO.DataAccess.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Domain\\UNOPS.PAO.Domain.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Domain\\UNOPS.PAO.Domain.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.GoogleServices\\UNOPS.PAO.GoogleServices.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.GoogleServices\\UNOPS.PAO.GoogleServices.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Models\\UNOPS.PAO.Models.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Models\\UNOPS.PAO.Models.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSBusiness\\UNOPS.PAO.UNOPSBusiness.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSBusiness\\UNOPS.PAO.UNOPSBusiness.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSDataAccess\\UNOPS.PAO.UNOPSDataAccess.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSDataAccess\\UNOPS.PAO.UNOPSDataAccess.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSIdentity\\UNOPS.PAO.UNOPSIdentity.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSIdentity\\UNOPS.PAO.UNOPSIdentity.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Utilities\\UNOPS.PAO.Utilities.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Utilities\\UNOPS.PAO.Utilities.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "AutoMapper": {
+              "target": "Package",
+              "version": "[13.0.1, )"
+            },
+            "Google.Cloud.PubSub.V1": {
+              "target": "Package",
+              "version": "[3.24.0, )"
+            },
+            "Google.Cloud.Speech.V1": {
+              "target": "Package",
+              "version": "[3.8.0, )"
+            },
+            "Google.Cloud.Storage.V1": {
+              "target": "Package",
+              "version": "[4.11.0, )"
+            },
+            "Google.Cloud.TextToSpeech.V1": {
+              "target": "Package",
+              "version": "[3.10.0, )"
+            },
+            "Google.Cloud.Vision.V1": {
+              "target": "Package",
+              "version": "[3.7.0, )"
+            },
+            "Humanizer": {
+              "target": "Package",
+              "version": "[2.14.1, )"
+            },
+            "Lamar.Microsoft.DependencyInjection": {
+              "target": "Package",
+              "version": "[14.0.1, )"
+            },
+            "Microsoft.AspNetCore.OpenApi": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.AspNetCore.SpaProxy": {
+              "target": "Package",
+              "version": "[9.*-*, )"
+            },
+            "Microsoft.EntityFrameworkCore.Tools": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.Extensions.Caching.Memory": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.VisualStudio.Web.CodeGeneration.Design": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Swashbuckle.AspNetCore": {
+              "target": "Package",
+              "version": "[7.2.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.309/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Server\\UNOPS.PAO.Server.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Server\\UNOPS.PAO.Server.csproj",
+        "projectName": "UNOPS.PAO.Server",
+        "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Server\\UNOPS.PAO.Server.csproj",
+        "packagesPath": "C:\\Users\\Leonardc\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Server\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Leonardc\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Business\\UNOPS.PAO.Business.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Business\\UNOPS.PAO.Business.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.DataAccess\\UNOPS.PAO.DataAccess.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.DataAccess\\UNOPS.PAO.DataAccess.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Domain\\UNOPS.PAO.Domain.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Domain\\UNOPS.PAO.Domain.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.GoogleServices\\UNOPS.PAO.GoogleServices.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.GoogleServices\\UNOPS.PAO.GoogleServices.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.MailSender\\UNOPS.PAO.MailSender.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.MailSender\\UNOPS.PAO.MailSender.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Models\\UNOPS.PAO.Models.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Models\\UNOPS.PAO.Models.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Presentation\\UNOPS.PAO.Presentation.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Presentation\\UNOPS.PAO.Presentation.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSBusiness\\UNOPS.PAO.UNOPSBusiness.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSBusiness\\UNOPS.PAO.UNOPSBusiness.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSDataAccess\\UNOPS.PAO.UNOPSDataAccess.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSDataAccess\\UNOPS.PAO.UNOPSDataAccess.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSIdentity\\UNOPS.PAO.UNOPSIdentity.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSIdentity\\UNOPS.PAO.UNOPSIdentity.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSPresentation\\UNOPS.PAO.UNOPSPresentation.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSPresentation\\UNOPS.PAO.UNOPSPresentation.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Utilities\\UNOPS.PAO.Utilities.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Utilities\\UNOPS.PAO.Utilities.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "AutoMapper": {
+              "target": "Package",
+              "version": "[13.0.1, )"
+            },
+            "Google.Apis.Auth": {
+              "target": "Package",
+              "version": "[1.73.0, )"
+            },
+            "Google.Apis.Auth.AspNetCore3": {
+              "target": "Package",
+              "version": "[1.69.0, )"
+            },
+            "Google.Cloud.AIPlatform.V1": {
+              "target": "Package",
+              "version": "[3.21.0, )"
+            },
+            "Google.Cloud.PubSub.V1": {
+              "target": "Package",
+              "version": "[3.24.0, )"
+            },
+            "Google.Cloud.Speech.V1": {
+              "target": "Package",
+              "version": "[3.8.0, )"
+            },
+            "Google.Cloud.Storage.V1": {
+              "target": "Package",
+              "version": "[4.11.0, )"
+            },
+            "Google.Cloud.TextToSpeech.V1": {
+              "target": "Package",
+              "version": "[3.10.0, )"
+            },
+            "Google.Cloud.Vision.V1": {
+              "target": "Package",
+              "version": "[3.7.0, )"
+            },
+            "Humanizer": {
+              "target": "Package",
+              "version": "[2.14.1, )"
+            },
+            "Lamar.Microsoft.DependencyInjection": {
+              "target": "Package",
+              "version": "[14.0.1, )"
+            },
+            "Microsoft.AspNetCore.OpenApi": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.AspNetCore.SpaProxy": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.EntityFrameworkCore.Tools": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.Extensions.Caching.Memory": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.VisualStudio.Web.CodeGeneration.Design": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Swashbuckle.AspNetCore": {
+              "target": "Package",
+              "version": "[7.2.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.309/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSBusiness\\UNOPS.PAO.UNOPSBusiness.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSBusiness\\UNOPS.PAO.UNOPSBusiness.csproj",
+        "projectName": "UNOPS.PAO.UNOPSBusiness",
+        "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSBusiness\\UNOPS.PAO.UNOPSBusiness.csproj",
+        "packagesPath": "C:\\Users\\Leonardc\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSBusiness\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Leonardc\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Business\\UNOPS.PAO.Business.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Business\\UNOPS.PAO.Business.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.GoogleServices\\UNOPS.PAO.GoogleServices.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.GoogleServices\\UNOPS.PAO.GoogleServices.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSDataAccess\\UNOPS.PAO.UNOPSDataAccess.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSDataAccess\\UNOPS.PAO.UNOPSDataAccess.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSDomain\\UNOPS.PAO.UNOPSDomain.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSDomain\\UNOPS.PAO.UNOPSDomain.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Utilities\\UNOPS.PAO.Utilities.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Utilities\\UNOPS.PAO.Utilities.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Castle.Core": {
+              "target": "Package",
+              "version": "[5.1.1, )"
+            },
+            "Google.Apis.Drive.v3": {
+              "target": "Package",
+              "version": "[1.72.0.3970, )"
+            },
+            "Google.Apis.Sheets.v4": {
+              "target": "Package",
+              "version": "[1.69.0.3694, )"
+            },
+            "Google.Cloud.AIPlatform.V1": {
+              "target": "Package",
+              "version": "[3.21.0, )"
+            },
+            "Google.Cloud.PubSub.V1": {
+              "target": "Package",
+              "version": "[3.24.0, )"
+            },
+            "Google.Cloud.Speech.V1": {
+              "target": "Package",
+              "version": "[3.8.0, )"
+            },
+            "Google.Cloud.Storage.V1": {
+              "target": "Package",
+              "version": "[4.11.0, )"
+            },
+            "Google.Cloud.TextToSpeech.V1": {
+              "target": "Package",
+              "version": "[3.10.0, )"
+            },
+            "Google.Cloud.Vision.V1": {
+              "target": "Package",
+              "version": "[3.7.0, )"
+            },
+            "Humanizer": {
+              "target": "Package",
+              "version": "[2.14.1, )"
+            },
+            "MailKit": {
+              "target": "Package",
+              "version": "[4.10.0, )"
+            },
+            "Microsoft.Extensions.Caching.Memory": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "RazorLight": {
+              "target": "Package",
+              "version": "[2.3.1, )"
+            },
+            "System.Linq.Dynamic.Core": {
+              "target": "Package",
+              "version": "[1.6.7, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.309/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSDataAccess\\UNOPS.PAO.UNOPSDataAccess.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSDataAccess\\UNOPS.PAO.UNOPSDataAccess.csproj",
+        "projectName": "UNOPS.PAO.UNOPSDataAccess",
+        "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSDataAccess\\UNOPS.PAO.UNOPSDataAccess.csproj",
+        "packagesPath": "C:\\Users\\Leonardc\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSDataAccess\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Leonardc\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.DataAccess\\UNOPS.PAO.DataAccess.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.DataAccess\\UNOPS.PAO.DataAccess.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSDomain\\UNOPS.PAO.UNOPSDomain.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSDomain\\UNOPS.PAO.UNOPSDomain.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "EntityFramework": {
+              "target": "Package",
+              "version": "[6.5.1, )"
+            },
+            "Google.Cloud.PubSub.V1": {
+              "target": "Package",
+              "version": "[3.24.0, )"
+            },
+            "Google.Cloud.Speech.V1": {
+              "target": "Package",
+              "version": "[3.8.0, )"
+            },
+            "Google.Cloud.Storage.V1": {
+              "target": "Package",
+              "version": "[4.11.0, )"
+            },
+            "Google.Cloud.TextToSpeech.V1": {
+              "target": "Package",
+              "version": "[3.10.0, )"
+            },
+            "Google.Cloud.Vision.V1": {
+              "target": "Package",
+              "version": "[3.7.0, )"
+            },
+            "Humanizer": {
+              "target": "Package",
+              "version": "[2.14.1, )"
+            },
+            "Microsoft.EntityFrameworkCore.Design": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.EntityFrameworkCore.SqlServer": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.309/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSDomain\\UNOPS.PAO.UNOPSDomain.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSDomain\\UNOPS.PAO.UNOPSDomain.csproj",
+        "projectName": "UNOPS.PAO.UNOPSDomain",
+        "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSDomain\\UNOPS.PAO.UNOPSDomain.csproj",
+        "packagesPath": "C:\\Users\\Leonardc\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSDomain\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Leonardc\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Domain\\UNOPS.PAO.Domain.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Domain\\UNOPS.PAO.Domain.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Models\\UNOPS.PAO.Models.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Models\\UNOPS.PAO.Models.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Google.Cloud.PubSub.V1": {
+              "target": "Package",
+              "version": "[3.24.0, )"
+            },
+            "Google.Cloud.Speech.V1": {
+              "target": "Package",
+              "version": "[3.8.0, )"
+            },
+            "Google.Cloud.Storage.V1": {
+              "target": "Package",
+              "version": "[4.11.0, )"
+            },
+            "Google.Cloud.TextToSpeech.V1": {
+              "target": "Package",
+              "version": "[3.10.0, )"
+            },
+            "Google.Cloud.Vision.V1": {
+              "target": "Package",
+              "version": "[3.7.0, )"
+            },
+            "Humanizer": {
+              "target": "Package",
+              "version": "[2.14.1, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.309/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSIdentity\\UNOPS.PAO.UNOPSIdentity.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSIdentity\\UNOPS.PAO.UNOPSIdentity.csproj",
+        "projectName": "UNOPS.PAO.UNOPSIdentity",
+        "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSIdentity\\UNOPS.PAO.UNOPSIdentity.csproj",
+        "packagesPath": "C:\\Users\\Leonardc\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSIdentity\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Leonardc\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Identity\\UNOPS.PAO.Identity.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Identity\\UNOPS.PAO.Identity.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Google.Apis.Auth": {
+              "target": "Package",
+              "version": "[1.69.0, )"
+            },
+            "Google.Cloud.PubSub.V1": {
+              "target": "Package",
+              "version": "[3.24.0, )"
+            },
+            "Google.Cloud.Speech.V1": {
+              "target": "Package",
+              "version": "[3.8.0, )"
+            },
+            "Google.Cloud.Storage.V1": {
+              "target": "Package",
+              "version": "[4.11.0, )"
+            },
+            "Google.Cloud.TextToSpeech.V1": {
+              "target": "Package",
+              "version": "[3.10.0, )"
+            },
+            "Google.Cloud.Vision.V1": {
+              "target": "Package",
+              "version": "[3.7.0, )"
+            },
+            "Humanizer": {
+              "target": "Package",
+              "version": "[2.14.1, )"
+            },
+            "Microsoft.Extensions.Caching.Memory": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.IdentityModel.Tokens": {
+              "target": "Package",
+              "version": "[8.12.1, )"
+            },
+            "System.IdentityModel.Tokens.Jwt": {
+              "target": "Package",
+              "version": "[8.12.1, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.309/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSPresentation\\UNOPS.PAO.UNOPSPresentation.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSPresentation\\UNOPS.PAO.UNOPSPresentation.csproj",
+        "projectName": "UNOPS.PAO.UNOPSPresentation",
+        "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSPresentation\\UNOPS.PAO.UNOPSPresentation.csproj",
+        "packagesPath": "C:\\Users\\Leonardc\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSPresentation\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Leonardc\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Domain\\UNOPS.PAO.Domain.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Domain\\UNOPS.PAO.Domain.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Presentation\\UNOPS.PAO.Presentation.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Presentation\\UNOPS.PAO.Presentation.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSBusiness\\UNOPS.PAO.UNOPSBusiness.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSBusiness\\UNOPS.PAO.UNOPSBusiness.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "AutoMapper": {
+              "target": "Package",
+              "version": "[13.0.1, )"
+            },
+            "Google.Cloud.PubSub.V1": {
+              "target": "Package",
+              "version": "[3.24.0, )"
+            },
+            "Google.Cloud.Speech.V1": {
+              "target": "Package",
+              "version": "[3.8.0, )"
+            },
+            "Google.Cloud.Storage.V1": {
+              "target": "Package",
+              "version": "[4.11.0, )"
+            },
+            "Google.Cloud.TextToSpeech.V1": {
+              "target": "Package",
+              "version": "[3.10.0, )"
+            },
+            "Google.Cloud.Vision.V1": {
+              "target": "Package",
+              "version": "[3.7.0, )"
+            },
+            "Humanizer": {
+              "target": "Package",
+              "version": "[2.14.1, )"
+            },
+            "Lamar.Microsoft.DependencyInjection": {
+              "target": "Package",
+              "version": "[14.0.1, )"
+            },
+            "Microsoft.AspNetCore.OpenApi": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.AspNetCore.SpaProxy": {
+              "target": "Package",
+              "version": "[9.*-*, )"
+            },
+            "Microsoft.EntityFrameworkCore.Tools": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.Extensions.Caching.Memory": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.VisualStudio.Web.CodeGeneration.Design": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Swashbuckle.AspNetCore": {
+              "target": "Package",
+              "version": "[7.2.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.309/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Utilities\\UNOPS.PAO.Utilities.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Utilities\\UNOPS.PAO.Utilities.csproj",
+        "projectName": "UNOPS.PAO.Utilities",
+        "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Utilities\\UNOPS.PAO.Utilities.csproj",
+        "packagesPath": "C:\\Users\\Leonardc\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Utilities\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Leonardc\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.DataAccess\\UNOPS.PAO.DataAccess.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.DataAccess\\UNOPS.PAO.DataAccess.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Domain\\UNOPS.PAO.Domain.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Domain\\UNOPS.PAO.Domain.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Models\\UNOPS.PAO.Models.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Models\\UNOPS.PAO.Models.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Google.Cloud.PubSub.V1": {
+              "target": "Package",
+              "version": "[3.24.0, )"
+            },
+            "Google.Cloud.Speech.V1": {
+              "target": "Package",
+              "version": "[3.8.0, )"
+            },
+            "Google.Cloud.Storage.V1": {
+              "target": "Package",
+              "version": "[4.11.0, )"
+            },
+            "Google.Cloud.TextToSpeech.V1": {
+              "target": "Package",
+              "version": "[3.10.0, )"
+            },
+            "Google.Cloud.Vision.V1": {
+              "target": "Package",
+              "version": "[3.7.0, )"
+            },
+            "Humanizer": {
+              "target": "Package",
+              "version": "[2.14.1, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.309/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Business\\UNOPS.Workflow.Business.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Business\\UNOPS.Workflow.Business.csproj",
+        "projectName": "UNOPS.Workflow.Business",
+        "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Business\\UNOPS.Workflow.Business.csproj",
+        "packagesPath": "C:\\Users\\Leonardc\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Business\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Leonardc\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Domain\\UNOPS.Workflow.Domain.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Domain\\UNOPS.Workflow.Domain.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Models\\UNOPS.Workflow.Models.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Models\\UNOPS.Workflow.Models.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "AutoMapper": {
+              "target": "Package",
+              "version": "[13.0.1, )"
+            },
+            "Microsoft.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.309/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.DataAccess\\UNOPS.Workflow.DataAccess.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.DataAccess\\UNOPS.Workflow.DataAccess.csproj",
+        "projectName": "UNOPS.Workflow.DataAccess",
+        "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.DataAccess\\UNOPS.Workflow.DataAccess.csproj",
+        "packagesPath": "C:\\Users\\Leonardc\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.DataAccess\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Leonardc\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Business\\UNOPS.Workflow.Business.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Business\\UNOPS.Workflow.Business.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Domain\\UNOPS.Workflow.Domain.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Domain\\UNOPS.Workflow.Domain.csproj"
+              },
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Models\\UNOPS.Workflow.Models.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Models\\UNOPS.Workflow.Models.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Microsoft.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.EntityFrameworkCore.Design": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.EntityFrameworkCore.Relational": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.Extensions.DependencyInjection.Abstractions": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.Extensions.Logging.Abstractions": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Npgsql.EntityFrameworkCore.PostgreSQL": {
+              "target": "Package",
+              "version": "[9.0.2, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.309/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Domain\\UNOPS.Workflow.Domain.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Domain\\UNOPS.Workflow.Domain.csproj",
+        "projectName": "UNOPS.Workflow.Domain",
+        "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Domain\\UNOPS.Workflow.Domain.csproj",
+        "packagesPath": "C:\\Users\\Leonardc\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Domain\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Leonardc\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Microsoft.AspNetCore.Identity.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.309/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Models\\UNOPS.Workflow.Models.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Models\\UNOPS.Workflow.Models.csproj",
+        "projectName": "UNOPS.Workflow.Models",
+        "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Models\\UNOPS.Workflow.Models.csproj",
+        "packagesPath": "C:\\Users\\Leonardc\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Models\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Leonardc\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Domain\\UNOPS.Workflow.Domain.csproj": {
+                "projectPath": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Domain\\UNOPS.Workflow.Domain.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.309/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

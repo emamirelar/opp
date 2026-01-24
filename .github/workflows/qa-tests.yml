@@ -27,14 +27,30 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
     
+    - name: Check if FastTests project exists
+      id: check-fast-tests
+      run: |
+        $projectPath = "QA Tests/C# Tests/UNOPS.PAO.FastTests/UNOPS.PAO.FastTests.csproj"
+        if (Test-Path $projectPath) {
+          echo "exists=true" >> $env:GITHUB_OUTPUT
+          echo "✅ FastTests project found at: $projectPath"
+        } else {
+          echo "exists=false" >> $env:GITHUB_OUTPUT
+          echo "ℹ️ FastTests project not found at: $projectPath"
+          echo "::notice::FastTests will be available after the QA Tests PR is merged to this branch"
+        }
+    
     - name: Restore dependencies
+      if: steps.check-fast-tests.outputs.exists == 'true'
       run: dotnet restore
     
     - name: Build
+      if: steps.check-fast-tests.outputs.exists == 'true'
       run: dotnet build --no-restore --configuration Release
     
     - name: Run FastTests
       id: run-fast-tests
+      if: steps.check-fast-tests.outputs.exists == 'true'
       continue-on-error: true
       run: |
         $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
@@ -47,7 +63,7 @@ jobs:
           --results-directory $testResultsDir
     
     - name: List Test Results (Debug)
-      if: always()
+      if: steps.check-fast-tests.outputs.exists == 'true' && always()
       run: |
         $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
         echo "Looking for test results in: $testResultsDir"
@@ -63,7 +79,7 @@ jobs:
     
     - name: Publish Test Results
       uses: dorny/test-reporter@v1
-      if: always()
+      if: steps.check-fast-tests.outputs.exists == 'true' && always()
       with:
         name: FastTests Results
         path: '**/TestResults/**/*.trx'
@@ -72,14 +88,21 @@ jobs:
 
     - name: Upload Test Results Artifact
       uses: actions/upload-artifact@v4
-      if: always()
+      if: steps.check-fast-tests.outputs.exists == 'true' && always()
       with:
         name: fast-tests-results
         path: TestResults
         if-no-files-found: warn
     
+    - name: FastTests Not Available
+      if: steps.check-fast-tests.outputs.exists == 'false'
+      run: |
+        echo "ℹ️ FastTests project not found on this branch"
+        echo "This is expected if the QA Tests haven't been merged yet"
+        echo "Once merged, FastTests (78 tests) will run automatically on future PRs"
+    
     - name: Check FastTests Result
-      if: steps.run-fast-tests.outcome != 'success'
+      if: steps.check-fast-tests.outputs.exists == 'true' && steps.run-fast-tests.outcome != 'success'
       run: |
         echo "::error::FastTests failed or encountered errors"
         exit 1
@@ -97,14 +120,30 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
     
+    - name: Check if Business Tests project exists
+      id: check-business-tests
+      run: |
+        $projectPath = "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj"
+        if (Test-Path $projectPath) {
+          echo "exists=true" >> $env:GITHUB_OUTPUT
+          echo "✅ Business Tests project found at: $projectPath"
+        } else {
+          echo "exists=false" >> $env:GITHUB_OUTPUT
+          echo "ℹ️ Business Tests project not found at: $projectPath"
+          echo "::notice::Business Tests will be available after the QA Tests PR is merged to this branch"
+        }
+    
     - name: Restore dependencies
+      if: steps.check-business-tests.outputs.exists == 'true'
       run: dotnet restore
     
     - name: Build
+      if: steps.check-business-tests.outputs.exists == 'true'
       run: dotnet build --no-restore --configuration Release
     
     - name: Run Business Tests
       id: run-business-tests
+      if: steps.check-business-tests.outputs.exists == 'true'
       continue-on-error: true
       run: |
         $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
@@ -117,7 +156,7 @@ jobs:
           --results-directory $testResultsDir
     
     - name: List Test Results (Debug)
-      if: always()
+      if: steps.check-business-tests.outputs.exists == 'true' && always()
       run: |
         $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
         echo "Looking for test results in: $testResultsDir"
@@ -133,7 +172,7 @@ jobs:
     
     - name: Publish Test Results
       uses: dorny/test-reporter@v1
-      if: always()
+      if: steps.check-business-tests.outputs.exists == 'true' && always()
       with:
         name: Business Tests Results
         path: '**/TestResults/**/*.trx'
@@ -142,14 +181,21 @@ jobs:
 
     - name: Upload Test Results Artifact
       uses: actions/upload-artifact@v4
-      if: always()
+      if: steps.check-business-tests.outputs.exists == 'true' && always()
       with:
         name: business-tests-results
         path: TestResults
         if-no-files-found: warn
     
+    - name: Business Tests Not Available
+      if: steps.check-business-tests.outputs.exists == 'false'
+      run: |
+        echo "ℹ️ Business Tests project not found on this branch"
+        echo "This is expected if the QA Tests haven't been merged yet"
+        echo "Once merged, Business Tests (2,135 tests) will run automatically on future PRs"
+    
     - name: Check Business Tests Result
-      if: steps.run-business-tests.outcome != 'success'
+      if: steps.check-business-tests.outputs.exists == 'true' && steps.run-business-tests.outcome != 'success'
       run: |
         echo "::error::Business Tests failed or encountered errors"
         exit 1
@@ -283,50 +329,87 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     
+    - name: Check if test projects exist
+      id: check-projects
+      run: |
+        if [ -f "QA Tests/C# Tests/UNOPS.PAO.FastTests/UNOPS.PAO.FastTests.csproj" ] && \
+           [ -f "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj" ]; then
+          echo "exist=true" >> $GITHUB_OUTPUT
+        else
+          echo "exist=false" >> $GITHUB_OUTPUT
+        fi
+    
     - name: Generate Summary
       run: |
         echo "# QA Tests Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "## Automated Test Results (PR Checks)" >> $GITHUB_STEP_SUMMARY
-        echo "- Fast Logic Tests (78 tests): ${{ needs.fast-tests.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- Business Logic Tests (2,135 tests): ${{ needs.business-tests.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "## Overall Status" >> $GITHUB_STEP_SUMMARY
-        if [[ "${{ needs.fast-tests.result }}" == "success" ]] && [[ "${{ needs.business-tests.result }}" == "success" ]]; then
-          echo "✅ All critical tests passing (2,213 tests)" >> $GITHUB_STEP_SUMMARY
+        
+        if [[ "${{ steps.check-projects.outputs.exist }}" == "false" ]]; then
+          echo "## ℹ️ Test Projects Not Yet Available" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Test Coverage" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Permission Logic (6 tests)" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Workflow Logic (7 tests)" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Notification Logic (7 tests)" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Export Logic (6 tests)" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Document Validation (11 tests)" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Partner Manager (1,127 tests)" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Other Business Logic (1,049 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "The QA test projects are not present on this branch yet." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "ℹ️ **Note**: Integration tests must be run manually or in staging" >> $GITHUB_STEP_SUMMARY
-          echo "- See: QA Tests/ENVIRONMENT_SETUP_GUIDE.md" >> $GITHUB_STEP_SUMMARY
-          echo "- Run: dotnet test \"QA Tests/Integration Tests/UNOPS.PAO.IntegrationTests.csproj\"" >> $GITHUB_STEP_SUMMARY
+          echo "**This is expected if:**" >> $GITHUB_STEP_SUMMARY
+          echo "- This PR is adding the test projects for the first time" >> $GITHUB_STEP_SUMMARY
+          echo "- The QA Tests haven't been merged to this branch yet" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Once this PR is merged:**" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ FastTests (78 tests) will run automatically on future PRs" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Business Tests (2,135 tests) will run automatically on future PRs" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Total: 2,213 automated tests will validate all future changes" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Coverage (Available After Merge)" >> $GITHUB_STEP_SUMMARY
+          echo "- Permission Logic (6 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- Workflow Logic (7 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- Notification Logic (7 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- Export Logic (6 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- Document Validation (11 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- Partner Manager (1,127 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- Other Business Logic (1,049 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Status**: No issues - tests will be enabled after merge" >> $GITHUB_STEP_SUMMARY
         else
-          echo "❌ Critical tests failed" >> $GITHUB_STEP_SUMMARY
+          echo "## Automated Test Results (PR Checks)" >> $GITHUB_STEP_SUMMARY
+          echo "- Fast Logic Tests (78 tests): ${{ needs.fast-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Business Logic Tests (2,135 tests): ${{ needs.business-tests.result }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          if [[ "${{ needs.fast-tests.result }}" != "success" ]]; then
-            echo "- ❌ Fast Logic Tests: ${{ needs.fast-tests.result }}" >> $GITHUB_STEP_SUMMARY
-            echo "  - Check the FastTests Results for detailed failure information" >> $GITHUB_STEP_SUMMARY
+          echo "## Overall Status" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ needs.fast-tests.result }}" == "success" ]] && [[ "${{ needs.business-tests.result }}" == "success" ]]; then
+            echo "✅ All critical tests passing (2,213 tests)" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Test Coverage" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Permission Logic (6 tests)" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Workflow Logic (7 tests)" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Notification Logic (7 tests)" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Export Logic (6 tests)" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Document Validation (11 tests)" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Partner Manager (1,127 tests)" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Other Business Logic (1,049 tests)" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "ℹ️ **Note**: Integration tests must be run manually or in staging" >> $GITHUB_STEP_SUMMARY
+            echo "- See: QA Tests/ENVIRONMENT_SETUP_GUIDE.md" >> $GITHUB_STEP_SUMMARY
+            echo "- Run: dotnet test \"QA Tests/Integration Tests/UNOPS.PAO.IntegrationTests.csproj\"" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Critical tests failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            if [[ "${{ needs.fast-tests.result }}" != "success" ]]; then
+              echo "- ❌ Fast Logic Tests: ${{ needs.fast-tests.result }}" >> $GITHUB_STEP_SUMMARY
+              echo "  - Check the FastTests Results for detailed failure information" >> $GITHUB_STEP_SUMMARY
+            fi
+            if [[ "${{ needs.business-tests.result }}" != "success" ]]; then
+              echo "- ❌ Business Logic Tests: ${{ needs.business-tests.result }}" >> $GITHUB_STEP_SUMMARY
+              echo "  - Check the Business Tests Results for detailed failure information" >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Troubleshooting" >> $GITHUB_STEP_SUMMARY
+            echo "1. Review test logs above for specific failures" >> $GITHUB_STEP_SUMMARY
+            echo "2. Run tests locally: dotnet test --configuration Release" >> $GITHUB_STEP_SUMMARY
+            echo "3. Check for environment-specific issues (paths, configuration)" >> $GITHUB_STEP_SUMMARY
           fi
-          if [[ "${{ needs.business-tests.result }}" != "success" ]]; then
-            echo "- ❌ Business Logic Tests: ${{ needs.business-tests.result }}" >> $GITHUB_STEP_SUMMARY
-            echo "  - Check the Business Tests Results for detailed failure information" >> $GITHUB_STEP_SUMMARY
-          fi
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Troubleshooting" >> $GITHUB_STEP_SUMMARY
-          echo "1. Review test logs above for specific failures" >> $GITHUB_STEP_SUMMARY
-          echo "2. Run tests locally: dotnet test --configuration Release" >> $GITHUB_STEP_SUMMARY
-          echo "3. Check for environment-specific issues (paths, configuration)" >> $GITHUB_STEP_SUMMARY
         fi
     
     - name: Check Critical Tests
-      if: needs.fast-tests.result != 'success' || needs.business-tests.result != 'success'
+      if: steps.check-projects.outputs.exist == 'true' && (needs.fast-tests.result != 'success' || needs.business-tests.result != 'success')
       run: |
         echo "Critical tests failed!"
         exit 1

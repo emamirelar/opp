@@ -1,0 +1,10 @@
+{
+"SpaProxyServer": {
+"ServerUrl": "",
+"RedirectUrl": "",
+"LaunchCommand": "",
+"WorkingDirectory": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Presentation",
+"MaxTimeoutInSeconds": "120",
+"KeepRunning": "false"
+}
+}

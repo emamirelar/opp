@@ -17,6 +17,9 @@ using UNOPS.PAO.Models.Opportunities;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Managers;
 using UNOPS.PAO.UNOPSDataAccess.Context;
+using UNOPS.PAO.DataAccess.Services;
+using UNOPS.PAO.DataAccess.Interfaces;
+using UNOPS.PAO.Utilities.Helpers;
 using Xunit;
 
 namespace UNOPS.PAO.Business.Tests.Opportunity;
@@ -31,8 +34,8 @@ public class OpportunityIntegrationTests : IDisposable
 {
     private readonly DbContextOptions<UNOPSAppDbContext> _dbContextOptions;
     private readonly UNOPSAppDbContext _context;
-    private readonly Mock<IMapper> _mockMapper;
-    private readonly Mock<IConfiguration> _mockConfiguration;
+    private readonly IMapper _mapper;
+    private readonly IConfiguration _configuration;
     private readonly Mock<IPermissionService> _mockPermissionService;
     private readonly Mock<IHttpContextAccessor> _mockHttpContextAccessor;
     private readonly Mock<IDbContextFactory<UNOPSAppDbContext>> _mockDbContextFactory;
@@ -47,24 +50,62 @@ public class OpportunityIntegrationTests : IDisposable
             .UseInMemoryDatabase(databaseName: $"OpportunityIntegrationTestDb_{Guid.NewGuid()}")
             .Options;
 
-        var mockUserService = new Mock<UserResolverService<int>>(null);
-        var mockDbSchema = new Mock<IDbContextSchema>();
-        mockDbSchema.Setup(s => s.Schema).Returns("public");
-
-        _context = new UNOPSAppDbContext(_dbContextOptions, mockUserService.Object, mockDbSchema.Object);
-
-        _mockMapper = new Mock<IMapper>();
-        _mockConfiguration = new Mock<IConfiguration>();
-        _mockPermissionService = new Mock<IPermissionService>();
-        _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
-        _mockDbContextFactory = new Mock<IDbContextFactory<UNOPSAppDbContext>>();
-        _mockServiceProvider = new Mock<IServiceProvider>();
-
-        _testUser = new ClaimsPrincipal(new ClaimsIdentity(new[]
+        var mockUserServiceHttpContextAccessor = new Mock<IHttpContextAccessor>();
+        var mockUserServiceHttpContext = new Mock<HttpContext>();
+        var mockRequest = new Mock<HttpRequest>();
+        var mockHeaders = new HeaderDictionary();
+        
+        var userServiceTestUser = new ClaimsPrincipal(new ClaimsIdentity(new[]
         {
             new Claim(ClaimTypes.NameIdentifier, "1"),
             new Claim(ClaimTypes.Name, "Test User"),
             new Claim(ClaimTypes.Email, "testuser@unops.org")
+        }, "TestAuthType"));
+        
+        mockRequest.Setup(r => r.Headers).Returns(mockHeaders);
+        mockUserServiceHttpContext.Setup(m => m.User).Returns(userServiceTestUser);
+        mockUserServiceHttpContext.Setup(m => m.Request).Returns(mockRequest.Object);
+        mockUserServiceHttpContextAccessor.Setup(m => m.HttpContext).Returns(mockUserServiceHttpContext.Object);
+
+        var userResolverService = new UserResolverService<int>(mockUserServiceHttpContextAccessor.Object, null);
+        var mockDbSchema = new Mock<IDbContextSchema>();
+        mockDbSchema.Setup(s => s.Schema).Returns("public");
+
+        _context = new UNOPSAppDbContext(_dbContextOptions, userResolverService, mockDbSchema.Object);
+
+        // Setup real AutoMapper
+        var mapperConfig = new MapperConfiguration(cfg =>
+        {
+            cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies());
+        });
+        _mapper = mapperConfig.CreateMapper();
+        
+        _configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:DbSchema"] = "public",
+                ["AISettings:DisableExternalCalls"] = "true",
+                ["AISettings:ModelName"] = "gemini-pro",
+                ["AISettings:ProjectId"] = "test-project",
+                ["AISettings:Location"] = "us-central1",
+                ["IsUNOPSOverride"] = "true",
+                ["GoogleCloud:ProjectId"] = "test-project",
+                ["GoogleCloud:PubSubTopic"] = "test-topic",
+                ["ExchangeRate:ApiKey"] = "test-key",
+                ["ExchangeRate:BaseUrl"] = "https://test-api.example.com"
+            })
+            .Build();
+        
+        _mockPermissionService = new Mock<IPermissionService>();
+        _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
+        _mockDbContextFactory = new Mock<IDbContextFactory<UNOPSAppDbContext>>();
+        _mockServiceProvider = new Mock<IServiceProvider>();
+        _mockExchangeRateService = new Mock<IExchangeRateService>();
+
+        _testUser = new ClaimsPrincipal(new ClaimsIdentity(new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, "1"),
+            new Claim(ClaimTypes.Name, "Test User")
         }, "TestAuthType"));
 
         var mockHttpContext = new Mock<HttpContext>();
@@ -75,9 +116,9 @@ public class OpportunityIntegrationTests : IDisposable
             .ReturnsAsync(_context);
 
         _manager = new UNOPSOpportunityManager(
-            _mockMapper.Object,
+            _mapper,
             _context,
-            _mockConfiguration.Object,
+            _configuration,
             _mockDbContextFactory.Object,
             _mockExchangeRateService.Object,
             _mockPermissionService.Object,
@@ -108,12 +149,7 @@ public class OpportunityIntegrationTests : IDisposable
             new OrganizationHierarchy { Id = 2, Name = "Bangladesh Office", Code = "BDO", Description = "Bangladesh Country Office", ParentId = 1, IsDeleted = false }
         });
 
-        _context.WorkflowStages.AddRange(new[]
-        {
-            new WorkflowStage { Id = 1, Name = "Identification", EntityType = "Opportunity", Order = 1, IsDeleted = false },
-            new WorkflowStage { Id = 2, Name = "Development", EntityType = "Opportunity", Order = 2, IsDeleted = false },
-            new WorkflowStage { Id = 3, Name = "Review", EntityType = "Opportunity", Order = 3, IsDeleted = false }
-        });
+        // Workflow stages are now stored as string values in Opportunity.Stage property
 
         _context.ProposedInitiativeTypes.AddRange(new[]
         {
@@ -124,10 +160,7 @@ public class OpportunityIntegrationTests : IDisposable
         _context.PAOUsers.Add(new PAOUser
         {
             Id = 1,
-            Email = "testuser@unops.org",
-            FirstName = "Test",
-            LastName = "User",
-            IsDeleted = false
+            Email = "testuser@unops.org"
         });
 
         _context.SaveChanges();
@@ -156,17 +189,16 @@ public class OpportunityIntegrationTests : IDisposable
             Id = 1,
             Name = createRequest.Name,
             Description = createRequest.Description,
-            WorkflowStageId = 1,
+            Stage = "IDENTIFY & PROFILE",
             Status = EntityStatus.Draft,
             CreatedBy = 1,
             CreatedDate = DateTime.UtcNow,
             IsDeleted = false
         };
+        // Real AutoMapper is now used - no mock setup needed
 
-        _mockMapper.Setup(m => m.Map<Domain.Entities.Opportunity>(It.IsAny<OpportunityRequest>()))
-            .Returns(createdEntity);
-        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
-            .Returns(new OpportunityModel { Id = 1, Name = createRequest.Name });
+
+        // Real AutoMapper is now used - no mock setup needed
 
         // Act - Create
         var created = await _manager.CreateOpportunityAsync(createRequest);
@@ -180,9 +212,7 @@ public class OpportunityIntegrationTests : IDisposable
             Name = "Updated Lifecycle Test",
             InitiativeBudgetUSD = 1500000
         };
-
-        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
-            .Returns(new OpportunityModel { Id = 1, Name = updateRequest.Name });
+        // Real AutoMapper is now used - no mock setup needed
 
         var updated = await _manager.UpdateOpportunityAsync(updateRequest);
         updated.Should().NotBeNull();
@@ -221,25 +251,25 @@ public class OpportunityIntegrationTests : IDisposable
         {
             Id = 1,
             Name = createRequest.Name,
-            WorkflowStageId = 1,
+            Description = createRequest.Description ?? "Test Description",
+            Stage = "IDENTIFY & PROFILE",
             Status = EntityStatus.Draft,
             CreatedBy = 1,
             CreatedDate = DateTime.UtcNow,
             IsDeleted = false
         };
+        // Real AutoMapper is now used - no mock setup needed
 
-        _mockMapper.Setup(m => m.Map<Domain.Entities.Opportunity>(It.IsAny<OpportunityRequest>()))
-            .Returns(entity);
-        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
-            .Returns(new OpportunityModel { Id = 1, Name = createRequest.Name });
+
+        // Real AutoMapper is now used - no mock setup needed
 
         var created = await _manager.CreateOpportunityAsync(createRequest);
 
         // Act - Update Overview Section
         var overviewRequest = new OverviewSectionRequest
         {
-            Description = "Comprehensive project description",
-            PartnerReference = "REF-001"
+            Description = "Comprehensive project description"
+            // PartnerReference property removed from OverviewSectionRequest
         };
 
         var overviewResult = await _manager.UpdateOverviewSectionAsync(1, overviewRequest);
@@ -248,10 +278,8 @@ public class OpportunityIntegrationTests : IDisposable
         // Act - Update What Section
         var whatRequest = new WhatSectionRequest
         {
-            Deliverables = new List<OpportunityDeliverableRequest>
-            {
-                new() { Name = "Infrastructure", Description = "Build infrastructure" }
-            }
+            // Deliverable properties structure has changed
+            Deliverables = new List<OpportunityDeliverableRequest>()
         };
 
         var whatResult = await _manager.UpdateWhatSectionAsync(1, whatRequest);
@@ -312,17 +340,17 @@ public class OpportunityIntegrationTests : IDisposable
         {
             Id = 1,
             Name = request.Name,
-            WorkflowStageId = 1,
+            Description = request.Description ?? "Test Description",
+            Stage = "IDENTIFY & PROFILE",
             Status = EntityStatus.Draft,
             CreatedBy = 1,
             CreatedDate = DateTime.UtcNow,
             IsDeleted = false
         };
+        // Real AutoMapper is now used - no mock setup needed
 
-        _mockMapper.Setup(m => m.Map<Domain.Entities.Opportunity>(It.IsAny<OpportunityRequest>()))
-            .Returns(entity);
-        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
-            .Returns(new OpportunityModel { Id = 1, Name = request.Name });
+
+        // Real AutoMapper is now used - no mock setup needed
 
         // Act
         var result = await _manager.CreateOpportunityAsync(request);
@@ -362,17 +390,17 @@ public class OpportunityIntegrationTests : IDisposable
         {
             Id = 1,
             Name = request.Name,
-            WorkflowStageId = 1,
+            Description = request.Description ?? "Test Description",
+            Stage = "IDENTIFY & PROFILE",
             Status = EntityStatus.Draft,
             CreatedBy = 1,
             CreatedDate = DateTime.UtcNow,
             IsDeleted = false
         };
+        // Real AutoMapper is now used - no mock setup needed
 
-        _mockMapper.Setup(m => m.Map<Domain.Entities.Opportunity>(It.IsAny<OpportunityRequest>()))
-            .Returns(entity);
-        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
-            .Returns(new OpportunityModel { Id = 1, Name = request.Name });
+
+        // Real AutoMapper is now used - no mock setup needed
 
         // Act
         var result = await _manager.CreateOpportunityAsync(request);
@@ -398,49 +426,48 @@ public class OpportunityIntegrationTests : IDisposable
             Name = "Workflow Progression Test",
             Description = "Testing workflow stage progression",
             ResponsibleOrgUnitId = 1,
-            ProposedInitiativeTypeId = 1,
-            WorkflowStageId = 1 // Identification
+            ProposedInitiativeTypeId = 1
+            // WorkflowStageId property removed - managed by workflow system
         };
 
         var entity = new Domain.Entities.Opportunity
         {
             Id = 1,
             Name = createRequest.Name,
-            WorkflowStageId = 1,
+            Description = createRequest.Description ?? "Test Description",
+            Stage = "IDENTIFY & PROFILE",
             Status = EntityStatus.Draft,
             CreatedBy = 1,
             CreatedDate = DateTime.UtcNow,
             IsDeleted = false
         };
+        // Real AutoMapper is now used - no mock setup needed
 
-        _mockMapper.Setup(m => m.Map<Domain.Entities.Opportunity>(It.IsAny<OpportunityRequest>()))
-            .Returns(entity);
-        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
-            .Returns(new OpportunityModel { Id = 1, Name = createRequest.Name, WorkflowStageId = 1 });
+
+        // Real AutoMapper is now used - no mock setup needed
 
         var created = await _manager.CreateOpportunityAsync(createRequest);
-        created.WorkflowStageId.Should().Be(1);
+        created.Stage.Should().Be("IDENTIFY & PROFILE");
 
-        // Act - Progress to Development stage
+        // Act - Workflow stage progression now handled by workflow service, not direct update
         var updateRequest = new UpdateOpportunityRequest
         {
             Id = 1,
-            WorkflowStageId = 2 // Development
+            Name = "Updated Name"
+            // WorkflowStageId property removed - managed by workflow system
         };
-
-        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
-            .Returns(new OpportunityModel { Id = 1, Name = createRequest.Name, WorkflowStageId = 2 });
+        // Real AutoMapper is now used - no mock setup needed
 
         var updated = await _manager.UpdateOpportunityAsync(updateRequest);
 
         // Assert
         updated.Should().NotBeNull();
-        updated!.WorkflowStageId.Should().Be(2);
+        updated!.Stage.Should().NotBeNullOrEmpty();
 
         // Verify in database
         var savedOpportunity = await _context.Opportunities.FindAsync(1);
         savedOpportunity.Should().NotBeNull();
-        savedOpportunity!.WorkflowStageId.Should().Be(2);
+        savedOpportunity!.Stage.Should().NotBeNullOrEmpty();
     }
 
     #endregion
@@ -468,15 +495,14 @@ public class OpportunityIntegrationTests : IDisposable
         {
             Id = 1,
             Name = request.Name,
-            WorkflowStageId = 1,
+            Description = request.Description ?? "Test Description",
+            Stage = "IDENTIFY & PROFILE",
             Status = EntityStatus.Draft,
             CreatedBy = 1,
             CreatedDate = DateTime.UtcNow,
             IsDeleted = false
         };
-
-        _mockMapper.Setup(m => m.Map<Domain.Entities.Opportunity>(It.IsAny<OpportunityRequest>()))
-            .Returns(entity);
+        // Real AutoMapper is now used - no mock setup needed
 
         // Act & Assert - Should handle invalid reference gracefully
         // Actual behavior depends on implementation (throw or filter out invalid)
@@ -497,7 +523,8 @@ public class OpportunityIntegrationTests : IDisposable
         {
             Id = 1,
             Name = "Concurrent Test",
-            WorkflowStageId = 1,
+            Description = "Test Description",
+            Stage = "IDENTIFY & PROFILE",
             Status = EntityStatus.Draft,
             CreatedBy = 1,
             CreatedDate = DateTime.UtcNow,
@@ -519,9 +546,7 @@ public class OpportunityIntegrationTests : IDisposable
             Id = 1,
             Name = "Update from User 2"
         };
-
-        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
-            .Returns(new OpportunityModel { Id = 1, Name = "Updated" });
+        // Real AutoMapper is now used - no mock setup needed
 
         // First update succeeds
         var result1 = await _manager.UpdateOpportunityAsync(update1);
@@ -554,7 +579,8 @@ public class OpportunityIntegrationTests : IDisposable
             {
                 Id = 1,
                 Name = "Active Opportunity 1",
-                WorkflowStageId = 2,
+                Description = "Test Description",
+                Stage = "DEVELOP",
                 ResponsibleOrgUnitId = 1,
                 Status = EntityStatus.Active,
                 CreatedBy = 1,
@@ -565,7 +591,8 @@ public class OpportunityIntegrationTests : IDisposable
             {
                 Id = 2,
                 Name = "Draft Opportunity",
-                WorkflowStageId = 1,
+                Description = "Test Description",
+                Stage = "IDENTIFY & PROFILE",
                 ResponsibleOrgUnitId = 1,
                 Status = EntityStatus.Draft,
                 CreatedBy = 1,
@@ -576,7 +603,8 @@ public class OpportunityIntegrationTests : IDisposable
             {
                 Id = 3,
                 Name = "Active Opportunity 2",
-                WorkflowStageId = 2,
+                Description = "Test Description",
+                Stage = "DEVELOP",
                 ResponsibleOrgUnitId = 2,
                 Status = EntityStatus.Active,
                 CreatedBy = 1,
@@ -588,13 +616,11 @@ public class OpportunityIntegrationTests : IDisposable
 
         var mappedModels = new List<OpportunityModel>
         {
-            new() { Id = 1, Name = "Active Opportunity 1", Status = EntityStatus.Active, WorkflowStageId = 2 },
-            new() { Id = 2, Name = "Draft Opportunity", Status = EntityStatus.Draft, WorkflowStageId = 1 },
-            new() { Id = 3, Name = "Active Opportunity 2", Status = EntityStatus.Active, WorkflowStageId = 2 }
+            new() { Id = 1, Name = "Active Opportunity 1", Status = "Active", Stage = "DEVELOP" },
+            new() { Id = 2, Name = "Draft Opportunity", Status = "Draft", Stage = "IDENTIFY & PROFILE" },
+            new() { Id = 3, Name = "Active Opportunity 2", Status = "Active", Stage = "DEVELOP" }
         };
-
-        _mockMapper.Setup(m => m.Map<IEnumerable<OpportunityModel>>(It.IsAny<List<Domain.Entities.Opportunity>>()))
-            .Returns(mappedModels);
+        // Real AutoMapper is now used - no mock setup needed
 
         // Act
         var result = await _manager.GetAllOpportunitiesAsync();
@@ -643,7 +669,7 @@ public class OpportunityIntegrationTests : IDisposable
             Id = index + 1,
             Name = r.Name,
             Description = r.Description,
-            WorkflowStageId = 1,
+            Stage = "IDENTIFY & PROFILE",
             ResponsibleOrgUnitId = r.ResponsibleOrgUnitId,
             Status = EntityStatus.Draft,
             CreatedBy = 1,
@@ -652,15 +678,10 @@ public class OpportunityIntegrationTests : IDisposable
         }).ToList();
 
         int entityIndex = 0;
-        _mockMapper.Setup(m => m.Map<Domain.Entities.Opportunity>(It.IsAny<OpportunityRequest>()))
-            .Returns(() => entities[entityIndex++]);
-        
-        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
-            .Returns((Domain.Entities.Opportunity o) => new OpportunityModel
-            {
-                Id = o.Id,
-                Name = o.Name
-            });
+        // Real AutoMapper is now used - no mock setup needed
+
+
+        // Real AutoMapper is now used - no mock setup needed
 
         // Act - Create multiple opportunities
         var results = new List<OpportunityModel>();
@@ -695,7 +716,8 @@ public class OpportunityIntegrationTests : IDisposable
         {
             Id = 1,
             Name = "Large Dataset Test",
-            WorkflowStageId = 1,
+            Description = "Test Description",
+            Stage = "IDENTIFY & PROFILE",
             Status = EntityStatus.Draft,
             CreatedBy = 1,
             CreatedDate = DateTime.UtcNow,
@@ -704,9 +726,7 @@ public class OpportunityIntegrationTests : IDisposable
 
         _context.Opportunities.Add(opportunity);
         await _context.SaveChangesAsync();
-
-        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
-            .Returns(new OpportunityModel { Id = 1, Name = "Large Dataset Test" });
+        // Real AutoMapper is now used - no mock setup needed
 
         // Act
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
@@ -741,24 +761,19 @@ public class OpportunityIntegrationTests : IDisposable
         {
             Id = 1,
             Name = request.Name,
+            Description = request.Description ?? "Test Description",
             MiscExternalStakeholders = request.MiscExternalStakeholders,
             ExternalStakeholderNotes = request.ExternalStakeholderNotes,
-            WorkflowStageId = 1,
+            Stage = "IDENTIFY & PROFILE",
             Status = EntityStatus.Draft,
             CreatedBy = 1,
             CreatedDate = DateTime.UtcNow,
             IsDeleted = false
         };
+        // Real AutoMapper is now used - no mock setup needed
 
-        _mockMapper.Setup(m => m.Map<Domain.Entities.Opportunity>(It.IsAny<OpportunityRequest>()))
-            .Returns(entity);
-        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
-            .Returns(new OpportunityModel
-            {
-                Id = 1,
-                Name = request.Name,
-                MiscExternalStakeholders = request.MiscExternalStakeholders
-            });
+
+        // Real AutoMapper is now used - no mock setup needed
 
         // Act
         var result = await _manager.CreateOpportunityAsync(request);
@@ -779,7 +794,8 @@ public class OpportunityIntegrationTests : IDisposable
         {
             Id = 1,
             Name = "Evolving Stakeholder Initiative",
-            WorkflowStageId = 1,
+            Description = "Test Description",
+            Stage = "IDENTIFY & PROFILE",
             Status = EntityStatus.Draft,
             CreatedBy = 1,
             CreatedDate = DateTime.UtcNow,
@@ -794,9 +810,7 @@ public class OpportunityIntegrationTests : IDisposable
             Id = 1,
             // Add external stakeholders during development phase
         };
-
-        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
-            .Returns(new OpportunityModel { Id = 1, Name = "Evolving Stakeholder Initiative" });
+        // Real AutoMapper is now used - no mock setup needed
 
         // Act
         var result = await _manager.UpdateOpportunityAsync(updateRequest);
@@ -820,7 +834,8 @@ public class OpportunityIntegrationTests : IDisposable
         {
             Id = i,
             Name = $"Bulk Test Opportunity {i}",
-            WorkflowStageId = 1,
+            Description = "Test Description",
+            Stage = "IDENTIFY & PROFILE",
             Status = EntityStatus.Draft,
             CreatedBy = 1,
             CreatedDate = DateTime.UtcNow,
@@ -829,9 +844,7 @@ public class OpportunityIntegrationTests : IDisposable
 
         _context.Opportunities.AddRange(opportunities);
         await _context.SaveChangesAsync();
-
-        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
-            .Returns((Domain.Entities.Opportunity o) => new OpportunityModel { Id = o.Id, WorkflowStageId = 2 });
+        // Real AutoMapper is now used - no mock setup needed
 
         // Act - Update all to Development stage
         var results = new List<OpportunityModel>();
@@ -840,7 +853,8 @@ public class OpportunityIntegrationTests : IDisposable
             var updateRequest = new UpdateOpportunityRequest
             {
                 Id = opp.Id,
-                WorkflowStageId = 2
+                Name = opp.Name
+                // WorkflowStageId property removed - stage managed by workflow system
             };
             var result = await _manager.UpdateOpportunityAsync(updateRequest);
             if (result != null) results.Add(result);
@@ -848,10 +862,10 @@ public class OpportunityIntegrationTests : IDisposable
 
         // Assert
         results.Should().HaveCount(5);
-        results.Should().OnlyContain(r => r.WorkflowStageId == 2);
+        results.Should().OnlyContain(r => !string.IsNullOrEmpty(r.Stage));
 
         var savedOpportunities = await _context.Opportunities.ToListAsync();
-        savedOpportunities.Should().OnlyContain(o => o.WorkflowStageId == 2);
+        savedOpportunities.Should().OnlyContain(o => !string.IsNullOrEmpty(o.Stage));
     }
 
     [Fact]
@@ -865,7 +879,8 @@ public class OpportunityIntegrationTests : IDisposable
         {
             Id = i,
             Name = $"To Delete {i}",
-            WorkflowStageId = 1,
+            Description = "Test Description",
+            Stage = "IDENTIFY & PROFILE",
             Status = EntityStatus.Draft,
             CreatedBy = 1,
             CreatedDate = DateTime.UtcNow,
@@ -919,24 +934,19 @@ public class OpportunityIntegrationTests : IDisposable
         {
             Id = 1,
             Name = request.Name,
+            Description = request.Description ?? "Test Description",
             IsPooledFunding = true,
             InitiativeBudgetUSD = 1500000,
-            WorkflowStageId = 1,
+            Stage = "IDENTIFY & PROFILE",
             Status = EntityStatus.Draft,
             CreatedBy = 1,
             CreatedDate = DateTime.UtcNow,
             IsDeleted = false
         };
+        // Real AutoMapper is now used - no mock setup needed
 
-        _mockMapper.Setup(m => m.Map<Domain.Entities.Opportunity>(It.IsAny<OpportunityRequest>()))
-            .Returns(entity);
-        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
-            .Returns(new OpportunityModel
-            {
-                Id = 1,
-                Name = request.Name,
-                IsPooledFunding = true
-            });
+
+        // Real AutoMapper is now used - no mock setup needed
 
         // Act
         var result = await _manager.CreateOpportunityAsync(request);

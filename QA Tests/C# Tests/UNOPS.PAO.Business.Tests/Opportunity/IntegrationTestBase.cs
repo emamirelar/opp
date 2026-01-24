@@ -13,6 +13,8 @@ using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Managers;
 using UNOPS.PAO.UNOPSDataAccess.Context;
+using UNOPS.PAO.DataAccess.Services;
+using UNOPS.PAO.DataAccess.Interfaces;
 
 namespace UNOPS.PAO.Business.Tests.Opportunity;
 
@@ -36,7 +38,28 @@ public abstract class IntegrationTestBase : IDisposable
             .EnableSensitiveDataLogging()
             .Options;
 
-        Context = new UNOPSAppDbContext(dbContextOptions);
+        var mockUserServiceHttpContextAccessor = new Mock<IHttpContextAccessor>();
+        var mockUserServiceHttpContext = new Mock<HttpContext>();
+        var mockRequest = new Mock<HttpRequest>();
+        var mockHeaders = new HeaderDictionary();
+        
+        var userServiceTestUser = new ClaimsPrincipal(new ClaimsIdentity(new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, "1"),
+            new Claim(ClaimTypes.Name, "Test User"),
+            new Claim(ClaimTypes.Email, "testuser@unops.org")
+        }, "TestAuthType"));
+        
+        mockRequest.Setup(r => r.Headers).Returns(mockHeaders);
+        mockUserServiceHttpContext.Setup(m => m.User).Returns(userServiceTestUser);
+        mockUserServiceHttpContext.Setup(m => m.Request).Returns(mockRequest.Object);
+        mockUserServiceHttpContextAccessor.Setup(m => m.HttpContext).Returns(mockUserServiceHttpContext.Object);
+
+        var userResolverService = new UserResolverService<int>(mockUserServiceHttpContextAccessor.Object, null);
+        var mockDbSchema = new Mock<IDbContextSchema>();
+        mockDbSchema.Setup(s => s.Schema).Returns("public");
+
+        Context = new UNOPSAppDbContext(dbContextOptions, userResolverService, mockDbSchema.Object);
 
         // Setup real AutoMapper
         var mapperConfig = new MapperConfiguration(cfg =>
@@ -48,12 +71,19 @@ public abstract class IntegrationTestBase : IDisposable
 
         // Setup real Configuration
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>
+            .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                {"IsUNOPSOverride", "true"},
-                {"ExchangeRate:ApiKey", "test-key"},
-                {"ExchangeRate:BaseUrl", "https://test-api.example.com"},
-                {"ConnectionStrings:DefaultConnection", "Host=localhost;Database=test_db;"}
+                ["IsUNOPSOverride"] = "true",
+                ["ExchangeRate:ApiKey"] = "test-key",
+                ["ExchangeRate:BaseUrl"] = "https://test-api.example.com",
+                ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=test_db;",
+                ["ConnectionStrings:DbSchema"] = "public",
+                ["AISettings:DisableExternalCalls"] = "true",
+                ["AISettings:ModelName"] = "gemini-pro",
+                ["AISettings:ProjectId"] = "test-project",
+                ["AISettings:Location"] = "us-central1",
+                ["GoogleCloud:ProjectId"] = "test-project",
+                ["GoogleCloud:PubSubTopic"] = "test-topic"
             })
             .Build();
 
@@ -171,13 +201,7 @@ public abstract class IntegrationTestBase : IDisposable
             }
         });
 
-        // Seed Workflow Stages
-        Context.WorkflowStages.AddRange(new[]
-        {
-            new WorkflowStage { Id = 1, Name = "Identification", EntityType = "Opportunity", Order = 1, IsDeleted = false },
-            new WorkflowStage { Id = 2, Name = "Development", EntityType = "Opportunity", Order = 2, IsDeleted = false },
-            new WorkflowStage { Id = 3, Name = "Review", EntityType = "Opportunity", Order = 3, IsDeleted = false }
-        });
+        // Workflow stages are now stored as string values in Opportunity.Stage property
 
         // Seed Proposed Initiative Types
         Context.ProposedInitiativeTypes.AddRange(new[]
@@ -222,12 +246,18 @@ public class TestDbContextFactory : IDbContextFactory<UNOPSAppDbContext>
 
     public UNOPSAppDbContext CreateDbContext()
     {
-        return new UNOPSAppDbContext(_options);
+        var mockUserService = new Mock<UserResolverService<int>>(MockBehavior.Loose, new object?[] { null });
+        var mockDbSchema = new Mock<IDbContextSchema>();
+        mockDbSchema.Setup(s => s.Schema).Returns("public");
+        return new UNOPSAppDbContext(_options, mockUserService.Object, mockDbSchema.Object);
     }
 
     public async Task<UNOPSAppDbContext> CreateDbContextAsync(CancellationToken cancellationToken = default)
     {
-        return await Task.FromResult(new UNOPSAppDbContext(_options));
+        var mockUserService = new Mock<UserResolverService<int>>(MockBehavior.Loose, new object?[] { null });
+        var mockDbSchema = new Mock<IDbContextSchema>();
+        mockDbSchema.Setup(s => s.Schema).Returns("public");
+        return await Task.FromResult(new UNOPSAppDbContext(_options, mockUserService.Object, mockDbSchema.Object));
     }
 }
 

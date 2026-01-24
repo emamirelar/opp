@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, NavigationEnd } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { createMockTranslateService, createMockDialogService, createMockMarkdownService } from '@shared/testing/test-utilities';
 import { ResponsiveTabsComponent } from './responsive-tabs.component';
 import { ResponsiveTabItem } from './responsive-tabs.model';
 import { Subject } from 'rxjs';

@@ -1,0 +1,13 @@
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Identity\bin\Debug\net9.0\UNOPS.PAO.Identity.deps.json
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Identity\bin\Debug\net9.0\UNOPS.PAO.Identity.dll
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Identity\bin\Debug\net9.0\UNOPS.PAO.Identity.pdb
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Identity\obj\Debug\net9.0\UNOPS.PAO.Identity.csproj.AssemblyReference.cache
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Identity\obj\Debug\net9.0\UNOPS.PAO.Identity.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Identity\obj\Debug\net9.0\UNOPS.PAO.Identity.AssemblyInfoInputs.cache
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Identity\obj\Debug\net9.0\UNOPS.PAO.Identity.AssemblyInfo.cs
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Identity\obj\Debug\net9.0\UNOPS.PAO.Identity.csproj.CoreCompileInputs.cache
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Identity\obj\Debug\net9.0\UNOPS.PAO.Identity.sourcelink.json
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Identity\obj\Debug\net9.0\UNOPS.PAO.Identity.dll
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Identity\obj\Debug\net9.0\refint\UNOPS.PAO.Identity.dll
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Identity\obj\Debug\net9.0\UNOPS.PAO.Identity.pdb
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Identity\obj\Debug\net9.0\ref\UNOPS.PAO.Identity.dll

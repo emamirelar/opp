@@ -1,0 +1,16 @@
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Domain\bin\Release\net9.0\UNOPS.PAO.Domain.deps.json
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Domain\bin\Release\net9.0\UNOPS.PAO.Domain.dll
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Domain\bin\Release\net9.0\UNOPS.PAO.Domain.pdb
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Domain\bin\Release\net9.0\UNOPS.PAO.Identity.dll
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Domain\bin\Release\net9.0\UNOPS.PAO.Identity.pdb
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Domain\obj\Release\net9.0\UNOPS.PAO.Domain.csproj.AssemblyReference.cache
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Domain\obj\Release\net9.0\UNOPS.PAO.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Domain\obj\Release\net9.0\UNOPS.PAO.Domain.AssemblyInfoInputs.cache
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Domain\obj\Release\net9.0\UNOPS.PAO.Domain.AssemblyInfo.cs
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Domain\obj\Release\net9.0\UNOPS.PAO.Domain.csproj.CoreCompileInputs.cache
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Domain\obj\Release\net9.0\UNOPS.PAO.Domain.sourcelink.json
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Domain\obj\Release\net9.0\UNOPS.PA.DEA5154B.Up2Date
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Domain\obj\Release\net9.0\UNOPS.PAO.Domain.dll
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Domain\obj\Release\net9.0\refint\UNOPS.PAO.Domain.dll
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Domain\obj\Release\net9.0\UNOPS.PAO.Domain.pdb
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.Domain\obj\Release\net9.0\ref\UNOPS.PAO.Domain.dll

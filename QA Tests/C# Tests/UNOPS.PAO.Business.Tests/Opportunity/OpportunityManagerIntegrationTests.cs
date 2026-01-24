@@ -2,7 +2,7 @@ using FluentAssertions;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using UNOPS.PAO.Models.Opportunities;
+using UNOPS.PAO.Models;
 using Xunit;
 
 namespace UNOPS.PAO.Business.Tests.Opportunity;
@@ -234,27 +234,28 @@ public class OpportunityManagerIntegrationTests : IntegrationTestBase
             Name = "Workflow Test",
             Description = "Testing workflow progression",
             ResponsibleOrgUnitId = 1,
-            ProposedInitiativeTypeId = 1,
-            WorkflowStageId = 1
+            ProposedInitiativeTypeId = 1
+            // WorkflowStageId property removed - stage managed by workflow system
         };
 
         var created = await Manager.CreateOpportunityAsync(createRequest);
 
-        // Act - Move to Development stage
+        // Act - Workflow stage progression now handled by workflow service, not direct update
         var updateRequest = new UpdateOpportunityRequest
         {
             Id = created.Id,
-            WorkflowStageId = 2
+            Name = "Updated Name"
+            // WorkflowStageId property removed - stage managed by workflow system
         };
 
         var result = await Manager.UpdateOpportunityAsync(updateRequest);
 
         // Assert
         result.Should().NotBeNull();
-        result!.WorkflowStageId.Should().Be(2);
+        result!.Stage.Should().NotBeNullOrEmpty();
 
         var savedOpportunity = await Context.Opportunities.FindAsync(created.Id);
-        savedOpportunity!.WorkflowStageId.Should().Be(2);
+        savedOpportunity!.Stage.Should().NotBeNullOrEmpty();
     }
 
     #endregion

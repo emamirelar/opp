@@ -1,0 +1,25 @@
+*   [33m29e27f2a[m[33m ([m[1;35mrefs/stash[m[33m)[m WIP on dev-deploy: 514997a3 Merge pull request #657 from UNOPS-ITG/pno-anushas
+[31m|[m[32m\[m  
+[31m|[m * [33m323b7dc9[m index on dev-deploy: 514997a3 Merge pull request #657 from UNOPS-ITG/pno-anushas
+[31m|[m[31m/[m  
+[31m|[m * [33m4ca83d7d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mQA-Tests[m[33m)[m docs(tests): Add comprehensive code fix documentation
+[31m|[m * [33m7cb9adfe[m fix(tests): Add test-friendly implementations for search, AI, and date parsing
+[31m|[m * [33m3fb9899d[m Update CI/CD troubleshooting guide with Windows path fix
+[31m|[m * [33me41de2a1[m Fix Windows path handling in CI/CD workflow
+[31m|[m * [33m88e8e121[m Create comprehensive Performance, Security, and Load testing structure
+[31m|[m * [33m299af907[m Add comprehensive CI/CD troubleshooting guide
+[31m|[m * [33mfa5e583b[m Fix CI/CD test execution and reporting
+[31m|[m * [33me9bdd0a0[m Fix test issues and achieve 98.4% pass rate
+[31m|[m * [33m1a98fe22[m Optimize CI/CD workflow - only run reliable tests in PR checks
+[31m|[m * [33m3ec56977[m Enable all 167 skipped tests - comprehensive analysis included
+[31m|[m * [33mdb3dcf09[m Add comprehensive test run results - 99.4% pass rate achieved
+[31m|[m * [33m8a9c2598[m Add complete session summary - all documentation and setup complete
+[31m|[m * [33m63281aea[m Complete environmental setup and CI/CD production preparation
+[31m|[m * [33m978f71a6[m Add comprehensive test execution results - 31 tests passing
+[31m|[m * [33m1ffe162e[m Fix compilation errors in new tests - 31 tests now passing
+[31m|[m * [33ma5d0e526[m Implement 55 new tests for dev-deploy merge coverage
+[31m|[m * [33m1b35752c[m Add comprehensive test coverage analysis for dev-deploy merge
+[31m|[m *   [33m0ff32dcf[m Merge latest dev-deploy changes into QA-Tests
+[31m|[m [34m|[m[31m\[m  
+[31m|[m [34m|[m[31m/[m  
+[31m|[m[31m/[m[34m|[m   

@@ -1,0 +1,21 @@
+{
+  "UNOPS.PAO.Business, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Business",
+  "UNOPS.PAO.DataAccess, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.DataAccess",
+  "UNOPS.PAO.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Domain",
+  "UNOPS.PAO.GoogleServices, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.GoogleServices",
+  "UNOPS.PAO.Identity, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Identity",
+  "UNOPS.PAO.MailSender, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.MailSender",
+  "UNOPS.PAO.Models, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Models",
+  "UNOPS.PAO.Presentation, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Presentation",
+  "UNOPS.PAO.Server, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Server",
+  "UNOPS.PAO.UNOPSBusiness, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSBusiness",
+  "UNOPS.PAO.UNOPSDataAccess, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSDataAccess",
+  "UNOPS.PAO.UNOPSDomain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSDomain",
+  "UNOPS.PAO.UNOPSIdentity, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSIdentity",
+  "UNOPS.PAO.UNOPSPresentation, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.UNOPSPresentation",
+  "UNOPS.PAO.Utilities, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.PAO.Utilities",
+  "UNOPS.Workflow.Business, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Business",
+  "UNOPS.Workflow.DataAccess, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.DataAccess",
+  "UNOPS.Workflow.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Domain",
+  "UNOPS.Workflow.Models, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\Leonardc\\git\\opportunityplus\\UNOPS.Workflow\\UNOPS.Workflow.Models"
+}

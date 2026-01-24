@@ -1,0 +1,7 @@
+npm verbose cli C:\Program Files\nodejs\node.exe C:\Users\Leonardc\AppData\Roaming\npm\node_modules\npm\bin\npm-cli.js
+npm info using npm@11.2.0
+npm info using node@v22.14.0
+npm verbose title npm install
+npm verbose argv "install" "--loglevel" "verbose"
+npm verbose logfile logs-max:10 dir:C:\Users\Leonardc\AppData\Local\npm-cache\_logs\2025-12-19T03_29_06_882Z-
+npm verbose logfile C:\Users\Leonardc\AppData\Local\npm-cache\_logs\2025-12-19T03_29_06_882Z-debug-0.log

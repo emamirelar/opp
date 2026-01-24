@@ -1,0 +1,16 @@
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\bin\Release\net9.0\UNOPS.PAO.UNOPSIdentity.deps.json
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\bin\Release\net9.0\UNOPS.PAO.UNOPSIdentity.dll
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\bin\Release\net9.0\UNOPS.PAO.UNOPSIdentity.pdb
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\bin\Release\net9.0\UNOPS.PAO.Identity.dll
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\bin\Release\net9.0\UNOPS.PAO.Identity.pdb
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\obj\Release\net9.0\UNOPS.PAO.UNOPSIdentity.csproj.AssemblyReference.cache
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\obj\Release\net9.0\UNOPS.PAO.UNOPSIdentity.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\obj\Release\net9.0\UNOPS.PAO.UNOPSIdentity.AssemblyInfoInputs.cache
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\obj\Release\net9.0\UNOPS.PAO.UNOPSIdentity.AssemblyInfo.cs
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\obj\Release\net9.0\UNOPS.PAO.UNOPSIdentity.csproj.CoreCompileInputs.cache
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\obj\Release\net9.0\UNOPS.PAO.UNOPSIdentity.sourcelink.json
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\obj\Release\net9.0\UNOPS.PA.288A8A8E.Up2Date
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\obj\Release\net9.0\UNOPS.PAO.UNOPSIdentity.dll
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\obj\Release\net9.0\refint\UNOPS.PAO.UNOPSIdentity.dll
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\obj\Release\net9.0\UNOPS.PAO.UNOPSIdentity.pdb
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSIdentity\obj\Release\net9.0\ref\UNOPS.PAO.UNOPSIdentity.dll

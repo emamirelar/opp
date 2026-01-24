@@ -1,0 +1,251 @@
+{
+    "seedSteps": [
+        {
+            "order": 0,
+            "name": "ArtifactDataTypes",
+            "type": "seeder",
+            "className": "ArtifactDataTypeSeeder",
+            "methodName": "SeedArtifactDataTypesAsync",
+            "filePath": "Seeders/ArtifactDataTypeSeeder.cs",
+            "description": "Artifact data types (string, number, date, datetime, document, json, array, map)"
+        },
+        {
+            "order": 1,
+            "name": "ArtifactTypeSeeder_Country",
+            "type": "seeder",
+            "className": "ArtifactTypeSeeder_Country",
+            "methodName": "SeedCountryArtifactTypesAsync",
+            "filePath": "Seeders/ArtifactTypeSeeder_Country.cs",
+            "description": "Artifact types for Country entity"
+        },
+        {
+            "order": 2,
+            "name": "ArtifactTypeSeeder_OrganizationHierarchy",
+            "type": "seeder",
+            "className": "ArtifactTypeSeeder_OrganizationHierarchy",
+            "methodName": "SeedOrganizationHierarchyArtifactTypesAsync",
+            "filePath": "Seeders/ArtifactTypeSeeder_OrganizationHierarchy.cs",
+            "description": "Artifact types for OrganizationHierarchy entity"
+        },
+        {
+            "order": 3,
+            "name": "CountryAndOrgUnitRelationshipSeeder",
+            "type": "seeder",
+            "className": "CountryAndOrgUnitRelationshipSeeder",
+            "methodName": "SeedCountryOrgUnitRelationshipsAsync",
+            "filePath": "Seeders/CountryAndOrgUnitRelationshipSeeder.cs",
+            "description": "Country and OrgUnit relationship"
+        },
+        {
+            "order": 4,
+            "name": "Entities",
+            "type": "seeder",
+            "className": "EntitySeeder",
+            "methodName": "SeedEntitiesAsync",
+            "filePath": "Seeders/EntitySeeder.cs",
+            "description": "Base entity types configuration"
+        },
+        {
+            "order": 5,
+            "name": "EntityManagers",
+            "type": "sql",
+            "path": "EntityManager.sql",
+            "description": "Entity managers and field managers complete configuration"
+        },
+        {
+            "order": 5,
+            "name": "DocumentTypes",
+            "type": "seeder",
+            "className": "DocumentTypeSeeder",
+            "methodName": "SeedDocumentTypesAsync",
+            "filePath": "Seeders/DocumentTypeSeeder.cs",
+            "description": "Document types configuration"
+        },
+        {
+            "order": 6,
+            "name": "AiPrompts",
+            "type": "sql",
+            "path": "AiPrompts.sql",
+            "description": "AiPrompts data"
+        },
+        {
+            "order": 7,
+            "name": "EntityPermissions",
+            "type": "sql",
+            "path": "EntityPermissions.sql",
+            "description": "Entity permissions configuration"
+        },
+        {
+            "order": 8,
+            "name": "EntityRoles",
+            "type": "seeder",
+            "className": "EntityRoleSeeder",
+            "methodName": "SeedEntityRolesAsync",
+            "filePath": "Seeders/EntityRoleSeeder.cs",
+            "description": "Entity roles for entities"
+        },
+        {
+            "order": 10,
+            "name": "ProposedInitiativeTypes",
+            "type": "seeder",
+            "className": "ProposedInitiativeTypeSeeder",
+            "methodName": "SeedProposedInitiativeTypesAsync",
+            "filePath": "Seeders/ProposedInitiativeTypeSeeder.cs",
+            "description": "Proposed initiative types (Project, Programme, Portfolio)"
+        },
+        {
+            "order": 11,
+            "name": "SDGs",
+            "type": "seeder",
+            "className": "SDGSeeder",
+            "methodName": "SeedSDGsAsync",
+            "filePath": "Seeders/SDGSeeder.cs",
+            "description": "UN Sustainable Development Goals (SDGs)"
+        },
+        {
+            "order": 12,
+            "name": "SDGTargets",
+            "type": "seeder",
+            "className": "SDGTargetSeeder",
+            "methodName": "SeedSDGTargetsAsync",
+            "filePath": "Seeders/SDGTargetSeeder.cs",
+            "description": "UN SDG Targets (169 targets under the 17 SDGs)"
+        },
+        {
+            "order": 13,
+            "name": "SDGIndicators",
+            "type": "seeder",
+            "className": "SDGIndicatorSeeder",
+            "methodName": "SeedSDGIndicatorsAsync",
+            "filePath": "Seeders/SDGIndicatorSeeder.cs",
+            "description": "UN SDG Indicators (247 indicators under the 169 SDG Targets)"
+        },
+        {
+            "order": 14,
+            "name": "UNCFMetadatas",
+            "type": "seeder",
+            "className": "UNCFMetadataSeeder",
+            "methodName": "SeedUNCFMetadataAsync",
+            "filePath": "Seeders/UNCFMetadataSeeder.cs",
+            "description": "UNCF Metadata Seeder"
+        },
+        {
+            "order": 15,
+            "name": "UNCFOutcomes",
+            "type": "seeder",
+            "className": "UNCFOutcomeSeeder",
+            "methodName": "SeedUNCFOutcomesAsync",
+            "filePath": "Seeders/UNCFOutcomeSeeder.cs",
+            "description": "UNCF Outcome Seeder"
+        },
+        {
+            "order": 16,
+            "name": "UNCFIndicators",
+            "type": "seeder",
+            "className": "UNCFIndicatorSeeder",
+            "methodName": "SeedUNCFIndicatorsAsync",
+            "filePath": "Seeders/UNCFIndicatorSeeder.cs",
+            "description": "UNCF Indicator Seeder"
+        },
+        {
+            "order": 17,
+            "name": "UNOPSMissions",
+            "type": "seeder",
+            "className": "UNOPSMissionSeeder",
+            "methodName": "SeedUNOPSMissionsAsync",
+            "filePath": "Seeders/UNOPSMissionSeeder.cs",
+            "description": "UNOPS Strategic Missions"
+        },
+        {
+            "order": 18,
+            "name": "Units",
+            "type": "seeder",
+            "className": "UnitSeeder",
+            "methodName": "SeedUnitsAsync",
+            "filePath": "Seeders/UnitSeeder.cs",
+            "description": "Units of measurement (Days, Number, Litres, etc.)"
+        },
+        {
+            "order": 19,
+            "name": "ProjectCategories",
+            "type": "seeder",
+            "className": "ProjectCategorySeeder",
+            "methodName": "SeedProjectCategoriesAsync",
+            "filePath": "Seeders/ProjectCategorySeeder.cs",
+            "description": "Project categories (Category 1, 2, 3)"
+        },
+        {
+            "order": 20,
+            "name": "Outputs",
+            "type": "seeder",
+            "className": "OutputSeeder",
+            "methodName": "SeedOutputsAsync",
+            "filePath": "Seeders/OutputSeeder.cs",
+            "description": "UNOPS Output catalog"
+        },
+        {
+            "order": 21,
+            "name": "OutputEmbeddings",
+            "type": "seeder",
+            "className": "OutputEmbeddingSeeder",
+            "methodName": "SeedOutputEmbeddingsAsync",
+            "filePath": "Seeders/OutputEmbeddingSeeder.cs",
+            "description": "Output embeddings (placeholder - requires AI services, run separately)"
+        },
+        {
+            "order": 22,
+            "name": "RiskLookups",
+            "type": "seeder",
+            "className": "RiskLookupSeeder",
+            "methodName": "SeedRiskLookupsAsync",
+            "filePath": "Seeders/RiskLookupSeeder.cs",
+            "description": "Risk lookup tables (RiskType, RiskProbability, RiskProximity, RiskImpactLevel, RiskResponseType)"
+        },
+        {
+            "order": 23,
+            "name": "RiskCategories",
+            "type": "seeder",
+            "className": "RiskCategorySeeder",
+            "methodName": "SeedRiskCategoriesAsync",
+            "filePath": "Seeders/RiskCategorySeeder.cs",
+            "description": "Risk category hierarchy (3 levels) from oUP"
+        },
+        {
+            "order": 24,
+            "name": "PreDefinedHighRisks",
+            "type": "seeder",
+            "className": "PreDefinedHighRiskSeeder",
+            "methodName": "SeedPreDefinedHighRisksAsync",
+            "filePath": "Seeders/PreDefinedHighRiskSeeder.cs",
+            "description": "PreDefined High Risk Checklist items from oUP (EAC questions)"
+        },
+        {
+            "order": 25,
+            "name": "OrgUnitDirectorRolesSeeder",
+            "type": "seeder",
+            "className": "OrgUnitDirectorRolesSeeder",
+            "methodName": "SeedOrgUnitDirectorRolesAsync",
+            "filePath": "Seeders/OrgUnitDirectorRolesSeeder.cs",
+            "description": "Seeds OrgUnit Director Roles"
+        },
+        {
+            "order": 26,
+            "name": "OrgUnitDOARolesSeeder",
+            "type": "seeder",
+            "className": "OrgUnitDOARolesSeeder",
+            "methodName": "SeedOrgUnitDOARolesAsync",
+            "filePath": "Seeders/OrgUnitDOARolesSeeder.cs",
+            "description": "Seeds OrgUnit DOA Roles"
+        },
+        {
+            "order": 27,
+            "name": "SequenceResync",
+            "type": "seeder",
+            "className": "SequenceResyncSeeder",
+            "methodName": "ResyncAllSequencesAsync",
+            "filePath": "Seeders/SequenceResyncSeeder.cs",
+            "description": "Resynchronize all PostgreSQL sequences to prevent duplicate key errors",
+            "forceExecuteIfAnyChanged": true
+        }
+    ]
+}
