@@ -401,7 +401,7 @@ public class OpportunityPermissionTests : IDisposable
         _mockPermissionService.Setup(p => p.ApplyAccessControlFiltersAsync(It.IsAny<IQueryable<Domain.Entities.Opportunity>>(), 
             It.IsAny<ClaimsPrincipal>(), "View", "Opportunity"))
             .ReturnsAsync((IQueryable<Domain.Entities.Opportunity> query, ClaimsPrincipal user, string action, string entityName) =>
-                query.Where(o => o.ResponsibleOrgUnitId == 1)); // Filter to org unit 1 only
+                (object)query.Where(o => o.ResponsibleOrgUnitId == 1)); // Filter to org unit 1 only, cast to object per method signature
 
         var filteredModels = new List<OpportunityModel>
         {
@@ -482,7 +482,7 @@ public class OpportunityPermissionTests : IDisposable
         _mockPermissionService.Setup(p => p.ApplyAccessControlFiltersAsync(It.IsAny<IQueryable<Domain.Entities.Opportunity>>(), 
             It.IsAny<ClaimsPrincipal>(), "View", "Opportunity"))
             .ReturnsAsync((IQueryable<Domain.Entities.Opportunity> query, ClaimsPrincipal user, string action, string entityName) =>
-                query); // Admin sees all - no filtering
+                (object)query); // Admin sees all - no filtering, cast to object per method signature
 
         // Act
         var result = await _manager.GetAllOpportunitiesAsync();

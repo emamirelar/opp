@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("UNOPS.PAO.UNOPSDomain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c564cc2d38dbbc6c49243b9861dfdf368da15fae")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+84b3a9eaa7816c5f6f7f4a9e28a666ff38ceaaed")]
 [assembly: System.Reflection.AssemblyProductAttribute("UNOPS.PAO.UNOPSDomain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("UNOPS.PAO.UNOPSDomain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

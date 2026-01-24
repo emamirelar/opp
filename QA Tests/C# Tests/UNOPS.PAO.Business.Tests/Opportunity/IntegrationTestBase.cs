@@ -123,8 +123,8 @@ public abstract class IntegrationTestBase : IDisposable
             .ReturnsAsync(true);
         mockPermissionService.Setup(s => s.CanPerformActionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ClaimsPrincipal>(), It.IsAny<object>()))
             .ReturnsAsync(true);
-        mockPermissionService.Setup(s => s.ApplyAccessControlFiltersAsync<It.IsAnyType>(It.IsAny<IQueryable<It.IsAnyType>>(), It.IsAny<ClaimsPrincipal>(), It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync((IQueryable<It.IsAnyType> query, ClaimsPrincipal user, string action, string entityName) => query);
+        // Note: ApplyAccessControlFiltersAsync is NOT mocked here - tests that need it will set up their own specific implementation
+        // Removed generic mock that was causing Moq errors: "Type matchers may not be used as the type for 'Callback' or 'Returns' parameters"
         mockPermissionService.Setup(s => s.GetUserOrgUnitAsync(It.IsAny<ClaimsPrincipal>()))
             .ReturnsAsync("1");
         mockPermissionService.Setup(s => s.HasInstanceAccessAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<ClaimsPrincipal>(), It.IsAny<string>()))
