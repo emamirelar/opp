@@ -22,6 +22,10 @@
           "UNOPS.PAO.MailSender": "1.0.0",
           "UNOPS.PAO.Models": "1.0.0",
           "UNOPS.PAO.Utilities": "1.0.0",
+          "UNOPS.Workflow.Business": "1.0.0",
+          "UNOPS.Workflow.DataAccess": "1.0.0",
+          "UNOPS.Workflow.Domain": "1.0.0",
+          "UNOPS.Workflow.Models": "1.0.0",
           "Z.EntityFramework.Plus.EFCore": "9.103.6.4"
         },
         "runtime": {
@@ -1664,6 +1668,60 @@
             "fileVersion": "1.0.0.0"
           }
         }
+      },
+      "UNOPS.Workflow.Business/1.0.0": {
+        "dependencies": {
+          "AutoMapper": "13.0.1",
+          "Microsoft.EntityFrameworkCore": "9.0.0",
+          "UNOPS.Workflow.Domain": "1.0.0",
+          "UNOPS.Workflow.Models": "1.0.0"
+        },
+        "runtime": {
+          "UNOPS.Workflow.Business.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "UNOPS.Workflow.DataAccess/1.0.0": {
+        "dependencies": {
+          "Microsoft.EntityFrameworkCore": "9.0.0",
+          "Microsoft.EntityFrameworkCore.Relational": "9.0.0",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "9.0.0",
+          "Microsoft.Extensions.Logging.Abstractions": "9.0.0",
+          "Npgsql.EntityFrameworkCore.PostgreSQL": "9.0.2",
+          "UNOPS.Workflow.Business": "1.0.0",
+          "UNOPS.Workflow.Domain": "1.0.0",
+          "UNOPS.Workflow.Models": "1.0.0"
+        },
+        "runtime": {
+          "UNOPS.Workflow.DataAccess.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "UNOPS.Workflow.Domain/1.0.0": {
+        "dependencies": {
+          "Microsoft.AspNetCore.Identity.EntityFrameworkCore": "9.0.0"
+        },
+        "runtime": {
+          "UNOPS.Workflow.Domain.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "UNOPS.Workflow.Models/1.0.0": {
+        "dependencies": {
+          "UNOPS.Workflow.Domain": "1.0.0"
+        },
+        "runtime": {
+          "UNOPS.Workflow.Models.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
       }
     }
   },
@@ -2759,6 +2817,26 @@
       "sha512": ""
     },
     "UNOPS.PAO.Utilities/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "UNOPS.Workflow.Business/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "UNOPS.Workflow.DataAccess/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "UNOPS.Workflow.Domain/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "UNOPS.Workflow.Models/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

@@ -36,8 +36,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                 ("EntityFieldManagers", "EntityFieldManagers_Id_seq"),
                 ("EntityPermissions", "EntityPermissions_Id_seq"),
                 
-                // Workflow management (seeded by WorkflowStageSeeder, EntityRoleSeeder, OrgUnitDirectorRolesSeeder, OrgUnitDOARolesSeeder)
-                ("WorkflowStages", "WorkflowStages_Id_seq"),
+                // Role management (WorkflowStages removed - now handled by workflow submodule)
                 ("EntityRoles", "EntityRoles_Id_seq"),
                 ("EntityRolePersons", "EntityRolePersons_Id_seq"),
                 
@@ -148,10 +147,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
             await VerifySequenceAsync(context, results, "EntityManagers", "EntityManagers_Id_seq",
                 async () => await context.EntityManagers.MaxAsync(x => (int?)x.Id) ?? 0);
 
-            // Workflow and roles
-            await VerifySequenceAsync(context, results, "WorkflowStages", "WorkflowStages_Id_seq",
-                async () => await context.WorkflowStages.MaxAsync(x => (int?)x.Id) ?? 0);
-            
+            // Roles (WorkflowStages removed - workflow now handled by submodule)
             await VerifySequenceAsync(context, results, "EntityRoles", "EntityRoles_Id_seq",
                 async () => await context.EntityRoles.MaxAsync(x => (int?)x.Id) ?? 0);
 

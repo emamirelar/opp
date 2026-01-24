@@ -51,7 +51,6 @@ C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\bin\Release\net9.0
 C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\bin\Release\net9.0\Seed\Seeders\UNCFOutcomeSeeder.cs
 C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\bin\Release\net9.0\Seed\Seeders\UnitSeeder.cs
 C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\bin\Release\net9.0\Seed\Seeders\UNOPSMissionSeeder.cs
-C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\bin\Release\net9.0\Seed\Seeders\WorkflowStageSeeder.cs
 C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\bin\Release\net9.0\Seed\SeedExtensions.cs
 C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\bin\Release\net9.0\Seed\SeedRunner.cs
 C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\bin\Release\net9.0\UNOPS.PAO.UNOPSBusiness.deps.json
@@ -90,3 +89,11 @@ C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\obj\Release\net9.0
 C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\obj\Release\net9.0\UNOPS.PAO.UNOPSBusiness.pdb
 C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\obj\Release\net9.0\UNOPS.PAO.UNOPSBusiness.genruntimeconfig.cache
 C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\obj\Release\net9.0\ref\UNOPS.PAO.UNOPSBusiness.dll
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\bin\Release\net9.0\UNOPS.Workflow.Business.dll
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\bin\Release\net9.0\UNOPS.Workflow.DataAccess.dll
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\bin\Release\net9.0\UNOPS.Workflow.Domain.dll
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\bin\Release\net9.0\UNOPS.Workflow.Models.dll
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\bin\Release\net9.0\UNOPS.Workflow.Business.pdb
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\bin\Release\net9.0\UNOPS.Workflow.DataAccess.pdb
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\bin\Release\net9.0\UNOPS.Workflow.Domain.pdb
+C:\Users\Leonardc\git\opportunityplus\UNOPS.PAO.UNOPSBusiness\bin\Release\net9.0\UNOPS.Workflow.Models.pdb

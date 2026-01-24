@@ -77,15 +77,6 @@
         },
         {
             "order": 8,
-            "name": "WorkflowStages",
-            "type": "seeder",
-            "className": "WorkflowStageSeeder",
-            "methodName": "SeedWorkflowStagesAsync",
-            "filePath": "Seeders/WorkflowStageSeeder.cs",
-            "description": "Workflow stages for entities"
-        },
-        {
-            "order": 9,
             "name": "EntityRoles",
             "type": "seeder",
             "className": "EntityRoleSeeder",

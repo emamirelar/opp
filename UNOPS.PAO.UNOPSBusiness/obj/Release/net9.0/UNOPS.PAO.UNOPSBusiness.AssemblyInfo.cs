@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("UNOPS.PAO.UNOPSBusiness")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3fb9899d842a1cebe198261894b97e9d899d4080")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+81ca285d7e1fc3a039728d35cf563fa1acea2351")]
 [assembly: System.Reflection.AssemblyProductAttribute("UNOPS.PAO.UNOPSBusiness")]
 [assembly: System.Reflection.AssemblyTitleAttribute("UNOPS.PAO.UNOPSBusiness")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
