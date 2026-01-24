@@ -8,6 +8,7 @@
 
 ## 📋 **WORK ITEM #1: EF Core 9.0 Model Finalization Issue**
 
+### **Owner**: 🟡 **QA TEAM** (Test Infrastructure)
 ### **Priority**: 🟡 **MEDIUM** (Architectural/Infrastructure)
 
 ### **Impact**: 38 tests failing (1.63% of test suite)
@@ -139,7 +140,8 @@ if (model is IMutableModel mutableModel)
 
 ## 📋 **WORK ITEM #2: Implement Permission Filtering in GetAllOpportunitiesAsync**
 
-### **Priority**: 🟠 **HIGH** (Missing Feature)
+### **Owner**: 🔴 **DEVELOPMENT TEAM** (Production Feature Gap)
+### **Priority**: 🟠 **HIGH** (Missing Feature / Security Gap)
 
 ### **Impact**: 12 tests failing (0.52% of test suite)
 
@@ -147,7 +149,7 @@ if (model is IMutableModel mutableModel)
 Tests expect `GetAllOpportunitiesAsync()` to apply permission-based access control filters, but the method currently returns all opportunities without filtering by user permissions.
 
 ### **Root Cause**
-This is **NOT a test bug** - it's a **missing feature** in production code.
+This is **NOT a test bug** - it's a **missing feature** in production code. The tests are correctly identifying a security gap.
 
 **Current Implementation** (no permission filtering):
 ```csharp
@@ -257,11 +259,11 @@ public async Task<IEnumerable<OpportunityModel>> GetAllOpportunitiesAsync()
 
 ## 📊 **SUMMARY TABLE**
 
-| Work Item | Type | Tests | Effort | Risk | Impact | Recommended |
-|-----------|------|-------|--------|------|--------|-------------|
-| **#1: EF Core Model Init** | Infrastructure | 38 | 3 SP | Medium ⚠️ | +1.63% | Try Option 1A |
-| **#2: Permission Filtering** | Feature Gap | 12 | 2 SP | Low ✅ | +0.52% | Implement |
-| **Total Potential** | - | **50** | **5 SP** | - | **+2.15%** | **97.30% → 98.41%** |
+| Work Item | Owner | Type | Tests | Effort | Risk | Impact | Recommended |
+|-----------|-------|------|-------|--------|------|--------|-------------|
+| **#1: EF Core Model Init** | 🟡 **QA** | Test Infra | 38 | 3 SP | Medium ⚠️ | +1.63% | Try Option 1A |
+| **#2: Permission Filtering** | 🔴 **DEV** | Feature Gap | 12 | 2 SP | Low ✅ | +0.52% | Implement |
+| **Total Potential** | - | - | **50** | **5 SP** | - | **+2.15%** | **97.30% → 98.41%** |
 
 ---
 
