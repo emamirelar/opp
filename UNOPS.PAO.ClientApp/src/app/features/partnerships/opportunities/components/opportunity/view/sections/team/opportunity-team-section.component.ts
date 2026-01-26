@@ -32,6 +32,7 @@ import { MessageModule } from 'primeng/message';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { DividerModule } from 'primeng/divider';
 import { CheckboxModule } from 'primeng/checkbox';
+import { MultiSelectModule } from 'primeng/multiselect';
 
 // Services and Models
 import {
@@ -90,6 +91,7 @@ import { FeedbackDialogService } from '@shared/services/ui';
     FloatLabelModule,
     DividerModule,
     CheckboxModule,
+    MultiSelectModule,
   ],
   templateUrl: './opportunity-team-section.component.html',
   styleUrls: ['./opportunity-team-section.component.scss'],
