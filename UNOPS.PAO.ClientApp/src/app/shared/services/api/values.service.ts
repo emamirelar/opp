@@ -24,6 +24,7 @@ export interface SimpleValue {
   partnerId?: number;  // For contacts - the partner they belong to
   type?: string;  // For entity roles - role type classification
   subType?: string;  // For entity roles - role subtype classification
+  position?: string;  // For users - standardized position title from personnel record
 }
 
 /**
@@ -57,6 +58,7 @@ export interface UserBasicModel {
   userId: number;
   name: string | null;
   email: string | null;
+  position: string | null;  // Standardized position title from personnel record
 }
 
 /**

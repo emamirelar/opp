@@ -7,7 +7,7 @@ namespace UNOPS.PAO.Models.Opportunities;
 public class TeamSectionRequest
 {
     /// <summary>
-    /// Responsible organization unit ID
+    /// Responsible organization unit ID (required for Opportunity Development Team)
     /// </summary>
     public int? ResponsibleOrgUnitId { get; set; }
 
@@ -15,6 +15,16 @@ public class TeamSectionRequest
     /// Proposed initiative type ID
     /// </summary>
     public int? ProposedInitiativeTypeId { get; set; }
+
+    /// <summary>
+    /// Opportunity Manager user ID (required for Opportunity Development Team)
+    /// </summary>
+    public int? OpportunityManagerId { get; set; }
+
+    /// <summary>
+    /// List of collaborator user IDs (Opportunity Development Team)
+    /// </summary>
+    public List<int>? CollaboratorIds { get; set; }
 
     /// <summary>
     /// List of internal team members and stakeholders

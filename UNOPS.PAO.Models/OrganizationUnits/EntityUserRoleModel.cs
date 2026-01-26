@@ -46,5 +46,6 @@ public class UserBasicModel
     public int UserId { get; set; }
     public string? Name { get; set; }
     public string? Email { get; set; }
+    public string? Position { get; set; }  // Standardized position title from personnel record
 }
 

@@ -24,10 +24,35 @@ public class OpportunityMappingProfile : Profile
             .ForMember(dest => dest.FundingPartners, opt => opt.MapFrom(src => src.FundingPartners))
             .ForMember(dest => dest.ClientPartners, opt => opt.MapFrom(src => src.ClientPartners))
             .ForMember(dest => dest.Stakeholders, opt => opt.MapFrom(src => src.Stakeholders))
+            .ForMember(dest => dest.Collaborators, opt => opt.MapFrom(src => src.Collaborators))
+            .ForMember(dest => dest.OpportunityManager, opt => opt.Ignore()) // Will be set in AfterMap
             .ForMember(dest => dest.Deliverables, opt => opt.MapFrom(src => src.Deliverables))
             .ForMember(dest => dest.Countries, opt => opt.MapFrom(src => src.Countries))
             .ForMember(dest => dest.SDGs, opt => opt.MapFrom(src => src.SDGs))
-            .ForMember(dest => dest.Stats, opt => opt.Ignore());
+            .ForMember(dest => dest.Stats, opt => opt.Ignore())
+            .AfterMap((src, dest, context) =>
+            {
+                // Map Opportunity Manager from stakeholders with "Opportunity Manager" role
+                var opportunityManagerStakeholder = src.Stakeholders?
+                    .FirstOrDefault(s => s.EntityRole != null && 
+                        s.EntityRole.Name != null && 
+                        s.EntityRole.Name.ToLower().Contains("manager") &&
+                        s.UserId.HasValue &&
+                        s.User != null);
+                
+                if (opportunityManagerStakeholder != null && opportunityManagerStakeholder.User != null)
+                {
+                    dest.OpportunityManager = new OpportunityManagerModel
+                    {
+                        UserId = opportunityManagerStakeholder.UserId.Value,
+                        UserName = opportunityManagerStakeholder.User.UserProfile != null 
+                            ? opportunityManagerStakeholder.User.UserProfile.Name 
+                            : opportunityManagerStakeholder.User.Email,
+                        UserEmail = opportunityManagerStakeholder.User.Email,
+                        Position = opportunityManagerStakeholder.User.UserProfile?.Position
+                    };
+                }
+            });
         
         // =================================================================
         // OpportunityListModel - Lightweight mapping for list/search views
@@ -95,11 +120,32 @@ public class OpportunityMappingProfile : Profile
             .ForMember(dest => dest.EntityRoleName, opt => opt.MapFrom(src => src.EntityRole != null ? src.EntityRole.Name : null))
             .ForMember(dest => dest.StakeholderType, opt => opt.MapFrom(src => src.IsInternal ? "Internal" : "External"))
             .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User != null && src.User.UserProfile != null ? src.User.UserProfile.Name : (src.User != null ? src.User.Email : null)))
-            .ForMember(dest => dest.UserEmail, opt => opt.MapFrom(src => src.User != null ? src.User.Email : null));
+            .ForMember(dest => dest.UserEmail, opt => opt.MapFrom(src => src.User != null ? src.User.Email : null))
+            .ForMember(dest => dest.Position, opt => opt.MapFrom(src => src.User != null && src.User.UserProfile != null ? src.User.UserProfile.Position : null));
             
         CreateMap<OpportunityStakeholderRequest, OpportunityStakeholder>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.OpportunityId, opt => opt.Ignore());
+        
+        // =================================================================
+        // OpportunityCollaborator mappings (Opportunity Development Team)
+        // =================================================================
+        CreateMap<OpportunityCollaborator, OpportunityCollaboratorModel>()
+            .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => 
+                src.User != null && src.User.UserProfile != null ? src.User.UserProfile.Name : 
+                (src.User != null ? src.User.Email : null)))
+            .ForMember(dest => dest.UserEmail, opt => opt.MapFrom(src => src.User != null ? src.User.Email : null))
+            .ForMember(dest => dest.Position, opt => opt.MapFrom(src => 
+                src.User != null && src.User.UserProfile != null ? src.User.UserProfile.Position : null))
+            .ForMember(dest => dest.AddedByName, opt => opt.MapFrom(src => 
+                src.AddedByUser != null && src.AddedByUser.UserProfile != null ? src.AddedByUser.UserProfile.Name : 
+                (src.AddedByUser != null ? src.AddedByUser.Email : null)));
+
+        CreateMap<OpportunityCollaboratorRequest, OpportunityCollaborator>()
+            .ForMember(dest => dest.Id, opt => opt.Ignore())
+            .ForMember(dest => dest.OpportunityId, opt => opt.Ignore())
+            .ForMember(dest => dest.AddedDate, opt => opt.Ignore())
+            .ForMember(dest => dest.AddedBy, opt => opt.Ignore());
         
         // =================================================================
         // OpportunityDeliverable mappings

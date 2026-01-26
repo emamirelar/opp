@@ -163,6 +163,12 @@ public class Opportunity : ModifiableDeletableEntity
     
     public virtual ICollection<OpportunityUNOPSMission> UNOPSMissions { get; set; } = new HashSet<OpportunityUNOPSMission>();
     
+    /// <summary>
+    /// Collaborators who have permissions to edit all fields of the opportunity.
+    /// Part of the Opportunity Development Team.
+    /// </summary>
+    public virtual ICollection<OpportunityCollaborator> Collaborators { get; set; } = new HashSet<OpportunityCollaborator>();
+    
     public virtual List<Document>? Documents { get; set; }
     
     [NotMapped]

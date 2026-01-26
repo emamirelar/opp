@@ -134,6 +134,8 @@ export interface Opportunity {
   sdGs: OpportunitySDG[];
   uncfOutcomes?: OpportunityUNCFOutcome[];
   unopsMissions?: OpportunityUNOPSMission[];
+  collaborators?: OpportunityCollaborator[];
+  opportunityManager?: OpportunityManager;
   smeSelections?: SMESelection[];
   stats: OpportunityStats | null;
   isNewValueRangeForOrgUnit: boolean | null;
@@ -248,13 +250,48 @@ export interface OpportunityStakeholder {
   userId: number | null;
   userName: string | null;
   userEmail: string | null;
+  /** Standardized position title from personnel record */
+  position: string | null;
   /** Organization Hierarchy ID - used for auto-populated stakeholders from EntityUserRoles */
   organizationHierarchyId: number | null;
   /** Organization Hierarchy Name - the name of the org unit for auto-populated stakeholders */
   organizationHierarchyName: string | null;
   /** Indicates if this stakeholder was auto-populated from EntityUserRoles. Cannot be edited/removed. */
   isAutoPopulated: boolean;
+  /** Indicates if this stakeholder is from a normally responsible org unit (different from selected responsible org unit) */
+  isNormallyResponsible?: boolean;
+  /** Country name for normally responsible org unit stakeholders */
+  countryName?: string;
   notes: string | null;
+}
+
+/**
+ * Collaborator model - team members with edit permissions
+ * Part of the Opportunity Development Team
+ */
+export interface OpportunityCollaborator {
+  id: number;
+  opportunityId: number;
+  userId: number;
+  userName: string | null;
+  userEmail: string | null;
+  /** Standardized position title from personnel record */
+  position: string | null;
+  addedDate: string | null;
+  addedBy: number | null;
+  addedByName: string | null;
+}
+
+/**
+ * Opportunity Manager model - the primary person responsible for the opportunity
+ * Part of the Opportunity Development Team
+ */
+export interface OpportunityManager {
+  userId: number;
+  userName: string | null;
+  userEmail: string | null;
+  /** Standardized position title from personnel record */
+  position: string | null;
 }
 
 /**
