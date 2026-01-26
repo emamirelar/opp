@@ -517,7 +517,7 @@ public class OpportunityValidationTests : IDisposable
     [Trait("TestId", "TC-UNOPS-VAL-013")]
     public async Task CreateOpportunity_ExpectedImpactTooLong_HandlesGracefully(int length)
     {
-        // Arrange - ExpectedImpact has 200 character limit
+        // Arrange - ExpectedImpact has 510 character limit
         var request = new OpportunityRequest
         {
             Name = "Impact Validation Test",
@@ -531,7 +531,7 @@ public class OpportunityValidationTests : IDisposable
         var exception = await Record.ExceptionAsync(act);
         if (exception != null)
         {
-            exception.Message.Should().MatchRegex("impact|length|200", Because: "should validate impact field length");
+            exception.Message.Should().MatchRegex("impact|length|510", Because: "should validate impact field length");
         }
     }
 
