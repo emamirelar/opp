@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UNOPS.PAO.UNOPSDataAccess.Context;
@@ -11,9 +12,11 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 {
     [DbContext(typeof(UNOPSAppDbContext))]
-    partial class UNOPSAppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260126200932_UpdateExpectedImpactAndOutcomesMaxLength")]
+    partial class UpdateExpectedImpactAndOutcomesMaxLength
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1931,40 +1934,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.HasIndex("PartnerId");
 
                     b.ToTable("OpportunityClientPartners", "public");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunityCollaborator", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("AddedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("AddedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("OpportunityId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AddedBy");
-
-                    b.HasIndex("OpportunityId");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("OpportunityId", "UserId")
-                        .IsUnique();
-
-                    b.ToTable("OpportunityCollaborators", "public");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunityCountry", b =>
@@ -5062,32 +5031,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Navigation("Partner");
                 });
 
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunityCollaborator", b =>
-                {
-                    b.HasOne("UNOPS.PAO.Domain.Entities.PAOUser", "AddedByUser")
-                        .WithMany()
-                        .HasForeignKey("AddedBy")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("UNOPS.PAO.Domain.Entities.Opportunity", "Opportunity")
-                        .WithMany("Collaborators")
-                        .HasForeignKey("OpportunityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("UNOPS.PAO.Domain.Entities.PAOUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("AddedByUser");
-
-                    b.Navigation("Opportunity");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunityCountry", b =>
                 {
                     b.HasOne("UNOPS.PAO.Domain.Entities.Country", "Country")
@@ -5604,8 +5547,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Opportunity", b =>
                 {
                     b.Navigation("ClientPartners");
-
-                    b.Navigation("Collaborators");
 
                     b.Navigation("Countries");
 

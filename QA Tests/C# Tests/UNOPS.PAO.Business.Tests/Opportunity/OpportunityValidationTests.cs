@@ -510,14 +510,14 @@ public class OpportunityValidationTests : IDisposable
     #region P2 - Expected Impact/Outcomes Validation Tests
 
     [Theory]
-    [InlineData(201)]
-    [InlineData(300)]
+    [InlineData(511)]
+    [InlineData(600)]
     [Trait("Category", "P2")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-013")]
     public async Task CreateOpportunity_ExpectedImpactTooLong_HandlesGracefully(int length)
     {
-        // Arrange - ExpectedImpact has 200 character limit
+        // Arrange - ExpectedImpact has 510 character limit
         var request = new OpportunityRequest
         {
             Name = "Impact Validation Test",
@@ -531,7 +531,7 @@ public class OpportunityValidationTests : IDisposable
         var exception = await Record.ExceptionAsync(act);
         if (exception != null)
         {
-            exception.Message.Should().MatchRegex("impact|length|200", Because: "should validate impact field length");
+            exception.Message.Should().MatchRegex("impact|length|510", Because: "should validate impact field length");
         }
     }
 
@@ -541,8 +541,8 @@ public class OpportunityValidationTests : IDisposable
     [Trait("TestId", "TC-UNOPS-VAL-014")]
     public async Task CreateOpportunity_ExpectedOutcomesAtMaxLength_Success()
     {
-        // Arrange - ExpectedOutcomes has 200 character limit
-        var maxLengthOutcomes = new string('A', 200);
+        // Arrange - ExpectedOutcomes has 510 character limit
+        var maxLengthOutcomes = new string('A', 510);
         var request = new OpportunityRequest
         {
             Name = "Outcomes Validation Test",
@@ -572,7 +572,7 @@ public class OpportunityValidationTests : IDisposable
 
         // Assert
         result.Should().NotBeNull();
-        result.ExpectedOutcomes.Should().HaveLength(200);
+        result.ExpectedOutcomes.Should().HaveLength(510);
     }
 
     #endregion
