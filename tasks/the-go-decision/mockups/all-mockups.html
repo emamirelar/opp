@@ -999,9 +999,11 @@
         <ul>
           <li><strong>Layout:</strong> Uses existing <code>grid-cols-3</code> layout with <code>&lt;app-dashboard-card&gt;</code> components</li>
           <li><strong>NEW: Workflow Approval badge</strong> distinguishes workflow tasks from Draft items</li>
-          <li><strong>Click action:</strong> Navigates to Opportunity → Statement section for review</li>
-          <li><strong>Data source:</strong> NEW <code>GET /api/workflow/pending-approvals</code> endpoint returns tasks where user is an approver</li>
-          <li><strong>Integration:</strong> Workflow tasks are merged with existing draft items in Actions Required</li>
+          <li><strong>Click action:</strong> Navigates to Opportunity view for review</li>
+          <li><strong>Data source:</strong> NEW <code>GET /api/workflow/pending-approvals</code> endpoint returns <code>PendingApprovalResponse[]</code> where user is an approver</li>
+          <li><strong>Response fields:</strong> EntityName, EntityId, EntityDisplayName, CurrentStage, PendingStage, SubmittedBy, SubmittedOn, OrgUnitName</li>
+          <li><strong>Frontend service:</strong> <code>workflowService.getPendingApprovalsForUser()</code> called from <code>home-dashboard.component.ts</code></li>
+          <li><strong>Integration:</strong> Workflow tasks are merged with existing draft items in Actions Required card</li>
         </ul>
       </div>
     </section>
@@ -1067,9 +1069,11 @@
         <h3>Implementation Notes:</h3>
         <ul>
           <li><strong>Existing component:</strong> Uses existing topbar notification bell and <code>NotificationService</code></li>
-          <li><strong>NEW: Workflow notifications</strong> created by <code>PaoWorkflowNotificationService.NotifyNewApprovalRequestAsync()</code></li>
-          <li><strong>Click action:</strong> Navigates directly to Opportunity Statement section</li>
-          <li><strong>Notification lifecycle:</strong> Created on submission, marked read/removed on decision</li>
+          <li><strong>NEW: In-system notifications</strong> created by <code>PaoWorkflowNotificationService.NotifyNewApprovalRequestAsync()</code> via <code>NotificationManager.CreateNotification()</code></li>
+          <li><strong>Notification category:</strong> <code>workflow_approval</code> with responseType <code>approval_request</code></li>
+          <li><strong>Notification message:</strong> "Go Decision Required: {Opportunity Name}"</li>
+          <li><strong>Click action:</strong> Navigates to Opportunity view (topbar handles <code>workflow_approval</code> category routing)</li>
+          <li><strong>Notification lifecycle:</strong> Created on submission, marked as done (<code>IsRead = true</code>, <code>Status = Done</code>) when decision is made</li>
           <li><strong>Polling:</strong> Uses existing 15-second polling mechanism</li>
         </ul>
       </div>
@@ -1292,8 +1296,10 @@
         <ul>
           <li><strong>Full Opportunity View:</strong> Decision-maker sees the complete opportunity context</li>
           <li><strong>Workflow Panel:</strong> EXISTING <code>&lt;app-stage-workflow&gt;</code> with Approve/Reject buttons</li>
-          <li><strong>NEW: Decision Guidance & Info Panel:</strong> Placed immediately after workflow panel, BEFORE section chips</li>
-          <li><strong>Visibility condition:</strong> Both panels shown when <code>isInWorkflow && userIsApprover</code></li>
+          <li><strong>NEW: Decision Guidance Message:</strong> Uses <code>p-message</code> component with info severity</li>
+          <li><strong>NEW: Decision Info Panel:</strong> <code>&lt;app-opportunity-decision-info-panel&gt;</code> in <code>features/partnerships/opportunities/components/opportunity/opportunity-decision-info-panel/</code></li>
+          <li><strong>Info Panel Data:</strong> Proposed initiative type, time to signing, concerning DD statuses (Pending/Expired/Expiring Soon), high risks, sender remarks from workflow submission</li>
+          <li><strong>Visibility condition:</strong> Both panels shown when workflow is pending approval and current user can approve</li>
           <li><strong>Section Navigation:</strong> EXISTING chips - Statement tab is active when arriving from notification</li>
           <li><strong>Statement Content:</strong> EXISTING <code>&lt;app-opportunity-statement-section&gt;</code> in main content area</li>
           <li><strong>Button click:</strong> Approve/Reject triggers <code>customStageChangeHandler</code> to show enhanced dialogs</li>
@@ -1346,11 +1352,11 @@
             <div class="form-group">
               <label class="form-label">Assigned Executive <span class="required">*</span></label>
               <select class="form-select" required>
-                <option value="1" selected>Maria Garcia - Director, AFRO-SS (Suggested)</option>
-                <option value="2">James Wilson - Manager, AFRO-SS</option>
-                <option value="3">David Chen - OiC, AFRO-SS</option>
+                <option value="1" selected>Maria Garcia - OrgUnit Director (Suggested)</option>
+                <option value="2">James Wilson - OrgUnit Deputy Director</option>
+                <option value="3">David Chen - Regional Director</option>
               </select>
-              <div class="form-hint">The Director/Manager/OiC of the responsible Org Unit is pre-selected. You may change if needed.</div>
+              <div class="form-hint">The OrgUnit Director of the responsible Org Unit is pre-selected. You may select another Director/Deputy Director if needed.</div>
             </div>
 
             <div class="alert alert-info" style="margin-bottom: 0;">
@@ -1370,11 +1376,12 @@
       <div class="mockup-notes">
         <h3>Implementation Notes:</h3>
         <ul>
-          <li><strong>Component:</strong> <code>&lt;app-approve-opportunity-dialog&gt;</code> in <code>shared/reusables/components/workflow/components/</code></li>
-          <li><strong>Triggered by:</strong> <code>customStageChangeHandler</code> input on <code>&lt;app-workflow&gt;</code> component</li>
-          <li><strong>Flow:</strong> User clicks Approve → <code>customStageChangeHandler('GO', 'Approve')</code> → Show this dialog → Return <code>CustomStageChangeResult</code></li>
-          <li><strong>API:</strong> Enhanced <code>POST /api/workflow/opportunity/{id}/approve</code> with <code>ApproveWorkflowRequest</code> (rationale, confirmationAcknowledged, executiveId)</li>
-          <li><strong>Executive Assignment:</strong> Mandatory field - Director/Manager/OiC pre-selected, stored on <code>Opportunity.ExecutiveId</code></li>
+          <li><strong>Component:</strong> <code>&lt;app-approve-opportunity-dialog&gt;</code> in <code>features/partnerships/opportunities/components/opportunity/approve-opportunity-dialog/</code></li>
+          <li><strong>Triggered by:</strong> <code>customStageChangeHandler</code> input on <code>&lt;app-stage-workflow&gt;</code> component</li>
+          <li><strong>Flow:</strong> User clicks Approve → <code>customStageChangeHandler('GO', 'Approve')</code> → Show this dialog → Return <code>CustomStageChangeResult { proceed: true, comment: rationale }</code></li>
+          <li><strong>API:</strong> Enhanced <code>POST /api/workflow/approve</code> with <code>ApproveWorkflowRequest</code> body (entityName, entityId, rationale, confirmationAcknowledged, executiveId)</li>
+          <li><strong>Executive Lookup:</strong> <code>GET /api/opportunity/{opportunityId}/executives</code> returns Director/Deputy Director options from <code>EntityUserRole</code> table</li>
+          <li><strong>Executive Assignment:</strong> Mandatory field - OrgUnit Director pre-selected (marked as "Suggested"), stored on <code>Opportunity.ExecutiveId</code></li>
           <li><strong>Validation:</strong> Submit disabled until checkbox checked AND rationale provided AND Executive selected</li>
         </ul>
       </div>
@@ -1443,11 +1450,12 @@
       <div class="mockup-notes">
         <h3>Implementation Notes:</h3>
         <ul>
-          <li><strong>Component:</strong> <code>&lt;app-reject-opportunity-dialog&gt;</code> in <code>shared/reusables/components/workflow/components/</code></li>
-          <li><strong>Triggered by:</strong> <code>customStageChangeHandler</code> input on <code>&lt;app-workflow&gt;</code> component</li>
-          <li><strong>Flow:</strong> User clicks Reject → <code>customStageChangeHandler('NO GO', 'Reject')</code> → Show this dialog → Return <code>CustomStageChangeResult</code></li>
-          <li><strong>API:</strong> Enhanced <code>POST /api/workflow/opportunity/{id}/reject</code> with <code>RejectWorkflowRequest</code> (rationale, confirmationAcknowledged)</li>
+          <li><strong>Component:</strong> <code>&lt;app-reject-opportunity-dialog&gt;</code> in <code>features/partnerships/opportunities/components/opportunity/reject-opportunity-dialog/</code></li>
+          <li><strong>Triggered by:</strong> <code>customStageChangeHandler</code> input on <code>&lt;app-stage-workflow&gt;</code> component</li>
+          <li><strong>Flow:</strong> User clicks Reject → <code>customStageChangeHandler('NO GO', 'Reject')</code> → Show this dialog → Return <code>CustomStageChangeResult { proceed: true, comment: rationale }</code></li>
+          <li><strong>API:</strong> Enhanced <code>POST /api/workflow/reject</code> with <code>RejectWorkflowRequest</code> body (entityName, entityId, rationale, confirmationAcknowledged)</li>
           <li><strong>Stage update:</strong> Immediately updates to NO GO upon confirmation</li>
+          <li><strong>Immutability:</strong> After rejection, record becomes read-only until Reopened by Opportunity Manager</li>
         </ul>
       </div>
     </section>
@@ -1525,11 +1533,12 @@
       <div class="mockup-notes">
         <h3>Implementation Notes:</h3>
         <ul>
-          <li><strong>Workflow Panel:</strong> EXISTING <code>&lt;app-stage-workflow&gt;</code> - no action buttons because record is in final stage (GO)</li>
+          <li><strong>Workflow Panel:</strong> EXISTING <code>&lt;app-stage-workflow&gt;</code> - no action buttons because record is in terminal stage (GO)</li>
           <li><strong>Stage Change History:</strong> EXISTING tab shows decision details (decision maker, date, rationale) from <code>WorkflowLog</code></li>
           <li><strong>Submit action:</strong> Requests transition IDENTIFY & PROFILE → GO (initiates approval workflow)</li>
           <li><strong>Approve action:</strong> Confirms transition IDENTIFY & PROFILE → GO (completes the workflow)</li>
-          <li><strong>Data immutability:</strong> Backend returns <code>403 Forbidden</code> for any edit attempts on final-stage records</li>
+          <li><strong>Data immutability:</strong> Backend throws <code>BusinessException</code> (400 Bad Request) for any edit attempts on GO/NO GO/CANCELLED stages. Permission endpoint returns <code>canUpdate: false</code> and <code>isImmutable: true</code></li>
+          <li><strong>Permanent vs Temporary:</strong> GO stage is permanent (no reopen). NO GO and CANCELLED can be reopened by OM, which lifts immutability</li>
           <li><strong>Statement:</strong> Locked, cannot regenerate AI content</li>
         </ul>
       </div>
