@@ -1365,17 +1365,17 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
         if (request.ExpectedImpact != null)
         {
-            // Truncate to 200 characters (database column limit)
-            entity.ExpectedImpact = request.ExpectedImpact.Length > 200 
-                ? request.ExpectedImpact[..200] 
+            // Truncate to 510 characters (database column limit)
+            entity.ExpectedImpact = request.ExpectedImpact.Length > 510 
+                ? request.ExpectedImpact[..510] 
                 : request.ExpectedImpact;
         }
 
         if (request.ExpectedOutcomes != null)
         {
-            // Truncate to 200 characters (database column limit)
-            entity.ExpectedOutcomes = request.ExpectedOutcomes.Length > 200 
-                ? request.ExpectedOutcomes[..200] 
+            // Truncate to 510 characters (database column limit)
+            entity.ExpectedOutcomes = request.ExpectedOutcomes.Length > 510 
+                ? request.ExpectedOutcomes[..510] 
                 : request.ExpectedOutcomes;
         }
 
@@ -2778,17 +2778,17 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
         if (request.ExpectedImpact != null)
         {
-            // Truncate to 200 characters (database column limit)
-            entity.ExpectedImpact = request.ExpectedImpact.Length > 200 
-                ? request.ExpectedImpact[..200] 
+            // Truncate to 510 characters (database column limit)
+            entity.ExpectedImpact = request.ExpectedImpact.Length > 510 
+                ? request.ExpectedImpact[..510] 
                 : request.ExpectedImpact;
         }
 
         if (request.ExpectedOutcomes != null)
         {
-            // Truncate to 200 characters (database column limit)
-            entity.ExpectedOutcomes = request.ExpectedOutcomes.Length > 200 
-                ? request.ExpectedOutcomes[..200] 
+            // Truncate to 510 characters (database column limit)
+            entity.ExpectedOutcomes = request.ExpectedOutcomes.Length > 510 
+                ? request.ExpectedOutcomes[..510] 
                 : request.ExpectedOutcomes;
         }
 
@@ -3140,12 +3140,12 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             TargetDeliveryDate = request.TargetDeliveryDate,
             Challenges = request.Challenges,
             ResultsFocus = request.ResultsFocus,
-            // Truncate to 200 characters (database column limit)
-            ExpectedImpact = request.ExpectedImpact?.Length > 200 
-                ? request.ExpectedImpact[..200] 
+            // Truncate to 510 characters (database column limit)
+            ExpectedImpact = request.ExpectedImpact?.Length > 510 
+                ? request.ExpectedImpact[..510] 
                 : request.ExpectedImpact,
-            ExpectedOutcomes = request.ExpectedOutcomes?.Length > 200 
-                ? request.ExpectedOutcomes[..200] 
+            ExpectedOutcomes = request.ExpectedOutcomes?.Length > 510 
+                ? request.ExpectedOutcomes[..510] 
                 : request.ExpectedOutcomes,
             ExpectedBeneficiaries = request.ExpectedBeneficiaries,
             EstimatedDirectBeneficiaries = request.EstimatedDirectBeneficiaries,
