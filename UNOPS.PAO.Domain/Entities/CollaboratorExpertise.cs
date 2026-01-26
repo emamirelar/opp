@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using UNOPS.PAO.Domain.Infrastructure.Audit;
+using UNOPS.PAO.Domain.Infrastructure;
 
 namespace UNOPS.PAO.Domain.Entities;
 

@@ -28,7 +28,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     private readonly AppDbContext context;
     private readonly UNOPSAppDbContext uNOPSAppDbContext;
     private readonly BaseRepository<Opportunity> opportunityRepository;
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IServiceProvider _serviceProvider; 
     private readonly IConfiguration configuration;
     private readonly IDbContextFactory<UNOPSAppDbContext> _dbContextFactory;
     private readonly IExchangeRateService _exchangeRateService;
@@ -2665,37 +2665,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             .ToListAsync();
 
         return normallyResponsibleOrgUnits;
-    }
-    {
-        // Get implementation country IDs for this opportunity
-        var countryIds = await context.Set<OpportunityCountry>()
-            .Where(oc => oc.OpportunityId == opportunityId)
-            .Select(oc => oc.CountryId)
-            .ToListAsync();
-
-        if (!countryIds.Any())
-            return new List<int>();
-
-        // Get org unit IDs that are directly responsible for these countries
-        var countryOrgUnitIds = await context.OrganizationUnitRelationships
-            .Where(r => 
-                r.EntityType == "Country" 
-                && countryIds.Contains(r.EntityId)
-                && !r.IsDeleted)
-            .Select(r => r.OrganizationHierarchyId)
-            .Distinct()
-            .ToListAsync();
-
-        if (!countryOrgUnitIds.Any())
-            return new List<int>();
-
-        // Get all descendants of the parent Hub/Region
-        var descendantIds = await GetAllDescendantOrgUnitIdsAsync(parentOrgUnitId);
-
-        // Filter to only include descendants that directly relate to the countries
-        return countryOrgUnitIds
-            .Where(id => descendantIds.Contains(id))
-            .ToList();
     }
 
     /// <summary>

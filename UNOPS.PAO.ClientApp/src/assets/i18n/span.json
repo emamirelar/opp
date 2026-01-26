@@ -3025,5 +3025,9 @@
   "message.workflow.recallSuccess": "Retirado con Ã©xito",
   "message.workflow.noApprovers": "No se encontraron aprobadores para esta transiciÃ³n de etapa",
   "message.workflow.cannotApprove": "No tiene permiso para aprobar este flujo de trabajo",
-  "message.workflow.alreadyInWorkflow": "Esta entidad ya estÃ¡ en un proceso de aprobaciÃ³n de flujo de trabajo"
+  "message.workflow.alreadyInWorkflow": "Esta entidad ya esta en un proceso de aprobacion de flujo de trabajo",
+  "label.expertiseIn": "Experiencia en",
+  "label.selectExpertise": "Seleccione las areas de experiencia",
+  "helpText.expertiseSelection": "Seleccione la experiencia especifica en la que este colaborador contribuira a la oportunidad",
+  "message.validation.expertiseRequired": "Por favor, seleccione al menos un area de experiencia para el colaborador"
 }

@@ -1006,47 +1006,6 @@ public class OpportunityManager : IOpportunityManager
             }
         }
 
-        // Update Collaborators (Opportunity Development Team)
-        if (request.CollaboratorIds != null)
-        {
-            entity.Collaborators ??= new List<OpportunityCollaborator>();
-            
-            // Get existing collaborator user IDs
-            var existingCollaboratorUserIds = entity.Collaborators
-                .Select(c => c.UserId)
-                .ToHashSet();
-            
-            // Find collaborators to remove (exist in DB but not in request)
-            var collaboratorsToRemove = entity.Collaborators
-                .Where(c => !request.CollaboratorIds.Contains(c.UserId))
-                .ToList();
-            
-            // Remove collaborators that are no longer in the request
-            foreach (var collaborator in collaboratorsToRemove)
-            {
-                entity.Collaborators.Remove(collaborator);
-                context.Set<OpportunityCollaborator>().Remove(collaborator);
-            }
-            
-            // Find collaborators to add (exist in request but not in DB)
-            var collaboratorIdsToAdd = request.CollaboratorIds
-                .Where(userId => !existingCollaboratorUserIds.Contains(userId))
-                .ToList();
-            
-            // Add new collaborators
-            // Note: AddedBy will be set by the audit system or can be overridden in UNOPSOpportunityManager
-            foreach (var userId in collaboratorIdsToAdd)
-            {
-                entity.Collaborators.Add(new OpportunityCollaborator
-                {
-                    OpportunityId = id,
-                    UserId = userId,
-                    AddedDate = DateTime.UtcNow,
-                    AddedBy = null // Will be set by audit system or overridden in derived class
-                });
-            }
-        }
-
         // Auto-populate stakeholders from EntityUserRoles if org unit changed
         if (orgUnitChanged && request.ResponsibleOrgUnitId.HasValue)
         {

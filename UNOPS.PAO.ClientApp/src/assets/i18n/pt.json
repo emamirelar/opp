@@ -3063,5 +3063,9 @@
   "message.workflow.recallSuccess": "Cancelado com sucesso",
   "message.workflow.noApprovers": "Nenhum aprovador encontrado para esta transiÃ§Ã£o de estÃ¡gio",
   "message.workflow.cannotApprove": "VocÃª nÃ£o tem permissÃ£o para aprovar este fluxo de trabalho",
-  "message.workflow.alreadyInWorkflow": "Esta entidade jÃ¡ estÃ¡ em um processo de aprovaÃ§Ã£o de fluxo de trabalho"
+  "message.workflow.alreadyInWorkflow": "Esta entidade ja esta em um processo de aprovacao de fluxo de trabalho",
+  "label.expertiseIn": "Expertise em",
+  "label.selectExpertise": "Selecione as areas de expertise",
+  "helpText.expertiseSelection": "Selecione a expertise especifica na qual este colaborador contribuira para a oportunidade",
+  "message.validation.expertiseRequired": "Por favor, selecione pelo menos uma area de expertise para o colaborador"
 }

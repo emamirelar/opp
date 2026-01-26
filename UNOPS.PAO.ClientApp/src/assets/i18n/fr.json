@@ -3076,5 +3076,9 @@
   "message.workflow.recallSuccess": "RappelÃ© avec succÃ¨s",
   "message.workflow.noApprovers": "Aucun approbateur trouvÃ© pour cette transition d'Ã©tape",
   "message.workflow.cannotApprove": "Vous n'avez pas la permission d'approuver ce workflow",
-  "message.workflow.alreadyInWorkflow": "Cette entitÃ© est dÃ©jÃ  dans un processus d'approbation de workflow"
+  "message.workflow.alreadyInWorkflow": "Cette entite est deja dans un processus d'approbation de workflow",
+  "label.expertiseIn": "Expertise en",
+  "label.selectExpertise": "Selectionnez les domaines d'expertise",
+  "helpText.expertiseSelection": "Selectionnez l'expertise specifique dans laquelle ce collaborateur contribuera a l'opportunite",
+  "message.validation.expertiseRequired": "Veuillez selectionner au moins un domaine d'expertise pour le collaborateur"
 }
