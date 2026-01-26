@@ -9,6 +9,12 @@ public class OpportunityCollaboratorRequest
     /// The user ID of the collaborator to add
     /// </summary>
     public int UserId { get; set; }
+    
+    /// <summary>
+    /// List of expertise IDs to assign to this collaborator.
+    /// Indicates the specific expertise/capacity in which the collaborator is related to the opportunity.
+    /// </summary>
+    public List<int>? ExpertiseIds { get; set; }
 }
 
 /// <summary>

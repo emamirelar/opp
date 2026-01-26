@@ -156,7 +156,6 @@ export class OpportunityTeamSectionComponent implements OnInit {
     opportunityManagerId?: number;
     collaboratorIds?: number[];
     stakeholders?: OpportunityStakeholder[];
-    smeSelections?: Map<number, { selected: boolean; userId: number | null }>;
   } | null = null;
 
   // Form controls for Team section
@@ -181,87 +180,27 @@ export class OpportunityTeamSectionComponent implements OnInit {
   // Collaborator dialog state
   readonly showCollaboratorDialog = signal(false);
   readonly collaboratorUserControl = new FormControl<SimpleValue | null>(null);
+  readonly collaboratorExpertiseControl = new FormControl<number[]>([]);
 
   // Dropdown data
   organizationUnits = signal<OrganizationUnit[]>([]);
   initiativeTypes = signal<SimpleValue[]>([]);
   readonly entityRoles = signal<SimpleValue[]>([]);
   readonly internalUsers = signal<SimpleValue[]>([]);
-
-  // SME (Subject Matter Expert) selection state
-  // Map of entityRoleId -> { selected: boolean, userId: number | null }
-  readonly smeSelections = signal<Map<number, { selected: boolean; userId: number | null }>>(new Map());
-
-  // Computed signal for SME roles (roles with Type = "SME")
-  readonly smeRoles = computed(() => {
-    return this.entityRoles().filter((role) => role.type === 'SME');
-  });
+  
+  // Collaborator expertise options (loaded from API)
+  readonly collaboratorExpertises = signal<{ id: number; name: string; code: string }[]>([]);
 
   // Computed signal for non-SME roles (excludes SME roles for use in Add Team Member dialog)
   readonly nonSmeRoles = computed(() => {
     return this.entityRoles().filter((role) => role.type !== 'SME');
   });
 
-  // Computed signal for SME roles grouped by SubType
-  readonly smeRolesBySubType = computed(() => {
-    const roles = this.smeRoles();
-    const grouped = new Map<string, SimpleValue[]>();
-    
-    for (const role of roles) {
-      const subType = role.subType || 'Other';
-      if (!grouped.has(subType)) {
-        grouped.set(subType, []);
-      }
-      grouped.get(subType)!.push(role);
-    }
-    
-    // Convert to array of { subType, roles } sorted with custom order: Service Line first, then Other, then others
-    const subTypeOrder = ['Service Line', 'Other'];
-    return Array.from(grouped.entries())
-      .map(([subType, roles]) => ({ subType, roles }))
-      .sort((a, b) => {
-        const aIndex = subTypeOrder.indexOf(a.subType);
-        const bIndex = subTypeOrder.indexOf(b.subType);
-        
-        // If both are in the custom order, sort by their index
-        if (aIndex !== -1 && bIndex !== -1) {
-          return aIndex - bIndex;
-        }
-        // If only a is in the custom order, it comes first
-        if (aIndex !== -1) {
-          return -1;
-        }
-        // If only b is in the custom order, it comes first
-        if (bIndex !== -1) {
-          return 1;
-        }
-        // If neither is in the custom order, sort alphabetically
-        return a.subType.localeCompare(b.subType);
-      });
-  });
-
-  /**
-   * @description Get the display name for a SubType
-   * @param subType The SubType value
-   * @returns The translated display name
-   */
-  getSubTypeDisplayName(subType: string): string {
-    if (subType === 'Service Line') {
-      return this.translateService.instant('label.opportunity.smeSubType.serviceLine');
-    } else if (subType === 'Other') {
-      return this.translateService.instant('label.opportunity.smeSubType.other');
-    }
-    // For any other SubType, return as-is
-    return subType;
-  }
-
-  // Computed user-added stakeholders (non-auto-populated and non-SME)
-  // SME stakeholders are displayed separately in the SME section
+  // Computed user-added stakeholders (non-auto-populated)
   readonly userAddedStakeholders = computed(() => {
-    const smeRoleIds = new Set(this.smeRoles().map((r) => r.id));
     return (
       this.opportunity().stakeholders?.filter(
-        (s) => !s.organizationHierarchyId && !smeRoleIds.has(s.entityRoleId)
+        (s) => !s.organizationHierarchyId
       ) || []
     );
   });
@@ -645,17 +584,6 @@ export class OpportunityTeamSectionComponent implements OnInit {
       }
     });
 
-    // Effect to initialize SME selections when opportunity and entity roles are available
-    effect(() => {
-      const opp = this.opportunity();
-      const smeRoles = this.smeRoles();
-      
-      // Initialize SME selections when both opportunity and SME roles are loaded, and not in edit mode
-      if (opp && smeRoles.length > 0 && !this.isEditing()) {
-        this.initializeSmeSelectionsFromStakeholders();
-      }
-    });
-
     // Effect to enrich auto-populated stakeholders with user names when viewing
     effect(() => {
       const rawStakeholders = this.rawAutoPopulatedStakeholders();
@@ -711,6 +639,7 @@ export class OpportunityTeamSectionComponent implements OnInit {
     this.loadDropdownData();
     this.loadEntityRoles();
     this.loadInternalUsers();
+    this.loadCollaboratorExpertises();
   }
 
   /**
@@ -732,6 +661,18 @@ export class OpportunityTeamSectionComponent implements OnInit {
     this.valuesService.getInternalUsers().subscribe({
       next: (users) => {
         this.internalUsers.set(users);
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  /**
+   * @description Load collaborator expertise options from API
+   */
+  private loadCollaboratorExpertises(): void {
+    this.opportunityService.getCollaboratorExpertises().subscribe({
+      next: (expertises) => {
+        this.collaboratorExpertises.set(expertises);
         this.cdr.detectChanges();
       },
     });
@@ -1163,10 +1104,7 @@ export class OpportunityTeamSectionComponent implements OnInit {
     this.orgUnitWarningAcknowledged.set(false);
     this.pendingOrgUnitChange = null;
 
-    // Initialize SME selections from existing stakeholders first
-    this.initializeSmeSelectionsFromStakeholders();
-
-    // Backup original data for cancel (including SME selections)
+    // Backup original data for cancel
     const manager = opp.opportunityManager;
     const collaborators = opp.collaborators || [];
     
@@ -1176,7 +1114,6 @@ export class OpportunityTeamSectionComponent implements OnInit {
       opportunityManagerId: manager?.userId ?? undefined,
       collaboratorIds: collaborators.map(c => c.userId),
       stakeholders: opp.stakeholders ? [...opp.stakeholders] : [],
-      smeSelections: new Map(this.smeSelections()),
     };
 
     // Initialize dynamic auto-populated stakeholders with existing data
@@ -1252,12 +1189,9 @@ export class OpportunityTeamSectionComponent implements OnInit {
     const opp = this.opportunity();
     if (!opp || !opp.id) return;
 
-    // Get SME role IDs to exclude from user-added stakeholders (SME selections are handled separately via smeSelections)
-    const smeRoleIds = new Set(this.smeRoles().map((r) => r.id));
-
-    // Get user-added stakeholders (non-auto-populated and non-SME)
+    // Get user-added stakeholders (non-auto-populated)
     const userAddedStakeholders = (opp.stakeholders || [])
-      .filter((s) => !s.isAutoPopulated && !smeRoleIds.has(s.entityRoleId))
+      .filter((s) => !s.isAutoPopulated)
       .map((s) => ({
         userId: s.userId!,
         entityRoleId: s.entityRoleId,
@@ -1273,22 +1207,21 @@ export class OpportunityTeamSectionComponent implements OnInit {
       notes: s.notes,
     }));
 
-    // Combine stakeholders (excluding SME - those are in smeSelections)
+    // Combine stakeholders
     const allStakeholders = [...userAddedStakeholders, ...autoPopulated];
 
-    // Get SME selections in the format expected by the backend
-    const smeSelections = this.getSmeSelectionsForSave();
-
-    // Get collaborator IDs
-    const collaboratorIds = this.collaboratorsControl.value?.map(c => c.id) || [];
+    // Get collaborators with their expertise IDs
+    const collaborators = this.collaboratorsControl.value?.map(c => ({
+      userId: c.id,
+      expertiseIds: (c as any).expertiseIds || []
+    })) || [];
     
     const teamData = {
       responsibleOrgUnitId: this.orgUnitControl.value ?? undefined,
       proposedInitiativeTypeId: this.initiativeTypeControl.value ?? undefined,
       opportunityManagerId: this.opportunityManagerControl.value?.id ?? undefined,
-      collaboratorIds: collaboratorIds.length > 0 ? collaboratorIds : undefined,
+      collaborators: collaborators.length > 0 ? collaborators : undefined,
       stakeholders: allStakeholders.length > 0 ? allStakeholders : undefined,
-      smeSelections: smeSelections.length > 0 ? smeSelections : undefined,
     };
 
     this.isSaving.set(true);
@@ -1389,11 +1322,6 @@ export class OpportunityTeamSectionComponent implements OnInit {
         this.collaboratorsControl.setValue(collaboratorUsers);
       } else {
         this.collaboratorsControl.setValue([]);
-      }
-
-      // Restore SME selections
-      if (original.smeSelections) {
-        this.smeSelections.set(new Map(original.smeSelections));
       }
 
       // Restore stakeholders
@@ -1684,6 +1612,7 @@ export class OpportunityTeamSectionComponent implements OnInit {
    */
   openAddCollaboratorDialog(): void {
     this.collaboratorUserControl.setValue(null);
+    this.collaboratorExpertiseControl.setValue([]);
     this.showCollaboratorDialog.set(true);
     this.cdr.detectChanges();
   }
@@ -1694,6 +1623,7 @@ export class OpportunityTeamSectionComponent implements OnInit {
   cancelCollaboratorDialog(): void {
     this.showCollaboratorDialog.set(false);
     this.collaboratorUserControl.setValue(null);
+    this.collaboratorExpertiseControl.setValue([]);
     this.cdr.detectChanges();
   }
 
@@ -1702,7 +1632,20 @@ export class OpportunityTeamSectionComponent implements OnInit {
    */
   confirmCollaboratorDialog(): void {
     const user = this.collaboratorUserControl.value;
+    const expertiseIds = this.collaboratorExpertiseControl.value || [];
+    
     if (!user) {
+      return;
+    }
+
+    // Validate expertise selection
+    if (expertiseIds.length === 0) {
+      this.feedbackService.showWarningToast({
+        summary: this.translateService.instant('message.warning'),
+        detail: this.translateService.instant(
+          'message.validation.expertiseRequired'
+        ),
+      });
       return;
     }
 
@@ -1732,8 +1675,12 @@ export class OpportunityTeamSectionComponent implements OnInit {
       return;
     }
 
-    // Add collaborator
-    const updatedCollaborators = [...currentCollaborators, user];
+    // Add collaborator with expertises
+    const collaboratorWithExpertise = {
+      ...user,
+      expertiseIds: expertiseIds
+    };
+    const updatedCollaborators = [...currentCollaborators, collaboratorWithExpertise];
     this.collaboratorsControl.setValue(updatedCollaborators);
     this.markAsChanged();
     this.cancelCollaboratorDialog();
@@ -1758,79 +1705,6 @@ export class OpportunityTeamSectionComponent implements OnInit {
         this.cdr.detectChanges();
       }
     );
-  }
-
-  // ========================================================================
-  // SME (SUBJECT MATTER EXPERT) MANAGEMENT
-  // ========================================================================
-
-  /**
-   * @description Initialize SME selections from backend's SMESelections data
-   */
-  private initializeSmeSelectionsFromStakeholders(): void {
-    const opp = this.opportunity();
-    const smeRoles = this.smeRoles();
-    const newSelections = new Map<number, { selected: boolean; userId: number | null }>();
-
-    // Initialize all SME roles as unselected
-    for (const role of smeRoles) {
-      newSelections.set(role.id, { selected: false, userId: null });
-    }
-
-    // Check backend SME selections
-    const smeSelections = opp.smeSelections || [];
-    for (const selection of smeSelections) {
-      if (selection.isSelected) {
-        newSelections.set(selection.entityRoleId, {
-          selected: true,
-          userId: selection.userId ?? null,
-        });
-      }
-    }
-
-    this.smeSelections.set(newSelections);
-  }
-
-  /**
-   * @description Check if an SME role is selected
-   */
-  isSmeRoleSelected(roleId: number): boolean {
-    const selection = this.smeSelections().get(roleId);
-    return selection?.selected ?? false;
-  }
-
-  /**
-   * @description Get the selected user ID for an SME role
-   */
-  getSmeSelectedUserId(roleId: number): number | null {
-    const selection = this.smeSelections().get(roleId);
-    return selection?.userId ?? null;
-  }
-
-  /**
-   * @description Handle SME checkbox toggle
-   */
-  onSmeCheckboxChange(roleId: number, checked: boolean): void {
-    const currentSelections = new Map(this.smeSelections());
-    const currentSelection = currentSelections.get(roleId);
-
-    if (checked) {
-      // Enable selection, keep existing userId if any
-      currentSelections.set(roleId, {
-        selected: true,
-        userId: currentSelection?.userId ?? null,
-      });
-    } else {
-      // Disable selection and clear userId
-      currentSelections.set(roleId, {
-        selected: false,
-        userId: null,
-      });
-    }
-
-    this.smeSelections.set(currentSelections);
-    this.markAsChanged();
-    this.cdr.detectChanges();
   }
 
   /**
@@ -1925,49 +1799,6 @@ export class OpportunityTeamSectionComponent implements OnInit {
   }
 
   /**
-   * @description Handle SME user selection change
-   */
-  onSmeUserChange(roleId: number, user: SimpleValue | null): void {
-    const currentSelections = new Map(this.smeSelections());
-
-    currentSelections.set(roleId, {
-      selected: true,
-      userId: user?.id ?? null,
-    });
-
-    this.smeSelections.set(currentSelections);
-    this.markAsChanged();
-    this.cdr.detectChanges();
-  }
-
-  /**
-   * @description Get SME selections in the format expected by the backend API
-   */
-  private getSmeSelectionsForSave(): { entityRoleId: number; isSelected: boolean; userId: number | null }[] {
-    const smeSelectionsForSave: { entityRoleId: number; isSelected: boolean; userId: number | null }[] = [];
-    const selections = this.smeSelections();
-
-    for (const [roleId, selection] of selections) {
-      smeSelectionsForSave.push({
-        entityRoleId: roleId,
-        isSelected: selection.selected,
-        userId: selection.selected ? selection.userId : null,
-      });
-    }
-
-    return smeSelectionsForSave;
-  }
-
-  /**
-   * @description Get the selected user object for an SME role
-   */
-  getSmeSelectedUser(roleId: number): SimpleValue | null {
-    const userId = this.getSmeSelectedUserId(roleId);
-    if (!userId) return null;
-    return this.internalUsers().find((u) => u.id === userId) ?? null;
-  }
-
-  /**
    * @description Get translation key for entity role based on code
    * @param entityRoleCode - The code of the entity role (e.g., "DoA1_OrganizationHierarchy")
    * @returns Translation key (e.g., "role.DoA1_OrganizationHierarchy") or null if code is not available
@@ -1995,23 +1826,6 @@ export class OpportunityTeamSectionComponent implements OnInit {
     return stakeholder.entityRoleName;
   }
 
-  /**
-   * @description Get translated SME role name, falling back to role.name if translation is not available
-   * @param role - The SimpleValue role object
-   * @returns Translated role name or the original role.name
-   */
-  getTranslatedSmeRoleName(role: SimpleValue): string {
-    const translationKey = this.getRoleTranslationKey(role.code);
-    if (translationKey) {
-      const translated = this.translateService.instant(translationKey);
-      // If translation exists and is different from the key, use it
-      if (translated && translated !== translationKey) {
-        return translated;
-      }
-    }
-    // Fallback to role.name
-    return role.name;
-  }
 }
 
 

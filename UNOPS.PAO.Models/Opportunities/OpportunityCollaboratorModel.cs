@@ -43,4 +43,10 @@ public class OpportunityCollaboratorModel
     /// Name of the user who added this collaborator
     /// </summary>
     public string? AddedByName { get; set; }
+    
+    /// <summary>
+    /// List of expertise areas for this collaborator.
+    /// Indicates the specific expertise/capacity in which the collaborator is related to the opportunity.
+    /// </summary>
+    public List<CollaboratorExpertiseModel> Expertises { get; set; } = new();
 }

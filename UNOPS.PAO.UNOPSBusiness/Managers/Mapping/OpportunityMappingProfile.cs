@@ -139,13 +139,21 @@ public class OpportunityMappingProfile : Profile
                 src.User != null && src.User.UserProfile != null ? src.User.UserProfile.Position : null))
             .ForMember(dest => dest.AddedByName, opt => opt.MapFrom(src => 
                 src.AddedByUser != null && src.AddedByUser.UserProfile != null ? src.AddedByUser.UserProfile.Name : 
-                (src.AddedByUser != null ? src.AddedByUser.Email : null)));
+                (src.AddedByUser != null ? src.AddedByUser.Email : null)))
+            .ForMember(dest => dest.Expertises, opt => opt.MapFrom(src => 
+                src.Expertises != null ? src.Expertises.Select(e => e.CollaboratorExpertise).Where(e => e != null) : new List<CollaboratorExpertise>()));
 
         CreateMap<OpportunityCollaboratorRequest, OpportunityCollaborator>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.OpportunityId, opt => opt.Ignore())
             .ForMember(dest => dest.AddedDate, opt => opt.Ignore())
-            .ForMember(dest => dest.AddedBy, opt => opt.Ignore());
+            .ForMember(dest => dest.AddedBy, opt => opt.Ignore())
+            .ForMember(dest => dest.Expertises, opt => opt.Ignore()); // Handled manually in manager
+        
+        // =================================================================
+        // CollaboratorExpertise mappings (Lookup table)
+        // =================================================================
+        CreateMap<CollaboratorExpertise, CollaboratorExpertiseModel>();
         
         // =================================================================
         // OpportunityDeliverable mappings

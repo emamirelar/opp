@@ -9,6 +9,7 @@ using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Identity.Entities;
@@ -1972,6 +1973,29 @@ public class OpportunityController : BaseController
         }
 
         return Ok(new { message = "Opportunity deleted successfully", id });
+    }
+
+    /// <summary>
+    /// Gets all available collaborator expertise types for dropdown selection.
+    /// These are the expertise areas that can be assigned to opportunity collaborators.
+    /// </summary>
+    [HttpGet(APIDictionary.Opportunity + "/collaborator-expertises")]
+    public async Task<IActionResult> GetCollaboratorExpertises()
+    {
+        var expertises = await _context.Set<CollaboratorExpertise>()
+            .Where(e => !e.IsDeleted && e.Status == EntityStatus.Active)
+            .OrderBy(e => e.DisplayOrder)
+            .Select(e => new CollaboratorExpertiseModel
+            {
+                Id = e.Id,
+                Code = e.Code,
+                Name = e.Name,
+                Description = e.Description,
+                DisplayOrder = e.DisplayOrder
+            })
+            .ToListAsync();
+
+        return Ok(expertises);
     }
 }
 

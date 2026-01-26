@@ -30,4 +30,10 @@ public class OpportunityCollaborator
     /// </summary>
     public int? AddedBy { get; set; }
     public virtual PAOUser? AddedByUser { get; set; }
+
+    /// <summary>
+    /// Navigation property for the collaborator's expertises (many-to-many via junction table).
+    /// Represents the specific expertise/capacity in which this collaborator is related to the opportunity.
+    /// </summary>
+    public virtual ICollection<OpportunityCollaboratorExpertise> Expertises { get; set; } = new HashSet<OpportunityCollaboratorExpertise>();
 }

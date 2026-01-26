@@ -240,6 +240,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             .Include(o => o.Collaborators)
                 .ThenInclude(c => c.AddedByUser)
                     .ThenInclude(u => u!.UserProfile)
+            .Include(o => o.Collaborators)
+                .ThenInclude(c => c.Expertises)
+                    .ThenInclude(e => e.CollaboratorExpertise)
             .Include(o => o.ExternalStakeholders)
                 .ThenInclude(es => es.Contact)
                     .ThenInclude(c => c!.Partner)
@@ -2101,32 +2104,10 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }
         }
 
-        // Update Collaborators (Opportunity Development Team)
-        if (request.CollaboratorIds != null)
+        // Update Collaborators (Opportunity Development Team) with Expertise assignments
+        if (request.Collaborators != null)
         {
             opportunity.Collaborators ??= new List<OpportunityCollaborator>();
-            
-            // Get existing collaborator user IDs
-            var existingCollaboratorUserIds = opportunity.Collaborators
-                .Select(c => c.UserId)
-                .ToHashSet();
-            
-            // Find collaborators to remove (exist in DB but not in request)
-            var collaboratorsToRemove = opportunity.Collaborators
-                .Where(c => !request.CollaboratorIds.Contains(c.UserId))
-                .ToList();
-            
-            // Remove collaborators that are no longer in the request
-            foreach (var collaborator in collaboratorsToRemove)
-            {
-                opportunity.Collaborators.Remove(collaborator);
-                context.Set<OpportunityCollaborator>().Remove(collaborator);
-            }
-            
-            // Find collaborators to add (exist in request but not in DB)
-            var collaboratorIdsToAdd = request.CollaboratorIds
-                .Where(userId => !existingCollaboratorUserIds.Contains(userId))
-                .ToList();
             
             // Get current user ID for AddedBy tracking
             int currentUserId = 0;
@@ -2139,23 +2120,88 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 }
             }
             
-            // Add new collaborators
-            foreach (var userId in collaboratorIdsToAdd)
+            // Get requested user IDs
+            var requestedUserIds = request.Collaborators.Select(c => c.UserId).ToHashSet();
+            
+            // Get existing collaborators (need to load with expertises)
+            var existingCollaborators = await context.Set<OpportunityCollaborator>()
+                .Include(c => c.Expertises)
+                .Where(c => c.OpportunityId == id)
+                .ToListAsync();
+            
+            // Find collaborators to remove (exist in DB but not in request)
+            var collaboratorsToRemove = existingCollaborators
+                .Where(c => !requestedUserIds.Contains(c.UserId))
+                .ToList();
+            
+            // Remove collaborators that are no longer in the request
+            foreach (var collaborator in collaboratorsToRemove)
             {
-                opportunity.Collaborators.Add(new OpportunityCollaborator
+                // Remove expertise assignments first
+                if (collaborator.Expertises != null && collaborator.Expertises.Any())
                 {
-                    OpportunityId = id,
-                    UserId = userId,
-                    AddedDate = DateTime.UtcNow,
-                    AddedBy = currentUserId > 0 ? currentUserId : null
-                });
+                    context.Set<OpportunityCollaboratorExpertise>().RemoveRange(collaborator.Expertises);
+                }
+                context.Set<OpportunityCollaborator>().Remove(collaborator);
             }
-        }
-
-        // Update SME (Subject Matter Expert) selections in EntityUserRoles table
-        if (request.SMESelections != null)
-        {
-            await UpdateSMESelectionsAsync(id, request.SMESelections);
+            
+            // Process each requested collaborator
+            foreach (var collaboratorRequest in request.Collaborators)
+            {
+                var existingCollaborator = existingCollaborators.FirstOrDefault(c => c.UserId == collaboratorRequest.UserId);
+                
+                if (existingCollaborator == null)
+                {
+                    // Add new collaborator
+                    var newCollaborator = new OpportunityCollaborator
+                    {
+                        OpportunityId = id,
+                        UserId = collaboratorRequest.UserId,
+                        AddedDate = DateTime.UtcNow,
+                        AddedBy = currentUserId > 0 ? currentUserId : null
+                    };
+                    
+                    // Add expertises
+                    if (collaboratorRequest.ExpertiseIds != null && collaboratorRequest.ExpertiseIds.Any())
+                    {
+                        newCollaborator.Expertises = collaboratorRequest.ExpertiseIds
+                            .Select(expertiseId => new OpportunityCollaboratorExpertise
+                            {
+                                CollaboratorExpertiseId = expertiseId
+                            })
+                            .ToList();
+                    }
+                    
+                    context.Set<OpportunityCollaborator>().Add(newCollaborator);
+                }
+                else
+                {
+                    // Update existing collaborator's expertises
+                    var requestedExpertiseIds = collaboratorRequest.ExpertiseIds?.ToHashSet() ?? new HashSet<int>();
+                    var existingExpertiseIds = existingCollaborator.Expertises?
+                        .Select(e => e.CollaboratorExpertiseId).ToHashSet() ?? new HashSet<int>();
+                    
+                    // Remove expertises that are no longer in the request
+                    if (existingCollaborator.Expertises != null)
+                    {
+                        var expertisesToRemove = existingCollaborator.Expertises
+                            .Where(e => !requestedExpertiseIds.Contains(e.CollaboratorExpertiseId))
+                            .ToList();
+                        context.Set<OpportunityCollaboratorExpertise>().RemoveRange(expertisesToRemove);
+                    }
+                    
+                    // Add new expertises
+                    var expertiseIdsToAdd = requestedExpertiseIds.Where(id => !existingExpertiseIds.Contains(id));
+                    foreach (var expertiseId in expertiseIdsToAdd)
+                    {
+                        context.Set<OpportunityCollaboratorExpertise>().Add(new OpportunityCollaboratorExpertise
+                        {
+                            OpportunityCollaboratorId = existingCollaborator.Id,
+                            CollaboratorExpertiseId = expertiseId
+                        });
+                    }
+                }
+            }
         }
 
         // Auto-populate stakeholders from EntityUserRoles if org unit changed

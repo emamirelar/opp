@@ -422,6 +422,42 @@ public class UNOPSAppDbContext : AppDbContext
         });
 
         #endregion
+
+        #region Collaborator Expertise Configuration
+
+        // Configure CollaboratorExpertise entity (lookup table)
+        modelBuilder.Entity<CollaboratorExpertise>(entity =>
+        {
+            entity.ToTable("CollaboratorExpertises");
+            entity.HasIndex(e => e.Code).IsUnique();
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Code).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Description).HasMaxLength(500);
+        });
+
+        // Configure OpportunityCollaboratorExpertise junction table
+        modelBuilder.Entity<OpportunityCollaboratorExpertise>(entity =>
+        {
+            entity.ToTable("OpportunityCollaboratorExpertises");
+            
+            // Composite unique index to prevent duplicate expertise assignments
+            entity.HasIndex(e => new { e.OpportunityCollaboratorId, e.CollaboratorExpertiseId })
+                  .IsUnique();
+
+            // FK to OpportunityCollaborator
+            entity.HasOne(e => e.OpportunityCollaborator)
+                  .WithMany(c => c.Expertises)
+                  .HasForeignKey(e => e.OpportunityCollaboratorId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            // FK to CollaboratorExpertise
+            entity.HasOne(e => e.CollaboratorExpertise)
+                  .WithMany(e => e.CollaboratorExpertises)
+                  .HasForeignKey(e => e.CollaboratorExpertiseId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        #endregion
     }
 
     public new DbSet<UNOPSContact> Contacts { get; set; }
@@ -474,4 +510,8 @@ public class UNOPSAppDbContext : AppDbContext
     // Base Engagement entities (externally managed, read-only)
     public DbSet<BaseEngagement> BaseEngagements { get; set; }
     public DbSet<BaseEngagementPartners> BaseEngagementPartners { get; set; }
+    
+    // Collaborator Expertise lookup and junction table
+    public DbSet<CollaboratorExpertise> CollaboratorExpertises { get; set; }
+    public DbSet<OpportunityCollaboratorExpertise> OpportunityCollaboratorExpertises { get; set; }
 }

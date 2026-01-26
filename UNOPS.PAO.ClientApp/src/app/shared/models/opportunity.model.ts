@@ -266,6 +266,17 @@ export interface OpportunityStakeholder {
 }
 
 /**
+ * Collaborator expertise model - the specific expertise/capacity in which a collaborator is related to an opportunity
+ */
+export interface CollaboratorExpertise {
+  id: number;
+  code: string;
+  name: string;
+  description: string | null;
+  displayOrder: number;
+}
+
+/**
  * Collaborator model - team members with edit permissions
  * Part of the Opportunity Development Team
  */
@@ -280,6 +291,8 @@ export interface OpportunityCollaborator {
   addedDate: string | null;
   addedBy: number | null;
   addedByName: string | null;
+  /** List of expertise areas for this collaborator */
+  expertises: CollaboratorExpertise[];
 }
 
 /**
