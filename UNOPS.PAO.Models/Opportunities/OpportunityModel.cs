@@ -117,6 +117,18 @@ public class OpportunityModel
     public List<OpportunityUNOPSMissionModel>? UNOPSMissions { get; set; }
     
     /// <summary>
+    /// Collaborators who have permissions to edit all fields of the opportunity.
+    /// Part of the Opportunity Development Team.
+    /// </summary>
+    public List<OpportunityCollaboratorModel>? Collaborators { get; set; }
+    
+    /// <summary>
+    /// Opportunity Manager - the primary person responsible for the opportunity.
+    /// Loaded from stakeholders with the "Opportunity Manager" role.
+    /// </summary>
+    public OpportunityManagerModel? OpportunityManager { get; set; }
+    
+    /// <summary>
     /// SME (Subject Matter Expert) selections for the opportunity.
     /// Loaded from OpportunityStakeholder table where IsInternal = true and EntityRole.Type = "SME".
     /// </summary>

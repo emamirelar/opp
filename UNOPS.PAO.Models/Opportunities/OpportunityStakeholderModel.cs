@@ -14,6 +14,11 @@ public class OpportunityStakeholderModel
     public string? UserEmail { get; set; }
     
     /// <summary>
+    /// Standardized position title from the personnel record
+    /// </summary>
+    public string? Position { get; set; }
+    
+    /// <summary>
     /// Organization Hierarchy ID - used for auto-populated stakeholders from EntityUserRoles.
     /// </summary>
     public int? OrganizationHierarchyId { get; set; }

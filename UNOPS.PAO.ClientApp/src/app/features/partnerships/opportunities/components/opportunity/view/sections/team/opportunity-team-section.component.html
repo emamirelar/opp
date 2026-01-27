@@ -88,110 +88,432 @@
   }
 
   <div class="space-y-6">
-    <!-- Warning Banner for Hub/Region/GPO Org Units -->
-    @if (showOrgUnitWarningBanner()) {
-      <div style="background-color: rgb(253, 250, 241);" class="p-3 border border-unops-warning-light rounded-lg flex items-start gap-3">
-        <i class="pi pi-exclamation-triangle text-unops-warning-darker text-lg mt-0.5 flex-shrink-0"></i>
-        <div class="text-sm text-unops-neutral-800">
-          {{ 'message.opportunity.hubRegionOrgUnitWarning' | translate }}
-        </div>
-      </div>
-    }
+    <!-- ============================================ -->
+    <!-- SUBSECTION 1: Opportunity Development Team -->
+    <!-- ============================================ -->
+    <div class="bg-unops-surface-primary rounded-unops-lg p-4 border border-unops-neutral-300">
+      <h3 class="text-base font-semibold text-unops-secondary mb-4 flex items-center gap-2">
+        <i class="pi pi-users text-unops-primary"></i>
+        <span>{{ 'label.opportunity.opportunityDevelopmentTeam' | translate }}</span>
+      </h3>
+      
+      <div class="space-y-4">
+        <!-- Warning Banner for Hub/Region/GPO Org Units -->
+        @if (showOrgUnitWarningBanner()) {
+          <div style="background-color: rgb(253, 250, 241);" class="p-3 border border-unops-warning-light rounded-lg flex items-start gap-3">
+            <i class="pi pi-exclamation-triangle text-unops-warning-darker text-lg mt-0.5 flex-shrink-0"></i>
+            <div class="text-sm text-unops-neutral-800">
+              {{ 'message.opportunity.hubRegionOrgUnitWarning' | translate }}
+            </div>
+          </div>
+        }
 
-    <!-- Responsible Org Unit and Initiative Type -->
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <h4 class="text-sm font-semibold text-unops-neutral-700 mb-2">
-          {{ 'label.opportunity.responsibleOrgUnit' | translate }}
-        </h4>
-        @if (isEditing()) {
-          @if (suggestedOrgUnitIds().length > 0) {
-            <div class="mb-2 p-2 bg-emerald-50 border border-emerald-200 rounded text-xs text-emerald-700 flex items-start gap-2">
-              <i class="pi pi-lightbulb text-emerald-500 mt-0.5 flex-shrink-0"></i>
-              <span>
-                @if (suggestionReason() === 'responsible_for_all_countries') {
-                  {{ 'hint.orgUnit.responsibleForAllCountries' | translate }}
-                } @else if (suggestionReason() === 'common_parent_for_multiple_countries') {
-                  {{ 'hint.orgUnit.commonParentForCountries' | translate }}
-                } @else {
-                  {{ 'hint.orgUnit.suggestedBasedOnCountries' | translate }}
+        <!-- Opportunity Manager* (mandatory) -->
+        <div>
+          <h4 class="text-sm font-semibold text-unops-neutral-700 mb-2">
+            {{ 'label.opportunity.opportunityManager' | translate }} <span class="text-unops-error">*</span>
+          </h4>
+          @if (isEditing()) {
+            <p-floatlabel variant="on">
+              <p-select
+                id="opportunityManager"
+                [formControl]="opportunityManagerControl"
+                [options]="internalUsers()"
+                optionLabel="name"
+                [filter]="true"
+                filterBy="name"
+                [placeholder]="'label.opportunity.selectOpportunityManager' | translate"
+                [appendTo]="'body'"
+                [virtualScroll]="true"
+                [virtualScrollItemSize]="38"
+                class="w-full"
+              />
+              <label for="opportunityManager">{{ 'label.opportunity.opportunityManager' | translate }} *</label>
+            </p-floatlabel>
+            @if (opportunityManagerControl.value) {
+              <p class="text-xs text-unops-neutral-600 mt-1">
+                {{ opportunityManagerControl.value.position || '-' }}
+              </p>
+            }
+          } @else {
+            @if (opportunityManager()) {
+              <div class="flex items-center gap-2">
+                <p-avatar
+                  [label]="(opportunityManager()?.userName?.charAt(0) || '?').toUpperCase()"
+                  shape="circle"
+                  styleClass="bg-unops-primary text-white"
+                />
+                <div>
+                  <p class="text-unops-secondary font-medium">{{ opportunityManager()?.userName || '-' }}</p>
+                  @if (opportunityManager()?.position) {
+                    <p class="text-xs text-unops-neutral-600">{{ opportunityManager()?.position }}</p>
+                  }
+                </div>
+              </div>
+            } @else {
+              <p class="text-unops-secondary">-</p>
+            }
+          }
+        </div>
+
+        <!-- Opportunity Collaborators (new) -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="text-sm font-semibold text-unops-neutral-700">
+              {{ 'label.opportunity.opportunityCollaborators' | translate }}
+            </h4>
+            @if (isEditing()) {
+              <p-button
+                [label]="'button.add' | translate"
+                icon="pi pi-plus"
+                size="small"
+                [text]="true"
+                (onClick)="openAddCollaboratorDialog()"
+              />
+            }
+          </div>
+          @if (isEditing()) {
+            <!-- Edit Mode: Show selected collaborators -->
+            @if (collaboratorsControl.value && collaboratorsControl.value.length > 0) {
+              <div class="space-y-2">
+                @for (collaborator of collaboratorsControl.value; track collaborator.id; let i = $index) {
+                  <div class="bg-unops-surface-secondary rounded-unops-lg p-3 border border-unops-neutral-300 shadow-unops-sm flex items-center justify-between">
+                    <div class="flex items-center gap-3 flex-1">
+                      <p-avatar
+                        [label]="collaborator.name.charAt(0) || '?'"
+                        shape="circle"
+                        styleClass="bg-blue-100 text-blue-600"
+                      />
+                      <div class="flex-1">
+                        <div class="font-semibold text-unops-secondary">{{ collaborator.name }}</div>
+                        @if (collaborator.position) {
+                          <div class="text-sm text-unops-neutral-600">{{ collaborator.position }}</div>
+                        }
+                      </div>
+                    </div>
+                    <p-button
+                      icon="pi pi-trash"
+                      size="small"
+                      [text]="true"
+                      [rounded]="true"
+                      severity="danger"
+                      (onClick)="removeCollaborator(i)"
+                    />
+                  </div>
                 }
-              </span>
+              </div>
+            } @else {
+              <p class="text-sm text-unops-neutral-500 italic">{{ 'message.noCollaborators' | translate }}</p>
+            }
+          } @else {
+            <!-- View Mode: Show collaborators -->
+            @if (collaborators().length > 0) {
+              <div class="space-y-2">
+                @for (collaborator of collaborators(); track collaborator.id) {
+                  <div class="bg-unops-surface-secondary rounded-unops-lg p-3 border border-unops-neutral-300 shadow-unops-sm flex items-center gap-3">
+                    <p-avatar
+                      [label]="(collaborator.userName?.charAt(0) || '?').toUpperCase()"
+                      shape="circle"
+                      styleClass="bg-blue-100 text-blue-600"
+                    />
+                    <div class="flex-1">
+                      <div class="font-semibold text-unops-secondary">{{ collaborator.userName || '-' }}</div>
+                      @if (collaborator.position) {
+                        <div class="text-sm text-unops-neutral-600">{{ collaborator.position }}</div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="text-sm text-unops-neutral-500 italic">{{ 'message.noCollaborators' | translate }}</p>
+            }
+          }
+        </div>
+
+        <!-- Org Unit Responsible for Opportunity development* (mandatory) -->
+        <div>
+          <h4 class="text-sm font-semibold text-unops-neutral-700 mb-2">
+            {{ 'label.opportunity.responsibleOrgUnit' | translate }} <span class="text-unops-error">*</span>
+          </h4>
+          @if (isEditing()) {
+            @if (suggestedOrgUnitIds().length > 0) {
+              <div class="mb-2 p-2 bg-emerald-50 border border-emerald-200 rounded text-xs text-emerald-700 flex items-start gap-2">
+                <i class="pi pi-lightbulb text-emerald-500 mt-0.5 flex-shrink-0"></i>
+                <span>
+                  @if (suggestionReason() === 'responsible_for_all_countries') {
+                    {{ 'hint.orgUnit.responsibleForAllCountries' | translate }}
+                  } @else if (suggestionReason() === 'common_parent_for_multiple_countries') {
+                    {{ 'hint.orgUnit.commonParentForCountries' | translate }}
+                  } @else {
+                    {{ 'hint.orgUnit.suggestedBasedOnCountries' | translate }}
+                  }
+                </span>
+              </div>
+            }
+            <p-select
+              [formControl]="orgUnitControl"
+              [options]="getSortedOrgUnits()"
+              optionLabel="name"
+              optionValue="id"
+              [filter]="true"
+              filterBy="name,code"
+              [placeholder]="'label.opportunity.selectOrgUnit' | translate"
+              class="w-full"
+              [showClear]="true"
+            >
+              <ng-template let-item pTemplate="item">
+                <div class="flex items-center gap-2">
+                  @if (isPrimarySuggestion(item.id)) {
+                    <i class="pi pi-star-fill text-unops-warning text-xs" pTooltip="{{ 'tooltip.orgUnit.primarySuggestion' | translate }}" tooltipPosition="left"></i>
+                  } @else if (isOrgUnitSuggested(item.id)) {
+                    <i class="pi pi-star text-unops-warning text-xs" pTooltip="{{ 'tooltip.orgUnit.suggested' | translate }}" tooltipPosition="left"></i>
+                  }
+                  <span [class.font-semibold]="isOrgUnitSuggested(item.id)">{{ item.name }}</span>
+                  @if (isOrgUnitSuggested(item.id)) {
+                    <span class="text-xs text-unops-success ml-auto">{{ 'label.suggested' | translate }}</span>
+                  }
+                </div>
+              </ng-template>
+              <ng-template let-item pTemplate="selectedItem">
+                <div class="flex items-center gap-2">
+                  @if (isPrimarySuggestion(item.id)) {
+                    <i class="pi pi-star-fill text-unops-warning text-xs"></i>
+                  } @else if (isOrgUnitSuggested(item.id)) {
+                    <i class="pi pi-star text-unops-warning text-xs"></i>
+                  }
+                  <span>{{ item.name }}</span>
+                </div>
+              </ng-template>
+            </p-select>
+          } @else {
+            <p class="text-unops-secondary">{{ opportunity().responsibleOrgUnitName || '-' }}</p>
+          }
+
+          <!-- Warning banner for org unit not normally responsible -->
+          @if (orgUnitConflictsWithNormalOrgUnits().hasConflict && !isEditing()) {
+            <div class="mt-3 p-3 bg-amber-50 border border-amber-300 rounded flex items-start gap-3">
+              <i class="pi pi-exclamation-triangle text-amber-600 text-lg mt-0.5 flex-shrink-0"></i>
+              <div class="text-sm">
+                <p class="font-semibold text-amber-900 mb-1">
+                  {{ 'title.notNormallyResponsible' | translate }}
+                </p>
+                @if (orgUnitConflictsWithNormalOrgUnits().affectedCountries.length === 1) {
+                  <p class="text-amber-800">
+                    {{ 'message.orgUnitNotNormallyResponsibleViewSingle' | translate: { country: orgUnitConflictsWithNormalOrgUnits().affectedCountries[0] } }}
+                  </p>
+                } @else {
+                  <p class="text-amber-800">
+                    {{ 'message.orgUnitNotNormallyResponsibleViewMultiple' | translate: { countries: orgUnitConflictsWithNormalOrgUnits().affectedCountries.join(', ') } }}
+                  </p>
+                }
+              </div>
             </div>
           }
-          <p-select
-            [formControl]="orgUnitControl"
-            [options]="getSortedOrgUnits()"
-            optionLabel="name"
-            optionValue="id"
-            [filter]="true"
-            filterBy="name,code"
-            [placeholder]="'label.opportunity.selectOrgUnit' | translate"
-            class="w-full"
-            [showClear]="true"
-          >
-            <ng-template let-item pTemplate="item">
-              <div class="flex items-center gap-2">
-                @if (isPrimarySuggestion(item.id)) {
-                  <i class="pi pi-star-fill text-unops-warning text-xs" pTooltip="{{ 'tooltip.orgUnit.primarySuggestion' | translate }}" tooltipPosition="left"></i>
-                } @else if (isOrgUnitSuggested(item.id)) {
-                  <i class="pi pi-star text-unops-warning text-xs" pTooltip="{{ 'tooltip.orgUnit.suggested' | translate }}" tooltipPosition="left"></i>
-                }
-                <span [class.font-semibold]="isOrgUnitSuggested(item.id)">{{ item.name }}</span>
-                @if (isOrgUnitSuggested(item.id)) {
-                  <span class="text-xs text-unops-success ml-auto">{{ 'label.suggested' | translate }}</span>
-                }
+        </div>
+
+        <!-- Divider -->
+        <div class="border-t border-unops-neutral-300 pt-4"></div>
+
+        <!-- Role Holders for Responsible Org Unit (read-only) -->
+        @if (autoPopulatedStakeholders().length > 0) {
+          <div>
+            <div class="text-xs text-unops-secondary mb-3 flex items-center gap-1">
+              <i class="pi pi-lock text-unops-secondary"></i>
+              <span>{{ 'label.opportunity.autoPopulatedFromOrgUnit' | translate }}</span>
+            </div>
+
+            @for (group of groupedAutoPopulatedStakeholders(); track group.orgUnitName) {
+              <div class="mb-4">
+                <!-- OrgUnit Group Header -->
+                <div class="text-sm font-semibold text-unops-primary mb-2 flex items-center gap-2">
+                  <i class="pi pi-building text-unops-primary"></i>
+                  <span>{{ group.orgUnitName }}</span>
+                  <span class="text-unops-neutral-500 font-normal text-xs">({{ group.stakeholders.length }})</span>
+                </div>
+
+                <!-- Roles Grid - 2 columns on medium screens, 3 on large -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                  @for (stakeholder of group.stakeholders; track stakeholder.entityRoleId) {
+                    <div class="bg-unops-surface-secondary rounded-unops-md p-2.5 border border-unops-neutral-300 opacity-90">
+                      <div class="flex items-center gap-2">
+                        <p-avatar
+                          label="A"
+                          shape="circle"
+                          size="normal"
+                          styleClass="bg-emerald-100 text-emerald-600 flex-shrink-0"
+                        />
+                        <div class="min-w-0 flex-1">
+                          <div class="font-semibold text-unops-secondary text-sm truncate">
+                            <span>{{ getTranslatedRoleName(stakeholder) }}</span>
+                          </div>
+                          @if (stakeholder.userName) {
+                            <div class="text-xs text-unops-neutral-600 truncate" [title]="stakeholder.userName">
+                              {{ stakeholder.userName }}
+                            </div>
+                          }
+                          @if (stakeholder.position) {
+                            <div class="text-xs text-unops-primary font-medium truncate" [title]="stakeholder.position">
+                              {{ stakeholder.position }}
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
               </div>
-            </ng-template>
-            <ng-template let-item pTemplate="selectedItem">
-              <div class="flex items-center gap-2">
-                @if (isPrimarySuggestion(item.id)) {
-                  <i class="pi pi-star-fill text-unops-warning text-xs"></i>
-                } @else if (isOrgUnitSuggested(item.id)) {
-                  <i class="pi pi-star text-unops-warning text-xs"></i>
-                }
-                <span>{{ item.name }}</span>
-              </div>
-            </ng-template>
-          </p-select>
-        } @else {
-          <p class="text-unops-secondary">{{ opportunity().responsibleOrgUnitName || '-' }}</p>
+            }
+          </div>
         }
-      </div>
-      <div>
-        <h4 class="text-sm font-semibold text-unops-neutral-700 mb-2">
-          {{ 'label.opportunity.initiativeType' | translate }}
-        </h4>
-        @if (isEditing()) {
-          <p-select
-            [formControl]="initiativeTypeControl"
-            [options]="initiativeTypes()"
-            optionLabel="name"
-            optionValue="id"
-            [filter]="true"
-            filterBy="name"
-            [placeholder]="'label.opportunity.selectInitiativeType' | translate"
-            class="w-full"
-            [showClear]="true"
-          />
-        } @else {
-          <p class="text-unops-secondary">
-            {{ opportunity().proposedInitiativeTypeName || '-' }}
-          </p>
+
+        <!-- Loading indicator for auto-populated stakeholders -->
+        @if (loadingAutoPopulatedStakeholders()) {
+          <div class="p-3 bg-unops-surface-secondary rounded-unops-lg border border-unops-neutral-300">
+            <div class="flex items-center gap-2 text-unops-neutral-600">
+              <i class="pi pi-spin pi-spinner"></i>
+              <span>{{ 'message.loadingAutoPopulatedStakeholders' | translate }}</span>
+            </div>
+          </div>
+        }
+
+        <!-- ============================================ -->
+        <!-- Proposed Initiative Type (moved to Opportunity Development Team) -->
+        <!-- ============================================ -->
+        <div class="mt-4 pt-4 border-t border-unops-neutral-300">
+          <h4 class="text-sm font-semibold text-unops-neutral-700 mb-2">
+            {{ 'label.opportunity.initiativeType' | translate }} <span class="text-unops-error">*</span>
+          </h4>
+          @if (isEditing()) {
+            <p-floatlabel variant="on">
+              <p-select
+                id="initiativeType"
+                [formControl]="initiativeTypeControl"
+                [options]="initiativeTypes()"
+                optionLabel="name"
+                optionValue="id"
+                [filter]="true"
+                filterBy="name"
+                [disabled]="isSaving()"
+                class="w-full"
+                [showClear]="true"
+              />
+              <label for="initiativeType">{{ 'label.opportunity.initiativeType' | translate }} *</label>
+            </p-floatlabel>
+          } @else {
+            <p class="text-unops-secondary">
+              {{ opportunity().proposedInitiativeTypeName || '-' }}
+            </p>
+          }
+        </div>
+
+        <!-- ============================================ -->
+        <!-- Opportunity Decision Making Pathway (DoA2 and DoA3) -->
+        <!-- ============================================ -->
+        @if (decisionMakingPathwayStakeholders().length > 0) {
+          <div class="mt-4 pt-4 border-t border-unops-neutral-300">
+            <h4 class="text-sm font-semibold text-unops-neutral-700 mb-3 flex items-center gap-2">
+              <i class="pi pi-sitemap text-unops-primary"></i>
+              <span>{{ 'label.opportunity.decisionMakingPathway' | translate }}</span>
+            </h4>
+            
+            <div class="text-xs text-unops-secondary mb-3 flex items-center gap-1">
+              <i class="pi pi-lock text-unops-secondary"></i>
+              <span>{{ 'label.opportunity.autoPopulatedFromOrgUnit' | translate }}</span>
+            </div>
+
+            @for (group of decisionMakingPathwayStakeholders(); track group.orgUnitName) {
+              <div class="mb-4">
+                <!-- OrgUnit Group Header -->
+                <div class="text-sm font-semibold text-unops-primary mb-2 flex items-center gap-2">
+                  <i class="pi pi-building text-unops-primary"></i>
+                  <span>{{ group.orgUnitName }}</span>
+                  <span class="text-unops-neutral-500 font-normal text-xs">({{ group.stakeholders.length }})</span>
+                </div>
+
+                <!-- DoA Roles Display -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                  @for (stakeholder of group.stakeholders; track stakeholder.entityRoleId) {
+                    <div class="bg-amber-50 rounded-unops-md p-2.5 border border-amber-300">
+                      <div class="flex items-center gap-2">
+                        <p-avatar
+                          label="D"
+                          shape="circle"
+                          size="normal"
+                          styleClass="bg-amber-100 text-amber-700 flex-shrink-0"
+                        />
+                        <div class="min-w-0 flex-1">
+                          <div class="font-semibold text-unops-secondary text-sm truncate">
+                            <span>{{ stakeholder.entityRoleName }}</span>
+                          </div>
+                          @if (stakeholder.userName) {
+                            <div class="text-xs text-unops-neutral-600 truncate" [title]="stakeholder.userName">
+                              {{ stakeholder.userName }}
+                            </div>
+                          }
+                          @if (stakeholder.position) {
+                            <div class="text-xs text-unops-primary font-medium truncate" [title]="stakeholder.position">
+                              {{ stakeholder.position }}
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
         }
       </div>
     </div>
 
-    <!-- Divider -->
-    <div class="border-t border-unops-neutral-300 pt-6"></div>
-
-    <!-- Team & Stakeholders (Internal) -->
-    <div>
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="text-sm font-semibold text-unops-secondary flex items-center gap-2">
-          <i class="pi pi-users text-unops-primary text-base"></i>
-          <span>{{ 'label.opportunity.teamStakeholders' | translate }} ({{ stakeholderCount() }})</span>
+    <!-- ============================================ -->
+    <!-- SUBSECTION 2: Team & Stakeholders -->
+    <!-- ============================================ -->
+    <div class="bg-unops-surface-primary rounded-unops-lg p-4 border border-unops-neutral-300">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-semibold text-unops-secondary flex items-center gap-2">
+          <i class="pi pi-users text-unops-primary"></i>
+          <span>{{ 'label.opportunity.otherInternalStakeholders' | translate }}</span>
         </h3>
+        
+        <!-- Add Internal Stakeholder Button (Edit mode only) -->
+        @if (isEditing()) {
+          <p-button
+            [label]="'button.addInternalStakeholder' | translate"
+            icon="pi pi-plus"
+            severity="primary"
+            size="small"
+            (onClick)="openAddStakeholderDialog()"
+          />
+        }
+      </div>
+      
+      <!-- ============================================ -->
+      <!-- Informational Message: Prerequisites for Stakeholder Suggestions -->
+      <!-- ============================================ -->
+      @if (!hasPrerequisitesForStakeholders()) {
+        <p-message severity="info" styleClass="mb-4 w-full">
+          <div class="flex items-start gap-2">
+            <i class="pi pi-info-circle text-lg"></i>
+            <div>
+              <div class="font-semibold mb-1">{{ 'message.stakeholderPrerequisitesTitle' | translate }}</div>
+              <div class="text-sm">{{ 'message.stakeholderPrerequisitesDetail' | translate }}</div>
+            </div>
+          </div>
+        </p-message>
+      }
+      
+      <div class="space-y-4">
+
+        <!-- Team & Stakeholders (Internal) -->
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold text-unops-secondary flex items-center gap-2">
+              <i class="pi pi-users text-unops-primary text-base"></i>
+              <span>{{ 'label.opportunity.teamStakeholders' | translate }} ({{ combinedInternalStakeholders().length }})</span>
+            </h3>
         @if (isEditing()) {
           <p-button
             [label]="'button.add' | translate"
@@ -200,30 +522,40 @@
             [text]="true"
             (onClick)="openAddStakeholderDialog()"
           />
-        }
-      </div>
-
-      <!-- User-added stakeholders (editable) -->
-      @if (userAddedStakeholders().length > 0) {
-        <div class="mb-4">
-          @if (autoPopulatedStakeholders().length > 0 || loadingAutoPopulatedStakeholders()) {
-            <div class="text-xs text-unops-neutral-600 mb-2">{{ 'label.opportunity.manuallyAddedStakeholders' | translate }}</div>
           }
-          @for (stakeholder of userAddedStakeholders(); track stakeholder.id; let i = $index) {
-            <div class="bg-unops-surface-secondary rounded-unops-lg p-3 mb-2 border border-unops-neutral-300 shadow-unops-sm">
+          </div>
+
+      <!-- Combined stakeholders: user-added + normally responsible org units -->
+      @if (combinedInternalStakeholders().length > 0) {
+        <div class="mb-4">
+          @for (stakeholder of combinedInternalStakeholders(); track stakeholder.id; let i = $index) {
+            <div class="bg-unops-surface-secondary rounded-unops-lg p-3 mb-2 border border-unops-neutral-300 shadow-unops-sm"
+                 [class.border-amber-400]="stakeholder.isNormallyResponsible">
               <div class="flex items-start justify-between">
                 <div class="flex items-center gap-3 flex-1">
                   <p-avatar
                     [label]="stakeholder.userName?.charAt(0) || '?'"
                     shape="circle"
-                    styleClass="bg-blue-100 text-blue-600"
+                    [styleClass]="stakeholder.isNormallyResponsible ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-600'"
                   />
                   <div class="flex-1">
-                    <div class="font-semibold text-unops-secondary">{{ stakeholder.userName }}</div>
+                    <div class="flex items-center gap-2">
+                      <span class="font-semibold text-unops-secondary">{{ stakeholder.userName }}</span>
+                      @if (stakeholder.isNormallyResponsible) {
+                        <p-tag 
+                          [value]="stakeholder.organizationHierarchyName || 'Normally Responsible'" 
+                          severity="warning"
+                          styleClass="text-xs"
+                        />
+                      }
+                    </div>
                     <div class="text-sm text-unops-primary">{{ getTranslatedRoleName(stakeholder) }}</div>
+                    @if (stakeholder.position) {
+                      <div class="text-xs text-unops-neutral-600 mt-0.5">{{ stakeholder.position }}</div>
+                    }
                   </div>
                 </div>
-                @if (isEditing()) {
+                @if (isEditing() && !stakeholder.isNormallyResponsible) {
                   <div class="flex items-center gap-2">
                     <p-button
                       icon="pi pi-pencil"
@@ -243,51 +575,10 @@
                     />
                   </div>
                 }
-              </div>
-            </div>
-          }
-        </div>
-      }
-
-      <!-- Auto-populated stakeholders from OrgUnit (read-only) - Grouped by OrgUnit -->
-      @if (autoPopulatedStakeholders().length > 0) {
-        <div class="mb-4">
-          <div class="text-xs text-unops-secondary mb-3 flex items-center gap-1">
-            <i class="pi pi-lock text-unops-secondary"></i>
-            <span>{{ 'label.opportunity.autoPopulatedFromOrgUnit' | translate }}</span>
-          </div>
-
-          @for (group of groupedAutoPopulatedStakeholders(); track group.orgUnitName) {
-            <div class="mb-4">
-              <!-- OrgUnit Group Header -->
-              <div class="text-sm font-semibold text-unops-primary mb-2 flex items-center gap-2">
-                <i class="pi pi-building text-unops-primary"></i>
-                <span>{{ group.orgUnitName }}</span>
-                <span class="text-unops-neutral-500 font-normal text-xs">({{ group.stakeholders.length }})</span>
-              </div>
-
-              <!-- Roles Grid - 2 columns on medium screens, 3 on large -->
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                @for (stakeholder of group.stakeholders; track stakeholder.entityRoleId) {
-                  <div class="bg-unops-surface-secondary rounded-unops-md p-2.5 border border-unops-neutral-300 opacity-90">
-                    <div class="flex items-center gap-2">
-                      <p-avatar
-                        label="A"
-                        shape="circle"
-                        size="normal"
-                        styleClass="bg-emerald-100 text-emerald-600 flex-shrink-0"
-                      />
-                      <div class="min-w-0 flex-1">
-                        <div class="font-semibold text-unops-secondary text-sm truncate">
-                          <span>{{ getTranslatedRoleName(stakeholder) }}</span>
-                        </div>
-                        @if (stakeholder.userName) {
-                          <div class="text-xs text-unops-neutral-600 truncate" [title]="stakeholder.userName">
-                            {{ stakeholder.userName }}
-                          </div>
-                        }
-                      </div>
-                    </div>
+                @if (stakeholder.isNormallyResponsible) {
+                  <div class="text-xs text-amber-700 flex items-center gap-1 flex-wrap">
+                    <i class="pi pi-map-marker"></i>
+                    <span>{{ 'label.normallyResponsibleFor' | translate }}: {{ stakeholder.countryName }}</span>
                   </div>
                 }
               </div>
@@ -296,226 +587,41 @@
         </div>
       }
 
-      <!-- Loading indicator for auto-populated stakeholders -->
-      @if (loadingAutoPopulatedStakeholders()) {
-        <div class="mb-4 p-3 bg-unops-surface-secondary rounded-unops-lg border border-unops-neutral-300">
-          <div class="flex items-center gap-2 text-unops-neutral-600">
-            <i class="pi pi-spin pi-spinner"></i>
-            <span>{{ 'message.loadingAutoPopulatedStakeholders' | translate }}</span>
-          </div>
-        </div>
-      }
-
       <!-- Empty state -->
-      @if (stakeholderCount() === 0 && !loadingAutoPopulatedStakeholders()) {
+      @if (combinedInternalStakeholders().length === 0) {
         <div class="text-center py-8 text-unops-neutral-500">
           <i class="pi pi-users text-4xl mb-3 text-unops-neutral-400"></i>
           <p>{{ 'message.noStakeholders' | translate }}</p>
         </div>
       }
-    </div>
-
-    <!-- Divider -->
-    <div class="border-t border-unops-neutral-300 pt-6"></div>
-
-    <!-- Subject Matter Experts Section -->
-    <div>
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="text-sm font-semibold text-unops-secondary flex items-center gap-2">
-          <i class="pi pi-user-edit text-unops-primary text-base"></i>
-          <span>{{ 'label.opportunity.subjectMatterExperts' | translate }}</span>
-        </h3>
-      </div>
-
-      <!-- Help text for SME section -->
-      <div class="mb-4 p-2 bg-unops-primary-container-soft border border-unops-primary-200 rounded text-xs text-unops-neutral-800">
-        <div class="flex items-start gap-2">
-          <i class="pi pi-info-circle text-unops-primary-dark mt-0.5 flex-shrink-0"></i>
-          <span>{{ 'helpText.opportunity.subjectMatterExperts' | translate }}</span>
         </div>
-      </div>
 
-      @if (smeRoles().length > 0) {
-        <div class="space-y-6">
-          @for (group of smeRolesBySubType(); track group.subType) {
-            <div>
-              <!-- SubType Header -->
-              <h4 class="text-sm font-semibold text-unops-primary mb-3 flex items-center gap-2">
-                <i class="pi pi-tag text-unops-primary"></i>
-                <span>{{ getSubTypeDisplayName(group.subType) }}</span>
-              </h4>
+        <!-- Divider -->
+        <div class="border-t border-unops-neutral-300 pt-4"></div>
 
-              <!-- Roles Grid for this SubType -->
-              <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                @for (role of group.roles; track role.id) {
-                  @if (isEditing()) {
-                    <!-- Edit Mode: Full card with checkbox and dropdown -->
-                    @if (isSmeRoleSelected(role.id) && getSmeSelectedUser(role.id)) {
-                      <!-- Selected SME Card - Enhanced visual distinction in edit mode -->
-                      <div class="bg-unops-primary-container-soft rounded-unops-lg p-3 border-2 border-unops-primary-light shadow-unops-sm">
-                        <div class="flex flex-col gap-3">
-                          <!-- Checkbox and Role Name Row -->
-                          <div class="flex items-center gap-3">
-                            <p-checkbox
-                              [binary]="true"
-                              [ngModel]="isSmeRoleSelected(role.id)"
-                              (ngModelChange)="onSmeCheckboxChange(role.id, $event)"
-                              inputId="sme-{{ role.id }}"
-                            />
-                            <label
-                              for="sme-{{ role.id }}"
-                              class="font-medium text-unops-secondary cursor-pointer flex-1"
-                            >
-                              {{ getTranslatedSmeRoleName(role) }}
-                            </label>
-                          </div>
-
-                          <!-- User Selection Dropdown -->
-                          <div>
-                            <p-select
-                              [options]="internalUsers()"
-                              optionLabel="name"
-                              [ngModel]="getSmeSelectedUser(role.id)"
-                              (ngModelChange)="onSmeUserChange(role.id, $event)"
-                              [disabled]="!isSmeRoleSelected(role.id)"
-                              [placeholder]="'label.opportunity.selectSME' | translate"
-                              [filter]="true"
-                              filterBy="name"
-                              [showClear]="true"
-                              [virtualScroll]="true"
-                              [virtualScrollItemSize]="38"
-                              class="w-full"
-                              styleClass="w-full"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    } @else {
-                      <!-- Unselected SME Card in edit mode -->
-                      <div class="bg-unops-surface-secondary rounded-unops-lg p-3 border border-unops-neutral-300">
-                        <div class="flex flex-col gap-3">
-                          <!-- Checkbox and Role Name Row -->
-                          <div class="flex items-center gap-3">
-                            <p-checkbox
-                              [binary]="true"
-                              [ngModel]="isSmeRoleSelected(role.id)"
-                              (ngModelChange)="onSmeCheckboxChange(role.id, $event)"
-                              inputId="sme-{{ role.id }}"
-                            />
-                            <label
-                              for="sme-{{ role.id }}"
-                              class="font-medium text-unops-secondary cursor-pointer flex-1"
-                            >
-                              {{ getTranslatedSmeRoleName(role) }}
-                            </label>
-                          </div>
-
-                          <!-- User Selection Dropdown -->
-                          <div>
-                            <p-select
-                              [options]="internalUsers()"
-                              optionLabel="name"
-                              [ngModel]="getSmeSelectedUser(role.id)"
-                              (ngModelChange)="onSmeUserChange(role.id, $event)"
-                              [disabled]="!isSmeRoleSelected(role.id)"
-                              [placeholder]="'label.opportunity.selectSME' | translate"
-                              [filter]="true"
-                              filterBy="name"
-                              [showClear]="true"
-                              [virtualScroll]="true"
-                              [virtualScrollItemSize]="38"
-                              class="w-full"
-                              styleClass="w-full"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    }
-                  } @else {
-                    <!-- View Mode: Compact card similar to auto-populated stakeholders -->
-                    @if (isSmeRoleSelected(role.id) && getSmeSelectedUser(role.id)) {
-                      <!-- Selected SME Card in view mode - similar to auto-populated stakeholders -->
-                      <div class="bg-unops-surface-secondary rounded-unops-md p-2.5 border border-unops-neutral-300 opacity-90">
-                        <div class="flex items-center gap-2">
-                          <p-avatar
-                            label="S"
-                            shape="circle"
-                            size="normal"
-                            styleClass="bg-blue-100 text-blue-600 flex-shrink-0"
-                          />
-                          <div class="min-w-0 flex-1">
-                            <div class="font-semibold text-unops-secondary text-sm flex items-center gap-1.5 flex-wrap">
-                              <span class="truncate">{{ getTranslatedSmeRoleName(role) }}</span>
-                            </div>
-                            @if (getSmeSelectedUser(role.id)) {
-                              <div class="text-xs text-unops-neutral-600 truncate" [title]="getSmeSelectedUser(role.id)?.name || ''">
-                                {{ getSmeSelectedUser(role.id)?.name }}
-                              </div>
-                            }
-                          </div>
-                        </div>
-                      </div>
-                    } @else {
-                      <!-- Unselected SME Card in view mode - similar to auto-populated stakeholders -->
-                      <div class="bg-unops-surface-secondary rounded-unops-md p-2.5 border border-unops-neutral-300 opacity-90">
-                        <div class="flex items-center gap-2">
-                          <p-avatar
-                            label="S"
-                            shape="circle"
-                            size="normal"
-                            styleClass="bg-unops-neutral-200 text-unops-neutral-500 flex-shrink-0"
-                          />
-                          <div class="min-w-0 flex-1">
-                            <div class="font-semibold text-unops-secondary text-sm opacity-60">
-                              <span class="truncate">{{ getTranslatedSmeRoleName(role) }}</span>
-                            </div>
-                            <div class="text-xs text-unops-neutral-500 italic">
-                              {{ 'label.opportunity.notAssigned' | translate }}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    }
-                  }
-                }
-              </div>
-            </div>
-          }
-        </div>
-      } @else {
-        <div class="text-center py-6 text-unops-neutral-500">
-          <i class="pi pi-user-edit text-3xl mb-2 text-unops-neutral-400"></i>
-          <p>{{ 'message.noSmeRolesAvailable' | translate }}</p>
-        </div>
-      }
-    </div>
-
-    <!-- Divider -->
-    <div class="border-t border-unops-neutral-300 pt-6"></div>
-
-    <!-- Relevant People Section -->
-    <div>
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold text-unops-secondary flex items-center gap-2">
-          <i class="pi pi-users text-unops-primary"></i>
-          <span>
-            {{ 'title.dst.relevantPeopleWithSkills' | translate }}
-          </span>
-        </h3>
-        <p-button
-          icon="pi pi-refresh"
-          [text]="true"
-          [rounded]="true"
-          size="small"
-          [loading]="loadingRelevantPeople()"
-          (onClick)="refreshRelevantPeople()"
-          pTooltip="{{ 'button.refresh' | translate }}"
-          tooltipPosition="left"
-        />
-      </div>
-      
-      <!-- Help Text -->
-      <div class="mb-4 p-2 bg-unops-primary-container-soft border border-unops-primary-200 rounded text-xs text-unops-neutral-800">
+        <!-- Relevant People Section -->
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-unops-secondary flex items-center gap-2">
+              <i class="pi pi-users text-unops-primary"></i>
+              <span>
+                {{ 'title.dst.relevantPeopleWithSkills' | translate }}
+              </span>
+            </h3>
+            <p-button
+              icon="pi pi-refresh"
+              [text]="true"
+              [rounded]="true"
+              size="small"
+              [loading]="loadingRelevantPeople()"
+              (onClick)="refreshRelevantPeople()"
+              pTooltip="{{ 'button.refresh' | translate }}"
+              tooltipPosition="left"
+            />
+          </div>
+          
+          <!-- Help Text -->
+          <div class="mb-4 p-2 bg-unops-primary-container-soft border border-unops-primary-200 rounded text-xs text-unops-neutral-800">
         <div class="flex items-start gap-2">
           <i class="pi pi-info-circle text-unops-primary-dark mt-0.5 flex-shrink-0"></i>
           <span>{{ 'helpText.dst.relevantPeople' | translate }}</span>
@@ -622,7 +728,7 @@
                   </div>
                 }
 
-                <!-- Expertise Tags -->
+                <!-- Expertise Tags (from relevantPeople API) -->
                 @if (person.expertise && person.expertise.length > 0) {
                   <div class="flex items-start gap-2 pt-2">
                     <i class="pi pi-star text-unops-neutral-500 mt-0.5 flex-shrink-0"></i>
@@ -641,6 +747,8 @@
           }
         </div>
       }
+        </div>
+      </div>
     </div>
   </div>
   
@@ -763,6 +871,73 @@
       [label]="'button.confirm' | translate"
       severity="primary"
       (onClick)="confirmStakeholderDialog()"
+    />
+  </ng-template>
+</p-dialog>
+
+<!-- Add Collaborator Dialog -->
+<p-dialog
+  [header]="'title.addCollaborator' | translate"
+  [(visible)]="showCollaboratorDialog"
+  [modal]="true"
+  [appendTo]="'body'"
+  [style]="{ width: '35rem' }"
+>
+  <div class="space-y-4">
+    <!-- User Selection -->
+    <div>
+      <p-floatlabel variant="on">
+        <p-select
+          id="collaboratorUser"
+          [formControl]="collaboratorUserControl"
+          [options]="availableCollaboratorUsers()"
+          optionLabel="name"
+          [filter]="true"
+          filterBy="name"
+          [showClear]="true"
+          [appendTo]="'body'"
+          [virtualScroll]="true"
+          [virtualScrollItemSize]="38"
+          class="w-full"
+        />
+        <label for="collaboratorUser">{{ 'label.user' | translate }} *</label>
+      </p-floatlabel>
+    </div>
+
+    <!-- Expertise Selection (Multi-select) -->
+    <div>
+      <p-floatlabel variant="on">
+        <p-multiselect
+          id="collaboratorExpertise"
+          [formControl]="collaboratorExpertiseControl"
+          [options]="collaboratorExpertises()"
+          optionLabel="name"
+          optionValue="id"
+          [filter]="true"
+          filterBy="name"
+          [appendTo]="'body'"
+          [showClear]="true"
+          [placeholder]="'label.selectExpertise' | translate"
+          class="w-full"
+          styleClass="w-full"
+        />
+        <label for="collaboratorExpertise">{{ 'label.expertiseIn' | translate }} *</label>
+      </p-floatlabel>
+      <p class="text-xs text-unops-neutral-600 mt-1">{{ 'helpText.expertiseSelection' | translate }}</p>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button
+      [label]="'button.cancel' | translate"
+      severity="secondary"
+      (onClick)="cancelCollaboratorDialog()"
+    />
+    <p-button
+      [label]="'button.confirm' | translate"
+      severity="primary"
+      (onClick)="confirmCollaboratorDialog()"
+      [disabled]="!collaboratorUserControl.value"
     />
   </ng-template>
 </p-dialog>

@@ -517,7 +517,10 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
         
         /// <summary>
         /// Checks if the current user is a stakeholder (team member) of an Opportunity.
-        /// This includes both directly assigned stakeholders and users related through OrgUnit role assignments (auto-populated).
+        /// This includes:
+        /// 1. Opportunity Collaborators (Opportunity Development Team - always have edit access)
+        /// 2. Directly assigned stakeholders
+        /// 3. Users related through OrgUnit role assignments (auto-populated)
         /// </summary>
         /// <param name="opportunityId">The opportunity ID to check</param>
         /// <returns>True if the user is a team member</returns>
@@ -543,7 +546,17 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
             
             try
             {
-                // 1. Check if user is directly assigned as a stakeholder (UserId is set, OrganizationHierarchyId is null)
+                // 1. Check if user is an Opportunity Collaborator (Opportunity Development Team)
+                // Collaborators always have edit access to all opportunity fields
+                var isCollaborator = await _context.Set<UNOPS.PAO.Domain.Entities.OpportunityCollaborator>()
+                    .AnyAsync(oc => oc.OpportunityId == opportunityId && oc.UserId == currentUserId);
+                
+                if (isCollaborator)
+                {
+                    return true;
+                }
+                
+                // 2. Check if user is directly assigned as a stakeholder (UserId is set, OrganizationHierarchyId is null)
                 var isDirectStakeholder = await _context.Set<UNOPS.PAO.Domain.Entities.OpportunityStakeholder>()
                     .AnyAsync(os => os.OpportunityId == opportunityId 
                         && os.UserId == currentUserId 
@@ -554,7 +567,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                     return true;
                 }
                 
-                // 2. Check if user is related through OrgUnit role assignments (auto-populated stakeholders)
+                // 3. Check if user is related through OrgUnit role assignments (auto-populated stakeholders)
                 // Get all auto-populated stakeholders for this opportunity (OrganizationHierarchyId is set)
                 var autoPopulatedStakeholders = await _context.Set<UNOPS.PAO.Domain.Entities.OpportunityStakeholder>()
                     .Where(os => os.OpportunityId == opportunityId && os.OrganizationHierarchyId.HasValue)
