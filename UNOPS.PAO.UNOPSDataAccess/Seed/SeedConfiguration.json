@@ -77,15 +77,6 @@
         },
         {
             "order": 8,
-            "name": "WorkflowStages",
-            "type": "seeder",
-            "className": "WorkflowStageSeeder",
-            "methodName": "SeedWorkflowStagesAsync",
-            "filePath": "Seeders/WorkflowStageSeeder.cs",
-            "description": "Workflow stages for entities"
-        },
-        {
-            "order": 9,
             "name": "EntityRoles",
             "type": "seeder",
             "className": "EntityRoleSeeder",
@@ -173,6 +164,15 @@
             "methodName": "SeedUnitsAsync",
             "filePath": "Seeders/UnitSeeder.cs",
             "description": "Units of measurement (Days, Number, Litres, etc.)"
+        },
+        {
+            "order": 18,
+            "name": "CollaboratorExpertises",
+            "type": "seeder",
+            "className": "CollaboratorExpertiseSeeder",
+            "methodName": "SeedCollaboratorExpertisesAsync",
+            "filePath": "Seeders/CollaboratorExpertiseSeeder.cs",
+            "description": "Collaborator expertise types for opportunity team members"
         },
         {
             "order": 19,

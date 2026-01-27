@@ -1,3 +1,4 @@
+using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Models.Shared;
 
 namespace UNOPS.PAO.Models;
@@ -27,8 +28,21 @@ public class OpportunityListModel
     
     // ========== STATUS & WORKFLOW ==========
     public string? Status { get; set; }
-    public int? WorkflowStageId { get; set; }
-    public string? WorkflowStageName { get; set; }
+    
+    /// <summary>
+    /// Current workflow stage. Values: "IDENTIFY &amp; PROFILE", "GO", "NO GO"
+    /// </summary>
+    public string? Stage { get; set; }
+    
+    /// <summary>
+    /// Workflow status for approval tracking.
+    /// </summary>
+    public WorkflowStatus WorkflowStatus { get; set; }
+    
+    /// <summary>
+    /// Indicates if the opportunity is in an approval workflow.
+    /// </summary>
+    public bool IsInWorkflow { get; set; }
     
     // ========== ORGANIZATION ==========
     public int? ResponsibleOrgUnitId { get; set; }
@@ -79,10 +93,10 @@ public class OpportunityListModel
             tags.Add(new EntityTagModel { Tag = Status, Color = statusColor });
         }
         
-        if (!string.IsNullOrEmpty(WorkflowStageName) && !string.IsNullOrEmpty(Status) && Status != "Closed" && Status != "Archived")
+        if (!string.IsNullOrEmpty(Stage) && !string.IsNullOrEmpty(Status) && Status != "Closed" && Status != "Archived")
         {
             var workflowColor = "bg-badge-warn text-badge-warn";
-            tags.Add(new EntityTagModel { Tag = WorkflowStageName, Color = workflowColor });
+            tags.Add(new EntityTagModel { Tag = Stage, Color = workflowColor });
         }
         
         return tags;

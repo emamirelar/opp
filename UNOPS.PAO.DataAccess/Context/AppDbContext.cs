@@ -29,7 +29,6 @@ public class AppDbContext : AuditableDbContext<int, int>
 
     public DbSet<EligibleEntity> EligibleEntities { get; set; }
 
-    public DbSet<WorkflowLog> WorkflowLogs { get; set; }
     public DbSet<EntityUserRole> EntityUserRoles { get; set; }
 
     public DbSet<Contact> Contacts { get; set; }
@@ -68,9 +67,9 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<OpportunityUNCFIndicator> OpportunityUNCFIndicators { get; set; }
     public DbSet<OpportunityUNOPSMission> OpportunityUNOPSMissions { get; set; }
     public DbSet<OpportunityInteraction> OpportunityInteractions { get; set; }
+    public DbSet<OpportunityCollaborator> OpportunityCollaborators { get; set; }
 
     // Infrastructure entities
-    public DbSet<WorkflowStage> WorkflowStages { get; set; }
     public DbSet<EntityRole> EntityRoles { get; set; }
     public DbSet<EntityRolePerson> EntityRolePersons { get; set; }
     public DbSet<AuditLog> AuditLogs { get; set; }
@@ -368,11 +367,6 @@ public class AppDbContext : AuditableDbContext<int, int>
         // Opportunity entity configuration
         modelBuilder.Entity<Opportunity>(entity =>
         {
-            entity.HasOne(x => x.WorkflowStage)
-                .WithMany()
-                .HasForeignKey(x => x.WorkflowStageId)
-                .IsRequired(false);
-                
             entity.HasOne(x => x.ResponsibleOrgUnit)
                 .WithMany()
                 .HasForeignKey(x => x.ResponsibleOrgUnitId)
@@ -388,7 +382,6 @@ public class AppDbContext : AuditableDbContext<int, int>
                 
             entity.HasIndex(x => x.Name);
             entity.HasIndex(x => x.Status);
-            entity.HasIndex(x => x.WorkflowStageId);
         });
 
         // OpportunityFundingPartner configuration
@@ -445,6 +438,29 @@ public class AppDbContext : AuditableDbContext<int, int>
                 .IsRequired(false);
                 
             entity.HasIndex(x => x.OpportunityId);
+        });
+
+        // OpportunityCollaborator configuration (Opportunity Development Team)
+        modelBuilder.Entity<OpportunityCollaborator>(entity =>
+        {
+            entity.HasOne(x => x.Opportunity)
+                .WithMany(x => x.Collaborators)
+                .HasForeignKey(x => x.OpportunityId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.AddedByUser)
+                .WithMany()
+                .HasForeignKey(x => x.AddedBy)
+                .OnDelete(DeleteBehavior.SetNull)
+                .IsRequired(false);
+                
+            entity.HasIndex(x => x.OpportunityId);
+            entity.HasIndex(x => new { x.OpportunityId, x.UserId }).IsUnique();
         });
 
         // OpportunityDeliverable configuration
@@ -575,12 +591,6 @@ public class AppDbContext : AuditableDbContext<int, int>
             entity.HasIndex(x => x.OpportunityId);
             entity.HasIndex(x => x.OpportunityUNCFOutcomeId);
             entity.HasIndex(x => x.UNCFIndicatorId);
-        });
-
-        // WorkflowStage configuration
-        modelBuilder.Entity<WorkflowStage>(entity =>
-        {
-            entity.HasIndex(x => new { x.EntityType, x.Order });
         });
 
         // EntityRole configuration

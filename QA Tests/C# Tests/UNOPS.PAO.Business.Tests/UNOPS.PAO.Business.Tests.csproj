@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="coverlet.msbuild" Version="6.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" Version="6.12.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="Moq" Version="4.20.70" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <!-- Path C: Opportunity tests now enabled - backend implemented with dependency injection -->
+  <!-- Keep other test files excluded until their dependencies are implemented -->
+  <ItemGroup>
+    <Compile Remove="AI\AIContextAwarenessTests.cs" />
+    <None Include="AI\AIContextAwarenessTests.cs" />
+    <Compile Remove="Authorization\RolePermissionComprehensiveTests.cs" />
+    <None Include="Authorization\RolePermissionComprehensiveTests.cs" />
+    <Compile Remove="Performance\RateLimitingTests.cs" />
+    <None Include="Performance\RateLimitingTests.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Updated paths: go up 3 levels (UNOPS.PAO.Business.Tests → C# Tests → QA Tests → root) -->
+    <ProjectReference Include="..\..\..\UNOPS.PAO.Business\UNOPS.PAO.Business.csproj" />
+    <ProjectReference Include="..\..\..\UNOPS.PAO.UNOPSBusiness\UNOPS.PAO.UNOPSBusiness.csproj" />
+    <ProjectReference Include="..\..\..\UNOPS.PAO.Domain\UNOPS.PAO.Domain.csproj" />
+    <ProjectReference Include="..\..\..\UNOPS.PAO.DataAccess\UNOPS.PAO.DataAccess.csproj" />
+  </ItemGroup>
+
+</Project>

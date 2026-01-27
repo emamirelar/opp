@@ -39,6 +39,3 @@ export * from './media/picture/picture-editor/picture-editor.component';
 export * from './navigation/go-back/go-back.component';
 export * from './navigation/responsive-tabs/responsive-tabs.component';
 
-// Workflows
-export * from './workflows/workflow/workflow.component';
-

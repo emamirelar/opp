@@ -1096,10 +1096,10 @@
           "description": "Partner reference number (max 255 characters)"
         },
         {
-          "name": "WorkflowStageId",
-          "dataType": "int",
+          "name": "Stage",
+          "dataType": "string",
           "required": false,
-          "description": "Foreign key to workflow stage"
+          "description": "Current workflow stage"
         },
         {
           "name": "ResponsibleOrgUnitId",
@@ -1246,10 +1246,10 @@
           "description": "Status filter"
         },
         {
-          "name": "WorkflowStageId",
-          "dataType": "int",
+          "name": "Stage",
+          "dataType": "string",
           "required": false,
-          "description": "Workflow stage ID filter"
+          "description": "Workflow stage filter"
         },
         {
           "name": "ResponsibleOrgUnitId",
@@ -4489,16 +4489,10 @@
             "description": "Opportunity status (Draft, Active, Closed, etc.)"
           },
           {
-            "name": "WorkflowStageId",
-            "dataType": "int",
-            "required": false,
-            "description": "Foreign key to workflow stage"
-          },
-          {
-            "name": "WorkflowStageName",
+            "name": "Stage",
             "dataType": "string",
             "required": false,
-            "description": "Computed workflow stage name"
+            "description": "Current workflow stage"
           },
           {
             "name": "ResponsibleOrgUnitId",
@@ -4915,13 +4909,13 @@
             "description": "JSON array of filter objects. Each filter specifies a field, operator, value, and how to combine with other filters.",
             "structure": "[{\"field\": \"fieldName\", \"operator\": \"operatorName\", \"value\": \"filterValue\", \"logicalOperator\": \"AND|OR\"}]",
             "availableOperators": ["is", "is not", "like", "not like", "greater than", "less than", "greater than or equal", "less than or equal", "this week", "this month", "this year"],
-            "commonFields": ["name", "description", "status", "workflowStageId", "workflowStageName", "responsibleOrgUnitId", "proposedInitiativeTypeId", "targetSigningDate", "targetDeliveryDate", "initiativeBudgetUSD", "isPooledFunding", "fundingPartners.partner.name", "clientPartners.partner.name", "countries.country.name", "sdGs.sdg.name", "createdDate", "lastModifiedDate"],
+            "commonFields": ["name", "description", "status", "stage", "responsibleOrgUnitId", "proposedInitiativeTypeId", "targetSigningDate", "targetDeliveryDate", "initiativeBudgetUSD", "isPooledFunding", "fundingPartners.partner.name", "clientPartners.partner.name", "countries.country.name", "sdGs.sdg.name", "createdDate", "lastModifiedDate"],
             "workflowStages": ["Prospecting", "Pipeline", "Negotiation", "Won", "Lost"],
             "examples": [
-              {"scenario": "Opportunities in Pipeline stage", "filters": "[{\"field\": \"workflowStageName\", \"operator\": \"is\", \"value\": \"Pipeline\"}]"},
+              {"scenario": "Opportunities in Pipeline stage", "filters": "[{\"field\": \"stage\", \"operator\": \"is\", \"value\": \"Pipeline\"}]"},
               {"scenario": "Opportunities with UNICEF as funding partner", "filters": "[{\"field\": \"fundingPartners.partner.name\", \"operator\": \"like\", \"value\": \"UNICEF\"}]"},
               {"scenario": "Opportunities created this month", "filters": "[{\"field\": \"createdDate\", \"operator\": \"this month\", \"value\": \"\"}]"},
-              {"scenario": "Won opportunities with budget > $1M", "filters": "[{\"field\": \"workflowStageName\", \"operator\": \"is\", \"value\": \"Won\", \"logicalOperator\": \"AND\"}, {\"field\": \"initiativeBudgetUSD\", \"operator\": \"greater than\", \"value\": \"1000000\"}]"}
+              {"scenario": "Won opportunities with budget > $1M", "filters": "[{\"field\": \"stage\", \"operator\": \"is\", \"value\": \"Won\", \"logicalOperator\": \"AND\"}, {\"field\": \"initiativeBudgetUSD\", \"operator\": \"greater than\", \"value\": \"1000000\"}]"}
             ]
           },
           "parameters": [

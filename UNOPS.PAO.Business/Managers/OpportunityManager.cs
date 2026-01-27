@@ -83,7 +83,7 @@ public class OpportunityManager : IOpportunityManager
     {
         var includes = new[]
         {
-            "WorkflowStage",
+            // "WorkflowStage" removed - now using Stage property instead
             "ResponsibleOrgUnit",
             "ProposedInitiativeType",
             "FundingPartners.Partner",
@@ -91,10 +91,12 @@ public class OpportunityManager : IOpportunityManager
             "FundingPartners.Document",
             "ClientPartners.Partner",
             "ClientPartners.Document",
-            "Stakeholders.User",
+            "Stakeholders.User.UserProfile",
             "Stakeholders.Contact",
             "Stakeholders.EntityRole",
             "Stakeholders.OrganizationHierarchy",
+            "Collaborators.User.UserProfile",
+            "Collaborators.AddedByUser.UserProfile",
             "Deliverables.Output.Unit",
             "Deliverables.Output.ProjectCategory",
             "Countries.Country",
@@ -255,7 +257,6 @@ public class OpportunityManager : IOpportunityManager
     public async Task<IEnumerable<OpportunityModel>> GetAllOpportunitiesAsync()
     {
         var entities = await context.Opportunities
-            .Include(o => o.WorkflowStage)
             .Include(o => o.ResponsibleOrgUnit)
             .Where(o => !o.IsDeleted)
             .ToListAsync();
@@ -857,7 +858,8 @@ public class OpportunityManager : IOpportunityManager
     {
         var entity = await opportunityRepository.GetByIdAsync(id, new[]
         {
-            nameof(Opportunity.Stakeholders)
+            nameof(Opportunity.Stakeholders),
+            nameof(Opportunity.Collaborators)
         });
 
         if (entity == null)
@@ -971,6 +973,39 @@ public class OpportunityManager : IOpportunityManager
             }
         }
 
+        // Update Opportunity Manager (from stakeholders with "Opportunity Manager" role)
+        if (request.OpportunityManagerId.HasValue)
+        {
+            // Get the Opportunity Manager role
+            var opportunityManagerRole = await context.Set<EntityRole>()
+                .FirstOrDefaultAsync(er => er.Name != null && er.Name.ToLower().Contains("manager") && er.EntityType == "Opportunity");
+            
+            if (opportunityManagerRole != null)
+            {
+                // Remove existing opportunity manager stakeholder
+                var existingManager = entity.Stakeholders?
+                    .FirstOrDefault(s => s.EntityRoleId == opportunityManagerRole.Id && s.UserId.HasValue);
+                
+                if (existingManager != null)
+                {
+                    entity.Stakeholders!.Remove(existingManager);
+                    context.Set<OpportunityStakeholder>().Remove(existingManager);
+                }
+                
+                // Add new opportunity manager stakeholder
+                entity.Stakeholders ??= new List<OpportunityStakeholder>();
+                entity.Stakeholders.Add(new OpportunityStakeholder
+                {
+                    OpportunityId = id,
+                    UserId = request.OpportunityManagerId.Value,
+                    EntityRoleId = opportunityManagerRole.Id,
+                    IsInternal = true,
+                    StakeholderType = "Internal",
+                    OrganizationHierarchyId = null
+                });
+            }
+        }
+
         // Auto-populate stakeholders from EntityUserRoles if org unit changed
         if (orgUnitChanged && request.ResponsibleOrgUnitId.HasValue)
         {
@@ -1014,33 +1049,45 @@ public class OpportunityManager : IOpportunityManager
             return;
         }
 
-        // Get EntityUserRoles for this org unit
+        // Build list of org units to get EntityUserRoles from
+        var orgUnitIdsForRoles = new List<int> { orgUnitId };
+
+        // ALWAYS add normally responsible org units (if different from selected)
+        // These are the org units normally responsible for implementation countries
+        var normallyResponsibleOrgUnits = await GetNormallyResponsibleOrgUnitsAsync(entity.Id, orgUnitId);
+        orgUnitIdsForRoles.AddRange(normallyResponsibleOrgUnits);
+
+        // Get EntityUserRoles for this org unit and normally responsible org units
         var entityUserRoles = await context.EntityUserRoles
             .Where(eur => eur.EntityType == "OrganizationHierarchy" 
-                       && eur.EntityId == orgUnitId
+                       && orgUnitIdsForRoles.Contains(eur.EntityId)
                        && eur.EntityRoleId.HasValue
                        && !eur.IsDeleted)
-            .Select(eur => eur.EntityRoleId!.Value)
+            .Select(eur => new { eur.EntityId, EntityRoleId = eur.EntityRoleId!.Value })
             .Distinct()
             .ToListAsync();
 
+        // Create a set of valid (OrgUnitId, RoleId) combinations
+        var validCombinations = entityUserRoles
+            .Select(e => (e.EntityId, e.EntityRoleId))
+            .ToHashSet();
+
         // Find auto-populated stakeholders to remove:
-        // - Those from a different org unit (org unit changed)
-        // - Those with roles no longer in EntityUserRoles
+        // - Those not in the valid combinations
         var autoPopulatedToRemove = existingAutoPopulated
             .Where(existing => 
-                existing.OrganizationHierarchyId != orgUnitId || 
-                !entityUserRoles.Contains(existing.EntityRoleId))
+                !existing.OrganizationHierarchyId.HasValue ||
+                !validCombinations.Contains((existing.OrganizationHierarchyId.Value, existing.EntityRoleId)))
             .ToList();
 
-        // Find roles to add (exist in EntityUserRoles but not in existing auto-populated for this org unit)
-        var existingRolesForOrgUnit = existingAutoPopulated
-            .Where(s => s.OrganizationHierarchyId == orgUnitId)
-            .Select(s => s.EntityRoleId)
-            .ToList();
+        // Find combinations to add (exist in EntityUserRoles but not in existing auto-populated)
+        var existingCombinations = existingAutoPopulated
+            .Where(s => s.OrganizationHierarchyId.HasValue)
+            .Select(s => (s.OrganizationHierarchyId!.Value, s.EntityRoleId))
+            .ToHashSet();
 
-        var rolesToAdd = entityUserRoles
-            .Where(roleId => !existingRolesForOrgUnit.Contains(roleId))
+        var combinationsToAdd = validCombinations
+            .Where(combo => !existingCombinations.Contains(combo))
             .ToList();
 
         // Remove stakeholders that are no longer needed
@@ -1051,13 +1098,13 @@ public class OpportunityManager : IOpportunityManager
         }
 
         // Add new auto-populated stakeholders
-        foreach (var roleId in rolesToAdd)
+        foreach (var (targetOrgUnitId, roleId) in combinationsToAdd)
         {
             entity.Stakeholders.Add(new OpportunityStakeholder
             {
                 OpportunityId = entity.Id,
                 EntityRoleId = roleId,
-                OrganizationHierarchyId = orgUnitId,
+                OrganizationHierarchyId = targetOrgUnitId,
                 UserId = null, // No specific user - auto-populated
                 IsInternal = true,
                 StakeholderType = "Internal",
@@ -1066,12 +1113,54 @@ public class OpportunityManager : IOpportunityManager
         }
     }
 
+    /// <summary>
+    /// Gets normally responsible org unit IDs for countries where the selected responsible org unit 
+    /// is NOT normally responsible. Returns org units (Type = "OrgUnit", level 3) from country hierarchies
+    /// that differ from the selected org unit.
+    /// </summary>
+    protected virtual async Task<List<int>> GetNormallyResponsibleOrgUnitsAsync(int opportunityId, int selectedOrgUnitId)
+    {
+        // Get implementation country IDs for this opportunity
+        var countryIds = await context.Set<OpportunityCountry>()
+            .Where(oc => oc.OpportunityId == opportunityId)
+            .Select(oc => oc.CountryId)
+            .ToListAsync();
+
+        if (!countryIds.Any())
+            return new List<int>();
+
+        // Get org unit relationships for these countries
+        var countryOrgUnitIds = await context.OrganizationUnitRelationships
+            .Where(r => 
+                r.EntityType == "Country" 
+                && countryIds.Contains(r.EntityId)
+                && !r.IsDeleted)
+            .Select(r => r.OrganizationHierarchyId)
+            .Distinct()
+            .ToListAsync();
+
+        if (!countryOrgUnitIds.Any())
+            return new List<int>();
+
+        // Get org units that are of type OrgUnit (level 3) and different from selected
+        var normallyResponsibleOrgUnits = await context.OrganizationHierarchies
+            .Where(oh => countryOrgUnitIds.Contains(oh.Id) 
+                      && oh.Type == Domain.Enums.OrganizationUnitType.OrgUnit
+                      && oh.Id != selectedOrgUnitId
+                      && !oh.IsDeleted)
+            .Select(oh => oh.Id)
+            .Distinct()
+            .ToListAsync();
+
+        return normallyResponsibleOrgUnits;
+    }
+
     public async Task<OpportunityModel> UpdateWhereSectionAsync(int id, WhereSectionRequest request)
     {
-        var entity = await opportunityRepository.GetByIdAsync(id, new[]
-        {
-            nameof(Opportunity.Countries)
-        });
+        var entity = await context.Opportunities
+            .Include(o => o.Countries)
+            .Include(o => o.Stakeholders)  // Include stakeholders for auto-population
+            .FirstOrDefaultAsync(o => o.Id == id);
 
         if (entity == null)
         {
@@ -1103,6 +1192,15 @@ public class OpportunityManager : IOpportunityManager
         }
 
         await context.SaveChangesAsync();
+
+        // Auto-populate stakeholders from normally responsible org units if responsible org unit is set
+        // This ensures that when countries change, the normally responsible org units' role holders
+        // are automatically added as internal stakeholders
+        if (entity.ResponsibleOrgUnitId.HasValue)
+        {
+            await AutoPopulateStakeholdersFromOrgUnitAsync(entity, entity.ResponsibleOrgUnitId.Value);
+            await context.SaveChangesAsync();
+        }
 
         // Reload with all includes
         return await GetOpportunityAsync(entity.Id) ?? throw new InvalidOperationException("Failed to reload opportunity after update");

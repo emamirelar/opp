@@ -15,7 +15,9 @@ public class OpportunityMappingProfile : Profile
         // =================================================================
         CreateMap<Opportunity, OpportunityModel>()
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
-            .ForMember(dest => dest.WorkflowStageName, opt => opt.MapFrom(src => src.WorkflowStage != null ? src.WorkflowStage.Name : null))
+            .ForMember(dest => dest.Stage, opt => opt.MapFrom(src => src.Stage))
+            .ForMember(dest => dest.WorkflowStatus, opt => opt.MapFrom(src => src.WorkflowStatus))
+            .ForMember(dest => dest.IsInWorkflow, opt => opt.MapFrom(src => src.IsInWorkflow))
             .ForMember(dest => dest.ResponsibleOrgUnitName, opt => opt.MapFrom(src => src.ResponsibleOrgUnit != null ? src.ResponsibleOrgUnit.Name : null))
             .ForMember(dest => dest.ResponsibleOrgUnit, opt => opt.MapFrom(src => src.ResponsibleOrgUnit))
             .ForMember(dest => dest.ProposedInitiativeTypeName, opt => opt.MapFrom(src => src.ProposedInitiativeType != null ? src.ProposedInitiativeType.Name : null))

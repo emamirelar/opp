@@ -5,7 +5,13 @@ public class OpportunityRequest
     public required string Name { get; set; }
     public required string Description { get; set; }
     public string? PartnerReference { get; set; }
-    public int? WorkflowStageId { get; set; }
+    
+    /// <summary>
+    /// Initial workflow stage. Defaults to "IDENTIFY &amp; PROFILE" if not provided.
+    /// Values: "IDENTIFY &amp; PROFILE", "GO", "NO GO"
+    /// </summary>
+    public string? Stage { get; set; }
+    
     public int? ResponsibleOrgUnitId { get; set; }
     public int? ProposedInitiativeTypeId { get; set; }
     public int? DeliveryModality { get; set; }

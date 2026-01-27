@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { DocumentUploadComponent } from './document-upload.component';
 import { FeedbackDialogService } from '@shared/services/ui/feedback-dialog.service';
@@ -14,6 +15,7 @@ describe('DocumentUploadComponent', () => {
     await TestBed.configureTestingModule({
       imports: [
         DocumentUploadComponent,
+        HttpClientTestingModule,
         TranslateModule.forRoot()
       ],
       providers: [

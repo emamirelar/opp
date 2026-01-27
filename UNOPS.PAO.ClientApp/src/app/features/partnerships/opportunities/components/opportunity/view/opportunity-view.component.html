@@ -105,9 +105,9 @@
                   [severity]="getStatusSeverity(opportunity()?.status)"
                   styleClass="whitespace-nowrap"
                 />
-                @if (opportunity()?.workflowStageName) {
+                @if (opportunity()?.stage) {
                   <p-badge
-                    [value]="opportunity()?.workflowStageName || ''"
+                    [value]="opportunity()?.stage || ''"
                     severity="warn"
                     styleClass="whitespace-nowrap"
                   />
@@ -157,6 +157,18 @@
               }
             </div>
             </div>
+          </div>
+
+          <!-- Workflow Component -->
+          <div class="px-unops-md md:px-unops-2xl py-4 border-t border-unops-neutral-300 bg-unops-surface-secondary">
+            <app-stage-workflow
+              #stageWorkflowComponent
+              [entityName]="'opportunity'"
+              [entityId]="opportunity()?.id?.toString() ?? ''"
+              [canChangeStage]="canChangeStage()"
+              [feedbackDialogService]="feedbackDialogService"
+              (onStageChangeSuccess)="handleStageChangeSuccess()"
+            />
           </div>
 
           <!-- Section Navigation - Dropdown on mobile, Chips on desktop -->
@@ -397,25 +409,6 @@
             />
           </div>
 
-          <!-- Team Section - UNOPS Team & Internal Stakeholders -->
-          <div 
-            id="section-team"
-            class="group relative section-hover-container"
-            [class.section-editable]="canUpdate() && !sectionsWithUnsavedChanges().has('team')"
-            (click)="handleSectionClick('team', $event)"
-          >
-            <app-opportunity-team-section
-              #teamSection
-              [opportunity]="opportunity()!"
-              [canUpdate]="canUpdate()"
-              [suggestions]="teamSuggestions()"
-              [sectionSaveTrigger]="sectionSaveTrigger()"
-              (opportunityUpdated)="handleOpportunityUpdate($event)"
-              (changesDetected)="handleSectionChangesDetected('team')"
-              (changesSavedOrDiscarded)="handleSectionChangesSaved('team')"
-            />
-          </div>
-
           <!-- WHERE Section - Geography -->
           <div 
             id="section-where"
@@ -489,6 +482,25 @@
               [opportunity]="opportunity()!"
               [canUpdate]="canUpdate()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
+            />
+          </div>
+
+          <!-- Team Section - UNOPS Team & Internal Stakeholders -->
+          <div 
+            id="section-team"
+            class="group relative section-hover-container"
+            [class.section-editable]="canUpdate() && !sectionsWithUnsavedChanges().has('team')"
+            (click)="handleSectionClick('team', $event)"
+          >
+            <app-opportunity-team-section
+              #teamSection
+              [opportunity]="opportunity()!"
+              [canUpdate]="canUpdate()"
+              [suggestions]="teamSuggestions()"
+              [sectionSaveTrigger]="sectionSaveTrigger()"
+              (opportunityUpdated)="handleOpportunityUpdate($event)"
+              (changesDetected)="handleSectionChangesDetected('team')"
+              (changesSavedOrDiscarded)="handleSectionChangesSaved('team')"
             />
           </div>
 

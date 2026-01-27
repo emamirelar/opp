@@ -42,6 +42,9 @@ import { DropdownModule } from 'primeng/dropdown';
 import { SelectModule } from 'primeng/select';
 import { MarkdownModule } from 'ngx-markdown';
 
+// Workflow component
+import { StageWorkflowComponent } from '@shared/reusables/components/workflow/components/stage-workflow/stage-workflow.component';
+
 // Services
 import { FeedbackDialogService } from '@shared/services/ui';
 import { PermissionUtilityService } from '@core/services/auth';
@@ -104,6 +107,7 @@ import { ValuesService } from '@app/shared/services/api/values.service';
     DropdownModule,
     SelectModule,
     MarkdownModule,
+    StageWorkflowComponent,
     OpportunityCollaborationComponent,
     OpportunityAnalysisSectionComponent,
     OpportunityOverviewSectionComponent,
@@ -203,6 +207,8 @@ export class OpportunityViewComponent
   chipsContainer?: ElementRef;
   @ViewChild('chipsSizerDiv', { read: ElementRef })
   chipsSizerDiv?: ElementRef;
+  @ViewChild('stageWorkflowComponent')
+  stageWorkflowComponent?: StageWorkflowComponent;
   @ViewChild('relatedItemsComponent')
   relatedItemsComponent?: OpportunityRelatedItemsComponent;
   @ViewChild('risksSection')
@@ -244,13 +250,13 @@ export class OpportunityViewComponent
     { id: 'what', label: 'What', icon: 'pi-briefcase' },
     { id: 'why', label: 'Why', icon: 'pi-lightbulb' },
     { id: 'who', label: 'Who', icon: 'pi-users' },
-    { id: 'team', label: 'label.opportunity.team', icon: 'pi-building' },
     { id: 'where', label: 'Where', icon: 'pi-globe' },
     { id: 'when', label: 'When', icon: 'pi-calendar' },
     { id: 'risks', label: 'Risks', icon: 'pi-chart-line' },
     { id: 'related', label: 'Related', icon: 'pi-link' },
     { id: 'collaboration', label: 'Comments', icon: 'pi-comments' },
     { id: 'statement', label: 'Statement', icon: 'pi-file-edit' },
+    { id: 'team', label: 'label.opportunity.team', icon: 'pi-building' },
   ];
 
   // Chip overflow management
@@ -274,12 +280,19 @@ export class OpportunityViewComponent
     return this.permissionUtilityService.canUpdate(this.recordPermissions());
   });
 
+  // Computed permission for changing workflow stage
+  canChangeStage = computed(() => {
+    const opp = this.opportunity();
+    // Check if user has update permissions (required for workflow actions)
+    return this.canUpdate() && opp?.id !== undefined;
+  });
+
   // Computed properties for conditional display
   showAdditionalInfo = computed(() => {
     const data = this.opportunity();
     if (!data) return false;
     return (
-      data.workflowStageName ||
+      data.stage ||
       data.responsibleOrgUnitName ||
       data.partnershipAgreementReference ||
       data.initiativeBudgetUSD ||
@@ -318,7 +331,7 @@ export class OpportunityViewComponent
     if (targetDate >= now) return false;
 
     // Check if opportunity is in Identify & Profile or Decide stage
-    const stageName = opp.workflowStageName?.toLowerCase() || '';
+    const stageName = opp.stage?.toLowerCase() || '';
     const isInEarlyStage = 
       stageName.includes('identify') || 
       stageName.includes('profile') || 
@@ -1259,6 +1272,21 @@ export class OpportunityViewComponent
   handleSectionSaveComplete(): void {
     // Increment the section save trigger to notify WHAT section to refresh framework status
     this.sectionSaveTrigger.update(v => v + 1);
+  }
+
+  /**
+   * @description Handle successful workflow stage change
+   * Reloads opportunity data to reflect the new stage and workflow status
+   */
+  handleStageChangeSuccess(): void {
+    // Reload the opportunity to get the updated stage and workflow status
+    this.reloadOpportunity();
+    
+    // Show success feedback
+    this.feedbackDialogService.showSuccessToast({
+      summary: this.translateService.instant('message.success'),
+      detail: this.translateService.instant('message.workflow.submitSuccess')
+    });
   }
 
   /**

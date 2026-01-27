@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync, flushMicrotasks, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { ExportGoogleSheetService } from './export-google-sheet.service';
 import { ConfigurationService } from '@core/services/configuration';
@@ -42,7 +42,7 @@ describe('ExportGoogleSheetService', () => {
 
   beforeEach(() => {
     mockConfigService = jasmine.createSpyObj('ConfigurationService', ['getConfig']);
-    mockFeedbackService = jasmine.createSpy('FeedbackDialogService', ['showErrorToast', 'showSuccessToast']);
+    mockFeedbackService = jasmine.createSpyObj('FeedbackDialogService', ['showErrorToast', 'showSuccessToast']);
     
     mockConfigService.getConfig.and.returnValue({
       googleClientId: 'test-client-id',
@@ -148,8 +148,9 @@ describe('ExportGoogleSheetService', () => {
   });
 
   describe('API initialization', () => {
-    it('should initialize Sheets API with correct config', () => {
+    it('should initialize Sheets API with correct config', fakeAsync(() => {
       service['initSheetsAPI']();
+      tick();
 
       expect(mockGapi.client.init).toHaveBeenCalledWith({
         apiKey: 'test-api-key',
@@ -158,31 +159,29 @@ describe('ExportGoogleSheetService', () => {
           'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'
         ]
       });
-    });
+    }));
 
-    it('should set API ready flags after initialization', (done) => {
+    it('should set API ready flags after initialization', fakeAsync(() => {
       mockGapi.client.init.and.returnValue(Promise.resolve());
 
       service['initSheetsAPI']();
 
-      setTimeout(() => {
-        expect(service['sheetsApiReady']).toBeTrue();
-        expect(service['driveApiReady']).toBeTrue();
-        done();
-      }, 100);
-    });
+      tick();
+      flushMicrotasks();
+      expect(service['sheetsApiReady']).toBeTrue();
+      expect(service['driveApiReady']).toBeTrue();
+    }));
 
-    it('should handle initialization errors', (done) => {
+    it('should handle initialization errors', fakeAsync(() => {
       const error = new Error('API Init Error');
-      mockGapi.client.init.and.returnValue(Promise.reject(error));
+      mockGapi.client.init.and.callFake(() => Promise.reject(error));
 
       service['initSheetsAPI']();
 
-      setTimeout(() => {
-        expect(mockFeedbackService.showErrorToast).toHaveBeenCalled();
-        done();
-      }, 100);
-    });
+      tick();
+      flushMicrotasks();
+      expect(mockFeedbackService.showErrorToast).toHaveBeenCalled();
+    }));
   });
 
   describe('OAuth token client', () => {

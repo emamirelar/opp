@@ -1,0 +1,82 @@
+@if (isWorkflowLoading()) {
+  <div class="flex gap-2">
+    <p-skeleton height="2.25rem" width="8rem"></p-skeleton>
+    <p-skeleton height="2.25rem" width="2.25rem"></p-skeleton>
+  </div>
+} @else if (!isReadOnly()) {
+  @if (isInWorkflow()) {
+    <div class="flex flex-wrap gap-2">
+      @if (workflowInfo()?.canRecall) {
+        <p-button
+          [label]="'button.workflow.recall' | translate"
+          severity="secondary"
+          [loading]="isActionInProgress()"
+          [disabled]="isActionInProgress()"
+          (onClick)="handleOnRecall()"
+        />
+      }
+      @if (workflowInfo()?.canApprove) {
+        <p-button
+          [label]="'button.workflow.approve' | translate"
+          severity="success"
+          [loading]="isActionInProgress()"
+          [disabled]="isActionInProgress()"
+          (onClick)="handleOnApprove()"
+        />
+      }
+      @if (workflowInfo()?.canReject) {
+        <p-button
+          [label]="'button.workflow.reject' | translate"
+          severity="danger"
+          [loading]="isActionInProgress()"
+          [disabled]="isActionInProgress()"
+          (onClick)="handleOnReject()"
+        />
+      }
+    </div>
+  } @else {
+    @if (workflowActions().length > 0) {
+      <p-splitButton
+        [label]="primaryeStageLabel"
+        [model]="items"
+        [disabled]="disabled || isActionInProgress()"
+        (onClick)="_handleOnPrimaryStageClick()"
+      />
+    }
+  }
+}
+
+<p-dialog
+  [header]="'title.workflow.comment' | translate"
+  [(visible)]="showCommentDialog"
+  [modal]="true"
+  [style]="{ width: '25rem' }"
+>
+  <div class="field">
+    <label for="comment">
+      {{ 'label.workflow.comment' | translate }}
+      @if (commentMode() === 'mandatory') {
+        <span class="required">*</span>
+      }
+    </label>
+    <textarea
+      id="comment"
+      pTextarea
+      rows="5"
+      class="w-full"
+      #commentInput
+    ></textarea>
+  </div>
+  <ng-template #footer>
+    <p-button
+      [label]="'button.cancel' | translate"
+      severity="secondary"
+      (onClick)="showCommentDialog = false"
+    />
+    <p-button
+      [label]="'button.save' | translate"
+      severity="primary"
+      (onClick)="handleOnCommentSave(commentInput.value)"
+    />
+  </ng-template>
+</p-dialog>

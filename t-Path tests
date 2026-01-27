@@ -1,0 +1,91 @@
+[1mdiff --git a/UNOPS.PAO.UNOPSBusiness/Managers/UNOPSContactManager.cs b/UNOPS.PAO.UNOPSBusiness/Managers/UNOPSContactManager.cs[m
+[1mindex 3910f1a4..ba83dad8 100644[m
+[1m--- a/UNOPS.PAO.UNOPSBusiness/Managers/UNOPSContactManager.cs[m
+[1m+++ b/UNOPS.PAO.UNOPSBusiness/Managers/UNOPSContactManager.cs[m
+[36m@@ -69,17 +69,18 @@[m [mpublic class UNOPSContactManager : BaseUNOPSManager, IContactManager[m
+         {[m
+             result.ProfilePictureUrl = googleCloudStorageService.GenerateSignedUrlFromStorageUrl(result.ProfilePictureUrl).Result;[m
+         }[m
+[31m-        [m
+[32m+[m
+         // Map CreatedBy user ID to user name and office[m
+[31m-        if (entity.CreatedBy > 0)[m
+[32m+[m[32m        //Updated the condition to include Opportunity+ User that has Id of -1[m
+[32m+[m[32m        if (entity.CreatedBy != 0)[m
+         {[m
+             var userInfo = userInfoRepository.GetAll()[m
+[31m-                .FirstOrDefault(u => u.UserId == entity.CreatedBy);[m
+[31m-            [m
+[32m+[m[32m            .FirstOrDefault(u => u.UserId == entity.CreatedBy);[m
+[32m+[m
+             if (userInfo != null)[m
+             {[m
+                 result.CreatedByName = userInfo.Name;[m
+[31m-                [m
+[32m+[m
+                 // Get office name from OrganizationHierarchy where Code = userInfo.OrgUnit[m
+                 if (!string.IsNullOrEmpty(userInfo.OrgUnit))[m
+                 {[m
+[36m@@ -107,9 +108,10 @@[m [mpublic class UNOPSContactManager : BaseUNOPSManager, IContactManager[m
+         {[m
+             result.ProfilePictureUrl = googleCloudStorageService.GenerateSignedUrlFromStorageUrl(result.ProfilePictureUrl).Result;[m
+         }[m
+[31m-        [m
+[32m+[m
+         // Map CreatedBy user ID to user name and office[m
+[31m-        if (entity.CreatedBy > 0 && userInfoLookup.TryGetValue(entity.CreatedBy, out var userInfo))[m
+[32m+[m[32m        //Updated the condition to include Opportunity+ User that has Id of -1[m
+[32m+[m[32m        if (entity.CreatedBy != 0 && userInfoLookup.TryGetValue(entity.CreatedBy, out var userInfo))[m
+         {[m
+             result.CreatedByName = userInfo.Name;[m
+             [m
+[36m@@ -276,7 +278,8 @@[m [mpublic class UNOPSContactManager : BaseUNOPSManager, IContactManager[m
+         }[m
+ [m
+         // Get all unique user IDs from the contacts[m
+[31m-        var userIds = items.Where(c => c.CreatedBy > 0).Select(c => c.CreatedBy).Distinct().ToList();[m
+[32m+[m[32m        //Updated the condition to include Opportunity+ User that has Id of -1[m
+[32m+[m[32m        var userIds = items.Where(c => c.CreatedBy != 0).Select(c => c.CreatedBy).Distinct().ToList();[m
+         [m
+         // Fetch all user info in one query[m
+         var userInfoLookup = userInfoRepository.GetAll()[m
+[36m@@ -338,7 +341,8 @@[m [mpublic class UNOPSContactManager : BaseUNOPSManager, IContactManager[m
+             }[m
+ [m
+             // Get all unique user IDs from the contacts for user info lookup[m
+[31m-            var userIds = pagedItems.Where(c => c.CreatedBy > 0).Select(c => c.CreatedBy).Distinct().ToList();[m
+[32m+[m[32m            //Updated the condition to include Opportunity+ User that has Id of -1[m
+[32m+[m[32m            var userIds = pagedItems.Where(c => c.CreatedBy != 0).Select(c => c.CreatedBy).Distinct().ToList();[m
+             [m
+             // Fetch all user info in one query[m
+             var userInfoLookup = userInfoRepository.GetAll()[m
+[36m@@ -632,7 +636,8 @@[m [mpublic class UNOPSContactManager : BaseUNOPSManager, IContactManager[m
+             }[m
+ [m
+             // Get all unique user IDs from the contacts for user info lookup[m
+[31m-            var userIds = pagedItems.Where(c => c.CreatedBy > 0).Select(c => c.CreatedBy).Distinct().ToList();[m
+[32m+[m[32m            //Updated the condition to include Opportunity+ User that has Id of -1[m
+[32m+[m[32m            var userIds = pagedItems.Where(c => c.CreatedBy != 0).Select(c => c.CreatedBy).Distinct().ToList();[m
+             [m
+             // Fetch all user info in one query[m
+             var userInfoLookup = userInfoRepository.GetAll()[m
+[36m@@ -907,7 +912,8 @@[m [mpublic class UNOPSContactManager : BaseUNOPSManager, IContactManager[m
+             }[m
+ [m
+             // Get all unique user IDs from the contacts for user info lookup[m
+[31m-            var userIds = pagedItems.Where(c => c.CreatedBy > 0).Select(c => c.CreatedBy).Distinct().ToList();[m
+[32m+[m[32m            //Updated the condition to include Opportunity+ User that has Id of -1[m
+[32m+[m[32m            var userIds = pagedItems.Where(c => c.CreatedBy != 0).Select(c => c.CreatedBy).Distinct().ToList();[m
+             [m
+             // Fetch all user info in one query[m
+             var userInfoLookup = userInfoRepository.GetAll()[m
+[36m@@ -1648,7 +1654,8 @@[m [mpublic class UNOPSContactManager : BaseUNOPSManager, IContactManager[m
+         }[m
+ [m
+         // Get all unique user IDs for efficient mapping[m
+[31m-        var userIds = contacts.Where(c => c.CreatedBy > 0).Select(c => c.CreatedBy).Distinct().ToList();[m
+[32m+[m[32m        //Updated the condition to include Opportunity+ User that has Id of -1[m
+[32m+[m[32m        var userIds = contacts.Where(c => c.CreatedBy != 0).Select(c => c.CreatedBy).Distinct().ToList();[m
+         [m
+         var userInfoLookup = userInfoRepository.GetAll()[m
+             .Where(u => userIds.Contains(u.UserId))[m

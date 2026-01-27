@@ -10,6 +10,7 @@ public class SimpleValueModel
     public string? Continent { get; set; }  // For countries
     public string? Type { get; set; }  // For entity roles - role type classification
     public string? SubType { get; set; }  // For entity roles - role subtype classification
+    public string? Position { get; set; }  // For users - standardized position title from personnel record
 }
 
 

@@ -28,15 +28,18 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     private readonly AppDbContext context;
     private readonly UNOPSAppDbContext uNOPSAppDbContext;
     private readonly BaseRepository<Opportunity> opportunityRepository;
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IServiceProvider _serviceProvider; 
     private readonly IConfiguration configuration;
     private readonly IDbContextFactory<UNOPSAppDbContext> _dbContextFactory;
+    private readonly IExchangeRateService _exchangeRateService;
+    private readonly IHttpContextAccessor httpContextAccessor;
 
     public UNOPSOpportunityManager(
         IMapper mapper,
         AppDbContext context,
         IConfiguration configuration,
         IDbContextFactory<UNOPSAppDbContext> dbContextFactory,
+        IExchangeRateService exchangeRateService,
         IPermissionService permissionService = null,
         IHttpContextAccessor httpContextAccessor = null,
         IServiceProvider serviceProvider = null)
@@ -48,6 +51,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         this._serviceProvider = serviceProvider;
         this.configuration = configuration;
         this._dbContextFactory = dbContextFactory;
+        this._exchangeRateService = exchangeRateService;
+        this.httpContextAccessor = httpContextAccessor;
         this.opportunityRepository = new BaseRepository<Opportunity>(this.uNOPSAppDbContext, configuration, serviceProvider);
     }
 
@@ -95,10 +100,11 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     {
         var entity = mapper.Map<Opportunity>(model);
 
-        // Set default workflow stage to 1 if not provided
-        if (entity.WorkflowStageId == null || entity.WorkflowStageId == 0)
+        // Set default workflow stage if not provided
+        // Stage defaults to "IDENTIFY & PROFILE" in entity definition
+        if (string.IsNullOrEmpty(entity.Stage))
         {
-            entity.WorkflowStageId = 1;
+            entity.Stage = "IDENTIFY & PROFILE";
         }
 
         // Handle child entities
@@ -119,7 +125,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }
 
             // Use exchange rate service for currency conversion (same as ApplyAiChangesAsync)
-            var exchangeRateService = new ExchangeRateService(uNOPSAppDbContext);
             var fundingPartners = new List<OpportunityFundingPartner>();
             
             foreach (var fp in model.FundingPartners)
@@ -138,7 +143,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 {
                     try
                     {
-                        var conversionResult = await exchangeRateService.ConvertToUSDAsync(
+                        var conversionResult = await _exchangeRateService.ConvertToUSDAsync(
                             amount.Value, 
                             currency.Code ?? "USD"
                         );
@@ -214,7 +219,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     {
         var entity = await context.Opportunities
             .AsNoTracking() // Performance: No entity tracking needed for read-only operations
-            .Include(o => o.WorkflowStage)
             .Include(o => o.ResponsibleOrgUnit)
             .Include(o => o.ProposedInitiativeType)
             .Include(o => o.FundingPartners)
@@ -230,6 +234,15 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                     .ThenInclude(u => u!.UserProfile)
             .Include(o => o.Stakeholders)
                 .ThenInclude(s => s.OrganizationHierarchy)
+            .Include(o => o.Collaborators)
+                .ThenInclude(c => c.User)
+                    .ThenInclude(u => u!.UserProfile)
+            .Include(o => o.Collaborators)
+                .ThenInclude(c => c.AddedByUser)
+                    .ThenInclude(u => u!.UserProfile)
+            .Include(o => o.Collaborators)
+                .ThenInclude(c => c.Expertises)
+                    .ThenInclude(e => e.CollaboratorExpertise)
             .Include(o => o.ExternalStakeholders)
                 .ThenInclude(es => es.Contact)
                     .ThenInclude(c => c!.Partner)
@@ -1120,7 +1133,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     public async Task<IEnumerable<OpportunityModel>> GetAllOpportunitiesAsync()
     {
         var entities = await context.Opportunities
-            .Include(o => o.WorkflowStage)
             .Include(o => o.ResponsibleOrgUnit)
             .Include(o => o.ProposedInitiativeType)
             .Where(o => !o.IsDeleted)
@@ -1364,17 +1376,17 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
         if (request.ExpectedImpact != null)
         {
-            // Truncate to 200 characters (database column limit)
-            entity.ExpectedImpact = request.ExpectedImpact.Length > 200 
-                ? request.ExpectedImpact[..200] 
+            // Truncate to 510 characters (database column limit)
+            entity.ExpectedImpact = request.ExpectedImpact.Length > 510 
+                ? request.ExpectedImpact[..510] 
                 : request.ExpectedImpact;
         }
 
         if (request.ExpectedOutcomes != null)
         {
-            // Truncate to 200 characters (database column limit)
-            entity.ExpectedOutcomes = request.ExpectedOutcomes.Length > 200 
-                ? request.ExpectedOutcomes[..200] 
+            // Truncate to 510 characters (database column limit)
+            entity.ExpectedOutcomes = request.ExpectedOutcomes.Length > 510 
+                ? request.ExpectedOutcomes[..510] 
                 : request.ExpectedOutcomes;
         }
 
@@ -1763,7 +1775,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }
 
             // Add new funding partners
-            var exchangeRateService = new ExchangeRateService(context);
             var fundingPartners = new List<OpportunityFundingPartner>();
             
             foreach (var fp in uniqueFundingPartners)
@@ -1794,7 +1805,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 {
                     try
                     {
-                        var conversionResult = await exchangeRateService.ConvertToUSDAsync(
+                        var conversionResult = await _exchangeRateService.ConvertToUSDAsync(
                             fp.Amount.Value, 
                             currency.Code ?? "USD"
                         );
@@ -1932,6 +1943,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     {
         var opportunity = await context.Opportunities
             .Include(o => o.Stakeholders)
+            .Include(o => o.Collaborators)
             .FirstOrDefaultAsync(o => o.Id == id);
 
         if (opportunity == null)
@@ -2059,10 +2071,137 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }
         }
 
-        // Update SME (Subject Matter Expert) selections in EntityUserRoles table
-        if (request.SMESelections != null)
+        // Update Opportunity Manager (from stakeholders with "Opportunity Manager" role)
+        if (request.OpportunityManagerId.HasValue)
         {
-            await UpdateSMESelectionsAsync(id, request.SMESelections);
+            // Get the Opportunity Manager role
+            var opportunityManagerRole = await context.Set<EntityRole>()
+                .FirstOrDefaultAsync(er => er.Name != null && er.Name.ToLower().Contains("manager") && er.EntityType == "Opportunity");
+            
+            if (opportunityManagerRole != null)
+            {
+                // Remove existing opportunity manager stakeholder
+                var existingManager = opportunity.Stakeholders?
+                    .FirstOrDefault(s => s.EntityRoleId == opportunityManagerRole.Id && s.UserId.HasValue);
+                
+                if (existingManager != null)
+                {
+                    opportunity.Stakeholders!.Remove(existingManager);
+                    context.Set<OpportunityStakeholder>().Remove(existingManager);
+                }
+                
+                // Add new opportunity manager stakeholder
+                opportunity.Stakeholders ??= new List<OpportunityStakeholder>();
+                opportunity.Stakeholders.Add(new OpportunityStakeholder
+                {
+                    OpportunityId = id,
+                    UserId = request.OpportunityManagerId.Value,
+                    EntityRoleId = opportunityManagerRole.Id,
+                    IsInternal = true,
+                    StakeholderType = "Internal",
+                    OrganizationHierarchyId = null
+                });
+            }
+        }
+
+        // Update Collaborators (Opportunity Development Team) with Expertise assignments
+        if (request.Collaborators != null)
+        {
+            opportunity.Collaborators ??= new List<OpportunityCollaborator>();
+            
+            // Get current user ID for AddedBy tracking
+            int currentUserId = 0;
+            if (httpContextAccessor?.HttpContext?.User != null)
+            {
+                var userIdClaim = httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int parsedUserId))
+                {
+                    currentUserId = parsedUserId;
+                }
+            }
+            
+            // Get requested user IDs
+            var requestedUserIds = request.Collaborators.Select(c => c.UserId).ToHashSet();
+            
+            // Get existing collaborators (need to load with expertises)
+            var existingCollaborators = await context.Set<OpportunityCollaborator>()
+                .Include(c => c.Expertises)
+                .Where(c => c.OpportunityId == id)
+                .ToListAsync();
+            
+            // Find collaborators to remove (exist in DB but not in request)
+            var collaboratorsToRemove = existingCollaborators
+                .Where(c => !requestedUserIds.Contains(c.UserId))
+                .ToList();
+            
+            // Remove collaborators that are no longer in the request
+            foreach (var collaborator in collaboratorsToRemove)
+            {
+                // Remove expertise assignments first
+                if (collaborator.Expertises != null && collaborator.Expertises.Any())
+                {
+                    context.Set<OpportunityCollaboratorExpertise>().RemoveRange(collaborator.Expertises);
+                }
+                context.Set<OpportunityCollaborator>().Remove(collaborator);
+            }
+            
+            // Process each requested collaborator
+            foreach (var collaboratorRequest in request.Collaborators)
+            {
+                var existingCollaborator = existingCollaborators.FirstOrDefault(c => c.UserId == collaboratorRequest.UserId);
+                
+                if (existingCollaborator == null)
+                {
+                    // Add new collaborator
+                    var newCollaborator = new OpportunityCollaborator
+                    {
+                        OpportunityId = id,
+                        UserId = collaboratorRequest.UserId,
+                        AddedDate = DateTime.UtcNow,
+                        AddedBy = currentUserId > 0 ? currentUserId : null
+                    };
+                    
+                    // Add expertises
+                    if (collaboratorRequest.ExpertiseIds != null && collaboratorRequest.ExpertiseIds.Any())
+                    {
+                        newCollaborator.Expertises = collaboratorRequest.ExpertiseIds
+                            .Select(expertiseId => new OpportunityCollaboratorExpertise
+                            {
+                                CollaboratorExpertiseId = expertiseId
+                            })
+                            .ToList();
+                    }
+                    
+                    context.Set<OpportunityCollaborator>().Add(newCollaborator);
+                }
+                else
+                {
+                    // Update existing collaborator's expertises
+                    var requestedExpertiseIds = collaboratorRequest.ExpertiseIds?.ToHashSet() ?? new HashSet<int>();
+                    var existingExpertiseIds = existingCollaborator.Expertises?
+                        .Select(e => e.CollaboratorExpertiseId).ToHashSet() ?? new HashSet<int>();
+                    
+                    // Remove expertises that are no longer in the request
+                    if (existingCollaborator.Expertises != null)
+                    {
+                        var expertisesToRemove = existingCollaborator.Expertises
+                            .Where(e => !requestedExpertiseIds.Contains(e.CollaboratorExpertiseId))
+                            .ToList();
+                        context.Set<OpportunityCollaboratorExpertise>().RemoveRange(expertisesToRemove);
+                    }
+                    
+                    // Add new expertises
+                    var expertiseIdsToAdd = requestedExpertiseIds.Where(id => !existingExpertiseIds.Contains(id));
+                    foreach (var expertiseId in expertiseIdsToAdd)
+                    {
+                        context.Set<OpportunityCollaboratorExpertise>().Add(new OpportunityCollaboratorExpertise
+                        {
+                            OpportunityCollaboratorId = existingCollaborator.Id,
+                            CollaboratorExpertiseId = expertiseId
+                        });
+                    }
+                }
+            }
         }
 
         // Auto-populate stakeholders from EntityUserRoles if org unit changed
@@ -2160,7 +2299,18 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             return;
         }
 
-        // Get EntityUserRoles for all relevant org units
+        // ALWAYS add normally responsible org units (if different from selected)
+        // These are the org units normally responsible for implementation countries
+        var normallyResponsibleOrgUnits = await GetNormallyResponsibleOrgUnitsAsync(entity.Id, orgUnitId);
+        foreach (var normalOrgUnitId in normallyResponsibleOrgUnits)
+        {
+            if (!orgUnitIdsForRoles.Contains(normalOrgUnitId))
+            {
+                orgUnitIdsForRoles.Add(normalOrgUnitId);
+            }
+        }
+
+        // Get EntityUserRoles for all relevant org units (including normally responsible)
         // Returns tuples of (OrgUnitId, EntityRoleId)
         var entityUserRoles = await context.EntityUserRoles
             .Where(eur => eur.EntityType == "OrganizationHierarchy" 
@@ -2416,7 +2566,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         if (!countryIds.Any())
             return new List<int>();
 
-        // Get org unit IDs that are directly responsible for these countries
+        // Get org unit relationships for these countries
         var countryOrgUnitIds = await context.OrganizationUnitRelationships
             .Where(r => 
                 r.EntityType == "Country" 
@@ -2429,13 +2579,92 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         if (!countryOrgUnitIds.Any())
             return new List<int>();
 
-        // Get all descendants of the parent Hub/Region
-        var descendantIds = await GetAllDescendantOrgUnitIdsAsync(parentOrgUnitId);
+        // Filter to only get child org units under this parent that are OrgUnit type (level 3)
+        var childOrgUnitIds = new List<int>();
+        foreach (var orgUnitId in countryOrgUnitIds)
+        {
+            var orgUnit = await context.OrganizationHierarchies
+                .Where(oh => oh.Id == orgUnitId && !oh.IsDeleted)
+                .Select(oh => new { oh.Id, oh.ParentId, oh.Type })
+                .FirstOrDefaultAsync();
 
-        // Filter to only include descendants that directly relate to the countries
-        return countryOrgUnitIds
-            .Where(id => descendantIds.Contains(id))
-            .ToList();
+            if (orgUnit == null)
+                continue;
+
+            // Check if this org unit is a child (direct or indirect) of the parent
+            // and is of type OrgUnit
+            if (orgUnit.Type == Domain.Enums.OrganizationUnitType.OrgUnit)
+            {
+                // Traverse up to check if parent matches
+                var currentParentId = orgUnit.ParentId;
+                var isChildOfParent = false;
+
+                while (currentParentId.HasValue && currentParentId.Value != 0)
+                {
+                    if (currentParentId.Value == parentOrgUnitId)
+                    {
+                        isChildOfParent = true;
+                        break;
+                    }
+
+                    var parentUnit = await context.OrganizationHierarchies
+                        .Where(oh => oh.Id == currentParentId.Value && !oh.IsDeleted)
+                        .Select(oh => new { oh.ParentId })
+                        .FirstOrDefaultAsync();
+
+                    currentParentId = parentUnit?.ParentId;
+                }
+
+                if (isChildOfParent)
+                {
+                    childOrgUnitIds.Add(orgUnit.Id);
+                }
+            }
+        }
+
+        return childOrgUnitIds.Distinct().ToList();
+    }
+
+    /// <summary>
+    /// Gets normally responsible org unit IDs for countries where the selected responsible org unit 
+    /// is NOT normally responsible. Returns org units (Type = "OrgUnit", level 3) from country hierarchies
+    /// that differ from the selected org unit.
+    /// </summary>
+    private async Task<List<int>> GetNormallyResponsibleOrgUnitsAsync(int opportunityId, int selectedOrgUnitId)
+    {
+        // Get implementation country IDs for this opportunity
+        var countryIds = await context.Set<OpportunityCountry>()
+            .Where(oc => oc.OpportunityId == opportunityId)
+            .Select(oc => oc.CountryId)
+            .ToListAsync();
+
+        if (!countryIds.Any())
+            return new List<int>();
+
+        // Get org unit relationships for these countries
+        var countryOrgUnitIds = await context.OrganizationUnitRelationships
+            .Where(r => 
+                r.EntityType == "Country" 
+                && countryIds.Contains(r.EntityId)
+                && !r.IsDeleted)
+            .Select(r => r.OrganizationHierarchyId)
+            .Distinct()
+            .ToListAsync();
+
+        if (!countryOrgUnitIds.Any())
+            return new List<int>();
+
+        // Get org units that are of type OrgUnit (level 3) and different from selected
+        var normallyResponsibleOrgUnits = await context.OrganizationHierarchies
+            .Where(oh => countryOrgUnitIds.Contains(oh.Id) 
+                      && oh.Type == Domain.Enums.OrganizationUnitType.OrgUnit
+                      && oh.Id != selectedOrgUnitId
+                      && !oh.IsDeleted)
+            .Select(oh => oh.Id)
+            .Distinct()
+            .ToListAsync();
+
+        return normallyResponsibleOrgUnits;
     }
 
     /// <summary>
@@ -2473,6 +2702,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         var opportunity = await context.Opportunities
             .Include(o => o.Countries)
                 .ThenInclude(c => c.Country)
+            .Include(o => o.Stakeholders)  // Include stakeholders for auto-population
             .FirstOrDefaultAsync(o => o.Id == id);
 
         if (opportunity == null)
@@ -2545,6 +2775,15 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         }
 
         await context.SaveChangesAsync();
+
+        // Auto-populate stakeholders from normally responsible org units if responsible org unit is set
+        // This ensures that when countries change, the normally responsible org units' role holders
+        // are automatically added as internal stakeholders
+        if (opportunity.ResponsibleOrgUnitId.HasValue)
+        {
+            await AutoPopulateStakeholdersFromOrgUnitAsync(opportunity, opportunity.ResponsibleOrgUnitId.Value);
+            await context.SaveChangesAsync();
+        }
 
         // Reload with all includes
         var result = await GetOpportunityAsync(id);
@@ -2778,17 +3017,17 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
         if (request.ExpectedImpact != null)
         {
-            // Truncate to 200 characters (database column limit)
-            entity.ExpectedImpact = request.ExpectedImpact.Length > 200 
-                ? request.ExpectedImpact[..200] 
+            // Truncate to 510 characters (database column limit)
+            entity.ExpectedImpact = request.ExpectedImpact.Length > 510 
+                ? request.ExpectedImpact[..510] 
                 : request.ExpectedImpact;
         }
 
         if (request.ExpectedOutcomes != null)
         {
-            // Truncate to 200 characters (database column limit)
-            entity.ExpectedOutcomes = request.ExpectedOutcomes.Length > 200 
-                ? request.ExpectedOutcomes[..200] 
+            // Truncate to 510 characters (database column limit)
+            entity.ExpectedOutcomes = request.ExpectedOutcomes.Length > 510 
+                ? request.ExpectedOutcomes[..510] 
                 : request.ExpectedOutcomes;
         }
 
@@ -2855,7 +3094,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }
 
             // Add new funding partners with amounts if provided - using exchange rate conversion
-            var exchangeRateService = new ExchangeRateService(context);
             var fundingPartners = new List<OpportunityFundingPartner>();
             
             foreach (var fp in request.FundingPartners)
@@ -2886,7 +3124,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 {
                     try
                     {
-                        var conversionResult = await exchangeRateService.ConvertToUSDAsync(
+                        var conversionResult = await _exchangeRateService.ConvertToUSDAsync(
                             amount.Value, 
                             currency.Code ?? "USD"
                         );
@@ -3087,9 +3325,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }
         }
 
-        if (request.WorkflowStageId.HasValue)
+        if (!string.IsNullOrEmpty(request.Stage))
         {
-            entity.WorkflowStageId = request.WorkflowStageId.Value;
+            entity.Stage = request.Stage;
         }
 
         if (request.InitiativeBudgetUSD.HasValue)
@@ -3141,12 +3379,12 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             TargetDeliveryDate = request.TargetDeliveryDate,
             Challenges = request.Challenges,
             ResultsFocus = request.ResultsFocus,
-            // Truncate to 200 characters (database column limit)
-            ExpectedImpact = request.ExpectedImpact?.Length > 200 
-                ? request.ExpectedImpact[..200] 
+            // Truncate to 510 characters (database column limit)
+            ExpectedImpact = request.ExpectedImpact?.Length > 510 
+                ? request.ExpectedImpact[..510] 
                 : request.ExpectedImpact,
-            ExpectedOutcomes = request.ExpectedOutcomes?.Length > 200 
-                ? request.ExpectedOutcomes[..200] 
+            ExpectedOutcomes = request.ExpectedOutcomes?.Length > 510 
+                ? request.ExpectedOutcomes[..510] 
                 : request.ExpectedOutcomes,
             ExpectedBeneficiaries = request.ExpectedBeneficiaries,
             EstimatedDirectBeneficiaries = request.EstimatedDirectBeneficiaries,
@@ -3366,7 +3604,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             .AsNoTracking() // No change tracking needed for AI data processing
             .Include(o => o.ResponsibleOrgUnit)
             .Include(o => o.ProposedInitiativeType)
-            .Include(o => o.WorkflowStage)
             .Include(o => o.CreatedByUser)
             .Include(o => o.LastModifiedByUser)
             .FirstOrDefaultAsync(o => o.Id == id);
@@ -3985,8 +4222,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             ["description"] = opportunity.Description ?? "",
             ["partnerReference"] = opportunity.PartnerReference ?? "",
             ["status"] = opportunity.Status.ToString(),
-            ["workflowStageId"] = opportunity.WorkflowStageId?.ToString() ?? "",
-            ["workflowStageName"] = opportunity.WorkflowStage?.Name ?? "",
+            ["stage"] = opportunity.Stage ?? "", // Use Stage property instead of WorkflowStage navigation
             
             // Organizational Information
             ["responsibleOrgUnitId"] = opportunity.ResponsibleOrgUnitId?.ToString() ?? "",
@@ -4152,7 +4388,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     public override async Task<object> GetBasicEntityDataAsync(int id)
     {
         var opportunity = await context.Opportunities
-            .Include(o => o.WorkflowStage)
             .Include(o => o.ResponsibleOrgUnit)
             .Include(o => o.ProposedInitiativeType)
             .Include(o => o.FundingPartners)
@@ -4243,7 +4478,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                     if (entityIds.Any())
                     {
                         var opportunities = await context.Opportunities
-                            .Include(o => o.WorkflowStage)
                             .Where(o => entityIds.Contains(o.Id) && !o.IsDeleted)
                             .ToListAsync();
                         
@@ -4265,7 +4499,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                                 Budget = opp.InitiativeBudgetUSD,
                                 DurationMonths = durationMonths,
                                 RelevanceScore = relevanceScores.GetValueOrDefault(opp.Id, 0),
-                                WorkflowStage = opp.WorkflowStage?.Name
+                                WorkflowStage = opp.Stage // Use Stage property
                             });
                         }
                         
@@ -4364,7 +4598,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         {
             // Query opportunities where the partner is either a funding partner or client partner
             var opportunities = await uNOPSAppDbContext.Opportunities
-                .Include(o => o.WorkflowStage)
                 .Include(o => o.ResponsibleOrgUnit)
                 .Include(o => o.ProposedInitiativeType)
                 .Include(o => o.FundingPartners).ThenInclude(fp => fp.Partner)
@@ -4402,7 +4635,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
         var opportunities = opportunityRepository
             .GetAll([
-                "WorkflowStage",
+                // "WorkflowStage" removed - now using Stage property instead
                 "ResponsibleOrgUnit",
                 "ProposedInitiativeType",
                 "FundingPartners",
@@ -4492,8 +4725,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
                 // Related entity fields - using dropdowns for enum-like lookups
                 new() { 
-                    Field = "workflowStageId", 
-                    DisplayName = "label.opportunity.workflowStage", 
+                    Field = "stage", 
+                    DisplayName = "label.opportunity.stage", 
                     FieldType = "enum", 
                     AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" },
                     DropdownOptions = new List<DropdownOption>() // Will be populated dynamically from API
