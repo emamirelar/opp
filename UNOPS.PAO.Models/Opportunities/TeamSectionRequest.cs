@@ -1,3 +1,5 @@
+using UNOPS.PAO.Models;
+
 namespace UNOPS.PAO.Models.Opportunities;
 
 /// <summary>
@@ -7,7 +9,7 @@ namespace UNOPS.PAO.Models.Opportunities;
 public class TeamSectionRequest
 {
     /// <summary>
-    /// Responsible organization unit ID
+    /// Responsible organization unit ID (required for Opportunity Development Team)
     /// </summary>
     public int? ResponsibleOrgUnitId { get; set; }
 
@@ -17,14 +19,18 @@ public class TeamSectionRequest
     public int? ProposedInitiativeTypeId { get; set; }
 
     /// <summary>
+    /// Opportunity Manager user ID (required for Opportunity Development Team)
+    /// </summary>
+    public int? OpportunityManagerId { get; set; }
+
+    /// <summary>
+    /// List of collaborators with their expertise assignments (Opportunity Development Team)
+    /// </summary>
+    public List<OpportunityCollaboratorRequest>? Collaborators { get; set; }
+
+    /// <summary>
     /// List of internal team members and stakeholders
     /// </summary>
     public List<OpportunityStakeholderRequest>? Stakeholders { get; set; }
-    
-    /// <summary>
-    /// List of SME (Subject Matter Expert) selections for the opportunity.
-    /// These are saved to EntityUserRoles table.
-    /// </summary>
-    public List<SMESelectionRequest>? SMESelections { get; set; }
 }
 

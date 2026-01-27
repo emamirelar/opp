@@ -409,25 +409,6 @@
             />
           </div>
 
-          <!-- Team Section - UNOPS Team & Internal Stakeholders -->
-          <div 
-            id="section-team"
-            class="group relative section-hover-container"
-            [class.section-editable]="canUpdate() && !sectionsWithUnsavedChanges().has('team')"
-            (click)="handleSectionClick('team', $event)"
-          >
-            <app-opportunity-team-section
-              #teamSection
-              [opportunity]="opportunity()!"
-              [canUpdate]="canUpdate()"
-              [suggestions]="teamSuggestions()"
-              [sectionSaveTrigger]="sectionSaveTrigger()"
-              (opportunityUpdated)="handleOpportunityUpdate($event)"
-              (changesDetected)="handleSectionChangesDetected('team')"
-              (changesSavedOrDiscarded)="handleSectionChangesSaved('team')"
-            />
-          </div>
-
           <!-- WHERE Section - Geography -->
           <div 
             id="section-where"
@@ -501,6 +482,25 @@
               [opportunity]="opportunity()!"
               [canUpdate]="canUpdate()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
+            />
+          </div>
+
+          <!-- Team Section - UNOPS Team & Internal Stakeholders -->
+          <div 
+            id="section-team"
+            class="group relative section-hover-container"
+            [class.section-editable]="canUpdate() && !sectionsWithUnsavedChanges().has('team')"
+            (click)="handleSectionClick('team', $event)"
+          >
+            <app-opportunity-team-section
+              #teamSection
+              [opportunity]="opportunity()!"
+              [canUpdate]="canUpdate()"
+              [suggestions]="teamSuggestions()"
+              [sectionSaveTrigger]="sectionSaveTrigger()"
+              (opportunityUpdated)="handleOpportunityUpdate($event)"
+              (changesDetected)="handleSectionChangesDetected('team')"
+              (changesSavedOrDiscarded)="handleSectionChangesSaved('team')"
             />
           </div>
 

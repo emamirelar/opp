@@ -250,13 +250,13 @@ export class OpportunityViewComponent
     { id: 'what', label: 'What', icon: 'pi-briefcase' },
     { id: 'why', label: 'Why', icon: 'pi-lightbulb' },
     { id: 'who', label: 'Who', icon: 'pi-users' },
-    { id: 'team', label: 'label.opportunity.team', icon: 'pi-building' },
     { id: 'where', label: 'Where', icon: 'pi-globe' },
     { id: 'when', label: 'When', icon: 'pi-calendar' },
     { id: 'risks', label: 'Risks', icon: 'pi-chart-line' },
     { id: 'related', label: 'Related', icon: 'pi-link' },
     { id: 'collaboration', label: 'Comments', icon: 'pi-comments' },
     { id: 'statement', label: 'Statement', icon: 'pi-file-edit' },
+    { id: 'team', label: 'label.opportunity.team', icon: 'pi-building' },
   ];
 
   // Chip overflow management
