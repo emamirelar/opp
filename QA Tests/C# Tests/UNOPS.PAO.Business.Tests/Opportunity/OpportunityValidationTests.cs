@@ -72,6 +72,9 @@ public class OpportunityValidationTests : IDisposable
         mockDbSchema.Setup(s => s.Schema).Returns("public");
 
         _context = new UNOPSAppDbContext(_dbContextOptions, userResolverService, mockDbSchema.Object);
+        
+        // Ensure EF Core model is finalized for in-memory database
+        _context.Database.EnsureCreated();
 
         // Setup real AutoMapper
         var mapperConfig = new MapperConfiguration(cfg =>
