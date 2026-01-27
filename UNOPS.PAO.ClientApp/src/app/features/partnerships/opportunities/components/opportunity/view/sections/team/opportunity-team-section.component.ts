@@ -1794,10 +1794,8 @@ export class OpportunityTeamSectionComponent implements OnInit {
         }
       }
     );
-    
-    // If user cancels (doesn't click confirm), the control stays at the reverted value
-    // and pendingOrgUnitChange will be cleared on next change
-    this.pendingOrgUnitChange = null;
+    // Note: If user cancels, pendingOrgUnitChange stays set but the UI is already reverted.
+    // It will be overwritten on the next org unit selection attempt.
   }
 
   /**

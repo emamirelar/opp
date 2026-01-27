@@ -42,6 +42,7 @@ public class OpportunityController : BaseController
     private readonly IRiskManager _riskManager;
     private readonly int _currentUserId;
     private readonly AppDbContext _context;
+    private readonly UNOPS.PAO.UNOPSDataAccess.Context.UNOPSAppDbContext _unopsContext;
     private readonly IConfiguration _configuration;
     private readonly UNOPSDocumentManager _documentManager;
     private readonly AdvancedSearchService _advancedSearchService;
@@ -68,6 +69,7 @@ public class OpportunityController : BaseController
         _riskManager = manager.RiskManager;
         _currentUserId = userResolverService.GetCurrentUserId();
         _context = context;
+        _unopsContext = unopsContext;
         _configuration = configuration;
         _documentManager = new UNOPSDocumentManager(driveManager, configuration, mapper, unopsContext, userManager, serviceProvider);
         _advancedSearchService = advancedSearchService;
@@ -1982,7 +1984,7 @@ public class OpportunityController : BaseController
     [HttpGet(APIDictionary.Opportunity + "/collaborator-expertises")]
     public async Task<IActionResult> GetCollaboratorExpertises()
     {
-        var expertises = await _context.Set<CollaboratorExpertise>()
+        var expertises = await _unopsContext.CollaboratorExpertises
             .Where(e => !e.IsDeleted && e.Status == EntityStatus.Active)
             .OrderBy(e => e.DisplayOrder)
             .Select(e => new CollaboratorExpertiseModel
