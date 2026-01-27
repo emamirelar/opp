@@ -334,13 +334,9 @@
                   {{ 'title.notNormallyResponsible' | translate }}
                 </p>
                 @if (orgUnitConflictsWithNormalOrgUnits().affectedCountries.length === 1) {
-                  <p class="text-amber-800">
-                    {{ 'message.orgUnitNotNormallyResponsibleViewSingle' | translate: { country: orgUnitConflictsWithNormalOrgUnits().affectedCountries[0] } }}
-                  </p>
+                  <p class="text-amber-800" [innerHTML]="'message.orgUnitNotNormallyResponsibleViewSingle' | translate: { country: orgUnitConflictsWithNormalOrgUnits().affectedCountries[0] }"></p>
                 } @else {
-                  <p class="text-amber-800">
-                    {{ 'message.orgUnitNotNormallyResponsibleViewMultiple' | translate: { countries: orgUnitConflictsWithNormalOrgUnits().affectedCountries.join(', ') } }}
-                  </p>
+                  <p class="text-amber-800" [innerHTML]="'message.orgUnitNotNormallyResponsibleViewMultiple' | translate: { countries: orgUnitConflictsWithNormalOrgUnits().affectedCountries.join(', ') }"></p>
                 }
               </div>
             </div>
@@ -433,9 +429,11 @@
                 class="w-full"
                 [showClear]="true"
               />
-              <label for="initiativeType">{{ 'label.opportunity.initiativeType' | translate }} *</label>
             </p-floatlabel>
           } @else {
+            <h4 class="text-sm font-semibold text-unops-neutral-700 mb-2">
+              {{ 'label.opportunity.initiativeType' | translate }}
+            </h4>
             <p class="text-unops-secondary">
               {{ opportunity().proposedInitiativeTypeName || '-' }}
             </p>
@@ -1019,7 +1017,6 @@
           filterBy="name"
           [appendTo]="'body'"
           [showClear]="true"
-          [placeholder]="'label.selectExpertise' | translate"
           class="w-full"
           styleClass="w-full"
         />
