@@ -295,10 +295,12 @@ export class OpportunityTeamSectionComponent implements OnInit {
   readonly groupedAutoPopulatedStakeholders = computed(() => {
     const stakeholders = this.autoPopulatedStakeholders();
     
-    // Filter out DoA1, DoA2, and DoA3 roles
+    // Filter out DoA roles and Opportunity Manager (has dedicated field)
     const filteredStakeholders = stakeholders.filter(stakeholder => {
       const roleName = stakeholder.entityRoleName || '';
-      return !['DoA1', 'DoA2', 'DoA3'].includes(roleName);
+      const roleCode = stakeholder.entityRoleCode || '';
+      return !['DoA1', 'DoA2', 'DoA3', 'Opportunity Manager'].includes(roleName) &&
+             roleCode !== 'Opportunity_Manager_Opportunity';
     });
     
     const groups = new Map<string, OpportunityStakeholder[]>();
@@ -355,14 +357,17 @@ export class OpportunityTeamSectionComponent implements OnInit {
   });
 
   // Grouped stakeholders from the SELECTED responsible org unit hierarchy
-  // Excludes DoA1, DoA2, and DoA3 roles from display
+  // Excludes DoA1, DoA2, DoA3 roles and Opportunity Manager (handled by dedicated field)
   readonly groupedResponsibleOrgUnitStakeholders = computed(() => {
     const stakeholders = this.responsibleOrgUnitStakeholders();
     
-    // Filter out DoA1, DoA2, and DoA3 roles
+    // Filter out DoA roles and Opportunity Manager (has dedicated field)
     const filteredStakeholders = stakeholders.filter(stakeholder => {
       const roleName = stakeholder.entityRoleName || '';
-      return !['DoA1', 'DoA2', 'DoA3'].includes(roleName);
+      const roleCode = stakeholder.entityRoleCode || '';
+      // Exclude DoA roles and Opportunity Manager (by name or code)
+      return !['DoA1', 'DoA2', 'DoA3', 'Opportunity Manager'].includes(roleName) &&
+             roleCode !== 'Opportunity_Manager_Opportunity';
     });
     
     const groups = new Map<string, OpportunityStakeholder[]>();
@@ -392,15 +397,18 @@ export class OpportunityTeamSectionComponent implements OnInit {
   });
 
   // Grouped stakeholders from NORMALLY RESPONSIBLE org units (for "Other Internal Stakeholders" section)
-  // Excludes DoA1, DoA2, and DoA3 roles from display
+  // Excludes DoA1, DoA2, DoA3 roles and Opportunity Manager (handled by dedicated field)
   readonly groupedNormallyResponsibleStakeholders = computed(() => {
     const stakeholders = this.normallyResponsibleOrgUnitStakeholders();
     const normalOrgUnits = this.normallyResponsibleOrgUnits();
     
-    // Filter out DoA1, DoA2, and DoA3 roles
+    // Filter out DoA1, DoA2, DoA3 roles and Opportunity Manager (has dedicated field)
     const filteredStakeholders = stakeholders.filter(stakeholder => {
       const roleName = stakeholder.entityRoleName || '';
-      return !['DoA1', 'DoA2', 'DoA3'].includes(roleName);
+      const roleCode = stakeholder.entityRoleCode || '';
+      // Exclude DoA roles and Opportunity Manager (by name or code)
+      return !['DoA1', 'DoA2', 'DoA3', 'Opportunity Manager'].includes(roleName) &&
+             roleCode !== 'Opportunity_Manager_Opportunity';
     });
     
     const groups = new Map<string, { stakeholders: OpportunityStakeholder[]; countryName: string }>();
@@ -1789,6 +1797,7 @@ export class OpportunityTeamSectionComponent implements OnInit {
 
   /**
    * @description Confirm collaborator dialog (add or update collaborator)
+   * If adding a user that already exists as collaborator, merges the expertise areas
    */
   confirmCollaboratorDialog(): void {
     const user = this.collaboratorUserControl.value;
@@ -1813,21 +1822,6 @@ export class OpportunityTeamSectionComponent implements OnInit {
     const isEditing = this.isEditingCollaborator();
     const editingIndex = this.editingCollaboratorIndex();
 
-    // Check for duplicate collaborator (only when adding or changing the user)
-    if (!isEditing || (isEditing && currentCollaborators[editingIndex]?.id !== user.id)) {
-      const isDuplicate = currentCollaborators.some((c, i) => c.id === user.id && i !== editingIndex);
-
-      if (isDuplicate) {
-        this.feedbackService.showWarningToast({
-          summary: this.translateService.instant('message.warning'),
-          detail: this.translateService.instant(
-            'message.validation.collaboratorAlreadyAdded'
-          ),
-        });
-        return;
-      }
-    }
-
     // Check if user is already the Opportunity Manager
     const manager = this.opportunityManagerControl.value;
     if (manager && manager.id === user.id) {
@@ -1840,19 +1834,48 @@ export class OpportunityTeamSectionComponent implements OnInit {
       return;
     }
 
-    // Create collaborator with expertises
-    const collaboratorWithExpertise = {
-      ...user,
-      expertiseIds: expertiseIds
-    };
+    // Check for existing collaborator (to merge expertise if found)
+    const existingIndex = currentCollaborators.findIndex((c, i) => c.id === user.id && i !== editingIndex);
+    const hasExistingCollaborator = existingIndex !== -1;
 
-    if (isEditing && editingIndex >= 0) {
-      // Update existing collaborator
+    if (hasExistingCollaborator && !isEditing) {
+      // Merge expertise with existing collaborator
+      const existingCollaborator = currentCollaborators[existingIndex] as SimpleValue & { expertiseIds?: number[] };
+      const existingExpertiseIds = existingCollaborator.expertiseIds || [];
+      
+      // Combine and deduplicate expertise IDs
+      const mergedExpertiseIds = [...new Set([...existingExpertiseIds, ...expertiseIds])];
+      
+      // Update the existing collaborator with merged expertise
+      const updatedCollaborators = [...currentCollaborators] as Array<SimpleValue & { expertiseIds?: number[] }>;
+      updatedCollaborators[existingIndex] = {
+        ...existingCollaborator,
+        expertiseIds: mergedExpertiseIds
+      };
+      this.collaboratorsControl.setValue(updatedCollaborators);
+      
+      // Show info toast about merging
+      this.feedbackService.showSuccessToast({
+        summary: this.translateService.instant('message.success'),
+        detail: this.translateService.instant(
+          'message.collaboratorExpertiseMerged'
+        ),
+      });
+    } else if (isEditing && editingIndex >= 0) {
+      // Update existing collaborator (standard edit)
+      const collaboratorWithExpertise = {
+        ...user,
+        expertiseIds: expertiseIds
+      };
       const updatedCollaborators = [...currentCollaborators];
       updatedCollaborators[editingIndex] = collaboratorWithExpertise;
       this.collaboratorsControl.setValue(updatedCollaborators);
     } else {
       // Add new collaborator
+      const collaboratorWithExpertise = {
+        ...user,
+        expertiseIds: expertiseIds
+      };
       const updatedCollaborators = [...currentCollaborators, collaboratorWithExpertise];
       this.collaboratorsControl.setValue(updatedCollaborators);
     }
