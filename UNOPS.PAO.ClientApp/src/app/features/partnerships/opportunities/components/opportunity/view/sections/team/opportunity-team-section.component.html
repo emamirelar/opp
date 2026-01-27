@@ -351,14 +351,14 @@
         <div class="border-t border-unops-neutral-300 pt-4"></div>
 
         <!-- Role Holders for Responsible Org Unit (read-only) -->
-        @if (autoPopulatedStakeholders().length > 0) {
+        @if (responsibleOrgUnitStakeholders().length > 0) {
           <div>
             <div class="text-xs text-unops-secondary mb-3 flex items-center gap-1">
               <i class="pi pi-lock text-unops-secondary"></i>
               <span>{{ 'label.opportunity.autoPopulatedFromOrgUnit' | translate }}</span>
             </div>
 
-            @for (group of groupedAutoPopulatedStakeholders(); track group.orgUnitName) {
+            @for (group of groupedResponsibleOrgUnitStakeholders(); track group.orgUnitName) {
               <div class="mb-4">
                 <!-- OrgUnit Group Header -->
                 <div class="text-sm font-semibold text-unops-primary mb-2 flex items-center gap-2">
@@ -613,8 +613,69 @@
         </div>
       }
 
+      <!-- Role Holders from Normally Responsible Org Units (Other Internal Stakeholders) -->
+      @if (normallyResponsibleOrgUnitStakeholders().length > 0) {
+        <div class="mt-4 pt-4 border-t border-unops-neutral-300">
+          <div class="text-xs text-unops-secondary mb-3 flex items-center gap-1">
+            <i class="pi pi-lock text-unops-secondary"></i>
+            <span>{{ 'label.opportunity.autoPopulatedFromNormallyResponsible' | translate }}</span>
+          </div>
+
+          @for (group of groupedNormallyResponsibleStakeholders(); track group.orgUnitName) {
+            <div class="mb-4">
+              <!-- OrgUnit Group Header with Country Badge -->
+              <div class="text-sm font-semibold text-unops-primary mb-2 flex items-center gap-2">
+                <i class="pi pi-building text-unops-primary"></i>
+                <span>{{ group.orgUnitName }}</span>
+                @if (group.countryName) {
+                  <p-tag 
+                    [value]="group.countryName" 
+                    severity="info" 
+                    styleClass="text-xs"
+                    [pTooltip]="'tooltip.normallyResponsibleForCountry' | translate"
+                    tooltipPosition="top"
+                  />
+                }
+                <span class="text-unops-neutral-500 font-normal text-xs">({{ group.stakeholders.length }})</span>
+              </div>
+
+              <!-- Roles Grid - 2 columns on medium screens, 3 on large -->
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                @for (stakeholder of group.stakeholders; track stakeholder.entityRoleId) {
+                  <div class="bg-amber-50 rounded-unops-md p-2.5 border border-amber-200 opacity-90">
+                    <div class="flex items-center gap-2">
+                      <p-avatar
+                        label="A"
+                        shape="circle"
+                        size="normal"
+                        styleClass="bg-amber-100 text-amber-600 flex-shrink-0"
+                      />
+                      <div class="min-w-0 flex-1">
+                        <div class="font-semibold text-unops-secondary text-sm truncate">
+                          <span>{{ getTranslatedRoleName(stakeholder) }}</span>
+                        </div>
+                        @if (stakeholder.userName) {
+                          <div class="text-xs text-unops-neutral-600 truncate" [title]="stakeholder.userName">
+                            {{ stakeholder.userName }}
+                          </div>
+                        }
+                        @if (stakeholder.position) {
+                          <div class="text-xs text-unops-primary font-medium truncate" [title]="stakeholder.position">
+                            {{ stakeholder.position }}
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+
       <!-- Empty state -->
-      @if (combinedInternalStakeholders().length === 0) {
+      @if (combinedInternalStakeholders().length === 0 && normallyResponsibleOrgUnitStakeholders().length === 0) {
         <div class="text-center py-8 text-unops-neutral-500">
           <i class="pi pi-users text-4xl mb-3 text-unops-neutral-400"></i>
           <p>{{ 'message.noStakeholders' | translate }}</p>
