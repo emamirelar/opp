@@ -47,6 +47,69 @@ npm run test:chrome
 npm run test:report
 ```
 
+## ⏳ Waiting for Page Ready States
+
+**Important**: The Angular application uses loading overlays and spinners. Always wait for these to disappear before making assertions.
+
+### Automatic Waiting
+
+The `login()` and `loginAndNavigate()` helpers automatically wait for loading to complete.
+
+### Manual Waiting
+
+```typescript
+import { waitForPageReady, waitForLoadingToComplete, waitForElementReady } from './helpers/wait.helper';
+
+// Wait for all loading overlays and network activity
+await waitForPageReady(page);
+
+// Wait specifically for loading overlays
+await waitForLoadingToComplete(page);
+
+// Wait for specific element to be ready
+await waitForElementReady(page.locator('[data-testid="my-element"]'));
+```
+
+## 🔌 API Mocking
+
+**Important**: The Angular application requires backend APIs to initialize. Playwright tests use API mocking to simulate backend responses without requiring a running backend server.
+
+### Automatic Mocking
+
+The following endpoints are automatically mocked when using the `login()` helper:
+
+- **`/api/configuration`** - Returns mock configuration data
+- **`/user/claims`** - Returns empty array (unauthenticated) or test user claims after login
+- **`/api/global/preferred-language`** - Returns English as default language
+- **`/user/login`** - Accepts credentials and returns success response
+- **`**/api/**`** - Catch-all for any other API endpoints
+
+### Usage
+
+```typescript
+import { login } from './helpers/auth.helper';
+
+test.beforeEach(async ({ page }) => {
+  // API mocks are automatically set up during login
+  await login(page);
+});
+```
+
+### Manual Mocking
+
+For custom test scenarios:
+
+```typescript
+import { setupAPIMocks, setupAuthenticatedUserMock } from './helpers/api-mocks.helper';
+
+// Mock APIs before navigation
+await setupAPIMocks(page);
+await page.goto('/');
+
+// Or mock authenticated user
+await setupAuthenticatedUserMock(page, 'test@example.com');
+```
+
 ## 📝 Writing Tests
 
 ### Basic Test Structure

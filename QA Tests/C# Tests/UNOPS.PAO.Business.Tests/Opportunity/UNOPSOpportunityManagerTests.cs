@@ -77,6 +77,9 @@ public class UNOPSOpportunityManagerTests : IDisposable
         mockDbSchema.Setup(s => s.Schema).Returns("public");
 
         _context = new UNOPSAppDbContext(_dbContextOptions, userResolverService, mockDbSchema.Object);
+        
+        // Ensure EF Core model is finalized for in-memory database
+        _context.Database.EnsureCreated();
 
         // Setup real AutoMapper with application profiles
         var mapperConfig = new MapperConfiguration(cfg =>
@@ -181,6 +184,20 @@ public class UNOPSOpportunityManagerTests : IDisposable
         {
             Id = 1,
             Email = "testuser@unops.org"
+        });
+
+        // Seed EntityRole for Opportunity Manager (required for team assignment tests)
+        _context.EntityRoles.Add(new EntityRole
+        {
+            Id = 1,
+            EntityType = "Opportunity",
+            Name = "Opportunity Manager",
+            Description = "Manages the opportunity",
+            IsInternal = true,
+            AllowsMultiple = false,
+            Code = "Opportunity_Manager",
+            Status = EntityStatus.Active,
+            IsDeleted = false
         });
 
         _context.SaveChanges();

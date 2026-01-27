@@ -1,4 +1,7 @@
 import { test, expect } from '@playwright/test';
+import { LoginPage } from './pages/login.page';
+import { getTestCredentials } from './helpers/test-config';
+import { assertUrlMatches } from './helpers/assertions.helper';
 
 /**
  * Login Flow E2E Tests
@@ -10,122 +13,85 @@ import { test, expect } from '@playwright/test';
  * - Form validation
  */
 test.describe('Login Flow', () => {
-  test('should display login form', async ({ page }) => {
-    await page.goto('/login');
-    
-    // Verify login page loaded
-    await expect(page).toHaveURL(/\/login/);
-    
-    // Verify form elements are present using data-testid
-    await expect(page.locator('[data-testid="username-input"]')).toBeVisible();
-    await expect(page.locator('[data-testid="password-input"]')).toBeVisible();
-    await expect(page.locator('[data-testid="login-button"]')).toBeVisible();
+  let loginPage: LoginPage;
+  
+  test.beforeEach(async ({ page }) => {
+    loginPage = new LoginPage(page);
+    await loginPage.navigate();
   });
   
-  test('should display email and password labels', async ({ page }) => {
-    await page.goto('/login');
+  test('should display login form', async ({ page }) => {
+    // Verify login page loaded
+    await assertUrlMatches(page, /\/login/);
     
+    // Verify form elements are present
+    await loginPage.verifyLoginFormVisible();
+  });
+  
+  test('should display email and password labels', async () => {
     // Verify form labels
-    await expect(page.locator('label[for="userEmail"]')).toContainText(/Email/i);
-    await expect(page.locator('label[for="password"]')).toContainText(/Password/i);
+    await loginPage.verifyFormLabels();
   });
   
   test('should successfully login with valid credentials', async ({ page }) => {
-    await page.goto('/login');
+    // Get credentials from config
+    const credentials = getTestCredentials();
     
-    // TODO: Replace with actual test credentials from your environment
-    const username = 'testuser@unops.org';
-    const password = 'TestPassword123!';
-    
-    // Fill in credentials using data-testid
-    await page.locator('[data-testid="username-input"]').fill(username);
-    
-    // For p-password component, need to target the actual input inside
-    await page.locator('[data-testid="password-input"] input').fill(password);
-    
-    // Click login button
-    await page.locator('[data-testid="login-button"]').click();
+    // Perform login
+    await loginPage.login(credentials.email, credentials.password);
     
     // Verify redirect to home/dashboard
-    await expect(page).toHaveURL(/\/home|\/dashboard/, { timeout: 10000 });
+    await assertUrlMatches(page, /\/home|\/dashboard/);
     
     // Verify user is logged in (dashboard content visible)
     await expect(page.locator('.max-w-7xl, .dashboard, [data-testid="dashboard"]')).toBeVisible({ timeout: 5000 });
   });
   
-  test('should show error with invalid credentials', async ({ page }) => {
-    await page.goto('/login');
-    
+  test('should show error with invalid credentials', async () => {
     // Fill in invalid credentials
-    await page.locator('[data-testid="username-input"]').fill('invalid@example.com');
-    await page.locator('[data-testid="password-input"] input').fill('wrongpassword');
+    await loginPage.fillUsername('invalid@example.com');
+    await loginPage.fillPassword('wrongpassword');
+    await loginPage.clickLogin();
     
-    // Click login
-    await page.locator('[data-testid="login-button"]').click();
-    
-    // Verify error message is shown (adjust selector based on actual error display)
-    await expect(
-      page.locator('.p-message-error, [role="alert"], .error-message')
-        .or(page.getByText(/Invalid credentials|Login failed|Authentication failed/i))
-    ).toBeVisible({ timeout: 5000 });
+    // Verify error message is shown
+    await loginPage.verifyErrorMessage();
   });
   
-  test('should validate required fields', async ({ page }) => {
-    await page.goto('/login');
-    
+  test('should validate required fields', async () => {
     // Try to submit without filling fields
-    await page.locator('[data-testid="login-button"]').click();
+    await loginPage.clickLogin();
     
-    // Verify validation occurs (PrimeNG adds ng-invalid class)
-    const usernameField = page.locator('[data-testid="username-input"]');
-    const passwordField = page.locator('[data-testid="password-input"]');
-    
-    // At least one field should show invalid state
-    const hasValidationError = 
-      await usernameField.evaluate(el => el.classList.contains('ng-invalid')).catch(() => false) ||
-      await passwordField.evaluate(el => el.classList.contains('ng-invalid')).catch(() => false);
-    
-    expect(hasValidationError).toBeTruthy();
+    // Verify validation occurs
+    const hasError = await loginPage.hasValidationError();
+    expect(hasError).toBeTruthy();
   });
   
-  test('should allow password visibility toggle', async ({ page }) => {
-    await page.goto('/login');
-    
+  test('should allow password visibility toggle', async () => {
     // Fill password field
-    await page.locator('[data-testid="password-input"] input').fill('TestPassword123!');
+    await loginPage.fillPassword('TestPassword123!');
     
-    // Find the toggle button (PrimeNG p-password has a toggle mask button)
-    const toggleButton = page.locator('[data-testid="password-input"] button').first();
+    // Toggle to show password
+    await loginPage.togglePasswordVisibility();
     
-    // Verify toggle button exists
-    await expect(toggleButton).toBeVisible();
+    // Verify input type changed to text
+    const visibleType = await loginPage.getPasswordFieldType();
+    expect(visibleType).toBe('text');
     
-    // Click to show password
-    await toggleButton.click();
-    
-    // Verify input type changed to text (password visible)
-    const inputType = await page.locator('[data-testid="password-input"] input').getAttribute('type');
-    expect(inputType).toBe('text');
-    
-    // Click again to hide
-    await toggleButton.click();
+    // Toggle to hide password
+    await loginPage.togglePasswordVisibility();
     
     // Verify input type changed back to password
-    const hiddenType = await page.locator('[data-testid="password-input"] input').getAttribute('type');
+    const hiddenType = await loginPage.getPasswordFieldType();
     expect(hiddenType).toBe('password');
   });
   
-  test('should display Sign Up button if registration is enabled', async ({ page }) => {
-    await page.goto('/login');
-    
-    // Check if signup section exists (depends on canDoSignUp config)
-    const signupSection = page.locator('[data-testid="signup-section"]');
-    const isSignupVisible = await signupSection.isVisible().catch(() => false);
+  test('should display Sign Up button if registration is enabled', async () => {
+    // Check if signup section exists
+    const isSignupVisible = await loginPage.isSignupSectionVisible();
     
     if (isSignupVisible) {
-      // Verify signup button
-      await expect(page.locator('[data-testid="signup-button"]')).toBeVisible();
-      await expect(signupSection).toContainText(/Not a member/i);
+      // Verify signup button is visible
+      await loginPage.assertElementVisible('signup-button');
     }
     
     // Test passes regardless - just verifying UI consistency

@@ -72,6 +72,9 @@ public class OpportunityAdvancedFeaturesTests : IDisposable
         mockDbSchema.Setup(s => s.Schema).Returns("public");
 
         _context = new UNOPSAppDbContext(_dbContextOptions, userResolverService, mockDbSchema.Object);
+        
+        // Ensure EF Core model is finalized for in-memory database
+        _context.Database.EnsureCreated();
 
         // Setup real AutoMapper
         var mapperConfig = new MapperConfiguration(cfg =>
@@ -139,6 +142,21 @@ public class OpportunityAdvancedFeaturesTests : IDisposable
         // Workflow stages are now stored as string values in Opportunity.Stage property
         _context.ProposedInitiativeTypes.Add(new ProposedInitiativeType { Id = 1, Name = "Project", IsDeleted = false });
         _context.PAOUsers.Add(new PAOUser { Id = 1, Email = "test@unops.org" });
+        
+        // Seed EntityRole for Opportunity Manager (required for team assignment tests)
+        _context.EntityRoles.Add(new EntityRole
+        {
+            Id = 1,
+            EntityType = "Opportunity",
+            Name = "Opportunity Manager",
+            Description = "Manages the opportunity",
+            IsInternal = true,
+            AllowsMultiple = false,
+            Code = "Opportunity_Manager",
+            Status = EntityStatus.Active,
+            IsDeleted = false
+        });
+        
         _context.SaveChanges();
     }
 

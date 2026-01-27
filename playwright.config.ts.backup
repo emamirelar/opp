@@ -58,18 +58,7 @@ export default defineConfig({
 
     {
       name: 'webkit',
-      use: { 
-        ...devices['Desktop Safari'],
-        // Webkit (Safari) needs 2-3x longer timeouts than Chromium/Firefox
-        // due to slower page load and stricter security model
-        navigationTimeout: 120000,  // 2 minutes for navigation (vs 30s default)
-        actionTimeout: 60000,        // 1 minute for actions (vs 30s default)
-      },
-      // Webkit tests take longer to complete
-      timeout: 180000,  // 3 minutes per test (vs 60s default)
-      expect: {
-        timeout: 15000,  // 15 seconds for assertions (vs 10s default)
-      },
+      use: { ...devices['Desktop Safari'] },
     },
 
     /* Test against mobile viewports. */

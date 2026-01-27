@@ -61,25 +61,10 @@ public abstract class IntegrationTestBase : IDisposable
         mockDbSchema.Setup(s => s.Schema).Returns("public");
 
         Context = new UNOPSAppDbContext(dbContextOptions, userResolverService, mockDbSchema.Object);
-
-        // ✅ WORK ITEM #1 FIX: Finalize the EF Core model for in-memory database
-        // EF Core 9.0 requires explicit model finalization for certain operations (like SaveChangesAsync)
-        // This resolves: "The model must be finalized and its runtime dependencies must be initialized"
-        try
-        {
-            var model = Context.Model;
-            if (model is IMutableModel mutableModel)
-            {
-                // Finalize the model to enable SaveChangesAsync operations
-                model = mutableModel.FinalizeModel();
-                Console.WriteLine("✅ EF Core model successfully finalized for in-memory database");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"⚠️ Warning: Could not finalize EF Core model: {ex.Message}");
-            // Don't throw - let tests proceed and see if they work without finalization
-        }
+        
+        // Ensure EF Core model is finalized for in-memory database
+        // This creates the database schema and finalizes the model
+        Context.Database.EnsureCreated();
 
         // Setup real AutoMapper
         var mapperConfig = new MapperConfiguration(cfg =>

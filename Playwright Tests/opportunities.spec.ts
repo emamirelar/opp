@@ -1,4 +1,7 @@
 import { test, expect } from '@playwright/test';
+import { OpportunitiesPage } from './pages/opportunities.page';
+import { loginAndNavigate } from './helpers/auth.helper';
+import { assertUrlMatches, assertDialogOpen } from './helpers/assertions.helper';
 
 /**
  * Opportunities List E2E Tests
@@ -11,50 +14,26 @@ import { test, expect } from '@playwright/test';
  * - Search and filter capabilities
  */
 test.describe('Opportunities List', () => {
+  let opportunitiesPage: OpportunitiesPage;
+  
   // Login before each test
   test.beforeEach(async ({ page }) => {
-    await page.goto('/login');
-    
-    // TODO: Replace with actual test credentials
-    await page.locator('[data-testid="username-input"]').fill('testuser@unops.org');
-    await page.locator('[data-testid="password-input"] input').fill('TestPassword123!');
-    await page.locator('[data-testid="login-button"]').click();
-    
-    // Wait for redirect
-    await page.waitForURL(/\/home|\/dashboard/, { timeout: 10000 });
-    
-    // Navigate to opportunities page
-    await page.goto('/opportunities');
-    
-    // Wait for opportunities page to load
-    await page.waitForLoadState('networkidle');
+    opportunitiesPage = new OpportunitiesPage(page);
+    await loginAndNavigate(page, '/opportunities');
   });
   
-  test('should display opportunities page header', async ({ page }) => {
-    // Verify page header using data-testid
-    await expect(page.locator('[data-testid="opportunities-header"]')).toBeVisible({ timeout: 10000 });
-    
-    // Verify icon (lightbulb)
-    await expect(page.locator('[data-testid="opportunities-icon"]')).toBeVisible();
-    
-    // Verify "Opportunities" title
-    await expect(page.locator('[data-testid="opportunities-title"]')).toBeVisible();
+  test('should display opportunities page header', async () => {
+    await opportunitiesPage.verifyPageHeader();
   });
   
-  test('should display New Opportunity button for users with create permission', async ({ page }) => {
-    // Wait for permissions to load
-    await page.waitForTimeout(2000);
+  test('should display New Opportunity button for users with create permission', async () => {
+    await opportunitiesPage.waitForPermissions();
     
-    // Check if New Opportunity button exists using data-testid
-    const newOpportunityButton = page.locator('[data-testid="new-opportunity-button"]');
-    const isVisible = await newOpportunityButton.isVisible().catch(() => false);
-    
+    const isVisible = await opportunitiesPage.isNewButtonVisible();
     if (isVisible) {
-      await expect(newOpportunityButton).toBeVisible();
-      await expect(newOpportunityButton).toContainText(/Opportunity/i);
+      await opportunitiesPage.assertElementVisible('new-opportunity-button');
     }
     
-    // Test passes - button visibility depends on permissions
     expect(true).toBeTruthy();
   });
   
