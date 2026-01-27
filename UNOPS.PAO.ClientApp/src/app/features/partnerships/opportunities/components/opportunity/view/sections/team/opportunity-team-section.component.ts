@@ -181,6 +181,8 @@ export class OpportunityTeamSectionComponent implements OnInit {
 
   // Collaborator dialog state
   readonly showCollaboratorDialog = signal(false);
+  readonly isEditingCollaborator = signal(false);
+  readonly editingCollaboratorIndex = signal(-1);
   readonly collaboratorUserControl = new FormControl<SimpleValue | null>(null);
   readonly collaboratorExpertiseControl = new FormControl<number[]>([]);
 
@@ -1613,6 +1615,8 @@ export class OpportunityTeamSectionComponent implements OnInit {
    * @description Open dialog to add collaborator
    */
   openAddCollaboratorDialog(): void {
+    this.isEditingCollaborator.set(false);
+    this.editingCollaboratorIndex.set(-1);
     this.collaboratorUserControl.setValue(null);
     this.collaboratorExpertiseControl.setValue([]);
     this.showCollaboratorDialog.set(true);
@@ -1620,17 +1624,49 @@ export class OpportunityTeamSectionComponent implements OnInit {
   }
 
   /**
+   * @description Open dialog to edit existing collaborator
+   */
+  editCollaborator(index: number): void {
+    const collaborators = this.collaboratorsControl.value || [];
+    const collaborator = collaborators[index] as SimpleValue & { expertiseIds?: number[] };
+    if (!collaborator) return;
+
+    this.isEditingCollaborator.set(true);
+    this.editingCollaboratorIndex.set(index);
+    
+    // Set the user (find the full SimpleValue object)
+    const userValue = this.internalUsers().find(u => u.id === collaborator.id);
+    this.collaboratorUserControl.setValue(userValue || collaborator);
+    
+    // Set the expertise IDs
+    this.collaboratorExpertiseControl.setValue(collaborator.expertiseIds || []);
+    
+    this.showCollaboratorDialog.set(true);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Get expertise name by ID
+   */
+  getExpertiseName(expertiseId: number): string {
+    const expertise = this.collaboratorExpertises().find(e => e.id === expertiseId);
+    return expertise?.name || `Expertise ${expertiseId}`;
+  }
+
+  /**
    * @description Cancel collaborator dialog
    */
   cancelCollaboratorDialog(): void {
     this.showCollaboratorDialog.set(false);
+    this.isEditingCollaborator.set(false);
+    this.editingCollaboratorIndex.set(-1);
     this.collaboratorUserControl.setValue(null);
     this.collaboratorExpertiseControl.setValue([]);
     this.cdr.detectChanges();
   }
 
   /**
-   * @description Confirm collaborator dialog (add collaborator)
+   * @description Confirm collaborator dialog (add or update collaborator)
    */
   confirmCollaboratorDialog(): void {
     const user = this.collaboratorUserControl.value;
@@ -1651,18 +1687,23 @@ export class OpportunityTeamSectionComponent implements OnInit {
       return;
     }
 
-    // Check for duplicate collaborator
     const currentCollaborators = this.collaboratorsControl.value || [];
-    const isDuplicate = currentCollaborators.some(c => c.id === user.id);
+    const isEditing = this.isEditingCollaborator();
+    const editingIndex = this.editingCollaboratorIndex();
 
-    if (isDuplicate) {
-      this.feedbackService.showWarningToast({
-        summary: this.translateService.instant('message.warning'),
-        detail: this.translateService.instant(
-          'message.validation.collaboratorAlreadyAdded'
-        ),
-      });
-      return;
+    // Check for duplicate collaborator (only when adding or changing the user)
+    if (!isEditing || (isEditing && currentCollaborators[editingIndex]?.id !== user.id)) {
+      const isDuplicate = currentCollaborators.some((c, i) => c.id === user.id && i !== editingIndex);
+
+      if (isDuplicate) {
+        this.feedbackService.showWarningToast({
+          summary: this.translateService.instant('message.warning'),
+          detail: this.translateService.instant(
+            'message.validation.collaboratorAlreadyAdded'
+          ),
+        });
+        return;
+      }
     }
 
     // Check if user is already the Opportunity Manager
@@ -1677,13 +1718,23 @@ export class OpportunityTeamSectionComponent implements OnInit {
       return;
     }
 
-    // Add collaborator with expertises
+    // Create collaborator with expertises
     const collaboratorWithExpertise = {
       ...user,
       expertiseIds: expertiseIds
     };
-    const updatedCollaborators = [...currentCollaborators, collaboratorWithExpertise];
-    this.collaboratorsControl.setValue(updatedCollaborators);
+
+    if (isEditing && editingIndex >= 0) {
+      // Update existing collaborator
+      const updatedCollaborators = [...currentCollaborators];
+      updatedCollaborators[editingIndex] = collaboratorWithExpertise;
+      this.collaboratorsControl.setValue(updatedCollaborators);
+    } else {
+      // Add new collaborator
+      const updatedCollaborators = [...currentCollaborators, collaboratorWithExpertise];
+      this.collaboratorsControl.setValue(updatedCollaborators);
+    }
+    
     this.markAsChanged();
     this.cancelCollaboratorDialog();
   }

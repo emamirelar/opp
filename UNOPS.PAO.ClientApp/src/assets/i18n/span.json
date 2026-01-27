@@ -2924,6 +2924,7 @@
   "message.confirmRemoveExternalStakeholder": "Â¿EstÃ¡ seguro de que desea eliminar esta parte interesada externa?",
   "title.addStakeholder": "Agregar Miembro del Equipo",
   "title.addCollaborator": "Agregar Colaborador",
+  "title.editCollaborator": "Editar Colaborador",
   "title.addExternalStakeholder": "Agregar Parte Interesada Externa",
   "confirmation.removeStakeholder": "Eliminar Miembro del Equipo",
   "confirmation.removeCollaborator": "Eliminar Colaborador",

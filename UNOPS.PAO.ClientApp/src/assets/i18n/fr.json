@@ -2964,6 +2964,7 @@
   "message.confirmRemoveExternalStakeholder": "ÃŠtes-vous sÃ»r de vouloir retirer cette partie prenante externe ?",
   "title.addStakeholder": "Ajouter un Membre d'Ã‰quipe",
   "title.addCollaborator": "Ajouter un Collaborateur",
+  "title.editCollaborator": "Modifier le Collaborateur",
   "title.addExternalStakeholder": "Ajouter une Partie Prenante Externe",
   "confirmation.removeStakeholder": "Retirer le Membre d'Ã‰quipe",
   "confirmation.removeCollaborator": "Retirer le Collaborateur",

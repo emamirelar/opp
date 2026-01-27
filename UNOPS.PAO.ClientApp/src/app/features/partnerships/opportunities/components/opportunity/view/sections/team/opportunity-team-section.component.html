@@ -114,22 +114,19 @@
             {{ 'label.opportunity.opportunityManager' | translate }} <span class="text-unops-error">*</span>
           </h4>
           @if (isEditing()) {
-            <p-floatlabel variant="on">
-              <p-select
-                id="opportunityManager"
-                [formControl]="opportunityManagerControl"
-                [options]="internalUsers()"
-                optionLabel="name"
-                [filter]="true"
-                filterBy="name"
-                [placeholder]="'label.opportunity.selectOpportunityManager' | translate"
-                [appendTo]="'body'"
-                [virtualScroll]="true"
-                [virtualScrollItemSize]="38"
-                class="w-full"
-              />
-              <label for="opportunityManager">{{ 'label.opportunity.opportunityManager' | translate }} *</label>
-            </p-floatlabel>
+            <p-select
+              id="opportunityManager"
+              [formControl]="opportunityManagerControl"
+              [options]="internalUsers()"
+              optionLabel="name"
+              [filter]="true"
+              filterBy="name"
+              [placeholder]="'label.opportunity.selectOpportunityManager' | translate"
+              [appendTo]="'body'"
+              [virtualScroll]="true"
+              [virtualScrollItemSize]="38"
+              class="w-full"
+            />
             @if (opportunityManagerControl.value) {
               <p class="text-xs text-unops-neutral-600 mt-1">
                 {{ opportunityManagerControl.value.position || '-' }}
@@ -177,28 +174,53 @@
             @if (collaboratorsControl.value && collaboratorsControl.value.length > 0) {
               <div class="space-y-2">
                 @for (collaborator of collaboratorsControl.value; track collaborator.id; let i = $index) {
-                  <div class="bg-unops-surface-secondary rounded-unops-lg p-3 border border-unops-neutral-300 shadow-unops-sm flex items-center justify-between">
-                    <div class="flex items-center gap-3 flex-1">
-                      <p-avatar
-                        [label]="collaborator.name.charAt(0) || '?'"
-                        shape="circle"
-                        styleClass="bg-blue-100 text-blue-600"
-                      />
-                      <div class="flex-1">
-                        <div class="font-semibold text-unops-secondary">{{ collaborator.name }}</div>
-                        @if (collaborator.position) {
-                          <div class="text-sm text-unops-neutral-600">{{ collaborator.position }}</div>
-                        }
+                  <div class="bg-unops-surface-secondary rounded-unops-lg p-3 border border-unops-neutral-300 shadow-unops-sm">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-3 flex-1">
+                        <p-avatar
+                          [label]="collaborator.name.charAt(0) || '?'"
+                          shape="circle"
+                          styleClass="bg-blue-100 text-blue-600"
+                        />
+                        <div class="flex-1">
+                          <div class="font-semibold text-unops-secondary">{{ collaborator.name }}</div>
+                          @if (collaborator.position) {
+                            <div class="text-sm text-unops-neutral-600">{{ collaborator.position }}</div>
+                          }
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <p-button
+                          icon="pi pi-pencil"
+                          size="small"
+                          [text]="true"
+                          [rounded]="true"
+                          severity="secondary"
+                          (onClick)="editCollaborator(i)"
+                          pTooltip="{{ 'button.edit' | translate }}"
+                        />
+                        <p-button
+                          icon="pi pi-trash"
+                          size="small"
+                          [text]="true"
+                          [rounded]="true"
+                          severity="danger"
+                          (onClick)="removeCollaborator(i)"
+                          pTooltip="{{ 'button.remove' | translate }}"
+                        />
                       </div>
                     </div>
-                    <p-button
-                      icon="pi pi-trash"
-                      size="small"
-                      [text]="true"
-                      [rounded]="true"
-                      severity="danger"
-                      (onClick)="removeCollaborator(i)"
-                    />
+                    @if ($any(collaborator).expertiseIds && $any(collaborator).expertiseIds.length > 0) {
+                      <div class="mt-2 flex flex-wrap gap-1">
+                        @for (expertiseId of $any(collaborator).expertiseIds; track expertiseId) {
+                          <p-tag 
+                            [value]="getExpertiseName(expertiseId)" 
+                            severity="info"
+                            styleClass="text-xs"
+                          />
+                        }
+                      </div>
+                    }
                   </div>
                 }
               </div>
@@ -210,18 +232,31 @@
             @if (collaborators().length > 0) {
               <div class="space-y-2">
                 @for (collaborator of collaborators(); track collaborator.id) {
-                  <div class="bg-unops-surface-secondary rounded-unops-lg p-3 border border-unops-neutral-300 shadow-unops-sm flex items-center gap-3">
-                    <p-avatar
-                      [label]="(collaborator.userName?.charAt(0) || '?').toUpperCase()"
-                      shape="circle"
-                      styleClass="bg-blue-100 text-blue-600"
-                    />
-                    <div class="flex-1">
-                      <div class="font-semibold text-unops-secondary">{{ collaborator.userName || '-' }}</div>
-                      @if (collaborator.position) {
-                        <div class="text-sm text-unops-neutral-600">{{ collaborator.position }}</div>
-                      }
+                  <div class="bg-unops-surface-secondary rounded-unops-lg p-3 border border-unops-neutral-300 shadow-unops-sm">
+                    <div class="flex items-center gap-3">
+                      <p-avatar
+                        [label]="(collaborator.userName?.charAt(0) || '?').toUpperCase()"
+                        shape="circle"
+                        styleClass="bg-blue-100 text-blue-600"
+                      />
+                      <div class="flex-1">
+                        <div class="font-semibold text-unops-secondary">{{ collaborator.userName || '-' }}</div>
+                        @if (collaborator.position) {
+                          <div class="text-sm text-unops-neutral-600">{{ collaborator.position }}</div>
+                        }
+                      </div>
                     </div>
+                    @if (collaborator.expertises && collaborator.expertises.length > 0) {
+                      <div class="mt-2 flex flex-wrap gap-1">
+                        @for (expertise of collaborator.expertises; track expertise.id) {
+                          <p-tag 
+                            [value]="expertise.name" 
+                            severity="info"
+                            styleClass="text-xs"
+                          />
+                        }
+                      </div>
+                    }
                   </div>
                 }
               </div>
@@ -875,33 +910,48 @@
   </ng-template>
 </p-dialog>
 
-<!-- Add Collaborator Dialog -->
+<!-- Add/Edit Collaborator Dialog -->
 <p-dialog
-  [header]="'title.addCollaborator' | translate"
+  [header]="(isEditingCollaborator() ? 'title.editCollaborator' : 'title.addCollaborator') | translate"
   [(visible)]="showCollaboratorDialog"
   [modal]="true"
   [appendTo]="'body'"
   [style]="{ width: '35rem' }"
 >
   <div class="space-y-4">
-    <!-- User Selection -->
+    <!-- User Selection (disabled when editing) -->
     <div>
-      <p-floatlabel variant="on">
-        <p-select
-          id="collaboratorUser"
-          [formControl]="collaboratorUserControl"
-          [options]="availableCollaboratorUsers()"
-          optionLabel="name"
-          [filter]="true"
-          filterBy="name"
-          [showClear]="true"
-          [appendTo]="'body'"
-          [virtualScroll]="true"
-          [virtualScrollItemSize]="38"
-          class="w-full"
-        />
-        <label for="collaboratorUser">{{ 'label.user' | translate }} *</label>
-      </p-floatlabel>
+      @if (isEditingCollaborator()) {
+        <!-- Show read-only user info when editing -->
+        <div class="p-3 bg-unops-surface-secondary rounded border border-unops-neutral-300">
+          <label class="text-xs text-unops-neutral-600 mb-1 block">{{ 'label.user' | translate }}</label>
+          <div class="flex items-center gap-2">
+            <p-avatar
+              [label]="(collaboratorUserControl.value?.name?.charAt(0) || '?').toUpperCase()"
+              shape="circle"
+              styleClass="bg-blue-100 text-blue-600 !w-8 !h-8 text-sm"
+            />
+            <span class="font-medium text-unops-secondary">{{ collaboratorUserControl.value?.name }}</span>
+          </div>
+        </div>
+      } @else {
+        <p-floatlabel variant="on">
+          <p-select
+            id="collaboratorUser"
+            [formControl]="collaboratorUserControl"
+            [options]="availableCollaboratorUsers()"
+            optionLabel="name"
+            [filter]="true"
+            filterBy="name"
+            [showClear]="true"
+            [appendTo]="'body'"
+            [virtualScroll]="true"
+            [virtualScrollItemSize]="38"
+            class="w-full"
+          />
+          <label for="collaboratorUser">{{ 'label.user' | translate }} *</label>
+        </p-floatlabel>
+      }
     </div>
 
     <!-- Expertise Selection (Multi-select) -->
