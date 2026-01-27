@@ -549,15 +549,6 @@
               <i class="pi pi-users text-unops-primary text-base"></i>
               <span>{{ 'label.opportunity.teamStakeholders' | translate }} ({{ combinedInternalStakeholders().length }})</span>
             </h3>
-        @if (isEditing()) {
-          <p-button
-            [label]="'button.add' | translate"
-            icon="pi pi-plus"
-            size="small"
-            [text]="true"
-            (onClick)="openAddStakeholderDialog()"
-          />
-          }
           </div>
 
       <!-- Combined stakeholders: user-added + normally responsible org units -->
