@@ -2288,6 +2288,18 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             return;
         }
 
+        // ALWAYS add normally responsible org units (if different from selected)
+        // These are the org units normally responsible for implementation countries
+        // NOTE: Must be done BEFORE the empty check below
+        var normallyResponsibleOrgUnits = await GetNormallyResponsibleOrgUnitsAsync(entity.Id, orgUnitId);
+        foreach (var normalOrgUnitId in normallyResponsibleOrgUnits)
+        {
+            if (!orgUnitIdsForRoles.Contains(normalOrgUnitId))
+            {
+                orgUnitIdsForRoles.Add(normalOrgUnitId);
+            }
+        }
+
         if (!orgUnitIdsForRoles.Any())
         {
             // No org units to populate from - remove existing auto-populated
@@ -2297,17 +2309,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 context.Set<OpportunityStakeholder>().Remove(stakeholder);
             }
             return;
-        }
-
-        // ALWAYS add normally responsible org units (if different from selected)
-        // These are the org units normally responsible for implementation countries
-        var normallyResponsibleOrgUnits = await GetNormallyResponsibleOrgUnitsAsync(entity.Id, orgUnitId);
-        foreach (var normalOrgUnitId in normallyResponsibleOrgUnits)
-        {
-            if (!orgUnitIdsForRoles.Contains(normalOrgUnitId))
-            {
-                orgUnitIdsForRoles.Add(normalOrgUnitId);
-            }
         }
 
         // Get EntityUserRoles for all relevant org units (including normally responsible)
