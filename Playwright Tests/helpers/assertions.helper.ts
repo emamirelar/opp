@@ -1,0 +1,239 @@
+/**
+ * @fileoverview Assertions Helper
+ * Provides reusable assertion functions for common test scenarios
+ */
+
+import { Page, Locator, expect } from '@playwright/test';
+import { getTimeout } from './test-config';
+import { waitForLoadingToComplete } from './wait.helper';
+
+/**
+ * Assert element is visible with optional timeout
+ * @param locator - Element locator
+ * @param timeout - Optional timeout override
+ */
+export async function assertVisible(
+  locator: Locator,
+  timeout?: number
+): Promise<void> {
+  await expect(locator).toBeVisible({ 
+    timeout: timeout || getTimeout('default') 
+  });
+}
+
+/**
+ * Assert element is hidden
+ * @param locator - Element locator
+ */
+export async function assertHidden(locator: Locator): Promise<void> {
+  await expect(locator).toBeHidden();
+}
+
+/**
+ * Assert element contains text
+ * @param locator - Element locator
+ * @param text - Expected text (string or regex)
+ */
+export async function assertContainsText(
+  locator: Locator,
+  text: string | RegExp
+): Promise<void> {
+  await expect(locator).toContainText(text);
+}
+
+/**
+ * Assert page header is visible with correct title
+ * @param page - Playwright page object
+ * @param entityName - Entity name (e.g., 'partners', 'contacts')
+ */
+export async function assertPageHeader(
+  page: Page,
+  entityName: string
+): Promise<void> {
+  console.log(`[Assert] Checking page header for ${entityName}...`);
+  
+  // Wait for any loading overlays to disappear first
+  await waitForLoadingToComplete(page);
+  
+  // Give Angular a moment to fully render the component after permissions load
+  await page.waitForTimeout(2000);
+  
+  // DEBUG: Log current URL and check what elements exist
+  const currentUrl = page.url();
+  console.log(`[Assert] Current URL: ${currentUrl}`);
+  
+  // Check if ANY content is visible on the page
+  const bodyText = await page.locator('body').textContent();
+  console.log(`[Assert] Page body contains text: ${bodyText?.substring(0, 200)}...`);
+  
+  // Wait for the header element to be attached to DOM and visible
+  // This is more reliable than URL waiting for hash-based routing
+  const header = page.locator(`[data-testid="${entityName}-header"]`);
+  console.log(`[Assert] Waiting for ${entityName}-header to be visible...`);
+  await header.waitFor({ 
+    state: 'visible', 
+    timeout: getTimeout('navigation') 
+  });
+  console.log(`[Assert] ${entityName}-header is visible`);
+  
+  const icon = page.locator(`[data-testid="${entityName}-icon"]`);
+  const title = page.locator(`[data-testid="${entityName}-title"]`);
+  
+  // Assert all elements are visible
+  await assertVisible(header);
+  await assertVisible(icon);
+  await assertVisible(title);
+  
+  console.log(`[Assert] Page header verified for ${entityName}`);
+}
+
+/**
+ * Assert listview is displayed
+ * @param page - Playwright page object
+ * @param entityName - Entity name (e.g., 'partners', 'contacts')
+ */
+export async function assertListviewVisible(
+  page: Page,
+  entityName: string
+): Promise<void> {
+  const listview = page.locator(`[data-testid="${entityName}-listview"]`);
+  await assertVisible(listview);
+}
+
+/**
+ * Assert button is visible with correct text
+ * @param page - Playwright page object
+ * @param testId - data-testid attribute value
+ * @param expectedText - Expected button text (optional)
+ */
+export async function assertButtonVisible(
+  page: Page,
+  testId: string,
+  expectedText?: string | RegExp
+): Promise<void> {
+  const button = page.locator(`[data-testid="${testId}"]`);
+  await assertVisible(button);
+  
+  if (expectedText) {
+    await assertContainsText(button, expectedText);
+  }
+}
+
+/**
+ * Assert table has data
+ * @param page - Playwright page object
+ * @returns Number of rows found
+ */
+export async function assertTableHasData(page: Page): Promise<number> {
+  const table = page.locator('p-table, .p-datatable, table').first();
+  await assertVisible(table);
+  
+  const rows = page.locator('tbody tr, .p-datatable-tbody tr');
+  const count = await rows.count();
+  
+  expect(count).toBeGreaterThan(0);
+  return count;
+}
+
+/**
+ * Assert URL matches pattern
+ * @param page - Playwright page object
+ * @param pattern - URL pattern (string or regex)
+ */
+export async function assertUrlMatches(
+  page: Page,
+  pattern: string | RegExp
+): Promise<void> {
+  await expect(page).toHaveURL(pattern, { timeout: getTimeout('default') });
+}
+
+/**
+ * Assert dialog is open
+ * @param page - Playwright page object
+ */
+export async function assertDialogOpen(page: Page): Promise<void> {
+  const dialog = page.locator('p-dialog, [role="dialog"]').first();
+  await assertVisible(dialog, getTimeout('short'));
+}
+
+/**
+ * Assert dialog is closed
+ * @param page - Playwright page object
+ */
+export async function assertDialogClosed(page: Page): Promise<void> {
+  const dialog = page.locator('p-dialog, [role="dialog"]').first();
+  await assertHidden(dialog);
+}
+
+/**
+ * Assert error message is displayed
+ * @param page - Playwright page object
+ * @param errorText - Optional specific error text to check
+ */
+export async function assertErrorDisplayed(
+  page: Page,
+  errorText?: string | RegExp
+): Promise<void> {
+  const errorLocator = page.locator(
+    '.p-message-error, [role="alert"], .error-message'
+  ).first();
+  
+  await assertVisible(errorLocator, getTimeout('short'));
+  
+  if (errorText) {
+    await assertContainsText(errorLocator, errorText);
+  }
+}
+
+/**
+ * Assert success message is displayed
+ * @param page - Playwright page object
+ * @param successText - Optional specific success text to check
+ */
+export async function assertSuccessDisplayed(
+  page: Page,
+  successText?: string | RegExp
+): Promise<void> {
+  const successLocator = page.locator(
+    '.p-message-success, .success-message'
+  ).first();
+  
+  await assertVisible(successLocator, getTimeout('short'));
+  
+  if (successText) {
+    await assertContainsText(successLocator, successText);
+  }
+}
+
+/**
+ * Assert element has attribute with value
+ * @param locator - Element locator
+ * @param attribute - Attribute name
+ * @param value - Expected attribute value
+ */
+export async function assertHasAttribute(
+  locator: Locator,
+  attribute: string,
+  value: string | RegExp
+): Promise<void> {
+  await expect(locator).toHaveAttribute(attribute, value);
+}
+
+/**
+ * Assert page is responsive on mobile
+ * @param page - Playwright page object
+ * @param criticalElements - Array of critical element locators to verify
+ */
+export async function assertMobileResponsive(
+  page: Page,
+  criticalElements: Locator[]
+): Promise<void> {
+  // Switch to mobile viewport
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.waitForTimeout(1000);
+  
+  // Verify critical elements are still visible
+  for (const element of criticalElements) {
+    await assertVisible(element);
+  }
+}

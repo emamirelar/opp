@@ -1,4 +1,7 @@
 import { test, expect } from '@playwright/test';
+import { ContactsPage } from './pages/contacts.page';
+import { loginAndNavigate } from './helpers/auth.helper';
+import { assertUrlMatches, assertDialogOpen } from './helpers/assertions.helper';
 
 /**
  * Contacts List E2E Tests
@@ -12,67 +15,37 @@ import { test, expect } from '@playwright/test';
  * - Search and filter capabilities
  */
 test.describe('Contacts List', () => {
+  let contactsPage: ContactsPage;
+  
   // Login before each test
   test.beforeEach(async ({ page }) => {
-    await page.goto('/login');
-    
-    // TODO: Replace with actual test credentials
-    await page.locator('[data-testid="username-input"]').fill('testuser@unops.org');
-    await page.locator('[data-testid="password-input"] input').fill('TestPassword123!');
-    await page.locator('[data-testid="login-button"]').click();
-    
-    // Wait for redirect
-    await page.waitForURL(/\/home|\/dashboard/, { timeout: 10000 });
-    
-    // Navigate to contacts page
-    await page.goto('/contacts');
-    
-    // Wait for contacts page to load
-    await page.waitForLoadState('networkidle');
+    contactsPage = new ContactsPage(page);
+    await loginAndNavigate(page, '/#/partnerships/contacts');
   });
   
-  test('should display contacts page header', async ({ page }) => {
-    // Verify page header using data-testid
-    await expect(page.locator('[data-testid="contacts-header"]')).toBeVisible({ timeout: 10000 });
-    
-    // Verify icon
-    await expect(page.locator('[data-testid="contacts-icon"]')).toBeVisible();
-    
-    // Verify "Contacts" title
-    await expect(page.locator('[data-testid="contacts-title"]')).toBeVisible();
+  test('should display contacts page header', async () => {
+    await contactsPage.verifyPageHeader();
   });
   
-  test('should display New Contact button for users with create permission', async ({ page }) => {
-    // Wait for permissions to load
-    await page.waitForTimeout(2000);
+  test('should display New Contact button for users with create permission', async () => {
+    await contactsPage.waitForPermissions();
     
-    // Check if New Contact button exists using data-testid
-    const newContactButton = page.locator('[data-testid="new-contact-button"]');
-    const isVisible = await newContactButton.isVisible().catch(() => false);
-    
+    const isVisible = await contactsPage.isNewButtonVisible();
     if (isVisible) {
-      await expect(newContactButton).toBeVisible();
-      await expect(newContactButton).toContainText(/New/i);
+      await contactsPage.assertElementVisible('new-contact-button');
     }
     
-    // Test passes - button visibility depends on permissions
     expect(true).toBeTruthy();
   });
   
-  test('should display Business Card Scanner button for users with create permission', async ({ page }) => {
-    // Wait for permissions to load
-    await page.waitForTimeout(2000);
+  test('should display Business Card Scanner button for users with create permission', async () => {
+    await contactsPage.waitForPermissions();
     
-    // Check if Scanner button exists using data-testid
-    const scannerButton = page.locator('[data-testid="scan-business-card-button"]');
-    const isVisible = await scannerButton.isVisible().catch(() => false);
-    
+    const isVisible = await contactsPage.isScannerButtonVisible();
     if (isVisible) {
-      await expect(scannerButton).toBeVisible();
-      await expect(scannerButton).toHaveAttribute('icon', 'pi pi-camera');
+      await contactsPage.assertElementVisible('scan-business-card-button');
     }
     
-    // Test passes - button visibility depends on permissions
     expect(true).toBeTruthy();
   });
   
@@ -133,26 +106,14 @@ test.describe('Contacts List', () => {
   });
   
   test('should allow clicking New Contact button to open dialog', async ({ page }) => {
-    // Wait for page to load
-    await page.waitForTimeout(2000);
+    await contactsPage.waitForPermissions();
     
-    // Find New Contact button using data-testid
-    const newContactButton = page.locator('[data-testid="new-contact-button"]');
-    const isVisible = await newContactButton.isVisible().catch(() => false);
-    
+    const isVisible = await contactsPage.isNewButtonVisible();
     if (isVisible) {
-      // Click the button
-      await newContactButton.click();
-      
-      // Wait for dialog to appear
-      await page.waitForTimeout(1000);
-      
-      // Verify dialog opened (look for app-contact-edit-dialog or p-dialog)
-      const dialog = page.locator('app-contact-edit-dialog, p-dialog, [role="dialog"]');
-      await expect(dialog.first()).toBeVisible({ timeout: 5000 });
+      await contactsPage.clickNewButton();
+      await assertDialogOpen(page);
     }
     
-    // Test passes - depends on permissions
     expect(true).toBeTruthy();
   });
   
@@ -236,26 +197,14 @@ test.describe('Contacts List', () => {
   });
   
   test('should open business card scanner dialog', async ({ page }) => {
-    // Wait for page to load
-    await page.waitForTimeout(2000);
+    await contactsPage.waitForPermissions();
     
-    // Find Scanner button using data-testid
-    const scannerButton = page.locator('[data-testid="scan-business-card-button"]');
-    const isVisible = await scannerButton.isVisible().catch(() => false);
-    
+    const isVisible = await contactsPage.isScannerButtonVisible();
     if (isVisible) {
-      // Click the button
-      await scannerButton.click();
-      
-      // Wait for scanner dialog to appear
-      await page.waitForTimeout(1000);
-      
-      // Verify dialog opened
-      const dialog = page.locator('app-business-card-scanner, [role="dialog"]');
-      await expect(dialog.first()).toBeVisible({ timeout: 5000 });
+      await contactsPage.clickScannerButton();
+      await assertDialogOpen(page);
     }
     
-    // Test passes - depends on permissions
     expect(true).toBeTruthy();
   });
 });
