@@ -109,4 +109,48 @@ public static class TestDataSeeder
         
         return partners;
     }
+    
+    public static Contact CreateContactWithValidRelations(int? partnerId = null, string? status = "Active")
+    {
+        var contact = TestDataBuilder.GetContactFaker().Generate();
+        
+        // Ensure required fields are set
+        if (string.IsNullOrEmpty(contact.Name)) 
+            contact.Name = $"{contact.FirstName} {contact.LastName}".Trim();
+        if (string.IsNullOrEmpty(contact.LastName)) 
+            contact.LastName = "Test Contact";
+        if (string.IsNullOrEmpty(contact.Title)) 
+            contact.Title = "Test Title";
+        if (string.IsNullOrEmpty(contact.Email)) 
+            contact.Email = "testcontact@example.com";
+        
+        // Map status string to enum
+        contact.Status = status switch
+        {
+            "Active" => Domain.Entities.EntityStatus.Active,
+            "Inactive" => Domain.Entities.EntityStatus.Closed,
+            "Draft" => Domain.Entities.EntityStatus.Draft,
+            _ => Domain.Entities.EntityStatus.Active
+        };
+        
+        // Link to partner if specified
+        if (partnerId.HasValue)
+        {
+            contact.PartnerId = partnerId.Value;
+        }
+        
+        return contact;
+    }
+    
+    public static List<Contact> CreateContactsForPartner(int partnerId, int count)
+    {
+        var contacts = new List<Contact>();
+        
+        for (int i = 0; i < count; i++)
+        {
+            contacts.Add(CreateContactWithValidRelations(partnerId));
+        }
+        
+        return contacts;
+    }
 }

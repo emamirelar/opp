@@ -175,7 +175,8 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             // Create interaction with user
             var interaction = new Interaction 
             { 
-                Id = 1, 
+                Id = 1,
+                Name = "Test Interaction", // Required by ModifiableDeletableEntity
                 Type = Domain.Enums.InteractionType.Email,
                 Date = DateTime.Now,
                 Subject = "Test interaction subject",
@@ -285,7 +286,8 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             
             var interaction = new Interaction 
             { 
-                Id = 1, 
+                Id = 1,
+                Name = "Test Interaction", // Required by ModifiableDeletableEntity
                 Type = Domain.Enums.InteractionType.Email,
                 Date = DateTime.Now,
                 Subject = "Test interaction subject",
@@ -526,6 +528,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             var interaction1 = new Interaction 
             { 
                 Id = 1,
+                Name = "Interaction 1", // Required by ModifiableDeletableEntity
                 Type = Domain.Enums.InteractionType.Email,
                 Date = DateTime.Now,
                 Subject = "Interaction 1 subject",
@@ -543,6 +546,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             var interaction2 = new Interaction 
             { 
                 Id = 2,
+                Name = "Interaction 2", // Required by ModifiableDeletableEntity
                 Type = Domain.Enums.InteractionType.Email,
                 Date = DateTime.Now,
                 Subject = "Interaction 2 subject",
@@ -561,6 +565,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             var interaction3 = new Interaction 
             { 
                 Id = 3,
+                Name = "Interaction 3", // Required by ModifiableDeletableEntity
                 Type = Domain.Enums.InteractionType.Email,
                 Date = DateTime.Now,
                 Subject = "Interaction 3 subject",
