@@ -517,6 +517,6 @@ namespace UNOPS.PAO.Tests.Integration.Permissions
             result.Should().NotBeNull();
         }
 
-        #endregion
+
     }
 }

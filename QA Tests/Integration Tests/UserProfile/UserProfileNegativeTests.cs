@@ -475,6 +475,6 @@ namespace UNOPS.PAO.Tests.Integration.UserProfile
             catch (ArgumentNullException) { Assert.True(true, "Null preferences handled"); }
         }
 
-        #endregion
+
     }
 }

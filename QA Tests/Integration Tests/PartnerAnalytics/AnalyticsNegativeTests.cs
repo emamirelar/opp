@@ -19,7 +19,7 @@ namespace UNOPS.PAO.Tests.Integration.PartnerAnalytics
         {
             using var scope = _factory.Services.CreateScope();
             var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().PartnerAnalyticsManager;
-            await Assert.ThrowsAsync<KeyNotFoundException>(async () => await mgr.GetAnalytics Async(999999, CreateUser()));
+            await Assert.ThrowsAsync<KeyNotFoundException>(async () => await mgr.GetAnalyticsAsync(999999, CreateUser()));
         }
 
         [Fact][Trait("TestId", "TC-ANALYTICS-NEG-002")][Trait("Priority", "High")]
@@ -390,7 +390,7 @@ namespace UNOPS.PAO.Tests.Integration.PartnerAnalytics
         }
 
         [Fact][Trait("TestId", "TC-ANALYTICS-NEG-045")][Trait("Priority", "High")]
-        public async Task GetPartnerComparison_InvalidComparison Criteria_ThrowsArgumentException()
+        public async Task GetPartnerComparison_InvalidComparisonCriteria_ThrowsArgumentException()
         {
             using var scope = _factory.Services.CreateScope();
             var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().PartnerAnalyticsManager;
@@ -477,6 +477,6 @@ namespace UNOPS.PAO.Tests.Integration.PartnerAnalytics
             result.Should().NotBeNull();
         }
 
-        #endregion
+
     }
 }

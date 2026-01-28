@@ -284,6 +284,6 @@ namespace UNOPS.PAO.Tests.Integration.PartnerAnalytics
             Assert.True(true, "Security headers at middleware level");
         }
 
-        #endregion
+
     }
 }

@@ -284,7 +284,7 @@ namespace UNOPS.PAO.Tests.Integration.UserProfile
         }
 
         [Fact][Trait("TestId", "TC-PROFILE-EDGE-026")][Trait("Priority", "Medium")]
-        public async Task UpdateUserProfile_MultilineB io_Handles()
+        public async Task UpdateUserProfile_MultilineBio_Handles()
         {
             using var scope = _factory.Services.CreateScope();
             var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().UserProfileManager;
@@ -547,6 +547,6 @@ namespace UNOPS.PAO.Tests.Integration.UserProfile
             result.Should().NotBeNull();
         }
 
-        #endregion
+
     }
 }

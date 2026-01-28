@@ -244,7 +244,7 @@ namespace UNOPS.PAO.Tests.Integration.SystemAdmin
         }
 
         [Fact][Trait("TestId", "TC-ADMIN-NEG-028")][Trait("Priority", "High")]
-        public async Task ExecuteMaintenance Task_InvalidTaskType_ThrowsArgumentException()
+        public async Task ExecuteMaintenanceTask_InvalidTaskType_ThrowsArgumentException()
         {
             using var scope = _factory.Services.CreateScope();
             var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().SystemAdminManager;
@@ -447,6 +447,6 @@ namespace UNOPS.PAO.Tests.Integration.SystemAdmin
             await Assert.ThrowsAsync<ArgumentException>(async () => await mgr.RestoreDatabaseAsync("../../etc/passwd", CreateUser()));
         }
 
-        #endregion
+
     }
 }

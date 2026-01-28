@@ -513,6 +513,6 @@ namespace UNOPS.PAO.Tests.Integration.UserManagement
             result.Should().NotBeNull();
         }
 
-        #endregion
+
     }
 }

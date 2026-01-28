@@ -386,7 +386,7 @@ namespace UNOPS.PAO.Tests.Integration.Roles
         }
 
         [Fact][Trait("TestId", "TC-ROLE-EDGE-038")][Trait("Priority", "High")]
-        public async Task DeleteRole_Verify NotInList_ConfirmsRemoval()
+        public async Task DeleteRole_VerifyNotInList_ConfirmsRemoval()
         {
             using var scope = _factory.Services.CreateScope();
             var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RoleManager;
@@ -519,6 +519,6 @@ namespace UNOPS.PAO.Tests.Integration.Roles
             result.Should().NotBeNull();
         }
 
-        #endregion
+
     }
 }

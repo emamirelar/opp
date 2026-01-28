@@ -582,6 +582,6 @@ namespace UNOPS.PAO.Tests.Integration.PartnerTree
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await mgr.MovePartnerAsync(1, 102, CreateUser()));
         }
 
-        #endregion
+
     }
 }

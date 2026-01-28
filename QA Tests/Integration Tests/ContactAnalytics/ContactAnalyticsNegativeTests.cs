@@ -434,6 +434,6 @@ namespace UNOPS.PAO.Tests.Integration.ContactAnalytics
             await Assert.ThrowsAsync<ArgumentException>(async () => await mgr.GetInteractionTrendsAsync(1, "'; DROP TABLE Trends; --", CreateUser()));
         }
 
-        #endregion
+
     }
 }

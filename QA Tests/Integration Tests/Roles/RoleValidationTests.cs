@@ -515,6 +515,6 @@ namespace UNOPS.PAO.Tests.Integration.Roles
             result.Should().NotBeNull();
         }
 
-        #endregion
+
     }
 }

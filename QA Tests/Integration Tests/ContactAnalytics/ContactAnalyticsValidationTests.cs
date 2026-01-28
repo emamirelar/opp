@@ -244,6 +244,6 @@ namespace UNOPS.PAO.Tests.Integration.ContactAnalytics
             result.Should().NotBeNull();
         }
 
-        #endregion
+
     }
 }

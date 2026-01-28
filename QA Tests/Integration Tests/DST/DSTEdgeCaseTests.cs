@@ -975,7 +975,7 @@ namespace UNOPS.PAO.Tests.Integration.DST
         [Fact]
         [Trait("TestId", "TC-DST-EDGE-019")]
         [Trait("Priority", "Low")]
-        public async Task AddDSTRisk_DuplicateTitle_HandlesPer BusinessRules()
+        public async Task AddDSTRisk_DuplicateTitle_HandlesPerBusinessRules()
         {
             // Arrange
             using var scope = _factory.Services.CreateScope();

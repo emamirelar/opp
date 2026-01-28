@@ -271,6 +271,6 @@ namespace UNOPS.PAO.Tests.Integration.Roles
             Assert.True(true, "Security headers at middleware level");
         }
 
-        #endregion
+
     }
 }

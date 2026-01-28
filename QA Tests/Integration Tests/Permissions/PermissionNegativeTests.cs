@@ -456,6 +456,6 @@ namespace UNOPS.PAO.Tests.Integration.Permissions
             await Assert.ThrowsAsync<ArgumentException>(async () => await mgr.AssignPermissionToRoleAsync(0, 1, CreateUser()));
         }
 
-        #endregion
+
     }
 }

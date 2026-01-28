@@ -470,6 +470,6 @@ namespace UNOPS.PAO.Tests.Integration.Dashboard
             result.Should().NotBeNull();
         }
 
-        #endregion
+
     }
 }

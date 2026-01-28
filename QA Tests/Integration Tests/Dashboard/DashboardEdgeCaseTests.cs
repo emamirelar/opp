@@ -174,7 +174,7 @@ namespace UNOPS.PAO.Tests.Integration.Dashboard
         }
 
         [Fact][Trait("TestId", "TC-DASH-EDGE-015")][Trait("Priority", "Medium")]
-        public async Task GetRecentActivities_Unicode EntityName_HandlesInternationalization()
+        public async Task GetRecentActivities_UnicodeEntityName_HandlesInternationalization()
         {
             using var scope = _factory.Services.CreateScope();
             var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().DashboardManager;
@@ -226,7 +226,7 @@ namespace UNOPS.PAO.Tests.Integration.Dashboard
         }
 
         [Fact][Trait("TestId", "TC-DASH-EDGE-020")][Trait("Priority", "Medium")]
-        public async Task GetDashboardMetrics_DST Transition_HandlesTimeChange()
+        public async Task GetDashboardMetrics_DSTTransition_HandlesTimeChange()
         {
             using var scope = _factory.Services.CreateScope();
             var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().DashboardManager;
@@ -237,7 +237,7 @@ namespace UNOPS.PAO.Tests.Integration.Dashboard
         }
 
         [Fact][Trait("TestId", "TC-DASH-EDGE-021")][Trait("Priority", "High")]
-        public async Task RefreshDashboard_During MetricCalculation_NoConflict()
+        public async Task RefreshDashboard_DuringMetricCalculation_NoConflict()
         {
             using var scope = _factory.Services.CreateScope();
             var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().DashboardManager;
@@ -336,7 +336,7 @@ namespace UNOPS.PAO.Tests.Integration.Dashboard
         }
 
         [Fact][Trait("TestId", "TC-DASH-EDGE-030")][Trait("Priority", "Low")]
-        public async Task GetDashboardStats_AlternatingUsers_NoCache Bleeding()
+        public async Task GetDashboardStats_AlternatingUsers_NoCacheBleeding()
         {
             using var scope = _factory.Services.CreateScope();
             var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().DashboardManager;
@@ -359,7 +359,7 @@ namespace UNOPS.PAO.Tests.Integration.Dashboard
         }
 
         [Fact][Trait("TestId", "TC-DASH-EDGE-032")][Trait("Priority", "High")]
-        public async Task GetRecentActivities_MixedCase EntityType_CaseSensitive()
+        public async Task GetRecentActivities_MixedCaseEntityType_CaseSensitive()
         {
             using var scope = _factory.Services.CreateScope();
             var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().DashboardManager;
@@ -382,7 +382,7 @@ namespace UNOPS.PAO.Tests.Integration.Dashboard
         }
 
         [Fact][Trait("TestId", "TC-DASH-EDGE-034")][Trait("Priority", "Medium")]
-        public async Task GetDashboardMetrics_VeryShor tRange_HandlesMicroseconds()
+        public async Task GetDashboardMetrics_VeryShortRange_HandlesMicroseconds()
         {
             using var scope = _factory.Services.CreateScope();
             var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().DashboardManager;
@@ -427,7 +427,7 @@ namespace UNOPS.PAO.Tests.Integration.Dashboard
         }
 
         [Fact][Trait("TestId", "TC-DASH-EDGE-038")][Trait("Priority", "Medium")]
-        public async Task GetDashboardMetrics_Century Boundary_Handles2000()
+        public async Task GetDashboardMetrics_CenturyBoundary_Handles2000()
         {
             using var scope = _factory.Services.CreateScope();
             var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().DashboardManager;

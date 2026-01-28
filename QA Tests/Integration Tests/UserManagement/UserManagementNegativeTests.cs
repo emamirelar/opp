@@ -451,6 +451,6 @@ namespace UNOPS.PAO.Tests.Integration.UserManagement
             await Assert.ThrowsAsync<ArgumentException>(async () => await mgr.CreateUserAsync(request, CreateUser()));
         }
 
-        #endregion
+
     }
 }

@@ -172,7 +172,7 @@ namespace UNOPS.PAO.Tests.Integration.PartnerAnalytics
         }
 
         [Fact][Trait("TestId", "TC-ANALYTICS-EDGE-017")][Trait("Priority", "High")]
-        public async Task RefreshAnalytics_Alternating Partners_NoStateBleed()
+        public async Task RefreshAnalytics_AlternatingPartners_NoStateBleed()
         {
             using var scope = _factory.Services.CreateScope();
             var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().PartnerAnalyticsManager;
@@ -256,7 +256,7 @@ namespace UNOPS.PAO.Tests.Integration.PartnerAnalytics
         }
 
         [Fact][Trait("TestId", "TC-ANALYTICS-EDGE-025")][Trait("Priority", "High")]
-        public async Task RefreshAnalytics_During MetricCalculation_NoConflict()
+        public async Task RefreshAnalytics_DuringMetricCalculation_NoConflict()
         {
             using var scope = _factory.Services.CreateScope();
             var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().PartnerAnalyticsManager;
@@ -275,7 +275,7 @@ namespace UNOPS.PAO.Tests.Integration.PartnerAnalytics
         }
 
         [Fact][Trait("TestId", "TC-ANALYTICS-EDGE-027")][Trait("Priority", "Medium")]
-        public async Task ComparePartners_PartnersWith NoData_HandlesGracefully()
+        public async Task ComparePartners_PartnersWithNoData_HandlesGracefully()
         {
             using var scope = _factory.Services.CreateScope();
             var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().PartnerAnalyticsManager;
@@ -440,7 +440,7 @@ namespace UNOPS.PAO.Tests.Integration.PartnerAnalytics
         }
 
         [Fact][Trait("TestId", "TC-ANALYTICS-EDGE-044")][Trait("Priority", "Medium")]
-        public async Task GetTrends_LeapYear29February_HandlesMissing Day()
+        public async Task GetTrends_LeapYear29February_HandlesMissingDay()
         {
             using var scope = _factory.Services.CreateScope();
             var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().PartnerAnalyticsManager;
@@ -548,6 +548,6 @@ namespace UNOPS.PAO.Tests.Integration.PartnerAnalytics
             result.Should().NotBeNull();
         }
 
-        #endregion
+
     }
 }

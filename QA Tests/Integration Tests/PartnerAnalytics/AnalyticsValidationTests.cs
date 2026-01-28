@@ -503,6 +503,6 @@ namespace UNOPS.PAO.Tests.Integration.PartnerAnalytics
             result.Should().NotBeNull();
         }
 
-        #endregion
+
     }
 }

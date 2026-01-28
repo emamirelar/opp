@@ -128,7 +128,7 @@ namespace UNOPS.PAO.Tests.Integration.ContactAnalytics
         {
             using var scope = _factory.Services.CreateScope();
             var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().ContactAnalyticsManager;
-            try { await mgr.GetContactAnalytics Async(int.MaxValue, CreateUser()); }
+            try { await mgr.GetContactAnalyticsAsync(int.MaxValue, CreateUser()); }
             catch (KeyNotFoundException) { Assert.True(true, "Large ID handled"); }
         }
 
@@ -167,6 +167,6 @@ namespace UNOPS.PAO.Tests.Integration.ContactAnalytics
             Assert.True(true, "Security headers at middleware level");
         }
 
-        #endregion
+
     }
 }

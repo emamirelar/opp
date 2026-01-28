@@ -192,7 +192,7 @@ namespace UNOPS.PAO.Tests.Integration.Dashboard
         }
 
         [Fact][Trait("TestId", "TC-DASH-SEC-017")][Trait("Priority", "High")]
-        public async Task RefreshDashboard_Deadlock_Detected AndPrevented()
+        public async Task RefreshDashboard_Deadlock_DetectedAndPrevented()
         {
             using var scope = _factory.Services.CreateScope();
             var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().DashboardManager;
@@ -275,6 +275,6 @@ namespace UNOPS.PAO.Tests.Integration.Dashboard
             Assert.True(true, "Security headers set at middleware level");
         }
 
-        #endregion
+
     }
 }

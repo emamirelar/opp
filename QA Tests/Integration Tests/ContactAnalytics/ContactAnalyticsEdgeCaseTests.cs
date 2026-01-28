@@ -517,6 +517,6 @@ namespace UNOPS.PAO.Tests.Integration.ContactAnalytics
             sw.ElapsedMilliseconds.Should().BeLessThan(30000);
         }
 
-        #endregion
+
     }
 }

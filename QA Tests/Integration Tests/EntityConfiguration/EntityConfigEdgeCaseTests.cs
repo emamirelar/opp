@@ -536,6 +536,6 @@ namespace UNOPS.PAO.Tests.Integration.EntityConfiguration
             result.Should().NotBeNull();
         }
 
-        #endregion
+
     }
 }

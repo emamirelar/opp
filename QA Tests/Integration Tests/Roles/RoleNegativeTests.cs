@@ -451,6 +451,6 @@ namespace UNOPS.PAO.Tests.Integration.Roles
             result.Name.Should().Contain("DROP");
         }
 
-        #endregion
+
     }
 }

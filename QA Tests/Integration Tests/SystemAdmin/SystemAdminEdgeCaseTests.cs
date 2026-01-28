@@ -525,6 +525,6 @@ namespace UNOPS.PAO.Tests.Integration.SystemAdmin
             catch (TimeoutException) { Assert.True(true, "Timeout handled"); }
         }
 
-        #endregion
+
     }
 }
