@@ -1,0 +1,412 @@
+# Comprehensive Test Strategy Standard
+
+## Purpose
+
+This rule ensures that ALL test creation requests result in comprehensive test coverage including positive scenarios, negative scenarios, edge cases, security testing, and concurrency testing. This prevents the common anti-pattern of creating only "happy path" tests and missing critical robustness and security validation.
+
+## When to Apply
+
+Apply this rule whenever:
+- Creating a new test suite for a feature
+- Expanding test coverage for an existing feature
+- User requests "create tests" or "add test coverage"
+- Implementing integration tests, unit tests, or end-to-end tests
+- Feature involves user input, database operations, or API endpoints
+
+## Mandatory Test Categories
+
+### **ALWAYS include all 5 categories** in any comprehensive test strategy:
+
+| Category | Purpose | Minimum Coverage | Priority |
+|----------|---------|------------------|----------|
+| **1. Positive Tests** | Happy path, valid inputs, expected workflows | 40-50% of total | 🔴 Critical |
+| **2. Negative Tests** | Invalid inputs, error handling, authorization failures | 20-25% of total | 🔴 Critical |
+| **3. Edge Cases** | Boundary values, extreme inputs, timing issues | 15-20% of total | 🟠 High |
+| **4. Validation/Security** | Injection prevention, XSS, input sanitization | 10-15% of total | 🔴 Critical |
+| **5. Concurrency** | Race conditions, deadlocks, transaction isolation | 5-10% of total | 🟠 High |
+
+**Minimum total tests**: 20 (for simple features) to 150+ (for complex features like DST)
+
+---
+
+## Test Category Breakdown
+
+### **Category 1: Positive Tests (Happy Path)**
+
+**What to test**:
+- ✅ Valid inputs with expected outputs
+- ✅ Standard user workflows
+- ✅ CRUD operations with valid data
+- ✅ Successful authentication/authorization
+- ✅ Expected business logic execution
+- ✅ Integration between components
+
+**Example test cases**:
+- Create entity with all required fields
+- Update entity with valid changes
+- Retrieve entity by valid ID
+- List entities with valid filters
+- Execute business operation successfully
+
+**Anti-pattern to avoid**:
+- ❌ Only testing positive scenarios
+- ❌ Assuming all inputs will be valid
+- ❌ Ignoring error handling paths
+
+---
+
+### **Category 2: Negative Tests (Failure Scenarios)**
+
+**What to test**:
+- ✅ Invalid/non-existent IDs → KeyNotFoundException
+- ✅ Null/empty required parameters → ArgumentNullException
+- ✅ Missing required fields → ValidationException
+- ✅ Invalid foreign key references → FK constraint violations
+- ✅ Unauthorized access attempts → UnauthorizedAccessException
+- ✅ Insufficient permissions → 403 Forbidden
+- ✅ Duplicate records → Conflict or allow based on business rules
+- ✅ Operations on deleted entities → Appropriate error
+- ✅ Invalid state transitions → Business rule violation
+
+**Example test cases**:
+- Create entity with missing required field
+- Update non-existent entity (ID = 999999)
+- Delete already deleted entity
+- Access entity without permission
+- Provide null user context
+- Use negative IDs or zero IDs
+
+**Required assertions**:
+- ✅ Appropriate exception type thrown
+- ✅ Clear error message provided
+- ✅ No data corruption occurred
+- ✅ No partial updates committed
+- ✅ Audit trail recorded (if applicable)
+
+---
+
+### **Category 3: Edge Cases (Boundary Conditions)**
+
+**What to test**:
+- ✅ Boundary values (0, 1, MAX_INT, MIN_INT)
+- ✅ Empty collections/strings
+- ✅ Very long strings (10,000+ characters)
+- ✅ Special characters (quotes, apostrophes, SQL keywords)
+- ✅ Unicode characters (Chinese, Arabic, Emoji)
+- ✅ Whitespace-only inputs
+- ✅ Extreme numeric values (zero, negative, billions)
+- ✅ Timing edge cases (immediate requests, delays)
+- ✅ Concurrent operations on same resource
+- ✅ Cache invalidation scenarios
+
+**Example test cases**:
+- maxResults = 0, 1, 1000, -1, int.MaxValue
+- String with 10,000 characters
+- Title with SQL injection attempt: `'; DROP TABLE Users; --`
+- Description with XSS: `<script>alert('XSS')</script>`
+- Unicode text: `项目 مشروع 🏥`
+- Zero budget, billion-dollar budget
+- Create entity and immediately query it
+- Mass operations (delete all, dismiss all)
+
+**Required validations**:
+- ✅ No crashes or unhandled exceptions
+- ✅ Graceful handling or clear error
+- ✅ Data truncated/validated appropriately
+- ✅ System remains in consistent state
+
+---
+
+### **Category 4: Validation & Security Tests**
+
+**What to test**:
+- ✅ **SQL Injection**: Parameterized queries prevent execution
+- ✅ **XSS (Cross-Site Scripting)**: Script tags sanitized/encoded
+- ✅ **NoSQL Injection**: Query operators safely handled
+- ✅ **LDAP Injection**: Directory queries parameterized
+- ✅ **Command Injection**: Shell commands not executed
+- ✅ **Path Traversal**: File paths validated, `../` prevented
+- ✅ **IDOR (Insecure Direct Object Reference)**: User can't access others' data
+- ✅ **Mass Assignment**: Read-only properties protected
+- ✅ **CSRF (Cross-Site Request Forgery)**: Token validation in place
+- ✅ **Privilege Escalation**: Role-based access enforced
+
+**Example test cases**:
+- Create entity with SQL injection in text field
+- Title contains `<script>alert('XSS')</script>`
+- User A tries to access User B's private data
+- Guest user attempts admin operation
+- Modify read-only property via mass assignment
+- Update entity without CSRF token
+- Token manipulation (change user ID in JWT)
+
+**Required validations**:
+- ✅ **OWASP Top 10 coverage**: Address all applicable threats
+- ✅ Injection attempts have no effect
+- ✅ Authorization checked at every endpoint
+- ✅ Audit trail records security events
+- ✅ Error messages don't leak sensitive info
+
+**OWASP Top 10 Checklist**:
+- [ ] A01: Broken Access Control (IDOR, privilege escalation)
+- [ ] A02: Cryptographic Failures (token security)
+- [ ] A03: Injection (SQL, XSS, NoSQL, LDAP, Command)
+- [ ] A04: Insecure Design (business logic flaws)
+- [ ] A05: Security Misconfiguration (defaults, permissions)
+- [ ] A06: Vulnerable Components (dependency checks)
+- [ ] A07: Authentication Failures (session management)
+- [ ] A08: Software and Data Integrity (audit trails)
+- [ ] A09: Logging Failures (security event logging)
+- [ ] A10: SSRF (if applicable to feature)
+
+---
+
+### **Category 5: Concurrency & Race Condition Tests**
+
+**What to test**:
+- ✅ Concurrent updates to same entity → Last write wins or optimistic concurrency
+- ✅ Concurrent deletes → Idempotent or appropriate error
+- ✅ Double submit prevention → Same request sent twice
+- ✅ Read during write → Transaction isolation maintained
+- ✅ Deadlock scenarios → Delete during update
+- ✅ Cache poisoning → User A can't corrupt User B's cache
+- ✅ Race conditions in counters/aggregates → Atomic operations
+- ✅ Simultaneous cache invalidation → No conflicts
+- ✅ High-frequency requests → Rate limiting or graceful handling
+
+**Example test cases**:
+- Two users update same record simultaneously
+- User clicks "Create" button twice rapidly
+- Delete entity while another user is updating it
+- Generate recommendations while opportunity is being updated
+- 1000 requests sent in 1 minute
+- Multiple users invalidate cache simultaneously
+
+**Required validations**:
+- ✅ No deadlocks occur
+- ✅ Data remains consistent (no corruption)
+- ✅ At least one operation succeeds
+- ✅ Appropriate error returned to conflicting operation
+- ✅ Audit trail records all attempts
+
+---
+
+## Test Strategy Template
+
+When creating a test strategy document, use this structure:
+
+```markdown
+# [Feature Name] Test Strategy
+
+## Test Scope
+- Feature description
+- Components to test
+- Dependencies
+
+## Test Categories
+
+### 1. Positive Tests (Target: 40 tests)
+**Scenarios**:
+- [ ] List of positive test scenarios
+
+**Test IDs**: TC-[FEATURE]-POS-001 through TC-[FEATURE]-POS-040
+
+### 2. Negative Tests (Target: 20 tests)
+**Scenarios**:
+- [ ] Invalid inputs
+- [ ] Missing required fields
+- [ ] Authorization failures
+- [ ] Non-existent resources
+
+**Test IDs**: TC-[FEATURE]-NEG-001 through TC-[FEATURE]-NEG-020
+
+### 3. Edge Cases (Target: 15 tests)
+**Scenarios**:
+- [ ] Boundary values
+- [ ] Extreme inputs
+- [ ] Timing edge cases
+- [ ] Special characters
+
+**Test IDs**: TC-[FEATURE]-EDGE-001 through TC-[FEATURE]-EDGE-015
+
+### 4. Validation & Security (Target: 15 tests)
+**Scenarios**:
+- [ ] SQL injection prevention
+- [ ] XSS prevention
+- [ ] IDOR prevention
+- [ ] Required field validation
+- [ ] OWASP coverage
+
+**Test IDs**: TC-[FEATURE]-SEC-001 through TC-[FEATURE]-SEC-015
+
+### 5. Concurrency (Target: 10 tests)
+**Scenarios**:
+- [ ] Concurrent updates
+- [ ] Race conditions
+- [ ] Double submit
+- [ ] Deadlock prevention
+
+**Test IDs**: TC-[FEATURE]-CONC-001 through TC-[FEATURE]-CONC-010
+
+## Total Tests: 100
+## Estimated Effort: [X] hours
+## Priority: Critical/High/Medium
+```
+
+---
+
+## Pre-Implementation Checklist
+
+Before starting test implementation, verify:
+
+- [ ] **All 5 categories included** in test strategy
+- [ ] **Test count targets** defined for each category
+- [ ] **OWASP Top 10 coverage** planned (if applicable)
+- [ ] **Negative scenarios** cover all error paths
+- [ ] **Edge cases** include boundary values and extreme inputs
+- [ ] **Security tests** address injection and authorization
+- [ ] **Concurrency tests** cover race conditions
+- [ ] **Test IDs** follow consistent naming convention
+- [ ] **Priority** assigned to each category
+- [ ] **Dependencies** identified (test data, services, etc.)
+
+---
+
+## Post-Implementation Verification
+
+After completing test implementation, verify:
+
+- [ ] **All 5 categories implemented** with actual tests
+- [ ] **Positive tests** cover all happy path scenarios
+- [ ] **Negative tests** verify all error handlers work
+- [ ] **Edge cases** confirm graceful degradation
+- [ ] **Security tests** pass (no vulnerabilities found)
+- [ ] **Concurrency tests** pass (no data corruption)
+- [ ] **Documentation complete** with JSDoc comments
+- [ ] **Test execution** successful in dev environment
+- [ ] **Code coverage** meets minimum threshold (80%+)
+- [ ] **Performance benchmarks** within acceptable range
+
+---
+
+## Common Anti-Patterns to Avoid
+
+### ❌ Anti-Pattern 1: "Happy Path Only" Syndrome
+**Problem**: Only testing valid inputs and expected workflows  
+**Impact**: Production failures, security vulnerabilities, poor user experience  
+**Solution**: Always include negative and edge case tests
+
+### ❌ Anti-Pattern 2: "Test Later" Mentality
+**Problem**: Deferring negative/security tests to "phase 2"  
+**Impact**: Technical debt, retrofit pain, missed vulnerabilities  
+**Solution**: Include all test categories from day 1
+
+### ❌ Anti-Pattern 3: "Security is Someone Else's Job"
+**Problem**: Assuming security team will find vulnerabilities  
+**Impact**: Late discovery, expensive fixes, production incidents  
+**Solution**: Include OWASP coverage in every test suite
+
+### ❌ Anti-Pattern 4: "It's Just a Small Feature"
+**Problem**: Skipping comprehensive testing for "simple" features  
+**Impact**: Small features become attack vectors  
+**Solution**: Apply same rigor to all features, scale test count accordingly
+
+### ❌ Anti-Pattern 5: "We'll Add Edge Cases if Issues Arise"
+**Problem**: Reactive rather than proactive edge case testing  
+**Impact**: Production incidents, data corruption, customer complaints  
+**Solution**: Proactively test edge cases based on input types
+
+---
+
+## Enforcement
+
+### For AI Assistants
+When user requests test creation:
+1. ✅ **STOP** - Do not immediately start coding
+2. ✅ **CREATE** comprehensive test strategy document first
+3. ✅ **VERIFY** all 5 categories are included with test counts
+4. ✅ **CONFIRM** with user before implementation
+5. ✅ **IMPLEMENT** all categories, not just positive tests
+6. ✅ **VALIDATE** post-implementation checklist completed
+
+### For Developers
+When planning test implementation:
+1. ✅ Review this standard before starting
+2. ✅ Create test strategy document with all 5 categories
+3. ✅ Get peer review of strategy before coding
+4. ✅ Implement all categories in parallel, not sequentially
+5. ✅ Run post-implementation checklist before PR submission
+
+### For QA Team
+When reviewing test PRs:
+1. ✅ Verify all 5 categories are present
+2. ✅ Check test counts meet minimum thresholds
+3. ✅ Validate OWASP coverage (if applicable)
+4. ✅ Ensure negative scenarios cover all error paths
+5. ✅ Reject PRs missing any category without justification
+
+---
+
+## Success Metrics
+
+**Minimum acceptable test distribution**:
+- Positive: 40-50%
+- Negative: 20-25%
+- Edge Cases: 15-20%
+- Security: 10-15%
+- Concurrency: 5-10%
+
+**Example for 100-test suite**:
+- Positive: 45 tests
+- Negative: 22 tests
+- Edge Cases: 18 tests
+- Security: 12 tests
+- Concurrency: 3 tests
+
+**Red flags** (reject test suite if):
+- ❌ Any category missing entirely
+- ❌ Negative tests < 15% of total
+- ❌ No security tests for user-facing features
+- ❌ No edge case tests for numeric/text inputs
+- ❌ No concurrency tests for shared resources
+
+---
+
+## Examples
+
+### ✅ Good: Comprehensive Test Suite
+```
+DST (Decision Support Tool) Tests:
+✅ Positive: 85 tests (51%) - All workflows covered
+✅ Negative: 20 tests (12%) - Error handling validated
+✅ Edge Cases: 20 tests (12%) - Boundaries tested
+✅ Security: 20 tests (12%) - OWASP coverage
+✅ Concurrency: 20 tests (12%) - Race conditions tested
+Total: 165 tests - COMPREHENSIVE ✅
+```
+
+### ❌ Bad: Incomplete Test Suite
+```
+Feature XYZ Tests:
+✅ Positive: 50 tests (100%)
+❌ Negative: 0 tests (0%) - MISSING
+❌ Edge Cases: 0 tests (0%) - MISSING
+❌ Security: 0 tests (0%) - MISSING
+❌ Concurrency: 0 tests (0%) - MISSING
+Total: 50 tests - INCOMPLETE ❌
+```
+
+---
+
+## Conclusion
+
+**Comprehensive testing is not optional**. Every test suite MUST include:
+1. ✅ Positive tests (happy path)
+2. ✅ Negative tests (error handling)
+3. ✅ Edge cases (boundary conditions)
+4. ✅ Security tests (OWASP vulnerabilities)
+5. ✅ Concurrency tests (race conditions)
+
+**No exceptions**. No "we'll add it later". No "it's just a small feature".
+
+**Comprehensive from day 1. Every time. No compromise.**
