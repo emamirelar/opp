@@ -1,4 +1,4 @@
-﻿namespace UNOPS.PAO.Server.Infrastructure;
+namespace UNOPS.PAO.Server.Infrastructure;
     
 using System.Security.Authentication;
 using Microsoft.AspNetCore.Diagnostics;
@@ -93,7 +93,24 @@ public class GlobalExceptionHandler : IExceptionHandler
                 };
         }
 
-        await httpContext.Response.WriteAsJsonAsync(problemDetails);
+        // WORKAROUND: .NET 9 bug - ResponseBodyPipeWriter doesn't implement UnflushedBytes
+        // GitHub issue: https://github.com/dotnet/runtime/issues/108075
+        // This causes WriteAsJsonAsync to fail in integration tests with TestHost
+        try
+        {
+            await httpContext.Response.WriteAsJsonAsync(problemDetails);
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("PipeWriter") && ex.Message.Contains("UnflushedBytes"))
+        {
+            // Fallback: Write JSON directly to response body as string
+            httpContext.Response.ContentType = "application/problem+json";
+            var json = System.Text.Json.JsonSerializer.Serialize(problemDetails, new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+                WriteIndented = hostEnvironment.IsDevelopment()
+            });
+            await httpContext.Response.WriteAsync(json);
+        }
 
         return true;
     }
