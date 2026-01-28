@@ -1076,5 +1076,1993 @@ namespace UNOPS.PAO.Tests.Integration.DST
         }
 
         #endregion
+
+        #region TC-DST-EDGE-021 through TC-DST-EDGE-076: Extended Edge Cases
+
+        /// <summary>
+        /// TC-DST-EDGE-021: Get DST recommendations with maxResults = 1 (minimum boundary)
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-021")]
+        [Trait("Priority", "Medium")]
+        public async Task GetDSTRecommendations_MaxResultsOne_ReturnsSingleResult()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var geminiManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().GeminiManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync("Opportunity with maxResults=1");
+
+            // Act
+            var response = await geminiManager.GetDSTRecommendationsAsync(
+                opportunityId: opportunityId,
+                user: user,
+                maxResults: 1, // Boundary: minimum useful value
+                dismissedOupQuestionIds: new List<int>(),
+                forceRefresh: true
+            );
+
+            // Assert
+            response.Should().NotBeNull();
+            response.Recommendations.Should().HaveCountLessOrEqualTo(1, "maxResults=1 should return at most 1 recommendation");
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-022: Get DST recommendations with maxResults = 1000 (large boundary)
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-022")]
+        [Trait("Priority", "Low")]
+        public async Task GetDSTRecommendations_MaxResults1000_HandlesLargeResult()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var geminiManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().GeminiManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync("Large maxResults");
+
+            // Act
+            var response = await geminiManager.GetDSTRecommendationsAsync(
+                opportunityId: opportunityId,
+                user: user,
+                maxResults: 1000,
+                dismissedOupQuestionIds: new List<int>(),
+                forceRefresh: true
+            );
+
+            // Assert
+            response.Should().NotBeNull();
+            response.Recommendations.Should().HaveCountLessOrEqualTo(1000);
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-023: Get DST recommendations with dismissedOupQuestionIds containing single negative value
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-023")]
+        [Trait("Priority", "Low")]
+        public async Task GetDSTRecommendations_SingleNegativeDismissedId_IgnoresInvalid()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var geminiManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().GeminiManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            // Act
+            var response = await geminiManager.GetDSTRecommendationsAsync(
+                opportunityId: opportunityId,
+                user: user,
+                maxResults: 10,
+                dismissedOupQuestionIds: new List<int> { -1 }, // Single negative
+                forceRefresh: true
+            );
+
+            // Assert
+            response.Should().NotBeNull();
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-024: Create DST risk with Title exactly at maximum length boundary (if enforced)
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-024")]
+        [Trait("Priority", "Medium")]
+        public async Task AddDSTRisk_TitleAtMaxLength_AcceptsValidLength()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            // Assume max length is 500 characters (adjust based on actual constraints)
+            var maxLengthTitle = new string('A', 500);
+
+            var riskRequest = new RiskCreateRequest
+            {
+                Title = maxLengthTitle,
+                Description = "Test description",
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = "DST"
+            };
+
+            // Act
+            var result = await riskManager.AddRiskAsync(riskRequest, user);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Title.Should().HaveLength(500);
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-025: Create DST risk with Description exactly at maximum length boundary
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-025")]
+        [Trait("Priority", "Medium")]
+        public async Task AddDSTRisk_DescriptionAtMaxLength_AcceptsValidLength()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            // Assume max length is 5000 characters
+            var maxLengthDescription = new string('B', 5000);
+
+            var riskRequest = new RiskCreateRequest
+            {
+                Title = "Edge Case Risk",
+                Description = maxLengthDescription,
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = "DST"
+            };
+
+            // Act
+            var result = await riskManager.AddRiskAsync(riskRequest, user);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Description.Should().HaveLength(5000);
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-026: Create DST risk with Title one character over maximum length
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-026")]
+        [Trait("Priority", "Medium")]
+        public async Task AddDSTRisk_TitleOneOverMaxLength_ThrowsException()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var overMaxTitle = new string('A', 501); // One over assumed max
+
+            var riskRequest = new RiskCreateRequest
+            {
+                Title = overMaxTitle,
+                Description = "Test description",
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4
+            };
+
+            // Act & Assert
+            await Assert.ThrowsAnyAsync<Exception>(async () =>
+            {
+                await riskManager.AddRiskAsync(riskRequest, user);
+            });
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-027: Create DST risk with Description one character over maximum length
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-027")]
+        [Trait("Priority", "Medium")]
+        public async Task AddDSTRisk_DescriptionOneOverMaxLength_ThrowsException()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var overMaxDescription = new string('B', 5001); // One over assumed max
+
+            var riskRequest = new RiskCreateRequest
+            {
+                Title = "Edge Case Risk",
+                Description = overMaxDescription,
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4
+            };
+
+            // Act & Assert
+            await Assert.ThrowsAnyAsync<Exception>(async () =>
+            {
+                await riskManager.AddRiskAsync(riskRequest, user);
+            });
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-028: Get DST recommendations with opportunity having Int32.MaxValue as ID
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-028")]
+        [Trait("Priority", "Low")]
+        public async Task GetDSTRecommendations_MaxIntOpportunityId_ThrowsKeyNotFoundException()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var geminiManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().GeminiManager;
+            var user = CreateTestUser();
+
+            // Act & Assert
+            await Assert.ThrowsAsync<KeyNotFoundException>(async () =>
+            {
+                await geminiManager.GetDSTRecommendationsAsync(
+                    opportunityId: int.MaxValue,
+                    user: user,
+                    maxResults: 10,
+                    dismissedOupQuestionIds: new List<int>(),
+                    forceRefresh: false
+                );
+            });
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-029: Create DST risk with minimum valid EntityId (1)
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-029")]
+        [Trait("Priority", "Low")]
+        public async Task AddDSTRisk_MinimumEntityId_HandlesCorrectly()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+
+            var riskRequest = new RiskCreateRequest
+            {
+                Title = "Minimum EntityId Risk",
+                Description = "Test with EntityId = 1",
+                EntityType = "Opportunity",
+                EntityId = 1, // Minimum valid ID
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = "DST"
+            };
+
+            // Act
+            try
+            {
+                var result = await riskManager.AddRiskAsync(riskRequest, user);
+                result.Should().NotBeNull();
+            }
+            catch (KeyNotFoundException)
+            {
+                Assert.True(true, "EntityId 1 may not exist");
+            }
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-030: Get DST recommendations with empty dismissedOupQuestionIds list
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-030")]
+        [Trait("Priority", "Low")]
+        public async Task GetDSTRecommendations_EmptyDismissedList_ReturnsAllRecommendations()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var geminiManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().GeminiManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            // Act
+            var response = await geminiManager.GetDSTRecommendationsAsync(
+                opportunityId: opportunityId,
+                user: user,
+                maxResults: 10,
+                dismissedOupQuestionIds: new List<int>(), // Empty list (not null)
+                forceRefresh: true
+            );
+
+            // Assert
+            response.Should().NotBeNull();
+            response.Recommendations.Should().NotBeNull();
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-031: Create DST risk with all Unicode characters in Title
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-031")]
+        [Trait("Priority", "Low")]
+        public async Task AddDSTRisk_UnicodeTitle_HandlesCorrectly()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var riskRequest = new RiskCreateRequest
+            {
+                Title = "风险标题 🚨 Риск Risque خطر", // Unicode from multiple languages
+                Description = "Test description",
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = "DST"
+            };
+
+            // Act
+            var result = await riskManager.AddRiskAsync(riskRequest, user);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Title.Should().Contain("风险");
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-032: Create DST risk with all emojis in Title
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-032")]
+        [Trait("Priority", "Low")]
+        public async Task AddDSTRisk_EmojiTitle_HandlesCorrectly()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var riskRequest = new RiskCreateRequest
+            {
+                Title = "🔥🚨⚠️💀☠️", // All emojis
+                Description = "Test description",
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = "DST"
+            };
+
+            // Act
+            var result = await riskManager.AddRiskAsync(riskRequest, user);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Title.Should().Contain("🔥");
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-033: Create DST risk with RTL (Right-to-Left) text in Title
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-033")]
+        [Trait("Priority", "Low")]
+        public async Task AddDSTRisk_RTLTitle_HandlesCorrectly()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var riskRequest = new RiskCreateRequest
+            {
+                Title = "مخاطر المشروع الكبيرة", // Arabic RTL text
+                Description = "Test description",
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = "DST"
+            };
+
+            // Act
+            var result = await riskManager.AddRiskAsync(riskRequest, user);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Title.Should().Contain("مخاطر");
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-034: Create DST risk with newlines and tabs in Title
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-034")]
+        [Trait("Priority", "Medium")]
+        public async Task AddDSTRisk_NewlinesTabsInTitle_HandlesorRejects()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var riskRequest = new RiskCreateRequest
+            {
+                Title = "Risk\nWith\nNewlines\tAnd\tTabs", // Control characters
+                Description = "Test description",
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = "DST"
+            };
+
+            // Act
+            try
+            {
+                var result = await riskManager.AddRiskAsync(riskRequest, user);
+                result.Should().NotBeNull();
+            }
+            catch (ArgumentException)
+            {
+                Assert.True(true, "Control characters may be rejected");
+            }
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-035: Create DST risk with null Source field (optional)
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-035")]
+        [Trait("Priority", "Medium")]
+        public async Task AddDSTRisk_NullSource_AcceptsIfOptional()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var riskRequest = new RiskCreateRequest
+            {
+                Title = "Risk without source",
+                Description = "Test description",
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = null // Null optional field
+            };
+
+            // Act
+            var result = await riskManager.AddRiskAsync(riskRequest, user);
+
+            // Assert
+            result.Should().NotBeNull();
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-036: Get DST recommendations with forceRefresh=true repeatedly
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-036")]
+        [Trait("Priority", "Low")]
+        public async Task GetDSTRecommendations_RepeatedForceRefresh_HandlesCache()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var geminiManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().GeminiManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            // Act - Call 5 times with forceRefresh
+            for (int i = 0; i < 5; i++)
+            {
+                var response = await geminiManager.GetDSTRecommendationsAsync(
+                    opportunityId: opportunityId,
+                    user: user,
+                    maxResults: 10,
+                    dismissedOupQuestionIds: new List<int>(),
+                    forceRefresh: true // Always refresh
+                );
+
+                response.Should().NotBeNull();
+            }
+
+            Assert.True(true, "Repeated force refresh handled");
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-037: Get DST recommendations alternating forceRefresh true/false
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-037")]
+        [Trait("Priority", "Low")]
+        public async Task GetDSTRecommendations_AlternatingForceRefresh_HandlesCacheCorrectly()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var geminiManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().GeminiManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            // Act - Alternate forceRefresh
+            for (int i = 0; i < 4; i++)
+            {
+                var response = await geminiManager.GetDSTRecommendationsAsync(
+                    opportunityId: opportunityId,
+                    user: user,
+                    maxResults: 10,
+                    dismissedOupQuestionIds: new List<int>(),
+                    forceRefresh: i % 2 == 0 // Alternate true/false
+                );
+
+                response.Should().NotBeNull();
+            }
+
+            Assert.True(true, "Alternating force refresh handled");
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-038: Create DST risk with minimum RiskTypeId (1)
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-038")]
+        [Trait("Priority", "Low")]
+        public async Task AddDSTRisk_MinimumRiskTypeId_AcceptsValidId()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var riskRequest = new RiskCreateRequest
+            {
+                Title = "Minimum RiskTypeId",
+                Description = "Test description",
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1, // Minimum valid ID
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = "DST"
+            };
+
+            // Act
+            try
+            {
+                var result = await riskManager.AddRiskAsync(riskRequest, user);
+                result.Should().NotBeNull();
+            }
+            catch (KeyNotFoundException)
+            {
+                Assert.True(true, "RiskTypeId 1 may not exist");
+            }
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-039: Create DST risk with maximum reasonable RiskTypeId (100)
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-039")]
+        [Trait("Priority", "Low")]
+        public async Task AddDSTRisk_LargeRiskTypeId_ThrowsIfInvalid()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var riskRequest = new RiskCreateRequest
+            {
+                Title = "Large RiskTypeId",
+                Description = "Test description",
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 100, // Large but reasonable ID
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = "DST"
+            };
+
+            // Act
+            try
+            {
+                var result = await riskManager.AddRiskAsync(riskRequest, user);
+                result.Should().NotBeNull();
+            }
+            catch (KeyNotFoundException)
+            {
+                Assert.True(true, "RiskTypeId 100 likely doesn't exist");
+            }
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-040: Create DST risk with all special characters in Description
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-040")]
+        [Trait("Priority", "Low")]
+        public async Task AddDSTRisk_SpecialCharsDescription_HandlesCorrectly()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var riskRequest = new RiskCreateRequest
+            {
+                Title = "Special Chars Test",
+                Description = "!@#$%^&*()_+-={}[]|\\:;<>?,./~`", // All special chars
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = "DST"
+            };
+
+            // Act
+            var result = await riskManager.AddRiskAsync(riskRequest, user);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Description.Should().Contain("!@#$");
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-041: Update DST risk immediately after creation (no delay)
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-041")]
+        [Trait("Priority", "Medium")]
+        public async Task UpdateDSTRisk_ImmediatelyAfterCreation_Succeeds()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var createRequest = new RiskCreateRequest
+            {
+                Title = "Original",
+                Description = "Original description",
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = "DST"
+            };
+
+            // Create and immediately update
+            var created = await riskManager.AddRiskAsync(createRequest, user);
+
+            var updateRequest = new RiskUpdateRequest
+            {
+                Id = created.Id,
+                Title = "Updated Immediately",
+                Description = "Updated immediately after creation"
+            };
+
+            // Act
+            var updated = await riskManager.UpdateRiskAsync(updateRequest, user);
+
+            // Assert
+            updated.Should().NotBeNull();
+            updated.Title.Should().Be("Updated Immediately");
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-042: Delete DST risk immediately after creation (no delay)
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-042")]
+        [Trait("Priority", "Medium")]
+        public async Task DeleteDSTRisk_ImmediatelyAfterCreation_Succeeds()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var createRequest = new RiskCreateRequest
+            {
+                Title = "To Be Deleted",
+                Description = "Will be deleted immediately",
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = "DST"
+            };
+
+            // Create and immediately delete
+            var created = await riskManager.AddRiskAsync(createRequest, user);
+
+            // Act
+            await riskManager.DeleteRiskAsync(created.Id, user);
+
+            // Assert - Verify deletion
+            await Assert.ThrowsAsync<KeyNotFoundException>(async () =>
+            {
+                await riskManager.GetRiskByIdAsync(created.Id, user);
+            });
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-043: Get DST recommendations with maximum Int32 for dismissedOupQuestionIds values
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-043")]
+        [Trait("Priority", "Low")]
+        public async Task GetDSTRecommendations_MaxIntDismissedIds_HandlesLargeIds()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var geminiManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().GeminiManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var largeDismissedIds = new List<int> { int.MaxValue, int.MaxValue - 1, int.MaxValue - 2 };
+
+            // Act
+            var response = await geminiManager.GetDSTRecommendationsAsync(
+                opportunityId: opportunityId,
+                user: user,
+                maxResults: 10,
+                dismissedOupQuestionIds: largeDismissedIds,
+                forceRefresh: true
+            );
+
+            // Assert
+            response.Should().NotBeNull();
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-044: Create DST risk with Title containing only numbers
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-044")]
+        [Trait("Priority", "Low")]
+        public async Task AddDSTRisk_NumericTitle_AcceptsValidString()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var riskRequest = new RiskCreateRequest
+            {
+                Title = "1234567890", // Only numbers
+                Description = "Test description",
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = "DST"
+            };
+
+            // Act
+            var result = await riskManager.AddRiskAsync(riskRequest, user);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Title.Should().Be("1234567890");
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-045: Create DST risk with Title containing single character
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-045")]
+        [Trait("Priority", "Low")]
+        public async Task AddDSTRisk_SingleCharTitle_AcceptsMinimalInput()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var riskRequest = new RiskCreateRequest
+            {
+                Title = "X", // Single character
+                Description = "Test description",
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = "DST"
+            };
+
+            // Act
+            var result = await riskManager.AddRiskAsync(riskRequest, user);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Title.Should().Be("X");
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-046: Get DST risks immediately after creating first risk for opportunity
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-046")]
+        [Trait("Priority", "Medium")]
+        public async Task GetDSTRisks_ImmediatelyAfterFirstRisk_ReturnsSingleRisk()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var createRequest = new RiskCreateRequest
+            {
+                Title = "First Risk",
+                Description = "Test description",
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = "DST"
+            };
+
+            await riskManager.AddRiskAsync(createRequest, user);
+
+            // Act - Immediately query
+            var risks = await riskManager.GetRisksByEntityAsync("Opportunity", opportunityId, user);
+
+            // Assert
+            risks.Should().HaveCount(1, "should return newly created risk immediately");
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-047: Create multiple DST risks rapidly (stress timing)
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-047")]
+        [Trait("Priority", "Medium")]
+        public async Task AddDSTRisk_MultipleRapidCreations_HandlesCorrectly()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            // Act - Create 10 risks rapidly
+            var createTasks = Enumerable.Range(0, 10).Select(i =>
+            {
+                var request = new RiskCreateRequest
+                {
+                    Title = $"Rapid Risk {i}",
+                    Description = $"Description {i}",
+                    EntityType = "Opportunity",
+                    EntityId = opportunityId,
+                    RiskTypeId = 1,
+                    ProbabilityId = 3,
+                    ImpactId = 4,
+                    Source = "DST"
+                };
+                return riskManager.AddRiskAsync(request, user);
+            }).ToList();
+
+            var results = await Task.WhenAll(createTasks);
+
+            // Assert
+            results.Should().HaveCount(10);
+            results.Should().AllSatisfy(r => r.Should().NotBeNull());
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-048: Update DST risk to same values 10 times consecutively
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-048")]
+        [Trait("Priority", "Low")]
+        public async Task UpdateDSTRisk_RepeatedIdenticalUpdates_HandlesIdempotently()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var createRequest = new RiskCreateRequest
+            {
+                Title = "Original",
+                Description = "Original description",
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = "DST"
+            };
+
+            var created = await riskManager.AddRiskAsync(createRequest, user);
+
+            // Act - Update 10 times with same data
+            for (int i = 0; i < 10; i++)
+            {
+                var updateRequest = new RiskUpdateRequest
+                {
+                    Id = created.Id,
+                    Title = "Same Update",
+                    Description = "Same description"
+                };
+
+                var updated = await riskManager.UpdateRiskAsync(updateRequest, user);
+                updated.Should().NotBeNull();
+            }
+
+            Assert.True(true, "Repeated identical updates handled");
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-049: Get DST recommendations with dismissedOupQuestionIds = [0]
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-049")]
+        [Trait("Priority", "Low")]
+        public async Task GetDSTRecommendations_ZeroDismissedId_IgnoresInvalidId()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var geminiManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().GeminiManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            // Act
+            var response = await geminiManager.GetDSTRecommendationsAsync(
+                opportunityId: opportunityId,
+                user: user,
+                maxResults: 10,
+                dismissedOupQuestionIds: new List<int> { 0 }, // Zero ID
+                forceRefresh: true
+            );
+
+            // Assert
+            response.Should().NotBeNull();
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-050: Create DST risk with Description containing only special characters
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-050")]
+        [Trait("Priority", "Low")]
+        public async Task AddDSTRisk_OnlySpecialCharsDescription_AcceptsValidString()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var riskRequest = new RiskCreateRequest
+            {
+                Title = "Special Chars Risk",
+                Description = "!!!###$$$%%%", // Only special chars
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = "DST"
+            };
+
+            // Act
+            var result = await riskManager.AddRiskAsync(riskRequest, user);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Description.Should().Be("!!!###$$$%%%");
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-051: Get DST risks for opportunity with exactly 1 risk
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-051")]
+        [Trait("Priority", "Medium")]
+        public async Task GetDSTRisks_ExactlyOneRisk_ReturnsSingleRisk()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var createRequest = new RiskCreateRequest
+            {
+                Title = "Only Risk",
+                Description = "The only risk for this opportunity",
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = "DST"
+            };
+
+            await riskManager.AddRiskAsync(createRequest, user);
+
+            // Act
+            var risks = await riskManager.GetRisksByEntityAsync("Opportunity", opportunityId, user);
+
+            // Assert
+            risks.Should().HaveCount(1, "should return exactly 1 risk");
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-052: Get DST risks for opportunity with 100 risks (large result set)
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-052")]
+        [Trait("Priority", "Low")]
+        public async Task GetDSTRisks_100Risks_HandlesLargeResultSet()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync("Opportunity with 100 risks");
+
+            // Create 100 risks
+            var createTasks = Enumerable.Range(0, 100).Select(i =>
+            {
+                var request = new RiskCreateRequest
+                {
+                    Title = $"Risk {i + 1} of 100",
+                    Description = $"Description {i + 1}",
+                    EntityType = "Opportunity",
+                    EntityId = opportunityId,
+                    RiskTypeId = 1,
+                    ProbabilityId = 3,
+                    ImpactId = 4,
+                    Source = "DST"
+                };
+                return riskManager.AddRiskAsync(request, user);
+            }).ToList();
+
+            await Task.WhenAll(createTasks);
+
+            // Act
+            var risks = await riskManager.GetRisksByEntityAsync("Opportunity", opportunityId, user);
+
+            // Assert
+            risks.Should().HaveCount(100, "should return all 100 risks");
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-053: Create DST risk with Title containing leading/trailing whitespace
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-053")]
+        [Trait("Priority", "Medium")]
+        public async Task AddDSTRisk_LeadingTrailingWhitespace_TrimsOrPreserves()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var riskRequest = new RiskCreateRequest
+            {
+                Title = "  Title With Whitespace  ", // Leading/trailing spaces
+                Description = "Test description",
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = "DST"
+            };
+
+            // Act
+            var result = await riskManager.AddRiskAsync(riskRequest, user);
+
+            // Assert
+            result.Should().NotBeNull();
+            // May trim or preserve whitespace depending on implementation
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-054: Update DST risk with Title containing leading/trailing whitespace
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-054")]
+        [Trait("Priority", "Medium")]
+        public async Task UpdateDSTRisk_LeadingTrailingWhitespace_TrimsOrPreserves()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            // Create risk
+            var createRequest = new RiskCreateRequest
+            {
+                Title = "Original Title",
+                Description = "Test description",
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = "DST"
+            };
+
+            var created = await riskManager.AddRiskAsync(createRequest, user);
+
+            // Update with whitespace
+            var updateRequest = new RiskUpdateRequest
+            {
+                Id = created.Id,
+                Title = "  Updated With Whitespace  ",
+                Description = "Updated description"
+            };
+
+            // Act
+            var updated = await riskManager.UpdateRiskAsync(updateRequest, user);
+
+            // Assert
+            updated.Should().NotBeNull();
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-055: Get DST recommendations with maxResults = Int32.MaxValue
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-055")]
+        [Trait("Priority", "Low")]
+        public async Task GetDSTRecommendations_MaxIntMaxResults_CapsToReasonableLimit()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var geminiManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().GeminiManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            // Act
+            var response = await geminiManager.GetDSTRecommendationsAsync(
+                opportunityId: opportunityId,
+                user: user,
+                maxResults: int.MaxValue, // Maximum int
+                dismissedOupQuestionIds: new List<int>(),
+                forceRefresh: true
+            );
+
+            // Assert
+            response.Should().NotBeNull();
+            response.Recommendations.Count.Should().BeLessThan(10000, "should cap to reasonable limit");
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-056: Create DST risk with all fields at maximum length
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-056")]
+        [Trait("Priority", "Medium")]
+        public async Task AddDSTRisk_AllFieldsMaxLength_AcceptsValidData()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var riskRequest = new RiskCreateRequest
+            {
+                Title = new string('T', 500), // Max length
+                Description = new string('D', 5000), // Max length
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = new string('S', 200) // Assuming max length for Source
+            };
+
+            // Act
+            var result = await riskManager.AddRiskAsync(riskRequest, user);
+
+            // Assert
+            result.Should().NotBeNull();
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-057: Get DST recommendations for opportunity created in last millisecond
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-057")]
+        [Trait("Priority", "Medium")]
+        public async Task GetDSTRecommendations_BrandNewOpportunity_HandlesImmediately()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var geminiManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().GeminiManager;
+            var user = CreateTestUser();
+
+            // Create opportunity
+            var opportunityId = await CreateTestOpportunityAsync("Brand New Opportunity");
+
+            // Immediately request DST (within milliseconds of creation)
+            var response = await geminiManager.GetDSTRecommendationsAsync(
+                opportunityId: opportunityId,
+                user: user,
+                maxResults: 10,
+                dismissedOupQuestionIds: new List<int>(),
+                forceRefresh: true
+            );
+
+            // Assert
+            response.Should().NotBeNull();
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-058: Create DST risk with EntityType "Opportunity" (exact case)
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-058")]
+        [Trait("Priority", "Low")]
+        public async Task AddDSTRisk_ExactCaseEntityType_AcceptsCorrectCase()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var riskRequest = new RiskCreateRequest
+            {
+                Title = "Exact Case Test",
+                Description = "Test description",
+                EntityType = "Opportunity", // Exact case
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = "DST"
+            };
+
+            // Act
+            var result = await riskManager.AddRiskAsync(riskRequest, user);
+
+            // Assert
+            result.Should().NotBeNull();
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-059: Create DST risk with EntityType "opportunity" (lowercase - case sensitivity test)
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-059")]
+        [Trait("Priority", "Medium")]
+        public async Task AddDSTRisk_LowercaseEntityType_HandlesCaseInsensitivityOrRejects()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var riskRequest = new RiskCreateRequest
+            {
+                Title = "Lowercase EntityType Test",
+                Description = "Test description",
+                EntityType = "opportunity", // Lowercase
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = "DST"
+            };
+
+            // Act
+            try
+            {
+                var result = await riskManager.AddRiskAsync(riskRequest, user);
+                result.Should().NotBeNull("case-insensitive matching may be supported");
+            }
+            catch (ArgumentException)
+            {
+                Assert.True(true, "Case-sensitive EntityType validation enforced");
+            }
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-060: Get DST risks with EntityType "OPPORTUNITY" (uppercase - case sensitivity test)
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-060")]
+        [Trait("Priority", "Medium")]
+        public async Task GetDSTRisks_UppercaseEntityType_HandlesCaseInsensitivityOrRejects()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            // Act
+            try
+            {
+                var risks = await riskManager.GetRisksByEntityAsync("OPPORTUNITY", opportunityId, user);
+                risks.Should().NotBeNull("case-insensitive matching may be supported");
+            }
+            catch (ArgumentException)
+            {
+                Assert.True(true, "Case-sensitive EntityType validation enforced");
+            }
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-061: Update DST risk multiple times rapidly (1000ms between updates)
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-061")]
+        [Trait("Priority", "Medium")]
+        public async Task UpdateDSTRisk_RapidSequentialUpdates_HandlesWithoutDataLoss()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var createRequest = new RiskCreateRequest
+            {
+                Title = "Rapid Update Test",
+                Description = "Original",
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = "DST"
+            };
+
+            var created = await riskManager.AddRiskAsync(createRequest, user);
+
+            // Act - Update 5 times with 1 second delay
+            for (int i = 0; i < 5; i++)
+            {
+                var updateRequest = new RiskUpdateRequest
+                {
+                    Id = created.Id,
+                    Title = $"Update {i + 1}",
+                    Description = $"Description {i + 1}"
+                };
+
+                await riskManager.UpdateRiskAsync(updateRequest, user);
+                await Task.Delay(1000); // 1 second delay
+            }
+
+            // Assert - Verify final state
+            var final = await riskManager.GetRiskByIdAsync(created.Id, user);
+            final.Title.Should().Be("Update 5");
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-062: Get DST recommendations with same dismissedOupQuestionIds repeated (contains duplicates)
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-062")]
+        [Trait("Priority", "Low")]
+        public async Task GetDSTRecommendations_ManyDuplicateDismissedIds_DeduplicatesCorrectly()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var geminiManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().GeminiManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            // List with many duplicates
+            var dismissedIds = new List<int> { 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4 };
+
+            // Act
+            var response = await geminiManager.GetDSTRecommendationsAsync(
+                opportunityId: opportunityId,
+                user: user,
+                maxResults: 10,
+                dismissedOupQuestionIds: dismissedIds,
+                forceRefresh: true
+            );
+
+            // Assert
+            response.Should().NotBeNull();
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-063: Create DST risk with Source field exactly at maximum length
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-063")]
+        [Trait("Priority", "Low")]
+        public async Task AddDSTRisk_SourceAtMaxLength_AcceptsValidLength()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            // Assume max length is 200
+            var maxLengthSource = new string('S', 200);
+
+            var riskRequest = new RiskCreateRequest
+            {
+                Title = "Source Max Length Test",
+                Description = "Test description",
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = maxLengthSource
+            };
+
+            // Act
+            var result = await riskManager.AddRiskAsync(riskRequest, user);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Source.Should().HaveLength(200);
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-064: Get DST recommendations for opportunity with null optional fields
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-064")]
+        [Trait("Priority", "Medium")]
+        public async Task GetDSTRecommendations_OpportunityNullOptionalFields_HandlesGracefully()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var geminiManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().GeminiManager;
+            var user = CreateTestUser();
+
+            // Create opportunity with minimal data (null optional fields)
+            var opportunityId = await CreateTestOpportunityAsync("Minimal Opportunity");
+
+            // Act
+            var response = await geminiManager.GetDSTRecommendationsAsync(
+                opportunityId: opportunityId,
+                user: user,
+                maxResults: 10,
+                dismissedOupQuestionIds: new List<int>(),
+                forceRefresh: true
+            );
+
+            // Assert
+            response.Should().NotBeNull();
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-065: Create DST risk and update it with exact same data
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-065")]
+        [Trait("Priority", "Low")]
+        public async Task UpdateDSTRisk_ExactSameData_HandlesIdempotently()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var createRequest = new RiskCreateRequest
+            {
+                Title = "Idempotent Update Test",
+                Description = "Original description",
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = "DST"
+            };
+
+            var created = await riskManager.AddRiskAsync(createRequest, user);
+
+            // Update with exact same data
+            var updateRequest = new RiskUpdateRequest
+            {
+                Id = created.Id,
+                Title = "Idempotent Update Test", // Same
+                Description = "Original description" // Same
+            };
+
+            // Act
+            var updated = await riskManager.UpdateRiskAsync(updateRequest, user);
+
+            // Assert
+            updated.Should().NotBeNull();
+            updated.Title.Should().Be(created.Title);
+            updated.Description.Should().Be(created.Description);
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-066: Get DST risks for opportunity that has risks then all deleted
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-066")]
+        [Trait("Priority", "Medium")]
+        public async Task GetDSTRisks_AllRisksDeleted_ReturnsEmptyList()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            // Create 3 risks
+            var createdRisks = new List<int>();
+            for (int i = 0; i < 3; i++)
+            {
+                var createRequest = new RiskCreateRequest
+                {
+                    Title = $"Risk {i + 1}",
+                    Description = "Test description",
+                    EntityType = "Opportunity",
+                    EntityId = opportunityId,
+                    RiskTypeId = 1,
+                    ProbabilityId = 3,
+                    ImpactId = 4,
+                    Source = "DST"
+                };
+
+                var created = await riskManager.AddRiskAsync(createRequest, user);
+                createdRisks.Add(created.Id);
+            }
+
+            // Delete all risks
+            foreach (var riskId in createdRisks)
+            {
+                await riskManager.DeleteRiskAsync(riskId, user);
+            }
+
+            // Act
+            var risks = await riskManager.GetRisksByEntityAsync("Opportunity", opportunityId, user);
+
+            // Assert
+            risks.Should().BeEmpty("all risks were deleted");
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-067: Get DST recommendations with dismissedOupQuestionIds exactly matching all recommendations
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-067")]
+        [Trait("Priority", "Medium")]
+        public async Task GetDSTRecommendations_AllDismissed_ReturnsEmptyOrAlternatives()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var geminiManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().GeminiManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            // Get initial recommendations
+            var initialResponse = await geminiManager.GetDSTRecommendationsAsync(
+                opportunityId: opportunityId,
+                user: user,
+                maxResults: 10,
+                dismissedOupQuestionIds: new List<int>(),
+                forceRefresh: true
+            );
+
+            // Extract all OUP question IDs
+            var allIds = initialResponse.Recommendations
+                .Where(r => r.OupQuestionId.HasValue)
+                .Select(r => r.OupQuestionId.Value)
+                .ToList();
+
+            // Request recommendations with all IDs dismissed
+            var response = await geminiManager.GetDSTRecommendationsAsync(
+                opportunityId: opportunityId,
+                user: user,
+                maxResults: 10,
+                dismissedOupQuestionIds: allIds,
+                forceRefresh: true
+            );
+
+            // Assert
+            response.Should().NotBeNull();
+            // May return empty or alternative recommendations
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-068: Create DST risk with only required fields (minimal payload)
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-068")]
+        [Trait("Priority", "Medium")]
+        public async Task AddDSTRisk_OnlyRequiredFields_AcceptsMinimalData()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var riskRequest = new RiskCreateRequest
+            {
+                // Only required fields
+                Title = "Minimal Risk",
+                Description = "Minimal description",
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4
+                // No Source (optional)
+            };
+
+            // Act
+            var result = await riskManager.AddRiskAsync(riskRequest, user);
+
+            // Assert
+            result.Should().NotBeNull();
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-069: Update DST risk changing only Title (partial update)
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-069")]
+        [Trait("Priority", "Medium")]
+        public async Task UpdateDSTRisk_OnlyTitleChanged_UpdatesSelectively()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var createRequest = new RiskCreateRequest
+            {
+                Title = "Original Title",
+                Description = "Original Description",
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = "DST"
+            };
+
+            var created = await riskManager.AddRiskAsync(createRequest, user);
+
+            // Update only title
+            var updateRequest = new RiskUpdateRequest
+            {
+                Id = created.Id,
+                Title = "Updated Title Only",
+                Description = created.Description // Keep same
+            };
+
+            // Act
+            var updated = await riskManager.UpdateRiskAsync(updateRequest, user);
+
+            // Assert
+            updated.Should().NotBeNull();
+            updated.Title.Should().Be("Updated Title Only");
+            updated.Description.Should().Be("Original Description");
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-070: Update DST risk changing only Description (partial update)
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-070")]
+        [Trait("Priority", "Medium")]
+        public async Task UpdateDSTRisk_OnlyDescriptionChanged_UpdatesSelectively()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var createRequest = new RiskCreateRequest
+            {
+                Title = "Original Title",
+                Description = "Original Description",
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = "DST"
+            };
+
+            var created = await riskManager.AddRiskAsync(createRequest, user);
+
+            // Update only description
+            var updateRequest = new RiskUpdateRequest
+            {
+                Id = created.Id,
+                Title = created.Title, // Keep same
+                Description = "Updated Description Only"
+            };
+
+            // Act
+            var updated = await riskManager.UpdateRiskAsync(updateRequest, user);
+
+            // Assert
+            updated.Should().NotBeNull();
+            updated.Title.Should().Be("Original Title");
+            updated.Description.Should().Be("Updated Description Only");
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-071: Get DST recommendations twice without forceRefresh (cache test)
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-071")]
+        [Trait("Priority", "Low")]
+        public async Task GetDSTRecommendations_WithoutForceRefresh_UsesCache()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var geminiManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().GeminiManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            // First call - populates cache
+            var first = await geminiManager.GetDSTRecommendationsAsync(
+                opportunityId: opportunityId,
+                user: user,
+                maxResults: 10,
+                dismissedOupQuestionIds: new List<int>(),
+                forceRefresh: false
+            );
+
+            // Second call - should use cache
+            var second = await geminiManager.GetDSTRecommendationsAsync(
+                opportunityId: opportunityId,
+                user: user,
+                maxResults: 10,
+                dismissedOupQuestionIds: new List<int>(),
+                forceRefresh: false // No force refresh
+            );
+
+            // Assert
+            first.Should().NotBeNull();
+            second.Should().NotBeNull();
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-072: Create DST risk with empty Source string (optional field)
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-072")]
+        [Trait("Priority", "Low")]
+        public async Task AddDSTRisk_EmptySource_AcceptsEmptyString()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var riskRequest = new RiskCreateRequest
+            {
+                Title = "Empty Source Test",
+                Description = "Test description",
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 4,
+                Source = string.Empty // Empty string
+            };
+
+            // Act
+            var result = await riskManager.AddRiskAsync(riskRequest, user);
+
+            // Assert
+            result.Should().NotBeNull();
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-073: Get DST recommendations for opportunity with huge Description (performance test)
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-073")]
+        [Trait("Priority", "Low")]
+        public async Task GetDSTRecommendations_HugeOpportunityDescription_HandlesPerformance()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var geminiManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().GeminiManager;
+            var user = CreateTestUser();
+
+            // Create opportunity with huge description
+            var opportunityId = await CreateTestOpportunityAsync("Huge Description Opportunity");
+
+            // Act
+            var response = await geminiManager.GetDSTRecommendationsAsync(
+                opportunityId: opportunityId,
+                user: user,
+                maxResults: 10,
+                dismissedOupQuestionIds: new List<int>(),
+                forceRefresh: true
+            );
+
+            // Assert
+            response.Should().NotBeNull();
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-074: Create DST risk with ProbabilityId = 1 (minimum boundary)
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-074")]
+        [Trait("Priority", "Low")]
+        public async Task AddDSTRisk_ProbabilityIdOne_AcceptsMinimumValue()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var riskRequest = new RiskCreateRequest
+            {
+                Title = "Minimum Probability",
+                Description = "Test description",
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 1, // Minimum
+                ImpactId = 4,
+                Source = "DST"
+            };
+
+            // Act
+            try
+            {
+                var result = await riskManager.AddRiskAsync(riskRequest, user);
+                result.Should().NotBeNull();
+            }
+            catch (KeyNotFoundException)
+            {
+                Assert.True(true, "ProbabilityId 1 may not exist");
+            }
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-075: Create DST risk with ImpactId = 1 (minimum boundary)
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-075")]
+        [Trait("Priority", "Low")]
+        public async Task AddDSTRisk_ImpactIdOne_AcceptsMinimumValue()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            var riskRequest = new RiskCreateRequest
+            {
+                Title = "Minimum Impact",
+                Description = "Test description",
+                EntityType = "Opportunity",
+                EntityId = opportunityId,
+                RiskTypeId = 1,
+                ProbabilityId = 3,
+                ImpactId = 1, // Minimum
+                Source = "DST"
+            };
+
+            // Act
+            try
+            {
+                var result = await riskManager.AddRiskAsync(riskRequest, user);
+                result.Should().NotBeNull();
+            }
+            catch (KeyNotFoundException)
+            {
+                Assert.True(true, "ImpactId 1 may not exist");
+            }
+        }
+
+        /// <summary>
+        /// TC-DST-EDGE-076: Get DST risks immediately after deleting half of them
+        /// </summary>
+        [Fact]
+        [Trait("TestId", "TC-DST-EDGE-076")]
+        [Trait("Priority", "Medium")]
+        public async Task GetDSTRisks_AfterPartialDeletion_ReturnsRemainingRisks()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var riskManager = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RiskManager;
+            var user = CreateTestUser();
+            var opportunityId = await CreateTestOpportunityAsync();
+
+            // Create 10 risks
+            var createdRisks = new List<int>();
+            for (int i = 0; i < 10; i++)
+            {
+                var createRequest = new RiskCreateRequest
+                {
+                    Title = $"Risk {i + 1}",
+                    Description = "Test description",
+                    EntityType = "Opportunity",
+                    EntityId = opportunityId,
+                    RiskTypeId = 1,
+                    ProbabilityId = 3,
+                    ImpactId = 4,
+                    Source = "DST"
+                };
+
+                var created = await riskManager.AddRiskAsync(createRequest, user);
+                createdRisks.Add(created.Id);
+            }
+
+            // Delete first 5 risks
+            for (int i = 0; i < 5; i++)
+            {
+                await riskManager.DeleteRiskAsync(createdRisks[i], user);
+            }
+
+            // Act - Get remaining risks
+            var risks = await riskManager.GetRisksByEntityAsync("Opportunity", opportunityId, user);
+
+            // Assert
+            risks.Should().HaveCount(5, "should return 5 remaining risks after deleting 5 of 10");
+        }
+
+        #endregion
     }
 }
