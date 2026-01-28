@@ -247,6 +247,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
                 {
                     new OrganizationUnitRelationship
                     {
+                        Name = $"Partner-1-OrgUnit-{orgUnitId}", // Required by ModifiableDeletableEntity
                         OrganizationHierarchyId = orgUnitId,
                         EntityId = 1,
                         EntityType = nameof(Partner),
@@ -636,6 +637,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             {
                 new OrganizationUnitRelationship
                 {
+                    Name = $"Partner-{partner.Id}-OrgUnit-{organizationHierarchyId}", // Required by ModifiableDeletableEntity
                     OrganizationHierarchyId = organizationHierarchyId,
                     EntityId = partner.Id,
                     EntityType = nameof(Partner),

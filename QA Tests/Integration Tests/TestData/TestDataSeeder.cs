@@ -153,4 +153,40 @@ public static class TestDataSeeder
         
         return contacts;
     }
+    
+    /// <summary>
+    /// Creates an OrganizationUnitRelationship with all required properties
+    /// </summary>
+    /// <param name="organizationHierarchyId">The organization hierarchy ID</param>
+    /// <param name="entityId">The entity ID (Partner, Contact, etc.)</param>
+    /// <param name="entityType">The entity type name (e.g., "UNOPSPartner", "Contact")</param>
+    /// <param name="status">The status (default: "Active")</param>
+    /// <returns>OrganizationUnitRelationship with all required fields set</returns>
+    public static OrganizationUnitRelationship CreateOrganizationUnitRelationship(
+        int organizationHierarchyId, 
+        int entityId, 
+        string entityType,
+        string? status = "Active")
+    {
+        var relationship = TestDataBuilder.GetOrganizationUnitRelationshipFaker().Generate();
+        
+        // Override with provided values
+        relationship.OrganizationHierarchyId = organizationHierarchyId;
+        relationship.EntityId = entityId;
+        relationship.EntityType = entityType;
+        
+        // Ensure Name is set (required by ModifiableDeletableEntity)
+        relationship.Name = $"{entityType}-{entityId}-OrgUnit-{organizationHierarchyId}";
+        
+        // Map status string to enum
+        relationship.Status = status switch
+        {
+            "Active" => Domain.Entities.EntityStatus.Active,
+            "Inactive" => Domain.Entities.EntityStatus.Closed,
+            "Draft" => Domain.Entities.EntityStatus.Draft,
+            _ => Domain.Entities.EntityStatus.Active
+        };
+        
+        return relationship;
+    }
 }

@@ -563,6 +563,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             {
                 new OrganizationUnitRelationship
                 {
+                    Name = $"Partner-{partner.Id}-OrgUnit-{organizationHierarchyId}", // Required by ModifiableDeletableEntity
                     OrganizationHierarchyId = organizationHierarchyId,
                     EntityId = partner.Id,
                     EntityType = nameof(UNOPSPartner),

@@ -61,6 +61,18 @@ public static class TestDataBuilder
             .RuleFor(c => c.LastModifiedDate, f => f.Date.Recent());
     }
 
+    public static Faker<OrganizationUnitRelationship> GetOrganizationUnitRelationshipFaker()
+    {
+        return new Faker<OrganizationUnitRelationship>()
+            .RuleFor(r => r.Name, (f, r) => $"{r.EntityType}-{r.EntityId}-OrgUnit-{r.OrganizationHierarchyId}") // Required: inherited from ModifiableDeletableEntity
+            .RuleFor(r => r.OrganizationHierarchyId, f => f.Random.Int(1, 100)) // Will be overridden by seeder
+            .RuleFor(r => r.EntityId, f => f.Random.Int(1, 100)) // Will be overridden by seeder
+            .RuleFor(r => r.EntityType, f => f.PickRandom(new[] { "Partner", "UNOPSPartner", "Contact", "Interaction", "Opportunity" })) // Will be overridden by seeder
+            .RuleFor(r => r.Status, f => f.PickRandom<Domain.Entities.EntityStatus>())
+            .RuleFor(r => r.CreatedDate, f => f.Date.Past(2))
+            .RuleFor(r => r.LastModifiedDate, f => f.Date.Recent());
+    }
+
     public static PartnerFilterRequest CreatePartnerFilterRequest(
         int pageIndex = 1,
         int pageSize = 10,

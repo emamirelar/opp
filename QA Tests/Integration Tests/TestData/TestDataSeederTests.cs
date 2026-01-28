@@ -91,4 +91,50 @@ public class TestDataSeederTests
         // Verify email format is valid
         contact.Email.Should().Contain("@");
     }
+    
+    [Fact]
+    public void GetOrganizationUnitRelationshipFaker_GeneratesValidRelationship()
+    {
+        // Act
+        var faker = TestDataBuilder.GetOrganizationUnitRelationshipFaker();
+        var relationship = faker.Generate();
+        
+        // Assert
+        relationship.Should().NotBeNull();
+        relationship.Name.Should().NotBeNullOrEmpty("Name is required by ModifiableDeletableEntity");
+        relationship.EntityType.Should().NotBeNullOrEmpty("EntityType is required");
+        relationship.OrganizationHierarchyId.Should().BeGreaterThan(0);
+        relationship.EntityId.Should().BeGreaterThan(0);
+    }
+    
+    [Fact]
+    public void CreateOrganizationUnitRelationship_SetsAllRequiredProperties()
+    {
+        // Act
+        var relationship = TestDataSeeder.CreateOrganizationUnitRelationship(
+            organizationHierarchyId: 1,
+            entityId: 123,
+            entityType: "UNOPSPartner");
+        
+        // Assert
+        relationship.Should().NotBeNull();
+        relationship.Name.Should().NotBeNullOrEmpty("Name is required");
+        relationship.Name.Should().Be("UNOPSPartner-123-OrgUnit-1", "Name should follow naming convention");
+        relationship.OrganizationHierarchyId.Should().Be(1);
+        relationship.EntityId.Should().Be(123);
+        relationship.EntityType.Should().Be("UNOPSPartner");
+        relationship.Status.Should().Be(EntityStatus.Active, "Default status should be Active");
+    }
+    
+    [Fact]
+    public void CreateOrganizationUnitRelationship_WithStatusParameter_MapsStatusCorrectly()
+    {
+        // Act
+        var inactiveRelationship = TestDataSeeder.CreateOrganizationUnitRelationship(1, 123, "Partner", "Inactive");
+        var draftRelationship = TestDataSeeder.CreateOrganizationUnitRelationship(1, 123, "Partner", "Draft");
+        
+        // Assert
+        inactiveRelationship.Status.Should().Be(EntityStatus.Closed);
+        draftRelationship.Status.Should().Be(EntityStatus.Draft);
+    }
 }

@@ -495,6 +495,7 @@ public class SimplePartnerFilterTests
             {
                 new OrganizationUnitRelationship
                 {
+                    Name = $"Partner-{partner.Id}-OrgUnit-{organizationHierarchyId.Value}", // Required by ModifiableDeletableEntity
                     OrganizationHierarchyId = organizationHierarchyId.Value,
                     EntityId = partner.Id,
                     EntityType = nameof(UNOPSPartner),
