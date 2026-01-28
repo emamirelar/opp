@@ -195,16 +195,20 @@ export class OpportunityTeamSectionComponent implements OnInit {
   // Collaborator expertise options (loaded from API)
   readonly collaboratorExpertises = signal<{ id: number; name: string; code: string }[]>([]);
 
-  // Computed signal for non-SME roles (excludes SME roles and Opportunity Manager for use in Add Team Member dialog)
+  // Computed signal for non-SME roles (excludes SME roles, Opportunity Manager, and External Stakeholder for use in Add Internal Stakeholder dialog)
   // Opportunity Manager is excluded because it has a dedicated field
+  // External Stakeholder is excluded because this is for INTERNAL stakeholders only
   readonly nonSmeRoles = computed(() => {
     return this.entityRoles().filter((role) => {
       // Exclude SME roles
       if (role.type === 'SME') return false;
-      // Exclude Opportunity Manager (has dedicated field) - case insensitive check
+      // Case insensitive check for role name and code
       const roleName = (role.name || '').toLowerCase();
       const roleCode = (role.code || '').toLowerCase();
+      // Exclude Opportunity Manager (has dedicated field)
       if (roleName === 'opportunity manager' || roleCode === 'opportunity_manager_opportunity') return false;
+      // Exclude External Stakeholder (this dropdown is for INTERNAL stakeholders only)
+      if (roleName === 'external stakeholder' || roleCode.includes('external_stakeholder')) return false;
       return true;
     });
   });
