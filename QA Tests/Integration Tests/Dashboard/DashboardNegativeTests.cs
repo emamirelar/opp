@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using UNOPS.PAO.IntegrationTests.Infrastructure;
 
 namespace UNOPS.PAO.Tests.Integration.Dashboard
 {

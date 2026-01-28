@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.Models.Liaison;
+using UNOPS.PAO.IntegrationTests.Infrastructure;
 
 namespace UNOPS.PAO.Tests.Integration.LiaisonOffice
 {

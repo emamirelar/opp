@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.Models.Roles;
+using UNOPS.PAO.IntegrationTests.Infrastructure;
 
 namespace UNOPS.PAO.Tests.Integration.Roles
 {
@@ -307,7 +308,7 @@ namespace UNOPS.PAO.Tests.Integration.Roles
         }
 
         [Fact][Trait("TestId", "TC-ROLE-NEG-035")][Trait("Priority", "Medium")]
-        public async Task GetRole_ZeroId_ThrowsArgumentException()
+        public async Task GetRoleById_ZeroId_ThrowsArgumentException()
         {
             using var scope = _factory.Services.CreateScope();
             var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().RoleManager;

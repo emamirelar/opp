@@ -7,6 +7,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.Models.Documents;
+using UNOPS.PAO.IntegrationTests.Infrastructure;
 
 namespace UNOPS.PAO.Tests.Integration.Documents
 {

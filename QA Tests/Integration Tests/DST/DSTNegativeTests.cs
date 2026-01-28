@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSBusiness.Managers;
+using UNOPS.PAO.IntegrationTests.Infrastructure;
 
 namespace UNOPS.PAO.Tests.Integration.DST
 {
@@ -1094,7 +1095,7 @@ namespace UNOPS.PAO.Tests.Integration.DST
         [Fact]
         [Trait("TestId", "TC-DST-NEG-024")]
         [Trait("Priority", "High")]
-        public async Task AddDSTRisk_InvalidRiskTypeId_ThrowsException()
+        public async Task AddDSTRisk_NonExistentRiskTypeId_ThrowsException()
         {
             // Arrange
             using var scope = _factory.Services.CreateScope();
@@ -1126,7 +1127,7 @@ namespace UNOPS.PAO.Tests.Integration.DST
         [Fact]
         [Trait("TestId", "TC-DST-NEG-025")]
         [Trait("Priority", "High")]
-        public async Task AddDSTRisk_InvalidProbabilityId_ThrowsException()
+        public async Task AddDSTRisk_NonExistentProbabilityId_ThrowsException()
         {
             // Arrange
             using var scope = _factory.Services.CreateScope();
@@ -1158,7 +1159,7 @@ namespace UNOPS.PAO.Tests.Integration.DST
         [Fact]
         [Trait("TestId", "TC-DST-NEG-026")]
         [Trait("Priority", "High")]
-        public async Task AddDSTRisk_InvalidImpactId_ThrowsException()
+        public async Task AddDSTRisk_NonExistentImpactId_ThrowsException()
         {
             // Arrange
             using var scope = _factory.Services.CreateScope();

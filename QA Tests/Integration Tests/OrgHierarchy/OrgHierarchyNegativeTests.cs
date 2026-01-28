@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.Models.Organizations;
+using UNOPS.PAO.IntegrationTests.Infrastructure;
 
 namespace UNOPS.PAO.Tests.Integration.OrgHierarchy
 {
@@ -380,7 +381,7 @@ namespace UNOPS.PAO.Tests.Integration.OrgHierarchy
         }
 
         [Fact][Trait("TestId", "TC-ORG-NEG-044")][Trait("Priority", "High")]
-        public async Task RemoveSubOrganization_InsufficientPermissions_ThrowsUnauthorizedAccessException()
+        public async Task RemoveSubOrganization_ViewerRoleAttempt_ThrowsUnauthorizedAccessException()
         {
             using var scope = _factory.Services.CreateScope();
             var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().OrganizationManager;

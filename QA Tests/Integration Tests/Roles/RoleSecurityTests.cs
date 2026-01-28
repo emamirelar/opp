@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.Models.Roles;
+using UNOPS.PAO.IntegrationTests.Infrastructure;
 
 namespace UNOPS.PAO.Tests.Integration.Roles
 {

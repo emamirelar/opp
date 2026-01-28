@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.Models.Partners;
+using UNOPS.PAO.IntegrationTests.Infrastructure;
 
 namespace UNOPS.PAO.Tests.Integration.PartnerTree
 {
@@ -380,7 +381,7 @@ namespace UNOPS.PAO.Tests.Integration.PartnerTree
         }
 
         [Fact][Trait("TestId", "TC-TREE-NEG-044")][Trait("Priority", "High")]
-        public async Task RemoveChildPartner_InsufficientPermissions_ThrowsUnauthorizedAccessException()
+        public async Task RemoveChildPartner_ViewerRoleAttempt_ThrowsUnauthorizedAccessException()
         {
             using var scope = _factory.Services.CreateScope();
             var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().PartnerManager;
