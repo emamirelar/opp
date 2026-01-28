@@ -150,10 +150,10 @@ export class OpportunityWhySectionComponent implements OnInit {
   estimatedIndirectBeneficiariesControl = new FormControl<number | null>(null);
   beneficiariesToBeDeterminedControl = new FormControl<boolean>(false);
   expectedImpactControl = new FormControl<string | null>(null, [
-    Validators.maxLength(200),
+    Validators.maxLength(510),
   ]);
   expectedOutcomesControl = new FormControl<string | null>(null, [
-    Validators.maxLength(200),
+    Validators.maxLength(510),
   ]);
   challengesControl = new FormControl<string | null>(null);
 
