@@ -182,8 +182,8 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     partnerReference: 255,
     signingDateNotes: 1000,
     resultsFocus: 2000,
-    expectedImpact: 200,
-    expectedOutcomes: 200,
+    expectedImpact: 510,
+    expectedOutcomes: 510,
     expectedBeneficiaries: 1000,
     miscExternalStakeholders: 2000,
     externalStakeholderNotes: 2000,
@@ -2246,13 +2246,13 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         this.translateService.instant('label.resultsFocus'));
     }
     
-    // Validate ExpectedImpact (max 200)
+    // Validate ExpectedImpact (max 510)
     if (this.isFieldSelected('expectedImpact') && opp.expectedImpact) {
       checkLength('expectedImpact', opp.expectedImpact, this.FIELD_MAX_LENGTHS.expectedImpact, 
         this.translateService.instant('label.opportunity.expectedImpact'));
     }
     
-    // Validate ExpectedOutcomes (max 200)
+    // Validate ExpectedOutcomes (max 510)
     if (this.isFieldSelected('expectedOutcomes') && opp.expectedOutcomes) {
       checkLength('expectedOutcomes', opp.expectedOutcomes, this.FIELD_MAX_LENGTHS.expectedOutcomes, 
         this.translateService.instant('label.opportunity.expectedOutcomes'));
