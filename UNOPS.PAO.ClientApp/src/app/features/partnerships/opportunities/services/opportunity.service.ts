@@ -507,4 +507,16 @@ export class OpportunityService {
       {},
     );
   }
+
+  /**
+   * Get available collaborator expertise types for selection
+   * @returns Observable with array of expertise options
+   */
+  getCollaboratorExpertises(): Observable<
+    { id: number; name: string; code: string; description: string | null; displayOrder: number }[]
+  > {
+    return this.http.get<
+      { id: number; name: string; code: string; description: string | null; displayOrder: number }[]
+    >(`${this.apiUrl}/collaborator-expertises`);
+  }
 }

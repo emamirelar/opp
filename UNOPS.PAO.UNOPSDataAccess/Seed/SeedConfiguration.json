@@ -166,6 +166,15 @@
             "description": "Units of measurement (Days, Number, Litres, etc.)"
         },
         {
+            "order": 18,
+            "name": "CollaboratorExpertises",
+            "type": "seeder",
+            "className": "CollaboratorExpertiseSeeder",
+            "methodName": "SeedCollaboratorExpertisesAsync",
+            "filePath": "Seeders/CollaboratorExpertiseSeeder.cs",
+            "description": "Collaborator expertise types for opportunity team members"
+        },
+        {
             "order": 19,
             "name": "ProjectCategories",
             "type": "seeder",

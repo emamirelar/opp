@@ -6,7 +6,7 @@
     [resizable]="false"
     [style]="{ width: '30vw' }"
     (onHide)="onDialogClose()">
-    <p>{{ dialogConfig?.detail }}</p>
+    <p [innerHTML]="dialogConfig?.detail"></p>
     @if (dialogConfig?.showRefreshButton) {
         <div class="flex justify-end mt-4">
             <p-button

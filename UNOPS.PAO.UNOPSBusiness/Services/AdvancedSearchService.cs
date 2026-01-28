@@ -786,7 +786,7 @@ public class AdvancedSearchService
                     // Stakeholders, Deliverables, Countries, SDGs and their nested relationships
                     _logger.LogInformation("Using LIGHTWEIGHT includes for Opportunity list query");
                     query = query
-                        .Include("WorkflowStage")
+                        // "WorkflowStage" removed - now using Stage property instead
                         .Include("ResponsibleOrgUnit")
                         .Include("ProposedInitiativeType");
                 }
@@ -794,7 +794,7 @@ public class AdvancedSearchService
                 {
                     // Full includes for detail views
                     query = query
-                        .Include("WorkflowStage")
+                        // "WorkflowStage" removed - now using Stage property instead
                         .Include("ResponsibleOrgUnit")
                         .Include("ProposedInitiativeType")
                         .Include("FundingPartners.Partner")
