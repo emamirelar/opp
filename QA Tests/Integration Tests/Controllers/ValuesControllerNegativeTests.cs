@@ -385,7 +385,7 @@ namespace UNOPS.PAO.Tests.Integration.Controllers
         }
 
         [Fact][Trait("TestId", "TC-VALUES-NEG-049")][Trait("Priority", "Medium")]
-        public async Task GetValuesByType_InvalidHTTP Version_HandlesOrRejects()
+        public async Task GetValuesByType_InvalidHTTPVersion_HandlesOrRejects()
         {
             var request = new HttpRequestMessage(HttpMethod.Get, "/api/values/Type");
             request.Version = new System.Version(0, 9);
@@ -401,6 +401,5 @@ namespace UNOPS.PAO.Tests.Integration.Controllers
             responses.Should().HaveCount(20);
         }
 
-        #endregion
     }
 }

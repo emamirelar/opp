@@ -422,6 +422,5 @@ namespace UNOPS.PAO.Tests.Integration.Controllers
             responses.Should().HaveCount(5);
         }
 
-        #endregion
     }
 }

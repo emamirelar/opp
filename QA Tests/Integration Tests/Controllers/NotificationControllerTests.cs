@@ -405,7 +405,7 @@ namespace UNOPS.PAO.Tests.Integration.Controllers
         }
 
         [Fact][Trait("TestId", "TC-NOTIF-EDGE-021")][Trait("Priority", "High")]
-        public async Task SendNotification_LongMessage_Truncated OrAccepted()
+        public async Task SendNotification_LongMessage_TruncatedOrAccepted()
         {
             var response = await _client.PostAsJsonAsync("/api/notifications/send", new { recipient = "user@test.com", message = new string('A', 2000) });
             response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Accepted, HttpStatusCode.BadRequest, HttpStatusCode.Unauthorized);
@@ -706,6 +706,5 @@ namespace UNOPS.PAO.Tests.Integration.Controllers
 
         #endregion
 
-        #endregion
     }
 }

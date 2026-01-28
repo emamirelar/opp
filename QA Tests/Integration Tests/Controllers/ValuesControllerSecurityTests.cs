@@ -223,6 +223,5 @@ namespace UNOPS.PAO.Tests.Integration.Controllers
             response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Forbidden, HttpStatusCode.NotFound);
         }
 
-        #endregion
     }
 }

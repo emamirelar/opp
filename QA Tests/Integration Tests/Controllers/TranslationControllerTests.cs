@@ -670,6 +670,5 @@ namespace UNOPS.PAO.Tests.Integration.Controllers
 
         #endregion
 
-        #endregion
     }
 }
