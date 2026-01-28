@@ -195,9 +195,18 @@ export class OpportunityTeamSectionComponent implements OnInit {
   // Collaborator expertise options (loaded from API)
   readonly collaboratorExpertises = signal<{ id: number; name: string; code: string }[]>([]);
 
-  // Computed signal for non-SME roles (excludes SME roles for use in Add Team Member dialog)
+  // Computed signal for non-SME roles (excludes SME roles and Opportunity Manager for use in Add Team Member dialog)
+  // Opportunity Manager is excluded because it has a dedicated field
   readonly nonSmeRoles = computed(() => {
-    return this.entityRoles().filter((role) => role.type !== 'SME');
+    return this.entityRoles().filter((role) => {
+      // Exclude SME roles
+      if (role.type === 'SME') return false;
+      // Exclude Opportunity Manager (has dedicated field) - case insensitive check
+      const roleName = (role.name || '').toLowerCase();
+      const roleCode = (role.code || '').toLowerCase();
+      if (roleName === 'opportunity manager' || roleCode === 'opportunity_manager_opportunity') return false;
+      return true;
+    });
   });
 
   // Computed user-added stakeholders (non-auto-populated)
@@ -211,13 +220,21 @@ export class OpportunityTeamSectionComponent implements OnInit {
 
   // Combined stakeholders: user-added only (auto-populated are shown in separate "Role Holders" section)
   // Normally responsible org units are shown with org unit badge and cannot be deleted
+  // Excludes Opportunity Manager role (has dedicated field)
   readonly combinedInternalStakeholders = computed(() => {
     const userAdded = this.userAddedStakeholders();
     // NOTE: Don't include autoPopulated here - they're shown in the "Role Holders for Responsible Org Unit" section
     const normalOrgUnitIds = this.normallyResponsibleOrgUnits().map(ou => ou.id);
     
+    // Filter out Opportunity Manager role (has dedicated field) - case insensitive check
+    const filteredUserAdded = userAdded.filter(s => {
+      const roleName = (s.entityRoleName || '').toLowerCase();
+      const roleCode = (s.entityRoleCode || '').toLowerCase();
+      return roleName !== 'opportunity manager' && roleCode !== 'opportunity_manager_opportunity';
+    });
+    
     // Mark stakeholders from normally responsible org units
-    const enrichedStakeholders = userAdded.map(s => {
+    const enrichedStakeholders = filteredUserAdded.map(s => {
       // Check if this stakeholder is from a normally responsible org unit
       const isFromNormalOrgUnit = s.organizationHierarchyId && 
                                    normalOrgUnitIds.includes(s.organizationHierarchyId);
@@ -440,11 +457,12 @@ export class OpportunityTeamSectionComponent implements OnInit {
       }));
   });
 
-  // Computed stakeholder count (user-added + auto-populated)
+  // Computed stakeholder count (user-added + auto-populated, excluding Opportunity Manager)
   readonly stakeholderCount = computed(() => {
-    const userAdded = this.userAddedStakeholders().length;
+    // Use combinedInternalStakeholders which already filters out Opportunity Manager
+    const userAddedFiltered = this.combinedInternalStakeholders().length;
     const autoPopulated = this.autoPopulatedStakeholders().length;
-    return userAdded + autoPopulated;
+    return userAddedFiltered + autoPopulated;
   });
 
   // Opportunity Development Team computed signals

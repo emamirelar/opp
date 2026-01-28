@@ -412,9 +412,6 @@
         <!-- Proposed Initiative Type (moved to Opportunity Development Team) -->
         <!-- ============================================ -->
         <div class="mt-4 pt-4 border-t border-unops-neutral-300">
-          <h4 class="text-sm font-semibold text-unops-neutral-700 mb-2">
-            {{ 'label.opportunity.initiativeType' | translate }} <span class="text-unops-error">*</span>
-          </h4>
           @if (isEditing()) {
             <p-floatlabel variant="on">
               <p-select
@@ -429,6 +426,7 @@
                 class="w-full"
                 [showClear]="true"
               />
+              <label for="initiativeType">{{ 'label.opportunity.initiativeType' | translate }} *</label>
             </p-floatlabel>
           } @else {
             <h4 class="text-sm font-semibold text-unops-neutral-700 mb-2">

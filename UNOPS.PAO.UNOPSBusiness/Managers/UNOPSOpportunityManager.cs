@@ -4113,6 +4113,78 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 $", Org Strategy: {c.OrgUnitStrategyAlignment}"))
             : "No countries";
 
+        // ==========================================
+        // NORMALLY RESPONSIBLE ORG UNITS ANALYSIS
+        // Gets org units that are normally responsible for implementation countries
+        // These may differ from the selected responsible org unit
+        // ==========================================
+        var normallyResponsibleOrgUnitsInfo = new List<(int OrgUnitId, string OrgUnitName, string OrgUnitCode, string CountryName)>();
+        var selectedOrgUnitId = opportunity.ResponsibleOrgUnitId ?? 0;
+        
+        if (countries != null && countries.Any())
+        {
+            // Get org unit relationships for all implementation countries
+            var countryIds = countries.Select(c => c.CountryId).ToList();
+            
+            var countryOrgUnitRelationships = await context.OrganizationUnitRelationships
+                .AsNoTracking()
+                .Where(r => 
+                    r.EntityType == "Country" 
+                    && countryIds.Contains(r.EntityId)
+                    && !r.IsDeleted)
+                .Include(r => r.OrganizationHierarchy)
+                .ToListAsync();
+            
+            // Get the org unit (Type = OrgUnit, level 3) for each country
+            var countryToOrgUnitMap = countryOrgUnitRelationships
+                .Where(r => r.OrganizationHierarchy != null 
+                         && r.OrganizationHierarchy.Type == Domain.Enums.OrganizationUnitType.OrgUnit)
+                .ToDictionary(r => r.EntityId, r => r.OrganizationHierarchy!);
+            
+            foreach (var country in countries)
+            {
+                if (countryToOrgUnitMap.TryGetValue(country.CountryId, out var orgUnit))
+                {
+                    normallyResponsibleOrgUnitsInfo.Add((
+                        OrgUnitId: orgUnit.Id,
+                        OrgUnitName: orgUnit.Name,
+                        OrgUnitCode: orgUnit.Code,
+                        CountryName: country.Country?.Name ?? "Unknown"
+                    ));
+                }
+            }
+        }
+        
+        // Determine if there's a mismatch between selected org unit and normally responsible org units
+        var normallyResponsibleOrgUnitIds = normallyResponsibleOrgUnitsInfo
+            .Select(n => n.OrgUnitId)
+            .Distinct()
+            .ToList();
+        
+        var hasOrgUnitMismatch = selectedOrgUnitId > 0 && 
+                                 normallyResponsibleOrgUnitIds.Any() && 
+                                 normallyResponsibleOrgUnitIds.Any(id => id != selectedOrgUnitId);
+        
+        // Countries where selected org unit is NOT normally responsible
+        var countriesWithDifferentOrgUnit = normallyResponsibleOrgUnitsInfo
+            .Where(n => n.OrgUnitId != selectedOrgUnitId)
+            .Select(n => $"{n.CountryName} (normally: {n.OrgUnitName})")
+            .Distinct()
+            .ToList();
+        
+        // Countries where selected org unit IS normally responsible
+        var countriesWithMatchingOrgUnit = normallyResponsibleOrgUnitsInfo
+            .Where(n => n.OrgUnitId == selectedOrgUnitId)
+            .Select(n => n.CountryName)
+            .Distinct()
+            .ToList();
+        
+        var normallyResponsibleOrgUnitsText = normallyResponsibleOrgUnitsInfo.Any()
+            ? string.Join("\n", normallyResponsibleOrgUnitsInfo
+                .GroupBy(n => new { n.OrgUnitId, n.OrgUnitName, n.OrgUnitCode })
+                .Select(g => $"- {g.Key.OrgUnitName} ({g.Key.OrgUnitCode}): {string.Join(", ", g.Select(n => n.CountryName))}"))
+            : "No normally responsible org units identified";
+
         // Format SDGs with targets and indicators
         var sdgsDetails = opportunity.SDGs?
             .Select(s => new
@@ -4363,7 +4435,21 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             ["hasSubmissionDeadline"] = opportunity.SubmissionDeadline.HasValue ? "Yes" : "No",
             ["daysUntilSubmissionDeadline"] = opportunity.SubmissionDeadline.HasValue
                 ? ((int)(opportunity.SubmissionDeadline.Value.Date - DateTime.UtcNow.Date).TotalDays).ToString()
-                : "N/A"
+                : "N/A",
+            
+            // ==========================================
+            // NORMALLY RESPONSIBLE ORG UNITS ANALYSIS
+            // Helps AI understand org unit configuration for implementation countries
+            // ==========================================
+            ["normallyResponsibleOrgUnits"] = normallyResponsibleOrgUnitsText,
+            ["normallyResponsibleOrgUnitsCount"] = normallyResponsibleOrgUnitIds.Count.ToString(),
+            ["hasOrgUnitMismatch"] = hasOrgUnitMismatch ? "Yes" : "No",
+            ["countriesWithDifferentOrgUnit"] = countriesWithDifferentOrgUnit.Any() 
+                ? string.Join(", ", countriesWithDifferentOrgUnit) 
+                : "None - selected org unit is normally responsible for all countries",
+            ["countriesWithMatchingOrgUnit"] = countriesWithMatchingOrgUnit.Any()
+                ? string.Join(", ", countriesWithMatchingOrgUnit)
+                : "None"
         };
     }
 
