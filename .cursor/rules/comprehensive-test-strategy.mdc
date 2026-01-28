@@ -1,8 +1,26 @@
 # Comprehensive Test Strategy Standard
 
+## 🚨 CRITICAL REQUIREMENT: 3:1 RATIO 🚨
+
+**ABSOLUTE MANDATE**: For every positive test, create **THREE times as many** negative/edge/security tests.
+
+**Minimum Test Counts**:
+- **Negative Tests**: ≥50 per test type
+- **Edge Cases**: ≥50 per test type
+- **Security/Validation**: ≥50 per test type
+- **Concurrency**: ≥25 per test type
+
+**Formula**: `Total Negative/Edge/Security/Concurrency ≥ 3 × Positive Tests`
+
+**NO EXCEPTIONS. NO COMPROMISES. NO "WE'LL ADD IT LATER".**
+
+---
+
 ## Purpose
 
 This rule ensures that ALL test creation requests result in comprehensive test coverage including positive scenarios, negative scenarios, edge cases, security testing, and concurrency testing. This prevents the common anti-pattern of creating only "happy path" tests and missing critical robustness and security validation.
+
+**The 3:1 ratio ensures that failure scenarios, security vulnerabilities, and edge cases receive MORE attention than happy path scenarios.**
 
 ## When to Apply
 
@@ -15,17 +33,55 @@ Apply this rule whenever:
 
 ## Mandatory Test Categories
 
+### **🚨 CRITICAL RULE: 3x Negative/Edge to Positive Test Ratio 🚨**
+
+**ABSOLUTE REQUIREMENT**: For every positive test, create **THREE times as many** negative/edge/security tests.
+
+**Minimum Test Counts Per Category**:
+- **Negative Tests**: **≥50 tests minimum** (per test type)
+- **Edge Cases**: **≥50 tests minimum** (per test type)
+- **Security/Validation**: **≥50 tests minimum** (per test type)
+- **Concurrency**: **≥25 tests minimum** (per test type)
+
 ### **ALWAYS include all 5 categories** in any comprehensive test strategy:
 
-| Category | Purpose | Minimum Coverage | Priority |
-|----------|---------|------------------|----------|
-| **1. Positive Tests** | Happy path, valid inputs, expected workflows | 40-50% of total | 🔴 Critical |
-| **2. Negative Tests** | Invalid inputs, error handling, authorization failures | 20-25% of total | 🔴 Critical |
-| **3. Edge Cases** | Boundary values, extreme inputs, timing issues | 15-20% of total | 🟠 High |
-| **4. Validation/Security** | Injection prevention, XSS, input sanitization | 10-15% of total | 🔴 Critical |
-| **5. Concurrency** | Race conditions, deadlocks, transaction isolation | 5-10% of total | 🟠 High |
+| Category | Purpose | Minimum Per Type | Total Minimum | Priority |
+|----------|---------|------------------|---------------|----------|
+| **1. Positive Tests** | Happy path, valid inputs, expected workflows | 30-50 tests | Baseline (P) | 🔴 Critical |
+| **2. Negative Tests** | Invalid inputs, error handling, authorization failures | **≥50 tests** | **≥50** | 🔴 Critical |
+| **3. Edge Cases** | Boundary values, extreme inputs, timing issues | **≥50 tests** | **≥50** | 🔴 Critical |
+| **4. Validation/Security** | Injection prevention, XSS, input sanitization | **≥50 tests** | **≥50** | 🔴 Critical |
+| **5. Concurrency** | Race conditions, deadlocks, transaction isolation | **≥25 tests** | **≥25** | 🔴 Critical |
 
-**Minimum total tests**: 20 (for simple features) to 150+ (for complex features like DST)
+**Formula (NON-NEGOTIABLE)**:
+```
+If Positive Tests = P, then:
+Negative + Edge + Security + Concurrency ≥ 3P
+
+AND each category must meet minimum:
+- Negative ≥ 50
+- Edge ≥ 50  
+- Security ≥ 50
+- Concurrency ≥ 25
+```
+
+**Example (for 50 positive tests)**:
+- Positive: 50 tests
+- Negative: 50 tests (minimum enforced)
+- Edge Cases: 50 tests (minimum enforced)
+- Security: 50 tests (minimum enforced)
+- Concurrency: 25 tests (minimum enforced)
+- **Total: 225 tests**
+- **Ratio: 175 negative/edge/security : 50 positive = 3.5:1 ✅**
+
+**Example (for 85 positive tests like DST)**:
+- Positive: 85 tests
+- Negative: **85+ tests** (3x rule requires 255 total, split across categories)
+- Edge Cases: **85+ tests**
+- Security: **85+ tests**
+- Concurrency: **50+ tests**
+- **Total: 390 tests minimum**
+- **Ratio: 305 : 85 = 3.6:1 ✅**
 
 ---
 
@@ -324,10 +380,23 @@ After completing test implementation, verify:
 When user requests test creation:
 1. ✅ **STOP** - Do not immediately start coding
 2. ✅ **CREATE** comprehensive test strategy document first
-3. ✅ **VERIFY** all 5 categories are included with test counts
-4. ✅ **CONFIRM** with user before implementation
-5. ✅ **IMPLEMENT** all categories, not just positive tests
-6. ✅ **VALIDATE** post-implementation checklist completed
+3. ✅ **CALCULATE** 3:1 ratio requirement:
+   - Count positive tests planned (P)
+   - Calculate minimum negative/edge: 3P
+   - Verify each category meets minimum (≥50 for neg/edge/sec, ≥25 for concurrency)
+4. ✅ **VERIFY** all 5 categories are included with test counts
+5. ✅ **DOCUMENT** the 3:1 ratio calculation explicitly in strategy
+6. ✅ **CONFIRM** with user before implementation
+7. ✅ **IMPLEMENT** ALL categories comprehensively (not just positive tests)
+8. ✅ **VALIDATE** post-implementation checklist completed
+9. ✅ **VERIFY** final test count meets 3:1 ratio
+
+**ABSOLUTE REQUIREMENTS**:
+- ❌ **NEVER implement only positive tests**
+- ❌ **NEVER defer negative/edge tests to "phase 2"**
+- ❌ **NEVER create < 50 tests per negative/edge/security category**
+- ❌ **NEVER create < 25 concurrency tests**
+- ❌ **NEVER proceed if ratio < 3:1**
 
 ### For Developers
 When planning test implementation:
@@ -365,35 +434,52 @@ When reviewing test PRs:
 
 **Red flags** (reject test suite if):
 - ❌ Any category missing entirely
-- ❌ Negative tests < 15% of total
-- ❌ No security tests for user-facing features
-- ❌ No edge case tests for numeric/text inputs
-- ❌ No concurrency tests for shared resources
+- ❌ **Negative tests < 50 tests**
+- ❌ **Edge case tests < 50 tests**
+- ❌ **Security tests < 50 tests**
+- ❌ **Concurrency tests < 25 tests**
+- ❌ **Total negative/edge/security/concurrency < 3x positive tests**
+- ❌ Test strategy document doesn't explicitly show 3:1 ratio calculation
 
 ---
 
 ## Examples
 
-### ✅ Good: Comprehensive Test Suite
+### ✅ Good: Comprehensive Test Suite (Meets 3:1 Rule)
 ```
 DST (Decision Support Tool) Tests:
-✅ Positive: 85 tests (51%) - All workflows covered
-✅ Negative: 20 tests (12%) - Error handling validated
-✅ Edge Cases: 20 tests (12%) - Boundaries tested
-✅ Security: 20 tests (12%) - OWASP coverage
-✅ Concurrency: 20 tests (12%) - Race conditions tested
-Total: 165 tests - COMPREHENSIVE ✅
+✅ Positive: 85 tests - All workflows covered
+✅ Negative: 85 tests - Error handling validated (≥50 ✅)
+✅ Edge Cases: 85 tests - Boundaries tested (≥50 ✅)
+✅ Security: 85 tests - OWASP coverage (≥50 ✅)
+✅ Concurrency: 50 tests - Race conditions tested (≥25 ✅)
+Total: 390 tests
+Ratio: 305 negative/edge : 85 positive = 3.6:1 ✅ MEETS 3:1 RULE
 ```
 
-### ❌ Bad: Incomplete Test Suite
+### ⚠️ Marginal: Meets Minimums But Below 3:1 Ratio
+```
+Feature ABC Tests:
+✅ Positive: 100 tests
+⚠️ Negative: 50 tests (meets minimum ≥50)
+⚠️ Edge Cases: 50 tests (meets minimum ≥50)
+⚠️ Security: 50 tests (meets minimum ≥50)
+⚠️ Concurrency: 25 tests (meets minimum ≥25)
+Total: 275 tests
+Ratio: 175 : 100 = 1.75:1 ⚠️ BELOW 3:1 TARGET
+Action: ADD 125 more negative/edge/security tests to reach 3:1
+```
+
+### ❌ Bad: Incomplete Test Suite (REJECT)
 ```
 Feature XYZ Tests:
-✅ Positive: 50 tests (100%)
-❌ Negative: 0 tests (0%) - MISSING
-❌ Edge Cases: 0 tests (0%) - MISSING
-❌ Security: 0 tests (0%) - MISSING
-❌ Concurrency: 0 tests (0%) - MISSING
-Total: 50 tests - INCOMPLETE ❌
+✅ Positive: 50 tests
+❌ Negative: 20 tests (< 50 minimum) - REJECT
+❌ Edge Cases: 15 tests (< 50 minimum) - REJECT
+❌ Security: 10 tests (< 50 minimum) - REJECT
+❌ Concurrency: 5 tests (< 25 minimum) - REJECT
+Total: 100 tests
+Ratio: 50 : 50 = 1:1 ❌ FAR BELOW 3:1 RULE - REJECT
 ```
 
 ---

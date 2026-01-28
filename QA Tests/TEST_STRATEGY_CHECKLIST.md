@@ -4,18 +4,43 @@
 
 ---
 
+## 🚨 CRITICAL: 3:1 RATIO REQUIREMENT 🚨
+
+**ABSOLUTE MANDATE**: Create **THREE times as many** negative/edge/security tests as positive tests.
+
+**Minimum Per Category**:
+- Negative: ≥50 tests
+- Edge Cases: ≥50 tests
+- Security: ≥50 tests
+- Concurrency: ≥25 tests
+
+**Formula**: `Negative + Edge + Security + Concurrency ≥ 3 × Positive`
+
+**REJECT any test strategy that doesn't meet this requirement.**
+
+---
+
 ## ✅ Comprehensive Test Strategy Checklist
 
 ### Before Implementation
 
 - [ ] **Test strategy document created** (not just diving into code)
+- [ ] **3:1 ratio calculated and documented explicitly**:
+  - [ ] Positive tests counted: P = ___
+  - [ ] Minimum negative/edge/security: 3P = ___
+  - [ ] Each category meets minimum (≥50 for neg/edge/sec, ≥25 for concurrency)
 - [ ] **All 5 categories included** in strategy:
-  - [ ] 1. Positive Tests (40-50% of total)
-  - [ ] 2. Negative Tests (20-25% of total)
-  - [ ] 3. Edge Cases (15-20% of total)
-  - [ ] 4. Security/Validation (10-15% of total)
-  - [ ] 5. Concurrency (5-10% of total)
-- [ ] **Test count targets** defined for each category
+  - [ ] 1. Positive Tests (baseline)
+  - [ ] 2. Negative Tests (≥50, ≥P for 3:1 ratio)
+  - [ ] 3. Edge Cases (≥50, ≥P for 3:1 ratio)
+  - [ ] 4. Security/Validation (≥50, ≥P for 3:1 ratio)
+  - [ ] 5. Concurrency (≥25)
+- [ ] **Test count targets** meet ALL minimums:
+  - [ ] Negative ≥ 50 ✅
+  - [ ] Edge ≥ 50 ✅
+  - [ ] Security ≥ 50 ✅
+  - [ ] Concurrency ≥ 25 ✅
+  - [ ] Total negative/edge ≥ 3 × positive ✅
 - [ ] **Test IDs** follow consistent naming (TC-[FEATURE]-[TYPE]-###)
 - [ ] **Priority** assigned (Critical/High/Medium)
 - [ ] **OWASP coverage** planned (if user-facing or data-handling)
@@ -96,10 +121,12 @@
 ## Red Flags (DO NOT PROCEED if any apply)
 
 - ❌ Any of the 5 categories missing entirely
-- ❌ Negative tests < 15% of total
-- ❌ No security tests for user-facing features
-- ❌ No edge cases for numeric/text inputs
-- ❌ No concurrency tests for shared resources
+- ❌ **Negative tests < 50 tests**
+- ❌ **Edge case tests < 50 tests**
+- ❌ **Security tests < 50 tests**
+- ❌ **Concurrency tests < 25 tests**
+- ❌ **Total negative/edge/security/concurrency < 3 × positive tests**
+- ❌ 3:1 ratio not calculated or documented in strategy
 - ❌ Test strategy skipped (went straight to coding)
 - ❌ Only positive/happy path tests created
 
@@ -122,41 +149,72 @@ If feature handles user input or database operations:
 
 ## Quick Test Distribution Formula
 
-**For 100 tests total:**
-- Positive: ~45 tests
-- Negative: ~22 tests
-- Edge Cases: ~18 tests
-- Security: ~12 tests
-- Concurrency: ~3 tests
+**For 50 positive tests (minimum viable):**
+- Positive: 50 tests (baseline)
+- Negative: 50 tests (minimum ≥50)
+- Edge Cases: 50 tests (minimum ≥50)
+- Security: 50 tests (minimum ≥50)
+- Concurrency: 25 tests (minimum ≥25)
+- **Total: 225 tests**
+- **Ratio: 175:50 = 3.5:1 ✅ MEETS 3:1 RULE**
 
-**Scale up/down proportionally based on feature complexity**
+**For 85 positive tests (like DST):**
+- Positive: 85 tests (baseline)
+- Negative: 85 tests (3:1 rule + minimum)
+- Edge Cases: 85 tests (3:1 rule + minimum)
+- Security: 85 tests (3:1 rule + minimum)
+- Concurrency: 50 tests (2x minimum for larger features)
+- **Total: 390 tests**
+- **Ratio: 305:85 = 3.6:1 ✅ EXCEEDS 3:1 RULE**
 
 ---
 
-## Example: DST Feature
+## Example: DST Feature Evolution
 
-**Initial (Incomplete) ❌**:
-- Positive: 85 tests (100%)
-- Negative: 0 tests
-- Edge: 0 tests
-- Security: 0 tests
-- Concurrency: 0 tests
-- **Total: 85 tests - MISSING 4 CATEGORIES**
+**Phase 1 (Incomplete) ❌ REJECT**:
+- Positive: 85 tests
+- Negative: 0 tests (< 50 minimum) ❌
+- Edge: 0 tests (< 50 minimum) ❌
+- Security: 0 tests (< 50 minimum) ❌
+- Concurrency: 0 tests (< 25 minimum) ❌
+- **Total: 85 tests**
+- **Ratio: 0:85 = 0:1 ❌ FAR BELOW 3:1 RULE - REJECT**
 
-**Final (Complete) ✅**:
-- Positive: 85 tests (51%)
-- Negative: 20 tests (12%)
-- Edge: 20 tests (12%)
-- Security: 20 tests (12%)
-- Concurrency: 20 tests (12%)
-- **Total: 165 tests - ALL CATEGORIES COVERED**
+**Phase 2 (Marginal) ⚠️ BELOW TARGET**:
+- Positive: 85 tests
+- Negative: 20 tests (< 50 minimum) ⚠️
+- Edge: 20 tests (< 50 minimum) ⚠️
+- Security: 20 tests (< 50 minimum) ⚠️
+- Concurrency: 20 tests (< 25 minimum) ⚠️
+- **Total: 165 tests**
+- **Ratio: 80:85 = 0.94:1 ⚠️ FAR BELOW 3:1 RULE**
+- **Action Required: Add 175 more tests to reach 3:1**
+
+**Phase 3 (Compliant) ✅ MEETS REQUIREMENTS**:
+- Positive: 85 tests
+- Negative: 85 tests (≥50 ✅, meets 3:1 ✅)
+- Edge: 85 tests (≥50 ✅, meets 3:1 ✅)
+- Security: 85 tests (≥50 ✅, meets 3:1 ✅)
+- Concurrency: 50 tests (≥25 ✅)
+- **Total: 390 tests**
+- **Ratio: 305:85 = 3.6:1 ✅ EXCEEDS 3:1 RULE**
 
 ---
 
 ## Remember
 
-**Comprehensive testing is MANDATORY, not optional.**
+**🚨 THE 3:1 RULE IS NON-NEGOTIABLE 🚨**
 
-**All 5 categories. Every feature. No exceptions.**
+**For every positive test, create THREE times as many negative/edge/security tests.**
 
-**If you're only writing positive tests, you're only 50% done.**
+**Minimum per category:**
+- Negative: ≥50 tests
+- Edge Cases: ≥50 tests
+- Security: ≥50 tests
+- Concurrency: ≥25 tests
+
+**All 5 categories. Every feature. No exceptions. No compromises.**
+
+**If you're only writing positive tests, you're less than 25% done.**
+
+**Formula: Total Negative/Edge/Security/Concurrency ≥ 3 × Positive Tests**
