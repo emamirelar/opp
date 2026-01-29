@@ -344,7 +344,7 @@ namespace UNOPS.PAO.Tests.Integration.Controllers
         public async Task BulkCreatePartners_LargeBatch_HandlesGracefully()
         {
             // Arrange
-            var largeB = Enumerable.Range(1, 1000).Select(i => new { 
+            var largeBatch = Enumerable.Range(1, 1000).Select(i => new { 
                 Name = $"Partner {i}",
                 Status = "Active"
             }).ToArray();

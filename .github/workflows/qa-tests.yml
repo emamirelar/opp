@@ -79,12 +79,31 @@ jobs:
           echo "ERROR: TestResults directory does not exist at $testResultsDir"
         }
     
+    - name: Check if Test Results Exist
+      id: check-test-results
+      if: steps.check-fast-tests.outputs.exists == 'true' && always()
+      run: |
+        $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
+        if (Test-Path $testResultsDir) {
+          $trxCount = (Get-ChildItem -Path $testResultsDir -Filter "*.trx" -Recurse -ErrorAction SilentlyContinue).Count
+          if ($trxCount -gt 0) {
+            echo "has-results=true" >> $env:GITHUB_OUTPUT
+            echo "✅ Found $trxCount .trx file(s) to publish"
+          } else {
+            echo "has-results=false" >> $env:GITHUB_OUTPUT
+            echo "⚠️ No .trx files found - tests may not have run"
+          }
+        } else {
+          echo "has-results=false" >> $env:GITHUB_OUTPUT
+          echo "⚠️ TestResults directory does not exist - tests did not run"
+        }
+    
     - name: Publish Test Results
       uses: dorny/test-reporter@v1
-      if: steps.check-fast-tests.outputs.exists == 'true' && always()
+      if: steps.check-test-results.outputs.has-results == 'true'
       with:
         name: FastTests Results
-        path: '**/TestResults/**/*.trx'
+        path: 'TestResults/**/*.trx'
         reporter: dotnet-trx
         fail-on-error: false
 
@@ -180,12 +199,31 @@ jobs:
           echo "ERROR: TestResults directory does not exist at $testResultsDir"
         }
     
+    - name: Check if Test Results Exist
+      id: check-test-results
+      if: steps.check-business-tests.outputs.exists == 'true' && always()
+      run: |
+        $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
+        if (Test-Path $testResultsDir) {
+          $trxCount = (Get-ChildItem -Path $testResultsDir -Filter "*.trx" -Recurse -ErrorAction SilentlyContinue).Count
+          if ($trxCount -gt 0) {
+            echo "has-results=true" >> $env:GITHUB_OUTPUT
+            echo "✅ Found $trxCount .trx file(s) to publish"
+          } else {
+            echo "has-results=false" >> $env:GITHUB_OUTPUT
+            echo "⚠️ No .trx files found - tests may not have run"
+          }
+        } else {
+          echo "has-results=false" >> $env:GITHUB_OUTPUT
+          echo "⚠️ TestResults directory does not exist - tests did not run"
+        }
+    
     - name: Publish Test Results
       uses: dorny/test-reporter@v1
-      if: steps.check-business-tests.outputs.exists == 'true' && always()
+      if: steps.check-test-results.outputs.has-results == 'true'
       with:
         name: Business Tests Results
-        path: '**/TestResults/**/*.trx'
+        path: 'TestResults/**/*.trx'
         reporter: dotnet-trx
         fail-on-error: false
 

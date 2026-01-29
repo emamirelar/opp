@@ -218,23 +218,290 @@ Two independent test runs with different test data (hardcoded ID=1 vs. dynamic T
 
 ---
 
+## Developer Recommendations
+
+### 🎯 Priority Recommendations (Based on ROI)
+
+**Immediate Action (This Sprint):**
+
+1. **DEF-005 Phase 2 (URGENT)** - Create 9 Manager Classes
+   - **Effort:** 4-6 hours
+   - **Impact:** Unlocks 1,800 tests (300:1 ROI) 🚀
+   - **Benefit:** Enables entire test marathon suite compilation
+   - **Action:** Create stub managers in `UNOPS.PAO.Business/Managers/`
+   - **Owner:** Senior developer (requires architectural knowledge)
+
+2. **DEF-001** - Fix Route Permission Guard
+   - **Effort:** 2-4 hours  
+   - **Impact:** Unlocks 29 Playwright tests (+4% coverage)
+   - **Benefit:** Achieves 100% Phase 1A pass rate, validates test infrastructure
+   - **Action:** Review and fix `routePermissionGuard` logic
+   - **Owner:** Frontend developer with security experience
+
+3. **DEF-004** - Fix AdvancedSearchService for Tests
+   - **Effort:** 4-6 hours (Option A: PostgreSQL test DB)
+   - **Impact:** Unlocks 53 Partner integration tests (+3.8% pass rate)
+   - **Benefit:** Validates advanced search functionality
+   - **Action:** Set up PostgreSQL test database OR create mock service
+   - **Owner:** Backend developer with EF Core experience
+
+**Near-Term (Next Sprint):**
+
+4. **DEF-002 + DEF-003** - Add data-testid Attributes
+   - **Effort:** 12-22 hours (12 components)
+   - **Impact:** Unlocks 100-180 Phase 1B tests
+   - **Benefit:** Enables comprehensive E2E testing
+   - **Action:** Follow `DATA_TESTID_GUIDE.md` systematically
+   - **Owner:** Frontend team (can be parallelized)
+
+### 🛡️ Prevention Strategies
+
+**To Prevent Similar Defects in Future:**
+
+1. **Testability-First Development**
+   - ✅ Add `data-testid` attributes when creating new components (not after)
+   - ✅ Follow naming convention: `{entity}-{element}-{type}` (e.g., `partner-name-input`)
+   - ✅ Include in Definition of Done: "Component has test IDs"
+   - ✅ Code review checklist: "Are test IDs present?"
+
+2. **Guard Testing Standards**
+   - ✅ Create unit tests for all route guards BEFORE deployment
+   - ✅ Test guards with different permission scenarios (authorized, unauthorized, partial)
+   - ✅ Mock permission service responses in guard tests
+   - ✅ Include integration tests for guarded routes
+
+3. **Model-First API Development**
+   - ✅ Create DTOs/Models BEFORE writing tests or business logic
+   - ✅ Use OpenAPI/Swagger to define API contracts first
+   - ✅ Generate models from OpenAPI spec when possible
+   - ✅ Validate models compile before writing dependent code
+
+4. **Test Infrastructure Decisions**
+   - ✅ Choose test database strategy early (in-memory vs. real DB)
+   - ✅ Document limitations of in-memory databases (no raw SQL)
+   - ✅ Use conditional compilation for test-specific code sparingly
+   - ✅ Prefer mocks/stubs over test-only conditional logic in production code
+
+### 🏗️ Architectural Patterns to Adopt
+
+**Based on Defect Analysis:**
+
+1. **Separation of Test and Production Data Access**
+   ```csharp
+   // ✅ GOOD: Abstract data access behind repository
+   public interface IAdvancedSearchService
+   {
+       Task<SearchResult> SearchAsync(SearchCriteria criteria);
+   }
+   
+   // Production: Uses raw SQL with PostgreSQL
+   public class PostgresAdvancedSearchService : IAdvancedSearchService { }
+   
+   // Test: Uses LINQ-only queries
+   public class InMemoryAdvancedSearchService : IAdvancedSearchService { }
+   ```
+
+2. **Guard Pattern with Explicit Permission Checks**
+   ```typescript
+   // ✅ GOOD: Guards log permission checks for debugging
+   export const routePermissionGuard: CanActivateFn = async (route, state) => {
+     const permissionService = inject(PermissionService);
+     const logger = inject(Logger);
+     
+     const hasPermission = await permissionService.checkRouteAccess(route);
+     
+     if (!hasPermission) {
+       logger.warn('Route access denied', { route: route.path, user: currentUser });
+     }
+     
+     return hasPermission;
+   };
+   ```
+
+3. **Component Design for Testability**
+   ```html
+   <!-- ✅ GOOD: Test IDs included from day 1 -->
+   <p-floatlabel variant="on">
+     <input
+       id="partner-name"
+       data-testid="partner-name-input"
+       formControlName="name"
+       pInputText
+     />
+     <label for="partner-name">{{ 'title.partnerName' | translate }}</label>
+   </p-floatlabel>
+   ```
+
+4. **Phased Implementation with Test Stubs**
+   ```csharp
+   // ✅ GOOD: Stub implementation allows tests to compile
+   public class ContactAnalyticsManager
+   {
+       // Phase 1: Stub returns default data
+       public async Task<ContactAnalyticsModel> GetAnalyticsAsync(int contactId)
+       {
+           // TODO: Implement actual analytics logic (DEF-005 Phase 3)
+           return new ContactAnalyticsModel { ContactId = contactId };
+       }
+   }
+   // Tests can run and fail gracefully, guiding implementation
+   ```
+
+### 🧪 Testing Best Practices
+
+**Validation Checklist for Defect Fixes:**
+
+1. **DEF-001 (Route Guard) Validation:**
+   - [ ] Run all 29 blocked Playwright tests
+   - [ ] Verify 100% pass rate (105/105 tests passing)
+   - [ ] Test with different user roles (admin, standard user, viewer)
+   - [ ] Verify navigation works for all protected routes
+   - [ ] Check browser console for permission-related errors
+   - [ ] Test with API mocks AND real backend
+
+2. **DEF-004 (AdvancedSearch) Validation:**
+   - [ ] Run all 53 Partner integration tests
+   - [ ] Verify HTTP 200 responses (no 500 errors)
+   - [ ] Check search results are correct (not just empty)
+   - [ ] Test similarity search with typos
+   - [ ] Verify pagination works
+   - [ ] Test GetAll with filters and sorting
+   - [ ] Check logs for exceptions or warnings
+
+3. **DEF-005 (Models/Managers) Validation:**
+   - [ ] Run `dotnet build` on integration test project - must compile
+   - [ ] Run full test suite to identify missing methods
+   - [ ] Implement methods one by one based on test failures
+   - [ ] Target 90%+ pass rate after Phase 3 implementation
+   - [ ] Verify managers registered in ManagerWrapper
+   - [ ] Check API endpoints return data (not just 404)
+
+4. **DEF-002/003 (Test IDs) Validation:**
+   - [ ] Search each component for `data-testid` attributes
+   - [ ] Verify naming convention followed: `{entity}-{element}-{type}`
+   - [ ] Write sample Playwright test using new attributes
+   - [ ] Verify attributes accessible in browser DevTools
+   - [ ] Check attributes don't break existing styling
+   - [ ] Run Phase 1B tests to confirm attributes work
+
+### 📊 Metrics to Track
+
+**After Fixing Each Defect:**
+
+| Defect | Metric to Track | Target | Current |
+|--------|----------------|--------|---------|
+| DEF-001 | Phase 1A pass rate | 100% | 72.4% |
+| DEF-002/003 | Phase 1B tests created | 90-140 | 0 (blocked) |
+| DEF-004 | Partner test pass rate | 95%+ | 0% (crash) |
+| DEF-005 | Marathon test compilation | 100% | 53% |
+| DEF-005 | Marathon test pass rate | 90%+ | N/A (won't compile) |
+
+**Project Health Indicators:**
+
+- **Test Pass Rate:** Target 95%+ after all critical defects fixed
+- **UI Coverage:** Target 75% after Phase 1B complete
+- **Defect Resolution Time:** Target <1 week for critical defects
+- **Test Creation Velocity:** Target 50-100 tests/week after blockers removed
+
+### 🔄 Process Improvements
+
+**Recommended Changes to Development Workflow:**
+
+1. **Definition of Done Enhancement:**
+   - [ ] Component has `data-testid` attributes for all interactive elements
+   - [ ] Route guards have unit tests covering auth scenarios
+   - [ ] New models added to both Domain and Models projects
+   - [ ] New managers registered in ManagerWrapper
+
+2. **Code Review Checklist Addition:**
+   - [ ] Are test IDs present and following naming convention?
+   - [ ] Do route guards have corresponding tests?
+   - [ ] Are new models/DTOs documented in README?
+   - [ ] Does AdvancedSearchService use LINQ (not raw SQL) for testability?
+
+3. **CI/CD Pipeline Enhancements:**
+   - [ ] Run Playwright tests in CI (currently manual)
+   - [ ] Run integration tests with both in-memory and real DB
+   - [ ] Block PRs if test pass rate drops below 90%
+   - [ ] Generate test coverage reports automatically
+
+4. **Documentation Standards:**
+   - [ ] Update `DATA_TESTID_GUIDE.md` when adding new patterns
+   - [ ] Document guard logic in route configuration comments
+   - [ ] Maintain model inventory in project README
+   - [ ] Create architecture decision records (ADRs) for test infrastructure choices
+
+### 💡 Quick Wins
+
+**Low-Effort, High-Impact Actions:**
+
+1. **Print and Post the DATA_TESTID_CHECKLIST.md** (5 minutes)
+   - Put on wall near developer desks
+   - Reference during code reviews
+   - Use as onboarding material
+
+2. **Create Guard Test Template** (30 minutes)
+   - Example test for typical route guard scenarios
+   - Copy-paste for new guards
+   - Include in project templates
+
+3. **Add Model Creation Script** (1 hour)
+   - Script to generate model stub from entity name
+   - Reduces boilerplate
+   - Ensures consistent structure
+
+4. **Set Up PostgreSQL Test Database** (2 hours)
+   - Docker Compose configuration
+   - Seed script for test data
+   - Resolves DEF-004 permanently
+
+### 🚨 Anti-Patterns to Avoid
+
+**Common Mistakes (Based on Current Defects):**
+
+1. ❌ **Adding guards to routes without testing them first** (DEF-001)
+   - Always test guards in isolation before applying to routes
+   - Test with both authorized and unauthorized scenarios
+
+2. ❌ **Writing tests before production code exists** (DEF-005)
+   - Create models/managers as stubs FIRST
+   - Let tests guide implementation (TDD)
+
+3. ❌ **Using raw SQL in services without abstraction** (DEF-004)
+   - Abstract data access behind repository/service interfaces
+   - Use LINQ where possible for testability
+
+4. ❌ **Forgetting to add test attributes to new components** (DEF-002/003)
+   - Add `data-testid` during initial component creation
+   - Include in component scaffolding templates
+
+5. ❌ **Hardcoding test bypasses in production code** (DEF-004)
+   - Use dependency injection to swap implementations
+   - Keep test-specific logic OUT of production code
+
+---
+
 ## How to Use This Document
 
 ### For Developers:
 1. Review open defects during sprint planning
-2. Update **Status** column as work progresses (Open → In Progress → Resolved)
-3. Move resolved defects to "Resolved Defects" section with resolution notes
-4. Reference defect IDs in commits (e.g., "DEF-001: Fixed route permission guard logic")
+2. **Read "Developer Recommendations" section first** - contains priority guidance and prevention strategies
+3. Update **Status** column as work progresses (Open → In Progress → Resolved)
+4. Move resolved defects to "Resolved Defects" section with resolution notes
+5. Reference defect IDs in commits (e.g., "DEF-001: Fixed route permission guard logic")
+6. **Use validation checklists** when fixing defects to ensure complete resolution
 
 ### For QA Team:
 1. Add new defects discovered during testing
 2. Use sequential IDs (DEF-001, DEF-002, etc.)
 3. Include clear reproduction steps and architectural context
-4. Verify resolved defects before closing
+4. Verify resolved defects before closing using validation checklists
 5. Cross-reference with "Defect List for QA.md" for test infrastructure issues
+6. **Provide ROI analysis** for high-impact defects (tests blocked, coverage impact)
 
 ### For Project Managers:
 1. Monitor defect statistics for project health
-2. Prioritize critical and high-priority defects
-3. Track resolution progress
+2. **Use priority recommendations** to allocate developer resources effectively
+3. Track resolution progress against target metrics
 4. Use for sprint velocity and quality metrics
+5. **Monitor ROI metrics** to demonstrate value of fixing blockers
