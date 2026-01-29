@@ -15,6 +15,7 @@ using UNOPS.PAO.UNOPSDomain.Entities;
 using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Models.Users;
 using UNOPS.PAO.Models.Partners;
+using Microsoft.Extensions.Configuration;
 
 [Route("/")]
 [ApiController]
@@ -22,16 +23,36 @@ using UNOPS.PAO.Models.Partners;
 public class ValuesController : BaseController
 {
     private readonly ValuesManager _manager;
+    private readonly IConfiguration _configuration;
     private int currentUserId => _userResolverService.GetCurrentUserId();
 
     public ValuesController(
         ValuesManager manager,
         ILogger<ValuesController> logger,
         IAuthorizationService authorizationService,
-        UserResolverService<int> userResolverService)
+        UserResolverService<int> userResolverService,
+        IConfiguration configuration)
         : base(logger, authorizationService, userResolverService)
     {
         _manager = manager;
+        _configuration = configuration;
+    }
+
+    /// <summary>
+    /// Gets frontend configuration settings
+    /// </summary>
+    [HttpGet(APIDictionary.Config)]
+    public ActionResult GetConfig()
+    {
+        var config = new
+        {
+            oupSettings = new
+            {
+                baseUrl = _configuration["OUPSettings:BaseUrl"]
+            }
+        };
+        
+        return Ok(config);
     }
 
     [HttpGet(APIDictionary.Currency)]

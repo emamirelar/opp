@@ -1,4 +1,4 @@
-﻿namespace UNOPS.PAO.Presentation.Helpers;
+namespace UNOPS.PAO.Presentation.Helpers;
 public class APIDictionary
 {
     public const string APIPrefix = "/api/";
@@ -24,6 +24,7 @@ public class APIDictionary
     public const string SystemAdmin = APIPrefix + "system-admin";
 
     // Values
+    public const string Config = APIPrefix + "values/config";
     public const string Currency = APIPrefix + "values/currency";
     public const string SelectionMethodology = APIPrefix + "values/selection-methodology";
     public const string EligibleEntity = APIPrefix + "values/eligible-entity";

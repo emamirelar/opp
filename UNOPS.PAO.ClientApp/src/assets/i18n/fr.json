@@ -2966,7 +2966,7 @@
   "message.validation.externalStakeholderRequired": "Veuillez sÃ©lectionner un contact Ã  ajouter comme partie prenante externe",
   "message.validation.externalStakeholderAlreadyAdded": "Ce contact a dÃ©jÃ  Ã©tÃ© ajoutÃ© comme partie prenante externe",
   "message.confirmRemoveExternalStakeholder": "ÃŠtes-vous sÃ»r de vouloir retirer cette partie prenante externe ?",
-  "title.addStakeholder": "Ajouter un Membre d'Ã‰quipe",
+  "title.addStakeholder": "Ajouter une Partie Prenante Interne",
   "title.addCollaborator": "Ajouter un Collaborateur",
   "title.editCollaborator": "Modifier le Collaborateur",
   "title.addExternalStakeholder": "Ajouter une Partie Prenante Externe",

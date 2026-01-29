@@ -1512,11 +1512,17 @@ export class OpportunityTeamSectionComponent implements OnInit {
   // ========================================================================
 
   /**
-   * @description Open dialog to add stakeholder
+   * @description Open dialog to add internal stakeholder
+   * Role is auto-set to "Internal Stakeholder" - no role selection needed
    */
   openAddStakeholderDialog(): void {
     this.userControl.setValue(null);
-    this.roleControl.setValue(null);
+    // Auto-set role to "Internal Stakeholder" - find the role from entityRoles
+    const internalStakeholderRole = this.entityRoles().find(
+      role => (role.name || '').toLowerCase() === 'internal stakeholder' || 
+              (role.code || '').toLowerCase().includes('internal_stakeholder')
+    );
+    this.roleControl.setValue(internalStakeholderRole || null);
     this.isEditingStakeholder.set(false);
     this.editingStakeholderIndex.set(-1);
     this.showStakeholderValidationError.set(false);
