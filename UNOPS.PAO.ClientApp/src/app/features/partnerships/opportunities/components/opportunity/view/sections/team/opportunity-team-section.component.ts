@@ -1349,8 +1349,9 @@ export class OpportunityTeamSectionComponent implements OnInit {
       }));
 
     // Get auto-populated stakeholders from the current org unit
+    // Include userId if available (resolved from EntityUserRoles)
     const autoPopulated = this.autoPopulatedStakeholders().map((s) => ({
-      userId: undefined,
+      userId: s.userId ?? undefined,  // Include userId if available from resolved EntityUserRoles
       entityRoleId: s.entityRoleId,
       organizationHierarchyId: s.organizationHierarchyId ?? undefined,
       notes: s.notes,

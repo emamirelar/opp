@@ -63,6 +63,7 @@ source:
           WHEN 'PRE-ENG' THEN 3
           WHEN 'INIT' THEN 3
           ELSE 0 END) AS Status
+      --, E.Opportunity_Id
       , CURRENT_TIMESTAMP() as last_modified
     FROM
       ENG E
@@ -89,6 +90,7 @@ source:
       , E.Engagement_Description
       , E.Engagement_Long_Description
       , E.Base_Engagement_Stage
+      --, E.Opportunity_Id
   
   primary_key_field: "Base_Engagement"
   batch_size: 1000
@@ -194,6 +196,11 @@ destination:
     - source_field: "Engagement_Long_Description"
       destination_field: "EngagementLongDescription"
       data_type: "text"
+      is_required: false
+    
+    - source_field: "Opportunity_Id"
+      destination_field: "OpportunityId"
+      data_type: "integer"
       is_required: false
 
 sync_options:

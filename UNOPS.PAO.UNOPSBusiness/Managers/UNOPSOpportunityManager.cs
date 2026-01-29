@@ -2312,33 +2312,43 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         }
 
         // Get EntityUserRoles for all relevant org units (including normally responsible)
-        // Returns tuples of (OrgUnitId, EntityRoleId)
+        // Returns tuples of (OrgUnitId, EntityRoleId, UserId) - includes UserId for storage
         var entityUserRoles = await context.EntityUserRoles
             .Where(eur => eur.EntityType == "OrganizationHierarchy" 
                        && orgUnitIdsForRoles.Contains(eur.EntityId)
                        && eur.EntityRoleId.HasValue
                        && !eur.IsDeleted)
-            .Select(eur => new { eur.EntityId, EntityRoleId = eur.EntityRoleId!.Value })
-            .Distinct()
+            .Select(eur => new { 
+                OrgUnitId = eur.EntityId, 
+                EntityRoleId = eur.EntityRoleId!.Value,
+                UserId = eur.UserId // Include UserId for proper stakeholder storage
+            })
             .ToListAsync();
 
-        // Create a set of valid (OrgUnitId, RoleId) combinations
+        // Create a set of valid (OrgUnitId, RoleId, UserId) combinations
+        // Use tuple to track all three values
         var validCombinations = entityUserRoles
-            .Select(e => (e.EntityId, e.EntityRoleId))
+            .Select(e => (e.OrgUnitId, e.EntityRoleId, e.UserId))
+            .ToHashSet();
+        
+        // Also track just (OrgUnitId, RoleId) for comparison with existing
+        var validOrgUnitRoleCombinations = entityUserRoles
+            .Select(e => (e.OrgUnitId, e.EntityRoleId))
             .ToHashSet();
 
         // Find auto-populated stakeholders to remove:
-        // - Those not in the valid combinations
+        // - Those not in the valid combinations (by OrgUnit + Role)
         var autoPopulatedToRemove = existingAutoPopulated
             .Where(existing => 
                 !existing.OrganizationHierarchyId.HasValue ||
-                !validCombinations.Contains((existing.OrganizationHierarchyId.Value, existing.EntityRoleId)))
+                !validOrgUnitRoleCombinations.Contains((existing.OrganizationHierarchyId.Value, existing.EntityRoleId)))
             .ToList();
 
         // Find combinations to add (exist in EntityUserRoles but not in existing auto-populated)
+        // Check by OrgUnit + Role + UserId to handle multiple users per role
         var existingCombinations = existingAutoPopulated
             .Where(s => s.OrganizationHierarchyId.HasValue)
-            .Select(s => (s.OrganizationHierarchyId!.Value, s.EntityRoleId))
+            .Select(s => (s.OrganizationHierarchyId!.Value, s.EntityRoleId, s.UserId))
             .ToHashSet();
 
         var combinationsToAdd = validCombinations
@@ -2352,15 +2362,15 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             context.Set<OpportunityStakeholder>().Remove(stakeholder);
         }
 
-        // Add new auto-populated stakeholders
-        foreach (var (targetOrgUnitId, roleId) in combinationsToAdd)
+        // Add new auto-populated stakeholders with UserId
+        foreach (var (targetOrgUnitId, roleId, userId) in combinationsToAdd)
         {
             entity.Stakeholders.Add(new OpportunityStakeholder
             {
                 OpportunityId = entity.Id,
                 EntityRoleId = roleId,
                 OrganizationHierarchyId = targetOrgUnitId,
-                UserId = null, // No specific user - auto-populated
+                UserId = userId, // Include UserId from EntityUserRoles
                 IsInternal = true,
                 StakeholderType = "Internal",
                 Notes = null

@@ -18,6 +18,9 @@ public class BaseEngagement : IBaseBusinessEntity<int>
     // Primary identifier (maps to BaseEngagement column from external service)
     public string EngagementNumber { get; set; } = string.Empty;
     
+    // OpportunityPlus Integration - Link to source opportunity
+    public int? OpportunityId { get; set; }
+    
     // Date fields (populated by External Data Service)
     public DateTime? EngagementImplementationStartDate { get; set; }
     public DateTime? EngagementImplementationEndDate { get; set; }
