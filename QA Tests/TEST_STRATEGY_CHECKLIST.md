@@ -6,15 +6,15 @@
 
 ## 🚨 CRITICAL: 3:1 RATIO REQUIREMENT 🚨
 
-**ABSOLUTE MANDATE**: Create **THREE times as many** negative/edge/security tests as positive tests.
+**ABSOLUTE MANDATE**: Create **THREE times as many** negative and edge tests as positive tests.
 
 **Minimum Per Category**:
 - Negative: ≥50 tests
 - Edge Cases: ≥50 tests
-- Security: ≥50 tests
-- Concurrency: ≥25 tests
+- Security: ≥50 tests (independent requirement, not part of 3:1 ratio)
+- Concurrency: ≥25 tests (independent requirement, not part of 3:1 ratio)
 
-**Formula**: `Negative + Edge + Security + Concurrency ≥ 3 × Positive`
+**Formula**: `Negative + Edge ≥ 3 × Positive`
 
 **REJECT any test strategy that doesn't meet this requirement.**
 
@@ -27,20 +27,20 @@
 - [ ] **Test strategy document created** (not just diving into code)
 - [ ] **3:1 ratio calculated and documented explicitly**:
   - [ ] Positive tests counted: P = ___
-  - [ ] Minimum negative/edge/security: 3P = ___
+  - [ ] Minimum negative/edge: 3P = ___
   - [ ] Each category meets minimum (≥50 for neg/edge/sec, ≥25 for concurrency)
 - [ ] **All 5 categories included** in strategy:
   - [ ] 1. Positive Tests (baseline)
   - [ ] 2. Negative Tests (≥50, ≥P for 3:1 ratio)
   - [ ] 3. Edge Cases (≥50, ≥P for 3:1 ratio)
-  - [ ] 4. Security/Validation (≥50, ≥P for 3:1 ratio)
-  - [ ] 5. Concurrency (≥25)
+  - [ ] 4. Security/Validation (≥50, independent requirement)
+  - [ ] 5. Concurrency (≥25, independent requirement)
 - [ ] **Test count targets** meet ALL minimums:
   - [ ] Negative ≥ 50 ✅
   - [ ] Edge ≥ 50 ✅
-  - [ ] Security ≥ 50 ✅
-  - [ ] Concurrency ≥ 25 ✅
-  - [ ] Total negative/edge ≥ 3 × positive ✅
+  - [ ] Security ≥ 50 ✅ (independent, not part of 3:1)
+  - [ ] Concurrency ≥ 25 ✅ (independent, not part of 3:1)
+  - [ ] Total negative + edge ≥ 3 × positive ✅
 - [ ] **Test IDs** follow consistent naming (TC-[FEATURE]-[TYPE]-###)
 - [ ] **Priority** assigned (Critical/High/Medium)
 - [ ] **OWASP coverage** planned (if user-facing or data-handling)
@@ -123,9 +123,9 @@
 - ❌ Any of the 5 categories missing entirely
 - ❌ **Negative tests < 50 tests**
 - ❌ **Edge case tests < 50 tests**
-- ❌ **Security tests < 50 tests**
-- ❌ **Concurrency tests < 25 tests**
-- ❌ **Total negative/edge/security/concurrency < 3 × positive tests**
+- ❌ **Security tests < 50 tests** (independent minimum, not part of 3:1)
+- ❌ **Concurrency tests < 25 tests** (independent minimum, not part of 3:1)
+- ❌ **Total negative + edge < 3 × positive tests**
 - ❌ 3:1 ratio not calculated or documented in strategy
 - ❌ Test strategy skipped (went straight to coding)
 - ❌ Only positive/happy path tests created
@@ -151,21 +151,21 @@ If feature handles user input or database operations:
 
 **For 50 positive tests (minimum viable):**
 - Positive: 50 tests (baseline)
-- Negative: 50 tests (minimum ≥50)
-- Edge Cases: 50 tests (minimum ≥50)
-- Security: 50 tests (minimum ≥50)
-- Concurrency: 25 tests (minimum ≥25)
-- **Total: 225 tests**
-- **Ratio: 175:50 = 3.5:1 ✅ MEETS 3:1 RULE**
+- Negative: 75 tests (3:1 ratio = 150 ÷ 2 = 75 each for neg/edge)
+- Edge Cases: 75 tests (3:1 ratio = 150 ÷ 2 = 75 each for neg/edge)
+- Security: 50 tests (independent minimum ≥50, not part of 3:1)
+- Concurrency: 25 tests (independent minimum ≥25, not part of 3:1)
+- **Total: 275 tests**
+- **Ratio: 150:50 = 3:1 ✅ MEETS 3:1 RULE**
 
 **For 85 positive tests (like DST):**
 - Positive: 85 tests (baseline)
-- Negative: 85 tests (3:1 rule + minimum)
-- Edge Cases: 85 tests (3:1 rule + minimum)
-- Security: 85 tests (3:1 rule + minimum)
-- Concurrency: 50 tests (2x minimum for larger features)
-- **Total: 390 tests**
-- **Ratio: 305:85 = 3.6:1 ✅ EXCEEDS 3:1 RULE**
+- Negative: 128 tests (3:1 ratio = 255 ÷ 2 ≈ 128 each for neg/edge)
+- Edge Cases: 127 tests (3:1 ratio = 255 ÷ 2 ≈ 127 each for neg/edge)
+- Security: 50 tests (independent minimum ≥50, not part of 3:1)
+- Concurrency: 50 tests (2x minimum for larger features, not part of 3:1)
+- **Total: 440 tests**
+- **Ratio: 255:85 = 3:1 ✅ MEETS 3:1 RULE**
 
 ---
 
@@ -184,20 +184,20 @@ If feature handles user input or database operations:
 - Positive: 85 tests
 - Negative: 20 tests (< 50 minimum) ⚠️
 - Edge: 20 tests (< 50 minimum) ⚠️
-- Security: 20 tests (< 50 minimum) ⚠️
+- Security: 50 tests (≥50 ✅, independent minimum met)
 - Concurrency: 20 tests (< 25 minimum) ⚠️
-- **Total: 165 tests**
-- **Ratio: 80:85 = 0.94:1 ⚠️ FAR BELOW 3:1 RULE**
-- **Action Required: Add 175 more tests to reach 3:1**
+- **Total: 195 tests**
+- **Ratio: 40:85 = 0.47:1 ⚠️ FAR BELOW 3:1 RULE**
+- **Action Required: Add 215 more negative/edge tests to reach 3:1 (255 total)**
 
 **Phase 3 (Compliant) ✅ MEETS REQUIREMENTS**:
 - Positive: 85 tests
-- Negative: 85 tests (≥50 ✅, meets 3:1 ✅)
-- Edge: 85 tests (≥50 ✅, meets 3:1 ✅)
-- Security: 85 tests (≥50 ✅, meets 3:1 ✅)
-- Concurrency: 50 tests (≥25 ✅)
-- **Total: 390 tests**
-- **Ratio: 305:85 = 3.6:1 ✅ EXCEEDS 3:1 RULE**
+- Negative: 128 tests (≥50 ✅, meets 3:1 ✅)
+- Edge: 127 tests (≥50 ✅, meets 3:1 ✅)
+- Security: 50 tests (≥50 ✅, independent minimum)
+- Concurrency: 50 tests (≥25 ✅, independent minimum)
+- **Total: 440 tests**
+- **Ratio: 255:85 = 3:1 ✅ MEETS 3:1 RULE**
 
 ---
 
@@ -205,16 +205,18 @@ If feature handles user input or database operations:
 
 **🚨 THE 3:1 RULE IS NON-NEGOTIABLE 🚨**
 
-**For every positive test, create THREE times as many negative/edge/security tests.**
+**For every positive test, create THREE times as many negative and edge tests combined.**
 
 **Minimum per category:**
-- Negative: ≥50 tests
-- Edge Cases: ≥50 tests
-- Security: ≥50 tests
-- Concurrency: ≥25 tests
+- Negative: ≥50 tests (part of 3:1 ratio)
+- Edge Cases: ≥50 tests (part of 3:1 ratio)
+- Security: ≥50 tests (independent requirement, keep existing tests)
+- Concurrency: ≥25 tests (independent requirement)
 
 **All 5 categories. Every feature. No exceptions. No compromises.**
 
 **If you're only writing positive tests, you're less than 25% done.**
 
-**Formula: Total Negative/Edge/Security/Concurrency ≥ 3 × Positive Tests**
+**Formula: Total Negative + Edge ≥ 3 × Positive Tests**
+
+**Note: Security tests remain required (≥50 minimum) but are not part of the 3:1 ratio calculation going forward. Keep all existing security tests.**
