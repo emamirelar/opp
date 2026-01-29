@@ -571,7 +571,11 @@
                         />
                       }
                     </div>
-                    <div class="text-sm text-unops-primary">{{ getTranslatedRoleName(stakeholder) }}</div>
+                    <!-- Only show role for normally responsible stakeholders (they have various roles) -->
+                    <!-- User-added stakeholders are always "Internal Stakeholder" so role is redundant -->
+                    @if (stakeholder.isNormallyResponsible) {
+                      <div class="text-sm text-unops-primary">{{ getTranslatedRoleName(stakeholder) }}</div>
+                    }
                     @if (stakeholder.position) {
                       <div class="text-xs text-unops-neutral-600 mt-0.5">{{ stakeholder.position }}</div>
                     }
