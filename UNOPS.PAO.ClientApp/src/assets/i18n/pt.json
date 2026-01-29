@@ -2953,7 +2953,7 @@
   "message.validation.externalStakeholderRequired": "Por favor, selecione um contato para adicionar como parte interessada externa",
   "message.validation.externalStakeholderAlreadyAdded": "Este contato jÃ¡ foi adicionado como parte interessada externa",
   "message.confirmRemoveExternalStakeholder": "Tem certeza de que deseja remover esta parte interessada externa?",
-  "title.addStakeholder": "Adicionar Membro da Equipe",
+  "title.addStakeholder": "Adicionar Parte Interessada Interna",
   "title.addCollaborator": "Adicionar Colaborador",
   "title.editCollaborator": "Editar Colaborador",
   "title.addExternalStakeholder": "Adicionar Parte Interessada Externa",

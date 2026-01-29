@@ -878,7 +878,7 @@
   </ng-template>
 </p-panel>
 
-<!-- Team & Stakeholders Dialog -->
+<!-- Add Internal Stakeholder Dialog -->
 <p-dialog
   [header]="isEditingStakeholder() ? ('title.editStakeholder' | translate) : ('title.addStakeholder' | translate)"
   [(visible)]="showStakeholderDialog"
@@ -888,7 +888,7 @@
 >
   @if (showStakeholderValidationError()) {
     <p-message severity="error" icon="pi pi-info-circle" styleClass="mb-4 w-full">
-      {{ 'message.validation.stakeholderRequired' | translate }}
+      {{ 'message.validation.userRequired' | translate }}
     </p-message>
   }
 
@@ -914,31 +914,6 @@
       @if (!userControl.value && showStakeholderValidationError()) {
         <p-message severity="error" variant="simple" styleClass="mt-2">
           {{ 'message.validation.userRequired' | translate }}
-        </p-message>
-      }
-    </div>
-
-    <!-- Role Selection -->
-    <div>
-      <p-floatlabel variant="on">
-        <p-select
-          id="stakeholderRole"
-          [formControl]="roleControl"
-          [options]="nonSmeRoles()"
-          optionLabel="name"
-          [filter]="true"
-          filterBy="name"
-          [showClear]="true"
-          [appendTo]="'body'"
-          [virtualScroll]="true"
-          [virtualScrollItemSize]="38"
-          class="w-full"
-        />
-        <label for="stakeholderRole">{{ 'label.role' | translate }} *</label>
-      </p-floatlabel>
-      @if (!roleControl.value && showStakeholderValidationError()) {
-        <p-message severity="error" variant="simple" styleClass="mt-2">
-          {{ 'message.validation.roleRequired' | translate }}
         </p-message>
       }
     </div>

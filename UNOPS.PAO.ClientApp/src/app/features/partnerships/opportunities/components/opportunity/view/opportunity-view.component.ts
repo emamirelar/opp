@@ -147,6 +147,8 @@ export class OpportunityViewComponent
   isRegeneratingBanner = signal<boolean>(false);
   recordId: string = '';
   opportunity = signal<Opportunity | null>(null);
+  baseEngagementNumber = signal<string | null>(null);
+  oupBaseUrl = signal<string>('');
 
   // Loading Progress State
   readonly loadingProgress = signal<LoadingProgress>(DEFAULT_LOADING_PROGRESS);
@@ -348,6 +350,16 @@ export class OpportunityViewComponent
 
   shouldShowSeeLessButton = computed(() => {
     return this.showAdditionalInfo() && this.showFullContent();
+  });
+
+  // Computed OUP engagement URL
+  oupEngagementUrl = computed(() => {
+    const baseUrl = this.oupBaseUrl();
+    const engagementNumber = this.baseEngagementNumber();
+    if (baseUrl && engagementNumber) {
+      return `${baseUrl}/${engagementNumber}/engagement/overview`;
+    }
+    return null;
   });
 
   // Computed stats from backend or calculated from child entities
@@ -610,6 +622,18 @@ export class OpportunityViewComponent
     // Register component data for AI Assistant
     this.pageContextService.setComponentData(this);
 
+    // Fetch OUP base URL from configuration
+    this.valuesService.getConfig().subscribe({
+      next: (config: any) => {
+        if (config?.oupSettings?.baseUrl) {
+          this.oupBaseUrl.set(config.oupSettings.baseUrl);
+        }
+      },
+      error: (error) => {
+        console.warn('Failed to load OUP settings:', error);
+      }
+    });
+
     // Subscribe to route parameter changes for both recordId and section
     this.activatedRoute.paramMap.subscribe({
       next: (paramMap) => {
@@ -741,8 +765,18 @@ export class OpportunityViewComponent
     this.updateLoadingProgress('opportunity', 'loading');
 
     this.opportunityService.getOpportunityById(+this.recordId).subscribe({
-      next: (data: Opportunity) => {
+      next: (response: any) => {
+        // Handle new response structure with opportunity and baseEngagementNumber
+        const data: Opportunity = response.opportunity || response;
         this.opportunity.set(data);
+        
+        // Store base engagement number if present
+        if (response.baseEngagementNumber) {
+          this.baseEngagementNumber.set(response.baseEngagementNumber);
+        } else {
+          this.baseEngagementNumber.set(null);
+        }
+        
         this.loading.set(false);
         this.updateLoadingProgress('opportunity', 'completed');
 
@@ -1558,6 +1592,16 @@ export class OpportunityViewComponent
    */
   toggleFullContent() {
     this.showFullContent.update((value) => !value);
+  }
+
+  /**
+   * Open OUP engagement in new tab
+   */
+  openOUPEngagement(): void {
+    const url = this.oupEngagementUrl();
+    if (url) {
+      window.open(url, '_blank');
+    }
   }
 
   /**

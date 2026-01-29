@@ -169,7 +169,22 @@ public class OpportunityController : BaseController
             return NotFound(new { error = $"Opportunity with ID {id} not found" });
         }
 
-        return Ok(result);
+        // Query base engagement number if opportunity has been synced to oUP
+        string? baseEngagementNumber = null;
+        var baseEngagement = await _unopsContext.BaseEngagements
+            .FirstOrDefaultAsync(be => be.OpportunityId == id && !be.IsDeleted);
+        
+        if (baseEngagement != null)
+        {
+            baseEngagementNumber = baseEngagement.EngagementNumber;
+        }
+
+        // Return opportunity with base engagement number
+        return Ok(new
+        {
+            opportunity = result,
+            baseEngagementNumber = baseEngagementNumber
+        });
     }
 
     /// <summary>
