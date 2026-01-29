@@ -112,6 +112,19 @@
                     styleClass="whitespace-nowrap"
                   />
                 }
+                @if (oupEngagementUrl()) {
+                  <p-button
+                    label="Go to oUP"
+                    icon="pi pi-external-link"
+                    [outlined]="true"
+                    size="small"
+                    severity="secondary"
+                    (onClick)="openOUPEngagement()"
+                    styleClass="whitespace-nowrap"
+                    [pTooltip]="'Open this opportunity in oUP (Engagement ' + baseEngagementNumber() + ')'"
+                    tooltipPosition="bottom"
+                  />
+                }
               </div>
             </div>
 
