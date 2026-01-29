@@ -2370,7 +2370,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 OpportunityId = entity.Id,
                 EntityRoleId = roleId,
                 OrganizationHierarchyId = targetOrgUnitId,
-                UserId = userId, // Include UserId from EntityUserRoles
+                UserId = null,
                 IsInternal = true,
                 StakeholderType = "Internal",
                 Notes = null
