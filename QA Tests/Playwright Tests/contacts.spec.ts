@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { ContactsPage } from './pages/contacts.page';
 import { loginAndNavigate } from './helpers/auth.helper';
 import { assertUrlMatches, assertDialogOpen } from './helpers/assertions.helper';
+import { setupCameraMocks } from './helpers/api-mocks.helper';
 
 /**
  * Contacts List E2E Tests
@@ -20,6 +21,10 @@ test.describe('Contacts List', () => {
   // Login before each test
   test.beforeEach(async ({ page }) => {
     contactsPage = new ContactsPage(page);
+    
+    // Setup camera mocks before navigation (required for business card scanner)
+    await setupCameraMocks(page);
+    
     await loginAndNavigate(page, '/#/partnerships/contacts');
   });
   

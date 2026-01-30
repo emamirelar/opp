@@ -84,6 +84,109 @@ export async function setupAPIMocks(page: Page): Promise<void> {
     });
   });
 
+  // ==========================================
+  // FORM DATA ENDPOINTS - Required for dialog rendering
+  // ==========================================
+  
+  // Mock /api/values/partners - Partners dropdown
+  await page.route(url => url.toString().includes('/api/values/partners'), async (route) => {
+    console.log('[API Mock] Intercepted: /api/values/partners');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: 1, name: 'Test Partner 1', type: 'Government' },
+        { id: 2, name: 'Test Partner 2', type: 'NGO' },
+        { id: 3, name: 'Test Partner 3', type: 'Private Sector' },
+      ]),
+    });
+  });
+
+  // Mock /api/values/organization-units - Organization units dropdown
+  await page.route(url => url.toString().includes('/api/values/organization-units'), async (route) => {
+    console.log('[API Mock] Intercepted: /api/values/organization-units');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: 1, name: 'HQ - Headquarters', code: 'HQ' },
+        { id: 2, name: 'RO - Regional Office', code: 'RO' },
+        { id: 3, name: 'CO - Country Office', code: 'CO' },
+      ]),
+    });
+  });
+
+  // Mock /api/partner-tree-structure - Hierarchical partner structure
+  await page.route(url => url.toString().includes('/api/partner-tree-structure'), async (route) => {
+    console.log('[API Mock] Intercepted: /api/partner-tree-structure');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        {
+          id: 1,
+          name: 'Test Partner 1',
+          children: [
+            { id: 11, name: 'Test Partner 1 - Division A', children: [] },
+            { id: 12, name: 'Test Partner 1 - Division B', children: [] },
+          ],
+        },
+        {
+          id: 2,
+          name: 'Test Partner 2',
+          children: [],
+        },
+      ]),
+    });
+  });
+
+  // Mock /api/values/liaison-offices - Liaison offices dropdown
+  await page.route(url => url.toString().includes('/api/values/liaison-offices'), async (route) => {
+    console.log('[API Mock] Intercepted: /api/values/liaison-offices');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: 1, name: 'New York Office', location: 'USA' },
+        { id: 2, name: 'Geneva Office', location: 'Switzerland' },
+        { id: 3, name: 'Copenhagen Office', location: 'Denmark' },
+      ]),
+    });
+  });
+
+  // Mock /api/values/contacts - Contacts dropdown
+  await page.route(url => url.toString().includes('/api/values/contacts'), async (route) => {
+    console.log('[API Mock] Intercepted: /api/values/contacts');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: 1, name: 'John Smith', email: 'john.smith@test.com' },
+        { id: 2, name: 'Jane Doe', email: 'jane.doe@test.com' },
+        { id: 3, name: 'Bob Johnson', email: 'bob.johnson@test.com' },
+      ]),
+    });
+  });
+
+  // Mock /api/values/users/paged - Users paged endpoint (POST)
+  await page.route(url => url.toString().includes('/api/values/users/paged'), async (route) => {
+    console.log('[API Mock] Intercepted: POST /api/values/users/paged');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        items: [
+          { id: 1, name: 'Test User 1', email: 'user1@unops.org' },
+          { id: 2, name: 'Test User 2', email: 'user2@unops.org' },
+          { id: 3, name: 'Test User 3', email: 'user3@unops.org' },
+        ],
+        totalCount: 3,
+        pageIndex: 1,
+        pageSize: 20,
+      }),
+    });
+  });
+
   // Catch-all for any other /api/ and /user/ calls - return smart defaults based on URL pattern
   await page.route(url => {
     const urlString = url.toString();
@@ -93,7 +196,13 @@ export async function setupAPIMocks(page: Page): Promise<void> {
            !urlString.includes('/user/login') &&
            !urlString.includes('/user/register') &&
            !urlString.includes('/user/googleSignIn') &&
-           !urlString.includes('/api/global/preferred-language');
+           !urlString.includes('/api/global/preferred-language') &&
+           !urlString.includes('/api/values/partners') &&
+           !urlString.includes('/api/values/organization-units') &&
+           !urlString.includes('/api/partner-tree-structure') &&
+           !urlString.includes('/api/values/liaison-offices') &&
+           !urlString.includes('/api/values/contacts') &&
+           !urlString.includes('/api/values/users/paged');
   }, async (route) => {
     const url = route.request().url();
     const method = route.request().method();
@@ -237,6 +346,103 @@ export async function setupAuthenticatedUserMock(page: Page, email: string): Pro
       ]),
     });
   });
+}
+
+/**
+ * Setup camera/MediaDevices API mocks for business card scanner
+ * @param page - Playwright page object
+ */
+export async function setupCameraMocks(page: Page): Promise<void> {
+  console.log('[API Mock] Setting up camera/MediaDevices mocks...');
+  
+  await page.addInitScript(() => {
+    // Mock getUserMedia for camera access
+    if (navigator.mediaDevices) {
+      navigator.mediaDevices.getUserMedia = async (constraints: MediaStreamConstraints) => {
+        console.log('[Camera Mock] getUserMedia called with constraints:', constraints);
+        
+        // Create a mock MediaStream
+        const mockStream = {
+          id: 'mock-stream-id',
+          active: true,
+          getTracks: () => [
+            {
+              kind: 'video',
+              id: 'mock-video-track-id',
+              label: 'Mock Camera',
+              enabled: true,
+              muted: false,
+              readyState: 'live',
+              stop: () => {
+                console.log('[Camera Mock] Video track stopped');
+              },
+              getSettings: () => ({
+                width: 1280,
+                height: 720,
+                aspectRatio: 16/9,
+                frameRate: 30,
+                facingMode: 'environment',
+              }),
+              getCapabilities: () => ({
+                width: { min: 640, max: 1920 },
+                height: { min: 480, max: 1080 },
+                frameRate: { min: 15, max: 60 },
+              }),
+              applyConstraints: async () => {},
+              clone: function() { return this; },
+              addEventListener: () => {},
+              removeEventListener: () => {},
+              dispatchEvent: () => true,
+            },
+          ],
+          getVideoTracks: function() { return this.getTracks(); },
+          getAudioTracks: () => [],
+          getTrackById: () => null,
+          addTrack: () => {},
+          removeTrack: () => {},
+          clone: function() { return this; },
+          addEventListener: () => {},
+          removeEventListener: () => {},
+          dispatchEvent: () => true,
+        } as unknown as MediaStream;
+        
+        return Promise.resolve(mockStream);
+      };
+      
+      // Mock enumerateDevices
+      navigator.mediaDevices.enumerateDevices = async () => {
+        console.log('[Camera Mock] enumerateDevices called');
+        return [
+          {
+            kind: 'videoinput',
+            deviceId: 'mock-camera-1',
+            label: 'Mock Camera (front)',
+            groupId: 'mock-group-1',
+            toJSON: () => ({}),
+          },
+          {
+            kind: 'videoinput',
+            deviceId: 'mock-camera-2',
+            label: 'Mock Camera (back)',
+            groupId: 'mock-group-1',
+            toJSON: () => ({}),
+          },
+        ] as MediaDeviceInfo[];
+      };
+      
+      // Mock getSupportedConstraints
+      navigator.mediaDevices.getSupportedConstraints = () => ({
+        aspectRatio: true,
+        facingMode: true,
+        frameRate: true,
+        height: true,
+        width: true,
+        deviceId: true,
+      });
+    }
+  });
+  
+  console.log('[API Mock] Camera/MediaDevices mocks configured');
 }
 
 /**
