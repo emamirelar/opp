@@ -14,7 +14,7 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './QA Tests/Playwright Tests',
   /* Maximum time one test can run for */
-  timeout: 60000,  // 60 seconds per test (increased from default 30s)
+  timeout: 120000,  // 120 seconds (2 minutes) per test - increased for API mocking delays
   /* Maximum time expect() should wait for the condition to be met */
   expect: {
     timeout: 10000,  // 10 seconds for assertions
