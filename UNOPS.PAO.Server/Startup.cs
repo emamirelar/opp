@@ -42,8 +42,10 @@ using System.IO;
 using UNOPS.PAO.Presentation.Security;
 using UNOPS.PAO.Business.Services;
 using Google.Apis.Auth.OAuth2;
+#if WORKFLOW_AVAILABLE
 using UNOPS.PAO.Business.Workflow.Adapters;
 using UNOPS.Workflow.DataAccess;
+#endif
 
 namespace UNOPS.PAO.Server;
 
@@ -241,11 +243,21 @@ public class Startup
         }
         else
         {
-            var projectId = Configuration["AppConfig:ProjectId"];
-            var secretManager = SecretManagerServiceClient.Create();
-            var secretName = $"projects/{projectId}/secrets/Bearer_Auth_Secret/versions/latest";
-            var secret = secretManager.AccessSecretVersion(secretName);
-            jwtSecret = secret.Payload.Data.ToStringUtf8();
+            // Check if JWT secret is provided in configuration (for local development)
+            var localJwtSecret = Configuration["JWTSettings:SecretKey"];
+            if (!string.IsNullOrEmpty(localJwtSecret))
+            {
+                jwtSecret = localJwtSecret;
+            }
+            else
+            {
+                // Fetch from Google Cloud Secret Manager (production/staging)
+                var projectId = Configuration["AppConfig:ProjectId"];
+                var secretManager = SecretManagerServiceClient.Create();
+                var secretName = $"projects/{projectId}/secrets/Bearer_Auth_Secret/versions/latest";
+                var secret = secretManager.AccessSecretVersion(secretName);
+                jwtSecret = secret.Payload.Data.ToStringUtf8();
+            }
         }
 
         // Configure authentication with support for both IAP and cookies
@@ -527,7 +539,7 @@ public class Startup
         services.SeedAsync();
         ConfigureRegisters(services);
         
-        if (!CurrentEnvironment.IsEnvironment("Testing"))
+        if (!CurrentEnvironment.IsEnvironment("Testing") && !CurrentEnvironment.IsEnvironment("Development"))
         {
             services.AddHostedService<PubSubPullService>(); // Register your background service
             services.AddHostedService<DueDiligenceNotificationService>(); // Register due diligence notification service
@@ -661,6 +673,7 @@ public class Startup
                 .UseNpgsql(dataSource)
                 .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
 
+#if WORKFLOW_AVAILABLE
         // ==========================================
         // Workflow Submodule - DbContext and Services
         // ==========================================
@@ -685,6 +698,7 @@ public class Startup
                 {
                     npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "workflow");
                 }));
+#endif
 
     }
     private string? GetConnectionStringFromSecretManager()

@@ -34,6 +34,11 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <!-- Define compilation symbol when workflow projects are available -->
+    <DefineConstants Condition="Exists('..\UNOPS.Workflow\UNOPS.Workflow.Business\UNOPS.Workflow.Business.csproj')">$(DefineConstants);WORKFLOW_AVAILABLE</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\UNOPS.PAO.Presentation\UNOPS.PAO.Presentation.csproj" />
     <ProjectReference Include="..\UNOPS.PAO.UNOPSBusiness\UNOPS.PAO.UNOPSBusiness.csproj" />
@@ -47,6 +52,9 @@
     <ProjectReference Include="..\UNOPS.PAO.GoogleServices\UNOPS.PAO.GoogleServices.csproj" />
     <ProjectReference Include="..\UNOPS.PAO.Models\UNOPS.PAO.Models.csproj" />
     <ProjectReference Include="..\UNOPS.PAO.MailSender\UNOPS.PAO.MailSender.csproj" />
+    <!-- Workflow submodule references - only include if project files exist -->
+    <ProjectReference Include="..\UNOPS.Workflow\UNOPS.Workflow.DataAccess\UNOPS.Workflow.DataAccess.csproj" Condition="Exists('..\UNOPS.Workflow\UNOPS.Workflow.DataAccess\UNOPS.Workflow.DataAccess.csproj')" />
+    <ProjectReference Include="..\UNOPS.Workflow\UNOPS.Workflow.Business\UNOPS.Workflow.Business.csproj" Condition="Exists('..\UNOPS.Workflow\UNOPS.Workflow.Business\UNOPS.Workflow.Business.csproj')" />
   </ItemGroup>
 
   <ItemGroup>
