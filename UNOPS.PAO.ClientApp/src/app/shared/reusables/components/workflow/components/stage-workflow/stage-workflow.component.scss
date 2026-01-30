@@ -2,6 +2,12 @@
   display: block;
 }
 
+// Fix z-index issue where workflow panel covers dialogs
+:host ::ng-deep p-panel {
+  z-index: auto !important;
+  position: relative;
+}
+
 .table-container {
   min-height: 100px;
 }
