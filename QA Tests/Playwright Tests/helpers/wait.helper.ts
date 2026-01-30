@@ -183,6 +183,7 @@ export async function waitForAngularReady(page: Page): Promise<void> {
 
 /**
  * Wait for PrimeNG dialog to be visible and ready
+ * NOTE: This waits for feature dialogs (role="dialog"), NOT confirmation dialogs (role="alertdialog")
  * @param page - Playwright page object
  * @param timeout - Optional timeout in milliseconds
  */
@@ -191,8 +192,9 @@ export async function waitForDialog(page: Page, timeout?: number): Promise<void>
   
   console.log('[Wait] Waiting for dialog to appear...');
   
-  // Wait for p-dialog to be visible
-  const dialog = page.locator('p-dialog[role="dialog"], [role="dialog"]').first();
+  // Wait for p-dialog with role="dialog" (NOT alertdialog) to be visible
+  // This excludes confirmation dialogs and focuses on feature dialogs
+  const dialog = page.locator('p-dialog[role="dialog"]:not([role="alertdialog"])').first();
   await dialog.waitFor({ state: 'visible', timeout: maxTimeout });
   
   // Wait for dialog animation to complete
