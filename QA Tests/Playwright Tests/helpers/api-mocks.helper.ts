@@ -187,6 +187,86 @@ export async function setupAPIMocks(page: Page): Promise<void> {
     });
   });
 
+  // ==========================================
+  // REFERENCE DATA ENDPOINTS - Required for CachedDataService
+  // These are loaded globally on app init for dropdown options
+  // ==========================================
+  
+  // Mock /api/values/salutations - Salutation dropdown (Mr., Ms., Dr., etc.)
+  await page.route(url => url.toString().includes('/api/values/salutations'), async (route) => {
+    console.log('[API Mock] Intercepted: /api/values/salutations');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: 1, name: 'Mr.' },
+        { id: 2, name: 'Ms.' },
+        { id: 3, name: 'Mrs.' },
+        { id: 4, name: 'Dr.' },
+        { id: 5, name: 'Prof.' },
+      ]),
+    });
+  });
+
+  // Mock /api/values/status - Status dropdown (Active, Inactive, etc.)
+  await page.route(url => url.toString().includes('/api/values/status'), async (route) => {
+    console.log('[API Mock] Intercepted: /api/values/status');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: 1, name: 'Active' },
+        { id: 2, name: 'Inactive' },
+      ]),
+    });
+  });
+
+  // Mock /api/values/pronouns - Pronouns dropdown
+  await page.route(url => url.toString().includes('/api/values/pronouns'), async (route) => {
+    console.log('[API Mock] Intercepted: /api/values/pronouns');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: 1, name: 'He/Him' },
+        { id: 2, name: 'She/Her' },
+        { id: 3, name: 'They/Them' },
+        { id: 4, name: 'Other' },
+      ]),
+    });
+  });
+
+  // Mock /api/values/countries - Countries dropdown
+  await page.route(url => url.toString().includes('/api/values/countries'), async (route) => {
+    console.log('[API Mock] Intercepted: /api/values/countries');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: 'US', name: 'United States', code: 'US' },
+        { id: 'GB', name: 'United Kingdom', code: 'GB' },
+        { id: 'FR', name: 'France', code: 'FR' },
+        { id: 'DE', name: 'Germany', code: 'DE' },
+        { id: 'CH', name: 'Switzerland', code: 'CH' },
+        { id: 'DK', name: 'Denmark', code: 'DK' },
+      ]),
+    });
+  });
+
+  // Mock /api/values/states - States/Provinces dropdown
+  await page.route(url => url.toString().includes('/api/values/states'), async (route) => {
+    console.log('[API Mock] Intercepted: /api/values/states');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: 'NY', name: 'New York', countryCode: 'US' },
+        { id: 'CA', name: 'California', countryCode: 'US' },
+        { id: 'TX', name: 'Texas', countryCode: 'US' },
+      ]),
+    });
+  });
+
   // Catch-all for any other /api/ and /user/ calls - return smart defaults based on URL pattern
   await page.route(url => {
     const urlString = url.toString();
@@ -202,7 +282,12 @@ export async function setupAPIMocks(page: Page): Promise<void> {
            !urlString.includes('/api/partner-tree-structure') &&
            !urlString.includes('/api/values/liaison-offices') &&
            !urlString.includes('/api/values/contacts') &&
-           !urlString.includes('/api/values/users/paged');
+           !urlString.includes('/api/values/users/paged') &&
+           !urlString.includes('/api/values/salutations') &&
+           !urlString.includes('/api/values/status') &&
+           !urlString.includes('/api/values/pronouns') &&
+           !urlString.includes('/api/values/countries') &&
+           !urlString.includes('/api/values/states');
   }, async (route) => {
     const url = route.request().url();
     const method = route.request().method();
