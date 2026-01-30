@@ -2970,7 +2970,7 @@
   "title.addCollaborator": "Ajouter un Collaborateur",
   "title.editCollaborator": "Modifier le Collaborateur",
   "title.addExternalStakeholder": "Ajouter une Partie Prenante Externe",
-  "confirmation.removeStakeholder": "Retirer le Membre d'Ã‰quipe",
+  "confirmation.removeStakeholder": "Retirer la Partie Prenante Interne",
   "confirmation.removeCollaborator": "Retirer le Collaborateur",
   "confirmation.removeExternalStakeholder": "Retirer la Partie Prenante Externe",
   "confirmation.discardChanges": "Abandonner les Modifications?",
