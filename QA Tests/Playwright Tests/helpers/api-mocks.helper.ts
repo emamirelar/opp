@@ -98,20 +98,26 @@ export async function setupAPIMocks(page: Page): Promise<void> {
     
     // Smart responses based on URL patterns
     if (method === 'GET') {
-      // Permission check endpoints - return nested permissions structure
+      // Permission check endpoints - return correct structure matching Angular PermissionService expectations
       if (url.includes('/api/permissions/check/')) {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify({
+            hasAccess: true, // ✅ Required field
+            route: url, // ✅ Required field
+            entity: 'Contact', // ✅ Required field
             permissions: {
-              canView: true,
+              canRead: true, // ✅ Note: canRead, not canView
               canCreate: true,
-              canEdit: true,
+              canUpdate: true, // ✅ Note: canUpdate, not canEdit
               canDelete: true,
               canExport: true,
               canImport: true,
-              canManage: true,
+              canApprove: false,
+              canActivate: false,
+              canClose: false,
+              canArchive: false,
             }
           }),
         });
