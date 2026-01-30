@@ -2930,7 +2930,7 @@
   "title.addCollaborator": "Agregar Colaborador",
   "title.editCollaborator": "Editar Colaborador",
   "title.addExternalStakeholder": "Agregar Parte Interesada Externa",
-  "confirmation.removeStakeholder": "Eliminar Miembro del Equipo",
+  "confirmation.removeStakeholder": "Eliminar Parte Interesada Interna",
   "confirmation.removeCollaborator": "Eliminar Colaborador",
   "confirmation.removeExternalStakeholder": "Eliminar Parte Interesada Externa",
   "confirmation.discardChanges": "Â¿Descartar Cambios?",
