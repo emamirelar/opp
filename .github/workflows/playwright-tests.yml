@@ -64,9 +64,10 @@ jobs:
       - name: Setup test database
         env:
           PGPASSWORD: test
+          ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
         run: |
           # Run migrations
-          dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess --startup-project UNOPS.PAO.Server -- --environment=Test
+          dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess --startup-project UNOPS.PAO.Server --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
           
           # Create test user
           psql -h localhost -p 5432 -U test -d TestDb -f "setup-test-user.sql"
@@ -185,8 +186,9 @@ jobs:
       - name: Setup test database
         env:
           PGPASSWORD: test
+          ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
         run: |
-          dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess --startup-project UNOPS.PAO.Server -- --environment=Test
+          dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess --startup-project UNOPS.PAO.Server --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
           psql -h localhost -p 5432 -U test -d TestDb -f "setup-test-user.sql"
           psql -h localhost -p 5432 -U test -d TestDb -f "setup-opportunity-permissions.sql"
       
@@ -277,8 +279,9 @@ jobs:
       - name: Setup test database
         env:
           PGPASSWORD: test
+          ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
         run: |
-          dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess --startup-project UNOPS.PAO.Server -- --environment=Test
+          dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess --startup-project UNOPS.PAO.Server --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
           psql -h localhost -p 5432 -U test -d TestDb -f "setup-test-user.sql"
           psql -h localhost -p 5432 -U test -d TestDb -f "setup-opportunity-permissions.sql"
       
