@@ -116,8 +116,7 @@ test.describe('Contacts List', () => {
     const isVisible = await contactsPage.isNewButtonVisible();
     if (isVisible) {
       // Click the New button - this should trigger form data API calls
-      const newButton = contactsPage.getByTestId('new-button');
-      await newButton.click();
+      await contactsPage.newButton.click();
       
       // Wait a moment for potential dialog rendering
       await page.waitForTimeout(2000);
