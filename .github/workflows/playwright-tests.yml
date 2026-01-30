@@ -68,8 +68,11 @@ jobs:
           PGPASSWORD: test
           ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
         run: |
-          # Run migrations
-          dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess --startup-project UNOPS.PAO.Server --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
+          # Run migrations on Identity context FIRST (creates AspNetUsers, AspNetRoles, etc.)
+          dotnet ef database update --project UNOPS.PAO.DataAccess --startup-project UNOPS.PAO.Server --context PAOIdentityDbContext --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
+          
+          # Run migrations on main application context SECOND (depends on Identity tables)
+          dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess --startup-project UNOPS.PAO.Server --context UNOPSAppDbContext --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
           
           # Create test user
           psql -h localhost -p 5432 -U test -d TestDb -f "setup-test-user.sql"
@@ -195,7 +198,12 @@ jobs:
           PGPASSWORD: test
           ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
         run: |
-          dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess --startup-project UNOPS.PAO.Server --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
+          # Run migrations on Identity context FIRST
+          dotnet ef database update --project UNOPS.PAO.DataAccess --startup-project UNOPS.PAO.Server --context PAOIdentityDbContext --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
+          
+          # Run migrations on main application context SECOND
+          dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess --startup-project UNOPS.PAO.Server --context UNOPSAppDbContext --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
+          
           psql -h localhost -p 5432 -U test -d TestDb -f "setup-test-user.sql"
           psql -h localhost -p 5432 -U test -d TestDb -f "setup-opportunity-permissions.sql"
       
@@ -292,7 +300,12 @@ jobs:
           PGPASSWORD: test
           ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
         run: |
-          dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess --startup-project UNOPS.PAO.Server --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
+          # Run migrations on Identity context FIRST
+          dotnet ef database update --project UNOPS.PAO.DataAccess --startup-project UNOPS.PAO.Server --context PAOIdentityDbContext --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
+          
+          # Run migrations on main application context SECOND
+          dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess --startup-project UNOPS.PAO.Server --context UNOPSAppDbContext --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
+          
           psql -h localhost -p 5432 -U test -d TestDb -f "setup-test-user.sql"
           psql -h localhost -p 5432 -U test -d TestDb -f "setup-opportunity-permissions.sql"
       
