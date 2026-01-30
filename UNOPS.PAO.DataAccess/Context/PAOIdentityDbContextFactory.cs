@@ -1,20 +1,19 @@
-namespace UNOPS.PAO.UNOPSDataAccess.Context;
+namespace UNOPS.PAO.DataAccess.Context;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using System;
 using System.IO;
-using UNOPS.PAO.DataAccess.Services;
-using UNOPS.PAO.DataAccess.Interfaces;
 
 /// <summary>
-/// Design-time factory for UNOPSAppDbContext to enable EF Core migrations
+/// Design-time factory for PAOIdentityDbContext to enable EF Core migrations
 /// </summary>
-public class UNOPSAppDbContextFactory : IDesignTimeDbContextFactory<UNOPSAppDbContext>
+public class PAOIdentityDbContextFactory : IDesignTimeDbContextFactory<PAOIdentityDbContext>
 {
-    public UNOPSAppDbContext CreateDbContext(string[] args)
+    public PAOIdentityDbContext CreateDbContext(string[] args)
     {
         // Build configuration
         var configuration = new ConfigurationBuilder()
@@ -31,19 +30,19 @@ public class UNOPSAppDbContextFactory : IDesignTimeDbContextFactory<UNOPSAppDbCo
         Console.WriteLine($"[Design-Time Factory] Using connection string: {MaskPassword(connectionString)}");
 
         // Build DbContext options
-        var optionsBuilder = new DbContextOptionsBuilder<UNOPSAppDbContext>();
+        var optionsBuilder = new DbContextOptionsBuilder<PAOIdentityDbContext>();
         optionsBuilder.UseNpgsql(connectionString, npgsqlOptions =>
         {
-            npgsqlOptions.MigrationsAssembly("UNOPS.PAO.UNOPSDataAccess");
+            npgsqlOptions.MigrationsAssembly("UNOPS.PAO.DataAccess");
             npgsqlOptions.EnableRetryOnFailure(maxRetryCount: 3);
         });
 
-        // Create minimal dependencies for design-time context creation
-        // These are only used during migrations, not at runtime
-        var userService = new UserResolverService<int>(null); // No HttpContext at design-time
-        var schema = new DefaultDbContextSchema(); // Use default schema
+        // Create a minimal service provider for the context
+        // This is only used during migrations, not at runtime
+        var serviceCollection = new ServiceCollection();
+        var serviceProvider = serviceCollection.BuildServiceProvider();
 
-        return new UNOPSAppDbContext(optionsBuilder.Options, userService, schema);
+        return new PAOIdentityDbContext(optionsBuilder.Options, serviceProvider);
     }
 
     private static string MaskPassword(string connectionString)
@@ -61,13 +60,5 @@ public class UNOPSAppDbContextFactory : IDesignTimeDbContextFactory<UNOPSAppDbCo
         {
             return "[connection string parse error]";
         }
-    }
-
-    /// <summary>
-    /// Default schema implementation for design-time context creation
-    /// </summary>
-    private class DefaultDbContextSchema : IDbContextSchema
-    {
-        public string GetSchema() => "public";
     }
 }
