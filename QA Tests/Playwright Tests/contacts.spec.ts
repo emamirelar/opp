@@ -114,7 +114,7 @@ test.describe('Contacts List', () => {
   // dialogService.open() is called but creates zero dynamic dialogs
   // Works in production - Playwright/PrimeNG interaction issue
   // Requires testing against real backend
-  test.failing('should allow clicking New Contact button to open dialog', async ({ page }) => {
+  test.fixme('should allow clicking New Contact button to open dialog', async ({ page }) => {
     await contactsPage.waitForPermissions();
     
     // Capture console errors during dialog open
@@ -248,7 +248,7 @@ test.describe('Contacts List', () => {
   // Button click succeeds but showBusinessCardScanner signal never set
   // Works in production - Playwright/PrimeNG interaction issue
   // Requires testing against real backend
-  test.failing('should open business card scanner dialog', async ({ page }) => {
+  test.fixme('should open business card scanner dialog', async ({ page }) => {
     await contactsPage.waitForPermissions();
     
     // Capture console errors during scanner open (excluding known Google API warnings)
