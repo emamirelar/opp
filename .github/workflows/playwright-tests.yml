@@ -58,6 +58,9 @@ jobs:
         working-directory: ./UNOPS.PAO.ClientApp
         run: npx playwright install --with-deps chromium
       
+      - name: Install EF Core tools
+        run: dotnet tool install --global dotnet-ef
+      
       - name: Setup test database
         env:
           PGPASSWORD: test
@@ -170,6 +173,9 @@ jobs:
           dotnet restore
           dotnet build --no-restore --configuration Release
       
+      - name: Install EF Core tools
+        run: dotnet tool install --global dotnet-ef
+      
       - name: Install dependencies
         working-directory: ./UNOPS.PAO.ClientApp
         run: |
@@ -258,6 +264,9 @@ jobs:
         run: |
           dotnet restore
           dotnet build --no-restore --configuration Release
+      
+      - name: Install EF Core tools
+        run: dotnet tool install --global dotnet-ef
       
       - name: Install dependencies
         working-directory: ./UNOPS.PAO.ClientApp
