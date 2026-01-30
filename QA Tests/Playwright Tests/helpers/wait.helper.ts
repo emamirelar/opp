@@ -180,3 +180,48 @@ export async function waitForAngularReady(page: Page): Promise<void> {
     console.warn('[Wait] Angular ready check timed out (non-critical):', error);
   }
 }
+
+/**
+ * Wait for PrimeNG dialog to be visible and ready
+ * @param page - Playwright page object
+ * @param timeout - Optional timeout in milliseconds
+ */
+export async function waitForDialog(page: Page, timeout?: number): Promise<void> {
+  const maxTimeout = timeout || getTimeout('default');
+  
+  console.log('[Wait] Waiting for dialog to appear...');
+  
+  // Wait for p-dialog to be visible
+  const dialog = page.locator('p-dialog[role="dialog"], [role="dialog"]').first();
+  await dialog.waitFor({ state: 'visible', timeout: maxTimeout });
+  
+  // Wait for dialog animation to complete
+  await page.waitForTimeout(500);
+  
+  console.log('[Wait] Dialog is visible and ready');
+}
+
+/**
+ * Wait for table data to load
+ * @param page - Playwright page object
+ * @param timeout - Optional timeout in milliseconds
+ */
+export async function waitForTableData(page: Page, timeout?: number): Promise<void> {
+  const maxTimeout = timeout || getTimeout('default');
+  
+  console.log('[Wait] Waiting for table data to load...');
+  
+  // Wait for loading to complete first
+  await waitForLoadingToComplete(page);
+  
+  // Wait for table body to be present
+  const tableBody = page.locator('tbody, .p-datatable-tbody').first();
+  await tableBody.waitFor({ state: 'attached', timeout: maxTimeout }).catch(() => {
+    console.log('[Wait] Table body not found - may be empty table');
+  });
+  
+  // Small buffer for data rendering
+  await page.waitForTimeout(500);
+  
+  console.log('[Wait] Table data loaded');
+}

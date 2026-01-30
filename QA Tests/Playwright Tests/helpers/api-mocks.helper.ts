@@ -23,6 +23,9 @@ export async function setupAPIMocks(page: Page): Promise<void> {
         appName: 'Opportunity+',
         version: '1.0.0',
         environment: 'test',
+        // Mock Google API credentials to suppress console errors
+        googleClientId: 'mock-google-client-id-for-testing',
+        googleApiKey: 'mock-google-api-key-for-testing',
       }),
     });
   });
