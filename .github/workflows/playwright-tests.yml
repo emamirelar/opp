@@ -50,13 +50,15 @@ jobs:
       - name: Build .NET solution
         run: dotnet build --no-restore --configuration Release
       
-      - name: Install Angular dependencies
-        working-directory: ./UNOPS.PAO.ClientApp
+      - name: Install root dependencies (Playwright)
         run: npm ci
       
       - name: Install Playwright Browsers
-        working-directory: ./UNOPS.PAO.ClientApp
         run: npx playwright install --with-deps chromium
+      
+      - name: Install Angular dependencies
+        working-directory: ./UNOPS.PAO.ClientApp
+        run: npm ci
       
       - name: Install EF Core tools
         run: dotnet tool install --global dotnet-ef
@@ -91,19 +93,20 @@ jobs:
         env:
           ASPNETCORE_ENVIRONMENT: Development
           ASPNETCORE_URLS: http://localhost:5159
+          ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
       
       - name: Run Playwright Tests
-        working-directory: ./UNOPS.PAO.ClientApp
         run: |
           npx playwright test \
-            contacts.spec.ts \
-            partners.spec.ts \
-            interactions.spec.ts \
-            opportunities.spec.ts \
+            "QA Tests/Playwright Tests/contacts.spec.ts" \
+            "QA Tests/Playwright Tests/partners.spec.ts" \
+            "QA Tests/Playwright Tests/interactions.spec.ts" \
+            "QA Tests/Playwright Tests/opportunities.spec.ts" \
             --project=chromium \
             --workers=1
         env:
           CI: true
+          API_URL: http://localhost:5159
       
       - name: Upload Playwright Report
         uses: actions/upload-artifact@v4
@@ -177,11 +180,15 @@ jobs:
       - name: Install EF Core tools
         run: dotnet tool install --global dotnet-ef
       
-      - name: Install dependencies
+      - name: Install root dependencies (Playwright)
+        run: npm ci
+      
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+      
+      - name: Install Angular dependencies
         working-directory: ./UNOPS.PAO.ClientApp
-        run: |
-          npm ci
-          npx playwright install --with-deps chromium
+        run: npm ci
       
       - name: Setup test database
         env:
@@ -205,15 +212,15 @@ jobs:
         env:
           ASPNETCORE_ENVIRONMENT: Development
           ASPNETCORE_URLS: http://localhost:5159
+          ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
       
       - name: Run Detail Page Tests
-        working-directory: ./UNOPS.PAO.ClientApp
         run: |
           npx playwright test \
-            partner-item-basic.spec.ts \
-            contact-item-basic.spec.ts \
-            interaction-item-basic.spec.ts \
-            opportunity-item-basic.spec.ts \
+            "QA Tests/Playwright Tests/partner-item-basic.spec.ts" \
+            "QA Tests/Playwright Tests/contact-item-basic.spec.ts" \
+            "QA Tests/Playwright Tests/interaction-item-basic.spec.ts" \
+            "QA Tests/Playwright Tests/opportunity-item-basic.spec.ts" \
             --project=chromium \
             --workers=1
       
@@ -270,11 +277,15 @@ jobs:
       - name: Install EF Core tools
         run: dotnet tool install --global dotnet-ef
       
-      - name: Install dependencies
+      - name: Install root dependencies (Playwright)
+        run: npm ci
+      
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+      
+      - name: Install Angular dependencies
         working-directory: ./UNOPS.PAO.ClientApp
-        run: |
-          npm ci
-          npx playwright install --with-deps chromium
+        run: npm ci
       
       - name: Setup test database
         env:
@@ -298,14 +309,14 @@ jobs:
         env:
           ASPNETCORE_ENVIRONMENT: Development
           ASPNETCORE_URLS: http://localhost:5159
+          ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
       
       - name: Run Navigation & Dashboard Tests
-        working-directory: ./UNOPS.PAO.ClientApp
         run: |
           npx playwright test \
-            home.spec.ts \
-            dashboard.spec.ts \
-            navigation-tabs.spec.ts \
+            "QA Tests/Playwright Tests/home.spec.ts" \
+            "QA Tests/Playwright Tests/dashboard.spec.ts" \
+            "QA Tests/Playwright Tests/navigation-tabs.spec.ts" \
             --project=chromium \
             --workers=1
       
