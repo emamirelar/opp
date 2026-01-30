@@ -84,11 +84,6 @@ Implemented **conditional compilation** strategy that allows the application to 
 
 **Changes:**
 ```xml
-<PropertyGroup>
-  <!-- Define compilation symbol when workflow projects are available -->
-  <DefineConstants Condition="Exists('..\UNOPS.Workflow\UNOPS.Workflow.Business\UNOPS.Workflow.Business.csproj')">$(DefineConstants);WORKFLOW_AVAILABLE</DefineConstants>
-</PropertyGroup>
-
 <ItemGroup>
   <!-- Workflow submodule references - only include if project files exist -->
   <ProjectReference Include="..\UNOPS.Workflow\UNOPS.Workflow.DataAccess\UNOPS.Workflow.DataAccess.csproj" 
@@ -102,56 +97,36 @@ Implemented **conditional compilation** strategy that allows the application to 
 
 **Changes:**
 ```csharp
-#if WORKFLOW_AVAILABLE
-using UNOPS.PAO.Business.Workflow.Seeders;
-using UNOPS.Workflow.DataAccess;
-#endif
+// Removed workflow using statements:
+// - using UNOPS.PAO.Business.Workflow.Seeders;
+// - using UNOPS.Workflow.DataAccess;
 
-// In Main method:
-#if WORKFLOW_AVAILABLE
-        // Ensure workflow schema is created and migrations are applied
-        using (var scope = app.Services.CreateScope())
-        {
-            var workflowContext = scope.ServiceProvider.GetRequiredService<WorkflowDbContext>();
-            workflowContext.EnsureWorkflowSchemaCreated();
-        }
-        
-        // Seed workflow configuration data
-        await app.Services.SeedStateMachineStageChangesAsync();
-        await app.Services.SeedStateMachineStageChangeRolesAsync();
-#endif
+// Removed workflow seeding code from Main method:
+// - WorkflowDbContext initialization
+// - SeedStateMachineStageChangesAsync()
+// - SeedStateMachineStageChangeRolesAsync()
 ```
 
 **File:** `Startup.cs`
 
 **Changes:**
 ```csharp
-#if WORKFLOW_AVAILABLE
-using UNOPS.PAO.Business.Workflow.Adapters;
-using UNOPS.Workflow.DataAccess;
-#endif
+// Removed workflow using statements:
+// - using UNOPS.PAO.Business.Workflow.Adapters;
+// - using UNOPS.Workflow.DataAccess;
 
-// In ConfigureDataAccess method:
-#if WORKFLOW_AVAILABLE
-        // Register WorkflowDbContext and workflow services
-        services.AddPaoWorkflowServices(options =>
-        {
-            options.UsePostgreSqlStorage(optimizedConnectionString, "workflow");
-        });
-
-        services.AddDbContext<UNOPS.Workflow.DataAccess.WorkflowDbContext>(options =>
-            options.UseNpgsql(dataSource, npgsql =>
-            {
-                npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "workflow");
-            }));
-#endif
+// Removed workflow service registration from ConfigureDataAccess:
+// - services.AddPaoWorkflowServices()
+// - services.AddDbContext<WorkflowDbContext>()
 ```
 
 **Effect:**
-- `WORKFLOW_AVAILABLE` symbol only defined when workflow projects exist
-- Workflow using statements only included when symbol is defined
-- Workflow service registration only executed when symbol is defined
-- Application starts successfully without workflow when symbol is not defined
+- Workflow code completely removed from Server project
+- Conditional project references still in place (for future use)
+- Application builds and runs successfully without workflow
+- Workflow functionality disabled in all environments until manually re-added
+
+**Note:** This simplified approach removes workflow entirely rather than using conditional compilation. When workflow is needed in production, the code must be manually re-added to Program.cs and Startup.cs.
 
 ---
 
