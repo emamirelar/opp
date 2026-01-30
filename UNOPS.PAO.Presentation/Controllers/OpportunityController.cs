@@ -1796,7 +1796,7 @@ public class OpportunityController : BaseController
     }
 
     /// <summary>
-    /// Searches for Products & Services (Outputs) using AI semantic search
+    /// Searches for Products &amp; Services (Outputs) using AI semantic search
     /// Combines text similarity and embedding-based search for best results
     /// </summary>
     /// <param name="request">Search request with text query</param>
