@@ -42,10 +42,6 @@ using System.IO;
 using UNOPS.PAO.Presentation.Security;
 using UNOPS.PAO.Business.Services;
 using Google.Apis.Auth.OAuth2;
-#if WORKFLOW_AVAILABLE
-using UNOPS.PAO.Business.Workflow.Adapters;
-using UNOPS.Workflow.DataAccess;
-#endif
 
 namespace UNOPS.PAO.Server;
 
@@ -673,32 +669,12 @@ public class Startup
                 .UseNpgsql(dataSource)
                 .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
 
-#if WORKFLOW_AVAILABLE
-        // ==========================================
-        // Workflow Submodule - DbContext and Services
-        // ==========================================
-        // Registers WorkflowDbContext with a separate "workflow" schema.
-        // Auto-creates schema and applies migrations on startup (like Hangfire).
-        // Uses the same connection string as the main AppDbContext.
-        // Also registers PAO-specific implementations:
-        // - PaoWorkflowUserContext (IWorkflowUserContext)
-        // - PaoEntityStageProvider (IEntityStageProvider)
-        // - PaoWorkflowApproverProvider (IWorkflowApproverProvider)
-        // - PaoWorkflowNotificationService (IWorkflowNotificationService)
-        services.AddPaoWorkflowServices(options =>
-        {
-            options.UsePostgreSqlStorage(optimizedConnectionString, "workflow");
-        });
-
-        // Override WorkflowDbContext registration to use dataSource (with IAM auth support)
-        // This ensures WorkflowDbContext uses the same IAM authentication as other DbContexts
-        services.AddDbContext<UNOPS.Workflow.DataAccess.WorkflowDbContext>(options =>
-            options
-                .UseNpgsql(dataSource, npgsql =>
-                {
-                    npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "workflow");
-                }));
-#endif
+        // NOTE: Workflow services registration removed to support CI/CD builds without workflow submodule
+        // When workflow submodule is available locally:
+        // 1. Uncomment workflow project references in UNOPS.PAO.Server.csproj
+        // 2. Add back workflow service registration here
+        // 3. Add back workflow seeding in Program.cs Main method
+        // See UNOPS.Workflow/README.md for full workflow integration instructions
 
     }
     private string? GetConnectionStringFromSecretManager()

@@ -34,11 +34,6 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
   </ItemGroup>
 
-  <PropertyGroup>
-    <!-- Define compilation symbol when workflow projects are available -->
-    <DefineConstants Condition="Exists('..\UNOPS.Workflow\UNOPS.Workflow.Business\UNOPS.Workflow.Business.csproj')">$(DefineConstants);WORKFLOW_AVAILABLE</DefineConstants>
-  </PropertyGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\UNOPS.PAO.Presentation\UNOPS.PAO.Presentation.csproj" />
     <ProjectReference Include="..\UNOPS.PAO.UNOPSBusiness\UNOPS.PAO.UNOPSBusiness.csproj" />
