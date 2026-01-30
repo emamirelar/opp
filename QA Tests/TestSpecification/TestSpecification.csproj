@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -8,8 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../UNOPS.PAO.Domain/UNOPS.PAO.Domain.csproj" />
-    <ProjectReference Include="../UNOPS.PAO.Models/UNOPS.PAO.Models.csproj" />
+    <ProjectReference Include="../../UNOPS.PAO.Domain/UNOPS.PAO.Domain.csproj" />
+    <ProjectReference Include="../../UNOPS.PAO.Models/UNOPS.PAO.Models.csproj" />
   </ItemGroup>
 
   <ItemGroup>
