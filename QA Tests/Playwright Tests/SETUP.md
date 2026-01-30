@@ -424,7 +424,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: playwright-report/
+          path: QA Tests/Playwright Tests/playwright-report/
 ```
 
 ### Environment Variables in CI

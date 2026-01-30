@@ -413,7 +413,8 @@ Include/
 
 # Playwright test results
 /test-results/
-/playwright-report/
+/QA Tests/Playwright Tests/test-results/
+/QA Tests/Playwright Tests/playwright-report/
 /playwright/.cache/
 
 # Node modules

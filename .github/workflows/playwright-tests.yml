@@ -1,0 +1,306 @@
+name: Playwright Tests
+
+on:
+  push:
+    branches: [ main, dev, QA-Tests ]
+  pull_request:
+    branches: [ main, dev ]
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  test:
+    name: Run Playwright Tests
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: TestDb
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: UNOPS.PAO.ClientApp/package-lock.json
+      
+      - name: Restore .NET dependencies
+        run: dotnet restore
+      
+      - name: Build .NET solution
+        run: dotnet build --no-restore --configuration Release
+      
+      - name: Install Angular dependencies
+        working-directory: ./UNOPS.PAO.ClientApp
+        run: npm ci
+      
+      - name: Install Playwright Browsers
+        working-directory: ./UNOPS.PAO.ClientApp
+        run: npx playwright install --with-deps chromium
+      
+      - name: Setup test database
+        env:
+          PGPASSWORD: test
+        run: |
+          # Run migrations
+          dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess --startup-project UNOPS.PAO.Server -- --environment=Test
+          
+          # Create test user
+          psql -h localhost -p 5432 -U test -d TestDb -f "setup-test-user.sql"
+          
+          # Setup Opportunity permissions
+          psql -h localhost -p 5432 -U test -d TestDb -f "setup-opportunity-permissions.sql"
+      
+      - name: Start .NET backend
+        run: |
+          cd UNOPS.PAO.Server
+          dotnet run --no-build --configuration Release &
+          echo "Waiting for backend to start..."
+          for i in {1..30}; do
+            if curl -f http://localhost:5159/health > /dev/null 2>&1; then
+              echo "Backend is ready!"
+              break
+            fi
+            echo "Waiting... ($i/30)"
+            sleep 2
+          done
+        env:
+          ASPNETCORE_ENVIRONMENT: Development
+          ASPNETCORE_URLS: http://localhost:5159
+      
+      - name: Run Playwright Tests
+        working-directory: ./UNOPS.PAO.ClientApp
+        run: |
+          npx playwright test \
+            contacts.spec.ts \
+            partners.spec.ts \
+            interactions.spec.ts \
+            opportunities.spec.ts \
+            --project=chromium \
+            --workers=1
+        env:
+          CI: true
+      
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: QA Tests/Playwright Tests/playwright-report/
+          retention-days: 30
+      
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: QA Tests/Playwright Tests/test-results/
+          retention-days: 30
+      
+      - name: Post Test Summary
+        if: always()
+        run: |
+          echo "## Playwright Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f "QA Tests/Playwright Tests/playwright-report/index.html" ]; then
+            echo "✅ Tests completed. View the full report in the artifacts." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Tests may have failed to generate a report." >> $GITHUB_STEP_SUMMARY
+          fi
+
+  test-detail-pages:
+    name: Run Detail Page Tests
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    needs: test  # Run after main tests pass
+    
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: TestDb
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: UNOPS.PAO.ClientApp/package-lock.json
+      
+      - name: Restore and build
+        run: |
+          dotnet restore
+          dotnet build --no-restore --configuration Release
+      
+      - name: Install dependencies
+        working-directory: ./UNOPS.PAO.ClientApp
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      
+      - name: Setup test database
+        env:
+          PGPASSWORD: test
+        run: |
+          dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess --startup-project UNOPS.PAO.Server -- --environment=Test
+          psql -h localhost -p 5432 -U test -d TestDb -f "setup-test-user.sql"
+          psql -h localhost -p 5432 -U test -d TestDb -f "setup-opportunity-permissions.sql"
+      
+      - name: Start backend
+        run: |
+          cd UNOPS.PAO.Server
+          dotnet run --no-build --configuration Release &
+          for i in {1..30}; do
+            if curl -f http://localhost:5159/health > /dev/null 2>&1; then
+              break
+            fi
+            sleep 2
+          done
+        env:
+          ASPNETCORE_ENVIRONMENT: Development
+          ASPNETCORE_URLS: http://localhost:5159
+      
+      - name: Run Detail Page Tests
+        working-directory: ./UNOPS.PAO.ClientApp
+        run: |
+          npx playwright test \
+            partner-item-basic.spec.ts \
+            contact-item-basic.spec.ts \
+            interaction-item-basic.spec.ts \
+            opportunity-item-basic.spec.ts \
+            --project=chromium \
+            --workers=1
+      
+      - name: Upload Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-detail-pages
+          path: QA Tests/Playwright Tests/playwright-report/
+          retention-days: 30
+
+  test-navigation:
+    name: Run Navigation & Dashboard Tests
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    needs: test  # Run after main tests pass
+    
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: TestDb
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: UNOPS.PAO.ClientApp/package-lock.json
+      
+      - name: Restore and build
+        run: |
+          dotnet restore
+          dotnet build --no-restore --configuration Release
+      
+      - name: Install dependencies
+        working-directory: ./UNOPS.PAO.ClientApp
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      
+      - name: Setup test database
+        env:
+          PGPASSWORD: test
+        run: |
+          dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess --startup-project UNOPS.PAO.Server -- --environment=Test
+          psql -h localhost -p 5432 -U test -d TestDb -f "setup-test-user.sql"
+          psql -h localhost -p 5432 -U test -d TestDb -f "setup-opportunity-permissions.sql"
+      
+      - name: Start backend
+        run: |
+          cd UNOPS.PAO.Server
+          dotnet run --no-build --configuration Release &
+          for i in {1..30}; do
+            if curl -f http://localhost:5159/health > /dev/null 2>&1; then
+              break
+            fi
+            sleep 2
+          done
+        env:
+          ASPNETCORE_ENVIRONMENT: Development
+          ASPNETCORE_URLS: http://localhost:5159
+      
+      - name: Run Navigation & Dashboard Tests
+        working-directory: ./UNOPS.PAO.ClientApp
+        run: |
+          npx playwright test \
+            home.spec.ts \
+            dashboard.spec.ts \
+            navigation-tabs.spec.ts \
+            --project=chromium \
+            --workers=1
+      
+      - name: Upload Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-navigation
+          path: QA Tests/Playwright Tests/playwright-report/
+          retention-days: 30

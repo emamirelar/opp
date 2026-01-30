@@ -13,6 +13,8 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './QA Tests/Playwright Tests',
+  /* Output directory for test results and reports */
+  outputDir: './QA Tests/Playwright Tests/test-results',
   /* Maximum time one test can run for */
   timeout: 120000,  // 120 seconds (2 minutes) per test - increased for API mocking delays
   /* Maximum time expect() should wait for the condition to be met */
@@ -28,7 +30,7 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
+  reporter: [['html', { outputFolder: './QA Tests/Playwright Tests/playwright-report' }]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
