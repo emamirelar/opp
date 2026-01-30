@@ -2957,7 +2957,7 @@
   "title.addCollaborator": "Adicionar Colaborador",
   "title.editCollaborator": "Editar Colaborador",
   "title.addExternalStakeholder": "Adicionar Parte Interessada Externa",
-  "confirmation.removeStakeholder": "Remover Membro da Equipe",
+  "confirmation.removeStakeholder": "Remover Parte Interessada Interna",
   "confirmation.removeCollaborator": "Remover Colaborador",
   "confirmation.removeExternalStakeholder": "Remover Parte Interessada Externa",
   "confirmation.discardChanges": "Descartar AlteraÃ§Ãµes?",
