@@ -68,6 +68,6 @@ public class UNOPSAppDbContextFactory : IDesignTimeDbContextFactory<UNOPSAppDbCo
     /// </summary>
     private class DefaultDbContextSchema : IDbContextSchema
     {
-        public string GetSchema() => "public";
+        public string Schema => "public";
     }
 }
