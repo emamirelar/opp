@@ -110,7 +110,11 @@ test.describe('Contacts List', () => {
     expect(true).toBeTruthy();
   });
   
-  test('should allow clicking New Contact button to open dialog', async ({ page }) => {
+  // QA-008: PrimeNG DynamicDialog not created in Playwright tests
+  // dialogService.open() is called but creates zero dynamic dialogs
+  // Works in production - Playwright/PrimeNG interaction issue
+  // Requires testing against real backend
+  test.failing('should allow clicking New Contact button to open dialog', async ({ page }) => {
     await contactsPage.waitForPermissions();
     
     // Capture console errors during dialog open
@@ -139,22 +143,22 @@ test.describe('Contacts List', () => {
       // Try to verify dialog opened
       const dialogVisible = await page.locator('p-dialog[role="dialog"]:not([role="alertdialog"])').first().isVisible().catch(() => false);
       
-      if (dialogVisible && dynamicDialogs > 0) {
-        console.log('[Test] ✅ New Contact dialog opened successfully');
-        expect(dialogVisible).toBe(true);
-      } else if (dynamicDialogs === 0) {
-        // ❌ KNOWN ISSUE: PrimeNG DynamicDialog not creating in test environment
-        console.error('[Test] ❌ KNOWN ISSUE: dialogService.open() did not create dynamic dialog');
-        console.error('[Test] This is a PrimeNG DynamicDialog initialization issue in Playwright');
-        console.error('[Test] See: BUG_REPORT_DIALOGS.md for full analysis');
+      // QA-008: Expect failure - dialog won't be created
+      console.log(`[Test Debug] Dialog elements: ${allDialogs}, Dynamic dialogs: ${dynamicDialogs}, Overlays: ${dialogOverlay}`);
+      
+      if (dynamicDialogs === 0) {
+        // This is the expected failure state
+        console.error('[Test] ❌ QA-008: dialogService.open() did not create dynamic dialog');
+        console.error('[Test] PrimeNG DynamicDialog initialization issue in Playwright');
+        console.error('[Test] Works in production - requires real backend testing');
         console.error(`[Test Debug] Console errors: ${consoleErrors.length > 0 ? consoleErrors.join('; ') : 'none'}`);
         
-        // Test passes but issue is documented
-        // TODO: This test should be marked as .failing() or tested against real backend
-        expect(true).toBeTruthy();
+        // Explicitly fail - this is what we expect with .failing()
+        expect(dynamicDialogs).toBeGreaterThan(0); // Will fail, as expected
       } else {
-        console.warn('[Test] ⚠️ Dynamic dialog exists but not visible');
-        expect(true).toBeTruthy();
+        // If this passes, the test will be marked as unexpectedly passing
+        console.log('[Test] ⚠️ Dialog created unexpectedly - QA-008 may be resolved!');
+        expect(dialogVisible).toBe(true);
       }
     } else {
       expect(true).toBeTruthy();
@@ -240,7 +244,11 @@ test.describe('Contacts List', () => {
     expect(true).toBeTruthy();
   });
   
-  test('should open business card scanner dialog', async ({ page }) => {
+  // QA-007: Business Card Scanner signal not set in Playwright tests
+  // Button click succeeds but showBusinessCardScanner signal never set
+  // Works in production - Playwright/PrimeNG interaction issue
+  // Requires testing against real backend
+  test.failing('should open business card scanner dialog', async ({ page }) => {
     await contactsPage.waitForPermissions();
     
     // Capture console errors during scanner open (excluding known Google API warnings)
@@ -291,32 +299,25 @@ test.describe('Contacts List', () => {
       console.log('[Test] Waiting for component rendering...');
       await page.waitForTimeout(3000);
       
-      // Check if component exists in DOM
+      // QA-007: Expect failure - component won't be added to DOM
       const componentCount = await page.locator('app-business-card-scanner').count();
       console.log(`[Test Debug] Scanner components in DOM: ${componentCount}`);
       
-      if (componentCount > 0) {
-        console.log('[Test] ✅ Business card scanner component added to DOM (signal set successfully)');
-        expect(componentCount).toBeGreaterThan(0);
-        
-        // Additional check: is it actually visible?
-        const scannerComponent = page.locator('app-business-card-scanner').first();
-        const scannerVisible = await scannerComponent.isVisible().catch(() => false);
-        console.log(`[Test Debug] Scanner component visible: ${scannerVisible}`);
-        
-        if (!scannerVisible) {
-          console.warn('[Test] ⚠️ Component in DOM but not visible (may be CSS/z-index/animation issue)');
-        }
-      } else {
-        console.error('[Test] ❌ Scanner component not in DOM after click');
-        console.error('[Test] This means showBusinessCardScanner signal was NOT set');
+      if (componentCount === 0) {
+        // This is the expected failure state
+        console.error('[Test] ❌ QA-007: Scanner component not in DOM after click');
+        console.error('[Test] showBusinessCardScanner signal was NOT set');
+        console.error('[Test] Works in production - Playwright/PrimeNG interaction issue');
         console.error(`[Test Debug] Console errors: ${consoleErrors.length > 0 ? consoleErrors.join('; ') : 'none'}`);
         
-        // Check if the button actually exists and has the right event handler
-        const buttonHTML = await scannerButton.evaluate(el => el.outerHTML);
-        console.log(`[Test Debug] Button HTML: ${buttonHTML.substring(0, 200)}...`);
-        
-        expect(true).toBeTruthy();
+        // Explicitly fail - this is what we expect with .failing()
+        expect(componentCount).toBeGreaterThan(0); // Will fail, as expected
+      } else {
+        // If this passes, the test will be marked as unexpectedly passing
+        console.log('[Test] ⚠️ Scanner component created unexpectedly - QA-007 may be resolved!');
+        const scannerComponent = page.locator('app-business-card-scanner').first();
+        const scannerVisible = await scannerComponent.isVisible().catch(() => false);
+        expect(scannerVisible).toBe(true);
       }
     } else {
       console.warn('[Test] ⚠️ Scanner button not visible - skipping test');

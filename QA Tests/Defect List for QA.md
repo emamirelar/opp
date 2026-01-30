@@ -10,9 +10,12 @@ This document tracks test infrastructure issues, test implementation bugs, tempo
 
 ## Open QA Issues
 
-**Status**: ✅ All QA infrastructure issues resolved!
+**Status**: ⚠️ 2 open issues - PrimeNG/Playwright compatibility
 
-No open issues at this time. All test infrastructure problems have been addressed.
+| QA ID | Title | Description | Reproduction Steps | Expected Result | Actual Result | Date Logged | Status | Assigned To |
+|-------|-------|-------------|-------------------|-----------------|---------------|-------------|--------|-------------|
+| QA-007 | Business Card Scanner signal not set in Playwright tests | Button click succeeds but `showBusinessCardScanner` signal is never set, preventing component from rendering.<br/><br/>**Root Cause:** Either:<br/>1. Permission check fails silently in test environment<br/>2. PrimeNG button event handler doesn't fire with Playwright force click<br/>3. Angular change detection doesn't run after signal.set()<br/><br/>**Note:** Scanner works in production - this is Playwright/PrimeNG interaction issue.<br/><br/>**Requires Real Backend Testing** | 1. Run: `npx playwright test contacts.spec.ts --grep "scanner"`<br/>2. Observe button click succeeds<br/>3. Check `app-business-card-scanner` count in DOM | Component should appear in DOM after button click | Component count = 0 (signal never set) | 2026-01-30 | Open | QA Team |
+| QA-008 | PrimeNG DynamicDialog not created in Playwright tests | `dialogService.open(ContactEditDialogComponent)` is called and all API mocks work, but zero dynamic dialogs are created.<br/><br/>**Root Cause:** Either:<br/>1. DialogService provider not available in test context<br/>2. DynamicDialog can't instantiate with mocked dependencies<br/>3. PrimeNG DynamicDialog incompatible with Playwright<br/><br/>**Note:** Dialog works in production - this is Playwright/PrimeNG interaction issue.<br/><br/>**Requires Real Backend Testing** | 1. Run: `npx playwright test contacts.spec.ts --grep "New Contact"`<br/>2. Observe button triggers API calls<br/>3. Check `.p-dynamic-dialog` count | Dynamic dialog should be created and visible | `.p-dynamic-dialog` count = 0 (dialog never created) | 2026-01-30 | Open | QA Team |
 
 ---
 
@@ -31,15 +34,15 @@ No open issues at this time. All test infrastructure problems have been addresse
 
 ## QA Issue Statistics
 
-- **Total Open:** 0 ✅
+- **Total Open:** 2 ⚠️ (QA-007, QA-008)
 - **Total In Testing:** 0
 - **Total Resolved:** 6 ✅
-- **Test Infrastructure:** 6 (all resolved)
+- **Test Infrastructure:** 8 (6 resolved, 2 open)
 - **Test Implementation:** 0
 - **Test Tooling:** 0
 - **Temporary Workarounds:** 1 (QA-005 - .NET 9 PipeWriter)
 - **Critical:** 0
-- **High Priority:** 0 (All resolved!)
+- **High Priority:** 2 (QA-007, QA-008 - require real backend testing)
 
 ---
 
@@ -155,6 +158,9 @@ No open issues at this time. All test infrastructure problems have been addresse
 - [x] **QA-006 Resolved:** Test infrastructure cleanup complete ✅
 
 ### Immediate (Next Sprint):
+- [ ] **QA-007, QA-008:** Test dialog functionality against real backend (integration/staging)
+- [ ] **QA-007:** Add console logging to `openBusinessCardScanner()` in Angular component
+- [ ] **QA-008:** Add console logging to `openContactEditDialog()` in Angular component
 - [ ] Wait for DEF-005 Phase 2 (9 managers) - **BLOCKS 1,800 tests** (developer work)
 - [ ] Execute 1,800 unblocked tests after managers created
 - [ ] Audit all Playwright test files for route format (QA-001 pattern)
