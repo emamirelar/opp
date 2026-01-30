@@ -446,52 +446,48 @@ export async function setupCameraMocks(page: Page): Promise<void> {
       navigator.mediaDevices.getUserMedia = async (constraints: MediaStreamConstraints) => {
         console.log('[Camera Mock] getUserMedia called with constraints:', constraints);
         
-        // Create a mock MediaStream
-        const mockStream = {
-          id: 'mock-stream-id',
-          active: true,
-          getTracks: () => [
-            {
-              kind: 'video',
-              id: 'mock-video-track-id',
-              label: 'Mock Camera',
-              enabled: true,
-              muted: false,
-              readyState: 'live',
-              stop: () => {
-                console.log('[Camera Mock] Video track stopped');
-              },
-              getSettings: () => ({
+        // ✅ Create a real MediaStream using canvas captureStream for browser compatibility
+        // This creates an actual MediaStream that can be assigned to video.srcObject
+        const canvas = document.createElement('canvas');
+        canvas.width = 1280;
+        canvas.height = 720;
+        
+        // Draw a test pattern so the video element has content
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.fillStyle = '#1a1a1a';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#00ff00';
+          ctx.font = '48px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText('MOCK CAMERA', canvas.width / 2, canvas.height / 2);
+          ctx.fillText('Test Environment', canvas.width / 2, canvas.height / 2 + 60);
+        }
+        
+        // ✅ captureStream() returns a REAL MediaStream that the browser accepts
+        const stream = canvas.captureStream(30); // 30 FPS
+        
+        // Add required methods to the stream
+        const originalGetTracks = stream.getTracks.bind(stream);
+        stream.getTracks = () => {
+          const tracks = originalGetTracks();
+          // Enhance tracks with required methods if not present
+          tracks.forEach(track => {
+            if (!track.getSettings) {
+              (track as any).getSettings = () => ({
                 width: 1280,
                 height: 720,
                 aspectRatio: 16/9,
                 frameRate: 30,
                 facingMode: 'environment',
-              }),
-              getCapabilities: () => ({
-                width: { min: 640, max: 1920 },
-                height: { min: 480, max: 1080 },
-                frameRate: { min: 15, max: 60 },
-              }),
-              applyConstraints: async () => {},
-              clone: function() { return this; },
-              addEventListener: () => {},
-              removeEventListener: () => {},
-              dispatchEvent: () => true,
-            },
-          ],
-          getVideoTracks: function() { return this.getTracks(); },
-          getAudioTracks: () => [],
-          getTrackById: () => null,
-          addTrack: () => {},
-          removeTrack: () => {},
-          clone: function() { return this; },
-          addEventListener: () => {},
-          removeEventListener: () => {},
-          dispatchEvent: () => true,
-        } as unknown as MediaStream;
+              });
+            }
+          });
+          return tracks;
+        };
         
-        return Promise.resolve(mockStream);
+        console.log('[Camera Mock] Created real MediaStream from canvas');
+        return Promise.resolve(stream);
       };
       
       // Mock enumerateDevices
