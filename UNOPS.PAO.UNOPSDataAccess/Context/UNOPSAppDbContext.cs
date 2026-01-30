@@ -28,11 +28,18 @@ public class UNOPSAppDbContext : AppDbContext
     public DbSet<EntityPermission> EntityPermissions { get; set; }
     
     // Reference data tables
-    public DbSet<LiaisonOffice> LiaisonOffices { get; set; }
+    public new DbSet<LiaisonOffice> LiaisonOffices { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // TEMPORARY: Configure EntityEmbeddings to use bytea instead of vector until pgvector is available
+        modelBuilder.Entity<EntityEmbeddings>(entity =>
+        {
+            entity.Property(e => e.FullEmbedding)
+                  .HasColumnType("bytea");  // Use bytea instead of vector(768)
+        });
 
         // Configure AiPrompt table mapping
         modelBuilder.Entity<AiPrompt>()
@@ -466,7 +473,7 @@ public class UNOPSAppDbContext : AppDbContext
     public new DbSet<UNOPSPartner> Partners { get; set; }
     public new DbSet<UNOPSLink> Links { get; set; }
 
-    public new DbSet<AiChatSession> AiChatSession { get; set; }
+    public DbSet<AiChatSession> AiChatSession { get; set; }
     public new DbSet<UNOPSDocument> Documents { get; set; }
     //Removed OrganizationHierarchies and OrganizationUnitRelationships from UNOPSAppDbContext to avoid shadowing issue as they are already present in AppDbContext
     public new DbSet<UNOPSPartnerTree> PartnerTrees { get; set; }

@@ -1,4 +1,4 @@
-﻿using UNOPS.PAO.Domain.Infrastructure;
+using UNOPS.PAO.Domain.Infrastructure;
 
 namespace UNOPS.PAO.UNOPSDomain.Entities;
 
@@ -12,5 +12,5 @@ public class UNOPSDocument : Domain.Entities.Document
     }
     public bool LinkedFile { get; set; }
 
-    public string GoogleId { get; set; }
+    public new string GoogleId { get; set; }
 }

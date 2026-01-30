@@ -19,9 +19,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
     /// </summary>
     public class UNOPSRiskManager : BaseUNOPSManager, IRiskManager
     {
-        private readonly IMapper _mapper;
-        private readonly UNOPSAppDbContext _context;
-        private readonly IConfiguration _configuration;
+        private new readonly IMapper _mapper;
+        private new readonly UNOPSAppDbContext _context;
+        private new readonly IConfiguration _configuration;
         private readonly BaseRepository<Risk> _riskRepository;
 
         public UNOPSRiskManager(

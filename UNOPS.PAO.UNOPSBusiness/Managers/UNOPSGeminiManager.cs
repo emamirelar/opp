@@ -49,14 +49,12 @@ using UNOPS.PAO.DataAccess.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using UNOPS.PAO.Identity.Entities;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
-using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.Models.Contacts;
 using UNOPS.PAO.Models.Interactions;
 using UNOPS.PAO.Models.Partners;
 using UNOPS.PAO.Models.AI;
 using UNOPS.PAO.Models.Shared;
 using UNOPS.PAO.Models.Opportunities;
-using UNOPS.PAO.Domain.Infrastructure;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
