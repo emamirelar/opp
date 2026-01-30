@@ -306,7 +306,6 @@ paket-files/
 
 # CodeRush personal settings
 .cr/personal
-/UNOPS.PAO.ClientApp/package-lock.json
 /UNOPS.VCEP/appsettings.Development.json
 */.angular/*
 */.vscode/*
