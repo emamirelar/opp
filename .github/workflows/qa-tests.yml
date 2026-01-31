@@ -16,7 +16,8 @@ env:
 jobs:
   fast-tests:
     name: Fast Logic Tests
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     
     steps:
     - name: Checkout code
@@ -29,18 +30,26 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
     
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+    
     - name: Check if FastTests project exists
       id: check-fast-tests
       run: |
-        $projectPath = "QA Tests/C# Tests/UNOPS.PAO.FastTests/UNOPS.PAO.FastTests.csproj"
-        if (Test-Path $projectPath) {
-          echo "exists=true" >> $env:GITHUB_OUTPUT
+        projectPath="QA Tests/C# Tests/UNOPS.PAO.FastTests/UNOPS.PAO.FastTests.csproj"
+        if [ -f "$projectPath" ]; then
+          echo "exists=true" >> $GITHUB_OUTPUT
           echo "✅ FastTests project found at: $projectPath"
-        } else {
-          echo "exists=false" >> $env:GITHUB_OUTPUT
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
           echo "ℹ️ FastTests project not found at: $projectPath"
           echo "::notice::FastTests will be available after the QA Tests PR is merged to this branch"
-        }
+        fi
     
     - name: Restore dependencies
       if: steps.check-fast-tests.outputs.exists == 'true'
@@ -55,49 +64,49 @@ jobs:
       if: steps.check-fast-tests.outputs.exists == 'true'
       continue-on-error: true
       run: |
-        $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
-        New-Item -ItemType Directory -Force -Path $testResultsDir | Out-Null
-        dotnet test "QA Tests/C# Tests/UNOPS.PAO.FastTests/UNOPS.PAO.FastTests.csproj" `
-          --no-build `
-          --configuration Release `
-          --verbosity normal `
-          --logger "trx;LogFileName=fast-tests.trx" `
-          --results-directory $testResultsDir `
+        testResultsDir="${{ github.workspace }}/TestResults"
+        mkdir -p "$testResultsDir"
+        dotnet test "QA Tests/C# Tests/UNOPS.PAO.FastTests/UNOPS.PAO.FastTests.csproj" \
+          --no-build \
+          --configuration Release \
+          --verbosity normal \
+          --logger "trx;LogFileName=fast-tests.trx" \
+          --results-directory "$testResultsDir" \
           --collect:"XPlat Code Coverage"
     
     - name: List Test Results (Debug)
       if: steps.check-fast-tests.outputs.exists == 'true' && always()
       run: |
-        $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
+        testResultsDir="${{ github.workspace }}/TestResults"
         echo "Looking for test results in: $testResultsDir"
-        if (Test-Path $testResultsDir) {
-          Get-ChildItem -Path $testResultsDir -Recurse -Filter "*.trx" -ErrorAction SilentlyContinue | ForEach-Object { 
-            Write-Host "Found: $($_.FullName)"
-          }
-          $trxCount = (Get-ChildItem -Path $testResultsDir -Filter "*.trx" -Recurse -ErrorAction SilentlyContinue).Count
+        if [ -d "$testResultsDir" ]; then
+          find "$testResultsDir" -name "*.trx" -type f 2>/dev/null | while read file; do
+            echo "Found: $file"
+          done
+          trxCount=$(find "$testResultsDir" -name "*.trx" -type f 2>/dev/null | wc -l)
           echo "Total .trx files found: $trxCount"
-        } else {
+        else
           echo "ERROR: TestResults directory does not exist at $testResultsDir"
-        }
+        fi
     
     - name: Check if Test Results Exist
       id: check-test-results
       if: steps.check-fast-tests.outputs.exists == 'true' && always()
       run: |
-        $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
-        if (Test-Path $testResultsDir) {
-          $trxCount = (Get-ChildItem -Path $testResultsDir -Filter "*.trx" -Recurse -ErrorAction SilentlyContinue).Count
-          if ($trxCount -gt 0) {
-            echo "has-results=true" >> $env:GITHUB_OUTPUT
+        testResultsDir="${{ github.workspace }}/TestResults"
+        if [ -d "$testResultsDir" ]; then
+          trxCount=$(find "$testResultsDir" -name "*.trx" -type f 2>/dev/null | wc -l)
+          if [ "$trxCount" -gt 0 ]; then
+            echo "has-results=true" >> $GITHUB_OUTPUT
             echo "✅ Found $trxCount .trx file(s) to publish"
-          } else {
-            echo "has-results=false" >> $env:GITHUB_OUTPUT
+          else
+            echo "has-results=false" >> $GITHUB_OUTPUT
             echo "⚠️ No .trx files found - tests may not have run"
-          }
-        } else {
-          echo "has-results=false" >> $env:GITHUB_OUTPUT
+          fi
+        else
+          echo "has-results=false" >> $GITHUB_OUTPUT
           echo "⚠️ TestResults directory does not exist - tests did not run"
-        }
+        fi
     
     - name: Publish Test Results
       uses: dorny/test-reporter@v1
@@ -120,22 +129,22 @@ jobs:
     - name: Generate Coverage Report
       if: steps.check-fast-tests.outputs.exists == 'true' && always()
       run: |
-        dotnet tool install -g dotnet-reportgenerator-globaltool 2>$null
-        $coverageFiles = Get-ChildItem -Path TestResults -Recurse -Filter "coverage.cobertura.xml" -ErrorAction SilentlyContinue
-        if ($coverageFiles) {
-          reportgenerator `
-            "-reports:TestResults/**/coverage.cobertura.xml" `
-            "-targetdir:CoverageReport" `
+        dotnet tool install -g dotnet-reportgenerator-globaltool 2>/dev/null || true
+        coverageFiles=$(find TestResults -name "coverage.cobertura.xml" 2>/dev/null)
+        if [ -n "$coverageFiles" ]; then
+          reportgenerator \
+            "-reports:TestResults/**/coverage.cobertura.xml" \
+            "-targetdir:CoverageReport" \
             "-reporttypes:HtmlSummary;MarkdownSummaryGithub;Cobertura"
           
           # Add coverage summary to GitHub step summary
-          if (Test-Path "CoverageReport/SummaryGithub.md") {
-            echo "## 📊 FastTests Code Coverage" >> $env:GITHUB_STEP_SUMMARY
-            Get-Content "CoverageReport/SummaryGithub.md" >> $env:GITHUB_STEP_SUMMARY
-          }
-        } else {
-          echo "⚠️ No coverage files found" >> $env:GITHUB_STEP_SUMMARY
-        }
+          if [ -f "CoverageReport/SummaryGithub.md" ]; then
+            echo "## 📊 FastTests Code Coverage" >> $GITHUB_STEP_SUMMARY
+            cat "CoverageReport/SummaryGithub.md" >> $GITHUB_STEP_SUMMARY
+          fi
+        else
+          echo "⚠️ No coverage files found" >> $GITHUB_STEP_SUMMARY
+        fi
     
     - name: Upload Coverage Report
       uses: actions/upload-artifact@v4
@@ -155,16 +164,17 @@ jobs:
     - name: FastTests Summary
       if: steps.check-fast-tests.outputs.exists == 'true' && always()
       run: |
-        if ("${{ steps.run-fast-tests.outcome }}" -eq "success") {
+        if [[ "${{ steps.run-fast-tests.outcome }}" == "success" ]]; then
           echo "✅ FastTests passed successfully"
-        } else {
+        else
           echo "ℹ️ FastTests completed with some issues"
           echo "⚠️ Note: PR is not blocked by test failures"
-        }
+        fi
 
   business-tests:
     name: Business Logic Tests
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
     
     steps:
     - name: Checkout code
@@ -177,18 +187,26 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
     
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+    
     - name: Check if Business Tests project exists
       id: check-business-tests
       run: |
-        $projectPath = "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj"
-        if (Test-Path $projectPath) {
-          echo "exists=true" >> $env:GITHUB_OUTPUT
+        projectPath="QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj"
+        if [ -f "$projectPath" ]; then
+          echo "exists=true" >> $GITHUB_OUTPUT
           echo "✅ Business Tests project found at: $projectPath"
-        } else {
-          echo "exists=false" >> $env:GITHUB_OUTPUT
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
           echo "ℹ️ Business Tests project not found at: $projectPath"
           echo "::notice::Business Tests will be available after the QA Tests PR is merged to this branch"
-        }
+        fi
     
     - name: Restore dependencies
       if: steps.check-business-tests.outputs.exists == 'true'
@@ -203,14 +221,14 @@ jobs:
       if: steps.check-business-tests.outputs.exists == 'true'
       continue-on-error: true
       run: |
-        $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
-        New-Item -ItemType Directory -Force -Path $testResultsDir | Out-Null
-        dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj" `
-          --no-build `
-          --configuration Release `
-          --verbosity normal `
-          --logger "trx;LogFileName=business-tests.trx" `
-          --results-directory $testResultsDir `
+        testResultsDir="${{ github.workspace }}/TestResults"
+        mkdir -p "$testResultsDir"
+        dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj" \
+          --no-build \
+          --configuration Release \
+          --verbosity normal \
+          --logger "trx;LogFileName=business-tests.trx" \
+          --results-directory "$testResultsDir" \
           --collect:"XPlat Code Coverage"
         echo "ℹ️ Note: 50 tests with known issues (documented in REMAINING_WORK_ITEMS_2026-01-23.md) may fail"
         echo "   These failures do not block the PR - 95.15% pass rate achieved"
@@ -218,36 +236,36 @@ jobs:
     - name: List Test Results (Debug)
       if: steps.check-business-tests.outputs.exists == 'true' && always()
       run: |
-        $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
+        testResultsDir="${{ github.workspace }}/TestResults"
         echo "Looking for test results in: $testResultsDir"
-        if (Test-Path $testResultsDir) {
-          Get-ChildItem -Path $testResultsDir -Recurse -Filter "*.trx" -ErrorAction SilentlyContinue | ForEach-Object { 
-            Write-Host "Found: $($_.FullName)"
-          }
-          $trxCount = (Get-ChildItem -Path $testResultsDir -Filter "*.trx" -Recurse -ErrorAction SilentlyContinue).Count
+        if [ -d "$testResultsDir" ]; then
+          find "$testResultsDir" -name "*.trx" -type f 2>/dev/null | while read file; do
+            echo "Found: $file"
+          done
+          trxCount=$(find "$testResultsDir" -name "*.trx" -type f 2>/dev/null | wc -l)
           echo "Total .trx files found: $trxCount"
-        } else {
+        else
           echo "ERROR: TestResults directory does not exist at $testResultsDir"
-        }
+        fi
     
     - name: Check if Test Results Exist
       id: check-test-results
       if: steps.check-business-tests.outputs.exists == 'true' && always()
       run: |
-        $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
-        if (Test-Path $testResultsDir) {
-          $trxCount = (Get-ChildItem -Path $testResultsDir -Filter "*.trx" -Recurse -ErrorAction SilentlyContinue).Count
-          if ($trxCount -gt 0) {
-            echo "has-results=true" >> $env:GITHUB_OUTPUT
+        testResultsDir="${{ github.workspace }}/TestResults"
+        if [ -d "$testResultsDir" ]; then
+          trxCount=$(find "$testResultsDir" -name "*.trx" -type f 2>/dev/null | wc -l)
+          if [ "$trxCount" -gt 0 ]; then
+            echo "has-results=true" >> $GITHUB_OUTPUT
             echo "✅ Found $trxCount .trx file(s) to publish"
-          } else {
-            echo "has-results=false" >> $env:GITHUB_OUTPUT
+          else
+            echo "has-results=false" >> $GITHUB_OUTPUT
             echo "⚠️ No .trx files found - tests may not have run"
-          }
-        } else {
-          echo "has-results=false" >> $env:GITHUB_OUTPUT
+          fi
+        else
+          echo "has-results=false" >> $GITHUB_OUTPUT
           echo "⚠️ TestResults directory does not exist - tests did not run"
-        }
+        fi
     
     - name: Publish Test Results
       uses: dorny/test-reporter@v1
@@ -270,22 +288,22 @@ jobs:
     - name: Generate Coverage Report
       if: steps.check-business-tests.outputs.exists == 'true' && always()
       run: |
-        dotnet tool install -g dotnet-reportgenerator-globaltool 2>$null
-        $coverageFiles = Get-ChildItem -Path TestResults -Recurse -Filter "coverage.cobertura.xml" -ErrorAction SilentlyContinue
-        if ($coverageFiles) {
-          reportgenerator `
-            "-reports:TestResults/**/coverage.cobertura.xml" `
-            "-targetdir:CoverageReport" `
+        dotnet tool install -g dotnet-reportgenerator-globaltool 2>/dev/null || true
+        coverageFiles=$(find TestResults -name "coverage.cobertura.xml" 2>/dev/null)
+        if [ -n "$coverageFiles" ]; then
+          reportgenerator \
+            "-reports:TestResults/**/coverage.cobertura.xml" \
+            "-targetdir:CoverageReport" \
             "-reporttypes:HtmlSummary;MarkdownSummaryGithub;Cobertura"
           
           # Add coverage summary to GitHub step summary
-          if (Test-Path "CoverageReport/SummaryGithub.md") {
-            echo "## 📊 Business Tests Code Coverage" >> $env:GITHUB_STEP_SUMMARY
-            Get-Content "CoverageReport/SummaryGithub.md" >> $env:GITHUB_STEP_SUMMARY
-          }
-        } else {
-          echo "⚠️ No coverage files found" >> $env:GITHUB_STEP_SUMMARY
-        }
+          if [ -f "CoverageReport/SummaryGithub.md" ]; then
+            echo "## 📊 Business Tests Code Coverage" >> $GITHUB_STEP_SUMMARY
+            cat "CoverageReport/SummaryGithub.md" >> $GITHUB_STEP_SUMMARY
+          fi
+        else
+          echo "⚠️ No coverage files found" >> $GITHUB_STEP_SUMMARY
+        fi
     
     - name: Upload Coverage Report
       uses: actions/upload-artifact@v4
@@ -305,9 +323,9 @@ jobs:
     - name: Business Tests Summary
       if: steps.check-business-tests.outputs.exists == 'true' && always()
       run: |
-        if ("${{ steps.run-business-tests.outcome }}" -eq "success") {
+        if [[ "${{ steps.run-business-tests.outcome }}" == "success" ]]; then
           echo "✅ Business Tests passed successfully"
-        } else {
+        else
           echo "ℹ️ Business Tests completed with some failures"
           echo "   Current pass rate: 95.15% (2,215/2,327 tests passing)"
           echo "   Remaining 50 failures are documented in REMAINING_WORK_ITEMS_2026-01-23.md"
@@ -316,7 +334,7 @@ jobs:
           echo "     - 12 tests: Permission filtering feature gap"
           echo ""
           echo "⚠️ Note: PR is not blocked by these known issues"
-        }
+        fi
 
   # ============================================================================
   # INTEGRATION TESTS - Run manually or in staging environment
