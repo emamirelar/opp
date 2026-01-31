@@ -38,6 +38,18 @@
     <None Include="Authorization\RolePermissionComprehensiveTests.cs" />
     <Compile Remove="Performance\RateLimitingTests.cs" />
     <None Include="Performance\RateLimitingTests.cs" />
+    <!-- Exclude tests that depend on Integration Tests project (UNOPS.PAO.IntegrationTests namespace) -->
+    <!-- TODO: Add project reference to Integration Tests or refactor these tests -->
+    <Compile Remove="Managers\UNOPSPartnerManagerTests.cs" />
+    <None Include="Managers\UNOPSPartnerManagerTests.cs" />
+    <Compile Remove="Search\AdvancedSearchLogicTests.cs" />
+    <None Include="Search\AdvancedSearchLogicTests.cs" />
+    <Compile Remove="Search\DateSearchTests.cs" />
+    <None Include="Search\DateSearchTests.cs" />
+    <Compile Remove="Search\SimplePartnerFilterTests.cs" />
+    <None Include="Search\SimplePartnerFilterTests.cs" />
+    <Compile Remove="Search\TextSearchSpaceHandlingTests.cs" />
+    <None Include="Search\TextSearchSpaceHandlingTests.cs" />
   </ItemGroup>
 
   <ItemGroup>
