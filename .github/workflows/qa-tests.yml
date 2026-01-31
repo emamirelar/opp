@@ -116,7 +116,7 @@ jobs:
         path: 'TestResults/**/*.trx'
         reporter: dotnet-trx
         fail-on-error: false
-        list-files: 'all'
+        list-tests: 'all'
 
     - name: Upload Test Results Artifact
       uses: actions/upload-artifact@v4
@@ -275,7 +275,7 @@ jobs:
         path: 'TestResults/**/*.trx'
         reporter: dotnet-trx
         fail-on-error: false
-        list-files: 'all'
+        list-tests: 'all'
 
     - name: Upload Test Results Artifact
       uses: actions/upload-artifact@v4
