@@ -64,28 +64,32 @@ jobs:
         run: dotnet tool install --global dotnet-ef
       
       - name: Setup test database
-        timeout-minutes: 15
+        timeout-minutes: 45
         env:
           PGPASSWORD: test
           ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
         run: |
-          # Create pgvector and pg_trgm extensions FIRST (required for semantic search functions)
+          echo "::group::Create PostgreSQL extensions"
           psql -h localhost -p 5432 -U test -d TestDb -c "CREATE EXTENSION IF NOT EXISTS vector;"
           psql -h localhost -p 5432 -U test -d TestDb -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
+          echo "::endgroup::"
           
-          # Run migrations on Identity context FIRST (creates AspNetUsers, AspNetRoles, etc.)
+          echo "::group::Run Identity migrations (1 migration)"
           dotnet ef database update --project UNOPS.PAO.DataAccess --startup-project UNOPS.PAO.Server --context PAOIdentityDbContext --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
+          echo "::endgroup::"
           
-          # Run migrations on main application context SECOND (depends on Identity tables)
+          echo "::group::Run Application migrations (376 migrations - this takes ~20-30 minutes)"
+          echo "Starting at $(date)"
           dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess --startup-project UNOPS.PAO.Server --context UNOPSAppDbContext --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
+          echo "Completed at $(date)"
+          echo "::endgroup::"
           
-          # Create test user (with explicit options to prevent hangs)
+          echo "::group::Setup test data"
           psql -h localhost -p 5432 -U test -d TestDb --no-psqlrc --quiet -f "setup-test-user.sql"
-          echo "Test user created successfully"
-          
-          # Setup Opportunity permissions
+          echo "Test user created"
           psql -h localhost -p 5432 -U test -d TestDb --no-psqlrc --quiet -f "setup-opportunity-permissions.sql"
-          echo "Permissions setup completed"
+          echo "Permissions configured"
+          echo "::endgroup::"
       
       - name: Start .NET backend
         run: |
@@ -201,23 +205,30 @@ jobs:
         run: npm ci
       
       - name: Setup test database
-        timeout-minutes: 15
+        timeout-minutes: 45
         env:
           PGPASSWORD: test
           ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
         run: |
-          # Create pgvector and pg_trgm extensions FIRST (required for semantic search functions)
+          echo "::group::Create PostgreSQL extensions"
           psql -h localhost -p 5432 -U test -d TestDb -c "CREATE EXTENSION IF NOT EXISTS vector;"
           psql -h localhost -p 5432 -U test -d TestDb -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
+          echo "::endgroup::"
           
-          # Run migrations on Identity context FIRST
+          echo "::group::Run Identity migrations"
           dotnet ef database update --project UNOPS.PAO.DataAccess --startup-project UNOPS.PAO.Server --context PAOIdentityDbContext --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
+          echo "::endgroup::"
           
-          # Run migrations on main application context SECOND
+          echo "::group::Run Application migrations (376 migrations - takes ~20-30 min)"
+          echo "Starting at $(date)"
           dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess --startup-project UNOPS.PAO.Server --context UNOPSAppDbContext --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
+          echo "Completed at $(date)"
+          echo "::endgroup::"
           
+          echo "::group::Setup test data"
           psql -h localhost -p 5432 -U test -d TestDb --no-psqlrc --quiet -f "setup-test-user.sql"
           psql -h localhost -p 5432 -U test -d TestDb --no-psqlrc --quiet -f "setup-opportunity-permissions.sql"
+          echo "::endgroup::"
       
       - name: Start backend
         run: |
@@ -308,23 +319,30 @@ jobs:
         run: npm ci
       
       - name: Setup test database
-        timeout-minutes: 15
+        timeout-minutes: 45
         env:
           PGPASSWORD: test
           ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
         run: |
-          # Create pgvector and pg_trgm extensions FIRST (required for semantic search functions)
+          echo "::group::Create PostgreSQL extensions"
           psql -h localhost -p 5432 -U test -d TestDb -c "CREATE EXTENSION IF NOT EXISTS vector;"
           psql -h localhost -p 5432 -U test -d TestDb -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
+          echo "::endgroup::"
           
-          # Run migrations on Identity context FIRST
+          echo "::group::Run Identity migrations"
           dotnet ef database update --project UNOPS.PAO.DataAccess --startup-project UNOPS.PAO.Server --context PAOIdentityDbContext --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
+          echo "::endgroup::"
           
-          # Run migrations on main application context SECOND
+          echo "::group::Run Application migrations (376 migrations - takes ~20-30 min)"
+          echo "Starting at $(date)"
           dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess --startup-project UNOPS.PAO.Server --context UNOPSAppDbContext --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
+          echo "Completed at $(date)"
+          echo "::endgroup::"
           
+          echo "::group::Setup test data"
           psql -h localhost -p 5432 -U test -d TestDb --no-psqlrc --quiet -f "setup-test-user.sql"
           psql -h localhost -p 5432 -U test -d TestDb --no-psqlrc --quiet -f "setup-opportunity-permissions.sql"
+          echo "::endgroup::"
       
       - name: Start backend
         run: |
