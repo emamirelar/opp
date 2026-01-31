@@ -554,7 +554,7 @@
   "confirmation.removeCountry": "Remove Country",
   "confirmation.removeCountries": "Remove Multiple Countries",
   "confirmation.removeFundingPartner": "Remove Funding Partner",
-  "confirmation.removeStakeholder": "Remove Team Member",
+  "confirmation.removeStakeholder": "Remove Internal Stakeholder",
   "confirmation.removeCollaborator": "Remove Collaborator",
   "confirmation.removeExternalStakeholder": "Remove External Stakeholder",
   "confirmation.discardChanges": "Discard Changes?",
