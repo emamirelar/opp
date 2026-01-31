@@ -94,7 +94,7 @@ jobs:
       - name: Start .NET backend
         run: |
           cd UNOPS.PAO.Server
-          dotnet run --no-build --configuration Release &
+          dotnet run --no-build --configuration Release --no-launch-profile &
           echo "Waiting for backend to start..."
           for i in {1..30}; do
             if curl -f http://localhost:5159/health > /dev/null 2>&1; then
@@ -233,7 +233,7 @@ jobs:
       - name: Start backend
         run: |
           cd UNOPS.PAO.Server
-          dotnet run --no-build --configuration Release &
+          dotnet run --no-build --configuration Release --no-launch-profile &
           for i in {1..30}; do
             if curl -f http://localhost:5159/health > /dev/null 2>&1; then
               break
@@ -347,7 +347,7 @@ jobs:
       - name: Start backend
         run: |
           cd UNOPS.PAO.Server
-          dotnet run --no-build --configuration Release &
+          dotnet run --no-build --configuration Release --no-launch-profile &
           for i in {1..30}; do
             if curl -f http://localhost:5159/health > /dev/null 2>&1; then
               break
