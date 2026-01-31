@@ -15,7 +15,7 @@ jobs:
     
     services:
       postgres:
-        image: postgres:16
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_DB: TestDb
           POSTGRES_USER: test
@@ -68,6 +68,10 @@ jobs:
           PGPASSWORD: test
           ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
         run: |
+          # Create pgvector and pg_trgm extensions FIRST (required for semantic search functions)
+          psql -h localhost -p 5432 -U test -d TestDb -c "CREATE EXTENSION IF NOT EXISTS vector;"
+          psql -h localhost -p 5432 -U test -d TestDb -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
+          
           # Run migrations on Identity context FIRST (creates AspNetUsers, AspNetRoles, etc.)
           dotnet ef database update --project UNOPS.PAO.DataAccess --startup-project UNOPS.PAO.Server --context PAOIdentityDbContext --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
           
@@ -146,7 +150,7 @@ jobs:
     
     services:
       postgres:
-        image: postgres:16
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_DB: TestDb
           POSTGRES_USER: test
@@ -198,6 +202,10 @@ jobs:
           PGPASSWORD: test
           ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
         run: |
+          # Create pgvector and pg_trgm extensions FIRST (required for semantic search functions)
+          psql -h localhost -p 5432 -U test -d TestDb -c "CREATE EXTENSION IF NOT EXISTS vector;"
+          psql -h localhost -p 5432 -U test -d TestDb -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
+          
           # Run migrations on Identity context FIRST
           dotnet ef database update --project UNOPS.PAO.DataAccess --startup-project UNOPS.PAO.Server --context PAOIdentityDbContext --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
           
@@ -248,7 +256,7 @@ jobs:
     
     services:
       postgres:
-        image: postgres:16
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_DB: TestDb
           POSTGRES_USER: test
@@ -300,6 +308,10 @@ jobs:
           PGPASSWORD: test
           ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
         run: |
+          # Create pgvector and pg_trgm extensions FIRST (required for semantic search functions)
+          psql -h localhost -p 5432 -U test -d TestDb -c "CREATE EXTENSION IF NOT EXISTS vector;"
+          psql -h localhost -p 5432 -U test -d TestDb -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
+          
           # Run migrations on Identity context FIRST
           dotnet ef database update --project UNOPS.PAO.DataAccess --startup-project UNOPS.PAO.Server --context PAOIdentityDbContext --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
           

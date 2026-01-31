@@ -11,8 +11,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            //migrationBuilder.Sql("CREATE EXTENSION IF NOT EXISTS vector;");
-            // TEMPORARY: Using bytea instead of vector type until pgvector is available
             migrationBuilder.CreateTable(
                 name: "EntityEmbeddings",
                 schema: "public",
@@ -22,8 +20,8 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     EntityName = table.Column<string>(type: "text", nullable: false),
                     EntityId = table.Column<int>(type: "integer", nullable: false),
-                    FullEmbedding = table.Column<byte[]>(type: "bytea", nullable: false),
-                    NameEmbedding = table.Column<byte[]>(type: "bytea", nullable: true)
+                    FullEmbedding = table.Column<byte[]>(type: "vector(768)", nullable: false),
+                    NameEmbedding = table.Column<byte[]>(type: "vector(768)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -49,8 +47,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 columns: new[] { "EntityName", "EntityId" },
                 unique: true);
 
-            // TEMPORARY: Commented out until pgvector is available
-            /*
             migrationBuilder.Sql(@"CREATE OR REPLACE PROCEDURE public.""InsertEntityEmbedding""(entityName TEXT, entityId INT, embedding TEXT)
                                 LANGUAGE plpgsql
                                 AS $$
@@ -77,7 +73,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         RETURN entityId;
                     END
                     $BODY$;");
-            */
         }
 
         /// <inheritdoc />

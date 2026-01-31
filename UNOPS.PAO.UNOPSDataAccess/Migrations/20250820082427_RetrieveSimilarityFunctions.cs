@@ -11,15 +11,11 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // TEMPORARY: Commented out for CI/CD compatibility (pgvector extension not available)
-            // These scripts create search functions that use vector(768) type
-            // Uncomment when pgvector extension is installed in the database
-            
-            // MigrationSqlScriptExecutor.ExecuteSqlScripts(migrationBuilder, new[]
-            // {
-            //     "retrieve_embedding_search.sql",
-            //     "retrieve_similarity_search.sql"
-            // });
+            MigrationSqlScriptExecutor.ExecuteSqlScripts(migrationBuilder, new[]
+            {
+                "retrieve_embedding_search.sql",
+                "retrieve_similarity_search.sql"
+            });
         }
 
         /// <inheritdoc />

@@ -11,14 +11,10 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // TEMPORARY: Commented out for CI/CD compatibility (pgvector extension not available)
-            // This script creates procedures that use vector(768) type
-            // Uncomment when pgvector extension is installed in the database
-            
-            // MigrationSqlScriptExecutor.ExecuteSqlScripts(migrationBuilder, new[]
-            // {
-            //     "InsertEntityEmbeddings.sql"
-            // });
+            MigrationSqlScriptExecutor.ExecuteSqlScripts(migrationBuilder, new[]
+            {
+                "InsertEntityEmbeddings.sql"
+            });
         }
 
         /// <inheritdoc />
