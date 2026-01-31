@@ -50,7 +50,7 @@ jobs:
       if: steps.check-fast-tests.outputs.exists == 'true'
       run: dotnet build "QA Tests/C# Tests/UNOPS.PAO.FastTests/UNOPS.PAO.FastTests.csproj" --no-restore --configuration Release
     
-    - name: Run FastTests
+    - name: Run FastTests with Coverage
       id: run-fast-tests
       if: steps.check-fast-tests.outputs.exists == 'true'
       continue-on-error: true
@@ -62,7 +62,8 @@ jobs:
           --configuration Release `
           --verbosity normal `
           --logger "trx;LogFileName=fast-tests.trx" `
-          --results-directory $testResultsDir
+          --results-directory $testResultsDir `
+          --collect:"XPlat Code Coverage"
     
     - name: List Test Results (Debug)
       if: steps.check-fast-tests.outputs.exists == 'true' && always()
@@ -106,6 +107,7 @@ jobs:
         path: 'TestResults/**/*.trx'
         reporter: dotnet-trx
         fail-on-error: false
+        list-files: 'all'
 
     - name: Upload Test Results Artifact
       uses: actions/upload-artifact@v4
@@ -114,6 +116,34 @@ jobs:
         name: fast-tests-results
         path: TestResults
         if-no-files-found: warn
+    
+    - name: Generate Coverage Report
+      if: steps.check-fast-tests.outputs.exists == 'true' && always()
+      run: |
+        dotnet tool install -g dotnet-reportgenerator-globaltool 2>$null
+        $coverageFiles = Get-ChildItem -Path TestResults -Recurse -Filter "coverage.cobertura.xml" -ErrorAction SilentlyContinue
+        if ($coverageFiles) {
+          reportgenerator `
+            "-reports:TestResults/**/coverage.cobertura.xml" `
+            "-targetdir:CoverageReport" `
+            "-reporttypes:HtmlSummary;MarkdownSummaryGithub;Cobertura"
+          
+          # Add coverage summary to GitHub step summary
+          if (Test-Path "CoverageReport/SummaryGithub.md") {
+            echo "## 📊 FastTests Code Coverage" >> $env:GITHUB_STEP_SUMMARY
+            Get-Content "CoverageReport/SummaryGithub.md" >> $env:GITHUB_STEP_SUMMARY
+          }
+        } else {
+          echo "⚠️ No coverage files found" >> $env:GITHUB_STEP_SUMMARY
+        }
+    
+    - name: Upload Coverage Report
+      uses: actions/upload-artifact@v4
+      if: steps.check-fast-tests.outputs.exists == 'true' && always()
+      with:
+        name: fast-tests-coverage-report
+        path: CoverageReport
+        if-no-files-found: ignore
     
     - name: FastTests Not Available
       if: steps.check-fast-tests.outputs.exists == 'false'
@@ -168,7 +198,7 @@ jobs:
       if: steps.check-business-tests.outputs.exists == 'true'
       run: dotnet build "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj" --no-restore --configuration Release
     
-    - name: Run Business Tests
+    - name: Run Business Tests with Coverage
       id: run-business-tests
       if: steps.check-business-tests.outputs.exists == 'true'
       continue-on-error: true
@@ -180,7 +210,8 @@ jobs:
           --configuration Release `
           --verbosity normal `
           --logger "trx;LogFileName=business-tests.trx" `
-          --results-directory $testResultsDir
+          --results-directory $testResultsDir `
+          --collect:"XPlat Code Coverage"
         echo "ℹ️ Note: 50 tests with known issues (documented in REMAINING_WORK_ITEMS_2026-01-23.md) may fail"
         echo "   These failures do not block the PR - 95.15% pass rate achieved"
     
@@ -226,6 +257,7 @@ jobs:
         path: 'TestResults/**/*.trx'
         reporter: dotnet-trx
         fail-on-error: false
+        list-files: 'all'
 
     - name: Upload Test Results Artifact
       uses: actions/upload-artifact@v4
@@ -234,6 +266,34 @@ jobs:
         name: business-tests-results
         path: TestResults
         if-no-files-found: warn
+    
+    - name: Generate Coverage Report
+      if: steps.check-business-tests.outputs.exists == 'true' && always()
+      run: |
+        dotnet tool install -g dotnet-reportgenerator-globaltool 2>$null
+        $coverageFiles = Get-ChildItem -Path TestResults -Recurse -Filter "coverage.cobertura.xml" -ErrorAction SilentlyContinue
+        if ($coverageFiles) {
+          reportgenerator `
+            "-reports:TestResults/**/coverage.cobertura.xml" `
+            "-targetdir:CoverageReport" `
+            "-reporttypes:HtmlSummary;MarkdownSummaryGithub;Cobertura"
+          
+          # Add coverage summary to GitHub step summary
+          if (Test-Path "CoverageReport/SummaryGithub.md") {
+            echo "## 📊 Business Tests Code Coverage" >> $env:GITHUB_STEP_SUMMARY
+            Get-Content "CoverageReport/SummaryGithub.md" >> $env:GITHUB_STEP_SUMMARY
+          }
+        } else {
+          echo "⚠️ No coverage files found" >> $env:GITHUB_STEP_SUMMARY
+        }
+    
+    - name: Upload Coverage Report
+      uses: actions/upload-artifact@v4
+      if: steps.check-business-tests.outputs.exists == 'true' && always()
+      with:
+        name: business-tests-coverage-report
+        path: CoverageReport
+        if-no-files-found: ignore
     
     - name: Business Tests Not Available
       if: steps.check-business-tests.outputs.exists == 'false'
