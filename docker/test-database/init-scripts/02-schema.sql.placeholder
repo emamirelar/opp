@@ -1,0 +1,16 @@
+-- =============================================================================
+-- PLACEHOLDER FILE
+-- =============================================================================
+-- This file will be replaced with the actual database schema after running:
+--
+--   cd docker/test-database
+--   ./generate-schema.ps1
+--
+-- The generated 02-schema.sql file contains:
+-- - All EF Core migrations applied as DDL statements
+-- - Initial seed data (if any)
+-- - Stored procedures and functions
+--
+-- DO NOT commit the generated 02-schema.sql to git - it's too large.
+-- Instead, the schema is baked into the Docker image.
+-- =============================================================================

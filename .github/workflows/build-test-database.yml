@@ -1,0 +1,155 @@
+name: Build Test Database Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      push_image:
+        description: 'Push image to registry'
+        required: false
+        default: 'true'
+        type: boolean
+  # Trigger when migrations change
+  push:
+    branches: [ main, dev ]
+    paths:
+      - 'UNOPS.PAO.DataAccess/Migrations/**'
+      - 'UNOPS.PAO.UNOPSDataAccess/Migrations/**'
+      - 'docker/test-database/**'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: unops-itg/opportunityplus-testdb
+
+jobs:
+  build-database-image:
+    name: Build Pre-migrated Database Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    
+    permissions:
+      contents: read
+      packages: write
+    
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: TestDb
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+      
+      - name: Install EF Core tools
+        run: dotnet tool install --global dotnet-ef
+      
+      - name: Restore dependencies
+        run: dotnet restore
+      
+      - name: Build solution
+        run: dotnet build --no-restore --configuration Release
+      
+      - name: Create extensions
+        env:
+          PGPASSWORD: test
+        run: |
+          psql -h localhost -p 5432 -U test -d TestDb -c "CREATE EXTENSION IF NOT EXISTS vector;"
+          psql -h localhost -p 5432 -U test -d TestDb -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
+      
+      - name: Run all migrations
+        env:
+          ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
+        run: |
+          echo "Starting migrations at $(date)"
+          
+          # Identity context
+          dotnet ef database update \
+            --project UNOPS.PAO.DataAccess \
+            --startup-project UNOPS.PAO.Server \
+            --context PAOIdentityDbContext \
+            --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
+          
+          # Application context
+          dotnet ef database update \
+            --project UNOPS.PAO.UNOPSDataAccess \
+            --startup-project UNOPS.PAO.Server \
+            --context UNOPSAppDbContext \
+            --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
+          
+          echo "Migrations completed at $(date)"
+      
+      - name: Setup test data
+        env:
+          PGPASSWORD: test
+        run: |
+          psql -h localhost -p 5432 -U test -d TestDb --no-psqlrc --quiet -f "setup-test-user.sql"
+          psql -h localhost -p 5432 -U test -d TestDb --no-psqlrc --quiet -f "setup-opportunity-permissions.sql"
+      
+      - name: Export database schema
+        env:
+          PGPASSWORD: test
+        run: |
+          mkdir -p docker/test-database/init-scripts
+          pg_dump -h localhost -p 5432 -U test -d TestDb --no-owner --no-privileges \
+            > docker/test-database/init-scripts/02-schema.sql
+          
+          echo "Schema size: $(du -h docker/test-database/init-scripts/02-schema.sql | cut -f1)"
+          echo "Line count: $(wc -l < docker/test-database/init-scripts/02-schema.sql)"
+      
+      - name: Log in to Container Registry
+        if: github.event.inputs.push_image != 'false'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: docker/test-database
+          push: ${{ github.event.inputs.push_image != 'false' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+      
+      - name: Summary
+        run: |
+          echo "## Test Database Image Built" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags:**" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta.outputs.tags }}" | while read tag; do
+            echo "- \`$tag\`" >> $GITHUB_STEP_SUMMARY
+          done
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Usage in Playwright Tests" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`yaml" >> $GITHUB_STEP_SUMMARY
+          echo "services:" >> $GITHUB_STEP_SUMMARY
+          echo "  postgres:" >> $GITHUB_STEP_SUMMARY
+          echo "    image: ghcr.io/unops-itg/opportunityplus-testdb:latest" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
