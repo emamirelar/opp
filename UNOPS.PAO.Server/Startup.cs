@@ -178,10 +178,9 @@ public class Startup
 
     public void ConfigureContainer(ServiceRegistry services)
     {
-        if (!CurrentEnvironment.IsEnvironment("Testing"))
-        {
-            ConfigureDataAccess(services);
-        }
+        // Always configure data access (DbContext registration)
+        // Migrations are conditionally skipped later for Testing environment
+        ConfigureDataAccess(services);
 
         services.Scan(x =>
         {
