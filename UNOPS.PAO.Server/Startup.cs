@@ -182,6 +182,10 @@ public class Startup
         // Migrations are conditionally skipped later for Testing environment
         ConfigureDataAccess(services);
 
+        // Register TimeProvider (required by ASP.NET Core Identity in .NET 8+)
+        // Lamar doesn't auto-register this like the default DI container
+        services.AddSingleton(TimeProvider.System);
+
         services.Scan(x =>
         {
             x.AddAllTypesOf(typeof(Register<>));
