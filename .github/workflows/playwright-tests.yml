@@ -1,3 +1,14 @@
+# =============================================================================
+# PLAYWRIGHT E2E TESTS - Mocked API Tests (Fast)
+# =============================================================================
+# These tests use API mocks at the browser level, so they DON'T need:
+# - Real database
+# - Real .NET backend
+# - EF migrations
+#
+# This makes them fast (~5-10 min) and suitable for every PR.
+# =============================================================================
+
 name: Playwright Tests
 
 on:
@@ -5,25 +16,86 @@ on:
     branches: [ main, dev, QA-Tests ]
   pull_request:
     branches: [ main, dev ]
-  workflow_dispatch:  # Allow manual trigger
+  workflow_dispatch:
 
 jobs:
-  test:
-    name: Run Playwright Tests
-    timeout-minutes: 90
+  # ===========================================================================
+  # SMOKE TESTS - Run on every push/PR (fast feedback)
+  # ===========================================================================
+  smoke-tests:
+    name: E2E Smoke Tests (Mocked)
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     
-    # ==========================================================================
-    # DATABASE SETUP OPTIONS:
-    # 
-    # Option 1 (Current): Run migrations each time (~20-30 min)
-    #   image: pgvector/pgvector:pg16
-    #
-    # Option 2 (Faster): Use pre-built database image with migrations applied
-    #   image: ghcr.io/unops-itg/opportunityplus-testdb:latest
-    #   (Requires running build-test-database.yml workflow first)
-    #   When using pre-built image, skip the "Setup test database" step
-    # ==========================================================================
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: UNOPS.PAO.ClientApp/package-lock.json
+      
+      - name: Install root dependencies (Playwright)
+        run: npm ci
+      
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+      
+      - name: Install Angular dependencies
+        working-directory: ./UNOPS.PAO.ClientApp
+        run: npm ci
+      
+      - name: Run Playwright Smoke Tests
+        run: |
+          npx playwright test \
+            "QA Tests/Playwright Tests/contacts.spec.ts" \
+            "QA Tests/Playwright Tests/partners.spec.ts" \
+            "QA Tests/Playwright Tests/interactions.spec.ts" \
+            "QA Tests/Playwright Tests/opportunities.spec.ts" \
+            --project=chromium
+        env:
+          CI: true
+      
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-smoke
+          path: QA Tests/Playwright Tests/playwright-report/
+          retention-days: 30
+      
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-smoke
+          path: QA Tests/Playwright Tests/test-results/
+          retention-days: 30
+      
+      - name: Post Test Summary
+        if: always()
+        run: |
+          echo "## Playwright Smoke Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Mocked E2E Tests** - No backend/database required" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -d "QA Tests/Playwright Tests/test-results" ]; then
+            echo "Test results uploaded as artifact" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ===========================================================================
+  # FULL E2E TESTS - Run only on merge to main (comprehensive)
+  # ===========================================================================
+  full-e2e-tests:
+    name: Full E2E Tests (With Backend)
+    timeout-minutes: 90
+    runs-on: ubuntu-latest
+    # Only run on push to main (not PRs, not other branches)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
     services:
       postgres:
         image: pgvector/pgvector:pg16
@@ -93,11 +165,11 @@ jobs:
           psql -h localhost -p 5432 -U test -d TestDb -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
           echo "::endgroup::"
           
-          echo "::group::Run Identity migrations (1 migration)"
+          echo "::group::Run Identity migrations"
           dotnet ef database update --project UNOPS.PAO.DataAccess --startup-project UNOPS.PAO.Server --context PAOIdentityDbContext --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
           echo "::endgroup::"
           
-          echo "::group::Run Application migrations (376 migrations - this takes ~20-30 minutes)"
+          echo "::group::Run Application migrations"
           echo "Starting at $(date)"
           dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess --startup-project UNOPS.PAO.Server --context UNOPSAppDbContext --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
           echo "Completed at $(date)"
@@ -105,9 +177,7 @@ jobs:
           
           echo "::group::Setup test data"
           psql -h localhost -p 5432 -U test -d TestDb --no-psqlrc --quiet -f "setup-test-user.sql"
-          echo "Test user created"
           psql -h localhost -p 5432 -U test -d TestDb --no-psqlrc --quiet -f "setup-opportunity-permissions.sql"
-          echo "Permissions configured"
           echo "::endgroup::"
       
       - name: Start .NET backend
@@ -116,10 +186,6 @@ jobs:
           dotnet run --no-build --configuration Release --no-launch-profile &
           echo "Waiting for backend to start..."
           for i in {1..30}; do
-            # Check if server responds (any HTTP status means it's running)
-            # The IAP middleware returns 401/403 for unauthenticated requests,
-            # but that still means the server is up and accepting connections
-            # curl outputs "000" when it can't connect, use || true to prevent script exit
             http_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5159/health 2>/dev/null) || true
             if [ -n "$http_code" ] && [ "$http_code" != "000" ]; then
               echo "Backend is ready! (HTTP $http_code)"
@@ -133,26 +199,19 @@ jobs:
           ASPNETCORE_URLS: http://localhost:5159
           ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
       
-      - name: Run Playwright Tests
+      - name: Run Full Playwright Tests
         run: |
-          npx playwright test \
-            "QA Tests/Playwright Tests/contacts.spec.ts" \
-            "QA Tests/Playwright Tests/partners.spec.ts" \
-            "QA Tests/Playwright Tests/interactions.spec.ts" \
-            "QA Tests/Playwright Tests/opportunities.spec.ts" \
-            --project=chromium \
-            --workers=1
+          npx playwright test --project=chromium
         env:
           CI: true
           API_URL: http://localhost:5159
-          # Set ASPNETCORE_URLS for the Angular proxy (proxy.conf.js uses this)
           ASPNETCORE_URLS: http://localhost:5159
       
       - name: Upload Playwright Report
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playwright-report
+          name: playwright-report-full
           path: QA Tests/Playwright Tests/playwright-report/
           retention-days: 30
       
@@ -160,268 +219,15 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-results
+          name: test-results-full
           path: QA Tests/Playwright Tests/test-results/
           retention-days: 30
       
       - name: Post Test Summary
         if: always()
         run: |
-          echo "## Playwright Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "## Full E2E Test Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          if [ -f "QA Tests/Playwright Tests/playwright-report/index.html" ]; then
-            echo "✅ Tests completed. View the full report in the artifacts." >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ Tests may have failed to generate a report." >> $GITHUB_STEP_SUMMARY
-          fi
-
-  test-detail-pages:
-    name: Run Detail Page Tests
-    timeout-minutes: 60
-    runs-on: ubuntu-latest
-    needs: test  # Run after main tests pass
-    
-    services:
-      postgres:
-        image: pgvector/pgvector:pg16
-        env:
-          POSTGRES_DB: TestDb
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '9.0.x'
-      
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: UNOPS.PAO.ClientApp/package-lock.json
-      
-      - name: Restore and build
-        run: |
-          dotnet restore
-          dotnet build --no-restore --configuration Release
-      
-      - name: Install EF Core tools
-        run: dotnet tool install --global dotnet-ef
-      
-      - name: Install root dependencies (Playwright)
-        run: npm ci
-      
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps chromium
-      
-      - name: Install Angular dependencies
-        working-directory: ./UNOPS.PAO.ClientApp
-        run: npm ci
-      
-      - name: Setup test database
-        timeout-minutes: 45
-        env:
-          PGPASSWORD: test
-          ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
-        run: |
-          echo "::group::Create PostgreSQL extensions"
-          psql -h localhost -p 5432 -U test -d TestDb -c "CREATE EXTENSION IF NOT EXISTS vector;"
-          psql -h localhost -p 5432 -U test -d TestDb -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
-          echo "::endgroup::"
-          
-          echo "::group::Run Identity migrations"
-          dotnet ef database update --project UNOPS.PAO.DataAccess --startup-project UNOPS.PAO.Server --context PAOIdentityDbContext --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
-          echo "::endgroup::"
-          
-          echo "::group::Run Application migrations (376 migrations - takes ~20-30 min)"
-          echo "Starting at $(date)"
-          dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess --startup-project UNOPS.PAO.Server --context UNOPSAppDbContext --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
-          echo "Completed at $(date)"
-          echo "::endgroup::"
-          
-          echo "::group::Setup test data"
-          psql -h localhost -p 5432 -U test -d TestDb --no-psqlrc --quiet -f "setup-test-user.sql"
-          psql -h localhost -p 5432 -U test -d TestDb --no-psqlrc --quiet -f "setup-opportunity-permissions.sql"
-          echo "::endgroup::"
-      
-      - name: Start backend
-        run: |
-          cd UNOPS.PAO.Server
-          dotnet run --no-build --configuration Release --no-launch-profile &
-          for i in {1..30}; do
-            if curl -f http://localhost:5159/health > /dev/null 2>&1; then
-              break
-            fi
-            sleep 2
-          done
-        env:
-          ASPNETCORE_ENVIRONMENT: Testing
-          ASPNETCORE_URLS: http://localhost:5159
-          ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
-      
-      - name: Run Detail Page Tests
-        run: |
-          npx playwright test \
-            "QA Tests/Playwright Tests/partner-item-basic.spec.ts" \
-            "QA Tests/Playwright Tests/contact-item-basic.spec.ts" \
-            "QA Tests/Playwright Tests/interaction-item-basic.spec.ts" \
-            "QA Tests/Playwright Tests/opportunity-item-basic.spec.ts" \
-            --project=chromium \
-            --workers=1
-        env:
-          CI: true
-          API_URL: http://localhost:5159
-          ASPNETCORE_URLS: http://localhost:5159
-      
-      - name: Upload Report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-report-detail-pages
-          path: QA Tests/Playwright Tests/playwright-report/
-          retention-days: 30
-
-  test-navigation:
-    name: Run Navigation & Dashboard Tests
-    timeout-minutes: 30
-    runs-on: ubuntu-latest
-    needs: test  # Run after main tests pass
-    
-    services:
-      postgres:
-        image: pgvector/pgvector:pg16
-        env:
-          POSTGRES_DB: TestDb
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '9.0.x'
-      
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: UNOPS.PAO.ClientApp/package-lock.json
-      
-      - name: Restore and build
-        run: |
-          dotnet restore
-          dotnet build --no-restore --configuration Release
-      
-      - name: Install EF Core tools
-        run: dotnet tool install --global dotnet-ef
-      
-      - name: Install root dependencies (Playwright)
-        run: npm ci
-      
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps chromium
-      
-      - name: Install Angular dependencies
-        working-directory: ./UNOPS.PAO.ClientApp
-        run: npm ci
-      
-      - name: Setup test database
-        timeout-minutes: 45
-        env:
-          PGPASSWORD: test
-          ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
-        run: |
-          echo "::group::Create PostgreSQL extensions"
-          psql -h localhost -p 5432 -U test -d TestDb -c "CREATE EXTENSION IF NOT EXISTS vector;"
-          psql -h localhost -p 5432 -U test -d TestDb -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
-          echo "::endgroup::"
-          
-          echo "::group::Run Identity migrations"
-          dotnet ef database update --project UNOPS.PAO.DataAccess --startup-project UNOPS.PAO.Server --context PAOIdentityDbContext --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
-          echo "::endgroup::"
-          
-          echo "::group::Run Application migrations (376 migrations - takes ~20-30 min)"
-          echo "Starting at $(date)"
-          dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess --startup-project UNOPS.PAO.Server --context UNOPSAppDbContext --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
-          echo "Completed at $(date)"
-          echo "::endgroup::"
-          
-          echo "::group::Setup test data"
-          psql -h localhost -p 5432 -U test -d TestDb --no-psqlrc --quiet -f "setup-test-user.sql"
-          psql -h localhost -p 5432 -U test -d TestDb --no-psqlrc --quiet -f "setup-opportunity-permissions.sql"
-          echo "::endgroup::"
-      
-      - name: Start backend
-        run: |
-          cd UNOPS.PAO.Server
-          dotnet run --no-build --configuration Release --no-launch-profile &
-          for i in {1..30}; do
-            if curl -f http://localhost:5159/health > /dev/null 2>&1; then
-              break
-            fi
-            sleep 2
-          done
-        env:
-          ASPNETCORE_ENVIRONMENT: Testing
-          ASPNETCORE_URLS: http://localhost:5159
-          ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
-      
-      - name: Run Navigation & Dashboard Tests
-        run: |
-          npx playwright test \
-            "QA Tests/Playwright Tests/home.spec.ts" \
-            "QA Tests/Playwright Tests/dashboard.spec.ts" \
-            "QA Tests/Playwright Tests/navigation-tabs.spec.ts" \
-            --project=chromium \
-            --workers=1
-        env:
-          CI: true
-          API_URL: http://localhost:5159
-          ASPNETCORE_URLS: http://localhost:5159
-      
-      - name: Upload Report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-report-navigation
-          path: QA Tests/Playwright Tests/playwright-report/
-          retention-days: 30
+          echo "🔄 **Full Integration Tests** - With real backend and database" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "This runs on merge to main only." >> $GITHUB_STEP_SUMMARY
