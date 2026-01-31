@@ -40,7 +40,7 @@ public class UNOPSAppDbContextFactory : IDesignTimeDbContextFactory<UNOPSAppDbCo
 
         // Create minimal dependencies for design-time context creation
         // These are only used during migrations, not at runtime
-        var userService = new UserResolverService<int>(null); // No HttpContext at design-time
+        var userService = new UserResolverService<int>("system@migrations.local"); // Use string constructor for design-time
         var schema = new DefaultDbContextSchema(); // Use default schema
 
         return new UNOPSAppDbContext(optionsBuilder.Options, userService, schema);
