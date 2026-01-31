@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -10,6 +10,11 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            // TEMPORARY: Commented out for CI/CD compatibility (pgvector extension not available)
+            // This SQL creates search functions that use vector(768) type
+            // Uncomment when pgvector extension is installed in the database
+            
+            /*
             migrationBuilder.Sql(@"DROP FUNCTION IF EXISTS public.RetrieveSimilarityId(TEXT, TEXT);");
             //migrationBuilder.Sql(@"CREATE EXTENSION IF NOT EXISTS pg_trgm;");
             migrationBuilder.Sql(@"
@@ -90,6 +95,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
         END;
         $BODY$;
 ");
+            */
         }
 
         /// <inheritdoc />
