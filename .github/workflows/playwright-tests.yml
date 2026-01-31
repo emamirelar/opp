@@ -64,6 +64,7 @@ jobs:
         run: dotnet tool install --global dotnet-ef
       
       - name: Setup test database
+        timeout-minutes: 15
         env:
           PGPASSWORD: test
           ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
@@ -78,11 +79,13 @@ jobs:
           # Run migrations on main application context SECOND (depends on Identity tables)
           dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess --startup-project UNOPS.PAO.Server --context UNOPSAppDbContext --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
           
-          # Create test user
-          psql -h localhost -p 5432 -U test -d TestDb -f "setup-test-user.sql"
+          # Create test user (with explicit options to prevent hangs)
+          psql -h localhost -p 5432 -U test -d TestDb --no-psqlrc --quiet -f "setup-test-user.sql"
+          echo "Test user created successfully"
           
           # Setup Opportunity permissions
-          psql -h localhost -p 5432 -U test -d TestDb -f "setup-opportunity-permissions.sql"
+          psql -h localhost -p 5432 -U test -d TestDb --no-psqlrc --quiet -f "setup-opportunity-permissions.sql"
+          echo "Permissions setup completed"
       
       - name: Start .NET backend
         run: |
@@ -198,6 +201,7 @@ jobs:
         run: npm ci
       
       - name: Setup test database
+        timeout-minutes: 15
         env:
           PGPASSWORD: test
           ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
@@ -212,8 +216,8 @@ jobs:
           # Run migrations on main application context SECOND
           dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess --startup-project UNOPS.PAO.Server --context UNOPSAppDbContext --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
           
-          psql -h localhost -p 5432 -U test -d TestDb -f "setup-test-user.sql"
-          psql -h localhost -p 5432 -U test -d TestDb -f "setup-opportunity-permissions.sql"
+          psql -h localhost -p 5432 -U test -d TestDb --no-psqlrc --quiet -f "setup-test-user.sql"
+          psql -h localhost -p 5432 -U test -d TestDb --no-psqlrc --quiet -f "setup-opportunity-permissions.sql"
       
       - name: Start backend
         run: |
@@ -304,6 +308,7 @@ jobs:
         run: npm ci
       
       - name: Setup test database
+        timeout-minutes: 15
         env:
           PGPASSWORD: test
           ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
@@ -318,8 +323,8 @@ jobs:
           # Run migrations on main application context SECOND
           dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess --startup-project UNOPS.PAO.Server --context UNOPSAppDbContext --connection "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
           
-          psql -h localhost -p 5432 -U test -d TestDb -f "setup-test-user.sql"
-          psql -h localhost -p 5432 -U test -d TestDb -f "setup-opportunity-permissions.sql"
+          psql -h localhost -p 5432 -U test -d TestDb --no-psqlrc --quiet -f "setup-test-user.sql"
+          psql -h localhost -p 5432 -U test -d TestDb --no-psqlrc --quiet -f "setup-opportunity-permissions.sql"
       
       - name: Start backend
         run: |
