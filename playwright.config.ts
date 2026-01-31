@@ -16,7 +16,7 @@ export default defineConfig({
   /* Output directory for test results and reports */
   outputDir: './QA Tests/Playwright Tests/test-results',
   /* Maximum time one test can run for */
-  timeout: 120000,  // 120 seconds (2 minutes) per test - increased for API mocking delays
+  timeout: 60000,  // 60 seconds per test (reduced from 120s - mocked tests are fast)
   /* Maximum time expect() should wait for the condition to be met */
   expect: {
     timeout: 10000,  // 10 seconds for assertions
@@ -25,10 +25,10 @@ export default defineConfig({
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
-  /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  /* Retry on CI only - reduced from 2 to 1 to speed up CI */
+  retries: process.env.CI ? 1 : 0,
+  /* Use 4 workers on CI for parallelization (mocked tests are I/O-bound, not CPU-bound) */
+  workers: process.env.CI ? 4 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [['html', { outputFolder: './QA Tests/Playwright Tests/playwright-report' }]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
