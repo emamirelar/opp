@@ -105,7 +105,7 @@ jobs:
             sleep 2
           done
         env:
-          ASPNETCORE_ENVIRONMENT: Development
+          ASPNETCORE_ENVIRONMENT: Testing
           ASPNETCORE_URLS: http://localhost:5159
           ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
       
@@ -241,7 +241,7 @@ jobs:
             sleep 2
           done
         env:
-          ASPNETCORE_ENVIRONMENT: Development
+          ASPNETCORE_ENVIRONMENT: Testing
           ASPNETCORE_URLS: http://localhost:5159
           ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
       
@@ -355,7 +355,7 @@ jobs:
             sleep 2
           done
         env:
-          ASPNETCORE_ENVIRONMENT: Development
+          ASPNETCORE_ENVIRONMENT: Testing
           ASPNETCORE_URLS: http://localhost:5159
           ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=TestDb;Username=test;Password=test;Include Error Detail=true"
       
