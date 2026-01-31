@@ -119,7 +119,8 @@ jobs:
             # Check if server responds (any HTTP status means it's running)
             # The IAP middleware returns 401/403 for unauthenticated requests,
             # but that still means the server is up and accepting connections
-            http_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5159/health)
+            # Use || echo "000" to handle curl connection failures gracefully
+            http_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5159/health 2>/dev/null || echo "000")
             if [ "$http_code" != "000" ]; then
               echo "Backend is ready! (HTTP $http_code)"
               break
