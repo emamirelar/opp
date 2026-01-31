@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { authenticateWithRealBackend } from './helpers/auth.helper';
 
 /**
  * Home Page & Dashboard E2E Tests
@@ -7,11 +8,13 @@ import { test, expect } from '@playwright/test';
  * - Application loads successfully
  * - Dashboard components render properly
  * - Key UI elements are visible and interactive
+ * 
+ * @updated 2026-01-30 - Migrated to real backend authentication
  */
 test.describe('Home Page & Dashboard', () => {
   test('should load home page and display dashboard', async ({ page }) => {
-    // Navigate to home page
-    await page.goto('/');
+    // Authenticate and navigate to home page
+    await authenticateWithRealBackend(page, '/#/');
     
     // Verify page title contains "Opportunity" or "UNOPS"
     await expect(page).toHaveTitle(/Opportunity|UNOPS/);
@@ -32,10 +35,8 @@ test.describe('Home Page & Dashboard', () => {
   });
   
   test('should display announcement banner', async ({ page }) => {
-    await page.goto('/');
-    
-    // Wait for page to load
-    await page.waitForLoadState('domcontentloaded');
+    // Authenticate and navigate to home page
+    await authenticateWithRealBackend(page, '/#/');
     
     // Verify the gradient announcement banner is visible
     const banner = page.locator('.bg-gradient-to-r');
@@ -60,10 +61,8 @@ test.describe('Home Page & Dashboard', () => {
   });
   
   test('should display quick actions toolbar for users with permissions', async ({ page }) => {
-    await page.goto('/');
-    
-    // Wait for dashboard to fully load
-    await page.waitForSelector('.max-w-7xl', { timeout: 10000 });
+    // Authenticate and navigate to home page
+    await authenticateWithRealBackend(page, '/#/');
     
     // Check if Quick Actions section exists (depends on user permissions)
     // The Quick Actions panel has specific buttons for creating entities
@@ -100,10 +99,8 @@ test.describe('Home Page & Dashboard', () => {
   });
   
   test('should handle error state gracefully', async ({ page }) => {
-    await page.goto('/');
-    
-    // Wait for page to load
-    await page.waitForLoadState('domcontentloaded');
+    // Authenticate and navigate to home page
+    await authenticateWithRealBackend(page, '/#/');
     
     // If error state is shown, verify it has proper UI
     const errorIcon = page.locator('i.material-symbols-outlined').filter({ hasText: 'warning' });
@@ -138,9 +135,9 @@ test.describe('Home Page & Dashboard', () => {
   test('should have responsive layout', async ({ page }) => {
     // Test desktop view
     await page.setViewportSize({ width: 1920, height: 1080 });
-    await page.goto('/');
     
-    await page.waitForSelector('.max-w-7xl', { timeout: 10000 });
+    // Authenticate and navigate to home page
+    await authenticateWithRealBackend(page, '/#/');
     
     // Desktop: Grid should show multiple columns
     const gridElement = page.locator('.grid').first();

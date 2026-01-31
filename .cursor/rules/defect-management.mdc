@@ -12,12 +12,12 @@ alwaysApply: true
 **1. `Defect List for Developers.md`** (Product Defects)
 - **Scope:** Business logic bugs, missing features, API issues, architectural problems in production code
 - **Prefix:** DEF-XXX
-- **Location:** `UNOPS.PAO.Tests/Defect List for Developers.md`
+- **Location:** `QA Tests/Defect List for Developers.md`
 
 **2. `Defect List for QA.md`** (Test Infrastructure Issues)
 - **Scope:** Test infrastructure issues, test implementation bugs, temporary workarounds, test tooling problems
 - **Prefix:** QA-XXX
-- **Location:** `UNOPS.PAO.Tests/Defect List for QA.md`
+- **Location:** `QA Tests/Defect List for QA.md`
 
 ---
 

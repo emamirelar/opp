@@ -2,58 +2,36 @@
  * @fileoverview Opportunity Detail Page - Phase 1A Basic Tests
  * Tests that can be written WITHOUT data-testid attributes
  * Uses generic selectors: text, roles, PrimeNG components, CSS classes
+ * 
+ * @updated 2026-01-30 - Migrated to real backend authentication
  */
 
 import { test, expect } from '@playwright/test';
-import { loginAndNavigate } from './helpers/auth.helper';
+import { authenticateWithRealBackend } from './helpers/auth.helper';
 import { assertUrlMatches } from './helpers/assertions.helper';
-import { TestDataSeeder, TestOpportunity, TestPartner } from './helpers/test-data-seeder';
 
 /**
  * Opportunity Detail Page - Phase 1A Tests
  * 
  * These tests use generic selectors and don't require specific data-testid attributes.
  * They test basic functionality, navigation, and layout.
+ * 
+ * NOTE: Tests use real backend with existing opportunity data (ID 1).
+ * Ensure database has at least one opportunity record before running tests.
+ * Opportunity routes are under /partnerships/opportunities (not /opportunities).
  */
 test.describe('Opportunity Detail Page - Phase 1A Basic Tests', () => {
-  let testPartner: TestPartner;
-  let testOpportunity: TestOpportunity;
-  let testOpportunityId: number;
+  // Use existing opportunity ID from database (assumes setup scripts have run)
+  const testOpportunityId = 1;
   
   test.beforeEach(async ({ page }) => {
-    // Create test partner first (opportunities may need partner context)
-    testPartner = await TestDataSeeder.createPartner({
-      name: 'Test Partner for Opportunity Phase 1A',
-      type: 'Organization',
-      status: 'Active'
-    });
+    // Authenticate with real backend and navigate to opportunity detail page
+    // Note: Opportunities are under /partnerships/opportunities path
+    await authenticateWithRealBackend(page, `/#/partnerships/opportunities/${testOpportunityId}`);
     
-    // Create test opportunity with dynamic data
-    testOpportunity = await TestDataSeeder.createOpportunity({
-      title: 'Test Opportunity for Phase 1A',
-      description: 'This is a test opportunity for Phase 1A automated E2E testing',
-      value: 100000,
-      stage: 'Draft',
-      partnerId: testPartner.id!
-    });
-    testOpportunityId = testOpportunity.id!;
-    
-    // Set up API mocks for detail page
-    await TestDataSeeder.setupTestDataMocks(page);
-    
-    // Navigate to opportunity detail page
-    await loginAndNavigate(page, `/#/opportunities/${testOpportunityId}`);
-    await page.waitForLoadState('networkidle');
-  });
-  
-  test.afterEach(async () => {
-    // Clean up test data (delete opportunity first, then partner)
-    if (testOpportunity?.id) {
-      await TestDataSeeder.deleteOpportunity(testOpportunity.id);
-    }
-    if (testPartner?.id) {
-      await TestDataSeeder.deletePartner(testPartner.id);
-    }
+    // Wait for page load
+    await page.waitForLoadState('load', { timeout: 15000 });
+    await page.waitForTimeout(2000); // Angular routing init
   });
   
   /**
@@ -65,7 +43,7 @@ test.describe('Opportunity Detail Page - Phase 1A Basic Tests', () => {
   
   test('should display opportunity detail page URL', async ({ page }) => {
     const currentUrl = page.url();
-    expect(currentUrl).toContain('/opportunities/');
+    expect(currentUrl).toContain('/partnerships/opportunities/');
     expect(currentUrl).toContain(testOpportunityId.toString());
   });
   

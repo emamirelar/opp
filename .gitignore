@@ -242,7 +242,8 @@ ClientBin/
 *.publishsettings
 orleans.codegen.cs
 
-/node_modules
+# Node modules (also listed below at root level)
+# /node_modules
 
 # RIA/Silverlight projects
 Generated_Code/
@@ -256,6 +257,7 @@ UpgradeLog*.XML
 UpgradeLog*.htm
 ServiceFabricBackup/
 *.rptproj.bak
+*.backup
 
 # SQL Server files
 *.mdf
@@ -472,7 +474,40 @@ FodyWeavers.xsd
 # Accidental Shell Output Files
 # ===========================
 
-# Prevent files from redirected commands
-" "*
-"-"*
-"*?"
+# Prevent files from redirected commands (files starting with special chars)
+# Files starting with space, dash, or containing special shell characters
+[[:space:]]*
+-*
+*\?*
+
+# Files that look like failed commands
+*origin*QA*
+*ref*--*
+*-Path*
+
+# ===========================
+# Test Artifacts (prevent at root level)
+# ===========================
+
+# Test scripts should be in QA Tests/Scripts/, not root
+/assign-test-roles.sql
+/create-test-users.sql
+/setup-test-data.sql
+/check-*.sql
+/verify-*.sql
+/setup-*-database*.ps1
+/create-test-*.ps1
+/verify-*.ps1
+
+# Test output files should be in QA Tests/Test Execution Results/
+/build-output.txt
+/test-run-results.log
+/*-install.log
+
+# Test documentation should be in QA Tests/Documentation/
+/PHASE_*.md
+/SESSION_*.md
+/TEST_*.md
+/*_SUMMARY*.md
+/*_COMPLETE*.md
+/*_REPORT*.md

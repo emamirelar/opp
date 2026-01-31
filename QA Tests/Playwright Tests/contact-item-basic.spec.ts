@@ -2,58 +2,34 @@
  * @fileoverview Contact Detail Page - Phase 1A Basic Tests
  * Tests that can be written WITHOUT data-testid attributes
  * Uses generic selectors: text, roles, PrimeNG components, CSS classes
+ * 
+ * @updated 2026-01-30 - Migrated to real backend authentication
  */
 
 import { test, expect } from '@playwright/test';
-import { loginAndNavigate } from './helpers/auth.helper';
+import { authenticateWithRealBackend } from './helpers/auth.helper';
 import { assertUrlMatches } from './helpers/assertions.helper';
-import { TestDataSeeder, TestContact, TestPartner } from './helpers/test-data-seeder';
 
 /**
  * Contact Detail Page - Phase 1A Tests
  * 
  * These tests use generic selectors and don't require specific data-testid attributes.
  * They test basic functionality, navigation, and layout.
+ * 
+ * NOTE: Tests use real backend with existing contact data (ID 1).
+ * Ensure database has at least one contact record before running tests.
  */
 test.describe('Contact Detail Page - Phase 1A Basic Tests', () => {
-  let testPartner: TestPartner;
-  let testContact: TestContact;
-  let testContactId: number;
+  // Use existing contact ID from database (assumes setup scripts have run)
+  const testContactId = 1;
   
   test.beforeEach(async ({ page }) => {
-    // Create test partner first (contacts need a partner)
-    testPartner = await TestDataSeeder.createPartner({
-      name: 'Test Partner for Contact Phase 1A',
-      type: 'Organization',
-      status: 'Active'
-    });
+    // Authenticate with real backend and navigate to contact detail page
+    await authenticateWithRealBackend(page, `/#/partnerships/contacts/${testContactId}`);
     
-    // Create test contact with dynamic data
-    testContact = await TestDataSeeder.createContact({
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john.doe.phase1a@test.com',
-      partnerId: testPartner.id!,
-      position: 'Test Manager'
-    });
-    testContactId = testContact.id!;
-    
-    // Set up API mocks for detail page
-    await TestDataSeeder.setupTestDataMocks(page);
-    
-    // Navigate to contact detail page
-    await loginAndNavigate(page, `/#/partnerships/contacts/${testContactId}`);
-    await page.waitForLoadState('networkidle');
-  });
-  
-  test.afterEach(async () => {
-    // Clean up test data (delete contact first, then partner)
-    if (testContact?.id) {
-      await TestDataSeeder.deleteContact(testContact.id);
-    }
-    if (testPartner?.id) {
-      await TestDataSeeder.deletePartner(testPartner.id);
-    }
+    // Wait for page load
+    await page.waitForLoadState('load', { timeout: 15000 });
+    await page.waitForTimeout(2000); // Angular routing init
   });
   
   /**

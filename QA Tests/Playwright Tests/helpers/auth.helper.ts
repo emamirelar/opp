@@ -9,6 +9,67 @@ import { setupAPIMocks } from './api-mocks.helper';
 import { waitForPageReady, waitForAngularReady } from './wait.helper';
 
 /**
+ * ✅ REAL BACKEND AUTHENTICATION (Cookie-Based)
+ * Use this for testing with real backend at http://localhost:5159
+ * 
+ * This matches the proven approach from contacts.spec.ts that successfully
+ * authenticates with the development backend using IAP simulation cookies.
+ * 
+ * Prerequisites:
+ * - Backend running at http://localhost:5159
+ * - Test user exists: test@playwright.local with Administrator role
+ * - Created via setup-test-user.sql
+ */
+
+/**
+ * Authenticate with real backend using development cookies
+ * @param page - Playwright page object
+ * @param targetUrl - URL to navigate to after authentication
+ * @param testUserEmail - Email of test user (default: test@playwright.local)
+ */
+export async function authenticateWithRealBackend(
+  page: Page,
+  targetUrl: string,
+  testUserEmail: string = 'test@playwright.local'
+): Promise<void> {
+  // Step 1: Clear all cookies
+  await page.context().clearCookies();
+  
+  // Step 2: Set authentication cookies BEFORE first navigation
+  await page.context().addCookies([
+    {
+      name: 'dev-user-email',
+      value: testUserEmail,
+      domain: '127.0.0.1',
+      path: '/',
+      httpOnly: false,
+      secure: false,
+      sameSite: 'Lax',
+    },
+    {
+      name: 'DevIAPAuth',
+      value: testUserEmail,
+      domain: '127.0.0.1',
+      path: '/',
+      httpOnly: true,
+      secure: false,
+      sameSite: 'Lax',
+    }
+  ]);
+  
+  // Step 3: Navigate to target page with cookies already set
+  const baseURL = 'http://127.0.0.1:4200';
+  const fullUrl = targetUrl.startsWith('http') ? targetUrl : `${baseURL}${targetUrl}`;
+  await page.goto(fullUrl);
+  
+  // Step 4: Wait for page to load (use 'load' not 'networkidle' for faster tests)
+  await page.waitForLoadState('load', { timeout: 15000 });
+  
+  // Step 5: Give Angular time to initialize routing
+  await page.waitForTimeout(2000);
+}
+
+/**
  * @description Check if current browser is webkit (Safari)
  * Webkit has different timing characteristics and needs special handling
  * @param page - Playwright page object

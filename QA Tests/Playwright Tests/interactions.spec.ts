@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { authenticateWithRealBackend } from './helpers/auth.helper';
 
 /**
  * Interactions List E2E Tests
@@ -12,23 +13,10 @@ import { test, expect } from '@playwright/test';
  * - Search and filter capabilities
  */
 test.describe('Interactions List', () => {
-  // Login before each test
+  // Authenticate with real backend before each test
   test.beforeEach(async ({ page }) => {
-    await page.goto('/login');
-    
-    // TODO: Replace with actual test credentials
-    await page.locator('[data-testid="username-input"]').fill('testuser@unops.org');
-    await page.locator('[data-testid="password-input"] input').fill('TestPassword123!');
-    await page.locator('[data-testid="login-button"]').click();
-    
-    // Wait for redirect
-    await page.waitForURL(/\/home|\/dashboard/, { timeout: 10000 });
-    
-    // Navigate to interactions page
-    await page.goto('/interactions');
-    
-    // Wait for interactions page to load
-    await page.waitForLoadState('networkidle');
+    // Use real backend authentication (cookie-based)
+    await authenticateWithRealBackend(page, '/#/partnerships/interactions');
   });
   
   test('should display interactions page header', async ({ page }) => {

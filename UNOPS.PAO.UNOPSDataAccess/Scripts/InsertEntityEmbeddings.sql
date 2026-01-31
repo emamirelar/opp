@@ -1,3 +1,7 @@
+-- TEMPORARY: Commenting out until pgvector is available
+DROP PROCEDURE IF EXISTS public."InsertEntityEmbedding"(TEXT, INT, TEXT, TEXT);
+
+/*
 CREATE OR REPLACE PROCEDURE public."InsertEntityEmbedding"(entityName TEXT, entityId INT, entityData TEXT,embedding TEXT)
 LANGUAGE plpgsql
 AS $$
@@ -9,4 +13,5 @@ DO UPDATE SET "FullEmbedding" = EXCLUDED."FullEmbedding",
     "EntityData" = entityData; 
 END;
 $$;
+*/
                                 

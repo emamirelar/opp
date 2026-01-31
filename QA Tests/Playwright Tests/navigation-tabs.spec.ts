@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { authenticateWithRealBackend } from './helpers/auth.helper';
 
 /**
  * Navigation Tabs E2E Tests
@@ -9,26 +10,20 @@ import { test, expect } from '@playwright/test';
  * - Tab navigation
  * - Active tab highlighting
  * - Responsive behavior
+ * 
+ * @updated 2026-01-30 - Migrated to real backend authentication
+ * 
+ * NOTE: Tests navigate to partner detail page (ID 1) which has tab navigation.
  */
 test.describe('Navigation Tabs', () => {
-  // Login before each test
+  // Authenticate with real backend before each test
   test.beforeEach(async ({ page }) => {
-    await page.goto('/login');
+    // Navigate to a page with tabs (partner detail page)
+    await authenticateWithRealBackend(page, '/#/partnerships/partners/1');
     
-    // TODO: Replace with actual test credentials
-    await page.locator('[data-testid="username-input"]').fill('testuser@unops.org');
-    await page.locator('[data-testid="password-input"] input').fill('TestPassword123!');
-    await page.locator('[data-testid="login-button"]').click();
-    
-    // Wait for redirect
-    await page.waitForURL(/\/home|\/dashboard/, { timeout: 10000 });
-    
-    // Navigate to a page with tabs (e.g., partner detail page)
-    // TODO: Update with actual route that has tabs
-    await page.goto('/partners/1');
-    
-    // Wait for page to load
-    await page.waitForLoadState('networkidle');
+    // Wait for page load and Angular init
+    await page.waitForLoadState('load', { timeout: 15000 });
+    await page.waitForTimeout(2000);
   });
   
   test('should display desktop tabs on larger screens', async ({ page }) => {

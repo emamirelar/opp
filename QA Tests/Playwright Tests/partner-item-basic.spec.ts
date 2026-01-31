@@ -2,46 +2,34 @@
  * @fileoverview Partner Detail Page - Phase 1A Basic Tests
  * Tests that can be written WITHOUT data-testid attributes
  * Uses generic selectors: text, roles, PrimeNG components, CSS classes
+ * 
+ * @updated 2026-01-30 - Migrated to real backend authentication
  */
 
 import { test, expect } from '@playwright/test';
-import { loginAndNavigate } from './helpers/auth.helper';
+import { authenticateWithRealBackend } from './helpers/auth.helper';
 import { assertUrlMatches } from './helpers/assertions.helper';
-import { TestDataSeeder, TestPartner } from './helpers/test-data-seeder';
 
 /**
  * Partner Detail Page - Phase 1A Tests
  * 
  * These tests use generic selectors and don't require specific data-testid attributes.
  * They test basic functionality, navigation, and layout.
+ * 
+ * NOTE: Tests use real backend with existing partner data (ID 1).
+ * Ensure database has at least one partner record before running tests.
  */
 test.describe('Partner Detail Page - Phase 1A Basic Tests', () => {
-  let testPartner: TestPartner;
-  let testPartnerId: number;
+  // Use existing partner ID from database (assumes setup scripts have run)
+  const testPartnerId = 1;
   
   test.beforeEach(async ({ page }) => {
-    // Create test partner with dynamic data
-    testPartner = await TestDataSeeder.createPartner({
-      name: 'Test Partner Organization for Phase 1A',
-      type: 'Organization',
-      status: 'Active',
-      description: 'This is a test partner for Phase 1A automated E2E testing'
-    });
-    testPartnerId = testPartner.id!;
+    // Authenticate with real backend and navigate to partner detail page
+    await authenticateWithRealBackend(page, `/#/partnerships/partners/${testPartnerId}`);
     
-    // Set up API mocks for detail page
-    await TestDataSeeder.setupTestDataMocks(page);
-    
-    // Navigate to partner detail page
-    await loginAndNavigate(page, `/#/partnerships/partners/${testPartnerId}`);
-    await page.waitForLoadState('networkidle');
-  });
-  
-  test.afterEach(async () => {
-    // Clean up test data
-    if (testPartner?.id) {
-      await TestDataSeeder.deletePartner(testPartner.id);
-    }
+    // Wait for page load
+    await page.waitForLoadState('load', { timeout: 15000 });
+    await page.waitForTimeout(2000); // Angular routing init
   });
   
   /**

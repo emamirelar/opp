@@ -2,71 +2,34 @@
  * @fileoverview Interaction Detail Page - Phase 1A Basic Tests
  * Tests that can be written WITHOUT data-testid attributes
  * Uses generic selectors: text, roles, PrimeNG components, CSS classes
+ * 
+ * @updated 2026-01-30 - Migrated to real backend authentication
  */
 
 import { test, expect } from '@playwright/test';
-import { loginAndNavigate } from './helpers/auth.helper';
+import { authenticateWithRealBackend } from './helpers/auth.helper';
 import { assertUrlMatches } from './helpers/assertions.helper';
-import { TestDataSeeder, TestInteraction, TestPartner, TestContact } from './helpers/test-data-seeder';
 
 /**
  * Interaction Detail Page - Phase 1A Tests
  * 
  * These tests use generic selectors and don't require specific data-testid attributes.
  * They test basic functionality, navigation, and layout.
+ * 
+ * NOTE: Tests use real backend with existing interaction data (ID 1).
+ * Ensure database has at least one interaction record before running tests.
  */
 test.describe('Interaction Detail Page - Phase 1A Basic Tests', () => {
-  let testPartner: TestPartner;
-  let testContact: TestContact;
-  let testInteraction: TestInteraction;
-  let testInteractionId: number;
+  // Use existing interaction ID from database (assumes setup scripts have run)
+  const testInteractionId = 1;
   
   test.beforeEach(async ({ page }) => {
-    // Create test partner first
-    testPartner = await TestDataSeeder.createPartner({
-      name: 'Test Partner for Interaction Phase 1A',
-      type: 'Organization',
-      status: 'Active'
-    });
+    // Authenticate with real backend and navigate to interaction detail page
+    await authenticateWithRealBackend(page, `/#/partnerships/interactions/${testInteractionId}`);
     
-    // Create test contact
-    testContact = await TestDataSeeder.createContact({
-      firstName: 'Jane',
-      lastName: 'Smith',
-      email: 'jane.smith.phase1a@test.com',
-      partnerId: testPartner.id!,
-      position: 'Project Coordinator'
-    });
-    
-    // Create test interaction with dynamic data
-    testInteraction = await TestDataSeeder.createInteraction({
-      type: 'Meeting',
-      date: new Date().toISOString(),
-      notes: 'Test interaction for Phase 1A automated E2E testing',
-      partnerId: testPartner.id!,
-      contactId: testContact.id!
-    });
-    testInteractionId = testInteraction.id!;
-    
-    // Set up API mocks for detail page
-    await TestDataSeeder.setupTestDataMocks(page);
-    
-    // Navigate to interaction detail page
-    await loginAndNavigate(page, `/#/partnerships/interactions/${testInteractionId}`);
-    await page.waitForLoadState('networkidle');
-  });
-  
-  test.afterEach(async () => {
-    // Clean up test data (delete in reverse order of creation)
-    if (testInteraction?.id) {
-      await TestDataSeeder.deleteInteraction(testInteraction.id);
-    }
-    if (testContact?.id) {
-      await TestDataSeeder.deleteContact(testContact.id);
-    }
-    if (testPartner?.id) {
-      await TestDataSeeder.deletePartner(testPartner.id);
-    }
+    // Wait for page load
+    await page.waitForLoadState('load', { timeout: 15000 });
+    await page.waitForTimeout(2000); // Angular routing init
   });
   
   /**

@@ -1,4 +1,13 @@
+---
+description: Comprehensive test strategy with detailed code examples - for quick reference see test-strategy-quick-reference.mdc
+globs:
+alwaysApply: false
+---
 # Comprehensive Test Strategy Standard
+
+> **📋 Quick Reference Available**: For a condensed version with just the essential rules, see `test-strategy-quick-reference.mdc`
+
+---
 
 ## 🚨 CRITICAL REQUIREMENT: 3:1 RATIO 🚨
 

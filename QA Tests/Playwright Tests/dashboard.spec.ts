@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { DashboardPage } from './pages/dashboard.page';
-import { login } from './helpers/auth.helper';
+import { authenticateWithRealBackend } from './helpers/auth.helper';
 
 /**
  * Dashboard Component E2E Tests
@@ -10,14 +10,18 @@ import { login } from './helpers/auth.helper';
  * - Quick actions functionality
  * - Recent activity display
  * - Data refresh capability
+ * 
+ * @updated 2026-01-30 - Migrated to real backend authentication
  */
 test.describe('Dashboard', () => {
   let dashboardPage: DashboardPage;
   
-  // Login before each test
+  // Authenticate with real backend before each test
   test.beforeEach(async ({ page }) => {
     dashboardPage = new DashboardPage(page);
-    await login(page);
+    
+    // Authenticate and navigate to home/dashboard page
+    await authenticateWithRealBackend(page, '/#/');
   });
   
   test('should display dashboard widgets', async () => {

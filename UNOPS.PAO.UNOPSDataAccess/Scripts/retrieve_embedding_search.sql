@@ -1,5 +1,9 @@
+-- TEMPORARY: Commenting out until pgvector is available
 DROP FUNCTION IF EXISTS public.retrieve_similarity_results(TEXT, TEXT, TEXT, REAL, REAL, TEXT);
+DROP FUNCTION IF EXISTS public.retrieve_embedding_search(TEXT, TEXT, REAL, TEXT);
+DROP FUNCTION IF EXISTS public.retrieve_embedding_search_multiple(TEXT, TEXT, REAL, INTEGER, TEXT);
 
+/*
 -- Drop existing function if it exists
 DROP FUNCTION IF EXISTS public.retrieve_embedding_search(TEXT, TEXT, REAL, TEXT);
 
@@ -64,3 +68,4 @@ BEGIN
     RETURN QUERY EXECUTE dynamic_sql;
 END;
 $BODY$;
+*/

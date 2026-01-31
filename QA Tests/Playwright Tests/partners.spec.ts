@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { PartnersPage } from './pages/partners.page';
-import { loginAndNavigate } from './helpers/auth.helper';
+import { authenticateWithRealBackend } from './helpers/auth.helper';
 import { assertUrlMatches } from './helpers/assertions.helper';
 
 /**
@@ -16,10 +16,15 @@ import { assertUrlMatches } from './helpers/assertions.helper';
 test.describe('Partners List', () => {
   let partnersPage: PartnersPage;
   
-  // Login before each test
+  // Authenticate with real backend before each test
   test.beforeEach(async ({ page }) => {
     partnersPage = new PartnersPage(page);
-    await loginAndNavigate(page, '/partners');
+    
+    // Use real backend authentication (cookie-based)
+    await authenticateWithRealBackend(page, '/#/partnerships/partners');
+    
+    // Wait for permissions to load
+    await partnersPage.waitForPermissions();
   });
   
   test('should display partners page header', async () => {

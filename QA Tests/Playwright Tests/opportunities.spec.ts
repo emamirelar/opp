@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { OpportunitiesPage } from './pages/opportunities.page';
-import { loginAndNavigate } from './helpers/auth.helper';
+import { authenticateWithRealBackend } from './helpers/auth.helper';
 import { assertUrlMatches, assertDialogOpen } from './helpers/assertions.helper';
 
 /**
@@ -16,10 +16,15 @@ import { assertUrlMatches, assertDialogOpen } from './helpers/assertions.helper'
 test.describe('Opportunities List', () => {
   let opportunitiesPage: OpportunitiesPage;
   
-  // Login before each test
+  // Authenticate with real backend before each test
   test.beforeEach(async ({ page }) => {
     opportunitiesPage = new OpportunitiesPage(page);
-    await loginAndNavigate(page, '/opportunities');
+    
+    // Use real backend authentication (cookie-based)
+    await authenticateWithRealBackend(page, '/#/partnerships/opportunities');
+    
+    // Wait for permissions to load
+    await opportunitiesPage.waitForPermissions();
   });
   
   test('should display opportunities page header', async () => {
