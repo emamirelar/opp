@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workflow Recalled</title>
+    <title>PAO: {{EntityName}} - Submission Recalled</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -49,7 +49,7 @@
         }
         .info-table td:first-child {
             font-weight: bold;
-            width: 150px;
+            width: 180px;
             color: #666;
         }
         .button {
@@ -74,13 +74,12 @@
             border-left: 4px solid #6c757d;
             padding: 10px 15px;
             margin: 15px 0;
-            font-style: italic;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>Workflow Recalled</h1>
+        <h1>Go Decision Submission Recalled</h1>
     </div>
     
     <div class="content">
@@ -88,27 +87,19 @@
         
         <div class="recall-box">
             <div class="recall-icon">&#8634;</div>
-            <strong>A workflow approval request has been recalled.</strong>
+            <strong>A Go Decision submission has been recalled.</strong>
         </div>
         
-        <p>This is to inform you that the following workflow request has been cancelled by the initiator:</p>
+        <p>This is to inform you that the Go Decision request for the following opportunity has been recalled and no longer requires your action:</p>
         
         <table class="info-table">
             <tr>
-                <td>Entity Type:</td>
-                <td>{{EntityType}}</td>
+                <td>Opportunity:</td>
+                <td><strong>{{EntityName}}</strong></td>
             </tr>
             <tr>
-                <td>Entity Name:</td>
-                <td>{{EntityName}}</td>
-            </tr>
-            <tr>
-                <td>Current Stage:</td>
-                <td>{{CurrentStage}}</td>
-            </tr>
-            <tr>
-                <td>Requested Stage:</td>
-                <td>{{RequestedStage}}</td>
+                <td>Responsible Org Unit:</td>
+                <td>{{OrgUnitName}}</td>
             </tr>
             <tr>
                 <td>Recalled By:</td>
@@ -120,22 +111,20 @@
             </tr>
         </table>
         
-        {{#if Comment}}
         <div class="comment-box">
-            <strong>Reason for Recall:</strong><br>
+            <strong>Justification:</strong><br>
             {{Comment}}
         </div>
-        {{/if}}
         
         <p>No further action is required from you at this time.</p>
         
         <p>
-            <a href="{{EntityUrl}}" class="button">View Details</a>
+            <a href="{{EntityUrl}}" class="button">View Opportunity</a>
         </p>
     </div>
     
     <div class="footer">
-        <p>This is an automated notification from UNOPS Opportunity+ System.</p>
+        <p>This is an automated notification from UNOPS Opportunity+ System (PAO).</p>
         <p>If you have any questions, please contact your system administrator.</p>
     </div>
 </body>

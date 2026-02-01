@@ -22,7 +22,7 @@ import {
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 
 // PrimeNG imports
 import { PanelModule } from 'primeng/panel';
@@ -42,8 +42,9 @@ import { DropdownModule } from 'primeng/dropdown';
 import { SelectModule } from 'primeng/select';
 import { MarkdownModule } from 'ngx-markdown';
 
-// Workflow component
+// Workflow components
 import { StageWorkflowComponent } from '@shared/reusables/components/workflow/components/stage-workflow/stage-workflow.component';
+import { RequirementsValidationComponent } from '@shared/reusables/components/workflow/components/requirements-validation/requirements-validation.component';
 
 // Services
 import { FeedbackDialogService } from '@shared/services/ui';
@@ -91,6 +92,7 @@ import { ValuesService } from '@app/shared/services/api/values.service';
     CommonModule,
     TranslateModule,
     FormsModule,
+    ReactiveFormsModule,
     PanelModule,
     ButtonModule,
     DividerModule,
@@ -108,6 +110,7 @@ import { ValuesService } from '@app/shared/services/api/values.service';
     SelectModule,
     MarkdownModule,
     StageWorkflowComponent,
+    RequirementsValidationComponent,
     OpportunityCollaborationComponent,
     OpportunityAnalysisSectionComponent,
     OpportunityOverviewSectionComponent,
@@ -200,6 +203,33 @@ export class OpportunityViewComponent
   
   // Section save trigger - incremented when any section saves to notify WHAT section to refresh framework status
   sectionSaveTrigger = signal<number>(0);
+
+  // FormGroup for requirements validation - mirrors opportunity fields
+  // Used by app-requirements-validation to validate workflow stage transition requirements
+  opportunityForm = new FormGroup({
+    name: new FormControl(''),
+    description: new FormControl(''),
+    challenges: new FormControl(''),
+    expectedImpact: new FormControl(''),
+    expectedOutcomes: new FormControl(''),
+    opportunityStatementMarkdown: new FormControl(''),
+    initiativeBudgetUSD: new FormControl<number | null>(null),
+    unopsMissions: new FormControl<unknown[]>([]),
+    sdgs: new FormControl<unknown[]>([]),
+    fundingPartners: new FormControl<unknown[]>([]),
+    clientPartners: new FormControl<unknown[]>([]),
+    deliverables: new FormControl<unknown[]>([]),
+    countries: new FormControl<unknown[]>([]),
+    targetSigningDate: new FormControl<Date | null>(null),
+    implementationStartDate: new FormControl<Date | null>(null),
+    targetDeliveryDate: new FormControl<Date | null>(null),
+    responsibleOrgUnitId: new FormControl<number | null>(null),
+    proposedInitiativeTypeId: new FormControl<number | null>(null),
+    beneficiariesToBeDetermined: new FormControl<boolean>(false),
+    estimatedDirectBeneficiaries: new FormControl<number | null>(null),
+    estimatedIndirectBeneficiaries: new FormControl<number | null>(null),
+    stakeholders: new FormControl<unknown[]>([]),
+  });
 
   @ViewChild('contentScrollContainer', { read: ElementRef })
   contentScrollContainer?: ElementRef;
@@ -604,6 +634,17 @@ export class OpportunityViewComponent
         untracked(() => this.onDocumentsLoaded());
       }
     });
+
+    // Effect to sync opportunityForm when opportunity data changes
+    // This enables requirements validation to work with the current data
+    effect(() => {
+      const opp = this.opportunity();
+      if (opp) {
+        untracked(() => {
+          this.syncOpportunityFormValues(opp);
+        });
+      }
+    });
   }
 
   ngOnInit() {
@@ -696,6 +737,37 @@ export class OpportunityViewComponent
         '❌ contentScrollContainer not found! Cannot attach scroll listener',
       );
     }
+  }
+
+  /**
+   * Syncs the opportunityForm values from the opportunity data.
+   * This allows the requirements-validation component to validate against current data.
+   */
+  private syncOpportunityFormValues(opp: Opportunity): void {
+    this.opportunityForm.patchValue({
+      name: opp.name || '',
+      description: opp.description || '',
+      challenges: opp.challenges || '',
+      expectedImpact: opp.expectedImpact || '',
+      expectedOutcomes: opp.expectedOutcomes || '',
+      opportunityStatementMarkdown: opp.opportunityStatementMarkdown || '',
+      initiativeBudgetUSD: opp.initiativeBudgetUSD ?? null,
+      unopsMissions: opp.unopsMissions || [],
+      sdgs: opp.sdGs || [],
+      fundingPartners: opp.fundingPartners || [],
+      clientPartners: opp.clientPartners || [],
+      deliverables: opp.deliverables || [],
+      countries: opp.countries || [],
+      targetSigningDate: opp.targetSigningDate ? new Date(opp.targetSigningDate) : null,
+      implementationStartDate: opp.implementationStartDate ? new Date(opp.implementationStartDate) : null,
+      targetDeliveryDate: opp.targetDeliveryDate ? new Date(opp.targetDeliveryDate) : null,
+      responsibleOrgUnitId: opp.responsibleOrgUnitId ?? null,
+      proposedInitiativeTypeId: opp.proposedInitiativeTypeId ?? null,
+      beneficiariesToBeDetermined: opp.beneficiariesToBeDetermined || false,
+      estimatedDirectBeneficiaries: opp.estimatedDirectBeneficiaries ?? null,
+      estimatedIndirectBeneficiaries: opp.estimatedIndirectBeneficiaries ?? null,
+      stakeholders: opp.stakeholders || [],
+    }, { emitEvent: true });
   }
 
   ngOnDestroy(): void {

@@ -80,3 +80,182 @@
     />
   </ng-template>
 </p-dialog>
+
+<!-- Non-OM Submitter Warning Dialog -->
+<p-dialog
+  [visible]="showNonOMWarningDialog()"
+  [header]="'message.workflow.nonOMWarningTitle' | translate"
+  [modal]="true"
+  [closable]="true"
+  [style]="{ width: '500px' }"
+  (onHide)="closeNonOMWarningDialog()"
+>
+  <div class="flex flex-col gap-4">
+    <div class="flex items-start gap-3">
+      <i class="pi pi-exclamation-triangle text-yellow-500 text-2xl"></i>
+      <p class="text-surface-600 m-0">
+        {{ 'message.workflow.nonOMSubmitterWarning' | translate: { role: nonOMWarningRole() } }}
+      </p>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end gap-2">
+      <p-button
+        [label]="'button.cancel' | translate"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="closeNonOMWarningDialog()"
+        [disabled]="isActionInProgress()"
+      />
+      <p-button
+        [label]="'button.continue' | translate"
+        severity="primary"
+        (onClick)="confirmNonOMWarning()"
+        [loading]="isActionInProgress()"
+      />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Org Unit Country Mismatch Warning Dialog -->
+<p-dialog
+  [visible]="showOrgUnitMismatchDialog()"
+  [header]="'message.workflow.orgUnitMismatchTitle' | translate"
+  [modal]="true"
+  [closable]="true"
+  [style]="{ width: '500px' }"
+  (onHide)="closeOrgUnitMismatchDialog()"
+>
+  <div class="flex flex-col gap-4">
+    <div class="flex items-start gap-3">
+      <i class="pi pi-exclamation-triangle text-yellow-500 text-2xl"></i>
+      <p class="text-surface-600 m-0">
+        {{ 'message.workflow.orgUnitCountryMismatch' | translate: { countries: unrelatedCountries().join(', ') } }}
+      </p>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end gap-2">
+      <p-button
+        [label]="'button.cancel' | translate"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="closeOrgUnitMismatchDialog()"
+        [disabled]="isActionInProgress()"
+      />
+      <p-button
+        [label]="'button.continue' | translate"
+        severity="primary"
+        (onClick)="confirmOrgUnitMismatch()"
+        [loading]="isActionInProgress()"
+      />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Acknowledgment Statement Dialog -->
+<p-dialog
+  [visible]="showAcknowledgmentDialog()"
+  [header]="'message.workflow.acknowledgmentTitle' | translate"
+  [modal]="true"
+  [closable]="true"
+  [style]="{ width: '600px' }"
+  (onHide)="closeAcknowledgmentDialog()"
+>
+  <div class="flex flex-col gap-4">
+    <div class="flex items-start gap-3">
+      <p-checkbox
+        [ngModel]="acknowledgmentChecked()"
+        (ngModelChange)="acknowledgmentChecked.set($event)"
+        [binary]="true"
+        inputId="acknowledgment"
+      />
+      <label for="acknowledgment" class="text-surface-700 cursor-pointer">
+        {{ acknowledgmentText() }}
+      </label>
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label class="font-semibold">{{ 'message.workflow.additionalRemarksLabel' | translate }}</label>
+      <textarea
+        pTextarea
+        [ngModel]="additionalRemarks()"
+        (ngModelChange)="additionalRemarks.set($event)"
+        [rows]="4"
+        class="w-full"
+        [placeholder]="'message.workflow.additionalRemarksPlaceholder' | translate"
+      ></textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end gap-2">
+      <p-button
+        [label]="'button.cancel' | translate"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="closeAcknowledgmentDialog()"
+        [disabled]="isActionInProgress()"
+      />
+      <p-button
+        [label]="'button.workflow.submit' | translate"
+        severity="primary"
+        (onClick)="confirmAcknowledgment()"
+        [loading]="isActionInProgress()"
+        [disabled]="!acknowledgmentChecked()"
+      />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Reject to NO GO Confirmation Dialog -->
+<p-dialog
+  [visible]="showRejectToNoGoDialog()"
+  [header]="'message.workflow.rejectToNoGoTitle' | translate"
+  [modal]="true"
+  [closable]="true"
+  [style]="{ width: '500px' }"
+  (onHide)="closeRejectToNoGoDialog()"
+>
+  <div class="flex flex-col gap-4">
+    <div class="flex items-start gap-3">
+      <i class="pi pi-exclamation-triangle text-orange-500 text-2xl"></i>
+      <p class="text-surface-600 m-0">
+        {{ 'message.workflow.rejectToNoGoWarning' | translate }}
+      </p>
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label class="font-semibold">{{ 'message.workflow.rejectToNoGoReason' | translate }}</label>
+      <textarea
+        pTextarea
+        [ngModel]="rejectToNoGoComment()"
+        (ngModelChange)="rejectToNoGoComment.set($event)"
+        [rows]="4"
+        class="w-full"
+        [placeholder]="'message.workflow.enterRejectionReason' | translate"
+      ></textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end gap-2">
+      <p-button
+        [label]="'button.cancel' | translate"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="closeRejectToNoGoDialog()"
+        [disabled]="isActionInProgress()"
+      />
+      <p-button
+        [label]="'message.workflow.rejectToNoGoButton' | translate"
+        severity="danger"
+        (onClick)="confirmRejectToNoGo()"
+        [loading]="isActionInProgress()"
+        [disabled]="!rejectToNoGoComment().trim()"
+      />
+    </div>
+  </ng-template>
+</p-dialog>

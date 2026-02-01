@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workflow Rejected</title>
+    <title>PAO: {{EntityName}} - Set to NO GO</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -49,7 +49,7 @@
         }
         .info-table td:first-child {
             font-weight: bold;
-            width: 150px;
+            width: 180px;
             color: #666;
         }
         .button {
@@ -75,11 +75,19 @@
             padding: 10px 15px;
             margin: 15px 0;
         }
+        .note-box {
+            background-color: #e7f3ff;
+            border: 1px solid #b8daff;
+            border-radius: 4px;
+            padding: 12px;
+            margin: 15px 0;
+            font-size: 13px;
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>Workflow Rejected</h1>
+        <h1>Opportunity Set to NO GO</h1>
     </div>
     
     <div class="content">
@@ -87,52 +95,49 @@
         
         <div class="rejection-box">
             <div class="rejection-icon">&#10006;</div>
-            <strong>Your workflow request has been rejected.</strong>
+            <strong>The opportunity has been set to NO GO.</strong>
         </div>
+        
+        <p>The DoA Level 2 holder has decided that <strong>{{OrgUnitName}}</strong> will not proceed with the development of this opportunity at this time.</p>
         
         <table class="info-table">
             <tr>
-                <td>Entity Type:</td>
-                <td>{{EntityType}}</td>
+                <td>Opportunity:</td>
+                <td><strong>{{EntityName}}</strong></td>
             </tr>
             <tr>
-                <td>Entity Name:</td>
-                <td>{{EntityName}}</td>
+                <td>Responsible Org Unit:</td>
+                <td>{{OrgUnitName}}</td>
             </tr>
             <tr>
-                <td>Current Stage:</td>
-                <td>{{CurrentStage}}</td>
-            </tr>
-            <tr>
-                <td>Requested Stage:</td>
-                <td>{{RequestedStage}}</td>
-            </tr>
-            <tr>
-                <td>Rejected By:</td>
+                <td>Decision By:</td>
                 <td>{{RejectedByName}}</td>
             </tr>
             <tr>
-                <td>Rejected On:</td>
+                <td>Decision Date:</td>
                 <td>{{RejectedOn}}</td>
             </tr>
         </table>
         
         {{#if Comment}}
         <div class="comment-box">
-            <strong>Reason for Rejection:</strong><br>
+            <strong>Reason:</strong><br>
             {{Comment}}
         </div>
         {{/if}}
         
-        <p>Please review the feedback and make necessary changes before resubmitting.</p>
+        <div class="note-box">
+            <strong>Note:</strong> The Opportunity Manager can reopen this opportunity if circumstances change 
+            and the opportunity becomes viable again.
+        </div>
         
         <p>
-            <a href="{{EntityUrl}}" class="button">View Details</a>
+            <a href="{{EntityUrl}}" class="button">View Opportunity</a>
         </p>
     </div>
     
     <div class="footer">
-        <p>This is an automated notification from UNOPS Opportunity+ System.</p>
+        <p>This is an automated notification from UNOPS Opportunity+ System (PAO).</p>
         <p>If you have any questions, please contact your system administrator.</p>
     </div>
 </body>

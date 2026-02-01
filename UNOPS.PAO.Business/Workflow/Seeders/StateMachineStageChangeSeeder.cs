@@ -10,7 +10,7 @@ namespace UNOPS.PAO.Business.Workflow.Seeders;
 
 /// <summary>
 /// Seeds workflow stage transitions for Opportunity entities.
-/// Includes all 3 transitions: Go, No Go, and Reopen (No Go → Identify & Profile).
+/// Includes all 5 transitions: Go, No Go, Reopen (No Go → Identify & Profile), Cancel, and Reopen from Cancelled.
 /// </summary>
 public static class StateMachineStageChangeSeeder
 {
@@ -95,7 +95,7 @@ public static class StateMachineStageChangeSeeder
 
     /// <summary>
     /// Returns the seed data for Opportunity workflow transitions.
-    /// Includes all 3 transitions: Go, No Go, and Reopen.
+    /// Includes all 5 transitions: Go, No Go, Reopen from No Go, Cancel, and Reopen from Cancelled.
     /// </summary>
     private static List<StateMachineStageChange> GetSeedStageChanges()
     {
@@ -142,6 +142,38 @@ public static class StateMachineStageChangeSeeder
                 Sequence = 1,
                 CommentRequired = false,
                 CommentOptional = true,
+                ApprovalRequired = false, // No approval needed for reopen
+                Internal = true,
+                External = false,
+                Name = "Reopen",
+                Status = EntityStatus.Active
+            },
+
+            // Transition 4: IDENTIFY & PROFILE → CANCELLED (cancel, no approval needed)
+            new StateMachineStageChange
+            {
+                EntityName = OpportunityWorkflow.EntityName,
+                FromStage = OpportunityWorkflow.Stages.IdentifyAndProfile,
+                ToStage = OpportunityWorkflow.Stages.Cancelled,
+                Sequence = 3,
+                CommentRequired = true, // Mandatory justification for cancellation
+                CommentOptional = false,
+                ApprovalRequired = false, // No approval needed for cancel
+                Internal = true,
+                External = false,
+                Name = "Cancel",
+                Status = EntityStatus.Active
+            },
+
+            // Transition 5: CANCELLED → IDENTIFY & PROFILE (reopen from cancelled, no approval needed)
+            new StateMachineStageChange
+            {
+                EntityName = OpportunityWorkflow.EntityName,
+                FromStage = OpportunityWorkflow.Stages.Cancelled,
+                ToStage = OpportunityWorkflow.Stages.IdentifyAndProfile,
+                Sequence = 1,
+                CommentRequired = true, // Mandatory reason for reopening from cancelled
+                CommentOptional = false,
                 ApprovalRequired = false, // No approval needed for reopen
                 Internal = true,
                 External = false,

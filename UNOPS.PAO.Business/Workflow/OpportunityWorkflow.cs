@@ -3,8 +3,8 @@ using UNOPS.Workflow.Models;
 namespace UNOPS.PAO.Business.Workflow;
 
 /// <summary>
-/// Defines the Opportunity workflow state machine with 3 stages.
-/// Based on PRD: IDENTIFY & PROFILE → GO or NO GO, with NO GO reopenable.
+/// Defines the Opportunity workflow state machine with 4 stages.
+/// Based on PRD: IDENTIFY & PROFILE → GO or NO GO or CANCELLED, with NO GO and CANCELLED reopenable.
 /// </summary>
 public static class OpportunityWorkflow
 {
@@ -32,6 +32,11 @@ public static class OpportunityWorkflow
         /// Final negative stage - opportunity not proceeding. Can be reopened.
         /// </summary>
         public const string NoGo = "NO GO";
+
+        /// <summary>
+        /// Cancelled stage - opportunity cancelled by OM. Can be reopened.
+        /// </summary>
+        public const string Cancelled = "CANCELLED";
     }
 
     /// <summary>
@@ -62,6 +67,13 @@ public static class OpportunityWorkflow
                 StageCode = Stages.NoGo, 
                 DisplayName = Stages.NoGo,  // Match database uppercase
                 Facing = Facing.Internal 
+            },
+            new State 
+            { 
+                Sequence = 4, 
+                StageCode = Stages.Cancelled, 
+                DisplayName = Stages.Cancelled,  // Match database uppercase
+                Facing = Facing.Internal 
             }
         ]
     };
@@ -73,7 +85,8 @@ public static class OpportunityWorkflow
     [
         Stages.IdentifyAndProfile,
         Stages.Go,
-        Stages.NoGo
+        Stages.NoGo,
+        Stages.Cancelled
     ];
 
     /// <summary>

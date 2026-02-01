@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workflow Approved</title>
+    <title>PAO: {{EntityName}} - Go Decision Approved</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -49,7 +49,7 @@
         }
         .info-table td:first-child {
             font-weight: bold;
-            width: 150px;
+            width: 180px;
             color: #666;
         }
         .button {
@@ -80,7 +80,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>Workflow Approved</h1>
+        <h1>Go Decision Approved</h1>
     </div>
     
     <div class="content">
@@ -88,25 +88,19 @@
         
         <div class="success-box">
             <div class="success-icon">&#10004;</div>
-            <strong>Your workflow request has been approved!</strong>
+            <strong>The Go Decision for your opportunity has been approved!</strong>
         </div>
+        
+        <p>The opportunity is now in the <strong style="color: #28a745;">GO</strong> stage and can proceed to the next phase of development.</p>
         
         <table class="info-table">
             <tr>
-                <td>Entity Type:</td>
-                <td>{{EntityType}}</td>
+                <td>Opportunity:</td>
+                <td><strong>{{EntityName}}</strong></td>
             </tr>
             <tr>
-                <td>Entity Name:</td>
-                <td>{{EntityName}}</td>
-            </tr>
-            <tr>
-                <td>Previous Stage:</td>
-                <td>{{PreviousStage}}</td>
-            </tr>
-            <tr>
-                <td>New Stage:</td>
-                <td><strong style="color: #28a745;">{{NewStage}}</strong></td>
+                <td>Responsible Org Unit:</td>
+                <td>{{OrgUnitName}}</td>
             </tr>
             <tr>
                 <td>Approved By:</td>
@@ -126,12 +120,12 @@
         {{/if}}
         
         <p>
-            <a href="{{EntityUrl}}" class="button">View Details</a>
+            <a href="{{EntityUrl}}" class="button">View Opportunity</a>
         </p>
     </div>
     
     <div class="footer">
-        <p>This is an automated notification from UNOPS Opportunity+ System.</p>
+        <p>This is an automated notification from UNOPS Opportunity+ System (PAO).</p>
         <p>If you have any questions, please contact your system administrator.</p>
     </div>
 </body>

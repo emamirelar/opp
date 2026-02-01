@@ -159,6 +159,19 @@
             </div>
           </div>
 
+          <!-- Requirements Validation (only shows when NOT all requirements are met) -->
+          @if (opportunity()?.stage && canChangeStage()) {
+            <div class="px-unops-md md:px-unops-2xl pt-4 bg-unops-surface-secondary">
+              <app-requirements-validation
+                [entityName]="'opportunity'"
+                [entityId]="opportunity()?.id?.toString() ?? ''"
+                [formGroup]="opportunityForm"
+                [currentStage]="opportunity()?.stage ?? ''"
+                [entityData]="opportunity()"
+              />
+            </div>
+          }
+
           <!-- Workflow Component -->
           <div class="px-unops-md md:px-unops-2xl py-4 border-t border-unops-neutral-300 bg-unops-surface-secondary">
             <app-stage-workflow
