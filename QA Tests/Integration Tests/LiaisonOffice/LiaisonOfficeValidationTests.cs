@@ -7,6 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.Models.Liaison;
 using UNOPS.PAO.IntegrationTests.Infrastructure;
 
+using UNOPS.PAO.Business.Interfaces;
+
 namespace UNOPS.PAO.Tests.Integration.LiaisonOffice
 {
     [Collection("Integration Tests")][Trait("Category", "Integration")][Trait("Feature", "LiaisonOffice")][Trait("Component", "ValidationTests")]

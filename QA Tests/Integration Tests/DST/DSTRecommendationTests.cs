@@ -10,6 +10,8 @@ using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSBusiness.Managers;
 using UNOPS.PAO.IntegrationTests.Infrastructure;
 
+using UNOPS.PAO.Business.Interfaces;
+
 namespace UNOPS.PAO.Tests.Integration.DST
 {
     /// <summary>

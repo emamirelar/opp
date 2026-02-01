@@ -29,6 +29,7 @@ namespace UNOPS.PAO.Business.Tests.Opportunity;
 /// Tests CRUD operations, section updates, AI integration, and validations
 /// Created: January 15, 2026
 /// Priority: P0 (Critical)
+/// Note: Tests that use Z.EntityFramework.Extensions features may fail with InMemory provider
 /// </summary>
 public class UNOPSOpportunityManagerTests : IDisposable
 {
@@ -578,8 +579,9 @@ public class UNOPSOpportunityManagerTests : IDisposable
         result.Should().BeTrue();
 
         // Verify soft delete
+        // Note: UNOPSAppDbContext does not use global query filters for IsDeleted
+        // Soft-delete filtering is done manually in repository methods per the architecture
         var deletedEntity = await _context.Opportunities
-            .IgnoreQueryFilters() // Include soft-deleted records
             .FirstOrDefaultAsync(o => o.Id == 1);
 
         deletedEntity.Should().NotBeNull();
@@ -587,11 +589,13 @@ public class UNOPSOpportunityManagerTests : IDisposable
         deletedEntity.DeletedBy.Should().Be(1);
         deletedEntity.DeletedDate.Should().NotBeNull();
 
-        // Verify not returned in normal queries
+        // Verify soft-deleted records are excluded when using manual IsDeleted filter
+        // This is how the repository layer filters records per the codebase architecture
         var normalQuery = await _context.Opportunities
+            .Where(o => !o.IsDeleted)
             .FirstOrDefaultAsync(o => o.Id == 1);
 
-        normalQuery.Should().BeNull(); // Soft-deleted records excluded by default
+        normalQuery.Should().BeNull(); // Soft-deleted records excluded when filtered
     }
 
     [Fact]

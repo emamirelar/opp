@@ -10,12 +10,14 @@ This document tracks test infrastructure issues, test implementation bugs, tempo
 
 ## Open QA Issues
 
-**Status**: ⚠️ 2 open issues - PrimeNG/Playwright compatibility
+**Status**: ⚠️ 4 open issues - PrimeNG/Playwright compatibility, InMemory database limitations
 
 | QA ID | Title | Description | Reproduction Steps | Expected Result | Actual Result | Date Logged | Status | Assigned To |
 |-------|-------|-------------|-------------------|-----------------|---------------|-------------|--------|-------------|
 | QA-007 | Business Card Scanner signal not set in Playwright tests | Button click succeeds but `showBusinessCardScanner` signal is never set, preventing component from rendering.<br/><br/>**Root Cause:** Either:<br/>1. Permission check fails silently in test environment<br/>2. PrimeNG button event handler doesn't fire with Playwright force click<br/>3. Angular change detection doesn't run after signal.set()<br/><br/>**Note:** Scanner works in production - this is Playwright/PrimeNG interaction issue.<br/><br/>**Requires Real Backend Testing** | 1. Run: `npx playwright test contacts.spec.ts --grep "scanner"`<br/>2. Observe button click succeeds<br/>3. Check `app-business-card-scanner` count in DOM | Component should appear in DOM after button click | Component count = 0 (signal never set) | 2026-01-30 | Open | QA Team |
 | QA-008 | PrimeNG DynamicDialog not created in Playwright tests | `dialogService.open(ContactEditDialogComponent)` is called and all API mocks work, but zero dynamic dialogs are created.<br/><br/>**Root Cause:** Either:<br/>1. DialogService provider not available in test context<br/>2. DynamicDialog can't instantiate with mocked dependencies<br/>3. PrimeNG DynamicDialog incompatible with Playwright<br/><br/>**Note:** Dialog works in production - this is Playwright/PrimeNG interaction issue.<br/><br/>**Requires Real Backend Testing** | 1. Run: `npx playwright test contacts.spec.ts --grep "New Contact"`<br/>2. Observe button triggers API calls<br/>3. Check `.p-dynamic-dialog` count | Dynamic dialog should be created and visible | `.p-dynamic-dialog` count = 0 (dialog never created) | 2026-01-30 | Open | QA Team |
+| QA-009 | Z.EntityFramework.Extensions fails with InMemory database | **~38 Opportunity tests failing.**<br/><br/>The `SingleUpdateAsync` and `BulkUpdate` methods from Z.EntityFramework.Extensions require relational model access which InMemory database doesn't provide.<br/><br/>**Root Cause:** `Z.EntityFramework.Extensions.EntityTypeZInfo` tries to call `GetRelationalModel()` which fails on InMemory provider.<br/><br/>**Error:** `InvalidOperationException: The model must be finalized and its runtime dependencies must be initialized before 'GetRelationalModel' can be used.`<br/><br/>**Attempted Fixes:**<br/>• Switching to SQLite - failed due to complex Identity table requirements<br/>• Model finalization in tests - doesn't work with Z.EntityFramework.Extensions<br/><br/>**Proper Fix:** Tests that use update operations need a real relational database (PostgreSQL or properly configured SQLite) OR need to mock the repository layer | 1. Run: `dotnet test --filter "FullyQualifiedName~Opportunity"`<br/>2. Observe tests that call `UpdateAsync` or similar methods | Tests should pass using InMemory database | Tests fail with `GetRelationalModel` error | 2026-01-31 | Open | QA Team |
+| QA-010 | AutoMapper EntityArtifactValueResolver requires DI container | **~5+ Opportunity tests failing.**<br/><br/>`EntityArtifactValueResolver` requires `AppDbContext` and `IMapper` constructor parameters but AutoMapper tries to instantiate it without DI support.<br/><br/>**Root Cause:** Value resolver has no parameterless constructor. Tests use `MapperConfiguration(cfg => cfg.AddMaps(...))` which doesn't support DI.<br/><br/>**Error:** `MissingMethodException: Cannot dynamically create an instance of type 'EntityArtifactValueResolver'. Reason: No parameterless constructor defined.`<br/><br/>**Attempted Fixes:**<br/>• `cfg.ConstructServicesUsing()` - didn't work due to mapping compilation order<br/>• Overriding Country/OrganizationHierarchy mappings - AutoMapper uses first mapping registered<br/><br/>**Proper Fix:** Tests should use AutoMapper's DI integration with `ServiceCollection` OR the resolver should support parameterless constructor with lazy initialization | 1. Run: `dotnet test --filter "FullyQualifiedName~Opportunity"`<br/>2. Observe tests that map `Opportunity` with nested `Country` entities | Tests should map entities correctly | Tests fail with `MissingMethodException` | 2026-01-31 | Open | QA Team |
 
 ---
 
@@ -34,15 +36,15 @@ This document tracks test infrastructure issues, test implementation bugs, tempo
 
 ## QA Issue Statistics
 
-- **Total Open:** 2 ⚠️ (QA-007, QA-008)
+- **Total Open:** 4 ⚠️ (QA-007, QA-008, QA-009, QA-010)
 - **Total In Testing:** 0
 - **Total Resolved:** 6 ✅
-- **Test Infrastructure:** 8 (6 resolved, 2 open)
+- **Test Infrastructure:** 10 (6 resolved, 4 open)
 - **Test Implementation:** 0
 - **Test Tooling:** 0
 - **Temporary Workarounds:** 1 (QA-005 - .NET 9 PipeWriter)
 - **Critical:** 0
-- **High Priority:** 2 (QA-007, QA-008 - require real backend testing)
+- **High Priority:** 4 (QA-007, QA-008 - require real backend testing; QA-009, QA-010 - InMemory database limitations)
 
 ---
 

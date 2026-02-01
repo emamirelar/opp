@@ -7,6 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.Models.Users;
 using UNOPS.PAO.IntegrationTests.Infrastructure;
 
+using UNOPS.PAO.Business.Interfaces;
+
 namespace UNOPS.PAO.Tests.Integration.UserManagement
 {
     [Collection("Integration Tests")][Trait("Category", "Integration")][Trait("Feature", "UserManagement")][Trait("Component", "NegativeTests")]

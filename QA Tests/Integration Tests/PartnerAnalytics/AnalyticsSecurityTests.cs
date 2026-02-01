@@ -7,6 +7,8 @@ using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.IntegrationTests.Infrastructure;
 
+using UNOPS.PAO.Business.Interfaces;
+
 namespace UNOPS.PAO.Tests.Integration.PartnerAnalytics
 {
     [Collection("Integration Tests")][Trait("Category", "Integration")][Trait("Feature", "PartnerAnalytics")][Trait("Component", "SecurityTests")]

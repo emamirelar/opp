@@ -7,6 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.Models.UserProfile;
 using UNOPS.PAO.IntegrationTests.Infrastructure;
 
+using UNOPS.PAO.Business.Interfaces;
+
 namespace UNOPS.PAO.Tests.Integration.UserProfile
 {
     [Collection("Integration Tests")][Trait("Category", "Integration")][Trait("Feature", "UserProfile")][Trait("Component", "SecurityTests")]

@@ -7,6 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.Models.Admin;
 using UNOPS.PAO.IntegrationTests.Infrastructure;
 
+using UNOPS.PAO.Business.Interfaces;
+
 namespace UNOPS.PAO.Tests.Integration.SystemAdmin
 {
     [Collection("Integration Tests")][Trait("Category", "Integration")][Trait("Feature", "SystemAdmin")][Trait("Component", "ValidationTests")]

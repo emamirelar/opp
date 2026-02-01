@@ -7,6 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.Models.Permissions;
 using UNOPS.PAO.IntegrationTests.Infrastructure;
 
+using UNOPS.PAO.Business.Interfaces;
+
 namespace UNOPS.PAO.Tests.Integration.Permissions
 {
     [Collection("Integration Tests")][Trait("Category", "Integration")][Trait("Feature", "Permissions")][Trait("Component", "EdgeCaseTests")]

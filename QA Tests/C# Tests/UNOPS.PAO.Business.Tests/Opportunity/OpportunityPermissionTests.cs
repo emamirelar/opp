@@ -1,11 +1,13 @@
 using AutoMapper;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -30,6 +32,7 @@ namespace UNOPS.PAO.Business.Tests.Opportunity;
 /// Tests row-level security, role-based access, and permission enforcement
 /// Created: January 15, 2026
 /// Priority: P1-P2
+/// Uses SQLite in-memory database for relational model support required by Z.EntityFramework.Extensions
 /// </summary>
 public class OpportunityPermissionTests : IDisposable
 {
@@ -44,11 +47,16 @@ public class OpportunityPermissionTests : IDisposable
     private readonly Mock<IServiceProvider> _mockServiceProvider;
     private readonly UNOPSOpportunityManager _manager;
     private readonly ClaimsPrincipal _testUser;
+    private readonly DbConnection _connection;
 
     public OpportunityPermissionTests()
     {
+        // Use SQLite in-memory database for relational model support
+        _connection = new SqliteConnection("DataSource=:memory:");
+        _connection.Open();
+        
         _dbContextOptions = new DbContextOptionsBuilder<UNOPSAppDbContext>()
-            .UseInMemoryDatabase(databaseName: $"OpportunityPermissionTestDb_{Guid.NewGuid()}")
+            .UseSqlite(_connection)
             .Options;
 
         var mockUserServiceHttpContextAccessor = new Mock<IHttpContextAccessor>();

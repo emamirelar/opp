@@ -7,6 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.Models.Organizations;
 using UNOPS.PAO.IntegrationTests.Infrastructure;
 
+using UNOPS.PAO.Business.Interfaces;
+
 namespace UNOPS.PAO.Tests.Integration.OrgHierarchy
 {
     [Collection("Integration Tests")][Trait("Category", "Integration")][Trait("Feature", "OrgHierarchy")][Trait("Component", "ValidationTests")]

@@ -6,7 +6,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.IntegrationTests.Infrastructure;
-using UNOPS.PAO.Models.Partner;
+using UNOPS.PAO.Models.Partners;
 
 namespace UNOPS.PAO.Tests.Integration.Controllers
 {

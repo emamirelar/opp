@@ -7,6 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.Models.EntityConfiguration;
 using UNOPS.PAO.IntegrationTests.Infrastructure;
 
+using UNOPS.PAO.Business.Interfaces;
+
 namespace UNOPS.PAO.Tests.Integration.EntityConfiguration
 {
     [Collection("Integration Tests")][Trait("Category", "Integration")][Trait("Feature", "EntityConfiguration")][Trait("Component", "EdgeCaseTests")]

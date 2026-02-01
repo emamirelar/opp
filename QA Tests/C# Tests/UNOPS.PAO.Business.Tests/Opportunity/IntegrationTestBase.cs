@@ -22,6 +22,8 @@ namespace UNOPS.PAO.Business.Tests.Opportunity;
 /// <summary>
 /// Base class for integration tests
 /// Uses in-memory database with real services (no mocks)
+/// Note: Tests that use Z.EntityFramework.Extensions (BulkUpdate, SingleUpdateAsync) 
+/// will fail with InMemory provider - these should be skipped or run with real database
 /// </summary>
 public abstract class IntegrationTestBase : IDisposable
 {
@@ -256,7 +258,7 @@ public class TestDbContextFactory : IDbContextFactory<UNOPSAppDbContext>
         mockDbSchema.Setup(s => s.Schema).Returns("public");
         var context = new UNOPSAppDbContext(_options, mockUserService.Object, mockDbSchema.Object);
         
-        // ✅ Finalize model for factory-created contexts
+        // Finalize model for factory-created contexts
         try
         {
             var model = context.Model;
@@ -275,26 +277,7 @@ public class TestDbContextFactory : IDbContextFactory<UNOPSAppDbContext>
 
     public async Task<UNOPSAppDbContext> CreateDbContextAsync(CancellationToken cancellationToken = default)
     {
-        var mockUserService = new Mock<UserResolverService<int>>(MockBehavior.Loose, new object?[] { null });
-        var mockDbSchema = new Mock<IDbContextSchema>();
-        mockDbSchema.Setup(s => s.Schema).Returns("public");
-        var context = new UNOPSAppDbContext(_options, mockUserService.Object, mockDbSchema.Object);
-        
-        // ✅ Finalize model for factory-created contexts
-        try
-        {
-            var model = context.Model;
-            if (model is IMutableModel mutableModel)
-            {
-                model = mutableModel.FinalizeModel();
-            }
-        }
-        catch
-        {
-            // Ignore finalization errors for factory contexts
-        }
-        
-        return await Task.FromResult(context);
+        return await Task.FromResult(CreateDbContext());
     }
 }
 

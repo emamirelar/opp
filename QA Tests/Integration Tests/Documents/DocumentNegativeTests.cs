@@ -8,6 +8,8 @@ using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.Models.Documents;
 using UNOPS.PAO.IntegrationTests.Infrastructure;
 
+using UNOPS.PAO.Business.Interfaces;
+
 namespace UNOPS.PAO.Tests.Integration.Documents
 {
     /// <summary>

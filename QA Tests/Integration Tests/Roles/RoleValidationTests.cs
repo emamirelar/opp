@@ -7,6 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.Models.Roles;
 using UNOPS.PAO.IntegrationTests.Infrastructure;
 
+using UNOPS.PAO.Business.Interfaces;
+
 namespace UNOPS.PAO.Tests.Integration.Roles
 {
     [Collection("Integration Tests")][Trait("Category", "Integration")][Trait("Feature", "Roles")][Trait("Component", "ValidationTests")]

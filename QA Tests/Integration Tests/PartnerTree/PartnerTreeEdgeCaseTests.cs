@@ -7,6 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.Models.Partners;
 using UNOPS.PAO.IntegrationTests.Infrastructure;
 
+using UNOPS.PAO.Business.Interfaces;
+
 namespace UNOPS.PAO.Tests.Integration.PartnerTree
 {
     [Collection("Integration Tests")][Trait("Category", "Integration")][Trait("Feature", "PartnerTree")][Trait("Component", "EdgeCaseTests")]
