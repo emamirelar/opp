@@ -30,9 +30,15 @@
     <ProjectReference Include="..\..\UNOPS.PAO.UNOPSDataAccess\UNOPS.PAO.UNOPSDataAccess.csproj" />
     <ProjectReference Include="..\..\UNOPS.PAO.UNOPSDomain\UNOPS.PAO.UNOPSDomain.csproj" />
     <ProjectReference Include="..\..\UNOPS.PAO.Business\UNOPS.PAO.Business.csproj" />
-    <ProjectReference Include="..\..\UNOPS.Workflow\UNOPS.Workflow.DataAccess\UNOPS.Workflow.DataAccess.csproj" />
-    <ProjectReference Include="..\..\UNOPS.Workflow\UNOPS.Workflow.Models\UNOPS.Workflow.Models.csproj" />
-    <ProjectReference Include="..\..\UNOPS.Workflow\UNOPS.Workflow.Domain\UNOPS.Workflow.Domain.csproj" />
+    <!-- UNOPS.Workflow projects are in a separate repository - excluded from this test project -->
+    <!-- <ProjectReference Include="..\..\UNOPS.Workflow\UNOPS.Workflow.DataAccess\UNOPS.Workflow.DataAccess.csproj" /> -->
+    <!-- <ProjectReference Include="..\..\UNOPS.Workflow\UNOPS.Workflow.Models\UNOPS.Workflow.Models.csproj" /> -->
+    <!-- <ProjectReference Include="..\..\UNOPS.Workflow\UNOPS.Workflow.Domain\UNOPS.Workflow.Domain.csproj" /> -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Exclude test files that depend on UNOPS.Workflow (separate repository) -->
+    <Compile Remove="Controllers\WorkflowControllerTests.cs" />
   </ItemGroup>
 
   <ItemGroup>
