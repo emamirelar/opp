@@ -24,6 +24,29 @@ public class WorkflowSubmitRequest
     /// Optional comment for the stage change
     /// </summary>
     public string? Comment { get; set; }
+
+    /// <summary>
+    /// Confirmation flag when submitter is not the Opportunity Manager.
+    /// Set to true to proceed despite the warning.
+    /// </summary>
+    public bool ConfirmedNonOMSubmission { get; set; }
+
+    /// <summary>
+    /// Confirmation flag when opportunity countries don't match org unit relationships.
+    /// Set to true to proceed despite the warning.
+    /// </summary>
+    public bool ConfirmedOrgUnitWarning { get; set; }
+
+    /// <summary>
+    /// Acknowledgment flag for the mandatory statement.
+    /// Must be true to proceed with submission to GO stage.
+    /// </summary>
+    public bool AcknowledgedStatement { get; set; }
+
+    /// <summary>
+    /// Optional additional remarks to include with the submission.
+    /// </summary>
+    public string? AdditionalRemarks { get; set; }
 }
 
 /// <summary>
@@ -282,6 +305,48 @@ public class WorkflowSubmitResponse
     /// Pending stage if approval is required
     /// </summary>
     public string? PendingStage { get; set; }
+
+    /// <summary>
+    /// Whether user confirmation is required before proceeding.
+    /// Frontend should display the ConfirmationMessage and re-submit with appropriate flag set.
+    /// </summary>
+    public bool RequiresConfirmation { get; set; }
+
+    /// <summary>
+    /// Type of confirmation required: "NonOMSubmitter", "OrgUnitCountryMismatch"
+    /// </summary>
+    public string? ConfirmationType { get; set; }
+
+    /// <summary>
+    /// Message to display to user when confirmation is required.
+    /// </summary>
+    public string? ConfirmationMessage { get; set; }
+
+    /// <summary>
+    /// List of country names that don't match org unit relationships (for OrgUnitCountryMismatch warning).
+    /// </summary>
+    public List<string>? UnrelatedCountries { get; set; }
+
+    /// <summary>
+    /// Whether acknowledgment of the statement is required before proceeding.
+    /// </summary>
+    public bool RequiresAcknowledgment { get; set; }
+
+    /// <summary>
+    /// Text of the acknowledgment statement that must be confirmed.
+    /// </summary>
+    public string? AcknowledgmentText { get; set; }
+
+    /// <summary>
+    /// Whether requirements validation failed.
+    /// Frontend should show the requirements panel with unmet items.
+    /// </summary>
+    public bool RequirementsNotMet { get; set; }
+
+    /// <summary>
+    /// List of unmet requirement messages to display.
+    /// </summary>
+    public List<string>? UnmetRequirements { get; set; }
 }
 
 /// <summary>
@@ -303,4 +368,70 @@ public class WorkflowStageConfigResponse
     /// Sequence number for ordering
     /// </summary>
     public int Sequence { get; set; }
+}
+
+/// <summary>
+/// Request model for cancelling an opportunity.
+/// Only Opportunity Manager can cancel, only from IDENTIFY & PROFILE stage.
+/// </summary>
+public class WorkflowCancelRequest
+{
+    /// <summary>
+    /// The entity type name (e.g., "Opportunity")
+    /// </summary>
+    public required string EntityName { get; set; }
+    
+    /// <summary>
+    /// The entity ID
+    /// </summary>
+    public required int EntityId { get; set; }
+    
+    /// <summary>
+    /// Mandatory comment explaining why the opportunity is being cancelled.
+    /// </summary>
+    public required string Comment { get; set; }
+}
+
+/// <summary>
+/// Request model for reopening an opportunity.
+/// Only Opportunity Manager can reopen, only from NO GO or CANCELLED stage.
+/// </summary>
+public class WorkflowReopenRequest
+{
+    /// <summary>
+    /// The entity type name (e.g., "Opportunity")
+    /// </summary>
+    public required string EntityName { get; set; }
+    
+    /// <summary>
+    /// The entity ID
+    /// </summary>
+    public required int EntityId { get; set; }
+    
+    /// <summary>
+    /// Comment explaining why the opportunity is being reopened.
+    /// Required when reopening from CANCELLED, optional from NO GO.
+    /// </summary>
+    public string? Comment { get; set; }
+}
+
+/// <summary>
+/// Response model for workflow action operations (cancel, reopen).
+/// </summary>
+public class WorkflowActionResponse
+{
+    /// <summary>
+    /// Whether the operation was successful
+    /// </summary>
+    public bool Success { get; set; }
+    
+    /// <summary>
+    /// Message describing the result
+    /// </summary>
+    public string? Message { get; set; }
+    
+    /// <summary>
+    /// The new stage after the action
+    /// </summary>
+    public string? NewStage { get; set; }
 }

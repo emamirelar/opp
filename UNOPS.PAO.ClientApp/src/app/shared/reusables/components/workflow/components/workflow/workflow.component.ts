@@ -5,17 +5,26 @@
 
 import { Component, inject, input, Input, OnInit, output, signal, ChangeDetectorRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
 import { MenuItem } from 'primeng/api';
 
 import { SplitButton } from 'primeng/splitbutton';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
-import { TranslateModule } from '@ngx-translate/core';
+import { CheckboxModule } from 'primeng/checkbox';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { SkeletonModule } from 'primeng/skeleton';
 
 import { WorkflowService } from '../../services/workflow.service';
-import { WorkflowStateActionModel, CustomStageChangeResult, WorkflowActionModel } from '../../models/workflow.models';
+import {
+  WorkflowStateActionModel,
+  CustomStageChangeResult,
+  WorkflowActionModel,
+  WorkflowSubmitRequest,
+  WorkflowSubmitResponse,
+  ConfirmationType,
+} from '../../models/workflow.models';
 
 /**
  * Interface for feedback dialog service that consuming applications must provide
@@ -41,11 +50,21 @@ export const FEEDBACK_DIALOG_SERVICE = 'FEEDBACK_DIALOG_SERVICE';
   selector: 'app-workflow',
   templateUrl: './workflow.component.html',
   styleUrl: './workflow.component.scss',
-  imports: [SplitButton, DialogModule, ButtonModule, TextareaModule, SkeletonModule, TranslateModule],
+  imports: [
+    SplitButton,
+    DialogModule,
+    ButtonModule,
+    TextareaModule,
+    CheckboxModule,
+    SkeletonModule,
+    TranslateModule,
+    FormsModule,
+  ],
 })
 export class WorkflowComponent implements OnInit {
   private changeDetectorRef = inject(ChangeDetectorRef);
   private http = inject(HttpClient);
+  private translateService = inject(TranslateService);
 
   // Injected feedback service - must be provided by consuming application
   @Input() feedbackDialogService!: IFeedbackDialogService;
@@ -55,6 +74,11 @@ export class WorkflowComponent implements OnInit {
   autoload = input<boolean>(true);
   isReadOnly = input<boolean>(false);
 
+  /**
+   * Name of the responsible org unit (for acknowledgment dialog display)
+   */
+  @Input() responsibleOrgUnitName = '';
+
   @Input() disabled!: boolean;
   @Input() beforeStageChange: (nextStage: string) => Promise<boolean> = async () => true;
   @Input() customStageChangeHandler?: (
@@ -63,6 +87,12 @@ export class WorkflowComponent implements OnInit {
   ) => Promise<CustomStageChangeResult | undefined>;
 
   stageChangeSuccess = output();
+
+  /**
+   * Emitted when requirements validation fails during submission
+   * Parent component can use this to scroll to the requirements panel
+   */
+  requirementsValidationFailed = output<string[]>();
 
   workflowService = inject(WorkflowService);
 
@@ -83,6 +113,31 @@ export class WorkflowComponent implements OnInit {
 
   isWorkflowLoading = signal(false);
   isActionInProgress = signal(false); // Track button action loading state
+
+  // Dialog state for confirmation flows
+  showNonOMWarningDialog = signal(false);
+  showOrgUnitMismatchDialog = signal(false);
+  showAcknowledgmentDialog = signal(false);
+  showRejectToNoGoDialog = signal(false);
+
+  // Non-OM warning dialog state
+  nonOMWarningRole = signal('');
+  nonOMWarningConfirmed = signal(false);
+
+  // Org unit mismatch dialog state
+  unrelatedCountries = signal<string[]>([]);
+  orgUnitMismatchConfirmed = signal(false);
+
+  // Acknowledgment dialog state
+  acknowledgmentText = signal('');
+  acknowledgmentChecked = signal(false);
+  additionalRemarks = signal('');
+
+  // Rejection to NO GO dialog state
+  rejectToNoGoComment = signal('');
+
+  // Pending submit request (to continue after confirmation)
+  pendingSubmitRequest = signal<WorkflowSubmitRequest | null>(null);
 
   ngOnInit(): void {
     if (this.autoload() === true) {
@@ -155,6 +210,17 @@ export class WorkflowComponent implements OnInit {
               return;
             }
 
+            // For opportunity Go Decision flow, use the specialized submit endpoint
+            if (item?.requiresApproval === true && this.entityName().toLowerCase() === 'opportunity') {
+              const request: WorkflowSubmitRequest = {
+                entityName: this.entityName(),
+                entityId: parseInt(this.entityId(), 10),
+                newStage: item['newStage'],
+              };
+              this._submitForGoDecision(request);
+              return;
+            }
+
             if (item?.requiresApproval === true) {
               this.feedbackDialogService?.showConfirmDialog(
                 {
@@ -210,18 +276,30 @@ export class WorkflowComponent implements OnInit {
         if (this.autoload() === true) {
           this.load(); // Reload from server to get current state
         }
-        
-        this.stageChangeSuccess.emit(data);
+
+        this.stageChangeSuccess.emit();
       },
       error: () => {
         this.isActionInProgress.set(false);
-      }
+      },
     });
   }
 
   async _handleOnPrimaryStageClick() {
     const canProceed = await this.beforeStageChange(this.primaryeStageName);
     if (!canProceed) {
+      return;
+    }
+
+    // For opportunity Go Decision flow, use the specialized submit endpoint
+    // which handles Non-OM warning, Org Unit mismatch, and Acknowledgment dialogs
+    if (this.primaryStageRequiresApproval === true && this.entityName().toLowerCase() === 'opportunity') {
+      const request: WorkflowSubmitRequest = {
+        entityName: this.entityName(),
+        entityId: parseInt(this.entityId(), 10),
+        newStage: this.primaryeStageName,
+      };
+      this._submitForGoDecision(request);
       return;
     }
 
@@ -309,8 +387,23 @@ export class WorkflowComponent implements OnInit {
   }
 
   private _performWorkflowAction(action: 'approve' | 'reject' | 'recall', comment?: string) {
+    // For rejection, show the NO GO confirmation dialog first (only for opportunities)
+    if (action === 'reject' && this.entityName().toLowerCase() === 'opportunity') {
+      this.rejectToNoGoComment.set(comment || '');
+      this.showRejectToNoGoDialog.set(true);
+      this.changeDetectorRef.detectChanges();
+      return;
+    }
+
+    this._executeWorkflowAction(action, comment);
+  }
+
+  /**
+   * Execute the workflow action after any confirmations
+   */
+  private _executeWorkflowAction(action: 'approve' | 'reject' | 'recall', comment?: string) {
     this.isActionInProgress.set(true);
-    
+
     const requestJson: any = {
       entityName: this.entityName(),
       entityId: parseInt(this.entityId(), 10),
@@ -318,26 +411,200 @@ export class WorkflowComponent implements OnInit {
     };
 
     const endpoint = `${action}`;
-    
+
     this.http.post(`/api/workflow/${endpoint}`, requestJson).subscribe({
       next: (data: any) => {
         this.isActionInProgress.set(false);
-        
+
         const actionPastTense = action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'recalled';
         this.feedbackDialogService?.showSuccessToast({
           detail: `Workflow ${actionPastTense} successfully!`,
         });
-        
+
         // Reload workflow state
         if (this.autoload() === true) {
           this.load();
         }
-        
-        this.stageChangeSuccess.emit(data);
+
+        this.stageChangeSuccess.emit();
       },
       error: () => {
         this.isActionInProgress.set(false);
+      },
+    });
+  }
+
+  /**
+   * Handles the response from submit for Go Decision
+   * May show confirmation dialogs or acknowledgment dialog
+   */
+  handleSubmitResponse(response: WorkflowSubmitResponse, request: WorkflowSubmitRequest): void {
+    if (response.success) {
+      this.feedbackDialogService?.showSuccessToast({
+        detail: this.translateService.instant('message.workflow.submitSuccess'),
+      });
+      if (this.autoload() === true) {
+        this.load();
       }
+      this.stageChangeSuccess.emit();
+      return;
+    }
+
+    // PRD Flow: Check if requirements are not met (first check in flow)
+    if (response.requirementsNotMet) {
+      // Show info toast with message to check requirements panel
+      this.feedbackDialogService?.showInfoToast({
+        detail: this.translateService.instant('message.workflow.requirementsNotMetDetail'),
+      });
+      // Emit event to notify parent that requirements validation failed
+      // Parent can scroll to requirements panel
+      this.requirementsValidationFailed.emit(response.unmetRequirements || []);
+      return;
+    }
+
+    // Store pending request for re-submission after confirmation
+    this.pendingSubmitRequest.set(request);
+
+    if (response.requiresConfirmation) {
+      const confirmationType = response.confirmationType;
+
+      if (confirmationType === 'NonOMSubmitter') {
+        // Extract role from message or use generic
+        const roleMatch = response.confirmationMessage?.match(/\[([^\]]+)\]/);
+        this.nonOMWarningRole.set(roleMatch ? roleMatch[1] : 'stakeholder');
+        this.nonOMWarningConfirmed.set(false);
+        this.showNonOMWarningDialog.set(true);
+        this.changeDetectorRef.detectChanges();
+      } else if (confirmationType === 'OrgUnitCountryMismatch') {
+        this.unrelatedCountries.set(response.unrelatedCountries || []);
+        this.orgUnitMismatchConfirmed.set(false);
+        this.showOrgUnitMismatchDialog.set(true);
+        this.changeDetectorRef.detectChanges();
+      }
+    } else if (response.requiresAcknowledgment) {
+      // Format acknowledgment text with org unit name
+      const text =
+        response.acknowledgmentText ||
+        this.translateService.instant('message.workflow.acknowledgmentStatement', {
+          orgUnitName: this.responsibleOrgUnitName,
+        });
+      this.acknowledgmentText.set(text);
+      this.acknowledgmentChecked.set(false);
+      this.additionalRemarks.set('');
+      this.showAcknowledgmentDialog.set(true);
+      this.changeDetectorRef.detectChanges();
+    }
+  }
+
+  /**
+   * Confirm non-OM submitter warning and re-submit
+   */
+  confirmNonOMWarning(): void {
+    this.showNonOMWarningDialog.set(false);
+    const request = this.pendingSubmitRequest();
+    if (request) {
+      request.confirmedNonOMSubmission = true;
+      this._submitForGoDecision(request);
+    }
+  }
+
+  /**
+   * Close non-OM warning dialog
+   */
+  closeNonOMWarningDialog(): void {
+    this.showNonOMWarningDialog.set(false);
+    this.pendingSubmitRequest.set(null);
+  }
+
+  /**
+   * Confirm org unit mismatch warning and re-submit
+   */
+  confirmOrgUnitMismatch(): void {
+    this.showOrgUnitMismatchDialog.set(false);
+    const request = this.pendingSubmitRequest();
+    if (request) {
+      request.confirmedOrgUnitWarning = true;
+      this._submitForGoDecision(request);
+    }
+  }
+
+  /**
+   * Close org unit mismatch dialog
+   */
+  closeOrgUnitMismatchDialog(): void {
+    this.showOrgUnitMismatchDialog.set(false);
+    this.pendingSubmitRequest.set(null);
+  }
+
+  /**
+   * Confirm acknowledgment and submit
+   */
+  confirmAcknowledgment(): void {
+    if (!this.acknowledgmentChecked()) {
+      this.feedbackDialogService?.showInfoToast({
+        detail: this.translateService.instant('message.workflow.acknowledgmentRequired'),
+      });
+      return;
+    }
+
+    this.showAcknowledgmentDialog.set(false);
+    const request = this.pendingSubmitRequest();
+    if (request) {
+      request.acknowledgedStatement = true;
+      // Map additionalRemarks to comment field for backend
+      const remarks = this.additionalRemarks().trim();
+      request.additionalRemarks = remarks || undefined;
+      request.comment = remarks || undefined;
+      this._submitForGoDecision(request);
+    }
+  }
+
+  /**
+   * Close acknowledgment dialog
+   */
+  closeAcknowledgmentDialog(): void {
+    this.showAcknowledgmentDialog.set(false);
+    this.pendingSubmitRequest.set(null);
+  }
+
+  /**
+   * Confirm rejection to NO GO
+   */
+  confirmRejectToNoGo(): void {
+    const comment = this.rejectToNoGoComment().trim();
+    if (!comment) {
+      this.feedbackDialogService?.showInfoToast({
+        detail: this.translateService.instant('message.workflow.rejectReasonRequired'),
+      });
+      return;
+    }
+
+    this.showRejectToNoGoDialog.set(false);
+    this._executeWorkflowAction('reject', comment);
+  }
+
+  /**
+   * Close reject to NO GO dialog
+   */
+  closeRejectToNoGoDialog(): void {
+    this.showRejectToNoGoDialog.set(false);
+    this.rejectToNoGoComment.set('');
+  }
+
+  /**
+   * Internal method to submit for Go decision
+   */
+  private _submitForGoDecision(request: WorkflowSubmitRequest): void {
+    this.isActionInProgress.set(true);
+
+    this.workflowService.submitForGoDecision(request).subscribe({
+      next: (response: WorkflowSubmitResponse) => {
+        this.isActionInProgress.set(false);
+        this.handleSubmitResponse(response, request);
+      },
+      error: () => {
+        this.isActionInProgress.set(false);
+      },
     });
   }
 }

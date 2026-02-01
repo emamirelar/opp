@@ -1,0 +1,86 @@
+:host {
+  --requirements-info-color: #2996f3;
+  --requirements-info-bg: #eaf6ff;
+  --requirements-info-border: #b5dbff;
+}
+
+.requirements-message {
+  @apply border border-solid rounded-md;
+  border-color: var(--requirements-info-border);
+  background-color: var(--requirements-info-bg);
+  color: var(--requirements-info-color);
+}
+
+.requirements-message-header {
+  @apply cursor-pointer select-none p-4 flex items-start gap-4 font-medium;
+  color: var(--requirements-info-color);
+}
+
+.requirements-message-icon {
+  @apply flex-shrink-0 leading-none mt-0.5;
+  color: var(--requirements-info-color);
+
+  i {
+    @apply text-[1.4rem];
+  }
+}
+
+.requirements-message-text {
+  @apply flex-grow leading-normal font-medium;
+  color: var(--requirements-info-color);
+}
+
+.requirements-message-toggle {
+  @apply flex-shrink-0 text-base leading-none mt-0.5;
+  color: var(--requirements-info-color);
+
+  i {
+    @apply text-inherit;
+  }
+}
+
+.requirements-validation-content {
+  @apply px-4 pb-4 rounded-md;
+  background-color: inherit;
+
+  &.loading {
+    @apply flex justify-center items-center min-h-[80px];
+
+    i {
+      @apply text-3xl;
+    }
+  }
+}
+
+.requirements-list {
+  @apply list-disc pl-6 m-0 font-normal;
+  color: var(--requirements-info-color);
+
+  .requirement-item {
+    @apply mb-3;
+
+    &:last-child {
+      @apply mb-0;
+    }
+
+    .requirement-text {
+      @apply block mb-2 font-normal;
+    }
+
+    &.clickable {
+      @apply cursor-pointer hover:opacity-80 transition-opacity;
+    }
+  }
+}
+
+.document-types-list {
+  @apply list-[circle] pl-6 my-2;
+
+  .document-type-item {
+    @apply text-sm mb-1;
+
+    &:last-child {
+      @apply mb-0;
+    }
+  }
+}
