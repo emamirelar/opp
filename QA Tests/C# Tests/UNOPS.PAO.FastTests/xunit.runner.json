@@ -3,12 +3,12 @@
   "appDomain": "ifAvailable",
   "diagnosticMessages": false,
   "internalDiagnosticMessages": false,
-  "maxParallelThreads": -1,
+  "maxParallelThreads": 8,
   "methodDisplay": "classAndMethod",
   "parallelizeAssembly": false,
   "parallelizeTestCollections": true,
   "preEnumerateTheories": true,
   "shadowCopy": false,
   "stopOnFail": false,
-  "longRunningTestSeconds": 30
+  "longRunningTestSeconds": 15
 }

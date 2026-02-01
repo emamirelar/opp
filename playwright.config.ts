@@ -27,8 +27,8 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only - reduced from 2 to 1 to speed up CI */
   retries: process.env.CI ? 1 : 0,
-  /* Use 4 workers on CI for parallelization (mocked tests are I/O-bound, not CPU-bound) */
-  workers: process.env.CI ? 4 : undefined,
+  /* Use 6 workers on CI for parallelization (mocked tests are I/O-bound, not CPU-bound) */
+  workers: process.env.CI ? 6 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [['html', { outputFolder: './QA Tests/Playwright Tests/playwright-report' }]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
