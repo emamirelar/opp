@@ -459,7 +459,7 @@ jobs:
         SUCCESS_COUNT=0
         for result in "$FAST" "$MGR" "$SVC" "$OPP" "$EDGE" "$OTHER"; do
           if [[ "$result" == "success" || "$result" == "skipped" ]]; then
-            ((SUCCESS_COUNT++))
+            SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
           fi
         done
         
