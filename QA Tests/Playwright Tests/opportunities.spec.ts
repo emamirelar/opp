@@ -27,9 +27,9 @@ test.describe('Opportunities List', () => {
     await opportunitiesPage.waitForPermissions();
   });
   
-  // SKIP: This test depends on data-testid="opportunities-header" which doesn't exist
-  // TODO: Add data-testid to the Angular component, then re-enable this test
-  test.skip('should display opportunities page header', async () => {
+  test('should display opportunities page header', async ({ page }) => {
+    // Wait for page to fully load before checking header
+    await page.waitForSelector('[data-testid="opportunities-header"]', { timeout: 15000 });
     await opportunitiesPage.verifyPageHeader();
   });
   
@@ -61,9 +61,10 @@ test.describe('Opportunities List', () => {
     expect(true).toBeTruthy();
   });
   
-  // SKIP: This test depends on data-testid="opportunities-listview" which doesn't exist
-  // TODO: Add data-testid to the Angular component, then re-enable this test
-  test.skip('should display opportunity listview component', async ({ page }) => {
+  test('should display opportunity listview component', async ({ page }) => {
+    // Wait for listview to load
+    await page.waitForSelector('[data-testid="opportunities-listview"]', { timeout: 15000 });
+    
     // Verify listview component loaded using data-testid
     const listview = page.locator('[data-testid="opportunities-listview"]');
     await expect(listview).toBeVisible({ timeout: 10000 });
@@ -128,11 +129,12 @@ test.describe('Opportunities List', () => {
     expect(true).toBeTruthy();
   });
   
-  // SKIP: This test depends on data-testid="opportunities-listview" which doesn't exist
-  // TODO: Add data-testid to the Angular component, then re-enable this test
-  test.skip('should handle empty state gracefully', async ({ page }) => {
+  test('should handle empty state gracefully', async ({ page }) => {
+    // Wait for listview to load
+    await page.waitForSelector('[data-testid="opportunities-listview"]', { timeout: 15000 });
+    
     // Wait for data to load
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(2000);
     
     // Look for empty state message or no data message
     const emptyStateMessages = page.getByText(/no opportunities|no results|no data|get started/i);
@@ -171,9 +173,10 @@ test.describe('Opportunities List', () => {
     expect(true).toBeTruthy();
   });
   
-  // SKIP: This test depends on data-testid attributes that don't exist in the Angular component
-  // TODO: Add data-testid to the Angular component, then re-enable this test
-  test.skip('should be responsive on mobile', async ({ page }) => {
+  test('should be responsive on mobile', async ({ page }) => {
+    // Wait for page to load first
+    await page.waitForSelector('[data-testid="opportunities-header"]', { timeout: 15000 });
+    
     // Switch to mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
     
@@ -192,11 +195,12 @@ test.describe('Opportunities List', () => {
     expect(true).toBeTruthy();
   });
   
-  // SKIP: This test depends on data-testid="opportunities-listview" which doesn't exist
-  // TODO: Add data-testid to the Angular component, then re-enable this test
-  test.skip('should display opportunities with proper formatting', async ({ page }) => {
+  test('should display opportunities with proper formatting', async ({ page }) => {
+    // Wait for listview to load
+    await page.waitForSelector('[data-testid="opportunities-listview"]', { timeout: 15000 });
+    
     // Wait for data to load
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(2000);
     
     // Verify listview is present
     const listview = page.locator('[data-testid="opportunities-listview"]');

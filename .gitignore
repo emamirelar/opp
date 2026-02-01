@@ -418,6 +418,9 @@ Include/
 /QA Tests/Playwright Tests/playwright-report/
 /playwright/.cache/
 
+# C# Test Results (dotnet test output)
+/QA Tests/TestResults/
+
 # Node modules
 node_modules/
 

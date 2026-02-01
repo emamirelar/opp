@@ -27,10 +27,9 @@ test.describe('Partners List', () => {
     await partnersPage.waitForPermissions();
   });
   
-  // SKIP: This test depends on data-testid="partners-header" which doesn't exist
-  // TODO: Add data-testid to the Angular component, then re-enable this test
-  test.skip('should display partners page header', async () => {
-    // Verify page header
+  test('should display partners page header', async ({ page }) => {
+    // Wait for page to fully load before checking header
+    await page.waitForSelector('[data-testid="partners-header"]', { timeout: 15000 });
     await partnersPage.verifyPageHeader();
   });
   
@@ -79,10 +78,9 @@ test.describe('Partners List', () => {
     expect(true).toBeTruthy();
   });
   
-  // SKIP: This test depends on data-testid="partners-listview" which doesn't exist
-  // TODO: Add data-testid to the Angular component, then re-enable this test
-  test.skip('should display partner listview component', async () => {
-    // Verify listview component loaded
+  test('should display partner listview component', async ({ page }) => {
+    // Wait for listview to load
+    await page.waitForSelector('[data-testid="partners-listview"]', { timeout: 15000 });
     await partnersPage.verifyListviewVisible();
   });
   
@@ -124,10 +122,9 @@ test.describe('Partners List', () => {
     expect(hasSearch || true).toBeTruthy();
   });
   
-  // SKIP: This test depends on data-testid="partners-listview" which doesn't exist
-  // TODO: Add data-testid to the Angular component, then re-enable this test
-  test.skip('should handle empty state gracefully', async () => {
-    // Verify listview is visible (handles empty state gracefully)
+  test('should handle empty state gracefully', async ({ page }) => {
+    // Wait for listview to load
+    await page.waitForSelector('[data-testid="partners-listview"]', { timeout: 15000 });
     await partnersPage.verifyListviewVisible();
     expect(true).toBeTruthy();
   });
@@ -148,10 +145,9 @@ test.describe('Partners List', () => {
     expect(true).toBeTruthy();
   });
   
-  // SKIP: This test depends on data-testid attributes that don't exist in the Angular component
-  // TODO: Add data-testid to the Angular component, then re-enable this test
-  test.skip('should be responsive on mobile', async () => {
-    // Test mobile responsiveness
+  test('should be responsive on mobile', async ({ page }) => {
+    // Wait for page to load first
+    await page.waitForSelector('[data-testid="partners-header"]', { timeout: 15000 });
     await partnersPage.verifyMobileResponsive();
   });
 });

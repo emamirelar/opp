@@ -19,9 +19,10 @@ test.describe('Interactions List', () => {
     await authenticateWithRealBackend(page, '/#/partnerships/interactions');
   });
   
-  // SKIP: This test depends on data-testid attributes that don't exist in the Angular component
-  // TODO: Add data-testid to the Angular component, then re-enable this test
-  test.skip('should display interactions page header', async ({ page }) => {
+  test('should display interactions page header', async ({ page }) => {
+    // Wait for page to fully load before checking header
+    await page.waitForSelector('[data-testid="interactions-header"]', { timeout: 15000 });
+    
     // Verify page header using data-testid
     await expect(page.locator('[data-testid="interactions-header"]')).toBeVisible({ timeout: 10000 });
     
@@ -100,9 +101,10 @@ test.describe('Interactions List', () => {
     expect(true).toBeTruthy();
   });
   
-  // SKIP: This test depends on data-testid="interactions-listview" which doesn't exist
-  // TODO: Add data-testid to the Angular component, then re-enable this test
-  test.skip('should display interaction listview component', async ({ page }) => {
+  test('should display interaction listview component', async ({ page }) => {
+    // Wait for listview to load
+    await page.waitForSelector('[data-testid="interactions-listview"]', { timeout: 15000 });
+    
     // Verify listview component loaded using data-testid
     const listview = page.locator('[data-testid="interactions-listview"]');
     await expect(listview).toBeVisible({ timeout: 10000 });
@@ -191,11 +193,12 @@ test.describe('Interactions List', () => {
     expect(true).toBeTruthy();
   });
   
-  // SKIP: This test depends on data-testid="interactions-listview" which doesn't exist
-  // TODO: Add data-testid to the Angular component, then re-enable this test
-  test.skip('should handle empty state gracefully', async ({ page }) => {
+  test('should handle empty state gracefully', async ({ page }) => {
+    // Wait for listview to load
+    await page.waitForSelector('[data-testid="interactions-listview"]', { timeout: 15000 });
+    
     // Wait for data to load
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(2000);
     
     // Look for empty state message or no data message
     const emptyStateMessages = page.getByText(/no interactions|no results|no data|get started/i);
@@ -234,9 +237,10 @@ test.describe('Interactions List', () => {
     expect(true).toBeTruthy();
   });
   
-  // SKIP: This test depends on data-testid attributes that don't exist in the Angular component
-  // TODO: Add data-testid to the Angular component, then re-enable this test
-  test.skip('should be responsive on mobile', async ({ page }) => {
+  test('should be responsive on mobile', async ({ page }) => {
+    // Wait for page to load first
+    await page.waitForSelector('[data-testid="interactions-header"]', { timeout: 15000 });
+    
     // Switch to mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
     

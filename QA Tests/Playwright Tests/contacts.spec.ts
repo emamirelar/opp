@@ -81,9 +81,9 @@ test.describe('Contacts List - WITH Permissions', () => {
     await authenticateAndNavigate(page, TEST_USER_WITH_PERMISSIONS, contactsPage);
   });
   
-  // SKIP: This test depends on data-testid="contacts-header" which doesn't exist in the Angular component
-  // TODO: Add data-testid to the Angular component, then re-enable this test
-  test.skip('should display contacts page header', async ({ page }) => {
+  test('should display contacts page header', async ({ page }) => {
+    // Wait for page to fully load before checking header
+    await page.waitForSelector('[data-testid="contacts-header"]', { timeout: 15000 });
     await contactsPage.verifyPageHeader();
   });
   
@@ -144,11 +144,10 @@ test.describe('Contacts List - WITH Permissions', () => {
   });
   
   // SKIP: This test has timing issues with parallel execution (4 workers)
-  // The test passes with 2 workers but fails intermittently with 4 workers
-  // TODO: Add proper data-testid attributes to Angular component for reliable testing
-  test.skip('should display contact listview component', async ({ page }) => {
+  test('should display contact listview component', async ({ page }) => {
     // Wait for page to fully load
     await contactsPage.waitForPermissions();
+    await page.waitForSelector('[data-testid="contacts-listview"]', { timeout: 15000 });
     
     // Verify listview component loaded - look for multiple possible selectors
     // The actual component may be app-listview or have "Showing X records" text
@@ -255,14 +254,13 @@ test.describe('Contacts List - WITH Permissions', () => {
   });
   
   // SKIP: This test has timing issues with parallel execution (4 workers)
-  // Passes with 2 workers but fails intermittently with 4 workers due to race conditions
-  // TODO: Improve test stability with better wait mechanisms
-  test.skip('should handle empty state gracefully', async ({ page }) => {
+  test('should handle empty state gracefully', async ({ page }) => {
     // Wait for permissions and page to fully load
     await contactsPage.waitForPermissions();
+    await page.waitForSelector('[data-testid="contacts-listview"]', { timeout: 15000 });
     
     // Wait longer for page to settle - helps with concurrency issues
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(2000);
     
     // Look for multiple possible UI states - any one indicates page loaded correctly
     const emptyStateMessage = page.getByText(/no data available/i);
@@ -313,11 +311,10 @@ test.describe('Contacts List - WITH Permissions', () => {
   });
   
   // SKIP: This test has timing issues with parallel execution (4 workers)
-  // Depends on data-testid="contacts-header" which doesn't exist
-  // TODO: Add data-testid attributes to Angular component
-  test.skip('should be responsive on mobile', async ({ page }) => {
+  test('should be responsive on mobile', async ({ page }) => {
     // Wait for page to load first
     await contactsPage.waitForPermissions();
+    await page.waitForSelector('[data-testid="contacts-header"]', { timeout: 15000 });
     
     // Switch to mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
