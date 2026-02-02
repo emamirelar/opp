@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using UNOPS.PAO.Domain.Infrastructure;
 
 namespace UNOPS.PAO.Domain.Entities;
 
@@ -6,10 +7,12 @@ namespace UNOPS.PAO.Domain.Entities;
 /// Represents a collaborator on an opportunity - personnel who have permissions to edit all fields of the opportunity.
 /// Part of the Opportunity Development Team.
 /// </summary>
-public class OpportunityCollaborator
+public class OpportunityCollaborator : ModifiableDeletableEntity
 {
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int Id { get; set; }
+    public new int Id { get; set; }
+    
+    public new string? Name { get; set; }
     
     public int OpportunityId { get; set; }
     public virtual Opportunity? Opportunity { get; set; }

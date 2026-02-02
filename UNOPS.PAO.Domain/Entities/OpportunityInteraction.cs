@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using UNOPS.PAO.Domain.Infrastructure;
 
 namespace UNOPS.PAO.Domain.Entities;
 
@@ -6,10 +7,12 @@ namespace UNOPS.PAO.Domain.Entities;
 /// Links opportunities to interactions that led to their creation
 /// Many-to-many relationship between Opportunity and Interaction
 /// </summary>
-public class OpportunityInteraction
+public class OpportunityInteraction : ModifiableDeletableEntity
 {
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int Id { get; set; }
+    public new int Id { get; set; }
+    
+    public new string? Name { get; set; }
     
     public int OpportunityId { get; set; }
     public virtual Opportunity? Opportunity { get; set; }

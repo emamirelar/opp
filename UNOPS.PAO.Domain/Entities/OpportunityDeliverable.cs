@@ -1,12 +1,15 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using UNOPS.PAO.Domain.Infrastructure;
 
 namespace UNOPS.PAO.Domain.Entities;
 
-public class OpportunityDeliverable
+public class OpportunityDeliverable : ModifiableDeletableEntity
 {
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int Id { get; set; }
+    public new int Id { get; set; }
+    
+    public new string? Name { get; set; }
     
     public int OpportunityId { get; set; }
     public virtual Opportunity? Opportunity { get; set; }
