@@ -3124,6 +3124,7 @@
   "message.noMatchFound": "No match found in UNOPS taxonomy",
   "label.opportunity.productsServices": "Products & Services",
   "label.workBreakdownStructure": "Work Breakdown Structure",
+  "label.emergingOpportunityDevelopmentPlanning": "Emerging Opportunity Development Planning",
   "label.plannedStart": "Planned Start",
   "label.plannedEnd": "Planned End",
   "label.procurementPrerequisite": "Procurement Prerequisite",

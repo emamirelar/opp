@@ -2957,6 +2957,7 @@
   "message.error.extractionFailed": "Error al extraer productos y servicios. Por favor, intÃ©ntelo de nuevo.",
   "label.opportunity.productsServices": "Productos y Servicios",
   "label.workBreakdownStructure": "Estructura de Desglose del Trabajo",
+  "label.emergingOpportunityDevelopmentPlanning": "Planificación del Desarrollo de Oportunidades Emergentes",
   "label.plannedStart": "Inicio Planificado",
   "label.plannedEnd": "Fin Planificado",
   "label.procurementPrerequisite": "Prerrequisito de Adquisiciones",
