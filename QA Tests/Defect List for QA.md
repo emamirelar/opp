@@ -10,7 +10,19 @@ This document tracks test infrastructure issues, test implementation bugs, tempo
 
 ## Open QA Issues
 
-**Status**: ⚠️ 4 open issues - PrimeNG/Playwright compatibility, InMemory database limitations
+**Status**: ⚠️ 12 open issues - Test infrastructure, InMemory database limitations, reclassified from DEF list
+
+### Reclassified from Developer Defects (Test Infrastructure Issues)
+
+These items were originally logged as developer defects (DEF-XXX) but have been reclassified as QA/test infrastructure issues because production code works correctly.
+
+| QA ID | Title | Description | Reproduction Steps | Expected Result | Actual Result | Date Logged | Status | Assigned To |
+|-------|-------|-------------|-------------------|-----------------|---------------|-------------|--------|-------------|
+| QA-018 | Route Permission Guard blocks access in Playwright tests | **Reclassified from DEF-001** - TEST CONFIGURATION issue, not a production bug.<br/><br/>**Root Cause:** `authenticateWithRealBackend()` does NOT call `setupAPIMocks()`, so permission API calls go to real backend. When backend isn't running or test user lacks permissions, guard correctly denies access.<br/><br/>**Impact:** 29 Playwright tests blocked<br/><br/>**Why Not a Production Defect:**<br/>• Production code works correctly<br/>• Guard properly checks permissions<br/>• Issue is test setup, not application logic<br/><br/>**Proper Fix (QA):** Modify `authenticateWithRealBackend()` to call `setupAPIMocks(page)` before navigation, OR ensure real backend is running with properly permissioned test user.<br/><br/>**See:** `QA Tests/DEF-001_RouteGuard_DeepAnalysis.md` | 1. Run Phase 1A Playwright tests<br/>2. Tests authenticate and navigate to detail pages<br/>3. Observe redirect to `/access-denied` | Tests navigate successfully to detail pages | 29 tests redirect to `/access-denied` | 2026-01-26 | Open | QA Team |
+| QA-019 | AdvancedSearchService incompatible with InMemory test database | **Reclassified from DEF-004** - TEST INFRASTRUCTURE limitation, not a production bug.<br/><br/>**Root Cause:** `AdvancedSearchService` uses raw PostgreSQL `similarity()` function. Test environment uses InMemory database which cannot execute raw SQL.<br/><br/>**Impact:** 53 Partner integration tests failing with HTTP 500<br/><br/>**Why Not a Production Defect:**<br/>• Production uses PostgreSQL - works correctly<br/>• InMemory provider limitation is well-documented<br/>• This is a test environment design decision<br/><br/>**Proper Fix (QA) - Choose One:**<br/>• **Option A:** Use PostgreSQL test database (Docker)<br/>• **Option B:** Mock AdvancedSearchService for tests<br/>• **Option C:** Use SQLite with EF.Functions polyfills | 1. Run Partner integration tests<br/>2. Observe HTTP 500 errors<br/>3. Check logs for `GetRelationalModel` error | Tests pass with correct search results | 53 tests fail with HTTP 500 | 2026-01-27 | Open | QA Team |
+| QA-020 | .NET 9 PipeWriter bug affects test host | **Reclassified from DEF-006** - Known .NET 9 framework issue affecting in-memory test host only.<br/><br/>**Root Cause:** `ResponseBodyPipeWriter` in test host doesn't implement `PipeWriter.UnflushedBytes`.<br/><br/>**Impact:** Intermittent integration test failures<br/><br/>**Why Not a Production Defect:**<br/>• Only affects in-memory test host<br/>• Production uses Kestrel - works correctly<br/>• Microsoft tracking as framework issue<br/><br/>**Workaround Applied:** Try-catch in `GlobalExceptionHandler.TryHandleAsync()` with fallback serialization.<br/><br/>**Proper Fix:** Wait for .NET 9 patch or upgrade when available. | 1. Run integration tests<br/>2. Observe intermittent PipeWriter errors | Tests execute without PipeWriter errors | Some tests fail with InvalidOperationException | 2026-01-27 | Open | QA Team |
+
+### PrimeNG/Playwright Compatibility Issues
 
 | QA ID | Title | Description | Reproduction Steps | Expected Result | Actual Result | Date Logged | Status | Assigned To |
 |-------|-------|-------------|-------------------|-----------------|---------------|-------------|--------|-------------|
@@ -18,8 +30,19 @@ This document tracks test infrastructure issues, test implementation bugs, tempo
 | QA-008 | PrimeNG DynamicDialog not created in Playwright tests | `dialogService.open(ContactEditDialogComponent)` is called and all API mocks work, but zero dynamic dialogs are created.<br/><br/>**Root Cause:** Either:<br/>1. DialogService provider not available in test context<br/>2. DynamicDialog can't instantiate with mocked dependencies<br/>3. PrimeNG DynamicDialog incompatible with Playwright<br/><br/>**Note:** Dialog works in production - this is Playwright/PrimeNG interaction issue.<br/><br/>**Requires Real Backend Testing** | 1. Run: `npx playwright test contacts.spec.ts --grep "New Contact"`<br/>2. Observe button triggers API calls<br/>3. Check `.p-dynamic-dialog` count | Dynamic dialog should be created and visible | `.p-dynamic-dialog` count = 0 (dialog never created) | 2026-01-30 | Open | QA Team |
 | QA-009 | Z.EntityFramework.Extensions fails with InMemory database | **~38 Opportunity tests failing.**<br/><br/>The `SingleUpdateAsync` and `BulkUpdate` methods from Z.EntityFramework.Extensions require relational model access which InMemory database doesn't provide.<br/><br/>**Root Cause:** `Z.EntityFramework.Extensions.EntityTypeZInfo` tries to call `GetRelationalModel()` which fails on InMemory provider.<br/><br/>**Error:** `InvalidOperationException: The model must be finalized and its runtime dependencies must be initialized before 'GetRelationalModel' can be used.`<br/><br/>**Attempted Fixes:**<br/>• Switching to SQLite - failed due to complex Identity table requirements<br/>• Model finalization in tests - doesn't work with Z.EntityFramework.Extensions<br/><br/>**Proper Fix:** Tests that use update operations need a real relational database (PostgreSQL or properly configured SQLite) OR need to mock the repository layer | 1. Run: `dotnet test --filter "FullyQualifiedName~Opportunity"`<br/>2. Observe tests that call `UpdateAsync` or similar methods | Tests should pass using InMemory database | Tests fail with `GetRelationalModel` error | 2026-01-31 | Open | QA Team |
 | QA-010 | AutoMapper EntityArtifactValueResolver requires DI container | **~5+ Opportunity tests failing.**<br/><br/>`EntityArtifactValueResolver` requires `AppDbContext` and `IMapper` constructor parameters but AutoMapper tries to instantiate it without DI support.<br/><br/>**Root Cause:** Value resolver has no parameterless constructor. Tests use `MapperConfiguration(cfg => cfg.AddMaps(...))` which doesn't support DI.<br/><br/>**Error:** `MissingMethodException: Cannot dynamically create an instance of type 'EntityArtifactValueResolver'. Reason: No parameterless constructor defined.`<br/><br/>**Attempted Fixes:**<br/>• `cfg.ConstructServicesUsing()` - didn't work due to mapping compilation order<br/>• Overriding Country/OrganizationHierarchy mappings - AutoMapper uses first mapping registered<br/><br/>**Proper Fix:** Tests should use AutoMapper's DI integration with `ServiceCollection` OR the resolver should support parameterless constructor with lazy initialization | 1. Run: `dotnet test --filter "FullyQualifiedName~Opportunity"`<br/>2. Observe tests that map `Opportunity` with nested `Country` entities | Tests should map entities correctly | Tests fail with `MissingMethodException` | 2026-01-31 | Open | QA Team |
+| | | | | | | | | |
 || QA-011 | 17 Playwright tests skipped due to incomplete API mocking | **17 Playwright tests temporarily skipped** because they require backend API responses not adequately mocked. Tests fail with `ECONNREFUSED` when Angular proxy can't reach backend for unmocked endpoints.<br/><br/>**Affected Tests:** contacts.spec.ts (5), interactions.spec.ts (4), opportunities.spec.ts (4), partners.spec.ts (4)<br/><br/>**Temporary Fix:** Tests marked `test.skip` to unblock CI.<br/>**Proper Fix:** Expand API mocks OR run against real backend. | Run Playwright smoke tests, observe TimeoutError before skip | Tests pass with mocking | 17 tests skipped, 34 active | 2026-02-01 | Open | QA Team |
+| | | | | | | | | |
 || QA-012 | 5 Business.Tests files excluded due to IntegrationTests dependency | **5 test files excluded** because they reference `IntegrationTests` which has 4,675 errors (DEF-007).<br/><br/>**Excluded:** UNOPSPartnerManagerTests.cs, AdvancedSearchLogicTests.cs, DateSearchTests.cs, SimplePartnerFilterTests.cs, TextSearchSpaceHandlingTests.cs<br/><br/>**Temporary Fix:** Files excluded via `<Compile Remove="..." />`<br/>**Proper Fix:** Re-enable when DEF-007 resolved.<br/>**Related:** DEF-007 | Check Business.Tests.csproj for Compile Remove directives | All files included | 5 files excluded, 2,374 tests active | 2026-02-01 | Open | QA Team |
+| | | | | | | | | |
+|| QA-014 | Opportunity+ to oUP Integration Tests BLOCKED - Missing Credentials | **34 Playwright tests blocked** for oUP integration testing.<br/><br/>**Missing Credentials:**<br/>• `OUP_BASE_URL` - oUP test environment URL<br/>• `OUP_USERNAME` - oUP test user<br/>• `OUP_PASSWORD` - oUP test password<br/>• `OUP_API_URL` - oUP API endpoint<br/>• `EMAIL_HOST` - SMTP/IMAP for notification testing<br/>• `EMAIL_USERNAME` - Email account for testing<br/>• `EMAIL_PASSWORD` - Email credentials<br/>• `OPP_MANAGER_EMAIL` - Test Opportunity Manager<br/>• `DOA2_EMAIL` - Test DoA2 approver<br/>• `BD_EMAIL` - Test Business Developer<br/><br/>**Access Required:**<br/>1. oUP test environment (projects-test.unops.org)<br/>2. Test user accounts with proper permissions<br/>3. Email inbox access for PE, DoA2, BD<br/>4. Google Cloud Pub/Sub monitoring (optional)<br/><br/>**Test File:** `oup-integration.spec.ts`<br/>**Test Categories:** Integration Flow (4), Field Mapping (8), High-Risk Mapping (4), Email Notifications (4), Deep Linking (2), Idempotency (3), Error Handling (3), Edge Cases (4) | Run: `npx playwright test oup-integration.spec.ts`<br/>All tests skip with credential warning | Tests execute against oUP | All 34 tests skipped pending credentials | 2026-02-02 | Open | QA Team |
+| | | | | | | | | |
+|| QA-015 | oUP "Go to oUP" Button - Production Only Testing | **1 Deep linking test not executable in test environments.**<br/><br/>Per documentation: "Go to oUP" button in Opportunity+ is only testable in production environment.<br/><br/>**Affected Test:** DL-001 in `oup-integration.spec.ts`<br/><br/>**Workaround:** Skip test with documentation note<br/>**Proper Fix:** Implement feature flag for test environments OR accept production-only testing | Review test DL-001 | Test executable in staging | Test permanently skipped for non-prod | 2026-02-02 | Open | QA Team |
+| | | | | | | | | |
+|| QA-016 | Go Decision PRD Test Cases BLOCKED - Feature Not Fully Implemented | **98 of 102 test cases blocked (96%)** for "Send Opportunity for Go Decision" feature.<br/><br/>**Root Cause:** The test cases are aligned with PRD requirements, but the feature is not yet fully implemented. Current `OpportunityStageRequirements.cs` only validates 4 of 20+ required fields.<br/><br/>**Related Defect:** DEF-008 (Go Decision Feature Incomplete)<br/><br/>**Test Case Document:**<br/>`QA Tests/Opportunity Tests/BusinessLogic/GoNoGoDecision_PRD_TestCases.md`<br/><br/>**Execution Report:**<br/>`QA Tests/Opportunity Tests/BusinessLogic/GoNoGoDecision_TestExecution_Report.md`<br/><br/>**Status:**<br/>• Test cases: ✅ Created (102 tests)<br/>• Automation: ⬜ Waiting for backend implementation<br/>• Execution: ❌ Blocked by DEF-008<br/><br/>**Next Steps:**<br/>1. Share test cases with Dev team as acceptance criteria<br/>2. Track DEF-008 implementation progress<br/>3. Create Playwright tests when backend ready<br/>4. Update execution report weekly | 1. Review `GoNoGoDecision_PRD_TestCases.md`<br/>2. Attempt to execute any DoA2 test<br/>3. Observe: No backend implementation | All 102 tests execute and validate PRD requirements | 98 tests blocked, 4 partially executable | 2026-02-02 | Open | QA Team |
+| | | | | | | | | |
+|| QA-017 | Playwright Tests FAILED - Angular Dev Server Not Running | **RESOLVED ✅** - Playwright webServer config now auto-starts Angular.<br/><br/>**Original Issue:** Tests failed with `net::ERR_CONNECTION_REFUSED` when Angular dev server wasn't running.<br/><br/>**Resolution:** The `playwright.config.ts` webServer section auto-starts `ng serve --port 4200 --host 127.0.0.1`.<br/><br/>**Re-run Results (2026-02-02):**<br/>• **Passed: 135 (54%)**<br/>• **Failed: 74 (30%)** - Various test issues, not server-related<br/>• **Skipped: 40 (16%)**<br/>• **Duration: 35.8m**<br/><br/>**Note:** Remaining failures are test-specific issues (DEF-001 route guard, missing data-testid, etc.), not server connectivity. | 1. Run: `npx playwright test --project=chromium`<br/>2. Observe: Tests execute successfully | Tests execute against Angular app | ✅ 135 passed, 74 failed, 40 skipped | 2026-02-02 | Resolved | QA Team |
+| | | | | | | | | |
 || QA-013 | Bash arithmetic bug in qa-tests.yml workflow | CI workflow `test-summary` job failed due to bash arithmetic. `((SUCCESS_COUNT++))` when SUCCESS_COUNT=0 returns exit code 1 in bash.<br/><br/>**Fix Applied:** Changed to `SUCCESS_COUNT=$((SUCCESS_COUNT + 1))` | Run qa-tests.yml, all 6 jobs succeed, summary fails | Summary job passes | Exit code 1 | 2026-02-01 | Resolved | QA Team |
 
 ---
@@ -40,15 +63,25 @@ This document tracks test infrastructure issues, test implementation bugs, tempo
 
 ## QA Issue Statistics
 
-- **Total Open:** 6 ⚠️ (QA-007, QA-008, QA-009, QA-010, QA-011, QA-012)
+- **Total Open:** 12 ⚠️ (QA-007 through QA-012, QA-014 through QA-016, QA-018 through QA-020)
 - **Total In Testing:** 0
-- **Total Resolved:** 7 ✅ (including QA-013)
-- **Test Infrastructure:** 13 (7 resolved, 6 open)
+- **Total Resolved:** 8 ✅ (including QA-013, QA-017)
+- **Test Infrastructure:** 20 (8 resolved, 12 open)
+- **Reclassified from DEF:** 3 ✅ (QA-018, QA-019, QA-020 - moved from developer defects as test infrastructure issues)
 - **Test Implementation:** 0
 - **Test Tooling:** 0
-- **Temporary Workarounds:** 3 (QA-005 - PipeWriter, QA-011 - Playwright skips, QA-012 - Business.Tests exclusions)
-- **Critical:** 0
-- **High Priority:** 6 (QA-007, QA-008 - require real backend; QA-009, QA-010 - InMemory DB; QA-011, QA-012 - CI workarounds)
+- **Temporary Workarounds:** 4 (QA-005 - PipeWriter, QA-011 - Playwright skips, QA-012 - Business.Tests exclusions, QA-020 - PipeWriter fallback)
+- **Blocked by Credentials:** 2 (QA-014, QA-015 - oUP integration testing)
+- **Blocked by Implementation:** 1 (QA-016 - Go Decision PRD tests blocked by DEF-008)
+- **Blocked by Environment:** 0 ✅ (QA-017 resolved - webServer auto-starts Angular)
+- **Critical:** 0 ✅ (QA-017 resolved)
+- **High Priority:** 11 (QA-007, QA-008 - require real backend; QA-009, QA-010 - InMemory DB; QA-011, QA-012 - CI workarounds; QA-014, QA-015 - oUP integration; QA-016 - Go Decision; QA-018, QA-019 - reclassified blockers)
+
+### Latest Playwright Test Results (2026-02-02, Chromium)
+- **Passed:** 135 (54%)
+- **Failed:** 74 (30%)
+- **Skipped:** 40 (16%)
+- **Duration:** 35.8 minutes
 
 ---
 
@@ -121,6 +154,11 @@ This document tracks test infrastructure issues, test implementation bugs, tempo
 | QA Issue | Related DEF Issue | Relationship |
 |----------|-------------------|--------------|
 | QA-001 | DEF-001 | Initially thought to be route guard issue (DEF-001), but was actually test implementation using wrong route format |
+| QA-018 | DEF-001 (reclassified) | DEF-001 was reclassified as QA-018 - test configuration issue, not production bug |
+| QA-019 | DEF-004 (reclassified) | DEF-004 was reclassified as QA-019 - InMemory DB limitation, not production bug |
+| QA-020 | DEF-006 (reclassified) | DEF-006 was reclassified as QA-020 - .NET 9 test host issue, not production bug |
+| QA-012 | DEF-007 | Test files excluded due to DEF-007 (IntegrationTests out of sync) - DEF-007 moved to backlog as planned work |
+| QA-016 | DEF-008 | Go Decision tests blocked by DEF-008 (only legitimate production defect) |
 
 ---
 
@@ -162,15 +200,61 @@ This document tracks test infrastructure issues, test implementation bugs, tempo
 - [x] **QA-006:** Add using statements to 69 test files ✅
 - [x] **QA-006:** Rename 6 duplicate test methods ✅
 - [x] **QA-006 Resolved:** Test infrastructure cleanup complete ✅
+- [x] **2026-02-02:** Created oUP Integration Playwright test suite (`oup-integration.spec.ts`) - 32 tests ✅
+- [x] **2026-02-02:** Created oUP integration helper (`helpers/oup-integration.helper.ts`) ✅
+- [x] **2026-02-02:** Updated `.env.example` with oUP credential requirements ✅
+
+---
+
+## Test Execution Summary (2026-02-02)
+
+### .NET Tests
+
+| Test Suite | Passed | Failed | Skipped | Total | Duration |
+|------------|--------|--------|---------|-------|----------|
+| **Business.Tests** | 2,214 ✅ | 44 ❌ | 69 ⏭️ | 2,327 | 1m 22s |
+| **Presentation.Tests** | 29 ✅ | 0 ❌ | 0 ⏭️ | 29 | 5s |
+
+**Pass Rate:** 95% (2,243 / 2,356)
+
+**Key Failure Patterns:**
+1. **QA-009 (Z.EntityFramework.Extensions):** ~38 tests failing due to `GetRelationalModel` with InMemory database
+2. **QA-010 (AutoMapper EntityArtifactValueResolver):** ~5 tests failing due to DI resolution issues
+3. **Soft Delete Logic:** Tests expecting null after delete getting entity with `IsDeleted = true`
+4. **Permission Tests:** Some tests expect null/exception but get data (permission logic issues)
+
+### Playwright Tests (In Progress)
+
+| Category | Status |
+|----------|--------|
+| oUP Integration | 32 skipped (credentials required - QA-014) |
+| Other Tests | ~224 tests executing (real backend) |
+
+### Blocked Tests Summary
+
+| Blocker | Tests Affected | Resolution |
+|---------|----------------|------------|
+| QA-009 (InMemory DB) | ~38 Opportunity tests | Need real PostgreSQL or repository mocking |
+| QA-010 (AutoMapper DI) | ~5 tests | Need proper DI integration |
+| QA-014 (oUP Credentials) | 34 integration tests | Request credentials from IT |
+| DEF-005 Phase 2 | 1,800 tests | Need 9 managers created |
 
 ### Immediate (Next Sprint):
 - [ ] **QA-007, QA-008:** Test dialog functionality against real backend (integration/staging)
 - [ ] **QA-007:** Add console logging to `openBusinessCardScanner()` in Angular component
 - [ ] **QA-008:** Add console logging to `openContactEditDialog()` in Angular component
-- [ ] Wait for DEF-005 Phase 2 (9 managers) - **BLOCKS 1,800 tests** (developer work)
-- [ ] Execute 1,800 unblocked tests after managers created
+- [ ] **QA-018:** Fix `authenticateWithRealBackend()` to call `setupAPIMocks(page)` - unlocks 29 Playwright tests
+- [ ] **QA-019:** Set up PostgreSQL test database OR mock AdvancedSearchService - unlocks 53 Partner tests
 - [ ] Audit all Playwright test files for route format (QA-001 pattern)
-- [ ] Address DEF-001 (route permission guard) - developer defect blocking Playwright tests
+- [ ] Review DEF-005, DEF-007 backlog items with dev team for sprint planning
+- [ ] **🔴 QA-014: REQUEST oUP TEST ENVIRONMENT CREDENTIALS** - Blocks 34 integration tests:
+  - [ ] Request `OUP_BASE_URL` - oUP test environment URL (projects-test.unops.org)
+  - [ ] Request `OUP_USERNAME` + `OUP_PASSWORD` - oUP test user credentials
+  - [ ] Request `OUP_API_URL` - oUP API endpoint
+  - [ ] Request test email inbox access for notification testing
+  - [ ] Request test user accounts: Opportunity Manager, DoA2, Business Developer
+  - [ ] Optional: Google Cloud Pub/Sub monitoring access
+- [ ] **QA-015:** Confirm "Go to oUP" button production-only limitation with Product team
 
 ### Short-Term (Sprint 2):
 - [ ] Full regression test on all 3 browsers after DEF-001 is resolved

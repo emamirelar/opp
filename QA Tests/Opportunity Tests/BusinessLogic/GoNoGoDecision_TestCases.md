@@ -3,13 +3,33 @@
 **Component:** Go/No-Go Decision Workflow Logic  
 **Test Count:** 25+  
 **Priority:** P0-P1 (Critical/High)  
-**Created:** January 13, 2026
+**Created:** January 13, 2026  
+**Last Updated:** February 2, 2026
 
 ---
 
 ## Overview
 
 Test cases for Go/No-Go decision workflow orchestration, completeness validation, stakeholder notification, and conditional approvals.
+
+> **NOTE:** This file contains generic workflow test cases. For PRD-specific test cases covering the "Send Opportunity for Go Decision" feature, see:
+> 
+> **[GoNoGoDecision_PRD_TestCases.md](./GoNoGoDecision_PRD_TestCases.md)** - **102 test cases** aligned with the PRD and Additional Acceptance Criteria covering:
+> - DoA Level 2 Approver Lookup (FR-1)
+> - Mandatory Field Validation (FR-2, US-3) - 20+ fields including UNCooperation Framework, Beneficiaries, High Risk
+> - Roles, Responsibilities & Permissions (OM, Collaborator, role transfer)
+> - Non-OM/Collaborator Submitter Warning (FR-6, US-2)
+> - Country-Org Unit Relationship Warning (FR-7, US-4)
+> - OM Recall Capability (FR-8, US-9)
+> - Custom Rejection → NO GO (FR-14, US-7)
+> - Cancel Opportunity (FR-17, US-11)
+> - Reopen from NO GO and CANCELLED stages (FR-15, FR-18, US-8, US-12)
+> - Stage Stepper Display Logic (FR-16)
+> - Email Notifications with exact wording (FR-9, FR-10)
+> - OIC Notifications
+> - DoA Pathway Display (DoA2 and DoA3)
+> - Visibility & Workflow Lock (inactive OM handling)
+> - Cancellation/Archiving Restrictions
 
 ---
 

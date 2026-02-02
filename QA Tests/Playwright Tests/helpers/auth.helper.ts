@@ -23,6 +23,11 @@ import { waitForPageReady, waitForAngularReady } from './wait.helper';
 
 /**
  * Authenticate with real backend using development cookies
+ * 
+ * UPDATE 2026-02-02: Now includes API mocks to ensure permission checks pass
+ * when backend is not running. This fixes DEF-001 (route guard blocking access).
+ * See QA Tests/DEF-001_RouteGuard_DeepAnalysis.md for full analysis.
+ * 
  * @param page - Playwright page object
  * @param targetUrl - URL to navigate to after authentication
  * @param testUserEmail - Email of test user (default: test@playwright.local)
@@ -35,7 +40,32 @@ export async function authenticateWithRealBackend(
   // Step 1: Clear all cookies
   await page.context().clearCookies();
   
-  // Step 2: Set authentication cookies BEFORE first navigation
+  // Step 2: Setup API mocks BEFORE navigation (FIX for DEF-001)
+  // This ensures permission checks pass even when backend is not running
+  console.log('[Auth] Setting up API mocks for authenticateWithRealBackend...');
+  await setupAPIMocks(page);
+  
+  // Step 3: Setup authenticated user claims mock
+  // Override the default empty claims with authenticated user
+  await page.unroute(url => url.toString().includes('/user/claims'));
+  await page.route(url => url.toString().includes('/user/claims'), async (route) => {
+    console.log('[API Mock] Intercepted: /user/claims (authenticated via authenticateWithRealBackend)');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { type: 'email', value: testUserEmail },
+        { type: 'name', value: 'Test User' },
+        { type: 'role', value: 'Administrator' },
+        { type: 'role', value: 'Internal' },
+        { type: 'IsInternal', value: 'true' },
+        { type: 'IAPAuthenticated', value: 'true' },
+        { type: 'sub', value: '12345' },
+      ]),
+    });
+  });
+  
+  // Step 4: Set authentication cookies
   await page.context().addCookies([
     {
       name: 'dev-user-email',
@@ -57,16 +87,18 @@ export async function authenticateWithRealBackend(
     }
   ]);
   
-  // Step 3: Navigate to target page with cookies already set
+  // Step 5: Navigate to target page with cookies and mocks already set
   const baseURL = 'http://127.0.0.1:4200';
   const fullUrl = targetUrl.startsWith('http') ? targetUrl : `${baseURL}${targetUrl}`;
+  console.log(`[Auth] Navigating to ${fullUrl} with mocks and cookies set...`);
   await page.goto(fullUrl);
   
-  // Step 4: Wait for page to load (use 'load' not 'networkidle' for faster tests)
+  // Step 6: Wait for page to load (use 'load' not 'networkidle' for faster tests)
   await page.waitForLoadState('load', { timeout: 15000 });
   
-  // Step 5: Give Angular time to initialize routing
+  // Step 7: Give Angular time to initialize routing
   await page.waitForTimeout(2000);
+  console.log('[Auth] authenticateWithRealBackend complete');
 }
 
 /**
