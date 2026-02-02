@@ -50,7 +50,31 @@
     </div>
   </ng-template>
   <ng-template #icons>
-    <div>
+    <div class="flex gap-2 items-center">
+      <!-- Cancel button - visible for OM when in IDENTIFY & PROFILE and not in workflow -->
+      @if (canCancel()) {
+        <p-button
+          [label]="'label.workflow.cancel' | translate"
+          severity="danger"
+          [outlined]="true"
+          icon="pi pi-times"
+          (onClick)="openCancelDialog()"
+          [disabled]="isActionInProgress()"
+        />
+      }
+
+      <!-- Reopen button - visible for OM when in NO GO or CANCELLED -->
+      @if (canReopen()) {
+        <p-button
+          [label]="'label.workflow.reopen' | translate"
+          severity="secondary"
+          [outlined]="true"
+          icon="pi pi-refresh"
+          (onClick)="openReopenDialog()"
+          [disabled]="isActionInProgress()"
+        />
+      }
+
       <app-workflow
         #workFlowComponent
         [autoload]="false"
@@ -84,7 +108,7 @@
             <p-skeleton height="3rem" width="8rem" shape="circle"></p-skeleton>
           </div>
         } @else {
-          <p-steps [activeIndex]="currentStageIndex" [model]="stages()" [readonly]="true" />
+          <p-steps [activeIndex]="displayStageIndex()" [model]="displayStages()" [readonly]="true" />
         }
       </p-tabpanel>
       @if (workflowData()?.isInWorkflow == true) {
@@ -204,3 +228,109 @@
     </p-tabpanels>
   </p-tabs>
 </p-panel>
+
+<!-- Cancel Opportunity Dialog -->
+<p-dialog
+  [visible]="showCancelDialog()"
+  [header]="'message.workflow.cancelTitle' | translate"
+  [modal]="true"
+  [closable]="true"
+  [style]="{ width: '500px' }"
+  (onHide)="closeCancelDialog()"
+>
+  <div class="flex flex-col gap-4">
+    <p class="text-surface-600">
+      {{ 'message.workflow.cancelWarning' | translate }}
+    </p>
+
+    <div class="flex flex-col gap-2">
+      <label class="font-semibold">{{ 'message.workflow.cancelReason' | translate }}</label>
+      <textarea
+        pTextarea
+        [ngModel]="cancelReason()"
+        (ngModelChange)="cancelReason.set($event)"
+        [rows]="4"
+        class="w-full"
+        [placeholder]="'message.workflow.enterCancellationReason' | translate"
+      ></textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end gap-2">
+      <p-button
+        [label]="'button.cancel' | translate"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="closeCancelDialog()"
+        [disabled]="isActionInProgress()"
+      />
+      <p-button
+        [label]="'message.workflow.cancelButton' | translate"
+        severity="danger"
+        (onClick)="confirmCancel()"
+        [loading]="isActionInProgress()"
+        [disabled]="!cancelReason().trim()"
+      />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Reopen Opportunity Dialog -->
+<p-dialog
+  [visible]="showReopenDialog()"
+  [header]="'message.workflow.reopenTitle' | translate"
+  [modal]="true"
+  [closable]="true"
+  [style]="{ width: '500px' }"
+  (onHide)="closeReopenDialog()"
+>
+  <div class="flex flex-col gap-4">
+    @if (currentStageName() === 'CANCELLED') {
+      <p class="text-surface-600">
+        {{ 'message.workflow.reopenFromCancelledConfirmation' | translate }}
+      </p>
+    } @else {
+      <p class="text-surface-600">
+        {{ 'message.workflow.reopenConfirmation' | translate }}
+      </p>
+    }
+
+    <div class="flex flex-col gap-2">
+      <label class="font-semibold">
+        @if (reopenRequiresReason()) {
+          {{ 'message.workflow.reopenFromCancelledReason' | translate }}
+        } @else {
+          {{ 'message.workflow.reopenReasonOptional' | translate }}
+        }
+      </label>
+      <textarea
+        pTextarea
+        [ngModel]="reopenReason()"
+        (ngModelChange)="reopenReason.set($event)"
+        [rows]="4"
+        class="w-full"
+        [placeholder]="'message.workflow.enterReopenReason' | translate"
+      ></textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end gap-2">
+      <p-button
+        [label]="'button.cancel' | translate"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="closeReopenDialog()"
+        [disabled]="isActionInProgress()"
+      />
+      <p-button
+        [label]="'label.workflow.reopen' | translate"
+        severity="primary"
+        (onClick)="confirmReopen()"
+        [loading]="isActionInProgress()"
+        [disabled]="reopenRequiresReason() && !reopenReason().trim()"
+      />
+    </div>
+  </ng-template>
+</p-dialog>

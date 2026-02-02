@@ -114,3 +114,106 @@ export interface CustomStageChangeResult {
   proceed: boolean;
   comment?: string;
 }
+
+/**
+ * Extended workflow action model for submission with confirmation flags
+ */
+export interface WorkflowSubmitRequest extends WorkflowActionModel {
+  /**
+   * Confirmed that user is not the Opportunity Manager but wishes to proceed
+   */
+  confirmedNonOMSubmission?: boolean;
+
+  /**
+   * Confirmed country-org unit mismatch warning
+   */
+  confirmedOrgUnitWarning?: boolean;
+
+  /**
+   * User has acknowledged the submission statement
+   */
+  acknowledgedStatement?: boolean;
+
+  /**
+   * Optional additional remarks for the decision maker
+   */
+  additionalRemarks?: string;
+}
+
+/**
+ * Response from workflow submission with confirmation requirements
+ */
+export interface WorkflowSubmitResponse {
+  /**
+   * Whether the submission was successful
+   */
+  success: boolean;
+
+  /**
+   * Whether user confirmation is required before proceeding
+   */
+  requiresConfirmation?: boolean;
+
+  /**
+   * Type of confirmation required
+   */
+  confirmationType?: ConfirmationType;
+
+  /**
+   * Message to display in confirmation dialog
+   */
+  confirmationMessage?: string;
+
+  /**
+   * List of countries not related to the org unit (for OrgUnitCountryMismatch)
+   */
+  unrelatedCountries?: string[];
+
+  /**
+   * Whether acknowledgment statement is required
+   */
+  requiresAcknowledgment?: boolean;
+
+  /**
+   * Text of the acknowledgment statement
+   */
+  acknowledgmentText?: string;
+
+  /**
+   * The new stage after successful submission
+   */
+  newStage?: string;
+
+  /**
+   * Error message if submission failed
+   */
+  errorMessage?: string;
+
+  /**
+   * Whether requirements validation failed.
+   * Frontend should show the requirements panel with unmet items.
+   */
+  requirementsNotMet?: boolean;
+
+  /**
+   * List of unmet requirement messages to display.
+   */
+  unmetRequirements?: string[];
+}
+
+/**
+ * Types of confirmation dialogs
+ */
+export type ConfirmationType = 'NonOMSubmitter' | 'OrgUnitCountryMismatch';
+
+/**
+ * Cancel/Reopen request model
+ */
+export interface WorkflowCancelReopenRequest {
+  entityName: string;
+  entityId: number;
+  comment?: string;
+}
+
+// Re-export requirement models for convenience
+export * from './requirement.models';
