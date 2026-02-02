@@ -1012,6 +1012,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 nullable: false,
                 defaultValue: 0);
 
+            // Truncate OpportunityCollaboratorExpertises to avoid migration conflicts
+            migrationBuilder.Sql(@"TRUNCATE TABLE public.""OpportunityCollaboratorExpertises"" CASCADE;");
+
             migrationBuilder.AddColumn<int>(
                 name: "CreatedBy",
                 schema: "public",
@@ -1083,6 +1086,14 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
             migrationBuilder.AddColumn<int>(
                 name: "WorkflowStatus",
+                schema: "public",
+                table: "OpportunityCollaboratorExpertises",
+                type: "integer",
+                nullable: false,
+                defaultValue: 0);
+
+            migrationBuilder.AddColumn<int>(
+                name: "OpportunityId",
                 schema: "public",
                 table: "OpportunityCollaboratorExpertises",
                 type: "integer",
@@ -1276,8 +1287,8 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 FROM public.""Opportunities"" o
                 WHERE ofp.""OpportunityId"" = o.""Id"";
 
-                -- OpportunityExternalStakeholders
-                UPDATE public.""OpportunityExternalStakeholders"" oes
+                -- OpportunityExternalStakeholder
+                UPDATE public.""OpportunityExternalStakeholder"" oes
                 SET 
                     ""CreatedBy"" = o.""CreatedBy"",
                     ""CreatedDate"" = o.""CreatedDate"",
@@ -1315,14 +1326,16 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 -- OpportunityCollaboratorExpertises
                 UPDATE public.""OpportunityCollaboratorExpertises"" oce
                 SET 
+                    ""OpportunityId"" = oc.""OpportunityId"",
                     ""CreatedBy"" = o.""CreatedBy"",
                     ""CreatedDate"" = o.""CreatedDate"",
                     ""LastModifiedBy"" = COALESCE(o.""LastModifiedBy"", o.""CreatedBy""),
                     ""LastModifiedDate"" = COALESCE(o.""LastModifiedDate"", o.""CreatedDate""),
                     ""Name"" = 'CollaboratorExpertise-' || oce.""Id""::text,
                     ""Status"" = 1
-                FROM public.""Opportunities"" o
-                WHERE oce.""OpportunityId"" = o.""Id"";
+                FROM public.""OpportunityCollaborators"" oc
+                INNER JOIN public.""Opportunities"" o ON oc.""OpportunityId"" = o.""Id""
+                WHERE oce.""OpportunityCollaboratorId"" = oc.""Id"";
 
                 -- OpportunityCollaborators
                 UPDATE public.""OpportunityCollaborators"" oc
@@ -1348,11 +1361,41 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 FROM public.""Opportunities"" o
                 WHERE ocp.""OpportunityId"" = o.""Id"";
             ");
+
+            // Create index for OpportunityCollaboratorExpertises.OpportunityId
+            migrationBuilder.CreateIndex(
+                name: "IX_OpportunityCollaboratorExpertises_OpportunityId",
+                schema: "public",
+                table: "OpportunityCollaboratorExpertises",
+                column: "OpportunityId");
+
+            // Add foreign key for OpportunityCollaboratorExpertises.OpportunityId
+            migrationBuilder.AddForeignKey(
+                name: "FK_OpportunityCollaboratorExpertises_Opportunities_Opportunity~",
+                schema: "public",
+                table: "OpportunityCollaboratorExpertises",
+                column: "OpportunityId",
+                principalSchema: "public",
+                principalTable: "Opportunities",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Cascade);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            // Drop foreign key for OpportunityCollaboratorExpertises.OpportunityId
+            migrationBuilder.DropForeignKey(
+                name: "FK_OpportunityCollaboratorExpertises_Opportunities_Opportunity~",
+                schema: "public",
+                table: "OpportunityCollaboratorExpertises");
+
+            // Drop index for OpportunityCollaboratorExpertises.OpportunityId
+            migrationBuilder.DropIndex(
+                name: "IX_OpportunityCollaboratorExpertises_OpportunityId",
+                schema: "public",
+                table: "OpportunityCollaboratorExpertises");
+
             migrationBuilder.DropColumn(
                 name: "CreatedBy",
                 schema: "public",
@@ -2050,6 +2093,11 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
             migrationBuilder.DropColumn(
                 name: "WorkflowStatus",
+                schema: "public",
+                table: "OpportunityCollaboratorExpertises");
+
+            migrationBuilder.DropColumn(
+                name: "OpportunityId",
                 schema: "public",
                 table: "OpportunityCollaboratorExpertises");
 

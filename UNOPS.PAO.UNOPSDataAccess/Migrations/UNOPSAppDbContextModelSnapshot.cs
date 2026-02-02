@@ -2125,6 +2125,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<int>("OpportunityCollaboratorId")
                         .HasColumnType("integer");
 
+                    b.Property<int>("OpportunityId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
@@ -2134,6 +2137,8 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CollaboratorExpertiseId");
+
+                    b.HasIndex("OpportunityId");
 
                     b.HasIndex("OpportunityCollaboratorId", "CollaboratorExpertiseId")
                         .IsUnique();
@@ -5639,7 +5644,15 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("UNOPS.PAO.Domain.Entities.Opportunity", "Opportunity")
+                        .WithMany()
+                        .HasForeignKey("OpportunityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("CollaboratorExpertise");
+
+                    b.Navigation("Opportunity");
 
                     b.Navigation("OpportunityCollaborator");
                 });
