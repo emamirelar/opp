@@ -565,15 +565,36 @@ public class WorkflowController : BaseController
     }
 
     /// <summary>
-    /// Approves a pending workflow.
+    /// Approves a pending workflow with enhanced Go decision requirements.
+    /// For Opportunity approvals: Requires rationale, confirmation acknowledgment, and Executive assignment.
     /// </summary>
-    /// <param name="request">The approval request</param>
+    /// <param name="request">The enhanced approval request with rationale, confirmation, and Executive</param>
     /// <returns>Approval result</returns>
     [HttpPost(APIDictionary.Workflow + "/approve")]
-    public async Task<ActionResult> Approve([FromBody] WorkflowActionRequest request)
+    public async Task<ActionResult> Approve([FromBody] ApproveWorkflowRequest request)
     {
         // Normalize entity name for workflow manager consistency
         var normalizedEntityName = NormalizeEntityNameForWorkflow(request.EntityName);
+
+        // === ENHANCED VALIDATION FOR GO DECISION ===
+        
+        // Validate rationale is provided (required)
+        if (string.IsNullOrWhiteSpace(request.Rationale))
+        {
+            return BadRequest(new { error = "Decision rationale is required" });
+        }
+
+        // Validate confirmation acknowledged (required)
+        if (!request.ConfirmationAcknowledged)
+        {
+            return BadRequest(new { error = "Confirmation statement must be acknowledged" });
+        }
+
+        // Validate Executive is assigned for Opportunity approvals (required)
+        if (normalizedEntityName == "Opportunity" && request.ExecutiveId <= 0)
+        {
+            return BadRequest(new { error = "Executive assignment is required for Go decision" });
+        }
         
         // Get pending task
         var pendingTask = _workflowManager.PendingTask(normalizedEntityName, request.EntityId);
@@ -594,18 +615,24 @@ public class WorkflowController : BaseController
         var entityDisplayName = await _entityStageProvider.GetEntityDisplayNameAsync(normalizedEntityName, request.EntityId.ToString());
         var entityUrl = $"/opportunity/{request.EntityId}";
 
-        // Approve the workflow
+        // Approve the workflow (rationale stored in comment field)
         var newStage = await _workflowManager.Approve(
             pendingTask,
             normalizedEntityName,
             request.EntityId,
             entityDisplayName,
-            request.Comment ?? "",
+            request.Rationale,  // Decision rationale stored as comment
             entityUrl);
 
         if (string.IsNullOrEmpty(newStage))
         {
             return StatusCode(500, new { error = "Failed to approve workflow" });
+        }
+
+        // === ASSIGN EXECUTIVE TO OPPORTUNITY (NEW) ===
+        if (normalizedEntityName == "Opportunity" && request.ExecutiveId > 0)
+        {
+            await _managerWrapper.OpportunityManager.AssignExecutiveAsync(request.EntityId, request.ExecutiveId);
         }
 
         // Update entity stage
@@ -622,25 +649,38 @@ public class WorkflowController : BaseController
             await _notificationService.NotifyInternalStakeholdersOnGoDecisionAsync(request.EntityId, currentUserName);
         }
 
+        // === MARK IN-SYSTEM NOTIFICATIONS AS DONE ===
+        await _notificationService.MarkWorkflowNotificationsAsApprovedAsync(normalizedEntityName, request.EntityId);
+
         return Ok(new { success = true, message = "Workflow approved", newStage });
     }
 
     /// <summary>
-    /// Rejects a pending workflow.
+    /// Rejects a pending workflow with enhanced No-Go decision requirements.
     /// For Opportunities: Custom behavior - rejection sets stage to NO GO (not previous stage).
+    /// Requires rationale and confirmation acknowledgment.
     /// </summary>
-    /// <param name="request">The rejection request</param>
+    /// <param name="request">The enhanced rejection request with rationale and confirmation</param>
     /// <returns>Rejection result</returns>
     [HttpPost(APIDictionary.Workflow + "/reject")]
-    public async Task<ActionResult> Reject([FromBody] WorkflowActionRequest request)
+    public async Task<ActionResult> Reject([FromBody] RejectWorkflowRequest request)
     {
-        if (string.IsNullOrWhiteSpace(request.Comment))
-        {
-            return BadRequest(new { error = "Comment is required when rejecting a workflow" });
-        }
-
         // Normalize entity name for workflow manager consistency
         var normalizedEntityName = NormalizeEntityNameForWorkflow(request.EntityName);
+
+        // === ENHANCED VALIDATION FOR NO-GO DECISION ===
+        
+        // Validate rationale is provided (required)
+        if (string.IsNullOrWhiteSpace(request.Rationale))
+        {
+            return BadRequest(new { error = "Decision rationale is required" });
+        }
+
+        // Validate confirmation acknowledged (required)
+        if (!request.ConfirmationAcknowledged)
+        {
+            return BadRequest(new { error = "Confirmation statement must be acknowledged" });
+        }
         
         // Get pending task
         var pendingTask = _workflowManager.PendingTask(normalizedEntityName, request.EntityId);
@@ -675,14 +715,14 @@ public class WorkflowController : BaseController
                 opportunity.LastModifiedDate = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
 
-                // Log the rejection with the NO GO stage
+                // Log the rejection with the NO GO stage (rationale stored in comment)
                 await _workflowManager.AddLog(new WorkflowLogModel
                 {
                     EntityName = normalizedEntityName,
                     EntityId = request.EntityId.ToString(),
                     Stage = currentStage,
                     NewStage = OpportunityWorkflow.Stages.NoGo,
-                    Comment = request.Comment,
+                    Comment = request.Rationale,  // Decision rationale stored as comment
                     Action = "Rejected",
                     UserId = CurrentUserId,
                     CompletedOn = DateTime.UtcNow
@@ -694,8 +734,11 @@ public class WorkflowController : BaseController
                     normalizedEntityName,
                     request.EntityId,
                     entityDisplayName,
-                    request.Comment,
+                    request.Rationale,  // Decision rationale
                     entityUrl);
+
+                // === MARK IN-SYSTEM NOTIFICATIONS AS DONE ===
+                await _notificationService.MarkWorkflowNotificationsAsRejectedAsync(normalizedEntityName, request.EntityId);
 
                 return Ok(new WorkflowActionResponse 
                 { 
@@ -712,7 +755,7 @@ public class WorkflowController : BaseController
             normalizedEntityName,
             request.EntityId,
             entityDisplayName,
-            request.Comment,
+            request.Rationale,  // Decision rationale
             entityUrl);
 
         if (!success)
@@ -722,6 +765,9 @@ public class WorkflowController : BaseController
 
         // Update entity WorkflowStatus back to None (rejection complete)
         await UpdateEntityWorkflowStatus(normalizedEntityName, request.EntityId, isInWorkflow: false);
+
+        // === MARK IN-SYSTEM NOTIFICATIONS AS DONE ===
+        await _notificationService.MarkWorkflowNotificationsAsRejectedAsync(normalizedEntityName, request.EntityId);
 
         return Ok(new WorkflowActionResponse { Success = true, Message = "Workflow rejected" });
     }
@@ -783,6 +829,9 @@ public class WorkflowController : BaseController
 
         // Update entity WorkflowStatus back to None (recall complete)
         await UpdateEntityWorkflowStatus(normalizedEntityName, request.EntityId, isInWorkflow: false);
+
+        // === MARK IN-SYSTEM NOTIFICATIONS AS DONE ===
+        await _notificationService.MarkWorkflowNotificationsAsRecalledAsync(normalizedEntityName, request.EntityId);
 
         return Ok(new WorkflowActionResponse { Success = true, Message = "Workflow recalled successfully" });
     }
@@ -1015,6 +1064,96 @@ public class WorkflowController : BaseController
         }
 
         return Ok(response);
+    }
+
+    /// <summary>
+    /// Gets pending workflow approval tasks for the current user.
+    /// Returns only tasks where the current user is authorized to approve.
+    /// Used by the Actions Required card on the home dashboard.
+    /// </summary>
+    /// <returns>List of pending approval tasks</returns>
+    [HttpGet(APIDictionary.Workflow + "/pending-approvals")]
+    public async Task<ActionResult<IEnumerable<PendingApprovalResponse>>> GetPendingApprovals()
+    {
+        var pendingApprovals = new List<PendingApprovalResponse>();
+
+        // Get all pending workflow tasks
+        var allPendingTasks = await _workflowManager.GetAllPendingTasksAsync();
+
+        foreach (var task in allPendingTasks)
+        {
+            // Parse entity ID
+            if (!int.TryParse(task.EntityId, out int entityId))
+                continue;
+
+            // Normalize entity name
+            var entityNameLower = task.EntityName.ToLowerInvariant();
+
+            // Get current stage for the entity
+            var currentStage = await _entityStageProvider.GetCurrentStageAsync(entityNameLower, task.EntityId);
+            if (string.IsNullOrEmpty(currentStage))
+                continue;
+
+            // Check if current user can approve this task
+            var canApprove = await _approverProvider.CanUserApproveAsync(
+                task.EntityName, entityId, CurrentUserId, currentStage, task.NewStage);
+
+            if (!canApprove)
+                continue;
+
+            // Get state machine for stage display names
+            var stateMachine = GetStateMachine(entityNameLower);
+
+            // Build approval response with entity details
+            var approvalResponse = new PendingApprovalResponse
+            {
+                EntityName = task.EntityName,
+                EntityId = entityId,
+                CurrentStage = currentStage,
+                CurrentStageDisplayName = stateMachine?.StageNames.TryGetValue(currentStage, out var currentName) == true 
+                    ? currentName : currentStage,
+                PendingStage = task.NewStage,
+                PendingStageDisplayName = stateMachine?.StageNames.TryGetValue(task.NewStage, out var pendingName) == true 
+                    ? pendingName : task.NewStage,
+                SubmittedOn = task.CreatedDate,
+                SubmittedByUserId = task.UserId
+            };
+
+            // Get entity-specific details
+            if (entityNameLower == "opportunity")
+            {
+                var opportunity = await _context.Opportunities
+                    .AsNoTracking()
+                    .Include(o => o.ResponsibleOrgUnit)
+                    .FirstOrDefaultAsync(o => o.Id == entityId && !o.IsDeleted);
+
+                if (opportunity != null)
+                {
+                    approvalResponse.EntityDisplayName = opportunity.Name;
+                    approvalResponse.OrgUnitName = opportunity.ResponsibleOrgUnit?.Name;
+                    approvalResponse.EntityUrl = $"/opportunity/{entityId}";
+                }
+            }
+
+            // Get submitter display name
+            if (task.UserId > 0)
+            {
+                var submitter = await _context.PAOUsers
+                    .AsNoTracking()
+                    .Include(u => u.UserProfile)
+                    .FirstOrDefaultAsync(u => u.Id == task.UserId);
+
+                if (submitter != null)
+                {
+                    approvalResponse.SubmittedBy = submitter.UserProfile?.Name ?? submitter.Email;
+                }
+            }
+
+            pendingApprovals.Add(approvalResponse);
+        }
+
+        // Sort by submitted date descending (most recent first)
+        return Ok(pendingApprovals.OrderByDescending(p => p.SubmittedOn));
     }
 
     /// <summary>

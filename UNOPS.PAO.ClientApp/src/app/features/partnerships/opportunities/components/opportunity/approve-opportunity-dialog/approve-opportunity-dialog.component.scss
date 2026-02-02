@@ -1,0 +1,13 @@
+// approve-opportunity-dialog.component.scss
+// Minimal styles - using Tailwind classes in template
+
+:host {
+  display: block;
+}
+
+// Ensure textarea maintains consistent styling
+::ng-deep {
+  .p-textarea {
+    min-height: 100px;
+  }
+}

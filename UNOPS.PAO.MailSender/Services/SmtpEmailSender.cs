@@ -60,6 +60,12 @@ public class SmtpEmailSender : IEmailSender
 
         message.To.AddRange(emailMessage.EmailReceivers.Select(r => new MailboxAddress("", r)));
 
+        // Add CC recipients for workflow notifications
+        if (emailMessage.CcReceivers.Any())
+        {
+            message.Cc.AddRange(emailMessage.CcReceivers.Select(r => new MailboxAddress("", r)));
+        }
+
         AddAttachments(message, emailMessage.Attachments);
 
         return message;
