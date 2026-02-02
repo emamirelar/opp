@@ -12,6 +12,7 @@ import {
   OnInit,
   output,
   signal,
+  computed,
   SimpleChanges,
   ViewChild,
 } from '@angular/core';
@@ -19,12 +20,16 @@ import { MenuItem } from 'primeng/api';
 import { StepsModule } from 'primeng/steps';
 import { FieldsetModule } from 'primeng/fieldset';
 import { TableModule } from 'primeng/table';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { PanelModule } from 'primeng/panel';
 import { TagModule } from 'primeng/tag';
 import { TabsModule } from 'primeng/tabs';
 import { SkeletonModule } from 'primeng/skeleton';
+import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
+import { TextareaModule } from 'primeng/textarea';
 import { DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 import { WorkflowService } from '../../services/workflow.service';
 import { WorkflowComponent, IFeedbackDialogService } from '../workflow/workflow.component';
@@ -58,6 +63,10 @@ import { CustomStageChangeResult, WorkflowHistoryUserModel, WorkflowApproverMode
     TranslateModule,
     TabsModule,
     SkeletonModule,
+    ButtonModule,
+    DialogModule,
+    TextareaModule,
+    FormsModule,
     DatePipe,
   ],
   templateUrl: './stage-workflow.component.html',
@@ -65,6 +74,7 @@ import { CustomStageChangeResult, WorkflowHistoryUserModel, WorkflowApproverMode
 })
 export class StageWorkflowComponent implements OnInit, OnChanges {
   workflowService = inject(WorkflowService);
+  private translateService = inject(TranslateService);
 
   @ViewChild('workFlowComponent') workflowComponent!: WorkflowComponent;
 
@@ -72,6 +82,17 @@ export class StageWorkflowComponent implements OnInit, OnChanges {
   entityId = input<string>('');
   canChangeStage = input<boolean>(true);
   onStageChangeSuccess = output();
+
+  /**
+   * Whether the current user is an Opportunity Manager for this opportunity
+   * Controls visibility of Cancel/Reopen buttons
+   */
+  isOpportunityManager = input<boolean>(false);
+
+  /**
+   * Name of the responsible org unit (for acknowledgment dialog display)
+   */
+  responsibleOrgUnitName = input<string>('');
 
   // Feedback service must be provided by consuming application
   @Input() feedbackDialogService!: IFeedbackDialogService;
@@ -89,11 +110,65 @@ export class StageWorkflowComponent implements OnInit, OnChanges {
   workflowDataLoading = signal(false);
   historyLoading = signal(false);
 
+  // Cancel/Reopen dialog state
+  showCancelDialog = signal(false);
+  showReopenDialog = signal(false);
+  cancelReason = signal('');
+  reopenReason = signal('');
+  isActionInProgress = signal(false);
+
   @Input() beforeStageChange: (nextStage: string) => Promise<boolean> = async () => true;
   @Input() customStageChangeHandler?: (
     nextStage: string,
     actionName: string
   ) => Promise<CustomStageChangeResult | undefined>;
+
+  /**
+   * Computed signal that filters stages for happy-path display
+   * - Default (IDENTIFY & PROFILE or GO): show only IDENTIFY & PROFILE → GO
+   * - NO GO: show IDENTIFY & PROFILE → NO GO
+   * - CANCELLED: show IDENTIFY & PROFILE → CANCELLED
+   */
+  readonly displayStages = computed(() => {
+    return this.getDisplayStages(this.stages(), this.currentStageName());
+  });
+
+  /**
+   * Computed signal for display stage index (relative to filtered stages)
+   */
+  readonly displayStageIndex = computed(() => {
+    const displayStages = this.displayStages();
+    const currentStage = this.currentStageName();
+    return displayStages.findIndex((item: MenuItem) => item['name'] === currentStage);
+  });
+
+  /**
+   * Whether Cancel button should be visible
+   * Only for OM when stage is IDENTIFY & PROFILE and not in workflow
+   */
+  readonly canCancel = computed(() => {
+    return (
+      this.isOpportunityManager() &&
+      this.currentStageName() === 'IDENTIFY & PROFILE' &&
+      !this.workflowData()?.isInWorkflow
+    );
+  });
+
+  /**
+   * Whether Reopen button should be visible
+   * Only for OM when stage is NO GO or CANCELLED
+   */
+  readonly canReopen = computed(() => {
+    const stage = this.currentStageName();
+    return this.isOpportunityManager() && (stage === 'NO GO' || stage === 'CANCELLED');
+  });
+
+  /**
+   * Whether reopen requires a mandatory reason (CANCELLED stage)
+   */
+  readonly reopenRequiresReason = computed(() => {
+    return this.currentStageName() === 'CANCELLED';
+  });
 
   get scrollHeightValue() {
     return this.approvers().length > 0 ? '200px' : undefined;
@@ -313,5 +388,124 @@ export class StageWorkflowComponent implements OnInit, OnChanges {
 
   getNextStage(): string {
     return this.workflowComponent?.nextStage() || '';
+  }
+
+  /**
+   * Filters stages for happy-path display based on current stage
+   * @param allStages All workflow stages
+   * @param currentStage Current stage name
+   * @returns Filtered stages for display
+   */
+  getDisplayStages(allStages: MenuItem[], currentStage: string): MenuItem[] {
+    const happyPath = ['IDENTIFY & PROFILE', 'GO'];
+    const noGoPath = ['IDENTIFY & PROFILE', 'NO GO'];
+    const cancelledPath = ['IDENTIFY & PROFILE', 'CANCELLED'];
+
+    let stagesToShow: string[];
+    switch (currentStage) {
+      case 'NO GO':
+        stagesToShow = noGoPath;
+        break;
+      case 'CANCELLED':
+        stagesToShow = cancelledPath;
+        break;
+      default:
+        // For IDENTIFY & PROFILE and GO stages, show happy path
+        stagesToShow = happyPath;
+    }
+
+    return allStages.filter((s) => stagesToShow.includes(s['name'] as string));
+  }
+
+  /**
+   * Opens the cancel confirmation dialog
+   */
+  openCancelDialog(): void {
+    this.cancelReason.set('');
+    this.showCancelDialog.set(true);
+  }
+
+  /**
+   * Closes the cancel dialog
+   */
+  closeCancelDialog(): void {
+    this.showCancelDialog.set(false);
+    this.cancelReason.set('');
+  }
+
+  /**
+   * Confirms and executes the cancel action
+   */
+  confirmCancel(): void {
+    const reason = this.cancelReason().trim();
+    if (!reason) {
+      this.feedbackDialogService?.showInfoToast({
+        detail: this.translateService.instant('message.workflow.cancelReasonRequired'),
+      });
+      return;
+    }
+
+    this.isActionInProgress.set(true);
+    this.workflowService.cancelOpportunity(this.entityId(), reason).subscribe({
+      next: () => {
+        this.isActionInProgress.set(false);
+        this.showCancelDialog.set(false);
+        this.feedbackDialogService?.showSuccessToast({
+          detail: this.translateService.instant('message.workflow.cancelSuccess'),
+        });
+        this.loadData();
+        this.onStageChangeSuccess.emit();
+      },
+      error: () => {
+        this.isActionInProgress.set(false);
+      },
+    });
+  }
+
+  /**
+   * Opens the reopen confirmation dialog
+   */
+  openReopenDialog(): void {
+    this.reopenReason.set('');
+    this.showReopenDialog.set(true);
+  }
+
+  /**
+   * Closes the reopen dialog
+   */
+  closeReopenDialog(): void {
+    this.showReopenDialog.set(false);
+    this.reopenReason.set('');
+  }
+
+  /**
+   * Confirms and executes the reopen action
+   */
+  confirmReopen(): void {
+    const reason = this.reopenReason().trim();
+
+    // For CANCELLED stage, reason is mandatory
+    if (this.reopenRequiresReason() && !reason) {
+      this.feedbackDialogService?.showInfoToast({
+        detail: this.translateService.instant('message.workflow.reopenReasonRequired'),
+      });
+      return;
+    }
+
+    this.isActionInProgress.set(true);
+    this.workflowService.reopenOpportunity(this.entityId(), reason || undefined).subscribe({
+      next: () => {
+        this.isActionInProgress.set(false);
+        this.showReopenDialog.set(false);
+        this.feedbackDialogService?.showSuccessToast({
+          detail: this.translateService.instant('message.workflow.reopenSuccess'),
+        });
+        this.loadData();
+        this.onStageChangeSuccess.emit();
+      },
+      error: () => {
+        this.isActionInProgress.set(false);
+      },
+    });
   }
 }

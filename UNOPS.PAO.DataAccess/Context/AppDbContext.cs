@@ -67,6 +67,7 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<OpportunityUNCFIndicator> OpportunityUNCFIndicators { get; set; }
     public DbSet<OpportunityUNOPSMission> OpportunityUNOPSMissions { get; set; }
     public DbSet<OpportunityInteraction> OpportunityInteractions { get; set; }
+    public DbSet<OpportunityCollaborator> OpportunityCollaborators { get; set; }
 
     // Infrastructure entities
     public DbSet<EntityRole> EntityRoles { get; set; }
@@ -437,6 +438,29 @@ public class AppDbContext : AuditableDbContext<int, int>
                 .IsRequired(false);
                 
             entity.HasIndex(x => x.OpportunityId);
+        });
+
+        // OpportunityCollaborator configuration (Opportunity Development Team)
+        modelBuilder.Entity<OpportunityCollaborator>(entity =>
+        {
+            entity.HasOne(x => x.Opportunity)
+                .WithMany(x => x.Collaborators)
+                .HasForeignKey(x => x.OpportunityId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.AddedByUser)
+                .WithMany()
+                .HasForeignKey(x => x.AddedBy)
+                .OnDelete(DeleteBehavior.SetNull)
+                .IsRequired(false);
+                
+            entity.HasIndex(x => x.OpportunityId);
+            entity.HasIndex(x => new { x.OpportunityId, x.UserId }).IsUnique();
         });
 
         // OpportunityDeliverable configuration

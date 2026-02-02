@@ -22,7 +22,7 @@ import {
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 
 // PrimeNG imports
 import { PanelModule } from 'primeng/panel';
@@ -42,8 +42,9 @@ import { DropdownModule } from 'primeng/dropdown';
 import { SelectModule } from 'primeng/select';
 import { MarkdownModule } from 'ngx-markdown';
 
-// Workflow component
+// Workflow components
 import { StageWorkflowComponent } from '@shared/reusables/components/workflow/components/stage-workflow/stage-workflow.component';
+import { RequirementsValidationComponent } from '@shared/reusables/components/workflow/components/requirements-validation/requirements-validation.component';
 
 // Services
 import { FeedbackDialogService } from '@shared/services/ui';
@@ -91,6 +92,7 @@ import { ValuesService } from '@app/shared/services/api/values.service';
     CommonModule,
     TranslateModule,
     FormsModule,
+    ReactiveFormsModule,
     PanelModule,
     ButtonModule,
     DividerModule,
@@ -108,6 +110,7 @@ import { ValuesService } from '@app/shared/services/api/values.service';
     SelectModule,
     MarkdownModule,
     StageWorkflowComponent,
+    RequirementsValidationComponent,
     OpportunityCollaborationComponent,
     OpportunityAnalysisSectionComponent,
     OpportunityOverviewSectionComponent,
@@ -147,6 +150,8 @@ export class OpportunityViewComponent
   isRegeneratingBanner = signal<boolean>(false);
   recordId: string = '';
   opportunity = signal<Opportunity | null>(null);
+  baseEngagementNumber = signal<string | null>(null);
+  oupBaseUrl = signal<string>('');
 
   // Loading Progress State
   readonly loadingProgress = signal<LoadingProgress>(DEFAULT_LOADING_PROGRESS);
@@ -201,6 +206,33 @@ export class OpportunityViewComponent
   // Section save trigger - incremented when any section saves to notify WHAT section to refresh framework status
   sectionSaveTrigger = signal<number>(0);
 
+  // FormGroup for requirements validation - mirrors opportunity fields
+  // Used by app-requirements-validation to validate workflow stage transition requirements
+  opportunityForm = new FormGroup({
+    name: new FormControl(''),
+    description: new FormControl(''),
+    challenges: new FormControl(''),
+    expectedImpact: new FormControl(''),
+    expectedOutcomes: new FormControl(''),
+    opportunityStatementMarkdown: new FormControl(''),
+    initiativeBudgetUSD: new FormControl<number | null>(null),
+    unopsMissions: new FormControl<unknown[]>([]),
+    sdgs: new FormControl<unknown[]>([]),
+    fundingPartners: new FormControl<unknown[]>([]),
+    clientPartners: new FormControl<unknown[]>([]),
+    deliverables: new FormControl<unknown[]>([]),
+    countries: new FormControl<unknown[]>([]),
+    targetSigningDate: new FormControl<Date | null>(null),
+    implementationStartDate: new FormControl<Date | null>(null),
+    targetDeliveryDate: new FormControl<Date | null>(null),
+    responsibleOrgUnitId: new FormControl<number | null>(null),
+    proposedInitiativeTypeId: new FormControl<number | null>(null),
+    beneficiariesToBeDetermined: new FormControl<boolean>(false),
+    estimatedDirectBeneficiaries: new FormControl<number | null>(null),
+    estimatedIndirectBeneficiaries: new FormControl<number | null>(null),
+    stakeholders: new FormControl<unknown[]>([]),
+  });
+
   @ViewChild('contentScrollContainer', { read: ElementRef })
   contentScrollContainer?: ElementRef;
   @ViewChild('chipsContainer', { read: ElementRef })
@@ -250,13 +282,13 @@ export class OpportunityViewComponent
     { id: 'what', label: 'What', icon: 'pi-briefcase' },
     { id: 'why', label: 'Why', icon: 'pi-lightbulb' },
     { id: 'who', label: 'Who', icon: 'pi-users' },
-    { id: 'team', label: 'label.opportunity.team', icon: 'pi-building' },
     { id: 'where', label: 'Where', icon: 'pi-globe' },
     { id: 'when', label: 'When', icon: 'pi-calendar' },
     { id: 'risks', label: 'Risks', icon: 'pi-chart-line' },
     { id: 'related', label: 'Related', icon: 'pi-link' },
     { id: 'collaboration', label: 'Comments', icon: 'pi-comments' },
     { id: 'statement', label: 'Statement', icon: 'pi-file-edit' },
+    { id: 'team', label: 'label.opportunity.team', icon: 'pi-building' },
   ];
 
   // Chip overflow management
@@ -348,6 +380,16 @@ export class OpportunityViewComponent
 
   shouldShowSeeLessButton = computed(() => {
     return this.showAdditionalInfo() && this.showFullContent();
+  });
+
+  // Computed OUP engagement URL
+  oupEngagementUrl = computed(() => {
+    const baseUrl = this.oupBaseUrl();
+    const engagementNumber = this.baseEngagementNumber();
+    if (baseUrl && engagementNumber) {
+      return `${baseUrl}/${engagementNumber}/engagement/overview`;
+    }
+    return null;
   });
 
   // Computed stats from backend or calculated from child entities
@@ -604,11 +646,34 @@ export class OpportunityViewComponent
         untracked(() => this.onDocumentsLoaded());
       }
     });
+
+    // Effect to sync opportunityForm when opportunity data changes
+    // This enables requirements validation to work with the current data
+    effect(() => {
+      const opp = this.opportunity();
+      if (opp) {
+        untracked(() => {
+          this.syncOpportunityFormValues(opp);
+        });
+      }
+    });
   }
 
   ngOnInit() {
     // Register component data for AI Assistant
     this.pageContextService.setComponentData(this);
+
+    // Fetch OUP base URL from configuration
+    this.valuesService.getConfig().subscribe({
+      next: (config: any) => {
+        if (config?.oupSettings?.baseUrl) {
+          this.oupBaseUrl.set(config.oupSettings.baseUrl);
+        }
+      },
+      error: (error) => {
+        console.warn('Failed to load OUP settings:', error);
+      }
+    });
 
     // Subscribe to route parameter changes for both recordId and section
     this.activatedRoute.paramMap.subscribe({
@@ -698,6 +763,37 @@ export class OpportunityViewComponent
     }
   }
 
+  /**
+   * Syncs the opportunityForm values from the opportunity data.
+   * This allows the requirements-validation component to validate against current data.
+   */
+  private syncOpportunityFormValues(opp: Opportunity): void {
+    this.opportunityForm.patchValue({
+      name: opp.name || '',
+      description: opp.description || '',
+      challenges: opp.challenges || '',
+      expectedImpact: opp.expectedImpact || '',
+      expectedOutcomes: opp.expectedOutcomes || '',
+      opportunityStatementMarkdown: opp.opportunityStatementMarkdown || '',
+      initiativeBudgetUSD: opp.initiativeBudgetUSD ?? null,
+      unopsMissions: opp.unopsMissions || [],
+      sdgs: opp.sdGs || [],
+      fundingPartners: opp.fundingPartners || [],
+      clientPartners: opp.clientPartners || [],
+      deliverables: opp.deliverables || [],
+      countries: opp.countries || [],
+      targetSigningDate: opp.targetSigningDate ? new Date(opp.targetSigningDate) : null,
+      implementationStartDate: opp.implementationStartDate ? new Date(opp.implementationStartDate) : null,
+      targetDeliveryDate: opp.targetDeliveryDate ? new Date(opp.targetDeliveryDate) : null,
+      responsibleOrgUnitId: opp.responsibleOrgUnitId ?? null,
+      proposedInitiativeTypeId: opp.proposedInitiativeTypeId ?? null,
+      beneficiariesToBeDetermined: opp.beneficiariesToBeDetermined || false,
+      estimatedDirectBeneficiaries: opp.estimatedDirectBeneficiaries ?? null,
+      estimatedIndirectBeneficiaries: opp.estimatedIndirectBeneficiaries ?? null,
+      stakeholders: opp.stakeholders || [],
+    }, { emitEvent: true });
+  }
+
   ngOnDestroy(): void {
     // Clear component data for AI Assistant
     this.pageContextService.clearComponentData();
@@ -741,8 +837,18 @@ export class OpportunityViewComponent
     this.updateLoadingProgress('opportunity', 'loading');
 
     this.opportunityService.getOpportunityById(+this.recordId).subscribe({
-      next: (data: Opportunity) => {
+      next: (response: any) => {
+        // Handle new response structure with opportunity and baseEngagementNumber
+        const data: Opportunity = response.opportunity || response;
         this.opportunity.set(data);
+        
+        // Store base engagement number if present
+        if (response.baseEngagementNumber) {
+          this.baseEngagementNumber.set(response.baseEngagementNumber);
+        } else {
+          this.baseEngagementNumber.set(null);
+        }
+        
         this.loading.set(false);
         this.updateLoadingProgress('opportunity', 'completed');
 
@@ -1558,6 +1664,16 @@ export class OpportunityViewComponent
    */
   toggleFullContent() {
     this.showFullContent.update((value) => !value);
+  }
+
+  /**
+   * Open OUP engagement in new tab
+   */
+  openOUPEngagement(): void {
+    const url = this.oupEngagementUrl();
+    if (url) {
+      window.open(url, '_blank');
+    }
   }
 
   /**

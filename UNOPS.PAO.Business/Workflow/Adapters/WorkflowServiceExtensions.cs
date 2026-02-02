@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using UNOPS.PAO.Business.Workflow.Interfaces;
+using UNOPS.PAO.Business.Workflow.StageRequirements;
 using UNOPS.Workflow.Business.Interfaces;
 using UNOPS.Workflow.Business.Managers;
 using UNOPS.Workflow.DataAccess;
@@ -59,7 +60,14 @@ public static class WorkflowServiceExtensions
         services.AddScoped<IEntityStageProvider, PaoEntityStageProvider>();
         services.AddScoped<IWorkflowApproverProvider, PaoWorkflowApproverProvider>();
         services.AddScoped<IPaoWorkflowApproverProvider, PaoWorkflowApproverProvider>();
-        services.AddScoped<IWorkflowNotificationService, PaoWorkflowNotificationService>();
+        
+        // Register notification service as both interface and concrete type
+        // Concrete type is needed for PAO-specific methods like NotifyInternalStakeholdersOnGoDecisionAsync
+        services.AddScoped<PaoWorkflowNotificationService>();
+        services.AddScoped<IWorkflowNotificationService>(sp => sp.GetRequiredService<PaoWorkflowNotificationService>());
+
+        // Register stage requirements provider for Opportunity workflow validation
+        services.AddScoped<IStageRequirementsProvider, OpportunityStageRequirementsProvider>();
 
         return services;
     }

@@ -24,6 +24,7 @@ export interface SimpleValue {
   partnerId?: number;  // For contacts - the partner they belong to
   type?: string;  // For entity roles - role type classification
   subType?: string;  // For entity roles - role subtype classification
+  position?: string;  // For users - standardized position title from personnel record
 }
 
 /**
@@ -57,6 +58,7 @@ export interface UserBasicModel {
   userId: number;
   name: string | null;
   email: string | null;
+  position: string | null;  // Standardized position title from personnel record
 }
 
 /**
@@ -316,6 +318,15 @@ export interface CountryDynamicSearchRequest {
 export class ValuesService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = '/api/values';
+
+  /**
+   * @description Get frontend configuration settings
+   * @returns {Observable<any>}
+   * @since 1.0.0
+   */
+  getConfig(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/config`);
+  }
 
   /**
    * @description Get all organization units (OrgUnit type only)

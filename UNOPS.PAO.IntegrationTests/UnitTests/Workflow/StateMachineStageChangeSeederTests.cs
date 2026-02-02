@@ -14,6 +14,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Workflow;
 /// <summary>
 /// Unit tests for StateMachineStageChangeSeeder.
 /// Uses InMemory database to test seeding logic.
+/// Tests all 5 transitions: Go, No Go, Reopen from No Go, Cancel, and Reopen from Cancelled.
 /// </summary>
 public class StateMachineStageChangeSeederTests : IDisposable
 {
@@ -44,14 +45,14 @@ public class StateMachineStageChangeSeederTests : IDisposable
     }
 
     [Fact]
-    public async Task SeedStateMachineStageChangesAsync_ShouldCreateThreeTransitions()
+    public async Task SeedStateMachineStageChangesAsync_ShouldCreateFiveTransitions()
     {
         // Act
         await _serviceProvider.SeedStateMachineStageChangesAsync();
 
         // Assert
         var transitions = await _workflowContext.StateMachineStageChanges.ToListAsync();
-        transitions.Should().HaveCount(3);
+        transitions.Should().HaveCount(5);
     }
 
     [Fact]
@@ -93,7 +94,7 @@ public class StateMachineStageChangeSeederTests : IDisposable
     }
 
     [Fact]
-    public async Task SeedStateMachineStageChangesAsync_ShouldCreateReopenTransition()
+    public async Task SeedStateMachineStageChangesAsync_ShouldCreateReopenFromNoGoTransition()
     {
         // Act
         await _serviceProvider.SeedStateMachineStageChangesAsync();
@@ -113,15 +114,55 @@ public class StateMachineStageChangeSeederTests : IDisposable
     }
 
     [Fact]
+    public async Task SeedStateMachineStageChangesAsync_ShouldCreateCancelTransition()
+    {
+        // Act
+        await _serviceProvider.SeedStateMachineStageChangesAsync();
+
+        // Assert
+        var transition = await _workflowContext.StateMachineStageChanges
+            .FirstOrDefaultAsync(x => 
+                x.EntityName == "Opportunity" &&
+                x.FromStage == "IDENTIFY & PROFILE" && 
+                x.ToStage == "CANCELLED");
+
+        transition.Should().NotBeNull();
+        transition!.ApprovalRequired.Should().BeFalse();
+        transition.CommentRequired.Should().BeTrue();
+        transition.CommentOptional.Should().BeFalse();
+        transition.Name.Should().Be("Cancel");
+    }
+
+    [Fact]
+    public async Task SeedStateMachineStageChangesAsync_ShouldCreateReopenFromCancelledTransition()
+    {
+        // Act
+        await _serviceProvider.SeedStateMachineStageChangesAsync();
+
+        // Assert
+        var transition = await _workflowContext.StateMachineStageChanges
+            .FirstOrDefaultAsync(x => 
+                x.EntityName == "Opportunity" &&
+                x.FromStage == "CANCELLED" && 
+                x.ToStage == "IDENTIFY & PROFILE");
+
+        transition.Should().NotBeNull();
+        transition!.ApprovalRequired.Should().BeFalse();
+        transition.CommentRequired.Should().BeTrue();
+        transition.CommentOptional.Should().BeFalse();
+        transition.Name.Should().Be("Reopen");
+    }
+
+    [Fact]
     public async Task SeedStateMachineStageChangesAsync_ShouldBeIdempotent()
     {
         // Act - Run seeder twice
         await _serviceProvider.SeedStateMachineStageChangesAsync();
         await _serviceProvider.SeedStateMachineStageChangesAsync();
 
-        // Assert - Should still have exactly 3 transitions
+        // Assert - Should still have exactly 5 transitions
         var transitions = await _workflowContext.StateMachineStageChanges.ToListAsync();
-        transitions.Should().HaveCount(3);
+        transitions.Should().HaveCount(5);
     }
 
     [Fact]

@@ -447,7 +447,8 @@ public class ValuesRepository
                 Id = x.Id,
                 Name = x.UserProfile != null ? x.UserProfile.Name : x.Email,
                 Code = x.Email,
-                Description = x.Email
+                Description = x.Email,
+                Position = x.UserProfile != null ? x.UserProfile.Position : null
             })
             .ToListAsync();
     }
@@ -714,7 +715,8 @@ public class ValuesRepository
                     {
                         UserId = eur.UserId,
                         Name = eur.User?.UserProfile?.Name ?? eur.User?.Email,
-                        Email = eur.User?.Email
+                        Email = eur.User?.Email,
+                        Position = eur.User?.UserProfile?.Position  // Add standardized position title
                     }).ToList()
                 })
                 .ToList();

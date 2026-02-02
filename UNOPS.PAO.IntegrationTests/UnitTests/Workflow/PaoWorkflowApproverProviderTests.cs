@@ -1,7 +1,9 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Moq;
+using UNOPS.PAO.Business.Workflow;
 using UNOPS.PAO.Business.Workflow.Adapters;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.DataAccess.Interfaces;
@@ -18,6 +20,9 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Workflow;
 /// <summary>
 /// Unit tests for PaoWorkflowApproverProvider.
 /// Tests approver resolution and permission checks for workflow transitions.
+/// Tests include:
+/// - Stakeholder-based approver lookup (NO GO, CANCELLED, etc.)
+/// - DoA Level 2 holder lookup from EntityUserRole for GO transitions
 /// </summary>
 public class PaoWorkflowApproverProviderTests : IDisposable
 {
@@ -197,6 +202,201 @@ public class PaoWorkflowApproverProviderTests : IDisposable
             Name = "Opportunity Manager Trigger Config"
         };
         _workflowDbContext.StateMachineStageChangeRoles.Add(triggerRoleConfig);
+
+        await _workflowDbContext.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Seeds test data including DoA Level 2 approvers via EntityUserRole for GO transition testing.
+    /// </summary>
+    private async Task SeedDoA2TestDataAsync()
+    {
+        // Create organization hierarchy (responsible org unit)
+        var orgUnit = new OrganizationHierarchy
+        {
+            Id = 500,
+            Name = "Test Org Unit",
+            Code = "TEST_ORG",
+            Status = EntityStatus.Active,
+            IsDeleted = false
+        };
+        _appDbContext.Set<OrganizationHierarchy>().Add(orgUnit);
+
+        // Create DoA Level 2 entity role for OrganizationHierarchy
+        var doA2OrgRole = new EntityRole
+        {
+            Id = 10,
+            EntityType = "OrganizationHierarchy",
+            Name = "DoA Level 2",
+            Code = "DoA2_OrganizationHierarchy",
+            Status = EntityStatus.Active,
+            IsDeleted = false
+        };
+        _appDbContext.EntityRoles.Add(doA2OrgRole);
+
+        var opportunityManagerRole = new EntityRole
+        {
+            Id = 11,
+            EntityType = "Opportunity",
+            Name = "Opportunity Manager",
+            Code = "OPP_MANAGER",
+            Status = EntityStatus.Active,
+            IsDeleted = false
+        };
+        _appDbContext.EntityRoles.Add(opportunityManagerRole);
+
+        // Create DoA2 user
+        var doA2User = new PAOUser
+        {
+            Id = 300,
+            Email = "doa2holder@test.com",
+            IsInternal = true
+        };
+        _appDbContext.PAOUsers.Add(doA2User);
+
+        var doA2UserProfile = new UserProfile
+        {
+            Id = 300,
+            UserId = 300,
+            FirstName = "DoA2",
+            LastName = "Holder",
+            Status = EntityStatus.Active,
+            IsDeleted = false
+        };
+        _appDbContext.UserProfile.Add(doA2UserProfile);
+
+        // Create trigger user (Opportunity Manager)
+        var triggerUser = new PAOUser
+        {
+            Id = 301,
+            Email = "oppmanager@test.com",
+            IsInternal = true
+        };
+        _appDbContext.PAOUsers.Add(triggerUser);
+
+        var triggerUserProfile = new UserProfile
+        {
+            Id = 301,
+            UserId = 301,
+            FirstName = "Opp",
+            LastName = "Manager",
+            Status = EntityStatus.Active,
+            IsDeleted = false
+        };
+        _appDbContext.UserProfile.Add(triggerUserProfile);
+
+        // Create opportunity WITH ResponsibleOrgUnitId set
+        var opportunity = new Opportunity
+        {
+            Id = 10,
+            Name = "Test Opportunity with DoA2",
+            Description = "Test Description",
+            Stage = OpportunityWorkflow.Stages.IdentifyAndProfile,
+            ResponsibleOrgUnitId = 500, // Links to org unit with DoA2 holder
+            Status = EntityStatus.Active,
+            IsDeleted = false
+        };
+        _appDbContext.Opportunities.Add(opportunity);
+
+        // Create EntityUserRole linking DoA2 user to the org unit
+        var entityUserRole = new EntityUserRole
+        {
+            Id = 1,
+            UserId = 300,
+            EntityRoleId = 10, // DoA Level 2 role
+            EntityId = 500, // Org unit ID
+            EntityType = "OrganizationHierarchy",
+            Name = "DoA2 Assignment",
+            Status = EntityStatus.Active,
+            IsDeleted = false
+        };
+        _appDbContext.Set<EntityUserRole>().Add(entityUserRole);
+
+        // Create Opportunity Manager stakeholder (for trigger permission)
+        var oppManagerStakeholder = new OpportunityStakeholder
+        {
+            Id = 10,
+            OpportunityId = 10,
+            UserId = 301,
+            EntityRoleId = 11, // Opportunity Manager
+            IsInternal = true
+        };
+        _appDbContext.Set<OpportunityStakeholder>().Add(oppManagerStakeholder);
+
+        await _appDbContext.SaveChangesAsync();
+
+        // Seed workflow stage change roles for GO transition
+        var doA2ApproverConfig = new StateMachineStageChangeRole
+        {
+            Id = 10,
+            EntityType = "Opportunity",
+            FromStage = OpportunityWorkflow.Stages.IdentifyAndProfile,
+            ToStage = OpportunityWorkflow.Stages.Go,
+            RoleId = 10,
+            RoleName = "DoA Level 2",
+            CanApprove = true,
+            CanTrigger = false,
+            Status = WorkflowEntityStatus.Active,
+            IsDeleted = false,
+            Name = "DoA Level 2 Approval Config"
+        };
+        _workflowDbContext.StateMachineStageChangeRoles.Add(doA2ApproverConfig);
+
+        var oppManagerTriggerConfig = new StateMachineStageChangeRole
+        {
+            Id = 11,
+            EntityType = "Opportunity",
+            FromStage = OpportunityWorkflow.Stages.IdentifyAndProfile,
+            ToStage = OpportunityWorkflow.Stages.Go,
+            RoleId = 11,
+            RoleName = "Opportunity Manager",
+            CanApprove = false,
+            CanTrigger = true,
+            Status = WorkflowEntityStatus.Active,
+            IsDeleted = false,
+            Name = "Opportunity Manager Trigger Config"
+        };
+        _workflowDbContext.StateMachineStageChangeRoles.Add(oppManagerTriggerConfig);
+
+        await _workflowDbContext.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Seeds test data for opportunity without ResponsibleOrgUnitId.
+    /// </summary>
+    private async Task SeedOpportunityWithoutOrgUnitAsync()
+    {
+        // Create opportunity WITHOUT ResponsibleOrgUnitId
+        var opportunity = new Opportunity
+        {
+            Id = 20,
+            Name = "Opportunity Without Org Unit",
+            Description = "Test Description",
+            Stage = OpportunityWorkflow.Stages.IdentifyAndProfile,
+            ResponsibleOrgUnitId = null, // No org unit set
+            Status = EntityStatus.Active,
+            IsDeleted = false
+        };
+        _appDbContext.Opportunities.Add(opportunity);
+
+        await _appDbContext.SaveChangesAsync();
+
+        // Seed minimal workflow stage change role
+        var approverConfig = new StateMachineStageChangeRole
+        {
+            Id = 20,
+            EntityType = "Opportunity",
+            FromStage = OpportunityWorkflow.Stages.IdentifyAndProfile,
+            ToStage = OpportunityWorkflow.Stages.Go,
+            RoleId = 1,
+            RoleName = "DoA Level 2",
+            CanApprove = true,
+            CanTrigger = false,
+            Status = WorkflowEntityStatus.Active,
+            IsDeleted = false,
+            Name = "Test Approval Config"
+        };
+        _workflowDbContext.StateMachineStageChangeRoles.Add(approverConfig);
 
         await _workflowDbContext.SaveChangesAsync();
     }
@@ -387,6 +587,220 @@ public class PaoWorkflowApproverProviderTests : IDisposable
 
         // Assert
         result.Should().BeFalse();
+    }
+
+    #endregion
+
+    #region DoA Level 2 Approver Tests (GO Transition)
+
+    [Fact]
+    public async Task GetApproversAsync_GoTransition_ReturnsDoA2HoldersFromEntityUserRole()
+    {
+        // Arrange
+        await SeedDoA2TestDataAsync();
+
+        // Act
+        var result = await _approverProvider.GetApproversAsync(
+            "Opportunity", 10, OpportunityWorkflow.Stages.IdentifyAndProfile, OpportunityWorkflow.Stages.Go);
+
+        // Assert
+        result.Should().NotBeEmpty();
+        result.Should().HaveCount(1);
+        result.First().UserId.Should().Be(300);
+        result.First().Role.Should().Be("DoA Level 2");
+        result.First().Email.Should().Be("doa2holder@test.com");
+    }
+
+    [Fact]
+    public async Task GetApproversAsync_GoTransition_WithNoResponsibleOrgUnit_ReturnsEmptyList()
+    {
+        // Arrange
+        await SeedOpportunityWithoutOrgUnitAsync();
+
+        // Act
+        var result = await _approverProvider.GetApproversAsync(
+            "Opportunity", 20, OpportunityWorkflow.Stages.IdentifyAndProfile, OpportunityWorkflow.Stages.Go);
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetApproversAsync_GoTransition_WithNoDoA2Holders_ReturnsEmptyList()
+    {
+        // Arrange - Create org unit without DoA2 holders
+        var orgUnit = new OrganizationHierarchy
+        {
+            Id = 600,
+            Name = "Empty Org Unit",
+            Code = "EMPTY_ORG",
+            Status = EntityStatus.Active,
+            IsDeleted = false
+        };
+        _appDbContext.Set<OrganizationHierarchy>().Add(orgUnit);
+
+        var opportunity = new Opportunity
+        {
+            Id = 30,
+            Name = "Opportunity With Empty Org Unit",
+            Description = "Test Description",
+            Stage = OpportunityWorkflow.Stages.IdentifyAndProfile,
+            ResponsibleOrgUnitId = 600, // Org unit with no DoA2 holders
+            Status = EntityStatus.Active,
+            IsDeleted = false
+        };
+        _appDbContext.Opportunities.Add(opportunity);
+        await _appDbContext.SaveChangesAsync();
+
+        // Seed workflow config
+        var approverConfig = new StateMachineStageChangeRole
+        {
+            Id = 30,
+            EntityType = "Opportunity",
+            FromStage = OpportunityWorkflow.Stages.IdentifyAndProfile,
+            ToStage = OpportunityWorkflow.Stages.Go,
+            RoleId = 1,
+            RoleName = "DoA Level 2",
+            CanApprove = true,
+            CanTrigger = false,
+            Status = WorkflowEntityStatus.Active,
+            IsDeleted = false,
+            Name = "Test Config"
+        };
+        _workflowDbContext.StateMachineStageChangeRoles.Add(approverConfig);
+        await _workflowDbContext.SaveChangesAsync();
+
+        // Act
+        var result = await _approverProvider.GetApproversAsync(
+            "Opportunity", 30, OpportunityWorkflow.Stages.IdentifyAndProfile, OpportunityWorkflow.Stages.Go);
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetApprovalConfigurationAsync_GoTransition_ReturnsDoA2Configuration()
+    {
+        // Arrange
+        await SeedDoA2TestDataAsync();
+
+        // Act
+        var result = await _approverProvider.GetApprovalConfigurationAsync(
+            "Opportunity", 10, OpportunityWorkflow.Stages.IdentifyAndProfile, OpportunityWorkflow.Stages.Go);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.Value.approvals.Should().NotBeEmpty();
+        result!.Value.approvals.First().UserId.Should().Be(300);
+        result!.Value.approvals.First().Role.Should().Be("DoA Level 2");
+    }
+
+    [Fact]
+    public async Task CanUserApproveAsync_GoTransition_WithDoA2Holder_ReturnsTrue()
+    {
+        // Arrange
+        await SeedDoA2TestDataAsync();
+
+        // Act - User 300 is the DoA2 holder
+        var result = await _approverProvider.CanUserApproveAsync(
+            "Opportunity", 10, 300, OpportunityWorkflow.Stages.IdentifyAndProfile, OpportunityWorkflow.Stages.Go);
+
+        // Assert
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CanUserApproveAsync_GoTransition_WithNonDoA2User_ReturnsFalse()
+    {
+        // Arrange
+        await SeedDoA2TestDataAsync();
+
+        // Act - User 301 is not a DoA2 holder (they are the trigger)
+        var result = await _approverProvider.CanUserApproveAsync(
+            "Opportunity", 10, 301, OpportunityWorkflow.Stages.IdentifyAndProfile, OpportunityWorkflow.Stages.Go);
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task GetApproversAsync_GoTransition_WithMultipleDoA2Holders_ReturnsAll()
+    {
+        // Arrange
+        await SeedDoA2TestDataAsync();
+
+        // Add second DoA2 holder
+        var secondDoA2User = new PAOUser
+        {
+            Id = 302,
+            Email = "doa2holder2@test.com",
+            IsInternal = true
+        };
+        _appDbContext.PAOUsers.Add(secondDoA2User);
+
+        var secondDoA2UserProfile = new UserProfile
+        {
+            Id = 302,
+            UserId = 302,
+            FirstName = "Second",
+            LastName = "DoA2Holder",
+            Status = EntityStatus.Active,
+            IsDeleted = false
+        };
+        _appDbContext.UserProfile.Add(secondDoA2UserProfile);
+
+        var secondEntityUserRole = new EntityUserRole
+        {
+            Id = 2,
+            UserId = 302,
+            EntityRoleId = 10, // DoA Level 2 role (already seeded)
+            EntityId = 500, // Same org unit
+            EntityType = "OrganizationHierarchy",
+            Name = "DoA2 Assignment 2",
+            Status = EntityStatus.Active,
+            IsDeleted = false
+        };
+        _appDbContext.Set<EntityUserRole>().Add(secondEntityUserRole);
+        await _appDbContext.SaveChangesAsync();
+
+        // Act
+        var result = await _approverProvider.GetApproversAsync(
+            "Opportunity", 10, OpportunityWorkflow.Stages.IdentifyAndProfile, OpportunityWorkflow.Stages.Go);
+
+        // Assert
+        result.Should().HaveCount(2);
+        result.Select(a => a.UserId).Should().Contain(300);
+        result.Select(a => a.UserId).Should().Contain(302);
+    }
+
+    [Fact]
+    public async Task GetApproversAsync_GoTransition_ExcludesDeletedEntityUserRoles()
+    {
+        // Arrange
+        await SeedDoA2TestDataAsync();
+
+        // Add deleted DoA2 holder
+        var deletedEntityUserRole = new EntityUserRole
+        {
+            Id = 3,
+            UserId = 301, // Reuse existing user
+            EntityRoleId = 10, // DoA Level 2 role
+            EntityId = 500, // Same org unit
+            EntityType = "OrganizationHierarchy",
+            Name = "Deleted DoA2 Assignment",
+            Status = EntityStatus.Active,
+            IsDeleted = true // Deleted
+        };
+        _appDbContext.Set<EntityUserRole>().Add(deletedEntityUserRole);
+        await _appDbContext.SaveChangesAsync();
+
+        // Act
+        var result = await _approverProvider.GetApproversAsync(
+            "Opportunity", 10, OpportunityWorkflow.Stages.IdentifyAndProfile, OpportunityWorkflow.Stages.Go);
+
+        // Assert - Should only return the non-deleted DoA2 holder
+        result.Should().HaveCount(1);
+        result.First().UserId.Should().Be(300);
     }
 
     #endregion

@@ -9,6 +9,7 @@ using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Identity.Entities;
@@ -41,6 +42,7 @@ public class OpportunityController : BaseController
     private readonly IRiskManager _riskManager;
     private readonly int _currentUserId;
     private readonly AppDbContext _context;
+    private readonly UNOPS.PAO.UNOPSDataAccess.Context.UNOPSAppDbContext _unopsContext;
     private readonly IConfiguration _configuration;
     private readonly UNOPSDocumentManager _documentManager;
     private readonly AdvancedSearchService _advancedSearchService;
@@ -67,6 +69,7 @@ public class OpportunityController : BaseController
         _riskManager = manager.RiskManager;
         _currentUserId = userResolverService.GetCurrentUserId();
         _context = context;
+        _unopsContext = unopsContext;
         _configuration = configuration;
         _documentManager = new UNOPSDocumentManager(driveManager, configuration, mapper, unopsContext, userManager, serviceProvider);
         _advancedSearchService = advancedSearchService;
@@ -166,7 +169,22 @@ public class OpportunityController : BaseController
             return NotFound(new { error = $"Opportunity with ID {id} not found" });
         }
 
-        return Ok(result);
+        // Query base engagement number if opportunity has been synced to oUP
+        string? baseEngagementNumber = null;
+        var baseEngagement = await _unopsContext.BaseEngagements
+            .FirstOrDefaultAsync(be => be.OpportunityId == id && !be.IsDeleted);
+        
+        if (baseEngagement != null)
+        {
+            baseEngagementNumber = baseEngagement.EngagementNumber;
+        }
+
+        // Return opportunity with base engagement number
+        return Ok(new
+        {
+            opportunity = result,
+            baseEngagementNumber = baseEngagementNumber
+        });
     }
 
     /// <summary>
@@ -1972,6 +1990,29 @@ public class OpportunityController : BaseController
         }
 
         return Ok(new { message = "Opportunity deleted successfully", id });
+    }
+
+    /// <summary>
+    /// Gets all available collaborator expertise types for dropdown selection.
+    /// These are the expertise areas that can be assigned to opportunity collaborators.
+    /// </summary>
+    [HttpGet(APIDictionary.Opportunity + "/collaborator-expertises")]
+    public async Task<IActionResult> GetCollaboratorExpertises()
+    {
+        var expertises = await _unopsContext.CollaboratorExpertises
+            .Where(e => !e.IsDeleted && e.Status == EntityStatus.Active)
+            .OrderBy(e => e.DisplayOrder)
+            .Select(e => new CollaboratorExpertiseModel
+            {
+                Id = e.Id,
+                Code = e.Code,
+                Name = e.Name,
+                Description = e.Description,
+                DisplayOrder = e.DisplayOrder
+            })
+            .ToListAsync();
+
+        return Ok(expertises);
     }
 }
 
