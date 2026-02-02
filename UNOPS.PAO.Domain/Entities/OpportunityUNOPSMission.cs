@@ -1,15 +1,18 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using UNOPS.PAO.Domain.Infrastructure;
 
 namespace UNOPS.PAO.Domain.Entities;
 
 /// <summary>
 /// Junction table linking Opportunities to UNOPS Strategic Missions
 /// </summary>
-public class OpportunityUNOPSMission
+public class OpportunityUNOPSMission : ModifiableDeletableEntity
 {
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int Id { get; set; }
+    public new int Id { get; set; }
+    
+    public new string? Name { get; set; }
     
     /// <summary>
     /// Foreign key to the Opportunity

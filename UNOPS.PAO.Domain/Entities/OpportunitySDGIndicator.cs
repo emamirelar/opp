@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using UNOPS.PAO.Domain.Infrastructure;
 
 namespace UNOPS.PAO.Domain.Entities;
 
@@ -7,10 +8,12 @@ namespace UNOPS.PAO.Domain.Entities;
 /// Links opportunities to SDG Indicators
 /// Child relationship of OpportunitySDGTarget
 /// </summary>
-public class OpportunitySDGIndicator
+public class OpportunitySDGIndicator : ModifiableDeletableEntity
 {
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int Id { get; set; }
+    public new int Id { get; set; }
+    
+    public new string? Name { get; set; }
     
     public int OpportunityId { get; set; }
     public virtual Opportunity? Opportunity { get; set; }
