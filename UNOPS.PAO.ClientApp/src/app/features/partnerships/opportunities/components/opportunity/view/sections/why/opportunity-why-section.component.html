@@ -111,7 +111,7 @@
         class="text-sm font-semibold text-unops-neutral-700 mb-2 flex items-center gap-2"
       >
         <i class="pi pi-exclamation-triangle text-unops-warning"></i>
-        {{ "label.opportunity.contextAndChallenges" | translate }}
+        {{ "label.opportunity.contextAndChallenges" | translate }} *
       </h3>
       @if (isEditing()) {
         <textarea
@@ -147,7 +147,7 @@
           class="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2"
         >
           <i class="pi pi-chart-line text-blue-600"></i>
-          {{ "label.opportunity.impact" | translate }}
+          {{ "label.opportunity.impact" | translate }} *
         </h3>
       @if (isEditing()) {
         <textarea
@@ -190,7 +190,7 @@
         class="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2"
       >
         <i class="pi pi-chart-line text-blue-600"></i>
-        {{ "label.opportunity.outcomes" | translate }}
+        {{ "label.opportunity.outcomes" | translate }} *
       </h3>
       @if (isEditing()) {
         <textarea
@@ -234,7 +234,7 @@
         class="text-lg font-semibold text-unops-secondary mb-4 flex items-center gap-2"
       >
         <i class="pi pi-users text-unops-primary"></i>
-        {{ "label.opportunity.beneficiaries" | translate }}
+        {{ "label.opportunity.beneficiaries" | translate }} *
       </h3>
 
       <!-- "To Be Determined" Option (Edit Mode - Shown First) -->
@@ -450,7 +450,7 @@
           class="text-lg font-semibold text-unops-secondary flex items-center gap-2"
         >
           <i class="pi pi-globe text-unops-success"></i>
-          {{ "label.opportunity.sdgAlignment" | translate }} ({{ sdgCount() }})
+          {{ "label.opportunity.sdgAlignment" | translate }} * ({{ sdgCount() }})
         </h3>
         @if (isEditing()) {
           <p-button
@@ -1547,7 +1547,7 @@
           class="text-lg font-semibold text-unops-secondary flex items-center gap-2"
         >
           <i class="pi pi-building text-unops-primary"></i>
-          {{ "label.opportunity.alignmentToUNOPSStrategy" | translate }} ({{
+          {{ "label.opportunity.alignmentToUNOPSStrategy" | translate }} * ({{
             unopsMissionCount()
           }})
         </h3>
