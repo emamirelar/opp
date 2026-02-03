@@ -1,0 +1,214 @@
+<#
+.SYNOPSIS
+    Validates test suite compliance with the 3:1 ratio strategy.
+
+.DESCRIPTION
+    This script analyzes a test suite directory and validates:
+    - 3:1 Ratio: (Negative + Edge) >= 3 x Positive
+    - Minimum test counts per category
+    - Fixed minimums for Security (50) and Concurrency (25)
+
+.PARAMETER Path
+    Path to the test suite directory (relative to QA Tests or absolute)
+
+.PARAMETER Detailed
+    Show detailed breakdown of tests per file
+
+.EXAMPLE
+    .\Validate-TestRatios.ps1 -Path "Opportunity Tests\OpportunityManager"
+    
+.EXAMPLE
+    .\Validate-TestRatios.ps1 -Path "Integration Tests\PartnerManagerTests" -Detailed
+
+.NOTES
+    Based on comprehensive-test-strategy.mdc requirements:
+    - Formula: (Negative + Edge) >= 3 x Positive
+    - Negative: >= 50 AND >= 1.5 x Positive
+    - Edge: >= 50 AND >= 1.5 x Positive  
+    - Security: >= 50 (FIXED)
+    - Concurrency: >= 25 (FIXED)
+#>
+
+param(
+    [Parameter(Mandatory = $true)]
+    [string]$Path,
+    
+    [switch]$Detailed
+)
+
+# Resolve path
+$TestsRoot = Split-Path -Parent $PSScriptRoot
+$FullPath = if ([System.IO.Path]::IsPathRooted($Path)) { 
+    $Path 
+} else { 
+    Join-Path $TestsRoot $Path 
+}
+
+if (-not (Test-Path $FullPath)) {
+    Write-Host "ERROR: Path not found: $FullPath" -ForegroundColor Red
+    exit 1
+}
+
+Write-Host "`n========================================" -ForegroundColor Cyan
+Write-Host "  TEST RATIO VALIDATION REPORT" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "Path: $FullPath`n" -ForegroundColor Gray
+
+# Count [Fact] and [Theory] attributes in each test file
+$TestFiles = Get-ChildItem -Path $FullPath -Filter "*.cs" -Recurse | Where-Object { $_.Name -match "Tests\.cs$" }
+
+$Categories = @{
+    "Positive" = 0
+    "Negative" = 0
+    "Edge" = 0
+    "Boundary" = 0
+    "Security" = 0
+    "Concurrency" = 0
+    "Integration" = 0
+    "Performance" = 0
+    "Stress" = 0
+    "Limits" = 0
+    "EndToEnd" = 0
+    "Functional" = 0
+    "AcceptanceCriteria" = 0
+    "Other" = 0
+}
+
+$FileBreakdown = @()
+
+foreach ($File in $TestFiles) {
+    $Content = Get-Content $File.FullName -Raw
+    $FactCount = ([regex]::Matches($Content, '\[Fact\]')).Count
+    $TheoryCount = ([regex]::Matches($Content, '\[Theory\]')).Count
+    $TestCount = $FactCount + $TheoryCount
+    
+    $FileName = $File.Name -replace '\.cs$', ''
+    
+    # Categorize based on filename
+    $Category = switch -Regex ($FileName) {
+        "^Positive" { "Positive" }
+        "^Negative" { "Negative" }
+        "^Edge" { "Edge" }
+        "^Boundary" { "Boundary" }  # Treat as Edge
+        "^Security" { "Security" }
+        "^Concurrency" { "Concurrency" }
+        "^Integration" { "Integration" }
+        "^Performance" { "Performance" }
+        "^Stress" { "Stress" }
+        "^Limits" { "Limits" }
+        "^EndToEnd" { "EndToEnd" }
+        "^Functional" { "Functional" }
+        "^AcceptanceCriteria" { "AcceptanceCriteria" }
+        default { "Other" }
+    }
+    
+    $Categories[$Category] += $TestCount
+    
+    $FileBreakdown += [PSCustomObject]@{
+        File = $FileName
+        Category = $Category
+        Tests = $TestCount
+    }
+}
+
+# Combine Boundary into Edge for ratio calculation
+$EdgeTotal = $Categories["Edge"] + $Categories["Boundary"]
+
+# Display file breakdown if detailed
+if ($Detailed) {
+    Write-Host "FILE BREAKDOWN:" -ForegroundColor Yellow
+    Write-Host "-" * 50
+    $FileBreakdown | Sort-Object Category, File | Format-Table -AutoSize
+}
+
+# Display category counts
+Write-Host "CATEGORY COUNTS:" -ForegroundColor Yellow
+Write-Host "-" * 50
+
+$Positive = $Categories["Positive"]
+$Negative = $Categories["Negative"]
+$Security = $Categories["Security"]
+$Concurrency = $Categories["Concurrency"]
+
+Write-Host ("Positive Tests:      {0,4}" -f $Positive)
+Write-Host ("Negative Tests:      {0,4}" -f $Negative)
+Write-Host ("Edge/Boundary Tests: {0,4}" -f $EdgeTotal)
+Write-Host ("Security Tests:      {0,4}" -f $Security)
+Write-Host ("Concurrency Tests:   {0,4}" -f $Concurrency)
+
+$OtherTotal = $Categories["Integration"] + $Categories["Performance"] + $Categories["Stress"] + 
+              $Categories["Limits"] + $Categories["EndToEnd"] + $Categories["Functional"] + 
+              $Categories["AcceptanceCriteria"] + $Categories["Other"]
+Write-Host ("Other Tests:         {0,4}" -f $OtherTotal) -ForegroundColor Gray
+
+$TotalTests = $Positive + $Negative + $EdgeTotal + $Security + $Concurrency + $OtherTotal
+Write-Host ("-" * 30)
+Write-Host ("TOTAL:               {0,4}" -f $TotalTests) -ForegroundColor Cyan
+
+# Calculate requirements
+Write-Host "`nREQUIREMENTS CHECK:" -ForegroundColor Yellow
+Write-Host "-" * 50
+
+$NegativeReq = [Math]::Max(50, [Math]::Ceiling(1.5 * $Positive))
+$EdgeReq = [Math]::Max(50, [Math]::Ceiling(1.5 * $Positive))
+$SecurityReq = 50
+$ConcurrencyReq = 25
+$RatioReq = 3 * $Positive
+
+$AllPassed = $true
+
+# Check Negative
+$NegativePass = $Negative -ge $NegativeReq
+$NegativeStatus = if ($NegativePass) { "[PASS]" } else { "[FAIL]" }
+$NegativeColor = if ($NegativePass) { "Green" } else { "Red" }
+Write-Host ("Negative:    {0,4} >= {1,4} (max(50, 1.5x{2}))  {3}" -f $Negative, $NegativeReq, $Positive, $NegativeStatus) -ForegroundColor $NegativeColor
+$AllPassed = $AllPassed -and $NegativePass
+
+# Check Edge
+$EdgePass = $EdgeTotal -ge $EdgeReq
+$EdgeStatus = if ($EdgePass) { "[PASS]" } else { "[FAIL]" }
+$EdgeColor = if ($EdgePass) { "Green" } else { "Red" }
+Write-Host ("Edge:        {0,4} >= {1,4} (max(50, 1.5x{2}))  {3}" -f $EdgeTotal, $EdgeReq, $Positive, $EdgeStatus) -ForegroundColor $EdgeColor
+$AllPassed = $AllPassed -and $EdgePass
+
+# Check Security (FIXED)
+$SecurityPass = $Security -ge $SecurityReq
+$SecurityStatus = if ($SecurityPass) { "[PASS]" } else { "[FAIL]" }
+$SecurityColor = if ($SecurityPass) { "Green" } else { "Red" }
+Write-Host ("Security:    {0,4} >= {1,4} (FIXED minimum)       {2}" -f $Security, $SecurityReq, $SecurityStatus) -ForegroundColor $SecurityColor
+$AllPassed = $AllPassed -and $SecurityPass
+
+# Check Concurrency (FIXED)
+$ConcurrencyPass = $Concurrency -ge $ConcurrencyReq
+$ConcurrencyStatus = if ($ConcurrencyPass) { "[PASS]" } else { "[FAIL]" }
+$ConcurrencyColor = if ($ConcurrencyPass) { "Green" } else { "Red" }
+Write-Host ("Concurrency: {0,4} >= {1,4} (FIXED minimum)       {2}" -f $Concurrency, $ConcurrencyReq, $ConcurrencyStatus) -ForegroundColor $ConcurrencyColor
+$AllPassed = $AllPassed -and $ConcurrencyPass
+
+# 3:1 Ratio Check
+Write-Host "`n3:1 RATIO CHECK:" -ForegroundColor Yellow
+Write-Host "-" * 50
+
+$RatioSum = $Negative + $EdgeTotal
+$RatioPass = $RatioSum -ge $RatioReq
+$RatioStatus = if ($RatioPass) { "[PASS]" } else { "[FAIL]" }
+$RatioColor = if ($RatioPass) { "Green" } else { "Red" }
+
+Write-Host "Formula: (Negative + Edge) >= 3 x Positive"
+Write-Host ("         ({0} + {1}) >= 3 x {2}" -f $Negative, $EdgeTotal, $Positive)
+Write-Host ("         {0} >= {1}  {2}" -f $RatioSum, $RatioReq, $RatioStatus) -ForegroundColor $RatioColor
+$AllPassed = $AllPassed -and $RatioPass
+
+# Final Result
+Write-Host "`n========================================" -ForegroundColor Cyan
+if ($AllPassed) {
+    Write-Host "  VALIDATION RESULT: PASSED" -ForegroundColor Green
+    Write-Host "========================================`n" -ForegroundColor Cyan
+    exit 0
+} else {
+    Write-Host "  VALIDATION RESULT: FAILED" -ForegroundColor Red
+    Write-Host "========================================" -ForegroundColor Cyan
+    Write-Host "`nAction Required: Add more tests to meet requirements" -ForegroundColor Yellow
+    Write-Host "See: .cursor\rules\comprehensive-test-strategy.mdc`n" -ForegroundColor Gray
+    exit 1
+}
