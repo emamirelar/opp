@@ -22,6 +22,7 @@ public class PaoWorkflowUserContextTests : IDisposable
     private readonly Mock<IHttpContextAccessor> _mockHttpContextAccessor;
     private readonly IConfiguration _configuration;
     private readonly AppDbContext _dbContext;
+    private readonly Mock<IDbContextFactory<AppDbContext>> _mockDbContextFactory;
     private readonly PaoWorkflowUserContext _userContext;
 
     public PaoWorkflowUserContextTests()
@@ -38,6 +39,12 @@ public class PaoWorkflowUserContextTests : IDisposable
         var userResolverService = new UserResolverService<int>(_mockHttpContextAccessor.Object);
         _dbContext = new AppDbContext(options, userResolverService, mockDbContextSchema.Object);
 
+        // Setup DbContextFactory mock to return the same context for testing
+        _mockDbContextFactory = new Mock<IDbContextFactory<AppDbContext>>();
+        _mockDbContextFactory
+            .Setup(f => f.CreateDbContext())
+            .Returns(() => new AppDbContext(options, userResolverService, mockDbContextSchema.Object));
+
         _configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
@@ -48,7 +55,7 @@ public class PaoWorkflowUserContextTests : IDisposable
         _userContext = new PaoWorkflowUserContext(
             _mockHttpContextAccessor.Object,
             _configuration,
-            _dbContext);
+            _mockDbContextFactory.Object);
     }
 
     public void Dispose()
@@ -487,7 +494,7 @@ public class PaoWorkflowUserContextTests : IDisposable
         var userContext = new PaoWorkflowUserContext(
             _mockHttpContextAccessor.Object,
             configuration,
-            _dbContext);
+            _mockDbContextFactory.Object);
 
         // Act & Assert
         userContext.Environment.Should().Be("Production");

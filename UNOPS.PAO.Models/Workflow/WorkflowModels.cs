@@ -51,6 +51,7 @@ public class WorkflowSubmitRequest
 
 /// <summary>
 /// Request model for approving/rejecting a workflow.
+/// Legacy request model - use ApproveWorkflowRequest or RejectWorkflowRequest for enhanced Go Decision flow.
 /// </summary>
 public class WorkflowActionRequest
 {
@@ -68,6 +69,70 @@ public class WorkflowActionRequest
     /// Comment for the action (required for reject)
     /// </summary>
     public string? Comment { get; set; }
+}
+
+/// <summary>
+/// Request model for approving an opportunity workflow with Go decision requirements.
+/// Used for enhanced approval flow with mandatory rationale, confirmation, and Executive assignment.
+/// </summary>
+public class ApproveWorkflowRequest
+{
+    /// <summary>
+    /// The entity type name (e.g., "Opportunity")
+    /// </summary>
+    public required string EntityName { get; set; }
+    
+    /// <summary>
+    /// The entity ID
+    /// </summary>
+    public required int EntityId { get; set; }
+    
+    /// <summary>
+    /// Decision rationale explaining the approval (required).
+    /// Stored in WorkflowLog.Comment field.
+    /// </summary>
+    public required string Rationale { get; set; }
+    
+    /// <summary>
+    /// Indicates the user has acknowledged the confirmation statement.
+    /// Must be true to proceed with approval.
+    /// </summary>
+    public bool ConfirmationAcknowledged { get; set; }
+    
+    /// <summary>
+    /// ID of the assigned Executive (required for Opportunity approvals).
+    /// Stored on Opportunity.ExecutiveId upon successful Go decision.
+    /// </summary>
+    public int ExecutiveId { get; set; }
+}
+
+/// <summary>
+/// Request model for rejecting an opportunity workflow with No-Go decision requirements.
+/// Used for enhanced rejection flow with mandatory rationale and confirmation.
+/// </summary>
+public class RejectWorkflowRequest
+{
+    /// <summary>
+    /// The entity type name (e.g., "Opportunity")
+    /// </summary>
+    public required string EntityName { get; set; }
+    
+    /// <summary>
+    /// The entity ID
+    /// </summary>
+    public required int EntityId { get; set; }
+    
+    /// <summary>
+    /// Decision rationale explaining the rejection (required).
+    /// Stored in WorkflowLog.Comment field.
+    /// </summary>
+    public required string Rationale { get; set; }
+    
+    /// <summary>
+    /// Indicates the user has acknowledged the rejection confirmation statement.
+    /// Must be true to proceed with rejection.
+    /// </summary>
+    public bool ConfirmationAcknowledged { get; set; }
 }
 
 /// <summary>
@@ -434,4 +499,71 @@ public class WorkflowActionResponse
     /// The new stage after the action
     /// </summary>
     public string? NewStage { get; set; }
+}
+
+/// <summary>
+/// Response model for pending workflow approval items.
+/// Used by the Actions Required card on the home dashboard.
+/// </summary>
+public class PendingApprovalResponse
+{
+    /// <summary>
+    /// The entity type name (e.g., "Opportunity")
+    /// </summary>
+    public required string EntityName { get; set; }
+    
+    /// <summary>
+    /// The entity ID
+    /// </summary>
+    public int EntityId { get; set; }
+    
+    /// <summary>
+    /// Display name for the entity (e.g., opportunity title)
+    /// </summary>
+    public string? EntityDisplayName { get; set; }
+    
+    /// <summary>
+    /// Current stage of the entity
+    /// </summary>
+    public string? CurrentStage { get; set; }
+    
+    /// <summary>
+    /// Display name for the current stage
+    /// </summary>
+    public string? CurrentStageDisplayName { get; set; }
+    
+    /// <summary>
+    /// The stage pending approval
+    /// </summary>
+    public string? PendingStage { get; set; }
+    
+    /// <summary>
+    /// Display name for the pending stage
+    /// </summary>
+    public string? PendingStageDisplayName { get; set; }
+    
+    /// <summary>
+    /// Name of the user who submitted for approval
+    /// </summary>
+    public string? SubmittedBy { get; set; }
+    
+    /// <summary>
+    /// User ID of the submitter
+    /// </summary>
+    public int? SubmittedByUserId { get; set; }
+    
+    /// <summary>
+    /// Date/time when the workflow was submitted
+    /// </summary>
+    public DateTime? SubmittedOn { get; set; }
+    
+    /// <summary>
+    /// Name of the responsible organization unit
+    /// </summary>
+    public string? OrgUnitName { get; set; }
+    
+    /// <summary>
+    /// URL to navigate to the entity detail page
+    /// </summary>
+    public string? EntityUrl { get; set; }
 }

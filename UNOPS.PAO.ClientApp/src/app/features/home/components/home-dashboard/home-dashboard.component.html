@@ -810,42 +810,75 @@
             <!-- Content Template -->
             @if (getTotalDraftActions() > 0) {
               <div class="space-y-unops-sm">
-                @for (item of getTruncatedDraftActions(); track item.id) {
-                  <div class="p-unops-sm rounded-unops-sm border border-unops-neutral-200 hover:border-unops-warning/50 hover:bg-unops-warning/5 cursor-pointer transition-all duration-unops-short"
-                       (click)="navigateToEntity(getDraftActionEntityType(item), getEntityId(item.id))">
-                    <div class="flex items-start justify-between">
-                      <div class="flex-1 min-w-0">
-                        <div class="flex items-center space-x-unops-xs mb-1">
-                          @if (getDraftActionEntityType(item) === 'Partner') {
-                            <div class="w-2 h-2 bg-red-500 rounded-full"></div>
-                          } @else if (getDraftActionEntityType(item) === 'Contact') {
-                            <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                          } @else if (getDraftActionEntityType(item) === 'Opportunity') {
-                            <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
-                          } @else {
-                            <div class="w-2 h-2 bg-orange-500 rounded-full"></div>
-                          }
-                          <span class="text-unops-label-small text-unops-neutral-500">{{ ('dashboard.' + getDraftActionEntityType(item).toLowerCase()) | translate }}</span>
-                          @if (getDraftActionEntityType(item) === 'Opportunity' && item.userRole) {
-                            <span class="inline-flex items-center px-unops-xs py-0.5 rounded-unops-sm text-unops-label-small font-unops-medium bg-unops-accent-purple/10 text-unops-accent-purple ml-unops-xs">
-                              {{ item.userRole }}
-                            </span>
+                @for (item of getTruncatedDraftActions(); track item.id || item.entityId) {
+                  <!-- Workflow Approval Item -->
+                  @if (isWorkflowApproval(item)) {
+                    <div class="p-unops-sm rounded-unops-sm border border-unops-primary/30 hover:border-unops-primary/60 hover:bg-unops-primary/5 cursor-pointer transition-all duration-unops-short"
+                         (click)="navigateToApproval(item)">
+                      <div class="flex items-start justify-between">
+                        <div class="flex-1 min-w-0">
+                          <div class="flex items-center space-x-unops-xs mb-1">
+                            <div class="w-2 h-2 bg-unops-primary rounded-full animate-pulse"></div>
+                            <span class="text-unops-label-small text-unops-primary font-medium">{{ 'home.actionsRequired.workflowApproval' | translate }}</span>
+                          </div>
+                          <h4 class="font-unops-body text-unops-body-medium font-unops-medium text-unops-neutral-900 mb-1 mt-0 line-clamp-1">
+                            {{ item.entityDisplayName }}
+                          </h4>
+                          <p class="text-unops-body-small text-unops-neutral-600 mb-1">
+                            {{ item.orgUnitName }}
+                          </p>
+                          <p class="text-unops-body-small text-unops-neutral-500">
+                            {{ 'home.actionsRequired.submittedBy' | translate }}: {{ item.submittedBy }} • {{ formatDate(item.submittedOn) }}
+                          </p>
+                        </div>
+                        <div class="ml-unops-sm flex flex-col items-end gap-1">
+                          <span class="inline-flex items-center px-unops-xs py-0.5 rounded-unops-sm text-unops-label-small font-unops-medium bg-unops-primary/10 text-unops-primary">
+                            {{ 'home.actionsRequired.reviewGoDecision' | translate }}
+                          </span>
+                          @if (isApprovalNavigating(item)) {
+                            <i class="pi pi-spin pi-spinner text-unops-primary"></i>
                           }
                         </div>
-                        <h4 class="font-unops-body text-unops-body-medium font-unops-medium text-unops-neutral-900 mb-1 mt-0 line-clamp-1">
-                          {{ getDraftActionDisplayName(item) }}
-                        </h4>
-                        <p class="text-unops-body-small text-unops-neutral-600">
-                          {{ formatDate(item.createdDate || item.date) }}
-                        </p>
-                      </div>
-                      <div class="ml-unops-sm">
-                        <span class="inline-flex items-center px-unops-xs py-0.5 rounded-unops-sm text-unops-label-small font-unops-medium bg-unops-warning/10 text-unops-warning">
-                          {{ 'dashboard.draft' | translate }}
-                        </span>
                       </div>
                     </div>
-                  </div>
+                  } @else {
+                    <!-- Regular Draft Action Item -->
+                    <div class="p-unops-sm rounded-unops-sm border border-unops-neutral-200 hover:border-unops-warning/50 hover:bg-unops-warning/5 cursor-pointer transition-all duration-unops-short"
+                         (click)="navigateToEntity(getDraftActionEntityType(item), getEntityId(item.id))">
+                      <div class="flex items-start justify-between">
+                        <div class="flex-1 min-w-0">
+                          <div class="flex items-center space-x-unops-xs mb-1">
+                            @if (getDraftActionEntityType(item) === 'Partner') {
+                              <div class="w-2 h-2 bg-red-500 rounded-full"></div>
+                            } @else if (getDraftActionEntityType(item) === 'Contact') {
+                              <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                            } @else if (getDraftActionEntityType(item) === 'Opportunity') {
+                              <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            } @else {
+                              <div class="w-2 h-2 bg-orange-500 rounded-full"></div>
+                            }
+                            <span class="text-unops-label-small text-unops-neutral-500">{{ ('dashboard.' + getDraftActionEntityType(item).toLowerCase()) | translate }}</span>
+                            @if (getDraftActionEntityType(item) === 'Opportunity' && item.userRole) {
+                              <span class="inline-flex items-center px-unops-xs py-0.5 rounded-unops-sm text-unops-label-small font-unops-medium bg-unops-accent-purple/10 text-unops-accent-purple ml-unops-xs">
+                                {{ item.userRole }}
+                              </span>
+                            }
+                          </div>
+                          <h4 class="font-unops-body text-unops-body-medium font-unops-medium text-unops-neutral-900 mb-1 mt-0 line-clamp-1">
+                            {{ getDraftActionDisplayName(item) }}
+                          </h4>
+                          <p class="text-unops-body-small text-unops-neutral-600">
+                            {{ formatDate(item.createdDate || item.date) }}
+                          </p>
+                        </div>
+                        <div class="ml-unops-sm">
+                          <span class="inline-flex items-center px-unops-xs py-0.5 rounded-unops-sm text-unops-label-small font-unops-medium bg-unops-warning/10 text-unops-warning">
+                            {{ 'dashboard.draft' | translate }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  }
                 }
               </div>
             }

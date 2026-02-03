@@ -476,12 +476,14 @@ public class WorkflowControllerTests : IDisposable
     [Fact]
     public async Task Approve_WithValidRequest_ReturnsSuccess()
     {
-        // Arrange
-        var request = new WorkflowActionRequest
+        // Arrange - Using enhanced ApproveWorkflowRequest
+        var request = new ApproveWorkflowRequest
         {
             EntityName = "opportunity",
             EntityId = 1,
-            Comment = "Approved"
+            Rationale = "Approved after thorough review",
+            ConfirmationAcknowledged = true,
+            ExecutiveId = 10 // Required for Opportunity approvals
         };
 
         var pendingTask = new WorkflowLog
@@ -507,21 +509,93 @@ public class WorkflowControllerTests : IDisposable
                 pendingTask, "Opportunity", 1, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync("GO");
 
+        // Setup OpportunityManager mock for AssignExecutiveAsync
+        var mockOpportunityManager = new Mock<IOpportunityManager>();
+        mockOpportunityManager.Setup(x => x.AssignExecutiveAsync(1, 10))
+            .Returns(Task.CompletedTask);
+        _mockManagerWrapper.Setup(x => x.OpportunityManager).Returns(mockOpportunityManager.Object);
+
         // Act
         var result = await _controller.Approve(request);
 
         // Assert
         result.Should().BeOfType<OkObjectResult>();
+        
+        // Verify Executive was assigned
+        mockOpportunityManager.Verify(x => x.AssignExecutiveAsync(1, 10), Times.Once);
+    }
+
+    [Fact]
+    public async Task Approve_WithoutRationale_Returns400()
+    {
+        // Arrange - Missing rationale
+        var request = new ApproveWorkflowRequest
+        {
+            EntityName = "opportunity",
+            EntityId = 1,
+            Rationale = "", // Empty rationale
+            ConfirmationAcknowledged = true,
+            ExecutiveId = 10
+        };
+
+        // Act
+        var result = await _controller.Approve(request);
+
+        // Assert
+        result.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [Fact]
+    public async Task Approve_WithoutConfirmation_Returns400()
+    {
+        // Arrange - Confirmation not acknowledged
+        var request = new ApproveWorkflowRequest
+        {
+            EntityName = "opportunity",
+            EntityId = 1,
+            Rationale = "Good opportunity",
+            ConfirmationAcknowledged = false, // Not confirmed
+            ExecutiveId = 10
+        };
+
+        // Act
+        var result = await _controller.Approve(request);
+
+        // Assert
+        result.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [Fact]
+    public async Task Approve_WithoutExecutive_ForOpportunity_Returns400()
+    {
+        // Arrange - Missing ExecutiveId for Opportunity
+        var request = new ApproveWorkflowRequest
+        {
+            EntityName = "opportunity",
+            EntityId = 1,
+            Rationale = "Good opportunity",
+            ConfirmationAcknowledged = true,
+            ExecutiveId = 0 // Missing Executive
+        };
+
+        // Act
+        var result = await _controller.Approve(request);
+
+        // Assert
+        result.Should().BeOfType<BadRequestObjectResult>();
     }
 
     [Fact]
     public async Task Approve_WithNoPendingWorkflow_Returns400()
     {
         // Arrange
-        var request = new WorkflowActionRequest
+        var request = new ApproveWorkflowRequest
         {
             EntityName = "opportunity",
-            EntityId = 1
+            EntityId = 1,
+            Rationale = "Approved",
+            ConfirmationAcknowledged = true,
+            ExecutiveId = 10
         };
 
         _mockWorkflowManager.Setup(x => x.PendingTask("Opportunity", 1))
@@ -538,10 +612,13 @@ public class WorkflowControllerTests : IDisposable
     public async Task Approve_WithUnauthorizedUser_Returns403()
     {
         // Arrange
-        var request = new WorkflowActionRequest
+        var request = new ApproveWorkflowRequest
         {
             EntityName = "opportunity",
-            EntityId = 1
+            EntityId = 1,
+            Rationale = "Approved",
+            ConfirmationAcknowledged = true,
+            ExecutiveId = 10
         };
 
         var pendingTask = new WorkflowLog
@@ -574,12 +651,13 @@ public class WorkflowControllerTests : IDisposable
     [Fact]
     public async Task Reject_WithValidRequest_ReturnsSuccess()
     {
-        // Arrange
-        var request = new WorkflowActionRequest
+        // Arrange - Using enhanced RejectWorkflowRequest
+        var request = new RejectWorkflowRequest
         {
             EntityName = "opportunity",
             EntityId = 1,
-            Comment = "Rejecting due to missing information"
+            Rationale = "Rejecting due to insufficient information and unclear scope",
+            ConfirmationAcknowledged = true
         };
 
         var pendingTask = new WorkflowLog
@@ -610,14 +688,34 @@ public class WorkflowControllerTests : IDisposable
     }
 
     [Fact]
-    public async Task Reject_WithoutComment_Returns400()
+    public async Task Reject_WithoutRationale_Returns400()
     {
-        // Arrange
-        var request = new WorkflowActionRequest
+        // Arrange - Missing rationale
+        var request = new RejectWorkflowRequest
         {
             EntityName = "opportunity",
             EntityId = 1,
-            Comment = null // Comment is required for reject
+            Rationale = "", // Empty rationale
+            ConfirmationAcknowledged = true
+        };
+
+        // Act
+        var result = await _controller.Reject(request);
+
+        // Assert
+        result.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [Fact]
+    public async Task Reject_WithoutConfirmation_Returns400()
+    {
+        // Arrange - Confirmation not acknowledged
+        var request = new RejectWorkflowRequest
+        {
+            EntityName = "opportunity",
+            EntityId = 1,
+            Rationale = "Insufficient budget",
+            ConfirmationAcknowledged = false // Not confirmed
         };
 
         // Act
@@ -631,11 +729,12 @@ public class WorkflowControllerTests : IDisposable
     public async Task Reject_WithNoPendingWorkflow_Returns400()
     {
         // Arrange
-        var request = new WorkflowActionRequest
+        var request = new RejectWorkflowRequest
         {
             EntityName = "opportunity",
             EntityId = 1,
-            Comment = "Rejecting"
+            Rationale = "Rejecting",
+            ConfirmationAcknowledged = true
         };
 
         _mockWorkflowManager.Setup(x => x.PendingTask("Opportunity", 1))
@@ -1195,12 +1294,13 @@ public class WorkflowControllerTests : IDisposable
     [Fact]
     public async Task Reject_Opportunity_SetsStageToNoGo()
     {
-        // Arrange
-        var request = new WorkflowActionRequest
+        // Arrange - Using enhanced RejectWorkflowRequest
+        var request = new RejectWorkflowRequest
         {
             EntityName = "opportunity",
             EntityId = 1,
-            Comment = "Rejecting - insufficient information"
+            Rationale = "Rejecting - insufficient information and scope unclear",
+            ConfirmationAcknowledged = true
         };
 
         await SeedOpportunityAsync(1, "IDENTIFY & PROFILE");
@@ -1503,17 +1603,19 @@ public class WorkflowControllerTests : IDisposable
 
     /// <summary>
     /// Task 8.5: Test Approve Flow
-    /// Verifies that approval changes stage to GO
+    /// Verifies that approval changes stage to GO with Executive assignment
     /// </summary>
     [Fact]
     public async Task Integration_ApproveFlow_SetsStageToGo()
     {
-        // Arrange
-        var request = new WorkflowActionRequest
+        // Arrange - Using enhanced ApproveWorkflowRequest
+        var request = new ApproveWorkflowRequest
         {
             EntityName = "opportunity",
             EntityId = 1,
-            Comment = "Approved for Go Decision"
+            Rationale = "Approved for Go Decision - all requirements met",
+            ConfirmationAcknowledged = true,
+            ExecutiveId = 10 // Director assigned as Executive
         };
 
         await SeedOpportunityAsync(1, "IDENTIFY & PROFILE");
@@ -1532,22 +1634,29 @@ public class WorkflowControllerTests : IDisposable
             .ReturnsAsync("IDENTIFY & PROFILE");
         _mockEntityStageProvider.Setup(x => x.GetEntityDisplayNameAsync("Opportunity", "1"))
             .ReturnsAsync("Test Opportunity");
+        _mockEntityStageProvider.Setup(x => x.UpdateStageAsync("Opportunity", "1", "GO", It.IsAny<int>()))
+            .ReturnsAsync(true);
         _mockApproverProvider.Setup(x => x.CanUserApproveAsync(
                 "Opportunity", 1, It.IsAny<int>(), "IDENTIFY & PROFILE", "GO"))
             .ReturnsAsync(true);
         _mockWorkflowManager.Setup(x => x.Approve(
                 pendingTask, "Opportunity", It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync(true);
+            .ReturnsAsync("GO");
+
+        // Setup OpportunityManager mock for AssignExecutiveAsync
+        var mockOpportunityManager = new Mock<IOpportunityManager>();
+        mockOpportunityManager.Setup(x => x.AssignExecutiveAsync(1, 10))
+            .Returns(Task.CompletedTask);
+        _mockManagerWrapper.Setup(x => x.OpportunityManager).Returns(mockOpportunityManager.Object);
 
         // Act
         var result = await _controller.Approve(request);
 
         // Assert
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var response = okResult.Value as WorkflowActionResponse;
-        response.Should().NotBeNull();
-        response!.Success.Should().BeTrue();
-        response.NewStage.Should().Be("GO");
+        
+        // Verify Executive assignment was called
+        mockOpportunityManager.Verify(x => x.AssignExecutiveAsync(1, 10), Times.Once);
     }
 
     /// <summary>
@@ -1557,12 +1666,13 @@ public class WorkflowControllerTests : IDisposable
     [Fact]
     public async Task Integration_RejectFlow_SetsStageToNoGo_NotIdentifyProfile()
     {
-        // Arrange
-        var request = new WorkflowActionRequest
+        // Arrange - Using enhanced RejectWorkflowRequest
+        var request = new RejectWorkflowRequest
         {
             EntityName = "opportunity",
             EntityId = 1,
-            Comment = "Insufficient information - set to NO GO"
+            Rationale = "Insufficient information and unclear scope - set to NO GO",
+            ConfirmationAcknowledged = true
         };
 
         await SeedOpportunityAsync(1, "IDENTIFY & PROFILE");
@@ -1667,6 +1777,129 @@ public class WorkflowControllerTests : IDisposable
 
         // This test ensures the notification infrastructure is in place
         // Actual email sending is tested via the notification service unit tests
+    }
+
+    #endregion
+
+    #region Pending Approvals Tests
+
+    /// <summary>
+    /// Task 3.6: Test pending approvals endpoint returns approvals for current user.
+    /// </summary>
+    [Fact]
+    public async Task GetPendingApprovals_ReturnsPendingApprovalsForCurrentUser()
+    {
+        // Arrange
+        await SeedOpportunityAsync(1, "IDENTIFY & PROFILE");
+        
+        var pendingTask = new WorkflowLog
+        {
+            EntityName = "Opportunity",
+            EntityId = "1",
+            Stage = "IDENTIFY & PROFILE",
+            NewStage = "GO",
+            UserId = 2, // Different user submitted
+            CompletedOn = null
+        };
+        
+        _mockWorkflowManager.Setup(x => x.GetAllPendingTasksAsync())
+            .ReturnsAsync(new List<WorkflowLog> { pendingTask });
+        
+        _mockEntityStageProvider.Setup(x => x.GetCurrentStageAsync("opportunity", "1"))
+            .ReturnsAsync("IDENTIFY & PROFILE");
+        
+        _mockApproverProvider.Setup(x => x.CanUserApproveAsync(
+                "Opportunity", 1, 1, "IDENTIFY & PROFILE", "GO"))
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _controller.GetPendingApprovals();
+
+        // Assert
+        var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var approvals = okResult.Value.Should().BeAssignableTo<IEnumerable<PendingApprovalResponse>>().Subject;
+        approvals.Should().HaveCount(1);
+        
+        var approval = approvals.First();
+        approval.EntityName.Should().Be("Opportunity");
+        approval.EntityId.Should().Be(1);
+        approval.CurrentStage.Should().Be("IDENTIFY & PROFILE");
+        approval.PendingStage.Should().Be("GO");
+    }
+
+    /// <summary>
+    /// Task 3.6: Test pending approvals endpoint returns empty list when no pending approvals.
+    /// </summary>
+    [Fact]
+    public async Task GetPendingApprovals_ReturnsEmptyList_WhenNoPendingApprovals()
+    {
+        // Arrange
+        _mockWorkflowManager.Setup(x => x.GetAllPendingTasksAsync())
+            .ReturnsAsync(new List<WorkflowLog>());
+
+        // Act
+        var result = await _controller.GetPendingApprovals();
+
+        // Assert
+        var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var approvals = okResult.Value.Should().BeAssignableTo<IEnumerable<PendingApprovalResponse>>().Subject;
+        approvals.Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// Task 3.6: Test pending approvals endpoint filters out tasks user cannot approve.
+    /// </summary>
+    [Fact]
+    public async Task GetPendingApprovals_FiltersTasksUserCannotApprove()
+    {
+        // Arrange
+        await SeedOpportunityAsync(1, "IDENTIFY & PROFILE");
+        await SeedOpportunityAsync(2, "IDENTIFY & PROFILE");
+        
+        var pendingTask1 = new WorkflowLog
+        {
+            EntityName = "Opportunity",
+            EntityId = "1",
+            Stage = "IDENTIFY & PROFILE",
+            NewStage = "GO",
+            UserId = 2,
+            CompletedOn = null
+        };
+        
+        var pendingTask2 = new WorkflowLog
+        {
+            EntityName = "Opportunity",
+            EntityId = "2",
+            Stage = "IDENTIFY & PROFILE",
+            NewStage = "GO",
+            UserId = 3,
+            CompletedOn = null
+        };
+        
+        _mockWorkflowManager.Setup(x => x.GetAllPendingTasksAsync())
+            .ReturnsAsync(new List<WorkflowLog> { pendingTask1, pendingTask2 });
+        
+        _mockEntityStageProvider.Setup(x => x.GetCurrentStageAsync("opportunity", "1"))
+            .ReturnsAsync("IDENTIFY & PROFILE");
+        _mockEntityStageProvider.Setup(x => x.GetCurrentStageAsync("opportunity", "2"))
+            .ReturnsAsync("IDENTIFY & PROFILE");
+        
+        // User can approve task 1 but not task 2
+        _mockApproverProvider.Setup(x => x.CanUserApproveAsync(
+                "Opportunity", 1, 1, "IDENTIFY & PROFILE", "GO"))
+            .ReturnsAsync(true);
+        _mockApproverProvider.Setup(x => x.CanUserApproveAsync(
+                "Opportunity", 2, 1, "IDENTIFY & PROFILE", "GO"))
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _controller.GetPendingApprovals();
+
+        // Assert
+        var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var approvals = okResult.Value.Should().BeAssignableTo<IEnumerable<PendingApprovalResponse>>().Subject;
+        approvals.Should().HaveCount(1);
+        approvals.First().EntityId.Should().Be(1);
     }
 
     #endregion

@@ -215,5 +215,56 @@ export interface WorkflowCancelReopenRequest {
   comment?: string;
 }
 
+/**
+ * Model for pending workflow approvals
+ * Used to display tasks in the Actions Required dashboard card
+ */
+export interface PendingApprovalModel {
+  /**
+   * Entity type (e.g., 'Opportunity')
+   */
+  entityName: string;
+
+  /**
+   * Entity ID
+   */
+  entityId: number;
+
+  /**
+   * Display name of the entity (e.g., opportunity name)
+   */
+  entityDisplayName: string;
+
+  /**
+   * Current workflow stage
+   */
+  currentStage: string;
+
+  /**
+   * Stage waiting for approval
+   */
+  pendingStage: string;
+
+  /**
+   * User who submitted for approval
+   */
+  submittedBy: string;
+
+  /**
+   * Submission timestamp
+   */
+  submittedOn: Date;
+
+  /**
+   * Responsible org unit name
+   */
+  orgUnitName: string;
+
+  /**
+   * Optional submission comment/remarks
+   */
+  submissionComment?: string;
+}
+
 // Re-export requirement models for convenience
 export * from './requirement.models';

@@ -51,7 +51,8 @@ import { FeedbackDialogService } from '@shared/services/ui';
 import { PermissionUtilityService } from '@core/services/auth';
 import { PageContextService } from '@shared/services/utils';
 import { OpportunityService } from '../../../services/opportunity.service';
-import { Opportunity } from '@shared/models/opportunity.model';
+import { Opportunity, GoDecisionPayload, NoGoDecisionPayload, Risk } from '@shared/models/opportunity.model';
+import { CustomStageChangeResult } from '@shared/reusables/components/workflow/models/workflow.models';
 import {
   LoadingProgress,
   LoadingSectionKey,
@@ -72,6 +73,11 @@ import { OpportunityRelatedItemsComponent } from './sections/related/opportunity
 import { OpportunityDocumentsComponent } from './sections/document/opportunity-documents.component';
 import { OpportunityStatementSectionComponent } from './sections/statement/opportunity-statement-section.component';
 import { ValuesService } from '@app/shared/services/api/values.service';
+
+// Go/No-Go Decision Components
+import { ApproveOpportunityDialogComponent } from '../approve-opportunity-dialog/approve-opportunity-dialog.component';
+import { RejectOpportunityDialogComponent } from '../reject-opportunity-dialog/reject-opportunity-dialog.component';
+import { OpportunityDecisionInfoPanelComponent } from '../opportunity-decision-info-panel/opportunity-decision-info-panel.component';
 
 /**
  * @class OpportunityViewComponent
@@ -124,6 +130,9 @@ import { ValuesService } from '@app/shared/services/api/values.service';
     OpportunityRelatedItemsComponent,
     OpportunityDocumentsComponent,
     OpportunityStatementSectionComponent,
+    ApproveOpportunityDialogComponent,
+    RejectOpportunityDialogComponent,
+    OpportunityDecisionInfoPanelComponent,
   ],
   templateUrl: './opportunity-view.component.html',
   styleUrls: ['./opportunity-view.component.scss'],
@@ -318,6 +327,60 @@ export class OpportunityViewComponent
     // Check if user has update permissions (required for workflow actions)
     return this.canUpdate() && opp?.id !== undefined;
   });
+
+  // ===== Go/No-Go Decision State =====
+
+  /**
+   * @description Whether the entity is in an immutable state (after Go/No-Go decision)
+   */
+  isImmutable = computed(() => {
+    const opp = this.opportunity();
+    return opp?.permissions?.isImmutable ?? false;
+  });
+
+  /**
+   * @description Whether to show the instructional guidance for decision makers
+   * Shows when user is an approver and opportunity is in pending approval workflow stage
+   */
+  showDecisionGuidance = computed(() => {
+    const opp = this.opportunity();
+    if (!opp) return false;
+    
+    // Check if opportunity is in workflow and pending approval (SEND FOR GO DECISION stage)
+    const stage = opp.stage?.toUpperCase() || '';
+    const isPendingGoDecision = stage.includes('SEND FOR GO DECISION') || stage.includes('PENDING');
+    const isInWorkflow = opp.isInWorkflow;
+    
+    // Check if current user can take workflow actions (is an approver)
+    const canApprove = this.canChangeStage();
+    
+    return isPendingGoDecision && isInWorkflow && canApprove;
+  });
+
+  /**
+   * @description Whether to show the decision info panel
+   * Same conditions as showDecisionGuidance
+   */
+  showDecisionInfoPanel = computed(() => this.showDecisionGuidance());
+
+  /**
+   * @description Instructional guidance text for decision makers
+   */
+  readonly instructionalGuidanceText = 'workflow.goDecision.guidance.message';
+
+  // Dialog visibility signals
+  showApproveDialog = signal<boolean>(false);
+  showRejectDialog = signal<boolean>(false);
+
+  // Risks loaded from DST section (for decision info panel)
+  opportunityRisks = signal<Risk[]>([]);
+
+  // Workflow submission comment (sender remarks)
+  workflowSubmissionComment = signal<string | null>(null);
+
+  // Promise resolvers for custom stage change handler
+  private approveDialogResolver: ((result: CustomStageChangeResult) => void) | null = null;
+  private rejectDialogResolver: ((result: CustomStageChangeResult) => void) | null = null;
 
   // Computed properties for conditional display
   showAdditionalInfo = computed(() => {
@@ -1393,6 +1456,105 @@ export class OpportunityViewComponent
       summary: this.translateService.instant('message.success'),
       detail: this.translateService.instant('message.workflow.submitSuccess')
     });
+  }
+
+  // ===== Go/No-Go Decision Handlers =====
+
+  /**
+   * @description Custom stage change handler for Go/No-Go decisions
+   * Opens the appropriate dialog when Approve or Reject actions are triggered
+   * @param {string} nextStage - The target stage name
+   * @param {string} actionName - The action being performed (Approve, Reject, etc.)
+   * @returns {Promise<CustomStageChangeResult | undefined>} Result with proceed flag and comment
+   */
+  customStageChangeHandler = async (
+    nextStage: string,
+    actionName: string
+  ): Promise<CustomStageChangeResult | undefined> => {
+    // Only intercept Approve and Reject actions for opportunity-specific dialogs
+    if (actionName === 'Approve') {
+      this.showApproveDialog.set(true);
+      return new Promise<CustomStageChangeResult>((resolve) => {
+        this.approveDialogResolver = resolve;
+      });
+    }
+    
+    if (actionName === 'Reject') {
+      this.showRejectDialog.set(true);
+      return new Promise<CustomStageChangeResult>((resolve) => {
+        this.rejectDialogResolver = resolve;
+      });
+    }
+    
+    // For other actions, return undefined to use default behavior
+    return undefined;
+  };
+
+  /**
+   * @description Handle Go decision confirmation from approve dialog
+   * @param {GoDecisionPayload} payload - The approval payload with rationale and executive
+   */
+  onApproveConfirmed(payload: GoDecisionPayload): void {
+    const opportunityId = this.opportunity()?.id;
+    if (!opportunityId) return;
+
+    // The dialog already handles the API call and shows success/error toasts
+    // We just need to resolve the promise and reload the opportunity
+    if (this.approveDialogResolver) {
+      this.approveDialogResolver({
+        proceed: true,
+        comment: payload.rationale,
+      });
+      this.approveDialogResolver = null;
+    }
+
+    // Reload opportunity to reflect new stage
+    this.reloadOpportunity();
+  }
+
+  /**
+   * @description Handle No-Go decision confirmation from reject dialog
+   * @param {NoGoDecisionPayload} payload - The rejection payload with rationale
+   */
+  onRejectConfirmed(payload: NoGoDecisionPayload): void {
+    const opportunityId = this.opportunity()?.id;
+    if (!opportunityId) return;
+
+    // The dialog already handles the API call and shows success/error toasts
+    // We just need to resolve the promise and reload the opportunity
+    if (this.rejectDialogResolver) {
+      this.rejectDialogResolver({
+        proceed: true,
+        comment: payload.rationale,
+      });
+      this.rejectDialogResolver = null;
+    }
+
+    // Reload opportunity to reflect new stage
+    this.reloadOpportunity();
+  }
+
+  /**
+   * @description Handle dialog cancellation
+   * Resolves the promise with proceed: false to cancel the workflow action
+   */
+  onDialogCancel(): void {
+    if (this.approveDialogResolver) {
+      this.approveDialogResolver({ proceed: false });
+      this.approveDialogResolver = null;
+    }
+    if (this.rejectDialogResolver) {
+      this.rejectDialogResolver({ proceed: false });
+      this.rejectDialogResolver = null;
+    }
+  }
+
+  /**
+   * @description Update risks signal when DST section loads risks
+   * @param {Risk[]} risks - Array of risks from DST section
+   */
+  updateRisks(risks: Risk[]): void {
+    this.opportunityRisks.set(risks);
   }
 
   /**

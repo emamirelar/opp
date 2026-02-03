@@ -356,10 +356,26 @@ export class WorkflowComponent implements OnInit {
     this.showCommentDialog = false;
   }
 
-  handleOnApprove() {
+  async handleOnApprove() {
     this.nextStage.set(this.workflowInfo()?.nextStage || '');
     this.nextStageActionName.set('Approve');
     this.commentMode.set(this.workflowInfo()?.approvalComment || 'optional');
+
+    // Check for custom stage change handler first (e.g., Go Decision dialog)
+    if (this.customStageChangeHandler) {
+      const result = await this.customStageChangeHandler(
+        this.workflowInfo()?.nextStage || '',
+        'Approve'
+      );
+
+      if (result !== undefined) {
+        if (result.proceed) {
+          this._executeWorkflowAction('approve', result.comment);
+        }
+        return; // Custom handler took over
+      }
+      // result is undefined, fall through to default behavior
+    }
 
     const commentMode = this.workflowInfo()?.approvalComment || 'optional';
     if (commentMode !== 'none') {
@@ -370,10 +386,27 @@ export class WorkflowComponent implements OnInit {
     }
   }
 
-  handleOnReject() {
+  async handleOnReject() {
     this.nextStage.set(this.workflowInfo()?.nextStage || '');
     this.nextStageActionName.set('Reject');
     this.commentMode.set(this.workflowInfo()?.rejectionComment || 'mandatory');
+
+    // Check for custom stage change handler first (e.g., No-Go Decision dialog)
+    if (this.customStageChangeHandler) {
+      const result = await this.customStageChangeHandler(
+        this.workflowInfo()?.nextStage || '',
+        'Reject'
+      );
+
+      if (result !== undefined) {
+        if (result.proceed) {
+          this._executeWorkflowAction('reject', result.comment);
+        }
+        return; // Custom handler took over
+      }
+      // result is undefined, fall through to default behavior
+    }
+
     this.showCommentDialog = true;
     this.changeDetectorRef.detectChanges();
   }

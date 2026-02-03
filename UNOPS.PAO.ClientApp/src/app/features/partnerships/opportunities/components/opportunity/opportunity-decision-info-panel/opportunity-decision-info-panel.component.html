@@ -1,0 +1,105 @@
+<p-panel styleClass="decision-info-panel">
+  <ng-template pTemplate="header">
+    <div class="flex items-center gap-2">
+      <i class="pi pi-info-circle text-blue-500"></i>
+      <span class="font-semibold">{{ 'workflow.goDecision.infoPanel.title' | translate }}</span>
+    </div>
+  </ng-template>
+
+  <div class="flex flex-col gap-4">
+    <!-- Key Metrics Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <!-- Initiative Type -->
+      <div class="flex flex-col gap-1">
+        <span class="text-sm text-gray-500">{{ 'workflow.goDecision.infoPanel.initiativeType' | translate }}</span>
+        <span class="font-medium">{{ initiativeType() }}</span>
+      </div>
+
+      <!-- Responsible Org Unit -->
+      <div class="flex flex-col gap-1">
+        <span class="text-sm text-gray-500">{{ 'workflow.goDecision.infoPanel.orgUnit' | translate }}</span>
+        <span class="font-medium">{{ orgUnitName() }}</span>
+      </div>
+
+      <!-- Budget -->
+      <div class="flex flex-col gap-1">
+        <span class="text-sm text-gray-500">{{ 'workflow.goDecision.infoPanel.budget' | translate }}</span>
+        <span class="font-medium">{{ budgetDisplay() }}</span>
+      </div>
+
+      <!-- Time to Signing -->
+      <div class="flex flex-col gap-1">
+        <span class="text-sm text-gray-500">{{ 'workflow.goDecision.infoPanel.timeToSigning' | translate }}</span>
+        <p-tag [severity]="timeToSigningSeverity()" [value]="timeToSigningDisplay()" />
+      </div>
+    </div>
+
+    <!-- Sender Remarks (if present) -->
+    @if (senderRemarks()) {
+      <div class="bg-blue-50 border border-blue-200 rounded-md p-3">
+        <div class="flex items-start gap-2">
+          <i class="pi pi-comment text-blue-500 mt-0.5"></i>
+          <div class="flex flex-col gap-1">
+            <span class="text-sm font-medium text-blue-700">{{ 'workflow.goDecision.infoPanel.submitterRemarks' | translate }}</span>
+            <span class="text-gray-700">{{ senderRemarks() }}</span>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Concerning Items Section -->
+    @if (hasConcerningItems()) {
+      <p-divider />
+
+      <div class="flex flex-col gap-3">
+        <span class="font-semibold text-orange-700">
+          <i class="pi pi-exclamation-triangle mr-2"></i>
+          {{ 'workflow.goDecision.infoPanel.attentionRequired' | translate }}
+        </span>
+
+        <!-- Concerning DD Statuses -->
+        @if (concerningDDStatuses().length > 0) {
+          <div class="bg-orange-50 border border-orange-200 rounded-md p-3">
+            <div class="flex flex-col gap-2">
+              <span class="text-sm font-medium text-orange-700">
+                {{ 'workflow.goDecision.infoPanel.ddStatusConcerns' | translate }} ({{ concerningDDStatuses().length }})
+              </span>
+              <div class="flex flex-col gap-1">
+                @for (item of concerningDDStatuses(); track item.partnerName) {
+                  <div class="flex items-center gap-2 text-sm">
+                    <span class="text-gray-700">{{ item.partnerName }}</span>
+                    <span class="text-gray-500">({{ item.partnerType }})</span>
+                    <span>-</span>
+                    <p-tag severity="warn" [value]="item.ddStatus" [rounded]="true" />
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- High Risks -->
+        @if (highRisks().length > 0) {
+          <div class="bg-red-50 border border-red-200 rounded-md p-3">
+            <div class="flex flex-col gap-2">
+              <span class="text-sm font-medium text-red-700">
+                {{ 'workflow.goDecision.infoPanel.highRisks' | translate }} ({{ highRisks().length }})
+              </span>
+              <div class="flex flex-col gap-1">
+                @for (risk of highRisks(); track risk.title) {
+                  <div class="flex items-center gap-2 text-sm">
+                    <i class="pi pi-exclamation-circle text-red-500"></i>
+                    <span class="text-gray-700">{{ risk.title }}</span>
+                    @if (risk.isPredefined) {
+                      <p-tag severity="danger" value="EAC High Risk" [rounded]="true" />
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</p-panel>

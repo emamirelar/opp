@@ -628,6 +628,13 @@ public class Startup
                 .UseNpgsql(dataSource)
                 .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
 
+        // Register IDbContextFactory for AppDbContext (base context)
+        // Used by workflow adapters to avoid DbContext concurrency issues
+        services.AddDbContextFactory<DataAccess.Context.AppDbContext>(options =>
+            options
+                .UseNpgsql(dataSource)
+                .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
+
         services.AddDbContext<PAOIdentityDbContext>(options =>
             options
                 .UseNpgsql(dataSource)

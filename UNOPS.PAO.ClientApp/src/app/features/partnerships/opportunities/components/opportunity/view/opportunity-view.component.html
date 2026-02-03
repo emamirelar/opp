@@ -185,6 +185,34 @@
             </div>
           }
 
+          <!-- Instructional Guidance for Decision Makers -->
+          @if (showDecisionGuidance()) {
+            <div class="px-unops-md md:px-unops-2xl pt-4 border-t border-unops-neutral-300 bg-unops-surface-secondary">
+              <p-message severity="info" [closable]="false">
+                <ng-template pTemplate="content">
+                  <div class="flex items-start gap-3">
+                    <i class="pi pi-info-circle text-blue-500 text-xl flex-shrink-0 mt-0.5"></i>
+                    <div class="flex flex-col gap-1">
+                      <span class="font-semibold">{{ 'workflow.goDecision.guidance.title' | translate }}</span>
+                      <span>{{ instructionalGuidanceText | translate }}</span>
+                    </div>
+                  </div>
+                </ng-template>
+              </p-message>
+            </div>
+          }
+
+          <!-- Decision Info Panel for Go/No-Go Decision Makers -->
+          @if (showDecisionInfoPanel()) {
+            <div class="px-unops-md md:px-unops-2xl pt-4 bg-unops-surface-secondary">
+              <app-opportunity-decision-info-panel
+                [opportunity]="opportunity()!"
+                [risks]="opportunityRisks()"
+                [senderRemarks]="workflowSubmissionComment()"
+              />
+            </div>
+          }
+
           <!-- Workflow Component -->
           <div class="px-unops-md md:px-unops-2xl py-4 border-t border-unops-neutral-300 bg-unops-surface-secondary">
             <app-stage-workflow
@@ -193,6 +221,8 @@
               [entityId]="opportunity()?.id?.toString() ?? ''"
               [canChangeStage]="canChangeStage()"
               [feedbackDialogService]="feedbackDialogService"
+              [customStageChangeHandler]="customStageChangeHandler"
+              [responsibleOrgUnitName]="opportunity()?.responsibleOrgUnitName ?? ''"
               (onStageChangeSuccess)="handleStageChangeSuccess()"
             />
           </div>
@@ -584,3 +614,18 @@
   }
 </div>
 <!-- End Main Container -->
+
+<!-- Go/No-Go Decision Dialogs -->
+@if (opportunity()) {
+  <app-approve-opportunity-dialog
+    [(visible)]="showApproveDialog"
+    [opportunity]="opportunity()!"
+    (decisionConfirmed)="onApproveConfirmed($event)"
+  />
+
+  <app-reject-opportunity-dialog
+    [(visible)]="showRejectDialog"
+    [opportunity]="opportunity()!"
+    (decisionConfirmed)="onRejectConfirmed($event)"
+  />
+}

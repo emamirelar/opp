@@ -1290,6 +1290,40 @@ public class OpportunityController : BaseController
         }
     }
 
+    /// <summary>
+    /// Gets executives (Director/Manager/OiC) for an opportunity's responsible org unit.
+    /// Used to populate the Executive dropdown in the Go Decision approval dialog.
+    /// Returns users with Director/Deputy Director roles on the opportunity's ResponsibleOrgUnit.
+    /// </summary>
+    /// <param name="id">The opportunity ID</param>
+    /// <returns>List of executives with display label and user ID</returns>
+    [HttpGet(APIDictionary.Opportunity + "/{id}/executives")]
+    [AccessControlled(EntityTypes.Opportunity, "read")]
+    public async Task<ActionResult> GetExecutives(int id)
+    {
+        try
+        {
+            _logger.LogInformation("👔 [API] Getting executives for opportunity {OpportunityId}", id);
+
+            var executives = await _manager.GetExecutivesForOpportunityAsync(id);
+
+            _logger.LogInformation("✅ [API] Successfully retrieved {Count} executives for opportunity {OpportunityId}", 
+                executives.Count(), id);
+
+            return Ok(executives);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            _logger.LogWarning("Opportunity not found: {Message}", ex.Message);
+            return NotFound(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting executives for opportunity {OpportunityId}", id);
+            return StatusCode(500, new { error = "Internal server error while getting executives", details = ex.Message });
+        }
+    }
+
     #region Risk Lookups & Categories
 
     /// <summary>
