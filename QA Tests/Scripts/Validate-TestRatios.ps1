@@ -9,22 +9,22 @@
     - Fixed minimums for Security (50) and Concurrency (25)
 
 .PARAMETER Path
-    Path to the test suite directory (relative to QA Tests or absolute)
+    Path to the test suite directory (relative to UNOPS.Pdj.Tests or absolute)
 
 .PARAMETER Detailed
     Show detailed breakdown of tests per file
 
 .EXAMPLE
-    .\Validate-TestRatios.ps1 -Path "Opportunity Tests\OpportunityManager"
+    .\Validate-TestRatios.ps1 -Path "Forms_Module\ESOURCE2-931_CAPA"
     
 .EXAMPLE
-    .\Validate-TestRatios.ps1 -Path "Integration Tests\PartnerManagerTests" -Detailed
+    .\Validate-TestRatios.ps1 -Path "Forms_Module\ESOURCE2-931_CAPA" -Detailed
 
 .NOTES
     Based on comprehensive-test-strategy.mdc requirements:
     - Formula: (Negative + Edge) >= 3 x Positive
-    - Negative: >= 50 AND >= 1.5 x Positive
-    - Edge: >= 50 AND >= 1.5 x Positive  
+    - Negative: >= 50 AND >= 2 x Positive
+    - Edge: >= 50 AND >= 2 x Positive  
     - Security: >= 50 (FIXED)
     - Concurrency: >= 25 (FIXED)
 #>
@@ -149,8 +149,8 @@ Write-Host ("TOTAL:               {0,4}" -f $TotalTests) -ForegroundColor Cyan
 Write-Host "`nREQUIREMENTS CHECK:" -ForegroundColor Yellow
 Write-Host "-" * 50
 
-$NegativeReq = [Math]::Max(50, [Math]::Ceiling(1.5 * $Positive))
-$EdgeReq = [Math]::Max(50, [Math]::Ceiling(1.5 * $Positive))
+$NegativeReq = [Math]::Max(50, [Math]::Ceiling(2 * $Positive))
+$EdgeReq = [Math]::Max(50, [Math]::Ceiling(2 * $Positive))
 $SecurityReq = 50
 $ConcurrencyReq = 25
 $RatioReq = 3 * $Positive
@@ -161,14 +161,14 @@ $AllPassed = $true
 $NegativePass = $Negative -ge $NegativeReq
 $NegativeStatus = if ($NegativePass) { "[PASS]" } else { "[FAIL]" }
 $NegativeColor = if ($NegativePass) { "Green" } else { "Red" }
-Write-Host ("Negative:    {0,4} >= {1,4} (max(50, 1.5x{2}))  {3}" -f $Negative, $NegativeReq, $Positive, $NegativeStatus) -ForegroundColor $NegativeColor
+Write-Host ("Negative:    {0,4} >= {1,4} (max(50, 2x{2}))  {3}" -f $Negative, $NegativeReq, $Positive, $NegativeStatus) -ForegroundColor $NegativeColor
 $AllPassed = $AllPassed -and $NegativePass
 
 # Check Edge
 $EdgePass = $EdgeTotal -ge $EdgeReq
 $EdgeStatus = if ($EdgePass) { "[PASS]" } else { "[FAIL]" }
 $EdgeColor = if ($EdgePass) { "Green" } else { "Red" }
-Write-Host ("Edge:        {0,4} >= {1,4} (max(50, 1.5x{2}))  {3}" -f $EdgeTotal, $EdgeReq, $Positive, $EdgeStatus) -ForegroundColor $EdgeColor
+Write-Host ("Edge:        {0,4} >= {1,4} (max(50, 2x{2}))  {3}" -f $EdgeTotal, $EdgeReq, $Positive, $EdgeStatus) -ForegroundColor $EdgeColor
 $AllPassed = $AllPassed -and $EdgePass
 
 # Check Security (FIXED)
