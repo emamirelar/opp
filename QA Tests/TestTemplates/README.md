@@ -4,6 +4,8 @@ This folder contains standardized test templates following the **3:1 Test Strate
 
 ## Quick Reference
 
+### Category 1: Required with Minimums (3:1 Ratio)
+
 | Template | Required Minimum | Formula |
 |----------|------------------|---------|
 | `PositiveTests.cs.template` | 30-50 tests | Baseline (P) |
@@ -11,6 +13,15 @@ This folder contains standardized test templates following the **3:1 Test Strate
 | `BoundaryTests.cs.template` | ≥50 tests | Max(50, 2×P) |
 | `SecurityTests.cs.template` | ≥50 tests | FIXED |
 | `ConcurrencyTests.cs.template` | ≥25 tests | FIXED |
+
+### Category 2: Mandatory Additional (No Minimums)
+
+| Template | Required | Purpose |
+|----------|----------|---------|
+| `UnitTests.cs.template` | At least 1 | Isolated unit tests |
+| `FunctionalTests.cs.template` | At least 1 | Business rule verification |
+| `IntegrationTests.cs.template` | At least 1 | End-to-end workflow testing |
+| `PerformanceTests.cs.template` | At least 1 | Load and response time tests |
 
 ## 3:1 Ratio Requirement
 

@@ -64,12 +64,13 @@ $Categories = @{
     "Boundary" = 0
     "Security" = 0
     "Concurrency" = 0
+    "Unit" = 0
     "Integration" = 0
     "Performance" = 0
+    "Functional" = 0
     "Stress" = 0
     "Limits" = 0
     "EndToEnd" = 0
-    "Functional" = 0
     "AcceptanceCriteria" = 0
     "Other" = 0
 }
@@ -92,12 +93,13 @@ foreach ($File in $TestFiles) {
         "^Boundary" { "Boundary" }  # Treat as Edge
         "^Security" { "Security" }
         "^Concurrency" { "Concurrency" }
+        "^Unit" { "Unit" }
         "^Integration" { "Integration" }
         "^Performance" { "Performance" }
+        "^Functional" { "Functional" }
         "^Stress" { "Stress" }
         "^Limits" { "Limits" }
         "^EndToEnd" { "EndToEnd" }
-        "^Functional" { "Functional" }
         "^AcceptanceCriteria" { "AcceptanceCriteria" }
         default { "Other" }
     }
@@ -136,8 +138,19 @@ Write-Host ("Edge/Boundary Tests: {0,4}" -f $EdgeTotal)
 Write-Host ("Security Tests:      {0,4}" -f $Security)
 Write-Host ("Concurrency Tests:   {0,4}" -f $Concurrency)
 
-$OtherTotal = $Categories["Integration"] + $Categories["Performance"] + $Categories["Stress"] + 
-              $Categories["Limits"] + $Categories["EndToEnd"] + $Categories["Functional"] + 
+$Unit = $Categories["Unit"]
+$Functional = $Categories["Functional"]
+$Integration = $Categories["Integration"]
+$Performance = $Categories["Performance"]
+
+Write-Host ""
+Write-Host "MANDATORY ADDITIONAL:" -ForegroundColor Yellow
+Write-Host ("Unit Tests:          {0,4}" -f $Unit)
+Write-Host ("Functional Tests:    {0,4}" -f $Functional)
+Write-Host ("Integration Tests:   {0,4}" -f $Integration)
+Write-Host ("Performance Tests:   {0,4}" -f $Performance)
+
+$OtherTotal = $Categories["Stress"] + $Categories["Limits"] + $Categories["EndToEnd"] + 
               $Categories["AcceptanceCriteria"] + $Categories["Other"]
 Write-Host ("Other Tests:         {0,4}" -f $OtherTotal) -ForegroundColor Gray
 
@@ -184,6 +197,34 @@ $ConcurrencyStatus = if ($ConcurrencyPass) { "[PASS]" } else { "[FAIL]" }
 $ConcurrencyColor = if ($ConcurrencyPass) { "Green" } else { "Red" }
 Write-Host ("Concurrency: {0,4} >= {1,4} (FIXED minimum)       {2}" -f $Concurrency, $ConcurrencyReq, $ConcurrencyStatus) -ForegroundColor $ConcurrencyColor
 $AllPassed = $AllPassed -and $ConcurrencyPass
+
+# Check Mandatory Additional Tests
+Write-Host "`nMANDATORY ADDITIONAL TESTS:" -ForegroundColor Yellow
+Write-Host "-" * 50
+
+$UnitPass = $Unit -ge 1
+$UnitStatus = if ($UnitPass) { "[PASS]" } else { "[FAIL]" }
+$UnitColor = if ($UnitPass) { "Green" } else { "Red" }
+Write-Host ("Unit:        {0,4} >= {1,4} (at least 1)            {2}" -f $Unit, 1, $UnitStatus) -ForegroundColor $UnitColor
+$AllPassed = $AllPassed -and $UnitPass
+
+$FunctionalPass = $Functional -ge 1
+$FunctionalStatus = if ($FunctionalPass) { "[PASS]" } else { "[FAIL]" }
+$FunctionalColor = if ($FunctionalPass) { "Green" } else { "Red" }
+Write-Host ("Functional:  {0,4} >= {1,4} (at least 1)            {2}" -f $Functional, 1, $FunctionalStatus) -ForegroundColor $FunctionalColor
+$AllPassed = $AllPassed -and $FunctionalPass
+
+$IntegrationPass = $Integration -ge 1
+$IntegrationStatus = if ($IntegrationPass) { "[PASS]" } else { "[FAIL]" }
+$IntegrationColor = if ($IntegrationPass) { "Green" } else { "Red" }
+Write-Host ("Integration: {0,4} >= {1,4} (at least 1)            {2}" -f $Integration, 1, $IntegrationStatus) -ForegroundColor $IntegrationColor
+$AllPassed = $AllPassed -and $IntegrationPass
+
+$PerformancePass = $Performance -ge 1
+$PerformanceStatus = if ($PerformancePass) { "[PASS]" } else { "[FAIL]" }
+$PerformanceColor = if ($PerformancePass) { "Green" } else { "Red" }
+Write-Host ("Performance: {0,4} >= {1,4} (at least 1)            {2}" -f $Performance, 1, $PerformanceStatus) -ForegroundColor $PerformanceColor
+$AllPassed = $AllPassed -and $PerformancePass
 
 # 3:1 Ratio Check
 Write-Host "`n3:1 RATIO CHECK:" -ForegroundColor Yellow

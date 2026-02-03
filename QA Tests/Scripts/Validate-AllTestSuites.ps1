@@ -77,6 +77,10 @@ foreach ($Suite in $AllSuites) {
         "Boundary" = 0
         "Security" = 0
         "Concurrency" = 0
+        "Unit" = 0
+        "Functional" = 0
+        "Integration" = 0
+        "Performance" = 0
     }
     
     foreach ($File in $TestFiles) {
@@ -95,6 +99,10 @@ foreach ($Suite in $AllSuites) {
             "^Boundary|^Edge" { $Categories["Boundary"] += $TestCount }
             "^Security" { $Categories["Security"] += $TestCount }
             "^Concurrency" { $Categories["Concurrency"] += $TestCount }
+            "^Unit" { $Categories["Unit"] += $TestCount }
+            "^Functional" { $Categories["Functional"] += $TestCount }
+            "^Integration" { $Categories["Integration"] += $TestCount }
+            "^Performance" { $Categories["Performance"] += $TestCount }
         }
     }
     
@@ -103,6 +111,10 @@ foreach ($Suite in $AllSuites) {
     $E = $Categories["Boundary"]
     $S = $Categories["Security"]
     $C = $Categories["Concurrency"]
+    $U = $Categories["Unit"]
+    $F = $Categories["Functional"]
+    $I = $Categories["Integration"]
+    $Perf = $Categories["Performance"]
     
     # Calculate requirements
     $NegReq = [Math]::Max(50, [Math]::Ceiling(2 * $P))
@@ -111,7 +123,7 @@ foreach ($Suite in $AllSuites) {
     $ConReq = 25
     $RatioReq = 3 * $P
     
-    # Check compliance
+    # Check compliance (includes mandatory additional files)
     $Checks = @{
         "Positive" = ($P -ge 30)
         "Negative" = ($N -ge $NegReq)
@@ -119,6 +131,10 @@ foreach ($Suite in $AllSuites) {
         "Security" = ($S -ge $SecReq)
         "Concurrency" = ($C -ge $ConReq)
         "Ratio" = (($N + $E) -ge $RatioReq)
+        "Unit" = ($U -ge 1)
+        "Functional" = ($F -ge 1)
+        "Integration" = ($I -ge 1)
+        "Performance" = ($Perf -ge 1)
     }
     
     $AllPass = ($Checks.Values | Where-Object { $_ -eq $false } | Measure-Object).Count -eq 0
@@ -135,6 +151,10 @@ foreach ($Suite in $AllSuites) {
         Boundary = $E
         Security = $S
         Concurrency = $C
+        Unit = $U
+        Functional = $F
+        Integration = $I
+        Performance = $Perf
         RatioSum = ($N + $E)
         RatioReq = $RatioReq
         Status = $Status
@@ -155,7 +175,8 @@ switch ($OutputFormat) {
             Write-Host ("[$($R.Status)] $($R.Suite)") -ForegroundColor $Color
             if ($R.Status -eq "FAIL") {
                 Write-Host ("       Issues: $($R.Issues)") -ForegroundColor Gray
-                Write-Host ("       P=$($R.Positive) N=$($R.Negative) B=$($R.Boundary) S=$($R.Security) C=$($R.Concurrency) | Ratio: $($R.RatioSum)/$($R.RatioReq)") -ForegroundColor Gray
+                Write-Host ("       Required: P=$($R.Positive) N=$($R.Negative) B=$($R.Boundary) S=$($R.Security) C=$($R.Concurrency) | Ratio: $($R.RatioSum)/$($R.RatioReq)") -ForegroundColor Gray
+                Write-Host ("       Additional: U=$($R.Unit) F=$($R.Functional) I=$($R.Integration) Perf=$($R.Performance)") -ForegroundColor Gray
             }
         }
         
@@ -167,11 +188,15 @@ switch ($OutputFormat) {
     "Markdown" {
         Write-Output "# Test Suite Compliance Report"
         Write-Output ""
-        Write-Output "| Suite | Status | P | N | B | S | C | Ratio | Issues |"
-        Write-Output "|-------|--------|---|---|---|---|---|-------|--------|"
+        Write-Output "## Legend"
+        Write-Output "- **P**: Positive, **N**: Negative, **B**: Boundary, **S**: Security, **C**: Concurrency"
+        Write-Output "- **U**: Unit, **F**: Functional, **I**: Integration, **Perf**: Performance"
+        Write-Output ""
+        Write-Output "| Suite | Status | P | N | B | S | C | U | F | I | Perf | Ratio | Issues |"
+        Write-Output "|-------|--------|---|---|---|---|---|---|---|---|------|-------|--------|"
         foreach ($R in $Results) {
             $StatusIcon = switch ($R.Status) { "PASS" { "✅" } "FAIL" { "❌" } default { "⚠️" } }
-            Write-Output "| $($R.Suite) | $StatusIcon | $($R.Positive) | $($R.Negative) | $($R.Boundary) | $($R.Security) | $($R.Concurrency) | $($R.RatioSum)/$($R.RatioReq) | $($R.Issues) |"
+            Write-Output "| $($R.Suite) | $StatusIcon | $($R.Positive) | $($R.Negative) | $($R.Boundary) | $($R.Security) | $($R.Concurrency) | $($R.Unit) | $($R.Functional) | $($R.Integration) | $($R.Performance) | $($R.RatioSum)/$($R.RatioReq) | $($R.Issues) |"
         }
         Write-Output ""
         Write-Output "**Summary:** $PassCount PASS | $FailCount FAIL | $WarnCount SKIP"
