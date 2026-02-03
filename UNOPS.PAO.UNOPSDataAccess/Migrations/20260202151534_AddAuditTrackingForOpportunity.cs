@@ -1287,7 +1287,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 FROM public.""Opportunities"" o
                 WHERE ofp.""OpportunityId"" = o.""Id"";
 
-                -- OpportunityExternalStakeholder
+                -- Updating OpportunityExternalStakeholder
                 UPDATE public.""OpportunityExternalStakeholder"" oes
                 SET 
                     ""CreatedBy"" = o.""CreatedBy"",
