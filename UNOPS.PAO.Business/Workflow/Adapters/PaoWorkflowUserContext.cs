@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.Workflow.Business.Interfaces;
@@ -9,21 +10,28 @@ namespace UNOPS.PAO.Business.Workflow.Adapters;
 /// <summary>
 /// PAO implementation of IWorkflowUserContext.
 /// Provides current user information from the HTTP context for workflow operations.
+/// Uses DbContextFactory to create separate context instances for user lookups,
+/// avoiding DbContext concurrency issues with async workflow operations.
 /// </summary>
 public class PaoWorkflowUserContext : IWorkflowUserContext
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IConfiguration _configuration;
-    private readonly AppDbContext _context;
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
+
+    // Cached user information to avoid repeated database queries
+    private string? _cachedUserName;
+    private string? _cachedUserEmail;
+    private int _cachedUserId = -1; // -1 indicates not yet cached
 
     public PaoWorkflowUserContext(
         IHttpContextAccessor httpContextAccessor,
         IConfiguration configuration,
-        AppDbContext context)
+        IDbContextFactory<AppDbContext> contextFactory)
     {
         _httpContextAccessor = httpContextAccessor;
         _configuration = configuration;
-        _context = context;
+        _contextFactory = contextFactory;
     }
 
     /// <summary>
@@ -36,6 +44,8 @@ public class PaoWorkflowUserContext : IWorkflowUserContext
     /// <summary>
     /// Gets the current user's display name.
     /// Queries the user profile from the database if available.
+    /// Uses a separate DbContext instance to avoid concurrency issues.
+    /// Results are cached per request to avoid repeated queries.
     /// </summary>
     public string CurrentUserName
     {
@@ -45,20 +55,34 @@ public class PaoWorkflowUserContext : IWorkflowUserContext
             if (userId == 0) 
                 return _httpContextAccessor.HttpContext?.User?.Identity?.Name ?? "Unknown";
             
-            // Query user profile from database
-            var userProfile = _context.UserProfile
+            // Return cached value if available for the same user
+            if (_cachedUserId == userId && _cachedUserName != null)
+                return _cachedUserName;
+            
+            // Query user profile from database using a separate context
+            using var context = _contextFactory.CreateDbContext();
+            var userProfile = context.UserProfile
+                .AsNoTracking()
                 .FirstOrDefault(up => up.UserId == userId);
             
             if (userProfile != null && !string.IsNullOrEmpty(userProfile.Name))
-                return userProfile.Name;
+            {
+                _cachedUserName = userProfile.Name;
+                _cachedUserId = userId;
+                return _cachedUserName;
+            }
             
             // Fallback to email or identity name
-            return _httpContextAccessor.HttpContext?.User?.Identity?.Name ?? "Unknown";
+            _cachedUserName = _httpContextAccessor.HttpContext?.User?.Identity?.Name ?? "Unknown";
+            _cachedUserId = userId;
+            return _cachedUserName;
         }
     }
 
     /// <summary>
     /// Gets the current user's email from the Email claim.
+    /// Uses a separate DbContext instance to avoid concurrency issues.
+    /// Results are cached per request to avoid repeated queries.
     /// </summary>
     public string CurrentUserEmail
     {
@@ -68,12 +92,22 @@ public class PaoWorkflowUserContext : IWorkflowUserContext
             if (!string.IsNullOrEmpty(emailClaim))
                 return emailClaim;
             
-            // Fallback: try to get from user table
+            // Return cached value if available for the same user
             var userId = CurrentUserId;
+            if (_cachedUserId == userId && _cachedUserEmail != null)
+                return _cachedUserEmail;
+            
+            // Fallback: try to get from user table using a separate context
             if (userId > 0)
             {
-                var user = _context.PAOUsers.FirstOrDefault(u => u.Id == userId);
-                return user?.Email ?? string.Empty;
+                using var context = _contextFactory.CreateDbContext();
+                var user = context.PAOUsers
+                    .AsNoTracking()
+                    .FirstOrDefault(u => u.Id == userId);
+                
+                _cachedUserEmail = user?.Email ?? string.Empty;
+                _cachedUserId = userId;
+                return _cachedUserEmail;
             }
             
             return string.Empty;
