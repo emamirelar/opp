@@ -15,6 +15,12 @@ public class OpportunityCollaboratorExpertise : ModifiableDeletableEntity
     public new string? Name { get; set; }
 
     /// <summary>
+    /// Foreign key to the Opportunity (denormalized for easier querying)
+    /// </summary>
+    public int OpportunityId { get; set; }
+    public virtual Opportunity? Opportunity { get; set; }
+
+    /// <summary>
     /// Foreign key to the OpportunityCollaborator
     /// </summary>
     public int OpportunityCollaboratorId { get; set; }
