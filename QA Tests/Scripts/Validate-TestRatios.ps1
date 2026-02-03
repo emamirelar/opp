@@ -68,6 +68,7 @@ $Categories = @{
     "Integration" = 0
     "Performance" = 0
     "Functional" = 0
+    "Load" = 0
     "Stress" = 0
     "Limits" = 0
     "EndToEnd" = 0
@@ -97,6 +98,7 @@ foreach ($File in $TestFiles) {
         "^Integration" { "Integration" }
         "^Performance" { "Performance" }
         "^Functional" { "Functional" }
+        "^Load" { "Load" }
         "^Stress" { "Stress" }
         "^Limits" { "Limits" }
         "^EndToEnd" { "EndToEnd" }
@@ -142,6 +144,7 @@ $Unit = $Categories["Unit"]
 $Functional = $Categories["Functional"]
 $Integration = $Categories["Integration"]
 $Performance = $Categories["Performance"]
+$Load = $Categories["Load"]
 
 Write-Host ""
 Write-Host "MANDATORY ADDITIONAL:" -ForegroundColor Yellow
@@ -149,6 +152,7 @@ Write-Host ("Unit Tests:          {0,4}" -f $Unit)
 Write-Host ("Functional Tests:    {0,4}" -f $Functional)
 Write-Host ("Integration Tests:   {0,4}" -f $Integration)
 Write-Host ("Performance Tests:   {0,4}" -f $Performance)
+Write-Host ("Load Tests:          {0,4}" -f $Load)
 
 $OtherTotal = $Categories["Stress"] + $Categories["Limits"] + $Categories["EndToEnd"] + 
               $Categories["AcceptanceCriteria"] + $Categories["Other"]
@@ -207,6 +211,7 @@ $UnitReq = 21        # Validation(5) + Formatting(3) + Calculations(5) + Status(
 $FunctionalReq = 26  # Workflow(10) + Validation(10) + Constraint(3) + Audit(3)
 $IntegrationReq = 25 # CRUD(5) + Search(5) + Pagination(2) + Relationships(3) + ErrorHandling(10)
 $PerformanceReq = 16 # SingleOps(2) + BulkOps(3) + Search(5) + Concurrent(3) + Memory(3)
+$LoadReq = 10        # SustainedLoad(3) + SpikeTesting(2) + StressTesting(2) + Scalability(3)
 
 $UnitPass = $Unit -ge $UnitReq
 $UnitStatus = if ($UnitPass) { "[PASS]" } else { "[FAIL]" }
@@ -231,6 +236,12 @@ $PerformanceStatus = if ($PerformancePass) { "[PASS]" } else { "[FAIL]" }
 $PerformanceColor = if ($PerformancePass) { "Green" } else { "Red" }
 Write-Host ("Performance: {0,4} >= {1,4} (FIXED minimum)         {2}" -f $Performance, $PerformanceReq, $PerformanceStatus) -ForegroundColor $PerformanceColor
 $AllPassed = $AllPassed -and $PerformancePass
+
+$LoadPass = $Load -ge $LoadReq
+$LoadStatus = if ($LoadPass) { "[PASS]" } else { "[FAIL]" }
+$LoadColor = if ($LoadPass) { "Green" } else { "Red" }
+Write-Host ("Load:        {0,4} >= {1,4} (FIXED minimum)         {2}" -f $Load, $LoadReq, $LoadStatus) -ForegroundColor $LoadColor
+$AllPassed = $AllPassed -and $LoadPass
 
 # 3:1 Ratio Check
 Write-Host "`n3:1 RATIO CHECK:" -ForegroundColor Yellow

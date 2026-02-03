@@ -22,6 +22,7 @@ This folder contains standardized test templates following the **3:1 Test Strate
 | `FunctionalTests.cs.template` | ≥26 | Workflow Rules (10), Validation Rules (10), Constraint Rules (3), Audit Rules (3) |
 | `IntegrationTests.cs.template` | ≥25 | CRUD Workflow (5), Search/Filter (5), Pagination (2), Relationships (3), Error Handling (10) |
 | `PerformanceTests.cs.template` | ≥16 | Single Ops (2), Bulk Ops (3), Search (5), Concurrent Access (3), Memory (3) |
+| `LoadTests.cs.template` | ≥10 | Sustained Load (3), Spike Testing (2), Stress Testing (2), Scalability (3) |
 
 ## 3:1 Ratio Requirement
 
