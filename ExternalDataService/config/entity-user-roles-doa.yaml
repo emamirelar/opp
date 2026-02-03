@@ -73,7 +73,7 @@ source:
         , Last_Updated_User_Name
         
       FROM
-        `unopsreportinguat.Common.Delegation_Of_Authorities_Report`
+        `unopsreporting.Common.Delegation_Of_Authorities_Report`
       WHERE
         Delegation_Of_Authority_Description = 'Engagement Acceptance'
         AND Delegation_Of_Authority_Entry_Status = 'N'  -- Active entries only (N = Normal/Active)
