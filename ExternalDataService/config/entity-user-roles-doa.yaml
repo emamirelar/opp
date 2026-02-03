@@ -3,6 +3,7 @@ metadata:
   description: "Delegation of Authority (DoA) roles sync for Engagement Acceptance"
   version: "1.0"
   enabled: true
+  schedule_cron: "0 * * * *"  # Every hour at minute 0 (e.g., 1:00, 2:00, 3:00)
   max_retry_attempts: 1
   timeout_minutes: 5
 
@@ -143,7 +144,6 @@ destination:
       destination_field: "Id"
       data_type: "integer"
       is_required: true
-      is_primary_key: true
     
     # UserId - foreign key (will be validated via foreign_key_mappings)
     - source_field: "UserId"
@@ -235,6 +235,7 @@ sync_options:
   delete_orphaned_records: false  # Don't delete existing DoA records not in BigQuery
   # Note: Updates all records on every sync to ensure latest data
   # Use CreatedDate vs LastModifiedDate to distinguish inserts from updates
+  # Upsert matching: Uses primary_key_field "Id" defined in source section
 
 validation:
   required_source_fields:
