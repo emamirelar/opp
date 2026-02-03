@@ -70,6 +70,7 @@
           [disabled]="isSubmitting() || isLoadingExecutives()"
           [loading]="isLoadingExecutives()"
           [placeholder]="isLoadingExecutives() ? ('common.loading' | translate) : ''"
+          appendTo="body"
           class="w-full"
         />
         <label for="executive">
