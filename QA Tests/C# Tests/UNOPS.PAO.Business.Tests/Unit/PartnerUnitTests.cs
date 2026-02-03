@@ -11,7 +11,7 @@ using FluentAssertions;
 using Moq;
 using Xunit;
 using UNOPS.PAO.Domain.Entities;
-using UNOPS.PAO.Models.Partner;
+using UNOPS.PAO.Models.Partners;
 
 namespace UNOPS.PAO.Business.Tests.Unit
 {

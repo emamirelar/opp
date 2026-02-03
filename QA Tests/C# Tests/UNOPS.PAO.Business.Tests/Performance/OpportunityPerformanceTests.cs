@@ -44,7 +44,7 @@ namespace UNOPS.PAO.Business.Tests.Performance
                     Id = i,
                     Amount = 100_000m + (i * 1000),
                     Probability = 10 + (i % 90),
-                    Stage = i % 5 switch
+                    Stage = (i % 5) switch
                     {
                         0 => "Identification",
                         1 => "Qualification",

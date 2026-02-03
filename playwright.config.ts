@@ -101,7 +101,7 @@ export default defineConfig({
     cwd: './UNOPS.PAO.ClientApp', // Set working directory
     url: 'http://127.0.0.1:4200',
     reuseExistingServer: !process.env.CI,
-    timeout: 180000,  // 3 minutes for Angular to compile and start
+    timeout: 300000,  // 5 minutes for Angular to compile and start (increased from 3 min for slower machines)
     stdout: 'ignore', // Don't wait for specific stdout, just URL check
   },
 });

@@ -99,8 +99,8 @@ namespace UNOPS.PAO.Business.Tests.Functional
 
             // Act - Set contact 2 as primary, unset contact 1
             var updatedContacts = contacts.Select(c => 
-                c.Id == 2 ? (c.Id, c.PartnerId, true) : 
-                c.Id == 1 ? (c.Id, c.PartnerId, false) : c
+                c.Id == 2 ? (Id: c.Id, PartnerId: c.PartnerId, IsPrimary: true) : 
+                c.Id == 1 ? (Id: c.Id, PartnerId: c.PartnerId, IsPrimary: false) : c
             ).ToList();
 
             // Assert
