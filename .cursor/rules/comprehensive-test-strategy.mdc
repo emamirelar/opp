@@ -1,11 +1,55 @@
 ---
-description: Comprehensive test strategy with detailed code examples - for quick reference see test-strategy-quick-reference.mdc
+description: Comprehensive test strategy with 3:1 ratio rules and detailed code examples. For human-readable guide see QA Tests/Documentation/QA_TESTER_PLAYBOOK.md
 globs:
 alwaysApply: false
 ---
 # Comprehensive Test Strategy Standard
 
-> **📋 Quick Reference Available**: For a condensed version with just the essential rules, see `test-strategy-quick-reference.mdc`
+> **📖 Human-Readable Guide**: For the full QA Tester Playbook with templates and checklists, see `QA Tests/Documentation/QA_TESTER_PLAYBOOK.md`
+
+---
+
+## Quick Reference Summary
+
+### Minimum Test Counts Table
+
+| Category | Minimum Required | Formula |
+|----------|------------------|---------|
+| **Positive Tests** | 30-50 tests | Baseline (P) |
+| **Negative Tests** | ≥50 AND ≥1.5×P | Max(50, 1.5×P) |
+| **Edge Cases** | ≥50 AND ≥1.5×P | Max(50, 1.5×P) |
+| **Security/Validation** | ≥50 (FIXED) | Always 50+ |
+| **Concurrency** | ≥25 (FIXED) | Always 25+ |
+
+### 3:1 Check Formula
+```
+(Negative + Edge) ≥ 3 × Positive Tests
+```
+
+### Quick Ratio Examples
+
+| Positive | Negative | Edge | Security | Concurrency | Total | 3:1 Check |
+|----------|----------|------|----------|-------------|-------|-----------|
+| 30 | 50 | 50 | 50 | 25 | 205 | ✅ (100 ≥ 90) |
+| 50 | 75 | 75 | 50 | 25 | 275 | ✅ (150 ≥ 150) |
+| 85 | 128 | 128 | 50 | 25 | 416 | ✅ (256 ≥ 255) |
+
+### AI Assistant Workflow
+
+1. ✅ **STOP** - Do not immediately start coding
+2. ✅ **CALCULATE** 3:1 ratio requirement first
+3. ✅ **CREATE** comprehensive test strategy document
+4. ✅ **VERIFY** all 5 categories included with test counts
+5. ✅ **DOCUMENT** the 3:1 ratio calculation explicitly
+6. ✅ **CONFIRM** with user before implementation
+7. ✅ **IMPLEMENT** ALL categories comprehensively
+
+**NEVER**:
+- ❌ Implement only positive tests
+- ❌ Defer negative/edge tests to "phase 2"
+- ❌ Create < 50 tests per negative/edge/security category
+- ❌ Create < 25 concurrency tests
+- ❌ Proceed if (Negative + Edge) < 3 × Positive
 
 ---
 
