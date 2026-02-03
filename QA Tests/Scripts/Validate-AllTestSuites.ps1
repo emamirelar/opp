@@ -81,6 +81,7 @@ foreach ($Suite in $AllSuites) {
         "Functional" = 0
         "Integration" = 0
         "Performance" = 0
+        "Load" = 0
     }
     
     foreach ($File in $TestFiles) {
@@ -103,6 +104,7 @@ foreach ($Suite in $AllSuites) {
             "^Functional" { $Categories["Functional"] += $TestCount }
             "^Integration" { $Categories["Integration"] += $TestCount }
             "^Performance" { $Categories["Performance"] += $TestCount }
+            "^Load" { $Categories["Load"] += $TestCount }
         }
     }
     
@@ -115,31 +117,33 @@ foreach ($Suite in $AllSuites) {
     $F = $Categories["Functional"]
     $I = $Categories["Integration"]
     $Perf = $Categories["Performance"]
+    $L = $Categories["Load"]
     
     # Calculate requirements
     $NegReq = [Math]::Max(50, [Math]::Ceiling(2 * $P))
     $EdgeReq = [Math]::Max(50, [Math]::Ceiling(2 * $P))
     $SecReq = 50
     $ConReq = 25
+    $UnitReq = 21
+    $FuncReq = 26
+    $IntReq = 25
+    $PerfReq = 16
+    $LoadReq = 10
     $RatioReq = 3 * $P
     
-    # Check compliance (includes mandatory additional files with fixed minimums)
-    $UnitReq = 21
-    $FunctionalReq = 26
-    $IntegrationReq = 25
-    $PerformanceReq = 16
-    
+    # Check compliance (all 10 categories)
     $Checks = @{
         "Positive" = ($P -ge 30)
         "Negative" = ($N -ge $NegReq)
         "Boundary" = ($E -ge $EdgeReq)
         "Security" = ($S -ge $SecReq)
         "Concurrency" = ($C -ge $ConReq)
-        "Ratio" = (($N + $E) -ge $RatioReq)
         "Unit" = ($U -ge $UnitReq)
-        "Functional" = ($F -ge $FunctionalReq)
-        "Integration" = ($I -ge $IntegrationReq)
-        "Performance" = ($Perf -ge $PerformanceReq)
+        "Functional" = ($F -ge $FuncReq)
+        "Integration" = ($I -ge $IntReq)
+        "Performance" = ($Perf -ge $PerfReq)
+        "Load" = ($L -ge $LoadReq)
+        "Ratio" = (($N + $E) -ge $RatioReq)
     }
     
     $AllPass = ($Checks.Values | Where-Object { $_ -eq $false } | Measure-Object).Count -eq 0
@@ -160,6 +164,7 @@ foreach ($Suite in $AllSuites) {
         Functional = $F
         Integration = $I
         Performance = $Perf
+        Load = $L
         RatioSum = ($N + $E)
         RatioReq = $RatioReq
         Status = $Status
@@ -180,8 +185,9 @@ switch ($OutputFormat) {
             Write-Host ("[$($R.Status)] $($R.Suite)") -ForegroundColor $Color
             if ($R.Status -eq "FAIL") {
                 Write-Host ("       Issues: $($R.Issues)") -ForegroundColor Gray
-                Write-Host ("       Required: P=$($R.Positive) N=$($R.Negative) B=$($R.Boundary) S=$($R.Security) C=$($R.Concurrency) | Ratio: $($R.RatioSum)/$($R.RatioReq)") -ForegroundColor Gray
-                Write-Host ("       Additional: U=$($R.Unit) F=$($R.Functional) I=$($R.Integration) Perf=$($R.Performance)") -ForegroundColor Gray
+                Write-Host ("       Core: P=$($R.Positive) N=$($R.Negative) B=$($R.Boundary) S=$($R.Security) C=$($R.Concurrency)") -ForegroundColor Gray
+                Write-Host ("       Add'l: U=$($R.Unit) F=$($R.Functional) I=$($R.Integration) Perf=$($R.Performance) L=$($R.Load)") -ForegroundColor Gray
+                Write-Host ("       Ratio: $($R.RatioSum)/$($R.RatioReq)") -ForegroundColor Gray
             }
         }
         
@@ -194,17 +200,31 @@ switch ($OutputFormat) {
         Write-Output "# Test Suite Compliance Report"
         Write-Output ""
         Write-Output "## Legend"
-        Write-Output "- **P**: Positive, **N**: Negative, **B**: Boundary, **S**: Security, **C**: Concurrency"
-        Write-Output "- **U**: Unit, **F**: Functional, **I**: Integration, **Perf**: Performance"
+        Write-Output "- **P**=Positive, **N**=Negative, **B**=Boundary, **S**=Security, **C**=Concurrency"
+        Write-Output "- **U**=Unit, **F**=Functional, **I**=Integration, **Pf**=Performance, **L**=Load"
         Write-Output ""
-        Write-Output "| Suite | Status | P | N | B | S | C | U | F | I | Perf | Ratio | Issues |"
-        Write-Output "|-------|--------|---|---|---|---|---|---|---|---|------|-------|--------|"
+        Write-Output "| Suite | Status | P | N | B | S | C | U | F | I | Pf | L | Issues |"
+        Write-Output "|-------|--------|---|---|---|---|---|---|---|---|----|----|--------|"
         foreach ($R in $Results) {
             $StatusIcon = switch ($R.Status) { "PASS" { "✅" } "FAIL" { "❌" } default { "⚠️" } }
-            Write-Output "| $($R.Suite) | $StatusIcon | $($R.Positive) | $($R.Negative) | $($R.Boundary) | $($R.Security) | $($R.Concurrency) | $($R.Unit) | $($R.Functional) | $($R.Integration) | $($R.Performance) | $($R.RatioSum)/$($R.RatioReq) | $($R.Issues) |"
+            Write-Output "| $($R.Suite) | $StatusIcon | $($R.Positive) | $($R.Negative) | $($R.Boundary) | $($R.Security) | $($R.Concurrency) | $($R.Unit) | $($R.Functional) | $($R.Integration) | $($R.Performance) | $($R.Load) | $($R.Issues) |"
         }
         Write-Output ""
         Write-Output "**Summary:** $PassCount PASS | $FailCount FAIL | $WarnCount SKIP"
+        Write-Output ""
+        Write-Output "## Minimum Requirements"
+        Write-Output "| Category | Minimum |"
+        Write-Output "|----------|---------|"
+        Write-Output "| Positive | ≥30 |"
+        Write-Output "| Negative | ≥50 AND ≥2×P |"
+        Write-Output "| Boundary | ≥50 AND ≥2×P |"
+        Write-Output "| Security | ≥50 |"
+        Write-Output "| Concurrency | ≥25 |"
+        Write-Output "| Unit | ≥21 |"
+        Write-Output "| Functional | ≥26 |"
+        Write-Output "| Integration | ≥25 |"
+        Write-Output "| Performance | ≥16 |"
+        Write-Output "| Load | ≥10 |"
     }
     
     "JSON" {
