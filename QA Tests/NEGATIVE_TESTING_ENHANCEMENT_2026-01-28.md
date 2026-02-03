@@ -388,7 +388,7 @@ Based on industry data and real-world testing:
 ## ✅ Integration with Existing Rules
 
 This enhancement integrates seamlessly with:
-- ✅ **3:1 Ratio Rule**: Negative tests still meet 1.5 × Positive minimum
+- ✅ **3:1 Ratio Rule**: Negative tests still meet 2 × Positive minimum
 - ✅ **Security Testing (Category 4)**: Injection tests cover OWASP Top 10
 - ✅ **Concurrency Testing (Category 5)**: Race condition examples added
 - ✅ **Defect Management**: Follows "Crashes, Corruption, Compliance" framework

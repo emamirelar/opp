@@ -32,8 +32,8 @@ Concurrency = 25 (FIXED)
 | Category | Previous Requirement | New Requirement | Change |
 |----------|---------------------|-----------------|---------|
 | **Positive** | Baseline (P) | Baseline (P) | No change |
-| **Negative** | ≥50 AND scales with P | **≥50 AND ≥1.5P** | ✅ Still scales |
-| **Edge Cases** | ≥50 AND scales with P | **≥50 AND ≥1.5P** | ✅ Still scales |
+| **Negative** | ≥50 AND scales with P | **≥50 AND ≥2×P** | ✅ Still scales |
+| **Edge Cases** | ≥50 AND scales with P | **≥50 AND ≥2×P** | ✅ Still scales |
 | **Security** | ≥50 AND scales with P | **≥50 FIXED** | ✅ No longer scales |
 | **Concurrency** | ≥25 AND scales with P | **≥25 FIXED** | ✅ No longer scales |
 
@@ -169,8 +169,8 @@ Use this calculation:
 ```
 Given P positive tests:
 
-Negative = max(50, 1.5 × P)
-Edge = max(50, 1.5 × P)
+Negative = max(50, 2 × P)
+Edge = max(50, 2 × P)
 Security = 50 (always)
 Concurrency = 25 (always)
 
@@ -200,8 +200,8 @@ The following files have been updated:
 | Rule Component | Status |
 |----------------|--------|
 | **3:1 Ratio** | ✅ Applies to Negative + Edge ONLY |
-| **Negative Tests** | ✅ Scale with positive (1.5P minimum) |
-| **Edge Tests** | ✅ Scale with positive (1.5P minimum) |
+| **Negative Tests** | ✅ Scale with positive (2×P minimum) |
+| **Edge Tests** | ✅ Scale with positive (2×P minimum) |
 | **Security Tests** | ✅ FIXED at 50 minimum |
 | **Concurrency Tests** | ✅ FIXED at 25 minimum |
 

@@ -59,16 +59,16 @@ All categories scale with positive test count
 ```
 (Negative + Edge) ≥ 3 × Positive
 
-Negative = max(50, 1.5 × Positive)
-Edge = max(50, 1.5 × Positive)
+Negative = max(50, 2 × Positive)
+Edge = max(50, 2 × Positive)
 Security = 50 (FIXED - does not scale)
 Concurrency = 25 (FIXED - does not scale)
 ```
 
 **Example (85 positive tests)**:
 - **Before**: 85+85+85+85+50 = 390 tests
-- **After**: 85+128+128+50+25 = 416 tests
-- **3:1 Check**: (128+128) = 256 ≥ 3×85 = 255 ✅
+- **After**: 85+170+170+50+25 = 500 tests
+- **3:1 Check**: (170+170) = 340 ≥ 3×85 = 255 ✅
 
 **Rationale**:
 - Security vulnerabilities are constant (OWASP Top 10)
@@ -500,13 +500,13 @@ public void ValidateThreshold_ExactLimit(decimal amount, bool expected)
 - [ ] Standard user workflows
 - [ ] CRUD operations with valid data
 
-### **Category 2: Negative Tests** (≥50 AND ≥1.5P)
+### **Category 2: Negative Tests** (≥50 AND ≥2×P)
 - [ ] **Input Validation**: BVA, invalid types, injection, malformed JSON
 - [ ] **Technical Edge Cases**: Null checks, collection stress, date paradoxes
 - [ ] **Environmental Failures**: Timeouts, API failures, connectivity issues
 - [ ] **Framework**: Targets Crashes, Corruption, Compliance
 
-### **Category 3: Edge Cases** (≥50 AND ≥1.5P)
+### **Category 3: Edge Cases** (≥50 AND ≥2×P)
 - [ ] **Financial Edge**: Rounding, zero-sum, extreme spans
 - [ ] **Temporal Boundaries**: Fiscal year, leap years, backdating
 - [ ] **Workflow States**: Double-submit, illegal transitions

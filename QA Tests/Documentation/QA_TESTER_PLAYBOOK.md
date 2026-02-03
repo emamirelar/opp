@@ -624,8 +624,8 @@ This ensures failure scenarios receive MORE attention than happy paths.
 | Category | Minimum Required | Formula |
 |----------|------------------|---------|
 | **Positive Tests** | 30-50 tests | Baseline (P) |
-| **Negative Tests** | ≥50 AND ≥1.5×P | Max(50, 1.5×P) |
-| **Edge Cases** | ≥50 AND ≥1.5×P | Max(50, 1.5×P) |
+| **Negative Tests** | ≥50 AND ≥2×P | Max(50, 2×P) |
+| **Edge Cases** | ≥50 AND ≥2×P | Max(50, 2×P) |
 | **Security/Validation** | ≥50 (FIXED) | Always 50+ |
 | **Concurrency** | ≥25 (FIXED) | Always 25+ |
 
@@ -640,12 +640,12 @@ REQUIREMENT: (Negative + Edge) ≥ 3 × Positive Tests
 | Category | Count | Calculation | Check |
 |----------|-------|-------------|-------|
 | Positive | 85 | Baseline | - |
-| Negative | 128 | Max(50, 1.5×85) = 128 | ✅ |
-| Edge Cases | 128 | Max(50, 1.5×85) = 128 | ✅ |
+| Negative | 170 | Max(50, 2×85) = 170 | ✅ |
+| Edge Cases | 170 | Max(50, 2×85) = 170 | ✅ |
 | Security | 50 | FIXED minimum | ✅ |
 | Concurrency | 25 | FIXED minimum | ✅ |
-| **Total** | **416** | - | - |
-| **3:1 Check** | - | (128+128) = 256 ≥ 3×85 = 255 | ✅ |
+| **Total** | **500** | - | - |
+| **3:1 Check** | - | (170+170) = 340 ≥ 3×85 = 255 | ✅ |
 
 ### 9.4 Category Checklist
 
@@ -1140,8 +1140,8 @@ test.describe('[Feature Name] E2E Tests', () => {
 ├─────────────────────────────────────────────────────────────────┤
 │  If you have [P] Positive Tests:                                │
 │                                                                  │
-│  Negative Tests:  MAX(50, 1.5 × P)                              │
-│  Edge Case Tests: MAX(50, 1.5 × P)                              │
+│  Negative Tests:  MAX(50, 2 × P)                                │
+│  Edge Case Tests: MAX(50, 2 × P)                                │
 │  Security Tests:  50 (FIXED)                                     │
 │  Concurrency:     25 (FIXED)                                     │
 │                                                                  │

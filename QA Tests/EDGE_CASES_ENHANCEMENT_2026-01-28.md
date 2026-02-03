@@ -530,7 +530,7 @@ Based on industry data:
 ## ✅ Integration with Existing Rules
 
 This enhancement integrates with:
-- ✅ **3:1 Ratio Rule**: Edge tests still meet 1.5 × Positive minimum
+- ✅ **3:1 Ratio Rule**: Edge tests still meet 2 × Positive minimum
 - ✅ **Negative Tests**: Financial edge cases complement error handling tests
 - ✅ **Security Testing**: Injection tests use edge case patterns
 - ✅ **Concurrency Testing**: Double-submit is both edge case and concurrency test
