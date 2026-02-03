@@ -7,14 +7,16 @@ namespace UNOPS.PAO.Business.Workflow.Adapters;
 /// <summary>
 /// PAO implementation of IEntityStageProvider.
 /// Provides entity stage information and update capabilities for workflow operations.
+/// Uses DbContextFactory to create separate context instances for each operation,
+/// avoiding DbContext concurrency issues with other async workflow operations.
 /// </summary>
 public class PaoEntityStageProvider : IEntityStageProvider
 {
-    private readonly AppDbContext _context;
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
 
-    public PaoEntityStageProvider(AppDbContext context)
+    public PaoEntityStageProvider(IDbContextFactory<AppDbContext> contextFactory)
     {
-        _context = context;
+        _contextFactory = contextFactory;
     }
 
     /// <summary>
@@ -25,9 +27,12 @@ public class PaoEntityStageProvider : IEntityStageProvider
         if (!int.TryParse(entityId, out var id)) 
             return null;
 
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        
         return entityName.ToLowerInvariant() switch
         {
-            "opportunity" => await _context.Opportunities
+            "opportunity" => await context.Opportunities
+                .AsNoTracking()
                 .Where(x => x.Id == id && !x.IsDeleted)
                 .Select(x => x.Stage)
                 .FirstOrDefaultAsync(),
@@ -58,9 +63,12 @@ public class PaoEntityStageProvider : IEntityStageProvider
         if (!int.TryParse(entityId, out var id)) 
             return false;
 
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        
         return entityName.ToLowerInvariant() switch
         {
-            "opportunity" => await _context.Opportunities
+            "opportunity" => await context.Opportunities
+                .AsNoTracking()
                 .AnyAsync(x => x.Id == id && !x.IsDeleted),
             _ => false
         };
@@ -74,9 +82,12 @@ public class PaoEntityStageProvider : IEntityStageProvider
         if (!int.TryParse(entityId, out var id)) 
             return "Unknown";
 
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        
         return entityName.ToLowerInvariant() switch
         {
-            "opportunity" => await _context.Opportunities
+            "opportunity" => await context.Opportunities
+                .AsNoTracking()
                 .Where(x => x.Id == id)
                 .Select(x => x.Name)
                 .FirstOrDefaultAsync() ?? "Unknown Opportunity",
@@ -89,7 +100,9 @@ public class PaoEntityStageProvider : IEntityStageProvider
     /// </summary>
     private async Task<bool> UpdateOpportunityStageAsync(int id, string newStage, int userId)
     {
-        var entity = await _context.Opportunities
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        
+        var entity = await context.Opportunities
             .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
         
         if (entity == null) 
@@ -99,7 +112,7 @@ public class PaoEntityStageProvider : IEntityStageProvider
         entity.LastModifiedBy = userId;
         entity.LastModifiedDate = DateTime.UtcNow;
         
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
         return true;
     }
 }
