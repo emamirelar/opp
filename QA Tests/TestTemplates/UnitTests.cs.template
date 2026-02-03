@@ -2,7 +2,12 @@
  * UNIT TESTS TEMPLATE
  * 
  * This template follows the comprehensive-test-strategy.mdc requirements:
- * - Minimum: At least 1 test (required but no scaling minimum)
+ * - Minimum: ≥21 tests (FIXED)
+ *   - Validation (5)
+ *   - Formatting (3)
+ *   - Calculations (5)
+ *   - Status Logic (5)
+ *   - Collections (3)
  * - Purpose: Isolated unit tests for individual methods/functions
  * 
  * Copy this template and replace [ENTITY] with your entity name.

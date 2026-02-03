@@ -2,7 +2,12 @@
  * INTEGRATION TESTS TEMPLATE
  * 
  * This template follows the comprehensive-test-strategy.mdc requirements:
- * - Minimum: At least 1 test (required but no scaling minimum)
+ * - Minimum: ≥25 tests (FIXED)
+ *   - CRUD Workflow (5)
+ *   - Search/Filter (5)
+ *   - Pagination (2)
+ *   - Relationships (3)
+ *   - Error Handling (10)
  * - Purpose: End-to-end workflow testing with real dependencies
  * 
  * Copy this template and replace [ENTITY] with your entity name.

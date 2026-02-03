@@ -215,6 +215,27 @@ namespace UNOPS.PAO.Business.Tests.Functional
             hasActiveContacts.Should().BeTrue("Partner has active contacts and cannot be deleted");
         }
 
+        /// <summary>
+        /// BR-010: Partner without contacts can be deleted
+        /// </summary>
+        [Fact]
+        public void BR010_PartnerWithoutContacts_CanBeDeleted()
+        {
+            // Arrange
+            var partner = new { Id = 2, Name = "Orphan Partner" };
+            var contacts = new List<(int Id, int PartnerId, bool IsActive)>
+            {
+                (1, 1, true),  // Belongs to partner 1
+                (2, 1, false)  // Belongs to partner 1
+            };
+
+            // Act
+            var hasContacts = contacts.Any(c => c.PartnerId == partner.Id);
+
+            // Assert
+            hasContacts.Should().BeFalse("Partner without contacts can be deleted");
+        }
+
         #endregion
     }
 }

@@ -14,14 +14,14 @@ This folder contains standardized test templates following the **3:1 Test Strate
 | `SecurityTests.cs.template` | ≥50 tests | FIXED |
 | `ConcurrencyTests.cs.template` | ≥25 tests | FIXED |
 
-### Category 2: Mandatory Additional (No Minimums)
+### Category 2: Mandatory Additional (Fixed Minimums)
 
-| Template | Required | Purpose |
-|----------|----------|---------|
-| `UnitTests.cs.template` | At least 1 | Isolated unit tests |
-| `FunctionalTests.cs.template` | At least 1 | Business rule verification |
-| `IntegrationTests.cs.template` | At least 1 | End-to-end workflow testing |
-| `PerformanceTests.cs.template` | At least 1 | Load and response time tests |
+| Template | Minimum | Coverage Breakdown |
+|----------|---------|-------------------|
+| `UnitTests.cs.template` | ≥21 | Validation (5), Formatting (3), Calculations (5), Status Logic (5), Collections (3) |
+| `FunctionalTests.cs.template` | ≥26 | Workflow Rules (10), Validation Rules (10), Constraint Rules (3), Audit Rules (3) |
+| `IntegrationTests.cs.template` | ≥25 | CRUD Workflow (5), Search/Filter (5), Pagination (2), Relationships (3), Error Handling (10) |
+| `PerformanceTests.cs.template` | ≥16 | Single Ops (2), Bulk Ops (3), Search (5), Concurrent Access (3), Memory (3) |
 
 ## 3:1 Ratio Requirement
 

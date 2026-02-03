@@ -74,7 +74,7 @@ The business card scanner feature requires camera access, which:
 
 ## Attempted Fixes
 
-### Fix 1: Dialog Selector Refinement ✅ (Partially Successful)
+### Fix 1: Dialog Selector Refinement ❌ (Failed - Incorrect Approach)
 **Commit**: `2934c5d7` - "fix(playwright): Improve dialog selector to exclude alertdialogs"
 
 **Change**: Updated `waitForDialog()` selector from:
@@ -82,11 +82,33 @@ The business card scanner feature requires camera access, which:
 // OLD - too generic
 const dialog = page.locator('p-dialog[role="dialog"], [role="dialog"]').first();
 
-// NEW - excludes alert dialogs
+// ATTEMPTED - excludes alert dialogs (STILL WRONG)
 const dialog = page.locator('p-dialog[role="dialog"]:not([role="alertdialog"])').first();
 ```
 
-**Result**: Selector now correctly excludes confirmation/alert dialogs, but tests still fail because **dialogs aren't rendering at all**.
+**Result**: This fix was incorrect. The selector still failed because `p-dialog` is an Angular component wrapper that does NOT have the `role="dialog"` attribute. PrimeNG renders the `role="dialog"` on an **inner `<div class="p-dialog">`** element, not on the `<p-dialog>` component itself.
+
+### Fix 2: Correct PrimeNG Dialog Selector ✅ (Corrected 2026-02-03)
+**Change**: Updated `waitForDialog()` to use the correct selector:
+```typescript
+// WRONG - p-dialog doesn't have role="dialog" attribute
+const dialog = page.locator('p-dialog[role="dialog"]:not([role="alertdialog"])').first();
+
+// CORRECT - p-dialog is the Angular component (no role attribute on it)
+// role="dialog" is on the inner .p-dialog div, but we just need the component
+const dialog = page.locator('p-dialog').first();
+```
+
+**PrimeNG HTML Structure**:
+```html
+<p-dialog>  <!-- Angular component wrapper - NO role attribute -->
+  <div class="p-dialog" role="dialog" ...>  <!-- Inner div HAS the role -->
+    <!-- dialog content -->
+  </div>
+</p-dialog>
+```
+
+**Result**: The corrected selector now properly targets the PrimeNG dialog component.
 
 ---
 

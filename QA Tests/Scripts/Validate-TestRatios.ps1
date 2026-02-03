@@ -202,28 +202,34 @@ $AllPassed = $AllPassed -and $ConcurrencyPass
 Write-Host "`nMANDATORY ADDITIONAL TESTS:" -ForegroundColor Yellow
 Write-Host "-" * 50
 
-$UnitPass = $Unit -ge 1
+# Fixed minimums for mandatory additional categories
+$UnitReq = 21        # Validation(5) + Formatting(3) + Calculations(5) + Status(5) + Collections(3)
+$FunctionalReq = 26  # Workflow(10) + Validation(10) + Constraint(3) + Audit(3)
+$IntegrationReq = 25 # CRUD(5) + Search(5) + Pagination(2) + Relationships(3) + ErrorHandling(10)
+$PerformanceReq = 16 # SingleOps(2) + BulkOps(3) + Search(5) + Concurrent(3) + Memory(3)
+
+$UnitPass = $Unit -ge $UnitReq
 $UnitStatus = if ($UnitPass) { "[PASS]" } else { "[FAIL]" }
 $UnitColor = if ($UnitPass) { "Green" } else { "Red" }
-Write-Host ("Unit:        {0,4} >= {1,4} (at least 1)            {2}" -f $Unit, 1, $UnitStatus) -ForegroundColor $UnitColor
+Write-Host ("Unit:        {0,4} >= {1,4} (FIXED minimum)         {2}" -f $Unit, $UnitReq, $UnitStatus) -ForegroundColor $UnitColor
 $AllPassed = $AllPassed -and $UnitPass
 
-$FunctionalPass = $Functional -ge 1
+$FunctionalPass = $Functional -ge $FunctionalReq
 $FunctionalStatus = if ($FunctionalPass) { "[PASS]" } else { "[FAIL]" }
 $FunctionalColor = if ($FunctionalPass) { "Green" } else { "Red" }
-Write-Host ("Functional:  {0,4} >= {1,4} (at least 1)            {2}" -f $Functional, 1, $FunctionalStatus) -ForegroundColor $FunctionalColor
+Write-Host ("Functional:  {0,4} >= {1,4} (FIXED minimum)         {2}" -f $Functional, $FunctionalReq, $FunctionalStatus) -ForegroundColor $FunctionalColor
 $AllPassed = $AllPassed -and $FunctionalPass
 
-$IntegrationPass = $Integration -ge 1
+$IntegrationPass = $Integration -ge $IntegrationReq
 $IntegrationStatus = if ($IntegrationPass) { "[PASS]" } else { "[FAIL]" }
 $IntegrationColor = if ($IntegrationPass) { "Green" } else { "Red" }
-Write-Host ("Integration: {0,4} >= {1,4} (at least 1)            {2}" -f $Integration, 1, $IntegrationStatus) -ForegroundColor $IntegrationColor
+Write-Host ("Integration: {0,4} >= {1,4} (FIXED minimum)         {2}" -f $Integration, $IntegrationReq, $IntegrationStatus) -ForegroundColor $IntegrationColor
 $AllPassed = $AllPassed -and $IntegrationPass
 
-$PerformancePass = $Performance -ge 1
+$PerformancePass = $Performance -ge $PerformanceReq
 $PerformanceStatus = if ($PerformancePass) { "[PASS]" } else { "[FAIL]" }
 $PerformanceColor = if ($PerformancePass) { "Green" } else { "Red" }
-Write-Host ("Performance: {0,4} >= {1,4} (at least 1)            {2}" -f $Performance, 1, $PerformanceStatus) -ForegroundColor $PerformanceColor
+Write-Host ("Performance: {0,4} >= {1,4} (FIXED minimum)         {2}" -f $Performance, $PerformanceReq, $PerformanceStatus) -ForegroundColor $PerformanceColor
 $AllPassed = $AllPassed -and $PerformancePass
 
 # 3:1 Ratio Check

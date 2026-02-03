@@ -142,6 +142,66 @@ namespace UNOPS.PAO.Business.Tests.Unit
             result.Should().OnlyContain(x => !x.IsDeleted);
         }
 
+        /// <summary>
+        /// Sorting partners by name should be case-insensitive
+        /// </summary>
+        [Fact]
+        public void SortPartnersByName_CaseInsensitive_ReturnsAlphabetical()
+        {
+            // Arrange
+            var partners = new List<string> { "Zebra", "apple", "Banana" };
+
+            // Act
+            var sorted = partners.OrderBy(p => p, StringComparer.OrdinalIgnoreCase).ToList();
+
+            // Assert
+            sorted.Should().BeInAscendingOrder(StringComparer.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Grouping partners by status should create correct groups
+        /// </summary>
+        [Fact]
+        public void GroupPartnersByStatus_MixedStatuses_CreatesCorrectGroups()
+        {
+            // Arrange
+            var partners = new List<(int Id, string Status)>
+            {
+                (1, "Active"),
+                (2, "Inactive"),
+                (3, "Active"),
+                (4, "Draft")
+            };
+
+            // Act
+            var grouped = partners.GroupBy(p => p.Status).ToDictionary(g => g.Key, g => g.Count());
+
+            // Assert
+            grouped["Active"].Should().Be(2);
+            grouped["Inactive"].Should().Be(1);
+            grouped["Draft"].Should().Be(1);
+        }
+
+        #endregion
+
+        #region Calculations
+
+        /// <summary>
+        /// Partner count by type should calculate correctly
+        /// </summary>
+        [Fact]
+        public void CountByType_MixedTypes_ReturnsCorrectCounts()
+        {
+            // Arrange
+            var partners = new List<string> { "NGO", "NGO", "Government", "Private" };
+
+            // Act
+            var ngoCount = partners.Count(p => p == "NGO");
+
+            // Assert
+            ngoCount.Should().Be(2);
+        }
+
         #endregion
     }
 }

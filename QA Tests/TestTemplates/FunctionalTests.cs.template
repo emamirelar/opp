@@ -2,7 +2,11 @@
  * FUNCTIONAL TESTS TEMPLATE
  * 
  * This template follows the comprehensive-test-strategy.mdc requirements:
- * - Minimum: At least 1 test (required but no scaling minimum)
+ * - Minimum: ≥26 tests (FIXED)
+ *   - Workflow Rules (10)
+ *   - Validation Rules (10)
+ *   - Constraint Rules (3)
+ *   - Audit Rules (3)
  * - Purpose: Business rule verification, workflow testing
  * 
  * Copy this template and replace [ENTITY] with your entity name.

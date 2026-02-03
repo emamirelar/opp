@@ -2,7 +2,12 @@
  * PERFORMANCE TESTS TEMPLATE
  * 
  * This template follows the comprehensive-test-strategy.mdc requirements:
- * - Minimum: At least 1 test (required but no scaling minimum)
+ * - Minimum: ≥16 tests (FIXED)
+ *   - Single Ops (2)
+ *   - Bulk Ops (3)
+ *   - Search (5)
+ *   - Concurrent Access (3)
+ *   - Memory (3)
  * - Purpose: Load testing, response time verification, throughput testing
  * 
  * Copy this template and replace [ENTITY] with your entity name.

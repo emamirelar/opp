@@ -123,7 +123,12 @@ foreach ($Suite in $AllSuites) {
     $ConReq = 25
     $RatioReq = 3 * $P
     
-    # Check compliance (includes mandatory additional files)
+    # Check compliance (includes mandatory additional files with fixed minimums)
+    $UnitReq = 21
+    $FunctionalReq = 26
+    $IntegrationReq = 25
+    $PerformanceReq = 16
+    
     $Checks = @{
         "Positive" = ($P -ge 30)
         "Negative" = ($N -ge $NegReq)
@@ -131,10 +136,10 @@ foreach ($Suite in $AllSuites) {
         "Security" = ($S -ge $SecReq)
         "Concurrency" = ($C -ge $ConReq)
         "Ratio" = (($N + $E) -ge $RatioReq)
-        "Unit" = ($U -ge 1)
-        "Functional" = ($F -ge 1)
-        "Integration" = ($I -ge 1)
-        "Performance" = ($Perf -ge 1)
+        "Unit" = ($U -ge $UnitReq)
+        "Functional" = ($F -ge $FunctionalReq)
+        "Integration" = ($I -ge $IntegrationReq)
+        "Performance" = ($Perf -ge $PerformanceReq)
     }
     
     $AllPass = ($Checks.Values | Where-Object { $_ -eq $false } | Measure-Object).Count -eq 0
