@@ -29,9 +29,11 @@ namespace UNOPS.PAO.Business.Tests.Opportunity;
 /// Tests data validation, business constraints, and error handling
 /// Created: January 15, 2026
 /// Priority: P1-P2
+/// SKIPPED: QA-009 - Z.EntityFramework.Extensions requires relational database (PostgreSQL)
 /// </summary>
 public class OpportunityValidationTests : IDisposable
 {
+    private const string SkipReason = "QA-009: Z.EntityFramework.Extensions requires relational database";
     private readonly DbContextOptions<UNOPSAppDbContext> _dbContextOptions;
     private readonly UNOPSAppDbContext _context;
     private readonly IMapper _mapper;
@@ -167,7 +169,7 @@ public class OpportunityValidationTests : IDisposable
         await act.Should().ThrowAsync<Exception>();
     }
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P1")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-002")]
@@ -185,7 +187,7 @@ public class OpportunityValidationTests : IDisposable
         await act.Should().ThrowAsync<Exception>().WithMessage("*length*");
     }
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P1")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-003")]
@@ -252,7 +254,7 @@ public class OpportunityValidationTests : IDisposable
         }
     }
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P1")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-005")]
@@ -289,7 +291,7 @@ public class OpportunityValidationTests : IDisposable
         result.InitiativeBudgetUSD.Should().Be(0);
     }
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P1")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-006")]
@@ -332,7 +334,7 @@ public class OpportunityValidationTests : IDisposable
 
     #region P1 - Date Validation Tests
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P1")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-007")]
@@ -358,7 +360,7 @@ public class OpportunityValidationTests : IDisposable
         }
     }
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P1")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-008")]
@@ -400,7 +402,7 @@ public class OpportunityValidationTests : IDisposable
 
     #region P1 - Description Validation Tests
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P1")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-009")]
@@ -434,7 +436,7 @@ public class OpportunityValidationTests : IDisposable
         result.Should().NotBeNull();
     }
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P1")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-010")]
@@ -476,7 +478,7 @@ public class OpportunityValidationTests : IDisposable
 
     #region P2 - Challenges Field Validation Tests
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P2")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-011")]
@@ -500,7 +502,7 @@ public class OpportunityValidationTests : IDisposable
         }
     }
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P2")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-012")]
@@ -570,7 +572,7 @@ public class OpportunityValidationTests : IDisposable
         }
     }
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P2")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-014")]
@@ -640,7 +642,7 @@ public class OpportunityValidationTests : IDisposable
         }
     }
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P2")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-016")]
@@ -684,7 +686,7 @@ public class OpportunityValidationTests : IDisposable
 
     #region P2 - Collection Validation Tests
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P2")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-017")]
@@ -721,7 +723,7 @@ public class OpportunityValidationTests : IDisposable
         result.Should().NotBeNull();
     }
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P2")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-018")]
@@ -762,7 +764,7 @@ public class OpportunityValidationTests : IDisposable
 
     #region P2 - Update Validation Tests
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P2")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-019")]
@@ -806,7 +808,7 @@ public class OpportunityValidationTests : IDisposable
         savedOpportunity.InitiativeBudgetUSD.Should().Be(1000000); // Unchanged
     }
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P2")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-020")]

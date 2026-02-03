@@ -29,9 +29,11 @@ namespace UNOPS.PAO.Business.Tests.Opportunity;
 /// Tests real-world opportunity management scenarios end-to-end
 /// Created: January 15, 2026
 /// Priority: P1 (High)
+/// SKIPPED: QA-009 - Z.EntityFramework.Extensions requires relational database (PostgreSQL)
 /// </summary>
 public class OpportunityIntegrationTests : IDisposable
 {
+    private const string SkipReason = "QA-009: Z.EntityFramework.Extensions requires relational database";
     private readonly DbContextOptions<UNOPSAppDbContext> _dbContextOptions;
     private readonly UNOPSAppDbContext _context;
     private readonly IMapper _mapper;
@@ -171,7 +173,7 @@ public class OpportunityIntegrationTests : IDisposable
 
     #region P1 - Complete Opportunity Lifecycle Tests
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P1")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-001")]
@@ -235,7 +237,7 @@ public class OpportunityIntegrationTests : IDisposable
         afterDelete.Should().BeNull(); // Soft-deleted records not returned
     }
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P1")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-002")]
@@ -317,7 +319,7 @@ public class OpportunityIntegrationTests : IDisposable
 
     #region P1 - Multi-Partner Integration Tests
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P1")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-003")]
@@ -371,7 +373,7 @@ public class OpportunityIntegrationTests : IDisposable
         savedOpportunity.Should().NotBeNull();
     }
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P1")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-004")]
@@ -417,7 +419,7 @@ public class OpportunityIntegrationTests : IDisposable
 
     #region P1 - Workflow Progression Tests
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P1")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-005")]
@@ -477,7 +479,7 @@ public class OpportunityIntegrationTests : IDisposable
 
     #region P1 - Data Validation and Constraints Tests
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P1")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-INT-006")]
@@ -515,7 +517,7 @@ public class OpportunityIntegrationTests : IDisposable
         await act.Should().NotThrowAsync<NullReferenceException>();
     }
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P1")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-INT-007")]
@@ -569,7 +571,7 @@ public class OpportunityIntegrationTests : IDisposable
 
     #region P1 - Complex Query and Filter Tests
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P1")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-008")]
@@ -638,7 +640,7 @@ public class OpportunityIntegrationTests : IDisposable
 
     #region P1 - Bulk Operations Tests
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P1")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-009")]
@@ -708,7 +710,7 @@ public class OpportunityIntegrationTests : IDisposable
 
     #region P2 - Performance and Load Tests
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P2")]
     [Trait("Type", "Performance")]
     [Trait("TestId", "TC-UNOPS-INT-010")]
@@ -745,7 +747,7 @@ public class OpportunityIntegrationTests : IDisposable
 
     #region P1 - External Stakeholder Management Tests
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P1")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-011")]
@@ -786,7 +788,7 @@ public class OpportunityIntegrationTests : IDisposable
         result.MiscExternalStakeholders.Should().Contain("Ministry of Infrastructure");
     }
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P1")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-012")]
@@ -826,7 +828,7 @@ public class OpportunityIntegrationTests : IDisposable
 
     #region P1 - Bulk Operations Tests
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P1")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-013")]
@@ -871,7 +873,7 @@ public class OpportunityIntegrationTests : IDisposable
         savedOpportunities.Should().OnlyContain(o => !string.IsNullOrEmpty(o.Stage));
     }
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P1")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-014")]
@@ -912,7 +914,7 @@ public class OpportunityIntegrationTests : IDisposable
 
     #region P2 - Pooled Funding Tests
 
-    [Fact]
+    [Fact(Skip = SkipReason)]
     [Trait("Category", "P2")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-015")]
