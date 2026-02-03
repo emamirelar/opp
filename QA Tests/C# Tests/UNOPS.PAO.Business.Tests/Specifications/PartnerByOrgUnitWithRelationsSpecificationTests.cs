@@ -276,6 +276,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             var contact = new Contact 
             { 
                 Id = 1, 
+                PartnerId = 2, // Link contact to partner2
                 FirstName = "Test", 
                 LastName = "Contact",
                 Name = "Test Contact",
