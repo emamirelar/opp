@@ -1,8 +1,9 @@
-<p-panel #mainPanel>
-  <ng-template #header>
-    <div class="flex">
+<p-panel #mainPanel [toggleable]="true" [collapsed]="collapsed()">
+  <ng-template pTemplate="header">
+    <div class="flex w-full pr-4">
       <div class="grow flex items-center gap-2">
-        <div class="font-semibold">{{ 'title.stage' | translate }}</div>
+        <i class="pi pi-sitemap text-unops-secondary"></i>
+        <span class="font-semibold">{{ 'title.stage' | translate }}</span>
         @if (workflowDataLoading()) {
           <div class="flex flex-wrap gap-6 items-center">
             <p-skeleton height="1.5rem" width="8rem" class="ml-3 mr-3"></p-skeleton>
@@ -49,7 +50,7 @@
       </div>
     </div>
   </ng-template>
-  <ng-template #icons>
+  <ng-template pTemplate="icons">
     <div class="flex gap-2 items-center">
       <!-- Cancel button - visible for OM when in IDENTIFY & PROFILE and not in workflow -->
       @if (canCancel()) {

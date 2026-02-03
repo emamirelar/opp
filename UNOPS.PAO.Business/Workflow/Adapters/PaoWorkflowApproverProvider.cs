@@ -13,10 +13,12 @@ namespace UNOPS.PAO.Business.Workflow.Adapters;
 /// Provides entity-specific workflow approvers based on stakeholders and entity roles.
 /// For GO transition: Uses DoA Level 2 holders from the opportunity's ResponsibleOrgUnit.
 /// For other transitions: Uses stakeholder-based lookup.
+/// Uses DbContextFactory to create separate context instances for each operation,
+/// avoiding DbContext concurrency issues with other async workflow operations.
 /// </summary>
 public class PaoWorkflowApproverProvider : IPaoWorkflowApproverProvider
 {
-    private readonly AppDbContext _context;
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
     private readonly WorkflowDbContext _workflowContext;
     private readonly ILogger<PaoWorkflowApproverProvider>? _logger;
 
@@ -26,11 +28,11 @@ public class PaoWorkflowApproverProvider : IPaoWorkflowApproverProvider
     private const string DoA2RoleCode = "DoA2_OrganizationHierarchy";
 
     public PaoWorkflowApproverProvider(
-        AppDbContext context,
+        IDbContextFactory<AppDbContext> contextFactory,
         WorkflowDbContext workflowContext,
         ILogger<PaoWorkflowApproverProvider>? logger = null)
     {
-        _context = context;
+        _contextFactory = contextFactory;
         _workflowContext = workflowContext;
         _logger = logger;
     }
@@ -198,8 +200,10 @@ public class PaoWorkflowApproverProvider : IPaoWorkflowApproverProvider
         int opportunityId,
         string toStage)
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        
         // Get the opportunity's ResponsibleOrgUnitId
-        var opportunity = await _context.Set<Opportunity>()
+        var opportunity = await context.Set<Opportunity>()
             .AsNoTracking()
             .Where(o => o.Id == opportunityId && !o.IsDeleted)
             .Select(o => new { o.Id, o.ResponsibleOrgUnitId })
@@ -231,7 +235,9 @@ public class PaoWorkflowApproverProvider : IPaoWorkflowApproverProvider
         int orgUnitId,
         string toStage)
     {
-        var doaHolders = await _context.Set<EntityUserRole>()
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        
+        var doaHolders = await context.Set<EntityUserRole>()
             .AsNoTracking()
             .Include(e => e.EntityRole)
             .Include(e => e.User)
@@ -274,8 +280,10 @@ public class PaoWorkflowApproverProvider : IPaoWorkflowApproverProvider
         List<string> roleNames,
         string toStage)
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        
         // Get stakeholders with the required entity roles
-        var stakeholders = await _context.Set<OpportunityStakeholder>()
+        var stakeholders = await context.Set<OpportunityStakeholder>()
             .AsNoTracking()
             .Include(s => s.EntityRole)
             .Include(s => s.User)
@@ -317,8 +325,10 @@ public class PaoWorkflowApproverProvider : IPaoWorkflowApproverProvider
             return await GetDoA2HolderTasksForOpportunityAsync(opportunityId);
         }
 
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        
         // For other transitions, use stakeholder-based lookup
-        var stakeholders = await _context.Set<OpportunityStakeholder>()
+        var stakeholders = await context.Set<OpportunityStakeholder>()
             .AsNoTracking()
             .Include(s => s.EntityRole)
             .Where(s => s.OpportunityId == opportunityId &&
@@ -341,8 +351,10 @@ public class PaoWorkflowApproverProvider : IPaoWorkflowApproverProvider
     /// </summary>
     private async Task<List<WorkflowTaskModel>> GetDoA2HolderTasksForOpportunityAsync(int opportunityId)
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        
         // Get the opportunity's ResponsibleOrgUnitId
-        var opportunity = await _context.Set<Opportunity>()
+        var opportunity = await context.Set<Opportunity>()
             .AsNoTracking()
             .Where(o => o.Id == opportunityId && !o.IsDeleted)
             .Select(o => new { o.Id, o.ResponsibleOrgUnitId })
@@ -353,7 +365,7 @@ public class PaoWorkflowApproverProvider : IPaoWorkflowApproverProvider
             return new List<WorkflowTaskModel>();
         }
 
-        var doaHolders = await _context.Set<EntityUserRole>()
+        var doaHolders = await context.Set<EntityUserRole>()
             .AsNoTracking()
             .Include(e => e.EntityRole)
             .Where(e => !e.IsDeleted &&
@@ -379,7 +391,10 @@ public class PaoWorkflowApproverProvider : IPaoWorkflowApproverProvider
         int opportunityId, 
         List<string> roleNames)
     {
-        var stakeholders = await _context.Set<OpportunityStakeholder>()
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        
+        var stakeholders = await context.Set<OpportunityStakeholder>()
+            .AsNoTracking()
             .Include(s => s.EntityRole)
             .Where(s => s.OpportunityId == opportunityId &&
                        s.UserId.HasValue &&
