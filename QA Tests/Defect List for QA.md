@@ -74,14 +74,20 @@ These items were originally logged as developer defects (DEF-XXX) but have been 
 - **Blocked by Credentials:** 2 (QA-014, QA-015 - oUP integration testing)
 - **Blocked by Implementation:** 1 (QA-016 - Go Decision PRD tests blocked by DEF-008)
 - **Blocked by Environment:** 0 ✅ (QA-017 resolved - webServer auto-starts Angular)
-- **Critical:** 0 ✅ (QA-017 resolved)
+- **Critical:** 1 ⚠️ (QA-010 - AutoMapper DI causing ~40 test failures)
 - **High Priority:** 11 (QA-007, QA-008 - require real backend; QA-009, QA-010 - InMemory DB; QA-011, QA-012 - CI workarounds; QA-014, QA-015 - oUP integration; QA-016 - Go Decision; QA-018, QA-019 - reclassified blockers)
 
-### Latest Playwright Test Results (2026-02-02, Chromium)
-- **Passed:** 135 (54%)
-- **Failed:** 74 (30%)
-- **Skipped:** 40 (16%)
-- **Duration:** 35.8 minutes
+### Latest .NET Test Results (2026-02-03)
+- **Passed:** 2,246 (94.6%)
+- **Failed:** 46 (1.9%)
+- **Skipped:** 82 (3.5%)
+- **Duration:** 2m 3s
+- **Primary Blocker:** QA-010 (AutoMapper EntityArtifactValueResolver) - ~40 failures
+
+### Latest Playwright Test Results (2026-02-03, Chromium)
+- **Status:** WebServer timeout (180s exceeded)
+- **Tests Listed:** 249+ tests available
+- **Blocked:** 80 tests (Go Decision + oUP Integration) marked as Skip
 
 ---
 
@@ -206,38 +212,58 @@ These items were originally logged as developer defects (DEF-XXX) but have been 
 
 ---
 
-## Test Execution Summary (2026-02-02)
+## Test Execution Summary (2026-02-03)
 
-### .NET Tests
+### .NET Tests (Latest Run)
 
 | Test Suite | Passed | Failed | Skipped | Total | Duration |
 |------------|--------|--------|---------|-------|----------|
-| **Business.Tests** | 2,214 ✅ | 44 ❌ | 69 ⏭️ | 2,327 | 1m 22s |
-| **Presentation.Tests** | 29 ✅ | 0 ❌ | 0 ⏭️ | 29 | 5s |
+| **Business.Tests** | 2,246 ✅ | 46 ❌ | 82 ⏭️ | 2,374 | 2m 3s |
 
-**Pass Rate:** 95% (2,243 / 2,356)
+**Pass Rate:** 94.6% (2,246 / 2,374)
 
-**Key Failure Patterns:**
-1. **QA-009 (Z.EntityFramework.Extensions):** ~38 tests failing due to `GetRelationalModel` with InMemory database
-2. **QA-010 (AutoMapper EntityArtifactValueResolver):** ~5 tests failing due to DI resolution issues
-3. **Soft Delete Logic:** Tests expecting null after delete getting entity with `IsDeleted = true`
-4. **Permission Tests:** Some tests expect null/exception but get data (permission logic issues)
+**Key Failure Patterns (46 Failures):**
 
-### Playwright Tests (In Progress)
+| Category | Count | Root Cause | QA Issue |
+|----------|-------|------------|----------|
+| AutoMapper EntityArtifactValueResolver | ~40 | `MissingMethodException` - No parameterless constructor | QA-010 |
+| Specification Tests | 1 | Assertion failure in PartnerByOrgUnitWithRelationsSpec | Investigation needed |
+| Concurrency Tests | 1 | Timeout in ConcurrentOperations test | Flaky test |
+| Performance Tests | 1 | OrganizationHierarchyLookup exceeded 500ms threshold | Environment-dependent |
+| Other Opportunity Tests | 3 | Cascading failures from AutoMapper issue | QA-010 |
+
+**Skipped Tests (82):**
+- 80 blocked tests (Go Decision: 40, oUP Integration: 40)
+- 2 PostgreSQL-only tests (specification tests requiring real DB)
+
+**Top Failed Tests:**
+1. `UpdateWhereSection_WithCountries_Success` - AutoMapper
+2. `CreateOpportunityWithManyChildRecords_Success` - AutoMapper
+3. `OpportunityLifecycle_CreateReadUpdateDelete_Success` - AutoMapper
+4. `UpdateOpportunity_ClearOptionalFields_Success` - AutoMapper
+5. `GetOpportunityDetailsForAI_ReturnsCompleteContext` - AutoMapper
+... (35+ more AutoMapper-related failures)
+
+### Playwright Tests (2026-02-03)
 
 | Category | Status |
 |----------|--------|
-| oUP Integration | 32 skipped (credentials required - QA-014) |
-| Other Tests | ~224 tests executing (real backend) |
+| **WebServer Startup** | ⚠️ Timed out (180s) - Angular dev server slow to start |
+| oUP Integration | 40 skipped (credentials required - QA-014) |
+| Go Decision | 40 skipped (feature not implemented - DEF-008) |
+| Other Tests | ~249 tests (execution blocked by webserver) |
+
+**Note:** Playwright webserver auto-start is configured but Angular dev server exceeded 180s timeout on this machine. This is environment-dependent - consider increasing timeout or pre-starting dev server.
 
 ### Blocked Tests Summary
 
 | Blocker | Tests Affected | Resolution |
 |---------|----------------|------------|
-| QA-009 (InMemory DB) | ~38 Opportunity tests | Need real PostgreSQL or repository mocking |
-| QA-010 (AutoMapper DI) | ~5 tests | Need proper DI integration |
-| QA-014 (oUP Credentials) | 34 integration tests | Request credentials from IT |
-| DEF-005 Phase 2 | 1,800 tests | Need 9 managers created |
+| **QA-010 (AutoMapper DI)** | **~40 Opportunity tests** | Need proper DI integration for EntityArtifactValueResolver |
+| QA-009 (InMemory DB) | ~3 Opportunity tests | Need real PostgreSQL or repository mocking |
+| QA-014 (oUP Credentials) | 40 C# + 34 Playwright tests | Request credentials from IT |
+| DEF-008 (Go Decision) | 40 C# tests | Feature not implemented |
+| Playwright WebServer | ~249 Playwright tests | Increase timeout or pre-start dev server |
 
 ### Immediate (Next Sprint):
 - [ ] **QA-007, QA-008:** Test dialog functionality against real backend (integration/staging)
