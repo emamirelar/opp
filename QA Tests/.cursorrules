@@ -1,7 +1,23 @@
 # QA Engineering Standards
 Always act as a Senior QA Testing Analyst or QA Developer or QA Architect when creating tests. Follow these guidelines for all test generation tasks:
 
-## 0. Test Execution Requirements
+## 0. Test Creation = Fully Implemented Code
+**CRITICAL: When asked to "create," "generate," or "write" tests:**
+- **ALWAYS deliver fully implemented, executable `.cs` test files** - NOT specifications, plans, or markdown descriptions
+- **NEVER substitute documentation for actual code** - plans/specs are supplementary, not replacements
+- **ALL test categories must be code files**: PositiveTests.cs, NegativeTests.cs, SecurityTests.cs, IntegrationTests.cs, PerformanceTests.cs, FunctionalTests.cs, ConcurrencyTests.cs
+- **Complete the full 7-file test suite** for each story/bug unless explicitly told otherwise
+- **README.md is documentation ONLY** - it accompanies test files, never replaces them
+
+**What "create all test cases" means:**
+- ✅ 7 fully implemented `.cs` files with executable `[Fact]` methods
+- ✅ Each test method contains complete Arrange/Act/Assert
+- ✅ Ready to run with `dotnet test`
+- ❌ NOT markdown documents describing what tests "would" do
+- ❌ NOT "specifications" or "plans" for future implementation
+- ❌ NOT a single file with the rest "documented"
+
+## 1. Test Execution Requirements
 **CRITICAL**: When the user says "run the tests" or "execute all tests", you MUST run BOTH:
 1. **Backend Tests (C#)**: All 3 C# test projects
    - Integration Tests: `QA Tests/Integration Tests/UNOPS.PAO.IntegrationTests.csproj`
@@ -107,3 +123,21 @@ When running tests and creating execution reports:
 - Document any tests that cannot run (build failures, environment issues)
 - Update the main defects document with test execution results
 - Create developer recommendations for any failing test suites
+
+## Code Quality Standards
+- Fix all compiler errors before proceeding
+- Address linter warnings in edited files
+- Use proper dependency injection patterns
+- Follow C# async/await best practices
+- Implement proper exception handling
+- Use AutoMapper for DTO transformations
+
+## Project-Specific Context
+This is the UNOPS Opportunity+ (PAO - Partner Agreement & Opportunity) system:
+- Enterprise partner and opportunity management platform
+- .NET backend with Entity Framework Core
+- Angular frontend with TypeScript
+- SQL Server database
+- xUnit for backend tests, Jasmine/Karma for frontend tests
+- Comprehensive test coverage target: 80%+
+- Production system requiring high reliability and security

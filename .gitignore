@@ -515,3 +515,25 @@ FodyWeavers.xsd
 /*_SUMMARY*.md
 /*_COMPLETE*.md
 /*_REPORT*.md
+
+# ===========================
+# Local Documentation & Task Folders
+# ===========================
+
+.doc
+.doc-local
+.task
+.tasks
+/Cursor/Rules
+
+# ===========================
+# VS Code Backups
+# ===========================
+
+.vscode_backup/
+
+# ===========================
+# Failed Command Output Files
+# ===========================
+
+QAProject*
