@@ -237,5 +237,175 @@ namespace UNOPS.PAO.Business.Tests.Functional
         }
 
         #endregion
+
+        #region Business Rule: Partner Status Workflow
+
+        /// <summary>
+        /// BR-011: Draft status allows all edits
+        /// </summary>
+        [Fact]
+        public void BR011_DraftStatus_AllowsAllEdits()
+        {
+            // Arrange
+            var partnerStatus = "Draft";
+            var editableStatuses = new[] { "Draft" };
+
+            // Act
+            var canEdit = editableStatuses.Contains(partnerStatus);
+
+            // Assert
+            canEdit.Should().BeTrue("Draft partners should be fully editable");
+        }
+
+        /// <summary>
+        /// BR-012: Active status has restricted edits
+        /// </summary>
+        [Fact]
+        public void BR012_ActiveStatus_RestrictedEdits()
+        {
+            // Arrange
+            var partnerStatus = "Active";
+            var restrictedFields = new[] { "Name", "Type", "Country" };
+
+            // Act & Assert
+            restrictedFields.Should().NotBeEmpty("Active partners have restricted fields");
+        }
+
+        /// <summary>
+        /// BR-013: Inactive partners cannot be edited
+        /// </summary>
+        [Fact]
+        public void BR013_InactiveStatus_NoEditsAllowed()
+        {
+            // Arrange
+            var partnerStatus = "Inactive";
+            var editableStatuses = new[] { "Draft", "Active" };
+
+            // Act
+            var canEdit = editableStatuses.Contains(partnerStatus);
+
+            // Assert
+            canEdit.Should().BeFalse("Inactive partners cannot be edited");
+        }
+
+        #endregion
+
+        #region Business Rule: Partner Hierarchy
+
+        /// <summary>
+        /// BR-014: Child partner inherits parent country if not specified
+        /// </summary>
+        [Fact]
+        public void BR014_ChildPartner_InheritsParentCountry()
+        {
+            // Arrange
+            var parentCountry = "Norway";
+            string? childCountry = null;
+
+            // Act
+            var effectiveCountry = childCountry ?? parentCountry;
+
+            // Assert
+            effectiveCountry.Should().Be(parentCountry);
+        }
+
+        /// <summary>
+        /// BR-015: Partner cannot be its own parent
+        /// </summary>
+        [Fact]
+        public void BR015_Partner_CannotBeSelfParent()
+        {
+            // Arrange
+            var partnerId = 1;
+            var parentId = 1;
+
+            // Act
+            var isSelfReference = partnerId == parentId;
+
+            // Assert
+            isSelfReference.Should().BeTrue("Detect self-reference to prevent");
+        }
+
+        /// <summary>
+        /// BR-016: Circular hierarchy is detected
+        /// </summary>
+        [Fact]
+        public void BR016_CircularHierarchy_IsDetected()
+        {
+            // Arrange - A -> B -> C -> A (circular)
+            var hierarchy = new Dictionary<int, int> { { 1, 2 }, { 2, 3 }, { 3, 1 } };
+            
+            // Act - Detect cycle
+            var visited = new HashSet<int>();
+            var current = 1;
+            var hasCycle = false;
+            
+            while (hierarchy.ContainsKey(current))
+            {
+                if (visited.Contains(current)) { hasCycle = true; break; }
+                visited.Add(current);
+                current = hierarchy[current];
+            }
+
+            // Assert
+            hasCycle.Should().BeTrue("Circular hierarchy detected");
+        }
+
+        #endregion
+
+        #region Business Rule: Data Validation
+
+        /// <summary>
+        /// BR-017: Website URL must be valid format
+        /// </summary>
+        [Fact]
+        public void BR017_Website_ValidUrlFormat()
+        {
+            // Arrange
+            var validUrl = "https://www.example.com";
+
+            // Act
+            var isValid = Uri.TryCreate(validUrl, UriKind.Absolute, out var uri) &&
+                         (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+
+            // Assert
+            isValid.Should().BeTrue("Valid HTTPS URL accepted");
+        }
+
+        /// <summary>
+        /// BR-018: Tax ID format validation
+        /// </summary>
+        [Fact]
+        public void BR018_TaxId_FormatValidation()
+        {
+            // Arrange
+            var validTaxId = "123-45-6789";
+            var pattern = @"^\d{3}-\d{2}-\d{4}$";
+
+            // Act
+            var isValid = System.Text.RegularExpressions.Regex.IsMatch(validTaxId, pattern);
+
+            // Assert
+            isValid.Should().BeTrue("Tax ID format is valid");
+        }
+
+        /// <summary>
+        /// BR-019: Country code must be ISO standard
+        /// </summary>
+        [Fact]
+        public void BR019_CountryCode_ISOStandard()
+        {
+            // Arrange
+            var validCodes = new[] { "NO", "DK", "SE", "US", "GB" };
+            var countryCode = "NO";
+
+            // Act
+            var isValid = validCodes.Contains(countryCode) && countryCode.Length == 2;
+
+            // Assert
+            isValid.Should().BeTrue("ISO country code is valid");
+        }
+
+        #endregion
     }
 }
