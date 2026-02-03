@@ -174,6 +174,18 @@ public class Opportunity : ModifiableDeletableEntity
     [NotMapped]
     public virtual ICollection<EntityRolePerson>? RoleAssignments { get; set; }
     
+    /// <summary>
+    /// The Executive assigned to direct Opportunity development after Go decision.
+    /// Set by the decision-maker during Go approval. Nullable until Go decision is made.
+    /// </summary>
+    public int? ExecutiveId { get; set; }
+    
+    /// <summary>
+    /// Navigation property to the assigned Executive user.
+    /// </summary>
+    [ForeignKey(nameof(ExecutiveId))]
+    public virtual PAOUser? Executive { get; set; }
+    
     // Audit user navigation properties
     [ForeignKey(nameof(CreatedBy))]
     public virtual PAOUser? CreatedByUser { get; set; }

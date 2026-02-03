@@ -171,6 +171,48 @@ export interface EntityPermissions {
   canImport?: boolean;
   permissionSource?: string;
   notes?: string;
+  /**
+   * Indicates if the entity is in an immutable state (e.g., after Go/No-Go decision).
+   * When true, the entity cannot be modified regardless of other permissions.
+   */
+  isImmutable?: boolean;
+}
+
+/**
+ * Payload for Go Decision (Approve) workflow action
+ * Used when an approver confirms a Go decision for an opportunity
+ */
+export interface GoDecisionPayload {
+  /** Rationale explaining the decision to approve */
+  rationale: string;
+  /** ID of the assigned Executive (Director/Manager/OiC) */
+  executiveId: number;
+  /** Confirmation that the approver has acknowledged the confirmation statement */
+  confirmationAcknowledged: boolean;
+}
+
+/**
+ * Payload for No-Go Decision (Reject) workflow action
+ * Used when an approver rejects an opportunity with No-Go decision
+ */
+export interface NoGoDecisionPayload {
+  /** Rationale explaining the decision to reject */
+  rationale: string;
+  /** Confirmation that the approver has acknowledged the confirmation statement */
+  confirmationAcknowledged: boolean;
+}
+
+/**
+ * Executive option for the Go Decision dropdown
+ * Represents a Director/Manager/OiC who can be assigned as Executive
+ */
+export interface ExecutiveOption {
+  /** User ID of the executive */
+  value: number;
+  /** Display name (e.g., "John Doe - Director") */
+  label: string;
+  /** Additional info (e.g., "Suggested" for pre-selection) */
+  description?: string;
 }
 
 /**

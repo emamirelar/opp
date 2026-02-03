@@ -1,10 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using UNOPS.PAO.Business.Managers;
 using UNOPS.PAO.DataAccess.Context;
+using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.MailSender;
 using UNOPS.PAO.MailSender.Interfaces;
 using UNOPS.Workflow.Business.Interfaces;
+using System.Text.Json;
 
 namespace UNOPS.PAO.Business.Workflow.Adapters;
 
@@ -72,6 +76,7 @@ public record WorkflowRecalledEmailModel
 /// <summary>
 /// PAO implementation of IWorkflowNotificationService.
 /// Sends workflow-related email notifications using PAO's email infrastructure.
+/// Also creates in-system notifications for the notification bell.
 /// </summary>
 public class PaoWorkflowNotificationService : IWorkflowNotificationService
 {
@@ -79,23 +84,34 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
     private readonly AppDbContext _context;
     private readonly ILogger<PaoWorkflowNotificationService> _logger;
     private readonly IConfiguration _configuration;
+    private readonly NotificationManager _notificationManager;
     private readonly string _baseUrl;
+
+    /// <summary>
+    /// Category identifier for workflow approval notifications.
+    /// Used to identify and mark as done when decision is made.
+    /// </summary>
+    public const string WorkflowApprovalCategory = "workflow_approval";
 
     public PaoWorkflowNotificationService(
         IEmailSender emailSender,
         AppDbContext context,
         ILogger<PaoWorkflowNotificationService> logger,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        NotificationManager notificationManager)
     {
         _emailSender = emailSender;
         _context = context;
         _logger = logger;
         _configuration = configuration;
+        _notificationManager = notificationManager;
         _baseUrl = _configuration["AppBaseUrl"] ?? "https://pao.unops.org";
     }
 
     /// <summary>
     /// Notifies DoA Level 2 holders about a new Go Decision requiring their attention.
+    /// Creates both email notifications and in-system notifications for the notification bell.
+    /// Email includes CC recipients: Opportunity Manager, workflow initiator, Director/Manager.
     /// </summary>
     public async Task NotifyNewApprovalRequestAsync(WorkflowNotification notification)
     {
@@ -111,6 +127,9 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
 
             var recipientNames = await GetRecipientNamesAsync(notification.RecipientUserIds);
             var orgUnitName = await GetOrgUnitNameForOpportunityAsync(notification.EntityId);
+
+            // Build CC recipient list (Opportunity Manager, initiator, Director/Manager)
+            var ccRecipients = await BuildCCRecipientsAsync(notification);
 
             var emailModel = new ApprovalRequestEmailModel
             {
@@ -128,20 +147,97 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
             {
                 TemplateName = "WorkflowApprovalRequest.html",
                 Title = $"PAO: {notification.EntityDisplayName} - Action Required",
-                EmailReceivers = recipientEmails.ToArray()
+                EmailReceivers = recipientEmails.ToArray(),
+                CcReceivers = ccRecipients.ToArray()
             };
 
             await _emailSender.SendEmailAsync(emailMessage, emailModel, _baseUrl);
 
             _logger.LogInformation(
-                "Sent approval request email for {EntityName} (ID: {EntityId}) to {RecipientCount} recipients",
-                notification.EntityDisplayName, notification.EntityId, recipientEmails.Count);
+                "Sent approval request email for {EntityName} (ID: {EntityId}) to {RecipientCount} recipients with {CcCount} CC recipients",
+                notification.EntityDisplayName, notification.EntityId, recipientEmails.Count, ccRecipients.Count);
+
+            // Create in-system notifications for each approver
+            await CreateInSystemNotificationsAsync(notification, orgUnitName);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to send approval request notification for entity {EntityName} {EntityId}",
                 notification.EntityName, notification.EntityId);
         }
+    }
+
+    /// <summary>
+    /// Creates in-system notifications for workflow approval requests.
+    /// These appear in the notification bell and Actions Required card.
+    /// </summary>
+    private async Task CreateInSystemNotificationsAsync(WorkflowNotification notification, string orgUnitName)
+    {
+        try
+        {
+            if (!int.TryParse(notification.EntityId, out var entityId))
+            {
+                _logger.LogWarning("Invalid entity ID for in-system notification: {EntityId}", notification.EntityId);
+                return;
+            }
+
+            var notificationMessage = $"Go Decision approval required for \"{notification.EntityDisplayName}\" ({orgUnitName})";
+
+            // Create a notification record with entity reference for navigation
+            var notificationData = new
+            {
+                entityName = notification.EntityName,
+                entityId = entityId,
+                entityDisplayName = notification.EntityDisplayName,
+                orgUnitName = orgUnitName,
+                requestedBy = notification.PerformedByUserName,
+                requestedOn = notification.Timestamp.ToString("o"),
+                pendingStage = "GO"
+            };
+
+            foreach (var userId in notification.RecipientUserIds)
+            {
+                await CreateWorkflowNotificationAsync(
+                    userId,
+                    notificationMessage,
+                    notification.EntityName,
+                    entityId,
+                    notificationData);
+            }
+
+            _logger.LogInformation(
+                "Created {Count} in-system notifications for workflow approval request on {EntityName} (ID: {EntityId})",
+                notification.RecipientUserIds.Count, notification.EntityName, entityId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create in-system notifications for entity {EntityName} {EntityId}",
+                notification.EntityName, notification.EntityId);
+            // Don't rethrow - email was sent successfully, in-system notification failure is non-critical
+        }
+    }
+
+    /// <summary>
+    /// Creates a single workflow approval notification.
+    /// </summary>
+    private async Task CreateWorkflowNotificationAsync(int userId, string message, string entityName, int entityId, object recordData)
+    {
+        var notification = new Notification
+        {
+            UserId = userId,
+            Message = message,
+            Category = WorkflowApprovalCategory,
+            ResponseType = "action_required",
+            Entity = entityName,
+            EntityId = entityId,
+            RecordData = JsonSerializer.Serialize(recordData),
+            IsRead = false,
+            Status = NotificationStatus.Pending,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _context.Notifications.AddAsync(notification);
+        await _context.SaveChangesAsync();
     }
 
     /// <summary>
@@ -392,6 +488,90 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
         }
     }
 
+    #region In-System Notification Management
+
+    /// <summary>
+    /// Marks workflow approval notifications as done when a decision is made.
+    /// Called when an opportunity is approved, rejected, or recalled.
+    /// </summary>
+    /// <param name="entityName">The entity type (e.g., "Opportunity")</param>
+    /// <param name="entityId">The entity ID</param>
+    /// <param name="decisionMessage">Optional message describing the decision</param>
+    public async Task MarkWorkflowNotificationsAsDoneAsync(string entityName, int entityId, string? decisionMessage = null)
+    {
+        try
+        {
+            // Find all pending workflow_approval notifications for this entity
+            var notifications = await _context.Notifications
+                .Where(n => n.Category == WorkflowApprovalCategory 
+                         && n.Entity == entityName 
+                         && n.EntityId == entityId
+                         && n.Status == NotificationStatus.Pending)
+                .ToListAsync();
+
+            if (!notifications.Any())
+            {
+                _logger.LogDebug("No pending workflow notifications found for {EntityName} {EntityId}", entityName, entityId);
+                return;
+            }
+
+            foreach (var notification in notifications)
+            {
+                notification.Status = NotificationStatus.Done;
+                notification.IsRead = true;
+                
+                if (!string.IsNullOrEmpty(decisionMessage))
+                {
+                    notification.Message = $"{notification.Message} - {decisionMessage}";
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Marked {Count} workflow notifications as done for {EntityName} (ID: {EntityId})",
+                notifications.Count, entityName, entityId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to mark workflow notifications as done for {EntityName} {EntityId}",
+                entityName, entityId);
+            // Don't rethrow - notification update failure is non-critical
+        }
+    }
+
+    /// <summary>
+    /// Marks workflow approval notifications as done with "Approved" status message.
+    /// </summary>
+    /// <param name="entityName">The entity type (e.g., "Opportunity")</param>
+    /// <param name="entityId">The entity ID</param>
+    public async Task MarkWorkflowNotificationsAsApprovedAsync(string entityName, int entityId)
+    {
+        await MarkWorkflowNotificationsAsDoneAsync(entityName, entityId, "Approved");
+    }
+
+    /// <summary>
+    /// Marks workflow approval notifications as done with "Rejected" status message.
+    /// </summary>
+    /// <param name="entityName">The entity type (e.g., "Opportunity")</param>
+    /// <param name="entityId">The entity ID</param>
+    public async Task MarkWorkflowNotificationsAsRejectedAsync(string entityName, int entityId)
+    {
+        await MarkWorkflowNotificationsAsDoneAsync(entityName, entityId, "Set to NO GO");
+    }
+
+    /// <summary>
+    /// Marks workflow approval notifications as done with "Recalled" status message.
+    /// </summary>
+    /// <param name="entityName">The entity type (e.g., "Opportunity")</param>
+    /// <param name="entityId">The entity ID</param>
+    public async Task MarkWorkflowNotificationsAsRecalledAsync(string entityName, int entityId)
+    {
+        await MarkWorkflowNotificationsAsDoneAsync(entityName, entityId, "Recalled");
+    }
+
+    #endregion
+
     #region Helper Methods
 
     /// <summary>
@@ -441,6 +621,144 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
             .FirstOrDefaultAsync(o => o.Id == opportunityId && !o.IsDeleted);
 
         return opportunity?.ResponsibleOrgUnit?.Name ?? "Unknown";
+    }
+
+    #endregion
+
+    #region CC Recipient Methods
+
+    /// <summary>
+    /// Builds the CC recipient list for workflow approval request emails.
+    /// Includes: Opportunity Manager, workflow initiator (if different), Director/Manager of org unit.
+    /// </summary>
+    /// <param name="notification">The workflow notification containing entity and submitter info</param>
+    /// <returns>List of email addresses for CC recipients (deduplicated)</returns>
+    private async Task<List<string>> BuildCCRecipientsAsync(WorkflowNotification notification)
+    {
+        var ccRecipients = new List<string>();
+
+        // Only add CC for Opportunity entities
+        if (!notification.EntityName.Equals("Opportunity", StringComparison.OrdinalIgnoreCase))
+            return ccRecipients;
+
+        try
+        {
+            // 1. Add Opportunity Manager email
+            var omEmail = await GetOpportunityManagerEmailAsync(notification.EntityId);
+            if (!string.IsNullOrEmpty(omEmail))
+            {
+                ccRecipients.Add(omEmail);
+            }
+
+            // 2. Add workflow initiator email (if different from OM)
+            if (notification.PerformedByUserId > 0)
+            {
+                var initiatorEmail = await GetUserEmailAsync(notification.PerformedByUserId);
+                if (!string.IsNullOrEmpty(initiatorEmail) && 
+                    !ccRecipients.Contains(initiatorEmail, StringComparer.OrdinalIgnoreCase))
+                {
+                    ccRecipients.Add(initiatorEmail);
+                }
+            }
+
+            // 3. Add Director/Manager of org unit
+            if (int.TryParse(notification.EntityId, out var opportunityId))
+            {
+                var opportunity = await _context.Opportunities
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(o => o.Id == opportunityId && !o.IsDeleted);
+
+                if (opportunity?.ResponsibleOrgUnitId != null)
+                {
+                    var directorEmail = await GetDirectorManagerEmailAsync(opportunity.ResponsibleOrgUnitId.Value);
+                    if (!string.IsNullOrEmpty(directorEmail) && 
+                        !ccRecipients.Contains(directorEmail, StringComparer.OrdinalIgnoreCase))
+                    {
+                        ccRecipients.Add(directorEmail);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error building CC recipients for entity {EntityName} {EntityId}, proceeding without CC",
+                notification.EntityName, notification.EntityId);
+        }
+
+        return ccRecipients.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    /// <summary>
+    /// Gets the Opportunity Manager's email for the specified opportunity.
+    /// Queries stakeholders with the "Opportunity_Manager_Opportunity" role.
+    /// </summary>
+    /// <param name="entityId">The opportunity ID as a string</param>
+    /// <returns>The Opportunity Manager's email, or null if not found</returns>
+    private async Task<string?> GetOpportunityManagerEmailAsync(string entityId)
+    {
+        if (!int.TryParse(entityId, out var opportunityId))
+            return null;
+
+        var omStakeholder = await _context.OpportunityStakeholders
+            .AsNoTracking()
+            .Include(s => s.EntityRole)
+            .Include(s => s.User)
+            .Where(s => s.OpportunityId == opportunityId
+                     && s.EntityRole != null
+                     && s.EntityRole.Code == "Opportunity_Manager_Opportunity"
+                     && s.User != null)
+            .FirstOrDefaultAsync();
+
+        return omStakeholder?.User?.Email;
+    }
+
+    /// <summary>
+    /// Gets the email address for a single user by ID.
+    /// </summary>
+    /// <param name="userId">The user ID</param>
+    /// <returns>The user's email, or null if not found</returns>
+    private async Task<string?> GetUserEmailAsync(int userId)
+    {
+        if (userId <= 0)
+            return null;
+
+        var user = await _context.PAOUsers
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
+        return user?.Email;
+    }
+
+    /// <summary>
+    /// Gets the Director/Manager email for the specified org unit.
+    /// Queries EntityUserRole for Director roles in priority order.
+    /// </summary>
+    /// <param name="orgUnitId">The organization unit ID</param>
+    /// <returns>The Director/Manager's email, or null if not found</returns>
+    private async Task<string?> GetDirectorManagerEmailAsync(int orgUnitId)
+    {
+        var directorRoleCodes = new[]
+        {
+            "OrgUnit_Director_OrganizationHierarchy",
+            "OrgUnit_Deputy_Director_OrganizationHierarchy",
+            "Regional_Director_OrganizationHierarchy",
+            "Regional_Deputy_Director_OrganizationHierarchy",
+            "MCO_Director_OrganizationHierarchy",
+            "MCO_Deputy_Director_OrganizationHierarchy"
+        };
+
+        var directorRole = await _context.EntityUserRoles
+            .AsNoTracking()
+            .Include(eur => eur.User)
+            .Include(eur => eur.EntityRole)
+            .Where(eur => eur.EntityType == "OrganizationHierarchy"
+                       && eur.EntityId == orgUnitId
+                       && !eur.IsDeleted
+                       && eur.EntityRole != null
+                       && directorRoleCodes.Contains(eur.EntityRole.Code))
+            .FirstOrDefaultAsync();
+
+        return directorRole?.User?.Email;
     }
 
     #endregion

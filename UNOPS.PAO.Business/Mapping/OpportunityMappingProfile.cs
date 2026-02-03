@@ -36,7 +36,12 @@ public class OpportunityMappingProfile : Profile
             .ForMember(dest => dest.LastModifiedByName, opt => opt.MapFrom(src => 
                 src.LastModifiedByUser != null && src.LastModifiedByUser.UserProfile != null 
                     ? src.LastModifiedByUser.UserProfile.Name 
-                    : (src.LastModifiedByUser != null ? src.LastModifiedByUser.Email : null)));
+                    : (src.LastModifiedByUser != null ? src.LastModifiedByUser.Email : null)))
+            .ForMember(dest => dest.ExecutiveId, opt => opt.MapFrom(src => src.ExecutiveId))
+            .ForMember(dest => dest.ExecutiveName, opt => opt.MapFrom(src => 
+                src.Executive != null && src.Executive.UserProfile != null 
+                    ? src.Executive.UserProfile.Name 
+                    : (src.Executive != null ? src.Executive.Email : null)));
             
         CreateMap<OpportunityRequest, Opportunity>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())

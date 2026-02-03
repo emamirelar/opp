@@ -27,6 +27,9 @@ import {
   RiskCategoryHierarchyResponse,
   PreDefinedHighRiskModel,
   HighRiskAnalysisResponse,
+  GoDecisionPayload,
+  NoGoDecisionPayload,
+  ExecutiveOption,
 } from '@shared/models/opportunity.model';
 
 /**
@@ -518,5 +521,52 @@ export class OpportunityService {
     return this.http.get<
       { id: number; name: string; code: string; description: string | null; displayOrder: number }[]
     >(`${this.apiUrl}/collaborator-expertises`);
+  }
+
+  // ===== Go/No-Go Decision Methods =====
+
+  /**
+   * Get executives (Director/Manager/OiC) for an opportunity's responsible org unit.
+   * Used to populate the Executive dropdown in the Go Decision approval dialog.
+   * @param opportunityId - The opportunity ID
+   * @returns Observable with list of executives with display label and user ID
+   */
+  getExecutivesForOpportunity(opportunityId: number): Observable<ExecutiveOption[]> {
+    return this.http.get<ExecutiveOption[]>(`${this.apiUrl}/${opportunityId}/executives`);
+  }
+
+  /**
+   * Approve an opportunity with Go decision.
+   * Assigns an Executive and records the decision rationale.
+   * @param entityId - The opportunity ID
+   * @param payload - Go decision payload with rationale, executiveId, and confirmation
+   * @returns Observable with workflow action response
+   */
+  approveOpportunity(entityId: number, payload: GoDecisionPayload): Observable<unknown> {
+    const requestBody = {
+      entityName: 'Opportunity',
+      entityId: entityId,
+      rationale: payload.rationale,
+      executiveId: payload.executiveId,
+      confirmationAcknowledged: payload.confirmationAcknowledged,
+    };
+    return this.http.post('/api/workflow/approve', requestBody);
+  }
+
+  /**
+   * Reject an opportunity with No-Go decision.
+   * Records the decision rationale.
+   * @param entityId - The opportunity ID
+   * @param payload - No-Go decision payload with rationale and confirmation
+   * @returns Observable with workflow action response
+   */
+  rejectOpportunity(entityId: number, payload: NoGoDecisionPayload): Observable<unknown> {
+    const requestBody = {
+      entityName: 'Opportunity',
+      entityId: entityId,
+      rationale: payload.rationale,
+      confirmationAcknowledged: payload.confirmationAcknowledged,
+    };
+    return this.http.post('/api/workflow/reject', requestBody);
   }
 }

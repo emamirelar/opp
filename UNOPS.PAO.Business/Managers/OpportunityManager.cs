@@ -6,6 +6,7 @@ using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.Filters;
 using UNOPS.PAO.Models.Opportunities;
 using UNOPS.PAO.Models.Search;
 
@@ -26,6 +27,53 @@ public class OpportunityManager : IOpportunityManager
         this.context = context;
         this.opportunityRepository = new DataRepository<Opportunity>(context);
     }
+
+    #region Immutability
+
+    /// <summary>
+    /// Immutable stages - opportunities in these stages cannot be modified.
+    /// GO is permanent, while NO GO and CANCELLED can be reopened (changing stage back to IDENTIFY &amp; PROFILE).
+    /// </summary>
+    protected static readonly string[] ImmutableStages = { "GO", "NO GO", "CANCELLED" };
+
+    /// <summary>
+    /// Determines if an opportunity is immutable based on its current stage.
+    /// Immutable stages: GO, NO GO, CANCELLED
+    /// </summary>
+    /// <param name="opportunity">The opportunity entity to check</param>
+    /// <returns>True if the opportunity is in an immutable stage</returns>
+    protected bool IsOpportunityImmutable(Opportunity opportunity)
+    {
+        return IsOpportunityImmutable(opportunity?.Stage);
+    }
+
+    /// <summary>
+    /// Determines if an opportunity is immutable based on its stage value.
+    /// Immutable stages: GO, NO GO, CANCELLED
+    /// </summary>
+    /// <param name="stage">The stage value to check</param>
+    /// <returns>True if the stage is an immutable stage</returns>
+    protected bool IsOpportunityImmutable(string? stage)
+    {
+        if (string.IsNullOrEmpty(stage)) return false;
+        return ImmutableStages.Contains(stage, StringComparer.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Throws a BusinessException if the opportunity is in an immutable stage.
+    /// Call this at the start of any modification method.
+    /// </summary>
+    /// <param name="opportunity">The opportunity to validate</param>
+    /// <exception cref="BusinessException">Thrown when opportunity is immutable</exception>
+    protected void ThrowIfImmutable(Opportunity opportunity)
+    {
+        if (IsOpportunityImmutable(opportunity))
+        {
+            throw new BusinessException("This opportunity record is locked and cannot be modified after a decision has been made.");
+        }
+    }
+
+    #endregion
 
     public async Task<OpportunityModel> CreateOpportunityAsync(OpportunityRequest model)
     {
@@ -283,6 +331,9 @@ public class OpportunityManager : IOpportunityManager
             return null;
         }
 
+        // Check immutability before any modifications
+        ThrowIfImmutable(entity);
+
         // Update main entity properties
         mapper.Map(model, entity);
 
@@ -380,6 +431,9 @@ public class OpportunityManager : IOpportunityManager
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
 
+        // Check immutability before any modifications
+        ThrowIfImmutable(entity);
+
         // Update Overview section fields
         if (request.Name != null)
         {
@@ -408,6 +462,9 @@ public class OpportunityManager : IOpportunityManager
         {
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
+
+        // Check immutability before any modifications
+        ThrowIfImmutable(entity);
 
         // Update WHAT section fields
         if (request.Description != null)
@@ -469,6 +526,9 @@ public class OpportunityManager : IOpportunityManager
         {
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
+
+        // Check immutability before any modifications
+        ThrowIfImmutable(entity);
 
         // Update WHY section fields
 
@@ -786,6 +846,9 @@ public class OpportunityManager : IOpportunityManager
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
 
+        // Check immutability before any modifications
+        ThrowIfImmutable(entity);
+
         // Update Funding Partners
         if (request.FundingPartners != null)
         {
@@ -866,6 +929,9 @@ public class OpportunityManager : IOpportunityManager
         {
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
+
+        // Check immutability before any modifications
+        ThrowIfImmutable(entity);
 
         // Track if org unit changed
         var orgUnitChanged = request.ResponsibleOrgUnitId.HasValue && 
@@ -1167,6 +1233,9 @@ public class OpportunityManager : IOpportunityManager
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
 
+        // Check immutability before any modifications
+        ThrowIfImmutable(entity);
+
         // Update Countries
         if (request.Countries != null)
         {
@@ -1312,6 +1381,9 @@ public class OpportunityManager : IOpportunityManager
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
 
+        // Check immutability before any modifications
+        ThrowIfImmutable(entity);
+
         // Validate date logic
         if (request.ImplementationStartDate.HasValue && request.TargetSigningDate.HasValue)
         {
@@ -1377,6 +1449,9 @@ public class OpportunityManager : IOpportunityManager
             return false;
         }
 
+        // Check immutability before any modifications
+        ThrowIfImmutable(entity);
+
         await opportunityRepository.Delete(entity);
         return true;
     }
@@ -1421,6 +1496,127 @@ public class OpportunityManager : IOpportunityManager
     public Task<OpportunityModel> CreateOpportunityFromProposalAsync(CreateOpportunityFromInteractionsRequest request, int currentUserId)
     {
         throw new NotImplementedException("CreateOpportunityFromProposalAsync is only implemented in UNOPSOpportunityManager");
+    }
+
+    /// <summary>
+    /// Assigns an Executive to an opportunity during Go decision approval.
+    /// The Executive is typically the Director/Manager/OiC of the responsible org unit.
+    /// </summary>
+    /// <param name="opportunityId">The opportunity ID</param>
+    /// <param name="executiveId">The user ID of the assigned Executive</param>
+    /// <exception cref="KeyNotFoundException">Thrown when opportunity is not found</exception>
+    public virtual async Task AssignExecutiveAsync(int opportunityId, int executiveId)
+    {
+        var opportunity = await opportunityRepository.GetByIdAsync(opportunityId);
+        if (opportunity == null)
+        {
+            throw new KeyNotFoundException($"Opportunity with ID {opportunityId} not found");
+        }
+
+        opportunity.ExecutiveId = executiveId;
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Gets executives (Director/Manager/OiC) for an opportunity's responsible org unit.
+    /// Used to populate the Executive dropdown in the Go Decision approval dialog.
+    /// </summary>
+    /// <param name="opportunityId">The opportunity ID</param>
+    /// <returns>List of executives with display label and user ID</returns>
+    /// <exception cref="KeyNotFoundException">Thrown when opportunity is not found</exception>
+    public virtual async Task<IEnumerable<TypeaheadInput>> GetExecutivesForOpportunityAsync(int opportunityId)
+    {
+        // Get the opportunity to find the ResponsibleOrgUnitId
+        var opportunity = await context.Opportunities
+            .AsNoTracking()
+            .Where(o => o.Id == opportunityId && !o.IsDeleted)
+            .Select(o => new { o.Id, o.ResponsibleOrgUnitId })
+            .FirstOrDefaultAsync();
+
+        if (opportunity == null)
+        {
+            throw new KeyNotFoundException($"Opportunity with ID {opportunityId} not found");
+        }
+
+        if (!opportunity.ResponsibleOrgUnitId.HasValue)
+        {
+            return Enumerable.Empty<TypeaheadInput>();
+        }
+
+        return await GetExecutivesForOrgUnitAsync(opportunity.ResponsibleOrgUnitId.Value);
+    }
+
+    /// <summary>
+    /// Gets executives (Director/Manager/OiC) for a specific organization unit.
+    /// Queries EntityUserRole for Director/Deputy Director roles on the org unit.
+    /// </summary>
+    /// <param name="orgUnitId">The organization unit ID</param>
+    /// <returns>List of executives with display label (name + role) and user ID as value</returns>
+    protected virtual async Task<IEnumerable<TypeaheadInput>> GetExecutivesForOrgUnitAsync(int orgUnitId)
+    {
+        // Director role codes to filter by
+        var directorRoleCodes = new[]
+        {
+            "OrgUnit_Director_OrganizationHierarchy",
+            "OrgUnit_Deputy_Director_OrganizationHierarchy",
+            "Regional_Director_OrganizationHierarchy",
+            "Regional_Deputy_Director_OrganizationHierarchy",
+            "MCO_Director_OrganizationHierarchy",
+            "MCO_Deputy_Director_OrganizationHierarchy"
+        };
+
+        // Query EntityUserRole for directors/deputies assigned to this org unit
+        var executives = await context.EntityUserRoles
+            .AsNoTracking()
+            .Include(e => e.EntityRole)
+            .Include(e => e.User)
+                .ThenInclude(u => u!.UserProfile)
+            .Where(e => !e.IsDeleted &&
+                       e.EntityType == "OrganizationHierarchy" &&
+                       e.EntityId == orgUnitId &&
+                       e.EntityRole != null &&
+                       e.EntityRole.Code != null &&
+                       directorRoleCodes.Contains(e.EntityRole.Code))
+            .ToListAsync();
+
+        // Map to TypeaheadInput
+        var result = executives
+            .Where(e => e.User != null)
+            .Select(e => {
+                var userName = e.User!.UserProfile?.Name ?? e.User.Email ?? "Unknown User";
+                var roleName = GetFriendlyRoleName(e.EntityRole?.Code);
+                var isDirector = e.EntityRole?.Code?.Contains("_Director_") == true && 
+                                !e.EntityRole?.Code?.Contains("Deputy") == true;
+                
+                return new TypeaheadInput
+                {
+                    Label = $"{userName} ({roleName})",
+                    Value = e.UserId.ToString(),
+                    Description = isDirector ? "Suggested" : null
+                };
+            })
+            .OrderByDescending(e => e.Description == "Suggested") // Directors first
+            .ThenBy(e => e.Label)
+            .ToList();
+
+        return result;
+    }
+
+    /// <summary>
+    /// Converts role code to friendly display name.
+    /// </summary>
+    private static string GetFriendlyRoleName(string? roleCode)
+    {
+        return roleCode switch
+        {
+            "OrgUnit_Director_OrganizationHierarchy" => "Director",
+            "OrgUnit_Deputy_Director_OrganizationHierarchy" => "Deputy Director",
+            "Regional_Director_OrganizationHierarchy" => "Regional Director",
+            "Regional_Deputy_Director_OrganizationHierarchy" => "Regional Deputy Director",
+            "MCO_Director_OrganizationHierarchy" => "MCO Director",
+            "MCO_Deputy_Director_OrganizationHierarchy" => "MCO Deputy Director",
+            _ => "Executive"
+        };
     }
 }
 

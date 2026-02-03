@@ -1848,6 +1848,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<int?>("EstimatedIndirectBeneficiaries")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("ExecutiveId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("ExpectedBeneficiaries")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
@@ -1947,6 +1950,8 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedBy");
+
+                    b.HasIndex("ExecutiveId");
 
                     b.HasIndex("LastModifiedBy");
 
@@ -5556,6 +5561,11 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("UNOPS.PAO.Domain.Entities.PAOUser", "Executive")
+                        .WithMany()
+                        .HasForeignKey("ExecutiveId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("UNOPS.PAO.Domain.Entities.PAOUser", "LastModifiedByUser")
                         .WithMany()
                         .HasForeignKey("LastModifiedBy")
@@ -5571,6 +5581,8 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasForeignKey("ResponsibleOrgUnitId");
 
                     b.Navigation("CreatedByUser");
+
+                    b.Navigation("Executive");
 
                     b.Navigation("LastModifiedByUser");
 

@@ -146,6 +146,17 @@ public class OpportunityModel
     /// </summary>
     public decimal? OrgUnitHistoricalMaxValue { get; set; }
     
+    /// <summary>
+    /// The Executive assigned to direct Opportunity development after Go decision.
+    /// Nullable until Go decision is made.
+    /// </summary>
+    public int? ExecutiveId { get; set; }
+    
+    /// <summary>
+    /// Display name of the assigned Executive.
+    /// </summary>
+    public string? ExecutiveName { get; set; }
+    
     public DateTime? CreatedDate { get; set; }
     public DateTime? LastModifiedDate { get; set; }
     public int? CreatedBy { get; set; }

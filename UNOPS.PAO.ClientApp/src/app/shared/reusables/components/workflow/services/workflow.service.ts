@@ -14,6 +14,7 @@ import {
   WorkflowSubmitRequest,
   WorkflowSubmitResponse,
   WorkflowCancelReopenRequest,
+  PendingApprovalModel,
 } from '../models/workflow.models';
 import { StageRequirement } from '../models/requirement.models';
 
@@ -177,5 +178,14 @@ export class WorkflowService {
       comment,
     };
     return this.http.post<WorkflowStateModel>(`${this.apiBaseUrl}/workflow/reopen`, request);
+  }
+
+  /**
+   * Gets pending workflow approvals for the current user
+   * Used to display tasks in the Actions Required dashboard card
+   * @returns Observable of pending approval models
+   */
+  getPendingApprovalsForUser(): Observable<PendingApprovalModel[]> {
+    return this.http.get<PendingApprovalModel[]>(`${this.apiBaseUrl}/workflow/pending-approvals`);
   }
 }
