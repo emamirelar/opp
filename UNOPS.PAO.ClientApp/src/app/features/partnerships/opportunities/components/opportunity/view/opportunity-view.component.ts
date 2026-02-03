@@ -313,11 +313,21 @@ export class OpportunityViewComponent
   // Computed canUpdate based on opportunity permissions (from backend including stakeholder check)
   canUpdate = computed(() => {
     const opp = this.opportunity();
-    // Check opportunity's inline permissions first (includes stakeholder check from backend)
-    if (opp?.permissions?.canUpdate) {
-      return true;
+    
+    // If opportunity has inline permissions, use them as the source of truth
+    // The backend sets canUpdate=false when the opportunity is immutable (GO, NO GO, CANCELLED stages)
+    if (opp?.permissions) {
+      // Explicitly check if canUpdate is false (immutable or no permission)
+      if (opp.permissions.canUpdate === false) {
+        return false;
+      }
+      // If canUpdate is explicitly true, allow editing
+      if (opp.permissions.canUpdate === true) {
+        return true;
+      }
     }
-    // Fallback to recordPermissions from utility service
+    
+    // Fallback to recordPermissions from utility service only if inline permissions are not available
     return this.permissionUtilityService.canUpdate(this.recordPermissions());
   });
 
