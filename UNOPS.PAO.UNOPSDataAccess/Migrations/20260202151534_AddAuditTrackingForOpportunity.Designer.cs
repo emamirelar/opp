@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UNOPS.PAO.UNOPSDataAccess.Context;
@@ -11,9 +12,11 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 {
     [DbContext(typeof(UNOPSAppDbContext))]
-    partial class UNOPSAppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260202151534_AddAuditTrackingForOpportunity")]
+    partial class AddAuditTrackingForOpportunity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1848,9 +1851,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<int?>("EstimatedIndirectBeneficiaries")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("ExecutiveId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("ExpectedBeneficiaries")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
@@ -1951,8 +1951,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     b.HasIndex("CreatedBy");
 
-                    b.HasIndex("ExecutiveId");
-
                     b.HasIndex("LastModifiedBy");
 
                     b.HasIndex("Name");
@@ -1999,6 +1997,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("OpportunityId")
@@ -2064,6 +2063,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("OpportunityId")
@@ -2125,6 +2125,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("OpportunityCollaboratorId")
@@ -2186,6 +2187,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<bool?>("NapAlignment")
@@ -2257,6 +2259,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Notes")
@@ -2329,6 +2332,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("OpportunityId")
@@ -2419,6 +2423,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("OpportunityId")
@@ -2496,6 +2501,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("OpportunityId")
@@ -2549,6 +2555,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Notes")
@@ -2609,6 +2616,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Notes")
@@ -2671,6 +2679,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Notes")
@@ -2739,6 +2748,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Notes")
@@ -2807,6 +2817,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Notes")
@@ -2869,6 +2880,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Notes")
@@ -2931,6 +2943,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("OpportunityId")
@@ -5556,11 +5569,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("UNOPS.PAO.Domain.Entities.PAOUser", "Executive")
-                        .WithMany()
-                        .HasForeignKey("ExecutiveId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("UNOPS.PAO.Domain.Entities.PAOUser", "LastModifiedByUser")
                         .WithMany()
                         .HasForeignKey("LastModifiedBy")
@@ -5576,8 +5584,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasForeignKey("ResponsibleOrgUnitId");
 
                     b.Navigation("CreatedByUser");
-
-                    b.Navigation("Executive");
 
                     b.Navigation("LastModifiedByUser");
 

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using UNOPS.PAO.Domain.Infrastructure;
 
 namespace UNOPS.PAO.Domain.Entities;
 
@@ -8,10 +9,12 @@ namespace UNOPS.PAO.Domain.Entities;
 /// UNCF Outcomes are country-specific, so they are linked through OpportunityCountry
 /// Only the latest version outcomes should be displayed for selection
 /// </summary>
-public class OpportunityUNCFOutcome
+public class OpportunityUNCFOutcome : ModifiableDeletableEntity
 {
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int Id { get; set; }
+    public new int Id { get; set; }
+    
+    public new string? Name { get; set; }
     
     public int OpportunityId { get; set; }
     public virtual Opportunity? Opportunity { get; set; }
