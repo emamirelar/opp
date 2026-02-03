@@ -313,6 +313,7 @@ paket-files/
 */.vscode/*
 /UNOPS.PAO.ClientApp/.vscode
 
+.cursor/
 */.cursor/*
 .vscode/
 # Python
