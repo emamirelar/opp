@@ -1567,8 +1567,10 @@ export class OpportunityViewComponent
       return;
     }
 
-    // Generate PDF with submission filename: Opportunity_<ID>_Submission.pdf
-    const pdfFileName = `Opportunity_${data.entityId}_Submission.pdf`;
+    // Generate PDF with submission filename: Opportunity_<ID>_Submission_YYYYMMDD.pdf
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+    const pdfFileName = `Opportunity_${data.entityId}_Submission_${dateStr}.pdf`;
     
     try {
       await this.documentsComponent.generateStatementPdf(
@@ -1608,8 +1610,10 @@ export class OpportunityViewComponent
       return;
     }
 
-    // Generate PDF with approval filename: Opportunity_<ID>_Approved.pdf
-    const pdfFileName = `Opportunity_${data.entityId}_Approved.pdf`;
+    // Generate PDF with approval filename: Opportunity_<ID>_Approved_YYYYMMDD.pdf
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+    const pdfFileName = `Opportunity_${data.entityId}_Approved_${dateStr}.pdf`;
     
     try {
       await this.documentsComponent.generateStatementPdf(
