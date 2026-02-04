@@ -312,5 +312,125 @@ namespace UNOPS.PAO.UNOPSPresentation.Controllers
                 });
             }
         }
+
+        /// <summary>
+        /// Gets all existing DOA role assignments (DOA2 and DOA3) from EntityUserRoles table.
+        /// </summary>
+        /// <returns>List of existing DOA role assignments with org unit and user details</returns>
+        [HttpGet("doa-roles")]
+        public async Task<IActionResult> GetDoaRoles()
+        {
+            try
+            {
+                // Get DOA role codes
+                var doaRoleCodes = new[] { "DoA2_OrganizationHierarchy", "DoA3_OrganizationHierarchy" };
+                
+                // Get EntityRoleIds for DOA2 and DOA3
+                var doaRoleIds = await _context.EntityRoles
+                    .AsNoTracking()
+                    .Where(er => er.EntityType == "OrganizationHierarchy" && 
+                                doaRoleCodes.Contains(er.Code) &&
+                                !er.IsDeleted)
+                    .Select(er => er.Id)
+                    .ToListAsync();
+
+                if (!doaRoleIds.Any())
+                {
+                    return Ok(new List<object>());
+                }
+
+                // Get all DOA role assignments
+                var doaRoles = await _context.EntityUserRoles
+                    .AsNoTracking()
+                    .Include(eur => eur.EntityRole)
+                    .Include(eur => eur.User)
+                        .ThenInclude(u => u!.UserProfile)
+                    .Where(eur => eur.EntityType == "OrganizationHierarchy" &&
+                                 eur.EntityRoleId.HasValue &&
+                                 doaRoleIds.Contains(eur.EntityRoleId.Value) &&
+                                 !eur.IsDeleted)
+                    .ToListAsync();
+
+                // Get org unit details
+                var orgUnitIds = doaRoles.Select(r => r.EntityId).Distinct().ToList();
+                var orgUnits = await _context.OrganizationHierarchies
+                    .AsNoTracking()
+                    .Where(o => orgUnitIds.Contains(o.Id))
+                    .ToDictionaryAsync(o => o.Id, o => new { o.Code, o.Name });
+
+                // Map to response
+                var result = doaRoles.Select(r => new
+                {
+                    id = r.Id,
+                    entityId = r.EntityId,
+                    orgUnitCode = orgUnits.ContainsKey(r.EntityId) ? orgUnits[r.EntityId].Code : r.EntityId.ToString(),
+                    orgUnitName = orgUnits.ContainsKey(r.EntityId) ? orgUnits[r.EntityId].Name : "Unknown",
+                    userId = r.UserId,
+                    userName = r.User?.UserProfile?.Name ?? r.User?.Email ?? $"User {r.UserId}",
+                    userEmail = r.User?.Email ?? "",
+                    entityRoleId = r.EntityRoleId ?? 0,
+                    roleName = r.EntityRole?.Name ?? "Unknown",
+                    roleCode = r.EntityRole?.Code ?? "Unknown",
+                    createdDate = r.CreatedDate
+                })
+                .OrderBy(r => r.orgUnitCode)
+                .ThenBy(r => r.roleName)
+                .ThenBy(r => r.userName)
+                .ToList();
+
+                _logger.LogInformation($"Retrieved {result.Count} DOA role assignments");
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving DOA roles");
+                return StatusCode(500, new { success = false, message = $"An error occurred: {ex.Message}" });
+            }
+        }
+
+        /// <summary>
+        /// Deletes a DOA role assignment by ID (soft delete).
+        /// </summary>
+        /// <param name="id">The EntityUserRole ID to delete</param>
+        /// <returns>Success or error response</returns>
+        [HttpDelete("doa-roles/{id}")]
+        public async Task<IActionResult> DeleteDoaRole(int id)
+        {
+            try
+            {
+                var entityUserRole = await _context.EntityUserRoles
+                    .Include(eur => eur.EntityRole)
+                    .FirstOrDefaultAsync(eur => eur.Id == id && !eur.IsDeleted);
+
+                if (entityUserRole == null)
+                {
+                    return NotFound(new { success = false, message = "DOA role assignment not found" });
+                }
+
+                // Verify it's a DOA role (DOA2 or DOA3)
+                var doaRoleCodes = new[] { "DoA2_OrganizationHierarchy", "DoA3_OrganizationHierarchy" };
+                if (entityUserRole.EntityRole == null || !doaRoleCodes.Contains(entityUserRole.EntityRole.Code))
+                {
+                    return BadRequest(new { success = false, message = "This is not a DOA role assignment" });
+                }
+
+                // Soft delete
+                var currentUserId = _userResolverService.GetCurrentUserId();
+                entityUserRole.IsDeleted = true;
+                entityUserRole.LastModifiedBy = currentUserId;
+                entityUserRole.LastModifiedDate = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation($"Deleted DOA role assignment: Id={id}, EntityId={entityUserRole.EntityId}, UserId={entityUserRole.UserId}, RoleCode={entityUserRole.EntityRole?.Code}");
+
+                return Ok(new { success = true, message = "DOA role assignment deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error deleting DOA role {id}");
+                return StatusCode(500, new { success = false, message = $"An error occurred: {ex.Message}" });
+            }
+        }
     }
 } 
