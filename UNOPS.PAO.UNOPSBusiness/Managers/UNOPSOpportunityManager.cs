@@ -2058,6 +2058,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         var opportunity = await context.Opportunities
             .Include(o => o.Stakeholders.Where(s => !s.IsDeleted))
             .Include(o => o.Collaborators.Where(c => !c.IsDeleted))
+                .ThenInclude(c => c.Expertises.Where(e => !e.IsDeleted))
             .FirstOrDefaultAsync(o => o.Id == id);
 
         if (opportunity == null)
