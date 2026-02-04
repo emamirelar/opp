@@ -1531,10 +1531,11 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         if (request.SdGs != null)
         {
             // Load existing SDGs with their targets and indicators for comparison
+            // CRITICAL: Filter out soft-deleted records to avoid re-selection issues
             var existingSDGs = await context.OpportunitySDGs
-                .Where(sdg => sdg.OpportunityId == id)
-                .Include(sdg => sdg.Targets)
-                    .ThenInclude(t => t.Indicators)
+                .Where(sdg => sdg.OpportunityId == id && !sdg.IsDeleted)
+                .Include(sdg => sdg.Targets.Where(t => !t.IsDeleted))
+                    .ThenInclude(t => t.Indicators.Where(i => !i.IsDeleted))
                 .ToListAsync();
 
             var requestedSDGIds = request.SdGs.Select(s => s.SDGId).ToHashSet();
@@ -1712,9 +1713,10 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         if (request.UncfOutcomes != null)
         {
             // Load existing UNCF outcomes with their indicators for comparison
+            // CRITICAL: Filter out soft-deleted records to avoid re-selection issues
             var existingUNCFOutcomes = await context.OpportunityUNCFOutcomes
-                .Where(uo => uo.OpportunityId == id)
-                .Include(uo => uo.Indicators)
+                .Where(uo => uo.OpportunityId == id && !uo.IsDeleted)
+                .Include(uo => uo.Indicators.Where(i => !i.IsDeleted))
                 .ToListAsync();
 
             // Create composite keys for comparison (OpportunityCountryId + UNCFOutcomeId)
@@ -1820,8 +1822,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         if (request.UNOPSMissions != null)
         {
             // Load existing UNOPS mission alignments
+            // CRITICAL: Filter out soft-deleted records to avoid re-selection issues
             var existingMissions = await context.Set<OpportunityUNOPSMission>()
-                .Where(m => m.OpportunityId == id)
+                .Where(m => m.OpportunityId == id && !m.IsDeleted)
                 .ToListAsync();
 
             var requestedMissionIds = request.UNOPSMissions.Select(m => m.UNOPSMissionId).ToHashSet();
@@ -2262,9 +2265,10 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             var requestedUserIds = request.Collaborators.Select(c => c.UserId).ToHashSet();
             
             // Get existing collaborators (need to load with expertises)
+            // CRITICAL: Filter out soft-deleted records to avoid re-selection issues
             var existingCollaborators = await context.Set<OpportunityCollaborator>()
-                .Include(c => c.Expertises)
-                .Where(c => c.OpportunityId == id)
+                .Include(c => c.Expertises.Where(e => !e.IsDeleted))
+                .Where(c => c.OpportunityId == id && !c.IsDeleted)
                 .ToListAsync();
             
             // Find collaborators to remove (exist in DB but not in request)
@@ -2650,8 +2654,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     private async Task<List<int>> GetOrgUnitIdsForCountriesWithHierarchyAsync(int opportunityId)
     {
         // Get implementation country IDs for this opportunity
+        // Filter out soft-deleted records
         var countryIds = await context.Set<OpportunityCountry>()
-            .Where(oc => oc.OpportunityId == opportunityId)
+            .Where(oc => oc.OpportunityId == opportunityId && !oc.IsDeleted)
             .Select(oc => oc.CountryId)
             .ToListAsync();
 
@@ -2709,8 +2714,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     private async Task<List<int>> GetChildOrgUnitIdsForHubRegionAsync(int parentOrgUnitId, int opportunityId)
     {
         // Get implementation country IDs for this opportunity
+        // Filter out soft-deleted records
         var countryIds = await context.Set<OpportunityCountry>()
-            .Where(oc => oc.OpportunityId == opportunityId)
+            .Where(oc => oc.OpportunityId == opportunityId && !oc.IsDeleted)
             .Select(oc => oc.CountryId)
             .ToListAsync();
 
@@ -2784,8 +2790,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     private async Task<List<int>> GetNormallyResponsibleOrgUnitsAsync(int opportunityId, int selectedOrgUnitId)
     {
         // Get implementation country IDs for this opportunity
+        // Filter out soft-deleted records
         var countryIds = await context.Set<OpportunityCountry>()
-            .Where(oc => oc.OpportunityId == opportunityId)
+            .Where(oc => oc.OpportunityId == opportunityId && !oc.IsDeleted)
             .Select(oc => oc.CountryId)
             .ToListAsync();
 
@@ -3792,12 +3799,13 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         List<Domain.Entities.Risk> risks;
 
         // Execute all independent queries in parallel using separate DbContext instances
+        // CRITICAL: Filter out soft-deleted records in all parallel queries
         var task1 = Task.Run(async () => 
         {
             await using var ctx = await _dbContextFactory.CreateDbContextAsync();
             return await ctx.Set<OpportunityFundingPartner>()
                 .AsNoTracking()
-                .Where(fp => fp.OpportunityId == id)
+                .Where(fp => fp.OpportunityId == id && !fp.IsDeleted)
                 .Include(fp => fp.Partner)
                 .Include(fp => fp.Currency)
                 .Include(fp => fp.Document)
@@ -3809,7 +3817,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             await using var ctx = await _dbContextFactory.CreateDbContextAsync();
             return await ctx.Set<OpportunityClientPartner>()
                 .AsNoTracking()
-                .Where(cp => cp.OpportunityId == id)
+                .Where(cp => cp.OpportunityId == id && !cp.IsDeleted)
                 .Include(cp => cp.Partner)
                 .Include(cp => cp.Document)
                 .ToListAsync();
@@ -3820,7 +3828,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             await using var ctx = await _dbContextFactory.CreateDbContextAsync();
             return await ctx.Set<OpportunityStakeholder>()
                 .AsNoTracking()
-                .Where(s => s.OpportunityId == id)
+                .Where(s => s.OpportunityId == id && !s.IsDeleted)
                 .Include(s => s.User).ThenInclude(u => u.UserProfile)
                 .Include(s => s.EntityRole)
                 .Include(s => s.OrganizationHierarchy)
@@ -3832,7 +3840,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             await using var ctx = await _dbContextFactory.CreateDbContextAsync();
             return await ctx.Set<OpportunityExternalStakeholder>()
                 .AsNoTracking()
-                .Where(es => es.OpportunityId == id)
+                .Where(es => es.OpportunityId == id && !es.IsDeleted)
                 .Include(es => es.Contact).ThenInclude(c => c.Partner)
                 .ToListAsync();
         });
@@ -3842,7 +3850,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             await using var ctx = await _dbContextFactory.CreateDbContextAsync();
             return await ctx.Set<OpportunityDeliverable>()
                 .AsNoTracking()
-                .Where(d => d.OpportunityId == id)
+                .Where(d => d.OpportunityId == id && !d.IsDeleted)
                 .Include(d => d.Output)
                 .ToListAsync();
         });
@@ -3852,7 +3860,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             await using var ctx = await _dbContextFactory.CreateDbContextAsync();
             return await ctx.Set<OpportunityCountry>()
                 .AsNoTracking()
-                .Where(c => c.OpportunityId == id)
+                .Where(c => c.OpportunityId == id && !c.IsDeleted)
                 .Include(c => c.Country)
                 .ToListAsync();
         });
@@ -3862,7 +3870,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             await using var ctx = await _dbContextFactory.CreateDbContextAsync();
             return await ctx.Set<OpportunitySDG>()
                 .AsNoTracking()
-                .Where(s => s.OpportunityId == id)
+                .Where(s => s.OpportunityId == id && !s.IsDeleted)
                 .Include(s => s.SDG)
                 .ToListAsync();
         });
@@ -3872,7 +3880,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             await using var ctx = await _dbContextFactory.CreateDbContextAsync();
             return await ctx.Set<OpportunityUNCFOutcome>()
                 .AsNoTracking()
-                .Where(u => u.OpportunityId == id)
+                .Where(u => u.OpportunityId == id && !u.IsDeleted)
                 .Include(u => u.UNCFOutcome)
                 .ToListAsync();
         });
@@ -3882,7 +3890,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             await using var ctx = await _dbContextFactory.CreateDbContextAsync();
             return await ctx.Set<OpportunityUNOPSMission>()
                 .AsNoTracking()
-                .Where(m => m.OpportunityId == id)
+                .Where(m => m.OpportunityId == id && !m.IsDeleted)
                 .Include(m => m.UNOPSMission)
                 .ToListAsync();
         });

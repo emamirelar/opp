@@ -460,7 +460,12 @@ public class AppDbContext : AuditableDbContext<int, int>
                 .IsRequired(false);
                 
             entity.HasIndex(x => x.OpportunityId);
-            entity.HasIndex(x => new { x.OpportunityId, x.UserId }).IsUnique();
+            
+            // Unique constraint to prevent duplicate collaborator assignments (only for non-deleted records)
+            // This allows soft-deleted records to be "replaced" by new ones with the same key combination
+            entity.HasIndex(x => new { x.OpportunityId, x.UserId })
+                .IsUnique()
+                .HasFilter("\"IsDeleted\" = false");
         });
 
         // OpportunityDeliverable configuration
@@ -775,8 +780,11 @@ public class AppDbContext : AuditableDbContext<int, int>
             entity.HasIndex(x => x.OpportunityId);
             entity.HasIndex(x => x.UNOPSMissionId);
             
-            // Unique constraint to prevent duplicate mission assignments
-            entity.HasIndex(x => new { x.OpportunityId, x.UNOPSMissionId }).IsUnique();
+            // Unique constraint to prevent duplicate mission assignments (only for non-deleted records)
+            // This allows soft-deleted records to be "replaced" by new ones with the same key combination
+            entity.HasIndex(x => new { x.OpportunityId, x.UNOPSMissionId })
+                .IsUnique()
+                .HasFilter("\"IsDeleted\" = false");
         });
 
         // Country configuration (External Data Service - Read Only)
