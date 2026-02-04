@@ -427,14 +427,16 @@ public class WorkflowController : BaseController
             if (!isOM && !request.ConfirmedNonOMSubmission)
             {
                 var userRole = await GetUserRoleOnOpportunityAsync(request.EntityId, CurrentUserId);
+                var omInfo = await GetOpportunityManagerInfoAsync(request.EntityId);
                 return Ok(new WorkflowSubmitResponse
                 {
                     Success = false,
                     RequiresConfirmation = true,
                     ConfirmationType = "NonOMSubmitter",
-                    ConfirmationMessage = $"You currently hold a {userRole ?? "stakeholder"} role on this opportunity. " +
+                    ConfirmationMessage = $"You currently hold a [{userRole ?? "stakeholder"}] role on this opportunity. " +
                         "The Opportunity Manager is typically responsible for submitting for Go Decision. " +
-                        "Are you sure you want to proceed with this submission?"
+                        "Are you sure you want to proceed with this submission?",
+                    OpportunityManagerInfo = omInfo
                 });
             }
 
@@ -443,6 +445,7 @@ public class WorkflowController : BaseController
             if (unrelatedCountries.Any() && !request.ConfirmedOrgUnitWarning)
             {
                 var orgUnitName = opportunity?.ResponsibleOrgUnit?.Name ?? "the selected org unit";
+                var countryMappings = await GetCountryMappingsAsync(request.EntityId);
                 return Ok(new WorkflowSubmitResponse
                 {
                     Success = false,
@@ -450,7 +453,9 @@ public class WorkflowController : BaseController
                     ConfirmationType = "OrgUnitCountryMismatch",
                     ConfirmationMessage = $"The org unit '{orgUnitName}' is not normally responsible for the following countries: " +
                         $"{string.Join(", ", unrelatedCountries)}. Are you sure you want to proceed?",
-                    UnrelatedCountries = unrelatedCountries
+                    UnrelatedCountries = unrelatedCountries,
+                    CountryMappings = countryMappings,
+                    ResponsibleOrgUnitName = orgUnitName
                 });
             }
 
@@ -1244,6 +1249,39 @@ public class WorkflowController : BaseController
     }
 
     /// <summary>
+    /// Gets the Opportunity Manager's name and email for display in the Non-OM warning dialog.
+    /// The Opportunity Manager is stored in OpportunityStakeholders with role code "Opportunity_Manager_Opportunity".
+    /// </summary>
+    /// <param name="opportunityId">The opportunity ID</param>
+    /// <returns>Formatted string with OM name and email, or empty string if not found</returns>
+    private async Task<string> GetOpportunityManagerInfoAsync(int opportunityId)
+    {
+        var omStakeholder = await _context.OpportunityStakeholders
+            .AsNoTracking()
+            .Include(s => s.EntityRole)
+            .Include(s => s.User)
+            .Where(s => s.OpportunityId == opportunityId
+                     && !s.IsDeleted
+                     && s.EntityRole != null
+                     && s.EntityRole.Code == "Opportunity_Manager_Opportunity"
+                     && s.User != null)
+            .FirstOrDefaultAsync();
+
+        if (omStakeholder?.User == null)
+        {
+            return string.Empty;
+        }
+
+        var om = omStakeholder.User;
+        var name = $"{om.Name}".Trim();
+        var email = om.Email ?? string.Empty;
+        
+        return !string.IsNullOrEmpty(email) 
+            ? $"{name} ({email})" 
+            : name;
+    }
+
+    /// <summary>
     /// Gets list of countries on the opportunity that are not in the org unit's normal relationships.
     /// Used for country-org unit mismatch warning.
     /// </summary>
@@ -1277,6 +1315,45 @@ public class WorkflowController : BaseController
             .ToList();
 
         return unrelatedCountries!;
+    }
+
+    /// <summary>
+    /// Gets all implementation countries with their mapping status for the org unit mismatch dialog.
+    /// </summary>
+    /// <param name="opportunityId">The opportunity ID</param>
+    /// <returns>List of CountryMappingInfo with country name and mapping status</returns>
+    private async Task<List<CountryMappingInfo>> GetCountryMappingsAsync(int opportunityId)
+    {
+        var opportunity = await _context.Opportunities
+            .Include(o => o.Countries)
+                .ThenInclude(oc => oc.Country)
+            .FirstOrDefaultAsync(o => o.Id == opportunityId && !o.IsDeleted);
+
+        if (opportunity == null || !opportunity.ResponsibleOrgUnitId.HasValue)
+        {
+            return new List<CountryMappingInfo>();
+        }
+
+        // Get country IDs that the org unit is normally responsible for
+        var orgUnitCountryIds = await _context.Set<OrganizationUnitRelationship>()
+            .Where(r => r.OrganizationHierarchyId == opportunity.ResponsibleOrgUnitId.Value &&
+                       r.EntityType == "Country" &&
+                       !r.IsDeleted)
+            .Select(r => r.EntityId)
+            .ToListAsync();
+
+        // Build mapping info for all implementation countries
+        var countryMappings = opportunity.Countries
+            .Where(oc => oc.Country != null && !string.IsNullOrEmpty(oc.Country.Name))
+            .Select(oc => new CountryMappingInfo
+            {
+                CountryName = oc.Country!.Name!,
+                IsMapped = orgUnitCountryIds.Contains(oc.CountryId)
+            })
+            .OrderBy(cm => cm.CountryName)
+            .ToList();
+
+        return countryMappings;
     }
 
     /// <summary>
