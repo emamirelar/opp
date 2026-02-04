@@ -21,6 +21,7 @@ import { PanelModule } from 'primeng/panel';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { MessageModule } from 'primeng/message';
+import { TooltipModule } from 'primeng/tooltip';
 import { MarkdownModule } from 'ngx-markdown';
 
 // Services and Models
@@ -58,6 +59,7 @@ import { GoogleOAuthService } from '@core/services/auth/google-oauth.service';
     ButtonModule,
     DialogModule,
     MessageModule,
+    TooltipModule,
     MarkdownModule,
   ],
   templateUrl: './opportunity-statement-section.component.html',
@@ -130,6 +132,14 @@ export class OpportunityStatementSectionComponent implements OnInit {
    * @since 1.0.0
    */
   showExportSuccessDialog = false;
+
+  /**
+   * @description Controls visibility of fullscreen statement dialog
+   * @type {boolean}
+   * @default false
+   * @since 1.0.0
+   */
+  showFullscreenDialog = false;
 
   /**
    * @description URL of the exported Google Doc
@@ -422,6 +432,28 @@ export class OpportunityStatementSectionComponent implements OnInit {
   closeExportDialog(): void {
     this.showExportSuccessDialog = false;
     this.exportedDocUrl = null;
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Open the fullscreen statement dialog
+   * @param {Event} event - Click event to stop propagation (prevents panel toggle)
+   * @returns {void}
+   * @since 1.0.0
+   */
+  openFullscreenDialog(event: Event): void {
+    event.stopPropagation();
+    this.showFullscreenDialog = true;
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Close the fullscreen statement dialog
+   * @returns {void}
+   * @since 1.0.0
+   */
+  closeFullscreenDialog(): void {
+    this.showFullscreenDialog = false;
     this.cdr.detectChanges();
   }
 
