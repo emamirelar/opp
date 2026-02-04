@@ -91,7 +91,7 @@ export class RejectOpportunityDialogComponent {
    * @returns {string} The confirmation statement text
    */
   readonly confirmationStatement = computed(() => {
-    return this.translateService.instant('workflow.goDecision.dialog.reject.confirmationLabel');
+    return this.translateService.instant('workflow.goDecision.dialog.reject.confirmationStatement');
   });
 
   /**

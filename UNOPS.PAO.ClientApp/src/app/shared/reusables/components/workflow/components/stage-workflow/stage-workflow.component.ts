@@ -151,11 +151,13 @@ export class StageWorkflowComponent implements OnInit, OnChanges {
 
   /**
    * Whether Cancel button should be visible
-   * Only for OM when stage is IDENTIFY & PROFILE and not in workflow
+   * For users who can change stage when in IDENTIFY & PROFILE and not in workflow
+   * Uses isOpportunityManager if explicitly set, otherwise falls back to canChangeStage
    */
   readonly canCancel = computed(() => {
+    const hasPermission = this.isOpportunityManager() || this.canChangeStage();
     return (
-      this.isOpportunityManager() &&
+      hasPermission &&
       this.currentStageName() === 'IDENTIFY & PROFILE' &&
       !this.workflowData()?.isInWorkflow
     );
@@ -163,11 +165,13 @@ export class StageWorkflowComponent implements OnInit, OnChanges {
 
   /**
    * Whether Reopen button should be visible
-   * Only for OM when stage is NO GO or CANCELLED
+   * For users who can change stage when in NO GO or CANCELLED
+   * Uses isOpportunityManager if explicitly set, otherwise falls back to canChangeStage
    */
   readonly canReopen = computed(() => {
     const stage = this.currentStageName();
-    return this.isOpportunityManager() && (stage === 'NO GO' || stage === 'CANCELLED');
+    const hasPermission = this.isOpportunityManager() || this.canChangeStage();
+    return hasPermission && (stage === 'NO GO' || stage === 'CANCELLED');
   });
 
   /**
@@ -175,6 +179,56 @@ export class StageWorkflowComponent implements OnInit, OnChanges {
    */
   readonly reopenRequiresReason = computed(() => {
     return this.currentStageName() === 'CANCELLED';
+  });
+
+  /**
+   * Whether the opportunity is in CANCELLED stage
+   */
+  readonly isCancelled = computed(() => {
+    return this.currentStageName() === 'CANCELLED';
+  });
+
+  /**
+   * Whether the opportunity is in NO GO stage
+   */
+  readonly isNoGo = computed(() => {
+    return this.currentStageName() === 'NO GO';
+  });
+
+  /**
+   * Get the cancellation reason from the stage change history
+   * Finds the most recent transition to CANCELLED stage and returns its comment
+   */
+  readonly cancellationReason = computed(() => {
+    if (!this.isCancelled()) return null;
+    
+    const history = this.stageChangeHistory();
+    if (!history || history.length === 0) return null;
+
+    // Find the most recent entry where toStage is CANCELLED
+    const cancelEntry = history.find(
+      (entry: any) => entry.toStage === 'CANCELLED' || entry.toStageDisplayName === 'CANCELLED'
+    );
+    
+    return cancelEntry?.comment || null;
+  });
+
+  /**
+   * Get the rejection reason from the stage change history
+   * Finds the most recent transition to NO GO stage and returns its comment
+   */
+  readonly rejectionReason = computed(() => {
+    if (!this.isNoGo()) return null;
+    
+    const history = this.stageChangeHistory();
+    if (!history || history.length === 0) return null;
+
+    // Find the most recent entry where toStage is NO GO
+    const rejectEntry = history.find(
+      (entry: any) => entry.toStage === 'NO GO' || entry.toStageDisplayName === 'NO GO'
+    );
+    
+    return rejectEntry?.comment || null;
   });
 
   get scrollHeightValue() {
@@ -331,11 +385,28 @@ export class StageWorkflowComponent implements OnInit, OnChanges {
           // Not in workflow - pass normal data to WorkflowComponent
           this.approvers.set([]);
           if (this.workflowComponent !== null && this.workflowComponent !== undefined) {
+            // Filter out Cancel and Reopen actions - these have dedicated buttons with custom dialogs
+            const filteredActions = (data.availableActions || []).filter((action: any) => {
+              const targetStage = action.targetStage || action.newStage || '';
+              
+              // Exclude Cancel action (→ CANCELLED) - has custom dialog
+              if (targetStage === 'CANCELLED') {
+                return false;
+              }
+              
+              // Exclude Reopen action (→ IDENTIFY & PROFILE from NO GO or CANCELLED) - has custom dialog
+              if (targetStage === 'IDENTIFY & PROFILE' && (currentStage === 'NO GO' || currentStage === 'CANCELLED')) {
+                return false;
+              }
+              
+              return true;
+            });
+            
             const transformedData = {
               stage: currentStage,
               displayName: displayName,
               isInWorkflow: false,
-              nextActions: (data.availableActions || []).map((action: any) => ({
+              nextActions: filteredActions.map((action: any) => ({
                 newStage: action.targetStage || action.newStage,
                 actionName: action.displayName || action.actionName,
                 comment: action.commentRequired ? 'mandatory' : (action.commentOptional ? 'optional' : 'none'),
@@ -441,6 +512,15 @@ export class StageWorkflowComponent implements OnInit, OnChanges {
   }
 
   /**
+   * Handles visibility change from p-dialog (for X button close)
+   */
+  onCancelDialogVisibleChange(visible: boolean): void {
+    if (!visible) {
+      this.closeCancelDialog();
+    }
+  }
+
+  /**
    * Confirms and executes the cancel action
    */
   confirmCancel(): void {
@@ -483,6 +563,15 @@ export class StageWorkflowComponent implements OnInit, OnChanges {
   closeReopenDialog(): void {
     this.showReopenDialog.set(false);
     this.reopenReason.set('');
+  }
+
+  /**
+   * Handles visibility change from p-dialog (for X button close)
+   */
+  onReopenDialogVisibleChange(visible: boolean): void {
+    if (!visible) {
+      this.closeReopenDialog();
+    }
   }
 
   /**

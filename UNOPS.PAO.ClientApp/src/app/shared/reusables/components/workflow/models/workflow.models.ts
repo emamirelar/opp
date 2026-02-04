@@ -165,9 +165,24 @@ export interface WorkflowSubmitResponse {
   confirmationMessage?: string;
 
   /**
+   * Opportunity Manager info for Non-OM warning (name and email)
+   */
+  opportunityManagerInfo?: string;
+
+  /**
    * List of countries not related to the org unit (for OrgUnitCountryMismatch)
    */
   unrelatedCountries?: string[];
+
+  /**
+   * All implementation countries with their mapping status (for OrgUnitCountryMismatch)
+   */
+  countryMappings?: CountryMappingInfo[];
+
+  /**
+   * Name of the responsible org unit for display in dialogs
+   */
+  responsibleOrgUnitName?: string;
 
   /**
    * Whether acknowledgment statement is required
@@ -205,6 +220,21 @@ export interface WorkflowSubmitResponse {
  * Types of confirmation dialogs
  */
 export type ConfirmationType = 'NonOMSubmitter' | 'OrgUnitCountryMismatch';
+
+/**
+ * Country mapping information for org unit mismatch dialog
+ */
+export interface CountryMappingInfo {
+  /**
+   * Country name
+   */
+  countryName: string;
+
+  /**
+   * Whether the country is mapped to the selected org unit
+   */
+  isMapped: boolean;
+}
 
 /**
  * Cancel/Reopen request model
