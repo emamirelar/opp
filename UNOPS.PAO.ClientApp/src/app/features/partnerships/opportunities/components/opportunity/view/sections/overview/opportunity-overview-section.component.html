@@ -71,7 +71,7 @@
 
   <div class="space-y-6">
     <!-- Name -->
-    <div>
+    <div id="field-name">
       <h3 class="text-sm font-semibold text-unops-neutral-700 mb-2">{{ 'label.opportunity.name' | translate }} *</h3>
       @if (isEditing()) {
         <input
@@ -99,7 +99,7 @@
     </div>
 
     <!-- Description -->
-    <div>
+    <div id="field-description">
       <h3 class="text-sm font-semibold text-unops-neutral-700 mb-2">{{ 'label.opportunity.description' | translate }} *</h3>
       @if (isEditing()) {
         <textarea
@@ -115,7 +115,7 @@
     </div>
 
     <!-- Proposed Budget for Initiative -->
-    <div>
+    <div id="field-initiativeBudgetUSD">
       <h3 class="text-sm font-semibold text-unops-neutral-700 mb-2">{{ 'label.proposedBudgetForInitiative' | translate }} *</h3>
       @if (isEditing()) {
         <p-inputNumber

@@ -35,6 +35,12 @@ export interface StageRequirement {
   form?: string;
 
   /**
+   * Section ID for navigation (maps to UI section where this field is located)
+   * Used by click-to-navigate functionality
+   */
+  section?: string;
+
+  /**
    * Validation rules for the requirement
    */
   validation?: RequirementValidation;
@@ -253,4 +259,69 @@ export function isBuiltInFieldType(fieldType: string | undefined): boolean {
   if (!fieldType) return false;
   const builtInTypes = Object.values(FieldTypes);
   return builtInTypes.includes(fieldType.toLowerCase() as BuiltInFieldType);
+}
+
+/**
+ * Field-to-section mapping for Opportunity entity.
+ * Maps field names from requirements to their corresponding UI section IDs.
+ * Used by click-to-navigate functionality in requirements validation component.
+ */
+export const OpportunityFieldSectionMapping: Record<string, string> = {
+  // Overview section fields
+  name: 'overview',
+  description: 'overview',
+  initiativeBudgetUSD: 'overview',
+
+  // Why section fields
+  challenges: 'why',
+  expectedImpact: 'why',
+  expectedOutcomes: 'why',
+  unopsMissions: 'why',
+  sdgs: 'why',
+  beneficiaries: 'why',
+  beneficiariesToBeDetermined: 'why',
+  estimatedDirectBeneficiaries: 'why',
+  estimatedIndirectBeneficiaries: 'why',
+
+  // Who section fields
+  fundingPartners: 'who',
+  clientPartners: 'who',
+  stakeholders: 'who',
+
+  // What section fields
+  deliverables: 'what',
+
+  // Where section fields
+  countries: 'where',
+
+  // When section fields
+  targetSigningDate: 'when',
+  implementationStartDate: 'when',
+  targetDeliveryDate: 'when',
+
+  // Statement section fields
+  opportunityStatementMarkdown: 'statement',
+
+  // Team section fields
+  responsibleOrgUnitId: 'team',
+  proposedInitiativeTypeId: 'team',
+  doaHolders: 'team',
+};
+
+/**
+ * Gets the section ID for a given field name.
+ * @param fieldName - The field name from a requirement
+ * @param entityName - The entity type (defaults to 'opportunity')
+ * @returns The section ID or undefined if no mapping exists
+ */
+export function getSectionForField(fieldName: string | undefined, entityName?: string): string | undefined {
+  if (!fieldName) return undefined;
+
+  // Currently only Opportunity entity has field-section mappings
+  // Can be extended to support other entities in the future
+  if (!entityName || entityName.toLowerCase() === 'opportunity') {
+    return OpportunityFieldSectionMapping[fieldName];
+  }
+
+  return undefined;
 }

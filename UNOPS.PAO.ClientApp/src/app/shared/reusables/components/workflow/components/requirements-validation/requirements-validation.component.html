@@ -19,7 +19,15 @@
           <ul class="requirements-list">
             @for (requirement of requirements(); track requirement.name) {
               @if (requirement.isMet !== true) {
-                <li class="requirement-item" [class.clickable]="requirement.fieldName">
+                <li 
+                  class="requirement-item" 
+                  [class.clickable]="isRequirementClickable(requirement)"
+                  (click)="onRequirementClick(requirement)"
+                  [attr.role]="isRequirementClickable(requirement) ? 'button' : null"
+                  [attr.tabindex]="isRequirementClickable(requirement) ? 0 : null"
+                  (keydown.enter)="onRequirementClick(requirement)"
+                  (keydown.space)="onRequirementClick(requirement); $event.preventDefault()"
+                >
                   <span class="requirement-text">{{ requirement.description | translate }}</span>
 
                   @if (requirement.fieldType === 'documents' && requirement.documentTypes) {
