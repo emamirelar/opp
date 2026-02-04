@@ -3,7 +3,6 @@ metadata:
   description: "Delegation of Authority (DoA) roles sync for Engagement Acceptance"
   version: "1.0"
   enabled: true
-  schedule_cron: "0 * * * *"  # Every hour at minute 0 (e.g., 1:00, 2:00, 3:00)
   max_retry_attempts: 1
   timeout_minutes: 5
 
@@ -145,12 +144,7 @@ destination:
       data_type: "integer"
       is_required: true
     
-    # UserId - foreign key (will be validated via foreign_key_mappings)
-    - source_field: "UserId"
-      destination_field: "UserId"
-      data_type: "integer"
-      is_required: true
-    
+    # UserId - handled via foreign_key_mappings (validates & maps)
     # EntityId - foreign key (will be validated via foreign_key_mappings)
     - source_field: "EntityId"
       destination_field: "EntityId"
@@ -227,6 +221,15 @@ destination:
       destination_field: "EntityRoleId"
       lookup_return_field: "Id"
       is_required: true
+      on_lookup_fail: "LogWarning"
+    
+    # Validate UserId exists in AspNetUsers - skip record if user is missing
+    - source_field: "UserId"
+      lookup_table: "AspNetUsers"
+      lookup_field: "Id"
+      destination_field: "UserId"
+      lookup_return_field: "Id"
+      is_required: false
       on_lookup_fail: "LogWarning"
 
 sync_options:
