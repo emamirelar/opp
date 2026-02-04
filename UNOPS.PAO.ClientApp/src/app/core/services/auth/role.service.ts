@@ -25,6 +25,20 @@ export interface DoaRoleAssignmentResponse {
   assignedCount: number;
 }
 
+export interface ExistingDoaRole {
+  id: number;
+  entityId: number;
+  orgUnitCode: string;
+  orgUnitName: string;
+  userId: number;
+  userName: string;
+  userEmail: string;
+  entityRoleId: number;
+  roleName: string;
+  roleCode: string;
+  createdDate: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -51,5 +65,19 @@ export class RoleService {
    */
   assignDoaRoles(assignments: DoaRoleAssignment[]): Observable<DoaRoleAssignmentResponse> {
     return this.http.post<DoaRoleAssignmentResponse>(`${this.baseUrl}/assign-doa-roles`, assignments);
+  }
+
+  /**
+   * Gets all existing DOA role assignments from EntityUserRoles table.
+   */
+  getDoaRoles(): Observable<ExistingDoaRole[]> {
+    return this.http.get<ExistingDoaRole[]>(`${this.baseUrl}/doa-roles`);
+  }
+
+  /**
+   * Deletes a DOA role assignment by ID.
+   */
+  deleteDoaRole(id: number): Observable<{ success: boolean; message: string }> {
+    return this.http.delete<{ success: boolean; message: string }>(`${this.baseUrl}/doa-roles/${id}`);
   }
 } 
