@@ -1,0 +1,331 @@
+metadata:
+  name: "EntityUserRoles DoA Sync"
+  description: "Delegation of Authority (DoA) roles sync for Engagement Acceptance"
+  version: "1.0"
+  enabled: true
+  schedule_cron: "0 * * * *"  # Every hour at minute 0 (e.g., 1:00, 2:00, 3:00)
+  max_retry_attempts: 1
+  timeout_minutes: 5
+
+source:
+  type: "bigquery"
+  
+  query: |
+    WITH DOA_DATA AS (
+      SELECT
+        -- Generate unique ID for composite key (EntityId, EntityRoleId, UserId)
+        CAST(MOD(ABS(FARM_FINGERPRINT(CONCAT(
+          CAST(Org_Unit AS STRING), 
+          '-', 
+          Delegation_Of_Authority_Level,
+          '-',
+          Resource
+        ))), 2147483647) AS INT64) AS Id
+        
+        -- Map Org_Unit to OrganizationHierarchy EntityId using hash
+        , CAST(MOD(ABS(FARM_FINGERPRINT(Org_Unit)), 2147483647) AS INT64) AS EntityId
+        , 'OrganizationHierarchy' AS EntityType
+        
+        -- Map UserId from Resource (employee ID) - ensure it's INT64
+        , CAST(PARSE_NUMERIC(Resource) AS INT64) AS UserId
+        
+        -- Map DoA Level to EntityRole Code for lookup
+        -- Codes: DoA1_OrganizationHierarchy, DoA2_OrganizationHierarchy, etc.
+        , CONCAT('DoA', CAST(Delegation_Of_Authority_Level AS STRING), '_OrganizationHierarchy') AS EntityRoleCode
+        
+        -- Standard fields
+        , CONCAT(
+            'DoA', Delegation_Of_Authority_Level, 
+            ' - ', Org_Unit, 
+            ' - ', Resource,
+            ' (', Resource_Name, ')'
+          ) AS Name
+        , CAST(1 AS INT64) AS Status  -- Active
+        , CAST(0 AS INT64) AS CreatedBy
+        , CURRENT_TIMESTAMP() AS CreatedDate
+        , CAST(0 AS INT64) AS LastModifiedBy
+        , CURRENT_TIMESTAMP() AS LastModifiedDate  -- Always update to track sync time
+        , FALSE AS IsDeleted
+        , CAST(0 AS INT64) AS DeletedBy
+        , CAST(NULL AS TIMESTAMP) AS DeletedDate
+        , CAST(0 AS INT64) AS WorkflowStatus
+        
+        -- Additional context fields for debugging
+        , Org_Unit AS OrgUnitCode
+        , Org_Unit_Description
+        , Region
+        , Region_Description
+        , Hub
+        , Hub_Description
+        , Resource
+        , Resource_Name
+        , Position_Description
+        , Standardized_Position_Title_Description
+        , Officer_In_Charge_Resource
+        , Officer_In_Charge_Resource_Name
+        , Delegation_Of_Authority_Level AS DoALevel
+        , Delegation_Of_Authority_Description
+        , Delegation_Of_Authority_Start_Date
+        , Delegation_Of_Authority_End_Date
+        , Delegation_Of_Authority_Entry_Status
+        , Delegation_Of_Authority_Entry_Status_Description
+        , Last_Updated
+        , Last_Updated_User
+        , Last_Updated_User_Name
+        
+      FROM
+        `unopsreporting.Common.Delegation_Of_Authorities_Report`
+      WHERE
+        Delegation_Of_Authority_Description = 'Engagement Acceptance'
+        AND Delegation_Of_Authority_Entry_Status = 'N'  -- Active entries only (N = Normal/Active)
+        -- Check that current date is within the delegation period
+        AND CAST(Delegation_Of_Authority_Start_Date AS DATE) <= CURRENT_DATE()
+        AND (
+          Delegation_Of_Authority_End_Date IS NULL  -- No end date = ongoing
+          OR CAST(Delegation_Of_Authority_End_Date AS DATE) >= CURRENT_DATE()
+        )
+        AND Org_Unit IS NOT NULL
+        AND Resource IS NOT NULL
+        AND Delegation_Of_Authority_Level IS NOT NULL
+    )
+    
+    SELECT
+      Id
+      , EntityId
+      , EntityType
+      , UserId
+      , EntityRoleCode
+      , Name
+      , Status
+      , CreatedBy
+      , CreatedDate
+      , LastModifiedBy
+      , LastModifiedDate
+      , IsDeleted
+      , DeletedBy
+      , DeletedDate
+      , WorkflowStatus
+      , OrgUnitCode
+      , Org_Unit_Description
+      , Region
+      , Region_Description
+      , Hub
+      , Hub_Description
+      , Resource
+      , Resource_Name
+      , Position_Description
+      , Standardized_Position_Title_Description
+      , Officer_In_Charge_Resource
+      , Officer_In_Charge_Resource_Name
+      , DoALevel
+      , Delegation_Of_Authority_Description
+      , Delegation_Of_Authority_Start_Date
+      , Delegation_Of_Authority_End_Date
+      , Delegation_Of_Authority_Entry_Status
+      , Delegation_Of_Authority_Entry_Status_Description
+      , Last_Updated
+      , Last_Updated_User
+      , Last_Updated_User_Name
+    FROM
+      DOA_DATA;
+  
+  primary_key_field: "Id"
+  batch_size: 1000
+
+destination:
+  table_name: "EntityUserRoles"
+  schema: "public"
+  manage_table_structure: true  # Allow ExternalDataService to manage updates
+  add_standard_fields: false  # Table already has standard fields, don't add new ones
+  
+  field_mappings:
+    # Primary Key (generated from composite key hash)
+    - source_field: "Id"
+      destination_field: "Id"
+      data_type: "integer"
+      is_required: true
+    
+    # UserId - foreign key (will be validated via foreign_key_mappings)
+    - source_field: "UserId"
+      destination_field: "UserId"
+      data_type: "integer"
+      is_required: true
+    
+    # EntityId - foreign key (will be validated via foreign_key_mappings)
+    - source_field: "EntityId"
+      destination_field: "EntityId"
+      data_type: "integer"
+      is_required: true
+    
+    # EntityRoleId will be resolved via foreign_key_mappings (not mapped here)
+    
+    - source_field: "EntityType"
+      destination_field: "EntityType"
+      data_type: "text"
+      is_required: true
+    
+    # Standard ModifiableDeletableEntity fields
+    - source_field: "Name"
+      destination_field: "Name"
+      data_type: "text"
+      is_required: false
+    
+    - source_field: "Status"
+      destination_field: "Status"
+      data_type: "integer"
+      is_required: true
+    
+    - source_field: "CreatedBy"
+      destination_field: "CreatedBy"
+      data_type: "integer"
+      is_required: true
+      insert_only: true  # Preserve original creator, don't update
+    
+    - source_field: "CreatedDate"
+      destination_field: "CreatedDate"
+      data_type: "timestamp"
+      is_required: true
+      insert_only: true  # Preserve original creation time, don't update
+    
+    - source_field: "LastModifiedBy"
+      destination_field: "LastModifiedBy"
+      data_type: "integer"
+      is_required: true
+    
+    - source_field: "LastModifiedDate"
+      destination_field: "LastModifiedDate"
+      data_type: "timestamp"
+      is_required: true
+    
+    - source_field: "IsDeleted"
+      destination_field: "IsDeleted"
+      data_type: "boolean"
+      is_required: true
+    
+    - source_field: "DeletedBy"
+      destination_field: "DeletedBy"
+      data_type: "integer"
+      is_required: false
+    
+    - source_field: "DeletedDate"
+      destination_field: "DeletedDate"
+      data_type: "timestamp"
+      is_required: false
+    
+    - source_field: "WorkflowStatus"
+      destination_field: "WorkflowStatus"
+      data_type: "integer"
+      is_required: true
+  
+  # Foreign key lookups - resolves IDs from lookup tables
+  foreign_key_mappings:
+    # Lookup EntityRoleId from EntityRoles using EntityRoleCode
+    # This transforms EntityRoleCode (text) into EntityRoleId (integer)
+    - source_field: "EntityRoleCode"
+      lookup_table: "EntityRoles"
+      lookup_field: "Code"
+      destination_field: "EntityRoleId"
+      lookup_return_field: "Id"
+      is_required: true
+      on_lookup_fail: "LogWarning"
+
+sync_options:
+  sync_mode: Upsert  # Insert new or update ALL existing records
+  batch_processing: true
+  delete_orphaned_records: false  # Don't delete existing DoA records not in BigQuery
+  # Note: Updates all records on every sync to ensure latest data
+  # Use CreatedDate vs LastModifiedDate to distinguish inserts from updates
+  # Upsert matching: Uses primary_key_field "Id" defined in source section
+
+validation:
+  required_source_fields:
+    - "Id"
+    - "EntityId"
+    - "EntityType"
+    - "UserId"
+    - "EntityRoleCode"
+  
+  # Validate DoA levels are 1-4 (STRING values)
+  custom_validations:
+    - field: "DoALevel"
+      rule: "in_list"
+      allowed_values: ["1", "2", "3", "4"]
+      error_message: "DoA Level must be 1, 2, 3, or 4"
+  
+error_handling:
+  on_connection_error: RetryWithBackoff
+  on_mapping_error: SkipRecord
+  on_lookup_failure: SkipRecord
+  log_skipped_records: true
+
+logging:
+  log_level: "Debug"
+  log_sql_queries: true
+  log_record_details: true
+  log_lookup_failures: true
+
+notes: |
+  This sync configuration manages Delegation of Authority (DoA) roles for Engagement Acceptance.
+  
+  DoA Levels:
+  - DoA1: Highest authority level (EntityRoleId = 12)
+  - DoA2: Second level (EntityRoleId = 13)
+  - DoA3: Third level (EntityRoleId = 14)
+  - DoA4: Fourth level (EntityRoleId = 15)
+  
+  Key Features:
+  - Syncs only active DoA assignments (Entry_Status = 'N' = Normal/Active)
+  - Only syncs Engagement Acceptance DoA roles
+  - Filters by date range:
+    * Current date >= Delegation_Of_Authority_Start_Date
+    * Current date <= Delegation_Of_Authority_End_Date (or End_Date is NULL for ongoing)
+  - Updates all records on every sync run (like engagements.yaml):
+    * manage_table_structure: true allows ExternalDataService to update all fields
+    * LastModifiedDate is always set to CURRENT_TIMESTAMP() on every sync
+    * CreatedDate is preserved from first insert (insert_only: true)
+    * To identify which records were just inserted vs updated:
+      - New inserts: CreatedDate ≈ LastModifiedDate (within seconds)
+      - Updates: CreatedDate < LastModifiedDate (older creation date)
+  - Uses foreign_key_mappings to resolve:
+    * EntityRoleCode (text) → EntityRoles.Id (EntityRoleId as integer)
+  - UserId and EntityId are already integers from BigQuery, mapped directly
+  - Records will be skipped if EntityRoleCode lookup fails
+  
+  Source Data Fields:
+  - Delegation_Of_Authority_Level: STRING values '1', '2', '3', or '4'
+  - Resource: Employee ID (numeric string)
+  - Org_Unit: Organization unit code
+  - Delegation_Of_Authority_Start_Date: When delegation begins
+  - Delegation_Of_Authority_End_Date: When delegation ends (NULL = ongoing)
+  - Delegation_Of_Authority_Entry_Status: 'N' = Active, other values = Inactive
+  
+  Prerequisites:
+  - PAOUsers table must contain the Resource IDs from BigQuery (as UserId)
+  - OrganizationHierarchies table must contain records with matching FARM_FINGERPRINT hashes
+  - EntityRoles must have DoA1-4 roles seeded for OrganizationHierarchy entity type:
+    * Code: DoA1_OrganizationHierarchy (Id: 12)
+    * Code: DoA2_OrganizationHierarchy (Id: 13)
+    * Code: DoA3_OrganizationHierarchy (Id: 14)
+    * Code: DoA4_OrganizationHierarchy (Id: 15)
+  
+  Troubleshooting:
+  - If records are skipped, check logs for EntityRoleCode lookup failures
+  - Verify EntityRoles DoA1-4 exist with correct codes:
+    * SELECT "Id", "Code", "EntityType", "IsDeleted" FROM "EntityRoles" WHERE "EntityType" = 'OrganizationHierarchy'
+    * Expected: DoA1_OrganizationHierarchy (Id=12), DoA2_OrganizationHierarchy (Id=13), etc.
+  - EntityRoleCode lookup uses exact match on Code field (case-sensitive)
+  - UserId values come directly from BigQuery (Resource field cast to INT64)
+  - EntityId values are generated via FARM_FINGERPRINT hash of Org_Unit code
+  - If foreign key constraint errors occur, verify PAOUsers and OrganizationHierarchies contain the expected IDs
+  - To identify inserts vs updates after sync:
+    * Recently inserted: SELECT "Id", "Name", "CreatedDate", "LastModifiedDate" 
+                         FROM "EntityUserRoles" 
+                         WHERE "EntityType" = 'OrganizationHierarchy' 
+                         AND "CreatedDate" >= NOW() - INTERVAL '5 minutes'
+                         ORDER BY "CreatedDate" DESC;
+    * Recently updated:  SELECT "Id", "Name", "CreatedDate", "LastModifiedDate" 
+                         FROM "EntityUserRoles" 
+                         WHERE "EntityType" = 'OrganizationHierarchy' 
+                         AND "LastModifiedDate" >= NOW() - INTERVAL '5 minutes'
+                         AND "CreatedDate" < "LastModifiedDate" - INTERVAL '1 minute'
+                         ORDER BY "LastModifiedDate" DESC;

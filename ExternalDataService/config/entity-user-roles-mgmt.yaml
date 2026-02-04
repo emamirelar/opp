@@ -1,0 +1,476 @@
+metadata:
+  name: "EntityUserRoles Management Sync"
+  description: "Organization Management roles sync (Regional Directors, Hub Directors, OrgUnit Directors and Deputies)"
+  version: "1.0"
+  enabled: true
+  schedule_cron: "0 * * * *"  # Every hour at minute 0 (e.g., 1:00, 2:00, 3:00)
+  max_retry_attempts: 1
+  timeout_minutes: 5
+
+source:
+  type: "bigquery"
+  
+  query: |
+    -- This query unpivots the Organisational_Structures table to create one row per director/deputy assignment
+    -- Each row represents a (UserId, EntityId, EntityRoleCode) combination
+    WITH ORG_STRUCTURE AS (
+      SELECT
+        Org_Unit
+        , Org_Unit_Description
+        , Hub
+        , Hub_Description
+        , Region
+        , Region_Description
+        , System_Status
+        , Effective_Date
+        -- Region level roles
+        , Region_Director_Resource
+        , Region_Director_Resource_Name
+        , Region_Director_Position_No
+        , Region_Director_Position_Description
+        , Region_Deputy_Director_Resource
+        , Region_Deputy_Director_Resource_Name
+        , Region_Deputy_Director_Position_No
+        , Region_Deputy_Director_Position_Description
+        -- Hub level roles (MCO = Multi-Country Office = Hub)
+        , Hub_Director_Resource
+        , Hub_Director_Resource_Name
+        , Hub_Director_Position_No
+        , Hub_Director_Position_Description
+        , Hub_Deputy_Director_Resource
+        , Hub_Deputy_Director_Resource_Name
+        , Hub_Deputy_Director_Position_No
+        , Hub_Deputy_Director_Position_Description
+        -- OrgUnit level roles
+        , Org_Unit_Director_Resource
+        , Org_Unit_Director_Resource_Name
+        , Org_Unit_Director_Position_No
+        , Org_Unit_Director_Position_Description
+        , Org_Unit_Deputy_Director_Resource
+        , Org_Unit_Deputy_Director_Resource_Name
+        , Org_Unit_Deputy_Director_Position_No
+        , Org_Unit_Deputy_Director_Position_Description
+      FROM
+        `unopsreporting.Organisation.Organisational_Structures`
+      WHERE
+        System_Status = 'N'
+        AND CAST(Effective_Date AS DATE) = CURRENT_DATE()
+    )
+    
+    -- Regional Directors
+    , REGIONAL_DIRECTORS AS (
+      SELECT
+        Region AS OrgCode
+        , Region_Director_Resource AS ResourceId
+        , Region_Director_Resource_Name AS ResourceName
+        , Region_Director_Position_Description AS PositionDescription
+        , 'Regional_Director_OrganizationHierarchy' AS EntityRoleCode
+        , 'Region' AS HierarchyLevel
+      FROM ORG_STRUCTURE
+      WHERE Region IS NOT NULL 
+        AND Region != ''
+        AND Region_Director_Resource IS NOT NULL 
+        AND Region_Director_Resource != ''
+    )
+    
+    -- Regional Deputy Directors
+    , REGIONAL_DEPUTY_DIRECTORS AS (
+      SELECT
+        Region AS OrgCode
+        , Region_Deputy_Director_Resource AS ResourceId
+        , Region_Deputy_Director_Resource_Name AS ResourceName
+        , Region_Deputy_Director_Position_Description AS PositionDescription
+        , 'Regional_Deputy_Director_OrganizationHierarchy' AS EntityRoleCode
+        , 'Region' AS HierarchyLevel
+      FROM ORG_STRUCTURE
+      WHERE Region IS NOT NULL 
+        AND Region != ''
+        AND Region_Deputy_Director_Resource IS NOT NULL 
+        AND Region_Deputy_Director_Resource != ''
+    )
+    
+    -- Hub Directors (MCO Directors)
+    , HUB_DIRECTORS AS (
+      SELECT
+        Hub AS OrgCode
+        , Hub_Director_Resource AS ResourceId
+        , Hub_Director_Resource_Name AS ResourceName
+        , Hub_Director_Position_Description AS PositionDescription
+        , 'MCO_Director_OrganizationHierarchy' AS EntityRoleCode
+        , 'Hub' AS HierarchyLevel
+      FROM ORG_STRUCTURE
+      WHERE Hub IS NOT NULL 
+        AND Hub != ''
+        AND Hub_Director_Resource IS NOT NULL 
+        AND Hub_Director_Resource != ''
+    )
+    
+    -- Hub Deputy Directors (MCO Deputy Directors)
+    , HUB_DEPUTY_DIRECTORS AS (
+      SELECT
+        Hub AS OrgCode
+        , Hub_Deputy_Director_Resource AS ResourceId
+        , Hub_Deputy_Director_Resource_Name AS ResourceName
+        , Hub_Deputy_Director_Position_Description AS PositionDescription
+        , 'MCO_Deputy_Director_OrganizationHierarchy' AS EntityRoleCode
+        , 'Hub' AS HierarchyLevel
+      FROM ORG_STRUCTURE
+      WHERE Hub IS NOT NULL 
+        AND Hub != ''
+        AND Hub_Deputy_Director_Resource IS NOT NULL 
+        AND Hub_Deputy_Director_Resource != ''
+    )
+    
+    -- OrgUnit Directors
+    , ORGUNIT_DIRECTORS AS (
+      SELECT
+        Org_Unit AS OrgCode
+        , Org_Unit_Director_Resource AS ResourceId
+        , Org_Unit_Director_Resource_Name AS ResourceName
+        , Org_Unit_Director_Position_Description AS PositionDescription
+        , 'OrgUnit_Director_OrganizationHierarchy' AS EntityRoleCode
+        , 'OrgUnit' AS HierarchyLevel
+      FROM ORG_STRUCTURE
+      WHERE Org_Unit IS NOT NULL 
+        AND Org_Unit != ''
+        AND Org_Unit_Director_Resource IS NOT NULL 
+        AND Org_Unit_Director_Resource != ''
+    )
+    
+    -- OrgUnit Deputy Directors
+    , ORGUNIT_DEPUTY_DIRECTORS AS (
+      SELECT
+        Org_Unit AS OrgCode
+        , Org_Unit_Deputy_Director_Resource AS ResourceId
+        , Org_Unit_Deputy_Director_Resource_Name AS ResourceName
+        , Org_Unit_Deputy_Director_Position_Description AS PositionDescription
+        , 'OrgUnit_Deputy_Director_OrganizationHierarchy' AS EntityRoleCode
+        , 'OrgUnit' AS HierarchyLevel
+      FROM ORG_STRUCTURE
+      WHERE Org_Unit IS NOT NULL 
+        AND Org_Unit != ''
+        AND Org_Unit_Deputy_Director_Resource IS NOT NULL 
+        AND Org_Unit_Deputy_Director_Resource != ''
+    )
+    
+    -- Combine all director roles
+    , ALL_DIRECTORS AS (
+      SELECT * FROM REGIONAL_DIRECTORS
+      UNION ALL
+      SELECT * FROM REGIONAL_DEPUTY_DIRECTORS
+      UNION ALL
+      SELECT * FROM HUB_DIRECTORS
+      UNION ALL
+      SELECT * FROM HUB_DEPUTY_DIRECTORS
+      UNION ALL
+      SELECT * FROM ORGUNIT_DIRECTORS
+      UNION ALL
+      SELECT * FROM ORGUNIT_DEPUTY_DIRECTORS
+    )
+    
+    -- Generate final dataset with IDs and standard fields
+    SELECT DISTINCT
+      -- Generate unique ID for composite key (OrgCode, EntityRoleCode, ResourceId)
+      CAST(MOD(ABS(FARM_FINGERPRINT(CONCAT(
+        CAST(OrgCode AS STRING), 
+        '-', 
+        EntityRoleCode,
+        '-',
+        ResourceId
+      ))), 2147483647) AS INT64) AS Id
+      
+      -- Map OrgCode to OrganizationHierarchy EntityId using hash (same logic as organization-hierarchies.yaml)
+      , CAST(MOD(ABS(FARM_FINGERPRINT(OrgCode)), 2147483647) AS INT64) AS EntityId
+      , 'OrganizationHierarchy' AS EntityType
+      
+      -- Map UserId from ResourceId (employee ID) - ensure it's INT64
+      , CAST(PARSE_NUMERIC(ResourceId) AS INT64) AS UserId
+      
+      -- EntityRoleCode for lookup (e.g., Regional_Director_OrganizationHierarchy)
+      , EntityRoleCode
+      
+      -- Standard fields
+      , CONCAT(
+          REPLACE(EntityRoleCode, '_OrganizationHierarchy', ''),
+          ' - ', OrgCode, 
+          ' - ', ResourceId,
+          ' (', ResourceName, ')'
+        ) AS Name
+      , CAST(1 AS INT64) AS Status  -- Active
+      , CAST(0 AS INT64) AS CreatedBy
+      , CURRENT_TIMESTAMP() AS CreatedDate
+      , CAST(0 AS INT64) AS LastModifiedBy
+      , CURRENT_TIMESTAMP() AS LastModifiedDate  -- Always update to track sync time
+      , FALSE AS IsDeleted
+      , CAST(0 AS INT64) AS DeletedBy
+      , CAST(NULL AS TIMESTAMP) AS DeletedDate
+      , CAST(0 AS INT64) AS WorkflowStatus
+      
+      -- Additional context fields for debugging
+      , OrgCode
+      , ResourceId
+      , ResourceName
+      , PositionDescription
+      , HierarchyLevel
+    FROM
+      ALL_DIRECTORS
+    ORDER BY
+      HierarchyLevel, OrgCode, EntityRoleCode
+  
+  primary_key_field: "Id"
+  batch_size: 1000
+
+destination:
+  table_name: "EntityUserRoles"
+  schema: "public"
+  manage_table_structure: true  # Allow updates to standard fields
+  add_standard_fields: false
+  
+  field_mappings:
+    - source_field: "Id"
+      destination_field: "Id"
+      data_type: "integer"
+      is_unique: true
+      is_required: true
+    
+    - source_field: "EntityId"
+      destination_field: "EntityId"
+      data_type: "integer"
+      is_required: true
+    
+    - source_field: "EntityType"
+      destination_field: "EntityType"
+      data_type: "varchar(50)"
+      is_required: true
+    
+    - source_field: "UserId"
+      destination_field: "UserId"
+      data_type: "integer"
+      is_required: true
+    
+    - source_field: "Name"
+      destination_field: "Name"
+      data_type: "varchar(500)"
+      is_required: false
+    
+    - source_field: "Status"
+      destination_field: "Status"
+      data_type: "integer"
+      is_required: true
+    
+    - source_field: "CreatedBy"
+      destination_field: "CreatedBy"
+      data_type: "integer"
+      is_required: true
+      insert_only: true  # Preserve original creator on updates
+    
+    - source_field: "CreatedDate"
+      destination_field: "CreatedDate"
+      data_type: "timestamp"
+      is_required: true
+      insert_only: true  # Preserve original creation time
+    
+    - source_field: "LastModifiedBy"
+      destination_field: "LastModifiedBy"
+      data_type: "integer"
+      is_required: true
+    
+    - source_field: "LastModifiedDate"
+      destination_field: "LastModifiedDate"
+      data_type: "timestamp"
+      is_required: true
+    
+    - source_field: "IsDeleted"
+      destination_field: "IsDeleted"
+      data_type: "boolean"
+      is_required: true
+    
+    - source_field: "DeletedBy"
+      destination_field: "DeletedBy"
+      data_type: "integer"
+      is_required: false
+    
+    - source_field: "DeletedDate"
+      destination_field: "DeletedDate"
+      data_type: "timestamp"
+      is_required: false
+    
+    - source_field: "WorkflowStatus"
+      destination_field: "WorkflowStatus"
+      data_type: "integer"
+      is_required: true
+  
+  # Foreign key lookups - resolves IDs from lookup tables
+  foreign_key_mappings:
+    # Lookup EntityRoleId from EntityRoles using EntityRoleCode
+    # This transforms EntityRoleCode (text) into EntityRoleId (integer)
+    - source_field: "EntityRoleCode"
+      lookup_table: "EntityRoles"
+      lookup_field: "Code"
+      destination_field: "EntityRoleId"
+      lookup_return_field: "Id"
+      is_required: true
+      on_lookup_fail: "LogWarning"
+
+sync_options:
+  sync_mode: Upsert  # Insert new or update ALL existing records
+  batch_processing: true
+  delete_orphaned_records: false  # Don't delete existing management records not in BigQuery
+  # Note: Updates all records on every sync to ensure latest data
+  # Use CreatedDate vs LastModifiedDate to distinguish inserts from updates
+  # Upsert matching: Uses primary_key_field "Id" defined in source section
+
+validation:
+  required_source_fields:
+    - "Id"
+    - "EntityId"
+    - "EntityType"
+    - "UserId"
+    - "EntityRoleCode"
+  
+  # Validate role codes are one of the expected management roles
+  custom_validations:
+    - field: "EntityRoleCode"
+      rule: "in_list"
+      allowed_values: 
+        - "Regional_Director_OrganizationHierarchy"
+        - "Regional_Deputy_Director_OrganizationHierarchy"
+        - "MCO_Director_OrganizationHierarchy"
+        - "MCO_Deputy_Director_OrganizationHierarchy"
+        - "OrgUnit_Director_OrganizationHierarchy"
+        - "OrgUnit_Deputy_Director_OrganizationHierarchy"
+      error_message: "EntityRoleCode must be a valid management role"
+  
+error_handling:
+  on_connection_error: RetryWithBackoff
+  on_mapping_error: SkipRecord
+  on_lookup_failure: SkipRecord
+  log_skipped_records: true
+
+logging:
+  log_level: "Information"
+  log_sql_queries: true
+  log_record_details: false
+
+notes: |
+  # Management Roles Sync Configuration
+  
+  ## Purpose
+  Synchronizes organizational management roles (Directors and Deputy Directors) from BigQuery 
+  Organisational_Structures table into the EntityUserRoles table. This replaces the 
+  OrgUnitDirectorRolesSeeder.cs static seeder with a dynamic, BigQuery-driven sync.
+  
+  ## Role Hierarchy
+  1. **Regional Roles** (Region level)
+     - Regional_Director_OrganizationHierarchy
+     - Regional_Deputy_Director_OrganizationHierarchy
+  
+  2. **Hub Roles** (MCO = Multi-Country Office level)
+     - MCO_Director_OrganizationHierarchy
+     - MCO_Deputy_Director_OrganizationHierarchy
+  
+  3. **OrgUnit Roles** (Organizational Unit level)
+     - OrgUnit_Director_OrganizationHierarchy
+     - OrgUnit_Deputy_Director_OrganizationHierarchy
+  
+  ## Data Flow
+  1. Extract from `unopsreporting.Organisation.Organisational_Structures`
+  2. UNPIVOT director/deputy columns into individual role assignments
+  3. Generate deterministic IDs using FARM_FINGERPRINT(OrgCode + RoleCode + ResourceId)
+  4. Map OrgCode to EntityId using FARM_FINGERPRINT (matches organization-hierarchies.yaml)
+  5. Map ResourceId (employee ID) to UserId (integer)
+  6. Lookup EntityRoleId from EntityRoles table using EntityRoleCode
+  7. Upsert into EntityUserRoles table
+  
+  ## Key Fields
+  - **Id**: Generated hash of (OrgCode + EntityRoleCode + ResourceId) for stable primary key
+  - **EntityId**: Hash of OrgCode (Region/Hub/OrgUnit) matching OrganizationHierarchies table
+  - **UserId**: Employee ID from Resource field (matches AspNetUsers.Id)
+  - **EntityRoleId**: Looked up from EntityRoles table using EntityRoleCode
+  - **EntityType**: Always 'OrganizationHierarchy' for organizational management roles
+  
+  ## Sync Behavior
+  - **Upsert mode**: Inserts new roles and updates existing ones on every sync
+  - **Update tracking**: LastModifiedDate always set to sync time
+  - **Creation tracking**: CreatedDate preserved from first insert (insert_only: true)
+  - **No orphan deletion**: Keeps existing records even if they disappear from BigQuery
+  
+  ## Prerequisites
+  1. **AspNetUsers** must be synced first (provides valid UserIds)
+  2. **OrganizationHierarchies** must be synced first (provides valid EntityIds)
+  3. **EntityRoles** must contain the 6 management role codes
+  
+  ## Validation
+  - Checks that all required source fields are present
+  - Validates EntityRoleCode is one of the 6 management roles
+  - Skips records if EntityRole lookup fails
+  - Logs warnings for failed lookups
+  
+  ## Monitoring
+  - Check SyncExecutionLogs for sync status
+  - Review logs for skipped records (missing users/orgs/roles)
+  - Compare record counts: BigQuery source vs PostgreSQL destination
+  
+  ## Related Configurations
+  - entity-user-roles-doa.yaml: DoA (Delegation of Authority) roles
+  - organization-hierarchies.yaml: Organization structure (provides EntityIds)
+  - aspnetusers.yaml: User accounts (provides UserIds)
+  
+  ## Troubleshooting
+  
+  ### Skipped Records
+  If records are skipped during sync, check:
+  1. **Missing EntityRole**: Does EntityRoles table contain all 6 management role codes?
+  2. **Missing User**: Does AspNetUsers contain the ResourceId as UserId?
+  3. **Missing OrgUnit**: Does OrganizationHierarchies contain the OrgCode with matching EntityId?
+  
+  Query to check missing lookups:
+  ```sql
+  -- Check which management roles exist
+  SELECT "Code", "Id" FROM "EntityRoles" 
+  WHERE "Code" LIKE '%Director%OrganizationHierarchy' 
+  ORDER BY "Code";
+  
+  -- Check if users exist
+  SELECT COUNT(*) FROM "AspNetUsers" WHERE "Id" IN (201247, 155212);
+  
+  -- Check if org codes exist
+  SELECT "Code", "Id" FROM "OrganizationHierarchies" 
+  WHERE "Code" IN ('CRP', 'B0048')
+  ORDER BY "Code";
+  ```
+  
+  ### Duplicate Detection
+  If duplicates are created:
+  ```sql
+  -- Check for duplicate (EntityId, EntityRoleId, UserId) combinations
+  SELECT 
+      "EntityId", "EntityRoleId", "UserId", COUNT(*) AS "Duplicates"
+  FROM "EntityUserRoles"
+  WHERE "EntityType" = 'OrganizationHierarchy'
+  GROUP BY "EntityId", "EntityRoleId", "UserId"
+  HAVING COUNT(*) > 1;
+  ```
+  
+  ### Verify Sync Results
+  ```sql
+  -- Count by role type
+  SELECT 
+      er."Code" AS "RoleCode",
+      COUNT(*) AS "AssignmentCount"
+  FROM "EntityUserRoles" eur
+  INNER JOIN "EntityRoles" er ON eur."EntityRoleId" = er."Id"
+  WHERE eur."EntityType" = 'OrganizationHierarchy'
+      AND er."Code" LIKE '%Director%OrganizationHierarchy'
+  GROUP BY er."Code"
+  ORDER BY er."Code";
+  
+  -- Recent syncs
+  SELECT 
+      COUNT(*) AS "TotalManagementRoles",
+      MAX("LastModifiedDate") AS "LastSyncTime"
+  FROM "EntityUserRoles" eur
+  INNER JOIN "EntityRoles" er ON eur."EntityRoleId" = er."Id"
+  WHERE eur."EntityType" = 'OrganizationHierarchy'
+      AND er."Code" LIKE '%Director%OrganizationHierarchy';
+  ```

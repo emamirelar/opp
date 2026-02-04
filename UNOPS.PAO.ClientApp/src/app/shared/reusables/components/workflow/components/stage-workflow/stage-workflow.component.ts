@@ -81,6 +81,13 @@ export class StageWorkflowComponent implements OnInit, OnChanges {
   entityName = input<string>('');
   entityId = input<string>('');
   canChangeStage = input<boolean>(true);
+  
+  /**
+   * Whether the panel should be initially collapsed
+   * @default false
+   */
+  collapsed = input<boolean>(false);
+  
   onStageChangeSuccess = output();
 
   /**

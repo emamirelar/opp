@@ -111,7 +111,7 @@
         class="text-sm font-semibold text-unops-neutral-700 mb-2 flex items-center gap-2"
       >
         <i class="pi pi-exclamation-triangle text-unops-warning"></i>
-        {{ "label.opportunity.contextAndChallenges" | translate }}
+        {{ "label.opportunity.contextAndChallenges" | translate }} *
       </h3>
       @if (isEditing()) {
         <textarea
@@ -141,90 +141,92 @@
         {{ "label.opportunity.partnerObjectivesAndResults" | translate }}
       </h3>
 
-      <!-- Impact -->
-      <div>
-        <h3
-          class="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2"
-        >
-          <i class="pi pi-chart-line text-blue-600"></i>
-          {{ "label.opportunity.impact" | translate }}
-        </h3>
-      @if (isEditing()) {
-        <textarea
-          pInputTextarea
-          [formControl]="expectedImpactControl"
-          rows="4"
-          class="w-full"
-          maxlength="510"
-          [placeholder]="
-            'label.opportunity.impactPlaceholder' | translate
-          "
-        ></textarea>
-        <div class="flex justify-end mt-1">
-          <small class="text-unops-neutral-600">{{ (expectedImpactControl.value?.length || 0) }} / 510</small>
+      <div class="space-y-6">
+        <!-- Impact -->
+        <div>
+          <h3
+            class="text-sm font-semibold text-unops-neutral-700 mb-2 flex items-center gap-2"
+          >
+            <i class="pi pi-chart-line text-unops-secondary"></i>
+            {{ "label.opportunity.impact" | translate }} *
+          </h3>
+          @if (isEditing()) {
+            <textarea
+              pInputTextarea
+              [formControl]="expectedImpactControl"
+              rows="4"
+              class="w-full"
+              maxlength="510"
+              [placeholder]="
+                'label.opportunity.impactPlaceholder' | translate
+              "
+            ></textarea>
+            <div class="flex justify-end mt-1">
+              <small class="text-unops-neutral-600">{{ (expectedImpactControl.value?.length || 0) }} / 510</small>
+            </div>
+            @if (
+              expectedImpactControl.invalid &&
+              expectedImpactControl.touched &&
+              expectedImpactControl.errors?.['maxlength']
+            ) {
+              <p-message
+                severity="error"
+                variant="simple"
+                styleClass="mt-2"
+                [text]="
+                  'validation.maxLength' | translate: { max: 510 }
+                "
+              ></p-message>
+            }
+          } @else {
+            <p class="text-unops-neutral-800 leading-relaxed">
+              {{ opportunity().expectedImpact || "-" }}
+            </p>
+          }
         </div>
-        @if (
-          expectedImpactControl.invalid &&
-          expectedImpactControl.touched &&
-          expectedImpactControl.errors?.['maxlength']
-        ) {
-          <p-message
-            severity="error"
-            variant="simple"
-            styleClass="mt-2"
-            [text]="
-              'validation.maxLength' | translate: { max: 510 }
-            "
-          ></p-message>
-        }
-      } @else {
-        <p class="text-gray-700 leading-relaxed">
-          {{ opportunity().expectedImpact || "-" }}
-        </p>
-      }
-    </div>
 
-    <!-- Outcome(s) -->
-    <div>
-      <h3
-        class="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2"
-      >
-        <i class="pi pi-chart-line text-blue-600"></i>
-        {{ "label.opportunity.outcomes" | translate }}
-      </h3>
-      @if (isEditing()) {
-        <textarea
-          pInputTextarea
-          [formControl]="expectedOutcomesControl"
-          rows="4"
-          class="w-full"
-          maxlength="510"
-          [placeholder]="
-            'label.opportunity.outcomesPlaceholder' | translate
-          "
-        ></textarea>
-        <div class="flex justify-end mt-1">
-          <small class="text-unops-neutral-600">{{ (expectedOutcomesControl.value?.length || 0) }} / 510</small>
+        <!-- Outcome(s) -->
+        <div>
+          <h3
+            class="text-sm font-semibold text-unops-neutral-700 mb-2 flex items-center gap-2"
+          >
+            <i class="pi pi-chart-line text-unops-secondary"></i>
+            {{ "label.opportunity.outcomes" | translate }} *
+          </h3>
+          @if (isEditing()) {
+            <textarea
+              pInputTextarea
+              [formControl]="expectedOutcomesControl"
+              rows="4"
+              class="w-full"
+              maxlength="510"
+              [placeholder]="
+                'label.opportunity.outcomesPlaceholder' | translate
+              "
+            ></textarea>
+            <div class="flex justify-end mt-1">
+              <small class="text-unops-neutral-600">{{ (expectedOutcomesControl.value?.length || 0) }} / 510</small>
+            </div>
+            @if (
+              expectedOutcomesControl.invalid &&
+              expectedOutcomesControl.touched &&
+              expectedOutcomesControl.errors?.['maxlength']
+            ) {
+              <p-message
+                severity="error"
+                variant="simple"
+                styleClass="mt-2"
+                [text]="
+                  'validation.maxLength' | translate: { max: 510 }
+                "
+              ></p-message>
+            }
+          } @else {
+            <p class="text-unops-neutral-800 leading-relaxed">
+              {{ opportunity().expectedOutcomes || "-" }}
+            </p>
+          }
         </div>
-        @if (
-          expectedOutcomesControl.invalid &&
-          expectedOutcomesControl.touched &&
-          expectedOutcomesControl.errors?.['maxlength']
-        ) {
-          <p-message
-            severity="error"
-            variant="simple"
-            styleClass="mt-2"
-            [text]="
-              'validation.maxLength' | translate: { max: 510 }
-            "
-          ></p-message>
-        }
-      } @else {
-        <p class="text-gray-700 leading-relaxed">
-          {{ opportunity().expectedOutcomes || "-" }}
-        </p>
-      }
       </div>
     </div>
 
@@ -234,7 +236,7 @@
         class="text-lg font-semibold text-unops-secondary mb-4 flex items-center gap-2"
       >
         <i class="pi pi-users text-unops-primary"></i>
-        {{ "label.opportunity.beneficiaries" | translate }}
+        {{ "label.opportunity.beneficiaries" | translate }} *
       </h3>
 
       <!-- "To Be Determined" Option (Edit Mode - Shown First) -->
@@ -450,7 +452,7 @@
           class="text-lg font-semibold text-unops-secondary flex items-center gap-2"
         >
           <i class="pi pi-globe text-unops-success"></i>
-          {{ "label.opportunity.sdgAlignment" | translate }} ({{ sdgCount() }})
+          {{ "label.opportunity.sdgAlignment" | translate }} * ({{ sdgCount() }})
         </h3>
         @if (isEditing()) {
           <p-button
@@ -1547,7 +1549,7 @@
           class="text-lg font-semibold text-unops-secondary flex items-center gap-2"
         >
           <i class="pi pi-building text-unops-primary"></i>
-          {{ "label.opportunity.alignmentToUNOPSStrategy" | translate }} ({{
+          {{ "label.opportunity.alignmentToUNOPSStrategy" | translate }} * ({{
             unopsMissionCount()
           }})
         </h3>

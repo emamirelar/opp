@@ -5,3 +5,17 @@
 .required {
   color: var(--red-500);
 }
+
+/* Add gap between split button parts */
+::ng-deep .p-splitbutton {
+  .p-splitbutton-button {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  
+  .p-splitbutton-dropdown {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    margin-left: 2px;
+  }
+}

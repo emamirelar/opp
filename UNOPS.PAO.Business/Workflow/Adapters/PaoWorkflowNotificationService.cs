@@ -77,11 +77,13 @@ public record WorkflowRecalledEmailModel
 /// PAO implementation of IWorkflowNotificationService.
 /// Sends workflow-related email notifications using PAO's email infrastructure.
 /// Also creates in-system notifications for the notification bell.
+/// Uses DbContextFactory to create separate context instances for each operation,
+/// avoiding DbContext concurrency issues with other async workflow operations.
 /// </summary>
 public class PaoWorkflowNotificationService : IWorkflowNotificationService
 {
     private readonly IEmailSender _emailSender;
-    private readonly AppDbContext _context;
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
     private readonly ILogger<PaoWorkflowNotificationService> _logger;
     private readonly IConfiguration _configuration;
     private readonly NotificationManager _notificationManager;
@@ -95,13 +97,13 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
 
     public PaoWorkflowNotificationService(
         IEmailSender emailSender,
-        AppDbContext context,
+        IDbContextFactory<AppDbContext> contextFactory,
         ILogger<PaoWorkflowNotificationService> logger,
         IConfiguration configuration,
         NotificationManager notificationManager)
     {
         _emailSender = emailSender;
-        _context = context;
+        _contextFactory = contextFactory;
         _logger = logger;
         _configuration = configuration;
         _notificationManager = notificationManager;
@@ -222,6 +224,8 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
     /// </summary>
     private async Task CreateWorkflowNotificationAsync(int userId, string message, string entityName, int entityId, object recordData)
     {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        
         var notification = new Notification
         {
             UserId = userId,
@@ -236,8 +240,8 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
             CreatedAt = DateTime.UtcNow
         };
 
-        await _context.Notifications.AddAsync(notification);
-        await _context.SaveChangesAsync();
+        await context.Notifications.AddAsync(notification);
+        await context.SaveChangesAsync();
     }
 
     /// <summary>
@@ -397,7 +401,9 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
     {
         try
         {
-            var opportunity = await _context.Opportunities
+            await using var context = await _contextFactory.CreateDbContextAsync();
+            
+            var opportunity = await context.Opportunities
                 .AsNoTracking()
                 .Include(o => o.ResponsibleOrgUnit)
                 .Include(o => o.Countries)
@@ -419,7 +425,7 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
             }
 
             // Get org units normally responsible for these countries (excluding opportunity's own org unit)
-            var orgUnitIds = await _context.OrganizationUnitRelationships
+            var orgUnitIds = await context.OrganizationUnitRelationships
                 .AsNoTracking()
                 .Where(r => countryIds.Contains(r.EntityId) && r.EntityType == "Country" && r.OrganizationHierarchyId != opportunity.ResponsibleOrgUnitId)
                 .Select(r => r.OrganizationHierarchyId)
@@ -434,7 +440,7 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
 
             // Get internal stakeholders from those org units (users with relevant roles)
             // For now, we'll notify users who have DoA2 role on those org units
-            var stakeholderUserIds = await _context.EntityUserRoles
+            var stakeholderUserIds = await context.EntityUserRoles
                 .AsNoTracking()
                 .Include(e => e.EntityRole)
                 .Where(e => e.EntityType == "OrganizationHierarchy" 
@@ -501,8 +507,10 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
     {
         try
         {
+            await using var context = await _contextFactory.CreateDbContextAsync();
+            
             // Find all pending workflow_approval notifications for this entity
-            var notifications = await _context.Notifications
+            var notifications = await context.Notifications
                 .Where(n => n.Category == WorkflowApprovalCategory 
                          && n.Entity == entityName 
                          && n.EntityId == entityId
@@ -526,7 +534,7 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
                 }
             }
 
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
 
             _logger.LogInformation(
                 "Marked {Count} workflow notifications as done for {EntityName} (ID: {EntityId})",
@@ -582,7 +590,9 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
         if (!userIds.Any())
             return new List<string>();
 
-        return await _context.PAOUsers
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        
+        return await context.PAOUsers
             .AsNoTracking()
             .Where(u => userIds.Contains(u.Id) && !string.IsNullOrEmpty(u.Email))
             .Select(u => u.Email!)
@@ -597,7 +607,9 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
         if (!userIds.Any())
             return new List<string>();
 
-        return await _context.PAOUsers
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        
+        return await context.PAOUsers
             .AsNoTracking()
             .Include(u => u.UserProfile)
             .Where(u => userIds.Contains(u.Id))
@@ -615,7 +627,9 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
         if (!int.TryParse(entityId, out var opportunityId))
             return "Unknown";
 
-        var opportunity = await _context.Opportunities
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        
+        var opportunity = await context.Opportunities
             .AsNoTracking()
             .Include(o => o.ResponsibleOrgUnit)
             .FirstOrDefaultAsync(o => o.Id == opportunityId && !o.IsDeleted);
@@ -643,6 +657,8 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
 
         try
         {
+            await using var context = await _contextFactory.CreateDbContextAsync();
+            
             // 1. Add Opportunity Manager email
             var omEmail = await GetOpportunityManagerEmailAsync(notification.EntityId);
             if (!string.IsNullOrEmpty(omEmail))
@@ -664,7 +680,7 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
             // 3. Add Director/Manager of org unit
             if (int.TryParse(notification.EntityId, out var opportunityId))
             {
-                var opportunity = await _context.Opportunities
+                var opportunity = await context.Opportunities
                     .AsNoTracking()
                     .FirstOrDefaultAsync(o => o.Id == opportunityId && !o.IsDeleted);
 
@@ -699,7 +715,9 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
         if (!int.TryParse(entityId, out var opportunityId))
             return null;
 
-        var omStakeholder = await _context.OpportunityStakeholders
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        
+        var omStakeholder = await context.OpportunityStakeholders
             .AsNoTracking()
             .Include(s => s.EntityRole)
             .Include(s => s.User)
@@ -722,7 +740,9 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
         if (userId <= 0)
             return null;
 
-        var user = await _context.PAOUsers
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        
+        var user = await context.PAOUsers
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == userId);
 
@@ -747,7 +767,9 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
             "MCO_Deputy_Director_OrganizationHierarchy"
         };
 
-        var directorRole = await _context.EntityUserRoles
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        
+        var directorRole = await context.EntityUserRoles
             .AsNoTracking()
             .Include(eur => eur.User)
             .Include(eur => eur.EntityRole)
