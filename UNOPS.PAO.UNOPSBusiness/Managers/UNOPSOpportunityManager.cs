@@ -4380,6 +4380,83 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }))
             : "No SDGs";
 
+        // Separate Primary and Secondary SDGs for clearer AI prompt usage
+        var primarySdgsText = sdgsDetails != null && sdgsDetails.Any(s => s.IsPrimary == "Primary")
+            ? string.Join("\n", sdgsDetails.Where(s => s.IsPrimary == "Primary").Select(s => $"- SDG {s.SDGNumber}: {s.SDGName}"))
+            : "No primary SDGs selected";
+        var primarySdgsCount = sdgsDetails?.Count(s => s.IsPrimary == "Primary") ?? 0;
+        
+        var secondarySdgsText = sdgsDetails != null && sdgsDetails.Any(s => s.IsPrimary == "Secondary")
+            ? string.Join("\n", sdgsDetails.Where(s => s.IsPrimary == "Secondary").Select(s => $"- SDG {s.SDGNumber}: {s.SDGName}"))
+            : "No secondary SDGs selected";
+        var secondarySdgsCount = sdgsDetails?.Count(s => s.IsPrimary == "Secondary") ?? 0;
+
+        // Simple country names list for Location section
+        var countryNamesList = countriesDetails != null && countriesDetails.Any()
+            ? string.Join(", ", countriesDetails.Select(c => c.CountryName))
+            : "No countries specified";
+        
+        var countryRegionsList = countriesDetails != null && countriesDetails.Any()
+            ? string.Join(", ", countriesDetails.Select(c => c.Region).Where(r => !string.IsNullOrEmpty(r)).Distinct())
+            : "No regions specified";
+
+        // Formatted budget display
+        var budgetDisplay = stats.TotalFundingUSD > 0
+            ? $"USD {stats.TotalFundingUSD:N2}"
+            : (opportunity.InitiativeBudgetUSD.HasValue && opportunity.InitiativeBudgetUSD.Value > 0
+                ? $"USD {opportunity.InitiativeBudgetUSD.Value:N2} (estimated initiative budget)"
+                : "Budget not yet specified");
+
+        // Formatted timeline display
+        var timelineDisplay = new List<string>();
+        if (opportunity.TargetSigningDate.HasValue)
+            timelineDisplay.Add($"Target Signing Date: {opportunity.TargetSigningDate.Value:MMMM d, yyyy}");
+        if (opportunity.ImplementationStartDate.HasValue)
+            timelineDisplay.Add($"Implementation Start: {opportunity.ImplementationStartDate.Value:MMMM d, yyyy}");
+        if (opportunity.TargetDeliveryDate.HasValue)
+            timelineDisplay.Add($"Target Delivery Date: {opportunity.TargetDeliveryDate.Value:MMMM d, yyyy}");
+        var formattedTimeline = timelineDisplay.Any() 
+            ? string.Join(", ", timelineDisplay) 
+            : "Timeline not yet specified";
+
+        // Formatted beneficiaries display
+        var beneficiariesDisplay = new List<string>();
+        if (opportunity.EstimatedDirectBeneficiaries.HasValue && opportunity.EstimatedDirectBeneficiaries.Value > 0)
+            beneficiariesDisplay.Add($"Direct Beneficiaries: {opportunity.EstimatedDirectBeneficiaries.Value:N0}");
+        else if (opportunity.BeneficiariesToBeDetermined)
+            beneficiariesDisplay.Add("Direct Beneficiaries: To be determined during development");
+        else
+            beneficiariesDisplay.Add("Direct Beneficiaries: Not specified");
+            
+        if (opportunity.EstimatedIndirectBeneficiaries.HasValue && opportunity.EstimatedIndirectBeneficiaries.Value > 0)
+            beneficiariesDisplay.Add($"Indirect Beneficiaries: {opportunity.EstimatedIndirectBeneficiaries.Value:N0}");
+        else if (opportunity.BeneficiariesToBeDetermined)
+            beneficiariesDisplay.Add("Indirect Beneficiaries: To be determined during development");
+        else
+            beneficiariesDisplay.Add("Indirect Beneficiaries: Not specified");
+            
+        if (!string.IsNullOrEmpty(opportunity.ExpectedBeneficiaries))
+            beneficiariesDisplay.Add($"Beneficiary Institutions: {opportunity.ExpectedBeneficiaries}");
+        else
+            beneficiariesDisplay.Add("Beneficiary Institutions: Not specified");
+        
+        var formattedBeneficiaries = string.Join("\n", beneficiariesDisplay);
+
+        // Enhanced deliverables formatting with full hierarchy
+        var deliverablesEnhanced = deliverablesDetails != null && deliverablesDetails.Any()
+            ? string.Join("\n", deliverablesDetails.Select(d =>
+            {
+                var parts = new List<string> { d.OutputName };
+                if (!string.IsNullOrEmpty(d.ServiceLine)) parts.Add($"Service Line: {d.ServiceLine}");
+                if (!string.IsNullOrEmpty(d.Level1)) parts.Add($"Category: {d.Level1}");
+                if (!string.IsNullOrEmpty(d.Level2)) parts.Add($"Sub-category: {d.Level2}");
+                if (d.Quantity != "Not specified") parts.Add($"Quantity: {d.Quantity}");
+                if (!string.IsNullOrEmpty(d.PlannedStartDate) && !string.IsNullOrEmpty(d.PlannedEndDate))
+                    parts.Add($"Timeline: {d.PlannedStartDate} to {d.PlannedEndDate}");
+                return $"- {string.Join(" | ", parts)}";
+            }))
+            : "No deliverables specified";
+
         // Format UNCF Outcomes
         var uncfOutcomesDetails = opportunity.UNCFOutcomes?
             .Select(u => new
@@ -4497,6 +4574,10 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             ["countriesCount"] = (countriesDetails?.Count ?? 0).ToString(),
             ["sdGs"] = sdgsText,
             ["sdGsCount"] = (sdgsDetails?.Count ?? 0).ToString(),
+            ["primarySdGs"] = primarySdgsText,
+            ["primarySdGsCount"] = primarySdgsCount.ToString(),
+            ["secondarySdGs"] = secondarySdgsText,
+            ["secondarySdGsCount"] = secondarySdgsCount.ToString(),
             ["uncfOutcomes"] = uncfOutcomesText,
             ["uncfOutcomesCount"] = (uncfOutcomesDetails?.Count ?? 0).ToString(),
             ["unopsMissions"] = unopsMissionsText,
@@ -4591,7 +4672,17 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 : "None - selected org unit is normally responsible for all countries",
             ["countriesWithMatchingOrgUnit"] = countriesWithMatchingOrgUnit.Any()
                 ? string.Join(", ", countriesWithMatchingOrgUnit)
-                : "None"
+                : "None",
+            
+            // ==========================================
+            // ENHANCED FORMATTED FIELDS FOR AI PROMPTS
+            // ==========================================
+            ["countryNamesList"] = countryNamesList,
+            ["countryRegionsList"] = countryRegionsList,
+            ["budgetDisplay"] = budgetDisplay,
+            ["formattedTimeline"] = formattedTimeline,
+            ["formattedBeneficiaries"] = formattedBeneficiaries,
+            ["deliverablesEnhanced"] = deliverablesEnhanced
         };
     }
 

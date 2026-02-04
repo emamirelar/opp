@@ -10,6 +10,7 @@ import {
   output,
   signal,
   inject,
+  effect,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
 } from '@angular/core';
@@ -160,6 +161,57 @@ export class OpportunityStatementSectionComponent implements OnInit {
   );
 
   /**
+   * @description Track the last modified date to detect real changes vs initial load
+   * @type {string | null}
+   * @private
+   * @since 1.0.0
+   */
+  private lastKnownModifiedDate: string | null = null;
+
+  /**
+   * @description Flag to skip validation during statement generation
+   * @type {boolean}
+   * @private
+   * @since 1.0.0
+   */
+  private skipNextValidation = false;
+
+  constructor() {
+    // Effect to watch for opportunity changes and re-run validation
+    // This triggers when other sections are saved and opportunity data is updated
+    effect(() => {
+      const opp = this.opportunity();
+      if (!opp) return;
+
+      const currentModifiedDate = opp.lastModifiedDate?.toString() || null;
+      const hasStatement = !!opp.opportunityStatementMarkdown;
+
+      // Skip if we're currently generating (validation is triggered after generation completes)
+      if (this.generatingStatement() || this.skipNextValidation) {
+        this.skipNextValidation = false;
+        this.lastKnownModifiedDate = currentModifiedDate;
+        return;
+      }
+
+      // Only re-validate if:
+      // 1. There's a statement to validate
+      // 2. The opportunity was modified (lastModifiedDate changed)
+      // 3. We have a previous date to compare (not initial load - ngOnInit handles that)
+      if (
+        hasStatement &&
+        this.lastKnownModifiedDate !== null &&
+        currentModifiedDate !== this.lastKnownModifiedDate
+      ) {
+        // Re-run validation because opportunity data changed
+        this.validateOpportunityStatement();
+      }
+
+      // Update tracking
+      this.lastKnownModifiedDate = currentModifiedDate;
+    });
+  }
+
+  /**
    * @description Generate or regenerate opportunity statement using AI
    * @returns {void}
    * @example
@@ -173,6 +225,8 @@ export class OpportunityStatementSectionComponent implements OnInit {
     if (!opportunityId) return;
 
     this.generatingStatement.set(true);
+    // Skip the effect-triggered validation since we manually call it after generation
+    this.skipNextValidation = true;
 
     this.opportunityService
       .generateOpportunityStatement(opportunityId)
@@ -206,6 +260,7 @@ export class OpportunityStatementSectionComponent implements OnInit {
         },
         error: () => {
           this.generatingStatement.set(false);
+          this.skipNextValidation = false; // Reset flag on error
           this.cdr.detectChanges();
           // Error handled by global interceptor
         },
@@ -255,8 +310,13 @@ export class OpportunityStatementSectionComponent implements OnInit {
    * @since 1.0.0
    */
   ngOnInit(): void {
+    const opp = this.opportunity();
+    
+    // Initialize tracking for the effect (prevents double validation on load)
+    this.lastKnownModifiedDate = opp?.lastModifiedDate?.toString() || null;
+    
     // Validate statement when component initializes if statement exists
-    const statement = this.opportunity()?.opportunityStatementMarkdown;
+    const statement = opp?.opportunityStatementMarkdown;
     if (statement) {
       this.validateOpportunityStatement();
     }
