@@ -269,53 +269,53 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             .AsNoTracking() // Performance: No entity tracking needed for read-only operations
             .Include(o => o.ResponsibleOrgUnit)
             .Include(o => o.ProposedInitiativeType)
-            .Include(o => o.FundingPartners)
+            .Include(o => o.FundingPartners.Where(fp => !fp.IsDeleted))
                 .ThenInclude(fp => fp.Partner)
-            .Include(o => o.FundingPartners)
+            .Include(o => o.FundingPartners.Where(fp => !fp.IsDeleted))
                 .ThenInclude(fp => fp.Currency)
-            .Include(o => o.ClientPartners)
+            .Include(o => o.ClientPartners.Where(cp => !cp.IsDeleted))
                 .ThenInclude(cp => cp.Partner)
-            .Include(o => o.Stakeholders)
+            .Include(o => o.Stakeholders.Where(s => !s.IsDeleted))
                 .ThenInclude(s => s.EntityRole)
-            .Include(o => o.Stakeholders)
+            .Include(o => o.Stakeholders.Where(s => !s.IsDeleted))
                 .ThenInclude(s => s.User)
                     .ThenInclude(u => u!.UserProfile)
-            .Include(o => o.Stakeholders)
+            .Include(o => o.Stakeholders.Where(s => !s.IsDeleted))
                 .ThenInclude(s => s.OrganizationHierarchy)
-            .Include(o => o.Collaborators)
+            .Include(o => o.Collaborators.Where(c => !c.IsDeleted))
                 .ThenInclude(c => c.User)
                     .ThenInclude(u => u!.UserProfile)
-            .Include(o => o.Collaborators)
+            .Include(o => o.Collaborators.Where(c => !c.IsDeleted))
                 .ThenInclude(c => c.AddedByUser)
                     .ThenInclude(u => u!.UserProfile)
-            .Include(o => o.Collaborators)
-                .ThenInclude(c => c.Expertises)
+            .Include(o => o.Collaborators.Where(c => !c.IsDeleted))
+                .ThenInclude(c => c.Expertises.Where(e => !e.IsDeleted))
                     .ThenInclude(e => e.CollaboratorExpertise)
-            .Include(o => o.ExternalStakeholders)
+            .Include(o => o.ExternalStakeholders.Where(es => !es.IsDeleted))
                 .ThenInclude(es => es.Contact)
                     .ThenInclude(c => c!.Partner)
-            .Include(o => o.Deliverables)
+            .Include(o => o.Deliverables.Where(d => !d.IsDeleted))
                 .ThenInclude(d => d.Output)
-            .Include(o => o.Countries)
+            .Include(o => o.Countries.Where(c => !c.IsDeleted))
                 .ThenInclude(c => c.Country)
-            .Include(o => o.SDGs)
+            .Include(o => o.SDGs.Where(s => !s.IsDeleted))
                 .ThenInclude(s => s.SDG)
-            .Include(o => o.SDGs)
-                .ThenInclude(s => s.Targets)
+            .Include(o => o.SDGs.Where(s => !s.IsDeleted))
+                .ThenInclude(s => s.Targets.Where(t => !t.IsDeleted))
                     .ThenInclude(t => t.SDGTarget)
-            .Include(o => o.SDGs)
-                .ThenInclude(s => s.Targets)
-                    .ThenInclude(t => t.Indicators)
+            .Include(o => o.SDGs.Where(s => !s.IsDeleted))
+                .ThenInclude(s => s.Targets.Where(t => !t.IsDeleted))
+                    .ThenInclude(t => t.Indicators.Where(i => !i.IsDeleted))
                         .ThenInclude(i => i.SDGIndicator)
-            .Include(o => o.UNCFOutcomes)
+            .Include(o => o.UNCFOutcomes.Where(uo => !uo.IsDeleted))
                 .ThenInclude(uo => uo.UNCFOutcome)
-            .Include(o => o.UNCFOutcomes)
+            .Include(o => o.UNCFOutcomes.Where(uo => !uo.IsDeleted))
                 .ThenInclude(uo => uo.OpportunityCountry)
                     .ThenInclude(oc => oc.Country)
-            .Include(o => o.UNCFOutcomes)
-                .ThenInclude(uo => uo.Indicators)
+            .Include(o => o.UNCFOutcomes.Where(uo => !uo.IsDeleted))
+                .ThenInclude(uo => uo.Indicators.Where(ui => !ui.IsDeleted))
                     .ThenInclude(ui => ui.UNCFIndicator)
-            .Include(o => o.UNOPSMissions)
+            .Include(o => o.UNOPSMissions.Where(om => !om.IsDeleted))
                 .ThenInclude(om => om.UNOPSMission)
             .Include(o => o.CreatedByUser)
                 .ThenInclude(u => u!.UserProfile)
@@ -558,7 +558,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         // Get entity for permission checking
         var entity = await context.Opportunities
             .AsNoTracking() // Performance: No entity tracking needed for read-only operations
-            .Include(o => o.Stakeholders)
+            .Include(o => o.Stakeholders.Where(s => !s.IsDeleted))
             .FirstOrDefaultAsync(o => o.Id == id && !o.IsDeleted);
         
         if (entity == null)
@@ -1206,12 +1206,12 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     public async Task<OpportunityModel?> UpdateOpportunityAsync(UpdateOpportunityRequest model)
     {
         var entity = await context.Opportunities
-            .Include(o => o.FundingPartners)
-            .Include(o => o.ClientPartners)
-            .Include(o => o.Stakeholders)
-            .Include(o => o.Deliverables)
-            .Include(o => o.Countries)
-            .Include(o => o.SDGs)
+            .Include(o => o.FundingPartners.Where(fp => !fp.IsDeleted))
+            .Include(o => o.ClientPartners.Where(cp => !cp.IsDeleted))
+            .Include(o => o.Stakeholders.Where(s => !s.IsDeleted))
+            .Include(o => o.Deliverables.Where(d => !d.IsDeleted))
+            .Include(o => o.Countries.Where(c => !c.IsDeleted))
+            .Include(o => o.SDGs.Where(s => !s.IsDeleted))
             .FirstOrDefaultAsync(o => o.Id == model.Id && !o.IsDeleted);
 
         if (entity == null)
@@ -1805,10 +1805,10 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     public async Task<OpportunityModel> UpdateWhoSectionAsync(int id, WhoSectionRequest request)
     {
         var opportunity = await context.Opportunities
-            .Include(o => o.FundingPartners)
-            .Include(o => o.ClientPartners)
-            .Include(o => o.Stakeholders)
-            .Include(o => o.ExternalStakeholders)
+            .Include(o => o.FundingPartners.Where(fp => !fp.IsDeleted))
+            .Include(o => o.ClientPartners.Where(cp => !cp.IsDeleted))
+            .Include(o => o.Stakeholders.Where(s => !s.IsDeleted))
+            .Include(o => o.ExternalStakeholders.Where(es => !es.IsDeleted))
             .FirstOrDefaultAsync(o => o.Id == id);
 
         if (opportunity == null)
@@ -2019,8 +2019,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     public async Task<OpportunityModel> UpdateTeamSectionAsync(int id, TeamSectionRequest request)
     {
         var opportunity = await context.Opportunities
-            .Include(o => o.Stakeholders)
-            .Include(o => o.Collaborators)
+            .Include(o => o.Stakeholders.Where(s => !s.IsDeleted))
+            .Include(o => o.Collaborators.Where(c => !c.IsDeleted))
             .FirstOrDefaultAsync(o => o.Id == id);
 
         if (opportunity == null)
@@ -2793,9 +2793,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     public async Task<OpportunityModel> UpdateWhereSectionAsync(int id, WhereSectionRequest request)
     {
         var opportunity = await context.Opportunities
-            .Include(o => o.Countries)
+            .Include(o => o.Countries.Where(c => !c.IsDeleted))
                 .ThenInclude(c => c.Country)
-            .Include(o => o.Stakeholders)  // Include stakeholders for auto-population
+            .Include(o => o.Stakeholders.Where(s => !s.IsDeleted))  // Include stakeholders for auto-population
             .FirstOrDefaultAsync(o => o.Id == id);
 
         if (opportunity == null)
@@ -2889,9 +2889,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     public async Task<RelatedItemsModel> GetRelatedItemsAsync(int id)
     {
         var opportunity = await context.Opportunities
-            .Include(o => o.FundingPartners)
+            .Include(o => o.FundingPartners.Where(fp => !fp.IsDeleted))
                 .ThenInclude(fp => fp.Partner)
-            .Include(o => o.ClientPartners)
+            .Include(o => o.ClientPartners.Where(cp => !cp.IsDeleted))
                 .ThenInclude(cp => cp.Partner)
             .FirstOrDefaultAsync(o => o.Id == id);
 
@@ -2986,7 +2986,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     public async Task<OpportunityModel> UpdateWhenSectionAsync(int id, WhenSectionRequest request)
     {
         var opportunity = await context.Opportunities
-            .Include(o => o.Deliverables)
+            .Include(o => o.Deliverables.Where(d => !d.IsDeleted))
             .FirstOrDefaultAsync(o => o.Id == id);
 
         if (opportunity == null)
@@ -4581,22 +4581,22 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         var opportunity = await context.Opportunities
             .Include(o => o.ResponsibleOrgUnit)
             .Include(o => o.ProposedInitiativeType)
-            .Include(o => o.FundingPartners)
+            .Include(o => o.FundingPartners.Where(fp => !fp.IsDeleted))
                 .ThenInclude(fp => fp.Partner)
-            .Include(o => o.FundingPartners)
+            .Include(o => o.FundingPartners.Where(fp => !fp.IsDeleted))
                 .ThenInclude(fp => fp.Currency)
-            .Include(o => o.ClientPartners)
+            .Include(o => o.ClientPartners.Where(cp => !cp.IsDeleted))
                 .ThenInclude(cp => cp.Partner)
-            .Include(o => o.Stakeholders)
+            .Include(o => o.Stakeholders.Where(s => !s.IsDeleted))
                 .ThenInclude(s => s.EntityRole)
-            .Include(o => o.Stakeholders)
+            .Include(o => o.Stakeholders.Where(s => !s.IsDeleted))
                 .ThenInclude(s => s.User)
                     .ThenInclude(u => u!.UserProfile)
-            .Include(o => o.Deliverables)
+            .Include(o => o.Deliverables.Where(d => !d.IsDeleted))
                 .ThenInclude(d => d.Output)
-            .Include(o => o.Countries)
+            .Include(o => o.Countries.Where(c => !c.IsDeleted))
                 .ThenInclude(c => c.Country)
-            .Include(o => o.SDGs)
+            .Include(o => o.SDGs.Where(s => !s.IsDeleted))
                 .ThenInclude(s => s.SDG)
             .FirstOrDefaultAsync(o => o.Id == id && !o.IsDeleted);
 
@@ -4791,16 +4791,16 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             var opportunities = await uNOPSAppDbContext.Opportunities
                 .Include(o => o.ResponsibleOrgUnit)
                 .Include(o => o.ProposedInitiativeType)
-                .Include(o => o.FundingPartners).ThenInclude(fp => fp.Partner)
-                .Include(o => o.ClientPartners).ThenInclude(cp => cp.Partner)
-                .Include(o => o.Stakeholders).ThenInclude(s => s.EntityRole)
-                .Include(o => o.Stakeholders).ThenInclude(s => s.OrganizationHierarchy)
-                .Include(o => o.Deliverables)
-                .Include(o => o.Countries).ThenInclude(c => c.Country)
-                .Include(o => o.SDGs).ThenInclude(s => s.SDG)
+                .Include(o => o.FundingPartners.Where(fp => !fp.IsDeleted)).ThenInclude(fp => fp.Partner)
+                .Include(o => o.ClientPartners.Where(cp => !cp.IsDeleted)).ThenInclude(cp => cp.Partner)
+                .Include(o => o.Stakeholders.Where(s => !s.IsDeleted)).ThenInclude(s => s.EntityRole)
+                .Include(o => o.Stakeholders.Where(s => !s.IsDeleted)).ThenInclude(s => s.OrganizationHierarchy)
+                .Include(o => o.Deliverables.Where(d => !d.IsDeleted))
+                .Include(o => o.Countries.Where(c => !c.IsDeleted)).ThenInclude(c => c.Country)
+                .Include(o => o.SDGs.Where(s => !s.IsDeleted)).ThenInclude(s => s.SDG)
                 .Where(o => 
-                    o.FundingPartners.Any(fp => fp.PartnerId == partnerId) ||
-                    o.ClientPartners.Any(cp => cp.PartnerId == partnerId))
+                    o.FundingPartners.Any(fp => !fp.IsDeleted && fp.PartnerId == partnerId) ||
+                    o.ClientPartners.Any(cp => !cp.IsDeleted && cp.PartnerId == partnerId))
                 .OrderByDescending(o => o.CreatedDate)
                 .ToListAsync();
 
