@@ -176,6 +176,11 @@ export interface EntityPermissions {
    * When true, the entity cannot be modified regardless of other permissions.
    */
   isImmutable?: boolean;
+  /**
+   * Indicates if the entity is currently in an approval workflow (Approval Pending status).
+   * When true, the entity cannot be edited until the approval process completes.
+   */
+  isApprovalPending?: boolean;
 }
 
 /**
