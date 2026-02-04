@@ -473,6 +473,7 @@ public class WorkflowController : BaseController
                 {
                     Success = false,
                     RequiresAcknowledgment = true,
+                    ResponsibleOrgUnitName = orgUnitDisplay,
                     AcknowledgmentText = $"All known information and materials relevant to this Opportunity have been provided " +
                         $"and are summarized in the Opportunity Statement for your review. Please confirm whether UNOPS org unit " +
                         $"[{orgUnitDisplay}] is authorised to assign resources to continue development based on this information."
