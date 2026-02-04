@@ -44,7 +44,10 @@ import { MarkdownModule } from 'ngx-markdown';
 
 // Workflow components
 import { StageWorkflowComponent } from '@shared/reusables/components/workflow/components/stage-workflow/stage-workflow.component';
-import { RequirementsValidationComponent } from '@shared/reusables/components/workflow/components/requirements-validation/requirements-validation.component';
+import {
+  RequirementsValidationComponent,
+  RequirementClickEvent,
+} from '@shared/reusables/components/workflow/components/requirements-validation/requirements-validation.component';
 
 // Services
 import { FeedbackDialogService } from '@shared/services/ui';
@@ -333,10 +336,21 @@ export class OpportunityViewComponent
   });
 
   // Computed permission for changing workflow stage
+  // Note: Workflow actions (Recall, Approve, Reject) should be available even when canUpdate is false
+  // due to approval pending status. The workflow component will verify specific permissions (canRecall, canApprove)
   canChangeStage = computed(() => {
     const opp = this.opportunity();
-    // Check if user has update permissions (required for workflow actions)
-    return this.canUpdate() && opp?.id !== undefined;
+    if (!opp?.id) return false;
+    
+    // If in immutable stage (GO, NO GO, CANCELLED), no workflow actions allowed
+    if (opp.permissions?.isImmutable) return false;
+    
+    // If in approval pending status, allow workflow actions (the workflow component
+    // will check specific permissions like canRecall, canApprove from backend)
+    if (opp.permissions?.isApprovalPending || opp.isInWorkflow) return true;
+    
+    // Otherwise, check update permission (for initiating workflow submissions)
+    return this.canUpdate();
   });
 
   // ===== Go/No-Go Decision State =====
@@ -347,6 +361,14 @@ export class OpportunityViewComponent
   isImmutable = computed(() => {
     const opp = this.opportunity();
     return opp?.permissions?.isImmutable ?? false;
+  });
+
+  /**
+   * @description Whether the entity is currently in an approval workflow (Approval Pending status)
+   */
+  isApprovalPending = computed(() => {
+    const opp = this.opportunity();
+    return opp?.permissions?.isApprovalPending ?? false;
   });
 
   /**
@@ -2002,6 +2024,48 @@ export class OpportunityViewComponent
         this.isScrolling = false;
       }, 800); // Reduced from 1500ms to 800ms
     }, 100);
+  }
+
+  /**
+   * Handle click on a requirement item in the requirements validation panel.
+   * Navigates to the section containing the required field and scrolls to the specific field.
+   * @param event - The requirement click event containing section and field information
+   */
+  handleRequirementClick(event: RequirementClickEvent): void {
+    if (event.section && this.isValidSection(event.section)) {
+      this.scrollToSection(event.section);
+
+      // After scrolling to section, scroll to the specific field and highlight it
+      if (event.fieldName) {
+        // Use a delay to allow section scroll to complete
+        setTimeout(() => {
+          this.scrollToFieldAndHighlight(event.fieldName!);
+        }, 600);
+      }
+    }
+  }
+
+  /**
+   * Scroll to a specific field element and apply highlight effect.
+   * @param fieldName - The field name to scroll to (matches id="field-{fieldName}")
+   */
+  private scrollToFieldAndHighlight(fieldName: string): void {
+    const fieldElement = document.getElementById(`field-${fieldName}`);
+    if (fieldElement) {
+      // Scroll the field into view with smooth behavior
+      fieldElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+
+      // Add highlight effect
+      fieldElement.classList.add('field-highlight');
+
+      // Remove highlight after animation completes
+      setTimeout(() => {
+        fieldElement.classList.remove('field-highlight');
+      }, 2000);
+    }
   }
 
   /**

@@ -83,9 +83,11 @@
           [entityId]="entityId()"
           [isReadOnly]="!canChangeStage()"
           [feedbackDialogService]="feedbackDialogService"
+          [responsibleOrgUnitName]="responsibleOrgUnitName()"
           [beforeStageChange]="beforeStageChange.bind(this)"
           [customStageChangeHandler]="customStageChangeHandler"
           (stageChangeSuccess)="handleOnStageChangeSuccess($event)"
+          (requirementsValidationFailed)="handleRequirementsValidationFailed($event)"
         ></app-workflow>
       </div>
     </div>

@@ -181,6 +181,7 @@
                 [formGroup]="opportunityForm"
                 [currentStage]="opportunity()?.stage ?? ''"
                 [entityData]="opportunity()"
+                (requirementClick)="handleRequirementClick($event)"
               />
             </div>
           }
