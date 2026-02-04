@@ -91,6 +91,13 @@ export class StageWorkflowComponent implements OnInit, OnChanges {
   onStageChangeSuccess = output();
 
   /**
+   * Emitted when requirements validation fails during submission.
+   * Contains list of unmet requirement message keys.
+   * Parent component can use this to display errors or scroll to requirements panel.
+   */
+  onRequirementsValidationFailed = output<string[]>();
+
+  /**
    * Whether the current user is an Opportunity Manager for this opportunity
    * Controls visibility of Cancel/Reopen buttons
    */
@@ -451,6 +458,15 @@ export class StageWorkflowComponent implements OnInit, OnChanges {
   handleOnStageChangeSuccess(data: any) {
     this.loadData();
     this.onStageChangeSuccess.emit(data);
+  }
+
+  /**
+   * Handles requirements validation failure from workflow component.
+   * Propagates the event to parent component.
+   * @param unmetRequirements Array of unmet requirement message keys
+   */
+  handleRequirementsValidationFailed(unmetRequirements: string[]): void {
+    this.onRequirementsValidationFailed.emit(unmetRequirements);
   }
 
   getUserNameToDisplay(user: WorkflowHistoryUserModel | WorkflowApproverModel | any): string {

@@ -324,7 +324,10 @@ public class WorkflowController : BaseController
 
         // Get requirements for the stage change
         var requirements = provider.GetRequirementsForStageChange(currentStage, nextStage);
-        return Ok(requirements);
+        
+        // Filter out server-side only requirements (they should not be displayed to users)
+        var clientRequirements = requirements.Where(r => !r.OnlyServerSideEvaluation).ToList();
+        return Ok(clientRequirements);
     }
 
     /// <summary>

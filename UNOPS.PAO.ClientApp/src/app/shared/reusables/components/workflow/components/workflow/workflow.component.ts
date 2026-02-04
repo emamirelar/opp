@@ -141,6 +141,10 @@ export class WorkflowComponent implements OnInit {
   // Rejection to NO GO dialog state
   rejectToNoGoComment = signal('');
 
+  // Unmet requirements dialog state (for server-side validation failures)
+  showUnmetRequirementsDialog = signal(false);
+  unmetRequirements = signal<string[]>([]);
+
   // Pending submit request (to continue after confirmation)
   pendingSubmitRequest = signal<WorkflowSubmitRequest | null>(null);
 
@@ -490,10 +494,10 @@ export class WorkflowComponent implements OnInit {
 
     // PRD Flow: Check if requirements are not met (first check in flow)
     if (response.requirementsNotMet) {
-      // Show info toast with message to check requirements panel
-      this.feedbackDialogService?.showInfoToast({
-        detail: this.translateService.instant('message.workflow.requirementsNotMetDetail'),
-      });
+      // Store unmet requirements and show dialog
+      this.unmetRequirements.set(response.unmetRequirements || []);
+      this.showUnmetRequirementsDialog.set(true);
+      this.changeDetectorRef.detectChanges();
       // Emit event to notify parent that requirements validation failed
       // Parent can scroll to requirements panel
       this.requirementsValidationFailed.emit(response.unmetRequirements || []);
@@ -632,6 +636,14 @@ export class WorkflowComponent implements OnInit {
   closeRejectToNoGoDialog(): void {
     this.showRejectToNoGoDialog.set(false);
     this.rejectToNoGoComment.set('');
+  }
+
+  /**
+   * Close unmet requirements dialog
+   */
+  closeUnmetRequirementsDialog(): void {
+    this.showUnmetRequirementsDialog.set(false);
+    this.unmetRequirements.set([]);
   }
 
   /**
