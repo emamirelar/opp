@@ -2247,6 +2247,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                         newCollaborator.Expertises = collaboratorRequest.ExpertiseIds
                             .Select(expertiseId => new OpportunityCollaboratorExpertise
                             {
+                                OpportunityId = id,
                                 CollaboratorExpertiseId = expertiseId
                             })
                             .ToList();
@@ -2271,11 +2272,12 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                     }
                     
                     // Add new expertises
-                    var expertiseIdsToAdd = requestedExpertiseIds.Where(id => !existingExpertiseIds.Contains(id));
+                    var expertiseIdsToAdd = requestedExpertiseIds.Where(eid => !existingExpertiseIds.Contains(eid));
                     foreach (var expertiseId in expertiseIdsToAdd)
                     {
                         context.Set<OpportunityCollaboratorExpertise>().Add(new OpportunityCollaboratorExpertise
                         {
+                            OpportunityId = id,
                             OpportunityCollaboratorId = existingCollaborator.Id,
                             CollaboratorExpertiseId = expertiseId
                         });
