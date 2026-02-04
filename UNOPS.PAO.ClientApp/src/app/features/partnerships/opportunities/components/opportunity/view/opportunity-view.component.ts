@@ -52,6 +52,7 @@ import {
 // Services
 import { FeedbackDialogService } from '@shared/services/ui';
 import { PermissionUtilityService, AuthService } from '@core/services/auth';
+import { GoogleOAuthService } from '@core/services/auth/google-oauth.service';
 import { PageContextService } from '@shared/services/utils';
 import { OpportunityService } from '../../../services/opportunity.service';
 import { Opportunity, GoDecisionPayload, NoGoDecisionPayload, Risk } from '@shared/models/opportunity.model';
@@ -157,6 +158,7 @@ export class OpportunityViewComponent
   confirmationService = inject(ConfirmationService);
   private pageContextService = inject(PageContextService);
   private authService = inject(AuthService);
+  private googleOAuthService = inject(GoogleOAuthService);
 
   // State
   loading = signal<boolean>(true);
@@ -1527,6 +1529,88 @@ export class OpportunityViewComponent
     this.reloadOpportunity();
     // Note: Success feedback is handled by the specific action (Cancel, Reopen, Submit, etc.)
     // to show action-specific messages instead of a generic one
+  }
+
+  /**
+   * @description Handle successful GO submission
+   * Generates a PDF of the Opportunity Statement after successful submission to GO stage
+   * @param {object} data - Event data containing entityName, entityId, and newStage
+   */
+  async handleGoSubmissionSuccess(data: { entityName: string; entityId: number; newStage: string }): Promise<void> {
+    console.log('📄 GO submission successful, generating statement PDF...', data);
+
+    const opp = this.opportunity();
+    if (!opp) {
+      console.error('❌ No opportunity data available for PDF generation');
+      return;
+    }
+
+    const markdown = opp.opportunityStatementMarkdown;
+    if (!markdown) {
+      console.warn('⚠️ No opportunity statement markdown available - skipping PDF generation');
+      return;
+    }
+
+    if (!this.documentsComponent) {
+      console.error('❌ Documents component not available for PDF generation');
+      return;
+    }
+
+    // Generate PDF with submission filename: Opportunity_<ID>_Submission.pdf
+    const pdfFileName = `Opportunity_${data.entityId}_Submission.pdf`;
+    
+    try {
+      await this.documentsComponent.generateStatementPdf(
+        markdown,
+        data.entityId,
+        pdfFileName
+      );
+    } catch (error) {
+      console.error('❌ Failed to generate statement PDF:', error);
+      // PDF generation errors are already handled in the documents component
+      // with appropriate user feedback, so we just log here
+    }
+  }
+
+  /**
+   * @description Handle successful GO approval
+   * Generates a PDF of the Opportunity Statement after successful approval (GO decision)
+   * @param {object} data - Event data containing entityName, entityId, and approvedStage
+   */
+  async handleGoApprovalSuccess(data: { entityName: string; entityId: number; approvedStage: string }): Promise<void> {
+    console.log('📄 GO approval successful, generating statement PDF...', data);
+
+    const opp = this.opportunity();
+    if (!opp) {
+      console.error('❌ No opportunity data available for PDF generation');
+      return;
+    }
+
+    const markdown = opp.opportunityStatementMarkdown;
+    if (!markdown) {
+      console.warn('⚠️ No opportunity statement markdown available - skipping PDF generation');
+      return;
+    }
+
+    if (!this.documentsComponent) {
+      console.error('❌ Documents component not available for PDF generation');
+      return;
+    }
+
+    // Generate PDF with approval filename: Opportunity_<ID>_Approved.pdf
+    const pdfFileName = `Opportunity_${data.entityId}_Approved.pdf`;
+    
+    try {
+      await this.documentsComponent.generateStatementPdf(
+        markdown,
+        data.entityId,
+        pdfFileName
+      );
+    } catch (error) {
+      console.error('❌ Failed to generate statement PDF:', error);
+      // PDF generation errors are already handled in the documents component
+      // with appropriate user feedback, so we just log here
+    }
   }
 
   // ===== Go/No-Go Decision Handlers =====

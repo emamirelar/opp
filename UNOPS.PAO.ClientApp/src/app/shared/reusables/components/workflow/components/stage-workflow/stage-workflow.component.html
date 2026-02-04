@@ -87,6 +87,8 @@
           [beforeStageChange]="beforeStageChange.bind(this)"
           [customStageChangeHandler]="customStageChangeHandler"
           (stageChangeSuccess)="handleOnStageChangeSuccess($event)"
+          (goSubmissionSuccess)="handleGoSubmissionSuccess($event)"
+          (goApprovalSuccess)="handleGoApprovalSuccess($event)"
           (requirementsValidationFailed)="handleRequirementsValidationFailed($event)"
         ></app-workflow>
       </div>
