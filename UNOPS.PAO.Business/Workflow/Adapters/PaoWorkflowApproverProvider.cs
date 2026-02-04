@@ -386,6 +386,9 @@ public class PaoWorkflowApproverProvider : IPaoWorkflowApproverProvider
 
     /// <summary>
     /// Gets trigger tasks for an Opportunity.
+    /// Includes both:
+    /// - Stakeholders with trigger roles (e.g., Opportunity Manager)
+    /// - Collaborators (Opportunity Development Team members who have edit permissions)
     /// </summary>
     private async Task<List<WorkflowTaskModel>> GetOpportunityTriggerTasksAsync(
         int opportunityId, 
@@ -393,21 +396,44 @@ public class PaoWorkflowApproverProvider : IPaoWorkflowApproverProvider
     {
         await using var context = await _contextFactory.CreateDbContextAsync();
         
+        var tasks = new List<WorkflowTaskModel>();
+        
+        // 1. Get stakeholders with trigger roles (e.g., Opportunity Manager)
         var stakeholders = await context.Set<OpportunityStakeholder>()
             .AsNoTracking()
             .Include(s => s.EntityRole)
             .Where(s => s.OpportunityId == opportunityId &&
+                       !s.IsDeleted &&
                        s.UserId.HasValue &&
                        s.EntityRole != null &&
                        roleNames.Contains(s.EntityRole.Name))
             .ToListAsync();
 
-        return stakeholders
+        tasks.AddRange(stakeholders
             .Select(s => new WorkflowTaskModel
             {
                 UserId = s.UserId!.Value,
                 Role = s.EntityRole!.Name
-            })
+            }));
+        
+        // 2. Get Collaborators (Opportunity Development Team members)
+        // Collaborators have edit permissions and should be able to trigger workflows
+        var collaborators = await context.Set<OpportunityCollaborator>()
+            .AsNoTracking()
+            .Where(c => c.OpportunityId == opportunityId && !c.IsDeleted)
+            .ToListAsync();
+
+        tasks.AddRange(collaborators
+            .Select(c => new WorkflowTaskModel
+            {
+                UserId = c.UserId,
+                Role = "Collaborator"
+            }));
+        
+        // Remove duplicates (in case a user is both a stakeholder with trigger role and a collaborator)
+        return tasks
+            .GroupBy(t => t.UserId)
+            .Select(g => g.First())
             .ToList();
     }
 

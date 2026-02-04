@@ -593,18 +593,18 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             return null;
         }
         
-        // Check if user is a stakeholder on this opportunity
-        var isStakeholder = await IsUserStakeholderOnOpportunityAsync(user, id);
+        // Check if user is a team member (stakeholder or collaborator) on this opportunity
+        var isTeamMember = await IsUserTeamMemberOnOpportunityAsync(user, id);
         
-        // Add permissions with stakeholder check
+        // Add permissions with team member check
         model = await MapEntityToModelWithPermissionsAsync(model, user, entity);
         
-        // If user is a stakeholder, they should be able to update the opportunity
+        // If user is a team member (stakeholder or collaborator), they should be able to update the opportunity
         // even if they don't have global update permission
-        if (isStakeholder && model.Permissions != null)
+        if (isTeamMember && model.Permissions != null)
         {
             model.Permissions.CanUpdate = true;
-            model.Permissions.Notes = "Stakeholder on this opportunity";
+            model.Permissions.Notes = "Team member on this opportunity";
         }
         
         // Check immutability and override permissions if the opportunity is in an immutable stage
@@ -635,12 +635,15 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     }
     
     /// <summary>
-    /// Checks if the current user is a stakeholder (team member) on the given opportunity
+    /// Checks if the current user is a team member (stakeholder or collaborator) on the given opportunity.
+    /// Team members include:
+    /// - Internal stakeholders (users assigned via OpportunityStakeholder)
+    /// - Collaborators (users assigned via OpportunityCollaborator - Opportunity Development Team)
     /// </summary>
     /// <param name="user">Current user context</param>
     /// <param name="opportunityId">Opportunity ID</param>
-    /// <returns>True if user is a stakeholder, false otherwise</returns>
-    private async Task<bool> IsUserStakeholderOnOpportunityAsync(ClaimsPrincipal user, int opportunityId)
+    /// <returns>True if user is a team member, false otherwise</returns>
+    private async Task<bool> IsUserTeamMemberOnOpportunityAsync(ClaimsPrincipal user, int opportunityId)
     {
         if (user == null)
         {
@@ -654,11 +657,24 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             return false;
         }
         
+        // Check if user is a Collaborator (Opportunity Development Team member)
+        // Collaborators have permissions to edit all fields of the opportunity
+        var isCollaborator = await context.OpportunityCollaborators
+            .AnyAsync(c => c.OpportunityId == opportunityId 
+                        && c.UserId == userId
+                        && !c.IsDeleted);
+        
+        if (isCollaborator)
+        {
+            return true;
+        }
+        
         // Check if this user is an internal stakeholder on the opportunity
         var isStakeholder = await context.OpportunityStakeholders
             .AnyAsync(s => s.OpportunityId == opportunityId 
                         && s.UserId == userId 
-                        && s.IsInternal);
+                        && s.IsInternal
+                        && !s.IsDeleted);
         
         return isStakeholder;
     }
@@ -1796,6 +1812,10 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }
         }
 
+        // Update UNOPS Missions Not Applicable flag
+        // When true, it means the user explicitly indicated that mission alignment is not applicable
+        entity.UNOPSMissionsNotApplicable = request.UNOPSMissionsNotApplicable;
+        
         // Update UNOPS Mission alignments with differential update strategy
         if (request.UNOPSMissions != null)
         {
