@@ -1677,7 +1677,7 @@ export class OpportunityDocumentsComponent implements OnInit {
    * Converts markdown to Google Doc, exports as PDF, uploads to GCS, and creates document record.
    * @param {string} markdown - The opportunity statement markdown content
    * @param {number} opportunityId - The opportunity ID
-   * @param {string} pdfFileName - The name for the generated PDF file (e.g., "Opportunity_123_Submission.pdf")
+   * @param {string} pdfFileName - The name for the generated PDF file (e.g., "Opportunity_123_Submission_20260204.pdf")
    * @returns {Promise<boolean>} True if successful, false otherwise
    */
   async generateStatementPdf(
@@ -1760,7 +1760,8 @@ export class OpportunityDocumentsComponent implements OnInit {
 
       // Extract Google Doc ID from the response URL
       // URL format: https://docs.google.com/document/d/{fileId}/edit
-      const docUrl = result.documentUrl || result.url || '';
+      // API returns URL nested in result.data.data.url or result.data.url
+      const docUrl = result.data?.data?.url || result.data?.url || result.url || '';
       const docIdMatch = docUrl.match(/\/document\/d\/([^\/]+)/);
       if (!docIdMatch) {
         console.error('❌ Could not extract Google Doc ID from URL:', docUrl);
@@ -1832,7 +1833,7 @@ export class OpportunityDocumentsComponent implements OnInit {
       uploadFormData.append('UploadToGCS', 'true');
 
       await firstValueFrom(this.documentService.uploadFile(uploadFormData));
-      console.log('✅ PDF uploaded successfully');
+      console.log('✅ Opportunity Statement uploaded successfully');
 
       // Step 8: Delete the temporary Google Doc (best effort - don't fail if this fails)
       try {
