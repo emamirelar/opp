@@ -1,7 +1,8 @@
 <p-panel #mainPanel [toggleable]="true" [collapsed]="collapsed()">
   <ng-template pTemplate="header">
-    <div class="flex w-full pr-4">
-      <div class="grow flex items-center gap-2">
+    <div class="flex items-center justify-between w-full pr-4">
+      <!-- Left side: Title and stage info -->
+      <div class="flex items-center gap-2 flex-wrap">
         <i class="pi pi-sitemap text-unops-secondary"></i>
         <span class="font-semibold">{{ 'title.stage' | translate }}</span>
         @if (workflowDataLoading()) {
@@ -48,45 +49,45 @@
           </div>
         }
       </div>
-    </div>
-  </ng-template>
-  <ng-template pTemplate="icons">
-    <div class="flex gap-2 items-center">
-      <!-- Cancel button - visible for OM when in IDENTIFY & PROFILE and not in workflow -->
-      @if (canCancel()) {
-        <p-button
-          [label]="'label.workflow.cancel' | translate"
-          severity="danger"
-          [outlined]="true"
-          icon="pi pi-times"
-          (onClick)="openCancelDialog()"
-          [disabled]="isActionInProgress()"
-        />
-      }
+      
+      <!-- Right side: Action buttons -->
+      <div class="flex gap-2 items-center flex-shrink-0">
+        <!-- Cancel button - visible for OM when in IDENTIFY & PROFILE and not in workflow -->
+        @if (canCancel()) {
+          <p-button
+            [label]="'label.workflow.cancel' | translate"
+            severity="danger"
+            [outlined]="true"
+            icon="pi pi-times"
+            (onClick)="openCancelDialog()"
+            [disabled]="isActionInProgress()"
+          />
+        }
 
-      <!-- Reopen button - visible for OM when in NO GO or CANCELLED -->
-      @if (canReopen()) {
-        <p-button
-          [label]="'label.workflow.reopen' | translate"
-          severity="secondary"
-          [outlined]="true"
-          icon="pi pi-refresh"
-          (onClick)="openReopenDialog()"
-          [disabled]="isActionInProgress()"
-        />
-      }
+        <!-- Reopen button - visible for OM when in NO GO or CANCELLED -->
+        @if (canReopen()) {
+          <p-button
+            [label]="'label.workflow.reopen' | translate"
+            severity="secondary"
+            [outlined]="true"
+            icon="pi pi-refresh"
+            (onClick)="openReopenDialog()"
+            [disabled]="isActionInProgress()"
+          />
+        }
 
-      <app-workflow
-        #workFlowComponent
-        [autoload]="false"
-        [entityName]="entityName()"
-        [entityId]="entityId()"
-        [isReadOnly]="!canChangeStage()"
-        [feedbackDialogService]="feedbackDialogService"
-        [beforeStageChange]="beforeStageChange.bind(this)"
-        [customStageChangeHandler]="customStageChangeHandler"
-        (stageChangeSuccess)="handleOnStageChangeSuccess($event)"
-      ></app-workflow>
+        <app-workflow
+          #workFlowComponent
+          [autoload]="false"
+          [entityName]="entityName()"
+          [entityId]="entityId()"
+          [isReadOnly]="!canChangeStage()"
+          [feedbackDialogService]="feedbackDialogService"
+          [beforeStageChange]="beforeStageChange.bind(this)"
+          [customStageChangeHandler]="customStageChangeHandler"
+          (stageChangeSuccess)="handleOnStageChangeSuccess($event)"
+        ></app-workflow>
+      </div>
     </div>
   </ng-template>
 
