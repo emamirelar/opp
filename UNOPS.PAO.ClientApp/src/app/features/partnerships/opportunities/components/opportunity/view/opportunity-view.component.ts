@@ -333,10 +333,21 @@ export class OpportunityViewComponent
   });
 
   // Computed permission for changing workflow stage
+  // Note: Workflow actions (Recall, Approve, Reject) should be available even when canUpdate is false
+  // due to approval pending status. The workflow component will verify specific permissions (canRecall, canApprove)
   canChangeStage = computed(() => {
     const opp = this.opportunity();
-    // Check if user has update permissions (required for workflow actions)
-    return this.canUpdate() && opp?.id !== undefined;
+    if (!opp?.id) return false;
+    
+    // If in immutable stage (GO, NO GO, CANCELLED), no workflow actions allowed
+    if (opp.permissions?.isImmutable) return false;
+    
+    // If in approval pending status, allow workflow actions (the workflow component
+    // will check specific permissions like canRecall, canApprove from backend)
+    if (opp.permissions?.isApprovalPending || opp.isInWorkflow) return true;
+    
+    // Otherwise, check update permission (for initiating workflow submissions)
+    return this.canUpdate();
   });
 
   // ===== Go/No-Go Decision State =====
@@ -347,6 +358,14 @@ export class OpportunityViewComponent
   isImmutable = computed(() => {
     const opp = this.opportunity();
     return opp?.permissions?.isImmutable ?? false;
+  });
+
+  /**
+   * @description Whether the entity is currently in an approval workflow (Approval Pending status)
+   */
+  isApprovalPending = computed(() => {
+    const opp = this.opportunity();
+    return opp?.permissions?.isApprovalPending ?? false;
   });
 
   /**

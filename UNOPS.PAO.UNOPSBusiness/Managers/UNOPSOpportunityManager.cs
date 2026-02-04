@@ -102,6 +102,33 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         }
     }
 
+    /// <summary>
+    /// Throws a BusinessException if the opportunity is currently in an approval workflow.
+    /// Call this at the start of any modification method.
+    /// </summary>
+    /// <param name="opportunity">The opportunity to validate</param>
+    /// <exception cref="BusinessException">Thrown when opportunity is in approval workflow</exception>
+    private void ThrowIfInApprovalWorkflow(Opportunity opportunity)
+    {
+        if (opportunity?.IsInWorkflow == true)
+        {
+            throw new BusinessException("This opportunity is pending approval and cannot be modified.");
+        }
+    }
+
+    /// <summary>
+    /// Throws a BusinessException if the opportunity cannot be modified.
+    /// Checks both immutability (GO/NO GO/CANCELLED stages) and approval workflow status.
+    /// Call this at the start of any modification method.
+    /// </summary>
+    /// <param name="opportunity">The opportunity to validate</param>
+    /// <exception cref="BusinessException">Thrown when opportunity cannot be modified</exception>
+    private void ThrowIfCannotModify(Opportunity opportunity)
+    {
+        ThrowIfImmutable(opportunity);
+        ThrowIfInApprovalWorkflow(opportunity);
+    }
+
     #endregion
 
     /// <summary>
@@ -591,6 +618,16 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 model.Permissions.CanDelete = false;
                 model.Permissions.IsImmutable = true;
                 model.Permissions.Notes = "This opportunity is locked after a decision has been made.";
+            }
+            
+            // Check if opportunity is in approval workflow (Approval Pending status)
+            // When in workflow, the opportunity cannot be edited until approval completes
+            if (entity.IsInWorkflow)
+            {
+                model.Permissions.CanUpdate = false;
+                model.Permissions.CanDelete = false;
+                model.Permissions.IsApprovalPending = true;
+                model.Permissions.Notes = "This opportunity is pending approval and cannot be edited.";
             }
         }
         
@@ -1219,8 +1256,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             return null;
         }
 
-        // Check immutability before any modifications
-        ThrowIfImmutable(entity);
+        // Check if opportunity can be modified (immutability and approval workflow status)
+        ThrowIfCannotModify(entity);
 
         // Update main entity properties
         mapper.Map(model, entity);
@@ -1320,8 +1357,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
 
-        // Check immutability before any modifications
-        ThrowIfImmutable(entity);
+        // Check if opportunity can be modified (immutability and approval workflow status)
+        ThrowIfCannotModify(entity);
 
         // Update Overview section fields
         if (request.Name != null)
@@ -1355,8 +1392,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
 
-        // Check immutability before any modifications
-        ThrowIfImmutable(entity);
+        // Check if opportunity can be modified (immutability and approval workflow status)
+        ThrowIfCannotModify(entity);
 
         // Update WHAT section fields
         if (request.Name != null)
@@ -1433,8 +1470,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
 
-        // Check immutability before any modifications
-        ThrowIfImmutable(entity);
+        // Check if opportunity can be modified (immutability and approval workflow status)
+        ThrowIfCannotModify(entity);
 
         // Update WHY section fields
 
@@ -1816,8 +1853,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
 
-        // Check immutability before any modifications
-        ThrowIfImmutable(opportunity);
+        // Check if opportunity can be modified (immutability and approval workflow status)
+        ThrowIfCannotModify(opportunity);
 
         // Update pooled funding flag
         opportunity.IsPooledFunding = request.IsPooledFunding;
@@ -2028,8 +2065,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
 
-        // Check immutability before any modifications
-        ThrowIfImmutable(opportunity);
+        // Check if opportunity can be modified (immutability and approval workflow status)
+        ThrowIfCannotModify(opportunity);
 
         // Track if org unit changed
         var orgUnitChanged = request.ResponsibleOrgUnitId.HasValue && 
@@ -2801,8 +2838,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
 
-        // Check immutability before any modifications
-        ThrowIfImmutable(opportunity);
+        // Check if opportunity can be modified (immutability and approval workflow status)
+        ThrowIfCannotModify(opportunity);
 
         // Update Countries with differential update strategy
         // CRITICAL: Do NOT remove and re-add countries as this will CASCADE DELETE all related
@@ -2992,8 +3029,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
 
-        // Check immutability before any modifications
-        ThrowIfImmutable(opportunity);
+        // Check if opportunity can be modified (immutability and approval workflow status)
+        ThrowIfCannotModify(opportunity);
 
         // Update target dates
         opportunity.TargetSigningDate = request.TargetSigningDate;
@@ -3053,8 +3090,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
 
-        // Check immutability before any modifications
-        ThrowIfImmutable(entity);
+        // Check if opportunity can be modified (immutability and approval workflow status)
+        ThrowIfCannotModify(entity);
 
         // WHAT Section - Update basic properties
         if (request.Name != null)
@@ -3577,8 +3614,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             return false;
         }
 
-        // Check immutability before any modifications
-        ThrowIfImmutable(entity);
+        // Check if opportunity can be modified (immutability and approval workflow status)
+        ThrowIfCannotModify(entity);
 
         await opportunityRepository.Delete(entity);
         return true;
@@ -5155,8 +5192,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             return false;
         }
 
-        // Check immutability before any modifications
-        ThrowIfImmutable(opportunity);
+        // Check if opportunity can be modified (immutability and approval workflow status)
+        ThrowIfCannotModify(opportunity);
 
         opportunity.HighRisksAcknowledged = acknowledged;
         // LastModifiedDate and LastModifiedBy are handled automatically by AuditableDbContext
