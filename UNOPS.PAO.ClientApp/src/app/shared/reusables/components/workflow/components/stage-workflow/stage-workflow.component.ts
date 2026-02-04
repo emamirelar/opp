@@ -91,6 +91,20 @@ export class StageWorkflowComponent implements OnInit, OnChanges {
   onStageChangeSuccess = output();
 
   /**
+   * Emitted when a GO submission is successful (after all confirmations).
+   * Parent component can use this to trigger PDF generation.
+   * Contains entityName, entityId, and newStage.
+   */
+  onGoSubmissionSuccess = output<{ entityName: string; entityId: number; newStage: string }>();
+
+  /**
+   * Emitted when a GO approval is successful.
+   * Parent component can use this to trigger PDF generation.
+   * Contains entityName, entityId, and approvedStage.
+   */
+  onGoApprovalSuccess = output<{ entityName: string; entityId: number; approvedStage: string }>();
+
+  /**
    * Emitted when requirements validation fails during submission.
    * Contains list of unmet requirement message keys.
    * Parent component can use this to display errors or scroll to requirements panel.
@@ -467,6 +481,24 @@ export class StageWorkflowComponent implements OnInit, OnChanges {
    */
   handleRequirementsValidationFailed(unmetRequirements: string[]): void {
     this.onRequirementsValidationFailed.emit(unmetRequirements);
+  }
+
+  /**
+   * Handles GO submission success from workflow component.
+   * Propagates the event to parent component for PDF generation.
+   * @param data Object containing entityName, entityId, and newStage
+   */
+  handleGoSubmissionSuccess(data: { entityName: string; entityId: number; newStage: string }): void {
+    this.onGoSubmissionSuccess.emit(data);
+  }
+
+  /**
+   * Handles GO approval success from workflow component.
+   * Propagates the event to parent component for PDF generation.
+   * @param data Object containing entityName, entityId, and approvedStage
+   */
+  handleGoApprovalSuccess(data: { entityName: string; entityId: number; approvedStage: string }): void {
+    this.onGoApprovalSuccess.emit(data);
   }
 
   getUserNameToDisplay(user: WorkflowHistoryUserModel | WorkflowApproverModel | any): string {

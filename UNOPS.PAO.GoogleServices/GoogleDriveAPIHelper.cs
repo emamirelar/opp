@@ -1,4 +1,4 @@
-﻿namespace UNOPS.PAO.GoogleServices;
+namespace UNOPS.PAO.GoogleServices;
 
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Download;

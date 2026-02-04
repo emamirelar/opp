@@ -90,6 +90,20 @@ export class WorkflowComponent implements OnInit {
   stageChangeSuccess = output();
 
   /**
+   * Emitted when a GO submission is successful (after all confirmations).
+   * Parent component can use this to trigger PDF generation.
+   * Contains entityName, entityId, and newStage.
+   */
+  goSubmissionSuccess = output<{ entityName: string; entityId: number; newStage: string }>();
+
+  /**
+   * Emitted when a GO approval is successful.
+   * Parent component can use this to trigger PDF generation.
+   * Contains entityName, entityId, and approvedStage.
+   */
+  goApprovalSuccess = output<{ entityName: string; entityId: number; approvedStage: string }>();
+
+  /**
    * Emitted when requirements validation fails during submission
    * Parent component can use this to scroll to the requirements panel
    */
@@ -469,6 +483,15 @@ export class WorkflowComponent implements OnInit {
         }
 
         this.stageChangeSuccess.emit();
+
+        // Emit GO approval success event for PDF generation (only for opportunities)
+        if (action === 'approve' && this.entityName().toLowerCase() === 'opportunity') {
+          this.goApprovalSuccess.emit({
+            entityName: this.entityName(),
+            entityId: parseInt(this.entityId(), 10),
+            approvedStage: this.workflowInfo()?.nextStage || 'GO',
+          });
+        }
       },
       error: () => {
         this.isActionInProgress.set(false);
@@ -489,6 +512,16 @@ export class WorkflowComponent implements OnInit {
         this.load();
       }
       this.stageChangeSuccess.emit();
+      
+      // Emit GO submission success event for PDF generation
+      // This is emitted for opportunity submissions to GO stage
+      if (this.entityName().toLowerCase() === 'opportunity') {
+        this.goSubmissionSuccess.emit({
+          entityName: this.entityName(),
+          entityId: parseInt(this.entityId(), 10),
+          newStage: request.newStage,
+        });
+      }
       return;
     }
 
