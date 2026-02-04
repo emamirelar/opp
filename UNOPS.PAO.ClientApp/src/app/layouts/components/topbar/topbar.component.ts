@@ -29,6 +29,7 @@ import { AvatarModule } from 'primeng/avatar';
 import { GlobalSearchBarComponent } from './global-search-bar/global-search-bar.component';
 import { RoleService } from '@core/services/auth';
 import { RoleDialogComponent } from './role-dialog/role-dialog.component';
+import { DoaRoleDialogComponent } from './doa-role-dialog/doa-role-dialog.component';
 import { ProfileDialogComponent } from '../profile-dialog/profile-dialog.component';
 
 import { GlobalFiltersDialogComponent } from './global-filters-dialog/global-filters-dialog.component';
@@ -83,6 +84,7 @@ interface UserInfo {
     DialogModule,
     GlobalSearchBarComponent,
     RoleDialogComponent,
+    DoaRoleDialogComponent,
     ProfileDialogComponent,
     GlobalFiltersDialogComponent,
     TranslateModule,
@@ -97,6 +99,7 @@ interface UserInfo {
 })
 export class TopbarComponent implements OnInit, OnDestroy {
   @ViewChild(RoleDialogComponent) roleDialog!: RoleDialogComponent;
+  @ViewChild(DoaRoleDialogComponent) doaRoleDialog!: DoaRoleDialogComponent;
   @ViewChild(ProfileDialogComponent) profileDialog!: ProfileDialogComponent;
 
   @ViewChild(GlobalFiltersDialogComponent) globalFiltersDialog!: GlobalFiltersDialogComponent;
@@ -292,6 +295,11 @@ export class TopbarComponent implements OnInit, OnDestroy {
         label: 'Impersonate Roles',
         icon: 'pi pi-users',
         command: () => this.showRoleDialog()
+      });
+      this.profileMenuItems.push({
+        label: 'Assign DoA Roles',
+        icon: 'pi pi-user-plus',
+        command: () => this.showDoaRoleDialog()
       });
     }
 
@@ -987,6 +995,10 @@ export class TopbarComponent implements OnInit, OnDestroy {
 
   showRoleDialog() {
     this.roleDialog.show();
+  }
+
+  showDoaRoleDialog() {
+    this.doaRoleDialog.show();
   }
 
   showProfile() {
