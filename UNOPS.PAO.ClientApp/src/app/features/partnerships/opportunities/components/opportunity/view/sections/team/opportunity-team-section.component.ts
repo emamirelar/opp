@@ -282,13 +282,44 @@ export class OpportunityTeamSectionComponent implements OnInit {
   readonly loadingAutoPopulatedStakeholders = signal<boolean>(false);
 
   // Displayed auto-populated stakeholders: uses dynamic when editing, enriched when viewing
+  // Includes deduplication to prevent duplicate entries for the same orgUnit+role
   readonly autoPopulatedStakeholders = computed(() => {
+    let stakeholders: OpportunityStakeholder[];
+    
     if (this.isEditing()) {
-      return this.dynamicAutoPopulatedStakeholders();
+      stakeholders = this.dynamicAutoPopulatedStakeholders();
+    } else {
+      // Use enriched data if available, otherwise fall back to raw data
+      const enriched = this.enrichedAutoPopulatedStakeholders();
+      stakeholders = enriched.length > 0 ? enriched : this.rawAutoPopulatedStakeholders();
     }
-    // Use enriched data if available, otherwise fall back to raw data
-    const enriched = this.enrichedAutoPopulatedStakeholders();
-    return enriched.length > 0 ? enriched : this.rawAutoPopulatedStakeholders();
+    
+    // Deduplicate by orgUnitId + roleId (unique key for auto-populated stakeholder)
+    // This prevents duplicate entries when data comes from multiple sources
+    // Prefer entries with more complete data (userName, position)
+    const stakeholderMap = new Map<string, OpportunityStakeholder>();
+    for (const s of stakeholders) {
+      const key = `${s.organizationHierarchyId}-${s.entityRoleId}`;
+      const existing = stakeholderMap.get(key);
+      
+      if (!existing) {
+        // First entry for this key
+        stakeholderMap.set(key, s);
+      } else {
+        // Prefer entry with more complete data
+        const existingScore = (existing.userName ? 1 : 0) + (existing.position ? 1 : 0);
+        const newScore = (s.userName ? 1 : 0) + (s.position ? 1 : 0);
+        
+        if (newScore > existingScore) {
+          stakeholderMap.set(key, s);
+        } else if (newScore === existingScore && s.userName && !existing.userName) {
+          // If scores are equal but new has userName and existing doesn't, prefer new
+          stakeholderMap.set(key, s);
+        }
+      }
+    }
+    
+    return Array.from(stakeholderMap.values());
   });
 
   // Getter for existing auto-populated stakeholders (used by startEditing)
@@ -496,6 +527,7 @@ export class OpportunityTeamSectionComponent implements OnInit {
 
   // Opportunity Decision Making Pathway: DoA2 and DoA3 holders (DoA1 excluded)
   readonly decisionMakingPathwayStakeholders = computed(() => {
+    // autoPopulatedStakeholders already handles deduplication
     const stakeholders = this.autoPopulatedStakeholders();
     
     // Filter for DoA2 and DoA3 only
@@ -729,6 +761,11 @@ export class OpportunityTeamSectionComponent implements OnInit {
 
       // Only fetch user names when not editing and there are auto-populated stakeholders
       if (!isEditing && rawStakeholders.length > 0) {
+        // IMPORTANT: Clear enriched stakeholders immediately when raw data changes
+        // This ensures the UI uses the new rawAutoPopulatedStakeholders while we fetch enriched data
+        // Without this, old enriched data would be displayed until the API call completes
+        this.enrichedAutoPopulatedStakeholders.set([]);
+        
         // Get unique org unit IDs
         const orgUnitIds = [...new Set(rawStakeholders.map((s) => s.organizationHierarchyId).filter((id): id is number => id !== null))];
 
