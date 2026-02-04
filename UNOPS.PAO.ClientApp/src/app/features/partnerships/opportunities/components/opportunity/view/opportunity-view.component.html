@@ -226,6 +226,8 @@
               [customStageChangeHandler]="customStageChangeHandler"
               [responsibleOrgUnitName]="opportunity()?.responsibleOrgUnitName ?? ''"
               (onStageChangeSuccess)="handleStageChangeSuccess()"
+              (onGoSubmissionSuccess)="handleGoSubmissionSuccess($event)"
+              (onGoApprovalSuccess)="handleGoApprovalSuccess($event)"
             />
           </div>
 

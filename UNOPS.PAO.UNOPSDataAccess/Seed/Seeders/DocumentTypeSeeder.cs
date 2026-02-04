@@ -45,6 +45,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                 // Opportunity document types
                 ("Opportunity", "Concept Note"),
                 ("Opportunity", "Proposal"),
+                ("Opportunity", "Opportunity Statement"),
                 ("Opportunity", "Other")
             };
 
