@@ -134,6 +134,11 @@ export interface Opportunity {
   sdGs: OpportunitySDG[];
   uncfOutcomes?: OpportunityUNCFOutcome[];
   unopsMissions?: OpportunityUNOPSMission[];
+  /**
+   * Indicates whether UNOPS Strategic Missions alignment is not applicable for this opportunity.
+   * When true, no missions need to be selected and validation will pass.
+   */
+  unopsMissionsNotApplicable?: boolean;
   collaborators?: OpportunityCollaborator[];
   opportunityManager?: OpportunityManager;
   smeSelections?: SMESelection[];

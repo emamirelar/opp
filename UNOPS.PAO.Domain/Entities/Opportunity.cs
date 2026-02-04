@@ -164,6 +164,12 @@ public class Opportunity : ModifiableDeletableEntity
     public virtual ICollection<OpportunityUNOPSMission> UNOPSMissions { get; set; } = new HashSet<OpportunityUNOPSMission>();
     
     /// <summary>
+    /// Indicates whether UNOPS Strategic Missions alignment is not applicable for this opportunity.
+    /// When true, no missions need to be selected and validation will pass.
+    /// </summary>
+    public bool UNOPSMissionsNotApplicable { get; set; } = false;
+    
+    /// <summary>
     /// Collaborators who have permissions to edit all fields of the opportunity.
     /// Part of the Opportunity Development Team.
     /// </summary>

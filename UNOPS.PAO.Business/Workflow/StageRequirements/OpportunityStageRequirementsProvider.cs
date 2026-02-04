@@ -127,13 +127,24 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
             // ============================================
 
             // 8. Strategic Missions (UNOPS Missions)
+            // Required: At least one mission selected, UNLESS "Not Applicable" flag is checked
             new StageRequirement
             {
                 Name = "unopsMissions",
                 Description = "message.requirements.opportunity.missionsRequired",
                 FieldName = "unopsMissions",
                 FieldType = FieldTypes.Array,
-                Validation = new RequirementValidation { Required = true, MinLength = 1 }
+                Validation = new RequirementValidation 
+                { 
+                    Required = true, 
+                    MinLength = 1,
+                    // Only require missions when "Not Applicable" is false
+                    Conditional = new ConditionalValidation
+                    {
+                        Field = "unopsMissionsNotApplicable",
+                        Value = false
+                    }
+                }
             },
 
             // 9. SDG Alignment
