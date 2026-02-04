@@ -267,6 +267,233 @@ export async function setupAPIMocks(page: Page): Promise<void> {
     });
   });
 
+  // ==========================================
+  // ENTITY DETAIL ENDPOINTS - Required for detail pages
+  // ==========================================
+  
+  // Mock /api/partner/{id} - Partner detail
+  await page.route(url => {
+    const urlString = url.toString();
+    return /\/api\/partner\/\d+$/.test(urlString);
+  }, async (route) => {
+    const url = route.request().url();
+    const partnerId = url.match(/\/api\/partner\/(\d+)/)?.[1] || '1';
+    console.log(`[API Mock] Intercepted: /api/partner/${partnerId}`);
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        id: parseInt(partnerId),
+        name: 'Test Partner Organization',
+        type: 'Organization',
+        status: 'Active',
+        description: 'This is a test partner for automated E2E testing',
+        website: 'https://test-partner.org',
+        email: 'contact@test-partner.org',
+        phone: '+1-555-0123',
+        address: '123 Test Street, Test City, TC 12345',
+        country: 'United States',
+        partnerType: { id: 1, name: 'Government' },
+        stage: 'Active',
+        workflowStatus: 'Active',
+        createdDate: '2024-01-01T00:00:00Z',
+        lastModifiedDate: '2024-06-15T12:00:00Z',
+        createdBy: 'system',
+        lastModifiedBy: 'system',
+        // Tab configuration data
+        contacts: [
+          { id: 1, firstName: 'John', lastName: 'Smith', email: 'john@test.com' },
+          { id: 2, firstName: 'Jane', lastName: 'Doe', email: 'jane@test.com' }
+        ],
+        interactions: [],
+        opportunities: [],
+        documents: [],
+      }),
+    });
+  });
+
+  // Mock /api/partner/{id}/permissions - Partner permissions
+  await page.route(url => {
+    const urlString = url.toString();
+    return /\/api\/partner\/\d+\/permissions/.test(urlString);
+  }, async (route) => {
+    console.log('[API Mock] Intercepted: /api/partner/{id}/permissions');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        canView: true,
+        canEdit: true,
+        canDelete: true,
+        canSubmit: true,
+        canApprove: false,
+        canActivate: true,
+        canCancel: false,
+      }),
+    });
+  });
+
+  // Mock /api/opportunity/{id} - Opportunity detail
+  await page.route(url => {
+    const urlString = url.toString();
+    return /\/api\/opportunity\/\d+$/.test(urlString);
+  }, async (route) => {
+    const url = route.request().url();
+    const opportunityId = url.match(/\/api\/opportunity\/(\d+)/)?.[1] || '1';
+    console.log(`[API Mock] Intercepted: /api/opportunity/${opportunityId}`);
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        id: parseInt(opportunityId),
+        name: 'Test Opportunity for E2E Testing',
+        title: 'Test Opportunity',
+        description: 'This is a comprehensive test opportunity for automated E2E testing',
+        status: 'Active',
+        stage: 'Identification',
+        workflowStatus: 'Active',
+        value: 1500000,
+        currency: 'USD',
+        estimatedValue: 1500000,
+        probability: 75,
+        expectedCloseDate: '2024-12-31T00:00:00Z',
+        startDate: '2024-01-01T00:00:00Z',
+        endDate: '2024-12-31T00:00:00Z',
+        createdDate: '2024-01-01T00:00:00Z',
+        lastModifiedDate: '2024-06-15T12:00:00Z',
+        createdBy: 'system',
+        lastModifiedBy: 'system',
+        partner: {
+          id: 1,
+          name: 'Test Partner Organization'
+        },
+        organizationUnit: {
+          id: 1,
+          name: 'HQ - Headquarters',
+          code: 'HQ'
+        },
+        opportunityType: { id: 1, name: 'New Business' },
+        sector: { id: 1, name: 'Infrastructure' },
+        country: 'United States',
+        region: 'North America',
+        // Related entities for tabs
+        contacts: [
+          { id: 1, firstName: 'John', lastName: 'Smith', email: 'john@test.com' }
+        ],
+        interactions: [
+          { id: 1, subject: 'Initial Meeting', date: '2024-01-15T10:00:00Z' }
+        ],
+        documents: [],
+        risks: [],
+        stakeholders: [
+          { id: 1, userId: 1, role: 'Opportunity Manager' }
+        ],
+      }),
+    });
+  });
+
+  // Mock /api/opportunity/{id}/permissions - Opportunity permissions
+  await page.route(url => {
+    const urlString = url.toString();
+    return /\/api\/opportunity\/\d+\/permissions/.test(urlString);
+  }, async (route) => {
+    console.log('[API Mock] Intercepted: /api/opportunity/{id}/permissions');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        canView: true,
+        canEdit: true,
+        canDelete: false,
+        canSubmit: true,
+        canApprove: false,
+        canActivate: true,
+        canCancel: false,
+      }),
+    });
+  });
+
+  // Mock /api/contact/{id} - Contact detail
+  await page.route(url => {
+    const urlString = url.toString();
+    return /\/api\/contact\/\d+$/.test(urlString);
+  }, async (route) => {
+    const url = route.request().url();
+    const contactId = url.match(/\/api\/contact\/(\d+)/)?.[1] || '1';
+    console.log(`[API Mock] Intercepted: /api/contact/${contactId}`);
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        id: parseInt(contactId),
+        firstName: 'John',
+        lastName: 'Smith',
+        name: 'John Smith',
+        email: 'john.smith@test.com',
+        phone: '+1-555-0123',
+        title: 'Director',
+        department: 'Partnerships',
+        status: 'Active',
+        partner: { id: 1, name: 'Test Partner Organization' },
+        createdDate: '2024-01-01T00:00:00Z',
+        lastModifiedDate: '2024-06-15T12:00:00Z',
+      }),
+    });
+  });
+
+  // Mock /api/interaction/{id} - Interaction detail
+  await page.route(url => {
+    const urlString = url.toString();
+    return /\/api\/interaction\/\d+$/.test(urlString);
+  }, async (route) => {
+    const url = route.request().url();
+    const interactionId = url.match(/\/api\/interaction\/(\d+)/)?.[1] || '1';
+    console.log(`[API Mock] Intercepted: /api/interaction/${interactionId}`);
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        id: parseInt(interactionId),
+        subject: 'Test Interaction',
+        description: 'This is a test interaction for E2E testing',
+        type: 'Meeting',
+        date: '2024-06-15T10:00:00Z',
+        duration: 60,
+        status: 'Completed',
+        partner: { id: 1, name: 'Test Partner Organization' },
+        contacts: [
+          { id: 1, firstName: 'John', lastName: 'Smith', email: 'john@test.com' }
+        ],
+        createdDate: '2024-01-01T00:00:00Z',
+        lastModifiedDate: '2024-06-15T12:00:00Z',
+      }),
+    });
+  });
+
+  // ==========================================
+  // WORKFLOW AND STAGE ENDPOINTS
+  // ==========================================
+  
+  // Mock /api/workflow/{entity}/{id} - Workflow status
+  await page.route(url => {
+    const urlString = url.toString();
+    return /\/api\/workflow\/\w+\/\d+/.test(urlString);
+  }, async (route) => {
+    console.log('[API Mock] Intercepted: /api/workflow/{entity}/{id}');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        currentStage: 'Active',
+        availableActions: ['Deactivate', 'Archive'],
+        history: [
+          { stage: 'Draft', date: '2024-01-01T00:00:00Z', user: 'system' },
+          { stage: 'Active', date: '2024-01-15T00:00:00Z', user: 'admin' },
+        ],
+      }),
+    });
+  });
+
   // Catch-all for any other /api/ and /user/ calls - return smart defaults based on URL pattern
   await page.route(url => {
     const urlString = url.toString();
@@ -287,7 +514,13 @@ export async function setupAPIMocks(page: Page): Promise<void> {
            !urlString.includes('/api/values/status') &&
            !urlString.includes('/api/values/pronouns') &&
            !urlString.includes('/api/values/countries') &&
-           !urlString.includes('/api/values/states');
+           !urlString.includes('/api/values/states') &&
+           // Exclude the new entity detail endpoints (handled above)
+           !/\/api\/partner\/\d+/.test(urlString) &&
+           !/\/api\/opportunity\/\d+/.test(urlString) &&
+           !/\/api\/contact\/\d+/.test(urlString) &&
+           !/\/api\/interaction\/\d+/.test(urlString) &&
+           !/\/api\/workflow\//.test(urlString);
   }, async (route) => {
     const url = route.request().url();
     const method = route.request().method();

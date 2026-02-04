@@ -16,10 +16,20 @@ export abstract class BasePage {
   
   /**
    * Navigate to the page
-   * @param url - Relative URL
+   * @param url - Relative URL (with or without hash prefix)
+   * @description Handles Angular hash-based routing by ensuring URLs are prefixed with /#/
    */
   async goto(url: string): Promise<void> {
-    await this.page.goto(url);
+    // Angular uses hash-based routing - ensure URLs are prefixed with /#/
+    let hashUrl = url;
+    if (!url.startsWith('/#/') && !url.startsWith('#/')) {
+      // Convert /login to /#/login
+      hashUrl = url.startsWith('/') ? `/#${url}` : `/#/${url}`;
+    } else if (url.startsWith('#/')) {
+      // Convert #/login to /#/login
+      hashUrl = `/${url}`;
+    }
+    await this.page.goto(hashUrl);
     await waitForNetworkIdle(this.page);
   }
   

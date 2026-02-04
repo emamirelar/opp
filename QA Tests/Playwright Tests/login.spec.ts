@@ -11,9 +11,20 @@ import { assertUrlMatches } from './helpers/assertions.helper';
  * - Successful authentication
  * - Error handling for invalid credentials
  * - Form validation
+ * 
+ * NOTE: These tests REQUIRE a real backend for proper login flow testing.
+ * In mocked environments (CI), these tests are skipped.
+ * To run: Use staging/development environment with real backend.
+ * 
+ * @requires Real Backend API
+ * @skipped-in CI (API mocking mode)
  */
 test.describe('Login Flow', () => {
   let loginPage: LoginPage;
+  
+  // Skip all login tests in mocked environment - they require real backend
+  // Comment: These tests verify the actual login flow against a real authentication service
+  test.skip(({ browserName }) => process.env.CI === 'true', 'Login tests require real backend - skipped in CI');
   
   test.beforeEach(async ({ page }) => {
     loginPage = new LoginPage(page);

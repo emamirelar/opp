@@ -2,7 +2,22 @@
 
 This document tracks **production code defects** discovered during testing. These are issues where implemented functionality does not match documented requirements (PRD, specifications, acceptance criteria).
 
-**Scope:** Business logic bugs, missing features per PRD, API contract violations, architectural problems in production code  
+**Scope:** All production code defects requiring developer intervention:
+- ✅ **Functional:** Business logic bugs, incorrect behavior, missing features
+- ✅ **API/Integration:** Contract violations, endpoint failures, data mapping issues
+- ✅ **Architecture:** Design flaws, async/sync problems, dependency issues
+- ✅ **Security:** Vulnerabilities, auth bypass, data exposure, injection flaws
+- ✅ **Performance:** Slow queries, memory leaks, N+1 problems, resource exhaustion
+- ✅ **Accessibility:** WCAG violations, keyboard nav, screen reader issues
+- ✅ **Data Integrity:** Calculation errors, constraint violations, data corruption
+- ✅ **Error Handling:** Unhandled exceptions, poor messages, silent failures
+- ✅ **Compatibility:** Browser-specific bugs, device/OS issues, responsive layout
+- ✅ **Internationalization:** Translation bugs, locale formatting, RTL issues
+- ✅ **Concurrency:** Race conditions, deadlocks, thread safety problems
+- ✅ **Observability:** Missing logs, audit gaps, inadequate telemetry
+- ✅ **Configuration:** Wrong defaults, missing feature flags, env issues
+- ✅ **Dependencies:** Vulnerable packages, version conflicts, deprecated APIs
+
 **Prefix:** DEF-XXX  
 **File Owner:** Development Team
 
@@ -61,10 +76,42 @@ The following items were previously logged as developer defects but have been re
 - **Total Open:** 1
 - **Total Resolved:** 0
 - **Total Reclassified:** 7 (moved to appropriate trackers)
-- **Critical:** 0
-- **High Priority:** 1 (DEF-008 - Go Decision feature incomplete)
-- **Medium Priority:** 0
-- **Low Priority:** 0
+- 🔴 **Critical:** 0
+- 🟠 **High Priority:** 1 (DEF-008 - Go Decision feature incomplete)
+- 🟡 **Medium Priority:** 0
+- 🟢 **Low Priority:** 0
+
+---
+
+## Latest Test Results (2026-02-04)
+
+### .NET C# Tests
+
+| Metric | Count | Percentage |
+|--------|-------|------------|
+| **Passed** | 2,725 | 90.8% |
+| **Failed** | 2 | 0.1% |
+| **Skipped** | 273 | 9.1% |
+| **Total** | 3,000 | 100% |
+| **Duration** | 22s | - |
+
+### C# Test Failures (2 failures)
+
+| Test | Category | Error | Root Cause | Action |
+|------|----------|-------|------------|--------|
+| `AccessibilityTests.A11Y010_Links_ShouldHaveDescriptiveText` | Accessibility | Expected <2 non-descriptive links, found 2 | Test stub - not fully implemented | QA to fix test |
+| `PartnerByOrgUnitWithRelationsSpecificationTests.Criteria_FiltersPartnersByBothDirectAndIndirectRelations` | Specification | Expected 2 results, found 1 | Test data setup incomplete | QA to fix test |
+
+**Note:** Both failures are test implementation issues (QA responsibility), not production defects.
+
+### Playwright E2E Tests (In Progress)
+
+| Metric | Count | Notes |
+|--------|-------|-------|
+| **Passed** | 179+ | Test suite still running |
+| **Failed** | 16 | Includes login tests (require real backend) |
+| **Skipped** | 71 | Blocked tests (Go Decision, oUP) |
+| **Progress** | 266/846 | ~32% complete |
 
 ---
 

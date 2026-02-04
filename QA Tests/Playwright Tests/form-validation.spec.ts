@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { authenticateWithRealBackend } from './helpers/auth.helper';
 
 /**
  * Form Validation E2E Tests
@@ -11,25 +12,20 @@ import { test, expect } from '@playwright/test';
  * - Custom validation rules
  * - Error message display
  * - Form submission prevention
+ * 
+ * @note Uses hash-based routing (/#/) for Angular app navigation
  */
 test.describe('Form Validation', () => {
-  // Login before each test
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/login');
-    
-    // TODO: Replace with actual test credentials
-    await page.locator('[data-testid="username-input"]').fill('testuser@unops.org');
-    await page.locator('[data-testid="password-input"] input').fill('TestPassword123!');
-    await page.locator('[data-testid="login-button"]').click();
-    
-    // Wait for redirect
-    await page.waitForURL(/\/home|\/dashboard/, { timeout: 10000 });
-  });
+  // Helper to navigate with hash-based routing
+  async function gotoHash(page: any, path: string): Promise<void> {
+    const hashUrl = path.startsWith('/#/') ? path : `/#${path.startsWith('/') ? path : '/' + path}`;
+    await page.goto(hashUrl);
+    await page.waitForLoadState('networkidle');
+  }
   
   test('should validate required fields on login form', async ({ page }) => {
-    // Navigate to login page (logout first or clear session)
-    await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    // Navigate to login page using hash-based routing
+    await gotoHash(page, '/login');
     
     // Clear any existing values
     await page.locator('[data-testid="username-input"]').clear();
@@ -48,9 +44,8 @@ test.describe('Form Validation', () => {
   });
   
   test('should validate email format in partner form', async ({ page }) => {
-    // Navigate to partners page
-    await page.goto('/partners');
-    await page.waitForLoadState('networkidle');
+    // Authenticate and navigate to partners page
+    await authenticateWithRealBackend(page, '/#/partnerships/partners');
     await page.waitForTimeout(2000);
     
     // Look for New Partner button
@@ -92,9 +87,8 @@ test.describe('Form Validation', () => {
   });
   
   test('should validate required fields on contact form', async ({ page }) => {
-    // Navigate to contacts page
-    await page.goto('/contacts');
-    await page.waitForLoadState('networkidle');
+    // Authenticate and navigate to contacts page
+    await authenticateWithRealBackend(page, '/#/partnerships/contacts');
     await page.waitForTimeout(2000);
     
     // Look for New Contact button
@@ -132,9 +126,8 @@ test.describe('Form Validation', () => {
   });
   
   test('should prevent form submission with invalid data', async ({ page }) => {
-    // Navigate to opportunities page
-    await page.goto('/opportunities');
-    await page.waitForLoadState('networkidle');
+    // Authenticate and navigate to opportunities page
+    await authenticateWithRealBackend(page, '/#/opportunities');
     await page.waitForTimeout(2000);
     
     // Look for New Opportunity button
@@ -173,9 +166,8 @@ test.describe('Form Validation', () => {
   });
   
   test('should display validation error messages', async ({ page }) => {
-    // Navigate to login to test error messages
-    await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    // Navigate to login page using hash-based routing
+    await gotoHash(page, '/login');
     
     // Enter invalid credentials
     await page.locator('[data-testid="username-input"]').fill('invalid@example.com');
@@ -194,9 +186,8 @@ test.describe('Form Validation', () => {
   });
   
   test('should validate number fields accept only numbers', async ({ page }) => {
-    // Navigate to page with number input (e.g., opportunities)
-    await page.goto('/opportunities');
-    await page.waitForLoadState('networkidle');
+    // Authenticate and navigate to opportunities page
+    await authenticateWithRealBackend(page, '/#/opportunities');
     await page.waitForTimeout(2000);
     
     // Look for New Opportunity button
@@ -231,9 +222,8 @@ test.describe('Form Validation', () => {
   });
   
   test('should validate date fields with proper format', async ({ page }) => {
-    // Navigate to interactions page (has date fields)
-    await page.goto('/interactions');
-    await page.waitForLoadState('networkidle');
+    // Authenticate and navigate to interactions page (has date fields)
+    await authenticateWithRealBackend(page, '/#/partnerships/interactions');
     await page.waitForTimeout(2000);
     
     // Look for New Interaction button
@@ -262,9 +252,8 @@ test.describe('Form Validation', () => {
   });
   
   test('should clear validation errors when field is corrected', async ({ page }) => {
-    // Go to login page
-    await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    // Go to login page using hash-based routing
+    await gotoHash(page, '/login');
     
     const usernameInput = page.locator('[data-testid="username-input"]');
     const passwordInput = page.locator('[data-testid="password-input"] input');
@@ -294,9 +283,8 @@ test.describe('Form Validation', () => {
   });
   
   test('should validate form fields on blur', async ({ page }) => {
-    // Navigate to page with form
-    await page.goto('/partners');
-    await page.waitForLoadState('networkidle');
+    // Authenticate and navigate to partners page
+    await authenticateWithRealBackend(page, '/#/partnerships/partners');
     await page.waitForTimeout(2000);
     
     const newPartnerButton = page.locator('[data-testid="new-partner-button"]');
@@ -331,9 +319,8 @@ test.describe('Form Validation', () => {
   });
   
   test('should disable submit button when form is invalid', async ({ page }) => {
-    // Navigate to page with form
-    await page.goto('/contacts');
-    await page.waitForLoadState('networkidle');
+    // Authenticate and navigate to contacts page
+    await authenticateWithRealBackend(page, '/#/partnerships/contacts');
     await page.waitForTimeout(2000);
     
     const newContactButton = page.locator('[data-testid="new-contact-button"]');

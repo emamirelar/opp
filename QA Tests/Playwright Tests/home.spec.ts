@@ -44,10 +44,8 @@ test.describe('Home Page & Dashboard', () => {
   });
   
   test('should display dashboard content or loading state', async ({ page }) => {
-    await page.goto('/');
-    
-    // Wait for Angular to bootstrap
-    await page.waitForLoadState('networkidle');
+    // Authenticate and navigate to home page using hash-based routing
+    await authenticateWithRealBackend(page, '/#/');
     
     // Either loading skeleton OR actual content should be visible
     const loadingState = page.locator('.animate-pulse');
@@ -81,10 +79,8 @@ test.describe('Home Page & Dashboard', () => {
   });
   
   test('should display dashboard panels (Actions Required, Recent Activity, My Workspace)', async ({ page }) => {
-    await page.goto('/');
-    
-    // Wait for content to load
-    await page.waitForLoadState('networkidle');
+    // Authenticate and navigate to home page using hash-based routing
+    await authenticateWithRealBackend(page, '/#/');
     
     // Look for the dashboard card components
     // These use app-dashboard-card or specific panel structures
@@ -118,10 +114,8 @@ test.describe('Home Page & Dashboard', () => {
   });
   
   test('should display last updated timestamp', async ({ page }) => {
-    await page.goto('/');
-    
-    // Wait for dashboard to load
-    await page.waitForSelector('.max-w-7xl', { timeout: 10000 });
+    // Authenticate and navigate to home page using hash-based routing
+    await authenticateWithRealBackend(page, '/#/');
     
     // Look for "Last Updated" text or timestamp
     const lastUpdatedText = page.getByText(/last updated|updated/i);
