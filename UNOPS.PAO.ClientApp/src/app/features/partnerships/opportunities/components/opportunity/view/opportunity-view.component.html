@@ -220,6 +220,7 @@
               [entityName]="'opportunity'"
               [entityId]="opportunity()?.id?.toString() ?? ''"
               [canChangeStage]="canChangeStage()"
+              [isOpportunityManager]="isCurrentUserOpportunityManager()"
               [feedbackDialogService]="feedbackDialogService"
               [customStageChangeHandler]="customStageChangeHandler"
               [responsibleOrgUnitName]="opportunity()?.responsibleOrgUnitName ?? ''"

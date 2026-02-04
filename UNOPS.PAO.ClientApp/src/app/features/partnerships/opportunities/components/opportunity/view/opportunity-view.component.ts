@@ -48,7 +48,7 @@ import { RequirementsValidationComponent } from '@shared/reusables/components/wo
 
 // Services
 import { FeedbackDialogService } from '@shared/services/ui';
-import { PermissionUtilityService } from '@core/services/auth';
+import { PermissionUtilityService, AuthService } from '@core/services/auth';
 import { PageContextService } from '@shared/services/utils';
 import { OpportunityService } from '../../../services/opportunity.service';
 import { Opportunity, GoDecisionPayload, NoGoDecisionPayload, Risk } from '@shared/models/opportunity.model';
@@ -153,6 +153,7 @@ export class OpportunityViewComponent
   feedbackDialogService = inject(FeedbackDialogService);
   confirmationService = inject(ConfirmationService);
   private pageContextService = inject(PageContextService);
+  private authService = inject(AuthService);
 
   // State
   loading = signal<boolean>(true);
@@ -407,6 +408,9 @@ export class OpportunityViewComponent
     );
   });
 
+  // Signal to store the current user's email (loaded from claims)
+  private currentUserEmail = signal<string>('');
+
   // Get opportunity manager from stakeholders (internal stakeholder with "Opportunity Manager" role)
   opportunityManager = computed(() => {
     const opp = this.opportunity();
@@ -422,6 +426,31 @@ export class OpportunityViewComponent
     );
 
     return manager ? manager.userName || manager.userEmail || '-' : '-';
+  });
+
+  // Get the opportunity manager stakeholder (for OM email comparison)
+  private opportunityManagerStakeholder = computed(() => {
+    const opp = this.opportunity();
+    if (!opp || !opp.stakeholders || opp.stakeholders.length === 0) return null;
+
+    return opp.stakeholders.find(
+      (s) =>
+        s.isInternal &&
+        s.entityRoleName &&
+        s.entityRoleName.toLowerCase().includes('opportunity') &&
+        s.entityRoleName.toLowerCase().includes('manager'),
+    ) || null;
+  });
+
+  // Determine if the current user is the Opportunity Manager
+  isCurrentUserOpportunityManager = computed(() => {
+    const email = this.currentUserEmail();
+    const omStakeholder = this.opportunityManagerStakeholder();
+    
+    if (!email || !omStakeholder?.userEmail) return false;
+    
+    // Compare emails (case-insensitive)
+    return omStakeholder.userEmail.toLowerCase() === email.toLowerCase();
   });
 
   // Check if target signing date is overdue (in the past) and opportunity is still in Identify & Profile or Decide stage
@@ -735,6 +764,19 @@ export class OpportunityViewComponent
   ngOnInit() {
     // Register component data for AI Assistant
     this.pageContextService.setComponentData(this);
+
+    // Load current user email from claims for OM comparison
+    this.authService.user().subscribe({
+      next: (claims) => {
+        const emailClaim = claims.find(c => 
+          c.type === 'email' || 
+          c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'
+        );
+        if (emailClaim?.value) {
+          this.currentUserEmail.set(emailClaim.value);
+        }
+      }
+    });
 
     // Fetch OUP base URL from configuration
     this.valuesService.getConfig().subscribe({
@@ -1456,16 +1498,13 @@ export class OpportunityViewComponent
   /**
    * @description Handle successful workflow stage change
    * Reloads opportunity data to reflect the new stage and workflow status
+   * Note: Success toast is shown by the specific action handler (e.g., Reopen, Cancel, Submit)
    */
   handleStageChangeSuccess(): void {
     // Reload the opportunity to get the updated stage and workflow status
     this.reloadOpportunity();
-    
-    // Show success feedback
-    this.feedbackDialogService.showSuccessToast({
-      summary: this.translateService.instant('message.success'),
-      detail: this.translateService.instant('message.workflow.submitSuccess')
-    });
+    // Note: Success feedback is handled by the specific action (Cancel, Reopen, Submit, etc.)
+    // to show action-specific messages instead of a generic one
   }
 
   // ===== Go/No-Go Decision Handlers =====
@@ -1509,10 +1548,10 @@ export class OpportunityViewComponent
     if (!opportunityId) return;
 
     // The dialog already handles the API call and shows success/error toasts
-    // We just need to resolve the promise and reload the opportunity
+    // We resolve with proceed: false to prevent the workflow component from making a duplicate API call
     if (this.approveDialogResolver) {
       this.approveDialogResolver({
-        proceed: true,
+        proceed: false, // API call already made by the dialog
         comment: payload.rationale,
       });
       this.approveDialogResolver = null;
@@ -1531,10 +1570,10 @@ export class OpportunityViewComponent
     if (!opportunityId) return;
 
     // The dialog already handles the API call and shows success/error toasts
-    // We just need to resolve the promise and reload the opportunity
+    // We resolve with proceed: false to prevent the workflow component from making a duplicate API call
     if (this.rejectDialogResolver) {
       this.rejectDialogResolver({
-        proceed: true,
+        proceed: false, // API call already made by the dialog
         comment: payload.rationale,
       });
       this.rejectDialogResolver = null;

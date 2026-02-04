@@ -24,6 +24,7 @@ import {
   WorkflowSubmitRequest,
   WorkflowSubmitResponse,
   ConfirmationType,
+  CountryMappingInfo,
 } from '../../models/workflow.models';
 
 /**
@@ -122,14 +123,18 @@ export class WorkflowComponent implements OnInit {
 
   // Non-OM warning dialog state
   nonOMWarningRole = signal('');
+  opportunityManagerInfo = signal('');
   nonOMWarningConfirmed = signal(false);
 
   // Org unit mismatch dialog state
   unrelatedCountries = signal<string[]>([]);
+  countryMappings = signal<CountryMappingInfo[]>([]);
+  selectedOrgUnitName = signal('');
   orgUnitMismatchConfirmed = signal(false);
 
   // Acknowledgment dialog state
   acknowledgmentText = signal('');
+  acknowledgmentOrgUnitName = signal('');
   acknowledgmentChecked = signal(false);
   additionalRemarks = signal('');
 
@@ -505,23 +510,28 @@ export class WorkflowComponent implements OnInit {
         // Extract role from message or use generic
         const roleMatch = response.confirmationMessage?.match(/\[([^\]]+)\]/);
         this.nonOMWarningRole.set(roleMatch ? roleMatch[1] : 'stakeholder');
+        this.opportunityManagerInfo.set(response.opportunityManagerInfo || '');
         this.nonOMWarningConfirmed.set(false);
         this.showNonOMWarningDialog.set(true);
         this.changeDetectorRef.detectChanges();
       } else if (confirmationType === 'OrgUnitCountryMismatch') {
         this.unrelatedCountries.set(response.unrelatedCountries || []);
+        this.countryMappings.set(response.countryMappings || []);
+        this.selectedOrgUnitName.set(response.responsibleOrgUnitName || this.responsibleOrgUnitName || '');
         this.orgUnitMismatchConfirmed.set(false);
         this.showOrgUnitMismatchDialog.set(true);
         this.changeDetectorRef.detectChanges();
       }
     } else if (response.requiresAcknowledgment) {
       // Format acknowledgment text with org unit name
+      const orgUnitName = response.responsibleOrgUnitName || this.responsibleOrgUnitName || '';
       const text =
         response.acknowledgmentText ||
         this.translateService.instant('message.workflow.acknowledgmentStatement', {
-          orgUnitName: this.responsibleOrgUnitName,
+          orgUnitName: orgUnitName,
         });
       this.acknowledgmentText.set(text);
+      this.acknowledgmentOrgUnitName.set(orgUnitName);
       this.acknowledgmentChecked.set(false);
       this.additionalRemarks.set('');
       this.showAcknowledgmentDialog.set(true);

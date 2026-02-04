@@ -388,9 +388,24 @@ public class WorkflowSubmitResponse
     public string? ConfirmationMessage { get; set; }
 
     /// <summary>
+    /// Opportunity Manager info (name and email) for Non-OM warning dialog.
+    /// </summary>
+    public string? OpportunityManagerInfo { get; set; }
+
+    /// <summary>
     /// List of country names that don't match org unit relationships (for OrgUnitCountryMismatch warning).
     /// </summary>
     public List<string>? UnrelatedCountries { get; set; }
+
+    /// <summary>
+    /// All implementation countries with their mapping status (for OrgUnitCountryMismatch dialog).
+    /// </summary>
+    public List<CountryMappingInfo>? CountryMappings { get; set; }
+
+    /// <summary>
+    /// Name of the responsible org unit for display in dialogs.
+    /// </summary>
+    public string? ResponsibleOrgUnitName { get; set; }
 
     /// <summary>
     /// Whether acknowledgment of the statement is required before proceeding.
@@ -499,6 +514,23 @@ public class WorkflowActionResponse
     /// The new stage after the action
     /// </summary>
     public string? NewStage { get; set; }
+}
+
+/// <summary>
+/// Country mapping information for org unit mismatch dialog.
+/// Shows which implementation countries are/aren't mapped to the selected org unit.
+/// </summary>
+public class CountryMappingInfo
+{
+    /// <summary>
+    /// Name of the country
+    /// </summary>
+    public required string CountryName { get; set; }
+
+    /// <summary>
+    /// Whether the country is mapped to the selected org unit
+    /// </summary>
+    public bool IsMapped { get; set; }
 }
 
 /// <summary>

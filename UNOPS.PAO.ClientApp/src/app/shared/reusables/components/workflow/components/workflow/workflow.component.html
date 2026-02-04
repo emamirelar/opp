@@ -91,10 +91,23 @@
   (onHide)="closeNonOMWarningDialog()"
 >
   <div class="flex flex-col gap-4">
-    <div class="flex items-start gap-3">
-      <i class="pi pi-exclamation-triangle text-yellow-500 text-2xl"></i>
-      <p class="text-surface-600 m-0">
-        {{ 'message.workflow.nonOMSubmitterWarning' | translate: { role: nonOMWarningRole() } }}
+    <!-- Warning Alert Box (Yellow) -->
+    <div class="p-4 rounded-lg" style="background-color: #fef3c7; border: 1px solid #fde68a;">
+      <p class="m-0" style="color: #92400e;">
+        {{ 'message.workflow.nonOMRoleWarning' | translate: { role: nonOMWarningRole() } }}
+      </p>
+      <p class="mt-3 mb-0" style="color: #92400e;">
+        {{ 'message.workflow.nonOMExpectedBehavior' | translate }}
+      </p>
+      <p class="mt-3 mb-0 font-semibold" style="color: #92400e;">
+        {{ 'message.workflow.pleaseConfirmProceed' | translate }}
+      </p>
+    </div>
+
+    <!-- Neutral Info Box showing Opportunity Manager -->
+    <div class="p-4 rounded-lg" style="background-color: #f3f4f6; border: 1px solid #e8e9ea;">
+      <p class="m-0" style="color: #5c5e60;">
+        <strong>{{ 'label.opportunityManager' | translate }}:</strong> {{ opportunityManagerInfo() }}
       </p>
     </div>
   </div>
@@ -109,7 +122,7 @@
         [disabled]="isActionInProgress()"
       />
       <p-button
-        [label]="'button.continue' | translate"
+        [label]="'button.proceedAnyway' | translate"
         severity="primary"
         (onClick)="confirmNonOMWarning()"
         [loading]="isActionInProgress()"
@@ -124,14 +137,46 @@
   [header]="'message.workflow.orgUnitMismatchTitle' | translate"
   [modal]="true"
   [closable]="true"
-  [style]="{ width: '500px' }"
+  [style]="{ width: '550px' }"
   (onHide)="closeOrgUnitMismatchDialog()"
 >
   <div class="flex flex-col gap-4">
-    <div class="flex items-start gap-3">
-      <i class="pi pi-exclamation-triangle text-yellow-500 text-2xl"></i>
-      <p class="text-surface-600 m-0">
-        {{ 'message.workflow.orgUnitCountryMismatch' | translate: { countries: unrelatedCountries().join(', ') } }}
+    <!-- Warning Alert Box (Yellow) -->
+    <div class="p-4 rounded-lg" style="background-color: #fef3c7; border: 1px solid #fde68a;">
+      <p class="m-0" style="color: #92400e;">
+        {{ 'message.workflow.orgUnitMismatchWarning' | translate: { orgUnitName: selectedOrgUnitName() } }}
+      </p>
+      <p class="mt-3 mb-0" style="color: #92400e;">
+        {{ 'message.workflow.pleaseConfirmProceed' | translate }}
+      </p>
+    </div>
+
+    <!-- Implementation Countries List (Neutral Gray Box) -->
+    @if (countryMappings().length > 0) {
+      <div class="p-4 rounded-lg" style="background-color: #f3f4f6; border: 1px solid #e8e9ea;">
+        <p class="font-semibold mb-2 m-0" style="color: #5c5e60;">
+          {{ 'message.workflow.implementationCountries' | translate }}
+        </p>
+        <ul class="m-0 pl-5 list-disc" style="color: #5c5e60;">
+          @for (country of countryMappings(); track country.countryName) {
+            <li>
+              {{ country.countryName }}
+              @if (country.isMapped) {
+                <span style="color: #059669;">({{ 'message.workflow.mappedTo' | translate: { orgUnitName: selectedOrgUnitName() } }})</span>
+              } @else {
+                <span style="color: #dc2626;">({{ 'message.workflow.notMappedTo' | translate: { orgUnitName: selectedOrgUnitName() } }})</span>
+              }
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
+    <!-- Info Notice (Light Blue Box) -->
+    <div class="p-4 rounded-lg flex items-start gap-2" style="background-color: #e3f2fd; border: 1px solid rgba(0, 146, 209, 0.2);">
+      <i class="pi pi-info-circle" style="color: #005a8a;"></i>
+      <p class="m-0" style="color: #005a8a;">
+        {{ 'message.workflow.orgUnitMismatchInfoNotice' | translate }}
       </p>
     </div>
   </div>
@@ -146,7 +191,7 @@
         [disabled]="isActionInProgress()"
       />
       <p-button
-        [label]="'button.continue' | translate"
+        [label]="'button.proceedAnyway' | translate"
         severity="primary"
         (onClick)="confirmOrgUnitMismatch()"
         [loading]="isActionInProgress()"
@@ -165,6 +210,19 @@
   (onHide)="closeAcknowledgmentDialog()"
 >
   <div class="flex flex-col gap-4">
+    <!-- Acknowledgment Statement Box (Light Blue) -->
+    <div class="p-4 rounded-lg" style="background-color: #e3f2fd; border: 1px solid rgba(0, 146, 209, 0.2);">
+      <h4 class="font-semibold mb-3 m-0" style="color: #005a8a;">
+        {{ 'message.workflow.acknowledgmentStatementTitle' | translate }}
+      </h4>
+      <p class="mb-3 m-0" style="color: #007bb8;">
+        {{ 'message.workflow.acknowledgmentStatementLine1' | translate }}
+      </p>
+      <p class="m-0" style="color: #007bb8;" [innerHTML]="'message.workflow.acknowledgmentStatementLine2' | translate: { orgUnitName: acknowledgmentOrgUnitName() }">
+      </p>
+    </div>
+
+    <!-- Checkbox (Outside the blue box) -->
     <div class="flex items-start gap-3">
       <p-checkbox
         [ngModel]="acknowledgmentChecked()"
@@ -173,20 +231,29 @@
         inputId="acknowledgment"
       />
       <label for="acknowledgment" class="text-surface-700 cursor-pointer">
-        {{ acknowledgmentText() }}
+        {{ 'message.workflow.acknowledgeAndConfirm' | translate }}
       </label>
     </div>
 
+    <!-- Additional Remarks Section -->
     <div class="flex flex-col gap-2">
-      <label class="font-semibold">{{ 'message.workflow.additionalRemarksLabel' | translate }}</label>
+      <label class="font-semibold">{{ 'message.workflow.additionalRemarksLabelOptional' | translate }}</label>
       <textarea
         pTextarea
         [ngModel]="additionalRemarks()"
         (ngModelChange)="additionalRemarks.set($event)"
         [rows]="4"
         class="w-full"
-        [placeholder]="'message.workflow.additionalRemarksPlaceholder' | translate"
+        [placeholder]="'message.workflow.additionalRemarksPlaceholderApprovers' | translate"
       ></textarea>
+    </div>
+
+    <!-- Info Notice (Neutral Gray/Yellow Box) -->
+    <div class="p-4 rounded-lg flex items-start gap-2" style="background-color: #fef3c7; border: 1px solid #fde68a;">
+      <i class="pi pi-info-circle" style="color: #92400e;"></i>
+      <p class="m-0" style="color: #92400e;">
+        {{ 'message.workflow.acknowledgmentInfoNotice' | translate }}
+      </p>
     </div>
   </div>
 
@@ -200,7 +267,7 @@
         [disabled]="isActionInProgress()"
       />
       <p-button
-        [label]="'button.workflow.submit' | translate"
+        [label]="'button.workflow.submitForGoDecision' | translate"
         severity="primary"
         (onClick)="confirmAcknowledgment()"
         [loading]="isActionInProgress()"
@@ -220,13 +287,23 @@
   (onHide)="closeRejectToNoGoDialog()"
 >
   <div class="flex flex-col gap-4">
-    <div class="flex items-start gap-3">
-      <i class="pi pi-exclamation-triangle text-orange-500 text-2xl"></i>
-      <p class="text-surface-600 m-0">
-        {{ 'message.workflow.rejectToNoGoWarning' | translate }}
+    <!-- Danger Alert Box (Pink/Red) -->
+    <div class="p-4 rounded-lg" style="background-color: #fce7f3; border: 1px solid #fbcfe8;">
+      <p class="m-0" style="color: #991e66;">
+        {{ 'message.workflow.rejectToNoGoWarningLine1' | translate }}
+      </p>
+      <p class="mt-3 mb-0" style="color: #991e66;">
+        {{ 'message.workflow.rejectToNoGoWarningLine2' | translate }}
+      </p>
+      <p class="mt-3 mb-0" style="color: #991e66;">
+        {{ 'message.workflow.rejectToNoGoWarningLine3' | translate }}
       </p>
     </div>
 
+    <!-- Divider -->
+    <hr style="border: none; border-top: 1px solid #e8e9ea; margin: 0;">
+
+    <!-- Reason Textarea -->
     <div class="flex flex-col gap-2">
       <label class="font-semibold">{{ 'message.workflow.rejectToNoGoReason' | translate }}</label>
       <textarea
@@ -237,6 +314,9 @@
         class="w-full"
         [placeholder]="'message.workflow.enterRejectionReason' | translate"
       ></textarea>
+      <p class="text-sm m-0" style="color: #7a7c7e;">
+        {{ 'message.workflow.rejectionReasonHint' | translate }}
+      </p>
     </div>
   </div>
 
