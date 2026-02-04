@@ -1812,6 +1812,10 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }
         }
 
+        // Update UNOPS Missions Not Applicable flag
+        // When true, it means the user explicitly indicated that mission alignment is not applicable
+        entity.UNOPSMissionsNotApplicable = request.UNOPSMissionsNotApplicable;
+        
         // Update UNOPS Mission alignments with differential update strategy
         if (request.UNOPSMissions != null)
         {

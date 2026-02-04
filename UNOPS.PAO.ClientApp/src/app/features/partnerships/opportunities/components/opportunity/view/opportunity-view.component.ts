@@ -230,6 +230,7 @@ export class OpportunityViewComponent
     opportunityStatementMarkdown: new FormControl(''),
     initiativeBudgetUSD: new FormControl<number | null>(null),
     unopsMissions: new FormControl<unknown[]>([]),
+    unopsMissionsNotApplicable: new FormControl<boolean>(false),
     sdgs: new FormControl<unknown[]>([]),
     fundingPartners: new FormControl<unknown[]>([]),
     clientPartners: new FormControl<unknown[]>([]),
@@ -914,6 +915,7 @@ export class OpportunityViewComponent
       opportunityStatementMarkdown: opp.opportunityStatementMarkdown || '',
       initiativeBudgetUSD: opp.initiativeBudgetUSD ?? null,
       unopsMissions: opp.unopsMissions || [],
+      unopsMissionsNotApplicable: opp.unopsMissionsNotApplicable || false,
       sdgs: opp.sdGs || [],
       fundingPartners: opp.fundingPartners || [],
       clientPartners: opp.clientPartners || [],
@@ -1450,6 +1452,15 @@ export class OpportunityViewComponent
     if (this.relatedItemsComponent) {
       this.relatedItemsComponent.loadSourceInteractions();
     }
+  }
+
+  /**
+   * Handle the "Not Applicable" flag change for UNOPS Missions from WHY section.
+   * Updates the form control to enable real-time requirements validation.
+   * @param value The new value of the flag
+   */
+  handleUnopsMissionsNotApplicableChange(value: boolean): void {
+    this.opportunityForm.get('unopsMissionsNotApplicable')?.setValue(value);
   }
 
   /**

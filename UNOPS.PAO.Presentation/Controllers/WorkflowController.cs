@@ -1420,7 +1420,8 @@ public class WorkflowController : BaseController
 
         // === Array Fields (minLength = 1) ===
         // Note: Junction tables (FundingPartners, ClientPartners, etc.) don't have IsDeleted property
-        if (opportunity.UNOPSMissions == null || !opportunity.UNOPSMissions.Any())
+        // UNOPS Missions: Either at least one mission selected OR marked as "Not Applicable"
+        if (!opportunity.UNOPSMissionsNotApplicable && (opportunity.UNOPSMissions == null || !opportunity.UNOPSMissions.Any()))
             unmetRequirements.Add("message.requirements.opportunity.missionsRequired");
 
         if (opportunity.SDGs == null || !opportunity.SDGs.Any())
