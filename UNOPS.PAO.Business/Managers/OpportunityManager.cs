@@ -556,10 +556,11 @@ public class OpportunityManager : IOpportunityManager
         if (request.SdGs != null)
         {
             // Load existing SDGs with their targets and indicators for comparison
+            // CRITICAL: Filter out soft-deleted records to avoid re-selection issues
             var existingSDGs = await context.Set<OpportunitySDG>()
-                .Where(sdg => sdg.OpportunityId == id)
-                .Include(sdg => sdg.Targets)
-                    .ThenInclude(t => t.Indicators)
+                .Where(sdg => sdg.OpportunityId == id && !sdg.IsDeleted)
+                .Include(sdg => sdg.Targets.Where(t => !t.IsDeleted))
+                    .ThenInclude(t => t.Indicators.Where(i => !i.IsDeleted))
                 .ToListAsync();
 
             var requestedSDGIds = request.SdGs.Select(s => s.SDGId).ToHashSet();
@@ -717,9 +718,10 @@ public class OpportunityManager : IOpportunityManager
         if (request.UncfOutcomes != null)
         {
             // Load existing UNCF outcomes with their indicators for comparison
+            // CRITICAL: Filter out soft-deleted records to avoid re-selection issues
             var existingUNCFOutcomes = await context.Set<OpportunityUNCFOutcome>()
-                .Where(uo => uo.OpportunityId == id)
-                .Include(uo => uo.Indicators)
+                .Where(uo => uo.OpportunityId == id && !uo.IsDeleted)
+                .Include(uo => uo.Indicators.Where(i => !i.IsDeleted))
                 .ToListAsync();
 
             // Group request by (OpportunityCountryId, UNCFOutcomeId) composite key

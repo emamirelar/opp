@@ -4843,8 +4843,9 @@ public class UNOPSGeminiManager : IGeminiManager
             }
 
             // Step 5: Get existing deliverables to avoid duplicates
+            // Filter out soft-deleted records
             var existingDeliverables = await _context.OpportunityDeliverables
-                .Where(od => od.OpportunityId == opportunityId)
+                .Where(od => od.OpportunityId == opportunityId && !od.IsDeleted)
                 .Include(od => od.Output)
                 .Select(od => new
                 {
@@ -5392,8 +5393,9 @@ public class UNOPSGeminiManager : IGeminiManager
             var response = new FrameworkStatusResponse();
 
             // Get funding partner frameworks (using existing DocumentId)
+            // Filter out soft-deleted records
             var fundingPartnerFrameworks = await _context.OpportunityFundingPartners
-                .Where(fp => fp.OpportunityId == opportunityId && fp.DocumentId.HasValue)
+                .Where(fp => fp.OpportunityId == opportunityId && !fp.IsDeleted && fp.DocumentId.HasValue)
                 .Include(fp => fp.Partner)
                 .Include(fp => fp.Document)
                 .Select(fp => new TaggedFrameworkInfo
@@ -5408,8 +5410,9 @@ public class UNOPSGeminiManager : IGeminiManager
                 .ToListAsync();
 
             // Get client partner frameworks (using existing DocumentId)
+            // Filter out soft-deleted records
             var clientPartnerFrameworks = await _context.OpportunityClientPartners
-                .Where(cp => cp.OpportunityId == opportunityId && cp.DocumentId.HasValue)
+                .Where(cp => cp.OpportunityId == opportunityId && !cp.IsDeleted && cp.DocumentId.HasValue)
                 .Include(cp => cp.Partner)
                 .Include(cp => cp.Document)
                 .Select(cp => new TaggedFrameworkInfo

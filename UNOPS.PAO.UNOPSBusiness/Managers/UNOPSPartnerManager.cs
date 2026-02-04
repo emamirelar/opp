@@ -553,10 +553,11 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
         // ==========================================
         // QUERY 2: Load contacts separately (eliminates Cartesian product)
+        // Filter out soft-deleted records
         // ==========================================
         var contacts = await _context.Contacts
             .AsNoTracking()
-            .Where(c => c.PartnerId == id)
+            .Where(c => c.PartnerId == id && !c.IsDeleted)
             .ToListAsync();
 
         // Assign contacts to entity
@@ -736,10 +737,11 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
         // ==========================================
         // QUERY 2: Load contacts separately to avoid Cartesian product
+        // Filter out soft-deleted records
         // ==========================================
         var contacts = await _context.Contacts
             .AsNoTracking()
-            .Where(c => c.PartnerId == id)
+            .Where(c => c.PartnerId == id && !c.IsDeleted)
             .ToListAsync();
 
         // Assign contacts to partner
@@ -805,10 +807,11 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
         // ==========================================
         // QUERY 2: Load contacts separately (can be parallelized if needed)
+        // Filter out soft-deleted records
         // ==========================================
         var contacts = await _context.Contacts
             .AsNoTracking()
-            .Where(c => c.PartnerId == id)
+            .Where(c => c.PartnerId == id && !c.IsDeleted)
             .ToListAsync();
 
         // Assign contacts to entity
@@ -1036,10 +1039,11 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
         // ==========================================
         // QUERY 2: Load contacts separately to avoid Cartesian product
+        // Filter out soft-deleted records
         // ==========================================
         var contacts = await _context.Contacts
             .AsNoTracking()
-            .Where(c => c.PartnerId == id)
+            .Where(c => c.PartnerId == id && !c.IsDeleted)
             .ToListAsync();
 
         // Assign contacts to partner
@@ -1843,9 +1847,10 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         }
 
         // Load contacts separately to avoid Cartesian product
+        // Filter out soft-deleted records
         var contacts = await _context.Contacts
             .AsNoTracking()
-            .Where(c => c.PartnerId == id)
+            .Where(c => c.PartnerId == id && !c.IsDeleted)
             .ToListAsync();
 
         // Assign contacts
