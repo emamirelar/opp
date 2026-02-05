@@ -1583,6 +1583,9 @@ export class OpportunityViewComponent
       // PDF generation errors are already handled in the documents component
       // with appropriate user feedback, so we just log here
     }
+
+    // Reload opportunity to reflect new stage
+    this.reloadOpportunity();
   }
 
   /**
@@ -1626,6 +1629,9 @@ export class OpportunityViewComponent
       // PDF generation errors are already handled in the documents component
       // with appropriate user feedback, so we just log here
     }
+
+    // Reload opportunity to reflect new stage
+    this.reloadOpportunity();
   }
 
   // ===== Go/No-Go Decision Handlers =====
@@ -1679,14 +1685,12 @@ export class OpportunityViewComponent
     }
 
     // Generate Approved PDF after successful Go decision
+    // Note: handleGoApprovalSuccess also calls reloadOpportunity()
     this.handleGoApprovalSuccess({
       entityName: 'Opportunity',
       entityId: opportunityId,
       approvedStage: 'GO',
     });
-
-    // Reload opportunity to reflect new stage
-    this.reloadOpportunity();
   }
 
   /**
