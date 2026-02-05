@@ -2465,12 +2465,21 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             return;
         }
 
+        // Get Opportunity Manager role ID to exclude from auto-population
+        // Opportunity Manager is managed separately via the dedicated OpportunityManagerId field
+        var opportunityManagerRoleId = await context.Set<EntityRole>()
+            .Where(er => er.Name != null && er.Name.ToLower() == "opportunity manager" && er.EntityType == "Opportunity" && !er.IsDeleted)
+            .Select(er => er.Id)
+            .FirstOrDefaultAsync();
+
         // Get EntityUserRoles for all relevant org units (including normally responsible)
         // Returns tuples of (OrgUnitId, EntityRoleId, UserId) - includes UserId for storage
+        // IMPORTANT: Excludes Opportunity Manager role - it is managed separately via OpportunityManagerId field
         var entityUserRoles = await context.EntityUserRoles
             .Where(eur => eur.EntityType == "OrganizationHierarchy" 
                        && orgUnitIdsForRoles.Contains(eur.EntityId)
                        && eur.EntityRoleId.HasValue
+                       && eur.EntityRoleId != opportunityManagerRoleId // Exclude Opportunity Manager role
                        && !eur.IsDeleted)
             .Select(eur => new { 
                 OrgUnitId = eur.EntityId, 

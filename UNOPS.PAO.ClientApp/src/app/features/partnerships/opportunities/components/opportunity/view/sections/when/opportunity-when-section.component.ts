@@ -815,18 +815,24 @@ export class OpportunityWhenSectionComponent implements OnInit {
   ngOnInit(): void {
     // Initialize form controls with current values
     const opp = this.opportunity();
-    if (opp.targetSigningDate) {
-      const signingDate = new Date(opp.targetSigningDate);
+    const signingDate = opp.targetSigningDate ? new Date(opp.targetSigningDate) : null;
+    const implStartDate = opp.implementationStartDate ? new Date(opp.implementationStartDate) : null;
+    const deliveryDate = opp.targetDeliveryDate ? new Date(opp.targetDeliveryDate) : null;
+    
+    if (signingDate) {
       this.targetSigningDateControl.setValue(signingDate);
       this.targetSigningDateSignal.set(signingDate);
     }
-    if (opp.implementationStartDate) {
-      const implStartDate = new Date(opp.implementationStartDate);
-      this.implementationStartDateControl.setValue(implStartDate);
-      this.implementationStartDateSignal.set(implStartDate);
+    
+    // If implementation start date is not set, default to signing date
+    // This implements the "Defaults to signing date if not specified" behavior
+    const effectiveImplStartDate = implStartDate || signingDate;
+    if (effectiveImplStartDate) {
+      this.implementationStartDateControl.setValue(effectiveImplStartDate);
+      this.implementationStartDateSignal.set(effectiveImplStartDate);
     }
-    if (opp.targetDeliveryDate) {
-      const deliveryDate = new Date(opp.targetDeliveryDate);
+    
+    if (deliveryDate) {
       this.targetDeliveryDateControl.setValue(deliveryDate);
       this.targetDeliveryDateSignal.set(deliveryDate);
     }
@@ -858,8 +864,11 @@ export class OpportunityWhenSectionComponent implements OnInit {
     this.targetSigningDateControl.setValue(signingDate);
     this.targetSigningDateSignal.set(signingDate);
     
-    this.implementationStartDateControl.setValue(implStartDate);
-    this.implementationStartDateSignal.set(implStartDate);
+    // If implementation start date is not set, default to signing date
+    // This implements the "Defaults to signing date if not specified" behavior
+    const effectiveImplStartDate = implStartDate || signingDate;
+    this.implementationStartDateControl.setValue(effectiveImplStartDate);
+    this.implementationStartDateSignal.set(effectiveImplStartDate);
     
     this.targetDeliveryDateControl.setValue(deliveryDate);
     this.targetDeliveryDateSignal.set(deliveryDate);
@@ -983,9 +992,14 @@ export class OpportunityWhenSectionComponent implements OnInit {
       };
     });
 
+    // Default implementation start date to signing date if not explicitly set
+    // This implements the "Defaults to signing date if not specified" behavior shown in the UI
+    const effectiveImplementationStartDate = this.implementationStartDateControl.value 
+      || this.targetSigningDateControl.value;
+
     const whenData = {
       targetSigningDate: this.normalizeDateToUTCMidnight(this.targetSigningDateControl.value),
-      implementationStartDate: this.normalizeDateToUTCMidnight(this.implementationStartDateControl.value),
+      implementationStartDate: this.normalizeDateToUTCMidnight(effectiveImplementationStartDate),
       targetDeliveryDate: this.normalizeDateToUTCMidnight(this.targetDeliveryDateControl.value),
       isTargetSigningDateFirm: this.isSigningDateFirmControl.value,
       signingDateNotes: this.signingDateNotesControl.value,
@@ -1045,8 +1059,11 @@ export class OpportunityWhenSectionComponent implements OnInit {
     this.targetSigningDateControl.setValue(signingDate);
     this.targetSigningDateSignal.set(signingDate);
     
-    this.implementationStartDateControl.setValue(implStartDate);
-    this.implementationStartDateSignal.set(implStartDate);
+    // If implementation start date is not set, default to signing date
+    // This implements the "Defaults to signing date if not specified" behavior
+    const effectiveImplStartDate = implStartDate || signingDate;
+    this.implementationStartDateControl.setValue(effectiveImplStartDate);
+    this.implementationStartDateSignal.set(effectiveImplStartDate);
     
     this.targetDeliveryDateControl.setValue(deliveryDate);
     this.targetDeliveryDateSignal.set(deliveryDate);
