@@ -83,35 +83,38 @@ The following items were previously logged as developer defects but have been re
 
 ---
 
-## Latest Test Results (2026-02-04)
+## Latest Test Results (2026-02-05)
 
-### .NET C# Tests
+### .NET C# Tests - Combined Summary
 
-| Metric | Count | Percentage |
-|--------|-------|------------|
-| **Passed** | 2,725 | 90.8% |
-| **Failed** | 2 | 0.1% |
-| **Skipped** | 273 | 9.1% |
-| **Total** | 3,000 | 100% |
-| **Duration** | 22s | - |
+| Test Suite | Passed | Failed | Skipped | Total | Pass Rate |
+|------------|--------|--------|---------|-------|-----------|
+| **Business.Tests** | 2,725 | 2 | 273 | 3,000 | 90.8% |
+| **FastTests** | 78 | 0 | 0 | 78 | 100% |
+| **Presentation.Tests** | 29 | 0 | 0 | 29 | 100% |
+| **Total** | **2,832** | **2** | **273** | **3,107** | **91.2%** |
+| **Duration** | 10s | - | - | - | - |
 
 ### C# Test Failures (2 failures)
 
 | Test | Category | Error | Root Cause | Action |
 |------|----------|-------|------------|--------|
-| `AccessibilityTests.A11Y010_Links_ShouldHaveDescriptiveText` | Accessibility | Expected <2 non-descriptive links, found 2 | Test stub - not fully implemented | QA to fix test |
-| `PartnerByOrgUnitWithRelationsSpecificationTests.Criteria_FiltersPartnersByBothDirectAndIndirectRelations` | Specification | Expected 2 results, found 1 | Test data setup incomplete | QA to fix test |
+| `AccessibilityTests.A11Y010_Links_ShouldHaveDescriptiveText` | Accessibility | Expected <2 non-descriptive links, found 2 | Test stub - not fully implemented | QA to fix test (QA-026) |
+| `PartnerByOrgUnitWithRelationsSpecificationTests.Criteria_FiltersPartnersByBothDirectAndIndirectRelations` | Specification | Expected 2 results, found 1 | Test data setup incomplete | QA to fix test (QA-027) |
 
 **Note:** Both failures are test implementation issues (QA responsibility), not production defects.
 
-### Playwright E2E Tests (In Progress)
+### Playwright E2E Tests (2026-02-05)
 
 | Metric | Count | Notes |
 |--------|-------|-------|
-| **Passed** | 179+ | Test suite still running |
-| **Failed** | 16 | Includes login tests (require real backend) |
-| **Skipped** | 71 | Blocked tests (Go Decision, oUP) |
-| **Progress** | 266/846 | ~32% complete |
+| **Passed** | 2 | Only 2 tests passed |
+| **Failed** | 377 | Angular dev server did not auto-start (QA-028) |
+| **Skipped** | 70 | Blocked tests (Go Decision, oUP, etc.) |
+| **Total** | 449 | - |
+| **Duration** | 9.2m | - |
+
+**⚠️ Critical Issue:** Playwright tests failing due to Angular dev server not starting automatically. Tests receive `net::ERR_CONNECTION_REFUSED`. See **QA-028** in `Defect List for QA.md`.
 
 ---
 

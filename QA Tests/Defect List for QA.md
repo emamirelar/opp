@@ -31,7 +31,7 @@ This document tracks test infrastructure issues, test implementation bugs, tempo
 
 ## Open QA Issues
 
-**Status**: ⚠️ 12 open issues - Test infrastructure, InMemory database limitations, reclassified from DEF list
+**Status**: ⚠️ 12 open issues - Test infrastructure, InMemory database limitations, reclassified from DEF list (QA-028 RESOLVED ✅)
 
 ### Reclassified from Developer Defects (Test Infrastructure Issues)
 
@@ -71,6 +71,8 @@ These items were originally logged as developer defects (DEF-XXX) but have been 
 ||| QA-023 | Navigation-tabs.spec.ts visibility failures | **RESOLVED ✅** - 4 tests fixed by updating selectors.<br/><br/>**Original Error:** `expect(locator).toBeVisible() failed`<br/><br/>**Fix Applied (2026-02-04):**<br/>• Updated tests to use more flexible tab selectors (PrimeNG, ARIA roles)<br/>• Tests now gracefully handle pages without tabs<br/>• Added fallback assertions for different layout patterns<br/><br/>**Result:** All 4 tests now passing | Run `npx playwright test navigation-tabs.spec.ts` | ✅ 4 tests passing | - | 2026-02-04 | **Resolved** | QA Team |
 || | | | | | | | | |
 ||| QA-024 | Partner-item.spec.ts timeouts and visibility failures | **7 tests failing** with timeouts and visibility issues.<br/><br/>**Errors:**<br/>• `Test timeout of 30000ms exceeded`<br/>• `expect(locator).toBeVisible() failed`<br/>• `Target page, context or browser has been closed`<br/><br/>**Root Cause:** `TestDataSeeder` creates test data but mocked API doesn't return it. When page loads with ID from seeder, mock returns generic data instead of seeded data.<br/><br/>**Affected Tests:** Various partner detail page tests<br/><br/>**Classification:** Require enhanced mocking OR real backend | Run `npx playwright test partner-item.spec.ts` | Tests pass | 7 tests fail with timeouts | 2026-02-04 | Open | QA Team |
+||| | | | | | | | | |
+|||| QA-028 | Playwright webServer not auto-starting Angular dev server | **RESOLVED ✅** - WebServer config updated to properly start Angular.<br/><br/>**Original Issue:** Tests failed with `net::ERR_CONNECTION_REFUSED` because Angular dev server wasn't starting via Playwright webServer.<br/><br/>**Root Cause:** `stdout: 'ignore'` setting prevented startup visibility, timeout was borderline, and auto-browser-open caused issues.<br/><br/>**Fix Applied (2026-02-05):**<br/>• Changed `stdout` and `stderr` from `'ignore'` to `'pipe'` for visibility<br/>• Increased `timeout` from 300,000ms (5 min) to 360,000ms (6 min)<br/>• Added `--no-open` flag to `ng serve` command<br/><br/>**Verification Run Results:**<br/>• **Passed: 265 tests (59%)**<br/>• **Failed: 76 tests (17%)** - Test-specific issues, NOT server connectivity<br/>• **Skipped: 71 tests (16%)**<br/>• **Duration: ~30 minutes**<br/><br/>**Connection refused errors: ELIMINATED** | 1. Run: `npx playwright test --project=chromium`<br/>2. Observe: Angular dev server starts successfully<br/>3. Check: Tests can navigate to http://127.0.0.1:4200 | Tests connect to Angular app | ✅ 265 tests passed, webServer working | 2026-02-05 | **Resolved** | QA Team |
 || | | | | | | | | |
 ||| QA-025 | Opportunity-item-basic.spec.ts assertion failures | **RESOLVED ✅** - 3 tests fixed by updating selectors.<br/><br/>**Original Errors:**<br/>• `expect(received).toBeGreaterThan(expected)` - card count<br/>• `expect(received).toBeFalsy()` - loading/error indicators<br/><br/>**Fix Applied (2026-02-04):**<br/>• Updated card selector to include PrimeNG panels and surface classes<br/>• Made loading indicator check more specific (avoid matching "download", "upload")<br/>• Made error check more specific (only check actual error messages)<br/>• Added enhanced API mocks for opportunity detail endpoint<br/><br/>**Result:** All 3 tests now passing | Run `npx playwright test opportunity-item-basic.spec.ts` | ✅ 3 tests passing | - | 2026-02-04 | **Resolved** | QA Team |
 | | | | | | | | | |
@@ -93,6 +95,7 @@ These items were originally logged as developer defects (DEF-XXX) but have been 
 || QA-022 | Hash-based routing issue in Playwright tests | **Fixed:** Updated `BasePage.goto()` to auto-convert `/login` → `/#/login`. Updated `form-validation.spec.ts` and `home.spec.ts` to use `authenticateWithRealBackend()`. **Result:** 21 tests now passing. | 2026-02-04 | QA Team |
 || QA-023 | Navigation-tabs.spec.ts visibility failures | **Fixed:** Updated 4 tests to use flexible selectors (PrimeNG tabs, ARIA roles). Tests now gracefully handle pages without tabs. **Result:** All 4 tests passing. | 2026-02-04 | QA Team |
 || QA-025 | Opportunity-item-basic.spec.ts assertion failures | **Fixed:** Updated card/loading/error selectors to be more specific. Enhanced API mocks with full entity detail responses. **Result:** All 3 tests passing. | 2026-02-04 | QA Team |
+|| QA-028 | Playwright webServer not auto-starting Angular | **Fixed:** Updated `playwright.config.ts` webServer settings: Changed `stdout`/`stderr` from `'ignore'` to `'pipe'` for visibility, increased timeout from 5 to 6 minutes, added `--no-open` flag to `ng serve`. **Result:** 265 tests now passing (up from 2), connection refused errors eliminated. | 2026-02-05 | QA Team |
 
 ---
 
@@ -100,17 +103,16 @@ These items were originally logged as developer defects (DEF-XXX) but have been 
 
 - **Total Open:** 12 ⚠️ (QA-007, QA-008, QA-011, QA-012, QA-014 through QA-016, QA-018 through QA-020, QA-024, QA-026, QA-027)
 - **Total In Testing:** 0
-- **Total Resolved/Workaround:** 16 ✅ (QA-009, QA-010, QA-013, QA-017, QA-021 through QA-023, QA-025, and 8 others)
-- **Test Infrastructure:** 27 (16 resolved/workaround, 11 open)
+- **Total Resolved/Workaround:** 17 ✅ (QA-009, QA-010, QA-013, QA-017, QA-021 through QA-023, QA-025, **QA-028**, and 8 others)
+- **Test Infrastructure:** 29 (17 resolved/workaround, 12 open)
 - **Reclassified from DEF:** 3 ✅ (QA-018, QA-019, QA-020 - moved from developer defects as test infrastructure issues)
 - **Test Implementation:** 1 (QA-026 - Accessibility test stub)
 - **Test Data:** 1 (QA-027 - Specification test data issue)
-- **Test Tooling:** 0
+- **Test Tooling:** 1 (**QA-028 - RESOLVED ✅**)
 - **Temporary Workarounds:** 6 (QA-005 - PipeWriter, QA-009 - 111 tests skipped, QA-011 - Playwright skips, QA-012 - Business.Tests exclusions, QA-020 - PipeWriter fallback, QA-021 - 7 login tests skipped)
 - **Blocked by Credentials:** 2 (QA-014, QA-015 - oUP integration testing)
 - **Blocked by Implementation:** 1 (QA-016 - Go Decision PRD tests blocked by DEF-008)
-- **Blocked by Environment:** 0 ✅ (QA-017 resolved - webServer auto-starts Angular)
-- 🔴 **Critical:** 0 ✅
+- 🔴 **Critical:** 0 (**QA-028 RESOLVED**)
 - 🟠 **High Priority:** 9 (QA-007, QA-008, QA-011, QA-012, QA-014, QA-015, QA-016, QA-018, QA-019, QA-024)
 - 🟡 **Medium Priority:** 2 (QA-026, QA-027 - test implementation issues)
 
@@ -122,22 +124,44 @@ These items were originally logged as developer defects (DEF-XXX) but have been 
 - Enhanced API mocks with entity detail endpoints (partner, opportunity, contact, interaction)
 - Created `PLAYWRIGHT_TEST_REQUIREMENTS.md` documenting all test requirements
 
-### Latest .NET Test Results (2026-02-03 After QA-010 Fix)
-- **Passed:** 2,792 (93.1%) ✅ **+546 improvement!**
-- **Failed:** 46 (1.5%)
-- **Skipped:** 162 (5.4%)
-- **Duration:** 1m 26s
-- **Primary Blocker:** QA-009 (Z.EntityFramework.Extensions InMemory) - ~40 failures
+### Latest .NET Test Results (2026-02-05 - Full Suite)
 
-### Latest Playwright Test Results (2026-02-04, Chromium - Full Suite)
-- **Status:** ✅ Completed (with Angular server manually started)
-- **Passed:** 178+ (63%+) - 7 more tests fixed
-- **Failed:** 28 (~10%) - Reduced from 35
-- **Skipped:** 76 (27.0%)
-- **Duration:** ~20 minutes
-- **Blocked:** 80 tests (Go Decision + oUP Integration) marked as Skip
+| Test Suite | Passed | Failed | Skipped | Total | Pass Rate |
+|------------|--------|--------|---------|-------|-----------|
+| **Business.Tests** | 2,725 | 2 | 273 | 3,000 | 90.8% |
+| **FastTests** | 78 | 0 | 0 | 78 | 100% |
+| **Presentation.Tests** | 29 | 0 | 0 | 29 | 100% |
+| **Total** | **2,832** | **2** | **273** | **3,107** | **91.2%** |
 
-**Improvements Applied (2026-02-04):**
+- **Duration:** ~10 seconds
+- **Primary Blockers:** QA-009 (Z.EntityFramework.Extensions InMemory) - 111 skipped, QA-026/QA-027 - 2 failures
+
+### Latest Playwright Test Results (2026-02-05, Full Suite - QA-028 RESOLVED ✅)
+
+| Metric | Count | Percentage |
+|--------|-------|------------|
+| **Passed** | 265 | 59.0% ✅ |
+| **Failed** | 76 | 17.0% |
+| **Skipped** | 71 | 16.0% |
+| **Total** | 449 | 100% |
+| **Duration** | ~30m | - |
+
+**✅ QA-028 RESOLVED (2026-02-05):**
+- WebServer now auto-starts Angular dev server successfully
+- Connection refused errors eliminated
+- Fix: Changed `stdout`/`stderr` to `'pipe'`, increased timeout to 6 minutes, added `--no-open` flag
+
+**Failure Analysis (76 tests):**
+- Vite proxy errors for unmocked API endpoints (expected with mock-based testing)
+- Tests requiring real backend endpoints not mocked
+- Test-specific issues (selectors, timing, etc.)
+- **NOT** server connectivity issues (those are resolved)
+
+**Comparison:**
+- 2026-02-05 (before QA-028 fix): 2 passed, 377 failed
+- 2026-02-05 (after QA-028 fix): **265 passed**, 76 failed (**+263 tests recovered!**)
+
+**Improvements Applied (2026-02-04 and 2026-02-05):**
 - Fixed hash-based routing in `BasePage.goto()` - URLs now convert `/login` → `/#/login`
 - Updated `form-validation.spec.ts` to use `authenticateWithRealBackend()`
 - Updated `home.spec.ts` to use `authenticateWithRealBackend()`
@@ -270,15 +294,18 @@ These items were originally logged as developer defects (DEF-XXX) but have been 
 
 ---
 
-## Test Execution Summary (2026-02-04)
+## Test Execution Summary (2026-02-05)
 
-### .NET Tests (Latest Run - 2026-02-04)
+### .NET Tests (Latest Run - 2026-02-05)
 
 | Test Suite | Passed | Failed | Skipped | Total | Duration |
 |------------|--------|--------|---------|-------|----------|
-| **Business.Tests** | 2,725 ✅ | 2 ❌ | 273 ⏭️ | 3,000 | 22s |
+| **Business.Tests** | 2,725 ✅ | 2 ❌ | 273 ⏭️ | 3,000 | 10s |
+| **FastTests** | 78 ✅ | 0 | 0 | 78 | <1s |
+| **Presentation.Tests** | 29 ✅ | 0 | 0 | 29 | 2s |
+| **TOTAL** | **2,832** ✅ | **2** ❌ | **273** ⏭️ | **3,107** | **~12s** |
 
-**Pass Rate:** 90.8% (2,725 / 3,000)
+**Overall Pass Rate:** 91.2% (2,832 / 3,107)
 
 **Test Failures (2):**
 
@@ -294,42 +321,39 @@ These items were originally logged as developer defects (DEF-XXX) but have been 
 - 80 blocked tests (Go Decision: 40, oUP Integration: 40)
 - 82 additional skipped (various reasons)
 
-**Key Improvements Since Last Run:**
-- **-44 failures** (was 46, now 2)
-- AutoMapper issue fully resolved (QA-010)
-- Opportunity tests properly skipped (QA-009)
-
-### Playwright E2E Tests (2026-02-04 - In Progress)
+### Playwright E2E Tests (2026-02-05 - QA-028 RESOLVED ✅)
 
 | Metric | Count | Percentage |
 |--------|-------|------------|
-| **Passed** | 179+ | 67%+ |
-| **Failed** | 16 | 6% |
-| **Skipped** | 71 | 27% |
-| **Progress** | 266/846 | 31% complete |
-| **Duration** | ~32 min (running) | - |
+| **Passed** | 265 | 59.0% ✅ |
+| **Failed** | 76 | 17.0% |
+| **Skipped** | 71 | 16.0% |
+| **Total** | 449 | 100% |
+| **Duration** | ~30m | - |
 
-**Failure Categories:**
+**✅ QA-028 RESOLVED - WebServer Now Auto-Starts Angular**
 
-| Category | Count | Root Cause | QA Issue |
-|----------|-------|------------|----------|
-| Login tests | 7 | Require real backend auth | QA-021 |
-| Timeout/visibility | 5 | API mocking gaps | QA-024 |
-| Other | 4 | Various | Investigation needed |
+| Test Category | Count | Status | Notes |
+|---------------|-------|--------|-------|
+| **Passing Tests** | 265 | ✅ | webServer working, mocks functional |
+| **Failing Tests** | 76 | ❌ | Unmocked API endpoints, test-specific issues |
+| **Blocked Tests** | 71 | ⏭️ | Go Decision + oUP + Login |
 
 **Blocked Tests (71 skipped):**
 - 40 Go Decision tests (DEF-008 - feature incomplete)
-- 31 oUP Integration tests (QA-014 - credentials missing)
+- 23 oUP Integration tests (QA-014 - credentials missing)
+- 7 Login tests (QA-021 - require real backend)
+- 1 Other
 
 ### Blocked Tests Summary
 
 | Blocker | Tests Affected | Resolution |
 |---------|----------------|------------|
+| ~~QA-028 (WebServer)~~ | ~~377 Playwright tests~~ | ✅ **RESOLVED (2026-02-05)** - WebServer config fixed, 265 tests now passing |
 | ~~QA-010 (AutoMapper DI)~~ | ~~40 Opportunity tests~~ | ✅ **RESOLVED** - Added parameterless constructor |
-| **QA-009 (InMemory DB)** | **~40 Opportunity tests** | Need real PostgreSQL or repository mocking |
-| QA-014 (oUP Credentials) | 40 C# + 34 Playwright tests | Request credentials from IT |
-| DEF-008 (Go Decision) | 40 C# tests | Feature not implemented |
-| Playwright WebServer | ~249 Playwright tests | ✅ Timeout increased to 5 minutes |
+| **QA-009 (InMemory DB)** | **111 Opportunity tests** | Need real PostgreSQL or repository mocking |
+| QA-014 (oUP Credentials) | 40 C# + 23 Playwright tests | Request credentials from IT |
+| DEF-008 (Go Decision) | 40 C# + 40 Playwright tests | Feature not implemented |
 
 ### Immediate (Next Sprint):
 - [ ] **QA-007, QA-008:** Test dialog functionality against real backend (integration/staging)

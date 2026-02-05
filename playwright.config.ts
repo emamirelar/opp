@@ -97,11 +97,14 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npx ng serve --port 4200 --host 127.0.0.1',
+    command: process.platform === 'win32' 
+      ? 'npx ng serve --port 4200 --host 127.0.0.1 --no-open' 
+      : 'npx ng serve --port 4200 --host 127.0.0.1 --no-open',
     cwd: './UNOPS.PAO.ClientApp', // Set working directory
     url: 'http://127.0.0.1:4200',
     reuseExistingServer: !process.env.CI,
-    timeout: 300000,  // 5 minutes for Angular to compile and start (increased from 3 min for slower machines)
-    stdout: 'ignore', // Don't wait for specific stdout, just URL check
+    timeout: 360000,  // 6 minutes for Angular to compile and start (increased for slower machines)
+    stdout: 'pipe',   // Show stdout to help debug startup issues
+    stderr: 'pipe',   // Show stderr to help debug startup issues
   },
 });
