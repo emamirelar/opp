@@ -455,23 +455,42 @@
 
             @for (group of decisionMakingPathwayStakeholders(); track group.orgUnitName) {
               <div class="mb-4">
-                <!-- OrgUnit Group Header -->
-                <div class="text-sm font-semibold text-unops-primary mb-2 flex items-center gap-2">
+                <!-- OrgUnit Group Header with Source Label -->
+                <div class="text-sm font-semibold text-unops-primary mb-2 flex items-center gap-2 flex-wrap">
                   <i class="pi pi-building text-unops-primary"></i>
                   <span>{{ group.orgUnitName }}</span>
+                  @if (group.isNormallyResponsible) {
+                    <!-- Normally Responsible Org Unit badge -->
+                    <p-tag 
+                      [value]="('label.normallyResponsible' | translate) + (group.countryName ? ': ' + group.countryName : '')"
+                      severity="warning"
+                      styleClass="text-xs"
+                      [pTooltip]="'tooltip.doaNormallyResponsible' | translate"
+                      tooltipPosition="top"
+                    />
+                  } @else {
+                    <!-- Responsible Org Unit badge -->
+                    <p-tag 
+                      [value]="'label.responsibleOrgUnit' | translate"
+                      severity="success"
+                      styleClass="text-xs"
+                      [pTooltip]="'tooltip.doaResponsibleOrgUnit' | translate"
+                      tooltipPosition="top"
+                    />
+                  }
                   <span class="text-unops-neutral-500 font-normal text-xs">({{ group.stakeholders.length }})</span>
                 </div>
 
                 <!-- DoA Roles Display -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                   @for (stakeholder of group.stakeholders; track stakeholder.entityRoleId) {
-                    <div class="bg-amber-50 rounded-unops-md p-2.5 border border-amber-300">
+                    <div [class]="group.isNormallyResponsible ? 'bg-amber-50 rounded-unops-md p-2.5 border border-amber-300' : 'bg-emerald-50 rounded-unops-md p-2.5 border border-emerald-300'">
                       <div class="flex items-center gap-2">
                         <p-avatar
                           label="D"
                           shape="circle"
                           size="normal"
-                          styleClass="bg-amber-100 text-amber-700 flex-shrink-0"
+                          [styleClass]="group.isNormallyResponsible ? 'bg-amber-100 text-amber-700 flex-shrink-0' : 'bg-emerald-100 text-emerald-700 flex-shrink-0'"
                         />
                         <div class="min-w-0 flex-1">
                           <div class="font-semibold text-unops-secondary text-sm truncate">

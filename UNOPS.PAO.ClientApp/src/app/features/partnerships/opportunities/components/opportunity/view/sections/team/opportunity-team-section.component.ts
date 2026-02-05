@@ -526,9 +526,12 @@ export class OpportunityTeamSectionComponent implements OnInit {
   });
 
   // Opportunity Decision Making Pathway: DoA2 and DoA3 holders (DoA1 excluded)
+  // Includes flags to distinguish between Responsible Org Unit and Normally Responsible Org Units
   readonly decisionMakingPathwayStakeholders = computed(() => {
     // autoPopulatedStakeholders already handles deduplication
     const stakeholders = this.autoPopulatedStakeholders();
+    const normalOrgUnits = this.normallyResponsibleOrgUnits();
+    const normalOrgUnitIds = normalOrgUnits.map(ou => ou.id);
     
     // Filter for DoA2 and DoA3 only
     const doaStakeholders = stakeholders.filter(stakeholder => {
@@ -536,24 +539,50 @@ export class OpportunityTeamSectionComponent implements OnInit {
       return ['DoA2', 'DoA3'].includes(roleName);
     });
 
-    // Group by org unit
-    const groups = new Map<string, OpportunityStakeholder[]>();
+    // Group by org unit with additional metadata
+    const groups = new Map<string, { 
+      stakeholders: OpportunityStakeholder[]; 
+      orgUnitId: number | undefined;
+      isNormallyResponsible: boolean;
+      countryName: string;
+    }>();
+    
     for (const stakeholder of doaStakeholders) {
       const key = stakeholder.organizationHierarchyName || 'Unknown';
+      const orgUnitId = stakeholder.organizationHierarchyId ?? undefined;
+      const isNormallyResponsible = orgUnitId ? normalOrgUnitIds.includes(orgUnitId) : false;
+      const countryName = isNormallyResponsible 
+        ? normalOrgUnits.find(ou => ou.id === orgUnitId)?.countryName || ''
+        : '';
+      
       if (!groups.has(key)) {
-        groups.set(key, []);
+        groups.set(key, { 
+          stakeholders: [], 
+          orgUnitId, 
+          isNormallyResponsible,
+          countryName
+        });
       }
-      groups.get(key)!.push(stakeholder);
+      groups.get(key)!.stakeholders.push(stakeholder);
     }
 
     // Sort by role: DoA2 first, then DoA3
     const roleOrder = { 'DoA2': 1, 'DoA3': 2 };
     
+    // Sort groups: Responsible Org Unit first, then Normally Responsible Org Units
     return Array.from(groups.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([orgUnitName, groupStakeholders]) => ({
+      .sort((a, b) => {
+        // Responsible org unit comes first
+        if (!a[1].isNormallyResponsible && b[1].isNormallyResponsible) return -1;
+        if (a[1].isNormallyResponsible && !b[1].isNormallyResponsible) return 1;
+        // Then sort alphabetically by name
+        return a[0].localeCompare(b[0]);
+      })
+      .map(([orgUnitName, groupData]) => ({
         orgUnitName,
-        stakeholders: groupStakeholders.sort(
+        isNormallyResponsible: groupData.isNormallyResponsible,
+        countryName: groupData.countryName,
+        stakeholders: groupData.stakeholders.sort(
           (a, b) => (roleOrder[a.entityRoleName as keyof typeof roleOrder] || 999) - (roleOrder[b.entityRoleName as keyof typeof roleOrder] || 999)
         ),
       }));
@@ -1375,17 +1404,9 @@ export class OpportunityTeamSectionComponent implements OnInit {
     const opp = this.opportunity();
     if (!opp || !opp.id) return;
 
-    // Get Opportunity Manager role ID to exclude from stakeholders
-    // (Opportunity Manager is sent separately via opportunityManagerId field)
-    const opportunityManagerRoleId = this.entityRoles().find(
-      r => (r.name || '').toLowerCase() === 'opportunity manager' ||
-           (r.code || '').toLowerCase() === 'opportunity_manager_opportunity'
-    )?.id;
-
     // Get user-added stakeholders (non-auto-populated)
-    // Exclude Opportunity Manager role - it has a dedicated field and should not be in stakeholders
     const userAddedStakeholders = (opp.stakeholders || [])
-      .filter((s) => !s.isAutoPopulated && s.entityRoleId !== opportunityManagerRoleId)
+      .filter((s) => !s.isAutoPopulated)
       .map((s) => ({
         userId: s.userId!,
         entityRoleId: s.entityRoleId,
@@ -1395,6 +1416,7 @@ export class OpportunityTeamSectionComponent implements OnInit {
 
     // Get auto-populated stakeholders from the current org unit
     // Include userId if available (resolved from EntityUserRoles)
+    // NOTE: Backend will filter out Opportunity Manager role - it is managed separately via opportunityManagerId field
     const autoPopulated = this.autoPopulatedStakeholders().map((s) => ({
       userId: s.userId ?? undefined,  // Include userId if available from resolved EntityUserRoles
       entityRoleId: s.entityRoleId,

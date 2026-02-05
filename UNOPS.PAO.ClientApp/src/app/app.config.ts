@@ -8,7 +8,6 @@ import {
 import {
   provideRouter,
   withComponentInputBinding,
-  withHashLocation,
   withInMemoryScrolling,
   Router,
 } from '@angular/router';
@@ -69,8 +68,7 @@ const socialAuthConfigFactory = (configService: ConfigurationService) => {
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(
-      routes, 
-      withHashLocation(), 
+      routes,
       withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }),
       withComponentInputBinding()
     ),

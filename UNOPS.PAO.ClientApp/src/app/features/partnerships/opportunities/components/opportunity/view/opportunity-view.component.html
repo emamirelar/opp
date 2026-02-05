@@ -213,161 +213,19 @@
               />
             </div>
           }
-
-          <!-- Workflow Component -->
-          <div class="px-unops-md md:px-unops-2xl py-4 border-t border-unops-neutral-300 bg-unops-surface-secondary">
-            <app-stage-workflow
-              #stageWorkflowComponent
-              [entityName]="'opportunity'"
-              [entityId]="opportunity()?.id?.toString() ?? ''"
-              [canChangeStage]="canChangeStage()"
-              [isOpportunityManager]="isCurrentUserOpportunityManager()"
-              [feedbackDialogService]="feedbackDialogService"
-              [customStageChangeHandler]="customStageChangeHandler"
-              [responsibleOrgUnitName]="opportunity()?.responsibleOrgUnitName ?? ''"
-              (onStageChangeSuccess)="handleStageChangeSuccess()"
-              (onGoSubmissionSuccess)="handleGoSubmissionSuccess($event)"
-              (onGoApprovalSuccess)="handleGoApprovalSuccess($event)"
-            />
-          </div>
-
-          <!-- Section Navigation - Dropdown on mobile, Chips on desktop -->
-          <div
-            class="px-unops-md md:px-unops-2xl py-3 border-t border-unops-neutral-300 bg-unops-surface-secondary"
-          >
-            <!-- Loading Progress Strip -->
-            @if (showProgressBar()) {
-              <div 
-                class="loading-progress-strip mb-3 transition-all duration-300"
-              >
-                <div class="flex items-center justify-between gap-4">
-                  <!-- Progress Bar -->
-                  <div class="flex-1 min-w-0">
-                    <div class="w-full bg-unops-neutral-200 rounded-full h-1.5 overflow-hidden">
-                      <div 
-                        class="bg-unops-primary h-1.5 rounded-full transition-all duration-500 ease-out"
-                        [style.width.%]="progressPercentage()"
-                      ></div>
-                    </div>
-                  </div>
-                  
-                  <!-- Progress Text -->
-                  <div class="flex items-center gap-3 text-sm text-unops-neutral-700 flex-shrink-0">
-                    <span class="flex items-center gap-2">
-                      <i class="pi pi-spin pi-spinner text-unops-primary text-sm"></i>
-                      <span class="font-medium hidden sm:inline">{{ progressMessage() }}</span>
-                    </span>
-                    <span class="text-unops-neutral-500 font-medium">
-                      {{ progressPercentage() }}%
-                    </span>
-                  </div>
-                </div>
-                
-                <!-- Accessibility: Screen reader announcement -->
-                <div 
-                  role="status" 
-                  aria-live="polite" 
-                  aria-atomic="true"
-                  class="sr-only"
-                >
-                  {{ progressMessage() }}
-                </div>
-              </div>
-            }
-
-            <!-- Mobile/Tablet: Dropdown (hidden on lg and above) -->
-            <div class="lg:hidden">
-              <p-select
-                [options]="sections"
-                [(ngModel)]="activeSection"
-                optionLabel="label"
-                optionValue="id"
-                (onChange)="scrollToSection($event.value)"
-                [style]="{ width: '100%' }"
-                appendTo="body"
-              >
-                <ng-template pTemplate="selectedItem" let-selectedOption>
-                  @if (selectedOption) {
-                    <div class="flex items-center gap-2">
-                      <i [class]="'pi ' + selectedOption.icon"></i>
-                      <span>{{ selectedOption.label | translate }}</span>
-                    </div>
-                  }
-                </ng-template>
-                <ng-template pTemplate="item" let-option>
-                  <div class="flex items-center gap-2">
-                    <i [class]="'pi ' + option.icon"></i>
-                    <span>{{ option.label | translate }}</span>
-                  </div>
-                </ng-template>
-              </p-select>
-            </div>
-
-            <!-- Desktop: Chips (hidden on mobile/tablet) -->
-            <div class="hidden lg:block relative">
-              <!-- Sizer div for ResizeObserver - 1px high transparent div spanning full width -->
-              <div #chipsSizerDiv class="absolute top-0 left-0 w-full pointer-events-none" style="height: 1px; opacity: 0;"></div>
-              
-              <!-- Chips container -->
-              <div #chipsContainer class="flex items-center gap-2">
-                <!-- Visible chips that fit in the available width -->
-                @for (section of visibleChips(); track section.id) {
-                  <button
-                    (click)="scrollToSection(section.id)"
-                    [class]="
-                      activeSection() === section.id
-                        ? 'flex items-center gap-2 px-4 py-2 rounded-full bg-unops-primary text-unops-primary-on font-medium text-sm transition-all duration-200 whitespace-nowrap shadow-unops-sm'
-                        : 'flex items-center gap-2 px-4 py-2 rounded-full bg-unops-surface-primary text-unops-neutral-700 hover:bg-unops-neutral-200 font-medium text-sm transition-all duration-200 whitespace-nowrap'
-                    "
-                  >
-                    <i [class]="'pi ' + section.icon + ' text-sm'"></i>
-                    <span>{{ section.label | translate }}</span>
-                  </button>
-                }
-                
-                <!-- "More..." dropdown for overflow chips -->
-                @if (hasOverflowChips()) {
-                  <p-select
-                    [(ngModel)]="activeSection"
-                    [options]="overflowChips()"
-                    optionLabel="label"
-                    optionValue="id"
-                    (onChange)="scrollToSection($event.value)"
-                    [placeholder]="'More...'"
-                    appendTo="body"
-                    [style]="{ width: '120px' }"
-                    styleClass="more-chips-dropdown"
-                  >
-                    <ng-template pTemplate="selectedItem" let-selectedOption>
-                      <div class="flex items-center gap-2">
-                        <i class="pi pi-ellipsis-h text-sm"></i>
-                        <span>More...</span>
-                      </div>
-                    </ng-template>
-                    <ng-template pTemplate="item" let-option>
-                      <div class="flex items-center gap-2">
-                        <i [class]="'pi ' + option.icon"></i>
-                        <span>{{ option.label | translate }}</span>
-                      </div>
-                    </ng-template>
-                  </p-select>
-                }
-              </div>
-            </div>
-          </div>
         </div>
         <!-- Right Spacer to match content padding -->
         <div class="w-unops-md md:w-unops-2xl flex-shrink-0"></div>
       </div>
     </div>
 
-    <!-- Content Layout - Documents Panel + Content (scrollable area, flex-1 takes remaining space) -->
+    <!-- Main Content Area - Documents Panel + Workflow/Tabs/Sections (scrollable) -->
     <div #contentScrollContainer class="flex flex-1 min-h-0 overflow-y-auto">
       <!-- LEFT: Documents Panel (hidden on mobile by default) -->
       <div
-        class="flex-shrink-0 border-r border-unops-neutral-300 bg-unops-surface-primary sticky top-0 mt-6 transition-all duration-300"
+        class="flex-shrink-0 border-r border-unops-neutral-300 bg-unops-surface-primary sticky top-0 transition-all duration-300"
         [class.hidden]="documentsCollapsed() && innerWidth() < 768"
-        style="height: fit-content; max-height: 100%; align-self: flex-start"
+        style="align-self: flex-start"
       >
         <app-opportunity-documents
           [opportunityId]="opportunity()!.id!"
@@ -379,8 +237,152 @@
         />
       </div>
 
-      <!-- RIGHT: Content Sections -->
-      <div class="flex-1 min-w-0 px-4 sm:px-unops-md md:px-unops-2xl py-4 sm:py-6 bg-unops-surface-secondary">
+      <!-- RIGHT: Workflow + Section Navigation + Content Sections -->
+      <div class="flex-1 min-w-0 bg-unops-surface-secondary">
+        <!-- Workflow Component -->
+        <div class="px-unops-md md:px-unops-2xl py-4 border-t border-unops-neutral-300">
+          <app-stage-workflow
+            #stageWorkflowComponent
+            [entityName]="'opportunity'"
+            [entityId]="opportunity()?.id?.toString() ?? ''"
+            [canChangeStage]="canChangeStage()"
+            [isOpportunityManager]="isCurrentUserOpportunityManager()"
+            [feedbackDialogService]="feedbackDialogService"
+            [customStageChangeHandler]="customStageChangeHandler"
+            [responsibleOrgUnitName]="opportunity()?.responsibleOrgUnitName ?? ''"
+            (onStageChangeSuccess)="handleStageChangeSuccess()"
+            (onGoSubmissionSuccess)="handleGoSubmissionSuccess($event)"
+            (onGoApprovalSuccess)="handleGoApprovalSuccess($event)"
+          />
+        </div>
+
+        <!-- Section Navigation - Dropdown on mobile, Chips on desktop -->
+        <div
+          class="px-unops-md md:px-unops-2xl py-3 border-t border-unops-neutral-300 sticky top-0 bg-unops-surface-secondary z-10"
+        >
+          <!-- Loading Progress Strip -->
+          @if (showProgressBar()) {
+            <div 
+              class="loading-progress-strip mb-3 transition-all duration-300"
+            >
+              <div class="flex items-center justify-between gap-4">
+                <!-- Progress Bar -->
+                <div class="flex-1 min-w-0">
+                  <div class="w-full bg-unops-neutral-200 rounded-full h-1.5 overflow-hidden">
+                    <div 
+                      class="bg-unops-primary h-1.5 rounded-full transition-all duration-500 ease-out"
+                      [style.width.%]="progressPercentage()"
+                    ></div>
+                  </div>
+                </div>
+                
+                <!-- Progress Text -->
+                <div class="flex items-center gap-3 text-sm text-unops-neutral-700 flex-shrink-0">
+                  <span class="flex items-center gap-2">
+                    <i class="pi pi-spin pi-spinner text-unops-primary text-sm"></i>
+                    <span class="font-medium hidden sm:inline">{{ progressMessage() }}</span>
+                  </span>
+                  <span class="text-unops-neutral-500 font-medium">
+                    {{ progressPercentage() }}%
+                  </span>
+                </div>
+              </div>
+              
+              <!-- Accessibility: Screen reader announcement -->
+              <div 
+                role="status" 
+                aria-live="polite" 
+                aria-atomic="true"
+                class="sr-only"
+              >
+                {{ progressMessage() }}
+              </div>
+            </div>
+          }
+
+          <!-- Mobile/Tablet: Dropdown (hidden on lg and above) -->
+          <div class="lg:hidden">
+            <p-select
+              [options]="sections"
+              [(ngModel)]="activeSection"
+              optionLabel="label"
+              optionValue="id"
+              (onChange)="scrollToSection($event.value)"
+              [style]="{ width: '100%' }"
+              appendTo="body"
+            >
+              <ng-template pTemplate="selectedItem" let-selectedOption>
+                @if (selectedOption) {
+                  <div class="flex items-center gap-2">
+                    <i [class]="'pi ' + selectedOption.icon"></i>
+                    <span>{{ selectedOption.label | translate }}</span>
+                  </div>
+                }
+              </ng-template>
+              <ng-template pTemplate="item" let-option>
+                <div class="flex items-center gap-2">
+                  <i [class]="'pi ' + option.icon"></i>
+                  <span>{{ option.label | translate }}</span>
+                </div>
+              </ng-template>
+            </p-select>
+          </div>
+
+          <!-- Desktop: Chips (hidden on mobile/tablet) -->
+          <div class="hidden lg:block relative">
+            <!-- Sizer div for ResizeObserver - 1px high transparent div spanning full width -->
+            <div #chipsSizerDiv class="absolute top-0 left-0 w-full pointer-events-none" style="height: 1px; opacity: 0;"></div>
+            
+            <!-- Chips container -->
+            <div #chipsContainer class="flex items-center gap-2">
+              <!-- Visible chips that fit in the available width -->
+              @for (section of visibleChips(); track section.id) {
+                <button
+                  (click)="scrollToSection(section.id)"
+                  [class]="
+                    activeSection() === section.id
+                      ? 'flex items-center gap-2 px-4 py-2 rounded-full bg-unops-primary text-unops-primary-on font-medium text-sm transition-all duration-200 whitespace-nowrap shadow-unops-sm'
+                      : 'flex items-center gap-2 px-4 py-2 rounded-full bg-unops-surface-primary text-unops-neutral-700 hover:bg-unops-neutral-200 font-medium text-sm transition-all duration-200 whitespace-nowrap'
+                  "
+                >
+                  <i [class]="'pi ' + section.icon + ' text-sm'"></i>
+                  <span>{{ section.label | translate }}</span>
+                </button>
+              }
+              
+              <!-- "More..." dropdown for overflow chips -->
+              @if (hasOverflowChips()) {
+                <p-select
+                  [(ngModel)]="activeSection"
+                  [options]="overflowChips()"
+                  optionLabel="label"
+                  optionValue="id"
+                  (onChange)="scrollToSection($event.value)"
+                  [placeholder]="'More...'"
+                  appendTo="body"
+                  [style]="{ width: '120px' }"
+                  styleClass="more-chips-dropdown"
+                >
+                  <ng-template pTemplate="selectedItem" let-selectedOption>
+                    <div class="flex items-center gap-2">
+                      <i class="pi pi-ellipsis-h text-sm"></i>
+                      <span>More...</span>
+                    </div>
+                  </ng-template>
+                  <ng-template pTemplate="item" let-option>
+                    <div class="flex items-center gap-2">
+                      <i [class]="'pi ' + option.icon"></i>
+                      <span>{{ option.label | translate }}</span>
+                    </div>
+                  </ng-template>
+                </p-select>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Content Sections -->
+        <div class="px-4 sm:px-unops-md md:px-unops-2xl py-4 sm:py-6">
         <div class="flex flex-col gap-6">
           <!-- ANALYSIS - Quick Stats & Insights -->
           <div id="section-analysis">
@@ -613,6 +615,7 @@
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
 

@@ -937,6 +937,13 @@ public class OpportunityController : BaseController
                 }
             }
 
+            // Default Implementation Start Date to Target Signing Date if not specified
+            // This implements the "Defaults to signing date if not specified" behavior
+            if (req.ImplementationStartDate == null && req.TargetSigningDate.HasValue)
+            {
+                req.ImplementationStartDate = req.TargetSigningDate;
+            }
+
             var result = await _manager.ApplyAiChangesAsync(id, req);
             
             // Create audit log
@@ -1669,6 +1676,13 @@ public class OpportunityController : BaseController
                     error = errorMessage,
                     validationErrors = validationErrors
                 });
+            }
+
+            // Default Implementation Start Date to Target Signing Date if not specified
+            // This implements the "Defaults to signing date if not specified" behavior
+            if (request.ImplementationStartDate == null && request.TargetSigningDate.HasValue)
+            {
+                request.ImplementationStartDate = request.TargetSigningDate;
             }
 
             // Create the opportunity using manager (handles deduplication, partner logic, etc.)

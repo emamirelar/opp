@@ -761,7 +761,7 @@ export class ImportDialogComponent implements OnInit, OnDestroy {
    * Generate entity URL for opening in new tab
    */
   private getEntityUrl(entityType: string, entityId: string): string {
-    return `/#/partnerships/${entityType}/${entityId}`;
+    return `/partnerships/${entityType}/${entityId}`;
   }
 
   // Select all rows in the current dataset (including rows with missing required fields and duplicates)

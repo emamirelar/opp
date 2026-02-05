@@ -60,11 +60,11 @@ public class UrlService : IUrlService
     {
         var entityPath = entityType.ToLower() switch
         {
-            "partner" => $"#/partnerships/partners/{entityId}",
-            "contact" => $"#/partnerships/contacts/{entityId}",
-            "interaction" => $"#/partnerships/interaction/{entityId}",
-            "opportunity" => $"#/partnerships/opportunities/{entityId}",
-            _ => $"#/partnerships/{entityType.ToLower()}s/{entityId}" // Generic fallback
+            "partner" => $"/partnerships/partners/{entityId}",
+            "contact" => $"/partnerships/contacts/{entityId}",
+            "interaction" => $"/partnerships/interaction/{entityId}",
+            "opportunity" => $"/partnerships/opportunities/{entityId}",
+            _ => $"/partnerships/{entityType.ToLower()}s/{entityId}" // Generic fallback
         };
         
         return BuildUrl(entityPath);
