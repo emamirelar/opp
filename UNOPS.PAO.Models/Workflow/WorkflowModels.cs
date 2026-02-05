@@ -293,6 +293,17 @@ public class WorkflowUserResponse
     public int UserId { get; set; }
     public string? UserName { get; set; }
     public string? UserEmail { get; set; }
+    
+    /// <summary>
+    /// User's standardized position/job title
+    /// </summary>
+    public string? PositionTitle { get; set; }
+    
+    /// <summary>
+    /// User's DOA (Delegation of Authority) level (e.g., "DoA1", "DoA2", "DoA3")
+    /// Only populated for approvers who have a DOA role
+    /// </summary>
+    public string? DoaLevel { get; set; }
 }
 
 /// <summary>

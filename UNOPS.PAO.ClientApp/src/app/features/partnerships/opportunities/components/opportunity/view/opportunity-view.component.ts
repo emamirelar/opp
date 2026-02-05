@@ -23,6 +23,7 @@ import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FormsModule, ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 
 // PrimeNG imports
 import { PanelModule } from 'primeng/panel';
@@ -48,6 +49,8 @@ import {
   RequirementsValidationComponent,
   RequirementClickEvent,
 } from '@shared/reusables/components/workflow/components/requirements-validation/requirements-validation.component';
+import { WorkflowService } from '@shared/reusables/components/workflow/services/workflow.service';
+import { WorkflowHistoryModel } from '@shared/reusables/components/workflow/models/workflow.models';
 
 // Services
 import { FeedbackDialogService } from '@shared/services/ui';
@@ -159,6 +162,7 @@ export class OpportunityViewComponent
   private pageContextService = inject(PageContextService);
   private authService = inject(AuthService);
   private googleOAuthService = inject(GoogleOAuthService);
+  private workflowService = inject(WorkflowService);
 
   // State
   loading = signal<boolean>(true);
@@ -1550,29 +1554,35 @@ export class OpportunityViewComponent
   async handleGoSubmissionSuccess(data: { entityName: string; entityId: number; newStage: string }): Promise<void> {
     console.log('📄 GO submission successful, generating statement PDF...', data);
 
-    const opp = this.opportunity();
-    if (!opp) {
-      console.error('❌ No opportunity data available for PDF generation');
-      return;
-    }
-
-    const markdown = opp.opportunityStatementMarkdown;
-    if (!markdown) {
-      console.warn('⚠️ No opportunity statement markdown available - skipping PDF generation');
-      return;
-    }
-
     if (!this.documentsComponent) {
       console.error('❌ Documents component not available for PDF generation');
       return;
     }
 
-    // Generate PDF with submission filename: Opportunity_<ID>_Submission_YYYYMMDD.pdf
-    const now = new Date();
-    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-    const pdfFileName = `Opportunity_${data.entityId}_Submission_${dateStr}.pdf`;
-    
+    // Fetch fresh opportunity data to get the updated statement markdown
+    // (the backend regenerates the statement during submission)
     try {
+      const response: any = await firstValueFrom(
+        this.opportunityService.getOpportunityById(data.entityId)
+      );
+      const freshOpp = response.opportunity || response;
+      
+      // Update local opportunity signal with fresh data
+      this.opportunity.set(freshOpp);
+
+      const markdown = freshOpp.opportunityStatementMarkdown;
+      if (!markdown) {
+        console.warn('⚠️ No opportunity statement markdown available - skipping PDF generation');
+        return;
+      }
+
+      // Generate PDF with submission filename: Opportunity_<ID>_Submission_YYYYMMDD_HHMM.pdf
+      // Include time so multiple submissions (after recall) can be differentiated
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+      const pdfFileName = `Opportunity_${data.entityId}_Submission_${dateStr}_${timeStr}.pdf`;
+      
       await this.documentsComponent.generateStatementPdf(
         markdown,
         data.entityId,
@@ -1583,44 +1593,56 @@ export class OpportunityViewComponent
       // PDF generation errors are already handled in the documents component
       // with appropriate user feedback, so we just log here
     }
-
-    // Reload opportunity to reflect new stage
-    this.reloadOpportunity();
   }
 
   /**
    * @description Handle successful GO approval
    * Generates a PDF of the Opportunity Statement after successful approval (GO decision)
+   * Includes an audit trail footer with submission and approval details
    * @param {object} data - Event data containing entityName, entityId, and approvedStage
    */
   async handleGoApprovalSuccess(data: { entityName: string; entityId: number; approvedStage: string }): Promise<void> {
     console.log('📄 GO approval successful, generating statement PDF...', data);
-
-    const opp = this.opportunity();
-    if (!opp) {
-      console.error('❌ No opportunity data available for PDF generation');
-      return;
-    }
-
-    const markdown = opp.opportunityStatementMarkdown;
-    if (!markdown) {
-      console.warn('⚠️ No opportunity statement markdown available - skipping PDF generation');
-      return;
-    }
 
     if (!this.documentsComponent) {
       console.error('❌ Documents component not available for PDF generation');
       return;
     }
 
-    // Generate PDF with approval filename: Opportunity_<ID>_Approved_YYYYMMDD.pdf
-    const now = new Date();
-    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-    const pdfFileName = `Opportunity_${data.entityId}_Approved_${dateStr}.pdf`;
-    
     try {
+      // Fetch fresh opportunity data
+      const response: any = await firstValueFrom(
+        this.opportunityService.getOpportunityById(data.entityId)
+      );
+      const freshOpp = response.opportunity || response;
+      
+      // Update local opportunity signal with fresh data
+      this.opportunity.set(freshOpp);
+
+      const markdown = freshOpp.opportunityStatementMarkdown;
+      if (!markdown) {
+        console.warn('⚠️ No opportunity statement markdown available - skipping PDF generation');
+        return;
+      }
+
+      // Fetch workflow history to get submission and approval details
+      const history = await firstValueFrom(
+        this.workflowService.getStageChangeHistory('Opportunity', data.entityId.toString())
+      );
+
+      // Build the audit trail section
+      const auditTrailMarkdown = this.buildAuditTrailMarkdown(history, freshOpp);
+
+      // Combine statement with audit trail
+      const fullMarkdown = markdown + '\n\n' + auditTrailMarkdown;
+
+      // Generate PDF with approval filename: Opportunity_<ID>_Approved_YYYYMMDD.pdf
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+      const pdfFileName = `Opportunity_${data.entityId}_Approved_${dateStr}.pdf`;
+      
       await this.documentsComponent.generateStatementPdf(
-        markdown,
+        fullMarkdown,
         data.entityId,
         pdfFileName
       );
@@ -1629,9 +1651,73 @@ export class OpportunityViewComponent
       // PDF generation errors are already handled in the documents component
       // with appropriate user feedback, so we just log here
     }
+  }
 
-    // Reload opportunity to reflect new stage
-    this.reloadOpportunity();
+  /**
+   * @description Build audit trail markdown section for the approved opportunity statement PDF
+   * Includes submission details, decision details, and acknowledgment statement
+   * @param {WorkflowHistoryModel[]} history - Workflow history entries
+   * @param {Opportunity} opportunity - The opportunity data
+   * @returns {string} Markdown formatted audit trail section
+   */
+  private buildAuditTrailMarkdown(history: WorkflowHistoryModel[], opportunity: any): string {
+    // Find the submission (Submit action) and approval (Approve action) records
+    // Sort by date descending to get the most recent
+    const sortedHistory = [...history].sort((a, b) => {
+      const dateA = a.performedOn ? new Date(a.performedOn).getTime() : 0;
+      const dateB = b.performedOn ? new Date(b.performedOn).getTime() : 0;
+      return dateB - dateA;
+    });
+
+    const submitRecord = sortedHistory.find(h => h.action?.toLowerCase() === 'submit');
+    const approveRecord = sortedHistory.find(h => h.action?.toLowerCase() === 'approve');
+
+    // Format date helper
+    const formatDate = (date: Date | string | undefined): string => {
+      if (!date) return 'N/A';
+      const d = new Date(date);
+      return d.toLocaleDateString('en-GB', { 
+        day: '2-digit', 
+        month: 'short', 
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    };
+
+    // Build acknowledgment statement with actual values
+    const orgUnitName = opportunity?.responsibleOrgUnitName || 'N/A';
+    const initiativeType = opportunity?.proposedInitiativeTypeName || 'initiative';
+    const acknowledgmentStatement = `I confirm that ${orgUnitName} has the capacity and capability to deliver this ${initiativeType} within the proposed timeline and budget.`;
+
+    // Build the audit trail markdown
+    let auditTrail = `
+---
+
+## Go Decision Audit Trail
+
+### Submission Details
+| Field | Value |
+|-------|-------|
+| **Date of Submission** | ${formatDate(submitRecord?.performedOn)} |
+| **Submitted By** | ${submitRecord?.performedBy?.userName || 'N/A'} |
+| **Position Title** | ${submitRecord?.performedBy?.positionTitle || 'N/A'} |
+| **Remarks for Decision Maker** | ${submitRecord?.comment || 'None provided'} |
+
+### Decision Details
+| Field | Value |
+|-------|-------|
+| **Date of Decision** | ${formatDate(approveRecord?.performedOn)} |
+| **Decision Maker** | ${approveRecord?.performedBy?.userName || 'N/A'} |
+| **DOA Level** | ${approveRecord?.performedBy?.doaLevel || 'N/A'} |
+| **Position Title** | ${approveRecord?.performedBy?.positionTitle || 'N/A'} |
+| **Acknowledged Statement** | ${acknowledgmentStatement} |
+| **Decision Rationale** | ${approveRecord?.comment || 'None provided'} |
+
+---
+`;
+
+    return auditTrail;
   }
 
   // ===== Go/No-Go Decision Handlers =====
@@ -1670,7 +1756,7 @@ export class OpportunityViewComponent
    * @description Handle Go decision confirmation from approve dialog
    * @param {GoDecisionPayload} payload - The approval payload with rationale and executive
    */
-  onApproveConfirmed(payload: GoDecisionPayload): void {
+  async onApproveConfirmed(payload: GoDecisionPayload): Promise<void> {
     const opportunityId = this.opportunity()?.id;
     if (!opportunityId) return;
 
@@ -1684,13 +1770,15 @@ export class OpportunityViewComponent
       this.approveDialogResolver = null;
     }
 
-    // Generate Approved PDF after successful Go decision
-    // Note: handleGoApprovalSuccess also calls reloadOpportunity()
-    this.handleGoApprovalSuccess({
+    // Generate Approved PDF after successful Go decision (includes audit trail)
+    await this.handleGoApprovalSuccess({
       entityName: 'Opportunity',
       entityId: opportunityId,
       approvedStage: 'GO',
     });
+
+    // Reload opportunity to ensure UI is fully updated
+    this.reloadOpportunity();
   }
 
   /**

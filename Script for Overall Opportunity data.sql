@@ -87,6 +87,36 @@ SELECT
                 ORDER BY eur."LastModifiedDate" DESC
                 LIMIT 1
             )
+            , 'NotificationCcEmails', (
+                -- Get CC list: Workflow initiator (last Submit) + Org Unit Managers/Directors
+                WITH workflow_initiator AS (
+                    SELECT anu."Email" as email
+                    FROM workflow."WorkflowLogs" wl
+                    LEFT JOIN "AspNetUsers" anu ON anu."Id" = CAST(wl."UserId" AS INTEGER)
+                    WHERE wl."EntityName" = 'Opportunity'
+                        AND wl."EntityId" = CAST(o."Id" AS TEXT)
+                        AND LOWER(wl."Action") = 'submit'
+                    ORDER BY wl."CompletedOn" DESC
+                    LIMIT 1
+                ),
+                org_managers AS (
+                    SELECT anu."Email" as email
+                    FROM "EntityUserRoles" eur
+                    LEFT JOIN "AspNetUsers" anu ON eur."UserId" = anu."Id"
+                    WHERE eur."EntityType" = 'OrganizationHierarchy'
+                        AND eur."EntityId" = o."ResponsibleOrgUnitId"
+                        AND eur."Name" NOT LIKE '%DoA%'
+                        AND eur."IsDeleted" = false
+                        AND eur."UserId" IS NOT NULL
+                        AND anu."Email" IS NOT NULL
+                )
+                SELECT STRING_AGG(DISTINCT email, ';')
+                FROM (
+                    SELECT email FROM workflow_initiator
+                    UNION
+                    SELECT email FROM org_managers
+                ) all_cc_emails
+            )
         ) || JSONB_BUILD_OBJECT(
             'Countries', COALESCE((
                 SELECT JSONB_AGG(
