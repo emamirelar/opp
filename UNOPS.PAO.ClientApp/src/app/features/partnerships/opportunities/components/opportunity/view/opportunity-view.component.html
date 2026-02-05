@@ -1,5 +1,12 @@
 <p-confirmDialog></p-confirmDialog>
 
+<!-- Workflow Action Loading Overlay - Shows blur effect during Submit/Approve/Reject/Recall/Cancel/Reopen -->
+@if (workflowActionInProgress()) {
+  <div class="workflow-action-overlay">
+    <i class="pi pi-spin pi-spinner text-5xl text-white"></i>
+  </div>
+}
+
   <!-- Main Container - Fixed height with flexbox layout -->
   <div
     class="flex flex-col bg-unops-surface-secondary -m-unops-md overflow-hidden"
@@ -228,6 +235,7 @@
               (onStageChangeSuccess)="handleStageChangeSuccess()"
               (onGoSubmissionSuccess)="handleGoSubmissionSuccess($event)"
               (onGoApprovalSuccess)="handleGoApprovalSuccess($event)"
+              (onActionInProgressChange)="handleWorkflowActionInProgressChange($event)"
             />
           </div>
 
