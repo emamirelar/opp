@@ -352,22 +352,32 @@ public class WorkflowController : BaseController
             return NotFound(new { error = $"Workflow not found for entity type '{normalizedEntityName}'" });
         }
 
+        // PERFORMANCE: Run initial validation checks in parallel to reduce network latency
+        var entityIdString = request.EntityId.ToString();
+        var entityValidTask = _entityStageProvider.IsEntityValidAsync(normalizedEntityName, entityIdString);
+        var currentStageTask = _entityStageProvider.GetCurrentStageAsync(normalizedEntityName, entityIdString);
+        // Note: PendingTask is synchronous, wrap in Task.Run to avoid blocking async context
+        var pendingTaskTask = Task.Run(() => _workflowManager.PendingTask(normalizedEntityName, request.EntityId));
+
+        // Wait for all parallel checks to complete
+        await Task.WhenAll(entityValidTask, currentStageTask, pendingTaskTask);
+
         // Verify entity exists
-        var entityValid = await _entityStageProvider.IsEntityValidAsync(normalizedEntityName, request.EntityId.ToString());
+        var entityValid = await entityValidTask;
         if (!entityValid)
         {
             return NotFound(new { error = $"{normalizedEntityName} with ID {request.EntityId} not found" });
         }
 
         // Get current stage
-        var currentStage = await _entityStageProvider.GetCurrentStageAsync(normalizedEntityName, request.EntityId.ToString());
+        var currentStage = await currentStageTask;
         if (string.IsNullOrEmpty(currentStage))
         {
             return BadRequest(new { error = "Entity has no workflow stage" });
         }
 
         // Check if already in workflow
-        var pendingTask = _workflowManager.PendingTask(normalizedEntityName, request.EntityId);
+        var pendingTask = await pendingTaskTask;
         if (pendingTask != null)
         {
             return BadRequest(new { error = "Entity is already in a workflow approval process" });
@@ -400,18 +410,61 @@ public class WorkflowController : BaseController
         // === OPPORTUNITY-SPECIFIC CHECKS FOR GO TRANSITION ===
         if (normalizedEntityName == "Opportunity" && request.NewStage == OpportunityWorkflow.Stages.Go)
         {
-            // Get opportunity with all related data for validation
+            // PERFORMANCE: Split query to avoid Cartesian product explosion
+            // With 10+ includes, EF creates massive result sets (e.g., 10×5×20×15 = 15,000 rows for 1 entity)
+            // Split into: 1 main query + separate collection queries
+            
+            // Query 1: Main entity with simple navigation properties only
             var opportunity = await _context.Opportunities
+                .AsNoTracking()
                 .Include(o => o.ResponsibleOrgUnit)
-                .Include(o => o.Countries)
-                .Include(o => o.SDGs)
-                .Include(o => o.FundingPartners)
-                .Include(o => o.ClientPartners)
-                .Include(o => o.Deliverables)
-                .Include(o => o.UNOPSMissions)
-                .Include(o => o.Stakeholders)
-                    .ThenInclude(s => s.EntityRole)
                 .FirstOrDefaultAsync(o => o.Id == request.EntityId && !o.IsDeleted);
+
+            if (opportunity == null)
+            {
+                return NotFound(new { error = $"Opportunity with ID {request.EntityId} not found" });
+            }
+
+            // Queries 2-8: Load collections separately (avoids Cartesian product)
+            var entityId = request.EntityId;
+            
+            opportunity.Countries = await _context.Set<OpportunityCountry>()
+                .AsNoTracking()
+                .Include(oc => oc.Country)
+                .Where(oc => oc.OpportunityId == entityId)
+                .ToListAsync();
+
+            opportunity.SDGs = await _context.Set<OpportunitySDG>()
+                .AsNoTracking()
+                .Where(s => s.OpportunityId == entityId)
+                .ToListAsync();
+
+            opportunity.FundingPartners = await _context.Set<OpportunityFundingPartner>()
+                .AsNoTracking()
+                .Where(fp => fp.OpportunityId == entityId)
+                .ToListAsync();
+
+            opportunity.ClientPartners = await _context.Set<OpportunityClientPartner>()
+                .AsNoTracking()
+                .Where(cp => cp.OpportunityId == entityId)
+                .ToListAsync();
+
+            opportunity.Deliverables = await _context.Set<OpportunityDeliverable>()
+                .AsNoTracking()
+                .Where(d => d.OpportunityId == entityId)
+                .ToListAsync();
+
+            opportunity.UNOPSMissions = await _context.Set<OpportunityUNOPSMission>()
+                .AsNoTracking()
+                .Where(m => m.OpportunityId == entityId)
+                .ToListAsync();
+
+            opportunity.Stakeholders = await _context.Set<OpportunityStakeholder>()
+                .AsNoTracking()
+                .Include(s => s.EntityRole)
+                .Include(s => s.User)
+                .Where(s => s.OpportunityId == entityId)
+                .ToListAsync();
 
             // PRD Flow Step 1: Check if all requirements are met (FIRST check)
             var unmetRequirements = await ValidateOpportunityRequirementsAsync(opportunity);
@@ -425,12 +478,16 @@ public class WorkflowController : BaseController
                 });
             }
 
+            // PERFORMANCE: Check stakeholder roles from already loaded data (no additional DB queries)
+            var currentUserStakeholder = opportunity?.Stakeholders?
+                .FirstOrDefault(s => s.UserId == CurrentUserId && s.EntityRole != null);
+            var isOM = currentUserStakeholder?.EntityRole?.Name == "Opportunity Manager";
+            
             // 1. Non-OM Submitter Warning
-            var isOM = await IsUserOpportunityManagerAsync(request.EntityId, CurrentUserId);
             if (!isOM && !request.ConfirmedNonOMSubmission)
             {
-                var userRole = await GetUserRoleOnOpportunityAsync(request.EntityId, CurrentUserId);
-                var omInfo = await GetOpportunityManagerInfoAsync(request.EntityId);
+                var userRole = currentUserStakeholder?.EntityRole?.Name;
+                var omInfo = GetOpportunityManagerInfoFromLoadedData(opportunity);
                 return Ok(new WorkflowSubmitResponse
                 {
                     Success = false,
@@ -443,12 +500,12 @@ public class WorkflowController : BaseController
                 });
             }
 
-            // 2. Country-Org Unit Mismatch Warning
-            var unrelatedCountries = await GetUnrelatedCountriesAsync(request.EntityId);
+            // PERFORMANCE: 2. Country-Org Unit Mismatch Warning - use already loaded data
+            var unrelatedCountries = await GetUnrelatedCountriesFromLoadedDataAsync(opportunity);
             if (unrelatedCountries.Any() && !request.ConfirmedOrgUnitWarning)
             {
                 var orgUnitName = opportunity?.ResponsibleOrgUnit?.Name ?? "the selected org unit";
-                var countryMappings = await GetCountryMappingsAsync(request.EntityId);
+                var countryMappings = await GetCountryMappingsFromLoadedDataAsync(opportunity);
                 return Ok(new WorkflowSubmitResponse
                 {
                     Success = false,
@@ -1283,6 +1340,101 @@ public class WorkflowController : BaseController
         return !string.IsNullOrEmpty(email) 
             ? $"{name} ({email})" 
             : name;
+    }
+
+    /// <summary>
+    /// PERFORMANCE: Gets the Opportunity Manager info from already loaded opportunity data.
+    /// No additional database query required.
+    /// </summary>
+    private string GetOpportunityManagerInfoFromLoadedData(Opportunity? opportunity)
+    {
+        if (opportunity?.Stakeholders == null)
+        {
+            return string.Empty;
+        }
+
+        var omStakeholder = opportunity.Stakeholders
+            .FirstOrDefault(s => !s.IsDeleted
+                && s.EntityRole != null
+                && s.EntityRole.Code == "Opportunity_Manager_Opportunity"
+                && s.User != null);
+
+        if (omStakeholder?.User == null)
+        {
+            return string.Empty;
+        }
+
+        var om = omStakeholder.User;
+        var name = $"{om.Name}".Trim();
+        var email = om.Email ?? string.Empty;
+        
+        return !string.IsNullOrEmpty(email) 
+            ? $"{name} ({email})" 
+            : name;
+    }
+
+    /// <summary>
+    /// PERFORMANCE: Gets list of unrelated countries using already loaded opportunity data.
+    /// Only requires one DB query for org unit relationships.
+    /// </summary>
+    private async Task<List<string>> GetUnrelatedCountriesFromLoadedDataAsync(Opportunity? opportunity)
+    {
+        if (opportunity == null || !opportunity.ResponsibleOrgUnitId.HasValue || opportunity.Countries == null)
+        {
+            return new List<string>();
+        }
+
+        // Get country IDs that the org unit is normally responsible for (single DB query)
+        var orgUnitCountryIds = await _context.Set<OrganizationUnitRelationship>()
+            .AsNoTracking()
+            .Where(r => r.OrganizationHierarchyId == opportunity.ResponsibleOrgUnitId.Value &&
+                       r.EntityType == "Country" &&
+                       !r.IsDeleted)
+            .Select(r => r.EntityId)
+            .ToListAsync();
+
+        // Find countries on the opportunity that are not in the org unit's relationships
+        var unrelatedCountries = opportunity.Countries
+            .Where(oc => oc.Country != null && !orgUnitCountryIds.Contains(oc.CountryId))
+            .Select(oc => oc.Country!.Name)
+            .Where(name => !string.IsNullOrEmpty(name))
+            .ToList();
+
+        return unrelatedCountries!;
+    }
+
+    /// <summary>
+    /// PERFORMANCE: Gets country mappings using already loaded opportunity data.
+    /// Only requires one DB query for org unit relationships.
+    /// </summary>
+    private async Task<List<CountryMappingInfo>> GetCountryMappingsFromLoadedDataAsync(Opportunity? opportunity)
+    {
+        if (opportunity == null || !opportunity.ResponsibleOrgUnitId.HasValue || opportunity.Countries == null)
+        {
+            return new List<CountryMappingInfo>();
+        }
+
+        // Get country IDs that the org unit is normally responsible for (single DB query)
+        var orgUnitCountryIds = await _context.Set<OrganizationUnitRelationship>()
+            .AsNoTracking()
+            .Where(r => r.OrganizationHierarchyId == opportunity.ResponsibleOrgUnitId.Value &&
+                       r.EntityType == "Country" &&
+                       !r.IsDeleted)
+            .Select(r => r.EntityId)
+            .ToListAsync();
+
+        // Build mapping info for all implementation countries
+        var countryMappings = opportunity.Countries
+            .Where(oc => oc.Country != null && !string.IsNullOrEmpty(oc.Country.Name))
+            .Select(oc => new CountryMappingInfo
+            {
+                CountryName = oc.Country!.Name!,
+                IsMapped = orgUnitCountryIds.Contains(oc.CountryId)
+            })
+            .OrderBy(cm => cm.CountryName)
+            .ToList();
+
+        return countryMappings;
     }
 
     /// <summary>
