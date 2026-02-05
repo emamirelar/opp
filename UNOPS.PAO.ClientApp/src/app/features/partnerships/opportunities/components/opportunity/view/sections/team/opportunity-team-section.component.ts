@@ -1404,17 +1404,9 @@ export class OpportunityTeamSectionComponent implements OnInit {
     const opp = this.opportunity();
     if (!opp || !opp.id) return;
 
-    // Get Opportunity Manager role ID to exclude from stakeholders
-    // (Opportunity Manager is sent separately via opportunityManagerId field)
-    const opportunityManagerRoleId = this.entityRoles().find(
-      r => (r.name || '').toLowerCase() === 'opportunity manager' ||
-           (r.code || '').toLowerCase() === 'opportunity_manager_opportunity'
-    )?.id;
-
     // Get user-added stakeholders (non-auto-populated)
-    // Exclude Opportunity Manager role - it has a dedicated field and should not be in stakeholders
     const userAddedStakeholders = (opp.stakeholders || [])
-      .filter((s) => !s.isAutoPopulated && s.entityRoleId !== opportunityManagerRoleId)
+      .filter((s) => !s.isAutoPopulated)
       .map((s) => ({
         userId: s.userId!,
         entityRoleId: s.entityRoleId,
@@ -1424,6 +1416,7 @@ export class OpportunityTeamSectionComponent implements OnInit {
 
     // Get auto-populated stakeholders from the current org unit
     // Include userId if available (resolved from EntityUserRoles)
+    // NOTE: Backend will filter out Opportunity Manager role - it is managed separately via opportunityManagerId field
     const autoPopulated = this.autoPopulatedStakeholders().map((s) => ({
       userId: s.userId ?? undefined,  // Include userId if available from resolved EntityUserRoles
       entityRoleId: s.entityRoleId,
