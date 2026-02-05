@@ -1845,13 +1845,16 @@ export class OpportunityDocumentsComponent implements OnInit {
         // Don't fail the overall operation for cleanup errors
       }
 
-      // Reload documents list to show the new PDF
-      this.loadDocuments();
-
       this.feedbackService.showSuccessToast({
         summary: this.translateService.instant('message.success'),
         detail: 'Opportunity Statement PDF generated successfully.',
       });
+
+      // Reload documents list to show the new PDF after a short delay
+      // to ensure the server has processed the upload
+      setTimeout(() => {
+        this.loadDocuments();
+      }, 500);
 
       return true;
     } catch (error: any) {
