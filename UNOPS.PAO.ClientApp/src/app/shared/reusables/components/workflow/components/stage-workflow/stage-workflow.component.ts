@@ -112,6 +112,13 @@ export class StageWorkflowComponent implements OnInit, OnChanges {
   onRequirementsValidationFailed = output<string[]>();
 
   /**
+   * Emitted when any workflow action (Submit, Approve, Reject, Recall, Cancel, Reopen) starts or completes.
+   * Parent component can use this to show/hide a full-page loading overlay with blur effect.
+   * @param {boolean} inProgress - true when action starts, false when action completes
+   */
+  onActionInProgressChange = output<boolean>();
+
+  /**
    * Whether the current user is an Opportunity Manager for this opportunity
    * Controls visibility of Cancel/Reopen buttons
    */
@@ -501,6 +508,15 @@ export class StageWorkflowComponent implements OnInit, OnChanges {
     this.onGoApprovalSuccess.emit(data);
   }
 
+  /**
+   * Handles action in progress state change from workflow component.
+   * Propagates the event to parent component for showing/hiding loading overlay.
+   * @param inProgress Whether a workflow action is in progress
+   */
+  handleActionInProgressChange(inProgress: boolean): void {
+    this.onActionInProgressChange.emit(inProgress);
+  }
+
   getUserNameToDisplay(user: WorkflowHistoryUserModel | WorkflowApproverModel | any): string {
     if (user?.name) {
       return user.name;
@@ -581,9 +597,11 @@ export class StageWorkflowComponent implements OnInit, OnChanges {
     }
 
     this.isActionInProgress.set(true);
+    this.onActionInProgressChange.emit(true);
     this.workflowService.cancelOpportunity(this.entityId(), reason).subscribe({
       next: () => {
         this.isActionInProgress.set(false);
+        this.onActionInProgressChange.emit(false);
         this.showCancelDialog.set(false);
         this.feedbackDialogService?.showSuccessToast({
           detail: this.translateService.instant('message.workflow.cancelSuccess'),
@@ -593,6 +611,7 @@ export class StageWorkflowComponent implements OnInit, OnChanges {
       },
       error: () => {
         this.isActionInProgress.set(false);
+        this.onActionInProgressChange.emit(false);
       },
     });
   }
@@ -637,9 +656,11 @@ export class StageWorkflowComponent implements OnInit, OnChanges {
     }
 
     this.isActionInProgress.set(true);
+    this.onActionInProgressChange.emit(true);
     this.workflowService.reopenOpportunity(this.entityId(), reason || undefined).subscribe({
       next: () => {
         this.isActionInProgress.set(false);
+        this.onActionInProgressChange.emit(false);
         this.showReopenDialog.set(false);
         this.feedbackDialogService?.showSuccessToast({
           detail: this.translateService.instant('message.workflow.reopenSuccess'),
@@ -649,6 +670,7 @@ export class StageWorkflowComponent implements OnInit, OnChanges {
       },
       error: () => {
         this.isActionInProgress.set(false);
+        this.onActionInProgressChange.emit(false);
       },
     });
   }

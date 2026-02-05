@@ -3024,6 +3024,7 @@
   "label.workflow.fromStage": "Desde Etapa",
   "label.workflow.toStage": "A Etapa",
   "label.workflow.completedOn": "Completado El",
+  "label.workflow.actionDate": "Fecha de Acción",
   "label.workflow.user": "Usuario",
   "title.workflow.comment": "Comentario",
   "button.workflow.submit": "Enviar para Aprobación",

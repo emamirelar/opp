@@ -3062,6 +3062,7 @@
   "label.workflow.fromStage": "Do Estágio",
   "label.workflow.toStage": "Para Estágio",
   "label.workflow.completedOn": "Concluído Em",
+  "label.workflow.actionDate": "Data da Ação",
   "label.workflow.user": "Usuário",
   "title.workflow.comment": "Comentário",
   "button.workflow.submit": "Enviar para Aprovação",
