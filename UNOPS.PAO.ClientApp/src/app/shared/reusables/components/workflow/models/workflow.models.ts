@@ -83,27 +83,35 @@ export interface WorkflowStateModel {
 }
 
 /**
- * Workflow history user model
+ * Workflow history user model (matches WorkflowUserResponse from backend)
  */
 export interface WorkflowHistoryUserModel {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  name: string;
+  userId: number;
+  userName?: string;
+  userEmail?: string;
+  /**
+   * User's standardized position/job title
+   */
+  positionTitle?: string;
+  /**
+   * User's DOA (Delegation of Authority) level (e.g., "DoA1", "DoA2", "DoA3")
+   * Only populated for approvers who have a DOA role
+   */
+  doaLevel?: string;
 }
 
 /**
- * Workflow history model
+ * Workflow history model (matches WorkflowHistoryResponse from backend)
  */
 export interface WorkflowHistoryModel {
   fromStage: string;
   toStage: string;
-  completedOn?: Date;
+  fromStageDisplayName?: string;
+  toStageDisplayName?: string;
   action: string;
   comment: string;
-  user?: WorkflowHistoryUserModel;
-  role?: string;
+  performedBy?: WorkflowHistoryUserModel;
+  performedOn?: Date;
   requiresApproval: boolean;
 }
 
