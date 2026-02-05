@@ -1375,9 +1375,17 @@ export class OpportunityTeamSectionComponent implements OnInit {
     const opp = this.opportunity();
     if (!opp || !opp.id) return;
 
+    // Get Opportunity Manager role ID to exclude from stakeholders
+    // (Opportunity Manager is sent separately via opportunityManagerId field)
+    const opportunityManagerRoleId = this.entityRoles().find(
+      r => (r.name || '').toLowerCase() === 'opportunity manager' ||
+           (r.code || '').toLowerCase() === 'opportunity_manager_opportunity'
+    )?.id;
+
     // Get user-added stakeholders (non-auto-populated)
+    // Exclude Opportunity Manager role - it has a dedicated field and should not be in stakeholders
     const userAddedStakeholders = (opp.stakeholders || [])
-      .filter((s) => !s.isAutoPopulated)
+      .filter((s) => !s.isAutoPopulated && s.entityRoleId !== opportunityManagerRoleId)
       .map((s) => ({
         userId: s.userId!,
         entityRoleId: s.entityRoleId,
@@ -1438,8 +1446,18 @@ export class OpportunityTeamSectionComponent implements OnInit {
 
         this.cdr.detectChanges();
       },
-      error: () => {
+      error: (error: any) => {
         this.isSaving.set(false);
+        
+        // Show detailed error message if available from backend
+        const details = error?.error?.details || error?.error?.message || error?.message;
+        if (details) {
+          this.feedbackService.showErrorToast({
+            summary: this.translateService.instant('message.error'),
+            detail: details,
+          });
+        }
+        
         this.cdr.detectChanges();
       },
     });

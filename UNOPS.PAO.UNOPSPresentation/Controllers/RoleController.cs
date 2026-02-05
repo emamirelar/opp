@@ -202,17 +202,19 @@ namespace UNOPS.PAO.UNOPSPresentation.Controllers
                         continue;
                     }
 
-                    // Look up EntityRoleId from EntityRoles table
+                    // Look up EntityRoleId from EntityRoles table using Code
+                    // EntityRole.Code format: "DoA2_OrganizationHierarchy", "DoA3_OrganizationHierarchy"
+                    var expectedRoleCode = $"{assignment.RoleName}_OrganizationHierarchy";
                     var entityRole = await _context.EntityRoles
                         .AsNoTracking()
                         .FirstOrDefaultAsync(er => 
                             er.EntityType == "OrganizationHierarchy" && 
-                            er.Name == assignment.RoleName &&
+                            er.Code == expectedRoleCode &&
                             !er.IsDeleted);
 
                     if (entityRole == null)
                     {
-                        _logger.LogWarning($"EntityRole not found for EntityType='OrganizationHierarchy' and Name='{assignment.RoleName}'");
+                        _logger.LogWarning($"EntityRole not found for EntityType='OrganizationHierarchy' and Code='{expectedRoleCode}'");
                         skippedCount++;
                         continue;
                     }

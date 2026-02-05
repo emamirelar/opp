@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { ButtonModule } from 'primeng/button';
-import { TableModule } from 'primeng/table';
+import { Table, TableModule } from 'primeng/table';
 import { FormsModule } from '@angular/forms';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TooltipModule } from 'primeng/tooltip';
@@ -13,6 +13,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { HttpClient } from '@angular/common/http';
 import { AutoCompleteModule, AutoCompleteCompleteEvent } from 'primeng/autocomplete';
+import { InputTextModule } from 'primeng/inputtext';
 
 interface OrgUnit {
   id: number;
@@ -54,7 +55,8 @@ interface PendingAssignment {
     TooltipModule,
     AutoCompleteModule,
     TabViewModule,
-    ProgressSpinnerModule
+    ProgressSpinnerModule,
+    InputTextModule
   ],
   template: `
     <p-dialog 
@@ -77,20 +79,34 @@ interface PendingAssignment {
             
             <!-- Existing Roles Table -->
             <div *ngIf="!loadingExisting && existingRoles.length > 0" class="border rounded-lg overflow-hidden">
-              <p-table [value]="existingRoles" styleClass="p-datatable-sm" [paginator]="true" [rows]="10"
-                       [globalFilterFields]="['orgUnitCode', 'orgUnitName', 'userName', 'userEmail', 'roleName']">
+              <p-table #dt [value]="existingRoles" styleClass="p-datatable-sm" [paginator]="true" [rows]="10"
+                       [rowsPerPageOptions]="[10, 25, 50, 100]"
+                       [globalFilterFields]="['orgUnitCode', 'orgUnitName', 'userName', 'userEmail', 'roleName']"
+                       [sortField]="'orgUnitCode'" [sortOrder]="1">
                 <ng-template pTemplate="caption">
-                  <div class="flex justify-between items-center">
-                    <span class="text-lg font-semibold">{{ existingRoles.length }} DOA Role(s)</span>
-                    <p-button icon="pi pi-refresh" label="Refresh" [text]="true" (onClick)="loadExistingRoles()"></p-button>
+                  <div class="flex flex-col gap-3">
+                    <div class="flex justify-between items-center">
+                      <span class="text-lg font-semibold">{{ existingRoles.length }} DOA Role(s)</span>
+                      <p-button icon="pi pi-refresh" label="Refresh" [text]="true" (onClick)="loadExistingRoles()"></p-button>
+                    </div>
+                    <div class="flex gap-3 items-center">
+                      <span class="p-input-icon-left flex-grow">
+                        <i class="pi pi-search"></i>
+                        <input pInputText type="text" (input)="dt.filterGlobal($any($event.target).value, 'contains')" 
+                               placeholder="Search by org unit, user name, or email..." class="w-full" />
+                      </span>
+                      <p-dropdown [options]="doaRoleFilterOptions" [(ngModel)]="selectedRoleFilter"
+                                  (onChange)="filterByRole(dt)" placeholder="All Roles" 
+                                  [showClear]="true" styleClass="w-40"></p-dropdown>
+                    </div>
                   </div>
                 </ng-template>
                 <ng-template pTemplate="header">
                   <tr>
-                    <th>Org Unit</th>
-                    <th>User</th>
-                    <th>DOA Role</th>
-                    <th>Created</th>
+                    <th pSortableColumn="orgUnitCode">Org Unit <p-sortIcon field="orgUnitCode"></p-sortIcon></th>
+                    <th pSortableColumn="userName">User <p-sortIcon field="userName"></p-sortIcon></th>
+                    <th pSortableColumn="roleName">DOA Role <p-sortIcon field="roleName"></p-sortIcon></th>
+                    <th pSortableColumn="createdDate">Created <p-sortIcon field="createdDate"></p-sortIcon></th>
                     <th style="width: 80px">Actions</th>
                   </tr>
                 </ng-template>
@@ -328,6 +344,13 @@ export class DoaRoleDialogComponent implements OnInit {
     { label: 'DOA Level 3', value: 'DoA3_OrganizationHierarchy', roleName: 'DoA3' }
   ];
 
+  // Filter options for existing roles table
+  doaRoleFilterOptions = [
+    { label: 'DOA Level 2', value: 'DoA2' },
+    { label: 'DOA Level 3', value: 'DoA3' }
+  ];
+  selectedRoleFilter: string | null = null;
+
   // Selected values
   selectedOrgUnit: OrgUnit | null = null;
   selectedUser: User | null = null;
@@ -471,6 +494,14 @@ export class DoaRoleDialogComponent implements OnInit {
       orgUnit.name.toLowerCase().includes(query) || 
       orgUnit.code.toLowerCase().includes(query)
     );
+  }
+
+  filterByRole(table: Table) {
+    if (this.selectedRoleFilter) {
+      table.filter(this.selectedRoleFilter, 'roleName', 'equals');
+    } else {
+      table.filter('', 'roleName', 'contains');
+    }
   }
 
   filterUsers(event: AutoCompleteCompleteEvent) {

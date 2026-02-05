@@ -1117,11 +1117,32 @@ public class WorkflowController : BaseController
 
                 if (user != null)
                 {
+                    // Get the user's DOA level for this entity (if any)
+                    // DOA levels are stored as EntityRoles with codes like "DoA1_OrganizationHierarchy", "DoA2_OrganizationHierarchy", etc.
+                    string? doaLevel = null;
+                    var doaEntityUserRole = await _context.EntityUserRoles
+                        .Include(eur => eur.EntityRole)
+                        .Where(eur => eur.UserId == userId 
+                            && eur.EntityId == id 
+                            && eur.EntityType == normalizedEntityName
+                            && eur.EntityRole != null 
+                            && eur.EntityRole.Code != null
+                            && eur.EntityRole.Code.StartsWith("DoA"))
+                        .FirstOrDefaultAsync();
+                    
+                    if (doaEntityUserRole?.EntityRole != null)
+                    {
+                        // Extract DOA level from role name (e.g., "DoA1", "DoA2", "DoA3")
+                        doaLevel = doaEntityUserRole.EntityRole.Name ?? doaEntityUserRole.EntityRole.Code;
+                    }
+
                     historyEntry.PerformedBy = new WorkflowUserResponse
                     {
                         UserId = user.Id,
                         UserName = user.UserProfile?.Name ?? user.Email,
-                        UserEmail = user.Email
+                        UserEmail = user.Email,
+                        PositionTitle = user.UserProfile?.Position,
+                        DoaLevel = doaLevel
                     };
                 }
             }
