@@ -954,14 +954,25 @@ public class OpportunityManager : IOpportunityManager
         // Update Internal Stakeholders (Team & Stakeholders) using differential update
         if (request.Stakeholders != null)
         {
+            // Get Opportunity Manager role ID - Opportunity Manager is managed separately via request.OpportunityManagerId
+            var opportunityManagerRoleId = await context.Set<EntityRole>()
+                .Where(er => er.Name != null && er.Name.ToLower() == "opportunity manager" && er.EntityType == "Opportunity" && !er.IsDeleted)
+                .Select(er => er.Id)
+                .FirstOrDefaultAsync();
+
+            // Filter out Opportunity Manager role from stakeholders (it's handled separately via OpportunityManagerId)
+            var filteredStakeholders = request.Stakeholders
+                .Where(s => s.EntityRoleId != opportunityManagerRoleId)
+                .ToList();
+
             // Get entity roles to check AllowsMultiple property
-            var entityRoleIds = request.Stakeholders.Select(s => s.EntityRoleId).Distinct().ToList();
+            var entityRoleIds = filteredStakeholders.Select(s => s.EntityRoleId).Distinct().ToList();
             var entityRoles = await context.Set<EntityRole>()
                 .Where(er => entityRoleIds.Contains(er.Id))
                 .ToDictionaryAsync(er => er.Id);
 
             // Validate that single-assignment roles don't have duplicates for user-based stakeholders
-            var userBasedStakeholders = request.Stakeholders.Where(s => s.UserId.HasValue).ToList();
+            var userBasedStakeholders = filteredStakeholders.Where(s => s.UserId.HasValue).ToList();
             var roleGroups = userBasedStakeholders
                 .GroupBy(s => s.EntityRoleId)
                 .ToList();
@@ -979,14 +990,14 @@ public class OpportunityManager : IOpportunityManager
 
             entity.Stakeholders ??= new List<OpportunityStakeholder>();
 
-            // Separate user-based stakeholders from the request (exclude auto-populated ones which are handled separately)
-            var requestedUserStakeholders = request.Stakeholders
+            // Separate user-based stakeholders from the request (exclude auto-populated ones and Opportunity Manager role)
+            var requestedUserStakeholders = filteredStakeholders
                 .Where(s => s.UserId.HasValue && !s.OrganizationHierarchyId.HasValue)
                 .ToList();
 
-            // Get existing user-based stakeholders (not auto-populated)
+            // Get existing user-based stakeholders (not auto-populated, not Opportunity Manager)
             var existingUserStakeholders = entity.Stakeholders
-                .Where(s => s.UserId.HasValue && !s.OrganizationHierarchyId.HasValue)
+                .Where(s => s.UserId.HasValue && !s.OrganizationHierarchyId.HasValue && s.EntityRoleId != opportunityManagerRoleId)
                 .ToList();
 
             // Find stakeholders to remove (exist in DB but not in request)
@@ -1046,7 +1057,7 @@ public class OpportunityManager : IOpportunityManager
         {
             // Get the Opportunity Manager role
             var opportunityManagerRole = await context.Set<EntityRole>()
-                .FirstOrDefaultAsync(er => er.Name != null && er.Name.ToLower().Contains("manager") && er.EntityType == "Opportunity");
+                .FirstOrDefaultAsync(er => er.Name != null && er.Name.ToLower() == "opportunity manager" && er.EntityType == "Opportunity");
             
             if (opportunityManagerRole != null)
             {
