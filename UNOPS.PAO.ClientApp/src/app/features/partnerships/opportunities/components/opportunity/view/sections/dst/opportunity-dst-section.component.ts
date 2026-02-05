@@ -1715,7 +1715,7 @@ export class OpportunityDstSectionComponent {
    * @since 1.0.0
    */
   navigateToOpportunity(opportunityId: number): void {
-    const url = `/#/partnerships/opportunities/${opportunityId}`;
+    const url = `/partnerships/opportunities/${opportunityId}`;
     window.open(url, '_blank');
   }
 
