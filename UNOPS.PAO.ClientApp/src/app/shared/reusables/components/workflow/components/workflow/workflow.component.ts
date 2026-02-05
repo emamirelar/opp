@@ -109,6 +109,13 @@ export class WorkflowComponent implements OnInit {
    */
   requirementsValidationFailed = output<string[]>();
 
+  /**
+   * Emitted when any workflow action starts or completes.
+   * Parent component can use this to show/hide a loading overlay.
+   * @param {boolean} inProgress - true when action starts, false when action completes
+   */
+  actionInProgressChange = output<boolean>();
+
   workflowService = inject(WorkflowService);
 
   primaryeStageLabel = '';
@@ -278,6 +285,7 @@ export class WorkflowComponent implements OnInit {
 
   _performStageChange(comment?: string) {
     this.isActionInProgress.set(true);
+    this.actionInProgressChange.emit(true);
     
     const requestJson: WorkflowActionModel = {
       entityName: this.entityName(),
@@ -289,6 +297,7 @@ export class WorkflowComponent implements OnInit {
     this.workflowService.changeWorkflow(requestJson).subscribe({
       next: (data: any) => {
         this.isActionInProgress.set(false);
+        this.actionInProgressChange.emit(false);
         
         // Show success message
         this.feedbackDialogService?.showSuccessToast({
@@ -304,6 +313,7 @@ export class WorkflowComponent implements OnInit {
       },
       error: () => {
         this.isActionInProgress.set(false);
+        this.actionInProgressChange.emit(false);
       },
     });
   }
@@ -459,6 +469,7 @@ export class WorkflowComponent implements OnInit {
    */
   private _executeWorkflowAction(action: 'approve' | 'reject' | 'recall', comment?: string) {
     this.isActionInProgress.set(true);
+    this.actionInProgressChange.emit(true);
 
     const requestJson: any = {
       entityName: this.entityName(),
@@ -471,6 +482,7 @@ export class WorkflowComponent implements OnInit {
     this.http.post(`/api/workflow/${endpoint}`, requestJson).subscribe({
       next: (data: any) => {
         this.isActionInProgress.set(false);
+        this.actionInProgressChange.emit(false);
 
         const actionPastTense = action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'recalled';
         this.feedbackDialogService?.showSuccessToast({
@@ -495,6 +507,7 @@ export class WorkflowComponent implements OnInit {
       },
       error: () => {
         this.isActionInProgress.set(false);
+        this.actionInProgressChange.emit(false);
       },
     });
   }
@@ -684,14 +697,17 @@ export class WorkflowComponent implements OnInit {
    */
   private _submitForGoDecision(request: WorkflowSubmitRequest): void {
     this.isActionInProgress.set(true);
+    this.actionInProgressChange.emit(true);
 
     this.workflowService.submitForGoDecision(request).subscribe({
       next: (response: WorkflowSubmitResponse) => {
         this.isActionInProgress.set(false);
+        this.actionInProgressChange.emit(false);
         this.handleSubmitResponse(response, request);
       },
       error: () => {
         this.isActionInProgress.set(false);
+        this.actionInProgressChange.emit(false);
       },
     });
   }

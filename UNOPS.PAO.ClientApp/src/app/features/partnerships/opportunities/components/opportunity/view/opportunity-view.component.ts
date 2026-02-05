@@ -412,6 +412,10 @@ export class OpportunityViewComponent
   showApproveDialog = signal<boolean>(false);
   showRejectDialog = signal<boolean>(false);
 
+  // Workflow action loading overlay state
+  // When true, shows a full-page blur overlay while workflow actions are in progress
+  workflowActionInProgress = signal<boolean>(false);
+
   // Risks loaded from DST section (for decision info panel)
   opportunityRisks = signal<Risk[]>([]);
 
@@ -1544,6 +1548,15 @@ export class OpportunityViewComponent
     this.reloadOpportunity();
     // Note: Success feedback is handled by the specific action (Cancel, Reopen, Submit, etc.)
     // to show action-specific messages instead of a generic one
+  }
+
+  /**
+   * @description Handle workflow action in progress state change
+   * Shows/hides a full-page blur overlay while workflow actions are executing
+   * @param {boolean} inProgress - true when action starts, false when action completes
+   */
+  handleWorkflowActionInProgressChange(inProgress: boolean): void {
+    this.workflowActionInProgress.set(inProgress);
   }
 
   /**
