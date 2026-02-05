@@ -23,8 +23,20 @@ import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Subject, takeUntil, Subscription } from 'rxjs';
 import { WorkflowService } from '../../services/workflow.service';
-import { StageRequirement, isBuiltInFieldType } from '../../models/requirement.models';
+import { StageRequirement, isBuiltInFieldType, getSectionForField } from '../../models/requirement.models';
 import { WorkflowStageModel } from '../../models/workflow.models';
+
+/**
+ * Event payload emitted when a requirement is clicked
+ */
+export interface RequirementClickEvent {
+  /** The clicked requirement */
+  requirement: StageRequirement;
+  /** The section ID to navigate to (if determined) */
+  section?: string;
+  /** The field name associated with the requirement */
+  fieldName?: string;
+}
 
 /**
  * Custom field validator service interface.
@@ -92,6 +104,8 @@ export class RequirementsValidationComponent implements OnInit, OnDestroy, OnCha
   // Outputs
   readonly requirementsLoaded = output<StageRequirement[]>();
   readonly validationChanged = output<boolean>();
+  /** Emitted when a requirement item is clicked (for navigation) */
+  readonly requirementClick = output<RequirementClickEvent>();
 
   // Services
   private readonly workflowService = inject(WorkflowService);
@@ -735,5 +749,40 @@ export class RequirementsValidationComponent implements OnInit, OnDestroy, OnCha
    */
   toggleCollapsed(): void {
     this.isCollapsed.set(!this.isCollapsed());
+  }
+
+  /**
+   * Handles click on a requirement item.
+   * Emits an event with the requirement and its associated section for navigation.
+   * Collapses the panel after navigation to reduce visual clutter.
+   * @param requirement - The clicked requirement
+   */
+  onRequirementClick(requirement: StageRequirement): void {
+    // Determine the section to navigate to
+    const section = requirement.section || getSectionForField(requirement.fieldName, this.entityName());
+
+    // Only emit and collapse if we have a navigable section
+    if (section || requirement.fieldName) {
+      this.requirementClick.emit({
+        requirement,
+        section,
+        fieldName: requirement.fieldName,
+      });
+
+      // Collapse the panel after clicking to navigate
+      // Small delay to ensure the click event is fully processed
+      setTimeout(() => {
+        this.isCollapsed.set(true);
+      }, 100);
+    }
+  }
+
+  /**
+   * Checks if a requirement is clickable (has a navigable section)
+   * @param requirement - The requirement to check
+   * @returns True if the requirement can be navigated to
+   */
+  isRequirementClickable(requirement: StageRequirement): boolean {
+    return !!(requirement.section || getSectionForField(requirement.fieldName, this.entityName()));
   }
 }

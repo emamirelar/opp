@@ -324,7 +324,10 @@ public class WorkflowController : BaseController
 
         // Get requirements for the stage change
         var requirements = provider.GetRequirementsForStageChange(currentStage, nextStage);
-        return Ok(requirements);
+        
+        // Filter out server-side only requirements (they should not be displayed to users)
+        var clientRequirements = requirements.Where(r => !r.OnlyServerSideEvaluation).ToList();
+        return Ok(clientRequirements);
     }
 
     /// <summary>
@@ -470,6 +473,7 @@ public class WorkflowController : BaseController
                 {
                     Success = false,
                     RequiresAcknowledgment = true,
+                    ResponsibleOrgUnitName = orgUnitDisplay,
                     AcknowledgmentText = $"All known information and materials relevant to this Opportunity have been provided " +
                         $"and are summarized in the Opportunity Statement for your review. Please confirm whether UNOPS org unit " +
                         $"[{orgUnitDisplay}] is authorised to assign resources to continue development based on this information."
@@ -1416,7 +1420,8 @@ public class WorkflowController : BaseController
 
         // === Array Fields (minLength = 1) ===
         // Note: Junction tables (FundingPartners, ClientPartners, etc.) don't have IsDeleted property
-        if (opportunity.UNOPSMissions == null || !opportunity.UNOPSMissions.Any())
+        // UNOPS Missions: Either at least one mission selected OR marked as "Not Applicable"
+        if (!opportunity.UNOPSMissionsNotApplicable && (opportunity.UNOPSMissions == null || !opportunity.UNOPSMissions.Any()))
             unmetRequirements.Add("message.requirements.opportunity.missionsRequired");
 
         if (opportunity.SDGs == null || !opportunity.SDGs.Any())

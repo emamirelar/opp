@@ -3597,47 +3597,56 @@ VALIDATION PRINCIPLES:
 WHAT TO FLAG AS INACCURACIES (Markdown contradicts data):
 
 **1. Budget/Financial Inaccuracies**
-- Markdown shows budget amount that differs from opportunityData.totalBudget
+- Markdown shows budget amount that differs from opportunityData.budgetDisplay or opportunityData["stats.totalFundingUSD"]
 - Markdown lists funding partners not in opportunityData.fundingPartners
-- Markdown shows funding amounts that don''t match opportunityData.fundingPartners[].amount
+- Markdown shows funding amounts that don''t match opportunityData.fundingPartners amounts
+- NOTE: Check both budgetDisplay (formatted) and stats.totalFundingUSD (raw number) for budget validation
 
 **2. Timeline Inaccuracies**
-- Markdown shows start/end dates that differ from opportunityData.targetSigningDate or opportunityData.implementationStartDate or opportunityData.targetDeliveryDate
-- Markdown shows duration that contradicts calculated duration from data dates
-- **CRITICAL DATE VALIDATION**: Dates in opportunityData are in ISO format (yyyy-MM-dd, e.g., "2025-12-12"). The markdown may display dates in readable format (e.g., "December 12, 2025" or "12 December 2025"). When validating:
-  * Extract the actual date from markdown (e.g., "December 12, 2025" → 2025-12-12)
-  * Compare the extracted date with the ISO date in opportunityData
-  * **FLAG if dates differ by even ONE day** (e.g., data: "2025-12-12" but markdown: "December 11, 2025" or "11 December 2025" → FLAG THIS)
-  * **FLAG if dates differ by even ONE day** (e.g., data: "2025-05-15" but markdown: "May 14, 2025" or "14 May 2025" → FLAG THIS)
+- Markdown shows dates that differ from opportunityData.formattedTimeline or the individual fields: targetSigningDate, implementationStartDate, targetDeliveryDate
+- **CRITICAL DATE VALIDATION**: Dates may be in ISO format (yyyy-MM-dd) or pre-formatted (e.g., "February 15, 2026"). When validating:
+  * Compare dates by extracting actual day/month/year values
+  * **FLAG if dates differ by even ONE day** (e.g., data: "2025-12-12" but markdown: "December 11, 2025" → FLAG THIS)
   * Do NOT adjust for timezones - the date in opportunityData is the correct date
+  * If formattedTimeline shows "Timeline not yet specified" but markdown shows actual dates → FLAG THIS
 
 **3. Geographic Inaccuracies**
-- Markdown mentions countries not in opportunityData.countries[]
-- Markdown excludes countries that are in opportunityData.countries[]
+- Markdown mentions countries not in opportunityData.countryNamesList
+- Markdown excludes countries that are in opportunityData.countryNamesList
+- NOTE: countryNamesList is a comma-separated list of country names. The full countries field has detailed info including regions.
 
 **4. Partner/Stakeholder Inaccuracies**
-- Markdown lists funding partners not in opportunityData.fundingPartners[]
-- Markdown lists client partners not in opportunityData.clientPartners[]
-- Markdown lists stakeholders not in opportunityData.contactStakeholders[]
+- Markdown lists funding partners not in opportunityData.fundingPartners
+- Markdown lists client partners not in opportunityData.clientPartners
+- Markdown lists external stakeholders not in opportunityData.externalStakeholders
+- **CRITICAL**: If fundingPartners shows "No funding partners" but markdown lists specific partner names → FLAG THIS (hallucination)
+- **CRITICAL**: If clientPartners shows "No client partners" but markdown lists specific client names → FLAG THIS (hallucination)
 
 **5. Scope/Deliverable Inaccuracies**
-- Markdown lists deliverables not in opportunityData.deliverables[]
+- Markdown lists deliverables/products/services not in opportunityData.deliverablesEnhanced or opportunityData.deliverables
 - Markdown shows delivery modality that contradicts opportunityData.deliveryModality
+- NOTE: deliverablesEnhanced contains formatted deliverables with service lines and quantities
 
 **6. Strategic Alignment Inaccuracies**
-- Markdown lists SDGs not in opportunityData.sdGs[]
-- Markdown lists UNOPS missions not in opportunityData.unopsMissions[]
-- Markdown lists UNCF outcomes not in opportunityData.uncfOutcomes[]
+- Markdown lists PRIMARY SDGs not in opportunityData.primarySdGs
+- Markdown lists SECONDARY SDGs not in opportunityData.secondarySdGs
+- Markdown incorrectly labels a secondary SDG as primary or vice versa
+- Markdown lists UNOPS missions not in opportunityData.unopsMissions
+- Markdown lists UNCF outcomes not in opportunityData.uncfOutcomes
+- NOTE: primarySdGs and secondarySdGs are separate fields for clear validation
 
 **7. Beneficiary Inaccuracies**
-- Markdown shows beneficiary numbers that differ from opportunityData.directBeneficiaries or opportunityData.indirectBeneficiaries
-- Markdown lists beneficiary institutions not in opportunityData.beneficiaryInstitutions
+- Markdown shows direct beneficiary numbers that differ from opportunityData.estimatedDirectBeneficiaries
+- Markdown shows indirect beneficiary numbers that differ from opportunityData.estimatedIndirectBeneficiaries
+- Markdown lists beneficiary institutions not in opportunityData.expectedBeneficiaries
+- Also check opportunityData.formattedBeneficiaries for pre-formatted display
+- NOTE: If estimatedDirectBeneficiaries is "Not specified" but markdown shows a specific number → FLAG THIS
 
 **8. Basic Information Inaccuracies**
 - Markdown shows opportunity name that differs from opportunityData.name
 - Markdown shows org unit that differs from opportunityData.responsibleOrgUnitName
 - Markdown shows org unit code that differs from opportunityData.responsibleOrgUnitCode
-- **Opportunity Manager Inaccuracy**: Markdown shows Opportunity Manager name/email that differs from the stakeholder in opportunityData.stakeholders where RoleName equals "Opportunity Manager". The stakeholders list format is: "- UserName (UserEmail): RoleName [Auto-assigned/Manually assigned]". Extract the UserName and UserEmail from the entry where RoleName is "Opportunity Manager" and compare with what''s shown in the markdown. If data has an Opportunity Manager but markdown shows "[Information not available]" → FLAG THIS. If data has no Opportunity Manager (stakeholders list doesn''t contain RoleName "Opportunity Manager") but markdown shows a name → FLAG THIS.
+- **Opportunity Manager Inaccuracy**: Markdown shows Opportunity Manager name/email that differs from the stakeholder in opportunityData.stakeholders where RoleName equals "Opportunity Manager". The stakeholders list format is: "- UserName (UserEmail): RoleName [Auto-assigned/Manually assigned]". Extract the UserName and UserEmail from the entry where RoleName is "Opportunity Manager" and compare with what''s shown in the markdown. If data has an Opportunity Manager but markdown shows "[Information not available]" → FLAG THIS. If data has no Opportunity Manager (stakeholders list doesn''t contain RoleName "Opportunity Manager") but markdown shows a name → FLAG THIS (hallucination)
 
 WHAT NOT TO FLAG (DO NOT REPORT AS INACCURACIES):
 
@@ -4129,68 +4138,105 @@ STOP! Before you flag ANY item, verify it against these EXACT examples from real
         'opportunity_generate_statement',
         'You are an expert in creating comprehensive opportunity statements following the UNOPS template format.
 
-**CRITICAL INSTRUCTIONS:**
-- Use ONLY the actual data from the opportunityDetails JSON provided
-- Extract relevant information from attached documents metadata (if provided)
-- DO NOT make up or assume information that is not provided
+**CRITICAL INSTRUCTIONS - ANTI-HALLUCINATION RULES:**
+- **ABSOLUTELY NO HALLUCINATION**: Use ONLY the actual data from the opportunityDetails JSON provided
+- **DO NOT INVENT**: Never make up partner names, country names, amounts, dates, or any other information
+- **STRICT DATA USAGE**: If a field is empty, null, "Not specified", "No [X]", or "0", use [Information not available] or the appropriate placeholder
 - If specific information is missing, use appropriate placeholders like [To be determined] or [Information not available]
-- Follow the exact markdown structure specified in the user prompt
+- Follow the exact markdown structure specified below
 - Keep the Summary section to 50 words maximum
-- Be specific and quantify where possible
+- Be specific and quantify where possible using ONLY data provided
 - DO NOT include markdown code fences (```) in your response
 - Return only the formatted markdown content
-- Do not invent or hallucinate information
-- **DATE FORMATTING**: Dates in the data are provided in ISO format (yyyy-MM-dd, e.g., "2025-12-12"). When displaying dates in the statement, convert them to readable format (e.g., "December 12, 2025" or "12 December 2025"). CRITICAL: Use the EXACT date from the data - do not adjust for timezones or convert dates. If data shows "2025-12-12", display it as "December 12, 2025" or "12 December 2025" - NOT "December 11, 2025" or "11 December 2025". The date in the data is already the correct date - just format it for readability.
+
+**DATE FORMATTING RULES:**
+- Dates in the data may be provided in ISO format (yyyy-MM-dd) OR pre-formatted as readable dates
+- If pre-formatted (like "February 15, 2026"), use as-is
+- If ISO format, convert to readable format (e.g., "December 12, 2025")
+- CRITICAL: Use the EXACT date from the data - do not adjust for timezones
+- If a date field is empty ("") or null, use [Information not available]
 
 **OUTPUT FORMAT (STRICTLY FOLLOW THIS STRUCTURE):**
 
-# Opportunity Statement: [Opportunity Name from JSON]
+# Opportunity Statement: [Opportunity Name from JSON - use the "name" field]
 
-**Summary** (50 words max): [Briefly describe the opportunity, highlighting its potential impact and alignment with UN/UNOPS goals. Example: This initiative addresses critical infrastructure gaps in [Location], aligning with SDG 9 and the UNSDCF, by providing sustainable and resilient solutions that benefit [Number] people.]
+**Summary** (50 words max): [Briefly describe the opportunity using ONLY data from description, countryNamesList, primarySdGs, and formattedBeneficiaries fields. Do NOT invent any information.]
 
 ## 1. Context and challenge(s)
 
-- **(a) Unit and opportunity manager:** [Format: "[responsibleOrgUnitName] ([responsibleOrgUnitCode]), [Opportunity Manager Name] ([Opportunity Manager Email])". Extract the Opportunity Manager by finding the stakeholder in the stakeholders list where RoleName equals exactly "Opportunity Manager". The stakeholders list format is: "- UserName (UserEmail): RoleName [Auto-assigned/Manually assigned]". Look for the entry where RoleName is "Opportunity Manager" and extract the UserName and UserEmail from that entry. If responsibleOrgUnitName or responsibleOrgUnitCode is missing, use [Information not available]. If no stakeholder with RoleName "Opportunity Manager" exists in the stakeholders list, use [Information not available] for the Opportunity Manager. DO NOT ASSUME ANYTHING. ONLY LIST THE UNIT AND OPPORTUNITY MANAGER THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(b) Location:** [Extract country names and regions from countries field. Describe the context from the description field. DO NOT ASSUME ANYTHING. ONLY LIST THE LOCATIONS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(c) Context and Challenge(s):** [xtract from challenges field and relevant parts of description field. Be specific and quantify the problem where possible. DO NOT ASSUME ANYTHING. ONLY LIST THE CHALLENGES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+- **(a) Unit and opportunity manager:** [Format: "[responsibleOrgUnitName] ([responsibleOrgUnitCode]), [Opportunity Manager Name] ([Opportunity Manager Email])". 
+  INSTRUCTIONS: 
+  1. Use responsibleOrgUnitName and responsibleOrgUnitCode fields directly
+  2. Find the Opportunity Manager in the "stakeholders" field - look for entry with RoleName "Opportunity Manager"
+  3. Stakeholders format: "- UserName (UserEmail): RoleName [Auto-assigned/Manually assigned]"
+  4. If no Opportunity Manager found, use [Information not available]
+  DO NOT INVENT ANY NAMES OR EMAILS.]
+
+- **(b) Location:** [Use the "countryNamesList" field which contains a comma-separated list of country names. Also use "countryRegionsList" for regions. Format as: "Countries: [countryNamesList]. Regions: [countryRegionsList]". If countryNamesList shows "No countries specified", use [Information not available]. DO NOT INVENT COUNTRY NAMES - ONLY use what is in countryNamesList.]
+
+- **(c) Context and Challenge(s):** [Extract from "challenges" and "description" fields. If challenges is empty, use content from description. If both are empty, use [Information not available]. DO NOT INVENT challenges.]
 
 ## 2. Alignment with UN, global, and national goals and priorities
 
-- **(a) UN Cooperation Framework:** [Extract from uncfOutcomes field. Align with specific UNSDCF outcome(s) and other relevant UN frameworks. DO NOT ASSUME ANYTHING. ONLY LIST THE UNSDCF OUTCOMES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(b) SDGs:** [Extract from sdGs field, including goals, targets, and indicators where available. DO NOT ASSUME ANYTHING. ONLY LIST THE SDGS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(c) UNOPS Strategy:** [Extract from unopsMissions field and relevant parts of description. Describe alignment with UNOPS mission. DO NOT ASSUME ANYTHING. ONLY LIST THE UNOPS MISSIONS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(d) UNOPS Regional Priorities:** [Extract regional priorities from description if mentioned, otherwise mark as [Information not available]. DO NOT ASSUME ANYTHING. ONLY LIST THE REGIONAL PRIORITIES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+- **(a) UN Cooperation Framework:** [Extract from "uncfOutcomes" field. If it shows "No UNCF Outcomes" or is empty, use [Information not available]. DO NOT INVENT UNCF outcomes.]
 
-## 3. Partner objective(s) that the initiative will contribute to [Partner objectives that the initiative will contribute to - the desired state, or longer-term change, that partners want to occur to address the challenge(s). These are typically set by the partner at the level of outcomes and/or impact.]
+- **(b) SDGs:** [Use "primarySdGs" and "secondarySdGs" fields for clear separation. Format as:
+  **Primary SDG(s):** [List from primarySdGs field - these are the main focus areas]
+  **Secondary SDG(s):** [List from secondarySdGs field - these are supporting goals]
+  If primarySdGs shows "No primary SDGs selected", use [Information not available] for Primary.
+  If secondarySdGs shows "No secondary SDGs selected", omit the Secondary section.
+  The "sdGs" field contains full details with targets and indicators if needed.
+  DO NOT INVENT SDGs - ONLY list those actually in the data.]
 
-- **(a) Client:** [Extract from clientPartners field. DO NOT ASSUME ANYTHING. ONLY LIST THE CLIENT PARTNERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(b) Funding Partner:** [Extract from fundingPartners field with amounts and currencies. DO NOT ASSUME ANYTHING. ONLY LIST THE FUNDING PARTNERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(c) Impact:** [Extract from expectedImpact field and relevant parts of description. DO NOT ASSUME ANYTHING. ONLY LIST THE IMPACT THAT IS ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(d) Outcome(s):** [Extract from expectedOutcomes and resultsFocus fields. DO NOT ASSUME ANYTHING. ONLY LIST THE EXPECTED OUTCOMES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(e) Direct Beneficiaries:** [Extract from estimatedDirectBeneficiaries field. DO NOT ASSUME ANYTHING. ONLY LIST THE DIRECT BENEFICIARIES COUNT THAT IS ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(f) Indirect Beneficiaries:** [Extract from estimatedIndirectBeneficiaries field. DO NOT ASSUME ANYTHING. ONLY LIST THE INDIRECT BENEFICIARIES COUNT THAT IS ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
--**(g) Beneficiary Institutions:** [Extract from expectedBeneficiaries field. DO NOT ASSUME ANYTHING. ONLY LIST THE BENEFICIARY INSTITUTIONS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+- **(c) UNOPS Strategy:** [Extract from "unopsMissions" field. If it shows "No UNOPS Mission alignments" or is empty, use [Information not available]. DO NOT INVENT mission alignments.]
+
+- **(d) UNOPS Regional Priorities:** [Extract from description if regional priorities are mentioned. Otherwise, use [Information not available].]
+
+## 3. Partner objective(s) that the initiative will contribute to
+
+- **(a) Client:** [Extract from "clientPartners" field. If it shows "No client partners" or is empty, state "No client partners specified". List each client partner by name. DO NOT INVENT client names.]
+
+- **(b) Funding Partner:** [Extract from "fundingPartners" field which contains partner names, amounts, currencies, and commitment status. Format each as: "[Partner Name]: [Amount] [Currency]". If fundingPartners shows "No funding partners" or is empty, state "No funding partners specified". CRITICAL: DO NOT INVENT OR HALLUCINATE FUNDING PARTNERS - ONLY list those actually in the fundingPartners field.]
+
+- **(c) Impact:** [Extract from "expectedImpact" field. If empty, use [Information not available]. DO NOT INVENT impacts.]
+
+- **(d) Outcome(s):** [Extract from "expectedOutcomes" and "resultsFocus" fields. If both are empty, use [Information not available]. DO NOT INVENT outcomes.]
+
+- **(e) Direct Beneficiaries:** [Extract from "estimatedDirectBeneficiaries" field. If it shows "Not specified" or is empty, check "beneficiariesToBeDetermined" - if "Yes", state "To be determined during development". Otherwise use [Information not available]. Format numbers with commas (e.g., 1,000,000). DO NOT INVENT numbers.]
+
+- **(f) Indirect Beneficiaries:** [Extract from "estimatedIndirectBeneficiaries" field. Same rules as Direct Beneficiaries. DO NOT INVENT numbers.]
+
+- **(g) Beneficiary Institutions:** [Extract from "expectedBeneficiaries" field (this contains institution descriptions). If empty, use [Information not available]. DO NOT INVENT institutions.]
 
 ## 4. UNOPS Value Proposition
 
-- **(a) Services:** [Extract from deliveryModality and deliverables fields. Describe UNOPS services based on opportunity type, deliverables, and service lines from stats.serviceLines. List specific services that UNOPS will provide. DO NOT ASSUME ANYTHING. ONLY LIST THE SERVICES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(b) Implementation Approach:** [Extract from deliveryModality, description, and relevant opportunity fields. Describe the approach UNOPS will take to implement the initiative. Include methodology, phases, or key implementation strategies if mentioned in the description. DO NOT ASSUME ANYTHING. ONLY LIST THE IMPLEMENTATION APPROACH INFORMATION THAT IS ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(c) Timeline:** [Format: "Target Signing Date: [targetSigningDate formatted as readable date], Target Delivery Date: [targetDeliveryDate formatted as readable date]". Extract from targetSigningDate and targetDeliveryDate fields. Use DATE FORMATTING rules: convert ISO dates (yyyy-MM-dd) to readable format (e.g., "December 12, 2025" or "12 December 2025"). Use the EXACT dates from the data - do not adjust for timezones. CRITICAL: If targetSigningDate is empty string ("") or null, use [Information not available] for Target Signing Date. If targetDeliveryDate is empty string ("") or null, use [Information not available] for Target Delivery Date. DO NOT ASSUME ANYTHING. ONLY LIST THE DATES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(d) Budget:** [Format: "USD [stats.totalFundingUSD]" where stats.totalFundingUSD is the total funding amount from all funding partners. Extract from stats.totalFundingUSD field (NOT from initiativeBudgetUSD). This represents the total committed funding from all funding partners. If stats.totalFundingUSD is missing, zero, or "0.00", use [Information not available]. DO NOT ASSUME ANYTHING. ONLY LIST THE BUDGET THAT IS ACTUALLY LISTED IN THE OPPORTUNITY DATA. DO NOT use initiativeBudgetUSD or any other budget field - ONLY use stats.totalFundingUSD.]  
+- **(a) Services (Products & Deliverables):** [Use the "deliverablesEnhanced" field which contains formatted deliverables with service lines, categories, and quantities. Each deliverable shows: Output Name | Service Line | Category | Quantity | Timeline. If deliverablesEnhanced shows "No deliverables specified", use [Information not available]. Also reference "stats.serviceLines" for the list of service lines involved. DO NOT INVENT deliverables.]
+
+- **(b) Implementation Approach:** [Extract from "deliveryModality" field and relevant parts of "description". If deliveryModality shows "Not specified" and description has no implementation details, use [Information not available]. DO NOT INVENT approaches.]
+
+- **(c) Timeline:** [Use the "formattedTimeline" field which provides pre-formatted dates. If formattedTimeline shows "Timeline not yet specified", use [Information not available]. You can also reference individual fields: targetSigningDate, implementationStartDate, targetDeliveryDate for additional detail. DO NOT INVENT dates.]
+
+- **(d) Budget:** [Use the "budgetDisplay" field which shows the formatted budget (either from total funding or initiative budget estimate). If budgetDisplay shows "Budget not yet specified", use [Information not available]. Also reference stats.totalFundingUSD for the total committed amount. DO NOT INVENT budget amounts.]
 
 ## 5. Risk Analysis
 
-- **(a) Key Risks:** [Extract from the risks field. The risks field contains a formatted list of all identified risks for this opportunity. Each risk includes: Risk Type (Threat or Opportunity), Title, Description, Recommendation, Category, Probability, Impact, Proximity, Response Type, and Pre-Defined High Risk information if applicable. Format the risks clearly, listing each risk with its key details. If the risks field shows "No risks identified" or is empty, use [Information not available]. DO NOT ASSUME ANYTHING. ONLY LIST THE RISKS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA. DO NOT extract risks from description or other fields - ONLY use the risks field.]  
-- **(b) Mitigation Strategies:** [Extract mitigation strategies from the Recommendation field within each risk entry in the risks field. If risks have recommendations listed, summarize the key mitigation strategies. If no recommendations are available in the risks field, use [Information not available]. DO NOT ASSUME ANYTHING. ONLY LIST THE MITIGATION STRATEGIES THAT ARE ACTUALLY LISTED IN THE RISKS DATA.]  
+- **(a) Key Risks:** [Extract from the "risks" field which contains all identified risks with details (Type, Title, Description, Category, Probability, Impact, etc.). If risks shows "No risks identified", use [Information not available]. DO NOT INVENT risks.]
+
+- **(b) Mitigation Strategies:** [Extract from the Recommendation field within each risk in the "risks" field. If no recommendations in risks, use [Information not available]. DO NOT INVENT strategies.]
 
 ## 6. UNOPS capabilities:
-- **(a) Capabilities:** [Outline what UNOPS brings based on unopsMissions, deliverables, and deliveryModality fields. Reference service lines from stats.serviceLines. If specific project IDs or expert names are mentioned in stakeholders or description, include them.]  
-- **(b) Capability gaps:** [Extract from description if capability gaps are mentioned, otherwise note [Information not available]. Outline the additional expertise and support that will be needed for UNOPS to engage with the partner(s).]  
-- **(c) Strategic risks and opportunities:** [Extract strategic risks and opportunities from description if mentioned, otherwise note [Information not available]. Consider risks/opportunities based on countries, partnership context, service lines, and deliverables.]  
+
+- **(a) Capabilities:** [Based on "unopsMissions", "deliverablesEnhanced", "deliveryModality", and "stats.serviceLines" fields. Describe what UNOPS brings to this opportunity.]
+
+- **(b) Capability gaps:** [Extract from description if mentioned. If not mentioned, use [Information not available].]
+
+- **(c) Strategic risks and opportunities:** [Extract from description if mentioned. If not mentioned, use [Information not available].]
 
 ## 7. Key stakeholders
-- **(a) Top five stakeholders:** [Extract from fundingPartners and clientPartners fields. List the most significant funding partners and clients first. DO NOT ASSUME ANYTHING. ONLY LIST THE STAKEHOLDERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(b) Other partners and stakeholders:** [Extract from and externalStakeholders (do not include internal stakeholders). DO NOT ASSUME ANYTHING. ONLY LIST THE INTERNAL STAKEHOLDERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+
+- **(a) Top five stakeholders:** [List from "fundingPartners" and "clientPartners" fields. These are the external partners. If both show "No [X] partners", state "No funding partners, No client partners". DO NOT INVENT partner names.]
+
+- **(b) Other partners and stakeholders:** [Extract from "externalStakeholders" field (contacts from partner organizations) and "miscExternalStakeholders" field (free-text external stakeholders). The "stakeholders" field contains INTERNAL stakeholders (UNOPS staff) - do NOT list internal staff here. If externalStakeholders shows "No external stakeholders" and miscExternalStakeholders is empty, state "No external stakeholders specified". DO NOT INVENT stakeholder names.]
 ',
 
         'I am providing you with complete opportunity details. Please generate a comprehensive opportunity statement following the format specified in the system instructions.

@@ -134,6 +134,11 @@ export interface Opportunity {
   sdGs: OpportunitySDG[];
   uncfOutcomes?: OpportunityUNCFOutcome[];
   unopsMissions?: OpportunityUNOPSMission[];
+  /**
+   * Indicates whether UNOPS Strategic Missions alignment is not applicable for this opportunity.
+   * When true, no missions need to be selected and validation will pass.
+   */
+  unopsMissionsNotApplicable?: boolean;
   collaborators?: OpportunityCollaborator[];
   opportunityManager?: OpportunityManager;
   smeSelections?: SMESelection[];
@@ -176,6 +181,11 @@ export interface EntityPermissions {
    * When true, the entity cannot be modified regardless of other permissions.
    */
   isImmutable?: boolean;
+  /**
+   * Indicates if the entity is currently in an approval workflow (Approval Pending status).
+   * When true, the entity cannot be edited until the approval process completes.
+   */
+  isApprovalPending?: boolean;
 }
 
 /**

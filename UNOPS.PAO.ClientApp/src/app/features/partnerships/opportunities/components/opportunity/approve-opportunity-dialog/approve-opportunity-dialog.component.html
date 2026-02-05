@@ -28,8 +28,7 @@
           inputId="confirmationCheckbox"
           [disabled]="isSubmitting()"
         />
-        <label for="confirmationCheckbox" class="leading-relaxed cursor-pointer" style="color: #007bb8;">
-          {{ confirmationStatement() }}
+        <label for="confirmationCheckbox" class="leading-relaxed cursor-pointer" style="color: #007bb8;" [innerHTML]="confirmationStatement()">
         </label>
       </div>
     </div>

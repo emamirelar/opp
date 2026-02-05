@@ -90,6 +90,13 @@ public class EntityPermissionsModel
     public bool? IsImmutable { get; set; }
 
     /// <summary>
+    /// Whether the entity is currently in an approval workflow (Approval Pending status).
+    /// When true, the entity cannot be edited until the approval process completes.
+    /// Frontend uses this to show "Approval Pending" indicator and disable edit controls.
+    /// </summary>
+    public bool? IsApprovalPending { get; set; }
+
+    /// <summary>
     /// Creates a default permission set with all permissions disabled
     /// </summary>
     public static EntityPermissionsModel None => new()

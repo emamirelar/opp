@@ -270,3 +270,31 @@ a:hover i {
     animation: none;
   }
 }
+
+// Field highlight animation for requirement click navigation
+// Applied globally since field elements are in child components
+:host ::ng-deep {
+  .field-highlight {
+    animation: fieldHighlightPulse 2s ease-in-out;
+    border-radius: 8px;
+  }
+}
+
+@keyframes fieldHighlightPulse {
+  0% {
+    background-color: transparent;
+    box-shadow: none;
+  }
+  20% {
+    background-color: rgba(0, 95, 136, 0.15);
+    box-shadow: 0 0 0 4px rgba(0, 95, 136, 0.2);
+  }
+  50% {
+    background-color: rgba(0, 95, 136, 0.1);
+    box-shadow: 0 0 0 4px rgba(0, 95, 136, 0.15);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: none;
+  }
+}

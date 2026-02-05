@@ -102,6 +102,33 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         }
     }
 
+    /// <summary>
+    /// Throws a BusinessException if the opportunity is currently in an approval workflow.
+    /// Call this at the start of any modification method.
+    /// </summary>
+    /// <param name="opportunity">The opportunity to validate</param>
+    /// <exception cref="BusinessException">Thrown when opportunity is in approval workflow</exception>
+    private void ThrowIfInApprovalWorkflow(Opportunity opportunity)
+    {
+        if (opportunity?.IsInWorkflow == true)
+        {
+            throw new BusinessException("This opportunity is pending approval and cannot be modified.");
+        }
+    }
+
+    /// <summary>
+    /// Throws a BusinessException if the opportunity cannot be modified.
+    /// Checks both immutability (GO/NO GO/CANCELLED stages) and approval workflow status.
+    /// Call this at the start of any modification method.
+    /// </summary>
+    /// <param name="opportunity">The opportunity to validate</param>
+    /// <exception cref="BusinessException">Thrown when opportunity cannot be modified</exception>
+    private void ThrowIfCannotModify(Opportunity opportunity)
+    {
+        ThrowIfImmutable(opportunity);
+        ThrowIfInApprovalWorkflow(opportunity);
+    }
+
     #endregion
 
     /// <summary>
@@ -566,18 +593,18 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             return null;
         }
         
-        // Check if user is a stakeholder on this opportunity
-        var isStakeholder = await IsUserStakeholderOnOpportunityAsync(user, id);
+        // Check if user is a team member (stakeholder or collaborator) on this opportunity
+        var isTeamMember = await IsUserTeamMemberOnOpportunityAsync(user, id);
         
-        // Add permissions with stakeholder check
+        // Add permissions with team member check
         model = await MapEntityToModelWithPermissionsAsync(model, user, entity);
         
-        // If user is a stakeholder, they should be able to update the opportunity
+        // If user is a team member (stakeholder or collaborator), they should be able to update the opportunity
         // even if they don't have global update permission
-        if (isStakeholder && model.Permissions != null)
+        if (isTeamMember && model.Permissions != null)
         {
             model.Permissions.CanUpdate = true;
-            model.Permissions.Notes = "Stakeholder on this opportunity";
+            model.Permissions.Notes = "Team member on this opportunity";
         }
         
         // Check immutability and override permissions if the opportunity is in an immutable stage
@@ -592,18 +619,31 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 model.Permissions.IsImmutable = true;
                 model.Permissions.Notes = "This opportunity is locked after a decision has been made.";
             }
+            
+            // Check if opportunity is in approval workflow (Approval Pending status)
+            // When in workflow, the opportunity cannot be edited until approval completes
+            if (entity.IsInWorkflow)
+            {
+                model.Permissions.CanUpdate = false;
+                model.Permissions.CanDelete = false;
+                model.Permissions.IsApprovalPending = true;
+                model.Permissions.Notes = "This opportunity is pending approval and cannot be edited.";
+            }
         }
         
         return model;
     }
     
     /// <summary>
-    /// Checks if the current user is a stakeholder (team member) on the given opportunity
+    /// Checks if the current user is a team member (stakeholder or collaborator) on the given opportunity.
+    /// Team members include:
+    /// - Internal stakeholders (users assigned via OpportunityStakeholder)
+    /// - Collaborators (users assigned via OpportunityCollaborator - Opportunity Development Team)
     /// </summary>
     /// <param name="user">Current user context</param>
     /// <param name="opportunityId">Opportunity ID</param>
-    /// <returns>True if user is a stakeholder, false otherwise</returns>
-    private async Task<bool> IsUserStakeholderOnOpportunityAsync(ClaimsPrincipal user, int opportunityId)
+    /// <returns>True if user is a team member, false otherwise</returns>
+    private async Task<bool> IsUserTeamMemberOnOpportunityAsync(ClaimsPrincipal user, int opportunityId)
     {
         if (user == null)
         {
@@ -617,11 +657,24 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             return false;
         }
         
+        // Check if user is a Collaborator (Opportunity Development Team member)
+        // Collaborators have permissions to edit all fields of the opportunity
+        var isCollaborator = await context.OpportunityCollaborators
+            .AnyAsync(c => c.OpportunityId == opportunityId 
+                        && c.UserId == userId
+                        && !c.IsDeleted);
+        
+        if (isCollaborator)
+        {
+            return true;
+        }
+        
         // Check if this user is an internal stakeholder on the opportunity
         var isStakeholder = await context.OpportunityStakeholders
             .AnyAsync(s => s.OpportunityId == opportunityId 
                         && s.UserId == userId 
-                        && s.IsInternal);
+                        && s.IsInternal
+                        && !s.IsDeleted);
         
         return isStakeholder;
     }
@@ -1219,8 +1272,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             return null;
         }
 
-        // Check immutability before any modifications
-        ThrowIfImmutable(entity);
+        // Check if opportunity can be modified (immutability and approval workflow status)
+        ThrowIfCannotModify(entity);
 
         // Update main entity properties
         mapper.Map(model, entity);
@@ -1320,8 +1373,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
 
-        // Check immutability before any modifications
-        ThrowIfImmutable(entity);
+        // Check if opportunity can be modified (immutability and approval workflow status)
+        ThrowIfCannotModify(entity);
 
         // Update Overview section fields
         if (request.Name != null)
@@ -1355,8 +1408,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
 
-        // Check immutability before any modifications
-        ThrowIfImmutable(entity);
+        // Check if opportunity can be modified (immutability and approval workflow status)
+        ThrowIfCannotModify(entity);
 
         // Update WHAT section fields
         if (request.Name != null)
@@ -1433,8 +1486,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
 
-        // Check immutability before any modifications
-        ThrowIfImmutable(entity);
+        // Check if opportunity can be modified (immutability and approval workflow status)
+        ThrowIfCannotModify(entity);
 
         // Update WHY section fields
 
@@ -1478,10 +1531,11 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         if (request.SdGs != null)
         {
             // Load existing SDGs with their targets and indicators for comparison
+            // CRITICAL: Filter out soft-deleted records to avoid re-selection issues
             var existingSDGs = await context.OpportunitySDGs
-                .Where(sdg => sdg.OpportunityId == id)
-                .Include(sdg => sdg.Targets)
-                    .ThenInclude(t => t.Indicators)
+                .Where(sdg => sdg.OpportunityId == id && !sdg.IsDeleted)
+                .Include(sdg => sdg.Targets.Where(t => !t.IsDeleted))
+                    .ThenInclude(t => t.Indicators.Where(i => !i.IsDeleted))
                 .ToListAsync();
 
             var requestedSDGIds = request.SdGs.Select(s => s.SDGId).ToHashSet();
@@ -1659,9 +1713,10 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         if (request.UncfOutcomes != null)
         {
             // Load existing UNCF outcomes with their indicators for comparison
+            // CRITICAL: Filter out soft-deleted records to avoid re-selection issues
             var existingUNCFOutcomes = await context.OpportunityUNCFOutcomes
-                .Where(uo => uo.OpportunityId == id)
-                .Include(uo => uo.Indicators)
+                .Where(uo => uo.OpportunityId == id && !uo.IsDeleted)
+                .Include(uo => uo.Indicators.Where(i => !i.IsDeleted))
                 .ToListAsync();
 
             // Create composite keys for comparison (OpportunityCountryId + UNCFOutcomeId)
@@ -1759,12 +1814,17 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }
         }
 
+        // Update UNOPS Missions Not Applicable flag
+        // When true, it means the user explicitly indicated that mission alignment is not applicable
+        entity.UNOPSMissionsNotApplicable = request.UNOPSMissionsNotApplicable;
+        
         // Update UNOPS Mission alignments with differential update strategy
         if (request.UNOPSMissions != null)
         {
             // Load existing UNOPS mission alignments
+            // CRITICAL: Filter out soft-deleted records to avoid re-selection issues
             var existingMissions = await context.Set<OpportunityUNOPSMission>()
-                .Where(m => m.OpportunityId == id)
+                .Where(m => m.OpportunityId == id && !m.IsDeleted)
                 .ToListAsync();
 
             var requestedMissionIds = request.UNOPSMissions.Select(m => m.UNOPSMissionId).ToHashSet();
@@ -1816,8 +1876,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
 
-        // Check immutability before any modifications
-        ThrowIfImmutable(opportunity);
+        // Check if opportunity can be modified (immutability and approval workflow status)
+        ThrowIfCannotModify(opportunity);
 
         // Update pooled funding flag
         opportunity.IsPooledFunding = request.IsPooledFunding;
@@ -2021,6 +2081,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         var opportunity = await context.Opportunities
             .Include(o => o.Stakeholders.Where(s => !s.IsDeleted))
             .Include(o => o.Collaborators.Where(c => !c.IsDeleted))
+                .ThenInclude(c => c.Expertises.Where(e => !e.IsDeleted))
             .FirstOrDefaultAsync(o => o.Id == id);
 
         if (opportunity == null)
@@ -2028,8 +2089,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
 
-        // Check immutability before any modifications
-        ThrowIfImmutable(opportunity);
+        // Check if opportunity can be modified (immutability and approval workflow status)
+        ThrowIfCannotModify(opportunity);
 
         // Track if org unit changed
         var orgUnitChanged = request.ResponsibleOrgUnitId.HasValue && 
@@ -2204,9 +2265,10 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             var requestedUserIds = request.Collaborators.Select(c => c.UserId).ToHashSet();
             
             // Get existing collaborators (need to load with expertises)
+            // CRITICAL: Filter out soft-deleted records to avoid re-selection issues
             var existingCollaborators = await context.Set<OpportunityCollaborator>()
-                .Include(c => c.Expertises)
-                .Where(c => c.OpportunityId == id)
+                .Include(c => c.Expertises.Where(e => !e.IsDeleted))
+                .Where(c => c.OpportunityId == id && !c.IsDeleted)
                 .ToListAsync();
             
             // Find collaborators to remove (exist in DB but not in request)
@@ -2592,8 +2654,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     private async Task<List<int>> GetOrgUnitIdsForCountriesWithHierarchyAsync(int opportunityId)
     {
         // Get implementation country IDs for this opportunity
+        // Filter out soft-deleted records
         var countryIds = await context.Set<OpportunityCountry>()
-            .Where(oc => oc.OpportunityId == opportunityId)
+            .Where(oc => oc.OpportunityId == opportunityId && !oc.IsDeleted)
             .Select(oc => oc.CountryId)
             .ToListAsync();
 
@@ -2651,8 +2714,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     private async Task<List<int>> GetChildOrgUnitIdsForHubRegionAsync(int parentOrgUnitId, int opportunityId)
     {
         // Get implementation country IDs for this opportunity
+        // Filter out soft-deleted records
         var countryIds = await context.Set<OpportunityCountry>()
-            .Where(oc => oc.OpportunityId == opportunityId)
+            .Where(oc => oc.OpportunityId == opportunityId && !oc.IsDeleted)
             .Select(oc => oc.CountryId)
             .ToListAsync();
 
@@ -2726,8 +2790,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     private async Task<List<int>> GetNormallyResponsibleOrgUnitsAsync(int opportunityId, int selectedOrgUnitId)
     {
         // Get implementation country IDs for this opportunity
+        // Filter out soft-deleted records
         var countryIds = await context.Set<OpportunityCountry>()
-            .Where(oc => oc.OpportunityId == opportunityId)
+            .Where(oc => oc.OpportunityId == opportunityId && !oc.IsDeleted)
             .Select(oc => oc.CountryId)
             .ToListAsync();
 
@@ -2803,8 +2868,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
 
-        // Check immutability before any modifications
-        ThrowIfImmutable(opportunity);
+        // Check if opportunity can be modified (immutability and approval workflow status)
+        ThrowIfCannotModify(opportunity);
 
         // Update Countries with differential update strategy
         // CRITICAL: Do NOT remove and re-add countries as this will CASCADE DELETE all related
@@ -2994,8 +3059,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
 
-        // Check immutability before any modifications
-        ThrowIfImmutable(opportunity);
+        // Check if opportunity can be modified (immutability and approval workflow status)
+        ThrowIfCannotModify(opportunity);
 
         // Update target dates
         opportunity.TargetSigningDate = request.TargetSigningDate;
@@ -3055,8 +3120,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
 
-        // Check immutability before any modifications
-        ThrowIfImmutable(entity);
+        // Check if opportunity can be modified (immutability and approval workflow status)
+        ThrowIfCannotModify(entity);
 
         // WHAT Section - Update basic properties
         if (request.Name != null)
@@ -3579,8 +3644,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             return false;
         }
 
-        // Check immutability before any modifications
-        ThrowIfImmutable(entity);
+        // Check if opportunity can be modified (immutability and approval workflow status)
+        ThrowIfCannotModify(entity);
 
         await opportunityRepository.Delete(entity);
         return true;
@@ -3734,12 +3799,13 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         List<Domain.Entities.Risk> risks;
 
         // Execute all independent queries in parallel using separate DbContext instances
+        // CRITICAL: Filter out soft-deleted records in all parallel queries
         var task1 = Task.Run(async () => 
         {
             await using var ctx = await _dbContextFactory.CreateDbContextAsync();
             return await ctx.Set<OpportunityFundingPartner>()
                 .AsNoTracking()
-                .Where(fp => fp.OpportunityId == id)
+                .Where(fp => fp.OpportunityId == id && !fp.IsDeleted)
                 .Include(fp => fp.Partner)
                 .Include(fp => fp.Currency)
                 .Include(fp => fp.Document)
@@ -3751,7 +3817,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             await using var ctx = await _dbContextFactory.CreateDbContextAsync();
             return await ctx.Set<OpportunityClientPartner>()
                 .AsNoTracking()
-                .Where(cp => cp.OpportunityId == id)
+                .Where(cp => cp.OpportunityId == id && !cp.IsDeleted)
                 .Include(cp => cp.Partner)
                 .Include(cp => cp.Document)
                 .ToListAsync();
@@ -3762,7 +3828,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             await using var ctx = await _dbContextFactory.CreateDbContextAsync();
             return await ctx.Set<OpportunityStakeholder>()
                 .AsNoTracking()
-                .Where(s => s.OpportunityId == id)
+                .Where(s => s.OpportunityId == id && !s.IsDeleted)
                 .Include(s => s.User).ThenInclude(u => u.UserProfile)
                 .Include(s => s.EntityRole)
                 .Include(s => s.OrganizationHierarchy)
@@ -3774,7 +3840,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             await using var ctx = await _dbContextFactory.CreateDbContextAsync();
             return await ctx.Set<OpportunityExternalStakeholder>()
                 .AsNoTracking()
-                .Where(es => es.OpportunityId == id)
+                .Where(es => es.OpportunityId == id && !es.IsDeleted)
                 .Include(es => es.Contact).ThenInclude(c => c.Partner)
                 .ToListAsync();
         });
@@ -3784,7 +3850,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             await using var ctx = await _dbContextFactory.CreateDbContextAsync();
             return await ctx.Set<OpportunityDeliverable>()
                 .AsNoTracking()
-                .Where(d => d.OpportunityId == id)
+                .Where(d => d.OpportunityId == id && !d.IsDeleted)
                 .Include(d => d.Output)
                 .ToListAsync();
         });
@@ -3794,7 +3860,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             await using var ctx = await _dbContextFactory.CreateDbContextAsync();
             return await ctx.Set<OpportunityCountry>()
                 .AsNoTracking()
-                .Where(c => c.OpportunityId == id)
+                .Where(c => c.OpportunityId == id && !c.IsDeleted)
                 .Include(c => c.Country)
                 .ToListAsync();
         });
@@ -3804,7 +3870,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             await using var ctx = await _dbContextFactory.CreateDbContextAsync();
             return await ctx.Set<OpportunitySDG>()
                 .AsNoTracking()
-                .Where(s => s.OpportunityId == id)
+                .Where(s => s.OpportunityId == id && !s.IsDeleted)
                 .Include(s => s.SDG)
                 .ToListAsync();
         });
@@ -3814,7 +3880,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             await using var ctx = await _dbContextFactory.CreateDbContextAsync();
             return await ctx.Set<OpportunityUNCFOutcome>()
                 .AsNoTracking()
-                .Where(u => u.OpportunityId == id)
+                .Where(u => u.OpportunityId == id && !u.IsDeleted)
                 .Include(u => u.UNCFOutcome)
                 .ToListAsync();
         });
@@ -3824,7 +3890,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             await using var ctx = await _dbContextFactory.CreateDbContextAsync();
             return await ctx.Set<OpportunityUNOPSMission>()
                 .AsNoTracking()
-                .Where(m => m.OpportunityId == id)
+                .Where(m => m.OpportunityId == id && !m.IsDeleted)
                 .Include(m => m.UNOPSMission)
                 .ToListAsync();
         });
@@ -4342,6 +4408,83 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }))
             : "No SDGs";
 
+        // Separate Primary and Secondary SDGs for clearer AI prompt usage
+        var primarySdgsText = sdgsDetails != null && sdgsDetails.Any(s => s.IsPrimary == "Primary")
+            ? string.Join("\n", sdgsDetails.Where(s => s.IsPrimary == "Primary").Select(s => $"- SDG {s.SDGNumber}: {s.SDGName}"))
+            : "No primary SDGs selected";
+        var primarySdgsCount = sdgsDetails?.Count(s => s.IsPrimary == "Primary") ?? 0;
+        
+        var secondarySdgsText = sdgsDetails != null && sdgsDetails.Any(s => s.IsPrimary == "Secondary")
+            ? string.Join("\n", sdgsDetails.Where(s => s.IsPrimary == "Secondary").Select(s => $"- SDG {s.SDGNumber}: {s.SDGName}"))
+            : "No secondary SDGs selected";
+        var secondarySdgsCount = sdgsDetails?.Count(s => s.IsPrimary == "Secondary") ?? 0;
+
+        // Simple country names list for Location section
+        var countryNamesList = countriesDetails != null && countriesDetails.Any()
+            ? string.Join(", ", countriesDetails.Select(c => c.CountryName))
+            : "No countries specified";
+        
+        var countryRegionsList = countriesDetails != null && countriesDetails.Any()
+            ? string.Join(", ", countriesDetails.Select(c => c.Region).Where(r => !string.IsNullOrEmpty(r)).Distinct())
+            : "No regions specified";
+
+        // Formatted budget display
+        var budgetDisplay = stats.TotalFundingUSD > 0
+            ? $"USD {stats.TotalFundingUSD:N2}"
+            : (opportunity.InitiativeBudgetUSD.HasValue && opportunity.InitiativeBudgetUSD.Value > 0
+                ? $"USD {opportunity.InitiativeBudgetUSD.Value:N2} (estimated initiative budget)"
+                : "Budget not yet specified");
+
+        // Formatted timeline display
+        var timelineDisplay = new List<string>();
+        if (opportunity.TargetSigningDate.HasValue)
+            timelineDisplay.Add($"Target Signing Date: {opportunity.TargetSigningDate.Value:MMMM d, yyyy}");
+        if (opportunity.ImplementationStartDate.HasValue)
+            timelineDisplay.Add($"Implementation Start: {opportunity.ImplementationStartDate.Value:MMMM d, yyyy}");
+        if (opportunity.TargetDeliveryDate.HasValue)
+            timelineDisplay.Add($"Target Delivery Date: {opportunity.TargetDeliveryDate.Value:MMMM d, yyyy}");
+        var formattedTimeline = timelineDisplay.Any() 
+            ? string.Join(", ", timelineDisplay) 
+            : "Timeline not yet specified";
+
+        // Formatted beneficiaries display
+        var beneficiariesDisplay = new List<string>();
+        if (opportunity.EstimatedDirectBeneficiaries.HasValue && opportunity.EstimatedDirectBeneficiaries.Value > 0)
+            beneficiariesDisplay.Add($"Direct Beneficiaries: {opportunity.EstimatedDirectBeneficiaries.Value:N0}");
+        else if (opportunity.BeneficiariesToBeDetermined)
+            beneficiariesDisplay.Add("Direct Beneficiaries: To be determined during development");
+        else
+            beneficiariesDisplay.Add("Direct Beneficiaries: Not specified");
+            
+        if (opportunity.EstimatedIndirectBeneficiaries.HasValue && opportunity.EstimatedIndirectBeneficiaries.Value > 0)
+            beneficiariesDisplay.Add($"Indirect Beneficiaries: {opportunity.EstimatedIndirectBeneficiaries.Value:N0}");
+        else if (opportunity.BeneficiariesToBeDetermined)
+            beneficiariesDisplay.Add("Indirect Beneficiaries: To be determined during development");
+        else
+            beneficiariesDisplay.Add("Indirect Beneficiaries: Not specified");
+            
+        if (!string.IsNullOrEmpty(opportunity.ExpectedBeneficiaries))
+            beneficiariesDisplay.Add($"Beneficiary Institutions: {opportunity.ExpectedBeneficiaries}");
+        else
+            beneficiariesDisplay.Add("Beneficiary Institutions: Not specified");
+        
+        var formattedBeneficiaries = string.Join("\n", beneficiariesDisplay);
+
+        // Enhanced deliverables formatting with full hierarchy
+        var deliverablesEnhanced = deliverablesDetails != null && deliverablesDetails.Any()
+            ? string.Join("\n", deliverablesDetails.Select(d =>
+            {
+                var parts = new List<string> { d.OutputName };
+                if (!string.IsNullOrEmpty(d.ServiceLine)) parts.Add($"Service Line: {d.ServiceLine}");
+                if (!string.IsNullOrEmpty(d.Level1)) parts.Add($"Category: {d.Level1}");
+                if (!string.IsNullOrEmpty(d.Level2)) parts.Add($"Sub-category: {d.Level2}");
+                if (d.Quantity != "Not specified") parts.Add($"Quantity: {d.Quantity}");
+                if (!string.IsNullOrEmpty(d.PlannedStartDate) && !string.IsNullOrEmpty(d.PlannedEndDate))
+                    parts.Add($"Timeline: {d.PlannedStartDate} to {d.PlannedEndDate}");
+                return $"- {string.Join(" | ", parts)}";
+            }))
+            : "No deliverables specified";
+
         // Format UNCF Outcomes
         var uncfOutcomesDetails = opportunity.UNCFOutcomes?
             .Select(u => new
@@ -4459,6 +4602,10 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             ["countriesCount"] = (countriesDetails?.Count ?? 0).ToString(),
             ["sdGs"] = sdgsText,
             ["sdGsCount"] = (sdgsDetails?.Count ?? 0).ToString(),
+            ["primarySdGs"] = primarySdgsText,
+            ["primarySdGsCount"] = primarySdgsCount.ToString(),
+            ["secondarySdGs"] = secondarySdgsText,
+            ["secondarySdGsCount"] = secondarySdgsCount.ToString(),
             ["uncfOutcomes"] = uncfOutcomesText,
             ["uncfOutcomesCount"] = (uncfOutcomesDetails?.Count ?? 0).ToString(),
             ["unopsMissions"] = unopsMissionsText,
@@ -4553,7 +4700,17 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 : "None - selected org unit is normally responsible for all countries",
             ["countriesWithMatchingOrgUnit"] = countriesWithMatchingOrgUnit.Any()
                 ? string.Join(", ", countriesWithMatchingOrgUnit)
-                : "None"
+                : "None",
+            
+            // ==========================================
+            // ENHANCED FORMATTED FIELDS FOR AI PROMPTS
+            // ==========================================
+            ["countryNamesList"] = countryNamesList,
+            ["countryRegionsList"] = countryRegionsList,
+            ["budgetDisplay"] = budgetDisplay,
+            ["formattedTimeline"] = formattedTimeline,
+            ["formattedBeneficiaries"] = formattedBeneficiaries,
+            ["deliverablesEnhanced"] = deliverablesEnhanced
         };
     }
 
@@ -5157,8 +5314,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             return false;
         }
 
-        // Check immutability before any modifications
-        ThrowIfImmutable(opportunity);
+        // Check if opportunity can be modified (immutability and approval workflow status)
+        ThrowIfCannotModify(opportunity);
 
         opportunity.HighRisksAcknowledged = acknowledged;
         // LastModifiedDate and LastModifiedBy are handled automatically by AuditableDbContext

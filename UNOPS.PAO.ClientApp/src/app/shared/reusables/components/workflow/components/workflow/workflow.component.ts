@@ -90,6 +90,20 @@ export class WorkflowComponent implements OnInit {
   stageChangeSuccess = output();
 
   /**
+   * Emitted when a GO submission is successful (after all confirmations).
+   * Parent component can use this to trigger PDF generation.
+   * Contains entityName, entityId, and newStage.
+   */
+  goSubmissionSuccess = output<{ entityName: string; entityId: number; newStage: string }>();
+
+  /**
+   * Emitted when a GO approval is successful.
+   * Parent component can use this to trigger PDF generation.
+   * Contains entityName, entityId, and approvedStage.
+   */
+  goApprovalSuccess = output<{ entityName: string; entityId: number; approvedStage: string }>();
+
+  /**
    * Emitted when requirements validation fails during submission
    * Parent component can use this to scroll to the requirements panel
    */
@@ -140,6 +154,10 @@ export class WorkflowComponent implements OnInit {
 
   // Rejection to NO GO dialog state
   rejectToNoGoComment = signal('');
+
+  // Unmet requirements dialog state (for server-side validation failures)
+  showUnmetRequirementsDialog = signal(false);
+  unmetRequirements = signal<string[]>([]);
 
   // Pending submit request (to continue after confirmation)
   pendingSubmitRequest = signal<WorkflowSubmitRequest | null>(null);
@@ -465,6 +483,15 @@ export class WorkflowComponent implements OnInit {
         }
 
         this.stageChangeSuccess.emit();
+
+        // Emit GO approval success event for PDF generation (only for opportunities)
+        if (action === 'approve' && this.entityName().toLowerCase() === 'opportunity') {
+          this.goApprovalSuccess.emit({
+            entityName: this.entityName(),
+            entityId: parseInt(this.entityId(), 10),
+            approvedStage: this.workflowInfo()?.nextStage || 'GO',
+          });
+        }
       },
       error: () => {
         this.isActionInProgress.set(false);
@@ -485,15 +512,25 @@ export class WorkflowComponent implements OnInit {
         this.load();
       }
       this.stageChangeSuccess.emit();
+      
+      // Emit GO submission success event for PDF generation
+      // This is emitted for opportunity submissions to GO stage
+      if (this.entityName().toLowerCase() === 'opportunity') {
+        this.goSubmissionSuccess.emit({
+          entityName: this.entityName(),
+          entityId: parseInt(this.entityId(), 10),
+          newStage: request.newStage,
+        });
+      }
       return;
     }
 
     // PRD Flow: Check if requirements are not met (first check in flow)
     if (response.requirementsNotMet) {
-      // Show info toast with message to check requirements panel
-      this.feedbackDialogService?.showInfoToast({
-        detail: this.translateService.instant('message.workflow.requirementsNotMetDetail'),
-      });
+      // Store unmet requirements and show dialog
+      this.unmetRequirements.set(response.unmetRequirements || []);
+      this.showUnmetRequirementsDialog.set(true);
+      this.changeDetectorRef.detectChanges();
       // Emit event to notify parent that requirements validation failed
       // Parent can scroll to requirements panel
       this.requirementsValidationFailed.emit(response.unmetRequirements || []);
@@ -632,6 +669,14 @@ export class WorkflowComponent implements OnInit {
   closeRejectToNoGoDialog(): void {
     this.showRejectToNoGoDialog.set(false);
     this.rejectToNoGoComment.set('');
+  }
+
+  /**
+   * Close unmet requirements dialog
+   */
+  closeUnmetRequirementsDialog(): void {
+    this.showUnmetRequirementsDialog.set(false);
+    this.unmetRequirements.set([]);
   }
 
   /**

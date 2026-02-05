@@ -181,6 +181,7 @@
                 [formGroup]="opportunityForm"
                 [currentStage]="opportunity()?.stage ?? ''"
                 [entityData]="opportunity()"
+                (requirementClick)="handleRequirementClick($event)"
               />
             </div>
           }
@@ -225,6 +226,8 @@
               [customStageChangeHandler]="customStageChangeHandler"
               [responsibleOrgUnitName]="opportunity()?.responsibleOrgUnitName ?? ''"
               (onStageChangeSuccess)="handleStageChangeSuccess()"
+              (onGoSubmissionSuccess)="handleGoSubmissionSuccess($event)"
+              (onGoApprovalSuccess)="handleGoApprovalSuccess($event)"
             />
           </div>
 
@@ -445,6 +448,7 @@
               (opportunityUpdated)="handleOpportunityUpdate($event)"
               (changesDetected)="handleSectionChangesDetected('why')"
               (changesSavedOrDiscarded)="handleSectionChangesSaved('why')"
+              (unopsMissionsNotApplicableChange)="handleUnopsMissionsNotApplicableChange($event)"
             />
           </div>
 

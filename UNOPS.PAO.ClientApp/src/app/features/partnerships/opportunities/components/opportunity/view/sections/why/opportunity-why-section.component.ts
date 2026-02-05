@@ -128,6 +128,12 @@ export class OpportunityWhySectionComponent implements OnInit {
    */
   readonly changesSavedOrDiscarded = output<void>();
 
+  /**
+   * @description Emitted when the "Not Applicable" flag for UNOPS Missions changes.
+   * This enables real-time sync with parent form for validation purposes.
+   */
+  readonly unopsMissionsNotApplicableChange = output<boolean>();
+
   // Edit mode state
   readonly isEditing = signal<boolean>(false);
   readonly isSaving = signal<boolean>(false);
@@ -263,6 +269,18 @@ export class OpportunityWhySectionComponent implements OnInit {
   private preDialogUNOPSMissions: Set<number> | null = null;
 
   // Computed properties
+  
+  /**
+   * @description Get "Not Applicable" flag for view mode (reads from opportunity model).
+   * During editing, uses the editable signal; in view mode, uses the saved value.
+   */
+  readonly displayUNOPSMissionsNotApplicable = computed(() => {
+    if (this.isEditing()) {
+      return this.unopsMissionsNotApplicable();
+    }
+    return this.opportunity().unopsMissionsNotApplicable ?? false;
+  });
+
   readonly sdgCount = computed(() => this.opportunity().sdGs?.length || 0);
 
   // Sorted SDGs for view mode (sorted by sdgId)
@@ -620,7 +638,11 @@ export class OpportunityWhySectionComponent implements OnInit {
     } else {
       selected.add(missionId);
       // If adding a mission, uncheck "not applicable"
-      this.unopsMissionsNotApplicable.set(false);
+      if (this.unopsMissionsNotApplicable()) {
+        this.unopsMissionsNotApplicable.set(false);
+        // Emit change for parent form sync (enables real-time validation)
+        this.unopsMissionsNotApplicableChange.emit(false);
+      }
     }
     this.selectedUNOPSMissions.set(selected);
     this.markAsChanged();
@@ -663,6 +685,32 @@ export class OpportunityWhySectionComponent implements OnInit {
   });
 
   /**
+   * @description Get UNOPS Missions for display that works correctly in both view and edit modes.
+   * In edit mode: uses the editable selectedUNOPSMissions signal for real-time updates.
+   * In view mode: reads directly from opportunity().unopsMissions to always show saved data.
+   * This prevents the "mission disappearing in edit mode" bug caused by timing issues.
+   */
+  displayedUNOPSMissionsForView = computed(() => {
+    const allMissions = this.unopsMissions();
+    
+    if (this.isEditing()) {
+      // In edit mode, use the selectedUNOPSMissions signal
+      const selectedIds = this.selectedUNOPSMissions();
+      return allMissions.filter((mission) => selectedIds.has(mission.id));
+    } else {
+      // In view mode, read directly from opportunity model
+      const opp = this.opportunity();
+      if (!opp.unopsMissions || opp.unopsMissions.length === 0) {
+        return [];
+      }
+      
+      // Map the opportunity missions to full mission objects
+      const selectedIds = new Set(opp.unopsMissions.map((m) => m.unopsMissionId));
+      return allMissions.filter((mission) => selectedIds.has(mission.id));
+    }
+  });
+
+  /**
    * @description Get only active UNOPS Missions for selection in dialog
    * Excludes inactive missions to prevent users from selecting them
    */
@@ -687,6 +735,8 @@ export class OpportunityWhySectionComponent implements OnInit {
       this.selectedUNOPSMissions.set(new Set());
     }
     this.markAsChanged();
+    // Emit change for parent form sync (enables real-time validation)
+    this.unopsMissionsNotApplicableChange.emit(checked);
     this.cdr.detectChanges();
   }
 
@@ -720,7 +770,11 @@ export class OpportunityWhySectionComponent implements OnInit {
     }
 
     // Reset "not applicable" flag - don't auto-check
-    this.unopsMissionsNotApplicable.set(false);
+    if (this.unopsMissionsNotApplicable()) {
+      this.unopsMissionsNotApplicable.set(false);
+      // Emit change for parent form sync (enables real-time validation)
+      this.unopsMissionsNotApplicableChange.emit(false);
+    }
 
     this.showUNOPSMissionsDialog.set(false);
     this.preDialogUNOPSMissions = null;
@@ -803,8 +857,8 @@ export class OpportunityWhySectionComponent implements OnInit {
       this.selectedUNOPSMissions.set(selectedIds);
     }
     
-    // Initialize "not applicable" state - always false so checkbox is not auto-selected
-    this.unopsMissionsNotApplicable.set(false);
+    // Initialize "not applicable" state from opportunity data
+    this.unopsMissionsNotApplicable.set(opp.unopsMissionsNotApplicable ?? false);
 
     this.isEditing.set(true);
     this.cdr.detectChanges();
@@ -870,6 +924,7 @@ export class OpportunityWhySectionComponent implements OnInit {
           unopsMissionId: missionId,
         }),
       ),
+      unopsMissionsNotApplicable: this.unopsMissionsNotApplicable(),
     };
 
     // Prepare WHERE data with updated framework alignments
@@ -1039,8 +1094,8 @@ export class OpportunityWhySectionComponent implements OnInit {
       this.selectedUNOPSMissions.set(new Set());
     }
     
-    // Reset "not applicable" flag
-    this.unopsMissionsNotApplicable.set(false);
+    // Load "not applicable" flag from opportunity model
+    this.unopsMissionsNotApplicable.set(opp.unopsMissionsNotApplicable ?? false);
 
     this.cdr.detectChanges();
   }

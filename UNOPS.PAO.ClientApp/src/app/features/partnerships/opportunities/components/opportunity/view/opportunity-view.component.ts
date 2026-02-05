@@ -44,11 +44,15 @@ import { MarkdownModule } from 'ngx-markdown';
 
 // Workflow components
 import { StageWorkflowComponent } from '@shared/reusables/components/workflow/components/stage-workflow/stage-workflow.component';
-import { RequirementsValidationComponent } from '@shared/reusables/components/workflow/components/requirements-validation/requirements-validation.component';
+import {
+  RequirementsValidationComponent,
+  RequirementClickEvent,
+} from '@shared/reusables/components/workflow/components/requirements-validation/requirements-validation.component';
 
 // Services
 import { FeedbackDialogService } from '@shared/services/ui';
 import { PermissionUtilityService, AuthService } from '@core/services/auth';
+import { GoogleOAuthService } from '@core/services/auth/google-oauth.service';
 import { PageContextService } from '@shared/services/utils';
 import { OpportunityService } from '../../../services/opportunity.service';
 import { Opportunity, GoDecisionPayload, NoGoDecisionPayload, Risk } from '@shared/models/opportunity.model';
@@ -154,6 +158,7 @@ export class OpportunityViewComponent
   confirmationService = inject(ConfirmationService);
   private pageContextService = inject(PageContextService);
   private authService = inject(AuthService);
+  private googleOAuthService = inject(GoogleOAuthService);
 
   // State
   loading = signal<boolean>(true);
@@ -227,6 +232,7 @@ export class OpportunityViewComponent
     opportunityStatementMarkdown: new FormControl(''),
     initiativeBudgetUSD: new FormControl<number | null>(null),
     unopsMissions: new FormControl<unknown[]>([]),
+    unopsMissionsNotApplicable: new FormControl<boolean>(false),
     sdgs: new FormControl<unknown[]>([]),
     fundingPartners: new FormControl<unknown[]>([]),
     clientPartners: new FormControl<unknown[]>([]),
@@ -333,10 +339,21 @@ export class OpportunityViewComponent
   });
 
   // Computed permission for changing workflow stage
+  // Note: Workflow actions (Recall, Approve, Reject) should be available even when canUpdate is false
+  // due to approval pending status. The workflow component will verify specific permissions (canRecall, canApprove)
   canChangeStage = computed(() => {
     const opp = this.opportunity();
-    // Check if user has update permissions (required for workflow actions)
-    return this.canUpdate() && opp?.id !== undefined;
+    if (!opp?.id) return false;
+    
+    // If in immutable stage (GO, NO GO, CANCELLED), no workflow actions allowed
+    if (opp.permissions?.isImmutable) return false;
+    
+    // If in approval pending status, allow workflow actions (the workflow component
+    // will check specific permissions like canRecall, canApprove from backend)
+    if (opp.permissions?.isApprovalPending || opp.isInWorkflow) return true;
+    
+    // Otherwise, check update permission (for initiating workflow submissions)
+    return this.canUpdate();
   });
 
   // ===== Go/No-Go Decision State =====
@@ -347,6 +364,14 @@ export class OpportunityViewComponent
   isImmutable = computed(() => {
     const opp = this.opportunity();
     return opp?.permissions?.isImmutable ?? false;
+  });
+
+  /**
+   * @description Whether the entity is currently in an approval workflow (Approval Pending status)
+   */
+  isApprovalPending = computed(() => {
+    const opp = this.opportunity();
+    return opp?.permissions?.isApprovalPending ?? false;
   });
 
   /**
@@ -892,6 +917,7 @@ export class OpportunityViewComponent
       opportunityStatementMarkdown: opp.opportunityStatementMarkdown || '',
       initiativeBudgetUSD: opp.initiativeBudgetUSD ?? null,
       unopsMissions: opp.unopsMissions || [],
+      unopsMissionsNotApplicable: opp.unopsMissionsNotApplicable || false,
       sdgs: opp.sdGs || [],
       fundingPartners: opp.fundingPartners || [],
       clientPartners: opp.clientPartners || [],
@@ -1431,6 +1457,15 @@ export class OpportunityViewComponent
   }
 
   /**
+   * Handle the "Not Applicable" flag change for UNOPS Missions from WHY section.
+   * Updates the form control to enable real-time requirements validation.
+   * @param value The new value of the flag
+   */
+  handleUnopsMissionsNotApplicableChange(value: boolean): void {
+    this.opportunityForm.get('unopsMissionsNotApplicable')?.setValue(value);
+  }
+
+  /**
    * @description Reload opportunity data from API (e.g., after AI changes)
    * @returns {void}
    */
@@ -1505,6 +1540,92 @@ export class OpportunityViewComponent
     this.reloadOpportunity();
     // Note: Success feedback is handled by the specific action (Cancel, Reopen, Submit, etc.)
     // to show action-specific messages instead of a generic one
+  }
+
+  /**
+   * @description Handle successful GO submission
+   * Generates a PDF of the Opportunity Statement after successful submission to GO stage
+   * @param {object} data - Event data containing entityName, entityId, and newStage
+   */
+  async handleGoSubmissionSuccess(data: { entityName: string; entityId: number; newStage: string }): Promise<void> {
+    console.log('📄 GO submission successful, generating statement PDF...', data);
+
+    const opp = this.opportunity();
+    if (!opp) {
+      console.error('❌ No opportunity data available for PDF generation');
+      return;
+    }
+
+    const markdown = opp.opportunityStatementMarkdown;
+    if (!markdown) {
+      console.warn('⚠️ No opportunity statement markdown available - skipping PDF generation');
+      return;
+    }
+
+    if (!this.documentsComponent) {
+      console.error('❌ Documents component not available for PDF generation');
+      return;
+    }
+
+    // Generate PDF with submission filename: Opportunity_<ID>_Submission_YYYYMMDD.pdf
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+    const pdfFileName = `Opportunity_${data.entityId}_Submission_${dateStr}.pdf`;
+    
+    try {
+      await this.documentsComponent.generateStatementPdf(
+        markdown,
+        data.entityId,
+        pdfFileName
+      );
+    } catch (error) {
+      console.error('❌ Failed to generate statement PDF:', error);
+      // PDF generation errors are already handled in the documents component
+      // with appropriate user feedback, so we just log here
+    }
+  }
+
+  /**
+   * @description Handle successful GO approval
+   * Generates a PDF of the Opportunity Statement after successful approval (GO decision)
+   * @param {object} data - Event data containing entityName, entityId, and approvedStage
+   */
+  async handleGoApprovalSuccess(data: { entityName: string; entityId: number; approvedStage: string }): Promise<void> {
+    console.log('📄 GO approval successful, generating statement PDF...', data);
+
+    const opp = this.opportunity();
+    if (!opp) {
+      console.error('❌ No opportunity data available for PDF generation');
+      return;
+    }
+
+    const markdown = opp.opportunityStatementMarkdown;
+    if (!markdown) {
+      console.warn('⚠️ No opportunity statement markdown available - skipping PDF generation');
+      return;
+    }
+
+    if (!this.documentsComponent) {
+      console.error('❌ Documents component not available for PDF generation');
+      return;
+    }
+
+    // Generate PDF with approval filename: Opportunity_<ID>_Approved_YYYYMMDD.pdf
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+    const pdfFileName = `Opportunity_${data.entityId}_Approved_${dateStr}.pdf`;
+    
+    try {
+      await this.documentsComponent.generateStatementPdf(
+        markdown,
+        data.entityId,
+        pdfFileName
+      );
+    } catch (error) {
+      console.error('❌ Failed to generate statement PDF:', error);
+      // PDF generation errors are already handled in the documents component
+      // with appropriate user feedback, so we just log here
+    }
   }
 
   // ===== Go/No-Go Decision Handlers =====
@@ -2002,6 +2123,48 @@ export class OpportunityViewComponent
         this.isScrolling = false;
       }, 800); // Reduced from 1500ms to 800ms
     }, 100);
+  }
+
+  /**
+   * Handle click on a requirement item in the requirements validation panel.
+   * Navigates to the section containing the required field and scrolls to the specific field.
+   * @param event - The requirement click event containing section and field information
+   */
+  handleRequirementClick(event: RequirementClickEvent): void {
+    if (event.section && this.isValidSection(event.section)) {
+      this.scrollToSection(event.section);
+
+      // After scrolling to section, scroll to the specific field and highlight it
+      if (event.fieldName) {
+        // Use a delay to allow section scroll to complete
+        setTimeout(() => {
+          this.scrollToFieldAndHighlight(event.fieldName!);
+        }, 600);
+      }
+    }
+  }
+
+  /**
+   * Scroll to a specific field element and apply highlight effect.
+   * @param fieldName - The field name to scroll to (matches id="field-{fieldName}")
+   */
+  private scrollToFieldAndHighlight(fieldName: string): void {
+    const fieldElement = document.getElementById(`field-${fieldName}`);
+    if (fieldElement) {
+      // Scroll the field into view with smooth behavior
+      fieldElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+
+      // Add highlight effect
+      fieldElement.classList.add('field-highlight');
+
+      // Remove highlight after animation completes
+      setTimeout(() => {
+        fieldElement.classList.remove('field-highlight');
+      }, 2000);
+    }
   }
 
   /**
