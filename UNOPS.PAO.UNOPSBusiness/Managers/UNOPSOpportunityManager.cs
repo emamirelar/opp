@@ -2118,12 +2118,20 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 .Select(er => er.Id)
                 .ToListAsync();
 
+            // Get Opportunity Manager role ID - Opportunity Manager is managed separately via request.OpportunityManagerId
+            var opportunityManagerRoleId = await context.Set<EntityRole>()
+                .Where(er => er.Name != null && er.Name.ToLower() == "opportunity manager" && er.EntityType == "Opportunity" && !er.IsDeleted)
+                .Select(er => er.Id)
+                .FirstOrDefaultAsync();
+
             // Deduplicate user-based stakeholders by UserId + EntityRoleId combination (keep first occurrence)
             // EXCLUDE SME roles - they should only be managed via SMESelections
+            // EXCLUDE Opportunity Manager role - it is managed separately via OpportunityManagerId field
             var requestedUserStakeholders = request.Stakeholders
                 .Where(s => s.UserId.HasValue 
                     && !s.OrganizationHierarchyId.HasValue 
-                    && !smeRoleIds.Contains(s.EntityRoleId)) // EXCLUDE SME roles
+                    && !smeRoleIds.Contains(s.EntityRoleId) // EXCLUDE SME roles
+                    && s.EntityRoleId != opportunityManagerRoleId) // EXCLUDE Opportunity Manager role
                 .GroupBy(s => new { s.UserId, s.EntityRoleId })
                 .Select(g => g.First())
                 .ToList();
@@ -2152,12 +2160,14 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
             opportunity.Stakeholders ??= new List<OpportunityStakeholder>();
 
-            // Get existing user-based stakeholders (not auto-populated and NOT SME roles)
-            // SME stakeholders are managed separately and should not be touched by this logic
+            // Get existing user-based stakeholders (not auto-populated and NOT SME/Opportunity Manager roles)
+            // SME stakeholders are managed separately via SMESelections
+            // Opportunity Manager stakeholders are managed separately via OpportunityManagerId field
             var existingUserStakeholders = opportunity.Stakeholders
                 .Where(s => s.UserId.HasValue 
                     && !s.OrganizationHierarchyId.HasValue 
-                    && !smeRoleIds.Contains(s.EntityRoleId)) // EXCLUDE SME roles
+                    && !smeRoleIds.Contains(s.EntityRoleId) // EXCLUDE SME roles
+                    && s.EntityRoleId != opportunityManagerRoleId) // EXCLUDE Opportunity Manager role
                 .ToList();
 
             // Find stakeholders to remove (exist in DB but not in request)
@@ -2217,7 +2227,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         {
             // Get the Opportunity Manager role
             var opportunityManagerRole = await context.Set<EntityRole>()
-                .FirstOrDefaultAsync(er => er.Name != null && er.Name.ToLower().Contains("manager") && er.EntityType == "Opportunity");
+                .FirstOrDefaultAsync(er => er.Name != null && er.Name.ToLower() == "opportunity manager" && er.EntityType == "Opportunity");
             
             if (opportunityManagerRole != null)
             {
