@@ -60,6 +60,7 @@ source:
     , REGIONAL_DIRECTORS AS (
       SELECT
         Region AS OrgCode
+        , Org_Unit
         , Region_Director_Resource AS ResourceId
         , Region_Director_Resource_Name AS ResourceName
         , Region_Director_Position_Description AS PositionDescription
@@ -76,6 +77,7 @@ source:
     , REGIONAL_DEPUTY_DIRECTORS AS (
       SELECT
         Region AS OrgCode
+        , Org_Unit
         , Region_Deputy_Director_Resource AS ResourceId
         , Region_Deputy_Director_Resource_Name AS ResourceName
         , Region_Deputy_Director_Position_Description AS PositionDescription
@@ -92,6 +94,7 @@ source:
     , HUB_DIRECTORS AS (
       SELECT
         Hub AS OrgCode
+        , Org_Unit
         , Hub_Director_Resource AS ResourceId
         , Hub_Director_Resource_Name AS ResourceName
         , Hub_Director_Position_Description AS PositionDescription
@@ -108,6 +111,7 @@ source:
     , HUB_DEPUTY_DIRECTORS AS (
       SELECT
         Hub AS OrgCode
+        , Org_Unit
         , Hub_Deputy_Director_Resource AS ResourceId
         , Hub_Deputy_Director_Resource_Name AS ResourceName
         , Hub_Deputy_Director_Position_Description AS PositionDescription
@@ -124,6 +128,7 @@ source:
     , ORGUNIT_DIRECTORS AS (
       SELECT
         Org_Unit AS OrgCode
+        , Org_Unit
         , Org_Unit_Director_Resource AS ResourceId
         , Org_Unit_Director_Resource_Name AS ResourceName
         , Org_Unit_Director_Position_Description AS PositionDescription
@@ -140,6 +145,7 @@ source:
     , ORGUNIT_DEPUTY_DIRECTORS AS (
       SELECT
         Org_Unit AS OrgCode
+        , Org_Unit
         , Org_Unit_Deputy_Director_Resource AS ResourceId
         , Org_Unit_Deputy_Director_Resource_Name AS ResourceName
         , Org_Unit_Deputy_Director_Position_Description AS PositionDescription
@@ -178,8 +184,10 @@ source:
         ResourceId
       ))), 2147483647) AS INT64) AS Id
       
-      -- Map OrgCode to OrganizationHierarchy EntityId using hash (same logic as organization-hierarchies.yaml)
-      , CAST(MOD(ABS(FARM_FINGERPRINT(OrgCode)), 2147483647) AS INT64) AS EntityId
+      -- IMPORTANT: EntityId should ALWAYS map to the Org_Unit (not Region/Hub)
+      -- This links the director role to the SPECIFIC org unit they manage
+      -- Even Regional/Hub directors are assigned TO manage specific org units
+      , CAST(MOD(ABS(FARM_FINGERPRINT(Org_Unit)), 2147483647) AS INT64) AS EntityId
       , 'OrganizationHierarchy' AS EntityType
       
       -- Map UserId from ResourceId (employee ID) - ensure it's INT64
@@ -207,6 +215,7 @@ source:
       
       -- Additional context fields for debugging
       , OrgCode
+      , Org_Unit
       , ResourceId
       , ResourceName
       , PositionDescription
