@@ -859,20 +859,12 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     this.processFiles([file]);
   }
 
-  // Extract current route from hash-based or path-based routing
+  // Extract current route from path-based routing (HTML5 History API)
   private extractCurrentRoute(): string {
     try {
-      const hash = window.location.hash;
       const pathname = window.location.pathname;
       const search = window.location.search;
       
-      // Check if using hash-based routing
-      if (hash && hash.startsWith('#/')) {
-        // Extract route from hash (remove the # and keep the /)
-        return hash.substring(1) + search;
-      }
-      
-      // Fallback to path-based routing
       return pathname + search;
     } catch (error) {
       console.error('Error extracting current route:', error);

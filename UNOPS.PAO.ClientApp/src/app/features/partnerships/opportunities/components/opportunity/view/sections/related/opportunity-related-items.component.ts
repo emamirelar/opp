@@ -117,6 +117,6 @@ export class OpportunityRelatedItemsComponent implements OnInit {
    * @description Navigate to interaction detail page
    */
   navigateToInteraction(id: number): void {
-    window.open(`/#/partnerships/interactions/${id}`, '_blank');
+    window.open(`/partnerships/interactions/${id}`, '_blank');
   }
 }

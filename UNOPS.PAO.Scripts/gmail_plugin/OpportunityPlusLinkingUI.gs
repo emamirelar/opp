@@ -366,7 +366,7 @@ function buildOpportunityPlusCard(relatedRecords, messageData, checkboxStates) {
 
     // Add fixed footer with conditional button based on existing interaction
     if(messageData.existingInteraction) {
-      const viewUrl = `${getBaseUrl()}/#/partnerships/interactions/${messageData.existingInteraction.id}`;
+      const viewUrl = `${getBaseUrl()}/partnerships/interactions/${messageData.existingInteraction.id}`;
 
       const footerButton = CardService.newTextButton()
             .setText('View')

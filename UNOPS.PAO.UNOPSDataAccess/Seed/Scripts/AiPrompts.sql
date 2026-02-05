@@ -749,7 +749,7 @@ INTRODUCTORY_PARAGRAPH (Highlight key interactions from the last month with part
 - **DATE | INTERACTION_TYPE | CONTACT_NAME, CONTACT_TITLE | SUBJECT**
   - Key discussion: DESCRIPTION
   - Project context: PROJECT_INFO or "not related to a specific project"
-  - [See more](/#/partnerships/interactions/id){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/id){:target="_blank" rel="noopener noreferrer"}
 
 (Repeat for each partner with recent interactions)
 
@@ -789,7 +789,7 @@ Over the past month, UNOPS has maintained active engagement with 3 UN agencies, 
 - **October 2, 2025 | Meeting | Sarah Johnson, Regional Director | Joint Logistics Coordination in Sudan**
   - Key discussion: Discussed coordination of logistics operations for humanitarian response in Sudan, including shared warehousing and transport solutions
   - Project context: Sudan Emergency Response Programme
-  - [See more](/#/partnerships/interactions/id){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/id){:target="_blank" rel="noopener noreferrer"}
 
 - **September 28, 2025 | Email | Michael Chen, Procurement Officer | Framework Agreement Review**
   - Key discussion: Reviewed draft framework agreement for procurement services in the Asia-Pacific region
@@ -801,7 +801,7 @@ Over the past month, UNOPS has maintained active engagement with 3 UN agencies, 
 - **October 1, 2025 | Conference Call | Maria Rodriguez, Country Director | Education Infrastructure Project**
   - Key discussion: Planning phase for school construction project in Madagascar, including site selection and community engagement strategy
   - Project context: Madagascar Education Access Programme
-  - [See more](/#/partnerships/interactions/id){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/id){:target="_blank" rel="noopener noreferrer"}
 
 ## Partnership Analysis
 
@@ -902,7 +902,7 @@ INTRODUCTORY_PARAGRAPH (Highlight key interactions from the last month with this
   - Key discussion: DESCRIPTION
   - Participants: CONTACT_NAMES from partner
   - Project context: PROJECT_INFO or "not related to a specific project"
-  - [See more](/#/partnerships/interactions/INTERACTION_ID){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/INTERACTION_ID){:target="_blank" rel="noopener noreferrer"}
 
 (List up to 10 most recent interactions)
 
@@ -925,19 +925,19 @@ Over the past month, UNOPS has maintained strong engagement with the World Bank,
   - Key discussion: Discussed framework agreement for regional procurement services and capacity building initiatives
   - Participants: Michael Chen (Senior Procurement Officer), Lisa Wang (Regional Director) from partner
   - Project context: Regional Infrastructure Programme, Project #45678
-  - [See more](/#/partnerships/interactions/123){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/123){:target="_blank" rel="noopener noreferrer"}
 
 - **2025-10-05 | Email | David Martinez, B5516 | Proposal Follow-up**
   - Key discussion: Follow-up on submitted proposal for education infrastructure project
   - Participants: James Brown (Programme Specialist) from partner
   - Project context: not related to a specific project
-  - [See more](/#/partnerships/interactions/124){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/124){:target="_blank" rel="noopener noreferrer"}
 
 - **2025-09-28 | Conference Call | Anna Thompson, B5520 | Project Implementation Review**
   - Key discussion: Quarterly review of ongoing water infrastructure projects and budget allocation
   - Participants: Robert Lee (Country Manager), Maria Santos (Finance Officer) from partner
   - Project context: Kenya Water Supply Programme, Project #34567
-  - [See more](/#/partnerships/interactions/125){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/125){:target="_blank" rel="noopener noreferrer"}
 
 ## Interaction Statistics
 
@@ -973,7 +973,7 @@ Do not include markdown code blocks or backticks in the response. Focus on actio
 {recentInteractions}
 
 Each interaction includes:
-- id: Use this to create links like [See more](/#/partnerships/interactions/{id}){:target="_blank" rel="noopener noreferrer"}
+- id: Use this to create links like [See more](/partnerships/interactions/{id}){:target="_blank" rel="noopener noreferrer"}
 - subject: The interaction subject
 - description: Details about the interaction
 - date: Interaction date
@@ -1128,7 +1128,7 @@ INTRODUCTORY_PARAGRAPH (Highlight key interactions from the last month with part
 - **DATE | INTERACTION_TYPE | CONTACT_NAME, CONTACT_TITLE | SUBJECT**
   - Key discussion: DESCRIPTION
   - Project context: PROJECT_INFO or "not related to a specific project"
-  - [See more](/#/partnerships/interactions/id){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/id){:target="_blank" rel="noopener noreferrer"}
 
 (Repeat for each partner with recent interactions)
 
@@ -1168,19 +1168,19 @@ Over the past month, UNOPS has maintained active engagement with 3 UN agencies, 
 - **October 2, 2025 | Meeting | Sarah Johnson, Regional Director | Joint Logistics Coordination in Sudan**
   - Key discussion: Discussed coordination of logistics operations for humanitarian response in Sudan, including shared warehousing and transport solutions
   - Project context: Sudan Emergency Response Programme
-  - [See more](/#/partnerships/interactions/123){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/123){:target="_blank" rel="noopener noreferrer"}
 
 - **September 28, 2025 | Email | Michael Chen, Procurement Officer | Framework Agreement Review**
   - Key discussion: Reviewed draft framework agreement for procurement services in the Asia-Pacific region
   - Project context: not related to a specific project
-  - [See more](/#/partnerships/interactions/124){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/124){:target="_blank" rel="noopener noreferrer"}
 
 **UNICEF**
 
 - **October 1, 2025 | Conference Call | Maria Rodriguez, Country Director | Education Infrastructure Project**
   - Key discussion: Planning phase for school construction project in Madagascar, including site selection and community engagement strategy
   - Project context: Madagascar Education Access Programme
-  - [See more](/#/partnerships/interactions/125){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/125){:target="_blank" rel="noopener noreferrer"}
 
 ## Partnership Analysis
 
@@ -1234,7 +1234,7 @@ Do not include markdown code blocks or backticks in the response. Focus on actio
 {recentInteractions}
 
 Each interaction in recentInteractions includes:
-- id: Use this to create links like [See more](/#/partnerships/interactions/{id}){:target="_blank" rel="noopener noreferrer"}
+- id: Use this to create links like [See more](/partnerships/interactions/{id}){:target="_blank" rel="noopener noreferrer"}
 - subject: The interaction subject
 - description: Details about the interaction
 - date: Interaction date (YYYY-MM-DD format)
@@ -1468,7 +1468,7 @@ BRIEF_DESCRIPTION (Summarize the duration and nature of UNOPS engagement with th
 - **DATE | INTERACTION_TYPE | SUBJECT**
   - Description: BRIEF_DESCRIPTION
   - UNOPS participants: USER_NAMES
-  - [See more](/#/partnerships/interactions/INTERACTION_ID){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/INTERACTION_ID){:target="_blank" rel="noopener noreferrer"}
 
 (List up to 10 most recent interactions)
 
@@ -1516,17 +1516,17 @@ Dr. Sarah Johnson has been a key contact for UNOPS since 2022, with consistent e
 - **2025-10-08 | Meeting | Joint Procurement Framework Discussion**
   - Description: Discussed framework agreement for regional procurement services and capacity building initiatives
   - UNOPS participants: Michael Chen (B5507), Lisa Wang (B5516)
-  - [See more](/#/partnerships/interactions/123){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/123){:target="_blank" rel="noopener noreferrer"}
 
 - **2025-09-25 | Email | Project Budget Review**
   - Description: Follow-up on quarterly budget allocation for Kenya Water Supply Programme
   - UNOPS participants: David Martinez (B5520)
-  - [See more](/#/partnerships/interactions/124){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/124){:target="_blank" rel="noopener noreferrer"}
 
 - **2025-09-15 | Conference Call | Strategic Planning Session**
   - Description: Planning for 2026 joint initiatives and funding opportunities
   - UNOPS participants: Anna Thompson (B5507), James Brown (B5525)
-  - [See more](/#/partnerships/interactions/125){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/125){:target="_blank" rel="noopener noreferrer"}
 
 ### Contact Statistics
 
@@ -1601,7 +1601,7 @@ Do not include markdown code blocks or backticks in the response. Focus on provi
 {interactions}
 
 Each interaction includes:
-- id: Use this to create links like [See more](/#/partnerships/interactions/{id}){:target="_blank" rel="noopener noreferrer"}
+- id: Use this to create links like [See more](/partnerships/interactions/{id}){:target="_blank" rel="noopener noreferrer"}
 - subject: The interaction subject
 - description: Details about the interaction
 - date: Interaction date
