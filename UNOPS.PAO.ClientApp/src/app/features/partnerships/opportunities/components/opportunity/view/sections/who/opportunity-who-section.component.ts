@@ -821,7 +821,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
    * @description Navigate to partner detail page
    */
   navigateToPartner(partnerId: number): void {
-    this.router.navigate(['/#/partnerships/partners', partnerId]);
+    this.router.navigate(['/partnerships/partners', partnerId]);
   }
 
   /**
