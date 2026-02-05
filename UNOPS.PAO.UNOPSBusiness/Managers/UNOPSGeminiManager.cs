@@ -67,6 +67,7 @@ public class UNOPSGeminiManager : IGeminiManager
     private readonly GoogleCredential _credentials;
     private readonly DataRepository<AiPrompt> _promptRepository;
     private readonly UNOPSAppDbContext _context;
+    private readonly IDbContextFactory<UNOPSAppDbContext> _dbContextFactory;
     private readonly GoogleTextToSpeechService _ttsService;
     private readonly TextExtractionService _textExtractionService;
     private readonly GoogleCloudStorageService _gcsService;
@@ -90,10 +91,11 @@ public class UNOPSGeminiManager : IGeminiManager
     private readonly string _sessionConfigCacheKey = "session_configuration";
     private readonly TimeSpan _sessionConfigCacheExpiration = TimeSpan.FromHours(1);
 
-    public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger<UNOPSGeminiManager> logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient)
+    public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger<UNOPSGeminiManager> logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient, IDbContextFactory<UNOPSAppDbContext> dbContextFactory)
     {
         _mapper = mapper;
         _context = context;
+        _dbContextFactory = dbContextFactory;
         _promptRepository = new DataRepository<AiPrompt>(context);
         _configuration = configuration;
         _logger = logger;
@@ -2572,6 +2574,9 @@ public class UNOPSGeminiManager : IGeminiManager
     /// <param name="userId">The user ID</param>
     private async Task CreateNotificationsFromModifications(JArray dataModifications, int userId)
     {
+        // Use factory to create a new DbContext for thread-safe background operations
+        await using var ctx = await _dbContextFactory.CreateDbContextAsync();
+        
         try
         {
             foreach (var modification in dataModifications)
@@ -2608,13 +2613,13 @@ public class UNOPSGeminiManager : IGeminiManager
                     CreatedAt = DateTime.UtcNow
                 };
 
-                _context.Notifications.Add(notification);
+                ctx.Notifications.Add(notification);
                 
                 _logger.LogInformation($"Created notification for user {userId}: {modificationType} on {entityType} {cleanEntityId}");
             }
 
             // Save all notifications to database
-            await _context.SaveChangesAsync();
+            await ctx.SaveChangesAsync();
             
             _logger.LogInformation($"Successfully saved {dataModifications.Count} notifications for user {userId}");
         }

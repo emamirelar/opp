@@ -640,6 +640,13 @@ public class Startup
                 .UseNpgsql(dataSource)
                 .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
 
+        // PERFORMANCE: Add DbContextFactory for PAOIdentityDbContext to support thread-safe parallel operations
+        // This allows code that needs to run identity queries in parallel to create separate context instances
+        services.AddDbContextFactory<PAOIdentityDbContext>(options =>
+            options
+                .UseNpgsql(dataSource)
+                .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
+
         // ==========================================
         // Workflow Submodule - DbContext and Services
         // ==========================================
