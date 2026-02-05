@@ -367,7 +367,7 @@
       <div
         class="flex-shrink-0 border-r border-unops-neutral-300 bg-unops-surface-primary sticky top-0 mt-6 transition-all duration-300"
         [class.hidden]="documentsCollapsed() && innerWidth() < 768"
-        style="height: fit-content; max-height: 100%; align-self: flex-start"
+        style="max-height: calc(100vh - 200px); align-self: flex-start"
       >
         <app-opportunity-documents
           [opportunityId]="opportunity()!.id!"
