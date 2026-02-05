@@ -449,17 +449,18 @@ export class OpportunityTeamSectionComponent implements OnInit {
   });
 
   // Grouped stakeholders from NORMALLY RESPONSIBLE org units (for "Other Internal Stakeholders" section)
-  // Excludes DoA1, DoA2, DoA3 roles and Opportunity Manager (handled by dedicated field)
+  // Excludes DoA1 and Opportunity Manager (handled by dedicated field)
+  // Includes DoA2 and DoA3 as they should appear in Internal Stakeholders section
   readonly groupedNormallyResponsibleStakeholders = computed(() => {
     const stakeholders = this.normallyResponsibleOrgUnitStakeholders();
     const normalOrgUnits = this.normallyResponsibleOrgUnits();
     
-    // Filter out DoA1, DoA2, DoA3 roles and Opportunity Manager (has dedicated field)
+    // Filter out DoA1 and Opportunity Manager only (DoA2/DoA3 should be included)
     const filteredStakeholders = stakeholders.filter(stakeholder => {
       const roleName = stakeholder.entityRoleName || '';
       const roleCode = stakeholder.entityRoleCode || '';
-      // Exclude DoA roles and Opportunity Manager (by name or code)
-      return !['DoA1', 'DoA2', 'DoA3', 'Opportunity Manager'].includes(roleName) &&
+      // Exclude DoA1 and Opportunity Manager (by name or code)
+      return !['DoA1', 'Opportunity Manager'].includes(roleName) &&
              roleCode !== 'Opportunity_Manager_Opportunity';
     });
     
@@ -586,6 +587,16 @@ export class OpportunityTeamSectionComponent implements OnInit {
           (a, b) => (roleOrder[a.entityRoleName as keyof typeof roleOrder] || 999) - (roleOrder[b.entityRoleName as keyof typeof roleOrder] || 999)
         ),
       }));
+  });
+
+  // Decision Making Pathway DOAs from RESPONSIBLE ORG UNIT ONLY (for Decision Making Pathway section)
+  readonly responsibleOrgUnitDecisionMakingPathway = computed(() => {
+    return this.decisionMakingPathwayStakeholders().filter(group => !group.isNormallyResponsible);
+  });
+
+  // Decision Making Pathway DOAs from NORMALLY RESPONSIBLE ORG UNITS (for Internal Stakeholders section)
+  readonly normallyResponsibleDecisionMakingPathway = computed(() => {
+    return this.decisionMakingPathwayStakeholders().filter(group => group.isNormallyResponsible);
   });
 
   // Relevant People signals

@@ -1118,22 +1118,56 @@ public class WorkflowController : BaseController
                 if (user != null)
                 {
                     // Get the user's DOA level for this entity (if any)
-                    // DOA levels are stored as EntityRoles with codes like "DoA1_OrganizationHierarchy", "DoA2_OrganizationHierarchy", etc.
+                    // DOA levels are stored as EntityRoles on OrganizationHierarchy, not on the entity itself
+                    // We need to look up the DOA role based on the entity's responsible org unit
                     string? doaLevel = null;
-                    var doaEntityUserRole = await _context.EntityUserRoles
-                        .Include(eur => eur.EntityRole)
-                        .Where(eur => eur.UserId == userId 
-                            && eur.EntityId == id 
-                            && eur.EntityType == normalizedEntityName
-                            && eur.EntityRole != null 
-                            && eur.EntityRole.Code != null
-                            && eur.EntityRole.Code.StartsWith("DoA"))
-                        .FirstOrDefaultAsync();
                     
-                    if (doaEntityUserRole?.EntityRole != null)
+                    // For Opportunity entities, look up DOA based on the opportunity's ResponsibleOrgUnitId
+                    if (normalizedEntityName.Equals("Opportunity", StringComparison.OrdinalIgnoreCase))
                     {
-                        // Extract DOA level from role name (e.g., "DoA1", "DoA2", "DoA3")
-                        doaLevel = doaEntityUserRole.EntityRole.Name ?? doaEntityUserRole.EntityRole.Code;
+                        var opportunity = await _context.Opportunities
+                            .AsNoTracking()
+                            .Where(o => o.Id == id && !o.IsDeleted)
+                            .Select(o => new { o.ResponsibleOrgUnitId })
+                            .FirstOrDefaultAsync();
+                        
+                        if (opportunity?.ResponsibleOrgUnitId.HasValue == true)
+                        {
+                            // DOA roles are assigned at OrganizationHierarchy level with EntityType = "OrganizationHierarchy"
+                            var doaEntityUserRole = await _context.EntityUserRoles
+                                .Include(eur => eur.EntityRole)
+                                .Where(eur => eur.UserId == userId 
+                                    && eur.EntityId == opportunity.ResponsibleOrgUnitId.Value
+                                    && eur.EntityType == "OrganizationHierarchy"
+                                    && eur.EntityRole != null 
+                                    && eur.EntityRole.Code != null
+                                    && eur.EntityRole.Code.StartsWith("DoA"))
+                                .FirstOrDefaultAsync();
+                            
+                            if (doaEntityUserRole?.EntityRole != null)
+                            {
+                                // Extract DOA level from role name (e.g., "DoA1", "DoA2", "DoA3")
+                                doaLevel = doaEntityUserRole.EntityRole.Name ?? doaEntityUserRole.EntityRole.Code;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // For other entity types, fall back to looking up DOA on the entity itself
+                        var doaEntityUserRole = await _context.EntityUserRoles
+                            .Include(eur => eur.EntityRole)
+                            .Where(eur => eur.UserId == userId 
+                                && eur.EntityId == id 
+                                && eur.EntityType == normalizedEntityName
+                                && eur.EntityRole != null 
+                                && eur.EntityRole.Code != null
+                                && eur.EntityRole.Code.StartsWith("DoA"))
+                            .FirstOrDefaultAsync();
+                        
+                        if (doaEntityUserRole?.EntityRole != null)
+                        {
+                            doaLevel = doaEntityUserRole.EntityRole.Name ?? doaEntityUserRole.EntityRole.Code;
+                        }
                     }
 
                     historyEntry.PerformedBy = new WorkflowUserResponse
