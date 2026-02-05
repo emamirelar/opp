@@ -1678,6 +1678,13 @@ export class OpportunityViewComponent
       this.approveDialogResolver = null;
     }
 
+    // Generate Approved PDF after successful Go decision
+    this.handleGoApprovalSuccess({
+      entityName: 'Opportunity',
+      entityId: opportunityId,
+      approvedStage: 'GO',
+    });
+
     // Reload opportunity to reflect new stage
     this.reloadOpportunity();
   }
