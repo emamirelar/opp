@@ -47,14 +47,6 @@ _(No resolved defects yet)_
 
 The following items were previously logged as developer defects but have been reclassified to more appropriate categories:
 
-### Moved to QA Defect List (Test Infrastructure Issues)
-
-| Former ID | New ID | Title | Reason for Reclassification |
-|-----------|--------|-------|----------------------------|
-| DEF-001 | QA-018 | Route Permission Guard blocks access in tests | **Test configuration issue** - `authenticateWithRealBackend()` doesn't call `setupAPIMocks()`. Production code works correctly. |
-| DEF-004 | QA-019 | AdvancedSearchService crashes with InMemory DB | **Test infrastructure incompatibility** - Production uses PostgreSQL and works correctly. Tests use InMemory provider which can't execute raw SQL. |
-| DEF-006 | QA-020 | .NET 9 PipeWriter Serialization Bug | **Known .NET 9 framework issue** affecting test host only. Not a production issue. |
-
 ### Moved to Technical Debt / Process Improvements
 
 | Former ID | Title | Why It's Not a Defect | Recommendation |
@@ -75,7 +67,7 @@ The following items were previously logged as developer defects but have been re
 
 - **Total Open:** 1
 - **Total Resolved:** 0
-- **Total Reclassified:** 7 (moved to appropriate trackers)
+- **Total Reclassified:** 4 (moved to appropriate trackers)
 - 🔴 **Critical:** 0
 - 🟠 **High Priority:** 1 (DEF-008 - Go Decision feature incomplete)
 - 🟡 **Medium Priority:** 0
@@ -108,13 +100,13 @@ The following items were previously logged as developer defects but have been re
 
 | Metric | Count | Notes |
 |--------|-------|-------|
-| **Passed** | 2 | Only 2 tests passed |
-| **Failed** | 377 | Angular dev server did not auto-start (QA-028) |
-| **Skipped** | 70 | Blocked tests (Go Decision, oUP, etc.) |
+| **Passed** | 265 | 59% pass rate |
+| **Failed** | 76 | Unmocked API endpoints, test-specific issues |
+| **Skipped** | 71 | Blocked tests (Go Decision, oUP, Login) |
 | **Total** | 449 | - |
-| **Duration** | 9.2m | - |
+| **Duration** | ~30m | - |
 
-**⚠️ Critical Issue:** Playwright tests failing due to Angular dev server not starting automatically. Tests receive `net::ERR_CONNECTION_REFUSED`. See **QA-028** in `Defect List for QA.md`.
+**Note:** QA-028 (webServer not starting) has been resolved. Remaining failures are due to missing API mocks and test-specific issues.
 
 ---
 
