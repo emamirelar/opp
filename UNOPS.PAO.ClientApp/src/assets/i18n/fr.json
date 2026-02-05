@@ -3075,6 +3075,7 @@
   "label.workflow.fromStage": "De l'Étape",
   "label.workflow.toStage": "À l'Étape",
   "label.workflow.completedOn": "Terminé Le",
+  "label.workflow.actionDate": "Date d'action",
   "label.workflow.user": "Utilisateur",
   "title.workflow.comment": "Commentaire",
   "button.workflow.submit": "Soumettre pour Approbation",

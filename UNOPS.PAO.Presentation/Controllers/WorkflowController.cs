@@ -1103,7 +1103,7 @@ public class WorkflowController : BaseController
                 FromStageDisplayName = !string.IsNullOrEmpty(entry.FromStage) && stateMachine.StageNames.TryGetValue(entry.FromStage, out var fromName) ? fromName : entry.FromStage,
                 ToStageDisplayName = !string.IsNullOrEmpty(entry.ToStage) && stateMachine.StageNames.TryGetValue(entry.ToStage, out var toName) ? toName : entry.ToStage,
                 Action = entry.Action,
-                PerformedOn = entry.CompletedOn,
+                PerformedOn = entry.CreatedDate,
                 Comment = entry.Comment
             };
 

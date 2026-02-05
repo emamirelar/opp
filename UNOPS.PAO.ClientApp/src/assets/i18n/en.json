@@ -3187,6 +3187,7 @@
   "label.workflow.fromStage": "From Stage",
   "label.workflow.toStage": "To Stage",
   "label.workflow.completedOn": "Completed On",
+  "label.workflow.actionDate": "Action Date",
   "label.workflow.user": "User",
   "title.workflow.comment": "Comment",
   "button.workflow.submit": "Submit for Approval",
