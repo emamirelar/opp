@@ -1,7 +1,7 @@
 # QA Tester Playbook
 
-**Version:** 1.2  
-**Last Updated:** February 6, 2026  
+**Version:** 1.0  
+**Last Updated:** February 3, 2026  
 **Audience:** QA Testers (New and Experienced)  
 **Scope:** Universal guide applicable to any software project
 
@@ -131,7 +131,7 @@ Use this checklist when joining a new project:
   - [ ] Documentation repositories
 
 - [ ] **Install development tools**:
-  - [ ] IDE (Visual Studio, VS Code, Cursor etc.)
+  - [ ] IDE (Visual Studio, VS Code, etc.)
   - [ ] Test runners (dotnet CLI, npm, pytest, etc.)
   - [ ] Browser testing tools (Playwright, Cypress, Selenium)
   - [ ] Database client (DBeaver, pgAdmin, SSMS)
@@ -363,27 +363,25 @@ Test:
 Recommended folder structure for test projects:
 
 ```
-Tests/
+QA Tests/
 ├── Documentation/
 │   ├── QA_TESTER_PLAYBOOK.md        # This document
-│   └── Archive/                      # Historical reports
-├── TestBase/
-│   ├── Fixtures/                     # Test setup classes
-│   ├── Utilities/                    # Helper methods
-│   ├── Stubs/                        # Mock implementations
-│   └── TestData/                     # Seed data files
-├── [Module_Name]/
-│   └── [JIRA-ID]_[FeatureName]/
-│       ├── README.md                 # Test case overview
-│       ├── PositiveTests.cs          # Happy path tests
-│       ├── NegativeTests.cs          # Error handling tests
-│       ├── EdgeCaseTests.cs          # Boundary tests
-│       ├── SecurityTests.cs          # Security validations
-│       ├── ConcurrencyTests.cs       # Race condition tests
-│       └── *.spec.ts                 # E2E Playwright tests
-├── Defect List for Developers.md     # Product defects
-├── Defect List for QA.md             # Test infrastructure issues
-└── playwright.config.js              # E2E test configuration
+│   └── [other docs]
+├── C# Tests/
+│   ├── [Feature]/
+│   │   ├── PositiveTests.cs
+│   │   ├── NegativeTests.cs
+│   │   └── EdgeCaseTests.cs
+├── Integration Tests/
+│   ├── [Feature]/
+│   │   └── IntegrationTests.cs
+├── Playwright Tests/
+│   ├── [feature].spec.ts
+│   └── [feature]-e2e.spec.ts
+├── Test Execution Results/
+│   └── [date]-results.md
+└── Scripts/
+    └── [setup scripts]
 ```
 
 ---
@@ -498,19 +496,10 @@ Is it a valid failure?
 ### 7.2 Defect Template
 
 ```markdown
-| ID | Severity | Title | Description | Reproduction Steps | Expected | Actual | Related Test | Reported | Status |
-|---|---|----|----|-----|-----|-----|-----|-----|-----|
-| DEF-XXX | 🔴/🟠/🟡/🟢 | [Brief title] | [Detailed description]<br/><br/>**Environment:** [ENV]<br/>**Browser:** [BROWSER]<br/>**User Role:** [ROLE] | 1. Step one<br/>2. Step two<br/>3. Step three | [Expected result] | [Actual result] | [TestFile.cs:line] or N/A | YYYY-MM-DD | Open |
+| ID | Title | Description | Reproduction Steps | Expected | Actual | Reported | Status |
+|---|----|----|-----|-----|-----|-----|-----|
+| DEF-XXX | [Brief title] | [Detailed description]<br/><br/>**Environment:** [ENV]<br/>**Browser:** [BROWSER]<br/>**User Role:** [ROLE] | 1. Step one<br/>2. Step two<br/>3. Step three | [Expected result] | [Actual result] | YYYY-MM-DD | Open |
 ```
-
-**Related Test column guidance:**
-
-| Discovery Context | Related Test Value | Example |
-|---|---|---|
-| Automated test failure | `FileName.cs:line` | `PositiveTests.cs:45` |
-| Manual test case | Test case ID | `TC-FORM-001` |
-| Exploratory testing | `N/A (exploratory)` | `N/A (exploratory)` |
-| Code review | `N/A (code review)` | `N/A (code review)` |
 
 ### 7.3 Defect Triage
 
@@ -632,32 +621,18 @@ This ensures failure scenarios receive MORE attention than happy paths.
 
 ### 9.2 Minimum Test Counts
 
-#### Core 5 Categories (3:1 Ratio Participants)
-
-| Category | File Name | Minimum Required | Formula |
-|----------|-----------|------------------|---------|
-| **Positive Tests** | `PositiveTests.cs` | 30-50 tests | Baseline (P) |
-| **Negative Tests** | `NegativeTests.cs` | ≥50 AND ≥2×P | Max(50, 2×P) |
-| **Boundary Tests** | `BoundaryTests.cs` | ≥50 AND ≥2×P | Max(50, 2×P) |
-| **Security Tests** | `SecurityTests.cs` | ≥50 (FIXED) | Always 50+ |
-| **Concurrency Tests** | `ConcurrencyTests.cs` | ≥25 (FIXED) | Always 25+ |
-
-#### Additional 5 Mandatory Categories
-
-| Category | File Name | Minimum Required | Coverage Areas |
-|----------|-----------|------------------|----------------|
-| **Unit Tests** | `UnitTests.cs` | ≥21 | validation(5), formatting(3), calculations(5), status logic(5), collections(3) |
-| **Functional Tests** | `FunctionalTests.cs` | ≥26 | workflow rules(10), validation rules(10), constraints(3), audit(3) |
-| **Integration Tests** | `IntegrationTests.cs` | ≥25 | CRUD(5), search/filter(5), pagination(2), relationships(3), error handling(10) |
-| **Performance Tests** | `PerformanceTests.cs` | ≥16 | single ops(2), bulk ops(3), search(5), concurrent(3), memory(3) |
-| **Load Tests** | `LoadTests.cs` | ≥10 | sustained(3), spike(2), stress(3), recovery(2) |
-
-**Total Mandatory Files: 10** (5 core + 5 additional) | **Grand Total Minimum: ~293+ tests per suite**
+| Category | Minimum Required | Formula |
+|----------|------------------|---------|
+| **Positive Tests** | 30-50 tests | Baseline (P) |
+| **Negative Tests** | ≥50 AND ≥2×P | Max(50, 2×P) |
+| **Edge Cases** | ≥50 AND ≥2×P | Max(50, 2×P) |
+| **Security/Validation** | ≥50 (FIXED) | Always 50+ |
+| **Concurrency** | ≥25 (FIXED) | Always 25+ |
 
 ### 9.3 Ratio Verification
 
 ```
-REQUIREMENT: (Negative + Boundary) ≥ 3 × Positive Tests
+REQUIREMENT: (Negative + Edge) ≥ 3 × Positive Tests
 ```
 
 #### Example: 85 Positive Tests
@@ -666,28 +641,21 @@ REQUIREMENT: (Negative + Boundary) ≥ 3 × Positive Tests
 |----------|-------|-------------|-------|
 | Positive | 85 | Baseline | - |
 | Negative | 170 | Max(50, 2×85) = 170 | ✅ |
-| Boundary | 170 | Max(50, 2×85) = 170 | ✅ |
+| Edge Cases | 170 | Max(50, 2×85) = 170 | ✅ |
 | Security | 50 | FIXED minimum | ✅ |
 | Concurrency | 25 | FIXED minimum | ✅ |
-| Unit | 21 | Per coverage areas | ✅ |
-| Functional | 26 | Per coverage areas | ✅ |
-| Integration | 25 | Per coverage areas | ✅ |
-| Performance | 16 | Per coverage areas | ✅ |
-| Load | 10 | Per coverage areas | ✅ |
-| **Total** | **598** | - | - |
+| **Total** | **500** | - | - |
 | **3:1 Check** | - | (170+170) = 340 ≥ 3×85 = 255 | ✅ |
 
 ### 9.4 Category Checklist
 
-All 10 mandatory test file categories must be present per suite.
-
-#### 1. Positive Tests (`PositiveTests.cs`) — Happy Path
+#### Positive Tests (Happy Path)
 - [ ] Valid inputs with expected outputs
 - [ ] Standard user workflows
 - [ ] CRUD operations with valid data
 - [ ] Successful authentication/authorization
 
-#### 2. Negative Tests (`NegativeTests.cs`) — Failure Scenarios
+#### Negative Tests (Failure Scenarios)
 - [ ] Boundary violations (string too long, number out of range)
 - [ ] Invalid data types (text in numeric fields)
 - [ ] Special characters & injection attempts
@@ -696,14 +664,14 @@ All 10 mandatory test file categories must be present per suite.
 - [ ] Date paradoxes (future dates, invalid ranges)
 - [ ] Dependency failures (API timeout, DB error)
 
-#### 3. Boundary Tests (`BoundaryTests.cs`) — Edge Cases
+#### Edge Cases (Boundary Conditions)
 - [ ] Financial precision (rounding, zero-sum)
 - [ ] Temporal boundaries (fiscal year, leap year)
 - [ ] Workflow state machine (illegal transitions)
 - [ ] Threshold tests (exact limits, cumulative limits)
 - [ ] Globalization (currency formats, multi-byte characters)
 
-#### 4. Security Tests (`SecurityTests.cs`) — Security & Validation
+#### Security/Validation Tests
 - [ ] SQL Injection prevention
 - [ ] XSS (Cross-Site Scripting) prevention
 - [ ] IDOR (Insecure Direct Object Reference)
@@ -711,45 +679,12 @@ All 10 mandatory test file categories must be present per suite.
 - [ ] Authentication bypass attempts
 - [ ] OWASP Top 10 coverage
 
-#### 5. Concurrency Tests (`ConcurrencyTests.cs`) — Race Conditions
+#### Concurrency Tests
 - [ ] Concurrent updates to same entity
 - [ ] Double submit prevention
 - [ ] Read during write (transaction isolation)
 - [ ] Deadlock scenarios
 - [ ] Race conditions in counters/aggregates
-
-#### 6. Unit Tests (`UnitTests.cs`) — Isolated Logic
-- [ ] Input validation rules (min/max, required, format)
-- [ ] Data formatting and transformation
-- [ ] Calculations and business math
-- [ ] Status/state transition logic
-- [ ] Collection manipulation and filtering
-
-#### 7. Functional Tests (`FunctionalTests.cs`) — Business Rules
-- [ ] Workflow rules and multi-step processes
-- [ ] Business validation rules (cross-field, conditional)
-- [ ] Constraint enforcement (uniqueness, referential)
-- [ ] Audit trail and history tracking
-
-#### 8. Integration Tests (`IntegrationTests.cs`) — End-to-End Flows
-- [ ] Full CRUD workflow (create, read, update, delete)
-- [ ] Search and filter operations
-- [ ] Pagination and sorting
-- [ ] Entity relationship operations (parent-child, many-to-many)
-- [ ] Error handling across layers (API → service → DB)
-
-#### 9. Performance Tests (`PerformanceTests.cs`) — Speed & Efficiency
-- [ ] Single operation response time thresholds
-- [ ] Bulk operation performance (batch create/update)
-- [ ] Search performance with large datasets
-- [ ] Concurrent access performance
-- [ ] Memory usage and resource consumption
-
-#### 10. Load Tests (`LoadTests.cs`) — Scalability
-- [ ] Sustained load (normal traffic over extended period)
-- [ ] Spike load (sudden traffic burst)
-- [ ] Stress limits (beyond expected capacity)
-- [ ] Recovery behavior (after load subsides)
 
 ---
 
@@ -806,157 +741,6 @@ Simulate:
 - Network drop mid-upload
 - Third-party service failure
 ```
-
-#### Combinatorial Testing: Value Permutations
-
-When testing multiple input fields, systematically combine values from **invalid value categories** to ensure comprehensive coverage.
-
-##### Standard Invalid Value Categories
-
-| Category | Examples | Use For |
-|----------|----------|---------|
-| **Null** | `null` | All nullable reference types |
-| **Empty** | `""`, `[]`, `{}` | Strings, collections, objects |
-| **Whitespace** | `"   "`, `"\t"`, `"\n"` | String fields |
-| **Boundary Min-1** | `-1`, `0` (if min is 1) | Numeric fields |
-| **Boundary Max+1** | `101` (if max is 100) | Numeric fields, string lengths |
-| **Invalid Format** | `"abc"` for number, `"99/99/9999"` for date | Typed fields |
-| **Special Characters** | `<script>`, `'; DROP`, `..\..\` | Text inputs |
-| **Unicode/Multi-byte** | `"日本語"`, `"Ñoño"`, emojis | Text inputs |
-| **Very Long** | 10,000+ characters | String fields |
-| **Negative** | `-100`, `-0.01` | Unsigned numeric fields |
-
-##### Pairwise Testing Strategy
-
-For methods with multiple parameters, use **pairwise (all-pairs) testing** to reduce test count while maintaining coverage:
-
-```
-Example: Method with 3 parameters, each with 4 invalid states
-- Full combinatorial: 4 × 4 × 4 = 64 tests ❌ (too many)
-- Pairwise: ~16 tests ✅ (covers all pairs of values)
-```
-
-##### Data-Driven Test Patterns (xUnit)
-
-**Pattern 1: InlineData for Small Value Sets**
-```csharp
-[Theory]
-[InlineData(null)]
-[InlineData("")]
-[InlineData("   ")]
-[InlineData("a")]  // Below minimum length
-public async Task CreateEntity_InvalidName_ShouldThrowValidation(string? name)
-{
-    var request = new CreateRequest { Name = name };
-    await Assert.ThrowsAsync<ValidationException>(
-        () => _manager.CreateAsync(request));
-}
-```
-
-**Pattern 2: MemberData for Complex Value Sets**
-```csharp
-public static IEnumerable<object[]> InvalidEmailTestData =>
-    new List<object[]>
-    {
-        new object[] { null, "Email is required" },
-        new object[] { "", "Email is required" },
-        new object[] { "not-an-email", "Invalid email format" },
-        new object[] { "missing@domain", "Invalid email format" },
-        new object[] { "@nodomain.com", "Invalid email format" },
-        new object[] { "spaces in@email.com", "Invalid email format" },
-        new object[] { new string('a', 256) + "@test.com", "Email too long" },
-    };
-
-[Theory]
-[MemberData(nameof(InvalidEmailTestData))]
-public async Task Validate_InvalidEmail_ReturnsExpectedError(string? email, string expectedError)
-{
-    var result = await _validator.ValidateAsync(new Request { Email = email });
-    Assert.Contains(expectedError, result.Errors.First().Message);
-}
-```
-
-**Pattern 3: ClassData for Reusable Test Data**
-```csharp
-public class InvalidStringTestData : IEnumerable<object[]>
-{
-    public IEnumerator<object[]> GetEnumerator()
-    {
-        yield return new object[] { null };
-        yield return new object[] { "" };
-        yield return new object[] { "   " };
-        yield return new object[] { "\t\n" };
-        yield return new object[] { new string('x', 10001) };  // Over max length
-    }
-    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-}
-
-[Theory]
-[ClassData(typeof(InvalidStringTestData))]
-public async Task ValidateField_InvalidString_ShouldReject(string? value)
-{
-    // Test implementation
-}
-```
-
-##### Multi-Field Permutation Example
-
-When testing a method with multiple parameters, combine invalid values systematically:
-
-```csharp
-public static IEnumerable<object[]> CreateEntityInvalidCombinations()
-{
-    // Each field's invalid values
-    var invalidNames = new[] { null, "", "   ", new string('a', 256) };
-    var invalidEmails = new[] { null, "", "invalid", "no@domain" };
-    var invalidAmounts = new[] { -1m, 0m, 1000001m };  // Outside valid range
-    
-    // Test each field independently with valid values for others
-    foreach (var name in invalidNames)
-        yield return new object[] { name, "valid@email.com", 100m, "Name" };
-    
-    foreach (var email in invalidEmails)
-        yield return new object[] { "Valid Name", email, 100m, "Email" };
-    
-    foreach (var amount in invalidAmounts)
-        yield return new object[] { "Valid Name", "valid@email.com", amount, "Amount" };
-    
-    // Key combinations (pairwise - invalid name + invalid email)
-    yield return new object[] { null, null, 100m, "Name, Email" };
-    yield return new object[] { "", "invalid", 100m, "Name, Email" };
-}
-
-[Theory]
-[MemberData(nameof(CreateEntityInvalidCombinations))]
-public async Task Create_InvalidInput_ShouldValidate(
-    string? name, string? email, decimal amount, string expectedInvalidField)
-{
-    var request = new CreateRequest { Name = name, Email = email, Amount = amount };
-    var exception = await Assert.ThrowsAsync<ValidationException>(
-        () => _manager.CreateAsync(request));
-    Assert.Contains(expectedInvalidField, exception.Message);
-}
-```
-
-##### Coverage Checklist for Negative Value Permutations
-
-For each input field, verify you have tests covering:
-
-- [ ] `null` value
-- [ ] Empty value (`""`, `[]`, `{}`)
-- [ ] Whitespace-only (`"   "`, `"\t"`, `"\n"`)
-- [ ] Below minimum length/value
-- [ ] Above maximum length/value
-- [ ] Invalid format/type
-- [ ] Special characters (XSS, SQL injection)
-- [ ] Unicode/multi-byte characters
-- [ ] Very large values (stress test)
-- [ ] Negative values (if unsigned expected)
-
-For multi-field inputs, also verify:
-- [ ] All fields null/empty simultaneously
-- [ ] Pairwise combinations of invalid values
-- [ ] One invalid field with all others valid (isolation)
 
 ### 10.3 Edge Cases (Boundary Conditions)
 
@@ -1036,186 +820,6 @@ await Task.WhenAll(task1, task2);
 // Verify only ONE record created
 var count = await repository.CountAsync();
 Assert.Equal(1, count);
-```
-
-### 10.6 Unit Tests (Isolated Logic)
-
-**Purpose**: Test individual methods and logic in isolation, without dependencies on databases, APIs, or other services.
-
-#### Coverage Areas
-
-| Area | Examples |
-|------|----------|
-| **Input validation** | Required field checks, format validation, min/max constraints |
-| **Data formatting** | Date formatting, number formatting, string transformations |
-| **Calculations** | Business math, totals, percentages, rounding |
-| **Status/state logic** | Allowed transitions, status-dependent behavior |
-| **Collection operations** | Filtering, grouping, sorting, aggregation |
-
-#### Unit Test Pattern
-
-```csharp
-// Pure logic test — no database, no API
-[Fact]
-public void CalculateTotalBudget_WithMultipleLineItems_ReturnsSumOfAmounts()
-{
-    var lineItems = new List<BudgetLine>
-    {
-        new() { Amount = 1000m },
-        new() { Amount = 2500m },
-        new() { Amount = 750m }
-    };
-
-    var total = BudgetCalculator.CalculateTotal(lineItems);
-
-    Assert.Equal(4250m, total);
-}
-```
-
-### 10.7 Functional Tests (Business Rules)
-
-**Purpose**: Verify that business rules, workflow logic, and domain constraints are enforced correctly.
-
-#### Coverage Areas
-
-| Area | Examples |
-|------|----------|
-| **Workflow rules** | Multi-step process enforcement, approval chains |
-| **Validation rules** | Cross-field validation, conditional required fields |
-| **Constraint rules** | Uniqueness, referential integrity, business invariants |
-| **Audit rules** | History tracking, change logging, timestamps |
-
-#### Functional Test Pattern
-
-```csharp
-// Business rule: Cannot close verification without answering all questions
-[Fact]
-public async Task CloseVerification_WithUnansweredQuestions_ShouldRejectClosure()
-{
-    // Arrange: Create verification with unanswered questions
-    var verification = await CreateVerificationWithQuestions(answered: false);
-
-    // Act & Assert: Business rule prevents closure
-    var exception = await Assert.ThrowsAsync<BusinessRuleException>(
-        () => _manager.CloseVerificationAsync(verification.Id));
-
-    Assert.Contains("unanswered questions", exception.Message);
-}
-```
-
-### 10.8 Integration Tests (End-to-End Flows)
-
-**Purpose**: Test complete workflows across multiple layers (API, service, database) to verify components work together correctly.
-
-#### Coverage Areas
-
-| Area | Examples |
-|------|----------|
-| **CRUD workflows** | Create → Read → Update → Delete lifecycle |
-| **Search & filter** | Query with various filter combinations |
-| **Pagination** | Page size, page number, total count accuracy |
-| **Relationships** | Parent-child creation, cascade operations |
-| **Error handling** | Error propagation across layers, proper HTTP status codes |
-
-#### Integration Test Pattern
-
-```csharp
-// Full CRUD lifecycle
-[Fact]
-public async Task Verification_FullCrudLifecycle_ShouldSucceed()
-{
-    // Create
-    var created = await _manager.CreateAsync(validRequest);
-    Assert.NotNull(created);
-
-    // Read
-    var retrieved = await _manager.GetByIdAsync(created.Id);
-    Assert.Equal(created.Id, retrieved.Id);
-
-    // Update
-    retrieved.Title = "Updated Title";
-    var updated = await _manager.UpdateAsync(retrieved);
-    Assert.Equal("Updated Title", updated.Title);
-
-    // Delete
-    await _manager.DeleteAsync(updated.Id);
-    var deleted = await _manager.GetByIdAsync(updated.Id);
-    Assert.Null(deleted);
-}
-```
-
-### 10.9 Performance Tests (Speed & Efficiency)
-
-**Purpose**: Verify that operations complete within acceptable time thresholds and resource limits.
-
-#### Coverage Areas
-
-| Area | Examples |
-|------|----------|
-| **Single operations** | Individual CRUD under time threshold |
-| **Bulk operations** | Batch create/update/delete performance |
-| **Search performance** | Query time with large datasets |
-| **Concurrent access** | Performance under parallel requests |
-| **Memory usage** | No excessive allocations or leaks |
-
-#### Performance Test Pattern
-
-```csharp
-[Fact]
-public async Task BulkCreate_100Records_ShouldCompleteWithin5Seconds()
-{
-    var stopwatch = Stopwatch.StartNew();
-
-    var requests = Enumerable.Range(1, 100)
-        .Select(i => CreateValidRequest($"Item-{i}"))
-        .ToList();
-
-    await _manager.BulkCreateAsync(requests);
-
-    stopwatch.Stop();
-    Assert.True(stopwatch.Elapsed < TimeSpan.FromSeconds(5),
-        $"Bulk create took {stopwatch.Elapsed.TotalSeconds}s, expected < 5s");
-}
-```
-
-### 10.10 Load Tests (Scalability)
-
-**Purpose**: Verify the system maintains stability and acceptable performance under sustained, peak, and beyond-capacity loads.
-
-#### Coverage Areas
-
-| Area | Examples |
-|------|----------|
-| **Sustained load** | Normal expected traffic over 5-10 minutes |
-| **Spike load** | Sudden burst of requests (e.g., 10x normal) |
-| **Stress limits** | Push beyond expected capacity to find breaking point |
-| **Recovery** | System returns to normal after load subsides |
-
-#### Load Test Pattern
-
-```csharp
-[Fact]
-public async Task SustainedLoad_50ConcurrentUsers_ShouldMaintainResponseTimes()
-{
-    var tasks = Enumerable.Range(1, 50).Select(async i =>
-    {
-        var sw = Stopwatch.StartNew();
-        for (int j = 0; j < 10; j++) // 10 operations per "user"
-        {
-            await _manager.GetByIdAsync(existingId);
-        }
-        sw.Stop();
-        return sw.Elapsed;
-    });
-
-    var results = await Task.WhenAll(tasks);
-
-    var avgTime = results.Average(r => r.TotalMilliseconds);
-    var maxTime = results.Max(r => r.TotalMilliseconds);
-
-    Assert.True(avgTime < 2000, $"Average response: {avgTime}ms, expected < 2000ms");
-    Assert.True(maxTime < 10000, $"Max response: {maxTime}ms, expected < 10000ms");
-}
 ```
 
 ---
@@ -1368,6 +972,31 @@ All tests should be performed manually in a test environment before production d
 
 ---
 
+## 4. Delete/Archive Functionality
+
+### TC-4.1: Delete Allowed Entities
+
+**Test Steps:**
+1. Create entity in Draft status
+2. Verify Delete button visible
+3. Click Delete
+4. Verify confirmation dialog
+5. Confirm deletion
+6. Verify soft delete in database
+
+---
+
+## 5. Filtering and Pagination
+
+### TC-5.1: Search and Filter
+
+| Search Term | Expected Results |
+|-------------|------------------|
+| "test" | Only matching entities |
+| (clear) | All entities |
+
+---
+
 ## Test Results Summary
 
 **Test Date:** _______________
@@ -1408,8 +1037,6 @@ namespace ProjectName.Tests.[ModuleName].[JiraId]_[FeatureName]
             _fixture = fixture;
         }
         
-        #region Positive Tests
-        
         [Fact]
         public async Task MethodName_ValidInput_ReturnsExpectedResult()
         {
@@ -1421,117 +1048,19 @@ namespace ProjectName.Tests.[ModuleName].[JiraId]_[FeatureName]
             
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(expected, result.Property);
         }
-        
-        #endregion
-        
-        #region Negative Tests
         
         [Fact]
         public async Task MethodName_NullInput_ThrowsArgumentNullException()
         {
-            // Arrange & Act & Assert
             await Assert.ThrowsAsync<ArgumentNullException>(
                 () => _fixture.Service.MethodAsync(null));
         }
-        
-        [Theory]
-        [InlineData("")]
-        [InlineData("   ")]
-        [InlineData(null)]
-        public async Task MethodName_InvalidString_ThrowsValidationException(string input)
-        {
-            // Arrange
-            var request = new Request { Name = input };
-            
-            // Act & Assert
-            await Assert.ThrowsAsync<ValidationException>(
-                () => _fixture.Service.MethodAsync(request));
-        }
-        
-        #endregion
-        
-        #region Edge Cases
-        
-        [Theory]
-        [InlineData(0)]
-        [InlineData(int.MaxValue)]
-        [InlineData(int.MinValue)]
-        public async Task MethodName_BoundaryValue_HandlesCorrectly(int value)
-        {
-            // Arrange
-            var request = new Request { Value = value };
-            
-            // Act
-            var exception = await Record.ExceptionAsync(
-                () => _fixture.Service.MethodAsync(request));
-            
-            // Assert
-            // Document expected behavior for each boundary
-        }
-        
-        #endregion
     }
 }
 ```
 
-### 12.2 Integration Test Template (C#/xUnit)
-
-```csharp
-namespace ProjectName.Tests.[ModuleName].[JiraId]_[FeatureName]
-{
-    /// <summary>
-    /// [JIRA-XXX]: Integration tests for [Feature Name]
-    /// Tests API endpoints and database integration
-    /// </summary>
-    public sealed class IntegrationTests : IClassFixture<IntegrationTestFixture>
-    {
-        private readonly IntegrationTestFixture _fixture;
-        
-        public IntegrationTests(IntegrationTestFixture fixture)
-        {
-            _fixture = fixture;
-        }
-        
-        [Fact]
-        public async Task CreateEntity_ValidRequest_PersistsToDatabase()
-        {
-            // Arrange
-            var request = new CreateRequest { /* valid data */ };
-            
-            // Act
-            var result = await _fixture.ApiClient.CreateAsync(request);
-            
-            // Assert
-            Assert.NotNull(result);
-            Assert.True(result.Id > 0);
-            
-            // Verify persistence
-            var saved = await _fixture.Repository.GetByIdAsync(result.Id);
-            Assert.NotNull(saved);
-            Assert.Equal(request.Name, saved.Name);
-        }
-        
-        [Fact]
-        public async Task CreateEntity_DuplicateName_ReturnsConflict()
-        {
-            // Arrange
-            await CreateEntityWithName("Existing Name");
-            var duplicateRequest = new CreateRequest { Name = "Existing Name" };
-            
-            // Act
-            var exception = await Assert.ThrowsAsync<ConflictException>(
-                () => _fixture.ApiClient.CreateAsync(duplicateRequest));
-            
-            // Assert
-            Assert.Contains("already exists", exception.Message);
-        }
-    }
-}
-```
-
-### 12.3 E2E Test Template (Playwright/TypeScript)
+### 12.2 E2E Test Template (Playwright/TypeScript)
 
 ```typescript
 import { test, expect, Page } from '@playwright/test';
@@ -1540,61 +1069,18 @@ import { test, expect, Page } from '@playwright/test';
  * JIRA-XXX: End-to-End Tests for [Feature Name]
  */
 test.describe('[Feature Name] E2E Tests', () => {
-  let page: Page;
-
-  test.beforeEach(async ({ page: testPage }) => {
-    page = testPage;
-    // Navigate and authenticate
+  test.beforeEach(async ({ page }) => {
     await page.goto('/login');
-    await page.fill('[data-testid="email"]', 'test@example.com');
-    await page.fill('[data-testid="password"]', 'password');
-    await page.click('[data-testid="login-button"]');
-    await page.waitForURL('/dashboard');
+    // Authentication steps
   });
 
-  test.describe('Positive Scenarios', () => {
-    test('should complete primary workflow successfully', async () => {
-      // Arrange
-      await page.goto('/feature-page');
-      
-      // Act
-      await page.fill('[data-testid="name-input"]', 'Test Name');
-      await page.click('[data-testid="submit-button"]');
-      
-      // Assert
-      await expect(page.locator('[data-testid="success-message"]'))
-        .toBeVisible();
-      await expect(page.locator('[data-testid="success-message"]'))
-        .toContainText('Created successfully');
-    });
-  });
-
-  test.describe('Negative Scenarios', () => {
-    test('should show validation error for empty required field', async () => {
-      // Arrange
-      await page.goto('/feature-page');
-      
-      // Act - submit without filling required field
-      await page.click('[data-testid="submit-button"]');
-      
-      // Assert
-      await expect(page.locator('[data-testid="name-error"]'))
-        .toContainText('Name is required');
-    });
-  });
-
-  test.describe('Edge Cases', () => {
-    test('should handle maximum length input', async () => {
-      const maxLengthInput = 'A'.repeat(255);
-      
-      await page.goto('/feature-page');
-      await page.fill('[data-testid="name-input"]', maxLengthInput);
-      await page.click('[data-testid="submit-button"]');
-      
-      // Should succeed with max length
-      await expect(page.locator('[data-testid="success-message"]'))
-        .toBeVisible();
-    });
+  test('should complete primary workflow successfully', async ({ page }) => {
+    await page.goto('/feature-page');
+    await page.fill('[data-testid="name-input"]', 'Test Name');
+    await page.click('[data-testid="submit-button"]');
+    
+    await expect(page.locator('[data-testid="success-message"]'))
+      .toBeVisible();
   });
 });
 ```
@@ -1609,7 +1095,6 @@ test.describe('[Feature Name] E2E Tests', () => {
 # Daily Test Execution Report
 
 **Date:** YYYY-MM-DD
-**Sprint:** [Sprint Name/Number]
 **Tester:** [Name]
 
 ## Summary
@@ -1617,117 +1102,15 @@ test.describe('[Feature Name] E2E Tests', () => {
 | Metric | Count | Percentage |
 |--------|-------|------------|
 | **Total Test Cases** | | 100% |
-| **Executed** | | % |
 | **Passed** | | % |
 | **Failed** | | % |
 | **Blocked** | | % |
-| **Skipped** | | % |
 
-## New Defects Found Today
+## New Defects Found
 
-| ID | Title | Severity | Status |
-|----|-------|----------|--------|
-| DEF-XXX | [Title] | 🔴 Critical | Open |
-| DEF-XXX | [Title] | 🟠 High | Open |
-
-## Blockers
-
-| Issue | Impact | Mitigation |
-|-------|--------|------------|
-| [Description] | [Which tests blocked] | [Action taken] |
-
-## Tomorrow's Plan
-
-- [ ] Complete [X] test cases
-- [ ] Retest [X] fixed defects
-- [ ] [Other activities]
-
-## Notes
-
-[Any additional observations or concerns]
-```
-
-### 13.2 Final Test Summary Report Template
-
-```markdown
-# Test Summary Report
-
-**Project:** [Project Name]
-**Release:** [Version/Release Name]
-**Test Period:** YYYY-MM-DD to YYYY-MM-DD
-**Prepared By:** [Name]
-
-## Executive Summary
-
-[2-3 sentence overview of testing activities and overall quality assessment]
-
-## Test Scope
-
-### In Scope
-- [Feature 1]
-- [Feature 2]
-
-### Out of Scope
-- [Feature X]
-
-## Test Results
-
-### Overall Statistics
-
-| Metric | Count | Target | Status |
-|--------|-------|--------|--------|
-| Total Tests | | | |
-| Passed | | 95%+ | ✅/❌ |
-| Failed | | <5% | ✅/❌ |
-| Blocked | | 0% | ✅/❌ |
-| Pass Rate | | 95%+ | ✅/❌ |
-
-### By Test Type
-
-| Type | Total | Passed | Failed | Pass Rate |
-|------|-------|--------|--------|-----------|
-| Smoke | | | | % |
-| Functional | | | | % |
-| Regression | | | | % |
-| Integration | | | | % |
-| E2E | | | | % |
-
-## Defect Summary
-
-### By Severity
-
-| Severity | Found | Fixed | Open | Deferred |
-|----------|-------|-------|------|----------|
-| 🔴 Critical | | | | |
-| 🟠 High | | | | |
-| 🟡 Medium | | | | |
-| 🟢 Low | | | | |
-
-### Open Defects
-
-| ID | Title | Severity | Status | Assigned |
-|----|-------|----------|--------|----------|
-| DEF-XXX | [Title] | [Level] | [Status] | [Name] |
-
-## Risk Assessment
-
-| Risk | Probability | Impact | Mitigation |
-|------|-------------|--------|------------|
-| [Risk description] | H/M/L | H/M/L | [Action] |
-
-## Recommendations
-
-1. **Release Decision:** ☐ Recommend Release ☐ Do Not Recommend
-2. **Conditions:** [Any conditions for release]
-3. **Known Issues:** [Issues going to production]
-
-## Sign-Off
-
-| Role | Name | Signature | Date |
-|------|------|-----------|------|
-| QA Lead | | | |
-| Dev Lead | | | |
-| Product Owner | | | |
+| ID | Title | Severity |
+|----|-------|----------|
+| DEF-XXX | [Title] | 🔴 Critical |
 ```
 
 ---
@@ -1741,159 +1124,40 @@ test.describe('[Feature Name] E2E Tests', () => {
 │                    TEST TYPE QUICK REFERENCE                     │
 ├──────────────┬───────────────────────────────────────────────────┤
 │ Unit Tests   │ Individual functions, classes, methods            │
-│              │ Fast, isolated, no external dependencies          │
-│              │ Run: Every commit, every build                    │
-├──────────────┼───────────────────────────────────────────────────┤
 │ Integration  │ API endpoints, database operations                │
-│ Tests        │ Medium speed, requires test database              │
-│              │ Run: Every PR, daily builds                       │
-├──────────────┼───────────────────────────────────────────────────┤
 │ E2E Tests    │ Full user workflows through UI                    │
-│              │ Slow, requires full environment                   │
-│              │ Run: Nightly, before release                      │
-├──────────────┼───────────────────────────────────────────────────┤
 │ Smoke Tests  │ Critical paths only, quick sanity check           │
-│              │ Fast, subset of regression                        │
-│              │ Run: After every deployment                       │
-├──────────────┼───────────────────────────────────────────────────┤
 │ Regression   │ All existing functionality still works            │
-│ Tests        │ Full suite, may be lengthy                        │
-│              │ Run: Before release, major changes                │
-├──────────────┼───────────────────────────────────────────────────┤
 │ Performance  │ Load, stress, response time                       │
-│ Tests        │ Requires production-like environment              │
-│              │ Run: Before major releases                        │
 └──────────────┴───────────────────────────────────────────────────┘
 ```
 
-### 14.2 Severity Classification Quick Reference
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│              SEVERITY CLASSIFICATION GUIDE                       │
-├──────────┬───────────────────────────────────────────────────────┤
-│          │ • System crash, data loss, data corruption           │
-│ CRITICAL │ • Security vulnerability exposed                     │
-│    🔴    │ • No workaround available                            │
-│          │ • Blocks release                                      │
-├──────────┼───────────────────────────────────────────────────────┤
-│          │ • Major feature completely broken                    │
-│   HIGH   │ • Significant user impact                            │
-│    🟠    │ • No reasonable workaround                           │
-│          │ • Should block release                               │
-├──────────┼───────────────────────────────────────────────────────┤
-│          │ • Feature partially working                          │
-│  MEDIUM  │ • Workaround available                               │
-│    🟡    │ • Moderate user impact                               │
-│          │ • Fix before next release                            │
-├──────────┼───────────────────────────────────────────────────────┤
-│          │ • Minor cosmetic issue                               │
-│   LOW    │ • Typo, alignment, minor UI                          │
-│    🟢    │ • Minimal user impact                                │
-│          │ • Fix when convenient                                 │
-└──────────┴───────────────────────────────────────────────────────┘
-```
-
-### 14.3 3:1 Ratio Quick Calculator
+### 14.2 3:1 Ratio Quick Calculator
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                   3:1 RATIO CALCULATOR                           │
 ├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
 │  If you have [P] Positive Tests:                                │
 │                                                                  │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │ Negative Tests:  MAX(50, 2 × P) = ____                 │    │
-│  │ Edge Case Tests: MAX(50, 2 × P) = ____                 │    │
-│  │ Security Tests:  50 (FIXED)                             │    │
-│  │ Concurrency:     25 (FIXED)                             │    │
-│  └─────────────────────────────────────────────────────────┘    │
+│  Negative Tests:  MAX(50, 2 × P)                                │
+│  Edge Case Tests: MAX(50, 2 × P)                                │
+│  Security Tests:  50 (FIXED)                                     │
+│  Concurrency:     25 (FIXED)                                     │
 │                                                                  │
 │  VERIFY: (Negative + Edge) ≥ 3 × P                              │
-│                                                                  │
-│  ─────────────────────────────────────────────────────────────  │
-│  EXAMPLES:                                                       │
-│                                                                  │
-│  30 Positive → 60 Neg, 60 Edge, 50 Sec, 25 Conc = 225 total    │
-│  50 Positive → 100 Neg, 100 Edge, 50 Sec, 25 Conc = 325 total  │
-│  85 Positive → 170 Neg, 170 Edge, 50 Sec, 25 Conc = 500 total  │
-│                                                                  │
 └─────────────────────────────────────────────────────────────────┘
-```
-
-### 14.4 Common Commands Quick Reference
-
-```bash
-# .NET Test Commands
-dotnet test                                    # Run all tests
-dotnet test --filter "Category=Smoke"          # By category
-dotnet test --filter "FullyQualifiedName~JIRA" # By name
-dotnet test --no-build                         # Skip build
-dotnet test --verbosity detailed               # Verbose output
-
-# Playwright Commands
-npx playwright test                            # Run all
-npx playwright test tests/login.spec.ts        # Specific file
-npx playwright test --headed                   # Show browser
-npx playwright test --debug                    # Debug mode
-npx playwright test --reporter=html            # HTML report
-npx playwright show-report                     # View report
-
-# Git Commands for QA
-git checkout QA-branch                         # Switch to QA branch
-git pull origin QA-branch                      # Get latest
-git status                                     # Check changes
-git add -A && git commit -m "msg"              # Commit changes
-git push origin QA-branch                      # Push changes
 ```
 
 ---
 
 ## 15. Troubleshooting Common Issues
 
-### 15.1 Test Infrastructure Issues
-
 | Problem | Possible Causes | Solutions |
 |---------|-----------------|-----------|
-| Tests won't compile | Missing dependencies, wrong SDK | Run `dotnet restore`, check SDK version |
-| All tests fail | Environment not configured | Check connection strings, environment variables |
-| Tests pass locally, fail in CI | Environment differences | Check CI logs, compare environments |
-| Flaky tests | Race conditions, timing issues | Add waits, use retries, improve isolation |
-| Slow tests | Database not cleaned, too many E2E | Use in-memory DB, reduce E2E count |
-
-### 15.2 Common Error Messages
-
-```
-Error: "Sequence contains no elements"
-Cause: Query returned empty collection, .First() or .Single() called
-Fix: Use .FirstOrDefault() or ensure test data exists
-
-Error: "Object reference not set to an instance"
-Cause: Null object being accessed
-Fix: Check test setup, verify object initialization
-
-Error: "Connection refused" / "Unable to connect"
-Cause: Service not running, wrong URL
-Fix: Start required services, check configuration
-
-Error: "Timeout expired"
-Cause: Database/service too slow, query taking too long
-Fix: Increase timeout, optimize query, check for locks
-
-Error: "Element not found" (E2E)
-Cause: Element not rendered, wrong selector
-Fix: Add wait, verify selector, check for dynamic content
-```
-
-### 15.3 When You're Stuck
-
-1. **Check logs** - Build output, test runner output, application logs
-2. **Simplify** - Reduce test to minimal reproduction case
-3. **Compare** - Look at similar working tests
-4. **Search** - Check documentation, Stack Overflow, team chat
-5. **Ask** - Reach out to team members, subject matter experts
-6. **Document** - If you solve it, document for future reference
+| Tests won't compile | Missing dependencies | Run `dotnet restore` |
+| All tests fail | Environment not configured | Check connection strings |
+| Flaky tests | Race conditions | Add waits, use retries |
 
 ---
 
@@ -1902,30 +1166,10 @@ Fix: Add wait, verify selector, check for dynamic content
 | Term | Definition |
 |------|------------|
 | **Assertion** | A statement that checks if a condition is true/false |
-| **Boundary Value** | Input at the edge of valid/invalid range |
-| **E2E (End-to-End)** | Testing complete user workflows through UI |
-| **Edge Case** | Unusual but valid scenario at system boundaries |
-| **Equivalence Partitioning** | Dividing inputs into groups that behave similarly |
-| **Fixture** | Test setup and teardown code |
-| **Flaky Test** | Test that sometimes passes, sometimes fails unpredictably |
+| **E2E** | Testing complete user workflows through UI |
+| **Flaky Test** | Test that sometimes passes, sometimes fails |
 | **Happy Path** | Standard successful workflow (positive test) |
-| **Integration Test** | Testing multiple components working together |
-| **Mock** | Simulated object that mimics real behavior |
-| **Negative Test** | Test with invalid input expecting failure |
-| **Positive Test** | Test with valid input expecting success |
 | **Regression** | Bug introduced by code changes |
-| **Regression Test** | Test to ensure existing features still work |
-| **Smoke Test** | Quick sanity check of critical functionality |
-| **Stub** | Simplified implementation returning canned responses |
-| **Test Case** | Single test scenario with steps and expected result |
-| **Test Coverage** | Percentage of code/features exercised by tests |
-| **Test Data** | Input values used for testing |
-| **Test Fixture** | Known state used as baseline for tests |
-| **Test Suite** | Collection of related test cases |
-| **TRX** | Microsoft test results XML format |
-| **Unit Test** | Testing isolated code units (functions, classes) |
-| **WCAG** | Web Content Accessibility Guidelines |
-| **XSS** | Cross-Site Scripting vulnerability |
 
 ---
 
@@ -1935,9 +1179,8 @@ Fix: Add wait, verify selector, check for dynamic content
 |----------|----------|---------|
 | Comprehensive Test Strategy | `.cursor/rules/comprehensive-test-strategy.mdc` | AI instruction rule with 3:1 ratio and code examples |
 | Defect Management Standard | `.cursor/rules/defect-management.mdc` | How to log and manage defects |
-| Defect List for Developers | `QA Tests/Defect List for Developers.md` | Product defects |
-| Defect List for QA | `QA Tests/Defect List for QA.md` | Test infrastructure issues |
-| Playwright E2E Guide | `QA Tests/PLAYWRIGHT_E2E_GUIDE.md` | E2E testing specifics |
+| Test Execution Results | `QA Tests/Test Execution Results/` | Historical test results |
+| Playwright Tests | `QA Tests/Playwright Tests/` | E2E test specifications |
 
 ---
 
@@ -1946,19 +1189,6 @@ Fix: Add wait, verify selector, check for dynamic content
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2026-02-03 | QA Team | Initial version - consolidated from multiple documents |
-| 1.1 | 2026-02-06 | QA Team | Synced with PDJ project playbook, standardized 2×P formula |
-| 1.2 | 2026-02-06 | QA Team | Added Combinatorial Testing: Value Permutations section with pairwise testing strategy and data-driven test patterns |
-
----
-
-## Appendix C: Feedback and Improvements
-
-This playbook is a living document. To suggest improvements:
-
-1. Identify the section needing improvement
-2. Document the proposed change
-3. Submit via team's change request process
-4. Changes reviewed and incorporated quarterly
 
 ---
 
