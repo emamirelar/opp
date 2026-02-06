@@ -630,10 +630,17 @@ export class OpportunityTeamSectionComponent implements OnInit {
     for (const country of opp.countries) {
       if (!country.country?.organizationUnitHierarchy) continue;
       
-      // Find the OrgUnit (Type = "OrgUnit", level 3) in the hierarchy
-      const normalOrgUnit = country.country.organizationUnitHierarchy.find(
-        (ou: any) => ou.type === 'OrgUnit' && ou.level === 3
+      // Find the deepest OrgUnit (Type = "OrgUnit") in the hierarchy
+      // Note: Different countries may have different hierarchy depths (e.g., some have Hub level, some don't)
+      // So we find the OrgUnit with the highest level instead of hardcoding level 3
+      const orgUnitsInHierarchy = country.country.organizationUnitHierarchy.filter(
+        (ou: any) => ou.type === 'OrgUnit'
       );
+      const normalOrgUnit = orgUnitsInHierarchy.length > 0
+        ? orgUnitsInHierarchy.reduce((deepest: any, current: any) => 
+            current.level > deepest.level ? current : deepest
+          )
+        : null;
       
       // Only include if it's different from the selected responsible org unit
       if (normalOrgUnit && normalOrgUnit.id !== selectedOrgUnitId) {
@@ -665,10 +672,17 @@ export class OpportunityTeamSectionComponent implements OnInit {
     for (const country of opp.countries) {
       if (!country.country?.organizationUnitHierarchy) continue;
       
-      // Find the OrgUnit (Type = "OrgUnit", level 3) in the hierarchy
-      const normalOrgUnit = country.country.organizationUnitHierarchy.find(
-        (ou: any) => ou.type === 'OrgUnit' && ou.level === 3
+      // Find the deepest OrgUnit (Type = "OrgUnit") in the hierarchy
+      // Note: Different countries may have different hierarchy depths (e.g., some have Hub level, some don't)
+      // So we find the OrgUnit with the highest level instead of hardcoding level 3
+      const orgUnitsInHierarchy = country.country.organizationUnitHierarchy.filter(
+        (ou: any) => ou.type === 'OrgUnit'
       );
+      const normalOrgUnit = orgUnitsInHierarchy.length > 0
+        ? orgUnitsInHierarchy.reduce((deepest: any, current: any) => 
+            current.level > deepest.level ? current : deepest
+          )
+        : null;
       
       if (normalOrgUnit && !normalOrgUnitIds.includes(normalOrgUnit.id)) {
         normalOrgUnitIds.push(normalOrgUnit.id);
@@ -703,9 +717,16 @@ export class OpportunityTeamSectionComponent implements OnInit {
     for (const country of opp.countries || []) {
       if (!country.country?.organizationUnitHierarchy) continue;
       
-      const normalOrgUnit = country.country.organizationUnitHierarchy.find(
-        (ou: any) => ou.type === 'OrgUnit' && ou.level === 3
+      // Find the deepest OrgUnit (Type = "OrgUnit") in the hierarchy
+      // Note: Different countries may have different hierarchy depths (e.g., some have Hub level, some don't)
+      const orgUnitsInHierarchy = country.country.organizationUnitHierarchy.filter(
+        (ou: any) => ou.type === 'OrgUnit'
       );
+      const normalOrgUnit = orgUnitsInHierarchy.length > 0
+        ? orgUnitsInHierarchy.reduce((deepest: any, current: any) => 
+            current.level > deepest.level ? current : deepest
+          )
+        : null;
       
       if (normalOrgUnit && normalOrgUnit.id !== selectedOrgUnitId) {
         affectedCountries.push(country.country.name);
