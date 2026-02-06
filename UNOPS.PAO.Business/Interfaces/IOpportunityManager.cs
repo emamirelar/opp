@@ -47,11 +47,12 @@ public interface IOpportunityManager
     Task AssignExecutiveAsync(int opportunityId, int executiveId);
 
     /// <summary>
-    /// Gets executives (Director/Manager/OiC) for an opportunity's responsible org unit.
+    /// Gets personnel for an opportunity's responsible org unit.
     /// Used to populate the Executive dropdown in the Go Decision approval dialog.
+    /// Returns all personnel with roles on the org unit, with Directors/Deputy Directors marked as "Suggested".
     /// </summary>
     /// <param name="opportunityId">The opportunity ID</param>
-    /// <returns>List of executives with display label and user ID</returns>
+    /// <returns>List of personnel with display label and user ID</returns>
     Task<IEnumerable<TypeaheadInput>> GetExecutivesForOpportunityAsync(int opportunityId);
 }
 

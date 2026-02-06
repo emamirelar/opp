@@ -1380,12 +1380,14 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
 
   /**
    * Navigate to opportunity for Go/No-Go decision
+   * Navigates directly to the Statement section for reviewing the opportunity
    */
   navigateToApproval(approval: PendingApprovalModel): void {
     const entityKey = `Opportunity-${approval.entityId}`;
     this.navigatingToEntity.set(entityKey);
     
-    this.router.navigate(['partnerships', 'opportunities', approval.entityId.toString()]).then(
+    // Navigate directly to the Statement section for Go/No-Go review
+    this.router.navigate(['partnerships', 'opportunities', approval.entityId.toString(), 'statement']).then(
       (success) => {
         if (!success) {
           console.warn('Navigation to approval failed');

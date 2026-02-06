@@ -232,21 +232,34 @@ public class WorkflowController : BaseController
                 }
             }
 
+            // Check if current user is the submitter (initiator of the workflow)
+            var isInitiator = pendingTask.UserId == CurrentUserId;
+
             // Get approvers (use normalized entity name)
             var approvers = await _approverProvider.GetApproversAsync(normalizedEntityName, id, currentStage, pendingTask.NewStage ?? "");
-            response.Approvers = approvers.Select(a => new WorkflowApproverResponse
+            var approversList = approvers.ToList();
+            
+            // If current user is the submitter, remove them from the approvers list
+            // (submitters shouldn't see themselves as potential approvers)
+            if (isInitiator)
+            {
+                approversList.RemoveAll(a => a.UserId == CurrentUserId);
+            }
+            
+            response.Approvers = approversList.Select(a => new WorkflowApproverResponse
             {
                 UserId = a.UserId,
                 UserName = a.Name ?? $"{a.FirstName} {a.LastName}".Trim(),
                 UserEmail = a.Email,
                 RoleName = a.Role
             }).ToList();
-
+            
             // Check if current user can approve (use normalized entity name)
-            response.CanApprove = await _approverProvider.CanUserApproveAsync(normalizedEntityName, id, CurrentUserId, currentStage, pendingTask.NewStage ?? "");
+            // Note: Users cannot approve/reject their own submissions, even if they have approval permissions
+            var hasApprovalPermission = await _approverProvider.CanUserApproveAsync(normalizedEntityName, id, CurrentUserId, currentStage, pendingTask.NewStage ?? "");
+            response.CanApprove = hasApprovalPermission && !isInitiator;
             
             // Check if current user can recall (submitter OR Opportunity Manager for Opportunities)
-            var isInitiator = pendingTask.UserId == CurrentUserId;
             var isOMForRecall = normalizedEntityName == "Opportunity" 
                 ? await IsUserOpportunityManagerAsync(id, CurrentUserId) 
                 : false;
