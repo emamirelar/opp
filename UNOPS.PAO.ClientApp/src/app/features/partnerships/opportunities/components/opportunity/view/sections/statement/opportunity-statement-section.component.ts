@@ -88,6 +88,14 @@ export class OpportunityStatementSectionComponent implements OnInit {
   readonly canUpdate = input<boolean>(false);
 
   /**
+   * @description Input signal to show approver guidance when user is an approver and opportunity is pending approval
+   * @type {Signal<boolean>}
+   * @default false
+   * @since 1.0.0
+   */
+  readonly showApproverGuidance = input<boolean>(false);
+
+  /**
    * @description Output event when opportunity statement is generated/regenerated
    * @type {OutputEmitterRef<Opportunity>}
    * @param {Opportunity} opportunity - The updated opportunity with new statement

@@ -188,6 +188,7 @@
                 [formGroup]="opportunityForm"
                 [currentStage]="opportunity()?.stage ?? ''"
                 [entityData]="opportunity()"
+                [customValidators]="customValidators"
                 (requirementClick)="handleRequirementClick($event)"
               />
             </div>
@@ -552,6 +553,7 @@
             <app-opportunity-statement-section
               [opportunity]="opportunity()!"
               [canUpdate]="canUpdate()"
+              [showApproverGuidance]="showDecisionGuidance()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
             />
           </div>

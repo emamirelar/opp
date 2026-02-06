@@ -1531,11 +1531,12 @@ public class OpportunityManager : IOpportunityManager
     }
 
     /// <summary>
-    /// Gets executives (Director/Manager/OiC) for an opportunity's responsible org unit.
+    /// Gets personnel for an opportunity's responsible org unit.
     /// Used to populate the Executive dropdown in the Go Decision approval dialog.
+    /// Returns all personnel with roles on the org unit, with Directors/Deputy Directors marked as "Suggested".
     /// </summary>
     /// <param name="opportunityId">The opportunity ID</param>
-    /// <returns>List of executives with display label and user ID</returns>
+    /// <returns>List of personnel with display label and user ID</returns>
     /// <exception cref="KeyNotFoundException">Thrown when opportunity is not found</exception>
     public virtual async Task<IEnumerable<TypeaheadInput>> GetExecutivesForOpportunityAsync(int opportunityId)
     {
@@ -1560,57 +1561,88 @@ public class OpportunityManager : IOpportunityManager
     }
 
     /// <summary>
-    /// Gets executives (Director/Manager/OiC) for a specific organization unit.
-    /// Queries EntityUserRole for Director/Deputy Director roles on the org unit.
+    /// Gets all users in the system for executive selection.
+    /// Users with Director/Deputy Director roles on the specified org unit are marked as "Suggested".
     /// </summary>
     /// <param name="orgUnitId">The organization unit ID</param>
-    /// <returns>List of executives with display label (name + role) and user ID as value</returns>
+    /// <returns>List of all users with suggested executives first</returns>
     protected virtual async Task<IEnumerable<TypeaheadInput>> GetExecutivesForOrgUnitAsync(int orgUnitId)
     {
-        // Director role codes to filter by
-        var directorRoleCodes = new[]
+        // Director/Deputy Director/OiC role codes that should be marked as "Suggested"
+        var suggestedRoleCodes = new[]
         {
             "OrgUnit_Director_OrganizationHierarchy",
             "OrgUnit_Deputy_Director_OrganizationHierarchy",
+            "OrgUnit_OiC_OrganizationHierarchy",
             "Regional_Director_OrganizationHierarchy",
             "Regional_Deputy_Director_OrganizationHierarchy",
             "MCO_Director_OrganizationHierarchy",
             "MCO_Deputy_Director_OrganizationHierarchy"
         };
 
-        // Query EntityUserRole for directors/deputies assigned to this org unit
-        var executives = await context.EntityUserRoles
+        // Get users with executive roles on this org unit (to mark as "Suggested")
+        var executiveRoles = await context.EntityUserRoles
             .AsNoTracking()
             .Include(e => e.EntityRole)
-            .Include(e => e.User)
-                .ThenInclude(u => u!.UserProfile)
             .Where(e => !e.IsDeleted &&
                        e.EntityType == "OrganizationHierarchy" &&
                        e.EntityId == orgUnitId &&
                        e.EntityRole != null &&
                        e.EntityRole.Code != null &&
-                       directorRoleCodes.Contains(e.EntityRole.Code))
+                       suggestedRoleCodes.Contains(e.EntityRole.Code))
             .ToListAsync();
 
-        // Map to TypeaheadInput
-        var result = executives
-            .Where(e => e.User != null)
-            .Select(e => {
-                var userName = e.User!.UserProfile?.Name ?? e.User.Email ?? "Unknown User";
-                var roleName = GetFriendlyRoleName(e.EntityRole?.Code);
-                var isDirector = e.EntityRole?.Code?.Contains("_Director_") == true && 
-                                !e.EntityRole?.Code?.Contains("Deputy") == true;
+        // Get the set of suggested user IDs and their roles
+        var suggestedUserRoles = executiveRoles
+            .GroupBy(e => e.UserId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.OrderByDescending(e => e.EntityRole?.Code?.Contains("_Director_") == true && 
+                                              !e.EntityRole?.Code?.Contains("Deputy") == true)
+                      .First().EntityRole?.Code
+            );
+
+        // Get ALL users in the system
+        var allUsers = await context.PAOUsers
+            .AsNoTracking()
+            .Include(u => u.UserProfile)
+            .ToListAsync();
+
+        // Map to TypeaheadInput - suggested users first, then 30 more non-suggested users
+        var suggestedUsers = allUsers
+            .Where(user => suggestedUserRoles.ContainsKey(user.Id))
+            .Select(user => {
+                var userName = user.UserProfile?.Name ?? user.Email ?? "Unknown User";
+                var roleName = GetFriendlyRoleName(suggestedUserRoles[user.Id]);
                 
                 return new TypeaheadInput
                 {
                     Label = $"{userName} ({roleName})",
-                    Value = e.UserId.ToString(),
-                    Description = isDirector ? "Suggested" : null
+                    Value = user.Id.ToString(),
+                    Description = "Suggested"
                 };
             })
-            .OrderByDescending(e => e.Description == "Suggested") // Directors first
-            .ThenBy(e => e.Label)
+            .OrderBy(e => e.Label)
             .ToList();
+
+        var nonSuggestedUsers = allUsers
+            .Where(user => !suggestedUserRoles.ContainsKey(user.Id))
+            .Select(user => {
+                var userName = user.UserProfile?.Name ?? user.Email ?? "Unknown User";
+                
+                return new TypeaheadInput
+                {
+                    Label = userName,
+                    Value = user.Id.ToString(),
+                    Description = null
+                };
+            })
+            .OrderBy(e => e.Label)
+            .Take(30) // Limit to 30 non-suggested users for performance
+            .ToList();
+
+        // Combine: all suggested users first, then up to 30 other users
+        var result = suggestedUsers.Concat(nonSuggestedUsers).ToList();
 
         return result;
     }
@@ -1620,6 +1652,9 @@ public class OpportunityManager : IOpportunityManager
     /// </summary>
     private static string GetFriendlyRoleName(string? roleCode)
     {
+        if (string.IsNullOrEmpty(roleCode))
+            return "Personnel";
+            
         return roleCode switch
         {
             "OrgUnit_Director_OrganizationHierarchy" => "Director",
@@ -1628,8 +1663,35 @@ public class OpportunityManager : IOpportunityManager
             "Regional_Deputy_Director_OrganizationHierarchy" => "Regional Deputy Director",
             "MCO_Director_OrganizationHierarchy" => "MCO Director",
             "MCO_Deputy_Director_OrganizationHierarchy" => "MCO Deputy Director",
-            _ => "Executive"
+            "OrgUnit_Manager_OrganizationHierarchy" => "Manager",
+            "OrgUnit_OiC_OrganizationHierarchy" => "OiC",
+            "OrgUnit_Staff_OrganizationHierarchy" => "Staff",
+            "OrgUnit_Member_OrganizationHierarchy" => "Member",
+            _ => ExtractRoleNameFromCode(roleCode)
         };
+    }
+    
+    /// <summary>
+    /// Extracts a friendly role name from a role code by parsing the code structure.
+    /// Example: "OrgUnit_Portfolio_Manager_OrganizationHierarchy" => "Portfolio Manager"
+    /// </summary>
+    private static string ExtractRoleNameFromCode(string roleCode)
+    {
+        // Remove common prefixes and suffixes
+        var name = roleCode
+            .Replace("_OrganizationHierarchy", "")
+            .Replace("OrgUnit_", "")
+            .Replace("Regional_", "Regional ")
+            .Replace("MCO_", "MCO ")
+            .Replace("_", " ");
+            
+        // Capitalize first letter of each word
+        if (!string.IsNullOrEmpty(name))
+        {
+            return System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(name.ToLower());
+        }
+        
+        return "Personnel";
     }
 }
 

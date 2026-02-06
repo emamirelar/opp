@@ -48,7 +48,9 @@ import { StageWorkflowComponent } from '@shared/reusables/components/workflow/co
 import {
   RequirementsValidationComponent,
   RequirementClickEvent,
+  ICustomFieldValidatorService,
 } from '@shared/reusables/components/workflow/components/requirements-validation/requirements-validation.component';
+import { StageRequirement } from '@shared/reusables/components/workflow/models/requirement.models';
 import { WorkflowService } from '@shared/reusables/components/workflow/services/workflow.service';
 import { WorkflowHistoryModel } from '@shared/reusables/components/workflow/models/workflow.models';
 
@@ -252,6 +254,46 @@ export class OpportunityViewComponent
     estimatedIndirectBeneficiaries: new FormControl<number | null>(null),
     stakeholders: new FormControl<unknown[]>([]),
   });
+
+  /**
+   * Custom validators for workflow requirements validation.
+   * Handles the "conditional" field type for beneficiaries validation.
+   */
+  customValidators: Map<string, ICustomFieldValidatorService> = new Map([
+    [
+      'conditional',
+      {
+        validate: async (
+          requirement: StageRequirement,
+          formGroup: FormGroup
+        ): Promise<boolean> => {
+          // Handle beneficiaries validation
+          if (requirement.name === 'beneficiaries') {
+            const beneficiariesToBeDetermined = formGroup.get(
+              'beneficiariesToBeDetermined'
+            )?.value;
+            const estimatedDirectBeneficiaries = formGroup.get(
+              'estimatedDirectBeneficiaries'
+            )?.value;
+            const estimatedIndirectBeneficiaries = formGroup.get(
+              'estimatedIndirectBeneficiaries'
+            )?.value;
+
+            // Validation rule: Either TBD is true OR (Direct > 0 AND Indirect >= 0)
+            const isValid =
+              beneficiariesToBeDetermined === true ||
+              (estimatedDirectBeneficiaries > 0 &&
+                estimatedIndirectBeneficiaries !== null &&
+                estimatedIndirectBeneficiaries >= 0);
+
+            return isValid;
+          }
+          // Unknown conditional requirement - pass
+          return true;
+        },
+      },
+    ],
+  ]);
 
   @ViewChild('contentScrollContainer', { read: ElementRef })
   contentScrollContainer?: ElementRef;
@@ -1699,10 +1741,13 @@ export class OpportunityViewComponent
     };
 
     // Build acknowledgment statement with actual values
-    const orgUnitName = opportunity?.responsibleOrgUnitName || 'N/A';
+    const orgUnitCode = opportunity?.responsibleOrgUnitName || 'N/A';
     const initiativeType = opportunity?.proposedInitiativeTypeName || 'initiative';
-    const acknowledgmentStatement = `I confirm that ${orgUnitName} has the capacity and capability to deliver this ${initiativeType} within the proposed timeline and budget.`;
-
+    const acknowledgmentStatement = this.translateService.instant('workflow.goDecision.dialog.approve.confirmationStatement', {
+      orgUnitCode: orgUnitCode,
+      initiativeType: initiativeType,
+    });
+    
     // Build the audit trail markdown
     let auditTrail = `
 ---

@@ -219,10 +219,20 @@ export class WorkflowComponent implements OnInit {
 
   private initialiseUI(workflowData: any) {
     let itemsArray: MenuItem[] = [];
-    const actions = workflowData?.nextActions || [];
+    let actions = workflowData?.nextActions || [];
 
     this.workflowInfo.set(workflowData?.workflow || {});
     this.isInWorkflow.set(workflowData?.isInWorkflow || false);
+
+    // For Opportunities, filter out the "No Go" action since users don't submit directly for No Go
+    // (No Go is only reached when a Go Decision is rejected)
+    if (this.entityName().toLowerCase() === 'opportunity') {
+      actions = actions.filter((action: any) => {
+        const newStage = (action['newStage'] || '').toUpperCase();
+        return !newStage.includes('NO GO') && !newStage.includes('NO_GO') && !newStage.includes('NOGO');
+      });
+    }
+
     this.workflowActions.set(actions);
 
     actions.forEach((item: any, index: number) => {
@@ -610,6 +620,15 @@ export class WorkflowComponent implements OnInit {
   }
 
   /**
+   * Handle non-OM warning dialog visibility change (for X button close)
+   */
+  onNonOMWarningDialogVisibleChange(visible: boolean): void {
+    if (!visible) {
+      this.closeNonOMWarningDialog();
+    }
+  }
+
+  /**
    * Confirm org unit mismatch warning and re-submit
    */
   confirmOrgUnitMismatch(): void {
@@ -627,6 +646,15 @@ export class WorkflowComponent implements OnInit {
   closeOrgUnitMismatchDialog(): void {
     this.showOrgUnitMismatchDialog.set(false);
     this.pendingSubmitRequest.set(null);
+  }
+
+  /**
+   * Handle org unit mismatch dialog visibility change (for X button close)
+   */
+  onOrgUnitMismatchDialogVisibleChange(visible: boolean): void {
+    if (!visible) {
+      this.closeOrgUnitMismatchDialog();
+    }
   }
 
   /**
@@ -661,6 +689,15 @@ export class WorkflowComponent implements OnInit {
   }
 
   /**
+   * Handle acknowledgment dialog visibility change (for X button close)
+   */
+  onAcknowledgmentDialogVisibleChange(visible: boolean): void {
+    if (!visible) {
+      this.closeAcknowledgmentDialog();
+    }
+  }
+
+  /**
    * Confirm rejection to NO GO
    */
   confirmRejectToNoGo(): void {
@@ -685,11 +722,29 @@ export class WorkflowComponent implements OnInit {
   }
 
   /**
+   * Handle reject to NO GO dialog visibility change (for X button close)
+   */
+  onRejectToNoGoDialogVisibleChange(visible: boolean): void {
+    if (!visible) {
+      this.closeRejectToNoGoDialog();
+    }
+  }
+
+  /**
    * Close unmet requirements dialog
    */
   closeUnmetRequirementsDialog(): void {
     this.showUnmetRequirementsDialog.set(false);
     this.unmetRequirements.set([]);
+  }
+
+  /**
+   * Handle unmet requirements dialog visibility change (for X button close)
+   */
+  onUnmetRequirementsDialogVisibleChange(visible: boolean): void {
+    if (!visible) {
+      this.closeUnmetRequirementsDialog();
+    }
   }
 
   /**
