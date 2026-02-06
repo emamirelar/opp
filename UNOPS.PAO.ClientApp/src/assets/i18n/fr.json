@@ -3194,7 +3194,7 @@
   "message.requirements.opportunity.deliveryDateRequired": "QUAND > Date de livraison cible",
   "message.requirements.opportunity.orgUnitRequired": "ÉQUIPE > Unité organisationnelle responsable du développement de l'opportunité",
   "message.requirements.opportunity.initiativeTypeRequired": "ÉQUIPE > Type d'initiative proposé à développer",
-  "message.requirements.opportunity.beneficiariesRequired": "POURQUOI > Bénéficiaires (soit 'À déterminer' doit être coché, soit les bénéficiaires directs et indirects doivent être spécifiés)",
+  "message.requirements.opportunity.beneficiariesRequired": "POURQUOI > Bénéficiaires (soit 'sera recherché' doit être coché, soit les bénéficiaires directs et indirects doivent être spécifiés)",
   "message.requirements.opportunity.managerRequired": "ÉQUIPE > Gestionnaire d'opportunité",
   "message.requirements.opportunity.doaHolderRequired": "ÉQUIPE > Le titulaire du DoA niveau 2 doit exister pour l'unité organisationnelle responsable",
   "message.requirements.opportunity.impactRequired": "POURQUOI > Impact",

@@ -3306,7 +3306,7 @@
   "message.requirements.opportunity.deliveryDateRequired": "WHEN > Target Delivery Date",
   "message.requirements.opportunity.orgUnitRequired": "TEAM > Org Unit Responsible for Opportunity development",
   "message.requirements.opportunity.initiativeTypeRequired": "TEAM > Proposed Initiative Type to be Developed",
-  "message.requirements.opportunity.beneficiariesRequired": "WHY > Beneficiaries (either 'To be determined' must be checked, or Direct and Indirect beneficiaries must be specified)",
+  "message.requirements.opportunity.beneficiariesRequired": "WHY > Beneficiaries (either 'will be sought' must be checked, or Direct and Indirect beneficiaries must be specified)",
   "message.requirements.opportunity.managerRequired": "TEAM > Opportunity Manager",
   "message.requirements.opportunity.doaHolderRequired": "TEAM > DoA Level 2 holder must exist for the responsible org unit",
   "message.requirements.opportunity.impactRequired": "WHY > Impact",

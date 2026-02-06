@@ -535,9 +535,8 @@ public class WorkflowController : BaseController
             // 3. Mandatory Acknowledgment Statement
             if (!request.AcknowledgedStatement)
             {
-                var orgUnitDisplay = opportunity?.ResponsibleOrgUnit != null 
-                    ? $"{opportunity.ResponsibleOrgUnit.Code} - {opportunity.ResponsibleOrgUnit.Name}"
-                    : "the responsible org unit";
+                // Use Name directly as it already contains the code prefix
+                var orgUnitDisplay = opportunity?.ResponsibleOrgUnit?.Name ?? "the responsible org unit";
                 
                 return Ok(new WorkflowSubmitResponse
                 {
