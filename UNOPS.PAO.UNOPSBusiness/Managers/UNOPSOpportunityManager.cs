@@ -2231,27 +2231,52 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             
             if (opportunityManagerRole != null)
             {
-                // Remove existing opportunity manager stakeholder
-                var existingManager = opportunity.Stakeholders?
-                    .FirstOrDefault(s => s.EntityRoleId == opportunityManagerRole.Id && s.UserId.HasValue);
+                // Step 1: Soft-delete ALL existing Opportunity Manager stakeholders for this opportunity
+                var allExistingManagers = await context.Set<OpportunityStakeholder>()
+                    .Where(s => s.OpportunityId == id 
+                        && s.EntityRoleId == opportunityManagerRole.Id)
+                    .ToListAsync();
                 
-                if (existingManager != null)
+                foreach (var existingManager in allExistingManagers)
                 {
-                    opportunity.Stakeholders!.Remove(existingManager);
-                    context.Set<OpportunityStakeholder>().Remove(existingManager);
+                    existingManager.IsDeleted = true;
+                    // Remove from in-memory collection if it's there
+                    if (opportunity.Stakeholders?.Contains(existingManager) == true)
+                    {
+                        opportunity.Stakeholders.Remove(existingManager);
+                    }
                 }
                 
-                // Add new opportunity manager stakeholder
-                opportunity.Stakeholders ??= new List<OpportunityStakeholder>();
-                opportunity.Stakeholders.Add(new OpportunityStakeholder
+                // Step 2: Check if the new manager already has a stakeholder record (possibly soft-deleted)
+                var existingRecordForNewManager = allExistingManagers
+                    .FirstOrDefault(s => s.UserId == request.OpportunityManagerId.Value);
+                
+                if (existingRecordForNewManager != null)
                 {
-                    OpportunityId = id,
-                    UserId = request.OpportunityManagerId.Value,
-                    EntityRoleId = opportunityManagerRole.Id,
-                    IsInternal = true,
-                    StakeholderType = "Internal",
-                    OrganizationHierarchyId = null
-                });
+                    // Reactivate the existing record
+                    existingRecordForNewManager.IsDeleted = false;
+                    // Add back to in-memory collection
+                    opportunity.Stakeholders ??= new List<OpportunityStakeholder>();
+                    if (!opportunity.Stakeholders.Contains(existingRecordForNewManager))
+                    {
+                        opportunity.Stakeholders.Add(existingRecordForNewManager);
+                    }
+                }
+                else
+                {
+                    // Create new opportunity manager stakeholder
+                    opportunity.Stakeholders ??= new List<OpportunityStakeholder>();
+                    opportunity.Stakeholders.Add(new OpportunityStakeholder
+                    {
+                        OpportunityId = id,
+                        UserId = request.OpportunityManagerId.Value,
+                        EntityRoleId = opportunityManagerRole.Id,
+                        IsInternal = true,
+                        StakeholderType = "Internal",
+                        OrganizationHierarchyId = null,
+                        IsDeleted = false
+                    });
+                }
             }
         }
 
