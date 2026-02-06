@@ -386,9 +386,9 @@
     <div #contentScrollContainer class="flex flex-1 min-h-0 overflow-y-auto">
       <!-- LEFT: Documents Panel (hidden on mobile by default) -->
       <div
-        class="flex-shrink-0 border-r border-unops-neutral-300 bg-unops-surface-primary sticky top-0 transition-all duration-300"
+        class="flex-shrink-0 bg-unops-surface-primary sticky top-0 transition-all duration-300"
         [class.hidden]="documentsCollapsed() && innerWidth() < 768"
-        style="max-height: calc(100vh - 450px); align-self: flex-start"
+        style="align-self: flex-start"
       >
         <app-opportunity-documents
           [opportunityId]="opportunity()!.id!"
