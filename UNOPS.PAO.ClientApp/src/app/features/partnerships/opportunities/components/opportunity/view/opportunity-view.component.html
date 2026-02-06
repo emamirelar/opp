@@ -188,6 +188,7 @@
                 [formGroup]="opportunityForm"
                 [currentStage]="opportunity()?.stage ?? ''"
                 [entityData]="opportunity()"
+                [customValidators]="customValidators"
                 (requirementClick)="handleRequirementClick($event)"
               />
             </div>

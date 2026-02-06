@@ -3181,7 +3181,7 @@
   "message.requirements.opportunity.deliveryDateRequired": "QUANDO > Data Prevista de Entrega",
   "message.requirements.opportunity.orgUnitRequired": "EQUIPE > Unidade Organizacional Responsável pelo Desenvolvimento da Oportunidade",
   "message.requirements.opportunity.initiativeTypeRequired": "EQUIPE > Tipo de Iniciativa Proposto a Desenvolver",
-  "message.requirements.opportunity.beneficiariesRequired": "PORQUÊ > Beneficiários (deve-se marcar 'A determinar', ou os beneficiários diretos e indiretos devem ser especificados)",
+  "message.requirements.opportunity.beneficiariesRequired": "PORQUÊ > Beneficiários (deve-se marcar 'será procurado', ou os beneficiários diretos e indiretos devem ser especificados)",
   "message.requirements.opportunity.managerRequired": "EQUIPE > Gestor de Oportunidade",
   "message.requirements.opportunity.doaHolderRequired": "EQUIPE > O titular do DoA nível 2 deve existir para a unidade organizacional responsável",
   "message.requirements.opportunity.impactRequired": "PORQUÊ > Impacto",
