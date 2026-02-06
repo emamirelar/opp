@@ -39,13 +39,14 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
     /// <summary>
     /// Gets all mandatory field requirements for the GO transition.
     /// Based on PRD FR-2.1: 21 mandatory fields.
+    /// Order matches UI display order (Overview → What → Why → Who → Where → When → Statement → Team).
     /// </summary>
     private static List<StageRequirement> GetGoTransitionRequirements()
     {
         return new List<StageRequirement>
         {
             // ============================================
-            // Text Fields (Required)
+            // SECTION: OVERVIEW
             // ============================================
 
             // 1. Opportunity Name
@@ -68,51 +69,7 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
                 Validation = new RequirementValidation { Required = true }
             },
 
-            // 3. Context & Challenges
-            new StageRequirement
-            {
-                Name = "challenges",
-                Description = "message.requirements.opportunity.challengesRequired",
-                FieldName = "challenges",
-                FieldType = FieldTypes.Text,
-                Validation = new RequirementValidation { Required = true }
-            },
-
-            // 4. Expected Impact
-            new StageRequirement
-            {
-                Name = "expectedImpact",
-                Description = "message.requirements.opportunity.impactRequired",
-                FieldName = "expectedImpact",
-                FieldType = FieldTypes.Text,
-                Validation = new RequirementValidation { Required = true }
-            },
-
-            // 5. Expected Outcomes
-            new StageRequirement
-            {
-                Name = "expectedOutcomes",
-                Description = "message.requirements.opportunity.outcomesRequired",
-                FieldName = "expectedOutcomes",
-                FieldType = FieldTypes.Text,
-                Validation = new RequirementValidation { Required = true }
-            },
-
-            // 6. Opportunity Statement
-            new StageRequirement
-            {
-                Name = "opportunityStatementMarkdown",
-                Description = "message.requirements.opportunity.statementRequired",
-                FieldName = "opportunityStatementMarkdown",
-                FieldType = FieldTypes.Text,
-                Validation = new RequirementValidation { Required = true }
-            },
-
-            // ============================================
-            // Number Fields (Required)
-            // ============================================
-
-            // 7. Proposed Budget (Initiative Budget USD)
+            // 3. Proposed Budget (Initiative Budget USD)
             new StageRequirement
             {
                 Name = "initiativeBudgetUSD",
@@ -123,10 +80,80 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
             },
 
             // ============================================
-            // Array Fields (minLength = 1)
+            // SECTION: WHAT (Products & Services)
             // ============================================
 
-            // 8. Strategic Missions (UNOPS Missions)
+            // 4. Products & Services (Deliverables)
+            new StageRequirement
+            {
+                Name = "deliverables",
+                Description = "message.requirements.opportunity.productsRequired",
+                FieldName = "deliverables",
+                FieldType = FieldTypes.Array,
+                Validation = new RequirementValidation { Required = true, MinLength = 1 }
+            },
+
+            // ============================================
+            // SECTION: WHY (Impact & Alignment)
+            // ============================================
+
+            // 5. Context & Challenges
+            new StageRequirement
+            {
+                Name = "challenges",
+                Description = "message.requirements.opportunity.challengesRequired",
+                FieldName = "challenges",
+                FieldType = FieldTypes.Text,
+                Validation = new RequirementValidation { Required = true }
+            },
+
+            // 6. Expected Impact
+            new StageRequirement
+            {
+                Name = "expectedImpact",
+                Description = "message.requirements.opportunity.impactRequired",
+                FieldName = "expectedImpact",
+                FieldType = FieldTypes.Text,
+                Validation = new RequirementValidation { Required = true }
+            },
+
+            // 7. Expected Outcomes
+            new StageRequirement
+            {
+                Name = "expectedOutcomes",
+                Description = "message.requirements.opportunity.outcomesRequired",
+                FieldName = "expectedOutcomes",
+                FieldType = FieldTypes.Text,
+                Validation = new RequirementValidation { Required = true }
+            },
+
+            // 8. Beneficiaries (Conditional validation)
+            // Either BeneficiariesToBeDetermined == true OR (EstimatedDirectBeneficiaries > 0 AND EstimatedIndirectBeneficiaries >= 0)
+            new StageRequirement
+            {
+                Name = "beneficiaries",
+                Description = "message.requirements.opportunity.beneficiariesRequired",
+                FieldName = "beneficiaries",
+                FieldType = "conditional",
+                CustomValidatorConfig = new Dictionary<string, object>
+                {
+                    ["validatorName"] = "BeneficiariesValidator",
+                    ["fields"] = new[] { "beneficiariesToBeDetermined", "estimatedDirectBeneficiaries", "estimatedIndirectBeneficiaries" },
+                    ["rule"] = "BeneficiariesToBeDetermined == true OR (EstimatedDirectBeneficiaries > 0 AND EstimatedIndirectBeneficiaries >= 0)"
+                }
+            },
+
+            // 9. SDG Alignment
+            new StageRequirement
+            {
+                Name = "sdgs",
+                Description = "message.requirements.opportunity.sdgRequired",
+                FieldName = "sdgs",
+                FieldType = FieldTypes.Array,
+                Validation = new RequirementValidation { Required = true, MinLength = 1 }
+            },
+
+            // 10. Strategic Missions (UNOPS Missions)
             // Required: At least one mission selected, UNLESS "Not Applicable" flag is checked
             new StageRequirement
             {
@@ -147,17 +174,11 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
                 }
             },
 
-            // 9. SDG Alignment
-            new StageRequirement
-            {
-                Name = "sdgs",
-                Description = "message.requirements.opportunity.sdgRequired",
-                FieldName = "sdgs",
-                FieldType = FieldTypes.Array,
-                Validation = new RequirementValidation { Required = true, MinLength = 1 }
-            },
+            // ============================================
+            // SECTION: WHO (Partners & People)
+            // ============================================
 
-            // 10. Funding Partners
+            // 11. Funding Partners
             new StageRequirement
             {
                 Name = "fundingPartners",
@@ -167,7 +188,7 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
                 Validation = new RequirementValidation { Required = true, MinLength = 1 }
             },
 
-            // 11. Client Partners
+            // 12. Client Partners
             new StageRequirement
             {
                 Name = "clientPartners",
@@ -177,15 +198,9 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
                 Validation = new RequirementValidation { Required = true, MinLength = 1 }
             },
 
-            // 12. Products & Services (Deliverables)
-            new StageRequirement
-            {
-                Name = "deliverables",
-                Description = "message.requirements.opportunity.productsRequired",
-                FieldName = "deliverables",
-                FieldType = FieldTypes.Array,
-                Validation = new RequirementValidation { Required = true, MinLength = 1 }
-            },
+            // ============================================
+            // SECTION: WHERE (Geographic Implementation)
+            // ============================================
 
             // 13. Countries of Implementation
             new StageRequirement
@@ -198,7 +213,7 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
             },
 
             // ============================================
-            // Date Fields (Required)
+            // SECTION: WHEN (Timeline & Key Dates)
             // ============================================
 
             // 14. Target Signing Date
@@ -232,50 +247,24 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
             },
 
             // ============================================
-            // Select Fields (Required)
+            // SECTION: STATEMENT
             // ============================================
 
-            // 17. Responsible Org Unit
+            // 17. Opportunity Statement
             new StageRequirement
             {
-                Name = "responsibleOrgUnitId",
-                Description = "message.requirements.opportunity.orgUnitRequired",
-                FieldName = "responsibleOrgUnitId",
-                FieldType = FieldTypes.Select,
-                Validation = new RequirementValidation { Required = true }
-            },
-
-            // 18. Proposed Initiative Type
-            new StageRequirement
-            {
-                Name = "proposedInitiativeTypeId",
-                Description = "message.requirements.opportunity.initiativeTypeRequired",
-                FieldName = "proposedInitiativeTypeId",
-                FieldType = FieldTypes.Select,
+                Name = "opportunityStatementMarkdown",
+                Description = "message.requirements.opportunity.statementRequired",
+                FieldName = "opportunityStatementMarkdown",
+                FieldType = FieldTypes.Text,
                 Validation = new RequirementValidation { Required = true }
             },
 
             // ============================================
-            // Custom/Conditional Fields
+            // SECTION: TEAM (UNOPS Team & Stakeholders)
             // ============================================
 
-            // 19. Beneficiaries (Conditional validation)
-            // Either BeneficiariesToBeDetermined == true OR (EstimatedDirectBeneficiaries > 0 AND EstimatedIndirectBeneficiaries >= 0)
-            new StageRequirement
-            {
-                Name = "beneficiaries",
-                Description = "message.requirements.opportunity.beneficiariesRequired",
-                FieldName = "beneficiaries",
-                FieldType = "conditional",
-                CustomValidatorConfig = new Dictionary<string, object>
-                {
-                    ["validatorName"] = "BeneficiariesValidator",
-                    ["fields"] = new[] { "beneficiariesToBeDetermined", "estimatedDirectBeneficiaries", "estimatedIndirectBeneficiaries" },
-                    ["rule"] = "BeneficiariesToBeDetermined == true OR (EstimatedDirectBeneficiaries > 0 AND EstimatedIndirectBeneficiaries >= 0)"
-                }
-            },
-
-            // 20. Opportunity Manager (Role-based validation)
+            // 18. Opportunity Manager (Role-based validation)
             // At least one stakeholder with "Opportunity Manager" role
             new StageRequirement
             {
@@ -289,6 +278,26 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
                     ["requiredRole"] = "Opportunity Manager",
                     ["minCount"] = 1
                 }
+            },
+
+            // 19. Responsible Org Unit
+            new StageRequirement
+            {
+                Name = "responsibleOrgUnitId",
+                Description = "message.requirements.opportunity.orgUnitRequired",
+                FieldName = "responsibleOrgUnitId",
+                FieldType = FieldTypes.Select,
+                Validation = new RequirementValidation { Required = true }
+            },
+
+            // 20. Proposed Initiative Type
+            new StageRequirement
+            {
+                Name = "proposedInitiativeTypeId",
+                Description = "message.requirements.opportunity.initiativeTypeRequired",
+                FieldName = "proposedInitiativeTypeId",
+                FieldType = FieldTypes.Select,
+                Validation = new RequirementValidation { Required = true }
             },
 
             // 21. DoA Level 2 Holder (Server-side only validation)

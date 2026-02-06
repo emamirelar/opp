@@ -716,6 +716,17 @@ public class WorkflowController : BaseController
         // Update entity stage
         await _entityStageProvider.UpdateStageAsync(normalizedEntityName, request.EntityId.ToString(), newStage, CurrentUserId);
 
+        // === SET STATUS TO ACTIVE WHEN OPPORTUNITY APPROVED TO GO ===
+        if (normalizedEntityName == "Opportunity" && newStage == OpportunityWorkflow.Stages.Go)
+        {
+            var opportunity = await _context.Opportunities.FindAsync(request.EntityId);
+            if (opportunity != null)
+            {
+                opportunity.Status = EntityStatus.Active;
+                await _context.SaveChangesAsync();
+            }
+        }
+
         // Update entity WorkflowStatus back to None (approval complete)
         await UpdateEntityWorkflowStatus(normalizedEntityName, request.EntityId, isInWorkflow: false);
 
@@ -1049,7 +1060,7 @@ public class WorkflowController : BaseController
         // Update opportunity
         var previousStage = opportunity.Stage;
         opportunity.Stage = OpportunityWorkflow.Stages.IdentifyAndProfile;
-        opportunity.Status = EntityStatus.Active;
+        opportunity.Status = EntityStatus.Draft;  // Set to Draft when reopened (not Active)
         opportunity.WorkflowStatus = WorkflowStatus.None;
         opportunity.LastModifiedBy = CurrentUserId;
         opportunity.LastModifiedDate = DateTime.UtcNow;
@@ -1614,76 +1625,111 @@ public class WorkflowController : BaseController
             return unmetRequirements;
         }
 
-        // === Text Fields (Required) ===
+        // ============================================
+        // SECTION: OVERVIEW
+        // Order matches UI display order (see OpportunityStageRequirementsProvider.cs)
+        // ============================================
+
+        // 1. Opportunity Name
         if (string.IsNullOrWhiteSpace(opportunity.Name))
             unmetRequirements.Add("message.requirements.opportunity.nameRequired");
 
+        // 2. Description
         if (string.IsNullOrWhiteSpace(opportunity.Description))
             unmetRequirements.Add("message.requirements.opportunity.descriptionRequired");
 
-        if (string.IsNullOrWhiteSpace(opportunity.Challenges))
-            unmetRequirements.Add("message.requirements.opportunity.challengesRequired");
-
-        if (string.IsNullOrWhiteSpace(opportunity.ExpectedImpact))
-            unmetRequirements.Add("message.requirements.opportunity.impactRequired");
-
-        if (string.IsNullOrWhiteSpace(opportunity.ExpectedOutcomes))
-            unmetRequirements.Add("message.requirements.opportunity.outcomesRequired");
-
-        if (string.IsNullOrWhiteSpace(opportunity.OpportunityStatementMarkdown))
-            unmetRequirements.Add("message.requirements.opportunity.statementRequired");
-
-        // === Number Fields (Required) ===
+        // 3. Proposed Budget (Initiative Budget USD)
         if (!opportunity.InitiativeBudgetUSD.HasValue || opportunity.InitiativeBudgetUSD <= 0)
             unmetRequirements.Add("message.requirements.opportunity.budgetRequired");
 
-        // === Array Fields (minLength = 1) ===
-        // Note: Junction tables (FundingPartners, ClientPartners, etc.) don't have IsDeleted property
-        // UNOPS Missions: Either at least one mission selected OR marked as "Not Applicable"
-        if (!opportunity.UNOPSMissionsNotApplicable && (opportunity.UNOPSMissions == null || !opportunity.UNOPSMissions.Any()))
-            unmetRequirements.Add("message.requirements.opportunity.missionsRequired");
+        // ============================================
+        // SECTION: WHAT (Products & Services)
+        // ============================================
 
-        if (opportunity.SDGs == null || !opportunity.SDGs.Any())
-            unmetRequirements.Add("message.requirements.opportunity.sdgRequired");
-
-        if (opportunity.FundingPartners == null || !opportunity.FundingPartners.Any())
-            unmetRequirements.Add("message.requirements.opportunity.fundingPartnerRequired");
-
-        if (opportunity.ClientPartners == null || !opportunity.ClientPartners.Any())
-            unmetRequirements.Add("message.requirements.opportunity.clientPartnerRequired");
-
+        // 4. Products & Services (Deliverables)
         if (opportunity.Deliverables == null || !opportunity.Deliverables.Any())
             unmetRequirements.Add("message.requirements.opportunity.productsRequired");
 
-        if (opportunity.Countries == null || !opportunity.Countries.Any())
-            unmetRequirements.Add("message.requirements.opportunity.countriesRequired");
+        // ============================================
+        // SECTION: WHY (Impact & Alignment)
+        // ============================================
 
-        // === Date Fields (Required) ===
-        if (!opportunity.TargetSigningDate.HasValue)
-            unmetRequirements.Add("message.requirements.opportunity.signingDateRequired");
+        // 5. Context & Challenges
+        if (string.IsNullOrWhiteSpace(opportunity.Challenges))
+            unmetRequirements.Add("message.requirements.opportunity.challengesRequired");
 
-        if (!opportunity.ImplementationStartDate.HasValue)
-            unmetRequirements.Add("message.requirements.opportunity.startDateRequired");
+        // 6. Expected Impact
+        if (string.IsNullOrWhiteSpace(opportunity.ExpectedImpact))
+            unmetRequirements.Add("message.requirements.opportunity.impactRequired");
 
-        if (!opportunity.TargetDeliveryDate.HasValue)
-            unmetRequirements.Add("message.requirements.opportunity.endDateRequired");
+        // 7. Expected Outcomes
+        if (string.IsNullOrWhiteSpace(opportunity.ExpectedOutcomes))
+            unmetRequirements.Add("message.requirements.opportunity.outcomesRequired");
 
-        // === Select Fields (Required) ===
-        if (!opportunity.ResponsibleOrgUnitId.HasValue || opportunity.ResponsibleOrgUnitId <= 0)
-            unmetRequirements.Add("message.requirements.opportunity.orgUnitRequired");
-
-        if (!opportunity.ProposedInitiativeTypeId.HasValue || opportunity.ProposedInitiativeTypeId <= 0)
-            unmetRequirements.Add("message.requirements.opportunity.initiativeTypeRequired");
-
-        // === Custom/Conditional Fields ===
-
-        // Beneficiaries: Either TBD is true OR (DirectBeneficiaries > 0 AND IndirectBeneficiaries >= 0)
+        // 8. Beneficiaries: Either TBD is true OR (DirectBeneficiaries > 0 AND IndirectBeneficiaries >= 0)
         var beneficiariesValid = opportunity.BeneficiariesToBeDetermined == true ||
             (opportunity.EstimatedDirectBeneficiaries > 0 && opportunity.EstimatedIndirectBeneficiaries >= 0);
         if (!beneficiariesValid)
             unmetRequirements.Add("message.requirements.opportunity.beneficiariesRequired");
 
-        // Opportunity Manager: At least one stakeholder with "Opportunity Manager" role
+        // 9. SDG Alignment
+        if (opportunity.SDGs == null || !opportunity.SDGs.Any())
+            unmetRequirements.Add("message.requirements.opportunity.sdgRequired");
+
+        // 10. Strategic Missions (UNOPS Missions)
+        // Either at least one mission selected OR marked as "Not Applicable"
+        if (!opportunity.UNOPSMissionsNotApplicable && (opportunity.UNOPSMissions == null || !opportunity.UNOPSMissions.Any()))
+            unmetRequirements.Add("message.requirements.opportunity.missionsRequired");
+
+        // ============================================
+        // SECTION: WHO (Partners & People)
+        // ============================================
+
+        // 11. Funding Partners
+        if (opportunity.FundingPartners == null || !opportunity.FundingPartners.Any())
+            unmetRequirements.Add("message.requirements.opportunity.fundingPartnerRequired");
+
+        // 12. Client Partners
+        if (opportunity.ClientPartners == null || !opportunity.ClientPartners.Any())
+            unmetRequirements.Add("message.requirements.opportunity.clientPartnerRequired");
+
+        // ============================================
+        // SECTION: WHERE (Geographic Implementation)
+        // ============================================
+
+        // 13. Countries of Implementation
+        if (opportunity.Countries == null || !opportunity.Countries.Any())
+            unmetRequirements.Add("message.requirements.opportunity.countriesRequired");
+
+        // ============================================
+        // SECTION: WHEN (Timeline & Key Dates)
+        // ============================================
+
+        // 14. Target Signing Date
+        if (!opportunity.TargetSigningDate.HasValue)
+            unmetRequirements.Add("message.requirements.opportunity.signingDateRequired");
+
+        // 15. Implementation Start Date
+        if (!opportunity.ImplementationStartDate.HasValue)
+            unmetRequirements.Add("message.requirements.opportunity.startDateRequired");
+
+        // 16. Implementation End Date (Target Delivery Date)
+        if (!opportunity.TargetDeliveryDate.HasValue)
+            unmetRequirements.Add("message.requirements.opportunity.endDateRequired");
+
+        // ============================================
+        // SECTION: STATEMENT
+        // ============================================
+
+        // 17. Opportunity Statement
+        if (string.IsNullOrWhiteSpace(opportunity.OpportunityStatementMarkdown))
+            unmetRequirements.Add("message.requirements.opportunity.statementRequired");
+
+        // ============================================
+        // SECTION: TEAM (UNOPS Team & Stakeholders)
+        // ============================================
+
+        // 18. Opportunity Manager: At least one stakeholder with "Opportunity Manager" role
         // Note: OpportunityStakeholder doesn't have IsDeleted, and uses EntityRole instead of Role
         var hasOpportunityManager = opportunity.Stakeholders != null &&
             opportunity.Stakeholders.Any(s => 
@@ -1692,7 +1738,15 @@ public class WorkflowController : BaseController
         if (!hasOpportunityManager)
             unmetRequirements.Add("message.requirements.opportunity.managerRequired");
 
-        // DoA Level 2 Holder: Server-side only validation
+        // 19. Responsible Org Unit
+        if (!opportunity.ResponsibleOrgUnitId.HasValue || opportunity.ResponsibleOrgUnitId <= 0)
+            unmetRequirements.Add("message.requirements.opportunity.orgUnitRequired");
+
+        // 20. Proposed Initiative Type
+        if (!opportunity.ProposedInitiativeTypeId.HasValue || opportunity.ProposedInitiativeTypeId <= 0)
+            unmetRequirements.Add("message.requirements.opportunity.initiativeTypeRequired");
+
+        // 21. DoA Level 2 Holder: Server-side only validation
         // EntityUserRole inherits from ModifiableDeletableEntity so it has IsDeleted
         // It uses EntityRole instead of Role
         if (opportunity.ResponsibleOrgUnitId.HasValue)

@@ -562,7 +562,7 @@ export class PartnerViewInteractionsComponent implements OnInit {
       const url = this.router.serializeUrl(
         this.router.createUrlTree(['/partnerships/opportunities', opportunity.id])
       );
-      window.open(`/#${url}`, '_blank');
+      window.open(url, '_blank');
     }
   }
 }
