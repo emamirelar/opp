@@ -61,6 +61,7 @@
   [(visible)]="showCommentDialog"
   [modal]="true"
   [style]="{ width: '25rem' }"
+  appendTo="body"
 >
   <div class="field">
     <label for="comment">
@@ -100,6 +101,7 @@
   [style]="{ width: '500px' }"
   (onHide)="closeNonOMWarningDialog()"
   (visibleChange)="onNonOMWarningDialogVisibleChange($event)"
+  appendTo="body"
 >
   <div class="flex flex-col gap-4">
     <!-- Warning Alert Box (Yellow) -->
@@ -151,6 +153,7 @@
   [style]="{ width: '550px' }"
   (onHide)="closeOrgUnitMismatchDialog()"
   (visibleChange)="onOrgUnitMismatchDialogVisibleChange($event)"
+  appendTo="body"
 >
   <div class="flex flex-col gap-4">
     <!-- Warning Alert Box (Yellow) -->
@@ -221,6 +224,7 @@
   [style]="{ width: '600px' }"
   (onHide)="closeAcknowledgmentDialog()"
   (visibleChange)="onAcknowledgmentDialogVisibleChange($event)"
+  appendTo="body"
 >
   <div class="flex flex-col gap-4">
     <!-- Acknowledgment Statement Box (Light Blue) -->
@@ -299,6 +303,7 @@
   [style]="{ width: '500px' }"
   (onHide)="closeRejectToNoGoDialog()"
   (visibleChange)="onRejectToNoGoDialogVisibleChange($event)"
+  appendTo="body"
 >
   <div class="flex flex-col gap-4">
     <!-- Danger Alert Box (Pink/Red) -->
@@ -363,6 +368,7 @@
   [style]="{ width: '550px' }"
   (onHide)="closeUnmetRequirementsDialog()"
   (visibleChange)="onUnmetRequirementsDialogVisibleChange($event)"
+  appendTo="body"
 >
   <div class="flex flex-col gap-4">
     <!-- Warning Alert Box (Yellow) -->
