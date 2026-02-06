@@ -36,12 +36,22 @@
     </div>
   } @else {
     @if (workflowActions().length > 0) {
-      <p-splitButton
-        [label]="primaryeStageLabel"
-        [model]="items"
-        [disabled]="disabled || isActionInProgress()"
-        (onClick)="_handleOnPrimaryStageClick()"
-      />
+      <!-- Show split button only when there are secondary actions in dropdown -->
+      @if (items.length > 0) {
+        <p-splitButton
+          [label]="primaryeStageLabel"
+          [model]="items"
+          [disabled]="disabled || isActionInProgress()"
+          (onClick)="_handleOnPrimaryStageClick()"
+        />
+      } @else {
+        <!-- Show regular button when there's only one action -->
+        <p-button
+          [label]="primaryeStageLabel"
+          [disabled]="disabled || isActionInProgress()"
+          (onClick)="_handleOnPrimaryStageClick()"
+        />
+      }
     }
   }
 }
@@ -89,6 +99,7 @@
   [closable]="true"
   [style]="{ width: '500px' }"
   (onHide)="closeNonOMWarningDialog()"
+  (visibleChange)="onNonOMWarningDialogVisibleChange($event)"
 >
   <div class="flex flex-col gap-4">
     <!-- Warning Alert Box (Yellow) -->
@@ -139,6 +150,7 @@
   [closable]="true"
   [style]="{ width: '550px' }"
   (onHide)="closeOrgUnitMismatchDialog()"
+  (visibleChange)="onOrgUnitMismatchDialogVisibleChange($event)"
 >
   <div class="flex flex-col gap-4">
     <!-- Warning Alert Box (Yellow) -->
@@ -208,6 +220,7 @@
   [closable]="true"
   [style]="{ width: '600px' }"
   (onHide)="closeAcknowledgmentDialog()"
+  (visibleChange)="onAcknowledgmentDialogVisibleChange($event)"
 >
   <div class="flex flex-col gap-4">
     <!-- Acknowledgment Statement Box (Light Blue) -->
@@ -285,6 +298,7 @@
   [closable]="true"
   [style]="{ width: '500px' }"
   (onHide)="closeRejectToNoGoDialog()"
+  (visibleChange)="onRejectToNoGoDialogVisibleChange($event)"
 >
   <div class="flex flex-col gap-4">
     <!-- Danger Alert Box (Pink/Red) -->
@@ -348,6 +362,7 @@
   [closable]="true"
   [style]="{ width: '550px' }"
   (onHide)="closeUnmetRequirementsDialog()"
+  (visibleChange)="onUnmetRequirementsDialogVisibleChange($event)"
 >
   <div class="flex flex-col gap-4">
     <!-- Warning Alert Box (Yellow) -->

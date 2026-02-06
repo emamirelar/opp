@@ -648,14 +648,16 @@
         <p class="text-unops-neutral-700 mb-4">
           {{ 'message.noDeliverablesForTimeline' | translate }}
         </p>
-        <p-button
-          [label]="'button.addProductsServices' | translate"
-          icon="pi pi-plus"
-          severity="primary"
-          [outlined]="true"
-          size="small"
-          (onClick)="navigateToWhatSection()"
-        />
+        @if (canUpdate()) {
+          <p-button
+            [label]="'button.addProductsServices' | translate"
+            icon="pi pi-plus"
+            severity="primary"
+            [outlined]="true"
+            size="small"
+            (onClick)="navigateToWhatSection()"
+          />
+        }
       </div>
     } @else {
       <!-- Timeline List View -->
