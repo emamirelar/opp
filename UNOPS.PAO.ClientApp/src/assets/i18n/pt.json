@@ -1377,6 +1377,7 @@
   "label.opportunity.selectOpportunityManager": "Selecionar Gerente de Oportunidade",
   "label.opportunity.initiativeTypeAndTeam": "Tipo de Iniciativa e Equipe",
   "label.opportunity.decisionMakingPathway": "Caminho de Tomada de Decisão da Oportunidade",
+  "label.opportunity.decisionMakingPathwayNormallyResponsible": "Caminho de Tomada de Decisão (Unidades Org. Normalmente Responsáveis)",
   "label.normallyResponsible": "Normalmente Responsável",
   "label.responsibleOrgUnit": "Unidade Org. Responsável",
   "label.opportunity.subjectMatterExperts": "Especialistas no Assunto",
