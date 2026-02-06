@@ -1699,10 +1699,13 @@ export class OpportunityViewComponent
     };
 
     // Build acknowledgment statement with actual values
-    const orgUnitName = opportunity?.responsibleOrgUnitName || 'N/A';
+    const orgUnitCode = opportunity?.responsibleOrgUnitName || 'N/A';
     const initiativeType = opportunity?.proposedInitiativeTypeName || 'initiative';
-    const acknowledgmentStatement = `I confirm that ${orgUnitName} has the capacity and capability to deliver this ${initiativeType} within the proposed timeline and budget.`;
-
+    const acknowledgmentStatement = this.translateService.instant('workflow.goDecision.dialog.approve.confirmationStatement', {
+      orgUnitCode: orgUnitCode,
+      initiativeType: initiativeType,
+    });
+    
     // Build the audit trail markdown
     let auditTrail = `
 ---

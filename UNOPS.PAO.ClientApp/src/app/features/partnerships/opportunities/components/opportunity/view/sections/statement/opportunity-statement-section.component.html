@@ -31,6 +31,23 @@
   </ng-template>
 
   <div id="field-opportunityStatementMarkdown" class="min-h-[300px]">
+    <!-- Approver Guidance Section - Shows when user is approver and opportunity is pending approval -->
+    @if (showApproverGuidance()) {
+      <div class="mb-6 p-4 bg-unops-info-lighter border border-unops-info-light rounded-unops-lg">
+        <div class="flex items-start gap-3">
+          <i class="pi pi-info-circle text-xl text-unops-info mt-0.5"></i>
+          <div class="flex-1">
+            <div class="font-semibold text-unops-neutral-900 mb-2">
+              {{ 'workflow.goDecision.statementGuidance.title' | translate }}
+            </div>
+            <p class="text-sm text-unops-neutral-700 leading-relaxed">
+              {{ 'workflow.goDecision.statementGuidance.message' | translate }}
+            </p>
+          </div>
+        </div>
+      </div>
+    }
+
     @if (!opportunity().opportunityStatementMarkdown) {
       <!-- Show generate button if no statement exists -->
       <div

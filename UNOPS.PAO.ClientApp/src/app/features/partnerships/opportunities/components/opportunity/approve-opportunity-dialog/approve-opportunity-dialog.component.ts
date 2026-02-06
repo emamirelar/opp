@@ -30,6 +30,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 // Services
 import { OpportunityService } from '../../../services/opportunity.service';
 import { FeedbackDialogService } from '@shared/services/ui';
+import { UserSearchService, UserSearchResult } from '@shared/services/user/user-search.service';
 
 // Models
 import {
@@ -42,7 +43,7 @@ import {
  * @class ApproveOpportunityDialogComponent
  * @description Dialog for confirming a Go decision on an opportunity.
  * Displays a confirmation statement, requires rationale input, and
- * mandatory Executive selection from org unit's Director/Manager/OiC.
+ * mandatory Executive selection from org unit personnel (with Directors/Deputy Directors suggested).
  * @since 1.0.0
  */
 @Component({
@@ -67,6 +68,7 @@ export class ApproveOpportunityDialogComponent implements OnInit {
   private opportunityService = inject(OpportunityService);
   private feedbackService = inject(FeedbackDialogService);
   private translateService = inject(TranslateService);
+  private userSearchService = inject(UserSearchService);
 
   /**
    * @description Two-way binding for dialog visibility
@@ -91,10 +93,13 @@ export class ApproveOpportunityDialogComponent implements OnInit {
   readonly decisionRationale = signal<string>('');
   readonly selectedExecutiveId = signal<number | null>(null);
 
-  // Data signals
+  // Data signals - suggested executives from backend
+  readonly suggestedExecutives = signal<ExecutiveOption[]>([]);
+  // Combined list for dropdown (suggested + search results)
   readonly executives = signal<ExecutiveOption[]>([]);
   readonly isLoadingExecutives = signal<boolean>(false);
   readonly isSubmitting = signal<boolean>(false);
+  readonly isSearchingUsers = this.userSearchService.isSearching;
 
   /**
    * @description Computed confirmation statement based on opportunity data
@@ -128,7 +133,7 @@ export class ApproveOpportunityDialogComponent implements OnInit {
   }
 
   /**
-   * @description Load executives for the opportunity's responsible org unit
+   * @description Load suggested executives for the opportunity's responsible org unit
    */
   loadExecutives(): void {
     const opportunityId = this.opportunity()?.id;
@@ -138,10 +143,11 @@ export class ApproveOpportunityDialogComponent implements OnInit {
 
     this.opportunityService.getExecutivesForOpportunity(opportunityId).subscribe({
       next: (executives) => {
+        this.suggestedExecutives.set(executives);
         this.executives.set(executives);
         this.isLoadingExecutives.set(false);
 
-        // Pre-select the suggested executive (if any)
+        // Pre-select the first suggested executive (if any)
         const suggested = executives.find((e) => e.description === 'Suggested');
         if (suggested) {
           this.selectedExecutiveId.set(suggested.value);
@@ -153,6 +159,60 @@ export class ApproveOpportunityDialogComponent implements OnInit {
       error: () => {
         this.isLoadingExecutives.set(false);
       },
+    });
+  }
+
+  /**
+   * @description Handle executive search filter event
+   * @param {any} event - Filter event from p-select
+   */
+  onExecutiveSearch(event: any): void {
+    const searchTerm = typeof event === 'string' ? event : event?.filter || '';
+    
+    // Get currently selected executive ID to ensure it remains visible
+    const selectedId = this.selectedExecutiveId();
+    const selectedUserIds = selectedId ? [selectedId] : [];
+
+    // If no search term, show only suggested executives
+    if (!searchTerm || searchTerm.length < 2) {
+      this.executives.set(this.suggestedExecutives());
+      return;
+    }
+
+    // Search users via backend
+    this.userSearchService.searchUsers(searchTerm, 50, selectedUserIds).subscribe({
+      next: (users: UserSearchResult[]) => {
+        // Get suggested executive IDs for marking
+        const suggestedIds = new Set(
+          this.suggestedExecutives()
+            .filter(e => e.description === 'Suggested')
+            .map(e => e.value)
+        );
+
+        // Convert search results to ExecutiveOption format
+        const searchResults: ExecutiveOption[] = users.map(user => {
+          const isSuggested = suggestedIds.has(user.id);
+          // Find the suggested entry to get the role name if applicable
+          const suggestedEntry = this.suggestedExecutives().find(e => e.value === user.id);
+          
+          return {
+            label: suggestedEntry?.label || user.name,
+            value: user.id,
+            description: isSuggested ? 'Suggested' : undefined
+          };
+        });
+
+        // Merge: keep suggested ones at top, then add search results that aren't already in suggested
+        const suggestedExecs = this.suggestedExecutives();
+        const suggestedValues = new Set(suggestedExecs.map(e => e.value));
+        const additionalResults = searchResults.filter(r => !suggestedValues.has(r.value));
+        
+        this.executives.set([...suggestedExecs, ...additionalResults]);
+      },
+      error: () => {
+        // On error, just show suggested executives
+        this.executives.set(this.suggestedExecutives());
+      }
     });
   }
 

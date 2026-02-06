@@ -56,6 +56,10 @@
     <!-- Executive Selection -->
     <div class="flex flex-col gap-2">
       <label class="font-semibold">{{ 'workflow.goDecision.dialog.approve.executiveLabel' | translate }} *</label>
+      <small class="text-unops-success flex items-center gap-1 -mt-1 mb-1">
+        <i class="pi pi-lightbulb text-xs"></i>
+        {{ 'workflow.goDecision.dialog.approve.executiveHint' | translate }}
+      </small>
       <p-select
         id="executive"
         [options]="executives()"
@@ -63,17 +67,36 @@
         optionValue="value"
         [ngModel]="selectedExecutiveId()"
         (ngModelChange)="onExecutiveChange($event)"
-        [filter]="executives().length > 5"
+        [filter]="true"
         filterBy="label"
         [disabled]="isSubmitting() || isLoadingExecutives()"
-        [loading]="isLoadingExecutives()"
+        [loading]="isLoadingExecutives() || isSearchingUsers()"
         [placeholder]="isLoadingExecutives() ? ('common.loading' | translate) : ''"
         appendTo="body"
         class="w-full"
-      />
-      <small style="color: #7a7c7e;">
-        {{ 'workflow.goDecision.dialog.approve.executiveHint' | translate }}
-      </small>
+        (onFilter)="onExecutiveSearch($event)"
+        [resetFilterOnHide]="true"
+      >
+        <ng-template let-item pTemplate="item">
+          <div class="flex items-center gap-2">
+            @if (item.description === 'Suggested') {
+              <i class="pi pi-star-fill text-unops-warning text-xs"></i>
+            }
+            <span [class.font-semibold]="item.description === 'Suggested'">{{ item.label }}</span>
+            @if (item.description === 'Suggested') {
+              <span class="text-xs text-unops-success ml-auto">{{ 'label.suggested' | translate }}</span>
+            }
+          </div>
+        </ng-template>
+        <ng-template let-item pTemplate="selectedItem">
+          <div class="flex items-center gap-2">
+            @if (item.description === 'Suggested') {
+              <i class="pi pi-star-fill text-unops-warning text-xs"></i>
+            }
+            <span>{{ item.label }}</span>
+          </div>
+        </ng-template>
+      </p-select>
     </div>
 
     <!-- Info Notice (Light Blue Box) -->

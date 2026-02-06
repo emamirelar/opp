@@ -1298,12 +1298,13 @@ public class OpportunityController : BaseController
     }
 
     /// <summary>
-    /// Gets executives (Director/Manager/OiC) for an opportunity's responsible org unit.
+    /// Gets personnel for an opportunity's responsible org unit.
     /// Used to populate the Executive dropdown in the Go Decision approval dialog.
-    /// Returns users with Director/Deputy Director roles on the opportunity's ResponsibleOrgUnit.
+    /// Returns all users with roles on the opportunity's ResponsibleOrgUnit,
+    /// with Directors/Deputy Directors marked as "Suggested".
     /// </summary>
     /// <param name="id">The opportunity ID</param>
-    /// <returns>List of executives with display label and user ID</returns>
+    /// <returns>List of personnel with display label and user ID</returns>
     [HttpGet(APIDictionary.Opportunity + "/{id}/executives")]
     [AccessControlled(EntityTypes.Opportunity, "read")]
     public async Task<ActionResult> GetExecutives(int id)
