@@ -30,7 +30,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         public async Task INT_001_CreateOpportunity_EndToEnd()
         {
             // Arrange
-            var opportunityData = new CreateOpportunityRequest { Name = "Integration Test Opportunity" };
+            var opportunityData = new IntCreateOpportunityRequest { Name = "Integration Test Opportunity" };
 
             // Act
             var created = await CreateOpportunity(opportunityData);
@@ -46,10 +46,10 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         public async Task INT_002_UpdateOpportunity_PersistsChanges()
         {
             // Arrange
-            var opportunity = await CreateOpportunity(new CreateOpportunityRequest { Name = "Original" });
+            var opportunity = await CreateOpportunity(new IntCreateOpportunityRequest { Name = "Original" });
 
             // Act
-            await UpdateOpportunity(opportunity.Id, new UpdateOpportunityRequest { Name = "Updated" });
+            await UpdateOpportunity(opportunity.Id, new IntUpdateOpportunityRequest { Name = "Updated" });
             var retrieved = await GetOpportunity(opportunity.Id);
 
             // Assert
@@ -61,7 +61,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         public async Task INT_003_DeleteOpportunity_RemovesFromDatabase()
         {
             // Arrange
-            var opportunity = await CreateOpportunity(new CreateOpportunityRequest { Name = "ToDelete" });
+            var opportunity = await CreateOpportunity(new IntCreateOpportunityRequest { Name = "ToDelete" });
 
             // Act
             await DeleteOpportunity(opportunity.Id);
@@ -95,7 +95,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         {
             // Arrange
             var requests = Enumerable.Range(1, 10)
-                .Select(i => new CreateOpportunityRequest { Name = $"Bulk Opportunity {i}" })
+                .Select(i => new IntCreateOpportunityRequest { Name = $"Bulk Opportunity {i}" })
                 .ToList();
 
             // Act
@@ -114,7 +114,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         public async Task INT_006_SearchByName_ReturnsMatches()
         {
             // Arrange
-            await CreateOpportunity(new CreateOpportunityRequest { Name = "Searchable Opportunity" });
+            await CreateOpportunity(new IntCreateOpportunityRequest { Name = "Searchable Opportunity" });
 
             // Act
             var results = await SearchOpportunities("Searchable");
@@ -172,7 +172,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         public async Task INT_010_ComplexFilter_CombinesCriteria()
         {
             // Arrange
-            var filter = new OpportunityFilter
+            var filter = new IntOpportunityFilter
             {
                 Status = "Active",
                 OrgUnitId = 5,
@@ -198,7 +198,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
             // Arrange
             for (int i = 0; i < 50; i++)
             {
-                await CreateOpportunity(new CreateOpportunityRequest { Name = $"Page Test {i}" });
+                await CreateOpportunity(new IntCreateOpportunityRequest { Name = $"Page Test {i}" });
             }
 
             // Act
@@ -293,7 +293,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         [Trait("SubCategory", "ErrorHandling")]
         public async Task INT_017_UpdateNonExistent_Fails()
         {
-            var result = await TryUpdateOpportunity(999999, new UpdateOpportunityRequest { Name = "Test" });
+            var result = await TryUpdateOpportunity(999999, new IntUpdateOpportunityRequest { Name = "Test" });
             result.Success.Should().BeFalse();
         }
 
@@ -317,8 +317,8 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         [Trait("SubCategory", "ErrorHandling")]
         public async Task INT_020_DuplicateKey_Rejected()
         {
-            await CreateOpportunity(new CreateOpportunityRequest { Name = "Unique", ExternalRef = "REF-001" });
-            var result = await TryCreateOpportunity(new CreateOpportunityRequest { Name = "Another", ExternalRef = "REF-001" });
+            await CreateOpportunity(new IntCreateOpportunityRequest { Name = "Unique", ExternalRef = "REF-001" });
+            var result = await TryCreateOpportunity(new IntCreateOpportunityRequest { Name = "Another", ExternalRef = "REF-001" });
             result.Success.Should().BeFalse();
         }
 
@@ -326,12 +326,12 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         [Trait("SubCategory", "ErrorHandling")]
         public async Task INT_021_ConcurrencyConflict_Detected()
         {
-            var opportunity = await CreateOpportunity(new CreateOpportunityRequest { Name = "Concurrency Test" });
+            var opportunity = await CreateOpportunity(new IntCreateOpportunityRequest { Name = "Concurrency Test" });
             var version = opportunity.Version;
 
-            await UpdateOpportunity(opportunity.Id, new UpdateOpportunityRequest { Name = "Update 1" });
+            await UpdateOpportunity(opportunity.Id, new IntUpdateOpportunityRequest { Name = "Update 1" });
 
-            var result = await TryUpdateWithVersion(opportunity.Id, version, new UpdateOpportunityRequest { Name = "Update 2" });
+            var result = await TryUpdateWithVersion(opportunity.Id, version, new IntUpdateOpportunityRequest { Name = "Update 2" });
             result.Success.Should().BeFalse();
             result.Error.Should().Contain("concurrency");
         }
@@ -340,7 +340,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         [Trait("SubCategory", "ErrorHandling")]
         public async Task INT_022_TransactionRollback_OnFailure()
         {
-            var opportunity = await CreateOpportunity(new CreateOpportunityRequest { Name = "Transaction Test" });
+            var opportunity = await CreateOpportunity(new IntCreateOpportunityRequest { Name = "Transaction Test" });
 
             var result = await TryBulkOperationWithFailure(opportunity.Id);
             result.Success.Should().BeFalse();
@@ -363,7 +363,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         public async Task INT_024_ConnectionLoss_Recovers()
         {
             await SimulateConnectionLoss();
-            var result = await CreateOpportunity(new CreateOpportunityRequest { Name = "After Recovery" });
+            var result = await CreateOpportunity(new IntCreateOpportunityRequest { Name = "After Recovery" });
             result.Should().NotBeNull();
         }
 
@@ -372,7 +372,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         public async Task INT_025_LargePayload_Handled()
         {
             var largeDescription = new string('X', 100000);
-            var result = await TryCreateOpportunity(new CreateOpportunityRequest { Name = "Large", Description = largeDescription });
+            var result = await TryCreateOpportunity(new IntCreateOpportunityRequest { Name = "Large", Description = largeDescription });
             result.Success.Should().BeTrue();
         }
 
@@ -384,7 +384,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         [Trait("SubCategory", "CRUD")]
         public async Task INT_026_SoftDelete_HidesFromQuery()
         {
-            var opportunity = await CreateOpportunity(new CreateOpportunityRequest { Name = "Soft Delete Test" });
+            var opportunity = await CreateOpportunity(new IntCreateOpportunityRequest { Name = "Soft Delete Test" });
             await SoftDeleteOpportunity(opportunity.Id);
 
             var results = await SearchOpportunities("Soft Delete Test");
@@ -395,7 +395,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         [Trait("SubCategory", "Search")]
         public async Task INT_027_FullTextSearch_FindsPartialMatch()
         {
-            await CreateOpportunity(new CreateOpportunityRequest { Name = "Development Project Alpha" });
+            await CreateOpportunity(new IntCreateOpportunityRequest { Name = "Development Project Alpha" });
 
             var results = await FullTextSearch("Develop Project");
             results.Should().NotBeEmpty();
@@ -437,97 +437,97 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
 
         #region Helper Methods (Stubs)
 
-        private Task<OpportunityData> CreateOpportunity(CreateOpportunityRequest request) => Task.FromResult(new OpportunityData { Id = 1, Name = request.Name, Version = 1 });
-        private Task<OpportunityData> GetOpportunity(int id) => Task.FromResult(id < 999999 ? new OpportunityData { Id = id } : null);
-        private Task UpdateOpportunity(int id, UpdateOpportunityRequest request) => Task.CompletedTask;
+        private Task<IntOpportunityData> CreateOpportunity(IntCreateOpportunityRequest request) => Task.FromResult(new IntOpportunityData { Id = 1, Name = request.Name, Version = 1 });
+        private Task<IntOpportunityData> GetOpportunity(int id) => Task.FromResult(id < 999999 ? new IntOpportunityData { Id = id } : null);
+        private Task UpdateOpportunity(int id, IntUpdateOpportunityRequest request) => Task.CompletedTask;
         private Task DeleteOpportunity(int id) => Task.CompletedTask;
-        private Task<OpportunityData> CreateCompleteOpportunity() => Task.FromResult(new OpportunityData { Id = 1, Status = "Draft" });
+        private Task<IntOpportunityData> CreateCompleteOpportunity() => Task.FromResult(new IntOpportunityData { Id = 1, Status = "Draft" });
         private Task ActivateOpportunity(int id) => Task.CompletedTask;
         private Task SubmitForGoDecision(int id) => Task.CompletedTask;
         private Task ApproveGoDecision(int id) => Task.CompletedTask;
-        private Task<List<OperationResult>> BulkCreateOpportunities(List<CreateOpportunityRequest> requests) =>
-            Task.FromResult(requests.Select(_ => new OperationResult { Success = true }).ToList());
+        private Task<List<IntOperationResult>> BulkCreateOpportunities(List<IntCreateOpportunityRequest> requests) =>
+            Task.FromResult(requests.Select(_ => new IntOperationResult { Success = true }).ToList());
 
-        private Task<List<OpportunityData>> SearchOpportunities(string term) =>
-            Task.FromResult(new List<OpportunityData> { new OpportunityData { Name = "Searchable Opportunity" } });
-        private Task<OpportunityData> CreateOpportunityWithStatus(string status) =>
-            Task.FromResult(new OpportunityData { Id = 1, Status = status });
-        private Task<List<OpportunityData>> FilterOpportunitiesByStatus(string status) =>
-            Task.FromResult(new List<OpportunityData> { new OpportunityData { Status = status } });
-        private Task<OpportunityData> CreateOpportunityInOrgUnit(int orgUnitId) =>
-            Task.FromResult(new OpportunityData { OrgUnitId = orgUnitId });
-        private Task<List<OpportunityData>> FilterOpportunitiesByOrgUnit(int orgUnitId) =>
-            Task.FromResult(new List<OpportunityData> { new OpportunityData { OrgUnitId = orgUnitId } });
-        private Task<OpportunityData> CreateOpportunityWithSDGs(int[] sdgIds) =>
-            Task.FromResult(new OpportunityData { Id = 1 });
-        private Task<List<OpportunityData>> FilterOpportunitiesBySDG(int sdgId) =>
-            Task.FromResult(new List<OpportunityData> { new OpportunityData() });
-        private Task<List<OpportunityData>> FilterOpportunities(OpportunityFilter filter) =>
-            Task.FromResult(new List<OpportunityData>());
+        private Task<List<IntOpportunityData>> SearchOpportunities(string term) =>
+            Task.FromResult(new List<IntOpportunityData> { new IntOpportunityData { Name = "Searchable Opportunity" } });
+        private Task<IntOpportunityData> CreateOpportunityWithStatus(string status) =>
+            Task.FromResult(new IntOpportunityData { Id = 1, Status = status });
+        private Task<List<IntOpportunityData>> FilterOpportunitiesByStatus(string status) =>
+            Task.FromResult(new List<IntOpportunityData> { new IntOpportunityData { Status = status } });
+        private Task<IntOpportunityData> CreateOpportunityInOrgUnit(int orgUnitId) =>
+            Task.FromResult(new IntOpportunityData { OrgUnitId = orgUnitId });
+        private Task<List<IntOpportunityData>> FilterOpportunitiesByOrgUnit(int orgUnitId) =>
+            Task.FromResult(new List<IntOpportunityData> { new IntOpportunityData { OrgUnitId = orgUnitId } });
+        private Task<IntOpportunityData> CreateOpportunityWithSDGs(int[] sdgIds) =>
+            Task.FromResult(new IntOpportunityData { Id = 1 });
+        private Task<List<IntOpportunityData>> FilterOpportunitiesBySDG(int sdgId) =>
+            Task.FromResult(new List<IntOpportunityData> { new IntOpportunityData() });
+        private Task<List<IntOpportunityData>> FilterOpportunities(IntOpportunityFilter filter) =>
+            Task.FromResult(new List<IntOpportunityData>());
 
-        private Task<PagedResult<OpportunityData>> GetOpportunitiesPage(int page, int pageSize) =>
-            Task.FromResult(new PagedResult<OpportunityData>
+        private Task<IntPagedResult<IntOpportunityData>> GetOpportunitiesPage(int page, int pageSize) =>
+            Task.FromResult(new IntPagedResult<IntOpportunityData>
             {
-                Items = Enumerable.Range(1, pageSize).Select(i => new OpportunityData { Id = i + (page - 1) * pageSize }).ToList(),
+                Items = Enumerable.Range(1, pageSize).Select(i => new IntOpportunityData { Id = i + (page - 1) * pageSize }).ToList(),
                 TotalCount = 50,
                 TotalPages = 5
             });
         private Task CreateOpportunities(int count) => Task.CompletedTask;
 
-        private Task<OpportunityData> CreateOpportunityWithCollaborators(int count) =>
-            Task.FromResult(new OpportunityData
+        private Task<IntOpportunityData> CreateOpportunityWithCollaborators(int count) =>
+            Task.FromResult(new IntOpportunityData
             {
                 Id = 1,
-                Collaborators = Enumerable.Range(1, count).Select(i => new CollaboratorData { Id = i }).ToList()
+                Collaborators = Enumerable.Range(1, count).Select(i => new IntCollaboratorData { Id = i }).ToList()
             });
-        private Task<OpportunityData> CreateOpportunityWithDeliverables(int count) =>
-            Task.FromResult(new OpportunityData
+        private Task<IntOpportunityData> CreateOpportunityWithDeliverables(int count) =>
+            Task.FromResult(new IntOpportunityData
             {
                 Id = 1,
-                Deliverables = Enumerable.Range(1, count).Select(i => new DeliverableData { Id = i }).ToList()
+                Deliverables = Enumerable.Range(1, count).Select(i => new IntDeliverableData { Id = i }).ToList()
             });
-        private Task<OpportunityData> GetOpportunityWithRelated(int id) =>
-            Task.FromResult(new OpportunityData
+        private Task<IntOpportunityData> GetOpportunityWithRelated(int id) =>
+            Task.FromResult(new IntOpportunityData
             {
                 Id = id,
-                Collaborators = new List<CollaboratorData> { new(), new(), new() },
-                Deliverables = new List<DeliverableData> { new(), new(), new(), new(), new() }
+                Collaborators = new List<IntCollaboratorData> { new(), new(), new() },
+                Deliverables = new List<IntDeliverableData> { new(), new(), new(), new(), new() }
             });
-        private Task<DeliverableData> GetDeliverable(int id) => Task.FromResult<DeliverableData>(null);
+        private Task<IntDeliverableData> GetDeliverable(int id) => Task.FromResult<IntDeliverableData>(null);
 
-        private Task<OperationResult> TryUpdateOpportunity(int id, UpdateOpportunityRequest request) =>
-            Task.FromResult(new OperationResult { Success = false });
-        private Task<OperationResult> TryDeleteOpportunity(int id) =>
-            Task.FromResult(new OperationResult { Success = false });
-        private Task<OperationResult> TryCreateOpportunityWithInvalidOrgUnit() =>
-            Task.FromResult(new OperationResult { Success = false });
-        private Task<OperationResult> TryCreateOpportunity(CreateOpportunityRequest request) =>
-            Task.FromResult(new OperationResult { Success = request.ExternalRef != "REF-001" && request.Description?.Length <= 100000 });
-        private Task<OperationResult> TryUpdateWithVersion(int id, int version, UpdateOpportunityRequest request) =>
-            Task.FromResult(new OperationResult { Success = false, Error = "concurrency conflict" });
-        private Task<OperationResult> TryBulkOperationWithFailure(int id) =>
-            Task.FromResult(new OperationResult { Success = false });
-        private Task<TimeoutResult> SimulateTimeout() =>
-            Task.FromResult(new TimeoutResult { TimedOut = true });
+        private Task<IntOperationResult> TryUpdateOpportunity(int id, IntUpdateOpportunityRequest request) =>
+            Task.FromResult(new IntOperationResult { Success = false });
+        private Task<IntOperationResult> TryDeleteOpportunity(int id) =>
+            Task.FromResult(new IntOperationResult { Success = false });
+        private Task<IntOperationResult> TryCreateOpportunityWithInvalidOrgUnit() =>
+            Task.FromResult(new IntOperationResult { Success = false });
+        private Task<IntOperationResult> TryCreateOpportunity(IntCreateOpportunityRequest request) =>
+            Task.FromResult(new IntOperationResult { Success = request.ExternalRef != "REF-001" && request.Description?.Length <= 100000 });
+        private Task<IntOperationResult> TryUpdateWithVersion(int id, int version, IntUpdateOpportunityRequest request) =>
+            Task.FromResult(new IntOperationResult { Success = false, Error = "concurrency conflict" });
+        private Task<IntOperationResult> TryBulkOperationWithFailure(int id) =>
+            Task.FromResult(new IntOperationResult { Success = false });
+        private Task<IntTimeoutResult> SimulateTimeout() =>
+            Task.FromResult(new IntTimeoutResult { TimedOut = true });
         private Task SimulateConnectionLoss() => Task.CompletedTask;
         private Task SoftDeleteOpportunity(int id) => Task.CompletedTask;
-        private Task<List<OpportunityData>> FullTextSearch(string query) =>
-            Task.FromResult(new List<OpportunityData> { new OpportunityData() });
-        private Task<OpportunityData> CreateOpportunityWithNestedRelationships() =>
-            Task.FromResult(new OpportunityData { Id = 1 });
-        private Task<OpportunityData> GetOpportunityWithAllRelated(int id) =>
-            Task.FromResult(new OpportunityData
+        private Task<List<IntOpportunityData>> FullTextSearch(string query) =>
+            Task.FromResult(new List<IntOpportunityData> { new IntOpportunityData() });
+        private Task<IntOpportunityData> CreateOpportunityWithNestedRelationships() =>
+            Task.FromResult(new IntOpportunityData { Id = 1 });
+        private Task<IntOpportunityData> GetOpportunityWithAllRelated(int id) =>
+            Task.FromResult(new IntOpportunityData
             {
-                Collaborators = new List<CollaboratorData> { new() },
-                Deliverables = new List<DeliverableData> { new() },
-                Documents = new List<DocumentData> { new() }
+                Collaborators = new List<IntCollaboratorData> { new() },
+                Deliverables = new List<IntDeliverableData> { new() },
+                Documents = new List<IntDocumentData> { new() }
             });
-        private Task<OperationResult> TryCreateCircularReference() =>
-            Task.FromResult(new OperationResult { Success = false });
-        private Task<PagedResult<OpportunityData>> GetOpportunitiesSorted(string field, string dir, int page, int pageSize) =>
-            Task.FromResult(new PagedResult<OpportunityData>
+        private Task<IntOperationResult> TryCreateCircularReference() =>
+            Task.FromResult(new IntOperationResult { Success = false });
+        private Task<IntPagedResult<IntOpportunityData>> GetOpportunitiesSorted(string field, string dir, int page, int pageSize) =>
+            Task.FromResult(new IntPagedResult<IntOpportunityData>
             {
-                Items = new List<OpportunityData> { new OpportunityData { Name = dir == "asc" ? "AAA" : "ZZZ" } }
+                Items = new List<IntOpportunityData> { new IntOpportunityData { Name = dir == "asc" ? "AAA" : "ZZZ" } }
             });
 
         #endregion
@@ -535,26 +535,26 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
 
     #region Supporting Types
 
-    public class CreateOpportunityRequest { public string Name { get; set; } public string Description { get; set; } public string ExternalRef { get; set; } }
-    public class UpdateOpportunityRequest { public string Name { get; set; } }
-    public class OpportunityData
+    public class IntCreateOpportunityRequest { public string Name { get; set; } public string Description { get; set; } public string ExternalRef { get; set; } }
+    public class IntUpdateOpportunityRequest { public string Name { get; set; } }
+    public class IntOpportunityData
     {
         public int Id { get; set; }
         public string Name { get; set; }
         public string Status { get; set; }
         public int OrgUnitId { get; set; }
         public int Version { get; set; }
-        public List<CollaboratorData> Collaborators { get; set; } = new();
-        public List<DeliverableData> Deliverables { get; set; } = new();
-        public List<DocumentData> Documents { get; set; } = new();
+        public List<IntCollaboratorData> Collaborators { get; set; } = new();
+        public List<IntDeliverableData> Deliverables { get; set; } = new();
+        public List<IntDocumentData> Documents { get; set; } = new();
     }
-    public class OperationResult { public bool Success { get; set; } public string Error { get; set; } }
-    public class OpportunityFilter { public string Status { get; set; } public int? OrgUnitId { get; set; } public int[] SDGIds { get; set; } public DateTime? CreatedAfter { get; set; } }
-    public class PagedResult<T> { public List<T> Items { get; set; } public int TotalCount { get; set; } public int TotalPages { get; set; } }
-    public class CollaboratorData { public int Id { get; set; } }
-    public class DeliverableData { public int Id { get; set; } }
-    public class DocumentData { public int Id { get; set; } }
-    public class TimeoutResult { public bool TimedOut { get; set; } }
+    public class IntOperationResult { public bool Success { get; set; } public string Error { get; set; } }
+    public class IntOpportunityFilter { public string Status { get; set; } public int? OrgUnitId { get; set; } public int[] SDGIds { get; set; } public DateTime? CreatedAfter { get; set; } }
+    public class IntPagedResult<T> { public List<T> Items { get; set; } public int TotalCount { get; set; } public int TotalPages { get; set; } }
+    public class IntCollaboratorData { public int Id { get; set; } }
+    public class IntDeliverableData { public int Id { get; set; } }
+    public class IntDocumentData { public int Id { get; set; } }
+    public class IntTimeoutResult { public bool TimedOut { get; set; } }
 
     #endregion
 }

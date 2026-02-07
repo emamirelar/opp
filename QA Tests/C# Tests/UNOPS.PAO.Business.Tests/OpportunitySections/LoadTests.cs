@@ -320,7 +320,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
             await Task.WhenAll(tasks);
 
             // Assert
-            failedCount.Should().BeLessThan(requestsOverPoolSize * 0.1, "Less than 10% should fail");
+            failedCount.Should().BeLessThan((int)(requestsOverPoolSize * 0.1), "Less than 10% should fail");
             // Queueing is acceptable, complete failures are not
         }
 

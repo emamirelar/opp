@@ -31,7 +31,7 @@ namespace UNOPS.PAO.Business.Tests.JIRA
         #region PNO-693: Global Search Performance
 
         [Fact]
-        public void PER_001_GlobalSearch_CompletesWith in3Seconds()
+        public void PER_001_GlobalSearch_CompletesWithin3Seconds()
         {
             // Arrange
             var searchQuery = "World Bank";

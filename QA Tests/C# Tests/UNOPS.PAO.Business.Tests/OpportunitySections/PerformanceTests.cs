@@ -208,7 +208,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         public async Task PERF_010_FilterOpportunities_ComplexQuery_CompletesWithin1s()
         {
             // Arrange
-            var filter = new OpportunityFilter
+            var filter = new PerfOpportunityFilter
             {
                 Status = "Active",
                 SDGIds = new[] { 1, 4, 13 },
@@ -444,48 +444,48 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
 
         #region Helper Methods (Stubs)
 
-        private Task<TeamSectionData> LoadTeamSection(int id) => Task.FromResult(new TeamSectionData());
-        private Task<StatusResult> TransitionOpportunityStatus(int id, string from, string to) => Task.FromResult(new StatusResult { Success = true });
-        private List<CollaboratorData> GenerateCollaborators(int count) => Enumerable.Range(1, count).Select(i => new CollaboratorData { Id = i }).ToList();
-        private Task<BulkResult> BulkAddCollaborators(int id, List<CollaboratorData> data) => Task.FromResult(new BulkResult { SuccessCount = data.Count });
-        private Task<BulkResult> BulkAssignSDGs(List<int> ids, int[] sdgIds) => Task.FromResult(new BulkResult { ProcessedCount = ids.Count });
-        private List<DeliverableData> GenerateDeliverables(int count) => Enumerable.Range(1, count).Select(i => new DeliverableData { Id = i }).ToList();
-        private Task<BulkResult> BulkCreateDeliverables(int id, List<DeliverableData> data) => Task.FromResult(new BulkResult { CreatedCount = data.Count });
-        private Task<List<CollaboratorData>> SearchCollaborators(string term, int limit) => Task.FromResult(new List<CollaboratorData>());
-        private Task<List<OrgUnitData>> SearchOrgUnitsWithHierarchy(string term) => Task.FromResult(new List<OrgUnitData>());
-        private Task<List<OpportunityData>> SearchOpportunitiesByStatus(string status, int limit) => Task.FromResult(new List<OpportunityData>());
-        private Task<List<SDGData>> GetAllSDGs() => Task.FromResult(Enumerable.Range(1, 17).Select(i => new SDGData { Id = i }).ToList());
-        private Task<List<OpportunityData>> FilterOpportunities(OpportunityFilter filter) => Task.FromResult(new List<OpportunityData>());
+        private Task<PerfTeamSectionData> LoadTeamSection(int id) => Task.FromResult(new PerfTeamSectionData());
+        private Task<PerfStatusResult> TransitionOpportunityStatus(int id, string from, string to) => Task.FromResult(new PerfStatusResult { Success = true });
+        private List<PerfCollaboratorData> GenerateCollaborators(int count) => Enumerable.Range(1, count).Select(i => new PerfCollaboratorData { Id = i }).ToList();
+        private Task<PerfBulkResult> BulkAddCollaborators(int id, List<PerfCollaboratorData> data) => Task.FromResult(new PerfBulkResult { SuccessCount = data.Count });
+        private Task<PerfBulkResult> BulkAssignSDGs(List<int> ids, int[] sdgIds) => Task.FromResult(new PerfBulkResult { ProcessedCount = ids.Count });
+        private List<PerfDeliverableData> GenerateDeliverables(int count) => Enumerable.Range(1, count).Select(i => new PerfDeliverableData { Id = i }).ToList();
+        private Task<PerfBulkResult> BulkCreateDeliverables(int id, List<PerfDeliverableData> data) => Task.FromResult(new PerfBulkResult { CreatedCount = data.Count });
+        private Task<List<PerfCollaboratorData>> SearchCollaborators(string term, int limit) => Task.FromResult(new List<PerfCollaboratorData>());
+        private Task<List<PerfOrgUnitData>> SearchOrgUnitsWithHierarchy(string term) => Task.FromResult(new List<PerfOrgUnitData>());
+        private Task<List<PerfOpportunityData>> SearchOpportunitiesByStatus(string status, int limit) => Task.FromResult(new List<PerfOpportunityData>());
+        private Task<List<PerfSDGData>> GetAllSDGs() => Task.FromResult(Enumerable.Range(1, 17).Select(i => new PerfSDGData { Id = i }).ToList());
+        private Task<List<PerfOpportunityData>> FilterOpportunities(PerfOpportunityFilter filter) => Task.FromResult(new List<PerfOpportunityData>());
         private Task<string> GetOpportunityStatus(int id) => Task.FromResult("Active");
-        private Task<StatusResult> UpdateWHYSection(int id, int userId) => Task.FromResult(new StatusResult { Success = true });
-        private Task<FullOpportunityData> LoadFullOpportunity(int id) => Task.FromResult(new FullOpportunityData());
-        private Task ProcessDeliverables(List<DeliverableData> items) => Task.CompletedTask;
-        private Task<List<ServiceSuggestion>> GetAIServiceSuggestions(int id) => Task.FromResult(new List<ServiceSuggestion>());
-        private Task<List<InitiativeTypeData>> LoadInitiativeTypeHierarchy() => Task.FromResult(new List<InitiativeTypeData> { new InitiativeTypeData() });
-        private Task<ApprovalResult> ProcessGoDecisionApproval(int id, int userId) => Task.FromResult(new ApprovalResult());
-        private Task<ExportResult> ExportOpportunitiesData(List<int> ids) => Task.FromResult(new ExportResult { RecordCount = ids.Count });
-        private Task<List<AuditEntry>> GetAuditLog(int id, (DateTime, DateTime) range) => Task.FromResult(new List<AuditEntry>());
+        private Task<PerfStatusResult> UpdateWHYSection(int id, int userId) => Task.FromResult(new PerfStatusResult { Success = true });
+        private Task<PerfFullOpportunityData> LoadFullOpportunity(int id) => Task.FromResult(new PerfFullOpportunityData());
+        private Task ProcessDeliverables(List<PerfDeliverableData> items) => Task.CompletedTask;
+        private Task<List<PerfServiceSuggestion>> GetAIServiceSuggestions(int id) => Task.FromResult(new List<PerfServiceSuggestion>());
+        private Task<List<PerfInitiativeTypeData>> LoadInitiativeTypeHierarchy() => Task.FromResult(new List<PerfInitiativeTypeData> { new PerfInitiativeTypeData() });
+        private Task<PerfApprovalResult> ProcessGoDecisionApproval(int id, int userId) => Task.FromResult(new PerfApprovalResult());
+        private Task<PerfExportResult> ExportOpportunitiesData(List<int> ids) => Task.FromResult(new PerfExportResult { RecordCount = ids.Count });
+        private Task<List<PerfAuditEntry>> GetAuditLog(int id, (DateTime, DateTime) range) => Task.FromResult(new List<PerfAuditEntry>());
 
         #endregion
     }
 
     #region Supporting Types
 
-    public class TeamSectionData { }
-    public class StatusResult { public bool Success { get; set; } public string Error { get; set; } }
-    public class CollaboratorData { public int Id { get; set; } }
-    public class BulkResult { public int SuccessCount { get; set; } public int ProcessedCount { get; set; } public int CreatedCount { get; set; } }
-    public class DeliverableData { public int Id { get; set; } }
-    public class OrgUnitData { }
-    public class OpportunityData { }
-    public class SDGData { public int Id { get; set; } }
-    public class OpportunityFilter { public string Status { get; set; } public int[] SDGIds { get; set; } public bool HasHighRisk { get; set; } public (DateTime, DateTime) DateRange { get; set; } }
-    public class FullOpportunityData { }
-    public class ServiceSuggestion { }
-    public class InitiativeTypeData { }
-    public class ApprovalResult { }
-    public class ExportResult { public int RecordCount { get; set; } }
-    public class AuditEntry { }
+    public class PerfTeamSectionData { }
+    public class PerfStatusResult { public bool Success { get; set; } public string Error { get; set; } }
+    public class PerfCollaboratorData { public int Id { get; set; } }
+    public class PerfBulkResult { public int SuccessCount { get; set; } public int ProcessedCount { get; set; } public int CreatedCount { get; set; } }
+    public class PerfDeliverableData { public int Id { get; set; } }
+    public class PerfOrgUnitData { }
+    public class PerfOpportunityData { }
+    public class PerfSDGData { public int Id { get; set; } }
+    public class PerfOpportunityFilter { public string Status { get; set; } public int[] SDGIds { get; set; } public bool HasHighRisk { get; set; } public (DateTime, DateTime) DateRange { get; set; } }
+    public class PerfFullOpportunityData { }
+    public class PerfServiceSuggestion { }
+    public class PerfInitiativeTypeData { }
+    public class PerfApprovalResult { }
+    public class PerfExportResult { public int RecordCount { get; set; } }
+    public class PerfAuditEntry { }
 
     #endregion
 }

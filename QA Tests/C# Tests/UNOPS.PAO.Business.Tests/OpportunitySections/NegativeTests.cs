@@ -303,7 +303,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         [Trait("Section", "WHYSection")]
         public async Task NEG_033_NegativeBeneficiaryCount_Rejected()
         {
-            var result = await SetBeneficiaries(1, new BeneficiaryData { Total = -100 });
+            var result = await SetBeneficiaries(1, new NegBeneficiaryData { Total = -100 });
             result.Success.Should().BeFalse();
         }
 
@@ -311,7 +311,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         [Trait("Section", "WHYSection")]
         public async Task NEG_034_BeneficiaryMismatch_Rejected()
         {
-            var result = await SetBeneficiaries(1, new BeneficiaryData { Total = 100, Women = 60, Men = 60 });
+            var result = await SetBeneficiaries(1, new NegBeneficiaryData { Total = 100, Women = 60, Men = 60 });
             result.Success.Should().BeFalse();
         }
 
@@ -420,7 +420,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         [Trait("Section", "WHATSection")]
         public async Task NEG_047_GrantAmountNegative_Rejected()
         {
-            var result = await SetGrantSupport(1, new GrantSupportData { GrantAmount = -1000 });
+            var result = await SetGrantSupport(1, new NegGrantSupportData { GrantAmount = -1000 });
             result.Success.Should().BeFalse();
         }
 
@@ -497,68 +497,68 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
 
         #region Helper Methods (Stubs)
 
-        private Task<OperationResult> SaveTeamSectionWithoutOM(int id) => Task.FromResult(new OperationResult { Success = false, Error = "Opportunity Manager required" });
-        private Task<OperationResult> AssignOpportunityManager(int id, int userId) => Task.FromResult(new OperationResult { Success = userId > 0 });
-        private Task<OperationResult> AddCollaborator(int id, int userId) => Task.FromResult(new OperationResult { Success = true });
-        private Task<OperationResult> SetResponsibleOrgUnit(int id, int orgId) => Task.FromResult(new OperationResult { Success = orgId < 1000 });
-        private Task<OperationResult> AddCollaboratorFromDifferentOrg(int id, int userId) => Task.FromResult(new OperationResult { Success = true, Warnings = new[] { "User from different org unit" } });
-        private Task<OperationResult> SaveTeamSection(int id, object data) => Task.FromResult(new OperationResult { Success = data != null });
-        private Task<OperationResult> SaveTeamSectionOnInactiveOpportunity(int id) => Task.FromResult(new OperationResult { Success = false });
-        private Task<OperationResult> SaveTeamSectionAsViewer(int id) => Task.FromResult(new OperationResult { Success = false });
-        private Task<OperationResult> SetDecisionMakingPathway(int id, int level) => Task.FromResult(new OperationResult { Success = level <= 5 });
-        private Task<OperationResult> RemoveOpportunityManagerWithoutReplacement(int id) => Task.FromResult(new OperationResult { Success = false });
-        private Task<OperationResult> AddSelfAsCollaborator(int id) => Task.FromResult(new OperationResult { Success = false });
-        private Task<OperationResult> ModifyTeamOnLockedOpportunity(int id) => Task.FromResult(new OperationResult { Success = false });
-        private Task<OperationResult> SaveTeamSectionWithExpiredSession(int id) => Task.FromResult(new OperationResult { Success = false });
+        private Task<NegOperationResult> SaveTeamSectionWithoutOM(int id) => Task.FromResult(new NegOperationResult { Success = false, Error = "Opportunity Manager required" });
+        private Task<NegOperationResult> AssignOpportunityManager(int id, int userId) => Task.FromResult(new NegOperationResult { Success = userId > 0 });
+        private Task<NegOperationResult> AddCollaborator(int id, int userId) => Task.FromResult(new NegOperationResult { Success = true });
+        private Task<NegOperationResult> SetResponsibleOrgUnit(int id, int orgId) => Task.FromResult(new NegOperationResult { Success = orgId < 1000 });
+        private Task<NegOperationResult> AddCollaboratorFromDifferentOrg(int id, int userId) => Task.FromResult(new NegOperationResult { Success = true, Warnings = new[] { "User from different org unit" } });
+        private Task<NegOperationResult> SaveTeamSection(int id, object data) => Task.FromResult(new NegOperationResult { Success = data != null });
+        private Task<NegOperationResult> SaveTeamSectionOnInactiveOpportunity(int id) => Task.FromResult(new NegOperationResult { Success = false });
+        private Task<NegOperationResult> SaveTeamSectionAsViewer(int id) => Task.FromResult(new NegOperationResult { Success = false });
+        private Task<NegOperationResult> SetDecisionMakingPathway(int id, int level) => Task.FromResult(new NegOperationResult { Success = level <= 5 });
+        private Task<NegOperationResult> RemoveOpportunityManagerWithoutReplacement(int id) => Task.FromResult(new NegOperationResult { Success = false });
+        private Task<NegOperationResult> AddSelfAsCollaborator(int id) => Task.FromResult(new NegOperationResult { Success = false });
+        private Task<NegOperationResult> ModifyTeamOnLockedOpportunity(int id) => Task.FromResult(new NegOperationResult { Success = false });
+        private Task<NegOperationResult> SaveTeamSectionWithExpiredSession(int id) => Task.FromResult(new NegOperationResult { Success = false });
 
-        private Task<OperationResult> TransitionStatus(int id, string from, string to) => Task.FromResult(new OperationResult { Success = from != "Draft" || to != "GO" });
-        private Task<OperationResult> SubmitIncompleteOpportunityForGoDecision(int id) => Task.FromResult(new OperationResult { Success = false, Error = "mandatory fields missing" });
-        private Task<OperationResult> ApproveGoDecision(int id, int userId) => Task.FromResult(new OperationResult { Success = userId >= 500 });
-        private Task<OperationResult> RecallGoDecisionAsNonOM(int id) => Task.FromResult(new OperationResult { Success = false });
-        private Task<OperationResult> RejectWithoutComment(int id) => Task.FromResult(new OperationResult { Success = false });
-        private Task<OperationResult> EditOpportunityInWorkflow(int id) => Task.FromResult(new OperationResult { Success = false });
-        private Task<OperationResult> DeleteOpportunityInWorkflow(int id) => Task.FromResult(new OperationResult { Success = false });
-        private Task<OperationResult> SubmitForGoDecision(int id) => Task.FromResult(new OperationResult { Success = true });
-        private Task<OperationResult> RecallGoDecision(int id) => Task.FromResult(new OperationResult { Success = true });
-        private Task<OperationResult> RejectWithShortComment(int id, string comment) => Task.FromResult(new OperationResult { Success = comment.Length >= 10 });
-        private Task<OperationResult> TryModifyAuditLog(int id) => Task.FromResult(new OperationResult { Success = false });
+        private Task<NegOperationResult> TransitionStatus(int id, string from, string to) => Task.FromResult(new NegOperationResult { Success = from != "Draft" || to != "GO" });
+        private Task<NegOperationResult> SubmitIncompleteOpportunityForGoDecision(int id) => Task.FromResult(new NegOperationResult { Success = false, Error = "mandatory fields missing" });
+        private Task<NegOperationResult> ApproveGoDecision(int id, int userId) => Task.FromResult(new NegOperationResult { Success = userId >= 500 });
+        private Task<NegOperationResult> RecallGoDecisionAsNonOM(int id) => Task.FromResult(new NegOperationResult { Success = false });
+        private Task<NegOperationResult> RejectWithoutComment(int id) => Task.FromResult(new NegOperationResult { Success = false });
+        private Task<NegOperationResult> EditOpportunityInWorkflow(int id) => Task.FromResult(new NegOperationResult { Success = false });
+        private Task<NegOperationResult> DeleteOpportunityInWorkflow(int id) => Task.FromResult(new NegOperationResult { Success = false });
+        private Task<NegOperationResult> SubmitForGoDecision(int id) => Task.FromResult(new NegOperationResult { Success = true });
+        private Task<NegOperationResult> RecallGoDecision(int id) => Task.FromResult(new NegOperationResult { Success = true });
+        private Task<NegOperationResult> RejectWithShortComment(int id, string comment) => Task.FromResult(new NegOperationResult { Success = comment.Length >= 10 });
+        private Task<NegOperationResult> TryModifyAuditLog(int id) => Task.FromResult(new NegOperationResult { Success = false });
 
-        private Task<OperationResult> SubmitWithoutSDGs(int id) => Task.FromResult(new OperationResult { Success = false });
-        private Task<OperationResult> SetSDGs(int id, int[] sdgIds) => Task.FromResult(new OperationResult { Success = false });
-        private Task<OperationResult> SetBeneficiaries(int id, BeneficiaryData data) => Task.FromResult(new OperationResult { Success = data.Total >= 0 && data.Women + data.Men <= data.Total });
-        private Task<OperationResult> LinkUNCooperationFramework(int id, int fwId) => Task.FromResult(new OperationResult { Success = fwId < 1000 });
-        private Task<OperationResult> SetHighRiskWithoutReason(int id) => Task.FromResult(new OperationResult { Success = false });
-        private Task<OperationResult> SubmitWithEmptyRationale(int id) => Task.FromResult(new OperationResult { Success = false });
-        private Task<OperationResult> SetRationale(int id, string rationale) => Task.FromResult(new OperationResult { Success = rationale.Length >= 50 });
-        private Task<OperationResult> SetMismatchedCountryFramework(int id) => Task.FromResult(new OperationResult { Success = true, Warnings = new[] { "Country mismatch" } });
-        private Task<OperationResult> SaveWHYSection(int id, object data) => Task.FromResult(new OperationResult { Success = data != null });
+        private Task<NegOperationResult> SubmitWithoutSDGs(int id) => Task.FromResult(new NegOperationResult { Success = false });
+        private Task<NegOperationResult> SetSDGs(int id, int[] sdgIds) => Task.FromResult(new NegOperationResult { Success = false });
+        private Task<NegOperationResult> SetBeneficiaries(int id, NegBeneficiaryData data) => Task.FromResult(new NegOperationResult { Success = data.Total >= 0 && data.Women + data.Men <= data.Total });
+        private Task<NegOperationResult> LinkUNCooperationFramework(int id, int fwId) => Task.FromResult(new NegOperationResult { Success = fwId < 1000 });
+        private Task<NegOperationResult> SetHighRiskWithoutReason(int id) => Task.FromResult(new NegOperationResult { Success = false });
+        private Task<NegOperationResult> SubmitWithEmptyRationale(int id) => Task.FromResult(new NegOperationResult { Success = false });
+        private Task<NegOperationResult> SetRationale(int id, string rationale) => Task.FromResult(new NegOperationResult { Success = rationale.Length >= 50 });
+        private Task<NegOperationResult> SetMismatchedCountryFramework(int id) => Task.FromResult(new NegOperationResult { Success = true, Warnings = new[] { "Country mismatch" } });
+        private Task<NegOperationResult> SaveWHYSection(int id, object data) => Task.FromResult(new NegOperationResult { Success = data != null });
 
-        private Task<OperationResult> SubmitWithEmptyScope(int id) => Task.FromResult(new OperationResult { Success = false });
-        private Task<OperationResult> SetProjectScope(int id, string scope) => Task.FromResult(new OperationResult { Success = scope.Length >= 50 });
-        private Task<OperationResult> SetInitiativeType(int id, int typeId) => Task.FromResult(new OperationResult { Success = typeId < 100 });
-        private Task<OperationResult> AddDeliverableWithPastDate(int id) => Task.FromResult(new OperationResult { Success = true, Warnings = new[] { "Date is in the past" } });
-        private Task<OperationResult> AddDeliverable(int id, string name) => Task.FromResult(new OperationResult { Success = true });
-        private Task<OperationResult> SetOutputs(int id, string[] outputs) => Task.FromResult(new OperationResult { Success = outputs.Length <= 50 });
-        private Task<OperationResult> SetGrantSupport(int id, GrantSupportData data) => Task.FromResult(new OperationResult { Success = data.GrantAmount >= 0 });
-        private Task<OperationResult> SaveWHATSection(int id, object data) => Task.FromResult(new OperationResult { Success = data != null });
-        private Task<OperationResult> ReorderDeliverables(int id, int[] order) => Task.FromResult(new OperationResult { Success = order.All(o => o < 50) });
+        private Task<NegOperationResult> SubmitWithEmptyScope(int id) => Task.FromResult(new NegOperationResult { Success = false });
+        private Task<NegOperationResult> SetProjectScope(int id, string scope) => Task.FromResult(new NegOperationResult { Success = scope.Length >= 50 });
+        private Task<NegOperationResult> SetInitiativeType(int id, int typeId) => Task.FromResult(new NegOperationResult { Success = typeId < 100 });
+        private Task<NegOperationResult> AddDeliverableWithPastDate(int id) => Task.FromResult(new NegOperationResult { Success = true, Warnings = new[] { "Date is in the past" } });
+        private Task<NegOperationResult> AddDeliverable(int id, string name) => Task.FromResult(new NegOperationResult { Success = true });
+        private Task<NegOperationResult> SetOutputs(int id, string[] outputs) => Task.FromResult(new NegOperationResult { Success = outputs.Length <= 50 });
+        private Task<NegOperationResult> SetGrantSupport(int id, NegGrantSupportData data) => Task.FromResult(new NegOperationResult { Success = data.GrantAmount >= 0 });
+        private Task<NegOperationResult> SaveWHATSection(int id, object data) => Task.FromResult(new NegOperationResult { Success = data != null });
+        private Task<NegOperationResult> ReorderDeliverables(int id, int[] order) => Task.FromResult(new NegOperationResult { Success = order.All(o => o < 50) });
         private Task<List<object>> GetAIServiceSuggestionsWithTimeout(int id) => Task.FromResult(new List<object>());
         private string[] GenerateManyOutputs(int count) => Enumerable.Range(1, count).Select(i => $"Output {i}").ToArray();
 
-        private Task<OperationResult> SimulateConcurrentEditConflict(int id) => Task.FromResult(new OperationResult { Success = false });
-        private Task<OperationResult> SaveWithSimulatedDBFailure(int id) => Task.FromResult(new OperationResult { Success = false, Error = "Database error" });
-        private Task<OperationResult> SendMalformedRequest(int id) => Task.FromResult(new OperationResult { Success = false });
-        private Task<OperationResult> AccessDeletedOpportunity(int id) => Task.FromResult(new OperationResult { Success = false });
-        private Task<OperationResult> EditArchivedOpportunity(int id) => Task.FromResult(new OperationResult { Success = false });
+        private Task<NegOperationResult> SimulateConcurrentEditConflict(int id) => Task.FromResult(new NegOperationResult { Success = false });
+        private Task<NegOperationResult> SaveWithSimulatedDBFailure(int id) => Task.FromResult(new NegOperationResult { Success = false, Error = "Database error" });
+        private Task<NegOperationResult> SendMalformedRequest(int id) => Task.FromResult(new NegOperationResult { Success = false });
+        private Task<NegOperationResult> AccessDeletedOpportunity(int id) => Task.FromResult(new NegOperationResult { Success = false });
+        private Task<NegOperationResult> EditArchivedOpportunity(int id) => Task.FromResult(new NegOperationResult { Success = false });
 
         #endregion
     }
 
     #region Supporting Types
 
-    public class OperationResult { public bool Success { get; set; } public string Error { get; set; } public string[] Warnings { get; set; } = Array.Empty<string>(); }
-    public class BeneficiaryData { public int Total { get; set; } public int Women { get; set; } public int Men { get; set; } }
-    public class GrantSupportData { public decimal GrantAmount { get; set; } }
+    public class NegOperationResult { public bool Success { get; set; } public string Error { get; set; } public string[] Warnings { get; set; } = Array.Empty<string>(); }
+    public class NegBeneficiaryData { public int Total { get; set; } public int Women { get; set; } public int Men { get; set; } }
+    public class NegGrantSupportData { public decimal GrantAmount { get; set; } }
 
     #endregion
 }

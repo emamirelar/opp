@@ -448,7 +448,7 @@ namespace UNOPS.PAO.Business.Tests.JIRA
         }
 
         [Fact]
-        public void PNO676_NEG_001_ImportUnedited Duplicate_Blocked()
+        public void PNO676_NEG_001_ImportUneditedDuplicate_Blocked()
         {
             // Arrange
             var existingEmails = new[] { "existing@example.com" };

@@ -962,10 +962,10 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         private Task<ApiResult> EditOpportunity(int oppId, int userId) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.OK });
         private Task<ApiResult> GetOpportunity(int oppId, int userId) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.OK });
         private Task<ApiResult> RecallOpportunity(int oppId, int userId) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.Forbidden });
-        private Task<BulkResult> BulkUpdateOpportunities(List<int> ids, int userId) => Task.FromResult(new BulkResult { SuccessIds = ids.Take(3).ToList(), FailedIds = ids.Skip(3).ToList() });
+        private Task<SecBulkResult> BulkUpdateOpportunities(List<int> ids, int userId) => Task.FromResult(new SecBulkResult { SuccessIds = ids.Take(3).ToList(), FailedIds = ids.Skip(3).ToList() });
         private Task<ApiResult> AccessEndpoint(string endpoint, int userId) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.NotFound });
         private void DemoteUserToViewer(int userId) { }
-        private Task<PermissionResult> GetPermissions(int oppId, int userId) => Task.FromResult(new PermissionResult { CanView = true, CanEdit = userId != GetViewerUserId() });
+        private Task<SecPermissionResult> GetPermissions(int oppId, int userId) => Task.FromResult(new SecPermissionResult { CanView = true, CanEdit = userId != GetViewerUserId() });
 
         // Injection helpers
         private Task<ApiResult> SearchCollaborators(string term) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.OK });
@@ -976,23 +976,23 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         private Task<ApiResult> UploadDocument(int id, string filename) => Task.FromResult(new ApiResult { StatusCode = filename.Contains("..") ? HttpStatusCode.BadRequest : HttpStatusCode.OK });
         private Task<ApiResult> SearchUsers(string term) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.OK });
         private Task<ApiResult> ImportXMLData(string xml) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.BadRequest });
-        private Task<CreateResult> CreateOpportunityWithJSON(string json) => Task.FromResult(new CreateResult { Id = 1 });
+        private Task<SecCreateResult> CreateOpportunityWithJSON(string json) => Task.FromResult(new SecCreateResult { Id = 1 });
         private Task<ApiResult> AccessWithMaliciousHeaders(Dictionary<string, string> headers) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.OK, ResponseHeaders = new Dictionary<string, string>() });
         private Task<ApiResult> DownloadDocument(string path) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.BadRequest });
 
         // Data protection helpers
         private Task PerformOperationWithSensitiveData(object data) => Task.CompletedTask;
         private Task<string> GetRecentLogs() => Task.FromResult("clean logs without sensitive data");
-        private Task<DbRecord> GetRawDatabaseRecord(string table, int id) => Task.FromResult(new DbRecord { EmailEncrypted = true, PhoneEncrypted = true });
+        private Task<SecDbRecord> GetRawDatabaseRecord(string table, int id) => Task.FromResult(new SecDbRecord { EmailEncrypted = true, PhoneEncrypted = true });
         private Task PerformAuditedAction(int oppId) => Task.CompletedTask;
-        private Task<AuditEntry> GetLatestAuditEntry(int oppId) => Task.FromResult(new AuditEntry { Id = 1 });
-        private Task<ModifyResult> TryModifyAuditEntry(int id) => Task.FromResult(new ModifyResult { Success = false });
+        private Task<SecAuditEntry> GetLatestAuditEntry(int oppId) => Task.FromResult(new SecAuditEntry { Id = 1 });
+        private Task<SecModifyResult> TryModifyAuditEntry(int id) => Task.FromResult(new SecModifyResult { Success = false });
         private Task<string> ExportOpportunityData(int id, int userId) => Task.FromResult("exported data");
         private Task<ApiResult> AccessViaHttp(string endpoint) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.MovedPermanently });
         private Task<ApiResult> AccessWithOrigin(string origin) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.OK, ResponseHeaders = new Dictionary<string, string>() });
         private byte[] CreateFileWithWrongExtension(string actual, string fake) => new byte[100];
         private Task<ApiResult> UploadFile(int id, byte[] file) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.BadRequest });
-        private Task<ListResult> GetOpportunitiesList() => Task.FromResult(new ListResult { Items = new List<string> { "{}" } });
+        private Task<SecListResult> GetOpportunitiesList() => Task.FromResult(new SecListResult { Items = new List<string> { "{}" } });
         private Task<string> GetOpportunityDetail(int id) => Task.FromResult("{}");
 
         // CSRF helpers
@@ -1016,24 +1016,24 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         public bool IsAdmin { get; set; }
     }
 
-    public class BulkResult
+    public class SecBulkResult
     {
         public List<int> SuccessIds { get; set; } = new();
         public List<int> FailedIds { get; set; } = new();
     }
 
-    public class PermissionResult
+    public class SecPermissionResult
     {
         public bool CanView { get; set; }
         public bool CanEdit { get; set; }
         public bool CanDelete { get; set; }
     }
 
-    public class CreateResult { public int Id { get; set; } }
-    public class DbRecord { public bool EmailEncrypted { get; set; } public bool PhoneEncrypted { get; set; } }
-    public class AuditEntry { public int Id { get; set; } }
-    public class ModifyResult { public bool Success { get; set; } }
-    public class ListResult { public List<string> Items { get; set; } }
+    public class SecCreateResult { public int Id { get; set; } }
+    public class SecDbRecord { public bool EmailEncrypted { get; set; } public bool PhoneEncrypted { get; set; } }
+    public class SecAuditEntry { public int Id { get; set; } }
+    public class SecModifyResult { public bool Success { get; set; } }
+    public class SecListResult { public List<string> Items { get; set; } }
 
     #endregion
 }

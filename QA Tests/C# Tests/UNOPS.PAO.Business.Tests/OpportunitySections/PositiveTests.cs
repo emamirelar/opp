@@ -119,7 +119,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         {
             // Arrange
             var opportunityId = 1;
-            var stakeholder = new StakeholderData { UserId = 150, Role = "Advisor" };
+            var stakeholder = new PosStakeholderData { UserId = 150, Role = "Advisor" };
 
             // Act
             var result = await AddInternalStakeholder(opportunityId, stakeholder);
@@ -193,7 +193,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         {
             // Arrange
             var opportunityId = 1;
-            var teamData = new TeamSectionData
+            var teamData = new PosTeamSectionData
             {
                 OpportunityManagerId = 100,
                 Collaborators = new[] { 200, 201 },
@@ -395,7 +395,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         {
             // Arrange
             var opportunityId = 1;
-            var beneficiaries = new BeneficiaryData { Total = 5000, Women = 2500, Men = 2500 };
+            var beneficiaries = new PosBeneficiaryData { Total = 5000, Women = 2500, Men = 2500 };
 
             // Act
             var result = await SetBeneficiaries(opportunityId, beneficiaries);
@@ -436,14 +436,14 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
 
         [Fact]
         [Trait("Section", "WHYSection")]
-        public async Task POS_028_HighRiskChecklist_CanBeCompleted()
+        public async Task POS_028_PosHighRiskChecklist_CanBeCompleted()
         {
             // Arrange
             var opportunityId = 1;
-            var checklist = new HighRiskChecklist { IsHighRisk = true, Reasons = new[] { "Conflict zone" } };
+            var checklist = new PosHighRiskChecklist { IsHighRisk = true, Reasons = new[] { "Conflict zone" } };
 
             // Act
-            var result = await SetHighRiskChecklist(opportunityId, checklist);
+            var result = await SetPosHighRiskChecklist(opportunityId, checklist);
 
             // Assert
             result.Success.Should().BeTrue();
@@ -470,10 +470,10 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         {
             // Arrange
             var opportunityId = 1;
-            var whyData = new WHYSectionData
+            var whyData = new PosWHYSectionData
             {
                 SDGIds = new[] { 1, 5 },
-                Beneficiaries = new BeneficiaryData { Total = 1000 },
+                Beneficiaries = new PosBeneficiaryData { Total = 1000 },
                 Rationale = "Test rationale"
             };
 
@@ -523,7 +523,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         {
             // Arrange
             var opportunityId = 1;
-            var deliverable = new DeliverableData { Name = "Project Plan", DueDate = DateTime.Now.AddMonths(3) };
+            var deliverable = new PosDeliverableData { Name = "Project Plan", DueDate = DateTime.Now.AddMonths(3) };
 
             // Act
             var result = await AddDeliverable(opportunityId, deliverable);
@@ -596,7 +596,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         {
             // Arrange
             var opportunityId = 1;
-            var grantData = new GrantSupportData { IsGrantSupport = true, GrantAmount = 500000 };
+            var grantData = new PosGrantSupportData { IsGrantSupport = true, GrantAmount = 500000 };
 
             // Act
             var result = await SetGrantSupport(opportunityId, grantData);
@@ -611,7 +611,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         {
             // Arrange
             var opportunityId = 1;
-            var whatData = new WHATSectionData
+            var whatData = new PosWHATSectionData
             {
                 Scope = "Test scope",
                 InitiativeTypeId = 1,
@@ -644,71 +644,71 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
 
         #region Helper Methods (Stubs)
 
-        private Task<TeamSectionData> LoadTeamSection(int id) => Task.FromResult(new TeamSectionData());
-        private Task<OperationResult> AssignOpportunityManager(int id, int managerId) => Task.FromResult(new OperationResult { Success = true });
-        private Task<OperationResult> AddCollaborator(int id, int userId) => Task.FromResult(new OperationResult { Success = true });
-        private Task<OperationResult> SetResponsibleOrgUnit(int id, int orgUnitId) => Task.FromResult(new OperationResult { Success = true });
-        private Task<OperationResult> SetDevelopmentTeam(int id, int[] members) => Task.FromResult(new OperationResult { Success = true });
+        private Task<PosTeamSectionData> LoadTeamSection(int id) => Task.FromResult(new PosTeamSectionData());
+        private Task<PosOperationResult> AssignOpportunityManager(int id, int managerId) => Task.FromResult(new PosOperationResult { Success = true });
+        private Task<PosOperationResult> AddCollaborator(int id, int userId) => Task.FromResult(new PosOperationResult { Success = true });
+        private Task<PosOperationResult> SetResponsibleOrgUnit(int id, int orgUnitId) => Task.FromResult(new PosOperationResult { Success = true });
+        private Task<PosOperationResult> SetDevelopmentTeam(int id, int[] members) => Task.FromResult(new PosOperationResult { Success = true });
         private Task<List<string>> GetOpportunityTabs(int id) => Task.FromResult(new List<string> { "Overview", "WHY", "WHAT", "WHERE", "WHO", "Statement", "Team" });
-        private Task<OperationResult> AddInternalStakeholder(int id, StakeholderData data) => Task.FromResult(new OperationResult { Success = true });
-        private Task<PermissionData> GetTeamMemberPermissions(int id, int userId) => Task.FromResult(new PermissionData { CanView = true });
-        private Task<OperationResult> SetDecisionMakingPathway(int id, int doaLevel) => Task.FromResult(new OperationResult { Success = true });
-        private Task<List<WarningData>> CheckTeamSectionWarnings(int id) => Task.FromResult(new List<WarningData>());
-        private Task<OperationResult> RemoveCollaborator(int id, int userId) => Task.FromResult(new OperationResult { Success = true });
-        private Task<OperationResult> SaveTeamSection(int id, TeamSectionData data) => Task.FromResult(new OperationResult { Success = true });
+        private Task<PosOperationResult> AddInternalStakeholder(int id, PosStakeholderData data) => Task.FromResult(new PosOperationResult { Success = true });
+        private Task<PosPermissionData> GetTeamMemberPermissions(int id, int userId) => Task.FromResult(new PosPermissionData { CanView = true });
+        private Task<PosOperationResult> SetDecisionMakingPathway(int id, int doaLevel) => Task.FromResult(new PosOperationResult { Success = true });
+        private Task<List<PosWarningData>> CheckTeamSectionWarnings(int id) => Task.FromResult(new List<PosWarningData>());
+        private Task<PosOperationResult> RemoveCollaborator(int id, int userId) => Task.FromResult(new PosOperationResult { Success = true });
+        private Task<PosOperationResult> SaveTeamSection(int id, PosTeamSectionData data) => Task.FromResult(new PosOperationResult { Success = true });
 
-        private Task<OperationResult> TransitionStatus(int id, string from, string to) => Task.FromResult(new OperationResult { Success = true });
-        private Task<OperationResult> SubmitForGoDecision(int id) => Task.FromResult(new OperationResult { Success = true });
-        private Task<OperationResult> ApproveGoDecision(int id, int userId) => Task.FromResult(new OperationResult { Success = true });
-        private Task<OperationResult> RecallGoDecision(int id) => Task.FromResult(new OperationResult { Success = true });
-        private Task<List<HistoryEntry>> GetWorkflowHistory(int id) => Task.FromResult(new List<HistoryEntry> { new HistoryEntry() });
-        private Task<List<NotificationData>> GetPendingNotifications(int id) => Task.FromResult(new List<NotificationData> { new NotificationData { Type = "ApprovalRequest" } });
-        private Task<WorkflowStatusData> GetOpportunityWorkflowStatus(int id) => Task.FromResult(new WorkflowStatusData { IsInWorkflow = true });
-        private Task<List<AuditEntry>> GetAuditTrail(int id) => Task.FromResult(new List<AuditEntry> { new AuditEntry { Action = "StatusChange" } });
+        private Task<PosOperationResult> TransitionStatus(int id, string from, string to) => Task.FromResult(new PosOperationResult { Success = true });
+        private Task<PosOperationResult> SubmitForGoDecision(int id) => Task.FromResult(new PosOperationResult { Success = true });
+        private Task<PosOperationResult> ApproveGoDecision(int id, int userId) => Task.FromResult(new PosOperationResult { Success = true });
+        private Task<PosOperationResult> RecallGoDecision(int id) => Task.FromResult(new PosOperationResult { Success = true });
+        private Task<List<PosHistoryEntry>> GetWorkflowHistory(int id) => Task.FromResult(new List<PosHistoryEntry> { new PosHistoryEntry() });
+        private Task<List<PosNotificationData>> GetPendingNotifications(int id) => Task.FromResult(new List<PosNotificationData> { new PosNotificationData { Type = "ApprovalRequest" } });
+        private Task<PosWorkflowStatusData> GetOpportunityWorkflowStatus(int id) => Task.FromResult(new PosWorkflowStatusData { IsInWorkflow = true });
+        private Task<List<PosAuditEntry>> GetAuditTrail(int id) => Task.FromResult(new List<PosAuditEntry> { new PosAuditEntry { Action = "StatusChange" } });
 
-        private Task<OperationResult> SetSDGs(int id, int[] sdgIds) => Task.FromResult(new OperationResult { Success = true });
-        private Task<OperationResult> SetImplementationContext(int id, string context) => Task.FromResult(new OperationResult { Success = true });
-        private Task<OperationResult> SetBeneficiaries(int id, BeneficiaryData data) => Task.FromResult(new OperationResult { Success = true });
-        private Task<OperationResult> LinkUNCooperationFramework(int id, int frameworkId) => Task.FromResult(new OperationResult { Success = true });
-        private Task<OperationResult> AddAlignmentFrameworks(int id, int[] frameworkIds) => Task.FromResult(new OperationResult { Success = true });
-        private Task<OperationResult> SetHighRiskChecklist(int id, HighRiskChecklist checklist) => Task.FromResult(new OperationResult { Success = true });
-        private Task<OperationResult> SetRationale(int id, string rationale) => Task.FromResult(new OperationResult { Success = true });
-        private Task<OperationResult> SaveWHYSection(int id, WHYSectionData data) => Task.FromResult(new OperationResult { Success = true });
-        private Task<List<SDGWithIcon>> GetSDGsWithIcons(int id) => Task.FromResult(new List<SDGWithIcon> { new SDGWithIcon { Id = 1, IconUrl = "/icons/sdg1.png" } });
+        private Task<PosOperationResult> SetSDGs(int id, int[] sdgIds) => Task.FromResult(new PosOperationResult { Success = true });
+        private Task<PosOperationResult> SetImplementationContext(int id, string context) => Task.FromResult(new PosOperationResult { Success = true });
+        private Task<PosOperationResult> SetBeneficiaries(int id, PosBeneficiaryData data) => Task.FromResult(new PosOperationResult { Success = true });
+        private Task<PosOperationResult> LinkUNCooperationFramework(int id, int frameworkId) => Task.FromResult(new PosOperationResult { Success = true });
+        private Task<PosOperationResult> AddAlignmentFrameworks(int id, int[] frameworkIds) => Task.FromResult(new PosOperationResult { Success = true });
+        private Task<PosOperationResult> SetPosHighRiskChecklist(int id, PosHighRiskChecklist checklist) => Task.FromResult(new PosOperationResult { Success = true });
+        private Task<PosOperationResult> SetRationale(int id, string rationale) => Task.FromResult(new PosOperationResult { Success = true });
+        private Task<PosOperationResult> SaveWHYSection(int id, PosWHYSectionData data) => Task.FromResult(new PosOperationResult { Success = true });
+        private Task<List<PosSDGWithIcon>> GetSDGsWithIcons(int id) => Task.FromResult(new List<PosSDGWithIcon> { new PosSDGWithIcon { Id = 1, IconUrl = "/icons/sdg1.png" } });
 
-        private Task<OperationResult> SetProjectScope(int id, string scope) => Task.FromResult(new OperationResult { Success = true });
-        private Task<OperationResult> AddDeliverable(int id, DeliverableData data) => Task.FromResult(new OperationResult { Success = true });
-        private Task<OperationResult> SetOutputs(int id, string[] outputs) => Task.FromResult(new OperationResult { Success = true });
-        private Task<OperationResult> SetInitiativeType(int id, int typeId) => Task.FromResult(new OperationResult { Success = true });
-        private Task<List<ServiceSuggestion>> GetAIServiceSuggestions(int id) => Task.FromResult(new List<ServiceSuggestion> { new ServiceSuggestion() });
-        private Task<List<ServiceNode>> GetServiceHierarchy() => Task.FromResult(new List<ServiceNode> { new ServiceNode { Children = new List<ServiceNode> { new ServiceNode() } } });
-        private Task<OperationResult> SetGrantSupport(int id, GrantSupportData data) => Task.FromResult(new OperationResult { Success = true });
-        private Task<OperationResult> SaveWHATSection(int id, WHATSectionData data) => Task.FromResult(new OperationResult { Success = true });
-        private Task<OperationResult> ReorderDeliverables(int id, int[] order) => Task.FromResult(new OperationResult { Success = true });
+        private Task<PosOperationResult> SetProjectScope(int id, string scope) => Task.FromResult(new PosOperationResult { Success = true });
+        private Task<PosOperationResult> AddDeliverable(int id, PosDeliverableData data) => Task.FromResult(new PosOperationResult { Success = true });
+        private Task<PosOperationResult> SetOutputs(int id, string[] outputs) => Task.FromResult(new PosOperationResult { Success = true });
+        private Task<PosOperationResult> SetInitiativeType(int id, int typeId) => Task.FromResult(new PosOperationResult { Success = true });
+        private Task<List<PosServiceSuggestion>> GetAIServiceSuggestions(int id) => Task.FromResult(new List<PosServiceSuggestion> { new PosServiceSuggestion() });
+        private Task<List<PosServiceNode>> GetServiceHierarchy() => Task.FromResult(new List<PosServiceNode> { new PosServiceNode { Children = new List<PosServiceNode> { new PosServiceNode() } } });
+        private Task<PosOperationResult> SetGrantSupport(int id, PosGrantSupportData data) => Task.FromResult(new PosOperationResult { Success = true });
+        private Task<PosOperationResult> SaveWHATSection(int id, PosWHATSectionData data) => Task.FromResult(new PosOperationResult { Success = true });
+        private Task<PosOperationResult> ReorderDeliverables(int id, int[] order) => Task.FromResult(new PosOperationResult { Success = true });
 
         #endregion
     }
 
     #region Supporting Types
 
-    public class TeamSectionData { public int OpportunityManagerId { get; set; } public int[] Collaborators { get; set; } public int ResponsibleOrgUnitId { get; set; } }
-    public class OperationResult { public bool Success { get; set; } }
-    public class StakeholderData { public int UserId { get; set; } public string Role { get; set; } }
-    public class PermissionData { public bool CanView { get; set; } }
-    public class WarningData { }
-    public class HistoryEntry { }
-    public class NotificationData { public string Type { get; set; } }
-    public class WorkflowStatusData { public bool IsInWorkflow { get; set; } }
-    public class AuditEntry { public string Action { get; set; } }
-    public class BeneficiaryData { public int Total { get; set; } public int Women { get; set; } public int Men { get; set; } }
-    public class HighRiskChecklist { public bool IsHighRisk { get; set; } public string[] Reasons { get; set; } }
-    public class WHYSectionData { public int[] SDGIds { get; set; } public BeneficiaryData Beneficiaries { get; set; } public string Rationale { get; set; } }
-    public class SDGWithIcon { public int Id { get; set; } public string IconUrl { get; set; } }
-    public class DeliverableData { public string Name { get; set; } public DateTime DueDate { get; set; } }
-    public class ServiceSuggestion { }
-    public class ServiceNode { public List<ServiceNode> Children { get; set; } }
-    public class GrantSupportData { public bool IsGrantSupport { get; set; } public decimal GrantAmount { get; set; } }
-    public class WHATSectionData { public string Scope { get; set; } public int InitiativeTypeId { get; set; } public string[] Outputs { get; set; } }
+    public class PosTeamSectionData { public int OpportunityManagerId { get; set; } public int[] Collaborators { get; set; } public int ResponsibleOrgUnitId { get; set; } }
+    public class PosOperationResult { public bool Success { get; set; } }
+    public class PosStakeholderData { public int UserId { get; set; } public string Role { get; set; } }
+    public class PosPermissionData { public bool CanView { get; set; } }
+    public class PosWarningData { }
+    public class PosHistoryEntry { }
+    public class PosNotificationData { public string Type { get; set; } }
+    public class PosWorkflowStatusData { public bool IsInWorkflow { get; set; } }
+    public class PosAuditEntry { public string Action { get; set; } }
+    public class PosBeneficiaryData { public int Total { get; set; } public int Women { get; set; } public int Men { get; set; } }
+    public class PosHighRiskChecklist { public bool IsHighRisk { get; set; } public string[] Reasons { get; set; } }
+    public class PosWHYSectionData { public int[] SDGIds { get; set; } public PosBeneficiaryData Beneficiaries { get; set; } public string Rationale { get; set; } }
+    public class PosSDGWithIcon { public int Id { get; set; } public string IconUrl { get; set; } }
+    public class PosDeliverableData { public string Name { get; set; } public DateTime DueDate { get; set; } }
+    public class PosServiceSuggestion { }
+    public class PosServiceNode { public List<PosServiceNode> Children { get; set; } }
+    public class PosGrantSupportData { public bool IsGrantSupport { get; set; } public decimal GrantAmount { get; set; } }
+    public class PosWHATSectionData { public string Scope { get; set; } public int InitiativeTypeId { get; set; } public string[] Outputs { get; set; } }
 
     #endregion
 }

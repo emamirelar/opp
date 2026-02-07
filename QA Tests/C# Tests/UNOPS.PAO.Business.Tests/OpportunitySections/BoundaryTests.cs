@@ -780,7 +780,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
             var savedSDGs = await GetSDGs(opportunityId);
 
             // Assert
-            savedSDGs.Distinct().Count().Should().Be(savedSDGs.Count,
+            savedSDGs.Distinct().Count().Should().Be(savedSDGs.Length,
                 "Duplicates should be removed automatically");
         }
 
@@ -834,11 +834,11 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
             var viewTask = ViewOpportunity(opportunityId);
             var editTask = EditOpportunity(opportunityId);
 
-            var results = await Task.WhenAll(viewTask, editTask);
+            await Task.WhenAll(viewTask, editTask);
 
             // Assert - Both should complete without error
-            results[0].Should().NotBeNull();
-            results[1].Success.Should().BeTrue();
+            (await viewTask).Should().NotBeNull();
+            (await editTask).Success.Should().BeTrue();
         }
 
         [Fact]

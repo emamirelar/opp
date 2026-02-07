@@ -375,7 +375,7 @@ namespace UNOPS.PAO.Business.Tests.Security
         }
 
         [Fact]
-        public void SEC_Data_ExportRespectsPerm issions()
+        public void SEC_Data_ExportRespectsPermissions()
         {
             // Arrange
             var userRoles = new[] { "GENUSER" };

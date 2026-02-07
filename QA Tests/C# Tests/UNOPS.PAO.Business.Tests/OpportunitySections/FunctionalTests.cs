@@ -325,64 +325,64 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
 
         #region Helper Methods (Stubs)
 
-        private Task<OpportunityData> CreateAndSubmitOpportunity() => Task.FromResult(new OpportunityData { Id = 1, IsInWorkflow = true, Status = "IDENTIFY & PROFILE" });
-        private Task<OpportunityData> GetOpportunity(int id) => Task.FromResult(new OpportunityData { Id = id, Status = "GO" });
+        private Task<FuncOpportunityData> CreateAndSubmitOpportunity() => Task.FromResult(new FuncOpportunityData { Id = 1, IsInWorkflow = true, Status = "IDENTIFY & PROFILE" });
+        private Task<FuncOpportunityData> GetOpportunity(int id) => Task.FromResult(new FuncOpportunityData { Id = id, Status = "GO" });
         private Task ApproveOpportunity(int id) => Task.CompletedTask;
-        private Task<OperationResult> TryApproveOpportunity(int id) => Task.FromResult(new OperationResult { Success = false });
+        private Task<FuncOperationResult> TryApproveOpportunity(int id) => Task.FromResult(new FuncOperationResult { Success = false });
         private Task RejectOpportunity(int id, string comment) => Task.CompletedTask;
         private Task RecallOpportunity(int id) => Task.CompletedTask;
-        private Task<OperationResult> TryEditOpportunity(int id) => Task.FromResult(new OperationResult { Success = false });
-        private Task<List<NotificationData>> GetSentNotifications(int id) => Task.FromResult(new List<NotificationData>
+        private Task<FuncOperationResult> TryEditOpportunity(int id) => Task.FromResult(new FuncOperationResult { Success = false });
+        private Task<List<FuncNotificationData>> GetSentNotifications(int id) => Task.FromResult(new List<FuncNotificationData>
         {
-            new NotificationData { Type = "ApprovalRequest", RecipientRole = "DoA", Body = "" },
-            new NotificationData { Type = "ApprovalComplete", Body = "" },
-            new NotificationData { Type = "Rejection", Body = "Missing budget details" }
+            new FuncNotificationData { Type = "ApprovalRequest", RecipientRole = "DoA", Body = "" },
+            new FuncNotificationData { Type = "ApprovalComplete", Body = "" },
+            new FuncNotificationData { Type = "Rejection", Body = "Missing budget details" }
         });
-        private Task<List<WorkflowHistoryEntry>> GetWorkflowHistory(int id) => Task.FromResult(new List<WorkflowHistoryEntry>
+        private Task<List<FuncWorkflowHistoryEntry>> GetWorkflowHistory(int id) => Task.FromResult(new List<FuncWorkflowHistoryEntry>
         {
-            new WorkflowHistoryEntry(), new WorkflowHistoryEntry(), new WorkflowHistoryEntry(), new WorkflowHistoryEntry()
+            new FuncWorkflowHistoryEntry(), new FuncWorkflowHistoryEntry(), new FuncWorkflowHistoryEntry(), new FuncWorkflowHistoryEntry()
         });
-        private Task<OpportunityData> CreateOpportunityWithStatus(string status) => Task.FromResult(new OpportunityData { Id = 1, Status = status });
-        private Task<OperationResult> ReopenOpportunity(int id) => Task.FromResult(new OperationResult { Success = true });
+        private Task<FuncOpportunityData> CreateOpportunityWithStatus(string status) => Task.FromResult(new FuncOpportunityData { Id = 1, Status = status });
+        private Task<FuncOperationResult> ReopenOpportunity(int id) => Task.FromResult(new FuncOperationResult { Success = true });
         private Task SubmitForApproval(int id) => Task.CompletedTask;
 
-        private Task<OpportunityData> CreateIncompleteOpportunity() => Task.FromResult(new OpportunityData { Id = 1 });
-        private Task<OperationResult> TrySubmitForApproval(int id) => Task.FromResult(new OperationResult { Success = false, Errors = new[] { "mandatory fields missing" } });
-        private Task<OpportunityData> CreateOpportunityWithoutOM() => Task.FromResult(new OpportunityData { Id = 1 });
-        private Task<OpportunityData> CreateOpportunityWithoutSDGs() => Task.FromResult(new OpportunityData { Id = 1 });
-        private Task<OpportunityData> CreateOpportunityWithoutScope() => Task.FromResult(new OpportunityData { Id = 1 });
-        private Task<OperationResult> SaveBeneficiaries(int id, int total, int women, int men) => Task.FromResult(new OperationResult { Success = women + men <= total });
-        private Task<OperationResult> SaveHighRisk(int id, bool isHighRisk, string justification) => Task.FromResult(new OperationResult { Success = !isHighRisk || !string.IsNullOrEmpty(justification) });
-        private Task<OperationResult> AddDeliverableOutsideProjectDates(int id) => Task.FromResult(new OperationResult { Success = false });
-        private Task<OperationResult> SetInvalidOrgUnit(int id) => Task.FromResult(new OperationResult { Success = false });
-        private Task<OperationResult> SetDoALevelMismatch(int id) => Task.FromResult(new OperationResult { Success = true, Warnings = new[] { "DoA level mismatch" } });
-        private Task<OperationResult> SetCountryMismatch(int id) => Task.FromResult(new OperationResult { Success = true, Warnings = new[] { "country mismatch" } });
+        private Task<FuncOpportunityData> CreateIncompleteOpportunity() => Task.FromResult(new FuncOpportunityData { Id = 1 });
+        private Task<FuncOperationResult> TrySubmitForApproval(int id) => Task.FromResult(new FuncOperationResult { Success = false, Errors = new[] { "mandatory fields missing" } });
+        private Task<FuncOpportunityData> CreateOpportunityWithoutOM() => Task.FromResult(new FuncOpportunityData { Id = 1 });
+        private Task<FuncOpportunityData> CreateOpportunityWithoutSDGs() => Task.FromResult(new FuncOpportunityData { Id = 1 });
+        private Task<FuncOpportunityData> CreateOpportunityWithoutScope() => Task.FromResult(new FuncOpportunityData { Id = 1 });
+        private Task<FuncOperationResult> SaveBeneficiaries(int id, int total, int women, int men) => Task.FromResult(new FuncOperationResult { Success = women + men <= total });
+        private Task<FuncOperationResult> SaveHighRisk(int id, bool isHighRisk, string justification) => Task.FromResult(new FuncOperationResult { Success = !isHighRisk || !string.IsNullOrEmpty(justification) });
+        private Task<FuncOperationResult> AddDeliverableOutsideProjectDates(int id) => Task.FromResult(new FuncOperationResult { Success = false });
+        private Task<FuncOperationResult> SetInvalidOrgUnit(int id) => Task.FromResult(new FuncOperationResult { Success = false });
+        private Task<FuncOperationResult> SetDoALevelMismatch(int id) => Task.FromResult(new FuncOperationResult { Success = true, Warnings = new[] { "DoA level mismatch" } });
+        private Task<FuncOperationResult> SetCountryMismatch(int id) => Task.FromResult(new FuncOperationResult { Success = true, Warnings = new[] { "country mismatch" } });
 
-        private Task<OpportunityData> CreateOpportunity(string name, int? orgUnitId = null) => Task.FromResult(new OpportunityData { Id = 1, Name = name });
-        private Task<OperationResult> TryCreateOpportunity(string name, int orgUnitId) => Task.FromResult(new OperationResult { Success = orgUnitId != 1 });
-        private Task<OpportunityData> CreateOpportunityWithMaxCollaborators() => Task.FromResult(new OpportunityData { Id = 1 });
-        private Task<OperationResult> TryAddCollaborator(int oppId, int userId) => Task.FromResult(new OperationResult { Success = false });
-        private Task<List<AuditLogEntry>> GetAuditLog(int id) => Task.FromResult(new List<AuditLogEntry>
+        private Task<FuncOpportunityData> CreateOpportunity(string name, int? orgUnitId = null) => Task.FromResult(new FuncOpportunityData { Id = 1, Name = name });
+        private Task<FuncOperationResult> TryCreateOpportunity(string name, int orgUnitId) => Task.FromResult(new FuncOperationResult { Success = orgUnitId != 1 });
+        private Task<FuncOpportunityData> CreateOpportunityWithMaxCollaborators() => Task.FromResult(new FuncOpportunityData { Id = 1 });
+        private Task<FuncOperationResult> TryAddCollaborator(int oppId, int userId) => Task.FromResult(new FuncOperationResult { Success = false });
+        private Task<List<FuncAuditLogEntry>> GetAuditLog(int id) => Task.FromResult(new List<FuncAuditLogEntry>
         {
-            new AuditLogEntry { Action = "Create", UserId = 1, Timestamp = DateTime.UtcNow },
-            new AuditLogEntry { Action = "Update", Field = "Name", UserId = 1, Timestamp = DateTime.UtcNow }
+            new FuncAuditLogEntry { Action = "Create", UserId = 1, Timestamp = DateTime.UtcNow },
+            new FuncAuditLogEntry { Action = "Update", Field = "Name", UserId = 1, Timestamp = DateTime.UtcNow }
         });
         private Task UpdateOpportunityName(int id, string name) => Task.CompletedTask;
-        private Task<OperationResult> TryModifyAuditLog(int id) => Task.FromResult(new OperationResult { Success = false });
-        private Task<OpportunityData> CreateOpportunityWithoutInitiativeType() => Task.FromResult(new OpportunityData { Id = 1 });
+        private Task<FuncOperationResult> TryModifyAuditLog(int id) => Task.FromResult(new FuncOperationResult { Success = false });
+        private Task<FuncOpportunityData> CreateOpportunityWithoutInitiativeType() => Task.FromResult(new FuncOpportunityData { Id = 1 });
         private Task DeleteOpportunity(int id) => Task.CompletedTask;
-        private Task<List<OpportunityData>> SearchOpportunities(string term) => Task.FromResult(new List<OpportunityData>());
+        private Task<List<FuncOpportunityData>> SearchOpportunities(string term) => Task.FromResult(new List<FuncOpportunityData>());
 
         #endregion
     }
 
     #region Supporting Types
 
-    public class OpportunityData { public int Id { get; set; } public string Name { get; set; } public string Status { get; set; } public bool IsInWorkflow { get; set; } }
-    public class OperationResult { public bool Success { get; set; } public string[] Errors { get; set; } = Array.Empty<string>(); public string[] Warnings { get; set; } = Array.Empty<string>(); }
-    public class NotificationData { public string Type { get; set; } public string RecipientRole { get; set; } public string Body { get; set; } }
-    public class WorkflowHistoryEntry { }
-    public class AuditLogEntry { public string Action { get; set; } public string Field { get; set; } public int UserId { get; set; } public DateTime Timestamp { get; set; } }
+    public class FuncOpportunityData { public int Id { get; set; } public string Name { get; set; } public string Status { get; set; } public bool IsInWorkflow { get; set; } }
+    public class FuncOperationResult { public bool Success { get; set; } public string[] Errors { get; set; } = Array.Empty<string>(); public string[] Warnings { get; set; } = Array.Empty<string>(); }
+    public class FuncNotificationData { public string Type { get; set; } public string RecipientRole { get; set; } public string Body { get; set; } }
+    public class FuncWorkflowHistoryEntry { }
+    public class FuncAuditLogEntry { public string Action { get; set; } public string Field { get; set; } public int UserId { get; set; } public DateTime Timestamp { get; set; } }
 
     #endregion
 }

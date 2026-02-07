@@ -31,7 +31,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         public async Task CONC_001_DuplicateOpportunityCreation_Prevented()
         {
             // Arrange
-            var opportunityData = new OpportunityData { Name = "Test Opportunity", UniqueRef = "REF-001" };
+            var opportunityData = new ConcOpportunityData { Name = "Test Opportunity", UniqueRef = "REF-001" };
             var creationCount = 0;
 
             // Act - Two concurrent create attempts with same unique ref
@@ -152,15 +152,15 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
 
         [Fact]
         [Trait("SubCategory", "RaceCondition")]
-        public async Task CONC_006_ConcurrentBeneficiaryUpdates_TotalConsistent()
+        public async Task CONC_006_ConcurrentConcBeneficiaryUpdates_TotalConsistent()
         {
             // Arrange
             var opportunityId = 1;
             var updates = new[]
             {
-                new BeneficiaryUpdate { Total = 1000, Women = 500, Men = 500 },
-                new BeneficiaryUpdate { Total = 2000, Women = 1000, Men = 1000 },
-                new BeneficiaryUpdate { Total = 1500, Women = 800, Men = 700 }
+                new ConcBeneficiaryUpdate { Total = 1000, Women = 500, Men = 500 },
+                new ConcBeneficiaryUpdate { Total = 2000, Women = 1000, Men = 1000 },
+                new ConcBeneficiaryUpdate { Total = 1500, Women = 800, Men = 700 }
             };
 
             // Act
@@ -199,7 +199,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
             // Arrange
             var opportunityId = 1;
             var documents = Enumerable.Range(1, 10)
-                .Select(i => new DocumentData { Name = $"Document_{i}.pdf" })
+                .Select(i => new ConcDocumentData { Name = $"Document_{i}.pdf" })
                 .ToList();
 
             // Act - Concurrent uploads
@@ -316,7 +316,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
             var attempts = 0;
 
             // Act - Retry pattern
-            OperationResult result = null;
+            ConcOperationResult result = null;
             while (attempts < maxRetries)
             {
                 var entity = await GetOpportunityWithVersion(opportunityId);
@@ -496,7 +496,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
             // Arrange
             var opportunityId = 1;
             var actions = Enumerable.Range(1, 50)
-                .Select(i => new AuditAction { Action = $"Action_{i}", UserId = i })
+                .Select(i => new ConcAuditAction { Action = $"Action_{i}", UserId = i })
                 .ToList();
 
             // Act
@@ -513,7 +513,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         public async Task CONC_023_ParallelNotifications_AllSent()
         {
             // Arrange
-            var recipients = Enumerable.Range(1, 20).Select(i => new Recipient { UserId = i }).ToList();
+            var recipients = Enumerable.Range(1, 20).Select(i => new ConcRecipient { UserId = i }).ToList();
 
             // Act
             var tasks = recipients.Select(r => SendNotification(r)).ToArray();
@@ -571,68 +571,68 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
 
         #region Helper Methods (Stubs)
 
-        private Task<OperationResult> CreateOpportunity(OpportunityData data) => Task.FromResult(new OperationResult { Success = true });
-        private Task<OperationResult> TransitionStatus(int id, string from, string to, int userId) => Task.FromResult(new OperationResult { Success = true });
-        private Task<OperationResult> AddCollaborator(int oppId, int userId, int adminId) => Task.FromResult(new OperationResult { Success = true });
-        private Task<List<CollaboratorInfo>> GetCollaborators(int oppId) => Task.FromResult(new List<CollaboratorInfo> { new CollaboratorInfo { UserId = 100 } });
-        private Task<OperationResult> UpdateSDGs(int id, int[] sdgIds) => Task.FromResult(new OperationResult { Success = true });
+        private Task<ConcOperationResult> CreateOpportunity(ConcOpportunityData data) => Task.FromResult(new ConcOperationResult { Success = true });
+        private Task<ConcOperationResult> TransitionStatus(int id, string from, string to, int userId) => Task.FromResult(new ConcOperationResult { Success = true });
+        private Task<ConcOperationResult> AddCollaborator(int oppId, int userId, int adminId) => Task.FromResult(new ConcOperationResult { Success = true });
+        private Task<List<ConcCollaboratorInfo>> GetCollaborators(int oppId) => Task.FromResult(new List<ConcCollaboratorInfo> { new ConcCollaboratorInfo { UserId = 100 } });
+        private Task<ConcOperationResult> UpdateSDGs(int id, int[] sdgIds) => Task.FromResult(new ConcOperationResult { Success = true });
         private Task<int[]> GetOpportunitySDGs(int id) => Task.FromResult(new[] { 7, 8, 9 });
-        private Task<OperationResult> RecallOpportunity(int id, int userId) => Task.FromResult(new OperationResult { Success = true });
-        private Task<OperationResult> ApproveOpportunity(int id, int userId) => Task.FromResult(new OperationResult { Success = true });
+        private Task<ConcOperationResult> RecallOpportunity(int id, int userId) => Task.FromResult(new ConcOperationResult { Success = true });
+        private Task<ConcOperationResult> ApproveOpportunity(int id, int userId) => Task.FromResult(new ConcOperationResult { Success = true });
         private Task<string> GetOpportunityStatus(int id) => Task.FromResult("Active");
-        private Task<OperationResult> UpdateBeneficiaries(int id, BeneficiaryUpdate update) => Task.FromResult(new OperationResult { Success = true });
-        private Task<BeneficiaryData> GetBeneficiaries(int id) => Task.FromResult(new BeneficiaryData { Total = 1500, Women = 800, Men = 700 });
+        private Task<ConcOperationResult> UpdateBeneficiaries(int id, ConcBeneficiaryUpdate update) => Task.FromResult(new ConcOperationResult { Success = true });
+        private Task<ConcBeneficiaryData> GetBeneficiaries(int id) => Task.FromResult(new ConcBeneficiaryData { Total = 1500, Women = 800, Men = 700 });
         private Task CreateDeliverables(int id, int count) => Task.CompletedTask;
-        private Task<OperationResult> ReorderDeliverables(int id, int userId) => Task.FromResult(new OperationResult { Success = true });
-        private Task<List<DeliverableInfo>> GetDeliverables(int id) => Task.FromResult(Enumerable.Range(1, 5).Select(i => new DeliverableInfo { Sequence = i }).ToList());
-        private Task<OperationResult> UploadDocument(int id, DocumentData doc) => Task.FromResult(new OperationResult { Success = true });
-        private Task<List<DocumentInfo>> GetDocuments(int id) => Task.FromResult(Enumerable.Range(1, 10).Select(i => new DocumentInfo()).ToList());
+        private Task<ConcOperationResult> ReorderDeliverables(int id, int userId) => Task.FromResult(new ConcOperationResult { Success = true });
+        private Task<List<ConcDeliverableInfo>> GetDeliverables(int id) => Task.FromResult(Enumerable.Range(1, 5).Select(i => new ConcDeliverableInfo { Sequence = i }).ToList());
+        private Task<ConcOperationResult> UploadDocument(int id, ConcDocumentData doc) => Task.FromResult(new ConcOperationResult { Success = true });
+        private Task<List<ConcDocumentInfo>> GetDocuments(int id) => Task.FromResult(Enumerable.Range(1, 10).Select(i => new ConcDocumentInfo()).ToList());
 
         // Optimistic locking helpers
-        private Task<VersionedEntity> GetOpportunityWithVersion(int id) => Task.FromResult(new VersionedEntity { Id = id, Version = 1 });
+        private Task<ConcVersionedEntity> GetOpportunityWithVersion(int id) => Task.FromResult(new ConcVersionedEntity { Id = id, Version = 1 });
         private Task UpdateOpportunityByAnotherUser(int id) => Task.CompletedTask;
-        private Task<OperationResult> UpdateOpportunityWithVersion(int id, int version, object data = null) => Task.FromResult(new OperationResult { Success = version == 1 });
-        private Task<OperationResult> UpdateOpportunity(int id, object data) => Task.FromResult(new OperationResult { Success = true });
+        private Task<ConcOperationResult> UpdateOpportunityWithVersion(int id, int version, object data = null) => Task.FromResult(new ConcOperationResult { Success = version == 1 });
+        private Task<ConcOperationResult> UpdateOpportunity(int id, object data) => Task.FromResult(new ConcOperationResult { Success = true });
         private Task<int> GetTeamSectionVersion(int id) => Task.FromResult(1);
         private Task<int> GetWHYSectionVersion(int id) => Task.FromResult(1);
         private Task UpdateTeamSection(int id) => Task.CompletedTask;
         private Task UpdateWHYSection(int id) => Task.CompletedTask;
         private Task UpdateWHATSection(int id) => Task.CompletedTask;
         private Task UpdateWHERESection(int id) => Task.CompletedTask;
-        private Task<OperationResult> DeleteOpportunityWithVersion(int id, int version) => Task.FromResult(new OperationResult { Success = false });
+        private Task<ConcOperationResult> DeleteOpportunityWithVersion(int id, int version) => Task.FromResult(new ConcOperationResult { Success = false });
 
         // Deadlock helpers
-        private Task<OperationResult> ExecuteNestedTransaction(Func<Task> action) { action(); return Task.FromResult(new OperationResult { Success = true }); }
+        private Task<ConcOperationResult> ExecuteNestedTransaction(Func<Task> action) { action(); return Task.FromResult(new ConcOperationResult { Success = true }); }
         private Task BulkUpdateOpportunities(List<int> ids) => Task.CompletedTask;
 
         // Parallel helpers
-        private Task<OpportunityData> LoadOpportunity(int id) => Task.FromResult(new OpportunityData { Name = "Test", Version = 1 });
-        private Task WriteAuditLog(int oppId, AuditAction action) => Task.CompletedTask;
-        private Task<List<AuditLogEntry>> GetAuditLogs(int id) => Task.FromResult(Enumerable.Range(1, 50).Select(i => new AuditLogEntry()).ToList());
-        private Task<NotificationResult> SendNotification(Recipient r) => Task.FromResult(new NotificationResult { Sent = true });
-        private Task<List<SearchResult>> SearchOpportunities(string query) => Task.FromResult(new List<SearchResult>());
-        private Task<AIResult> RequestAISuggestion(int id) { Thread.Sleep(10); return Task.FromResult(new AIResult { Success = true }); }
+        private Task<ConcOpportunityData> LoadOpportunity(int id) => Task.FromResult(new ConcOpportunityData { Name = "Test", Version = 1 });
+        private Task WriteAuditLog(int oppId, ConcAuditAction action) => Task.CompletedTask;
+        private Task<List<ConcAuditLogEntry>> GetAuditLogs(int id) => Task.FromResult(Enumerable.Range(1, 50).Select(i => new ConcAuditLogEntry()).ToList());
+        private Task<ConcNotificationResult> SendNotification(ConcRecipient r) => Task.FromResult(new ConcNotificationResult { Sent = true });
+        private Task<List<ConcSearchResult>> SearchOpportunities(string query) => Task.FromResult(new List<ConcSearchResult>());
+        private Task<ConcAIResult> RequestAISuggestion(int id) { Thread.Sleep(10); return Task.FromResult(new ConcAIResult { Success = true }); }
 
         #endregion
     }
 
     #region Supporting Types
 
-    public class OpportunityData { public string Name { get; set; } public string UniqueRef { get; set; } public int Version { get; set; } }
-    public class OperationResult { public bool Success { get; set; } public string Error { get; set; } }
-    public class CollaboratorInfo { public int UserId { get; set; } }
-    public class BeneficiaryUpdate { public int Total { get; set; } public int Women { get; set; } public int Men { get; set; } }
-    public class BeneficiaryData { public int Total { get; set; } public int Women { get; set; } public int Men { get; set; } }
-    public class DeliverableInfo { public int Sequence { get; set; } }
-    public class DocumentData { public string Name { get; set; } }
-    public class DocumentInfo { }
-    public class VersionedEntity { public int Id { get; set; } public int Version { get; set; } }
-    public class AuditAction { public string Action { get; set; } public int UserId { get; set; } }
-    public class AuditLogEntry { }
-    public class Recipient { public int UserId { get; set; } }
-    public class NotificationResult { public bool Sent { get; set; } }
-    public class SearchResult { }
-    public class AIResult { public bool Success { get; set; } }
+    public class ConcOpportunityData { public string Name { get; set; } public string UniqueRef { get; set; } public int Version { get; set; } }
+    public class ConcOperationResult { public bool Success { get; set; } public string Error { get; set; } }
+    public class ConcCollaboratorInfo { public int UserId { get; set; } }
+    public class ConcBeneficiaryUpdate { public int Total { get; set; } public int Women { get; set; } public int Men { get; set; } }
+    public class ConcBeneficiaryData { public int Total { get; set; } public int Women { get; set; } public int Men { get; set; } }
+    public class ConcDeliverableInfo { public int Sequence { get; set; } }
+    public class ConcDocumentData { public string Name { get; set; } }
+    public class ConcDocumentInfo { }
+    public class ConcVersionedEntity { public int Id { get; set; } public int Version { get; set; } }
+    public class ConcAuditAction { public string Action { get; set; } public int UserId { get; set; } }
+    public class ConcAuditLogEntry { }
+    public class ConcRecipient { public int UserId { get; set; } }
+    public class ConcNotificationResult { public bool Sent { get; set; } }
+    public class ConcSearchResult { }
+    public class ConcAIResult { public bool Success { get; set; } }
 
     #endregion
 }

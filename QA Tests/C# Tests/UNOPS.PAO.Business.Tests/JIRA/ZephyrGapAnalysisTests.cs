@@ -218,8 +218,8 @@ namespace UNOPS.PAO.Business.Tests.JIRA
             
             // Assert
             results.Should().AllSatisfy(r => 
-                r.Type.Should().Be("Development and Partnerships") ||
-                r.ParentType.Should().Be("Development and Partnerships"));
+                (r.Type == "Development and Partnerships" || 
+                 r.ParentType == "Development and Partnerships").Should().BeTrue());
         }
 
         [Fact]
@@ -475,7 +475,7 @@ namespace UNOPS.PAO.Business.Tests.JIRA
             var omUserId = opportunity.OpportunityManagerId;
             
             // Act
-            var result = RecallOpportunity(opportunity.Id, omUserId);
+            var result = RecallOpportunity(opportunity.Id, omUserId!.Value);
             
             // Assert
             result.Success.Should().BeTrue();
