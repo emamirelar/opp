@@ -500,7 +500,7 @@ public class SavedFilterControllerTests : IntegrationTestBase
         var response = await client.GetAsync($"/api/saved-filters/{otherUserFilterId}");
 
         // Assert
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.Forbidden, 
+        response.StatusCode.Should().BeOneOf(new[] { HttpStatusCode.NotFound, HttpStatusCode.Forbidden }, 
             "because private filters should not be accessible to other users");
     }
 

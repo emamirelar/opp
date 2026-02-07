@@ -39,6 +39,97 @@
   <ItemGroup>
     <!-- Exclude test files that depend on UNOPS.Workflow (separate repository) -->
     <Compile Remove="Controllers\WorkflowControllerTests.cs" />
+
+    <!-- DEF-007: Exclude test files referencing managers not yet implemented in production.
+         These tests were written ahead of implementation. Re-enable when managers are built.
+         See: QA Tests/Defect List for Developers.md (DEF-007) -->
+
+    <!-- Dashboard/ - DashboardManager does not exist -->
+    <Compile Remove="Dashboard\DashboardEdgeCaseTests.cs" />
+    <Compile Remove="Dashboard\DashboardNegativeTests.cs" />
+    <Compile Remove="Dashboard\DashboardSecurityTests.cs" />
+    <Compile Remove="Dashboard\DashboardValidationTests.cs" />
+
+    <!-- PartnerAnalytics/ - PartnerAnalyticsManager does not exist -->
+    <Compile Remove="PartnerAnalytics\AnalyticsEdgeCaseTests.cs" />
+    <Compile Remove="PartnerAnalytics\AnalyticsNegativeTests.cs" />
+    <Compile Remove="PartnerAnalytics\AnalyticsSecurityTests.cs" />
+    <Compile Remove="PartnerAnalytics\AnalyticsValidationTests.cs" />
+
+    <!-- ContactAnalytics/ - ContactAnalyticsManager does not exist -->
+    <Compile Remove="ContactAnalytics\ContactAnalyticsEdgeCaseTests.cs" />
+    <Compile Remove="ContactAnalytics\ContactAnalyticsNegativeTests.cs" />
+    <Compile Remove="ContactAnalytics\ContactAnalyticsSecurityTests.cs" />
+    <Compile Remove="ContactAnalytics\ContactAnalyticsValidationTests.cs" />
+
+    <!-- OrgHierarchy/ - OrganizationManager does not exist -->
+    <Compile Remove="OrgHierarchy\OrgHierarchyEdgeCaseTests.cs" />
+    <Compile Remove="OrgHierarchy\OrgHierarchyNegativeTests.cs" />
+    <Compile Remove="OrgHierarchy\OrgHierarchySecurityTests.cs" />
+    <Compile Remove="OrgHierarchy\OrgHierarchyValidationTests.cs" />
+
+    <!-- UserProfile/ - UserProfileManager does not exist -->
+    <Compile Remove="UserProfile\UserProfileEdgeCaseTests.cs" />
+    <Compile Remove="UserProfile\UserProfileNegativeTests.cs" />
+    <Compile Remove="UserProfile\UserProfileSecurityTests.cs" />
+
+    <!-- Roles/ - Custom RoleManager does not exist (only ASP.NET Identity RoleManager) -->
+    <Compile Remove="Roles\RoleEdgeCaseTests.cs" />
+    <Compile Remove="Roles\RoleNegativeTests.cs" />
+    <Compile Remove="Roles\RoleSecurityTests.cs" />
+    <Compile Remove="Roles\RoleValidationTests.cs" />
+
+    <!-- Permissions/ - PermissionManager does not exist -->
+    <Compile Remove="Permissions\PermissionEdgeCaseTests.cs" />
+    <Compile Remove="Permissions\PermissionNegativeTests.cs" />
+    <Compile Remove="Permissions\PermissionSecurityTests.cs" />
+    <Compile Remove="Permissions\PermissionValidationTests.cs" />
+
+    <!-- LiaisonOffice/ - LiaisonOfficeManager does not exist -->
+    <Compile Remove="LiaisonOffice\LiaisonOfficeEdgeCaseTests.cs" />
+    <Compile Remove="LiaisonOffice\LiaisonOfficeNegativeTests.cs" />
+    <Compile Remove="LiaisonOffice\LiaisonOfficeSecurityTests.cs" />
+    <Compile Remove="LiaisonOffice\LiaisonOfficeValidationTests.cs" />
+
+    <!-- SystemAdmin/ - UpdateSystemSettingsRequest, ExecuteMaintenanceTaskAsync, etc. do not exist -->
+    <Compile Remove="SystemAdmin\SystemAdminEdgeCaseTests.cs" />
+    <Compile Remove="SystemAdmin\SystemAdminNegativeTests.cs" />
+    <Compile Remove="SystemAdmin\SystemAdminSecurityTests.cs" />
+    <Compile Remove="SystemAdmin\SystemAdminValidationTests.cs" />
+
+    <!-- PartnerTree/ - AddChildPartnerAsync, MovePartnerAsync, etc. do not exist -->
+    <Compile Remove="PartnerTree\PartnerTreeEdgeCaseTests.cs" />
+    <Compile Remove="PartnerTree\PartnerTreeNegativeTests.cs" />
+    <Compile Remove="PartnerTree\PartnerTreeSecurityTests.cs" />
+    <Compile Remove="PartnerTree\PartnerTreeValidationTests.cs" />
+
+    <!-- UserManagement/ - CreateUserRequest, UpdateUserRequest do not exist -->
+    <Compile Remove="UserManagement\UserManagementEdgeCaseTests.cs" />
+    <Compile Remove="UserManagement\UserManagementNegativeTests.cs" />
+    <Compile Remove="UserManagement\UserManagementSecurityTests.cs" />
+    <Compile Remove="UserManagement\UserManagementValidationTests.cs" />
+
+    <!-- EntityConfiguration/ - CreateEntityConfigRequest, AddFieldRequest, EntityConfigManager do not exist -->
+    <Compile Remove="EntityConfiguration\EntityConfigEdgeCaseTests.cs" />
+    <Compile Remove="EntityConfiguration\EntityConfigNegativeTests.cs" />
+    <Compile Remove="EntityConfiguration\EntityConfigSecurityTests.cs" />
+    <Compile Remove="EntityConfiguration\EntityConfigValidationTests.cs" />
+
+    <!-- Documents/ - UploadDocumentAsync and DeleteDocumentAsync have wrong signatures (CS1501) -->
+    <Compile Remove="Documents\DocumentEdgeCaseTests.cs" />
+    <Compile Remove="Documents\DocumentNegativeTests.cs" />
+    <Compile Remove="Documents\DocumentSecurityAndConcurrencyTests.cs" />
+
+    <!-- Controller tests referencing non-existent model types (WidgetDataModel, DashboardSummaryModel, etc.) -->
+    <Compile Remove="Controllers\NotificationControllerTests.cs" />
+    <Compile Remove="Controllers\DashboardControllerTests.cs" />
+    <Compile Remove="Controllers\CommonEntitiesControllerTests.cs" />
+    <Compile Remove="Controllers\EntityConfigurationControllerTests.cs" />
+    <Compile Remove="Controllers\ConfigurationControllerTests.cs" />
+
+    <!-- Controller tests using wrong entity types (Partner vs UNOPSPartner, missing Contact properties) -->
+    <Compile Remove="Controllers\ContactAnalyticsControllerTests.cs" />
+    <Compile Remove="Controllers\PartnerAnalyticsControllerTests.cs" />
   </ItemGroup>
 
   <ItemGroup>

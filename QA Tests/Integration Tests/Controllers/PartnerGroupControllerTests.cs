@@ -429,7 +429,7 @@ public class PartnerGroupControllerTests : IntegrationTestBase
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK, "because membership check should complete");
         var isMember = await response.Content.ReadFromJsonAsync<bool>();
-        isMember.Should().NotBeNull("because boolean result should be returned");
+        isMember.Should().Be(true, "because boolean result should be returned");
     }
 
     /// <summary>
@@ -597,7 +597,7 @@ public class PartnerGroupControllerTests : IntegrationTestBase
         var response = await client.PostAsync($"/api/partner-groups/{groupId}/members/{partnerId}", null);
 
         // Assert
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Forbidden, 
+        response.StatusCode.Should().BeOneOf(new[] { HttpStatusCode.OK, HttpStatusCode.Forbidden }, 
             "because response depends on user role permissions");
     }
 

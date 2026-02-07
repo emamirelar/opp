@@ -599,7 +599,7 @@ public class PermissionControllerTests : IntegrationTestBase
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK, "because entity permission check should complete");
         var hasPermission = await response.Content.ReadFromJsonAsync<bool>();
-        hasPermission.Should().NotBeNull("because permission status should be returned");
+        hasPermission.Should().Be(true, "because permission status should be returned");
     }
 
     /// <summary>

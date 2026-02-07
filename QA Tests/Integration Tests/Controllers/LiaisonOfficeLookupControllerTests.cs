@@ -298,7 +298,7 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
 
         // Assert
         // Either 200 with empty results or 400 for minimum length validation
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest, 
+        response.StatusCode.Should().BeOneOf(new[] { HttpStatusCode.OK, HttpStatusCode.BadRequest }, 
             "because single character may not meet minimum requirement");
     }
 

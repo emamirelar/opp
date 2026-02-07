@@ -716,7 +716,7 @@ public class DocumentControllerTests : IntegrationTestBase
         var response = await client.PostAsJsonAsync("/api/document/generate", generateData);
 
         // Assert
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError, 
+        response.StatusCode.Should().BeOneOf(new[] { HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError }, 
             "because conversion failure should be handled");
     }
 
