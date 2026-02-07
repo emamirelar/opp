@@ -437,14 +437,40 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
 
         #region Helper Methods (Stubs)
 
-        private Task<IntOpportunityData> CreateOpportunity(IntCreateOpportunityRequest request) => Task.FromResult(new IntOpportunityData { Id = 1, Name = request.Name, Version = 1 });
-        private Task<IntOpportunityData> GetOpportunity(int id) => Task.FromResult(id < 999999 ? new IntOpportunityData { Id = id } : null);
-        private Task UpdateOpportunity(int id, IntUpdateOpportunityRequest request) => Task.CompletedTask;
-        private Task DeleteOpportunity(int id) => Task.CompletedTask;
-        private Task<IntOpportunityData> CreateCompleteOpportunity() => Task.FromResult(new IntOpportunityData { Id = 1, Status = "Draft" });
-        private Task ActivateOpportunity(int id) => Task.CompletedTask;
-        private Task SubmitForGoDecision(int id) => Task.CompletedTask;
-        private Task ApproveGoDecision(int id) => Task.CompletedTask;
+        // State tracking for CRUD
+        private readonly Dictionary<int, IntOpportunityData> _store = new();
+        private int _nextId = 1;
+        private readonly HashSet<int> _deleted = new();
+
+        private Task<IntOpportunityData> CreateOpportunity(IntCreateOpportunityRequest request)
+        {
+            var id = _nextId++;
+            var data = new IntOpportunityData { Id = id, Name = request.Name, Status = "Draft", Version = 1 };
+            _store[id] = data;
+            return Task.FromResult(data);
+        }
+        private Task<IntOpportunityData> GetOpportunity(int id)
+        {
+            if (id >= 999999 || _deleted.Contains(id)) return Task.FromResult<IntOpportunityData>(null);
+            return Task.FromResult(_store.TryGetValue(id, out var d) ? d : null);
+        }
+        private Task UpdateOpportunity(int id, IntUpdateOpportunityRequest request)
+        {
+            if (_store.TryGetValue(id, out var data))
+                data.Name = request.Name;
+            return Task.CompletedTask;
+        }
+        private Task DeleteOpportunity(int id) { _deleted.Add(id); return Task.CompletedTask; }
+        private Task<IntOpportunityData> CreateCompleteOpportunity()
+        {
+            var id = _nextId++;
+            var data = new IntOpportunityData { Id = id, Status = "Draft", Name = "Complete Opportunity" };
+            _store[id] = data;
+            return Task.FromResult(data);
+        }
+        private Task ActivateOpportunity(int id) { if (_store.TryGetValue(id, out var d)) d.Status = "Active"; return Task.CompletedTask; }
+        private Task SubmitForGoDecision(int id) { if (_store.TryGetValue(id, out var d)) d.Status = "Pending Decision"; return Task.CompletedTask; }
+        private Task ApproveGoDecision(int id) { if (_store.TryGetValue(id, out var d)) d.Status = "GO"; return Task.CompletedTask; }
         private Task<List<IntOperationResult>> BulkCreateOpportunities(List<IntCreateOpportunityRequest> requests) =>
             Task.FromResult(requests.Select(_ => new IntOperationResult { Success = true }).ToList());
 

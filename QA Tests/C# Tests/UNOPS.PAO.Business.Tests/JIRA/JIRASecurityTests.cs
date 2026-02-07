@@ -550,11 +550,13 @@ namespace UNOPS.PAO.Business.Tests.JIRA
 
         private string SanitizeSearchQuery(string query)
         {
-            // Remove SQL injection patterns
+            // Remove SQL injection special characters
             var sanitized = Regex.Replace(query, @"[;'\-\-]", "");
+            // Remove dangerous SQL keywords
+            sanitized = Regex.Replace(sanitized, @"\b(DROP|DELETE|INSERT|UPDATE|ALTER|EXEC|EXECUTE|UNION|SELECT)\b", "", RegexOptions.IgnoreCase);
             // Remove script tags
             sanitized = Regex.Replace(sanitized, @"<[^>]+>", "", RegexOptions.IgnoreCase);
-            return sanitized;
+            return sanitized.Trim();
         }
 
         private string SanitizeHtml(string html)

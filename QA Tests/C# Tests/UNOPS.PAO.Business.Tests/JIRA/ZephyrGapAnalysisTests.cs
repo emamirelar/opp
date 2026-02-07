@@ -10,6 +10,7 @@ using Xunit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace UNOPS.PAO.Business.Tests.JIRA
@@ -325,24 +326,77 @@ namespace UNOPS.PAO.Business.Tests.JIRA
 
         #region Helper Methods (Stubs)
 
+        // State tracking
+        private readonly Dictionary<int, List<CollaboratorInfo>> _collaborators = new();
+        private readonly Dictionary<int, int?> _normallyResponsibleOrgUnits = new();
+
         private string[] GetOpportunityTabOrder() => new[] { "Overview", "Why", "What", "Who", "Where", "When", "Statement", "Team" };
         private string[] GetTeamSectionSubsections() => new[] { "Opportunity Development Team", "Other Internal Stakeholders", "Opportunity decision making pathway" };
         private TestOpportunity CreateTestOpportunity() => new TestOpportunity { Id = 1 };
         private TestOpportunity CreateTestOpportunityWithOM() => new TestOpportunity { Id = 1, OpportunityManagerId = 100 };
         private TestOpportunity CreateTestOpportunityWithOrgUnit() => new TestOpportunity { Id = 1, ResponsibleOrgUnitId = 200 };
-        private ValidationResult ValidateOpportunity(TestOpportunity opportunity) => new ValidationResult { IsValid = opportunity.OpportunityManagerId.HasValue };
+        private ValidationResult ValidateOpportunity(TestOpportunity opportunity)
+        {
+            var result = new ValidationResult { IsValid = opportunity.OpportunityManagerId.HasValue };
+            if (!result.IsValid)
+            {
+                result.Errors.Add(new ValidationError { Field = "OpportunityManagerId", Message = "Opportunity Manager is required" });
+            }
+            return result;
+        }
         private PersonDetails GetOpportunityManagerDetails(int? id) => new PersonDetails { StandardizedPositionTitle = "Project Manager", DisplayName = "John Doe" };
         private List<PersonDetails> SearchActivePersonnel(string term) => new List<PersonDetails> { new PersonDetails { Id = 123, DisplayName = "John Smith" } };
-        private AddResult AddCollaborator(int oppId, int userId, string[] expertise) => new AddResult { Success = expertise != null && expertise.Any() };
-        private List<CollaboratorInfo> GetOpportunityCollaborators(int oppId) => new List<CollaboratorInfo>();
+        private AddResult AddCollaborator(int oppId, int userId, string[] expertise)
+        {
+            if (expertise == null || !expertise.Any())
+                return new AddResult { Success = false, ValidationErrors = new[] { "Expertise is required" } };
+            if (!_collaborators.ContainsKey(oppId)) _collaborators[oppId] = new List<CollaboratorInfo>();
+            _collaborators[oppId].Add(new CollaboratorInfo { UserId = userId, Expertise = expertise });
+            return new AddResult { Success = true };
+        }
+        private List<CollaboratorInfo> GetOpportunityCollaborators(int oppId) =>
+            _collaborators.TryGetValue(oppId, out var list) ? list : new List<CollaboratorInfo>();
         private string[] GetExpertiseOptions() => new[] { "Project Management", "Technical Expertise", "Financial Management", "Legal", "Procurement", "Human Resources", "Communications", "Risk Management", "Monitoring & Evaluation", "Other" };
         private CollaboratorInfo GetCollaborator(int oppId, int userId) => new CollaboratorInfo { UserId = userId, Expertise = new[] { "Project Management", "Legal", "Risk Management" } };
         private PermissionInfo GetUserOpportunityPermissions(int userId, int oppId) => new PermissionInfo { CanEdit = userId != 999, CanView = true };
-        private List<OrgUnitInfo> SearchResponsibleOrgUnits(string term) => new List<OrgUnitInfo>();
+        private List<OrgUnitInfo> SearchResponsibleOrgUnits(string term) => new List<OrgUnitInfo>
+        {
+            new OrgUnitInfo { Id = 200, Type = "Development and Partnerships", ParentType = null },
+            new OrgUnitInfo { Id = 201, Type = "D&P Hub", ParentType = "Development and Partnerships" }
+        };
         private OrgUnitInfo GetTestOrgUnit() => new OrgUnitInfo { Id = 200, Type = "D&P Hub" };
-        private void SetResponsibleOrgUnit(int oppId, int orgUnitId, bool acknowledgeWarning = false) { }
-        private SetResult SetResponsibleOrgUnit(int oppId, int orgUnitId) => new SetResult { WarningTriggered = false };
-        private TestOpportunity GetOpportunity(int id) => new TestOpportunity { Id = id, OrgUnitType = "D&P Hub" };
+        private void SetResponsibleOrgUnit(int oppId, int orgUnitId, bool acknowledgeWarning = false)
+        {
+            // When acknowledging country mismatch, auto-populate normally responsible org unit
+            if (acknowledgeWarning)
+            {
+                var normalOrgUnit = GetOrgUnitResponsibleForCountry(1);
+                _normallyResponsibleOrgUnits[oppId] = normalOrgUnit.Id;
+            }
+        }
+        private SetResult SetResponsibleOrgUnit(int oppId, int orgUnitId)
+        {
+            // Check for country mismatch
+            var mismatchedOrgUnitId = GetOrgUnitNotResponsibleForCountry(1).Id;
+            if (orgUnitId == mismatchedOrgUnitId)
+            {
+                return new SetResult
+                {
+                    Success = true,
+                    WarningTriggered = true,
+                    WarningType = "CountryMismatch",
+                    WarningMessage = "This org unit is not normally responsible for this country"
+                };
+            }
+            return new SetResult { WarningTriggered = false };
+        }
+        private TestOpportunity GetOpportunity(int id)
+        {
+            var opp = new TestOpportunity { Id = id, OrgUnitType = "D&P Hub" };
+            if (_normallyResponsibleOrgUnits.TryGetValue(id, out var normalOrgUnitId))
+                opp.NormallyResponsibleOrgUnitId = normalOrgUnitId;
+            return opp;
+        }
         private UpdateResult UpdateOrgUnitType(int oppId, string type) => new UpdateResult { Success = false, ValidationErrors = new[] { "Field is read-only" } };
         private OrgUnitInfo GetOrgUnitNotResponsibleForCountry(int countryId) => new OrgUnitInfo { Id = 300 };
         private OrgUnitInfo GetOrgUnitResponsibleForCountry(int countryId) => new OrgUnitInfo { Id = 301 };
@@ -745,22 +799,91 @@ namespace UNOPS.PAO.Business.Tests.JIRA
 
         #region Helper Methods (Stubs)
 
-        private TestOpportunity CreateDraftOpportunity() => new TestOpportunity { Id = 1, Status = "Draft" };
-        private TestOpportunity CreateActiveOpportunity() => new TestOpportunity { Id = 2, Status = "Active" };
-        private TestOpportunity CreatePendingOpportunity() => new TestOpportunity { Id = 3, Status = "Pending Decision", OpportunityManagerId = 100 };
-        private TestOpportunity CreateNoGoOpportunity() => new TestOpportunity { Id = 4, Status = "NO GO" };
-        private void CompleteMandatoryFields(TestOpportunity opp) { }
-        private StatusResult ActivateOpportunity(int id, int? userId = null) => new StatusResult { Success = true };
-        private StatusResult SubmitForDecision(int id) => new StatusResult { Success = true };
-        private StatusResult ApproveOpportunity(int id, int userId) => new StatusResult { Success = true };
-        private StatusResult RejectOpportunity(int id, int userId, string reason) => new StatusResult { Success = reason != null, ValidationErrors = reason == null ? new[] { "Rejection reason is required" } : null };
-        private StatusResult CancelOpportunity(int id, string reason) => new StatusResult { Success = reason != null, ValidationErrors = reason == null ? new[] { "Cancellation reason is required" } : null };
-        private StatusResult ReopenOpportunity(int id, string justification) => new StatusResult { Success = true };
-        private StatusResult RecallOpportunity(int id, int userId) => new StatusResult { Success = true };
-        private string GetOpportunityStatus(int id) => "Active";
-        private string GetOpportunityRejectionReason(int id) => "Budget constraints";
+        // State tracking
+        private readonly Dictionary<int, string> _wfStatuses = new();
+        private readonly Dictionary<int, string> _wfRejectionReasons = new();
+        private readonly HashSet<int> _wfMandatoryFieldsComplete = new();
+        private readonly HashSet<int?> _wfRemovedDoAOrgUnits = new();
+        private int _activateWinner = 0;
+        private int _wfNextId = 1;
+
+        private TestOpportunity CreateDraftOpportunity()
+        {
+            var id = _wfNextId++;
+            _wfStatuses[id] = "Draft";
+            return new TestOpportunity { Id = id, Status = "Draft" };
+        }
+        private TestOpportunity CreateActiveOpportunity()
+        {
+            var id = _wfNextId++;
+            _wfStatuses[id] = "Active";
+            return new TestOpportunity { Id = id, Status = "Active", ResponsibleOrgUnitId = 200 };
+        }
+        private TestOpportunity CreatePendingOpportunity()
+        {
+            var id = _wfNextId++;
+            _wfStatuses[id] = "Pending Decision";
+            return new TestOpportunity { Id = id, Status = "Pending Decision", OpportunityManagerId = 100 };
+        }
+        private TestOpportunity CreateNoGoOpportunity()
+        {
+            var id = _wfNextId++;
+            _wfStatuses[id] = "NO GO";
+            return new TestOpportunity { Id = id, Status = "NO GO" };
+        }
+        private void CompleteMandatoryFields(TestOpportunity opp) { _wfMandatoryFieldsComplete.Add(opp.Id); }
+        private StatusResult ActivateOpportunity(int id, int? userId = null)
+        {
+            if (!_wfMandatoryFieldsComplete.Contains(id))
+                return new StatusResult { Success = false, ValidationErrors = new[] { "Mandatory fields are missing" } };
+            // Concurrency: only first caller wins
+            if (Interlocked.CompareExchange(ref _activateWinner, id, 0) != 0 && _activateWinner == id)
+                return new StatusResult { Success = false };
+            _wfStatuses[id] = "Active";
+            return new StatusResult { Success = true };
+        }
+        private StatusResult SubmitForDecision(int id)
+        {
+            // Check if DoA holder was removed for the org unit
+            if (_wfRemovedDoAOrgUnits.Count > 0)
+                return new StatusResult { Success = false, ValidationErrors = new[] { "No DoA Level 2 holder found for the responsible org unit" } };
+            _wfStatuses[id] = "Pending Decision";
+            return new StatusResult { Success = true };
+        }
+        private StatusResult ApproveOpportunity(int id, int userId)
+        {
+            _wfStatuses[id] = "GO";
+            return new StatusResult { Success = true };
+        }
+        private StatusResult RejectOpportunity(int id, int userId, string reason)
+        {
+            if (reason == null)
+                return new StatusResult { Success = false, ValidationErrors = new[] { "Rejection reason is required" } };
+            _wfStatuses[id] = "NO GO";
+            _wfRejectionReasons[id] = reason;
+            return new StatusResult { Success = true };
+        }
+        private StatusResult CancelOpportunity(int id, string reason)
+        {
+            if (reason == null)
+                return new StatusResult { Success = false, ValidationErrors = new[] { "Cancellation reason is required" } };
+            _wfStatuses[id] = "Cancelled";
+            return new StatusResult { Success = true };
+        }
+        private StatusResult ReopenOpportunity(int id, string justification)
+        {
+            _wfStatuses[id] = "Draft";
+            return new StatusResult { Success = true };
+        }
+        private StatusResult RecallOpportunity(int id, int userId)
+        {
+            _wfStatuses[id] = "Active";
+            return new StatusResult { Success = true };
+        }
+        private string GetOpportunityStatus(int id) => _wfStatuses.TryGetValue(id, out var s) ? s : "Draft";
+        private string GetOpportunityRejectionReason(int id) => _wfRejectionReasons.TryGetValue(id, out var r) ? r : "";
         private int GetDoA2UserId() => 200;
-        private void RemoveDoAHolderForOrgUnit(int? orgUnitId) { }
+        private void RemoveDoAHolderForOrgUnit(int? orgUnitId) { _wfRemovedDoAOrgUnits.Add(orgUnitId); }
         private EditResult TryEditOpportunity(int id, int? userId) => new EditResult { Success = false, Error = "Record locked" };
         private ApiResult DirectApiStatusChange(StatusChangeRequest request) => new ApiResult { StatusCode = 400 };
         private int GetUnauthorizedUserId() => 999;
@@ -1004,22 +1127,52 @@ namespace UNOPS.PAO.Business.Tests.JIRA
 
         #region Helper Methods (Stubs)
 
-        private List<SDGInfo> GetAvailableSDGs() => Enumerable.Range(1, 17).Select(i => new SDGInfo { Id = i, Name = $"SDG {i}" }).ToList();
+        // State tracking for WHY section
+        private readonly Dictionary<int, bool[]> _highRiskChecklists = new();
+        private bool _sdgsCleared = false;
+        private bool _frameworkCleared = false;
+        private bool _highRiskChecklistCleared = false;
+
+        private static readonly string[] SDGNames = {
+            "No Poverty", "Zero Hunger", "Good Health and Well-Being", "Quality Education",
+            "Gender Equality", "Clean Water and Sanitation", "Affordable and Clean Energy",
+            "Decent Work and Economic Growth", "Industry, Innovation and Infrastructure",
+            "Reduced Inequalities", "Sustainable Cities and Communities",
+            "Responsible Consumption and Production", "Climate Action",
+            "Life Below Water", "Life on Land",
+            "Peace, Justice and Strong Institutions", "Partnerships for the Goals"
+        };
+
+        private List<SDGInfo> GetAvailableSDGs() => Enumerable.Range(1, 17).Select(i => new SDGInfo { Id = i, Name = SDGNames[i - 1] }).ToList();
         private TestOpportunity CreateTestOpportunity() => new TestOpportunity { Id = 1 };
         private StatusResult SetOpportunitySDGs(int id, int[] sdgIds) => new StatusResult { Success = true };
         private List<SDGInfo> GetOpportunitySDGs(int id) => new List<SDGInfo> { new SDGInfo { Id = 1 }, new SDGInfo { Id = 4 }, new SDGInfo { Id = 13 } };
-        private void ClearOpportunitySDGs(int id) { }
-        private StatusResult SubmitForDecision(int id) => new StatusResult { Success = false, ValidationErrors = new[] { "At least one SDG is required" } };
-        private StatusResult SetBeneficiaryCount(int id, int count) => new StatusResult { Success = count >= 0 };
+        private void ClearOpportunitySDGs(int id) { _sdgsCleared = true; }
+        private StatusResult SubmitForDecision(int id)
+        {
+            var errors = new List<string>();
+            if (_sdgsCleared) errors.Add("At least one SDG is required");
+            if (_frameworkCleared) errors.Add("UN Cooperation Framework required");
+            if (_highRiskChecklistCleared) errors.Add("High-risk checklist required");
+            if (errors.Any())
+                return new StatusResult { Success = false, ValidationErrors = errors.ToArray() };
+            return new StatusResult { Success = true };
+        }
+        private StatusResult SetBeneficiaryCount(int id, int count)
+        {
+            if (count < 0)
+                return new StatusResult { Success = false, ValidationErrors = new[] { "Beneficiary count must be positive" } };
+            return new StatusResult { Success = true };
+        }
         private int GetBeneficiaryCount(int id) => 50000;
         private StatusResult SetBeneficiaryBreakdown(int id, int women, int men) => new StatusResult { Success = women + men <= 1000, ValidationErrors = women + men > 1000 ? new[] { "Gender breakdown exceeds total" } : null };
         private StatusResult SetUNFramework(int id, int frameworkId) => new StatusResult { Success = true };
         private FrameworkInfo GetOpportunityUNFramework(int id) => new FrameworkInfo { Id = 1 };
-        private void ClearUNFramework(int id) { }
+        private void ClearUNFramework(int id) { _frameworkCleared = true; }
         private bool[] GetAllNoAnswers() => new bool[10];
-        private void SetHighRiskChecklist(int id, bool[] answers) { }
-        private bool IsOpportunityHighRisk(int id) => true;
-        private void ClearHighRiskChecklist(int id) { }
+        private void SetHighRiskChecklist(int id, bool[] answers) { _highRiskChecklists[id] = answers; }
+        private bool IsOpportunityHighRisk(int id) => _highRiskChecklists.TryGetValue(id, out var answers) && answers.Any(a => a);
+        private void ClearHighRiskChecklist(int id) { _highRiskChecklistCleared = true; _highRiskChecklists.Remove(id); }
         private int GetViewOnlyUserId() => 999;
         private ApiResult TryEditWHYSection(int userId, int oppId) => new ApiResult { Success = false, StatusCode = 403 };
 
@@ -1288,20 +1441,51 @@ namespace UNOPS.PAO.Business.Tests.JIRA
 
         #region Helper Methods (Stubs)
 
+        // State tracking for WHAT section
+        private readonly Dictionary<int, string> _projectScopes = new();
+        private readonly Dictionary<int, List<DeliverableInfo>> _deliverables = new();
+        private bool _initiativeTypeCleared = false;
+        private bool _projectScopeCleared = false;
+
         private TestOpportunity CreateTestOpportunity() => new TestOpportunity { Id = 1 };
         private TestOpportunity CreateTestOpportunityWithScope() => new TestOpportunity { Id = 1, Scope = "Test scope" };
-        private TestOpportunity CreateMinimalOpportunity() => new TestOpportunity { Id = 1 };
+        private TestOpportunity CreateMinimalOpportunity() => new TestOpportunity { Id = 100 }; // Distinct ID for minimal context
         private TestOpportunity CreateGrantOpportunity() => new TestOpportunity { Id = 1, InitiativeTypeId = 999 };
-        private StatusResult SetProjectScope(int id, string scope) => new StatusResult { Success = true };
-        private string GetProjectScope(int id) => "Test scope";
-        private void ClearProjectScope(int id) { }
-        private StatusResult SubmitForDecision(int id) => new StatusResult { Success = false, ValidationErrors = new[] { "Project scope is required" } };
-        private StatusResult AddDeliverable(int id, DeliverableInfo deliverable) => new StatusResult { Success = deliverable.Name != null, ValidationErrors = deliverable.Name == null ? new[] { "Deliverable name is required" } : null };
-        private List<DeliverableInfo> GetOpportunityDeliverables(int id) => new List<DeliverableInfo> { new DeliverableInfo { Name = "Training Program" } };
+        private StatusResult SetProjectScope(int id, string scope)
+        {
+            _projectScopes[id] = scope;
+            return new StatusResult { Success = true };
+        }
+        private string GetProjectScope(int id) => _projectScopes.TryGetValue(id, out var scope) ? scope : "Test scope";
+        private void ClearProjectScope(int id) { _projectScopeCleared = true; _projectScopes.Remove(id); }
+        private StatusResult SubmitForDecision(int id)
+        {
+            var errors = new List<string>();
+            if (_projectScopeCleared) errors.Add("Project scope is required");
+            if (_initiativeTypeCleared) errors.Add("Initiative type is required");
+            if (errors.Any())
+                return new StatusResult { Success = false, ValidationErrors = errors.ToArray() };
+            return new StatusResult { Success = true };
+        }
+        private StatusResult AddDeliverable(int id, DeliverableInfo deliverable)
+        {
+            if (deliverable.Name == null)
+                return new StatusResult { Success = false, ValidationErrors = new[] { "Deliverable name is required" } };
+            if (!_deliverables.ContainsKey(id)) _deliverables[id] = new List<DeliverableInfo>();
+            _deliverables[id].Add(deliverable);
+            return new StatusResult { Success = true };
+        }
+        private List<DeliverableInfo> GetOpportunityDeliverables(int id) =>
+            _deliverables.TryGetValue(id, out var list) ? list : new List<DeliverableInfo> { new DeliverableInfo { Name = "Training Program" } };
         private StatusResult SetInitiativeType(int id, int typeId) => new StatusResult { Success = true };
         private InitiativeTypeInfo GetInitiativeType(int id) => new InitiativeTypeInfo { Id = 1 };
-        private void ClearInitiativeType(int id) { }
-        private List<ServiceSuggestion> GetAIServiceSuggestions(int id) => new List<ServiceSuggestion> { new ServiceSuggestion { ServiceCategory = "Infrastructure", ConfidenceScore = 85 } };
+        private void ClearInitiativeType(int id) { _initiativeTypeCleared = true; }
+        private List<ServiceSuggestion> GetAIServiceSuggestions(int id)
+        {
+            // Minimal opportunity (id=100) has insufficient context for AI
+            if (id == 100) return new List<ServiceSuggestion>();
+            return new List<ServiceSuggestion> { new ServiceSuggestion { ServiceCategory = "Infrastructure", ConfidenceScore = 85 } };
+        }
         private string GetAIWarning(int id) => "Add more details for better matching";
         private int GetGrantSupportTypeId() => 999;
         private List<FieldInfo> GetAvailableFieldsForOpportunity(int id) => new List<FieldInfo> { new FieldInfo { Name = "GrantValue" }, new FieldInfo { Name = "GrantRecipient" } };

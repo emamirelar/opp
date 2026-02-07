@@ -1,7 +1,7 @@
 # QA Tester Playbook
 
-**Version:** 1.2  
-**Last Updated:** February 6, 2026  
+**Version:** 1.3  
+**Last Updated:** February 7, 2026  
 **Audience:** QA Testers (New and Experienced)  
 **Scope:** Universal guide applicable to any software project
 
@@ -12,6 +12,7 @@
 1. [Introduction](#1-introduction)
 2. [QA Lifecycle Overview](#2-qa-lifecycle-overview)
 3. [Phase 1: Project Onboarding](#3-phase-1-project-onboarding)
+   - [3.2 Test Case Locations & Project Map](#32-test-case-locations--project-map)
 4. [Phase 2: Test Planning](#4-phase-2-test-planning)
 5. [Phase 3: Test Development](#5-phase-3-test-development)
 6. [Phase 4: Test Execution](#6-phase-4-test-execution)
@@ -184,7 +185,163 @@ Use this checklist when joining a new project:
   - [ ] Stub/mock implementations
   - [ ] Test utilities and helpers
 
-### 3.2 Key Questions to Ask
+### 3.2 Test Case Locations & Project Map
+
+Understanding where different types of tests live in the repository is essential. Use the directory map below to quickly locate test files by purpose.
+
+#### Project Test Directory Map
+
+```
+opportunityplus/                                    (Repository Root)
+│
+├── QA Tests/                                       ─── TOP-LEVEL QA DIRECTORY ───
+│   │
+│   ├── Documentation/                              📖 QA guides and playbooks
+│   │   ├── QA_TESTER_PLAYBOOK.md                      This document
+│   │   └── TESTING_STRUCTURE.md                       Test architecture overview
+│   │
+│   ├── Defect List for Developers.md               🐛 Product defects (DEF-XXX)
+│   ├── Defect List for QA.md                       🐛 Test infra issues (QA-XXX)
+│   │
+│   ├── Playwright Tests/                           🎭 E2E BROWSER TESTS (Playwright/TypeScript)
+│   │   ├── *.spec.ts                                  25 spec files (login, partners, etc.)
+│   │   ├── helpers/                                   Test utilities & data builders
+│   │   └── pages/                                     Page Object Model classes
+│   │
+│   ├── Frontend Tests/                             🖥️ ANGULAR COMPONENT TESTS (Karma/Jasmine)
+│   │   ├── components/                                Component-level spec files
+│   │   └── services/                                  Service-level spec files
+│   │
+│   ├── C# Tests/                                   ⚙️ BACKEND UNIT & FUNCTIONAL TESTS (xUnit/C#)
+│   │   ├── UNOPS.PAO.Business.Tests/                  Business layer tests
+│   │   │   ├── Core/                                     Positive, Negative, Boundary tests
+│   │   │   ├── Functional/                               Contact, Opportunity, Partner tests
+│   │   │   ├── Security/                                 Security tests
+│   │   │   ├── Concurrency/                              Race condition tests
+│   │   │   ├── Performance/                              Performance & load tests
+│   │   │   ├── EdgeCases/                                Edge case tests
+│   │   │   ├── Unit/                                     Isolated unit tests
+│   │   │   ├── Validation/                               Input validation tests
+│   │   │   ├── Authorization/                            Role & permission tests
+│   │   │   ├── JIRA/                                     Requirement-linked tests
+│   │   │   ├── TestBase/                                 Test fixtures & base classes
+│   │   │   └── TestData/                                 Test data builders
+│   │   │
+│   │   ├── UNOPS.PAO.Presentation.Tests/              Controller/API tests
+│   │   │   └── Controllers/                              REST endpoint tests
+│   │   │
+│   │   └── UNOPS.PAO.FastTests/                       Lightweight logic-only tests
+│   │       └── *.cs                                      Quick-running unit tests
+│   │
+│   ├── Integration Tests/                          🔗 INTEGRATION TESTS (xUnit/C#)
+│   │   ├── Controllers/                               20+ controller integration tests
+│   │   ├── Database/                                  Database integration tests
+│   │   ├── Permissions/                               Permission tests
+│   │   ├── AI/                                        AI feature integration tests
+│   │   ├── DST/                                       DST analysis tests
+│   │   └── Infrastructure/                            Infrastructure tests
+│   │
+│   ├── ───────────── TEST CASE DOCUMENTATION (Markdown) ──────────────
+│   │
+│   ├── Opportunity Tests/                          📝 Opportunity test case specs
+│   │   ├── BusinessLogic/                             13 business logic test cases
+│   │   ├── Controllers/                               8 controller test cases
+│   │   ├── Managers/                                  8 manager test cases
+│   │   └── Services/                                  3 service test cases
+│   │
+│   ├── Partner Tests/                              📝 Partner test case specs
+│   │   └── *.md                                       Ecosystem, Hierarchy, Intelligence
+│   │
+│   ├── Admin Tests/                                📝 Admin feature test case specs
+│   ├── AI Tests/                                   📝 AI assistant test case specs
+│   ├── Authorization Tests/                        📝 Role matrix test case specs
+│   ├── UI Tests/                                   📝 UI/UX test case specs
+│   ├── Services Tests/                             📝 Service layer test case specs
+│   ├── Business Logic Tests/                       📝 Business rule test case specs
+│   ├── Controllers Tests/                          📝 Controller test case specs
+│   ├── Edge Cases & Security Tests/                📝 Edge case & security test case specs
+│   ├── CRM Enhancement Tests/                      📝 CRM feature test case specs
+│   ├── Unit Tests/                                 📝 Unit test case documentation
+│   │   └── Business/                                  25+ manager/service test docs
+│   │
+│   ├── Business Manager Functional Test List/      📝 Per-manager functional test lists
+│   ├── Load Tests/                                 📝 Load test documentation
+│   ├── Performance Tests/                          📝 Performance test documentation
+│   ├── Security Tests/                             📝 Security test documentation
+│   │
+│   ├── ──────────────────── SUPPORTING FILES ─────────────────────────
+│   │
+│   ├── Test Plans/                                 📋 Test planning documents
+│   ├── Test Execution Results/                     📊 Test run reports & summaries
+│   ├── TestTemplates/                              📄 12 reusable test templates
+│   ├── TestSpecification/                          📐 Test specification infrastructure
+│   └── Scripts/                                    🛠️ PowerShell & SQL setup scripts
+│
+├── UNOPS.PAO.ClientApp/src/app/                    🖥️ ANGULAR IN-SOURCE COMPONENT TESTS
+│   └── **/*.spec.ts                                   91+ component & service spec files
+│
+├── UNOPS.PAO.IntegrationTests/                     🔗 WORKFLOW INTEGRATION TESTS
+│   └── UnitTests/Workflow/                            Workflow state machine tests
+│
+├── playwright.config.ts                            ⚙️ Playwright configuration (root)
+│
+└── .github/
+    └── workflows/
+        └── playwright-tests.yml                    🚀 CI/CD pipeline for Playwright tests
+```
+
+#### Test Types at a Glance
+
+| Test Type | Language / Tool | Location | Purpose |
+|-----------|----------------|----------|---------|
+| **E2E Browser Tests** | TypeScript / Playwright | `QA Tests/Playwright Tests/*.spec.ts` | Simulate real user interactions through the browser to validate complete workflows end-to-end, including login, navigation, form submissions, and cross-page flows. |
+| **Angular Component Tests** | TypeScript / Karma+Jasmine | `QA Tests/Frontend Tests/` and `UNOPS.PAO.ClientApp/src/app/**/*.spec.ts` | Test individual Angular components and services in isolation to verify rendering, data binding, event handling, and service logic without a full browser. |
+| **Backend Unit Tests** | C# / xUnit | `QA Tests/C# Tests/UNOPS.PAO.Business.Tests/` | Test business logic, validation rules, calculations, and manager methods in isolation using stubs and mocks — no database or HTTP calls. |
+| **Backend Fast Tests** | C# / xUnit | `QA Tests/C# Tests/UNOPS.PAO.FastTests/` | Lightweight, quick-running unit tests for specific logic (e.g., ERP dimension values, workflow logic) designed to run in seconds. |
+| **Controller / API Tests** | C# / xUnit | `QA Tests/C# Tests/UNOPS.PAO.Presentation.Tests/` | Test REST API controllers to verify routing, request/response mapping, authorization attributes, and HTTP status codes. |
+| **Integration Tests** | C# / xUnit | `QA Tests/Integration Tests/` | Test multiple layers together (controller → manager → database) against a real or in-memory database to verify end-to-end data flows. |
+| **Workflow Integration Tests** | C# / xUnit | `UNOPS.PAO.IntegrationTests/UnitTests/Workflow/` | Verify workflow state machine transitions, stage providers, approver logic, and workflow user context. |
+| **Test Case Documentation** | Markdown (`.md`) | `QA Tests/{Feature} Tests/*.md` | Human-readable test case specifications organized by feature area. Used for manual test planning, review, and traceability back to requirements. |
+| **Smoke Tests** | TypeScript / Playwright | Integrated in `QA Tests/Playwright Tests/` + CI pipeline | A small, fast subset of critical-path E2E tests run after every deployment to confirm the build is viable for further testing. Configured in `.github/workflows/playwright-tests.yml`. |
+| **Performance & Load Tests** | C# / xUnit | `QA Tests/C# Tests/UNOPS.PAO.Business.Tests/Performance/` | Measure response times, throughput, and resource consumption under normal and stress conditions to ensure non-functional requirements are met. |
+| **Security Tests** | C# / xUnit | `QA Tests/C# Tests/UNOPS.PAO.Business.Tests/Security/` | Validate protection against OWASP Top 10 vulnerabilities including injection, broken access control, XSS, and privilege escalation. |
+| **Test Scripts** | PowerShell / SQL | `QA Tests/Scripts/` | Automation scripts for test environment setup, database seeding, configuration validation, and test data management. |
+| **Test Templates** | Various | `QA Tests/TestTemplates/` | Reusable scaffolding templates for creating new test files consistently across the project. |
+
+#### How to Find the Right Tests
+
+Use this decision guide when you need to locate or create tests:
+
+```
+What do you need to test?
+    │
+    ├── A user workflow in the browser?
+    │   └── → QA Tests/Playwright Tests/*.spec.ts  (E2E)
+    │
+    ├── An Angular component or service?
+    │   └── → UNOPS.PAO.ClientApp/src/app/**/*.spec.ts  (Component tests)
+    │         or QA Tests/Frontend Tests/  (Standalone FE tests)
+    │
+    ├── A C# manager method or business rule?
+    │   └── → QA Tests/C# Tests/UNOPS.PAO.Business.Tests/  (Unit/Functional)
+    │
+    ├── A REST API controller endpoint?
+    │   └── → QA Tests/C# Tests/UNOPS.PAO.Presentation.Tests/  (Controller tests)
+    │
+    ├── A full data flow (API → DB → response)?
+    │   └── → QA Tests/Integration Tests/  (Integration tests)
+    │
+    ├── Test case specifications for manual testing or review?
+    │   └── → QA Tests/{Feature} Tests/*.md  (Markdown docs)
+    │
+    ├── A quick sanity check after deployment?
+    │   └── → Smoke tests in Playwright suite + CI workflow
+    │
+    └── Performance, security, or load validation?
+        └── → QA Tests/C# Tests/UNOPS.PAO.Business.Tests/Performance/ or /Security/
+```
+
+### 3.3 Key Questions to Ask
 
 | Question | Why It Matters |
 |----------|----------------|
@@ -1948,6 +2105,7 @@ Fix: Add wait, verify selector, check for dynamic content
 | 1.0 | 2026-02-03 | QA Team | Initial version - consolidated from multiple documents |
 | 1.1 | 2026-02-06 | QA Team | Synced with PDJ project playbook, standardized 2×P formula |
 | 1.2 | 2026-02-06 | QA Team | Added Combinatorial Testing: Value Permutations section with pairwise testing strategy and data-driven test patterns |
+| 1.3 | 2026-02-07 | QA Team | Added Section 3.2: Test Case Locations & Project Map — directory map, test type reference table, and decision guide for locating tests by purpose |
 
 ---
 

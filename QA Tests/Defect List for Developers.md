@@ -24,7 +24,7 @@ This document tracks **production code defects** discovered during testing. Thes
 > ⚠️ **Important Distinction**: This list is for **actual defects** in production code, NOT:
 > - Test infrastructure issues → See `Defect List for QA.md`
 > - Tests written for unimplemented features → Track in backlog/sprint planning
-> - Missing test attributes → Track as Definition of Done improvements
+> - Test selector/locator issues → See `Defect List for QA.md` (QA owns test locator strategy)
 > - Test environment limitations → See `Defect List for QA.md`
 
 ---
@@ -33,7 +33,7 @@ This document tracks **production code defects** discovered during testing. Thes
 
 | Defect ID | Title | Description | Reproduction Steps | Expected Result | Actual Result | Date Reported | Status |
 |-----------|-------|-------------|-------------------|-----------------|---------------|---------------|---------|
-| DEF-009 | 🟢 Low | `isAdmin()` in AuthService does not check for `Administrator` role | AuthService | `isAdmin()` method in `auth.service.ts` (line 370-380) only checks for `PARTNER_GLOB_ADMIN` or `ORG_UNIT_ADMIN` roles. It does not include `Administrator` as an admin role. This means a user with only the `Administrator` role claim won't see the Administration menu in the sidebar.<br/><br/>**Root Cause:** Hardcoded role checks in `isAdmin()` method.<br/><br/>**Current code:**<br/>`roles.includes('PARTNER_GLOB_ADMIN') \|\| roles.includes('ORG_UNIT_ADMIN')`<br/><br/>**Proper Fix:**<br/>• Add `'ADMINISTRATOR'` to the `isAdmin()` check<br/>• OR ensure backend always assigns `PARTNER_GLOB_ADMIN` to Administrator users<br/><br/>**Workaround:** In tests, System Admin is assigned both `Administrator` and `PARTNER_GLOB_ADMIN` roles.<br/><br/>**Note:** May be by design if `Administrator` users always have `PARTNER_GLOB_ADMIN` assigned in backend. Verify with team. | 1. Create user with only `Administrator` role claim<br/>2. Login to application<br/>3. Check sidebar for Administration menu | Admin sidebar should be visible | Admin sidebar not visible | Dev | `auth.service.ts:370-380` | role-access-control.spec.ts | 2026-02-07 | Open | QA Team |
+| DEF-009 | 🟢 Low | `isAdmin()` in AuthService does not check for `Administrator` role | AuthService | `isAdmin()` method in `auth.service.ts` (line 370-380) only checks for `PARTNER_GLOB_ADMIN` or `ORG_UNIT_ADMIN` roles. It does not include `Administrator` as an admin role. This means a user with only the `Administrator` role claim won't see the Administration menu in the sidebar.<br/><br/>**Root Cause:** Hardcoded role checks in `isAdmin()` method.<br/><br/>**Current code:**<br/>`roles.includes('PARTNER_GLOB_ADMIN') \|\| roles.includes('ORG_UNIT_ADMIN')`<br/><br/>**Proper Fix:**<br/>• Add `'ADMINISTRATOR'` to the `isAdmin()` check<br/>• OR ensure backend always assigns `PARTNER_GLOB_ADMIN` to Administrator users<br/><br/>**Workaround:** In tests, System Admin is assigned both `Administrator` and `PARTNER_GLOB_ADMIN` roles.<br/><br/>**Note:** May be by design if `Administrator` users always have `PARTNER_GLOB_ADMIN` assigned in backend. Verify with team.<br/><br/>**RBAC Test Execution (2026-02-07):** 161/161 tests passing with workaround applied. All 5 roles × 4 entities verified for Create/Export/Import/Admin access. | 1. Create user with only `Administrator` role claim<br/>2. Login to application<br/>3. Check sidebar for Administration menu | Admin sidebar should be visible | Admin sidebar not visible | Dev | `auth.service.ts:370-380` | role-access-control.spec.ts | 2026-02-07 | Open | QA Team |
 | DEF-008 | Go Decision Feature Incomplete - PRD Requirements Not Implemented | **96% of PRD requirements not yet implemented** for "Send Opportunity for Go Decision" feature.<br/><br/>**📋 PRD Reference:** Product Requirements Document: Send Opportunity for Go Decision<br/>**📊 Test Cases Created:** 102 test cases aligned with PRD<br/>**⚠️ Tests Executable:** 4 (4%)<br/>**❌ Tests Blocked:** 98 (96%)<br/><br/>**Current Implementation (OpportunityStageRequirements.cs):**<br/>• ✅ Name validation<br/>• ✅ Description validation<br/>• ✅ ResponsibleOrgUnitId validation<br/>• ✅ InitiativeBudgetUSD validation (optional)<br/><br/>**Missing PRD Requirements (Not Implemented):**<br/><br/>**1. Mandatory Field Validation (16+ fields missing):**<br/>• ❌ Context & Challenges<br/>• ❌ UNOPS Strategic Mission(s) (minLength=1)<br/>• ❌ Expected Impact<br/>• ❌ Expected Outcomes<br/>• ❌ SDG Alignment (minLength=1)<br/>• ❌ Funding Partner with amount/currency<br/>• ❌ Client Partner<br/>• ❌ Products & Services<br/>• ❌ Countries of Implementation<br/>• ❌ Target Signing Date<br/>• ❌ Implementation Start/End Dates<br/>• ❌ Opportunity Manager role validation<br/>• ❌ Proposed Initiative Type<br/>• ❌ DoA Level 2 holder (server-side)<br/>• ❌ Opportunity Statement generated<br/>• ❌ UNCooperation Framework Outcome(s)<br/>• ❌ Estimated Beneficiaries OR acknowledgement<br/>• ❌ High Risk Acknowledgement<br/><br/>**2. DoA Level 2 Approver Lookup (FR-1):**<br/>• ❌ Query EntityUserRole with Code="DoA2_OrganizationHierarchy"<br/>• ❌ Block submission if no DoA2 found<br/>• ❌ Support multiple DoA2 holders<br/><br/>**3. Warnings & Acknowledgments:**<br/>• ❌ Non-OM submitter warning (Collaborator role)<br/>• ❌ Country-Org Unit mismatch warning<br/>• ❌ Mandatory acknowledgment statement<br/>• ❌ Additional remarks field<br/><br/>**4. Custom Workflow Behavior:**<br/>• ❌ Rejection → NO GO (not previous stage)<br/>• ❌ CANCELLED stage with cancel/reopen<br/>• ❌ OM recall (any OM, not just submitter)<br/>• ❌ OM role transfer (OM → Collaborator)<br/><br/>**5. Notifications:**<br/>• ❌ Email templates with exact wording<br/>• ❌ OIC notifications<br/>• ❌ Internal stakeholder notifications on GO<br/><br/>**6. UI Components:**<br/>• ❌ Stage stepper display logic (happy path only)<br/>• ❌ DoA pathway display (DoA2/DoA3 read-only)<br/>• ❌ Inactive OM visibility<br/>• ❌ In-workflow indicator on opportunity card<br/><br/>**📍 Test Case Location:**<br/>`QA Tests/Opportunity Tests/BusinessLogic/GoNoGoDecision_PRD_TestCases.md`<br/><br/>**📍 Execution Report:**<br/>`QA Tests/Opportunity Tests/BusinessLogic/GoNoGoDecision_TestExecution_Report.md`<br/><br/>**⏰ ESTIMATED EFFORT:** 80-120 hours (full feature implementation)<br/>**📊 PRIORITY:** P1 - Feature required for business workflow | 1. Review `OpportunityStageRequirements.cs`<br/>2. Compare with PRD requirements<br/>3. Observe: Only 4 of 20+ fields validated<br/>4. Review test cases in GoNoGoDecision_PRD_TestCases.md<br/>5. Attempt to execute any DoA2 lookup test<br/>6. Observe: No implementation exists | All 20+ mandatory fields validated. DoA2 lookup works from EntityUserRole. All warnings and acknowledgments implemented. Custom rejection → NO GO works. All 102 test cases pass. | Only 4 fields validated. No DoA2 lookup. No warnings. Standard rejection behavior. 98 of 102 tests blocked. | 2026-02-02 | Open |
 
 ---
@@ -48,13 +48,6 @@ _(No resolved defects yet)_
 
 The following items were previously logged as developer defects but have been reclassified to more appropriate categories:
 
-### Moved to Technical Debt / Process Improvements
-
-| Former ID | Title | Why It's Not a Defect | Recommendation |
-|-----------|-------|----------------------|----------------|
-| DEF-002 | Missing data-testid attributes on detail pages | Components work correctly. This is a **testability improvement**, not a defect. | Add to Definition of Done: "New components must include data-testid attributes" |
-| DEF-003 | Missing data-testid attributes on forms | Components work correctly. This is a **testability improvement**, not a defect. | Add to Definition of Done: "New forms must include data-testid attributes" |
-
 ### Moved to Backlog (Tests Written for Unimplemented Features)
 
 | Former ID | Title | Why It's Not a Defect | Recommendation |
@@ -64,50 +57,86 @@ The following items were previously logged as developer defects but have been re
 
 ---
 
-## Defect Statistics
+## Defect Statistics (Updated 2026-02-07)
 
 - **Total Open:** 2
 - **Total Resolved:** 0
-- **Total Reclassified:** 4 (moved to appropriate trackers)
+- **Total Reclassified:** 2 (moved to appropriate trackers)
 - 🔴 **Critical:** 0
-- 🟠 **High Priority:** 1 (DEF-008 - Go Decision feature incomplete)
+- 🟠 **High Priority:** 1 (DEF-008 - Go Decision feature incomplete — 96% of PRD not implemented)
 - 🟡 **Medium Priority:** 0
-- 🟢 **Low Priority:** 1 (DEF-009 - isAdmin() doesn't check Administrator role)
+- 🟢 **Low Priority:** 1 (DEF-009 - isAdmin() doesn't check Administrator role — workaround applied)
+- **New Defects Found (2026-02-07 Full Execution):** 0 — All 50 C# failures and 12 Playwright failures are test implementation issues, not production defects
 
 ---
 
-## Latest Test Results (2026-02-05)
+## Latest Test Results (2026-02-07 — Full Execution)
 
 ### .NET C# Tests - Combined Summary
 
-| Test Suite | Passed | Failed | Skipped | Total | Pass Rate |
-|------------|--------|--------|---------|-------|-----------|
-| **Business.Tests** | 2,725 | 2 | 273 | 3,000 | 90.8% |
-| **FastTests** | 78 | 0 | 0 | 78 | 100% |
-| **Presentation.Tests** | 29 | 0 | 0 | 29 | 100% |
-| **Total** | **2,832** | **2** | **273** | **3,107** | **91.2%** |
-| **Duration** | 10s | - | - | - | - |
+| Test Suite | Passed | Failed | Skipped | Total | Pass Rate | Duration |
+|------------|--------|--------|---------|-------|-----------|----------|
+| **FastTests** | 78 | 0 | 0 | 78 | 100% ✅ | 6s |
+| **Business.Tests** | 1,722 | 50 | 83 | 1,855 | 92.8% | ~6m |
+| **Presentation.Tests** | 29 | 0 | 0 | 29 | 100% ✅ | 9s |
+| **Integration Tests** | ❌ BUILD FAILED | - | - | - | N/A | 3m |
+| **Total (executable)** | **1,829** | **50** | **83** | **1,962** | **93.2%** | ~6.5m |
 
-### C# Test Failures (2 failures)
+### C# Business.Tests Failures (50 failures)
 
-| Test | Category | Error | Root Cause | Action |
-|------|----------|-------|------------|--------|
-| `AccessibilityTests.A11Y010_Links_ShouldHaveDescriptiveText` | Accessibility | Expected <2 non-descriptive links, found 2 | Test stub - not fully implemented | QA to fix test (QA-026) |
-| `PartnerByOrgUnitWithRelationsSpecificationTests.Criteria_FiltersPartnersByBothDirectAndIndirectRelations` | Specification | Expected 2 results, found 1 | Test data setup incomplete | QA to fix test (QA-027) |
+| Category | Count | Tests | Root Cause | Action |
+|----------|-------|-------|------------|--------|
+| Security Tests (SEC_*) | 13 | SEC_007, SEC_008, SEC_016-020, SEC_024, SEC_030, SEC_043-044, SEC_049 | Tests validate Go Decision security features not yet implemented (DEF-008) | QA: Skip until DEF-008 implemented |
+| Opportunity Workflow (POS/NEG/CONC/SEC) | 6 | POS_002-005, NEG_001-002, CONC_001, SEC_001 | Go Decision workflow tests - feature incomplete (DEF-008) | QA: Skip until DEF-008 implemented |
+| Boundary Tests (BOUND_*) | 10 | BOUND_006-007, 032, 034, 036, 040-041, 043, 054 | Test expectations don't match current API surface | QA: Update test assertions |
+| Negative Tests (NEG_*) | 11 | NEG_003-004, 007, 021, 024-028, 045 | Test expectations for unimplemented validation rules | QA: Skip until features implemented |
+| WHAT Section Tests | 4 | POS_001, POS_005, NEG_015, NEG_020 | WHAT section features not fully implemented | QA: Skip until implemented |
+| Team Section Tests | 5 | POS_005, POS_010, BL_018-019, NEG_003, NEG_006 | Team section features not fully implemented | QA: Skip until implemented |
+| JIRA SQL Injection Test | 1 | SEC_PNO677_001 | Test implementation issue - mock setup | QA: Fix test mock |
 
-**Note:** Both failures are test implementation issues (QA responsibility), not production defects.
+**Note:** All 50 failures are test implementation issues or tests for unimplemented features (DEF-008). **No new production defects discovered.**
 
-### Playwright E2E Tests (2026-02-05)
+### Integration Tests - BUILD FAILURE (4,675 errors)
+
+The Integration Tests project fails to compile. This is a known issue (reclassified as backlog item DEF-007). Tests reference APIs, models, and methods that have been refactored or not yet implemented (e.g., `RiskCreateRequest.EntityType`, `IRiskManager.AddRiskAsync`).
+
+### Playwright E2E Tests (2026-02-07, Full Suite, chromium)
+
+| Metric | Count | Percentage |
+|--------|-------|------------|
+| **Passed** | 288 | 47.1% of total / **96.0% of executed** ✅ |
+| **Failed** | 12 | 2.0% |
+| **Skipped** | 311 | 50.9% |
+| **Total** | 611 | 100% |
+| **Duration** | ~26m | chromium only |
+
+### Playwright Failures (12 tests)
+
+| Test | File | Root Cause | Action |
+|------|------|------------|--------|
+| POS_001 - Tour button visible on home page | jira-requirements.spec.ts | "Take a Tour" feature not implemented | QA: Skip until implemented |
+| POS_002 - Duplicate detection during import | jira-requirements.spec.ts | Import duplicate detection disabled (DEF-related) | QA: Already tracked |
+| POS_001/002/003 - Contact list columns/sort | jira-requirements.spec.ts | Test selector mismatch with current UI | QA: Update selectors |
+| POS_001 - Recent Activity notifications | jira-requirements.spec.ts | Notification data not mocked | QA: Add notification mock |
+| POS_001/004 - Gmail Integration | jira-requirements.spec.ts | Gmail addon not available in test env | QA: Skip in mock mode |
+| POS_001 - Interaction list columns | jira-requirements.spec.ts | Test selector mismatch | QA: Update selectors |
+| POS_001 - New Opportunity button visible | jira-requirements.spec.ts | Test assertion issue | QA: Fix assertion |
+| POS_004 - Progress indicator during import | jira-requirements.spec.ts | Feature not fully mocked | QA: Add mock |
+| Workflow status badge | partner-item.spec.ts | Workflow badge not in current template | QA: Update test |
+
+**Note:** All 12 Playwright failures are test implementation issues (missing mocks, selector mismatches, features not implemented). **No new production defects discovered.**
+
+### RBAC Playwright Tests (2026-02-07 - role-access-control.spec.ts, included in above totals)
 
 | Metric | Count | Notes |
 |--------|-------|-------|
-| **Passed** | 265 | 59% pass rate |
-| **Failed** | 76 | Unmocked API endpoints, test-specific issues |
-| **Skipped** | 71 | Blocked tests (Go Decision, oUP, Login) |
-| **Total** | 449 | - |
-| **Duration** | ~30m | - |
+| **Passed** | 161 | 100% pass rate ✅ |
+| **Failed** | 0 | - |
+| **Skipped** | 0 | - |
+| **Total** | 161 | - |
+| **Duration** | 9.9m | chromium only |
 
-**Note:** QA-028 (webServer not starting) has been resolved. Remaining failures are due to missing API mocks and test-specific issues.
+**All 161 role-based access control tests passing.** Covers 5 roles (System Admin, Partner Global Admin, Partner User, Org Unit Admin, General User) across 4 entities (Partners, Contacts, Interactions, Opportunities) plus Admin pages and Sidebar navigation.
 
 ---
 
@@ -129,7 +158,7 @@ The following items were previously logged as developer defects but have been re
 | Test infrastructure issues | `Defect List for QA.md` |
 | Tests fail due to test configuration | `Defect List for QA.md` |
 | InMemory DB can't run raw SQL | `Defect List for QA.md` |
-| Missing test attributes (data-testid) | Definition of Done / Tech Debt |
+| Missing test selectors (data-testid) | `Defect List for QA.md` (QA-036: rewrite locators) |
 | Tests written for features not yet built | Sprint Backlog / Feature Requests |
 | .NET/Angular framework bugs | External issue tracker (GitHub) |
 | Test environment limitations | `Defect List for QA.md` |

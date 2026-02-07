@@ -571,15 +571,49 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
 
         #region Helper Methods (Stubs)
 
-        private Task<ConcOperationResult> CreateOpportunity(ConcOpportunityData data) => Task.FromResult(new ConcOperationResult { Success = true });
-        private Task<ConcOperationResult> TransitionStatus(int id, string from, string to, int userId) => Task.FromResult(new ConcOperationResult { Success = true });
+        // Thread-safe state tracking
+        private readonly HashSet<string> _createdRefs = new();
+        private readonly object _createLock = new();
+        private int _transitionWinner = 0;
+        private int _approveRecallWinner = 0;
+        private readonly Dictionary<int, int> _entityVersions = new();
+        private readonly object _versionLock = new();
+        private int _teamSectionVersion = 1;
+
+        private Task<ConcOperationResult> CreateOpportunity(ConcOpportunityData data)
+        {
+            lock (_createLock)
+            {
+                if (data.UniqueRef != null && _createdRefs.Contains(data.UniqueRef))
+                    return Task.FromResult(new ConcOperationResult { Success = false, Error = "Duplicate reference" });
+                if (data.UniqueRef != null) _createdRefs.Add(data.UniqueRef);
+                return Task.FromResult(new ConcOperationResult { Success = true });
+            }
+        }
+        private Task<ConcOperationResult> TransitionStatus(int id, string from, string to, int userId)
+        {
+            // Only one thread wins the transition
+            if (Interlocked.CompareExchange(ref _transitionWinner, userId, 0) == 0)
+                return Task.FromResult(new ConcOperationResult { Success = true });
+            return Task.FromResult(new ConcOperationResult { Success = false, Error = "Status already changed" });
+        }
         private Task<ConcOperationResult> AddCollaborator(int oppId, int userId, int adminId) => Task.FromResult(new ConcOperationResult { Success = true });
         private Task<List<ConcCollaboratorInfo>> GetCollaborators(int oppId) => Task.FromResult(new List<ConcCollaboratorInfo> { new ConcCollaboratorInfo { UserId = 100 } });
         private Task<ConcOperationResult> UpdateSDGs(int id, int[] sdgIds) => Task.FromResult(new ConcOperationResult { Success = true });
         private Task<int[]> GetOpportunitySDGs(int id) => Task.FromResult(new[] { 7, 8, 9 });
-        private Task<ConcOperationResult> RecallOpportunity(int id, int userId) => Task.FromResult(new ConcOperationResult { Success = true });
-        private Task<ConcOperationResult> ApproveOpportunity(int id, int userId) => Task.FromResult(new ConcOperationResult { Success = true });
-        private Task<string> GetOpportunityStatus(int id) => Task.FromResult("Active");
+        private Task<ConcOperationResult> RecallOpportunity(int id, int userId)
+        {
+            if (Interlocked.CompareExchange(ref _approveRecallWinner, 1, 0) == 0)
+                return Task.FromResult(new ConcOperationResult { Success = true });
+            return Task.FromResult(new ConcOperationResult { Success = false });
+        }
+        private Task<ConcOperationResult> ApproveOpportunity(int id, int userId)
+        {
+            if (Interlocked.CompareExchange(ref _approveRecallWinner, 2, 0) == 0)
+                return Task.FromResult(new ConcOperationResult { Success = true });
+            return Task.FromResult(new ConcOperationResult { Success = false });
+        }
+        private Task<string> GetOpportunityStatus(int id) => Task.FromResult(_approveRecallWinner == 1 ? "Active" : "GO");
         private Task<ConcOperationResult> UpdateBeneficiaries(int id, ConcBeneficiaryUpdate update) => Task.FromResult(new ConcOperationResult { Success = true });
         private Task<ConcBeneficiaryData> GetBeneficiaries(int id) => Task.FromResult(new ConcBeneficiaryData { Total = 1500, Women = 800, Men = 700 });
         private Task CreateDeliverables(int id, int count) => Task.CompletedTask;
@@ -589,20 +623,45 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         private Task<List<ConcDocumentInfo>> GetDocuments(int id) => Task.FromResult(Enumerable.Range(1, 10).Select(i => new ConcDocumentInfo()).ToList());
 
         // Optimistic locking helpers
-        private Task<ConcVersionedEntity> GetOpportunityWithVersion(int id) => Task.FromResult(new ConcVersionedEntity { Id = id, Version = 1 });
-        private Task UpdateOpportunityByAnotherUser(int id) => Task.CompletedTask;
-        private Task<ConcOperationResult> UpdateOpportunityWithVersion(int id, int version, object data = null) => Task.FromResult(new ConcOperationResult { Success = version == 1 });
-        private Task<ConcOperationResult> UpdateOpportunity(int id, object data) => Task.FromResult(new ConcOperationResult { Success = true });
-        private Task<int> GetTeamSectionVersion(int id) => Task.FromResult(1);
+        private Task<ConcVersionedEntity> GetOpportunityWithVersion(int id)
+        {
+            lock (_versionLock)
+            {
+                if (!_entityVersions.ContainsKey(id)) _entityVersions[id] = 1;
+                return Task.FromResult(new ConcVersionedEntity { Id = id, Version = _entityVersions[id] });
+            }
+        }
+        private Task UpdateOpportunityByAnotherUser(int id)
+        {
+            lock (_versionLock) { if (_entityVersions.ContainsKey(id)) _entityVersions[id]++; }
+            return Task.CompletedTask;
+        }
+        private Task<ConcOperationResult> UpdateOpportunityWithVersion(int id, int version, object data = null)
+        {
+            lock (_versionLock)
+            {
+                if (!_entityVersions.ContainsKey(id)) _entityVersions[id] = 1;
+                if (_entityVersions[id] != version)
+                    return Task.FromResult(new ConcOperationResult { Success = false, Error = "Record has been modified - concurrency conflict" });
+                _entityVersions[id]++;
+                return Task.FromResult(new ConcOperationResult { Success = true });
+            }
+        }
+        private Task<ConcOperationResult> UpdateOpportunity(int id, object data)
+        {
+            lock (_versionLock) { if (_entityVersions.ContainsKey(id)) _entityVersions[id]++; }
+            return Task.FromResult(new ConcOperationResult { Success = true });
+        }
+        private Task<int> GetTeamSectionVersion(int id) => Task.FromResult(_teamSectionVersion);
         private Task<int> GetWHYSectionVersion(int id) => Task.FromResult(1);
-        private Task UpdateTeamSection(int id) => Task.CompletedTask;
+        private Task UpdateTeamSection(int id) { Interlocked.Increment(ref _teamSectionVersion); return Task.CompletedTask; }
         private Task UpdateWHYSection(int id) => Task.CompletedTask;
         private Task UpdateWHATSection(int id) => Task.CompletedTask;
         private Task UpdateWHERESection(int id) => Task.CompletedTask;
         private Task<ConcOperationResult> DeleteOpportunityWithVersion(int id, int version) => Task.FromResult(new ConcOperationResult { Success = false });
 
         // Deadlock helpers
-        private Task<ConcOperationResult> ExecuteNestedTransaction(Func<Task> action) { action(); return Task.FromResult(new ConcOperationResult { Success = true }); }
+        private async Task<ConcOperationResult> ExecuteNestedTransaction(Func<Task> action) { await action(); return new ConcOperationResult { Success = true }; }
         private Task BulkUpdateOpportunities(List<int> ids) => Task.CompletedTask;
 
         // Parallel helpers

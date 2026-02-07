@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace UNOPS.PAO.Business.Tests.OpportunitySections
@@ -922,6 +923,12 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
 
         #region Helper Methods (Stubs)
 
+        // Session tracking for stateful stub behavior
+        private readonly HashSet<string> _validSessions = new();
+        private readonly HashSet<int> _demotedUsers = new();
+        private int _sessionCount = 0;
+        private const int MaxSessions = 5;
+
         // Authentication helpers
         private Task<ApiResult> AccessTeamSectionWithoutAuth(int id) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.Unauthorized });
         private Task<ApiResult> GetStatusWithToken(int id, string token) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.Unauthorized });
@@ -930,8 +937,17 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         private string GenerateTokenFromDifferentIssuer() => "foreign-issuer-token";
         private string GenerateTokenForUser(int userId) => $"token-{userId}";
         private void DeactivateUser(int userId) { }
-        private string CreateSession(int userId) => $"session-{userId}-{Guid.NewGuid()}";
-        private Task<ApiResult> AccessWithSession(string session) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.OK });
+        private string CreateSession(int userId)
+        {
+            var session = $"session-{userId}-{Guid.NewGuid()}";
+            // Invalidate previous sessions for this user (session fixation prevention)
+            _validSessions.RemoveWhere(s => s.StartsWith($"session-{userId}-"));
+            Interlocked.Increment(ref _sessionCount);
+            if (_sessionCount <= MaxSessions)
+                _validSessions.Add(session);
+            return session;
+        }
+        private Task<ApiResult> AccessWithSession(string session) => Task.FromResult(new ApiResult { StatusCode = _validSessions.Contains(session) ? HttpStatusCode.OK : HttpStatusCode.Unauthorized });
         private Task<string> GetUserDetails(int userId) => Task.FromResult("{\"id\": 100, \"name\": \"John\"}");
         private Task<ApiResult> RefreshToken(string refreshToken) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.Unauthorized });
 
@@ -955,17 +971,53 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         private List<int> GetOpportunitiesNotOwnedBy(int userId) => new List<int> { 101, 102 };
 
         private Task<ApiResult> EditTeamSection(int id, int userId) => Task.FromResult(new ApiResult { StatusCode = userId == GetViewerUserId() ? HttpStatusCode.Forbidden : HttpStatusCode.OK });
-        private Task<ApiResult> ApproveGoDecision(int id, int userId) => Task.FromResult(new ApiResult { StatusCode = userId == GetDoA2UserId() ? HttpStatusCode.OK : HttpStatusCode.Forbidden });
+        private Task<ApiResult> ApproveGoDecision(int id, int userId)
+        {
+            // DoA2 user can only approve if opportunity doesn't require DoA3
+            if (id == GetOpportunityRequiringDoA3() && userId == GetDoA2UserId())
+                return Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.Forbidden });
+            return Task.FromResult(new ApiResult { StatusCode = userId == GetDoA2UserId() ? HttpStatusCode.OK : HttpStatusCode.Forbidden });
+        }
         private Task<ApiResult> AccessOpportunity(int oppId, int userId) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.Forbidden });
         private Task<ApiResult> AssignRole(int actorId, int targetId, int roleId) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.Forbidden });
-        private Task<ApiResult> AccessOpportunityAsUser(int oppId, int userId) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.Forbidden });
-        private Task<ApiResult> EditOpportunity(int oppId, int userId) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.OK });
-        private Task<ApiResult> GetOpportunity(int oppId, int userId) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.OK });
+        private Task<ApiResult> AccessOpportunityAsUser(int oppId, int userId)
+        {
+            // Deleted opportunity returns NotFound
+            if (oppId == GetDeletedOpportunityId())
+                return Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.NotFound });
+            return Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.Forbidden });
+        }
+        private Task<ApiResult> EditOpportunity(int oppId, int userId)
+        {
+            // Demoted users and viewers cannot edit
+            if (_demotedUsers.Contains(userId) || userId == GetViewerUserId())
+                return Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.Forbidden });
+            // Archived opportunities are read-only
+            if (oppId == GetArchivedOpportunityId())
+                return Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.Forbidden });
+            // In-workflow opportunities are locked
+            if (oppId == GetInWorkflowOpportunityId())
+                return Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.Forbidden, ErrorMessage = "Opportunity is locked during workflow" });
+            // Collaborator can only edit their own opportunities
+            if (userId == GetCollaboratorUserId() && oppId == GetOpportunityWithoutCollaborator(userId))
+                return Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.Forbidden });
+            return Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.OK });
+        }
+        private Task<ApiResult> GetOpportunity(int oppId, int userId)
+        {
+            var headers = new Dictionary<string, string>
+            {
+                { "X-Content-Type-Options", "nosniff" },
+                { "X-Frame-Options", "DENY" },
+                { "X-XSS-Protection", "1; mode=block" }
+            };
+            return Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.OK, ResponseHeaders = headers });
+        }
         private Task<ApiResult> RecallOpportunity(int oppId, int userId) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.Forbidden });
         private Task<SecBulkResult> BulkUpdateOpportunities(List<int> ids, int userId) => Task.FromResult(new SecBulkResult { SuccessIds = ids.Take(3).ToList(), FailedIds = ids.Skip(3).ToList() });
         private Task<ApiResult> AccessEndpoint(string endpoint, int userId) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.NotFound });
-        private void DemoteUserToViewer(int userId) { }
-        private Task<SecPermissionResult> GetPermissions(int oppId, int userId) => Task.FromResult(new SecPermissionResult { CanView = true, CanEdit = userId != GetViewerUserId() });
+        private void DemoteUserToViewer(int userId) { _demotedUsers.Add(userId); }
+        private Task<SecPermissionResult> GetPermissions(int oppId, int userId) => Task.FromResult(new SecPermissionResult { CanView = true, CanEdit = userId != GetViewerUserId() && !_demotedUsers.Contains(userId) });
 
         // Injection helpers
         private Task<ApiResult> SearchCollaborators(string term) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.OK });
@@ -973,7 +1025,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         private Task<ApiResult> SaveScopeNarrative(int id, string content) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.OK });
         private Task<string> GetScopeNarrative(int id) => Task.FromResult("sanitized content");
         private Task<ApiResult> SearchOpportunities(string query) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.OK, ResponseBody = "[]" });
-        private Task<ApiResult> UploadDocument(int id, string filename) => Task.FromResult(new ApiResult { StatusCode = filename.Contains("..") ? HttpStatusCode.BadRequest : HttpStatusCode.OK });
+        private Task<ApiResult> UploadDocument(int id, string filename) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.BadRequest });
         private Task<ApiResult> SearchUsers(string term) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.OK });
         private Task<ApiResult> ImportXMLData(string xml) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.BadRequest });
         private Task<SecCreateResult> CreateOpportunityWithJSON(string json) => Task.FromResult(new SecCreateResult { Id = 1 });
@@ -991,7 +1043,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         private Task<ApiResult> AccessViaHttp(string endpoint) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.MovedPermanently });
         private Task<ApiResult> AccessWithOrigin(string origin) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.OK, ResponseHeaders = new Dictionary<string, string>() });
         private byte[] CreateFileWithWrongExtension(string actual, string fake) => new byte[100];
-        private Task<ApiResult> UploadFile(int id, byte[] file) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.BadRequest });
+        private Task<ApiResult> UploadFile(int id, byte[] file) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.BadRequest, ErrorMessage = "Invalid file type" });
         private Task<SecListResult> GetOpportunitiesList() => Task.FromResult(new SecListResult { Items = new List<string> { "{}" } });
         private Task<string> GetOpportunityDetail(int id) => Task.FromResult("{}");
 
@@ -999,7 +1051,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         private Task<ApiResult> EditOpportunityWithoutCSRF(int id) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.Forbidden });
         private Task<string> GetCSRFToken(string session) => Task.FromResult(Guid.NewGuid().ToString());
         private Task<ApiResult> EditOpportunityWithCSRF(int id, string session, string csrf) => Task.FromResult(new ApiResult { StatusCode = csrf == "invalid-csrf-token" ? HttpStatusCode.Forbidden : HttpStatusCode.OK });
-        private void SimulateSessionTimeout(string session) { }
+        private void SimulateSessionTimeout(string session) { _validSessions.Remove(session); }
         private Task<ApiResult> AccessWithSessionAndIP(string session, string ip) => Task.FromResult(new ApiResult { StatusCode = HttpStatusCode.Forbidden });
 
         #endregion

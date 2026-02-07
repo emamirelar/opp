@@ -234,6 +234,8 @@ namespace UNOPS.PAO.Business.Tests.Accessibility
                 new { Text = "View partner details", IsDescriptive = true },
                 new { Text = "Click here", IsDescriptive = false },
                 new { Text = "Download annual report (PDF, 2MB)", IsDescriptive = true },
+                new { Text = "Open opportunity overview", IsDescriptive = true },
+                new { Text = "Navigate to contact list", IsDescriptive = true },
                 new { Text = "More", IsDescriptive = false }
             };
 

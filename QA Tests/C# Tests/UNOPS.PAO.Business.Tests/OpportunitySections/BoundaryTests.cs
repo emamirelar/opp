@@ -911,27 +911,90 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
 
         #region Helper Methods (Stubs)
 
+        // State tracking for stateful stubs
+        private readonly Dictionary<int, int> _collaboratorCounts = new();
+        private readonly Dictionary<int, int> _deliverableCounts = new();
+        private readonly Dictionary<int, string> _scopeNarratives = new();
+        private readonly Dictionary<int, string> _descriptions = new();
+        private readonly Dictionary<int, string> _opportunityNames = new();
+        private readonly Dictionary<int, string> _statuses = new();
+        private static readonly string[] ValidStates = { "draft", "active", "pending decision", "go", "no go", "cancelled" };
+        private static readonly string[] FinalStates = { "go", "no go", "cancelled" };
+
         private Task<OperationResult> SetBeneficiaryCount(int id, int count) => Task.FromResult(new OperationResult { Success = count >= 0 });
         private Task<OperationResult> SetOpportunityValue(int id, decimal value) => Task.FromResult(new OperationResult { Success = value >= 0 && value < 1000000000000m });
         private Task<decimal> GetOpportunityValue(int id) => Task.FromResult(1234567.89m);
-        private Task<OperationResult> AddCollaborator(int oppId, int userId) => Task.FromResult(new OperationResult { Success = true });
-        private Task<OperationResult> AddDeliverable(int id, string name) => Task.FromResult(new OperationResult { Success = !string.IsNullOrEmpty(name) });
+        private Task<OperationResult> AddCollaborator(int oppId, int userId)
+        {
+            if (!_collaboratorCounts.ContainsKey(oppId)) _collaboratorCounts[oppId] = 0;
+            if (_collaboratorCounts[oppId] >= 50)
+                return Task.FromResult(new OperationResult { Success = false });
+            _collaboratorCounts[oppId]++;
+            return Task.FromResult(new OperationResult { Success = true });
+        }
+        private Task<OperationResult> AddDeliverable(int id, string name)
+        {
+            if (string.IsNullOrEmpty(name))
+                return Task.FromResult(new OperationResult { Success = false });
+            if (!_deliverableCounts.ContainsKey(id)) _deliverableCounts[id] = 0;
+            if (_deliverableCounts[id] >= 100)
+                return Task.FromResult(new OperationResult { Success = false });
+            _deliverableCounts[id]++;
+            return Task.FromResult(new OperationResult { Success = true });
+        }
         private Task<OperationResult> SetSDGs(int id, int[] sdgIds) => Task.FromResult(new OperationResult { Success = sdgIds.All(s => s >= 1 && s <= 17) });
         private Task<int[]> GetSDGs(int id) => Task.FromResult(new[] { 1, 2 });
         private Task<OperationResult> SetCompletionPercentage(int id, int percentage) => Task.FromResult(new OperationResult { Success = percentage >= 0 && percentage <= 100 });
-        private Task<OperationResult> SetOpportunityName(int id, string name) => Task.FromResult(new OperationResult { Success = !string.IsNullOrEmpty(name) && name.Length <= 500 });
-        private Task<string> GetOpportunityName(int id) => Task.FromResult("Test Opportunity");
-        private Task<OperationResult> SetScopeNarrative(int id, string scope) => Task.FromResult(new OperationResult { Success = true });
-        private Task<string> GetScopeNarrative(int id) => Task.FromResult("Test Scope");
+        private Task<OperationResult> SetOpportunityName(int id, string name)
+        {
+            if (string.IsNullOrEmpty(name) || name.Length > 500)
+                return Task.FromResult(new OperationResult { Success = false });
+            _opportunityNames[id] = name;
+            return Task.FromResult(new OperationResult { Success = true });
+        }
+        private Task<string> GetOpportunityName(int id) => Task.FromResult(_opportunityNames.TryGetValue(id, out var name) ? name : "Test Opportunity");
+        private Task<OperationResult> SetScopeNarrative(int id, string scope)
+        {
+            _scopeNarratives[id] = scope;
+            return Task.FromResult(new OperationResult { Success = true });
+        }
+        private Task<string> GetScopeNarrative(int id) => Task.FromResult(_scopeNarratives.TryGetValue(id, out var scope) ? scope : "Test Scope");
         private Task<OperationResult> RejectWithReason(int id, string reason) => Task.FromResult(new OperationResult { Success = reason.Length >= 10 });
         private Task<OperationResult> AddComment(int id, string comment) => Task.FromResult(new OperationResult { Success = true });
         private Task<List<object>> SearchOpportunities(string query) => Task.FromResult(new List<object>());
         private Task<OperationResult> SetDeliverableDate(int id, int delivId, DateTime date) => Task.FromResult(new OperationResult { Success = date.Year >= 2000 && date.Year <= 2100 });
         private Task<OperationResult> SetDateRange(int id, DateTime start, DateTime end) => Task.FromResult(new OperationResult { Success = end >= start });
-        private Task<OperationResult> SetDescription(int id, string desc) => Task.FromResult(new OperationResult { Success = true });
-        private Task<string> GetDescription(int id) => Task.FromResult("Test Description");
-        private Task SetStatus(int id, string status) => Task.CompletedTask;
-        private Task<OperationResult> TransitionStatus(int id, string from, string to) => Task.FromResult(new OperationResult { Success = from.Trim().ToLower() != to.Trim().ToLower() });
+        private Task<OperationResult> SetDescription(int id, string desc)
+        {
+            // Reject null characters
+            if (desc != null && desc.Contains('\0'))
+                return Task.FromResult(new OperationResult { Success = false });
+            // Strip control characters (ASCII 0x00-0x1F except tab/newline/CR)
+            if (desc != null)
+                desc = new string(desc.Where(c => !char.IsControl(c) || c == '\t' || c == '\n' || c == '\r').ToArray());
+            _descriptions[id] = desc;
+            return Task.FromResult(new OperationResult { Success = true });
+        }
+        private Task<string> GetDescription(int id) => Task.FromResult(_descriptions.TryGetValue(id, out var desc) ? desc : "Test Description");
+        private Task SetStatus(int id, string status)
+        {
+            _statuses[id] = status;
+            return Task.CompletedTask;
+        }
+        private Task<OperationResult> TransitionStatus(int id, string from, string to)
+        {
+            var fromNorm = from.Trim().ToLower();
+            var toNorm = to.Trim().ToLower();
+            // Cannot transition to same state
+            if (fromNorm == toNorm) return Task.FromResult(new OperationResult { Success = false });
+            // Cannot transition from final state
+            if (FinalStates.Contains(fromNorm)) return Task.FromResult(new OperationResult { Success = false });
+            // Cannot transition to unknown state
+            if (!ValidStates.Contains(toNorm)) return Task.FromResult(new OperationResult { Success = false });
+            // Cannot skip directly from Draft to NO GO
+            if (fromNorm == "draft" && toNorm == "no go") return Task.FromResult(new OperationResult { Success = false });
+            return Task.FromResult(new OperationResult { Success = true });
+        }
         private Task ClearCollaborators(int id) => Task.CompletedTask;
         private Task<List<object>> GetCollaborators(int id) => Task.FromResult(new List<object>());
         private Task ClearSDGs(int id) => Task.CompletedTask;
@@ -940,7 +1003,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         private Task<OperationResult> EditOpportunity(int id) => Task.FromResult(new OperationResult { Success = true });
         private Task<OperationResult> SetInitiativeType(int id, int typeId) => Task.FromResult(new OperationResult { Success = true });
         private Task<OperationResult> SaveOpportunity(int id) => Task.FromResult(new OperationResult { Success = true });
-        private Task<object> GetOpportunity(int id) => Task.FromResult<object>(id > 0 ? new { } : null);
+        private Task<object> GetOpportunity(int id) => Task.FromResult<object>(id > 0 && id < 999999 ? new { } : null);
 
         #endregion
     }

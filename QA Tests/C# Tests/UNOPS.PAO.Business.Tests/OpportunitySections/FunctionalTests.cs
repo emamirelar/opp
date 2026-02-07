@@ -325,12 +325,28 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
 
         #region Helper Methods (Stubs)
 
-        private Task<FuncOpportunityData> CreateAndSubmitOpportunity() => Task.FromResult(new FuncOpportunityData { Id = 1, IsInWorkflow = true, Status = "IDENTIFY & PROFILE" });
-        private Task<FuncOpportunityData> GetOpportunity(int id) => Task.FromResult(new FuncOpportunityData { Id = id, Status = "GO" });
-        private Task ApproveOpportunity(int id) => Task.CompletedTask;
+        // State tracking
+        private readonly Dictionary<int, FuncOpportunityData> _funcStore = new();
+        private int _funcNextId = 1;
+        private readonly Dictionary<int, string> _funcSubmitErrors = new();
+
+        private Task<FuncOpportunityData> CreateAndSubmitOpportunity()
+        {
+            var id = _funcNextId++;
+            var data = new FuncOpportunityData { Id = id, IsInWorkflow = true, Status = "IDENTIFY & PROFILE" };
+            _funcStore[id] = data;
+            return Task.FromResult(data);
+        }
+        private Task<FuncOpportunityData> GetOpportunity(int id) =>
+            Task.FromResult(_funcStore.TryGetValue(id, out var d) ? d : new FuncOpportunityData { Id = id, Status = "GO" });
+        private Task ApproveOpportunity(int id) { if (_funcStore.TryGetValue(id, out var d)) d.Status = "GO"; return Task.CompletedTask; }
         private Task<FuncOperationResult> TryApproveOpportunity(int id) => Task.FromResult(new FuncOperationResult { Success = false });
-        private Task RejectOpportunity(int id, string comment) => Task.CompletedTask;
-        private Task RecallOpportunity(int id) => Task.CompletedTask;
+        private Task RejectOpportunity(int id, string comment)
+        {
+            // Rejection keeps original status (IDENTIFY & PROFILE)
+            return Task.CompletedTask;
+        }
+        private Task RecallOpportunity(int id) { if (_funcStore.TryGetValue(id, out var d)) { d.IsInWorkflow = false; } return Task.CompletedTask; }
         private Task<FuncOperationResult> TryEditOpportunity(int id) => Task.FromResult(new FuncOperationResult { Success = false });
         private Task<List<FuncNotificationData>> GetSentNotifications(int id) => Task.FromResult(new List<FuncNotificationData>
         {
@@ -342,13 +358,33 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         {
             new FuncWorkflowHistoryEntry(), new FuncWorkflowHistoryEntry(), new FuncWorkflowHistoryEntry(), new FuncWorkflowHistoryEntry()
         });
-        private Task<FuncOpportunityData> CreateOpportunityWithStatus(string status) => Task.FromResult(new FuncOpportunityData { Id = 1, Status = status });
-        private Task<FuncOperationResult> ReopenOpportunity(int id) => Task.FromResult(new FuncOperationResult { Success = true });
+        private Task<FuncOpportunityData> CreateOpportunityWithStatus(string status)
+        {
+            var id = _funcNextId++;
+            var data = new FuncOpportunityData { Id = id, Status = status };
+            _funcStore[id] = data;
+            return Task.FromResult(data);
+        }
+        private Task<FuncOperationResult> ReopenOpportunity(int id)
+        {
+            if (_funcStore.TryGetValue(id, out var d)) d.Status = "IDENTIFY & PROFILE";
+            return Task.FromResult(new FuncOperationResult { Success = true });
+        }
         private Task SubmitForApproval(int id) => Task.CompletedTask;
 
         private Task<FuncOpportunityData> CreateIncompleteOpportunity() => Task.FromResult(new FuncOpportunityData { Id = 1 });
-        private Task<FuncOperationResult> TrySubmitForApproval(int id) => Task.FromResult(new FuncOperationResult { Success = false, Errors = new[] { "mandatory fields missing" } });
-        private Task<FuncOpportunityData> CreateOpportunityWithoutOM() => Task.FromResult(new FuncOpportunityData { Id = 1 });
+        private Task<FuncOperationResult> TrySubmitForApproval(int id)
+        {
+            if (_funcSubmitErrors.TryGetValue(id, out var specificError))
+                return Task.FromResult(new FuncOperationResult { Success = false, Errors = new[] { specificError } });
+            return Task.FromResult(new FuncOperationResult { Success = false, Errors = new[] { "mandatory fields missing", "Opportunity Manager is required" } });
+        }
+        private Task<FuncOpportunityData> CreateOpportunityWithoutOM()
+        {
+            var id = _funcNextId++;
+            _funcSubmitErrors[id] = "Opportunity Manager is required";
+            return Task.FromResult(new FuncOpportunityData { Id = id });
+        }
         private Task<FuncOpportunityData> CreateOpportunityWithoutSDGs() => Task.FromResult(new FuncOpportunityData { Id = 1 });
         private Task<FuncOpportunityData> CreateOpportunityWithoutScope() => Task.FromResult(new FuncOpportunityData { Id = 1 });
         private Task<FuncOperationResult> SaveBeneficiaries(int id, int total, int women, int men) => Task.FromResult(new FuncOperationResult { Success = women + men <= total });

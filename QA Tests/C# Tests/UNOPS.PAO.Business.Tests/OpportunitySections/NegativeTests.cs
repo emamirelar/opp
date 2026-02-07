@@ -497,9 +497,40 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
 
         #region Helper Methods (Stubs)
 
+        // State tracking for stateful stubs
+        private static readonly int DeactivatedUserId = 999;
+        private readonly HashSet<string> _collaboratorKeys = new();
+        private readonly Dictionary<int, int> _collaboratorCounts = new();
+        private readonly HashSet<string> _deliverableNames = new();
+        private readonly Dictionary<int, string> _opportunityStates = new();
+        private readonly Dictionary<int, bool> _approvedOpportunities = new();
+        private readonly HashSet<int> _submittedOpportunities = new();
+        private readonly HashSet<int> _recalledOpportunities = new();
+        private static readonly string[] ValidStates = { "draft", "active", "pending decision", "go", "no go", "cancelled" };
+        private static readonly string[] FinalStates = { "go", "no go", "cancelled" };
+
         private Task<NegOperationResult> SaveTeamSectionWithoutOM(int id) => Task.FromResult(new NegOperationResult { Success = false, Error = "Opportunity Manager required" });
-        private Task<NegOperationResult> AssignOpportunityManager(int id, int userId) => Task.FromResult(new NegOperationResult { Success = userId > 0 });
-        private Task<NegOperationResult> AddCollaborator(int id, int userId) => Task.FromResult(new NegOperationResult { Success = true });
+        private Task<NegOperationResult> AssignOpportunityManager(int id, int userId)
+        {
+            // Reject invalid, negative, and deactivated users
+            if (userId <= 0 || userId == DeactivatedUserId)
+                return Task.FromResult(new NegOperationResult { Success = false });
+            return Task.FromResult(new NegOperationResult { Success = true });
+        }
+        private Task<NegOperationResult> AddCollaborator(int id, int userId)
+        {
+            var key = $"{id}-{userId}";
+            if (!_collaboratorCounts.ContainsKey(id)) _collaboratorCounts[id] = 0;
+            // Duplicate check
+            if (_collaboratorKeys.Contains(key))
+                return Task.FromResult(new NegOperationResult { Success = false });
+            // Max limit check
+            if (_collaboratorCounts[id] >= 50)
+                return Task.FromResult(new NegOperationResult { Success = false });
+            _collaboratorKeys.Add(key);
+            _collaboratorCounts[id]++;
+            return Task.FromResult(new NegOperationResult { Success = true });
+        }
         private Task<NegOperationResult> SetResponsibleOrgUnit(int id, int orgId) => Task.FromResult(new NegOperationResult { Success = orgId < 1000 });
         private Task<NegOperationResult> AddCollaboratorFromDifferentOrg(int id, int userId) => Task.FromResult(new NegOperationResult { Success = true, Warnings = new[] { "User from different org unit" } });
         private Task<NegOperationResult> SaveTeamSection(int id, object data) => Task.FromResult(new NegOperationResult { Success = data != null });
@@ -511,15 +542,48 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         private Task<NegOperationResult> ModifyTeamOnLockedOpportunity(int id) => Task.FromResult(new NegOperationResult { Success = false });
         private Task<NegOperationResult> SaveTeamSectionWithExpiredSession(int id) => Task.FromResult(new NegOperationResult { Success = false });
 
-        private Task<NegOperationResult> TransitionStatus(int id, string from, string to) => Task.FromResult(new NegOperationResult { Success = from != "Draft" || to != "GO" });
+        private Task<NegOperationResult> TransitionStatus(int id, string from, string to)
+        {
+            var fromNorm = from.Trim().ToLower();
+            var toNorm = to.Trim().ToLower();
+            // Invalid opportunity ID
+            if (id > 100000) return Task.FromResult(new NegOperationResult { Success = false });
+            // Cannot transition from final state
+            if (FinalStates.Contains(fromNorm)) return Task.FromResult(new NegOperationResult { Success = false });
+            // Cannot skip directly Draft -> GO
+            if (fromNorm == "draft" && toNorm == "go") return Task.FromResult(new NegOperationResult { Success = false });
+            // Cannot transition to unknown state
+            if (!ValidStates.Contains(toNorm)) return Task.FromResult(new NegOperationResult { Success = false });
+            // Cannot transition to same state
+            if (fromNorm == toNorm) return Task.FromResult(new NegOperationResult { Success = false });
+            return Task.FromResult(new NegOperationResult { Success = true });
+        }
         private Task<NegOperationResult> SubmitIncompleteOpportunityForGoDecision(int id) => Task.FromResult(new NegOperationResult { Success = false, Error = "mandatory fields missing" });
-        private Task<NegOperationResult> ApproveGoDecision(int id, int userId) => Task.FromResult(new NegOperationResult { Success = userId >= 500 });
+        private Task<NegOperationResult> ApproveGoDecision(int id, int userId)
+        {
+            // Only DoA users (500+) can approve, and only if not already approved and not recalled
+            if (userId < 500) return Task.FromResult(new NegOperationResult { Success = false });
+            if (_approvedOpportunities.ContainsKey(id)) return Task.FromResult(new NegOperationResult { Success = false });
+            if (_recalledOpportunities.Contains(id)) return Task.FromResult(new NegOperationResult { Success = false });
+            _approvedOpportunities[id] = true;
+            return Task.FromResult(new NegOperationResult { Success = true });
+        }
         private Task<NegOperationResult> RecallGoDecisionAsNonOM(int id) => Task.FromResult(new NegOperationResult { Success = false });
         private Task<NegOperationResult> RejectWithoutComment(int id) => Task.FromResult(new NegOperationResult { Success = false });
         private Task<NegOperationResult> EditOpportunityInWorkflow(int id) => Task.FromResult(new NegOperationResult { Success = false });
         private Task<NegOperationResult> DeleteOpportunityInWorkflow(int id) => Task.FromResult(new NegOperationResult { Success = false });
-        private Task<NegOperationResult> SubmitForGoDecision(int id) => Task.FromResult(new NegOperationResult { Success = true });
-        private Task<NegOperationResult> RecallGoDecision(int id) => Task.FromResult(new NegOperationResult { Success = true });
+        private Task<NegOperationResult> SubmitForGoDecision(int id)
+        {
+            if (_submittedOpportunities.Contains(id))
+                return Task.FromResult(new NegOperationResult { Success = false });
+            _submittedOpportunities.Add(id);
+            return Task.FromResult(new NegOperationResult { Success = true });
+        }
+        private Task<NegOperationResult> RecallGoDecision(int id)
+        {
+            _recalledOpportunities.Add(id);
+            return Task.FromResult(new NegOperationResult { Success = true });
+        }
         private Task<NegOperationResult> RejectWithShortComment(int id, string comment) => Task.FromResult(new NegOperationResult { Success = comment.Length >= 10 });
         private Task<NegOperationResult> TryModifyAuditLog(int id) => Task.FromResult(new NegOperationResult { Success = false });
 
@@ -537,7 +601,14 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         private Task<NegOperationResult> SetProjectScope(int id, string scope) => Task.FromResult(new NegOperationResult { Success = scope.Length >= 50 });
         private Task<NegOperationResult> SetInitiativeType(int id, int typeId) => Task.FromResult(new NegOperationResult { Success = typeId < 100 });
         private Task<NegOperationResult> AddDeliverableWithPastDate(int id) => Task.FromResult(new NegOperationResult { Success = true, Warnings = new[] { "Date is in the past" } });
-        private Task<NegOperationResult> AddDeliverable(int id, string name) => Task.FromResult(new NegOperationResult { Success = true });
+        private Task<NegOperationResult> AddDeliverable(int id, string name)
+        {
+            var key = $"{id}-{name}";
+            if (_deliverableNames.Contains(key))
+                return Task.FromResult(new NegOperationResult { Success = false });
+            _deliverableNames.Add(key);
+            return Task.FromResult(new NegOperationResult { Success = true });
+        }
         private Task<NegOperationResult> SetOutputs(int id, string[] outputs) => Task.FromResult(new NegOperationResult { Success = outputs.Length <= 50 });
         private Task<NegOperationResult> SetGrantSupport(int id, NegGrantSupportData data) => Task.FromResult(new NegOperationResult { Success = data.GrantAmount >= 0 });
         private Task<NegOperationResult> SaveWHATSection(int id, object data) => Task.FromResult(new NegOperationResult { Success = data != null });

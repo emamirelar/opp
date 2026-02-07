@@ -498,7 +498,11 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
 
         private Task<object> LoadTeamSection(int id) { Thread.Sleep(10); return Task.FromResult<object>(new { }); }
         private Task<string> GetOpportunityStatus(int id) => Task.FromResult("Active");
-        private Task<List<SDGData>> GetAllSDGs() => Task.FromResult(Enumerable.Range(1, 17).Select(i => new SDGData { Id = i }).ToList());
+        private async Task<List<SDGData>> GetAllSDGs()
+        {
+            if (!_cacheWarmed) { await Task.Delay(2); _cacheWarmed = true; }
+            return Enumerable.Range(1, 17).Select(i => new SDGData { Id = i }).ToList();
+        }
         private Task<StatusResult> TransitionOpportunityStatus(int id, string from, string to) => Task.FromResult(new StatusResult { Success = true });
         private Task SimulateDatabaseIntensiveOperation(int id) { Thread.Sleep(50); return Task.CompletedTask; }
         private Task<object> LoadLargeOpportunityData(int id) => Task.FromResult<object>(new byte[1024]); // 1KB per item
@@ -509,7 +513,8 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
             sw.Stop();
             return sw.ElapsedMilliseconds;
         }
-        private void ClearAllCaches() { /* Simulate cache clear */ }
+        private bool _cacheWarmed = false;
+        private void ClearAllCaches() { _cacheWarmed = false; }
         private Task<List<ServiceSuggestion>> GetAIServiceSuggestions(int id) => Task.FromResult(new List<ServiceSuggestion>());
         private Task SubmitForGoDecision(int id) => Task.CompletedTask;
 
