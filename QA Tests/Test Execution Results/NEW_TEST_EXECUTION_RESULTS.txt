@@ -1,4 +1,0 @@
-Test run for C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\bin\Debug\net9.0\UNOPS.PAO.Business.Tests.dll (.NETCoreApp,Version=v9.0)
-VSTest version 17.14.1 (x64)
-
-The test source file "C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\bin\Debug\net9.0\UNOPS.PAO.Business.Tests.dll" provided was not found.
