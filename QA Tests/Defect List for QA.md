@@ -31,7 +31,7 @@ This document tracks test infrastructure issues, test implementation bugs, tempo
 
 ## Open QA Issues
 
-**Status**: ⚠️ 13 open issues - Test infrastructure, InMemory database limitations, reclassified from DEF list (QA-028 RESOLVED ✅, QA-029 NEW)
+**Status**: ⚠️ 12 open issues - Test infrastructure, InMemory database limitations (QA-018 RESOLVED ✅, QA-028 RESOLVED ✅, QA-029 Pending Verification)
 
 ### Reclassified from Developer Defects (Test Infrastructure Issues)
 
@@ -39,7 +39,7 @@ These items were originally logged as developer defects (DEF-XXX) but have been 
 
 | QA ID | Title | Description | Reproduction Steps | Expected Result | Actual Result | Date Logged | Status | Assigned To |
 |-------|-------|-------------|-------------------|-----------------|---------------|-------------|--------|-------------|
-| QA-018 | Route Permission Guard blocks access in Playwright tests | **Reclassified from DEF-001** - TEST CONFIGURATION issue, not a production bug.<br/><br/>**Root Cause:** `authenticateWithRealBackend()` does NOT call `setupAPIMocks()`, so permission API calls go to real backend. When backend isn't running or test user lacks permissions, guard correctly denies access.<br/><br/>**Impact:** 29 Playwright tests blocked<br/><br/>**Why Not a Production Defect:**<br/>• Production code works correctly<br/>• Guard properly checks permissions<br/>• Issue is test setup, not application logic<br/><br/>**Proper Fix (QA):** Modify `authenticateWithRealBackend()` to call `setupAPIMocks(page)` before navigation, OR ensure real backend is running with properly permissioned test user.<br/><br/>**See:** `QA Tests/DEF-001_RouteGuard_DeepAnalysis.md` | 1. Run Phase 1A Playwright tests<br/>2. Tests authenticate and navigate to detail pages<br/>3. Observe redirect to `/access-denied` | Tests navigate successfully to detail pages | 29 tests redirect to `/access-denied` | 2026-01-26 | Open | QA Team |
+| QA-018 | Route Permission Guard blocks access in Playwright tests | **RESOLVED ✅** - Fix applied 2026-02-02.<br/><br/>**Original Issue:** `authenticateWithRealBackend()` did not call `setupAPIMocks()`, so permission API calls went to real backend.<br/><br/>**Fix Applied:**<br/>• Added `await setupAPIMocks(page);` to `authenticateWithRealBackend()` (line 46)<br/>• Added permission mock endpoints for partner, opportunity, contact, interaction<br/>• Added catch-all mock for `/api/permissions/check/` endpoints<br/><br/>**Files Modified:**<br/>• `auth.helper.ts` - Added setupAPIMocks() call<br/>• `api-mocks.helper.ts` - Added permission endpoint mocks<br/><br/>**See:** `QA Tests/DEF-001_RouteGuard_DeepAnalysis.md` | 1. Run Playwright tests with mocks<br/>2. Tests authenticate and navigate | Tests navigate successfully | ✅ Tests no longer redirect to /access-denied | 2026-01-26 | **Resolved** | QA Team |
 | QA-019 | AdvancedSearchService incompatible with InMemory test database | **Reclassified from DEF-004** - TEST INFRASTRUCTURE limitation, not a production bug.<br/><br/>**Root Cause:** `AdvancedSearchService` uses raw PostgreSQL `similarity()` function. Test environment uses InMemory database which cannot execute raw SQL.<br/><br/>**Impact:** 53 Partner integration tests failing with HTTP 500<br/><br/>**Why Not a Production Defect:**<br/>• Production uses PostgreSQL - works correctly<br/>• InMemory provider limitation is well-documented<br/>• This is a test environment design decision<br/><br/>**Proper Fix (QA) - Choose One:**<br/>• **Option A:** Use PostgreSQL test database (Docker)<br/>• **Option B:** Mock AdvancedSearchService for tests<br/>• **Option C:** Use SQLite with EF.Functions polyfills | 1. Run Partner integration tests<br/>2. Observe HTTP 500 errors<br/>3. Check logs for `GetRelationalModel` error | Tests pass with correct search results | 53 tests fail with HTTP 500 | 2026-01-27 | Open | QA Team |
 | QA-020 | .NET 9 PipeWriter bug affects test host | **Reclassified from DEF-006** - Known .NET 9 framework issue affecting in-memory test host only.<br/><br/>**Root Cause:** `ResponseBodyPipeWriter` in test host doesn't implement `PipeWriter.UnflushedBytes`.<br/><br/>**Impact:** Intermittent integration test failures<br/><br/>**Why Not a Production Defect:**<br/>• Only affects in-memory test host<br/>• Production uses Kestrel - works correctly<br/>• Microsoft tracking as framework issue<br/><br/>**Workaround Applied:** Try-catch in `GlobalExceptionHandler.TryHandleAsync()` with fallback serialization.<br/><br/>**Proper Fix:** Wait for .NET 9 patch or upgrade when available. | 1. Run integration tests<br/>2. Observe intermittent PipeWriter errors | Tests execute without PipeWriter errors | Some tests fail with InvalidOperationException | 2026-01-27 | Open | QA Team |
 
@@ -97,14 +97,15 @@ These items were originally logged as developer defects (DEF-XXX) but have been 
 || QA-023 | Navigation-tabs.spec.ts visibility failures | **Fixed:** Updated 4 tests to use flexible selectors (PrimeNG tabs, ARIA roles). Tests now gracefully handle pages without tabs. **Result:** All 4 tests passing. | 2026-02-04 | QA Team |
 || QA-025 | Opportunity-item-basic.spec.ts assertion failures | **Fixed:** Updated card/loading/error selectors to be more specific. Enhanced API mocks with full entity detail responses. **Result:** All 3 tests passing. | 2026-02-04 | QA Team |
 || QA-028 | Playwright webServer not auto-starting Angular | **Fixed:** Updated `playwright.config.ts` webServer settings: Changed `stdout`/`stderr` from `'ignore'` to `'pipe'` for visibility, increased timeout from 5 to 6 minutes, added `--no-open` flag to `ng serve`. **Result:** 265 tests now passing (up from 2), connection refused errors eliminated. | 2026-02-05 | QA Team |
+|| QA-018 | Route Permission Guard blocks access in Playwright tests | **Fixed:** Added `await setupAPIMocks(page);` to `authenticateWithRealBackend()` function. Added permission endpoint mocks for partner, opportunity, contact, interaction entities. Tests no longer redirect to `/access-denied`. | 2026-02-05 | QA Team |
 
 ---
 
 ## QA Issue Statistics
 
-- **Total Open:** 13 ⚠️ (QA-007, QA-008, QA-011, QA-012, QA-014 through QA-016, QA-018 through QA-020, QA-024, QA-026, QA-027, QA-029)
+- **Total Open:** 12 ⚠️ (QA-007, QA-008, QA-011, QA-012, QA-014 through QA-016, QA-019, QA-020, QA-024, QA-026, QA-027, QA-029)
 - **Total In Testing:** 0
-- **Total Resolved/Workaround:** 17 ✅ (QA-009, QA-010, QA-013, QA-017, QA-021 through QA-023, QA-025, **QA-028**, and 8 others)
+- **Total Resolved/Workaround:** 18 ✅ (QA-009, QA-010, QA-013, QA-017, **QA-018**, QA-021 through QA-023, QA-025, **QA-028**, and 8 others)
 - **Test Infrastructure:** 29 (17 resolved/workaround, 12 open)
 - **Reclassified from DEF:** 3 ✅ (QA-018, QA-019, QA-020 - moved from developer defects as test infrastructure issues)
 - **Test Implementation:** 1 (QA-026 - Accessibility test stub)

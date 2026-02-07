@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
+import { setupAPIMocks } from './helpers/api-mocks.helper';
 
 /**
  * Form Validation E2E Tests
@@ -16,16 +17,21 @@ import { authenticateWithRealBackend } from './helpers/auth.helper';
  * @note Uses hash-based routing (/#/) for Angular app navigation
  */
 test.describe('Form Validation', () => {
-  // Helper to navigate with hash-based routing
-  async function gotoHash(page: any, path: string): Promise<void> {
+  const BASE_URL = 'http://127.0.0.1:4200';
+  
+  // Helper to navigate with hash-based routing and API mocks
+  async function gotoHashWithMocks(page: any, path: string): Promise<void> {
+    // Set up API mocks before navigation for permission checks
+    await setupAPIMocks(page);
     const hashUrl = path.startsWith('/#/') ? path : `/#${path.startsWith('/') ? path : '/' + path}`;
-    await page.goto(hashUrl);
-    await page.waitForLoadState('networkidle');
+    await page.goto(`${BASE_URL}${hashUrl}`);
+    await page.waitForLoadState('load');
+    await page.waitForTimeout(1000);
   }
   
   test('should validate required fields on login form', async ({ page }) => {
-    // Navigate to login page using hash-based routing
-    await gotoHash(page, '/login');
+    // Navigate to login page using hash-based routing with API mocks
+    await gotoHashWithMocks(page, '/login');
     
     // Clear any existing values
     await page.locator('[data-testid="username-input"]').clear();
@@ -166,8 +172,8 @@ test.describe('Form Validation', () => {
   });
   
   test('should display validation error messages', async ({ page }) => {
-    // Navigate to login page using hash-based routing
-    await gotoHash(page, '/login');
+    // Navigate to login page using hash-based routing with API mocks
+    await gotoHashWithMocks(page, '/login');
     
     // Enter invalid credentials
     await page.locator('[data-testid="username-input"]').fill('invalid@example.com');
@@ -252,8 +258,8 @@ test.describe('Form Validation', () => {
   });
   
   test('should clear validation errors when field is corrected', async ({ page }) => {
-    // Go to login page using hash-based routing
-    await gotoHash(page, '/login');
+    // Go to login page using hash-based routing with API mocks
+    await gotoHashWithMocks(page, '/login');
     
     const usernameInput = page.locator('[data-testid="username-input"]');
     const passwordInput = page.locator('[data-testid="password-input"] input');

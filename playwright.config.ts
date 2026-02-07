@@ -1,20 +1,25 @@
 import { defineConfig, devices } from '@playwright/test';
+import path from 'path';
 
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
 // import dotenv from 'dotenv';
-// import path from 'path';
 // dotenv.config({ path: path.resolve(__dirname, '.env') });
+
+// Get absolute paths based on config file location
+const configDir = __dirname;
+const testDir = path.join(configDir, 'QA Tests', 'Playwright Tests');
+const clientAppDir = path.join(configDir, 'UNOPS.PAO.ClientApp');
 
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  testDir: './QA Tests/Playwright Tests',
+  testDir: testDir,
   /* Output directory for test results and reports */
-  outputDir: './QA Tests/Playwright Tests/test-results',
+  outputDir: path.join(testDir, 'test-results'),
   /* Maximum time one test can run for */
   timeout: 60000,  // 60 seconds per test (reduced from 120s - mocked tests are fast)
   /* Maximum time expect() should wait for the condition to be met */
@@ -27,10 +32,15 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only - reduced from 2 to 1 to speed up CI */
   retries: process.env.CI ? 1 : 0,
-  /* Use 6 workers on CI for parallelization (mocked tests are I/O-bound, not CPU-bound) */
-  workers: process.env.CI ? 6 : undefined,
+  /* Limit workers to prevent overwhelming the Angular dev server
+   * - CI: 4 workers (reduced from 6 for stability)
+   * - Local: 2 workers (was unlimited, causing server crashes with 449 tests)
+   */
+  workers: process.env.CI ? 4 : 2,
+  /* Stop test run early if too many tests fail (indicates server crash or systemic issue) */
+  maxFailures: process.env.CI ? 50 : 20,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: [['html', { outputFolder: './QA Tests/Playwright Tests/playwright-report' }]],
+  reporter: [['html', { outputFolder: path.join(testDir, 'playwright-report') }]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
@@ -44,6 +54,12 @@ export default defineConfig({
     
     /* Video on failure */
     video: 'retain-on-failure',
+    
+    /* Navigation timeout - give server time to respond under load */
+    navigationTimeout: 30000,  // 30 seconds for navigation
+    
+    /* Action timeout for clicks, fills, etc. */
+    actionTimeout: 15000,  // 15 seconds for actions
   },
 
   /* Configure projects for major browsers */
@@ -100,7 +116,7 @@ export default defineConfig({
     command: process.platform === 'win32' 
       ? 'npx ng serve --port 4200 --host 127.0.0.1 --no-open' 
       : 'npx ng serve --port 4200 --host 127.0.0.1 --no-open',
-    cwd: './UNOPS.PAO.ClientApp', // Set working directory
+    cwd: clientAppDir, // Absolute path to Angular app directory
     url: 'http://127.0.0.1:4200',
     reuseExistingServer: !process.env.CI,
     timeout: 360000,  // 6 minutes for Angular to compile and start (increased for slower machines)
