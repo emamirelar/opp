@@ -166,19 +166,32 @@ export class PartnerItemPage extends EntityDetailPage {
     description: string | null;
     website: string | null;
   }> {
+    // Use short timeouts to avoid consuming the entire test timeout
+    // when elements are not yet rendered or only visible after "See More"
+    const SHORT_TIMEOUT = 5000;
+    
     // Get partner title text from the panel header
     const titleLocator = this.getByTestId('partner-title');
-    const titleText = await titleLocator.textContent().catch(() => null);
+    const titleText = await titleLocator.textContent({ timeout: SHORT_TIMEOUT }).catch(() => null);
     
-    // Get status (may require "See More" to be clicked)
-    const statusText = await this.partnerStatus.textContent().catch(() => null);
+    // Get status (may require "See More" to be clicked — often not visible)
+    const statusVisible = await this.partnerStatus.isVisible().catch(() => false);
+    const statusText = statusVisible
+      ? await this.partnerStatus.textContent({ timeout: SHORT_TIMEOUT }).catch(() => null)
+      : null;
     
-    // Get category as type substitute
-    const categoryText = await this.partnerCategory.textContent().catch(() => null);
+    // Get category as type substitute (may not be assigned)
+    const categoryVisible = await this.partnerCategory.isVisible().catch(() => false);
+    const categoryText = categoryVisible
+      ? await this.partnerCategory.textContent({ timeout: SHORT_TIMEOUT }).catch(() => null)
+      : null;
     
     // Get partner info from the panel body content
     const infoContent = this.page.locator('.partner-info-content, .partner-information').first();
-    const bodyText = await infoContent.textContent().catch(() => null);
+    const bodyVisible = await infoContent.isVisible().catch(() => false);
+    const bodyText = bodyVisible
+      ? await infoContent.textContent({ timeout: SHORT_TIMEOUT }).catch(() => null)
+      : null;
     
     return {
       name: titleText,

@@ -9,6 +9,11 @@ on:
     # Run daily at 2 AM UTC
     - cron: '0 2 * * *'
 
+permissions:
+  contents: read
+  actions: read
+  checks: write    # Required by dorny/test-reporter to create check runs
+
 env:
   DOTNET_VERSION: '9.0.x'
 
@@ -136,6 +141,26 @@ jobs:
           --logger "trx;LogFileName=fast-tests.trx" \
           --results-directory "$testResultsDir"
     
+    - name: Check if Test Results Exist
+      id: check-fast-results
+      if: always()
+      run: |
+        if find "${{ github.workspace }}/TestResults" -name "*.trx" 2>/dev/null | grep -q .; then
+          echo "has-results=true" >> $GITHUB_OUTPUT
+        else
+          echo "has-results=false" >> $GITHUB_OUTPUT
+          echo "No .trx files found - tests may not have produced results"
+        fi
+    
+    - name: Publish Test Results
+      uses: dorny/test-reporter@v1
+      if: always() && steps.check-fast-results.outputs.has-results == 'true'
+      with:
+        name: FastTests Results
+        path: 'TestResults/**/*.trx'
+        reporter: dotnet-trx
+        fail-on-error: false
+    
     - name: Upload Test Results
       uses: actions/upload-artifact@v4
       if: always()
@@ -191,6 +216,26 @@ jobs:
           --logger "trx;LogFileName=managers-tests.trx" \
           --results-directory "$testResultsDir"
     
+    - name: Check if Test Results Exist
+      id: check-managers-results
+      if: always()
+      run: |
+        if find "${{ github.workspace }}/TestResults" -name "*.trx" 2>/dev/null | grep -q .; then
+          echo "has-results=true" >> $GITHUB_OUTPUT
+        else
+          echo "has-results=false" >> $GITHUB_OUTPUT
+          echo "No .trx files found - tests may not have produced results"
+        fi
+    
+    - name: Publish Test Results
+      uses: dorny/test-reporter@v1
+      if: always() && steps.check-managers-results.outputs.has-results == 'true'
+      with:
+        name: Manager Tests Results
+        path: 'TestResults/**/*.trx'
+        reporter: dotnet-trx
+        fail-on-error: false
+    
     - name: Upload Test Results
       uses: actions/upload-artifact@v4
       if: always()
@@ -241,6 +286,26 @@ jobs:
           --filter "FullyQualifiedName~Service" \
           --logger "trx;LogFileName=services-tests.trx" \
           --results-directory "$testResultsDir"
+    
+    - name: Check if Test Results Exist
+      id: check-services-results
+      if: always()
+      run: |
+        if find "${{ github.workspace }}/TestResults" -name "*.trx" 2>/dev/null | grep -q .; then
+          echo "has-results=true" >> $GITHUB_OUTPUT
+        else
+          echo "has-results=false" >> $GITHUB_OUTPUT
+          echo "No .trx files found - tests may not have produced results"
+        fi
+    
+    - name: Publish Test Results
+      uses: dorny/test-reporter@v1
+      if: always() && steps.check-services-results.outputs.has-results == 'true'
+      with:
+        name: Service Tests Results
+        path: 'TestResults/**/*.trx'
+        reporter: dotnet-trx
+        fail-on-error: false
     
     - name: Upload Test Results
       uses: actions/upload-artifact@v4
@@ -293,6 +358,26 @@ jobs:
           --logger "trx;LogFileName=opportunity-tests.trx" \
           --results-directory "$testResultsDir"
     
+    - name: Check if Test Results Exist
+      id: check-opportunity-results
+      if: always()
+      run: |
+        if find "${{ github.workspace }}/TestResults" -name "*.trx" 2>/dev/null | grep -q .; then
+          echo "has-results=true" >> $GITHUB_OUTPUT
+        else
+          echo "has-results=false" >> $GITHUB_OUTPUT
+          echo "No .trx files found - tests may not have produced results"
+        fi
+    
+    - name: Publish Test Results
+      uses: dorny/test-reporter@v1
+      if: always() && steps.check-opportunity-results.outputs.has-results == 'true'
+      with:
+        name: Opportunity Tests Results
+        path: 'TestResults/**/*.trx'
+        reporter: dotnet-trx
+        fail-on-error: false
+    
     - name: Upload Test Results
       uses: actions/upload-artifact@v4
       if: always()
@@ -343,6 +428,26 @@ jobs:
           --filter "FullyQualifiedName~EdgeCase|FullyQualifiedName~Concurrency|FullyQualifiedName~Performance" \
           --logger "trx;LogFileName=edge-cases-tests.trx" \
           --results-directory "$testResultsDir"
+    
+    - name: Check if Test Results Exist
+      id: check-edge-results
+      if: always()
+      run: |
+        if find "${{ github.workspace }}/TestResults" -name "*.trx" 2>/dev/null | grep -q .; then
+          echo "has-results=true" >> $GITHUB_OUTPUT
+        else
+          echo "has-results=false" >> $GITHUB_OUTPUT
+          echo "No .trx files found - tests may not have produced results"
+        fi
+    
+    - name: Publish Test Results
+      uses: dorny/test-reporter@v1
+      if: always() && steps.check-edge-results.outputs.has-results == 'true'
+      with:
+        name: Edge Case Tests Results
+        path: 'TestResults/**/*.trx'
+        reporter: dotnet-trx
+        fail-on-error: false
     
     - name: Upload Test Results
       uses: actions/upload-artifact@v4
@@ -395,6 +500,26 @@ jobs:
           --filter "FullyQualifiedName!~Manager&FullyQualifiedName!~Service&FullyQualifiedName!~Opportunity&FullyQualifiedName!~EdgeCase&FullyQualifiedName!~Concurrency&FullyQualifiedName!~Performance" \
           --logger "trx;LogFileName=other-tests.trx" \
           --results-directory "$testResultsDir"
+    
+    - name: Check if Test Results Exist
+      id: check-other-results
+      if: always()
+      run: |
+        if find "${{ github.workspace }}/TestResults" -name "*.trx" 2>/dev/null | grep -q .; then
+          echo "has-results=true" >> $GITHUB_OUTPUT
+        else
+          echo "has-results=false" >> $GITHUB_OUTPUT
+          echo "No .trx files found - tests may not have produced results"
+        fi
+    
+    - name: Publish Test Results
+      uses: dorny/test-reporter@v1
+      if: always() && steps.check-other-results.outputs.has-results == 'true'
+      with:
+        name: Other Tests Results
+        path: 'TestResults/**/*.trx'
+        reporter: dotnet-trx
+        fail-on-error: false
     
     - name: Upload Test Results
       uses: actions/upload-artifact@v4

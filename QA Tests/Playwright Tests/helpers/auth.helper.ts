@@ -32,6 +32,41 @@ import { waitForPageReady, waitForAngularReady } from './wait.helper';
  * @param targetUrl - URL to navigate to after authentication
  * @param testUserEmail - Email of test user (default: test@playwright.local)
  */
+/**
+ * Role configuration for non-admin test users.
+ * Any email NOT in this map defaults to Administrator + Internal roles.
+ * 
+ * QA-039 FIX: Previously all users received Administrator claims regardless
+ * of the testUserEmail parameter. Now restricted users get appropriate roles.
+ */
+const RESTRICTED_TEST_USERS: Record<string, { roles: string[]; isInternal: boolean; name: string }> = {
+  'test-readonly@playwright.local': {
+    roles: ['UNOPS_GEN_USER'],
+    isInternal: true,
+    name: 'Test Readonly User',
+  },
+  'test-no-permissions@playwright.local': {
+    roles: ['UNOPS_GEN_USER'],
+    isInternal: true,
+    name: 'Test No-Permissions User',
+  },
+  'viewer@example.com': {
+    roles: ['UNOPS_GEN_USER'],
+    isInternal: true,
+    name: 'Test Viewer',
+  },
+  'doa2@example.com': {
+    roles: ['UNOPS_GEN_USER'],
+    isInternal: true,
+    name: 'Test DoA2 Approver',
+  },
+  'other-user@example.com': {
+    roles: ['UNOPS_GEN_USER'],
+    isInternal: true,
+    name: 'Test Other User',
+  },
+};
+
 export async function authenticateWithRealBackend(
   page: Page,
   targetUrl: string,
@@ -46,14 +81,19 @@ export async function authenticateWithRealBackend(
   await setupAPIMocks(page);
   
   // Step 3: Setup authenticated user claims mock
-  // Override the default empty claims with authenticated user
-  await page.unroute(url => url.toString().includes('/user/claims'));
-  await page.route(url => url.toString().includes('/user/claims'), async (route) => {
-    console.log('[API Mock] Intercepted: /user/claims (authenticated via authenticateWithRealBackend)');
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify([
+  // QA-039 FIX: Differentiate claims based on user email
+  const restrictedUser = RESTRICTED_TEST_USERS[testUserEmail];
+  const claims = restrictedUser
+    ? [
+        { type: 'email', value: testUserEmail },
+        { type: 'name', value: restrictedUser.name },
+        ...restrictedUser.roles.map(role => ({ type: 'role', value: role })),
+        { type: 'IsInternal', value: String(restrictedUser.isInternal) },
+        { type: 'IAPAuthenticated', value: 'true' },
+        { type: 'sub', value: '99999' },
+      ]
+    : [
+        // Default: Administrator (backwards-compatible for all existing tests)
         { type: 'email', value: testUserEmail },
         { type: 'name', value: 'Test User' },
         { type: 'role', value: 'Administrator' },
@@ -61,10 +101,71 @@ export async function authenticateWithRealBackend(
         { type: 'IsInternal', value: 'true' },
         { type: 'IAPAuthenticated', value: 'true' },
         { type: 'sub', value: '12345' },
-      ]),
+      ];
+  
+  // Override the default empty claims with authenticated user
+  await page.unroute(url => url.toString().includes('/user/claims'));
+  await page.route(url => url.toString().includes('/user/claims'), async (route) => {
+    const roleDesc = restrictedUser ? restrictedUser.roles.join(',') : 'Administrator';
+    console.log(`[API Mock] Intercepted: /user/claims (user=${testUserEmail}, roles=${roleDesc})`);
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(claims),
     });
   });
   
+  // Step 3b: QA-039 FIX - Override permission mocks for restricted users
+  // setupAPIMocks() returns full admin permissions for all endpoints.
+  // For restricted users, override the catch-all permission check to deny create/edit/delete.
+  if (restrictedUser) {
+    console.log(`[Auth] Overriding permission mocks for restricted user: ${testUserEmail}`);
+    
+    // Override /api/permissions/check/* — route-level permission checks
+    await page.route(url => url.toString().includes('/api/permissions/check/'), async (route) => {
+      console.log(`[API Mock] Intercepted: /api/permissions/check/ (RESTRICTED for ${testUserEmail})`);
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          hasAccess: true,
+          route: route.request().url(),
+          entity: 'Contact',
+          permissions: {
+            canRead: true,
+            canCreate: false,
+            canUpdate: false,
+            canDelete: false,
+            canExport: false,
+            canImport: false,
+            canApprove: false,
+            canActivate: false,
+            canClose: false,
+            canArchive: false,
+          }
+        }),
+      });
+    });
+
+    // Override /api/{entity}/{id}/permissions — entity-level permission checks
+    await page.route(url => /\/api\/\w+\/\d+\/permissions/.test(url.toString()), async (route) => {
+      console.log(`[API Mock] Intercepted: entity permissions (RESTRICTED for ${testUserEmail})`);
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          canView: true,
+          canEdit: false,
+          canDelete: false,
+          canSubmit: false,
+          canApprove: false,
+          canActivate: false,
+          canCancel: false,
+        }),
+      });
+    });
+  }
+
   // Step 4: Set authentication cookies
   await page.context().addCookies([
     {

@@ -268,6 +268,153 @@ export async function setupAPIMocks(page: Page): Promise<void> {
   });
 
   // ==========================================
+  // ENTITY LIST ENDPOINTS - Required for listview rendering
+  // ==========================================
+
+  // Mock /api/partner (list) - Partner list data
+  await page.route(url => {
+    const urlString = url.toString();
+    // Match /api/partner with optional query params, but NOT /api/partner/{id} or /api/partner-tree-structure
+    return /\/api\/partner(\?|$)/.test(urlString) && 
+           !urlString.includes('/api/partner-tree-structure') &&
+           !urlString.includes('/api/partner/');
+  }, async (route) => {
+    console.log('[API Mock] Intercepted: GET /api/partner (list)');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        records: [
+          { id: 1, name: 'UNICEF Regional Office', type: 'Government', status: 'Active', stage: 'Active', country: 'United States', createdDate: '2024-01-15T00:00:00Z' },
+          { id: 2, name: 'Red Cross International', type: 'NGO', status: 'Active', stage: 'Active', country: 'Switzerland', createdDate: '2024-02-20T00:00:00Z' },
+          { id: 3, name: 'World Bank Group', type: 'Multilateral', status: 'Active', stage: 'Active', country: 'United States', createdDate: '2024-03-10T00:00:00Z' },
+        ],
+        totalCount: 3,
+      }),
+    });
+  });
+
+  // Mock /api/partner/search - Partner search endpoint
+  await page.route(url => /\/api\/partner\/search/.test(url.toString()), async (route) => {
+    console.log('[API Mock] Intercepted: GET /api/partner/search');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        records: [
+          { id: 1, name: 'UNICEF Regional Office', type: 'Government', status: 'Active', stage: 'Active', country: 'United States', createdDate: '2024-01-15T00:00:00Z' },
+        ],
+        totalCount: 1,
+      }),
+    });
+  });
+
+  // Mock /api/contact (list) - Contact list data
+  await page.route(url => {
+    const urlString = url.toString();
+    return /\/api\/contact(\?|$)/.test(urlString) && !urlString.includes('/api/contact/');
+  }, async (route) => {
+    console.log('[API Mock] Intercepted: GET /api/contact (list)');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        records: [
+          { id: 1, firstName: 'John', lastName: 'Smith', name: 'John Smith', email: 'john.smith@test.com', status: 'Active', partner: { id: 1, name: 'UNICEF Regional Office' }, createdDate: '2024-01-20T00:00:00Z' },
+          { id: 2, firstName: 'Jane', lastName: 'Doe', name: 'Jane Doe', email: 'jane.doe@test.com', status: 'Active', partner: { id: 2, name: 'Red Cross International' }, createdDate: '2024-02-15T00:00:00Z' },
+          { id: 3, firstName: 'Bob', lastName: 'Johnson', name: 'Bob Johnson', email: 'bob.johnson@test.com', status: 'Active', partner: { id: 3, name: 'World Bank Group' }, createdDate: '2024-03-05T00:00:00Z' },
+        ],
+        totalCount: 3,
+      }),
+    });
+  });
+
+  // Mock /api/contact/search - Contact search endpoint
+  await page.route(url => /\/api\/contact\/search/.test(url.toString()), async (route) => {
+    console.log('[API Mock] Intercepted: GET /api/contact/search');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        records: [
+          { id: 1, firstName: 'John', lastName: 'Smith', name: 'John Smith', email: 'john.smith@test.com', status: 'Active', partner: { id: 1, name: 'UNICEF Regional Office' }, createdDate: '2024-01-20T00:00:00Z' },
+        ],
+        totalCount: 1,
+      }),
+    });
+  });
+
+  // Mock /api/interaction (list) - Interaction list data
+  await page.route(url => {
+    const urlString = url.toString();
+    return /\/api\/interaction(\?|$)/.test(urlString) && !urlString.includes('/api/interaction/');
+  }, async (route) => {
+    console.log('[API Mock] Intercepted: GET /api/interaction (list)');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        records: [
+          { id: 1, subject: 'Quarterly Partnership Review', type: 'Meeting', status: 'Completed', date: '2024-06-15T10:00:00Z', partner: { id: 1, name: 'UNICEF Regional Office' }, createdDate: '2024-06-10T00:00:00Z' },
+          { id: 2, subject: 'Follow-up Call on Project Scope', type: 'Call', status: 'Completed', date: '2024-07-01T14:00:00Z', partner: { id: 2, name: 'Red Cross International' }, createdDate: '2024-06-28T00:00:00Z' },
+          { id: 3, subject: 'Technical Assessment Visit', type: 'Visit', status: 'Scheduled', date: '2024-08-15T09:00:00Z', partner: { id: 3, name: 'World Bank Group' }, createdDate: '2024-07-20T00:00:00Z' },
+        ],
+        totalCount: 3,
+      }),
+    });
+  });
+
+  // Mock /api/interaction/search - Interaction search endpoint
+  await page.route(url => /\/api\/interaction\/search/.test(url.toString()), async (route) => {
+    console.log('[API Mock] Intercepted: GET /api/interaction/search');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        records: [
+          { id: 1, subject: 'Quarterly Partnership Review', type: 'Meeting', status: 'Completed', date: '2024-06-15T10:00:00Z', partner: { id: 1, name: 'UNICEF Regional Office' }, createdDate: '2024-06-10T00:00:00Z' },
+        ],
+        totalCount: 1,
+      }),
+    });
+  });
+
+  // Mock /api/opportunity (list) - Opportunity list data
+  await page.route(url => {
+    const urlString = url.toString();
+    return /\/api\/opportunity(\?|$)/.test(urlString) && !urlString.includes('/api/opportunity/');
+  }, async (route) => {
+    console.log('[API Mock] Intercepted: GET /api/opportunity (list)');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        records: [
+          { id: 1, name: 'Infrastructure Development Program', title: 'Infrastructure Development', status: 'Active', stage: 'Identification', value: 1500000, currency: 'USD', partner: { id: 1, name: 'UNICEF Regional Office' }, organizationUnit: { id: 1, name: 'HQ' }, createdDate: '2024-01-15T00:00:00Z' },
+          { id: 2, name: 'Education Support Initiative', title: 'Education Support', status: 'Active', stage: 'Active', value: 800000, currency: 'USD', partner: { id: 2, name: 'Red Cross International' }, organizationUnit: { id: 2, name: 'RO' }, createdDate: '2024-03-01T00:00:00Z' },
+          { id: 3, name: 'Healthcare Capacity Building', title: 'Healthcare Capacity', status: 'Draft', stage: 'Draft', value: 2000000, currency: 'USD', partner: { id: 3, name: 'World Bank Group' }, organizationUnit: { id: 1, name: 'HQ' }, createdDate: '2024-05-10T00:00:00Z' },
+        ],
+        totalCount: 3,
+      }),
+    });
+  });
+
+  // Mock /api/opportunity/search - Opportunity search endpoint
+  await page.route(url => /\/api\/opportunity\/search/.test(url.toString()), async (route) => {
+    console.log('[API Mock] Intercepted: GET /api/opportunity/search');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        records: [
+          { id: 1, name: 'Infrastructure Development Program', title: 'Infrastructure Development', status: 'Active', stage: 'Identification', value: 1500000, currency: 'USD', partner: { id: 1, name: 'UNICEF Regional Office' }, createdDate: '2024-01-15T00:00:00Z' },
+        ],
+        totalCount: 1,
+      }),
+    });
+  });
+
+  // ==========================================
   // ENTITY DETAIL ENDPOINTS - Required for detail pages
   // ==========================================
   
@@ -333,60 +480,87 @@ export async function setupAPIMocks(page: Page): Promise<void> {
     });
   });
 
-  // Mock /api/opportunity/{id} - Opportunity detail
+  // Mock /api/opportunity/{id} - Opportunity detail (comprehensive mock with multiple stages)
   await page.route(url => {
     const urlString = url.toString();
     return /\/api\/opportunity\/\d+$/.test(urlString);
   }, async (route) => {
     const url = route.request().url();
     const opportunityId = url.match(/\/api\/opportunity\/(\d+)/)?.[1] || '1';
+    const id = parseInt(opportunityId);
     console.log(`[API Mock] Intercepted: /api/opportunity/${opportunityId}`);
+    
+    // Different mock data based on ID for testing various states
+    const stageByIdRange = id <= 3 ? 'Draft' : id <= 6 ? 'Active' : id <= 9 ? 'Pending Decision' : 'Active';
+    const statusByIdRange = id <= 3 ? 'Draft' : 'Active';
+    
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
-        id: parseInt(opportunityId),
-        name: 'Test Opportunity for E2E Testing',
-        title: 'Test Opportunity',
-        description: 'This is a comprehensive test opportunity for automated E2E testing',
-        status: 'Active',
-        stage: 'Identification',
-        workflowStatus: 'Active',
+        id: id,
+        name: `Test Opportunity ${id}`,
+        title: `Test Opportunity ${id}`,
+        description: 'This is a comprehensive test opportunity for automated E2E testing. It covers infrastructure development and capacity building initiatives.',
+        status: statusByIdRange,
+        stage: stageByIdRange,
+        workflowStatus: stageByIdRange,
         value: 1500000,
         currency: 'USD',
         estimatedValue: 1500000,
         probability: 75,
-        expectedCloseDate: '2024-12-31T00:00:00Z',
-        startDate: '2024-01-01T00:00:00Z',
-        endDate: '2024-12-31T00:00:00Z',
-        createdDate: '2024-01-01T00:00:00Z',
-        lastModifiedDate: '2024-06-15T12:00:00Z',
+        expectedCloseDate: '2026-12-31T00:00:00Z',
+        startDate: '2026-01-01T00:00:00Z',
+        endDate: '2026-12-31T00:00:00Z',
+        createdDate: '2025-01-01T00:00:00Z',
+        lastModifiedDate: '2025-06-15T12:00:00Z',
         createdBy: 'system',
         lastModifiedBy: 'system',
-        partner: {
-          id: 1,
-          name: 'Test Partner Organization'
-        },
-        organizationUnit: {
-          id: 1,
-          name: 'HQ - Headquarters',
-          code: 'HQ'
-        },
+        partner: { id: 1, name: 'UNICEF Regional Office' },
+        organizationUnit: { id: 1, name: 'HQ - Headquarters', code: 'HQ' },
         opportunityType: { id: 1, name: 'New Business' },
         sector: { id: 1, name: 'Infrastructure' },
         country: 'United States',
         region: 'North America',
-        // Related entities for tabs
+        // Team section data
+        opportunityManager: { id: 1, name: 'Test User', email: 'test@unops.org', position: 'Programme Manager' },
+        collaborators: [
+          { id: 1, userId: 1, name: 'Jane Doe', expertise: ['Project Management', 'Technical Expertise'] },
+          { id: 2, userId: 2, name: 'Bob Johnson', expertise: ['Financial Management'] },
+        ],
+        stakeholders: [
+          { id: 1, userId: 1, role: 'Opportunity Manager', name: 'Test User' },
+          { id: 2, userId: 2, role: 'Collaborator', name: 'Jane Doe' },
+        ],
+        // WHY section data
+        sdgs: [
+          { id: 1, name: 'No Poverty', number: 1, isPrimary: true },
+          { id: 4, name: 'Quality Education', number: 4, isPrimary: false },
+          { id: 13, name: 'Climate Action', number: 13, isPrimary: false },
+        ],
+        beneficiaryCount: 50000,
+        beneficiaryBreakdown: { women: 25000, men: 20000, children: 5000 },
+        unCooperationFramework: { id: 1, name: 'UN Sustainable Development Cooperation Framework' },
+        highRiskChecklist: [],
+        // WHAT section data
+        scope: 'Comprehensive project scope covering infrastructure development, capacity building, and knowledge transfer across 5 countries.',
+        deliverables: [
+          { id: 1, name: 'Training Program', description: 'Staff training across all regions', date: '2026-06-30T00:00:00Z' },
+          { id: 2, name: 'Infrastructure Assessment', description: 'Assessment of current facilities', date: '2026-03-31T00:00:00Z' },
+        ],
+        initiativeType: { id: 1, name: 'Technical Assistance' },
+        // Related entities
         contacts: [
-          { id: 1, firstName: 'John', lastName: 'Smith', email: 'john@test.com' }
+          { id: 1, firstName: 'John', lastName: 'Smith', email: 'john@test.com' },
+          { id: 2, firstName: 'Jane', lastName: 'Doe', email: 'jane@test.com' },
         ],
         interactions: [
-          { id: 1, subject: 'Initial Meeting', date: '2024-01-15T10:00:00Z' }
+          { id: 1, subject: 'Initial Meeting', date: '2025-01-15T10:00:00Z' },
+          { id: 2, subject: 'Follow-up Discussion', date: '2025-02-20T14:00:00Z' },
         ],
         documents: [],
-        risks: [],
-        stakeholders: [
-          { id: 1, userId: 1, role: 'Opportunity Manager' }
+        risks: [
+          { id: 1, name: 'Budget Overrun', category: 'Financial', likelihood: 'Medium', impact: 'High' },
         ],
       }),
     });
@@ -515,7 +689,16 @@ export async function setupAPIMocks(page: Page): Promise<void> {
            !urlString.includes('/api/values/pronouns') &&
            !urlString.includes('/api/values/countries') &&
            !urlString.includes('/api/values/states') &&
-           // Exclude the new entity detail endpoints (handled above)
+           // Exclude the entity list endpoints (handled above)
+           !/\/api\/partner(\?|$)/.test(urlString) &&
+           !/\/api\/partner\/search/.test(urlString) &&
+           !/\/api\/contact(\?|$)/.test(urlString) &&
+           !/\/api\/contact\/search/.test(urlString) &&
+           !/\/api\/interaction(\?|$)/.test(urlString) &&
+           !/\/api\/interaction\/search/.test(urlString) &&
+           !/\/api\/opportunity(\?|$)/.test(urlString) &&
+           !/\/api\/opportunity\/search/.test(urlString) &&
+           // Exclude the entity detail endpoints (handled above)
            !/\/api\/partner\/\d+/.test(urlString) &&
            !/\/api\/opportunity\/\d+/.test(urlString) &&
            !/\/api\/contact\/\d+/.test(urlString) &&
