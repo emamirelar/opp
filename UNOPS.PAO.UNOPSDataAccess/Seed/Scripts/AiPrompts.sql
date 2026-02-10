@@ -3769,6 +3769,11 @@ Data: opportunityData.responsibleOrgUnitCode = "B5507"
 Markdown: "Unit and opportunity manager: Global Infrastructure Unit (B5507), John Doe (john.doe@unops.org)"
 → DO NOT FLAG (Opportunity Manager matches data)
 
+**Example 8e: SHOULD NOT FLAG - Statement CONTAINS correct value (even with placeholder)**
+Data: opportunityData shows Opportunity Manager = "Perminder Saluja (perminders@unops.org)"
+Markdown: "Unit and opportunity manager: [Information not available], Perminder Saluja (perminders@unops.org)"
+→ DO NOT FLAG. The statement CONTAINS the correct name and email from data. The presence of "[Information not available]" alongside the correct value does NOT make it an inaccuracy. Only flag when the statement states a DIFFERENT person or omits the person entirely.
+
 **Example 9: SHOULD NOT FLAG - Missing in both data and markdown**
 Data: opportunityData.uncfOutcomes = null
 Markdown: "UN Cooperation Framework: No UNCF Outcomes"
@@ -3788,6 +3793,16 @@ Markdown: "Risk: No risks identified"
 Data: opportunityData.highRisksAcknowledged = false
 Markdown: "High risks acknowledged: No"
 → DO NOT FLAG (false = "No" - semantically equivalent)
+
+**Example 13: SHOULD NOT FLAG - "No X" wording variants (SAME meaning)**
+Data: opportunityData.clientPartners = [] or null or "No client partners"
+Markdown: "No client partners specified" OR "No client partners" OR "Client Partners: None"
+→ DO NOT FLAG. "No client partners specified", "No client partners", "None", "No client partners selected" all mean the same thing. They AGREE. ONLY flag when data has actual partners but statement says none (or vice versa).
+
+**Example 14: SHOULD NOT FLAG - No primary SDGs / placeholder equivalence**
+Data: opportunityData.primarySdGs = null or [] or "No primary SDGs selected"
+Markdown: "[Information not available]" OR "No primary SDGs selected" OR "No primary SDGs"
+→ DO NOT FLAG. When data indicates no SDGs selected, any of these in the statement means the same. They AGREE.
 
 VALIDATION DECISION FRAMEWORK:
 
@@ -3816,6 +3831,7 @@ VALIDATION DECISION FRAMEWORK:
 - Consider name variations ("World Bank" = "The World Bank")
 - Consider date format variations ("2026-03-30" = "March 2026")
 - Consider semantic equivalence ("No risks" = "No risks identified" = "risks: []" = "risks: null")
+- **Statement CONTAINS correct value**: If the statement text CONTAINS the actual value from data (e.g. a person''s name and email) in the same sentence or section, even if it also contains "[Information not available]" or similar, DO NOT FLAG. Only flag when the statement states a different value or omits the value entirely.
 
 **Step 5: Apply Flagging Decision**
 - If markdown states DIFFERENT fact than data → FLAG (inaccuracy)
@@ -4045,6 +4061,16 @@ When validating lists (stakeholders, deliverables, partners, etc.) in markdown a
 3. Compare the COMPLETE lists (data vs all markdown mentions)
 4. Only flag if markdown includes items NOT in data, or omits items that ARE in data
 
+SPECIAL EMPHASIS - AVOID FALSE POSITIVES (Statement contains correct value / "No X" equivalence):
+
+**🚨 CRITICAL: DO NOT FLAG WHEN STATEMENT CONTAINS THE CORRECT VALUE 🚨**
+- If the Opportunity Statement text CONTAINS the actual value from data (e.g. "Perminder Saluja (perminders@unops.org)") anywhere in the relevant sentence or section, even if it also shows "[Information not available]" or similar placeholder in the same sentence, that is NOT an inaccuracy. The correct information IS present. DO NOT FLAG. Only flag when the statement states a different person/value or omits the value entirely.
+
+**🚨 CRITICAL: "No X" PHRASES ARE SEMANTICALLY EQUIVALENT 🚨**
+- "No client partners specified" = "No client partners" = "No client partners" (data) → SAME MEANING → DO NOT FLAG
+- "No primary SDGs selected" (data) = "[Information not available]" or "No primary SDGs" in statement → SAME MEANING (absence of SDGs) → DO NOT FLAG
+- Any variation of "no [field]", "none", "not specified", "[Information not available]" when data is empty or "No X" → DO NOT FLAG
+
 FINAL INSTRUCTION:
 Validate the existingStatementMarkdown against the opportunityData structured data. Only flag factual inaccuracies where the markdown states something that contradicts the data. If you are unsure whether something is an inaccuracy, DO NOT FLAG IT. Only flag clear factual contradictions that would mislead a reader about the actual opportunity data.
 
@@ -4103,6 +4129,9 @@ STOP! Before you flag ANY item, verify it against these EXACT examples from real
 3. Markdown: "No UNOPS Mission alignments" | Data: "No UNOPS Mission alignments" → **IDENTICAL TEXT** → DO NOT FLAG
 4. Markdown: "NIC-Union Europea: 5,214,368.48 USD (4,500,000.00 EUR)" | Data: "4,500,000.00 EUR (5,214,368.48 USD)" → **SAME AMOUNTS, DIFFERENT ORDER** → DO NOT FLAG
 5. Markdown: "Budget of $45M" | Data: totalBudget = 45214368.48 → **0.5% DIFFERENCE, ACCEPTABLE** → DO NOT FLAG
+6. **Opportunity Manager**: Statement shows "[Information not available], Perminder Saluja (perminders@unops.org)" | Data: "Perminder Saluja (perminders@unops.org)" → **CORRECT NAME IS IN STATEMENT** → DO NOT FLAG
+7. **Primary SDGs**: Statement shows "[Information not available]" | Data: "No primary SDGs selected" → **SAME MEANING (no SDGs)** → DO NOT FLAG
+8. **Client Partners**: Statement shows "No client partners specified" | Data: "No client partners" → **SAME MEANING** → DO NOT FLAG
 
 **SHOULD FLAG (These ARE inaccuracies):**
 1. Markdown: "No SDGs" | Data: "SDG 6: Clean Water and Sanitation" → **MARKDOWN SAYS NO, DATA HAS VALUE** → FLAG THIS
