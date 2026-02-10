@@ -413,10 +413,12 @@ Test Listeners/
 Libs/
 Include/
 
-# Playwright test results
+# Playwright test artifacts
 /test-results/
+/screenshots/
 /QA Tests/Playwright Tests/test-results/
 /QA Tests/Playwright Tests/playwright-report/
+/QA Tests/Playwright Tests/screenshots/
 /playwright/.cache/
 
 # C# Test Results (dotnet test output)

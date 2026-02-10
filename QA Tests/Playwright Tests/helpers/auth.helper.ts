@@ -7,6 +7,7 @@ import { Page } from '@playwright/test';
 import { getTestCredentials, getTimeout } from './test-config';
 import { setupAPIMocks } from './api-mocks.helper';
 import { waitForPageReady, waitForAngularReady } from './wait.helper';
+import path from 'path';
 
 /**
  * ✅ REAL BACKEND AUTHENTICATION (Cookie-Based)
@@ -321,7 +322,7 @@ export async function login(
       console.error('Angular components not rendering.');
       console.error('Current URL:', await page.url().catch(() => 'Page closed'));
       console.error('Page title:', await page.title().catch(() => 'Page closed'));
-      await page.screenshot({ path: 'test-results/login-failed.png' }).catch(() => {});
+      await page.screenshot({ path: path.resolve(__dirname, '..', 'test-results', 'login-failed.png') }).catch(() => {});
     } catch (logError) {
       console.error('Failed to log debug info (page may be closed)');
     }

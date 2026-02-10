@@ -6,6 +6,7 @@
 import { Page, Locator } from '@playwright/test';
 import { waitForNetworkIdle, waitForVisible, waitForPermissions } from '../helpers/wait.helper';
 import { assertVisible } from '../helpers/assertions.helper';
+import path from 'path';
 
 export abstract class BasePage {
   protected readonly page: Page;
@@ -102,7 +103,7 @@ export abstract class BasePage {
    * Take screenshot
    */
   async takeScreenshot(name: string): Promise<void> {
-    await this.page.screenshot({ path: `screenshots/${name}.png` });
+    await this.page.screenshot({ path: path.resolve(__dirname, '..', 'screenshots', `${name}.png`) });
   }
   
   /**
