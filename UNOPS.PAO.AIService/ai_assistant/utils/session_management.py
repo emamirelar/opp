@@ -164,9 +164,10 @@ async def update_session_state_in_database(
         
         # Access the database session factory from the service (async in ADK 1.3.0+)
         async with session_service.database_session_factory() as db_session:
-            # Import the StorageSession model from the session service module
-            from google.adk.sessions.database_session_service import StorageSession
-            
+            # Use the same schema classes as the service (v0 or v1 depending on DB)
+            schema = session_service._get_schema_classes()
+            StorageSession = schema.StorageSession
+
             # Get the existing session (use await for async session)
             storage_session = await db_session.get(StorageSession, (app_name, user_id, session_id))
             
@@ -218,8 +219,10 @@ async def _recover_session_state_from_db(
     """
     try:
         async with session_service.database_session_factory() as db_session:
-            from google.adk.sessions.database_session_service import StorageSession
-            
+            # Use the same schema classes as the service (v0 or v1 depending on DB)
+            schema = session_service._get_schema_classes()
+            StorageSession = schema.StorageSession
+
             # Get the raw storage session (this bypasses event deserialization)
             storage_session = await db_session.get(StorageSession, (app_name, user_id, session_id))
             

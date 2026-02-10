@@ -43,6 +43,8 @@ echo [2/3] Setting DATABASE_URL...
 set DATABASE_URL=postgresql+asyncpg://anushas%%40unops.org:%IAM_TOKEN%@localhost:6364/unops-opportunityplus-dev-db-anushas
 set CURRENT_ENV=local
 set GOOGLE_CLOUD_PROJECT=unops-opportunityplus-dev
+set GOOGLE_CLOUD_LOCATION=europe-west4
+set GOOGLE_GENAI_USE_VERTEXAI=true
 
 echo DATABASE_URL configured for unops-opportunityplus-dev-db-anushas database
 echo.
