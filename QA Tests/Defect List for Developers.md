@@ -53,10 +53,12 @@ This document tracks **production code defects** discovered during testing. Thes
 **Significant implementation progress** since original filing. Core workflow now operational — OM can submit, cancel, reopen. DoA2 lookup works. Many original items now implemented by Tafazzul.
 
 - **PNO-969 Reference:** Sending the Opportunity to decision makers (Go / No Go decision)
-- **Test Cases:** 55 test cases (authoritative: `PNO-969_GoDecision_TestCases.md`)
-- **Tests Passed:** 2 (TC-005 Cancel, TC-007 Reopen — verified by Silvia on QA, 2026-02-10)
+- **Test Cases:** 397 test cases (authoritative: `PNO-969_GoDecision_TestCases.md`, restructured to 10-category standard 2026-02-11)
+- **Manual QA Passed:** 2 (TC-005 Cancel, TC-007 Reopen — verified by Silvia on QA, 2026-02-10)
+- **Automated Tests Executed (2026-02-11):** 569 total across C# and Playwright
+  - **509 passed, 0 failed, 60 skipped** (all skips intentional — DEF-008 blocked or env var not set)
 - **Tests Blocked:** ~3 (PNO-1193 role transfer, inactive OM, Collaborator role)
-- **Tests Awaiting Execution:** ~50
+- **Tests Awaiting Manual QA Execution:** ~50 of 55 Playwright E2E tests (require `GO_DECISION_IMPLEMENTED=true`)
 
 **Now Implemented (confirmed by QA testing 2026-02-05 through 2026-02-10):**
 - ✅ Name validation
@@ -222,7 +224,7 @@ The following items were previously logged as developer defects but have been re
 
 ---
 
-## Defect Statistics (Updated 2026-02-11 — PNO-969 QA Testing Results)
+## Defect Statistics (Updated 2026-02-11 — PNO-969 Full Test Execution)
 
 - **Total Open:** 3
 - **Total Partially Resolved:** 1 (DEF-008 — significant implementation progress, remaining gaps tracked)
@@ -234,6 +236,7 @@ The following items were previously logged as developer defects but have been re
 - 🟢 **Low Priority:** 0
 - **New Defects Found (2026-02-11 PNO-969 Testing):** 2 — DEF-010 (OM role transfer bug), DEF-011 (duplicate workflow history entry)
 - **DEF-008 Progress:** Core Go Decision workflow now operational (submit, cancel, reopen, reject, DoA2 lookup all working). Remaining: Collaborator role, notifications, UI components, role transfer (DEF-010).
+- **PNO-969 Full Test Execution (2026-02-11):** **509 passed, 0 failed, 60 skipped** across all C# and Playwright PNO-969 tests. No new product defects discovered.
 - **Playwright Improvement (2026-02-09):** 511+ passed (was 289, **+222**), ~100 skipped (was 322, **-222**). 222 more tests now executing and passing. **0 failures.**
 - **DEF-007 RESOLVED:** Integration Tests build restored (4,675 → 0 errors). Business.Tests recovered +1,866 tests (3,445 now passing).
 

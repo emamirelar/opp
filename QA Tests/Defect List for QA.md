@@ -31,7 +31,7 @@ This document tracks test infrastructure issues, test implementation bugs, tempo
 
 ## Open QA Issues
 
-**Status**: ⚠️ 6 open + 2 partial — Full suite (2026-02-11): **547 passed (chromium), 0 failed, 37 skipped**. QA-040 RESOLVED (API mock catch-all hang fix). QA-041 logged (resource exhaustion during full suite). C# tests: 3842 passed, 0 failed, 273 skipped.
+**Status**: ⚠️ 6 open + 2 partial — Full suite (2026-02-11): **547 passed (chromium), 0 failed, 37 skipped**. PNO-969 full execution: **509 passed, 0 failed, 60 skipped** (all intentional). QA-040 RESOLVED (API mock catch-all hang fix). QA-041 logged (resource exhaustion during full suite). C# tests: 3,740 passed, 0 failed, 273 skipped.
 
 ### Latest RBAC Test Execution (2026-02-07)
 
@@ -289,11 +289,26 @@ Per documentation: "Go to oUP" button is only testable in production.
 
 **Status:** Partially Resolved (2026-02-11)  
 **Category:** Blocked by DEF-008 (remaining gaps)  
-**Impact:** ~50 of 55 test cases awaiting execution; 2 passed, ~3 blocked by bugs/limitations
+**Impact:** ~50 of 55 manual test cases awaiting execution; automated tests: 509 passed, 60 skipped
 
-**Update (2026-02-11):** Core workflow now operational — significant implementation progress by Tafazzul. New authoritative test case document created with 55 tests aligned to PNO-969 JIRA requirements and stage/status transition matrix.
+**Update (2026-02-11):** Core workflow now operational — significant implementation progress by Tafazzul. Authoritative test case document restructured to 397 cases across 10 categories. Full automated test execution completed with **0 failures**.
 
-**Execution Status:**
+**Automated Test Execution (2026-02-11):**
+
+| Test Group | Passed | Failed | Skipped | Total | Notes |
+|------------|--------|--------|---------|-------|-------|
+| **C# Blocked/GoDecisionTests.cs** | 0 | 0 | 40 | 40 | All `[Fact(Skip = DEF-008)]` — expected |
+| **C# OpportunitySections/** | 376 | 0 | 0 | 376 | All 10-category tests passing |
+| **C# OpportunityFunctionalTests.cs** | 77 | 0 | 0 | 77 | Go Decision business rules (BR_O005–BR_O006c) passing |
+| **C# OpportunityWorkflowIntegrationTests.cs** | 55 | 0 | 0 | 55 | Go Decision workflow integration passing |
+| **Playwright go-decision.spec.ts** | 1 | 0 | 20 | 21 | 20 skipped (`GO_DECISION_IMPLEMENTED` env var not set); 1 summary test passed |
+| **TOTAL** | **509** | **0** | **60** | **569** | **0 failures — all skips intentional** |
+
+**Skip Breakdown (60 total):**
+- 40 C# skips: `DEF-008` blocker — Go Decision feature not fully implemented (approval workflow, notifications, UI)
+- 20 Playwright skips: `GO_DECISION_IMPLEMENTED` env var not set to `true` — tests require fully implemented feature
+
+**Manual QA Status:**
 - **2 PASSED:** TC-005 (OM Cancel), TC-007 (OM Reopen from Cancelled) — verified by Silvia on QA env, 2026-02-10
 - **~3 BLOCKED:** TC-039 (PNO-1193 OM role transfer), TC-033 (inactive OM needs DB deactivation), TC-042 (Collaborator not implemented)
 - **~50 AWAITING:** Require systematic QA execution pass on QA/TEST environment
@@ -303,14 +318,16 @@ Per documentation: "Go to oUP" button is only testable in production.
 - DEF-011 / PNO-1171: Reject appears twice in history → affects TC-030
 
 **Status Tracker:**
-- Test cases: ✅ Created (55 tests — supersedes previous 102-test PRD document)
+- Test cases: ✅ Created (397 tests across 10 categories — supersedes previous 55/102-test documents)
+- Automated tests: ✅ **509 passed, 0 failed, 60 skipped** (all skips intentional)
 - Manual QA: 🟡 In progress — 2/55 passed, ~50 awaiting execution
 - Playwright automation: ⬜ Scaffolded in `go-decision.spec.ts`, conditional skips for unimplemented features
 - Execution: 🟡 Partially unblocked — core workflow testable, Collaborator role + notifications still blocked
 
 **Related Files:**
-- Test Cases (authoritative): `QA Tests/Opportunity Tests/BusinessLogic/PNO-969_GoDecision_TestCases.md` (55 tests, 2026-02-11)
+- Test Cases (authoritative): `QA Tests/Opportunity Tests/BusinessLogic/PNO-969_GoDecision_TestCases.md` (397 tests, 10 categories, 2026-02-11)
 - Playwright Tests: `QA Tests/Playwright Tests/go-decision.spec.ts`
+- C# Tests: `Blocked/GoDecisionTests.cs`, `OpportunitySections/*.cs`, `OpportunityFunctionalTests.cs`, `OpportunityWorkflowIntegrationTests.cs`
 - Legacy PRD Test Cases: `QA Tests/Opportunity Tests/BusinessLogic/GoNoGoDecision_PRD_TestCases.md` (102 tests, superseded)
 - Execution Report: `QA Tests/Opportunity Tests/BusinessLogic/GoNoGoDecision_TestExecution_Report.md`
 
@@ -541,10 +558,14 @@ Similarly, the workflow exclusion `!/\/api\/workflow\//` excluded ALL workflow U
 - **Role-Based Access Control Coverage:** 161 E2E tests ✅ ALL PASSING (5 roles × 4 entities × multiple permission checks, executed 2026-02-07)
 - **PNO-969 Go Decision Testing (2026-02-11):**
   - **QA-016 PARTIALLY UNBLOCKED:** Core workflow now operational — Submit, Cancel, Reopen, Reject, DoA2 lookup all working
-  - **2 of 55 test cases PASSED** (TC-005 Cancel, TC-007 Reopen — Silvia verified on QA)
-  - **~50 test cases AWAITING** systematic QA execution
+  - **Full Automated Execution:** 509 passed, 0 failed, 60 skipped (all skips intentional — DEF-008 blocked or env var not set)
+  - **C# Tests:** 508 passed (376 OpportunitySections + 77 Functional + 55 Integration), 40 skipped (GoDecisionTests.cs — DEF-008)
+  - **Playwright Tests:** 1 passed, 20 skipped (`GO_DECISION_IMPLEMENTED` env var not set)
+  - **2 of 55 manual test cases PASSED** (TC-005 Cancel, TC-007 Reopen — Silvia verified on QA)
+  - **~50 manual test cases AWAITING** systematic QA execution
   - **~3 test cases BLOCKED** by PNO-1193 (role transfer), inactive OM (DB), Collaborator (not implemented)
   - **2 new developer defects discovered:** DEF-010 (PNO-1193), DEF-011 (PNO-1171)
+  - **0 new defects from automated execution** — all tests passed or skipped intentionally
 - **Full Suite Re-Execution (2026-02-09):**
   - **511 passed** (was 289, **+222, +77%**)
   - **0 failed** ✅ (QA-008 conditional skip, QA-039 fixed)
@@ -885,7 +906,7 @@ Similarly, the workflow exclusion `!/\/api\/workflow\//` excluded ALL workflow U
 | **QA-009 (InMemory DB)** | **~72+ Opportunity tests** | Need real PostgreSQL or repository mocking |
 | ~~QA-039 (Permission Mock)~~ | ~~1 Playwright test~~ | ✅ **RESOLVED (2026-02-09)** - Added RESTRICTED_TEST_USERS map + permission overrides |
 | QA-014 (oUP Credentials) | 34+ Playwright + C# tests | Request credentials from IT |
-| DEF-008 (Go Decision) | ~3 blocked + ~50 awaiting execution (55 total test cases) | Core workflow operational — Collaborator, notifications, UI remain |
+| DEF-008 (Go Decision) | 60 automated skips (40 C# + 20 Playwright) + ~3 manual blocked + ~50 manual awaiting | Core workflow operational — **509 automated passed, 0 failed**. Collaborator, notifications, UI remain |
 | DEF-010 (PNO-1193) | TC-039 + role transfer tests | OM role transfer not working |
 | DEF-011 (PNO-1171) | TC-030 (workflow history accuracy) | Reject appears twice in history |
 | QA-008 (PrimeNG Dialog) | ~5 Playwright tests (all skipped, 0 failing) | ✅ All dialog tests now use conditional `test.skip()` |
