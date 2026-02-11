@@ -3235,6 +3235,7 @@
   "label.workflow.cancellationReason": "Cancellation Reason",
   "label.workflow.rejectionReason": "Rejection Reason",
   "message.workflow.cancelledStatusInfo": "This opportunity has been cancelled and is in <b>Closed</b> status. It is read-only. The Opportunity Manager can reopen it if circumstances change.",
+  "message.workflow.pendingApprovalReadOnlyInfo": "This opportunity has been submitted for approval and is read-only while awaiting the decision. The submitter or Opportunity Manager can recall the submission if needed.",
   "label.stage.cancelled": "CANCELLED",
   "label.stage.noGo": "NO GO",
   "message.workflow.nonOMWarningTitle": "Submitter Warning",
