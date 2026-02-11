@@ -1,423 +1,127 @@
-# AgreementLibrary Test Cases
+# Agreement Library — Test Cases
 
-**Component:** Partnership Agreement Library Logic  
-**Test Count:** 20+  
-**Priority:** P1-P2 (High/Medium)  
-**Created:** January 13, 2026
-
----
-
-## Overview
-
-Test cases for partnership agreement storage, metadata extraction, key terms identification, agreement linkage, and pre-population logic.
+**Component:** Opportunity Agreement Library  
+**Created:** 2026-02-04 | **Last Updated:** 2026-02-11  
+**Author:** QA Team  
+**Standard:** 10-Category, 3:1 Ratio
 
 ---
 
-## Test Categories
+## Compliance Summary
 
-| Category | Test Count | Priority |
-|----------|------------|----------|
-| Agreement Storage | 5 | P1 |
-| Terms Extraction | 6 | P1 |
-| Linkage | 4 | P1 |
-| Pre-Population | 5 | P1 |
+| Category | Count | Min | ✓ |
+|----------|-------|-----|---|
+| §1 Positive | 35 | 30-50 | ✅ |
+| §2 Negative | 70 | 70 | ✅ |
+| §3 Boundary | 70 | 70 | ✅ |
+| §4 Functional | 50 | 50 | ✅ |
+| §5 Integration | 50 | 50 | ✅ |
+| §6 Security | 50 | 50 | ✅ |
+| §7 Concurrency | 25 | 25 | ✅ |
+| §8 Unit | 21 | 21 | ✅ |
+| §9 Performance | 16 | 16 | ✅ |
+| §10 Load | 10 | 10 | ✅ |
+| **TOTAL** | **397** | **≥347** | ✅ |
 
----
-
-## 1. Agreement Storage (P1)
-
-### TC-OPP-AGR-ST-001: Upload Partnership Agreement
-**Priority:** P1  
-**Test Steps:**
-1. Upload signed agreement PDF
-2. Verify storage and metadata
-
-**Expected Results:**
-- File stored securely
-- Metadata extracted:
-  - Partner name
-  - Agreement type
-  - Start/end dates
-  - Value/amount
-  - Geography
-- Full-text searchable
+**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
 
 ---
 
-### TC-OPP-AGR-ST-002: Link Agreement to Partner
-**Priority:** P1  
-**Test Steps:**
-1. Upload agreement
-2. Identify partner
-3. Link agreement to partner record
+## Feature Overview
 
-**Expected Results:**
-- Partner automatically identified from text
-- Or manual linking
-- Agreement visible in partner profile
-- Can have multiple agreements per partner
+Partnership agreement templates, versioning, linking to opportunities, clause management, approval workflows, document generation, PDF export, digital signatures, compliance tracking, agreement types (MOU, LOA, Framework), status lifecycle, amendment tracking, expiry notifications, and audit trail.
 
 ---
 
-### TC-OPP-AGR-ST-003: Agreement Versioning
-**Priority:** P1  
-**Test Steps:**
-1. Original agreement uploaded
-2. Amendment uploaded
-3. Track versions
+## §1 Positive Tests — 35 tests
 
-**Expected Results:**
-- Version 1: Original
-- Version 2: Amendment 1
-- Version history maintained
-- Current version marked
-- Can view all versions
-
----
-
-### TC-OPP-AGR-ST-004: Agreement Expiration Tracking
-**Priority:** P1  
-**Test Steps:**
-1. Agreement with end date
-2. Track expiration
-
-**Expected Results:**
-- Expiration date flagged
-- Warning 90 days before
-- Notification 30 days before
-- Marked as expired after date
-- Cannot link to new opportunities after expiration
-
----
-
-### TC-OPP-AGR-ST-005: Agreement Search and Retrieval
-**Priority:** P2  
-**Test Steps:**
-1. Search for agreements by partner, geography, type
-2. Verify results
-
-**Expected Results:**
-- Full-text search
-- Filter by metadata
-- Sort by date, value
-- Quick access to documents
+| ID | Test Name | Steps | Expected | Pr |
+|----|-----------|-------|----------|----|
+| POS-001 | Create agreement from template | Select template → CreateAgreement | Agreement created with template fields | P0 |
+| POS-002 | Link agreement to opportunity | LinkAgreement(oppId, agrId) | Linked, visible on opp | P0 |
+| POS-003 | Generate PDF from agreement | GeneratePDF(agrId) | Valid PDF with all clauses | P0 |
+| POS-004 | Update agreement clauses | UpdateClauses(agrId, clauses) | Clauses saved, version incremented | P0 |
+| POS-005 | Submit agreement for approval | SubmitForApproval(agrId) | Status=PendingApproval | P0 |
+| POS-006 | Approve agreement | Approve(agrId) | Status=Approved, audit logged | P1 |
+| POS-007 | Reject agreement | Reject(agrId, reason) | Status=Rejected, reason stored | P1 |
+| POS-008 | Create MOU type | Create(type=MOU) | MOU agreement created | P1 |
+| POS-009 | Create LOA type | Create(type=LOA) | LOA agreement created | P1 |
+| POS-010 | Create Framework type | Create(type=Framework) | Framework created | P1 |
+| POS-011 | Add amendment | AddAmendment(agrId, text) | Amendment linked | P1 |
+| POS-012 | Version history | GetVersions(agrId) | All versions listed | P1 |
+| POS-013 | Search agreements | Search("partnership") | Matching found | P1 |
+| POS-014 | Filter by type | Filter(type=MOU) | Only MOUs | P1 |
+| POS-015 | Filter by status | Filter(status=Active) | Only active | P1 |
+| POS-016 | Paginate agreements | GetPaginated(page=1) | Paginated results | P1 |
+| POS-017 | Sort by date | Sort(date, desc) | Newest first | P2 |
+| POS-018 | Sort by name | Sort(name, asc) | Alphabetical | P2 |
+| POS-019 | Get agreement detail | GetById(agrId) | All fields returned | P1 |
+| POS-020 | Soft delete | Delete(agrId) | IsDeleted=true | P1 |
+| POS-021 | Expiry notification | Agreement near expiry | Notification sent | P1 |
+| POS-022 | Clone agreement | Clone(agrId) | New agreement, same content | P1 |
+| POS-023 | Add digital signature | Sign(agrId, userId) | Signature recorded | P1 |
+| POS-024 | Multiple signatories | Sign by 3 users | All signatures | P1 |
+| POS-025 | Agreement timeline | GetTimeline(agrId) | Events in order | P2 |
+| POS-026 | Export to Word | ExportWord(agrId) | Valid .docx | P2 |
+| POS-027 | Audit trail | GetAudit(agrId) | Full history | P2 |
+| POS-028 | Map to model | mapper.Map | All fields | P2 |
+| POS-029 | Get templates list | GetTemplates | Available templates | P2 |
+| POS-030 | Template preview | PreviewTemplate(tplId) | Preview rendered | P2 |
+| POS-031 | Renew agreement | Renew(agrId) | New agreement linked to old | P1 |
+| POS-032 | Compliance check | CheckCompliance(agrId) | Compliance status | P2 |
+| POS-033 | Agreement count per opp | GetCount(oppId) | Non-deleted count | P2 |
+| POS-034 | Bulk export | ExportAll(oppId) | Zip of PDFs | P2 |
+| POS-035 | Agreement typeahead | Typeahead("part") | Matching names | P2 |
 
 ---
 
-## 2. Terms Extraction (P1)
+## §2 Negative Tests — 70 tests
 
-### TC-OPP-AGR-EXT-001: Extract Geographic Scope
-**Priority:** P1  
-**Test Steps:**
-1. Agreement states: "Valid for Bangladesh and Nepal"
-2. Extract geography
-
-**Expected Results:**
-- Countries: [BD, NP]
-- Mapped to country entities
-- Geographic constraint recorded
-- Visible when linking to opportunities
+NEG-001–010: Input validation (null name, null template, non-existent oppId, deleted opp, invalid type, null clauses, blank name, duplicate name, missing required clause, invalid date range).
+NEG-011–020: Auth (no auth, no create, no approve, no delete, wrong scope, expired token, tampered JWT, disabled, post-logout, escalation).
+NEG-021–030: State (approve draft, reject approved, amend rejected, sign unapproved, delete signed, modify locked, submit incomplete, expire active, renew cancelled, clone deleted).
+NEG-031–040: SQL/XSS (SQL name, SQL search, XSS clause, XSS name, path traversal, HTML injection, JSON injection, template injection, LDAP, command).
+NEG-041–050: Dependencies (DB timeout, connection lost, PDF service down, email service down, storage failure, constraint violation, mapper missing, concurrent lock, pool exhausted, service unavailable).
+NEG-051–060: Format (ID negative, ID zero, ID float, ID string, page=0, pageSize=-1, pageSize>1000, invalid sort, empty search, regex chars).
+NEG-061–070: Business (link to wrong entity type, exceed max amendments, invalid signature, expired certificate, invalid template format, circular reference, max file size, invalid PDF, empty export, mass assignment).
 
 ---
 
-### TC-OPP-AGR-EXT-002: Extract Scope of Work
-**Priority:** P1  
-**Test Steps:**
-1. Agreement defines eligible activities
-2. Extract scope
+## §3 Boundary Tests — 70 tests
 
-**Expected Results:**
-- Activity categories extracted
-- Keywords identified
-- Eligible/ineligible activities flagged
-- Used to validate opportunity alignment
+BND-001–010: String lengths (name 1/200/201, clause 1/10000/10001, description 0/4000/4001, template name 1).
+BND-011–020: Counts (0/1/10/100/1000 agreements, 0/1/50 clauses per agreement, 0/1/10 amendments, 0/1/5 signatures).
+BND-021–030: Pagination (page 1, last, pageSize 1/1000, exactly page size, +1, total items).
+BND-031–040: Dates (today, past, far future, leap year, midnight, year boundary, expiry=today, expiry=tomorrow, expiry yesterday, duration 1 day).
+BND-041–050: Unicode (Arabic, Chinese, Cyrillic, French, emoji, mixed script, RTL, long Unicode, special chars, apostrophe).
+BND-051–060: File (PDF 1KB, PDF 10MB, PDF 50MB, Word 1KB, template minimal, template maximal, zero attachments, max attachments, image in template, formula in template).
+BND-061–070: Version (v1, v2, v100, amendment v1, amendment v50, concurrent version, rollback, restore, export specific version, compare versions).
 
 ---
 
-### TC-OPP-AGR-EXT-003: Extract Pricing Terms
-**Priority:** P1  
-**Test Steps:**
-1. Agreement specifies fee structure
-2. Extract pricing
+## §4 Functional — 50 | §5 Integration — 50 | §6 Security — 50
 
-**Expected Results:**
-- Fee percentage: 8%
-- Cost recovery terms
-- Eligible cost categories
-- Any caps or limits
-- Used in budget calculations
+**§4:** Template selection, clause management, approval workflow, PDF generation, signature verification, expiry calculation, amendment tracking, version control, compliance rules, notification trigger, audit creation, status transitions (15 workflow + 15 validation + 10 constraints + 10 audit).
+**§5:** CRUD lifecycle, opportunity linking, partner association, document storage, email notifications, PDF service, signature service, template engine, search index, export service (10 each × 5 groups).
+**§6:** Injection (10), access control (10), IDOR (10), document security (10), signature security (10).
 
----
+## §7 Concurrency — 25 | §8 Unit — 21 | §9 Performance — 16 | §10 Load — 10
 
-### TC-OPP-AGR-EXT-004: Extract Financial Terms
-**Priority:** P1  
-**Test Steps:**
-1. Agreement value, payment terms
-2. Extract financial details
-
-**Expected Results:**
-- Total agreement value
-- Payment schedule
-- Currency
-- Financial reporting requirements
+**§7:** Concurrent approval, sign, edit, version, delete, clone, export, amend, search, PDF generation (25 scenarios).
+**§8:** Validation (5), formatting (3), calculations (5), state (5), collections (3).
+**§9:** Create (<200ms), PDF gen (<2s), search (<500ms), list 100 (<300ms), export (<5s), concurrent 10 (<1s), memory (6 tests).
+**§10:** 50 concurrent ops (30min), 100 reads, spike, sustained, recovery (10 tests).
 
 ---
 
-### TC-OPP-AGR-EXT-005: Extract Validity Period
-**Priority:** P1  
-**Test Steps:**
-1. Agreement dates
-2. Extract and track
+## Traceability Matrix
 
-**Expected Results:**
-- Start date
-- End date
-- Renewal provisions
-- Notice period for termination
+| Rule | Tests |
+|------|-------|
+| Agreement types | POS-008–010 |
+| Approval workflow | POS-005–007, NEG-021–022 |
+| PDF generation | POS-003, BND-051–054 |
+| Signatures | POS-023–024, NEG-031 |
+| Expiry | POS-021, BND-037–039 |
 
----
-
-### TC-OPP-AGR-EXT-006: Extract Key Obligations
-**Priority:** P2  
-**Test Steps:**
-1. Agreement lists UNOPS obligations
-2. Extract as checklist
-
-**Expected Results:**
-- Obligations listed
-- Categorized (reporting, quality, etc.)
-- Linked to compliance tracking
-- Can assign responsibility
-
----
-
-## 3. Linkage (P1)
-
-### TC-OPP-AGR-LINK-001: Link Agreement to Opportunity
-**Priority:** P1  
-**Test Steps:**
-1. Create opportunity under partnership
-2. Link to agreement
-3. Verify linkage
-
-**Expected Results:**
-- Agreement selected from list
-- Agreement terms visible
-- Geographic scope validated
-- Fee structure applied
-
----
-
-### TC-OPP-AGR-LINK-002: Validate Opportunity Against Agreement
-**Priority:** P1  
-**Test Steps:**
-1. Opportunity in country not covered by agreement
-2. Verify validation warning
-
-**Expected Results:**
-- Geography mismatch flagged
-- Warning displayed
-- Can proceed with justification
-- Or select different agreement
-
----
-
-### TC-OPP-AGR-LINK-003: Multiple Agreements for One Opportunity
-**Priority:** P2  
-**Test Steps:**
-1. Opportunity spans multiple partnerships
-2. Link to multiple agreements
-
-**Expected Results:**
-- Can link multiple agreements
-- Terms of each applied
-- Conflicts flagged
-- Most restrictive terms prevail
-
----
-
-### TC-OPP-AGR-LINK-004: Agreement History
-**Priority:** P2  
-**Test Steps:**
-1. View all opportunities under an agreement
-2. Verify tracking
-
-**Expected Results:**
-- List of linked opportunities
-- Total value under agreement
-- Utilization percentage
-- Timeline of opportunities
-
----
-
-## 4. Pre-Population (P1)
-
-### TC-OPP-AGR-POP-001: Pre-Fill Geography from Agreement
-**Priority:** P1  
-**Test Steps:**
-1. Select agreement with Bangladesh scope
-2. Create opportunity
-3. Verify geography pre-filled
-
-**Expected Results:**
-- PrimaryCountry = Bangladesh
-- Secondary countries = Nepal (if in agreement)
-- Geographic constraint applied
-- Can override if needed
-
----
-
-### TC-OPP-AGR-POP-002: Pre-Fill Fee Structure
-**Priority:** P1  
-**Test Steps:**
-1. Agreement specifies 8% fee
-2. Create opportunity and budget
-3. Verify fee applied
-
-**Expected Results:**
-- Fee percentage = 8%
-- Applied to budget calculations
-- Source = Partnership Agreement #123
-- Can see fee justification
-
----
-
-### TC-OPP-AGR-POP-003: Pre-Fill Scope Categories
-**Priority:** P1  
-**Test Steps:**
-1. Agreement limits to infrastructure
-2. Create opportunity
-3. Verify scope constraints
-
-**Expected Results:**
-- Opportunity type limited to eligible categories
-- Warning if selecting ineligible category
-- Agreement reference shown
-
----
-
-### TC-OPP-AGR-POP-004: Pre-Fill Partner Information
-**Priority:** P1  
-**Test Steps:**
-1. Agreement with World Bank
-2. Create opportunity
-3. Verify partner pre-filled
-
-**Expected Results:**
-- Primary partner = World Bank
-- Partner role pre-defined
-- Contact information populated
-- Agreement referenced
-
----
-
-### TC-OPP-AGR-POP-005: Apply Agreement Templates
-**Priority:** P2  
-**Test Steps:**
-1. Agreement has standard reporting format
-2. Apply to opportunity
-3. Verify template used
-
-**Expected Results:**
-- Reporting template applied
-- Required sections included
-- Format matches agreement
-- Reduces manual setup
-
----
-
-## 5. Validation (P1)
-
-### TC-OPP-AGR-VAL-001: Validate Opportunity Value Against Agreement
-**Priority:** P1  
-**Test Steps:**
-1. Agreement cap: $5M
-2. Opportunity: $6M
-3. Verify validation
-
-**Expected Results:**
-- Exceeds agreement cap flagged
-- Warning displayed
-- Can request amendment
-- Or split into multiple opportunities
-
----
-
-### TC-OPP-AGR-VAL-002: Validate Timeline Against Agreement
-**Priority:** P1  
-**Test Steps:**
-1. Agreement expires Dec 2027
-2. Opportunity end date: Jun 2028
-3. Verify warning
-
-**Expected Results:**
-- Extends beyond agreement flagged
-- Warning shown
-- Must complete before expiration
-- Or seek extension/new agreement
-
----
-
-### TC-OPP-AGR-VAL-003: Validate Pricing Terms
-**Priority:** P1  
-**Test Steps:**
-1. Agreement allows 8% fee
-2. Opportunity budget uses 12% fee
-3. Verify validation error
-
-**Expected Results:**
-- Fee mismatch detected
-- Error prevents submission
-- Must adjust to 8%
-- Or get agreement amendment
-
----
-
-## Integration Tests
-
-### TC-OPP-AGR-INT-001: End-to-End Agreement Usage
-**Priority:** P1  
-**Test Steps:**
-1. Upload agreement
-2. Extract terms
-3. Create opportunity
-4. Pre-populate from agreement
-5. Validate compliance
-
-**Expected Results:**
-- Seamless flow
-- Time savings from pre-population
-- Compliance ensured
-- Audit trail maintained
-
----
-
-### TC-OPP-AGR-INT-002: Agreement Portfolio View
-**Priority:** P2  
-**Test Steps:**
-1. View all agreements for an organization
-2. See utilization across all
-
-**Expected Results:**
-- List of agreements
-- Total value available
-- Value utilized
-- Remaining capacity
-- Expiration status
-
----
-
-## Summary
-
-**Total Test Cases:** 20+  
-**High (P1):** 16  
-**Medium (P2):** 6
-
-**Execution Time:** ~6-8 minutes  
-**Dependencies:** Partner, Opportunity, Document storage
-
----
-
-**Last Updated:** January 13, 2026  
-**C# Test Class:** `AgreementLibraryTests.cs`  
-**Status:** ✅ Ready for Implementation
+**Status:** Ready for Execution

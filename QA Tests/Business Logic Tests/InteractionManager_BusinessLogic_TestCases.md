@@ -1,459 +1,731 @@
-# InteractionManager - Business Logic Test Cases
+# InteractionManager Business Logic — Test Cases
 
-## Manager Overview
-**Manager**: `InteractionManager` / `UNOPSInteractionManager`  
-**Location**: `UNOPS.PAO.Business/Managers/InteractionManager.cs`, `UNOPS.PAO.UNOPSBusiness/Managers/UNOPSInteractionManager.cs`  
-**Purpose**: Manages interactions (meetings, calls, emails, visits) between contacts and the organization.
-
-## Key Business Rules (From PRD)
-
-1. **Interaction Types**: InPersonMeeting, VirtualMeeting, Call, Email, Chat, SiteVisit
-2. **Contact Association**: Interactions linked to one or more contacts via InteractionContact
-3. **Date Tracking**: FromDate/ToDate for meetings, Date for general timestamp
-4. **Document Attachment**: Interactions can have documents attached
-5. **Gmail Integration**: Interactions can be created from Gmail emails
-6. **Status Lifecycle**: Interactions have EntityStatus (Active, Closed, etc.)
-7. **Soft Delete**: Interactions are soft-deleted to preserve history
+**Component:** `UNOPS.PAO.Business/Managers/InteractionManager`  
+**Created:** 2026-02-04  
+**Last Updated:** 2026-02-11  
+**Author:** QA Team  
+**Standard:** 10-Category, 3:1 Ratio (per `comprehensive-test-strategy.mdc`)
 
 ---
 
-## P0 - Critical Business Logic Tests
+## Compliance Summary
 
-### TC-IM-BL-P0-001: Create Interaction - Valid Meeting
-**Priority**: P0 - Critical  
-**Description**: Verify meeting interaction creation  
-**Business Rule**: Meetings require Subject, Type, and Date  
-**Preconditions**: Contact exists
+| Category | File/Section | Count | Minimum Required | Status |
+|----------|-------------|-------|-----------------|--------|
+| Positive Tests | §1 | 35 | 30-50 | ✅ |
+| Negative Tests | §2 | 70 | Max(50, 2×35)=70 | ✅ |
+| Boundary Tests | §3 | 70 | Max(50, 2×35)=70 | ✅ |
+| Functional Tests | §4 | 50 | ≥50 | ✅ |
+| Integration Tests | §5 | 50 | ≥50 | ✅ |
+| Security Tests | §6 | 50 | ≥50 | ✅ |
+| Concurrency Tests | §7 | 25 | ≥25 | ✅ |
+| Unit Tests | §8 | 21 | ≥21 | ✅ |
+| Performance Tests | §9 | 16 | ≥16 | ✅ |
+| Load Tests | §10 | 10 | ≥10 | ✅ |
+| **TOTAL** | | **397** | **≥347** | ✅ |
 
-**Test Steps**:
-1. Create InteractionRequest with Type = InPersonMeeting
-2. Set Subject, Date, FromDate, ToDate
-3. Associate with contact
-4. Call `CreateInteractionAsync(model)`
-5. Verify interaction created
-
-**Expected Result**: Meeting interaction created  
-**Business Impact**: Core relationship tracking
-
----
-
-### TC-IM-BL-P0-002: Create Interaction - Type Validation
-**Priority**: P0 - Critical  
-**Description**: Verify interaction type is valid  
-**Business Rule**: Type must be valid InteractionType enum value  
-**Preconditions**: None
-
-**Test Steps**:
-1. Create with Type = InPersonMeeting - should succeed
-2. Create with Type = Email - should succeed
-3. Create with invalid type - should fail validation
-
-**Expected Result**: Valid types accepted, invalid rejected  
-**Business Impact**: Data classification accuracy
+**3:1 Ratio Check:** (N + B) = 140 ≥ 3 × P = 105 → ✅ PASS
 
 ---
 
-### TC-IM-BL-P0-003: Create Interaction - Contact Association
-**Priority**: P0 - Critical  
-**Description**: Verify interaction-contact relationship  
-**Business Rule**: Interactions must be linked to at least one contact  
-**Preconditions**: Multiple contacts exist
+## Feature Overview
 
-**Test Steps**:
-1. Create interaction with single contact
-2. Verify InteractionContact record created
-3. Create interaction with multiple contacts
-4. Verify all relationships created
-
-**Expected Result**: Contact associations created correctly  
-**Business Impact**: Relationship tracking accuracy
+The InteractionManager handles CRUD operations for interactions (meetings, emails, calls, site visits, virtual meetings, chats). Key functionality: creation with contact/partner association, date range validation (FromDate/ToDate), type classification, Gmail integration, deduplication, status lifecycle, search by date/type, pagination, audit trail, and soft delete.
 
 ---
 
-### TC-IM-BL-P0-004: Get Interaction - Include Related Data
-**Priority**: P0 - Critical  
-**Description**: Verify interaction retrieval includes related entities  
-**Business Rule**: Eager load contacts, documents, partner info  
-**Preconditions**: Interaction with contacts and documents
+## §1 Positive Tests (Happy Path)
 
-**Test Steps**:
-1. Call `GetInteractionAsync(interactionId)`
-2. Verify contacts loaded
-3. Verify documents loaded
-4. Verify partner info included
+> **Minimum:** 30-50 tests | **Focus:** Valid inputs, standard workflows, successful operations
 
-**Expected Result**: Complete interaction data returned  
-**Business Impact**: Complete history display
+### Detailed Test Cases (P0)
 
----
+#### POS-001: Create Meeting Interaction
 
-### TC-IM-BL-P0-005: Update Interaction - Change Type
-**Priority**: P0 - Critical  
-**Description**: Verify interaction type can be changed  
-**Business Rule**: Type change should be allowed  
-**Preconditions**: Interaction of type InPersonMeeting
+**Priority:** P0  
+**Precondition:** Contact and Partner exist. User has create permission.
 
-**Test Steps**:
-1. Update interaction type to VirtualMeeting
-2. Call `UpdateInteractionAsync`
-3. Verify type changed
-4. Verify other fields preserved
+**Steps:**
+1. Call `CreateInteractionAsync` with Type=Meeting, ContactId, PartnerId, FromDate, ToDate, Description
+2. Verify response
 
-**Expected Result**: Type successfully changed  
-**Business Impact**: Data correction capability
+**Expected Result:** Interaction created with auto-ID, audit fields set, IsDeleted=false, Status=Active
 
 ---
 
-### TC-IM-BL-P0-006: Delete Interaction - Soft Delete
-**Priority**: P0 - Critical  
-**Description**: Verify interaction is soft-deleted  
-**Business Rule**: Interactions must be soft-deleted for audit  
-**Preconditions**: Active interaction exists
+#### POS-002: Get Interaction by ID with Related Data
 
-**Test Steps**:
-1. Call `DeleteInteractionAsync(interactionId)`
-2. Verify IsDeleted = true
-3. Verify interaction not in active lists
-4. Verify record still in database
+**Priority:** P0  
+**Precondition:** Interaction exists with linked contact and partner.
 
-**Expected Result**: Soft delete applied  
-**Business Impact**: Audit trail preservation
+**Steps:**
+1. Call `GetInteractionByIdAsync(id)` with includes
+2. Verify related data loaded
+
+**Expected Result:** Interaction returned with Contact and Partner navigation properties loaded, all fields populated
 
 ---
 
-### TC-IM-BL-P0-007: Interaction Date Range - Meeting Duration
-**Priority**: P0 - Critical  
-**Description**: Verify FromDate/ToDate handling for meetings  
-**Business Rule**: Meeting duration captured via date range  
-**Preconditions**: None
+#### POS-003: Update Interaction Description and Dates
 
-**Test Steps**:
-1. Create meeting with FromDate < ToDate
-2. Verify both dates stored
-3. Create with FromDate > ToDate - should fail or swap
-4. Verify duration calculation correct
+**Priority:** P0  
+**Precondition:** Interaction exists, user has edit permission.
 
-**Expected Result**: Valid date ranges accepted  
-**Business Impact**: Calendar integration accuracy
+**Steps:**
+1. Call `UpdateInteractionAsync` with modified Description, FromDate, ToDate
+2. Verify persistence
+
+**Expected Result:** Fields updated, LastModifiedBy/Date set, unchanged fields intact
 
 ---
 
-### TC-IM-BL-P0-008: Gmail Integration - Create from Email
-**Priority**: P0 - Critical  
-**Description**: Verify interaction creation from Gmail  
-**Business Rule**: Gmail Add-on can create Email interactions  
-**Preconditions**: Contact exists with matching email
+#### POS-004: Soft Delete Interaction
 
-**Test Steps**:
-1. Call Gmail integration method with email data
-2. Verify Email type interaction created
-3. Verify subject from email
-4. Verify contact associated
+**Priority:** P0  
+**Precondition:** Interaction exists, user has delete permission.
 
-**Expected Result**: Interaction created from email  
-**Business Impact**: Gmail Add-on core functionality
+**Steps:**
+1. Call `DeleteInteractionAsync(id)`
+2. Verify soft delete
+
+**Expected Result:** IsDeleted=true, DeletedBy/Date set, not physically removed, excluded from future queries
 
 ---
 
-### TC-IM-BL-P0-009: Permission Check - User Access
-**Priority**: P0 - Critical  
-**Description**: Verify interaction access permissions  
-**Business Rule**: Users can only access interactions they have permission for  
-**Preconditions**: Interactions for different org units
+#### POS-005: List Interactions with Pagination
 
-**Test Steps**:
-1. User in OrgUnit A queries interactions
-2. Verify only OrgUnit A interactions visible
-3. Admin user sees all
+**Priority:** P0  
+**Precondition:** 50+ interactions for a partner.
 
-**Expected Result**: Permission-based filtering  
-**Business Impact**: Data security
+**Steps:**
+1. Call `GetInteractionsWithPagination(page=1, size=20)`
+2. Verify paginated results
+
+**Expected Result:** 20 interactions on page 1, total count correct, no deleted interactions, sorted by date desc
 
 ---
 
-### TC-IM-BL-P0-010: Interaction by Contact - Filtered List
-**Priority**: P0 - Critical  
-**Description**: Verify interactions filtered by contact  
-**Business Rule**: Get only interactions for specific contact  
-**Preconditions**: Contact with 10 interactions
+### Positive Tests — Tabular (P1/P2)
 
-**Test Steps**:
-1. Call GetInteractionsByContact
-2. Verify exactly 10 interactions returned
-3. Verify all linked to that contact
-
-**Expected Result**: Correct contact filtering  
-**Business Impact**: Contact history accuracy
-
----
-
-## P1 - High Priority Business Logic Tests
-
-### TC-IM-BL-P1-001: Interaction Search - Date Range
-**Priority**: P1 - High  
-**Description**: Verify date range filtering  
-**Business Rule**: Filter interactions by date range  
-**Preconditions**: Interactions spanning multiple months
-
-**Test Steps**:
-1. Query with date range Jan 1 - Jan 31
-2. Verify only January interactions returned
-3. Verify boundary dates handled correctly
-
-**Expected Result**: Date range filtering works  
-**Business Impact**: Reporting accuracy
-
----
-
-### TC-IM-BL-P1-002: Interaction Search - By Type
-**Priority**: P1 - High  
-**Description**: Verify type-based filtering  
-**Business Rule**: Filter interactions by type  
-**Preconditions**: Mix of interaction types
-
-**Test Steps**:
-1. Query for Type = Email
-2. Verify only email interactions returned
-3. Query for Type = InPersonMeeting
-4. Verify only meetings returned
-
-**Expected Result**: Type filtering works  
-**Business Impact**: Activity analysis
+| ID | Test Name | Precondition | Steps (Brief) | Expected Result | Priority |
+|----|-----------|-------------|---------------|-----------------|----------|
+| POS-006 | Create Email interaction | Contact exists | Create with Type=Email | Email interaction created | P1 |
+| POS-007 | Create Call interaction | Contact exists | Create with Type=Call | Call interaction created | P1 |
+| POS-008 | Create SiteVisit interaction | Contact exists | Create with Type=SiteVisit | SiteVisit created | P1 |
+| POS-009 | Create VirtualMeeting interaction | Contact exists | Create with Type=VirtualMeeting | VirtualMeeting created | P1 |
+| POS-010 | Create Chat interaction | Contact exists | Create with Type=Chat | Chat created | P1 |
+| POS-011 | Get interactions by partner ID | Partner with interactions | GetByPartnerId | Non-deleted interactions returned | P1 |
+| POS-012 | Get interactions by contact ID | Contact with interactions | GetByContactId | Contact's interactions returned | P1 |
+| POS-013 | Search interactions by date range | Interactions span months | SearchByDateRange(from, to) | Only interactions in range | P1 |
+| POS-014 | Search interactions by type | Various types exist | SearchByType(Meeting) | Only Meeting type returned | P1 |
+| POS-015 | Get recent interactions | Many interactions | GetRecentInteractions(limit=10) | 10 most recent | P1 |
+| POS-016 | Gmail import interaction | Gmail data | CreateFromGmail | Gmail metadata populated | P1 |
+| POS-017 | Gmail deduplication — new interaction | Unique Gmail ID | ImportGmail | New interaction created | P1 |
+| POS-018 | Gmail deduplication — existing skipped | Duplicate Gmail ID | ImportGmail | Existing not duplicated | P1 |
+| POS-019 | Update interaction type | Existing interaction | Update Type=Email to Call | Type changed | P1 |
+| POS-020 | Update interaction contact association | Existing interaction | Reassign to new contact | ContactId updated | P1 |
+| POS-021 | Filter by multiple types | Various types | Filter(Meeting, Call) | Both types returned | P2 |
+| POS-022 | Sort by FromDate ascending | Multiple interactions | Sort(fromDate, asc) | Oldest first | P2 |
+| POS-023 | Sort by FromDate descending | Multiple interactions | Sort(fromDate, desc) | Newest first | P2 |
+| POS-024 | Get interaction count by partner | Partner with 15 interactions | GetCount(partnerId) | 15 (non-deleted) | P2 |
+| POS-025 | Get interaction count by type | Mixed types | GetCountByType | Correct per-type counts | P2 |
+| POS-026 | Create with minimum fields | Only required fields | Create with required only | Created with nulls for optional | P2 |
+| POS-027 | Create with all optional fields | All fields populated | Create with all fields | All persisted | P2 |
+| POS-028 | Map entity to model | Interaction entity | mapper.Map<InteractionModel> | All fields mapped | P2 |
+| POS-029 | Map create request to entity | CreateInteractionRequest | mapper.Map<Interaction> | All fields mapped | P2 |
+| POS-030 | Interaction with long description (4000 chars) | Long text | Create with 4000 chars | Stored completely | P2 |
+| POS-031 | Status lifecycle — Active to Completed | Active interaction | ChangeStatus(Completed) | Status=Completed, audit set | P2 |
+| POS-032 | Status lifecycle — Active to Cancelled | Active interaction | ChangeStatus(Cancelled) | Status=Cancelled | P2 |
+| POS-033 | Paginate page 2 | 50+ interactions | GetInteractions(page=2) | Interactions 21-40 | P2 |
+| POS-034 | Get interaction audit trail | Modified interaction | GetAudit | Audit entries returned | P2 |
+| POS-035 | Restore soft-deleted interaction | Deleted interaction | Restore | IsDeleted=false | P2 |
 
 ---
 
-### TC-IM-BL-P1-003: Interaction Pagination
-**Priority**: P1 - High  
-**Description**: Verify pagination for large result sets  
-**Business Rule**: PaginationRequest applies correctly  
-**Preconditions**: 100 interactions
+## §2 Negative Tests (Failure Scenarios)
 
-**Test Steps**:
-1. Query Page 1, Size 20
-2. Verify 20 results
-3. Verify TotalCount = 100
+> **Minimum:** 70 tests
 
-**Expected Result**: Pagination works correctly  
-**Business Impact**: Performance
+### 2.1 Invalid Input (10)
 
----
+| ID | Invalid Input | Expected Error | Priority |
+|----|--------------|---------------|----------|
+| NEG-001 | Null Description | BusinessException: required | P0 |
+| NEG-002 | Null ContactId | BusinessException: contact required | P0 |
+| NEG-003 | Non-existent ContactId | KeyNotFoundException | P0 |
+| NEG-004 | Deleted ContactId | BusinessException: contact deleted | P0 |
+| NEG-005 | Null PartnerId | BusinessException: partner required | P0 |
+| NEG-006 | Non-existent PartnerId | KeyNotFoundException | P0 |
+| NEG-007 | Invalid Type value | BusinessException: invalid type | P0 |
+| NEG-008 | FromDate > ToDate | BusinessException: invalid date range | P0 |
+| NEG-009 | Null FromDate | BusinessException: date required | P0 |
+| NEG-010 | Update non-existent interaction | KeyNotFoundException | P0 |
 
-### TC-IM-BL-P1-004: Interaction Update - Add Contacts
-**Priority**: P1 - High  
-**Description**: Verify adding contacts to existing interaction  
-**Business Rule**: Can add more contacts to interaction  
-**Preconditions**: Interaction with 1 contact
+### 2.2 Unauthorized Access (10)
 
-**Test Steps**:
-1. Add 2 more contacts to interaction
-2. Call Update
-3. Verify now has 3 contacts
+| ID | Role | Action | Expected | Priority |
+|----|------|--------|----------|----------|
+| NEG-011 | No auth | Create | UnauthorizedAccessException | P0 |
+| NEG-012 | Read-only | Create | UnauthorizedAccessException | P0 |
+| NEG-013 | Read-only | Update | UnauthorizedAccessException | P0 |
+| NEG-014 | Read-only | Delete | UnauthorizedAccessException | P0 |
+| NEG-015 | OrgUnit-scoped | Create out of scope | UnauthorizedAccessException | P0 |
+| NEG-016 | OrgUnit-scoped | Read out of scope | UnauthorizedAccessException | P0 |
+| NEG-017 | OrgUnit-scoped | Update out of scope | UnauthorizedAccessException | P0 |
+| NEG-018 | OrgUnit-scoped | Delete out of scope | UnauthorizedAccessException | P0 |
+| NEG-019 | Expired session | Any operation | UnauthorizedAccessException | P1 |
+| NEG-020 | Disabled account | Any operation | UnauthorizedAccessException | P1 |
 
-**Expected Result**: Contacts added successfully  
-**Business Impact**: Multi-person meeting tracking
+### 2.3 Invalid State (5)
 
----
+| ID | State | Action | Expected | Priority |
+|----|-------|--------|----------|----------|
+| NEG-021 | Deleted interaction | Update | BusinessException | P1 |
+| NEG-022 | Deleted interaction | Delete again | No-op or error | P1 |
+| NEG-023 | Completed interaction | Modify dates | BusinessException (if locked) | P1 |
+| NEG-024 | Cancelled interaction | Update | BusinessException (if locked) | P1 |
+| NEG-025 | Invalid status transition | Active → Draft | BusinessException: invalid transition | P1 |
 
-### TC-IM-BL-P1-005: Interaction Update - Remove Contacts
-**Priority**: P1 - High  
-**Description**: Verify removing contacts from interaction  
-**Business Rule**: Can remove contacts from interaction  
-**Preconditions**: Interaction with 3 contacts
+### 2.4 Missing/Null Data (10)
 
-**Test Steps**:
-1. Update with only 1 contact
-2. Verify now has 1 contact
-3. Verify removed relationships deleted
+| ID | Missing | Expected | Priority |
+|----|---------|----------|----------|
+| NEG-026 | All fields null | Multiple validation errors | P1 |
+| NEG-027 | Null request object | ArgumentNullException | P1 |
+| NEG-028 | Null specification | Default or error | P1 |
+| NEG-029 | Null pagination params | Defaults applied | P1 |
+| NEG-030 | Whitespace-only Description | BusinessException | P1 |
+| NEG-031 | Empty Type string | BusinessException | P1 |
+| NEG-032 | Null date range for search | Default range or error | P1 |
+| NEG-033 | ToDate = null with FromDate set | Error or open-ended | P2 |
+| NEG-034 | FromDate = null with ToDate set | Error or open-ended | P2 |
+| NEG-035 | Description with only whitespace | Trimmed to empty → error | P1 |
 
-**Expected Result**: Contacts removed correctly  
-**Business Impact**: Data correction
+### 2.5 Dependency Failures (10)
 
----
+| ID | Failure | Expected | Priority |
+|----|---------|----------|----------|
+| NEG-036 | DB connection lost on create | Transaction rolled back | P1 |
+| NEG-037 | DB timeout on query | TimeoutException | P1 |
+| NEG-038 | AutoMapper missing mapping | MappingException | P2 |
+| NEG-039 | Repository constraint violation | BusinessException | P1 |
+| NEG-040 | Gmail API unavailable | Graceful failure | P1 |
+| NEG-041 | Gmail returns malformed data | Handled, fields default | P2 |
+| NEG-042 | Concurrent DB migration | Graceful error | P2 |
+| NEG-043 | Connection pool exhausted | Wait or error | P1 |
+| NEG-044 | Transaction deadlock | Retry mechanism | P1 |
+| NEG-045 | Serialization failure | Error handled | P2 |
 
-### TC-IM-BL-P1-006: Interaction Description - Long Text
-**Priority**: P1 - High  
-**Description**: Verify long description handling  
-**Business Rule**: Description can be lengthy notes  
-**Preconditions**: None
+### 2.6 Additional Scenarios (25)
 
-**Test Steps**:
-1. Create with 5000 character description
-2. Verify stored completely
-3. Retrieve and verify no truncation
-
-**Expected Result**: Long descriptions supported  
-**Business Impact**: Meeting notes capability
-
----
-
-### TC-IM-BL-P1-007: Interaction Audit Fields
-**Priority**: P1 - High  
-**Description**: Verify audit trail  
-**Business Rule**: CreatedBy/Date and ModifiedBy/Date tracked  
-**Preconditions**: Interaction exists
-
-**Test Steps**:
-1. Create interaction as User A
-2. Verify CreatedBy = User A
-3. Update as User B
-4. Verify LastModifiedBy = User B
-
-**Expected Result**: Audit fields maintained  
-**Business Impact**: Accountability
-
----
-
-### TC-IM-BL-P1-008: Recent Interactions - Partner View
-**Priority**: P1 - High  
-**Description**: Verify getting recent interactions for partner  
-**Business Rule**: Show recent activity for partner contacts  
-**Preconditions**: Partner with contacts having interactions
-
-**Test Steps**:
-1. Get recent interactions for partner
-2. Verify ordered by date descending
-3. Verify includes all partner's contacts' interactions
-
-**Expected Result**: Recent activity shown  
-**Business Impact**: Relationship overview
-
----
-
-### TC-IM-BL-P1-009: Find or Create - Gmail Deduplication
-**Priority**: P1 - High  
-**Description**: Verify Gmail doesn't create duplicates  
-**Business Rule**: Same email should not create duplicate interactions  
-**Preconditions**: Email interaction already exists
-
-**Test Steps**:
-1. Process same email again via Gmail
-2. Verify existing interaction found
-3. Verify no duplicate created
-
-**Expected Result**: Duplicate prevention  
-**Business Impact**: Data quality
+| ID | Scenario | Expected | Priority |
+|----|---------|----------|----------|
+| NEG-046 | SQL injection in Description | Parameterized, no injection | P0 |
+| NEG-047 | XSS in Description | Sanitized | P0 |
+| NEG-048 | Description > 4000 chars | Validation error | P1 |
+| NEG-049 | Negative ContactId | Validation error | P1 |
+| NEG-050 | Zero ContactId | Validation error | P1 |
+| NEG-051 | Negative PartnerId | Validation error | P1 |
+| NEG-052 | Zero PartnerId | Validation error | P1 |
+| NEG-053 | Negative interaction ID | Not found | P1 |
+| NEG-054 | Zero interaction ID | Not found | P1 |
+| NEG-055 | Page = 0 | Default to 1 | P2 |
+| NEG-056 | PageSize = -1 | Validation error | P2 |
+| NEG-057 | PageSize > 1000 | Capped | P2 |
+| NEG-058 | Sort by invalid column | Default sort | P2 |
+| NEG-059 | FromDate far in future | Validation (if rule exists) | P2 |
+| NEG-060 | ToDate far in past | Valid if before FromDate check | P2 |
+| NEG-061 | Create for inactive partner | Business rule | P1 |
+| NEG-062 | Multiple validation errors | All returned | P1 |
+| NEG-063 | Gmail duplicate with different data | Dedup logic handles | P1 |
+| NEG-064 | Path traversal in any field | Sanitized | P0 |
+| NEG-065 | HTML injection in Description | Escaped | P1 |
+| NEG-066 | Very long Type string | Validation error | P1 |
+| NEG-067 | Search regex chars | Escaped/literal | P1 |
+| NEG-068 | Filter invalid date format | Parsing error | P1 |
+| NEG-069 | Batch create with mixed valid/invalid | Valid created, invalid rejected | P1 |
+| NEG-070 | Create with contact from different partner | Business rule validation | P1 |
 
 ---
 
-### TC-IM-BL-P1-010: Interaction Status - Lifecycle
-**Priority**: P1 - High  
-**Description**: Verify status transitions  
-**Business Rule**: EntityStatus follows valid transitions  
-**Preconditions**: Active interaction
+## §3 Boundary Tests (Edge Cases)
 
-**Test Steps**:
-1. Verify starts as Active
-2. Close interaction
-3. Verify status = Closed
-4. Verify closed interactions excluded from default queries
+> **Minimum:** 70 tests
 
-**Expected Result**: Status lifecycle works  
-**Business Impact**: Status management
+### 3.1 String Lengths (8)
 
----
+| ID | Field | Min | Max | At Min | At Max | Over Max | Priority |
+|----|-------|-----|-----|--------|--------|----------|----------|
+| BND-001 | Description | 1 | 4000 | ✅ | ✅ | ❌ | P1 |
+| BND-002 | Type | 1 | 50 | ✅ | ✅ | ❌ | P1 |
+| BND-003 | Location | 0 | 500 | ✅ | ✅ | ❌ | P2 |
+| BND-004 | Subject | 0 | 200 | ✅ | ✅ | ❌ | P2 |
+| BND-005 | Participants | 0 | 2000 | ✅ | ✅ | ❌ | P2 |
+| BND-006 | Notes | 0 | 4000 | ✅ | ✅ | ❌ | P2 |
+| BND-007 | GmailMessageId | 0 | 500 | ✅ | ✅ | ❌ | P2 |
+| BND-008 | GmailThreadId | 0 | 500 | ✅ | ✅ | ❌ | P2 |
 
-## P2 - Medium Priority Business Logic Tests
+### 3.2 Numeric Boundaries (8)
 
-### TC-IM-BL-P2-001: Interaction with Documents
-**Priority**: P2 - Medium  
-**Description**: Verify document attachment  
-**Test Steps**:
-1. Create interaction
-2. Attach document
-3. Verify document linked
+| ID | Field | Min | Max | Zero | Negative | Priority |
+|----|-------|-----|-----|------|----------|----------|
+| BND-009 | Interaction ID | 1 | MAX_INT | ❌ | ❌ | P1 |
+| BND-010 | ContactId | 1 | MAX_INT | ❌ | ❌ | P1 |
+| BND-011 | PartnerId | 1 | MAX_INT | ❌ | ❌ | P1 |
+| BND-012 | Page number | 1 | 10000 | ❌ Default | ❌ Error | P1 |
+| BND-013 | Page size | 1 | 1000 | ❌ | ❌ | P1 |
+| BND-014 | Interactions per partner | 0 | 100000 | ✅ Empty | ✅ Large | P1 |
+| BND-015 | Interactions per contact | 0 | 10000 | ✅ Empty | ✅ Large | P1 |
+| BND-016 | Recent interactions limit | 1 | 100 | ✅ | ✅ | P2 |
 
-**Expected Result**: Documents attachable
+### 3.3 Date Boundaries (12)
 
----
+| ID | Test Name | Scenario | Expected | Priority |
+|----|-----------|---------|----------|----------|
+| BND-017 | FromDate = ToDate (same day) | Point-in-time | Accepted | P1 |
+| BND-018 | FromDate = ToDate (same second) | Exact match | Accepted | P1 |
+| BND-019 | ToDate = FromDate + 1 second | Minimal duration | Accepted | P1 |
+| BND-020 | Multi-day interaction | FromDate Mon, ToDate Fri | Accepted | P1 |
+| BND-021 | Leap year date | Feb 29, 2028 | Accepted | P2 |
+| BND-022 | End of month | Jan 31 | Accepted | P2 |
+| BND-023 | Year boundary | Dec 31 - Jan 1 | Accepted | P2 |
+| BND-024 | Midnight UTC | 00:00:00 | No boundary error | P2 |
+| BND-025 | Very old date | 2000-01-01 | Accepted | P2 |
+| BND-026 | Today's date | Current date | Accepted | P2 |
+| BND-027 | Search range exactly 1 day | Same from/to | Returns that day | P1 |
+| BND-028 | Search range exactly 1 year | 365 days | Correct results | P1 |
 
-### TC-IM-BL-P2-002: Virtual Meeting - URL Storage
-**Priority**: P2 - Medium  
-**Description**: Verify meeting URL stored  
-**Test Steps**:
-1. Create VirtualMeeting with meeting URL
-2. Verify URL stored correctly
+### 3.4 Collections (10)
 
-**Expected Result**: Meeting URL preserved
+| ID | Test Name | State | Expected | Priority |
+|----|-----------|-------|----------|----------|
+| BND-029 | 0 interactions for partner | Empty | Empty list, count=0 | P1 |
+| BND-030 | 1 interaction | Single | List with 1 | P1 |
+| BND-031 | Exactly page size | 20 interactions, size=20 | Full page, hasNext=false | P1 |
+| BND-032 | Page size + 1 | 21 interactions | 20 on page 1, hasNext=true | P1 |
+| BND-033 | 1000 interactions | Large | Paginated correctly | P1 |
+| BND-034 | 10,000 interactions | Very large | Performance acceptable | P1 |
+| BND-035 | Last page partial | 45 items, page 3, size=20 | 5 items | P1 |
+| BND-036 | All interactions same type | Only Meeting | Filter returns all | P2 |
+| BND-037 | All interactions same date | Same FromDate | Sort handles ties | P2 |
+| BND-038 | Contact with 0 interactions, partner has some | Mixed | Contact-specific returns empty | P1 |
 
----
+### 3.5 Unicode & Special Characters (10)
 
-### TC-IM-BL-P2-003: Interaction Location
-**Priority**: P2 - Medium  
-**Description**: Verify location field  
-**Test Steps**:
-1. Create with Location field
-2. Verify stored and searchable
+| ID | Field | Input | Expected | Priority |
+|----|-------|-------|----------|----------|
+| BND-039 | Description (Arabic) | `اجتماع عمل` | Stored correctly | P2 |
+| BND-040 | Description (Chinese) | `商务会议记录` | Stored correctly | P2 |
+| BND-041 | Description (Cyrillic) | `Деловая встреча` | Stored correctly | P2 |
+| BND-042 | Description (French) | `Réunion d'affaires` | Accents preserved | P2 |
+| BND-043 | Description with emoji | `Great meeting! 🤝` | Emoji preserved | P2 |
+| BND-044 | Location with special chars | `Room 3-A (2nd Floor)` | Chars preserved | P2 |
+| BND-045 | Subject with HTML entities | `Revenue &gt; $1M` | Stored as-is | P2 |
+| BND-046 | Participants with commas | `John, Jane, Bob` | Stored correctly | P2 |
+| BND-047 | Notes with newlines | Multi-line text | Newlines preserved | P2 |
+| BND-048 | GmailMessageId with special chars | Base64 encoded ID | Stored as-is | P2 |
 
-**Expected Result**: Location tracked
+### 3.6 Type Boundaries (7)
 
----
+| ID | Test Name | Scenario | Expected | Priority |
+|----|-----------|---------|----------|----------|
+| BND-049 | Each valid type creates successfully | Meeting,Email,Call,SiteVisit,VirtualMeeting,Chat | All accepted | P1 |
+| BND-050 | Type case sensitivity | "meeting" vs "Meeting" | Handled (either accepted or normalized) | P1 |
+| BND-051 | Type with leading/trailing spaces | " Meeting " | Trimmed | P2 |
+| BND-052 | Type enum at first value | Meeting (index 0) | Accepted | P2 |
+| BND-053 | Type enum at last value | Chat (last index) | Accepted | P2 |
+| BND-054 | Status Active to Completed | Valid transition | Accepted | P1 |
+| BND-055 | Status Active to Cancelled | Valid transition | Accepted | P1 |
 
-### TC-IM-BL-P2-004: Site Visit Type
-**Priority**: P2 - Medium  
-**Description**: Verify SiteVisit interaction type  
-**Test Steps**:
-1. Create SiteVisit type interaction
-2. Verify type-specific handling
+### 3.7 Additional (15)
 
-**Expected Result**: Site visits tracked
-
----
-
-### TC-IM-BL-P2-005: Chat Interaction
-**Priority**: P2 - Medium  
-**Description**: Verify Chat type interaction  
-**Test Steps**:
-1. Create Chat type interaction
-2. Verify appropriate for chat logs
-
-**Expected Result**: Chat interactions supported
-
----
-
-## P3 - Low Priority Edge Cases
-
-### TC-IM-BL-P3-001: Interaction Without Contacts
-**Priority**: P3 - Low  
-**Description**: Verify handling of orphaned interaction  
-**Test Steps**:
-1. Create interaction without contacts
-2. Verify created or rejected appropriately
-
-**Expected Result**: Handled gracefully
-
----
-
-### TC-IM-BL-P3-002: Zero Duration Meeting
-**Priority**: P3 - Low  
-**Description**: Verify FromDate = ToDate handling  
-**Test Steps**:
-1. Create with FromDate = ToDate
-2. Verify handled (allowed or rejected)
-
-**Expected Result**: Edge case handled
-
----
-
-### TC-IM-BL-P3-003: Future Dated Interaction
-**Priority**: P3 - Low  
-**Description**: Verify future dates allowed  
-**Test Steps**:
-1. Create interaction with future date
-2. Verify allowed (scheduled meeting)
-
-**Expected Result**: Future dates accepted
-
----
-
-## Integration with Unit Tests
-
-Implement in: `tests/UNOPS.PAO.Business.Tests/Managers/InteractionManagerBusinessLogicTests.cs`
+| ID | Test Name | Scenario | Expected | Priority |
+|----|-----------|---------|----------|----------|
+| BND-056 | Duration = 0 (same time) | FromDate = ToDate exact | Accepted | P1 |
+| BND-057 | Duration = 1 minute | 60-second gap | Accepted | P1 |
+| BND-058 | Duration = 24 hours | Full day | Accepted | P1 |
+| BND-059 | Duration = 7 days | Week-long | Accepted | P2 |
+| BND-060 | Create at exactly midnight | Time = 00:00:00 | No boundary issue | P2 |
+| BND-061 | Create at end of day | Time = 23:59:59 | No boundary issue | P2 |
+| BND-062 | Interaction ID = 1 | Minimum valid | Retrieved | P2 |
+| BND-063 | Interaction ID = MAX_INT | Maximum | Handled | P2 |
+| BND-064 | Search with exactly 1 result | Single match | Returned correctly | P1 |
+| BND-065 | Search with 0 results | No match | Empty list | P1 |
+| BND-066 | Filter by type + date combined | Both criteria | Intersection returned | P1 |
+| BND-067 | Sort each available column | Type, Date, Description | Each works | P1 |
+| BND-068 | Paginate exactly to last page | Total / pageSize = integer | Last page full | P2 |
+| BND-069 | Gmail message ID at max length | 500 chars | Stored correctly | P2 |
+| BND-070 | Multiple contacts for same interaction | Many-to-many if supported | All linked | P2 |
 
 ---
 
-## Related Documentation
+## §4 Functional Tests (Business Rules)
 
-- [Interaction Entity](../../UNOPS.PAO.Domain/Entities/Interaction.cs)
-- [InteractionType Enum](../../UNOPS.PAO.Domain/Enums/InteractionType.cs)
-- [Existing Test Cases](../Business/InteractionManager/InteractionManager_TestCases.md)
+> **Minimum:** 50 tests
 
+### 4.1 Workflow Rules (15)
+
+| ID | Rule | Trigger | Expected | Priority |
+|----|------|---------|----------|----------|
+| FUN-001 | Queries exclude IsDeleted=true | Any query | Deleted filtered out | P0 |
+| FUN-002 | Create sets audit fields | Create | CreatedBy, CreatedDate | P0 |
+| FUN-003 | Update sets audit fields | Update | LastModifiedBy/Date | P0 |
+| FUN-004 | Delete sets soft-delete fields | Delete | IsDeleted, DeletedBy/Date | P0 |
+| FUN-005 | Name auto-set from Type + Date | Create | Name = "Meeting - 2026-02-11" | P1 |
+| FUN-006 | Contact association validated | Create | Contact must exist, !IsDeleted | P0 |
+| FUN-007 | Partner association validated | Create | Partner must exist, !IsDeleted | P0 |
+| FUN-008 | Date range validated | Create/Update | FromDate ≤ ToDate | P0 |
+| FUN-009 | Gmail deduplication by MessageId | Gmail import | Existing not duplicated | P1 |
+| FUN-010 | Status transitions validated | ChangeStatus | Only valid transitions | P1 |
+| FUN-011 | Search is case-insensitive | Search | "meeting" = "Meeting" | P1 |
+| FUN-012 | Pagination defaults applied | Null params | Page=1, Size=20 | P1 |
+| FUN-013 | Recent interactions sorted desc | GetRecent | Most recent first | P1 |
+| FUN-014 | Count excludes deleted | GetCount | Only !IsDeleted | P1 |
+| FUN-015 | Contact change updates interaction scope | Reassign contact | Interaction follows contact | P1 |
+
+### 4.2 Validation Rules (15)
+
+| ID | Rule | Valid | Invalid | Priority |
+|----|------|-------|---------|----------|
+| FUN-016 | Description required | "Meeting notes" | null, "" | P0 |
+| FUN-017 | ContactId required and positive | 42 | 0, -1 | P0 |
+| FUN-018 | PartnerId required and positive | 42 | 0, -1 | P0 |
+| FUN-019 | Type must be valid enum | "Meeting" | "INVALID" | P0 |
+| FUN-020 | FromDate required | Valid date | null | P0 |
+| FUN-021 | FromDate ≤ ToDate | Jan 1 < Jan 2 | Jan 2 > Jan 1 reversed | P0 |
+| FUN-022 | Contact must exist and not deleted | Active contact | Deleted contact | P0 |
+| FUN-023 | Partner must exist and not deleted | Active partner | Deleted partner | P0 |
+| FUN-024 | Input sanitized for XSS | Clean text | `<script>` | P0 |
+| FUN-025 | Description max length 4000 | 3999 chars | 4001 chars | P1 |
+| FUN-026 | Location max length 500 | 499 chars | 501 chars | P2 |
+| FUN-027 | Subject max length 200 | 199 chars | 201 chars | P2 |
+| FUN-028 | Description trimmed | " text " | Trimmed to "text" | P2 |
+| FUN-029 | Gmail MessageId validated | Valid format | Malformed | P2 |
+| FUN-030 | Status transition: Active→Completed valid | Active | Draft→Completed invalid | P1 |
+
+### 4.3 Constraint Rules (10)
+
+| ID | Constraint | Input | Expected | Priority |
+|----|-----------|-------|----------|----------|
+| FUN-031 | Max page size 1000 | Size=5000 | Capped at 1000 | P1 |
+| FUN-032 | FK contact exists | Non-existent | FK violation | P0 |
+| FUN-033 | FK partner exists | Non-existent | FK violation | P0 |
+| FUN-034 | Soft-delete no cascade | Delete interaction | Contact/Partner unchanged | P1 |
+| FUN-035 | Gmail MessageId unique | Duplicate | Dedup (skip or update) | P1 |
+| FUN-036 | Search result limit | 10,000 matches | Paginated | P2 |
+| FUN-037 | Batch operation limit | 1000 interactions | Processed | P2 |
+| FUN-038 | Max interactions per contact | System limit | Enforced or unlimited | P2 |
+| FUN-039 | Date range search limit | 10 years | Accepted or capped | P2 |
+| FUN-040 | Recent interactions limit | Max 100 | Capped | P2 |
+
+### 4.4 Audit Rules (10)
+
+| ID | Action | Expected Audit | Priority |
+|----|--------|---------------|----------|
+| FUN-041 | Create | CreatedBy=current, CreatedDate=now | P0 |
+| FUN-042 | Update | LastModifiedBy=current, LastModifiedDate=now | P0 |
+| FUN-043 | Delete | DeletedBy=current, DeletedDate=now | P0 |
+| FUN-044 | Status change | LastModifiedBy updated | P1 |
+| FUN-045 | Gmail import | CreatedBy=user or system | P1 |
+| FUN-046 | Read no audit change | Audit fields unchanged | P1 |
+| FUN-047 | Batch update | Each interaction's audit set | P1 |
+| FUN-048 | Failed operation | No audit change | P1 |
+| FUN-049 | Reassign contact | Audit trail entry | P1 |
+| FUN-050 | Restore | IsDeleted=false, LastModifiedBy updated | P1 |
+
+---
+
+## §5 Integration Tests (End-to-End)
+
+> **Minimum:** 50 tests
+
+### 5.1 CRUD (10)
+
+| ID | Test | Operation | Expected | Priority |
+|----|------|----------|----------|----------|
+| INT-001 | Full CRUD lifecycle | Create→Read→Update→Delete | All succeed | P0 |
+| INT-002 | Create → appears in partner interactions | Create | Listed under partner | P0 |
+| INT-003 | Create → appears in contact interactions | Create | Listed under contact | P0 |
+| INT-004 | Delete → excluded from lists | Soft-delete | Not in partner/contact lists | P0 |
+| INT-005 | Update → persists across reads | Update + read | Changes persisted | P0 |
+| INT-006 | Create all 6 types | Each type | All created successfully | P1 |
+| INT-007 | Status transition lifecycle | Active→Completed | Status updated | P1 |
+| INT-008 | Gmail import lifecycle | Import → read → search | Searchable | P1 |
+| INT-009 | Restore deleted | Restore → read | Available again | P1 |
+| INT-010 | Bulk create 50 interactions | Batch | All 50 created | P1 |
+
+### 5.2 Search & Filter (10)
+
+| ID | Test | Criteria | Expected | Priority |
+|----|------|---------|----------|----------|
+| INT-011 | Search by type Meeting | Type filter | Only meetings | P0 |
+| INT-012 | Search by date range | Last 30 days | Only recent | P0 |
+| INT-013 | Search by type + date | Meeting + last 7 days | Intersection | P1 |
+| INT-014 | Search by partner | PartnerId | Partner's interactions | P1 |
+| INT-015 | Search by contact | ContactId | Contact's interactions | P1 |
+| INT-016 | Search case-insensitive | "meeting" | Matches "Meeting" | P1 |
+| INT-017 | Search returns empty | "NONEXISTENT" | Empty set | P1 |
+| INT-018 | Filter excludes deleted | Include deleted contact | Filtered out | P1 |
+| INT-019 | Combined partner + type + date | All three | Narrow result | P1 |
+| INT-020 | Clear filters | Reset | All interactions shown | P1 |
+
+### 5.3 Pagination (5)
+
+| ID | Page | Expected | Priority |
+|----|------|----------|----------|
+| INT-021 | Page 1 of 3 | 20 interactions | P1 |
+| INT-022 | Page 3 of 3 (partial) | Remaining items | P1 |
+| INT-023 | Empty results | 0 total | P1 |
+| INT-024 | Single page | < pageSize | P2 |
+| INT-025 | Large page size 1000 | All in 1 page | P2 |
+
+### 5.4 Relationships (10)
+
+| ID | Relationship | Scenario | Expected | Priority |
+|----|-------------|---------|----------|----------|
+| INT-026 | Interaction → Contact | Include | Contact loaded | P0 |
+| INT-027 | Interaction → Partner | Include | Partner loaded | P0 |
+| INT-028 | Contact deletion impact | Delete contact | Interactions remain, contact ref broken or cascade | P1 |
+| INT-029 | Partner deletion impact | Delete partner | Interactions remain | P1 |
+| INT-030 | Interaction across contacts | Same partner, diff contacts | Both listed under partner | P1 |
+| INT-031 | Gmail → Interaction link | Gmail import | Gmail metadata linked | P1 |
+| INT-032 | Interaction → OrgUnit (via partner) | Scope check | OrgUnit scoping works | P1 |
+| INT-033 | Multiple interactions same contact | 10 interactions | All listed | P2 |
+| INT-034 | Interaction type affects categorization | Type grouping | Correct grouping | P2 |
+| INT-035 | Audit trail integration | Modify + check audit | Audit entries match | P1 |
+
+### 5.5 Error Handling (15)
+
+| ID | Error | Expected | Priority |
+|----|-------|----------|----------|
+| INT-036 | Invalid data → 400 | BusinessException | P0 |
+| INT-037 | Not found → 404 | KeyNotFoundException | P0 |
+| INT-038 | Unauthorized → 403 | UnauthorizedAccessException | P0 |
+| INT-039 | Update non-existent → 404 | KeyNotFoundException | P0 |
+| INT-040 | Delete non-existent → 404 | KeyNotFoundException | P0 |
+| INT-041 | Duplicate Gmail → dedup | Handled gracefully | P1 |
+| INT-042 | FK violation → 400 | BusinessException | P1 |
+| INT-043 | Date range invalid → 400 | BusinessException | P1 |
+| INT-044 | DB timeout → 500 | Graceful error | P1 |
+| INT-045 | Concurrency conflict → 409 | Optimistic concurrency | P1 |
+| INT-046 | Malformed request → 400 | Validation error | P1 |
+| INT-047 | Rate limit → 429 | Rate limit message | P2 |
+| INT-048 | SQL injection sanitized | No harm | P0 |
+| INT-049 | Large payload → 413 | Request too large | P2 |
+| INT-050 | Session expired → 401 | Auth required | P1 |
+
+---
+
+## §6 Security Tests
+
+> **Minimum:** 50 tests
+
+### 6.1 Injection (10)
+
+| ID | Attack | Target | Expected | Priority |
+|----|--------|--------|----------|----------|
+| SEC-001 | SQL in Description | `'; DROP TABLE--` | Parameterized | P0 |
+| SEC-002 | SQL in search | `1 OR 1=1` | Parameterized | P0 |
+| SEC-003 | XSS in Description | `<script>alert(1)</script>` | Sanitized | P0 |
+| SEC-004 | XSS in Subject | Script tag | Sanitized | P0 |
+| SEC-005 | LDAP injection | `*)(cn=*` | Sanitized | P1 |
+| SEC-006 | HTML in Notes | `<img onerror=...>` | Escaped | P1 |
+| SEC-007 | JSON injection | `{"$ne":null}` | Rejected | P1 |
+| SEC-008 | Path traversal | `../../etc/passwd` | Rejected | P1 |
+| SEC-009 | XML entity | XXE payload | Rejected | P1 |
+| SEC-010 | Template injection | `{{constructor}}` | Escaped | P1 |
+
+### 6.2 Access Control (10)
+
+| ID | Role | Action | Expected | Priority |
+|----|------|--------|----------|----------|
+| SEC-011 | Anonymous | POST create | 401 | P0 |
+| SEC-012 | No permission | POST create | 403 | P0 |
+| SEC-013 | Scoped | Out-of-scope read | 403 | P0 |
+| SEC-014 | Scoped | Out-of-scope create | 403 | P0 |
+| SEC-015 | Expired | Any | 401 | P0 |
+| SEC-016 | Tampered JWT | Any | 401/403 | P0 |
+| SEC-017 | Horizontal | Other user's data | 403 | P0 |
+| SEC-018 | Disabled | Any | 403 | P1 |
+| SEC-019 | Post-logout | Cached | 401 | P1 |
+| SEC-020 | Role escalation | ?role=admin | Ignored | P0 |
+
+### 6.3 IDOR (10)
+
+| ID | Object | Manipulation | Expected | Priority |
+|----|--------|-------------|----------|----------|
+| SEC-021 | Interaction ID | Guess | 403 if not in scope | P0 |
+| SEC-022 | Sequential enum | /1, /2, /3 | Rate limited | P0 |
+| SEC-023 | Deleted ID | Access deleted | 404 | P1 |
+| SEC-024 | Other OrgUnit | Change scope | 403 | P0 |
+| SEC-025 | Negative ID | -1 | 400 | P1 |
+| SEC-026 | Zero ID | 0 | 400 | P1 |
+| SEC-027 | Float ID | 1.5 | 400 | P1 |
+| SEC-028 | String ID | "abc" | 400 | P1 |
+| SEC-029 | MAX_INT | Large ID | 404 | P1 |
+| SEC-030 | Other contact's interaction | Wrong scope | 403 | P0 |
+
+### 6.4 Mass Assignment (5)
+
+| ID | Field | Expected | Priority |
+|----|-------|----------|----------|
+| SEC-031 | IsDeleted | Not modifiable | P0 |
+| SEC-032 | CreatedBy | Not modifiable | P0 |
+| SEC-033 | CreatedDate | Not modifiable | P0 |
+| SEC-034 | Id | Not settable | P0 |
+| SEC-035 | DeletedBy/Date | Not modifiable | P1 |
+
+### 6.5 Auth & Session (10)
+
+| ID | Attack | Protection | Priority |
+|----|--------|-----------|----------|
+| SEC-036 | Brute-force | Lockout | P0 |
+| SEC-037 | Session fixation | New session | P0 |
+| SEC-038 | Hijacking | Token binding | P1 |
+| SEC-039 | CSRF create | CSRF token | P0 |
+| SEC-040 | CSRF delete | CSRF token | P0 |
+| SEC-041 | Token storage | HttpOnly | P0 |
+| SEC-042 | Concurrent sessions | Policy | P1 |
+| SEC-043 | Token refresh | Works | P1 |
+| SEC-044 | Logout | Invalidated | P0 |
+| SEC-045 | HTTPS | Enforced | P0 |
+
+### 6.6 Data Exposure (5)
+
+| ID | Data | Protection | Priority |
+|----|------|-----------|----------|
+| SEC-046 | Internal fields | DTO filtered | P1 |
+| SEC-047 | Stack traces | Generic errors | P0 |
+| SEC-048 | Gmail credentials | Not exposed | P0 |
+| SEC-049 | Cache | no-store | P1 |
+| SEC-050 | Tokens in URL | HttpOnly | P1 |
+
+---
+
+## §7 Concurrency Tests
+
+> **Minimum:** 25 tests
+
+| ID | Scenario | Expected | Priority |
+|----|---------|----------|----------|
+| CON-001 | Two users update same interaction | Last-write-wins or conflict | P1 |
+| CON-002 | Create and delete simultaneously | One succeeds, other fails | P1 |
+| CON-003 | Two users create for same contact | Both succeed | P1 |
+| CON-004 | Update during read | Consistent state | P1 |
+| CON-005 | Delete during read | Null or pre-delete data | P1 |
+| CON-006 | Concurrent status change | One succeeds | P1 |
+| CON-007 | Gmail import race condition | Dedup handles both | P1 |
+| CON-008 | Concurrent pagination | Correct pages | P2 |
+| CON-009 | Database deadlock | Resolved, retry | P1 |
+| CON-010 | Token refresh during create | Retry with new token | P1 |
+| CON-011 | Bulk import concurrent | Both batches complete | P2 |
+| CON-012 | Search during bulk update | Consistent results | P2 |
+| CON-013 | Optimistic concurrency | Version conflict detected | P1 |
+| CON-014 | Concurrent soft-delete | One succeeds, other no-op | P1 |
+| CON-015 | Rapid status changes | Final state correct | P1 |
+| CON-016 | Connection pool exhaustion | Wait or graceful error | P1 |
+| CON-017 | Cache invalidation during read | Fresh data | P1 |
+| CON-018 | Concurrent count queries | Consistent | P2 |
+| CON-019 | Session timeout during save | Rolled back | P1 |
+| CON-020 | Parallel partner lookups | All succeed | P2 |
+| CON-021 | Multiple Gmail syncs | Dedup handles | P1 |
+| CON-022 | Database migration during operation | Graceful | P2 |
+| CON-023 | Two users reassign same interaction | One succeeds | P1 |
+| CON-024 | Export during modification | Consistent snapshot | P2 |
+| CON-025 | Concurrent filter changes | Final correct | P1 |
+
+---
+
+## §8 Unit Tests
+
+> **Minimum:** 21 tests
+
+| ID | Category | Input | Expected | Priority |
+|----|----------|-------|----------|----------|
+| UNT-001 | Validation | Email valid "a@b.com" | Valid | P1 |
+| UNT-002 | Validation | Null Description | Invalid | P1 |
+| UNT-003 | Validation | FromDate > ToDate | Invalid | P1 |
+| UNT-004 | Validation | Invalid Type | Invalid | P1 |
+| UNT-005 | Validation | PartnerId = -1 | Invalid | P1 |
+| UNT-006 | Formatting | Type + Date → Name | "Meeting - 2026-02-11" | P1 |
+| UNT-007 | Formatting | Duration calculation | "2h 30m" | P1 |
+| UNT-008 | Formatting | Date display | "Feb 11, 2026" | P2 |
+| UNT-009 | Calculations | Count non-deleted | 5 of 7 (2 deleted) | P1 |
+| UNT-010 | Calculations | Pagination pages | 55/20=3 | P1 |
+| UNT-011 | Calculations | HasNext page | True for page 1 of 3 | P1 |
+| UNT-012 | Calculations | Duration (From→To) | Correct hours | P1 |
+| UNT-013 | Calculations | Count by type | {Meeting:5, Email:3} | P1 |
+| UNT-014 | Status | IsDeletedCheck | true → inaccessible | P1 |
+| UNT-015 | Status | ValidTransition | Active→Completed = valid | P1 |
+| UNT-016 | Status | InvalidTransition | Draft→Completed = invalid | P1 |
+| UNT-017 | Status | GmailDedupCheck | Existing=skip | P1 |
+| UNT-018 | Status | ContactAssocValid | Active=valid | P1 |
+| UNT-019 | Collections | FilterByDateRange | Correct subset | P1 |
+| UNT-020 | Collections | GroupByType | Dictionary<Type, List> | P1 |
+| UNT-021 | Collections | SortByDate | Descending order | P1 |
+
+---
+
+## §9 Performance Tests
+
+> **Minimum:** 16 tests
+
+| ID | Operation | Threshold | Priority |
+|----|----------|-----------|----------|
+| PRF-001 | Create single | < 200ms | P1 |
+| PRF-002 | Get with includes | < 300ms | P1 |
+| PRF-003 | Bulk create 100 | < 5s | P2 |
+| PRF-004 | Bulk create 1000 | < 30s | P2 |
+| PRF-005 | Gmail import 50 | < 10s | P2 |
+| PRF-006 | Search 1000 interactions | < 500ms | P1 |
+| PRF-007 | Search 10,000 | < 1s | P1 |
+| PRF-008 | Paginate 10,000 | < 500ms/page | P1 |
+| PRF-009 | Date range search | < 500ms | P1 |
+| PRF-010 | Count query | < 100ms | P1 |
+| PRF-011 | 10 concurrent creates | < 1s each | P2 |
+| PRF-012 | 50 concurrent reads | < 500ms each | P2 |
+| PRF-013 | 100 concurrent searches | < 1s each | P2 |
+| PRF-014 | Memory 10,000 load | < 200MB | P2 |
+| PRF-015 | Memory 50,000 query | < 500MB | P2 |
+| PRF-016 | Memory leak check | No growth > 10% | P1 |
+
+---
+
+## §10 Load Tests
+
+> **Minimum:** 10 tests
+
+| ID | Profile | Duration | Criteria | Priority |
+|----|---------|----------|----------|----------|
+| LDT-001 | 50 concurrent CRUD | 30 min | 95% < 500ms | P2 |
+| LDT-002 | 100 concurrent reads | 30 min | 95% < 300ms | P2 |
+| LDT-003 | 50 concurrent searches | 15 min | < 1s/search | P2 |
+| LDT-004 | Spike 10→200 req/s | 5 min | Recovery < 30s | P2 |
+| LDT-005 | Spike + Gmail imports | 5 min | All complete | P2 |
+| LDT-006 | 500 concurrent ops | 10 min | Graceful degradation | P2 |
+| LDT-007 | 100K interactions in DB | 15 min | Queries < 1s | P2 |
+| LDT-008 | Continuous create/delete | 10 min | Stable | P2 |
+| LDT-009 | Recovery after DB crash | N/A | < 60s | P2 |
+| LDT-010 | Recovery after service restart | N/A | < 30s | P2 |
+
+---
+
+## Traceability Matrix
+
+| Business Rule | Test Cases |
+|--------------|-----------|
+| Interaction CRUD | POS-001–005, INT-001–005, NEG-001–010 |
+| Contact/Partner association | POS-011–012, FUN-006–007, NEG-002–006 |
+| Date range validation | FUN-008, FUN-021, NEG-008, BND-017–028 |
+| Type classification | POS-006–010, FUN-019, BND-049–055 |
+| Gmail integration | POS-016–018, FUN-009, CON-007, CON-021 |
+| Status lifecycle | POS-031–032, FUN-010, FUN-030, NEG-023–025 |
+| Soft delete | POS-004, FUN-004, NEG-021–022, SEC-031 |
+| Audit trail | FUN-041–050, POS-034 |
+| Security | SEC-001–050 |
+| Performance | PRF-001–016, LDT-001–010 |
+
+---
+
+**Last Updated:** 2026-02-11  
+**Status:** Ready for Execution

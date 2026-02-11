@@ -891,12 +891,17 @@ public class ContactIntegrationTests : IntegrationTestBase
         await SaveChangesAsync();
 
         // Act & Assert
-        await Context.Contacts.AddAsync(new Contact
+        // The duplicate AddAsync throws InvalidOperationException immediately because the entity
+        // with the same key is already being tracked by the change tracker. Wrap both AddAsync
+        // and SaveChangesAsync in the act lambda to capture the exception properly.
+        var act = async () =>
         {
-            Id = 1, Name = "Duplicate", FirstName = "D", LastName = "2", Email = "d@t.com", Title = "T", Status = EntityStatus.Active
-        });
-
-        var act = async () => await SaveChangesAsync();
+            await Context.Contacts.AddAsync(new Contact
+            {
+                Id = 1, Name = "Duplicate", FirstName = "D", LastName = "2", Email = "d@t.com", Title = "T", Status = EntityStatus.Active
+            });
+            await SaveChangesAsync();
+        };
         await act.Should().ThrowAsync<Exception>();
     }
 

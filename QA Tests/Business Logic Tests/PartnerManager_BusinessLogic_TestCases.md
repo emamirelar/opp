@@ -1,666 +1,620 @@
-# PartnerManager - Business Logic Test Cases
+# PartnerManager Business Logic — Test Cases
 
-## Manager Overview
-**Manager**: `PartnerManager` / `UNOPSPartnerManager`  
-**Location**: `UNOPS.PAO.Business/Managers/PartnerManager.cs`, `UNOPS.PAO.UNOPSBusiness/Managers/UNOPSPartnerManager.cs`  
-**Purpose**: Manages partner organizations including CRUD, approval workflows, organization unit relationships, and ERP integration.
-
-## Key Business Rules (From PRD)
-
-1. **Partner Approval Workflow**: Partners must go through approval process before they can be used in opportunities
-2. **ERP Dim Value Assignment**: Approved partners receive unique ERP dimension values (1-7999 or 8000-9999 reserved range)
-3. **Organization Unit Relationships**: Partners can be associated with multiple organization units (OrgUnits only)
-4. **Partner Status Lifecycle**: Draft → Active → Closed → Archived
-5. **Partner Categories**: Partners belong to partner groups within categories via PartnerTree
-6. **Smart Search**: Search across partner and all related entities (contacts, interactions)
+**Component:** `UNOPS.PAO.Business/Managers/PartnerManager`  
+**Created:** 2026-02-04  
+**Last Updated:** 2026-02-11  
+**Author:** QA Team  
+**Standard:** 10-Category, 3:1 Ratio (per `comprehensive-test-strategy.mdc`)
 
 ---
 
-## P0 - Critical Business Logic Tests
+## Compliance Summary
 
-### TC-PM-BL-P0-001: Partner Approval - Valid Workflow
-**Priority**: P0 - Critical  
-**Description**: Verify partner approval process assigns ERP Dim Value correctly  
-**Business Rule**: Approved partners must receive a unique ERP Dim Value  
-**Preconditions**: 
-- Partner exists with status Draft/Active
-- Partner has PartnerGroupId and LiaisonOfficeId set
-- User has approval permissions
+| Category | File/Section | Count | Minimum Required | Status |
+|----------|-------------|-------|-----------------|--------|
+| Positive Tests | §1 | 35 | 30-50 | ✅ |
+| Negative Tests | §2 | 70 | Max(50, 2×35)=70 | ✅ |
+| Boundary Tests | §3 | 70 | Max(50, 2×35)=70 | ✅ |
+| Functional Tests | §4 | 50 | ≥50 | ✅ |
+| Integration Tests | §5 | 50 | ≥50 | ✅ |
+| Security Tests | §6 | 50 | ≥50 | ✅ |
+| Concurrency Tests | §7 | 25 | ≥25 | ✅ |
+| Unit Tests | §8 | 21 | ≥21 | ✅ |
+| Performance Tests | §9 | 16 | ≥16 | ✅ |
+| Load Tests | §10 | 10 | ≥10 | ✅ |
+| **TOTAL** | | **397** | **≥347** | ✅ |
 
-**Test Steps**:
-1. Create partner with required fields (Name, PartnerGroupId, LiaisonOfficeId)
-2. Call `ApprovePartnerAsync(user, partnerId, request)`
-3. Verify PartnerApprovalStatus changed to "Approved"
-4. Verify ErpDimValue assigned (unique, in valid range)
-5. Verify PartnerApprovalDate set to current date
-
-**Expected Result**: Partner approved with unique ERP Dim Value  
-**Business Impact**: Without ERP Dim Value, partners cannot be used in financial transactions
+**3:1 Ratio Check:** (N + B) = 140 ≥ 3 × P = 105 → ✅ PASS
 
 ---
 
-### TC-PM-BL-P0-002: Partner Approval - ERP Dim Value Uniqueness
-**Priority**: P0 - Critical  
-**Description**: Verify ERP Dim Values are never duplicated  
-**Business Rule**: Each approved partner must have a unique ErpDimValue  
-**Preconditions**: 5 partners exist with ErpDimValues 1001-1005
+## Feature Overview
 
-**Test Steps**:
-1. Approve new partner
-2. Verify assigned ErpDimValue is NOT 1001-1005
-3. Approve another partner
-4. Verify new ErpDimValue is different from all existing
-
-**Expected Result**: All ERP Dim Values are unique  
-**Business Impact**: Duplicate values would cause financial data corruption
+The PartnerManager handles CRUD for partners (organizations). Key features: approval workflow with ERP dim value assignment (uniqueness, reserved range 8000-9999), unapproval, status transitions (Draft→Active→Closed→Archived), OrgUnit relationships, soft delete, partner group/category validation, contact cascade, OrgUnit filtering, logo upload, partner tree recursion, specification filters, smart search, concurrency, sorting, audit trail, Gmail integration, and pagination.
 
 ---
 
-### TC-PM-BL-P0-003: Partner Approval - Reserved ERP Range
-**Priority**: P0 - Critical  
-**Description**: Verify reserved ERP range (8000-9999) handling  
-**Business Rule**: ERP values 8000-9999 are reserved for special partners  
-**Preconditions**: Partner in reserved range exists (ErpDimValue = 8500)
+## §1 Positive Tests (Happy Path) — 35 tests
 
-**Test Steps**:
-1. Approve new regular partner
-2. Verify assigned ErpDimValue is NOT in 8000-9999 range
-3. Verify reserved partners retain their special values
+### Detailed Test Cases (P0)
 
-**Expected Result**: Regular partners get values outside reserved range  
-**Business Impact**: Reserved range conflicts could affect special partner accounting
+#### POS-001: Create Partner with Valid Data
+**Priority:** P0 | **Precondition:** User has create permission. OrgUnit exists.
+**Steps:** Call `CreatePartnerAsync` with Name, Type, Group, Category, OrgUnitId
+**Expected:** Partner created, Id generated, Status=Draft, audit fields set, IsDeleted=false
 
----
+#### POS-002: Approve Partner — ERP Dim Value Assigned
+**Priority:** P0 | **Precondition:** Partner in Draft status. User has approval permission.
+**Steps:** Call `ApprovePartnerAsync(id)`
+**Expected:** Status → Active, ErpDimValue assigned (1-7999), unique across all partners
 
-### TC-PM-BL-P0-004: Partner Unapproval - Remove ERP Dim Value
-**Priority**: P0 - Critical  
-**Description**: Verify unapproval removes ERP integration  
-**Business Rule**: Unapproved partners should not have active ERP integration  
-**Preconditions**: Approved partner with ErpDimValue exists
+#### POS-003: Get Partner by ID with Includes
+**Priority:** P0 | **Precondition:** Partner exists with contacts, interactions, documents.
+**Steps:** Call `GetPartnerByIdAsync(id)` with includes
+**Expected:** Partner returned with all related data loaded (!IsDeleted filtered)
 
-**Test Steps**:
-1. Call `UnapprovePartnerAsync(user, partnerId, request)`
-2. Verify PartnerApprovalStatus changed to "NotApproved"
-3. Verify ErpDimValue handling (may retain value but disable)
-4. Verify CanCreateNewOpportunities set to false
+#### POS-004: Soft Delete Partner
+**Priority:** P0 | **Precondition:** Partner exists, user has delete permission.
+**Steps:** Call `DeletePartnerAsync(id)`
+**Expected:** IsDeleted=true, DeletedBy/Date set, contacts not cascade-deleted
 
-**Expected Result**: Partner unapproved and cannot create opportunities  
-**Business Impact**: Prevents financial transactions with unapproved partners
+#### POS-005: List Partners with Pagination
+**Priority:** P0 | **Precondition:** 100+ partners exist.
+**Steps:** Call `GetPartnersWithPagination(page=1, size=20)`
+**Expected:** 20 partners returned, no deleted, total count correct
 
----
+### Positive Tests — Tabular (P1/P2) — 30 tests
 
-### TC-PM-BL-P0-005: Partner Status - Draft to Active Transition
-**Priority**: P0 - Critical  
-**Description**: Verify status transition from Draft to Active  
-**Business Rule**: Partners can only be activated with required fields complete  
-**Preconditions**: Partner in Draft status with all required fields
-
-**Test Steps**:
-1. Call `ActivatePartnerAsync(user, partnerId, request)`
-2. Verify Status changed from Draft to Active
-3. Verify all required fields validated
-4. Verify partner appears in active partner lists
-
-**Expected Result**: Partner successfully activated  
-**Business Impact**: Draft partners should not be visible to end users
-
----
-
-### TC-PM-BL-P0-006: Partner Status - Active to Closed Transition
-**Priority**: P0 - Critical  
-**Description**: Verify closing an active partner  
-**Business Rule**: Closed partners cannot be used for new opportunities  
-**Preconditions**: Active partner with existing relationships
-
-**Test Steps**:
-1. Call `ClosePartnerAsync(user, partnerId, request)`
-2. Verify Status changed to Closed
-3. Verify existing relationships preserved
-4. Verify partner no longer appears in selection lists
-
-**Expected Result**: Partner closed but data preserved  
-**Business Impact**: Historical data integrity must be maintained
-
----
-
-### TC-PM-BL-P0-007: Organization Unit Relationship - Create with OrgUnit
-**Priority**: P0 - Critical  
-**Description**: Verify partners can only be associated with OrgUnit type  
-**Business Rule**: OrganizationUnitRelationships must be OrgUnit type, not Hub or Region  
-**Preconditions**: 
-- OrgUnit hierarchy exists (Region → Hub → OrgUnit)
-- Partner exists
-
-**Test Steps**:
-1. Create partner with OrganizationHierarchyIds containing OrgUnit IDs
-2. Verify relationships created successfully
-3. Attempt to create with Hub ID - should fail/be rejected
-4. Attempt to create with Region ID - should fail/be rejected
-
-**Expected Result**: Only OrgUnit relationships allowed  
-**Business Impact**: Ensures proper organizational alignment
+| ID | Test Name | Steps (Brief) | Expected | Priority |
+|----|-----------|--------------|----------|----------|
+| POS-006 | Unapprove partner | UnapprovePartnerAsync | Status → Draft, ErpDimValue cleared | P1 |
+| POS-007 | Close partner | ChangeStatus(Closed) | Status → Closed | P1 |
+| POS-008 | Archive partner | ChangeStatus(Archived) | Status → Archived | P1 |
+| POS-009 | Reactivate closed partner | ChangeStatus(Active) | Status → Active | P1 |
+| POS-010 | ERP dim value in valid range (1-7999) | Approve | Value ∈ [1,7999] | P1 |
+| POS-011 | ERP dim value unique | Approve 2 partners | Different values | P1 |
+| POS-012 | Get partners by OrgUnit | GetByOrgUnit | Only OrgUnit's partners | P1 |
+| POS-013 | Search partners by name | SmartSearch("ACME") | Matching partners | P1 |
+| POS-014 | Filter by group | FilterByGroup | Correct group's partners | P1 |
+| POS-015 | Filter by category | FilterByCategory | Correct category's partners | P1 |
+| POS-016 | Filter by type (Funding) | FilterByType | Only Funding partners | P1 |
+| POS-017 | Filter by type (Client) | FilterByType | Only Client partners | P1 |
+| POS-018 | Filter by type (Implementation) | FilterByType | Only Implementation partners | P1 |
+| POS-019 | Get partner tree (hierarchy) | GetPartnerTree | Recursive tree structure | P1 |
+| POS-020 | Upload partner logo | UploadLogo | Logo URL stored | P1 |
+| POS-021 | Update partner name | UpdatePartner | Name changed, audit set | P1 |
+| POS-022 | Update partner OrgUnit | UpdatePartner | OrgUnitId changed | P1 |
+| POS-023 | Get partner contacts | GetPartnerContacts | Non-deleted contacts | P1 |
+| POS-024 | Get partner interactions | GetPartnerInteractions | Non-deleted interactions | P1 |
+| POS-025 | Get partner documents | GetPartnerDocuments | Non-deleted documents | P1 |
+| POS-026 | Specification filter | GetWithSpecification | Filtered results | P2 |
+| POS-027 | Sort by name ascending | Sort(name, asc) | A-Z order | P2 |
+| POS-028 | Sort by date descending | Sort(date, desc) | Newest first | P2 |
+| POS-029 | Get partner audit trail | GetAudit | History entries | P2 |
+| POS-030 | Map entity to model | mapper.Map | All fields mapped | P2 |
+| POS-031 | Create from Gmail integration | Gmail data | Gmail fields set | P2 |
+| POS-032 | Get partner typeahead | GetTypeahead | Id+Name list | P2 |
+| POS-033 | Get partner count | GetCount | Non-deleted count | P2 |
+| POS-034 | Create with all optional fields | Full data | All persisted | P2 |
+| POS-035 | Restore soft-deleted partner | Restore | IsDeleted=false | P2 |
 
 ---
 
-### TC-PM-BL-P0-008: Organization Unit Relationship - Differential Update
-**Priority**: P0 - Critical  
-**Description**: Verify org unit updates only add/remove changed relationships  
-**Business Rule**: Efficient update - don't recreate unchanged relationships  
-**Preconditions**: Partner with OrgUnit IDs [1, 2, 3]
+## §2 Negative Tests — 70 tests
 
-**Test Steps**:
-1. Update partner with OrgUnit IDs [2, 3, 4]
-2. Verify OrgUnit 1 relationship removed
-3. Verify OrgUnit 2, 3 relationships unchanged
-4. Verify OrgUnit 4 relationship added
+### 2.1 Invalid Input (10)
+| ID | Invalid Input | Expected | Priority |
+|----|--------------|----------|----------|
+| NEG-001 | Null Name | BusinessException: required | P0 |
+| NEG-002 | Empty Name | BusinessException: required | P0 |
+| NEG-003 | Null Type | BusinessException: required | P0 |
+| NEG-004 | Invalid Type value | BusinessException | P0 |
+| NEG-005 | Null OrgUnitId | BusinessException: required | P0 |
+| NEG-006 | Non-existent OrgUnitId | KeyNotFoundException | P0 |
+| NEG-007 | Update non-existent partner | KeyNotFoundException | P0 |
+| NEG-008 | Delete non-existent partner | KeyNotFoundException | P0 |
+| NEG-009 | Approve non-existent partner | KeyNotFoundException | P0 |
+| NEG-010 | Approve already-active partner | BusinessException: already approved | P0 |
 
-**Expected Result**: Only differential changes applied  
-**Business Impact**: Performance and audit trail integrity
+### 2.2 Unauthorized Access (10)
+| ID | Role | Action | Expected | Priority |
+|----|------|--------|----------|----------|
+| NEG-011 | No auth | Create | Unauthorized | P0 |
+| NEG-012 | Read-only | Create | Unauthorized | P0 |
+| NEG-013 | Read-only | Update | Unauthorized | P0 |
+| NEG-014 | Read-only | Delete | Unauthorized | P0 |
+| NEG-015 | No approval perm | Approve | Unauthorized | P0 |
+| NEG-016 | OrgUnit-scoped | Create out of scope | Unauthorized | P0 |
+| NEG-017 | OrgUnit-scoped | Update out of scope | Unauthorized | P0 |
+| NEG-018 | OrgUnit-scoped | Delete out of scope | Unauthorized | P0 |
+| NEG-019 | Expired session | Any | Unauthorized | P1 |
+| NEG-020 | Disabled account | Any | Unauthorized | P1 |
 
----
+### 2.3 ERP Dim Value (10)
+| ID | Scenario | Expected | Priority |
+|----|---------|----------|----------|
+| NEG-021 | Approve when all 1-7999 values taken | BusinessException: no values available | P0 |
+| NEG-022 | Manually set ErpDimValue to reserved range (8000) | Rejected: reserved range | P0 |
+| NEG-023 | Manually set ErpDimValue to 9999 | Rejected: reserved range | P0 |
+| NEG-024 | Manually set ErpDimValue to 0 | Rejected: out of range | P1 |
+| NEG-025 | Manually set ErpDimValue to -1 | Rejected: out of range | P1 |
+| NEG-026 | Manually set ErpDimValue to 10000 | Rejected: out of range | P1 |
+| NEG-027 | Duplicate ErpDimValue assignment | Uniqueness enforced | P0 |
+| NEG-028 | Unapprove then re-approve gets new value | Re-approve | New unique value assigned | P1 |
+| NEG-029 | ErpDimValue collision with soft-deleted partner | Uniqueness includes deleted | P1 |
+| NEG-030 | Approve partner with incomplete prerequisites | Missing required data | BusinessException | P0 |
 
-### TC-PM-BL-P0-009: Partner Delete - Soft Delete Verification
-**Priority**: P0 - Critical  
-**Description**: Verify partners are soft-deleted, not hard-deleted  
-**Business Rule**: Partners must retain historical data via soft delete  
-**Preconditions**: Partner with contacts and interactions
+### 2.4 Invalid State Transitions (10)
+| ID | Transition | Expected | Priority |
+|----|-----------|----------|----------|
+| NEG-031 | Draft → Closed (skip Active) | BusinessException: invalid transition | P1 |
+| NEG-032 | Draft → Archived | BusinessException | P1 |
+| NEG-033 | Archived → Active | BusinessException (if not allowed) | P1 |
+| NEG-034 | Closed → Draft | BusinessException | P1 |
+| NEG-035 | Update deleted partner | BusinessException | P1 |
+| NEG-036 | Approve deleted partner | BusinessException | P1 |
+| NEG-037 | Delete already-deleted | No-op or error | P1 |
+| NEG-038 | Upload logo for deleted partner | BusinessException | P1 |
+| NEG-039 | Change OrgUnit for approved partner | Business rule check | P1 |
+| NEG-040 | Re-approve active partner | BusinessException: already active | P1 |
 
-**Test Steps**:
-1. Call `DeletePartnerAsync(userId, partnerId)`
-2. Verify IsDeleted = true in database
-3. Verify partner not in active partner lists
-4. Verify contacts still accessible (orphaned or also soft-deleted)
+### 2.5 Missing Data (10)
+| ID | Missing | Expected | Priority |
+|----|---------|----------|----------|
+| NEG-041 | All nulls | Multiple validation errors | P1 |
+| NEG-042 | Null request object | ArgumentNullException | P1 |
+| NEG-043 | Whitespace-only Name | BusinessException | P1 |
+| NEG-044 | Null Group | Accepted (if optional) or error | P1 |
+| NEG-045 | Null Category | Accepted (if optional) or error | P1 |
+| NEG-046 | Invalid Group value | BusinessException | P1 |
+| NEG-047 | Invalid Category value | BusinessException | P1 |
+| NEG-048 | Logo file = null | BusinessException | P1 |
+| NEG-049 | Logo file = 0 bytes | BusinessException | P1 |
+| NEG-050 | Logo invalid type (.exe) | BusinessException | P0 |
 
-**Expected Result**: Partner soft-deleted, data preserved  
-**Business Impact**: Regulatory compliance and data recovery
-
----
-
-### TC-PM-BL-P0-010: Permission Check - Read vs Update Access
-**Priority**: P0 - Critical  
-**Description**: Verify permission-based access control  
-**Business Rule**: Different operations require different permissions  
-**Preconditions**: Partner exists, users with different roles
-
-**Test Steps**:
-1. User with Read permission - verify can call GetPartnerAsync
-2. User with Read permission - verify cannot call UpdatePartnerAsync
-3. Admin user - verify can perform all operations
-4. Creator user - verify can modify own partner
-
-**Expected Result**: Permissions correctly enforced  
-**Business Impact**: Data security and access control
-
----
-
-### TC-PM-BL-P0-011: Partner Group Assignment - Category Validation
-**Priority**: P0 - Critical  
-**Description**: Verify partner group must have valid category  
-**Business Rule**: PartnerGroupId must reference valid PartnerTree with category  
-**Preconditions**: PartnerTree categories exist
-
-**Test Steps**:
-1. Create partner with valid PartnerGroupId
-2. Verify partner created with correct category association
-3. Attempt with invalid PartnerGroupId - should fail
-
-**Expected Result**: Valid category assignment required  
-**Business Impact**: Proper partner classification for reporting
-
----
-
-### TC-PM-BL-P0-012: Partner Approval - Missing Required Fields
-**Priority**: P0 - Critical  
-**Description**: Verify approval fails without required fields  
-**Business Rule**: Cannot approve partner without PartnerGroupId and LiaisonOfficeId  
-**Preconditions**: Partner without PartnerGroupId
-
-**Test Steps**:
-1. Attempt to approve partner without PartnerGroupId
-2. Verify BusinessException thrown
-3. Attempt to approve without LiaisonOfficeId
-4. Verify BusinessException thrown
-
-**Expected Result**: Approval blocked with clear error message  
-**Business Impact**: Ensures data completeness before ERP integration
-
----
-
-### TC-PM-BL-P0-013: Partner With Contacts - Cascade Behavior
-**Priority**: P0 - Critical  
-**Description**: Verify contact handling when partner status changes  
-**Business Rule**: Contact access should follow partner visibility  
-**Preconditions**: Partner with 10 contacts
-
-**Test Steps**:
-1. Close partner
-2. Verify contacts still accessible for historical queries
-3. Verify contacts not shown in active contact searches
-4. Archive partner
-5. Verify contact archive behavior
-
-**Expected Result**: Proper cascade of status changes  
-**Business Impact**: Data consistency across related entities
+### 2.6 Additional (20)
+| ID | Scenario | Expected | Priority |
+|----|---------|----------|----------|
+| NEG-051 | SQL injection in Name | Parameterized | P0 |
+| NEG-052 | XSS in Name | Sanitized | P0 |
+| NEG-053 | Name > max length | Validation error | P1 |
+| NEG-054 | Negative PartnerId | Not found | P1 |
+| NEG-055 | Zero PartnerId | Not found | P1 |
+| NEG-056 | Page = 0 | Default to 1 | P2 |
+| NEG-057 | PageSize = -1 | Error | P2 |
+| NEG-058 | PageSize > 1000 | Capped | P2 |
+| NEG-059 | Sort by invalid column | Default sort | P2 |
+| NEG-060 | Search with regex chars | Escaped | P1 |
+| NEG-061 | Logo > 5MB | Rejected | P1 |
+| NEG-062 | Logo path traversal | Sanitized | P0 |
+| NEG-063 | Circular hierarchy (parent = self) | Rejected | P0 |
+| NEG-064 | Circular hierarchy (A→B→A) | Rejected | P0 |
+| NEG-065 | Create duplicate name (same OrgUnit) | Allowed or duplicate warning | P2 |
+| NEG-066 | Batch delete with mixed valid/invalid | Valid deleted, invalid error | P1 |
+| NEG-067 | Multiple validation errors at once | All returned | P1 |
+| NEG-068 | Create for deleted OrgUnit | BusinessException | P1 |
+| NEG-069 | Gmail import malformed data | Handled gracefully | P2 |
+| NEG-070 | Search empty string | No results or all | P1 |
 
 ---
 
-### TC-PM-BL-P0-014: Partner Search - OrgUnit Filtering
-**Priority**: P0 - Critical  
-**Description**: Verify partners filtered by user's organization unit  
-**Business Rule**: Users should only see partners in their org unit hierarchy  
-**Preconditions**: Partners in different org units, user in specific org unit
+## §3 Boundary Tests — 70 tests
 
-**Test Steps**:
-1. Query partners as user in OrgUnit A
-2. Verify only partners with OrgUnit A relationships returned
-3. Verify partners in OrgUnit B not visible
-4. Admin user should see all partners
+### String Lengths (8)
+| ID | Field | Min | Max | At Min | At Max | Over | Pr |
+|----|-------|-----|-----|--------|--------|------|---|
+| BND-001 | Name | 1 | 200 | ✅ | ✅ | ❌ | P1 |
+| BND-002 | Code | 0 | 50 | ✅ | ✅ | ❌ | P1 |
+| BND-003 | Description | 0 | 4000 | ✅ | ✅ | ❌ | P2 |
+| BND-004 | Address | 0 | 500 | ✅ | ✅ | ❌ | P2 |
+| BND-005 | Website | 0 | 2048 | ✅ | ✅ | ❌ | P2 |
+| BND-006 | Phone | 0 | 50 | ✅ | ✅ | ❌ | P2 |
+| BND-007 | Email | 0 | 320 | ✅ | ✅ | ❌ | P2 |
+| BND-008 | LogoUrl | 0 | 2048 | ✅ | ✅ | ❌ | P2 |
 
-**Expected Result**: Proper org unit filtering  
-**Business Impact**: Multi-tenant security and data isolation
+### Numeric (10)
+| ID | Field | Min | Max | Zero | Neg | Pr |
+|----|-------|-----|-----|------|-----|---|
+| BND-009 | PartnerId | 1 | MAX_INT | ❌ | ❌ | P1 |
+| BND-010 | OrgUnitId | 1 | MAX_INT | ❌ | ❌ | P1 |
+| BND-011 | ErpDimValue | 1 | 7999 | ❌ | ❌ | P0 |
+| BND-012 | ErpDimValue reserved min | 8000 | — | Reserved | — | P0 |
+| BND-013 | ErpDimValue reserved max | — | 9999 | — | Reserved | P0 |
+| BND-014 | Page | 1 | 10000 | ❌ | ❌ | P1 |
+| BND-015 | PageSize | 1 | 1000 | ❌ | ❌ | P1 |
+| BND-016 | Contacts per partner | 0 | 10000 | ✅ | — | P1 |
+| BND-017 | Hierarchy depth | 0 | 20 | ✅ | — | P1 |
+| BND-018 | Children per parent | 0 | 1000 | ✅ | — | P1 |
 
----
+### Date (5)
+| ID | Scenario | Expected | Priority |
+|----|---------|----------|----------|
+| BND-019 | Created on leap year | Correct date | P2 |
+| BND-020 | Very old creation date | Handled | P2 |
+| BND-021 | Created at midnight UTC | No boundary error | P2 |
+| BND-022 | Approved at end of year | Correct | P2 |
+| BND-023 | Status change at midnight | Correct | P2 |
 
-### TC-PM-BL-P0-015: Partner Logo Upload - File Validation
-**Priority**: P0 - Critical  
-**Description**: Verify logo upload validates file type and size  
-**Business Rule**: Only valid image files under size limit accepted  
-**Preconditions**: Partner exists
+### Collections (12)
+| ID | Scenario | Expected | Priority |
+|----|---------|----------|----------|
+| BND-024 | 0 partners | Empty list | P1 |
+| BND-025 | 1 partner | Single item list | P1 |
+| BND-026 | Exactly page size (20) | Full page, hasNext=false | P1 |
+| BND-027 | PageSize + 1 (21) | 20 + hasNext=true | P1 |
+| BND-028 | 1000 partners | Paginated | P1 |
+| BND-029 | 10,000 partners | Performance OK | P1 |
+| BND-030 | Partner with 0 contacts | Empty contacts | P1 |
+| BND-031 | Partner with 500 contacts | Large collection | P1 |
+| BND-032 | Partner with 0 documents | Empty docs | P2 |
+| BND-033 | Partner tree depth = 0 (root only) | Single node | P1 |
+| BND-034 | Partner tree depth = 20 (max) | Full depth | P1 |
+| BND-035 | Partner tree width = 100 children | Wide tree | P1 |
 
-**Test Steps**:
-1. Upload valid JPG logo - should succeed
-2. Upload valid PNG logo - should succeed
-3. Upload invalid file type (PDF) - should fail
-4. Upload oversized file - should fail
+### Unicode (10)
+| ID | Field | Input | Expected | Pr |
+|----|-------|-------|----------|----|
+| BND-036 | Name (Arabic) | `مؤسسة` | Stored | P2 |
+| BND-037 | Name (Chinese) | `合作公司` | Stored | P2 |
+| BND-038 | Name (Cyrillic) | `Организация` | Stored | P2 |
+| BND-039 | Name (French) | `Société` | Accents | P2 |
+| BND-040 | Name (Emoji) | `🏢 Corp` | Stored | P2 |
+| BND-041 | Name with apostrophe | `O'Brien & Co` | Preserved | P1 |
+| BND-042 | Name with ampersand | `Smith & Partners` | Preserved | P1 |
+| BND-043 | Address multi-line | Multi-line | Newlines | P2 |
+| BND-044 | Website with path | `https://example.com/path?q=1` | Stored | P2 |
+| BND-045 | Email with plus | `admin+test@corp.com` | Valid | P2 |
 
-**Expected Result**: File validation enforced  
-**Business Impact**: Security and storage management
+### ERP Dim Value Boundaries (10)
+| ID | Scenario | Expected | Priority |
+|----|---------|----------|----------|
+| BND-046 | ErpDimValue = 1 (min valid) | Accepted | P0 |
+| BND-047 | ErpDimValue = 7999 (max valid) | Accepted | P0 |
+| BND-048 | ErpDimValue = 8000 (reserved start) | Rejected | P0 |
+| BND-049 | ErpDimValue = 9999 (reserved end) | Rejected | P0 |
+| BND-050 | ErpDimValue = 10000 (over reserved) | Rejected | P1 |
+| BND-051 | All values 1-7999 taken (7999 partners) | No value available error | P1 |
+| BND-052 | 7998 values taken, 1 remaining | Last value assigned | P1 |
+| BND-053 | Value freed by unapproval → reusable | Re-assigned | P1 |
+| BND-054 | Sequential assignment order | Values assigned sequentially | P2 |
+| BND-055 | Gap in values (3 freed) → fills gaps | Gap values reused | P2 |
 
----
-
-## P1 - High Priority Business Logic Tests
-
-### TC-PM-BL-P1-001: Partner Query - Include Contacts and Interactions
-**Priority**: P1 - High  
-**Description**: Verify eager loading of related entities  
-**Business Rule**: GetPartnerWithContactsAndInteractionsAsync includes all related data  
-**Preconditions**: Partner with 5 contacts, each with 3 interactions
-
-**Test Steps**:
-1. Call `GetPartnerWithContactsAndInteractionsAsync(partnerId)`
-2. Verify 5 contacts loaded
-3. Verify each contact has 3 interactions
-4. Verify no N+1 query problem
-
-**Expected Result**: All related data loaded efficiently  
-**Business Impact**: Performance and user experience
-
----
-
-### TC-PM-BL-P1-002: Partner by Partner Group - Filtering
-**Priority**: P1 - High  
-**Description**: Verify filtering partners by partner group  
-**Business Rule**: GetPartnersByPartnerGroup returns only matching partners  
-**Preconditions**: 3 partner groups with 10 partners each
-
-**Test Steps**:
-1. Call `GetPartnersByPartnerGroup(userId, partnerGroupId, request)`
-2. Verify only partners in that group returned
-3. Verify pagination works correctly
-4. Verify count reflects filtered results
-
-**Expected Result**: Correct filtering by partner group  
-**Business Impact**: Accurate reporting and filtering
-
----
-
-### TC-PM-BL-P1-003: Partner by Category - Filtering
-**Priority**: P1 - High  
-**Description**: Verify filtering partners by category code  
-**Business Rule**: GetPartnersByPartnerCategory includes partners in all groups of category  
-**Preconditions**: Category with 3 partner groups, each with 5 partners
-
-**Test Steps**:
-1. Call `GetPartnersByPartnerCategory(userId, categoryCode, request)`
-2. Verify all 15 partners returned (3 groups × 5 partners)
-3. Verify partners from other categories not included
-
-**Expected Result**: All partners in category returned  
-**Business Impact**: Category-level reporting
-
----
-
-### TC-PM-BL-P1-004: Partner Tree Recursion - Child Nodes
-**Priority**: P1 - High  
-**Description**: Verify recursive child partner tree retrieval  
-**Business Rule**: GetChildPartnerTreesRecursively returns all descendants  
-**Preconditions**: Partner tree with 3-level hierarchy
-
-**Test Steps**:
-1. Call `GetChildPartnerTreesRecursively(["ROOT_CODE"])`
-2. Verify all child and grandchild nodes returned
-3. Verify parent node not in result
-4. Verify no duplicates in result
-
-**Expected Result**: All descendant nodes returned  
-**Business Impact**: Correct hierarchy navigation
-
----
-
-### TC-PM-BL-P1-005: Partner Specification - Complex Filter
-**Priority**: P1 - High  
-**Description**: Verify specification pattern with multiple criteria  
-**Business Rule**: Specifications compose correctly for complex queries  
-**Preconditions**: Diverse partner data
-
-**Test Steps**:
-1. Create specification with: status filter, name contains, category filter
-2. Call `GetPartnersWithSpecification(userId, specification, pagination)`
-3. Verify all criteria applied correctly
-4. Verify pagination works with filtered results
-
-**Expected Result**: Complex filter works correctly  
-**Business Impact**: Advanced search functionality
+### Additional (15)
+| ID | Scenario | Expected | Priority |
+|----|---------|----------|----------|
+| BND-056 | Name exactly 1 char | "A" accepted | P1 |
+| BND-057 | Name exactly 200 chars | Accepted | P1 |
+| BND-058 | Code exactly 50 chars | Accepted | P1 |
+| BND-059 | Partner ID = 1 | Retrieved | P2 |
+| BND-060 | Partner ID = MAX_INT | Handled | P2 |
+| BND-061 | Search 1 char | Results from "A*" | P1 |
+| BND-062 | Search 255 chars | Processed | P1 |
+| BND-063 | Sort each column | All sort correctly | P1 |
+| BND-064 | Filter exact match | Exact result | P2 |
+| BND-065 | Filter partial match | Partial matches | P2 |
+| BND-066 | Last page with 1 item | Single item page | P1 |
+| BND-067 | All partners same type | Filter shows all | P2 |
+| BND-068 | All partners same group | Group filter shows all | P2 |
+| BND-069 | Partner with all optional null | Created | P1 |
+| BND-070 | Partner with all optional filled | Created | P1 |
 
 ---
 
-### TC-PM-BL-P1-006: Smart Search - Cross-Entity Search
-**Priority**: P1 - High  
-**Description**: Verify smart search finds partners by contact/interaction data  
-**Business Rule**: Search should find partners even when search term matches contact  
-**Preconditions**: Partner "ABC Corp" with contact "John Smith"
+## §4 Functional Tests — 50 tests
 
-**Test Steps**:
-1. Search for "John Smith"
-2. Verify "ABC Corp" returned (matched via contact)
-3. Search for "ABC Corp"
-4. Verify partner returned (direct match)
+### 4.1 Workflow (15)
+| ID | Rule | Expected | Pr |
+|----|------|----------|----|
+| FUN-001 | Queries exclude IsDeleted | Deleted filtered | P0 |
+| FUN-002 | Create sets audit | CreatedBy/Date | P0 |
+| FUN-003 | Update sets audit | LastModifiedBy/Date | P0 |
+| FUN-004 | Delete sets soft-delete | IsDeleted/DeletedBy/Date | P0 |
+| FUN-005 | Approval assigns ErpDimValue | Unique value 1-7999 | P0 |
+| FUN-006 | Unapproval clears ErpDimValue | Value cleared | P1 |
+| FUN-007 | Status: Draft→Active (approve) | Valid | P0 |
+| FUN-008 | Status: Active→Closed | Valid | P1 |
+| FUN-009 | Status: Active→Archived | Valid | P1 |
+| FUN-010 | Status: Closed→Active (reactivate) | Valid | P1 |
+| FUN-011 | Name property set from input | Auto-set | P1 |
+| FUN-012 | OrgUnit association validated | OrgUnit exists, !deleted | P0 |
+| FUN-013 | Contact cascade on delete | Contacts not deleted | P1 |
+| FUN-014 | Search case-insensitive | "acme"="ACME" | P1 |
+| FUN-015 | Pagination defaults | Page=1, Size=20 | P1 |
 
-**Expected Result**: Partners found via related entity matches  
-**Business Impact**: Comprehensive search experience
+### 4.2 Validation (15)
+| ID | Rule | Valid | Invalid | Pr |
+|----|------|-------|---------|---|
+| FUN-016 | Name required | "ACME" | null | P0 |
+| FUN-017 | Type required | "Funding" | null | P0 |
+| FUN-018 | OrgUnitId required | 42 | 0, -1 | P0 |
+| FUN-019 | Group valid enum | Valid group | "INVALID" | P1 |
+| FUN-020 | Category valid enum | Valid category | "INVALID" | P1 |
+| FUN-021 | ErpDimValue in 1-7999 | 5000 | 8500 | P0 |
+| FUN-022 | ErpDimValue unique | New value | Duplicate | P0 |
+| FUN-023 | Logo image type | .jpg, .png | .exe | P0 |
+| FUN-024 | Logo size ≤ 5MB | 4MB | 6MB | P1 |
+| FUN-025 | XSS prevention | "ACME" | `<script>` | P0 |
+| FUN-026 | Name trimmed | " ACME " | "ACME" | P2 |
+| FUN-027 | Circular hierarchy check | Non-circular | Parent=self | P0 |
+| FUN-028 | Hierarchy depth ≤ 20 | 19 levels | 21 | P1 |
+| FUN-029 | Status transition valid | Draft→Active | Draft→Archived | P1 |
+| FUN-030 | Approval prerequisites met | All required fields | Missing fields | P0 |
 
----
+### 4.3 Constraints (10)
+| ID | Constraint | Expected | Pr |
+|----|-----------|----------|----|
+| FUN-031 | Max page size 1000 | Capped | P1 |
+| FUN-032 | FK OrgUnit exists | Violation error | P0 |
+| FUN-033 | ErpDimValue 8000-9999 reserved | Rejected | P0 |
+| FUN-034 | Unique ErpDimValue (incl deleted) | Enforced | P0 |
+| FUN-035 | Soft-delete no FK cascade | Contacts intact | P1 |
+| FUN-036 | Search result limit | Paginated | P2 |
+| FUN-037 | Logo overwrites previous | Old replaced | P1 |
+| FUN-038 | Batch operation limit | Chunked | P2 |
+| FUN-039 | Gmail deduplication | Handled | P1 |
+| FUN-040 | Max hierarchy depth | Enforced | P1 |
 
-### TC-PM-BL-P1-007: Partner Update - Concurrent Modification
-**Priority**: P1 - High  
-**Description**: Verify handling of concurrent updates  
-**Business Rule**: Optimistic concurrency or last-write-wins behavior  
-**Preconditions**: Partner exists
-
-**Test Steps**:
-1. User A reads partner
-2. User B reads same partner
-3. User A updates partner
-4. User B attempts update with stale data
-5. Verify consistent final state
-
-**Expected Result**: Consistent data without corruption  
-**Business Impact**: Data integrity in multi-user environment
-
----
-
-### TC-PM-BL-P1-008: Partner Query - Sorting Options
-**Priority**: P1 - High  
-**Description**: Verify partners can be sorted by various fields  
-**Business Rule**: OrderBy in PaginationRequest applies correctly  
-**Preconditions**: 50 partners with varied data
-
-**Test Steps**:
-1. Query with OrderBy = "Name", Ascending = true
-2. Verify alphabetical order A-Z
-3. Query with OrderBy = "Name", Ascending = false
-4. Verify reverse order Z-A
-5. Query with OrderBy = "CreatedDate"
-
-**Expected Result**: Correct sorting applied  
-**Business Impact**: User experience and usability
-
----
-
-### TC-PM-BL-P1-009: Partner Status - Archive Validation
-**Priority**: P1 - High  
-**Description**: Verify archiving requirements  
-**Business Rule**: Only closed partners can be archived  
-**Preconditions**: Partner in Active status
-
-**Test Steps**:
-1. Attempt to archive Active partner - should fail
-2. Close the partner first
-3. Archive closed partner - should succeed
-4. Verify status is Archived
-
-**Expected Result**: Archive only from Closed status  
-**Business Impact**: Proper lifecycle management
-
----
-
-### TC-PM-BL-P1-010: Partner Creation - Audit Fields
-**Priority**: P1 - High  
-**Description**: Verify audit fields populated on creation  
-**Business Rule**: CreatedBy, CreatedDate set automatically  
-**Preconditions**: User authenticated
-
-**Test Steps**:
-1. Create new partner
-2. Verify CreatedBy = current user ID
-3. Verify CreatedDate = current timestamp
-4. Verify LastModifiedBy/Date set
-
-**Expected Result**: Audit trail created  
-**Business Impact**: Accountability and compliance
+### 4.4 Audit (10)
+| ID | Action | Expected Audit | Pr |
+|----|--------|---------------|----|
+| FUN-041 | Create | CreatedBy=current | P0 |
+| FUN-042 | Update | LastModifiedBy=current | P0 |
+| FUN-043 | Delete | DeletedBy=current | P0 |
+| FUN-044 | Approve | Status change + ErpDimValue logged | P1 |
+| FUN-045 | Unapprove | Status revert logged | P1 |
+| FUN-046 | Logo upload | LastModifiedBy updated | P1 |
+| FUN-047 | Status change | Transition logged | P1 |
+| FUN-048 | Read no audit | No modification | P1 |
+| FUN-049 | Failed op no audit | No entries | P1 |
+| FUN-050 | Batch update | Each partner's audit set | P1 |
 
 ---
 
-### TC-PM-BL-P1-011: Partner Update - Audit Fields
-**Priority**: P1 - High  
-**Description**: Verify audit fields updated on modification  
-**Business Rule**: LastModifiedBy, LastModifiedDate updated on changes  
-**Preconditions**: Partner exists, different user makes changes
+## §5 Integration Tests — 50 tests
 
-**Test Steps**:
-1. Update partner as User B
-2. Verify LastModifiedBy = User B ID
-3. Verify LastModifiedDate updated
-4. Verify CreatedBy unchanged (User A)
+### 5.1 CRUD (10)
+| ID | Operation | Expected | Pr |
+|----|----------|----------|----|
+| INT-001 | Full CRUD lifecycle | All succeed | P0 |
+| INT-002 | Create → listed | In partner list | P0 |
+| INT-003 | Delete → excluded | Not in list | P0 |
+| INT-004 | Update → persisted | Changes saved | P0 |
+| INT-005 | Approve → ErpDimValue visible | Value assigned | P0 |
+| INT-006 | Unapprove → ErpDimValue cleared | Value removed | P1 |
+| INT-007 | Status lifecycle (Draft→Active→Closed→Archived) | All transitions | P1 |
+| INT-008 | Create with contacts → both saved | Both entities | P1 |
+| INT-009 | Delete → contacts accessible | Contacts remain | P1 |
+| INT-010 | Restore deleted | Re-included | P1 |
 
-**Expected Result**: Modification audit trail  
-**Business Impact**: Change tracking
+### 5.2 Search & Filter (10)
+| ID | Criteria | Expected | Pr |
+|----|---------|----------|----|
+| INT-011 | Search by name | Matching partners | P0 |
+| INT-012 | Filter by type | Type-specific list | P0 |
+| INT-013 | Filter by group | Group-specific | P1 |
+| INT-014 | Filter by category | Category-specific | P1 |
+| INT-015 | Filter by OrgUnit | OrgUnit-specific | P1 |
+| INT-016 | Filter by status | Status-specific | P1 |
+| INT-017 | Combined search + filter | Intersection | P1 |
+| INT-018 | Search returns empty | Empty result | P1 |
+| INT-019 | Case-insensitive search | Same results | P1 |
+| INT-020 | Filter excludes deleted | Correct | P1 |
 
----
+### 5.3 Pagination (5)
+| ID | Page | Expected | Pr |
+|----|------|----------|----|
+| INT-021 | Page 1 of 5 | 20 items | P1 |
+| INT-022 | Last page partial | Remaining | P1 |
+| INT-023 | Empty results | 0 total | P1 |
+| INT-024 | Single page | All items | P2 |
+| INT-025 | Max page size | 1000 items | P2 |
 
-### TC-PM-BL-P1-012: Partner Gmail Integration - Related Records
-**Priority**: P1 - High  
-**Description**: Verify Gmail Add-on partner lookup  
-**Business Rule**: Find partners related to email addresses  
-**Preconditions**: Partners with contacts having specific emails
+### 5.4 Relationships (10)
+| ID | Relationship | Expected | Pr |
+|----|-------------|----------|----|
+| INT-026 | Partner → Contacts | Loaded | P0 |
+| INT-027 | Partner → Interactions | Loaded | P0 |
+| INT-028 | Partner → Documents | Loaded | P1 |
+| INT-029 | Partner → OrgUnit | Loaded | P1 |
+| INT-030 | Partner → Parent (hierarchy) | Loaded | P1 |
+| INT-031 | Partner → Children (hierarchy) | Loaded | P1 |
+| INT-032 | Delete partner → children orphaned | Reparented or error | P1 |
+| INT-033 | OrgUnit change → scope change | Correct scoping | P1 |
+| INT-034 | Partner → Opportunities | Loaded | P1 |
+| INT-035 | Audit trail | Complete history | P1 |
 
-**Test Steps**:
-1. Call `GetPartnersForGmailAddon(request, user)` with email addresses
-2. Verify partners with matching contacts returned
-3. Verify correct partner-contact associations
-
-**Expected Result**: Partners found via email matching  
-**Business Impact**: Gmail Add-on functionality
-
----
-
-### TC-PM-BL-P1-013: Partner by Name - Exact Match
-**Priority**: P1 - High  
-**Description**: Verify partner lookup by exact name  
-**Business Rule**: GetPartnerByNameAsync returns exact match  
-**Preconditions**: Partner "Test Corporation" exists
-
-**Test Steps**:
-1. Call `GetPartnerByNameAsync(user, "Test Corporation")`
-2. Verify exact match returned
-3. Call with "Test Corp" - should not match
-4. Verify case sensitivity behavior
-
-**Expected Result**: Exact name matching  
-**Business Impact**: Duplicate detection and lookup
-
----
-
-### TC-PM-BL-P1-014: Partner Query - Exclude Deleted
-**Priority**: P1 - High  
-**Description**: Verify deleted partners excluded by default  
-**Business Rule**: Standard queries exclude IsDeleted=true partners  
-**Preconditions**: Mix of active and deleted partners
-
-**Test Steps**:
-1. Query partners with standard GetPartners
-2. Verify deleted partners not in results
-3. Verify total count excludes deleted
-
-**Expected Result**: Deleted partners filtered out  
-**Business Impact**: User experience and data cleanliness
-
----
-
-### TC-PM-BL-P1-015: Partner Total Count - Debug Method
-**Priority**: P1 - High  
-**Description**: Verify total partner count calculation  
-**Business Rule**: GetTotalPartnerCountAsync respects user permissions  
-**Preconditions**: 100 partners, user with limited access
-
-**Test Steps**:
-1. Call `GetTotalPartnerCountAsync(user)`
-2. Verify count reflects user's visible partners
-3. Admin should see all partners
-
-**Expected Result**: Correct filtered count  
-**Business Impact**: Dashboard accuracy
+### 5.5 Error Handling (15)
+| ID | Error | Expected | Pr |
+|----|-------|----------|----|
+| INT-036 | Invalid data → 400 | BusinessException | P0 |
+| INT-037 | Not found → 404 | KeyNotFound | P0 |
+| INT-038 | Unauthorized → 403 | Unauthorized | P0 |
+| INT-039 | Duplicate ErpDimValue → 400 | Constraint error | P0 |
+| INT-040 | Invalid status transition → 400 | BusinessException | P1 |
+| INT-041 | FK violation → 400 | BusinessException | P1 |
+| INT-042 | Logo invalid → 400 | BusinessException | P1 |
+| INT-043 | Circular hierarchy → 400 | BusinessException | P1 |
+| INT-044 | DB timeout → 500 | Graceful error | P1 |
+| INT-045 | Concurrency conflict → 409 | Optimistic concurrency | P1 |
+| INT-046 | Malformed request → 400 | Validation | P1 |
+| INT-047 | Rate limit → 429 | Rate limit | P2 |
+| INT-048 | SQL injection → sanitized | No harm | P0 |
+| INT-049 | Large payload → 413 | Too large | P2 |
+| INT-050 | Session expired → 401 | Auth required | P1 |
 
 ---
 
-## P2 - Medium Priority Business Logic Tests
+## §6 Security Tests — 50 tests
 
-### TC-PM-BL-P2-001: Partner Pagination - First Page
-**Priority**: P2 - Medium  
-**Description**: Verify first page returns correct data  
-**Preconditions**: 100 partners
-
-**Test Steps**:
-1. Request PageIndex=1, PageSize=10
-2. Verify 10 records returned
-3. Verify TotalCount=100
-
-**Expected Result**: First 10 partners returned
-
----
-
-### TC-PM-BL-P2-002: Partner Pagination - Last Page Partial
-**Priority**: P2 - Medium  
-**Description**: Verify last page with partial results  
-**Preconditions**: 95 partners, PageSize=10
-
-**Test Steps**:
-1. Request PageIndex=10, PageSize=10
-2. Verify 5 records returned (95 total, last page partial)
-
-**Expected Result**: Correct partial page
-
----
-
-### TC-PM-BL-P2-003: Partner Creation - Special Characters in Name
-**Priority**: P2 - Medium  
-**Description**: Verify special characters handled in name  
-**Test Steps**:
-1. Create partner with name "L'Oréal S.A. & Co."
-2. Verify stored correctly
-3. Search by name works
-
-**Expected Result**: Special characters preserved
-
----
-
-### TC-PM-BL-P2-004: Partner Logo - Update Existing
-**Priority**: P2 - Medium  
-**Description**: Verify logo replacement behavior  
-**Preconditions**: Partner with existing logo
-
-**Test Steps**:
-1. Upload new logo
-2. Verify old logo replaced
-3. Verify new URL returned
-
-**Expected Result**: Logo replaced successfully
-
----
-
-### TC-PM-BL-P2-005: Partner Short Description - Validation
-**Priority**: P2 - Medium  
-**Description**: Verify short description length limits  
-**Test Steps**:
-1. Create partner with max length description
-2. Verify accepted
-3. Exceed limit - verify validation error
-
-**Expected Result**: Length validation enforced
+| ID | Category | Attack/Scenario | Expected | Pr |
+|----|----------|----------------|----------|----|
+| SEC-001 | Injection | SQL in Name | Parameterized | P0 |
+| SEC-002 | Injection | SQL in search | Parameterized | P0 |
+| SEC-003 | Injection | XSS in Name | Sanitized | P0 |
+| SEC-004 | Injection | XSS in Description | Sanitized | P0 |
+| SEC-005 | Injection | LDAP | Sanitized | P1 |
+| SEC-006 | Injection | OS cmd in logo name | Sanitized | P0 |
+| SEC-007 | Injection | Path traversal | Rejected | P0 |
+| SEC-008 | Injection | HTML in fields | Escaped | P1 |
+| SEC-009 | Injection | JSON injection | Rejected | P1 |
+| SEC-010 | Injection | Template injection | Escaped | P1 |
+| SEC-011 | Access | Anonymous create | 401 | P0 |
+| SEC-012 | Access | No perm create | 403 | P0 |
+| SEC-013 | Access | Scoped read violation | 403 | P0 |
+| SEC-014 | Access | Scoped create violation | 403 | P0 |
+| SEC-015 | Access | Expired token | 401 | P0 |
+| SEC-016 | Access | Tampered JWT | 401/403 | P0 |
+| SEC-017 | Access | Horizontal access | 403 | P0 |
+| SEC-018 | Access | Disabled account | 403 | P1 |
+| SEC-019 | Access | Post-logout | 401 | P1 |
+| SEC-020 | Access | Role escalation | Ignored | P0 |
+| SEC-021 | IDOR | Guess partner ID | 403 if not scoped | P0 |
+| SEC-022 | IDOR | Enumerate IDs | Rate limited | P0 |
+| SEC-023 | IDOR | Deleted partner | 404 | P1 |
+| SEC-024 | IDOR | Other OrgUnit | 403 | P0 |
+| SEC-025 | IDOR | Negative ID | 400 | P1 |
+| SEC-026 | IDOR | Zero ID | 400 | P1 |
+| SEC-027 | IDOR | Float ID | 400 | P1 |
+| SEC-028 | IDOR | String ID | 400 | P1 |
+| SEC-029 | IDOR | MAX_INT | 404 | P1 |
+| SEC-030 | IDOR | Other user's partner | 403 | P0 |
+| SEC-031 | Mass assign | IsDeleted | Not modifiable | P0 |
+| SEC-032 | Mass assign | CreatedBy | Not modifiable | P0 |
+| SEC-033 | Mass assign | CreatedDate | Not modifiable | P0 |
+| SEC-034 | Mass assign | Id | Not settable | P0 |
+| SEC-035 | Mass assign | ErpDimValue via API | Validated/rejected | P0 |
+| SEC-036 | Auth | Brute-force | Lockout | P0 |
+| SEC-037 | Auth | Session fixation | New session | P0 |
+| SEC-038 | Auth | Hijacking | Token binding | P1 |
+| SEC-039 | Auth | CSRF create | CSRF token | P0 |
+| SEC-040 | Auth | CSRF delete | CSRF token | P0 |
+| SEC-041 | Auth | Token storage | HttpOnly | P0 |
+| SEC-042 | Auth | Concurrent sessions | Policy | P1 |
+| SEC-043 | Auth | Token refresh | Works | P1 |
+| SEC-044 | Auth | Logout | Invalidated | P0 |
+| SEC-045 | Auth | HTTPS | Enforced | P0 |
+| SEC-046 | Exposure | Internal fields | DTO filtered | P1 |
+| SEC-047 | Exposure | Stack traces | Generic errors | P0 |
+| SEC-048 | Exposure | ErpDimValue range info | Not exposed | P1 |
+| SEC-049 | Exposure | Cache | no-store | P1 |
+| SEC-050 | Exposure | Tokens in URL | HttpOnly | P1 |
 
 ---
 
-## P3 - Low Priority Edge Cases
+## §7 Concurrency Tests — 25 tests
 
-### TC-PM-BL-P3-001: Partner with No Contacts
-**Priority**: P3 - Low  
-**Description**: Verify partner without contacts works correctly  
-**Test Steps**:
-1. Create partner without contacts
-2. Query with contacts include
-3. Verify empty contacts list, no error
-
-**Expected Result**: Empty contacts handled gracefully
-
----
-
-### TC-PM-BL-P3-002: Partner Tree - Circular Reference Prevention
-**Priority**: P3 - Low  
-**Description**: Verify system handles circular references  
-**Test Steps**:
-1. Attempt to create circular partner tree
-2. Verify prevented or handled gracefully
-
-**Expected Result**: No infinite loops
-
----
-
-### TC-PM-BL-P3-003: Partner Query - Empty Database
-**Priority**: P3 - Low  
-**Description**: Verify queries work on empty database  
-**Test Steps**:
-1. Query partners with no data
-2. Verify empty result, no error
-3. Verify TotalCount = 0
-
-**Expected Result**: Empty results handled correctly
+| ID | Scenario | Expected | Pr |
+|----|---------|----------|----|
+| CON-001 | Two users update same partner | Conflict/last-write | P1 |
+| CON-002 | Two users approve same partner | One succeeds | P1 |
+| CON-003 | Approve + delete simultaneously | One succeeds | P1 |
+| CON-004 | Create during search | Consistent | P1 |
+| CON-005 | Delete during read | Null or pre-delete | P1 |
+| CON-006 | Concurrent ErpDimValue assignment | Unique values | P0 |
+| CON-007 | Concurrent status changes | One succeeds | P1 |
+| CON-008 | Concurrent pagination | Correct pages | P2 |
+| CON-009 | DB deadlock | Resolved | P1 |
+| CON-010 | Token refresh during approve | Retry | P1 |
+| CON-011 | Bulk import concurrent | Both complete | P2 |
+| CON-012 | Gmail sync concurrent | Dedup handles | P2 |
+| CON-013 | Optimistic concurrency | Conflict detected | P1 |
+| CON-014 | Concurrent soft-delete | One succeeds | P1 |
+| CON-015 | Rapid status transitions | Final correct | P1 |
+| CON-016 | Connection pool exhaustion | Graceful | P1 |
+| CON-017 | Cache invalidation | Fresh data | P1 |
+| CON-018 | Concurrent logo upload | Last wins | P2 |
+| CON-019 | Session timeout during approve | Rolled back | P1 |
+| CON-020 | Multiple users creating partners | All succeed | P2 |
+| CON-021 | Concurrent tree operations | Correct hierarchy | P1 |
+| CON-022 | Approve during unapproval | Conflict | P1 |
+| CON-023 | DB migration during operation | Graceful | P2 |
+| CON-024 | Export during update | Consistent snapshot | P2 |
+| CON-025 | Concurrent ErpDimValue recalculation | Unique guaranteed | P0 |
 
 ---
 
-## Integration with Unit Tests
+## §8 Unit Tests — 21 tests
 
-These business logic test cases should be implemented as actual unit tests in:
-`tests/UNOPS.PAO.Business.Tests/Managers/PartnerManagerBusinessLogicTests.cs`
-
-### Test Implementation Guidance
-
-```csharp
-// Example test structure
-[Fact]
-public async Task ApprovePartner_WithValidData_AssignsUniqueErpDimValue()
-{
-    // Arrange: Create partner with required fields
-    // Act: Call ApprovePartnerAsync
-    // Assert: Verify ErpDimValue assigned and unique
-}
-```
+| ID | Category | Input | Expected | Pr |
+|----|----------|-------|----------|----|
+| UNT-001 | Validation | Null Name | Invalid | P1 |
+| UNT-002 | Validation | Invalid Type | Invalid | P1 |
+| UNT-003 | Validation | OrgUnitId=-1 | Invalid | P1 |
+| UNT-004 | Validation | ErpDimValue=8500 | Invalid (reserved) | P0 |
+| UNT-005 | Validation | Circular hierarchy | Invalid | P0 |
+| UNT-006 | Formatting | Name trim | " ACME " → "ACME" | P1 |
+| UNT-007 | Formatting | ErpDimValue display | "5000" | P1 |
+| UNT-008 | Formatting | Status display | "Active" | P2 |
+| UNT-009 | Calculation | Next ErpDimValue | Sequential, skip taken | P0 |
+| UNT-010 | Calculation | Contact count | Non-deleted only | P1 |
+| UNT-011 | Calculation | Pagination pages | 55/20=3 | P1 |
+| UNT-012 | Calculation | HasNext | True for page 1 of 3 | P1 |
+| UNT-013 | Calculation | Tree depth | Correct depth | P1 |
+| UNT-014 | Status | ValidTransition Draft→Active | True | P1 |
+| UNT-015 | Status | InvalidTransition Draft→Closed | False | P1 |
+| UNT-016 | Status | IsDeleted check | True → inaccessible | P1 |
+| UNT-017 | Status | ErpDimValue in valid range | True for 5000 | P0 |
+| UNT-018 | Status | ErpDimValue in reserved | True for 8500 | P0 |
+| UNT-019 | Collections | Filter by IsDeleted | Correct subset | P1 |
+| UNT-020 | Collections | Group by type | Dictionary | P1 |
+| UNT-021 | Collections | Build tree from flat | Correct hierarchy | P1 |
 
 ---
 
-## Related Documentation
+## §9 Performance Tests — 16 tests
 
-- [Partner Entity](../../UNOPS.PAO.Domain/Entities/Partner.cs)
-- [Partner Approval Status Enum](../../UNOPS.PAO.Domain/Enums/PartnerApprovalStatus.cs)
-- [Organization Hierarchy](../../UNOPS.PAO.Domain/Entities/OrganizationHierarchy.cs)
-- [Existing Test Cases](../Business/PartnerManager/PartnerManager_TestCases.md)
+| ID | Operation | Threshold | Pr |
+|----|----------|----------|----|
+| PRF-001 | Create single | < 200ms | P1 |
+| PRF-002 | Get with includes | < 300ms | P1 |
+| PRF-003 | Approve (ErpDimValue assign) | < 500ms | P1 |
+| PRF-004 | Bulk create 100 | < 5s | P2 |
+| PRF-005 | Logo upload 5MB | < 3s | P2 |
+| PRF-006 | Search 1000 partners | < 500ms | P1 |
+| PRF-007 | Search 10,000 | < 1s | P1 |
+| PRF-008 | Paginate 10,000 | < 500ms/page | P1 |
+| PRF-009 | Tree build 1000 partners | < 1s | P1 |
+| PRF-010 | Count query | < 100ms | P1 |
+| PRF-011 | 10 concurrent creates | < 1s each | P2 |
+| PRF-012 | 50 concurrent reads | < 500ms each | P2 |
+| PRF-013 | 10 concurrent approvals | < 1s each (unique values) | P2 |
+| PRF-014 | Memory 10,000 load | < 200MB | P2 |
+| PRF-015 | Memory 50,000 query | < 500MB | P2 |
+| PRF-016 | Memory leak check | No growth > 10% | P1 |
 
+---
+
+## §10 Load Tests — 10 tests
+
+| ID | Profile | Duration | Criteria | Pr |
+|----|---------|----------|----------|----|
+| LDT-001 | 50 concurrent CRUD | 30 min | 95% < 500ms | P2 |
+| LDT-002 | 100 concurrent reads | 30 min | 95% < 300ms | P2 |
+| LDT-003 | 50 concurrent searches | 15 min | < 1s/search | P2 |
+| LDT-004 | Spike 10→200 req/s | 5 min | Recovery < 30s | P2 |
+| LDT-005 | Spike + approvals | 5 min | All unique values | P2 |
+| LDT-006 | 500 concurrent | 10 min | Graceful degradation | P2 |
+| LDT-007 | 100K partners in DB | 15 min | Queries < 1s | P2 |
+| LDT-008 | Continuous create/delete | 10 min | Stable | P2 |
+| LDT-009 | Recovery after DB crash | N/A | < 60s | P2 |
+| LDT-010 | Recovery after restart | N/A | < 30s | P2 |
+
+---
+
+## Traceability Matrix
+
+| Business Rule | Test Cases |
+|--------------|-----------|
+| Partner CRUD | POS-001–005, INT-001–004 |
+| Approval workflow + ErpDimValue | POS-002, POS-010–011, FUN-005, NEG-021–030, BND-046–055 |
+| Status transitions | POS-006–009, FUN-007–010, NEG-031–040 |
+| OrgUnit association | POS-012, FUN-012, INT-015, SEC-013 |
+| Hierarchy/tree | POS-019, FUN-027–028, NEG-063–064, BND-033–035 |
+| Soft delete | POS-004, FUN-004, SEC-031 |
+| Security | SEC-001–050 |
+| Performance | PRF-001–016, LDT-001–010 |
+
+---
+
+**Last Updated:** 2026-02-11  
+**Status:** Ready for Execution

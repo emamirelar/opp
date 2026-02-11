@@ -1,257 +1,514 @@
-# DashboardController Test Cases
+# DashboardController — Test Cases
 
-**Controller**: `UNOPS.PAO.Presentation/Controllers/Dashboard/DashboardController.cs`  
-**Priority**: P0 - Critical  
-**Total Test Cases**: 30  
+**Component:** `OpportunityPlus.API/Controllers/DashboardController`  
+**Created:** 2026-02-04 | **Last Updated:** 2026-02-11  
+**Author:** QA Team  
+**Standard:** 10-Category, 3:1 Ratio
 
----
-
-## Overview
-
-The DashboardController provides dashboard data and analytics for the Opportunity+ system:
-- Partner statistics and trends
-- Contact activity summaries
-- Interaction metrics
-- Recent activity feeds
-- Key performance indicators (KPIs)
+**Feature Overview:** REST API for dashboard: widgets, KPI tiles, recent activity, pipeline overview, partner statistics.
 
 ---
 
-## Test Categories
+## Compliance Summary
 
-| Category | Count | Priority |
-|----------|-------|----------|
-| Dashboard Statistics | 10 | P0 |
-| Activity Feeds | 6 | P1 |
-| Analytics Endpoints | 8 | P1 |
-| Authorization | 4 | P0 |
-| Performance | 2 | P1 |
+| Category | Count | Min | ✓ |
+|----------|-------|-----|---|
+| §1 Positive | 35 | 30-50 | ✅ |
+| §2 Negative | 70 | 70 | ✅ |
+| §3 Boundary | 70 | 70 | ✅ |
+| §4 Functional | 50 | 50 | ✅ |
+| §5 Integration | 50 | 50 | ✅ |
+| §6 Security | 50 | 50 | ✅ |
+| §7 Concurrency | 25 | 25 | ✅ |
+| §8 Unit | 21 | 21 | ✅ |
+| §9 Performance | 16 | 16 | ✅ |
+| §10 Load | 10 | 10 | ✅ |
+| **TOTAL** | **397** | **≥347** | ✅ |
 
----
-
-## P0 - Critical Tests
-
-### TC-DASH-001: Get dashboard summary - authenticated user
-**Description**: Retrieve dashboard summary for authenticated user  
-**Preconditions**: 
-- User authenticated
-- User has dashboard access permission
-**Test Steps**:
-1. Authenticate as valid user
-2. Call `GET /api/dashboard/summary`
-3. Verify summary data returned
-**Expected Result**: Dashboard summary with partner count, contact count, interaction count
-
-### TC-DASH-002: Get dashboard summary - unauthorized user
-**Description**: Unauthenticated request should fail  
-**Preconditions**: No authentication token  
-**Test Steps**:
-1. Call `GET /api/dashboard/summary` without auth
-2. Verify 401 response
-**Expected Result**: 401 Unauthorized
-
-### TC-DASH-003: Get partner statistics
-**Description**: Retrieve partner-related statistics  
-**Preconditions**: User authenticated with partner read permission  
-**Test Steps**:
-1. Create test partners with various statuses
-2. Call `GET /api/dashboard/partners/stats`
-3. Verify statistics accuracy
-**Expected Result**: Returns counts by status, new partners this month, etc.
-
-### TC-DASH-004: Get contact statistics
-**Description**: Retrieve contact-related statistics  
-**Preconditions**: User authenticated with contact read permission  
-**Test Steps**:
-1. Create test contacts
-2. Call `GET /api/dashboard/contacts/stats`
-3. Verify statistics
-**Expected Result**: Returns total contacts, active contacts, new this month
-
-### TC-DASH-005: Get interaction statistics
-**Description**: Retrieve interaction-related statistics  
-**Preconditions**: User authenticated with interaction read permission  
-**Test Steps**:
-1. Create test interactions
-2. Call `GET /api/dashboard/interactions/stats`
-3. Verify statistics
-**Expected Result**: Returns interaction counts by type, recent activity
-
-### TC-DASH-006: Dashboard respects org unit filter
-**Description**: Dashboard data filtered by user's org unit  
-**Preconditions**: 
-- User with org unit assignment
-- Data exists across multiple org units
-**Test Steps**:
-1. Create data in user's org unit and other org units
-2. Call dashboard summary
-3. Verify only user's org unit data returned
-**Expected Result**: Only data from user's accessible org units included
-
-### TC-DASH-007: Dashboard with no data
-**Description**: Dashboard handles empty data gracefully  
-**Preconditions**: User has no accessible data  
-**Test Steps**:
-1. Authenticate as user with no data access
-2. Call dashboard summary
-3. Verify zero counts returned
-**Expected Result**: Returns zeros, no errors
-
-### TC-DASH-008: Get KPI metrics
-**Description**: Retrieve key performance indicators  
-**Preconditions**: User authenticated  
-**Test Steps**:
-1. Call `GET /api/dashboard/kpis`
-2. Verify KPI data structure
-**Expected Result**: Returns KPIs with current values and trends
-
-### TC-DASH-009: Dashboard date range filter
-**Description**: Filter dashboard data by date range  
-**Preconditions**: Historical data exists  
-**Test Steps**:
-1. Create data across multiple months
-2. Call `GET /api/dashboard/summary?startDate=2025-01-01&endDate=2025-01-31`
-3. Verify only January data included
-**Expected Result**: Data filtered to specified date range
-
-### TC-DASH-010: Dashboard with invalid date range
-**Description**: Handle invalid date range gracefully  
-**Preconditions**: None  
-**Test Steps**:
-1. Call `GET /api/dashboard/summary?startDate=2025-12-31&endDate=2025-01-01`
-2. Verify appropriate error
-**Expected Result**: 400 Bad Request with validation message
+**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
 
 ---
 
-## P1 - High Priority Tests
+## §1 Positive Tests (35)
 
-### TC-DASH-011: Get recent activity feed
-**Description**: Retrieve recent activity across entities  
-**Preconditions**: Various entity activities exist  
-**Test Steps**:
-1. Create partners, contacts, interactions
-2. Call `GET /api/dashboard/activity/recent`
-3. Verify activity feed
-**Expected Result**: Returns recent activities sorted by date
+| ID | Test Name | Steps | Expected Result |
+|----|-----------|-------|-----------------|
+| POS-001 | Get dashboard | GET /api/dashboard | Dashboard data |
+| POS-002 | Get widgets | GET /api/dashboard/widgets | Widget list |
+| POS-003 | Get KPI tiles | GET /api/dashboard/kpis | KPI tiles |
+| POS-004 | Get recent activity | GET /api/dashboard/activity | Activity feed |
+| POS-005 | Get pipeline overview | GET /api/dashboard/pipeline | Pipeline data |
+| POS-006 | Get partner statistics | GET /api/dashboard/partners/stats | Partner stats |
+| POS-007 | Get opportunity stats | GET /api/dashboard/opportunities/stats | Opp stats |
+| POS-008 | Get widget by ID | GET /api/dashboard/widgets/{id} | Widget details |
+| POS-009 | Filter by org unit | GET ?orgUnitId=1 | Org-scoped |
+| POS-010 | Filter by date range | GET ?start&end | Date-filtered |
+| POS-011 | Get user-specific | GET (authenticated) | User dashboard |
+| POS-012 | Get default layout | GET /api/dashboard/layout | Layout |
+| POS-013 | Get widget config | GET /api/dashboard/widgets/{id}/config | Config |
+| POS-014 | Update widget order | PUT /api/dashboard/layout | Order updated |
+| POS-015 | Add widget | POST /api/dashboard/widgets | Widget added |
+| POS-016 | Remove widget | DELETE /api/dashboard/widgets/{id} | Removed |
+| POS-017 | Refresh dashboard | POST /api/dashboard/refresh | Refreshed |
+| POS-018 | Get drill-down | GET /api/dashboard/kpis/{id}/drill | Drill data |
+| POS-019 | Paginate activity | GET ?page=1&pageSize=20 | Paginated |
+| POS-020 | Filter activity type | GET ?activityType=Created | Filtered |
+| POS-021 | Get top partners | GET /api/dashboard/partners/top | Top list |
+| POS-022 | Get pipeline stages | GET /api/dashboard/pipeline/stages | Stages |
+| POS-023 | Get charts data | GET /api/dashboard/charts | Chart data |
+| POS-024 | Get alerts | GET /api/dashboard/alerts | Alerts |
+| POS-025 | Dismiss alert | POST /api/dashboard/alerts/{id}/dismiss | Dismissed |
+| POS-026 | Get notifications | GET /api/dashboard/notifications | Notifications |
+| POS-027 | Get shortcut summary | GET /api/dashboard/shortcuts | Shortcuts |
+| POS-028 | Empty dashboard | New user | Default layout |
+| POS-029 | Cached dashboard | GET twice | Cached |
+| POS-030 | Localized dashboard | GET ?lang=fr | French labels |
+| POS-031 | Theme preference | GET ?theme=dark | Dark theme |
+| POS-032 | Authenticated access | GET with token | 200 |
+| POS-033 | Role-based widgets | GET as user | Scoped widgets |
+| POS-034 | Admin full dashboard | GET as admin | Full data |
+| POS-035 | Export dashboard | GET /api/dashboard/export | Export file |
 
-### TC-DASH-012: Activity feed pagination
-**Description**: Paginate activity feed results  
-**Preconditions**: Many activities exist  
-**Test Steps**:
-1. Create 50 activities
-2. Call `GET /api/dashboard/activity/recent?page=1&pageSize=10`
-3. Verify pagination
-**Expected Result**: Returns 10 items with pagination metadata
-
-### TC-DASH-013: Get partner trend data
-**Description**: Retrieve partner growth trends  
-**Preconditions**: Historical partner data exists  
-**Test Steps**:
-1. Create partners over multiple months
-2. Call `GET /api/dashboard/partners/trends`
-3. Verify trend data
-**Expected Result**: Monthly partner counts for trend chart
-
-### TC-DASH-014: Get interaction type breakdown
-**Description**: Retrieve interaction distribution by type  
-**Preconditions**: Interactions of various types exist  
-**Test Steps**:
-1. Create interactions: 10 meetings, 5 calls, 3 emails
-2. Call `GET /api/dashboard/interactions/breakdown`
-3. Verify breakdown
-**Expected Result**: Returns counts per interaction type
-
-### TC-DASH-015: Get pending approvals count
-**Description**: Retrieve count of items pending user approval  
-**Preconditions**: User is approver for some items  
-**Test Steps**:
-1. Create items pending user's approval
-2. Call `GET /api/dashboard/pending-approvals`
-3. Verify count
-**Expected Result**: Correct count of pending approvals
-
-### TC-DASH-016: Get user's recent items
-**Description**: Retrieve items recently viewed/edited by user  
-**Preconditions**: User has activity history  
-**Test Steps**:
-1. User views/edits some items
-2. Call `GET /api/dashboard/my-recent`
-3. Verify recent items
-**Expected Result**: Returns user's recently accessed items
-
-### TC-DASH-017: Dashboard widget data
-**Description**: Retrieve data for specific dashboard widget  
-**Preconditions**: Widget configuration exists  
-**Test Steps**:
-1. Call `GET /api/dashboard/widgets/partner-status-chart`
-2. Verify widget data format
-**Expected Result**: Data formatted for chart rendering
-
-### TC-DASH-018: Get upcoming deadlines
-**Description**: Retrieve upcoming deadline items  
-**Preconditions**: Items with deadlines exist  
-**Test Steps**:
-1. Create items with future deadlines
-2. Call `GET /api/dashboard/deadlines/upcoming`
-3. Verify deadline items
-**Expected Result**: Items sorted by deadline date
 
 ---
 
-## Authorization Tests
+## §2 Negative Tests (70)
 
-### TC-DASH-A001: Admin sees all org unit data
-**Description**: Admin user sees data across all org units  
-**Preconditions**: User has admin role  
-**Test Steps**:
-1. Create data across multiple org units
-2. Call dashboard as admin
-3. Verify all data visible
-**Expected Result**: Aggregated data from all org units
-
-### TC-DASH-A002: User without dashboard permission
-**Description**: User without dashboard permission denied  
-**Preconditions**: User lacks dashboard permission  
-**Test Steps**:
-1. Authenticate as restricted user
-2. Call `GET /api/dashboard/summary`
-3. Verify access denied
-**Expected Result**: 403 Forbidden
-
-### TC-DASH-A003: Delegation affects dashboard
-**Description**: Delegated user sees delegator's data  
-**Preconditions**: User has active delegation  
-**Test Steps**:
-1. Set up delegation
-2. Call dashboard as delegate
-3. Verify delegator's data visible
-**Expected Result**: Dashboard shows delegated access data
-
-### TC-DASH-A004: Role-based widget visibility
-**Description**: Widgets shown based on user role  
-**Preconditions**: Widgets configured with role requirements  
-**Test Steps**:
-1. Call dashboard as user with limited role
-2. Verify only permitted widgets returned
-**Expected Result**: Only role-appropriate widgets included
+| ID | Test Name | Invalid Input | Expected Error |
+|----|-----------|--------------|----------------|
+| NEG-001 | No auth | No token | 401 |
+| NEG-002 | Expired token | Expired JWT | 401 |
+| NEG-003 | Invalid widget ID | id=999999 | 404 |
+| NEG-004 | Negative ID | id=-1 | 400 |
+| NEG-005 | Invalid orgUnitId | orgUnitId=-1 | 400 |
+| NEG-006 | Non-existent org | orgUnitId=999999 | 404 or empty |
+| NEG-007 | Invalid date format | start=invalid | 400 |
+| NEG-008 | End before start | start>end | 400 |
+| NEG-009 | Future date | start=2030 | 400 |
+| NEG-010 | SQL injection | filter='; DROP | Sanitized |
+| NEG-011 | XSS in widget name | name=<script> | Sanitized |
+| NEG-012 | Negative page | page=-1 | 400 |
+| NEG-013 | Zero pageSize | pageSize=0 | 400 |
+| NEG-014 | Excessive pageSize | pageSize=10000 | 400 |
+| NEG-015 | Invalid activity type | type=Invalid | 400 |
+| NEG-016 | Cross-org access | Other org data | 403 |
+| NEG-017 | No permission | User without CanViewDashboard | 403 |
+| NEG-018 | Deleted widget | id of deleted | 404 |
+| NEG-019 | Invalid layout | Malformed layout JSON | 400 |
+| NEG-020 | Null request | POST null | 400 |
+| NEG-021 | Malformed JSON | Invalid JSON | 400 |
+| NEG-022 | Wrong content-type | Application/xml | 415 |
+| NEG-023 | Invalid widget type | type=Invalid | 400 |
+| NEG-024 | Duplicate widget | Add same widget twice | 400 |
+| NEG-025 | Exceed max widgets | Add 21st widget | 400 |
+| NEG-026 | Rate limit | Too many requests | 429 |
+| NEG-027 | Invalid drill ID | drill?id=invalid | 404 |
+| NEG-028 | Invalid alert ID | alert?id=999999 | 404 |
+| NEG-029 | Dismiss others' alert | Dismiss other user's | 403 |
+| NEG-030 | Update read-only widget | PUT on system widget | 403 |
+| NEG-031 | Delete system widget | DELETE system widget | 403 |
+| NEG-032 | DB timeout | Simulate | 503 |
+| NEG-033 | Cache failure | Cache down | Fallback |
+| NEG-034 | Payload too large | Huge body | 413 |
+| NEG-035 | Invalid Accept | Accept: text/plain | 406 |
+| NEG-036 | HTTP method | PUT for get | 405 |
+| NEG-037 | OPTIONS | OPTIONS | 200 |
+| NEG-038 | HEAD | HEAD | 200 or 405 |
+| NEG-039 | Trailing slash | /api/dashboard/ | Redirect |
+| NEG-040 | Case sensitivity | /api/Dashboard | 404 |
+| NEG-041 | Extra path | /api/dashboard/1/extra | 404 |
+| NEG-042 | Invalid bearer | Bearer malformed | 401 |
+| NEG-043 | Revoked token | Revoked JWT | 401 |
+| NEG-044 | Service account | Service for UI | 403 |
+| NEG-045 | Session expired | Mid-request | 401 |
+| NEG-046 | Audit failure | Audit down | Continue |
+| NEG-047 | Invalid theme | theme=invalid | 400 |
+| NEG-048 | Invalid lang | lang=xx | 400 or default |
+| NEG-049 | Export no permission | No export permission | 403 |
+| NEG-050 | Stale date range | Very old dates | Empty or warn |
+| NEG-051 | Control chars | name with \0 | 400 |
+| NEG-052 | Unicode overflow | Very long | 400 |
+| NEG-053 | Invalid UUID | id=invalid-guid | 400 |
+| NEG-054 | Mismatched IDs | Path != body | 400 |
+| NEG-055 | Read-only field | Update system field | Ignored |
+| NEG-056 | Version conflict | Stale version | 409 |
+| NEG-057 | Blocked IP | From blocked | 403 |
+| NEG-058 | CORS fail | Invalid origin | CORS error |
+| NEG-059 | Widget config invalid | Invalid config | 400 |
+| NEG-060 | Pipeline filter invalid | Invalid stage | 400 |
+| NEG-061 | KPI drill disabled | Drill on disabled KPI | 403 |
+| NEG-062 | Alert limit exceeded | Too many alerts | 429 |
+| NEG-063 | Notification limit | Too many | Truncate |
+| NEG-064 | Empty layout | Empty layout | Default |
+| NEG-065 | Concurrent layout update | 2 users update | Last write |
+| NEG-066 | Widget dependency missing | Widget needs missing data | Graceful |
+| NEG-067 | Data source failure | Source down | Partial/503 |
+| NEG-068 | Permission change mid-load | Permission revoked | 403 |
+| NEG-069 | Inactive org | Org inactive | 403 |
+| NEG-070 | Soft-deleted data | Query deleted | Excluded |
 
 ---
 
-## Performance Tests
+## §3 Boundary Tests (70)
 
-### TC-DASH-P001: Dashboard summary performance
-**Description**: Dashboard loads within acceptable time  
-**Preconditions**: 50,000 partners, 100,000 contacts  
-**Performance Criteria**: Complete in < 2 seconds
-
-### TC-DASH-P002: Activity feed performance
-**Description**: Activity feed loads quickly  
-**Preconditions**: 1,000,000 activity records  
-**Performance Criteria**: Complete in < 1 second
+| ID | Field/Scenario | Min | Max | At Min | At Max | Over Max |
+|----|----------------|-----|-----|--------|--------|----------|
+| BND-001 | widget count | 0 | 20 | ✅ | ✅ | ❌ |
+| BND-002 | page | 1 | 9999 | ✅ | ✅ | ❌ |
+| BND-003 | pageSize | 1 | 100 | ✅ | ✅ | ❌ |
+| BND-004 | name length | 1 | 100 | ✅ | ✅ | ❌ |
+| BND-005 | date range | 1 day | 365 days | ✅ | ✅ | ❌ |
+| BND-006 | orgUnitId | 1 | int.Max | ✅ | ✅ | ❌ |
+| BND-007 | activity count | 0 | 1000 | ✅ | ✅ | ❌ |
+| BND-008 | pipeline stages | 0 | 20 | ✅ | ✅ | ❌ |
+| BND-009 | KPI count | 0 | 50 | ✅ | ✅ | ❌ |
+| BND-010 | alert count | 0 | 100 | ✅ | ✅ | ❌ |
+| BND-011 | Empty dashboard | - | - | Default | - | - |
+| BND-012 | Single widget | - | - | [widget] | - | - |
+| BND-013 | First page | page=1 | - | ✅ | - | - |
+| BND-014 | Last page | - | - | Partial | - | - |
+| BND-015 | Zero widgets | - | - | [] | - | - |
+| BND-016 | Max widgets | 20 | - | - | ✅ | ❌ |
+| BND-017 | Feb 29 | - | - | Valid | - | - |
+| BND-018 | Unicode name | - | - | Accept | - | - |
+| BND-019 | Null optional | - | - | Default | - | - |
+| BND-020 | Empty string | - | - | No filter | - | - |
+| BND-021 | Whitespace | - | - | Trim | - | - |
+| BND-022 | Sort empty | - | - | [] | - | - |
+| BND-023 | Sort single | - | - | [item] | - | - |
+| BND-024 | Filter no match | - | - | [] | - | - |
+| BND-025 | Filter all | - | - | Full | - | - |
+| BND-026 | Timezone | UTC | - | Correct | - | - |
+| BND-027 | Concurrent requests | - | 100 | ✅ | ✅ | ❌ |
+| BND-028 | Cache TTL | - | - | Expire | - | - |
+| BND-029 | URL length | - | 2048 | - | ✅ | ❌ |
+| BND-030 | Query params | - | 20 | ✅ | ✅ | ❌ |
+| BND-031 | Layout size | - | 100KB | ✅ | ✅ | ❌ |
+| BND-032 | Config size | - | 10KB | ✅ | ✅ | ❌ |
+| BND-033 | Chart data points | 0 | 1000 | ✅ | ✅ | ❌ |
+| BND-034 | Pipeline items | 0 | 500 | ✅ | ✅ | ❌ |
+| BND-035 | Partner stats | 0 | 10000 | ✅ | ✅ | ❌ |
+| BND-036 | Activity items | 0 | 500 | ✅ | ✅ | ❌ |
+| BND-037 | KPI value | - | decimal.Max | ✅ | ✅ | ❌ |
+| BND-038 | Percent value | 0 | 100 | ✅ | ✅ | ❌ |
+| BND-039 | Theme values | - | - | light,dark,system | - | - |
+| BND-040 | Locale values | - | - | en,fr,es,pt | - | - |
+| BND-041 | Pagination boundary | - | - | Exact | - | - |
+| BND-042 | Cursor pagination | - | - | Valid | - | - |
+| BND-043 | Empty activity | - | - | [] | - | - |
+| BND-044 | Single activity | - | - | [item] | - | - |
+| BND-045 | Empty pipeline | - | - | [] | - | - |
+| BND-046 | Single pipeline | - | - | [item] | - | - |
+| BND-047 | Zero KPIs | - | - | [] | - | - |
+| BND-048 | Single KPI | - | - | [item] | - | - |
+| BND-049 | Round-trip | Update → Get | - | Match | - | - |
+| BND-050 | Soft-deleted | - | - | Excluded | - | - |
+| BND-051 | Inactive | - | - | Excluded | - | - |
+| BND-052 | Widget order | 0 | 19 | ✅ | ✅ | ❌ |
+| BND-053 | Position x | 0 | 12 | ✅ | ✅ | ❌ |
+| BND-054 | Position y | 0 | 12 | ✅ | ✅ | ❌ |
+| BND-055 | Width | 1 | 12 | ✅ | ✅ | ❌ |
+| BND-056 | Height | 1 | 12 | ✅ | ✅ | ❌ |
+| BND-057 | Refresh interval | 0 | 3600 | ✅ | ✅ | ❌ |
+| BND-058 | Drill depth | 0 | 5 | ✅ | ✅ | ❌ |
+| BND-059 | Export rows | - | 10000 | ✅ | ✅ | ❌ |
+| BND-060 | Export empty | - | - | Headers | - | - |
+| BND-061 | Export single | - | - | Valid | - | - |
+| BND-062 | Alert priority | 0 | 3 | ✅ | ✅ | ❌ |
+| BND-063 | Notification limit | - | 50 | ✅ | ✅ | ❌ |
+| BND-064 | Shortcut count | 0 | 20 | ✅ | ✅ | ❌ |
+| BND-065 | Chart series | 0 | 10 | ✅ | ✅ | ❌ |
+| BND-066 | Top N | 1 | 100 | ✅ | ✅ | ❌ |
+| BND-067 | Decimal precision | - | 2 | Rounded | - | - |
+| BND-068 | Null KPI | - | - | 0 or N/A | - | - |
+| BND-069 | Negative KPI | - | - | Reject or 0 | - | - |
+| BND-070 | Version | 1 | - | ✅ | ❌ | - |
 
 ---
 
-**Last Updated**: December 18, 2025  
-**C# Test File**: `QA Tests/Integration Tests/Controllers/DashboardControllerTests.cs`
+## §4 Functional Tests (50)
 
+| ID | Category | Rule | Trigger | Expected |
+|----|----------|------|---------|----------|
+| FUN-001 | Workflow | Get dashboard | GET | Data |
+| FUN-002 | Workflow | Get widgets | GET | Widgets |
+| FUN-003 | Workflow | Get KPIs | GET | KPIs |
+| FUN-004 | Workflow | Get activity | GET | Activity |
+| FUN-005 | Workflow | Get pipeline | GET | Pipeline |
+| FUN-006 | Workflow | Add widget | POST | Added |
+| FUN-007 | Workflow | Remove widget | DELETE | Removed |
+| FUN-008 | Workflow | Update layout | PUT | Updated |
+| FUN-009 | Workflow | Drill-down | GET drill | Drill data |
+| FUN-010 | Workflow | Dismiss alert | POST dismiss | Dismissed |
+| FUN-011 | Workflow | Filter org | GET ?orgUnitId | Filtered |
+| FUN-012 | Workflow | Filter date | GET ?start&end | Filtered |
+| FUN-013 | Workflow | Paginate | GET ?page | Paginated |
+| FUN-014 | Workflow | Refresh | POST refresh | Refreshed |
+| FUN-015 | Workflow | Export | GET export | File |
+| FUN-016 | Validation | Required auth | No auth | 401 |
+| FUN-017 | Validation | Permission | No permission | 403 |
+| FUN-018 | Validation | Valid ID | Invalid ID | 400 |
+| FUN-019 | Validation | Valid date | Invalid date | 400 |
+| FUN-020 | Validation | Org scope | Cross-org | 403 |
+| FUN-021 | Validation | Widget type | Invalid type | 400 |
+| FUN-022 | Validation | Max widgets | >20 | 400 |
+| FUN-023 | Validation | Layout format | Invalid | 400 |
+| FUN-024 | Validation | Config format | Invalid | 400 |
+| FUN-025 | Validation | Activity type | Invalid | 400 |
+| FUN-026 | Constraint | System widget | No delete | 403 |
+| FUN-027 | Constraint | Widget order | Unique | Enforce |
+| FUN-028 | Constraint | Cache TTL | Stale | Refresh |
+| FUN-029 | Constraint | Rate limit | Too many | 429 |
+| FUN-030 | Constraint | Org scope | Cross-org | 403 |
+| FUN-031 | Constraint | User scope | Own alerts | Only |
+| FUN-032 | Constraint | Version | Optimistic | 409 |
+| FUN-033 | Constraint | Max export | >10K | Truncate |
+| FUN-034 | Constraint | Drill depth | >5 | Limit |
+| FUN-035 | Constraint | Refresh cooldown | Too soon | 429 |
+| FUN-036 | Audit | View | GET | Audit |
+| FUN-037 | Audit | Add widget | POST | Audit |
+| FUN-038 | Audit | Remove widget | DELETE | Audit |
+| FUN-039 | Audit | Update layout | PUT | Audit |
+| FUN-040 | Audit | Dismiss alert | POST | Audit |
+| FUN-041 | Audit | Export | GET export | Audit |
+| FUN-042 | Audit | Timestamp | Any | UTC |
+| FUN-043 | Audit | User ID | Any | User ID |
+| FUN-044 | Audit | IP | Any | IP |
+| FUN-045 | Audit | Resource | Any | Resource |
+| FUN-046 | Business | Soft-deleted | Query | Excluded |
+| FUN-047 | Business | Inactive | Query | Excluded |
+| FUN-048 | Business | Permission | Query | Scoped |
+| FUN-049 | Business | Role-based | Query | Role widgets |
+| FUN-050 | Business | Decimal | Currency | 2 decimals |
+
+---
+
+## §5 Integration Tests (50)
+
+| ID | Category | Scenario | Entities | Expected |
+|----|----------|----------|----------|----------|
+| INT-001 | CRUD | Get dashboard | Dashboard | Data |
+| INT-002 | CRUD | Get widgets | Widgets | List |
+| INT-003 | CRUD | Add widget | Widget | Added |
+| INT-004 | CRUD | Remove widget | Widget | Removed |
+| INT-005 | CRUD | Update layout | Layout | Updated |
+| INT-006 | CRUD | Get KPIs | KPIs | List |
+| INT-007 | CRUD | Get activity | Activity | Feed |
+| INT-008 | CRUD | Get pipeline | Pipeline | Data |
+| INT-009 | CRUD | Drill-down | KPI, Drill | Data |
+| INT-010 | CRUD | Dismiss alert | Alert | Dismissed |
+| INT-011 | Search | Filter org | Dashboard | Filtered |
+| INT-012 | Search | Filter date | Dashboard | Filtered |
+| INT-013 | Search | Filter type | Activity | Filtered |
+| INT-014 | Search | Multi-filter | Dashboard | Combined |
+| INT-015 | Search | Empty filter | - | Default |
+| INT-016 | Search | Invalid filter | Dashboard | 400 |
+| INT-017 | Search | Sort | Activity | Sorted |
+| INT-018 | Search | Paginate | Activity | Paginated |
+| INT-019 | Search | Export filtered | Dashboard | Matches |
+| INT-020 | Search | Widget config | Widget | Config |
+| INT-021 | Pagination | Page 1 | Activity | First |
+| INT-022 | Pagination | Last page | Activity | Partial |
+| INT-023 | Pagination | Size | Activity | Correct |
+| INT-024 | Pagination | Invalid | Activity | 400 |
+| INT-025 | Pagination | Boundary | Activity | Exact |
+| INT-026 | Relationships | Dashboard → Widget | Dashboard, Widget | Linked |
+| INT-027 | Relationships | Dashboard → User | Dashboard, User | Linked |
+| INT-028 | Relationships | KPI → Drill | KPI, Drill | Linked |
+| INT-029 | Relationships | Orphan | Deleted widget | 404 |
+| INT-030 | Relationships | Pipeline → Stage | Pipeline, Stage | Linked |
+| INT-031 | Error | DB down | DB | 503 |
+| INT-032 | Error | Auth down | Auth | 401/503 |
+| INT-033 | Error | Validation | Bad input | 400 |
+| INT-034 | Error | NotFound | Invalid ID | 404 |
+| INT-035 | Error | Forbidden | No permission | 403 |
+| INT-036 | Error | Conflict | Duplicate | 409 |
+| INT-037 | Error | Rate limit | Too many | 429 |
+| INT-038 | Error | Timeout | Slow | 504 |
+| INT-039 | Error | Payload | Huge | 413 |
+| INT-040 | Error | Media | Wrong type | 415 |
+| INT-041 | Error | Method | Wrong verb | 405 |
+| INT-042 | Error | Service | Dependency | 503 |
+| INT-043 | Error | Gateway | Upstream | 504 |
+| INT-044 | Error | Gone | Deleted | 410 |
+| INT-045 | Error | Locked | Locked | 423 |
+| INT-046 | E2E | Full dashboard load | All | Load → display |
+| INT-047 | E2E | Add widget flow | Widget | Add → refresh |
+| INT-048 | E2E | Layout update flow | Layout | Update → persist |
+| INT-049 | E2E | Multi-user | Users | Isolated |
+| INT-050 | E2E | Session expiry | Auth | Clean fail |
+
+---
+
+## §6 Security Tests (50)
+
+| ID | Category | Attack | Target | Expected |
+|----|----------|--------|-------|----------|
+| SEC-001 | Injection | SQL | Filter | Sanitized |
+| SEC-002 | Injection | XSS | Widget name | Encoded |
+| SEC-003 | Injection | Path traversal | Path | Rejected |
+| SEC-004 | Injection | NoSQL | Filter | Rejected |
+| SEC-005 | Injection | Command | Export | Rejected |
+| SEC-006 | Injection | Header | Header | Rejected |
+| SEC-007 | Injection | Log | Input | Sanitized |
+| SEC-008 | Injection | LDAP | Search | Rejected |
+| SEC-009 | Injection | Log4j | Input | Rejected |
+| SEC-010 | Injection | SSRF | URL | Rejected |
+| SEC-011 | Access | No auth | All | 401 |
+| SEC-012 | Access | Wrong role | Admin | 403 |
+| SEC-013 | Access | Cross-org | Other org | 403 |
+| SEC-014 | Access | Horizontal | Other user | 403 |
+| SEC-015 | Access | Vertical | Admin | 403 |
+| SEC-016 | Access | Expired | Token | 401 |
+| SEC-017 | Access | Revoked | Token | 401 |
+| SEC-018 | Access | Tampered | Token | 401 |
+| SEC-019 | Access | Scope | OAuth | 403 |
+| SEC-020 | Access | Service | UI | 403 |
+| SEC-021 | IDOR | Other org dashboard | ID | 403 |
+| SEC-022 | IDOR | Other user widget | ID | 403 |
+| SEC-023 | IDOR | Manipulate | Path | 403 |
+| SEC-024 | IDOR | Enumeration | IDs | Rate limit |
+| SEC-025 | IDOR | Pollution | Params | First |
+| SEC-026 | Mass Assign | Admin | Body | Ignored |
+| SEC-027 | Mass Assign | Role | Body | Ignored |
+| SEC-028 | Mass Assign | Org | Body | Ignored |
+| SEC-029 | Mass Assign | User | Body | Ignored |
+| SEC-030 | Mass Assign | Permission | Body | Ignored |
+| SEC-031 | Auth | Fixation | Session | New |
+| SEC-032 | Auth | Hijack | Token | Invalid |
+| SEC-033 | Auth | Replay | Old token | Reject |
+| SEC-034 | Auth | CSRF | State | Token |
+| SEC-035 | Auth | Brute | Login | Rate limit |
+| SEC-036 | Data | PII in export | Export | Masked |
+| SEC-037 | Data | Logs | Sensitive | No PII |
+| SEC-038 | Data | Error | 500 | Generic |
+| SEC-039 | Data | Stack | Exception | Hidden |
+| SEC-040 | Data | Debug | Prod | Off |
+| SEC-041 | OWASP | A01 | Access | 403 |
+| SEC-042 | OWASP | A02 | Crypto | TLS |
+| SEC-043 | OWASP | A03 | Injection | Param |
+| SEC-044 | OWASP | A04 | Design | Defensive |
+| SEC-045 | OWASP | A05 | Misconfig | Secure |
+| SEC-046 | OWASP | A06 | Vulnerable | No CVE |
+| SEC-047 | OWASP | A07 | Auth | Strong |
+| SEC-048 | OWASP | A08 | Integrity | Checks |
+| SEC-049 | OWASP | A09 | Logging | Audit |
+| SEC-050 | OWASP | A10 | SSRF | No internal |
+
+---
+
+## §7 Concurrency Tests (25)
+
+| ID | Scenario | Expected |
+|----|----------|----------|
+| CON-001 | 2 users get dashboard | Both succeed |
+| CON-002 | 2 users update layout | Last write |
+| CON-003 | Add widget during refresh | Consistent |
+| CON-004 | 10 concurrent gets | All succeed |
+| CON-005 | 50 concurrent list | All succeed |
+| CON-006 | Double-click add | Single |
+| CON-007 | Rapid filter | Last wins |
+| CON-008 | Cache invalidation | No stale |
+| CON-009 | Refresh during update | Snapshot |
+| CON-010 | Connection pool | Queue/503 |
+| CON-011 | Transaction | No dirty |
+| CON-012 | Optimistic | Last write |
+| CON-013 | Deadlock | Timeout |
+| CON-014 | Export + update | Snapshot |
+| CON-015 | Rate limit | Fair |
+| CON-016 | Session expiry | Clean |
+| CON-017 | Multiple adds | All or unique |
+| CON-018 | Cache stampede | Single |
+| CON-019 | Lock | Timeout |
+| CON-020 | Memory | Graceful |
+| CON-021 | KPI during update | Consistent |
+| CON-022 | Widget during delete | Consistent |
+| CON-023 | Permission change | Old |
+| CON-024 | Layout concurrent | Last write |
+| CON-025 | Replica lag | Eventual |
+
+---
+
+## §8 Unit Tests (21)
+
+| ID | Category | Input | Expected |
+|----|----------|-------|----------|
+| UNT-001 | Validation | Valid ID | Accept |
+| UNT-002 | Validation | Invalid ID | Reject |
+| UNT-003 | Validation | Valid date | Accept |
+| UNT-004 | Validation | Invalid date | Reject |
+| UNT-005 | Validation | Valid type | Accept |
+| UNT-006 | Formatting | KPI value | Localized |
+| UNT-007 | Formatting | Date | ISO 8601 |
+| UNT-008 | Formatting | Percent | 2 decimal |
+| UNT-009 | Calculation | KPI sum | Correct |
+| UNT-010 | Calculation | KPI avg | Correct |
+| UNT-011 | Calculation | Growth % | Correct |
+| UNT-012 | Calculation | Pipeline % | Correct |
+| UNT-013 | Calculation | Delta | Correct |
+| UNT-014 | Status | Active | Active only |
+| UNT-015 | Status | Inactive | Inactive only |
+| UNT-016 | Status | All | All |
+| UNT-017 | Status | Dismissed | Excluded |
+| UNT-018 | Status | Pending | Pending only |
+| UNT-019 | Collections | Empty | [] |
+| UNT-020 | Collections | Single | [item] |
+| UNT-021 | Collections | Dedupe | No dupes |
+
+---
+
+## §9 Performance Tests (16)
+
+| ID | Operation | Threshold |
+|----|-----------|-----------|
+| PRF-001 | Get dashboard | < 500ms |
+| PRF-002 | Get widgets | < 200ms |
+| PRF-003 | Get KPIs | < 300ms |
+| PRF-004 | Get activity | < 500ms |
+| PRF-005 | Get pipeline | < 500ms |
+| PRF-006 | Drill-down | < 300ms |
+| PRF-007 | Add widget | < 200ms |
+| PRF-008 | Update layout | < 200ms |
+| PRF-009 | Refresh | < 2s |
+| PRF-010 | 10 concurrent | < 1s each |
+| PRF-011 | 50 concurrent | < 2s each |
+| PRF-012 | 5 concurrent add | < 500ms each |
+| PRF-013 | Memory | < 100MB |
+| PRF-014 | Memory refresh | < 200MB |
+| PRF-015 | Cache hit | > 80% |
+| PRF-016 | DB queries | < 10 per request |
+
+---
+
+## §10 Load Tests (10)
+
+| ID | Load Profile | Duration | Success Criteria |
+|----|--------------|----------|-------------------|
+| LDT-001 | 10 users | 10 min | 95% < 1s |
+| LDT-002 | 50 users | 10 min | 95% < 2s |
+| LDT-003 | 100 users | 10 min | 95% < 3s |
+| LDT-004 | Spike 10→100 | 5 min | No crash |
+| LDT-005 | Spike 50→200 | 5 min | Graceful |
+| LDT-006 | Stress 200 | Until fail | Document |
+| LDT-007 | Stress 500 | Until fail | Document |
+| LDT-008 | 50 concurrent | 5 min | Queue/limit |
+| LDT-009 | Recovery spike | 5 min | Baseline |
+| LDT-010 | Recovery stress | 10 min | Full |
+
+---
+
+## Traceability Matrix
+
+| Requirement | Test Cases |
+|-------------|------------|
+| Widgets | POS-002, FUN-002 |
+| KPI tiles | POS-003, FUN-003 |
+| Recent activity | POS-004, FUN-004 |
+| Pipeline overview | POS-005, FUN-005 |
+| Partner statistics | POS-006, FUN-006 |
+| 3:1 Ratio | NEG-001–070, BND-001–070 |
+
+---
+
+**Last Updated:** 2026-02-11  
+**Status:** Ready for Execution

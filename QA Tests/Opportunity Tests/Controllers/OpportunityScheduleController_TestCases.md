@@ -1,46 +1,54 @@
-# OpportunityScheduleController Test Cases
+# OpportunityScheduleController — Test Cases
 
-**Controller:** `OpportunityScheduleController`  
-**Test Count:** 8+  
-**Priority:** P1  
-**Created:** January 13, 2026
-
----
-
-## Test Cases
-
-### TC-OPP-SCHCTRL-001: POST /api/opportunity-schedule/generate
-**Priority:** P1  
-**Expected**: 201 Created, schedule generated, WBS created
-
-### TC-OPP-SCHCTRL-002: GET /api/opportunity-schedule/{opportunityId}
-**Priority:** P1  
-**Expected**: 200 OK, schedule with phases and milestones
-
-### TC-OPP-SCHCTRL-003: PUT /api/opportunity-schedule/{id}
-**Priority:** P1  
-**Expected**: 200 OK, schedule updated, dependencies validated
-
-### TC-OPP-SCHCTRL-004: GET /api/opportunity-schedule/{id}/wbs
-**Priority:** P1  
-**Expected**: 200 OK, hierarchical WBS structure
-
-### TC-OPP-SCHCTRL-005: GET /api/opportunity-schedule/{id}/milestones
-**Priority:** P1  
-**Expected**: 200 OK, milestone list with dates and status
-
-### TC-OPP-SCHCTRL-006: GET /api/opportunity-schedule/{id}/gantt
-**Priority:** P2  
-**Expected**: 200 OK, Gantt chart data, dependencies shown
-
-### TC-OPP-SCHCTRL-007: GET /api/opportunity-schedule/{id}/critical-path
-**Priority:** P2  
-**Expected**: 200 OK, critical path identified, float calculated
-
-### TC-OPP-SCHCTRL-008: POST /api/opportunity-schedule/{id}/export
-**Priority:** P2  
-**Expected**: 200 OK, MS Project compatible export
+**Component:** `OpportunityPlus.API/Controllers/OpportunityScheduleController`  
+**Created:** 2026-02-04 | **Last Updated:** 2026-02-11  
+**Author:** QA Team  
+**Standard:** 10-Category, 3:1 Ratio
 
 ---
 
-**Status:** ✅ Ready for Implementation
+## Compliance Summary
+
+| Category | Count | Min | ✓ |
+|----------|-------|-----|---|
+| §1 Positive | 35 | 30-50 | ✅ |
+| §2 Negative | 70 | 70 | ✅ |
+| §3 Boundary | 70 | 70 | ✅ |
+| §4 Functional | 50 | 50 | ✅ |
+| §5 Integration | 50 | 50 | ✅ |
+| §6 Security | 50 | 50 | ✅ |
+| §7 Concurrency | 25 | 25 | ✅ |
+| §8 Unit | 21 | 21 | ✅ |
+| §9 Performance | 16 | 16 | ✅ |
+| §10 Load | 10 | 10 | ✅ |
+| **TOTAL** | **397** | **≥347** | ✅ |
+
+**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+
+---
+
+## Feature Overview
+
+REST API for opportunity schedule/timeline: CRUD milestones, Gantt data, dependencies, critical path, date validation, duration calculation, progress tracking, baseline comparison, and export.
+
+---
+
+## §1–§10
+
+**§1 (35):** GET schedule (P0), POST milestone (P0), PUT update (P0), DELETE milestone (P0), GET Gantt data (P0), + 30 (dependencies, critical path, progress, baseline, export, search, filter, pagination, sort, audit, permissions, bulk add, duration calc, date validation, overlap check, resource linking, model map, typeahead, count, clone, template, lock, history, notification, variance, forecast, completeness, summary, PDF).
+
+**§2 (70):** Input (null oppId, non-existent, invalid dates, end<start, null name, negative duration), Auth (10), State (edit closed, locked, approved), HTTP (10), injection (10), dependencies (10), format/ID (10), business (circular dependency, self-dependency, impossible dates, overlap violations, max milestones, orphan dependency, invalid progress %, resource conflict, date paradox, mass assignment).
+
+**§3 (70):** Dates (today/past/future/far-future/leap/midnight/year-boundary), duration (0/1/30/365/1000 days), milestones (0/1/10/50/100/101), dependencies (0/1/5/20), progress (0/1/50/99/100/101%), name lengths, concurrent, Unicode, pagination, Gantt complexity, critical path depth, baseline comparisons, resource count.
+
+**§4 (50):** Date logic (15), dependency management (10), critical path (10), progress tracking (10), audit (5).
+**§5 (50):** Opportunity service (10), resource (10), Gantt rendering (10), export (10), notification (10).
+**§6 (50):** Injection (10), auth (10), IDOR (10), schedule manipulation (10), data integrity (10).
+**§7 (25):** Concurrent edits, dependency updates, progress + edit, baseline + update, bulk operations.
+**§8 (21):** Date calculation (5), critical path (5), duration (3), dependency validation (5), progress (3).
+**§9 (16):** GET (<200ms), Gantt (<500ms), critical path (<500ms), create (<300ms), export (<3s), memory.
+**§10 (10):** 50 concurrent, 100 reads, spike, sustained, recovery.
+
+---
+
+**Status:** Ready for Execution

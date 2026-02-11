@@ -344,12 +344,13 @@ export async function setupAPIMocks(page: Page): Promise<void> {
     });
   });
 
-  // Mock /api/interaction (list) - Interaction list data
+  // Mock /api/interaction or /api/interactions (list) - Interaction list data
+  // The Angular app uses /api/interactions (plural) for the list endpoint
   await page.route(url => {
     const urlString = url.toString();
-    return /\/api\/interaction(\?|$)/.test(urlString) && !urlString.includes('/api/interaction/');
+    return /\/api\/interactions?(\?|$)/.test(urlString) && !urlString.includes('/api/interaction/');
   }, async (route) => {
-    console.log('[API Mock] Intercepted: GET /api/interaction (list)');
+    console.log('[API Mock] Intercepted: GET /api/interaction(s) (list)');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -694,16 +695,22 @@ export async function setupAPIMocks(page: Page): Promise<void> {
            !/\/api\/partner\/search/.test(urlString) &&
            !/\/api\/contact(\?|$)/.test(urlString) &&
            !/\/api\/contact\/search/.test(urlString) &&
-           !/\/api\/interaction(\?|$)/.test(urlString) &&
+           !/\/api\/interactions?(\?|$)/.test(urlString) &&
            !/\/api\/interaction\/search/.test(urlString) &&
            !/\/api\/opportunity(\?|$)/.test(urlString) &&
            !/\/api\/opportunity\/search/.test(urlString) &&
            // Exclude the entity detail endpoints (handled above)
-           !/\/api\/partner\/\d+/.test(urlString) &&
-           !/\/api\/opportunity\/\d+/.test(urlString) &&
-           !/\/api\/contact\/\d+/.test(urlString) &&
-           !/\/api\/interaction\/\d+/.test(urlString) &&
-           !/\/api\/workflow\//.test(urlString);
+           // CRITICAL: Use $ anchor to match ONLY exact detail URLs, NOT sub-resources
+           // Without $, patterns like /api/opportunity/1/generate-images would be excluded
+           // from the catch-all AND not matched by the specific mock, causing proxy hangs
+           !/\/api\/partner\/\d+$/.test(urlString) &&
+           !/\/api\/partner\/\d+\/permissions/.test(urlString) &&
+           !/\/api\/opportunity\/\d+$/.test(urlString) &&
+           !/\/api\/opportunity\/\d+\/permissions/.test(urlString) &&
+           !/\/api\/contact\/\d+$/.test(urlString) &&
+           !/\/api\/interaction\/\d+$/.test(urlString) &&
+           // Exclude only workflow URLs with entity AND id (handled above)
+           !/\/api\/workflow\/\w+\/\d+/.test(urlString);
   }, async (route) => {
     const url = route.request().url();
     const method = route.request().method();

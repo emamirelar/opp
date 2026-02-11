@@ -33,99 +33,172 @@ This document tracks **production code defects** discovered during testing. Thes
 
 | Defect ID | Severity | Title | Component | Date Reported | Status |
 |-----------|----------|-------|-----------|---------------|--------|
-| DEF-008 | 🟠 High | Go Decision Feature Incomplete - PRD Requirements Not Implemented | OpportunityStageRequirements | 2026-02-02 | Open |
+| DEF-008 | 🟠 High | Go Decision Feature — Remaining Implementation Gaps | OpportunityStageRequirements | 2026-02-02 | Partially Resolved |
+| DEF-010 | 🟠 High | PNO-1193: OM role transfer not working | OpportunityWorkflow | 2026-02-11 | Open |
+| DEF-011 | 🟡 Medium | PNO-1171: Reject action appears twice in workflow history | WorkflowHistory | 2026-02-11 | Open |
 
 ---
 
-### DEF-008: Go Decision Feature Incomplete - PRD Requirements Not Implemented
+### DEF-008: Go Decision Feature — Remaining Implementation Gaps
 
 **Severity:** 🟠 High  
 **Component:** OpportunityStageRequirements (`OpportunityStageRequirements.cs`)  
 **Date Reported:** 2026-02-02  
-**Status:** Open  
+**Status:** Partially Resolved (significant progress since Feb 2)  
 **Priority:** P1 - Feature required for business workflow  
-**Estimated Effort:** 80-120 hours (full feature implementation)
+**JIRA:** [PNO-969](https://unops.atlassian.net/browse/PNO-969)
 
 **Description:**
 
-**96% of PRD requirements not yet implemented** for "Send Opportunity for Go Decision" feature.
+**Significant implementation progress** since original filing. Core workflow now operational — OM can submit, cancel, reopen. DoA2 lookup works. Many original items now implemented by Tafazzul.
 
-- **PRD Reference:** Product Requirements Document: Send Opportunity for Go Decision
-- **Test Cases Created:** 102 test cases aligned with PRD
-- **Tests Executable:** 4 (4%)
-- **Tests Blocked:** 98 (96%)
+- **PNO-969 Reference:** Sending the Opportunity to decision makers (Go / No Go decision)
+- **Test Cases:** 55 test cases (authoritative: `PNO-969_GoDecision_TestCases.md`)
+- **Tests Passed:** 2 (TC-005 Cancel, TC-007 Reopen — verified by Silvia on QA, 2026-02-10)
+- **Tests Blocked:** ~3 (PNO-1193 role transfer, inactive OM, Collaborator role)
+- **Tests Awaiting Execution:** ~50
 
-**Current Implementation:**
+**Now Implemented (confirmed by QA testing 2026-02-05 through 2026-02-10):**
 - ✅ Name validation
 - ✅ Description validation
 - ✅ ResponsibleOrgUnitId validation
 - ✅ InitiativeBudgetUSD validation (optional)
+- ✅ DoA2 Approver Lookup — querying EntityUserRole, routing to correct decision maker (India=Dominic, Sri Lanka=Perminder)
+- ✅ Submit for Go Decision — I&P/Draft → GO/Active workflow (Perminder end-to-end tested)
+- ✅ Rejection → NO GO/Closed (custom behavior, not previous stage)
+- ✅ Cancel with mandatory reason — I&P/Draft → CANCELLED/Closed (Silvia verified)
+- ✅ Reopen from Cancelled — CANCELLED/Closed → I&P/Draft (Silvia verified)
+- ✅ Mandatory acknowledgement statement with org unit reference (fixed by Tafazzul 2026-02-06)
+- ✅ Additional remarks field on submission dialog
+- ✅ Read-only after submission for OM (fixed by Tafazzul — products/services and risks were editable, now locked)
+- ✅ Workflow history visible on opportunity detail (fixed by Tafazzul 2026-02-06)
+- ✅ Opportunity Statement review prior to submission (warning dialog implemented)
+- ✅ Mandatory field validation — server-side validation displaying all failures as list
 
-**Missing PRD Requirements (Not Implemented):**
+**Remaining Gaps (Not Yet Implemented or Unverified):**
 
-**1. Mandatory Field Validation (16+ fields missing):**
-- ❌ Context & Challenges
-- ❌ UNOPS Strategic Mission(s) (minLength=1)
-- ❌ Expected Impact
-- ❌ Expected Outcomes
-- ❌ SDG Alignment (minLength=1)
-- ❌ Funding Partner with amount/currency
-- ❌ Client Partner
-- ❌ Products & Services
-- ❌ Countries of Implementation
-- ❌ Target Signing Date
-- ❌ Implementation Start/End Dates
-- ❌ Opportunity Manager role validation
-- ❌ Proposed Initiative Type
-- ❌ DoA Level 2 holder (server-side)
-- ❌ Opportunity Statement generated
-- ❌ UNCooperation Framework Outcome(s)
-- ❌ Estimated Beneficiaries OR acknowledgement
-- ❌ High Risk Acknowledgement
+**1. Collaborator Role (Not Implemented):**
+- ❌ Collaborator can edit all content in I&P stage
+- ❌ Collaborator can initiate "Submit for Go" (AC Section 1)
+- ❌ Non-OM submitter warning when Collaborator submits
+- ℹ️ Per Issam (2026-01-23): "collaborator role is not yet implemented" — all Collaborator test cases verify access denial as expected current behavior
 
-**2. DoA Level 2 Approver Lookup (FR-1):**
-- ❌ Query EntityUserRole with Code="DoA2_OrganizationHierarchy"
-- ❌ Block submission if no DoA2 found
-- ❌ Support multiple DoA2 holders
-
-**3. Warnings & Acknowledgments:**
-- ❌ Non-OM submitter warning (Collaborator role)
-- ❌ Country-Org Unit mismatch warning
-- ❌ Mandatory acknowledgment statement
-- ❌ Additional remarks field
-
-**4. Custom Workflow Behavior:**
-- ❌ Rejection → NO GO (not previous stage)
-- ❌ CANCELLED stage with cancel/reopen
-- ❌ OM recall (any OM, not just submitter)
-- ❌ OM role transfer (OM → Collaborator)
-
-**5. Notifications:**
-- ❌ Email templates with exact wording
+**2. Notifications (Unverified):**
+- ❌ Email notification to DoA2 on submission (template content unverified)
 - ❌ OIC notifications
-- ❌ Internal stakeholder notifications on GO
+- ❌ Internal stakeholder notifications on GO decision
+- ❌ OM recall notification to DoA2
+- ❌ Email exact wording per AC Section 6
 
-**6. UI Components:**
+**3. UI Components (Unverified):**
 - ❌ Stage stepper display logic (happy path only)
-- ❌ DoA pathway display (DoA2/DoA3 read-only)
-- ❌ Inactive OM visibility
-- ❌ In-workflow indicator on opportunity card
+- ❌ DoA pathway display (DoA2/DoA3 read-only on detail page)
+- ❌ In-workflow indicator on opportunity card in list view
+- ❌ Inactive OM visibility (TC-033 — blocked, requires database deactivation to test)
 
-**Reproduction Steps:**
-1. Review `OpportunityStageRequirements.cs`
-2. Compare with PRD requirements
-3. Observe: Only 4 of 20+ fields validated
-4. Review test cases in `GoNoGoDecision_PRD_TestCases.md`
-5. Attempt to execute any DoA2 lookup test
-6. Observe: No implementation exists
+**4. Additional Field Validations (Unverified):**
+- ❓ Country-Org Unit mismatch warning
+- ❓ Additional Remarks character count (Tafazzul: not yet implemented, needs separate refinement ticket)
 
-**Expected Result:** All 20+ mandatory fields validated. DoA2 lookup works from EntityUserRole. All warnings and acknowledgments implemented. Custom rejection → NO GO works. All 102 test cases pass.
+**5. Active Bugs:**
+- 🐛 DEF-010 / PNO-1193: OM role transfer not working
+- 🐛 DEF-011 / PNO-1171: Reject action appears twice in history
 
-**Actual Result:** Only 4 fields validated. No DoA2 lookup. No warnings. Standard rejection behavior. 98 of 102 tests blocked.
+**6. Requirements Gaps (Pending Clarification):**
+- ❓ Initial status "Draft" vs AC Section saying "Active" — Issam workflow map (2026-02-10) shows Draft; requires confirmation from Roz/Issam
 
 **Related Files:**
-- Test Cases: `QA Tests/Opportunity Tests/BusinessLogic/GoNoGoDecision_PRD_TestCases.md`
+- Test Cases (authoritative): `QA Tests/Opportunity Tests/BusinessLogic/PNO-969_GoDecision_TestCases.md` (55 tests, 2026-02-11)
+- Playwright Tests: `QA Tests/Playwright Tests/go-decision.spec.ts`
+- Legacy PRD Test Cases: `QA Tests/Opportunity Tests/BusinessLogic/GoNoGoDecision_PRD_TestCases.md` (102 tests, superseded)
 - Execution Report: `QA Tests/Opportunity Tests/BusinessLogic/GoNoGoDecision_TestExecution_Report.md`
+
+---
+
+### DEF-010: PNO-1193 — OM Role Transfer Not Working
+
+**Severity:** 🟠 High  
+**Component:** OpportunityWorkflow (Role Management)  
+**Date Reported:** 2026-02-11  
+**Status:** Open  
+**Priority:** P1 - Business workflow requirement  
+**JIRA Bug:** [PNO-1193](https://unops.atlassian.net/browse/PNO-1193)  
+**Related PNO-969 Test Case:** TC-039
+
+**Description:**
+
+When a new Opportunity Manager (OM) is assigned to an opportunity, the previous OM should automatically be demoted to the Collaborator role. This is not happening — the previous OM retains the OM role or is removed entirely.
+
+**Root Cause:** Role transfer logic not implemented or not functioning correctly in the backend when OM assignment changes.
+
+**Proper Fix:**
+- When a new OM is assigned via the Opportunity Manager field, the system must:
+  1. Set the new user as OM
+  2. Demote the previous OM to Collaborator
+  3. Preserve the previous OM's access to the opportunity content
+
+**Wrong Fix:** ❌ Simply removing the previous OM's access entirely
+
+**AC Reference:** Section 1 — "The OM field is a mandatory field that can never be blank. If a new Opportunity Manager is designated, the previous OM will be automatically assigned the Collaborator role."
+
+**Reproduction Steps:**
+1. Open an opportunity where User A is the current OM
+2. Change the Opportunity Manager field to User B
+3. Save the changes
+4. Log in as User A
+5. Navigate to the same opportunity
+
+**Expected Result:** User A is now listed as a Collaborator on the opportunity and retains view/edit access to content.
+
+**Actual Result:** User A does not become a Collaborator. Role transfer does not occur.
+
+**Environment:** QA / TEST  
+**Error/Logs:** No error displayed — silent failure  
+**Reporter:** Perminder (QA testing 2026-02-10)
+
+---
+
+### DEF-011: PNO-1171 — Reject Action Appears Twice in Workflow History
+
+**Severity:** 🟡 Medium  
+**Component:** WorkflowHistory  
+**Date Reported:** 2026-02-11  
+**Status:** Open  
+**Priority:** P2 - Data integrity / UI display issue  
+**JIRA Bug:** [PNO-1171](https://unops.atlassian.net/browse/PNO-1171)  
+**Related PNO-969 Test Case:** TC-030
+
+**Description:**
+
+When a DoA2 rejects a workflow for "Submit for Go Decision", the reject action is recorded **twice** in the stage change history. This causes:
+- Confusing workflow history display
+- Potential data integrity concerns in audit trail
+- Incorrect action count in workflow history
+
+**Root Cause:** Likely duplicate event firing or dual database writes during rejection workflow processing.
+
+**Proper Fix:**
+- Investigate the rejection workflow handler and ensure only a single history entry is created per rejection action
+- Add a uniqueness check or idempotency guard in the workflow history recording logic
+
+**Wrong Fix:** ❌ Hiding duplicate entries at the UI level (masks the underlying data integrity issue)
+
+**AC Reference:** Section 2 — Workflow history should accurately record each action once
+
+**Reproduction Steps:**
+1. Submit an opportunity for Go Decision as OM
+2. Log in as DoA2 (decision maker)
+3. Reject the workflow with a reason
+4. View the stage change history on the opportunity
+5. Observe: Reject action appears twice
+
+**Expected Result:** A single "Reject" entry in workflow history with timestamp, user, and reason.
+
+**Actual Result:** Two identical "Reject" entries appear in the stage change history.
+
+**Environment:** QA / TEST  
+**Error/Logs:** N/A — no error, visual duplication in history  
+**Reporter:** Perminder (QA testing, JIRA PNO-1171)
 
 ---
 
@@ -149,17 +222,19 @@ The following items were previously logged as developer defects but have been re
 
 ---
 
-## Defect Statistics (Updated 2026-02-09 — Full Suite Re-Execution)
+## Defect Statistics (Updated 2026-02-11 — PNO-969 QA Testing Results)
 
-- **Total Open:** 1
+- **Total Open:** 3
+- **Total Partially Resolved:** 1 (DEF-008 — significant implementation progress, remaining gaps tracked)
 - **Total Resolved:** 0
 - **Total Reclassified:** 3 (moved to appropriate trackers)
 - 🔴 **Critical:** 0
-- 🟠 **High Priority:** 1 (DEF-008 - Go Decision feature incomplete — 96% of PRD not implemented)
-- 🟡 **Medium Priority:** 0
+- 🟠 **High Priority:** 2 (DEF-008 remaining gaps, DEF-010 PNO-1193 OM role transfer)
+- 🟡 **Medium Priority:** 1 (DEF-011 PNO-1171 duplicate reject in history)
 - 🟢 **Low Priority:** 0
-- **New Production Defects Found (2026-02-09 Full Suite Run):** 0 — All Playwright issues were test infrastructure (QA-008, QA-039), both now fixed
-- **Playwright Improvement:** 511+ passed (was 289, **+222**), ~100 skipped (was 322, **-222**). 222 more tests now executing and passing. **0 failures.**
+- **New Defects Found (2026-02-11 PNO-969 Testing):** 2 — DEF-010 (OM role transfer bug), DEF-011 (duplicate workflow history entry)
+- **DEF-008 Progress:** Core Go Decision workflow now operational (submit, cancel, reopen, reject, DoA2 lookup all working). Remaining: Collaborator role, notifications, UI components, role transfer (DEF-010).
+- **Playwright Improvement (2026-02-09):** 511+ passed (was 289, **+222**), ~100 skipped (was 322, **-222**). 222 more tests now executing and passing. **0 failures.**
 - **DEF-007 RESOLVED:** Integration Tests build restored (4,675 → 0 errors). Business.Tests recovered +1,866 tests (3,445 now passing).
 
 ---

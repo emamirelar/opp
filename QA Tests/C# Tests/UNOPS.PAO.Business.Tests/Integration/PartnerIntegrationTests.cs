@@ -864,8 +864,14 @@ namespace UNOPS.PAO.Business.Tests.Integration
             await Context.Partners.AddAsync(new Partner { Id = 1, Name = "First", Status = EntityStatus.Active });
             await SaveChangesAsync();
 
-            await Context.Partners.AddAsync(new Partner { Id = 1, Name = "Duplicate", Status = EntityStatus.Active });
-            var act = async () => await SaveChangesAsync();
+            // The duplicate AddAsync throws InvalidOperationException immediately because the entity
+            // with the same key is already being tracked by the change tracker. Wrap both AddAsync
+            // and SaveChangesAsync in the act lambda to capture the exception properly.
+            var act = async () =>
+            {
+                await Context.Partners.AddAsync(new Partner { Id = 1, Name = "Duplicate", Status = EntityStatus.Active });
+                await SaveChangesAsync();
+            };
             await act.Should().ThrowAsync<Exception>();
         }
 

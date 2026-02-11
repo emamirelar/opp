@@ -1,370 +1,575 @@
 /**
- * @fileoverview Go Decision Workflow E2E Tests
- * Tests for "Send Opportunity for Go Decision" feature
- * 
- * Note: Many tests are skipped pending feature implementation (DEF-008)
- * These tests serve as executable specifications for the PRD requirements.
- * 
+ * @fileoverview PNO-969: Go/No Go Decision Workflow E2E Tests
+ *
+ * Tests for "Sending the Opportunity to decision makers (Go / No Go decision)"
+ * Aligned with PNO-969_GoDecision_TestCases.md (55 test cases)
+ *
+ * Stage/Status Transition Matrix:
+ *   OM: Submit for Go      (I&P/Draft → GO/Active)
+ *   OM: Reject workflow     (I&P/Draft → NO GO/Closed)
+ *   OM: Cancel              (I&P/Draft → CANCELLED/Closed)
+ *   OM: Reopen Cancelled    (Cancelled/Closed → I&P/Draft)
+ *   OM: Reopen No-Go        (No-Go/Closed → I&P/Draft)
+ *   Collaborator: ALL ACTIONS → Access Denied (role not yet implemented)
+ *
  * @author UNOPS Opportunity+ QA Team
- * @see GoNoGoDecision_PRD_TestCases.md for full test case documentation
+ * @see PNO-969_GoDecision_TestCases.md
+ * @see https://unops.atlassian.net/browse/PNO-969
  */
 
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
 
-// Feature implementation status check
-function isGoDecisionFullyImplemented(): boolean {
-  // This will return true once DEF-008 is resolved
-  // For now, returns false to skip tests that require full implementation
-  return process.env.GO_DECISION_IMPLEMENTED === 'true';
-}
+// ---------------------------------------------------------------------------
+// Configuration
+// ---------------------------------------------------------------------------
 
-/**
- * Test data for Go Decision workflow
- */
-const TEST_DATA = {
-  // Opportunity with all required fields for GO stage
-  completeOpportunity: {
-    name: 'QA Test Opportunity - Go Decision',
-    description: 'Test opportunity for Go Decision workflow validation',
-    context: 'Test context and challenges',
-    expectedImpact: 'Test expected impact',
-    expectedOutcomes: 'Test expected outcomes',
-  },
-  // Opportunity missing required fields
-  incompleteOpportunity: {
-    name: 'Incomplete Opportunity',
-    // Missing other required fields
-  },
+/** Set GO_DECISION_IMPLEMENTED=true when all PNO-969 features are deployed */
+const featureReady = process.env.GO_DECISION_IMPLEMENTED === 'true';
+
+/** Known test opportunity IDs on the TEST environment */
+const TEST_OPPORTUNITIES = {
+  /** Opportunity in I&P/Draft with all mandatory fields — Org Unit B5503 India */
+  completeInIdentifyProfile: process.env.GO_TEST_OPP_IP_ID || '',
+  /** Opportunity already in CANCELLED/Closed stage */
+  cancelled: process.env.GO_TEST_OPP_CANCELLED_ID || '',
+  /** Opportunity already in NO GO/Closed stage */
+  noGo: process.env.GO_TEST_OPP_NOGO_ID || '',
 };
 
+const OPPORTUNITIES_URL = '/#/partnerships/opportunities';
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function skipIfNotReady(reason = 'Go Decision feature not fully deployed (PNO-969 / DEF-008)') {
+  test.skip(!featureReady, reason);
+}
+
+function opportunityUrl(id: string): string {
+  return `/#/partnerships/opportunities/${id}`;
+}
+
 // =============================================================================
-// CATEGORY 1: MANDATORY FIELD VALIDATION (Partially Implemented)
+// SECTION 1: OM Stage Transition Tests (TC-001, TC-003, TC-005, TC-007, TC-009)
 // =============================================================================
-test.describe('Go Decision - Mandatory Field Validation', () => {
-  test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/opportunities');
+test.describe('PNO-969 — OM Stage Transitions', () => {
+
+  // TC-005: OM Cancel — I&P/Draft → CANCELLED/Closed  [PASS — Silvia 2026-02-10]
+  test('TC-005: OM Cancel — I&P/Draft → CANCELLED/Closed', async ({ page }) => {
+    skipIfNotReady();
+
+    await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
+    // Navigate to an opportunity in Identify & Profile / Draft
+    await page.goto(opportunityUrl(TEST_OPPORTUNITIES.completeInIdentifyProfile));
+    await page.waitForLoadState('networkidle');
+
+    // Verify Cancel action is available
+    const cancelBtn = page.getByRole('button', { name: /cancel/i });
+    await expect(cancelBtn).toBeVisible();
+
+    // Click Cancel
+    await cancelBtn.click();
+
+    // Enter mandatory reason
+    const reasonField = page.getByPlaceholder(/reason/i).or(page.locator('textarea').first());
+    await expect(reasonField).toBeVisible();
+    await reasonField.fill('QA Test: Funding partner withdrew');
+
+    // Confirm cancellation
+    const confirmBtn = page.getByRole('button', { name: /confirm|yes|ok/i });
+    await confirmBtn.click();
+
+    // Verify stage = CANCELLED, status = Closed
+    await expect(page.getByText(/cancelled/i)).toBeVisible({ timeout: 10000 });
+
+    // Verify Reopen action is now available
+    const reopenBtn = page.getByRole('button', { name: /reopen/i });
+    await expect(reopenBtn).toBeVisible();
   });
 
-  test('TC-GO-VAL-001: Basic field validation - Name required', async ({ page }) => {
-    // This test can run against current implementation
-    // Navigate to create opportunity
-    const newButton = page.locator('[data-testid="new-opportunity-button"]');
-    const isVisible = await newButton.isVisible().catch(() => false);
-    
+  // TC-007: OM Reopen from Cancelled — Cancelled/Closed → I&P/Draft  [PASS — Silvia 2026-02-10]
+  test('TC-007: OM Reopen from Cancelled → I&P/Draft', async ({ page }) => {
+    skipIfNotReady();
+
+    await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
+    await page.goto(opportunityUrl(TEST_OPPORTUNITIES.cancelled));
+    await page.waitForLoadState('networkidle');
+
+    // Verify Reopen action is available
+    const reopenBtn = page.getByRole('button', { name: /reopen/i });
+    await expect(reopenBtn).toBeVisible();
+
+    // Click Reopen
+    await reopenBtn.click();
+
+    // Confirm reopen
+    const confirmBtn = page.getByRole('button', { name: /confirm|yes|ok/i });
+    if (await confirmBtn.isVisible().catch(() => false)) {
+      await confirmBtn.click();
+    }
+
+    // Verify stage = Identify & Profile, status = Draft
+    await expect(page.getByText(/identify/i)).toBeVisible({ timeout: 10000 });
+  });
+
+  // TC-001: OM Submit for Go — I&P/Draft → GO/Active
+  test('TC-001: OM Submit for Go — I&P/Draft → GO/Active', async ({ page }) => {
+    skipIfNotReady();
+
+    await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
+    await page.goto(opportunityUrl(TEST_OPPORTUNITIES.completeInIdentifyProfile));
+    await page.waitForLoadState('networkidle');
+
+    // Verify Submit for Go action is available
+    const submitBtn = page.getByRole('button', { name: /submit for go/i });
+    await expect(submitBtn).toBeVisible();
+
+    // Click Submit for Go Decision
+    await submitBtn.click();
+
+    // Handle acknowledgement statement
+    const ackCheckbox = page.getByRole('checkbox').first();
+    if (await ackCheckbox.isVisible().catch(() => false)) {
+      await ackCheckbox.check();
+    }
+
+    // Confirm submission
+    const confirmBtn = page.getByRole('button', { name: /submit|confirm|send/i });
+    await confirmBtn.click();
+
+    // Verify success confirmation
+    await expect(
+      page.getByText(/success/i).or(page.getByText(/submitted/i))
+    ).toBeVisible({ timeout: 15000 });
+
+    // Verify opportunity is now read-only / in workflow
+    await expect(
+      page.getByText(/in workflow/i)
+        .or(page.getByText(/approval pending/i))
+        .or(page.getByText(/read.only/i))
+    ).toBeVisible({ timeout: 10000 });
+  });
+
+  // TC-003: OM Reject workflow — I&P/Draft → NO GO/Closed
+  // NOTE: This action is performed by the DoA2 approver, not the OM directly
+  test('TC-003: DoA2 Reject workflow → NO GO/Closed', async ({ page }) => {
+    skipIfNotReady();
+
+    // Must log in as DoA2 holder (Dominic for B5503 India)
+    // This test requires an opportunity already submitted and pending approval
+    await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
+
+    // Navigate to opportunity pending approval
+    // (requires DoA2 user credentials — may need separate auth)
+    await page.waitForLoadState('networkidle');
+
+    // Verify Reject action is available
+    const rejectBtn = page.getByRole('button', { name: /reject/i });
+    await expect(rejectBtn).toBeVisible();
+
+    // Click Reject
+    await rejectBtn.click();
+
+    // Enter mandatory rejection reason
+    const reasonField = page.getByPlaceholder(/reason/i).or(page.locator('textarea').first());
+    await expect(reasonField).toBeVisible();
+    await reasonField.fill('QA Test: Not aligned with regional strategy');
+
+    // Confirm rejection
+    const confirmBtn = page.getByRole('button', { name: /confirm|reject|yes/i });
+    await confirmBtn.click();
+
+    // Verify stage = NO GO, status = Closed
+    await expect(page.getByText(/no.go/i)).toBeVisible({ timeout: 10000 });
+  });
+
+  // TC-009: OM Reopen from No-Go — No-Go/Closed → I&P/Draft
+  test('TC-009: OM Reopen from No-Go → I&P/Draft', async ({ page }) => {
+    skipIfNotReady();
+
+    await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
+    await page.goto(opportunityUrl(TEST_OPPORTUNITIES.noGo));
+    await page.waitForLoadState('networkidle');
+
+    // Verify Reopen action is available
+    const reopenBtn = page.getByRole('button', { name: /reopen/i });
+    await expect(reopenBtn).toBeVisible();
+
+    // Click Reopen
+    await reopenBtn.click();
+
+    // Confirm reopen
+    const confirmBtn = page.getByRole('button', { name: /confirm|yes|ok/i });
+    if (await confirmBtn.isVisible().catch(() => false)) {
+      await confirmBtn.click();
+    }
+
+    // Verify stage = Identify & Profile, status = Draft
+    await expect(page.getByText(/identify/i)).toBeVisible({ timeout: 10000 });
+  });
+});
+
+// =============================================================================
+// SECTION 2: Collaborator Access Denial Tests (TC-002, TC-004, TC-006, TC-008, TC-010)
+// =============================================================================
+test.describe('PNO-969 — Collaborator Access Denial', () => {
+  // NOTE: Collaborator role not yet implemented (Issam, 2026-01-23).
+  // These tests verify that non-OM users cannot perform workflow actions.
+
+  test('TC-002: Collaborator Submit for Go — Access Denied', async ({ page }) => {
+    skipIfNotReady('Collaborator role not implemented — access denial expected');
+
+    // Log in as a non-OM user (Collaborator)
+    // Navigate to opportunity in I&P / Draft
+    await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
+    await page.goto(opportunityUrl(TEST_OPPORTUNITIES.completeInIdentifyProfile));
+    await page.waitForLoadState('networkidle');
+
+    // Verify Submit for Go button is NOT visible or disabled
+    const submitBtn = page.getByRole('button', { name: /submit for go/i });
+    const isVisible = await submitBtn.isVisible().catch(() => false);
+    expect(isVisible).toBeFalsy();
+  });
+
+  test('TC-006: Collaborator Cancel — Access Denied', async ({ page }) => {
+    skipIfNotReady('Collaborator role not implemented — access denial expected');
+
+    await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
+    await page.goto(opportunityUrl(TEST_OPPORTUNITIES.completeInIdentifyProfile));
+    await page.waitForLoadState('networkidle');
+
+    // Verify Cancel button is NOT visible for Collaborator
+    const cancelBtn = page.getByRole('button', { name: /cancel/i });
+    const isVisible = await cancelBtn.isVisible().catch(() => false);
+    expect(isVisible).toBeFalsy();
+  });
+
+  test('TC-008: Collaborator Reopen from Cancelled — Access Denied', async ({ page }) => {
+    skipIfNotReady('Collaborator role not implemented — access denial expected');
+
+    await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
+    await page.goto(opportunityUrl(TEST_OPPORTUNITIES.cancelled));
+    await page.waitForLoadState('networkidle');
+
+    // Verify Reopen button is NOT visible for Collaborator
+    const reopenBtn = page.getByRole('button', { name: /reopen/i });
+    const isVisible = await reopenBtn.isVisible().catch(() => false);
+    expect(isVisible).toBeFalsy();
+  });
+
+  test('TC-010: Collaborator Reopen from No-Go — Access Denied', async ({ page }) => {
+    skipIfNotReady('Collaborator role not implemented — access denial expected');
+
+    await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
+    await page.goto(opportunityUrl(TEST_OPPORTUNITIES.noGo));
+    await page.waitForLoadState('networkidle');
+
+    // Verify Reopen button is NOT visible for Collaborator
+    const reopenBtn = page.getByRole('button', { name: /reopen/i });
+    const isVisible = await reopenBtn.isVisible().catch(() => false);
+    expect(isVisible).toBeFalsy();
+  });
+
+  test('TC-004: Collaborator Reject workflow — Access Denied', async ({ page }) => {
+    skipIfNotReady('Collaborator role not implemented — access denial expected');
+
+    // Collaborator viewing an opportunity in workflow should NOT see Reject
+    await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
+    await page.waitForLoadState('networkidle');
+
+    const rejectBtn = page.getByRole('button', { name: /reject/i });
+    const isVisible = await rejectBtn.isVisible().catch(() => false);
+    expect(isVisible).toBeFalsy();
+  });
+});
+
+// =============================================================================
+// SECTION 3: Submission Pre-Conditions (TC-016 to TC-022)
+// =============================================================================
+test.describe('PNO-969 — Submission Pre-Conditions', () => {
+
+  test('TC-020: Opportunity Statement must be generated before submission', async ({ page }) => {
+    skipIfNotReady();
+
+    await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
+    // Navigate to opportunity WITHOUT Opportunity Statement
+    await page.waitForLoadState('networkidle');
+
+    // Click Submit for Go
+    const submitBtn = page.getByRole('button', { name: /submit for go/i });
+    if (await submitBtn.isVisible().catch(() => false)) {
+      await submitBtn.click();
+
+      // Expect warning about missing Opportunity Statement
+      await expect(
+        page.getByText(/opportunity statement has not yet been generated/i)
+      ).toBeVisible({ timeout: 10000 });
+    }
+  });
+
+  test('TC-022: Mandatory acknowledgement includes org unit name', async ({ page }) => {
+    skipIfNotReady();
+
+    await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
+    await page.goto(opportunityUrl(TEST_OPPORTUNITIES.completeInIdentifyProfile));
+    await page.waitForLoadState('networkidle');
+
+    // Click Submit for Go
+    const submitBtn = page.getByRole('button', { name: /submit for go/i });
+    if (await submitBtn.isVisible().catch(() => false)) {
+      await submitBtn.click();
+
+      // Verify acknowledgement text contains org unit reference
+      await expect(
+        page.getByText(/UNOPS org unit/i)
+      ).toBeVisible({ timeout: 10000 });
+
+      // Verify checkbox exists and is required
+      const ackCheckbox = page.getByRole('checkbox').first();
+      await expect(ackCheckbox).toBeVisible();
+    }
+  });
+});
+
+// =============================================================================
+// SECTION 4: Post-Submission Visibility (TC-027 to TC-031)
+// =============================================================================
+test.describe('PNO-969 — Post-Submission Visibility', () => {
+
+  test('TC-027: Record read-only for OM after submission', async ({ page }) => {
+    skipIfNotReady();
+
+    await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
+    // Navigate to opportunity that has been submitted (in workflow)
+    await page.waitForLoadState('networkidle');
+
+    // Verify edit buttons are disabled or hidden
+    const editBtn = page.getByRole('button', { name: /edit/i }).first();
+    const isVisible = await editBtn.isVisible().catch(() => false);
+
     if (isVisible) {
-      await newButton.click();
-      await page.waitForTimeout(2000);
-      
-      // Try to save without name
-      const saveButton = page.locator('[data-testid="save-button"], button:has-text("Save")');
-      if (await saveButton.isVisible()) {
-        await saveButton.click();
-        
-        // Should show validation error for name
-        const nameError = page.locator('[data-testid="name-error"], .p-error:has-text("name")');
-        const hasError = await nameError.isVisible().catch(() => false);
-        
-        // Log result
-        console.log('Name validation:', hasError ? 'PASSED' : 'NEEDS VERIFICATION');
+      // If visible, it should be disabled
+      await expect(editBtn).toBeDisabled();
+    }
+    // Else: edit button is hidden — that's correct too
+  });
+
+  test('TC-029: In-Workflow indicator visible', async ({ page }) => {
+    skipIfNotReady();
+
+    await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
+    // Navigate to opportunity in workflow
+    await page.waitForLoadState('networkidle');
+
+    // Verify In Workflow / Approval Pending indicator
+    await expect(
+      page.getByText(/in workflow/i)
+        .or(page.getByText(/approval pending/i))
+        .or(page.getByText(/pending/i))
+    ).toBeVisible({ timeout: 10000 });
+  });
+
+  test('TC-030: Workflow history visible', async ({ page }) => {
+    skipIfNotReady();
+
+    await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
+    // Navigate to opportunity with workflow history
+    await page.waitForLoadState('networkidle');
+
+    // Look for workflow history section
+    await expect(
+      page.getByText(/workflow history/i)
+        .or(page.getByText(/stage change/i))
+        .or(page.getByText(/history/i))
+    ).toBeVisible({ timeout: 10000 });
+  });
+});
+
+// =============================================================================
+// SECTION 5: Recall (TC-034, TC-035, TC-037)
+// =============================================================================
+test.describe('PNO-969 — OM Recall', () => {
+
+  test('TC-034: OM can recall from workflow', async ({ page }) => {
+    skipIfNotReady();
+
+    await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
+    // Navigate to opportunity in workflow as OM
+    await page.waitForLoadState('networkidle');
+
+    // Verify Recall button visible for OM
+    const recallBtn = page.getByRole('button', { name: /recall/i });
+    await expect(recallBtn).toBeVisible();
+
+    // Click Recall
+    await recallBtn.click();
+
+    // Enter mandatory justification
+    const reasonField = page.getByPlaceholder(/reason|justification/i).or(page.locator('textarea').first());
+    await expect(reasonField).toBeVisible();
+    await reasonField.fill('QA Test: Need to update budget figures');
+
+    // Confirm recall
+    const confirmBtn = page.getByRole('button', { name: /confirm|recall|yes/i });
+    await confirmBtn.click();
+
+    // Verify opportunity returns to I&P / Draft
+    await expect(page.getByText(/identify/i)).toBeVisible({ timeout: 10000 });
+  });
+
+  test('TC-035: Recall requires justification', async ({ page }) => {
+    skipIfNotReady();
+
+    await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
+    await page.waitForLoadState('networkidle');
+
+    // Click Recall
+    const recallBtn = page.getByRole('button', { name: /recall/i });
+    if (await recallBtn.isVisible().catch(() => false)) {
+      await recallBtn.click();
+
+      // Leave justification empty and try to confirm
+      const confirmBtn = page.getByRole('button', { name: /confirm|recall|yes/i });
+
+      // Confirm button should be disabled or show error when justification is empty
+      if (await confirmBtn.isVisible().catch(() => false)) {
+        await confirmBtn.click();
+
+        // Expect error about missing justification
+        await expect(
+          page.getByText(/justification.*required/i)
+            .or(page.getByText(/required/i))
+        ).toBeVisible({ timeout: 5000 });
       }
     }
-    
-    // Test passes - validation behavior verified or skipped
-    expect(true).toBeTruthy();
   });
 
-  test('TC-GO-VAL-002: Full mandatory field validation (18+ fields)', async ({ page }) => {
-    test.skip(!isGoDecisionFullyImplemented(), 
-      'BLOCKED by DEF-008: Full field validation not implemented. See GoNoGoDecision_PRD_TestCases.md TC-GO-VAL-001');
-    
-    // This test will validate all 18+ required fields once implemented
-    // Fields to validate:
-    // - Name, Description, Context, Impact, Outcomes
-    // - Strategic Missions, SDGs, Partners, Countries
-    // - Dates, Initiative Type, Opportunity Manager
-    // - DoA2 holder, Opportunity Statement, etc.
-  });
+  test('TC-037: Cannot cancel while in workflow', async ({ page }) => {
+    skipIfNotReady();
 
-  test('TC-GO-VAL-003: Array fields require at least one item', async ({ page }) => {
-    test.skip(!isGoDecisionFullyImplemented(),
-      'BLOCKED by DEF-008: Array field validation not implemented');
-    
-    // Validate minLength=1 for:
-    // - Strategic Missions
-    // - SDGs
-    // - Funding Partners
-    // - Client Partners
-    // - Products & Services
-    // - Countries
+    await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
+    // Navigate to opportunity IN workflow
+    await page.waitForLoadState('networkidle');
+
+    // Verify Cancel button is NOT available while in workflow
+    const cancelBtn = page.getByRole('button', { name: /^cancel$/i });
+    const isVisible = await cancelBtn.isVisible().catch(() => false);
+    expect(isVisible).toBeFalsy();
   });
 });
 
 // =============================================================================
-// CATEGORY 2: DOA LEVEL 2 APPROVER LOOKUP
+// SECTION 6: End-to-End Scenarios (TC-053 to TC-055)
 // =============================================================================
-test.describe('Go Decision - DoA Level 2 Approver Lookup', () => {
-  test.beforeEach(async ({ page }) => {
-    if (!isGoDecisionFullyImplemented()) {
-      test.skip(true, 'BLOCKED by DEF-008: DoA2 lookup not implemented');
+test.describe('PNO-969 — End-to-End Workflows', () => {
+
+  // TC-055: Cancel → Reopen → ready for re-submission
+  test('TC-055: Cancel and Reopen cycle', async ({ page }) => {
+    skipIfNotReady();
+
+    await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
+    await page.goto(opportunityUrl(TEST_OPPORTUNITIES.completeInIdentifyProfile));
+    await page.waitForLoadState('networkidle');
+
+    // Step 1: Cancel
+    const cancelBtn = page.getByRole('button', { name: /cancel/i });
+    await expect(cancelBtn).toBeVisible();
+    await cancelBtn.click();
+
+    const reasonField = page.getByPlaceholder(/reason/i).or(page.locator('textarea').first());
+    await reasonField.fill('QA Test: E2E Cancel-Reopen cycle');
+
+    const confirmBtn = page.getByRole('button', { name: /confirm|yes|ok/i });
+    await confirmBtn.click();
+
+    // Verify CANCELLED
+    await expect(page.getByText(/cancelled/i)).toBeVisible({ timeout: 10000 });
+
+    // Step 2: Reopen
+    const reopenBtn = page.getByRole('button', { name: /reopen/i });
+    await expect(reopenBtn).toBeVisible();
+    await reopenBtn.click();
+
+    const confirm2 = page.getByRole('button', { name: /confirm|yes|ok/i });
+    if (await confirm2.isVisible().catch(() => false)) {
+      await confirm2.click();
     }
-    await authenticateWithRealBackend(page, '/#/partnerships/opportunities');
+
+    // Verify back to I&P / Draft
+    await expect(page.getByText(/identify/i)).toBeVisible({ timeout: 10000 });
   });
 
-  test('TC-GO-DOA2-001: DoA2 lookup from EntityUserRole', async ({ page }) => {
-    // Navigate to opportunity detail
-    // Submit for Go Decision
-    // Verify DoA2 is identified from EntityUserRole
-    expect(true).toBeTruthy();
-  });
+  // TC-053: Full happy path (requires multi-user login — partially automated)
+  test('TC-053: Full happy path — Submit → Approve → GO', async ({ page }) => {
+    skipIfNotReady();
 
-  test('TC-GO-DOA2-002: Block submission if no DoA2 found', async ({ page }) => {
-    // Create opportunity in org unit without DoA2
-    // Attempt to submit for Go Decision
-    // Verify error: "No DoA Level 2 holder found"
-    expect(true).toBeTruthy();
-  });
+    await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
+    await page.goto(opportunityUrl(TEST_OPPORTUNITIES.completeInIdentifyProfile));
+    await page.waitForLoadState('networkidle');
 
-  test('TC-GO-DOA2-003: Multiple DoA2 holders supported', async ({ page }) => {
-    // Org unit with multiple DoA2 holders
-    // Submit for Go Decision
-    // Verify all DoA2 holders notified
-    expect(true).toBeTruthy();
-  });
-});
+    // Step 1: OM submits for Go Decision
+    const submitBtn = page.getByRole('button', { name: /submit for go/i });
+    await expect(submitBtn).toBeVisible();
+    await submitBtn.click();
 
-// =============================================================================
-// CATEGORY 3: WARNINGS AND ACKNOWLEDGMENTS
-// =============================================================================
-test.describe('Go Decision - Warnings', () => {
-  test.beforeEach(async ({ page }) => {
-    if (!isGoDecisionFullyImplemented()) {
-      test.skip(true, 'BLOCKED by DEF-008: Warnings not implemented');
+    // Acknowledge
+    const ackCheckbox = page.getByRole('checkbox').first();
+    if (await ackCheckbox.isVisible().catch(() => false)) {
+      await ackCheckbox.check();
     }
-    await authenticateWithRealBackend(page, '/#/partnerships/opportunities');
-  });
 
-  test('TC-GO-WARN-001: Non-OM submitter warning', async ({ page }) => {
-    // Log in as Collaborator (not OM)
-    // Navigate to opportunity
-    // Click "Send for Go Decision"
-    // Verify warning: "You are not the Opportunity Manager for this record"
-    expect(true).toBeTruthy();
-  });
+    const confirmBtn = page.getByRole('button', { name: /submit|confirm|send/i });
+    await confirmBtn.click();
 
-  test('TC-GO-WARN-002: Country-Org Unit mismatch warning', async ({ page }) => {
-    // Create opportunity with country not matching org unit
-    // Submit for Go Decision
-    // Verify warning with org unit name
-    expect(true).toBeTruthy();
-  });
+    // Verify submission success
+    await expect(
+      page.getByText(/success/i).or(page.getByText(/submitted/i))
+    ).toBeVisible({ timeout: 15000 });
 
-  test('TC-GO-ACK-001: Mandatory acknowledgment statement', async ({ page }) => {
-    // Navigate to opportunity
-    // Click "Send for Go Decision"
-    // Verify acknowledgment checkbox is required
-    // Try to submit without checking
-    // Verify error
-    expect(true).toBeTruthy();
+    // NOTE: Approval step requires logging in as DoA2 (Dominic for B5503).
+    // Full E2E requires multi-user authentication or API-level approval.
+    // Mark as partially verified — submission path works.
   });
 });
 
 // =============================================================================
-// CATEGORY 4: CUSTOM WORKFLOW BEHAVIOR
+// SUMMARY
 // =============================================================================
-test.describe('Go Decision - Custom Workflow', () => {
-  test.beforeEach(async ({ page }) => {
-    if (!isGoDecisionFullyImplemented()) {
-      test.skip(true, 'BLOCKED by DEF-008: Custom workflow not implemented');
-    }
-    await authenticateWithRealBackend(page, '/#/partnerships/opportunities');
-  });
-
-  test('TC-GO-REJ-001: Rejection transitions to NO GO', async ({ page }) => {
-    // Submit opportunity for Go Decision
-    // Log in as DoA2
-    // Reject the opportunity
-    // Verify stage is "NO GO" (not "IDENTIFY & PROFILE")
-    expect(true).toBeTruthy();
-  });
-
-  test('TC-GO-REJ-002: Rejection requires reason', async ({ page }) => {
-    // Log in as DoA2
-    // Attempt to reject without reason
-    // Verify error: reason is required
-    expect(true).toBeTruthy();
-  });
-
-  test('TC-GO-CANCEL-001: Cancel from IDENTIFY & PROFILE', async ({ page }) => {
-    // Navigate to opportunity in IDENTIFY & PROFILE
-    // Click Cancel button
-    // Verify stage changes to CANCELLED
-    expect(true).toBeTruthy();
-  });
-
-  test('TC-GO-CANCEL-002: Cannot cancel from other stages', async ({ page }) => {
-    // Navigate to opportunity in GO or NO GO stage
-    // Verify Cancel button not available
-    expect(true).toBeTruthy();
-  });
-
-  test('TC-GO-REOPEN-001: Reopen from NO GO', async ({ page }) => {
-    // Navigate to opportunity in NO GO stage
-    // Click Reopen button
-    // Verify stage changes to IDENTIFY & PROFILE
-    expect(true).toBeTruthy();
-  });
-
-  test('TC-GO-REOPEN-002: Reopen from CANCELLED', async ({ page }) => {
-    // Navigate to opportunity in CANCELLED stage
-    // Click Reopen button
-    // Verify stage changes to IDENTIFY & PROFILE
-    expect(true).toBeTruthy();
-  });
-
-  test('TC-GO-RECALL-001: OM can recall submitted opportunity', async ({ page }) => {
-    // Submit opportunity for Go Decision
-    // Log in as any OM (not just submitter)
-    // Click Recall button
-    // Verify opportunity returns to IDENTIFY & PROFILE
-    expect(true).toBeTruthy();
-  });
-});
-
-// =============================================================================
-// CATEGORY 5: WORKFLOW COMPONENT (Partially Implemented)
-// =============================================================================
-test.describe('Go Decision - Workflow Component', () => {
-  test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/opportunities');
-  });
-
-  test('TC-GO-WF-001: Workflow component displays current stage', async ({ page }) => {
-    // Navigate to any opportunity
-    await page.waitForTimeout(2000);
-    
-    // Click first opportunity in list
-    const opportunityRow = page.locator('[data-testid="opportunity-row"], tr').first();
-    if (await opportunityRow.isVisible()) {
-      await opportunityRow.click();
-      await page.waitForTimeout(2000);
-      
-      // Check for workflow component
-      const workflowComponent = page.locator('app-workflow, [data-testid="workflow-component"]');
-      const hasWorkflow = await workflowComponent.isVisible().catch(() => false);
-      
-      console.log('Workflow component visible:', hasWorkflow);
-    }
-    
-    expect(true).toBeTruthy();
-  });
-
-  test('TC-GO-WF-002: Stage stepper shows happy path only', async ({ page }) => {
-    test.skip(!isGoDecisionFullyImplemented(),
-      'BLOCKED by DEF-008: Stage stepper display logic not fully implemented');
-    
-    // Navigate to opportunity
-    // Verify stepper shows: IDENTIFY & PROFILE → GO
-    // Verify NO GO and CANCELLED are NOT shown in stepper
-    expect(true).toBeTruthy();
-  });
-});
-
-// =============================================================================
-// CATEGORY 6: EMAIL NOTIFICATIONS
-// =============================================================================
-test.describe('Go Decision - Email Notifications', () => {
-  test.beforeEach(async ({ page }) => {
-    if (!isGoDecisionFullyImplemented()) {
-      test.skip(true, 'BLOCKED by DEF-008: Email notifications not implemented');
-    }
-    // Also need email credentials (QA-014)
-    if (!process.env.EMAIL_HOST) {
-      test.skip(true, 'BLOCKED by QA-014: Email credentials not configured');
-    }
-    await authenticateWithRealBackend(page, '/#/partnerships/opportunities');
-  });
-
-  test('TC-GO-EMAIL-001: Submission notification to DoA2', async ({ page }) => {
-    // Submit opportunity for Go Decision
-    // Check DoA2 email inbox
-    // Verify notification received with correct wording
-    expect(true).toBeTruthy();
-  });
-
-  test('TC-GO-EMAIL-002: Approval notification to OM and stakeholders', async ({ page }) => {
-    // Approve opportunity
-    // Check OM, Collaborator, and Stakeholder inboxes
-    // Verify all receive GO notification
-    expect(true).toBeTruthy();
-  });
-
-  test('TC-GO-EMAIL-003: Rejection notification to OM', async ({ page }) => {
-    // Reject opportunity
-    // Check OM email inbox
-    // Verify rejection notification with reason
-    expect(true).toBeTruthy();
-  });
-});
-
-// =============================================================================
-// CATEGORY 7: PERMISSIONS AND ROLES
-// =============================================================================
-test.describe('Go Decision - Permissions', () => {
-  test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/opportunities');
-  });
-
-  test('TC-GO-PERM-001: OM and Collaborator can submit', async ({ page }) => {
-    test.skip(!isGoDecisionFullyImplemented(),
-      'BLOCKED by DEF-008: Permission checks not fully implemented');
-    
-    // Log in as OM - verify "Send for Go Decision" button visible
-    // Log in as Collaborator - verify button visible
-    expect(true).toBeTruthy();
-  });
-
-  test('TC-GO-PERM-002: Only DoA2/DoA3 can approve/reject', async ({ page }) => {
-    test.skip(!isGoDecisionFullyImplemented(),
-      'BLOCKED by DEF-008: DoA permissions not implemented');
-    
-    // Log in as regular user
-    // Navigate to submitted opportunity
-    // Verify Approve/Reject buttons NOT visible
-    expect(true).toBeTruthy();
-  });
-
-  test('TC-GO-PERM-003: Opportunity read-only during workflow', async ({ page }) => {
-    test.skip(!isGoDecisionFullyImplemented(),
-      'BLOCKED by DEF-008: Workflow lock not implemented');
-    
-    // Submit opportunity for Go Decision
-    // Try to edit fields
-    // Verify fields are read-only
-    expect(true).toBeTruthy();
-  });
-});
-
-// =============================================================================
-// SUMMARY TEST
-// =============================================================================
-test.describe('Go Decision - Implementation Status', () => {
-  test('SUMMARY: Go Decision feature implementation status', async ({ page }) => {
+test.describe('PNO-969 — Test Suite Status', () => {
+  test('SUMMARY: PNO-969 Go Decision test coverage', async () => {
     console.log('='.repeat(60));
-    console.log('GO DECISION FEATURE STATUS');
+    console.log('PNO-969: GO/NO GO DECISION TEST SUITE');
     console.log('='.repeat(60));
     console.log('');
-    console.log('Feature implemented:', isGoDecisionFullyImplemented() ? 'YES' : 'NO');
-    console.log('Related defect:', 'DEF-008');
-    console.log('Test cases created:', '102 (see GoNoGoDecision_PRD_TestCases.md)');
-    console.log('Tests executable now:', '~10%');
-    console.log('Tests blocked:', '~90% (pending DEF-008)');
+    console.log('Feature deployed:', featureReady ? 'YES' : 'NO');
     console.log('');
-    console.log('To enable all tests, set environment variable:');
+    console.log('Test Case Document: PNO-969_GoDecision_TestCases.md');
+    console.log('Total test cases:  55');
+    console.log('');
+    console.log('Stage Transitions (OM):');
+    console.log('  TC-001: Submit for Go → GO/Active');
+    console.log('  TC-003: Reject → NO GO/Closed');
+    console.log('  TC-005: Cancel → CANCELLED/Closed     ✅ PASS');
+    console.log('  TC-007: Reopen Cancelled → I&P/Draft   ✅ PASS');
+    console.log('  TC-009: Reopen No-Go → I&P/Draft');
+    console.log('');
+    console.log('Access Denial (Collaborator):');
+    console.log('  TC-002, TC-004, TC-006, TC-008, TC-010: All → Access Denied');
+    console.log('');
+    console.log('Known Issues:');
+    console.log('  PNO-1193: OM role transfer not working');
+    console.log('  PNO-1171: Reject action appears twice in history');
+    console.log('  Collaborator role not yet implemented');
+    console.log('');
+    console.log('To enable all tests:');
     console.log('  GO_DECISION_IMPLEMENTED=true');
-    console.log('');
+    console.log('  GO_TEST_OPP_IP_ID=<opportunity-id>');
+    console.log('  GO_TEST_OPP_CANCELLED_ID=<opportunity-id>');
+    console.log('  GO_TEST_OPP_NOGO_ID=<opportunity-id>');
     console.log('='.repeat(60));
-    
+
     expect(true).toBeTruthy();
   });
 });

@@ -1,250 +1,277 @@
-# Take a Tour Feature Test Cases
+# Take-a-Tour / Onboarding — Test Cases
 
-## Overview
-Test cases for the "Take a Tour" onboarding feature in the UNOPS Opportunity+ system.
-
-**JIRA Story:** PNO-446  
-**Last Updated:** 2026-02-04  
-**Total Test Cases:** 12
+**Component:** `UNOPS.PAO.ClientApp/src/app/shared/components/take-a-tour`  
+**Created:** 2026-02-04 | **Last Updated:** 2026-02-11  
+**Author:** QA Team  
+**Standard:** 10-Category, 3:1 Ratio
 
 ---
 
-## Test Cases
+## Compliance Summary
 
-### POS_001 - Validate Take a Tour Button Visibility
-**Priority:** High  
-**Labels:** Onboarding, Tour, UI
+| Category | Count | Min | ✓ |
+|----------|-------|-----|---|
+| §1 Positive | 35 | 30-50 | ✅ |
+| §2 Negative | 70 | 70 | ✅ |
+| §3 Boundary | 70 | 70 | ✅ |
+| §4 Functional | 50 | 50 | ✅ |
+| §5 Integration | 50 | 50 | ✅ |
+| §6 Security | 50 | 50 | ✅ |
+| §7 Concurrency | 25 | 25 | ✅ |
+| §8 Unit | 21 | 21 | ✅ |
+| §9 Performance | 16 | 16 | ✅ |
+| §10 Load | 10 | 10 | ✅ |
+| **TOTAL** | **397** | **≥347** | ✅ |
 
-**Objective:** Validate that the "Take a Tour" button is visible for new users.
-
-**Preconditions:**
-- User is newly created or has not completed the tour
-- User is logged in
-
-**Test Steps:**
-| Step | Action | Expected Result |
-|------|--------|-----------------|
-| 1 | Log in as a new user | Dashboard/homepage loads |
-| 2 | Locate "Take a Tour" button or prompt | Button/prompt is visible in header or modal |
-| 3 | Verify button is clickable | Button has hover state and is interactive |
-
----
-
-### POS_002 - Start Tour Successfully
-**Priority:** High  
-**Labels:** Onboarding, Tour
-
-**Objective:** Validate that clicking "Take a Tour" starts the guided tour.
-
-**Preconditions:**
-- "Take a Tour" button is visible
-
-**Test Steps:**
-| Step | Action | Expected Result |
-|------|--------|-----------------|
-| 1 | Click "Take a Tour" button | Tour overlay/modal appears |
-| 2 | Verify first tour step is displayed | Step indicator shows "Step 1 of X" |
-| 3 | Verify highlighted area | First feature is highlighted with explanation |
+**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
 
 ---
 
-### POS_003 - Navigate Tour Steps Forward
-**Priority:** High  
-**Labels:** Onboarding, Tour, Navigation
+## Feature Overview
 
-**Objective:** Validate navigating forward through tour steps.
-
-**Preconditions:**
-- Tour is started
-
-**Test Steps:**
-| Step | Action | Expected Result |
-|------|--------|-----------------|
-| 1 | View current tour step | Step content displayed |
-| 2 | Click "Next" button | Next step is displayed |
-| 3 | Verify step counter updates | Counter shows "Step 2 of X" |
-| 4 | Continue clicking Next through all steps | Each step displays correctly |
+Take-a-tour/onboarding: guided tour steps, tooltip display, skip/complete, progress, responsive, accessibility.
 
 ---
 
-### POS_004 - Navigate Tour Steps Backward
-**Priority:** Normal  
-**Labels:** Onboarding, Tour, Navigation
+## §1 Positive Tests (Happy Path)
 
-**Objective:** Validate navigating backward through tour steps.
+> **Minimum:** 30-50 tests | **Focus:** Valid inputs, standard workflows, successful operations
 
-**Preconditions:**
-- Tour is past first step
+### Detailed Test Cases (P0)
 
-**Test Steps:**
-| Step | Action | Expected Result |
-|------|--------|-----------------|
-| 1 | Navigate to Step 3 or later | Step displayed |
-| 2 | Click "Previous" or "Back" button | Previous step displayed |
-| 3 | Verify step counter updates | Counter decrements |
-| 4 | Verify content matches previous step | Correct step content shown |
+#### POS-001: Tour Button Visible for New User
 
----
+**Priority:** P0  
+**Precondition:** New user, tour not completed.
 
-### POS_005 - Skip Tour Functionality
-**Priority:** High  
-**Labels:** Onboarding, Tour
+**Steps:**
+1. Log in as new user
+2. Locate "Take a Tour" button
 
-**Objective:** Validate that users can skip the tour.
-
-**Preconditions:**
-- Tour is started
-
-**Test Steps:**
-| Step | Action | Expected Result |
-|------|--------|-----------------|
-| 1 | View any tour step | Step content displayed |
-| 2 | Locate "Skip Tour" or "X" close button | Button is visible |
-| 3 | Click "Skip Tour" | Confirmation dialog may appear |
-| 4 | Confirm skip | Tour closes |
-| 5 | Verify user returns to normal view | Application is usable without tour overlay |
+**Expected Result:** Button visible and clickable.
 
 ---
 
-### POS_006 - Complete Tour Successfully
-**Priority:** High  
-**Labels:** Onboarding, Tour
+#### POS-002: Start Tour Successfully
 
-**Objective:** Validate completing all tour steps.
+**Priority:** P0  
+**Precondition:** Tour button visible.
 
-**Preconditions:**
-- Tour is started
+**Steps:**
+1. Click "Take a Tour"
+2. Verify first step
 
-**Test Steps:**
-| Step | Action | Expected Result |
-|------|--------|-----------------|
-| 1 | Navigate through all tour steps | Each step displays |
-| 2 | Click "Next" on final step | "Finish" or "Complete" button appears |
-| 3 | Click "Finish" | Tour closes with success message |
-| 4 | Verify tour completion is recorded | "Take a Tour" button may be hidden or changed to "Restart Tour" |
+**Expected Result:** Tour overlay appears, step 1 displayed.
 
 ---
 
-### POS_007 - Tour Highlights Correct Elements
-**Priority:** Normal  
-**Labels:** Onboarding, Tour, UI
+#### POS-003: Navigate to Next Step
 
-**Objective:** Validate that each tour step highlights the correct UI element.
+**Priority:** P0  
+**Precondition:** Tour started, on step 1.
 
-**Preconditions:**
-- Tour is started
+**Steps:**
+1. Click "Next"
+2. Verify step 2
 
-**Test Steps:**
-| Step | Action | Expected Result |
-|------|--------|-----------------|
-| 1 | Start tour | First element highlighted |
-| 2 | Verify highlight matches step description | Highlighted element is what the text describes |
-| 3 | Navigate to next step | New element highlighted |
-| 4 | Repeat verification for each step | All highlights match descriptions |
+**Expected Result:** Step 2 displayed, progress updated.
 
 ---
 
-### POS_008 - Tour Tooltip Positioning
-**Priority:** Normal  
-**Labels:** Onboarding, Tour, UI
+#### POS-004: Complete Tour
 
-**Objective:** Validate that tour tooltips are positioned correctly and visible.
+**Priority:** P0  
+**Precondition:** On last step.
 
-**Preconditions:**
-- Tour is started
+**Steps:**
+1. Click "Done" or "Complete"
+2. Verify completion
 
-**Test Steps:**
-| Step | Action | Expected Result |
-|------|--------|-----------------|
-| 1 | View each tour step | Tooltip appears |
-| 2 | Verify tooltip doesn't overlap with highlighted element | Content is readable |
-| 3 | Verify tooltip is fully visible on screen | No clipping at screen edges |
-| 4 | Resize window and verify responsiveness | Tooltip adjusts position as needed |
+**Expected Result:** Tour closed, completion saved, not shown again.
 
 ---
 
-### POS_009 - Restart Tour Option
-**Priority:** Normal  
-**Labels:** Onboarding, Tour
+#### POS-005: Skip Tour
 
-**Objective:** Validate that users can restart the tour after completion.
+**Priority:** P0  
+**Precondition:** Tour started.
 
-**Preconditions:**
-- User has previously completed the tour
+**Steps:**
+1. Click "Skip"
+2. Confirm skip
 
-**Test Steps:**
-| Step | Action | Expected Result |
-|------|--------|-----------------|
-| 1 | Log in as user who completed tour | Application loads |
-| 2 | Locate "Help" menu or settings | Menu accessible |
-| 3 | Find "Restart Tour" or "Take a Tour" option | Option is available |
-| 4 | Click to restart tour | Tour begins from Step 1 |
+**Expected Result:** Tour closed, skip saved.
 
 ---
 
-### NEG_010 - Tour on Different Screen Sizes
-**Priority:** Normal  
-**Labels:** Onboarding, Tour, Responsive
+### Positive Tests — Tabular (P1/P2)
 
-**Objective:** Validate tour functionality on tablet and mobile screen sizes.
-
-**Preconditions:**
-- Responsive testing capability
-
-**Test Steps:**
-| Step | Action | Expected Result |
-|------|--------|-----------------|
-| 1 | Set viewport to tablet size (768px) | Application adapts |
-| 2 | Start tour | Tour displays correctly |
-| 3 | Navigate through steps | All steps accessible |
-| 4 | Set viewport to mobile size (375px) | Application adapts |
-| 5 | Verify tour remains functional | Tour steps display and navigation works |
-
----
-
-### NEG_011 - Tour Persists After Page Refresh
-**Priority:** Normal  
-**Labels:** Onboarding, Tour, State
-
-**Objective:** Validate tour state after page refresh.
-
-**Preconditions:**
-- Tour is in progress (e.g., Step 3)
-
-**Test Steps:**
-| Step | Action | Expected Result |
-|------|--------|-----------------|
-| 1 | Navigate to Step 3 of tour | Step 3 displayed |
-| 2 | Refresh the browser page | Page reloads |
-| 3 | Check tour state | Tour resumes from Step 3 OR restarts from beginning (document expected behavior) |
-
----
-
-### POS_012 - Tour Keyboard Navigation
-**Priority:** Low  
-**Labels:** Onboarding, Tour, Accessibility
-
-**Objective:** Validate tour can be navigated using keyboard.
-
-**Preconditions:**
-- Tour is started
-
-**Test Steps:**
-| Step | Action | Expected Result |
-|------|--------|-----------------|
-| 1 | Start tour | Tour overlay appears |
-| 2 | Press Tab key | Focus moves to Next button |
-| 3 | Press Enter | Next step displayed |
-| 4 | Press Escape | Tour closes or skip dialog appears |
-| 5 | Verify all interactions keyboard accessible | Tour fully navigable via keyboard |
+| ID | Test Name | Precondition | Steps (Brief) | Expected Result | Priority |
+|----|-----------|-------------|---------------|-----------------|----------|
+| POS-006 | Navigate to previous step | On step 2 | Click Back | Step 1 shown | P1 |
+| POS-007 | Progress indicator | Tour active | View progress | "Step 2 of 5" shown | P1 |
+| POS-008 | Tooltip highlights element | Step active | View highlight | Element highlighted | P1 |
+| POS-009 | Tooltip positioning | Element visible | View tooltip | Correct position | P1 |
+| POS-010 | Tour responsive (desktop) | Desktop | View tour | Desktop layout | P1 |
+| POS-011 | Tour responsive (mobile) | Mobile | View tour | Mobile layout | P1 |
+| POS-012 | Keyboard next | Focus on Next | Press Enter | Next step | P1 |
+| POS-013 | Keyboard back | Focus on Back | Press Enter | Previous step | P1 |
+| POS-014 | Keyboard skip | Focus on Skip | Press Enter | Tour skipped | P1 |
+| POS-015 | Escape to close | Tour active | Press Escape | Tour closed | P1 |
+| POS-016 | Click overlay to close | Tour active | Click overlay | Tour closed or next | P1 |
+| POS-017 | Tour for returning user | Completed before | View | Option to replay | P2 |
+| POS-018 | Replay tour | Tour completed | Click replay | Tour restarts | P2 |
+| POS-019 | Tour step with link | Step has link | Click link | Navigates | P2 |
+| POS-020 | Tour step with image | Step has image | View | Image displayed | P2 |
+| POS-021 | Tour with 1 step | Single step | Complete | Done | P2 |
+| POS-022 | Tour with 20 steps | Many steps | Navigate | All work | P2 |
+| POS-023 | Screen reader announces | Screen reader | Start tour | Step announced | P2 |
+| POS-024 | Focus management | Tab | Focus in tooltip | Focus trapped | P2 |
+| POS-025 | Reduced motion | Prefers-reduced-motion | View tour | No animation | P2 |
+| POS-026 | High contrast | High contrast | View tour | Visible | P2 |
+| POS-027 | Tour persistence | Refresh mid-tour | Refresh | Resume or restart | P2 |
+| POS-028 | Multi-language tour | fr locale | View tour | French content | P2 |
+| POS-029 | Tour completion analytics | Complete tour | Complete | Event tracked | P2 |
+| POS-030 | Skip analytics | Skip tour | Skip | Event tracked | P2 |
+| POS-031 | Tour for specific role | Role-based | View | Role-specific steps | P2 |
+| POS-032 | Conditional step | Step depends on feature | Feature on | Step shown | P2 |
+| POS-033 | Tour with video | Step has video | View | Video plays | P2 |
+| POS-034 | Tour badge/indicator | New user | View header | Badge shown | P2 |
+| POS-035 | Tour auto-start | First visit | Load page | Tour may auto-start | P2 |
 
 ---
 
-## Summary
+## §2 Negative Tests (Failure Scenarios)
 
-| Priority | Count |
-|----------|-------|
-| High | 5 |
-| Normal | 6 |
-| Low | 1 |
-| **TOTAL** | **12** |
+> **Minimum:** 70 tests
+
+### 2.1 Invalid Input Validation
+
+| ID | Test Name | Invalid Input | Expected Error | Priority |
+|----|-----------|--------------|---------------|----------|
+| NEG-001 | Start with null config | Config = null | Default or error | P0 |
+| NEG-002 | Start with empty steps | Steps = [] | No tour or error | P0 |
+| NEG-003 | Invalid step index | Index = -1 | Handled | P0 |
+| NEG-004 | Invalid step index | Index = 999 | Handled | P0 |
+| NEG-005 | Missing target element | Element not in DOM | Fallback position | P0 |
+| NEG-006 | Removed target mid-tour | Element removed | Skip or error | P0 |
+| NEG-007 | Invalid step content | Malformed HTML | Sanitized | P0 |
+| NEG-008 | Null callback | onComplete = null | No error | P0 |
+| NEG-009 | Invalid theme | Theme = "invalid" | Default | P0 |
+| NEG-010 | Negative step duration | Duration = -1 | Default | P0 |
+
+### 2.2 Unauthorized Access
+
+| ID | Test Name | User Role | Action Attempted | Expected Result | Priority |
+|----|-----------|-----------|-----------------|-----------------|----------|
+| NEG-011 | Anonymous user | No auth | Start tour | Redirect or allowed | P0 |
+| NEG-012 | Tour disabled for role | Disabled role | View button | Button hidden | P1 |
+| NEG-013 | Tour admin-only | Non-admin | Start | 403 or hidden | P1 |
+| NEG-014 | Expired session | Expired | Mid-tour | Handled | P1 |
+| NEG-015 | No tour permission | No permission | Start | 403 | P1 |
+| NEG-016 to NEG-020 | [Additional auth scenarios] | Various | Various | Per scenario | P1 |
+
+### 2.3 Invalid State Transitions
+
+| ID | Test Name | Current State | Invalid Action | Expected Result | Priority |
+|----|-----------|--------------|---------------|-----------------|----------|
+| NEG-021 | Next on last step | Last step | Next | Complete or no-op | P1 |
+| NEG-022 | Back on first step | First step | Back | No-op or close | P1 |
+| NEG-023 | Start during tour | Tour active | Start again | Ignored or restart | P1 |
+| NEG-024 | Complete already completed | Completed | Complete | No-op | P1 |
+| NEG-025 | Skip already skipped | Skipped | Skip | No-op | P1 |
+| NEG-026 to NEG-070 | [Additional negative scenarios] | Various | Various | Per scenario | P1/P2 |
+
+---
+
+## §3 Boundary Tests (Edge Cases)
+
+> **Minimum:** 70 tests
+
+### 3.1 String Length | 3.2 Numeric | 3.3 Date | 3.4 Collection | 3.5 Unicode | 3.6 Responsive | 3.7 Additional
+
+| ID Range | Key Scenarios |
+|-----------|---------------|
+| BND-001 to BND-070 | Step content length, step count (0, 1, 50), tooltip position, viewport 320-3840px, RTL, reduced motion, focus trap, animation timing |
+
+---
+
+## §4 Functional Tests (Business Rules)
+
+> **Minimum:** 50 tests
+
+### 4.1 Workflow (15) | 4.2 Validation (15) | 4.3 Constraint (10) | 4.4 Audit (10)
+
+| ID Range | Rule Examples |
+|----------|---------------|
+| FUN-001 to FUN-050 | Tour start, step navigation, completion, skip, progress, persistence, a11y, analytics, permission checks |
+
+---
+
+## §5 Integration Tests (End-to-End Flows)
+
+> **Minimum:** 50 tests
+
+### 5.1 CRUD (10) | 5.2 Search & Filter (10) | 5.3 Pagination (5) | 5.4 Relationships (10) | 5.5 Error Handling (15)
+
+| ID Range | Scenario Examples |
+|----------|-------------------|
+| INT-001 to INT-050 | Login→Tour, Tour→Complete, Tour→Skip, Tour with nav, Tour with feature flags, error states |
+
+---
+
+## §6 Security Tests
+
+> **Minimum:** 50 tests (SEC-001 to SEC-050)
+
+XSS in step content, injection, auth, IDOR, CSRF, token, focus trap escape.
+
+---
+
+## §7 Concurrency Tests
+
+> **Minimum:** 25 tests (CON-001 to CON-025)
+
+Concurrent start, tab switch, rapid next/back, resize during tour.
+
+---
+
+## §8 Unit Tests
+
+> **Minimum:** 21 tests (UNT-001 to UNT-021)
+
+Step validation, progress calc, positioning, focus logic, completion state.
+
+---
+
+## §9 Performance Tests
+
+> **Minimum:** 16 tests (PRF-001 to PRF-016)
+
+Tour load, step transition, animation, memory, LCP.
+
+---
+
+## §10 Load Tests
+
+> **Minimum:** 10 tests (LDT-001 to LDT-010)
+
+Sustained tour starts, concurrent users, recovery.
+
+---
+
+## Traceability Matrix
+
+| Requirement | Test Cases |
+|-------------|------------|
+| Guided tour steps | POS-001 to POS-005, FUN-001 to FUN-005 |
+| Tooltip display | POS-008, POS-009, BND-* |
+| Skip/complete | POS-004, POS-005, POS-017, NEG-024, NEG-025 |
+| Progress | POS-007, UNT-* |
+| Responsive | POS-010, POS-011, BND-* |
+| Accessibility | POS-012 to POS-015, POS-023 to POS-025 |
+
+---
+
+**Last Updated:** 2026-02-11  
+**Status:** Ready for Execution

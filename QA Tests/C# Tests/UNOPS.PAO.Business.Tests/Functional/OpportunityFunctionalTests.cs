@@ -295,7 +295,7 @@ namespace UNOPS.PAO.Business.Tests.Functional
         [InlineData("No", "Budget constraints", true)]
         [InlineData("Yes", "", false)]
         [InlineData("No", null, false)]
-        public void BR_O006a_GoDecision_RequiresJustification(string _decision, string? justification, bool expectedValid)
+        public void BR_O006a_GoDecision_RequiresJustification(string decision, string? justification, bool expectedValid)
         {
             // Act
             var isValid = !string.IsNullOrWhiteSpace(justification);
@@ -518,7 +518,7 @@ namespace UNOPS.PAO.Business.Tests.Functional
         [InlineData("Proposal", new[] { "Proposal Document", "Budget" }, true)]
         [InlineData("Contracting", new[] { "Contract Draft", "Legal Review" }, true)]
         [InlineData("Identification", new string[] { }, true)]
-        public void BR_O010_StageDocumentRequirements(string stage, string[] requiredDocs, bool _hasRequired)
+        public void BR_O010_StageDocumentRequirements(string stage, string[] requiredDocs, bool hasRequired)
         {
             // Arrange
             var stageRequirements = new Dictionary<string, string[]>
