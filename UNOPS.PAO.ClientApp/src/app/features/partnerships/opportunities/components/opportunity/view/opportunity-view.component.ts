@@ -2212,6 +2212,8 @@ export class OpportunityViewComponent
     switch (status.toLowerCase()) {
       case 'active':
         return 'success';
+      case 'closed':
+        return 'warn';
       case 'pending':
         return 'warn';
       case 'onhold':
