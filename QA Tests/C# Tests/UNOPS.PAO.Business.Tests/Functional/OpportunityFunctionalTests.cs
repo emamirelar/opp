@@ -778,14 +778,14 @@ namespace UNOPS.PAO.Business.Tests.Functional
         public void BR_O018_WinRate_Calculation()
         {
             // Arrange
-            var opportunities = new List<(string Stage)>
+            var opportunities = new List<string>
             {
-                ("Won"), ("Won"), ("Lost"), ("Won"), ("Lost")
+                "Won", "Won", "Lost", "Won", "Lost"
             };
 
             // Act
-            var closed = opportunities.Where(o => o.Stage == "Won" || o.Stage == "Lost").ToList();
-            var wonCount = closed.Count(o => o.Stage == "Won");
+            var closed = opportunities.Where(o => o == "Won" || o == "Lost").ToList();
+            var wonCount = closed.Count(o => o == "Won");
             var winRate = closed.Count > 0 ? (decimal)wonCount / closed.Count * 100 : 0;
 
             // Assert
