@@ -1,7 +1,7 @@
 # QA Tester Playbook
 
-**Version:** 1.3  
-**Last Updated:** February 7, 2026  
+**Version:** 1.4  
+**Last Updated:** February 10, 2026  
 **Audience:** QA Testers (New and Experienced)  
 **Scope:** Universal guide applicable to any software project
 
@@ -411,7 +411,9 @@ Total = Positive + (3 × Positive) = 4× coverage
 | **Positive Tests** | Valid inputs, successful workflows | 🔴 Critical |
 | **Negative Tests** | Invalid inputs, error handling | 🔴 Critical |
 | **Edge Cases** | Boundary values, timing issues | 🔴 Critical |
-| **Security Tests** | Injection, authorization, data exposure | 🔴 Critical |
+| **Functional Tests** | Business rules, workflow logic, audit rules | 🔴 Critical |
+| **Integration Tests** | End-to-end CRUD, relationships, search/filter | 🔴 Critical |
+| **Security Tests** | Injection, authorization, data exposure | 🟠 High |
 | **Concurrency Tests** | Race conditions, duplicate submissions | 🟠 High |
 | **Performance Tests** | Load, stress, response times | 🟡 Medium |
 | **Accessibility Tests** | WCAG compliance, screen readers | 🟡 Medium |
@@ -796,20 +798,20 @@ This ensures failure scenarios receive MORE attention than happy paths.
 | **Positive Tests** | `PositiveTests.cs` | 30-50 tests | Baseline (P) |
 | **Negative Tests** | `NegativeTests.cs` | ≥50 AND ≥2×P | Max(50, 2×P) |
 | **Boundary Tests** | `BoundaryTests.cs` | ≥50 AND ≥2×P | Max(50, 2×P) |
-| **Security Tests** | `SecurityTests.cs` | ≥50 (FIXED) | Always 50+ |
-| **Concurrency Tests** | `ConcurrencyTests.cs` | ≥25 (FIXED) | Always 25+ |
+| **Functional Tests** | `FunctionalTests.cs` | ≥50 (FIXED) | Always 50+ — workflow rules(15), validation rules(15), constraint rules(10), audit rules(10) |
+| **Integration Tests** | `IntegrationTests.cs` | ≥50 (FIXED) | Always 50+ — CRUD workflow(10), search/filter(10), pagination(5), relationships(10), error handling(15) |
 
 #### Additional 5 Mandatory Categories
 
 | Category | File Name | Minimum Required | Coverage Areas |
 |----------|-----------|------------------|----------------|
+| **Security/Validation** | `SecurityTests.cs` | ≥50 (FIXED) | OWASP Top 10, injection prevention, authorization, IDOR, mass assignment |
+| **Concurrency** | `ConcurrencyTests.cs` | ≥25 (FIXED) | race conditions, deadlocks, double submit, transaction isolation, cache poisoning |
 | **Unit Tests** | `UnitTests.cs` | ≥21 | validation(5), formatting(3), calculations(5), status logic(5), collections(3) |
-| **Functional Tests** | `FunctionalTests.cs` | ≥26 | workflow rules(10), validation rules(10), constraints(3), audit(3) |
-| **Integration Tests** | `IntegrationTests.cs` | ≥25 | CRUD(5), search/filter(5), pagination(2), relationships(3), error handling(10) |
 | **Performance Tests** | `PerformanceTests.cs` | ≥16 | single ops(2), bulk ops(3), search(5), concurrent(3), memory(3) |
 | **Load Tests** | `LoadTests.cs` | ≥10 | sustained(3), spike(2), stress(3), recovery(2) |
 
-**Total Mandatory Files: 10** (5 core + 5 additional) | **Grand Total Minimum: ~293+ tests per suite**
+**Total Mandatory Files: 10** (5 core + 5 additional) | **Grand Total Minimum: ~347+ tests per suite**
 
 ### 9.3 Ratio Verification
 
@@ -824,14 +826,14 @@ REQUIREMENT: (Negative + Boundary) ≥ 3 × Positive Tests
 | Positive | 85 | Baseline | - |
 | Negative | 170 | Max(50, 2×85) = 170 | ✅ |
 | Boundary | 170 | Max(50, 2×85) = 170 | ✅ |
-| Security | 50 | FIXED minimum | ✅ |
-| Concurrency | 25 | FIXED minimum | ✅ |
+| Functional | 50 | FIXED minimum (Core) | ✅ |
+| Integration | 50 | FIXED minimum (Core) | ✅ |
+| Security | 50 | FIXED minimum (Additional) | ✅ |
+| Concurrency | 25 | FIXED minimum (Additional) | ✅ |
 | Unit | 21 | Per coverage areas | ✅ |
-| Functional | 26 | Per coverage areas | ✅ |
-| Integration | 25 | Per coverage areas | ✅ |
 | Performance | 16 | Per coverage areas | ✅ |
 | Load | 10 | Per coverage areas | ✅ |
-| **Total** | **598** | - | - |
+| **Total** | **647** | - | - |
 | **3:1 Check** | - | (170+170) = 340 ≥ 3×85 = 255 | ✅ |
 
 ### 9.4 Category Checklist
@@ -1960,21 +1962,34 @@ test.describe('[Feature Name] E2E Tests', () => {
 │                                                                  │
 │  If you have [P] Positive Tests:                                │
 │                                                                  │
+│  CORE CATEGORIES:                                                │
 │  ┌─────────────────────────────────────────────────────────┐    │
-│  │ Negative Tests:  MAX(50, 2 × P) = ____                 │    │
-│  │ Edge Case Tests: MAX(50, 2 × P) = ____                 │    │
+│  │ Negative Tests:    MAX(50, 2 × P) = ____               │    │
+│  │ Edge Case Tests:   MAX(50, 2 × P) = ____               │    │
+│  │ Functional Tests:  50 (FIXED)                           │    │
+│  │ Integration Tests: 50 (FIXED)                           │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                                                                  │
+│  ADDITIONAL CATEGORIES:                                          │
+│  ┌─────────────────────────────────────────────────────────┐    │
 │  │ Security Tests:  50 (FIXED)                             │    │
 │  │ Concurrency:     25 (FIXED)                             │    │
+│  │ Unit Tests:      21 (FIXED)                             │    │
+│  │ Performance:     16 (FIXED)                             │    │
+│  │ Load Tests:      10 (FIXED)                             │    │
 │  └─────────────────────────────────────────────────────────┘    │
 │                                                                  │
 │  VERIFY: (Negative + Edge) ≥ 3 × P                              │
 │                                                                  │
 │  ─────────────────────────────────────────────────────────────  │
-│  EXAMPLES:                                                       │
+│  EXAMPLES (Core only):                                           │
 │                                                                  │
-│  30 Positive → 60 Neg, 60 Edge, 50 Sec, 25 Conc = 225 total    │
-│  50 Positive → 100 Neg, 100 Edge, 50 Sec, 25 Conc = 325 total  │
-│  85 Positive → 170 Neg, 170 Edge, 50 Sec, 25 Conc = 500 total  │
+│  30 Positive → 60 Neg, 60 Edge, 50 Func, 50 Int = 250 core     │
+│  50 Positive → 100 Neg, 100 Edge, 50 Func, 50 Int = 350 core   │
+│  85 Positive → 170 Neg, 170 Edge, 50 Func, 50 Int = 525 core   │
+│                                                                  │
+│  Add Additional (122) for Grand Total:                           │
+│  30P → 372 total | 50P → 472 total | 85P → 647 total            │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -2106,6 +2121,7 @@ Fix: Add wait, verify selector, check for dynamic content
 | 1.1 | 2026-02-06 | QA Team | Synced with PDJ project playbook, standardized 2×P formula |
 | 1.2 | 2026-02-06 | QA Team | Added Combinatorial Testing: Value Permutations section with pairwise testing strategy and data-driven test patterns |
 | 1.3 | 2026-02-07 | QA Team | Added Section 3.2: Test Case Locations & Project Map — directory map, test type reference table, and decision guide for locating tests by purpose |
+| 1.4 | 2026-02-10 | QA Team | Restructured Core/Additional categories: Moved Functional Tests (≥50) and Integration Tests (≥50) to Core Categories; moved Security and Concurrency to Additional Categories. Updated all minimum counts, ratio examples, and calculator to reflect new structure. Grand Total Minimum updated from ~293+ to ~347+ per suite. |
 
 ---
 

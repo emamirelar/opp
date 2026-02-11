@@ -31,10 +31,101 @@ This document tracks **production code defects** discovered during testing. Thes
 
 ## Open Defects
 
-| Defect ID | Title | Description | Reproduction Steps | Expected Result | Actual Result | Date Reported | Status |
-|-----------|-------|-------------|-------------------|-----------------|---------------|---------------|---------|
-| DEF-009 | 🟢 Low | `isAdmin()` in AuthService does not check for `Administrator` role | AuthService | `isAdmin()` method in `auth.service.ts` (line 370-380) only checks for `PARTNER_GLOB_ADMIN` or `ORG_UNIT_ADMIN` roles. It does not include `Administrator` as an admin role. This means a user with only the `Administrator` role claim won't see the Administration menu in the sidebar.<br/><br/>**Root Cause:** Hardcoded role checks in `isAdmin()` method.<br/><br/>**Current code:**<br/>`roles.includes('PARTNER_GLOB_ADMIN') \|\| roles.includes('ORG_UNIT_ADMIN')`<br/><br/>**Proper Fix:**<br/>• Add `'ADMINISTRATOR'` to the `isAdmin()` check<br/>• OR ensure backend always assigns `PARTNER_GLOB_ADMIN` to Administrator users<br/><br/>**Workaround:** In tests, System Admin is assigned both `Administrator` and `PARTNER_GLOB_ADMIN` roles.<br/><br/>**Note:** May be by design if `Administrator` users always have `PARTNER_GLOB_ADMIN` assigned in backend. Verify with team.<br/><br/>**RBAC Test Execution (2026-02-07):** 161/161 tests passing with workaround applied. All 5 roles × 4 entities verified for Create/Export/Import/Admin access. | 1. Create user with only `Administrator` role claim<br/>2. Login to application<br/>3. Check sidebar for Administration menu | Admin sidebar should be visible | Admin sidebar not visible | Dev | `auth.service.ts:370-380` | role-access-control.spec.ts | 2026-02-07 | Open | QA Team |
-| DEF-008 | Go Decision Feature Incomplete - PRD Requirements Not Implemented | **96% of PRD requirements not yet implemented** for "Send Opportunity for Go Decision" feature.<br/><br/>**📋 PRD Reference:** Product Requirements Document: Send Opportunity for Go Decision<br/>**📊 Test Cases Created:** 102 test cases aligned with PRD<br/>**⚠️ Tests Executable:** 4 (4%)<br/>**❌ Tests Blocked:** 98 (96%)<br/><br/>**Current Implementation (OpportunityStageRequirements.cs):**<br/>• ✅ Name validation<br/>• ✅ Description validation<br/>• ✅ ResponsibleOrgUnitId validation<br/>• ✅ InitiativeBudgetUSD validation (optional)<br/><br/>**Missing PRD Requirements (Not Implemented):**<br/><br/>**1. Mandatory Field Validation (16+ fields missing):**<br/>• ❌ Context & Challenges<br/>• ❌ UNOPS Strategic Mission(s) (minLength=1)<br/>• ❌ Expected Impact<br/>• ❌ Expected Outcomes<br/>• ❌ SDG Alignment (minLength=1)<br/>• ❌ Funding Partner with amount/currency<br/>• ❌ Client Partner<br/>• ❌ Products & Services<br/>• ❌ Countries of Implementation<br/>• ❌ Target Signing Date<br/>• ❌ Implementation Start/End Dates<br/>• ❌ Opportunity Manager role validation<br/>• ❌ Proposed Initiative Type<br/>• ❌ DoA Level 2 holder (server-side)<br/>• ❌ Opportunity Statement generated<br/>• ❌ UNCooperation Framework Outcome(s)<br/>• ❌ Estimated Beneficiaries OR acknowledgement<br/>• ❌ High Risk Acknowledgement<br/><br/>**2. DoA Level 2 Approver Lookup (FR-1):**<br/>• ❌ Query EntityUserRole with Code="DoA2_OrganizationHierarchy"<br/>• ❌ Block submission if no DoA2 found<br/>• ❌ Support multiple DoA2 holders<br/><br/>**3. Warnings & Acknowledgments:**<br/>• ❌ Non-OM submitter warning (Collaborator role)<br/>• ❌ Country-Org Unit mismatch warning<br/>• ❌ Mandatory acknowledgment statement<br/>• ❌ Additional remarks field<br/><br/>**4. Custom Workflow Behavior:**<br/>• ❌ Rejection → NO GO (not previous stage)<br/>• ❌ CANCELLED stage with cancel/reopen<br/>• ❌ OM recall (any OM, not just submitter)<br/>• ❌ OM role transfer (OM → Collaborator)<br/><br/>**5. Notifications:**<br/>• ❌ Email templates with exact wording<br/>• ❌ OIC notifications<br/>• ❌ Internal stakeholder notifications on GO<br/><br/>**6. UI Components:**<br/>• ❌ Stage stepper display logic (happy path only)<br/>• ❌ DoA pathway display (DoA2/DoA3 read-only)<br/>• ❌ Inactive OM visibility<br/>• ❌ In-workflow indicator on opportunity card<br/><br/>**📍 Test Case Location:**<br/>`QA Tests/Opportunity Tests/BusinessLogic/GoNoGoDecision_PRD_TestCases.md`<br/><br/>**📍 Execution Report:**<br/>`QA Tests/Opportunity Tests/BusinessLogic/GoNoGoDecision_TestExecution_Report.md`<br/><br/>**⏰ ESTIMATED EFFORT:** 80-120 hours (full feature implementation)<br/>**📊 PRIORITY:** P1 - Feature required for business workflow | 1. Review `OpportunityStageRequirements.cs`<br/>2. Compare with PRD requirements<br/>3. Observe: Only 4 of 20+ fields validated<br/>4. Review test cases in GoNoGoDecision_PRD_TestCases.md<br/>5. Attempt to execute any DoA2 lookup test<br/>6. Observe: No implementation exists | All 20+ mandatory fields validated. DoA2 lookup works from EntityUserRole. All warnings and acknowledgments implemented. Custom rejection → NO GO works. All 102 test cases pass. | Only 4 fields validated. No DoA2 lookup. No warnings. Standard rejection behavior. 98 of 102 tests blocked. | 2026-02-02 | Open |
+| Defect ID | Severity | Title | Component | Date Reported | Status |
+|-----------|----------|-------|-----------|---------------|--------|
+| DEF-008 | 🟠 High | Go Decision Feature Incomplete - PRD Requirements Not Implemented | OpportunityStageRequirements | 2026-02-02 | Open |
+
+---
+
+### DEF-008: Go Decision Feature Incomplete - PRD Requirements Not Implemented
+
+**Severity:** 🟠 High  
+**Component:** OpportunityStageRequirements (`OpportunityStageRequirements.cs`)  
+**Date Reported:** 2026-02-02  
+**Status:** Open  
+**Priority:** P1 - Feature required for business workflow  
+**Estimated Effort:** 80-120 hours (full feature implementation)
+
+**Description:**
+
+**96% of PRD requirements not yet implemented** for "Send Opportunity for Go Decision" feature.
+
+- **PRD Reference:** Product Requirements Document: Send Opportunity for Go Decision
+- **Test Cases Created:** 102 test cases aligned with PRD
+- **Tests Executable:** 4 (4%)
+- **Tests Blocked:** 98 (96%)
+
+**Current Implementation:**
+- ✅ Name validation
+- ✅ Description validation
+- ✅ ResponsibleOrgUnitId validation
+- ✅ InitiativeBudgetUSD validation (optional)
+
+**Missing PRD Requirements (Not Implemented):**
+
+**1. Mandatory Field Validation (16+ fields missing):**
+- ❌ Context & Challenges
+- ❌ UNOPS Strategic Mission(s) (minLength=1)
+- ❌ Expected Impact
+- ❌ Expected Outcomes
+- ❌ SDG Alignment (minLength=1)
+- ❌ Funding Partner with amount/currency
+- ❌ Client Partner
+- ❌ Products & Services
+- ❌ Countries of Implementation
+- ❌ Target Signing Date
+- ❌ Implementation Start/End Dates
+- ❌ Opportunity Manager role validation
+- ❌ Proposed Initiative Type
+- ❌ DoA Level 2 holder (server-side)
+- ❌ Opportunity Statement generated
+- ❌ UNCooperation Framework Outcome(s)
+- ❌ Estimated Beneficiaries OR acknowledgement
+- ❌ High Risk Acknowledgement
+
+**2. DoA Level 2 Approver Lookup (FR-1):**
+- ❌ Query EntityUserRole with Code="DoA2_OrganizationHierarchy"
+- ❌ Block submission if no DoA2 found
+- ❌ Support multiple DoA2 holders
+
+**3. Warnings & Acknowledgments:**
+- ❌ Non-OM submitter warning (Collaborator role)
+- ❌ Country-Org Unit mismatch warning
+- ❌ Mandatory acknowledgment statement
+- ❌ Additional remarks field
+
+**4. Custom Workflow Behavior:**
+- ❌ Rejection → NO GO (not previous stage)
+- ❌ CANCELLED stage with cancel/reopen
+- ❌ OM recall (any OM, not just submitter)
+- ❌ OM role transfer (OM → Collaborator)
+
+**5. Notifications:**
+- ❌ Email templates with exact wording
+- ❌ OIC notifications
+- ❌ Internal stakeholder notifications on GO
+
+**6. UI Components:**
+- ❌ Stage stepper display logic (happy path only)
+- ❌ DoA pathway display (DoA2/DoA3 read-only)
+- ❌ Inactive OM visibility
+- ❌ In-workflow indicator on opportunity card
+
+**Reproduction Steps:**
+1. Review `OpportunityStageRequirements.cs`
+2. Compare with PRD requirements
+3. Observe: Only 4 of 20+ fields validated
+4. Review test cases in `GoNoGoDecision_PRD_TestCases.md`
+5. Attempt to execute any DoA2 lookup test
+6. Observe: No implementation exists
+
+**Expected Result:** All 20+ mandatory fields validated. DoA2 lookup works from EntityUserRole. All warnings and acknowledgments implemented. Custom rejection → NO GO works. All 102 test cases pass.
+
+**Actual Result:** Only 4 fields validated. No DoA2 lookup. No warnings. Standard rejection behavior. 98 of 102 tests blocked.
+
+**Related Files:**
+- Test Cases: `QA Tests/Opportunity Tests/BusinessLogic/GoNoGoDecision_PRD_TestCases.md`
+- Execution Report: `QA Tests/Opportunity Tests/BusinessLogic/GoNoGoDecision_TestExecution_Report.md`
 
 ---
 
@@ -54,18 +145,19 @@ The following items were previously logged as developer defects but have been re
 |-----------|-------|----------------------|----------------|
 | DEF-005 | Missing Model Namespaces (7 namespaces) | Tests were written **ahead of implementation**. Models don't exist because features aren't built yet. | Track as planned feature work in sprint backlog. Tests serve as specifications. |
 | DEF-007 | IntegrationTests Out of Sync (4,675 errors) | Tests reference APIs that **were never implemented** or were changed. Test code is wrong, not production code. | **RESOLVED (2026-02-07):** Audit complete. Deleted 13 fully obsolete files (DST module, TranslationController, ExportController). Excluded 51 files referencing non-existent managers/types via Compile Remove. Fixed 6 FluentAssertions syntax errors. Build now succeeds with 0 errors. 1,450 tests compile; 465 pass, 942 fail at runtime (expected — require PostgreSQL + running app), 43 skipped. |
+| DEF-009 | `isAdmin()` does not check for `Administrator` role | **Not a defect.** There is no `Administrator` role in the system. The only admin roles are `PARTNER_GLOB_ADMIN` and `ORG_UNIT_ADMIN`, which `isAdmin()` already checks correctly. The test workaround of assigning both roles was unnecessary — `PARTNER_GLOB_ADMIN` alone is sufficient. | No action needed. `isAdmin()` is working as designed. |
 
 ---
 
 ## Defect Statistics (Updated 2026-02-09 — Full Suite Re-Execution)
 
-- **Total Open:** 2
+- **Total Open:** 1
 - **Total Resolved:** 0
-- **Total Reclassified:** 2 (moved to appropriate trackers)
+- **Total Reclassified:** 3 (moved to appropriate trackers)
 - 🔴 **Critical:** 0
 - 🟠 **High Priority:** 1 (DEF-008 - Go Decision feature incomplete — 96% of PRD not implemented)
 - 🟡 **Medium Priority:** 0
-- 🟢 **Low Priority:** 1 (DEF-009 - isAdmin() doesn't check Administrator role — workaround applied)
+- 🟢 **Low Priority:** 0
 - **New Production Defects Found (2026-02-09 Full Suite Run):** 0 — All Playwright issues were test infrastructure (QA-008, QA-039), both now fixed
 - **Playwright Improvement:** 511+ passed (was 289, **+222**), ~100 skipped (was 322, **-222**). 222 more tests now executing and passing. **0 failures.**
 - **DEF-007 RESOLVED:** Integration Tests build restored (4,675 → 0 errors). Business.Tests recovered +1,866 tests (3,445 now passing).
