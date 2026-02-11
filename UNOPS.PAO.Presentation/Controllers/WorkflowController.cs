@@ -797,8 +797,9 @@ public class WorkflowController : BaseController
             var opportunity = await _context.Opportunities.FindAsync(request.EntityId);
             if (opportunity != null)
             {
-                // Set stage to NO GO (custom rejection behavior)
+                // Set stage to NO GO and status to Closed (custom rejection behavior)
                 opportunity.Stage = OpportunityWorkflow.Stages.NoGo;
+                opportunity.Status = EntityStatus.Closed;
                 opportunity.WorkflowStatus = WorkflowStatus.None;
                 opportunity.LastModifiedBy = CurrentUserId;
                 opportunity.LastModifiedDate = DateTime.UtcNow;
