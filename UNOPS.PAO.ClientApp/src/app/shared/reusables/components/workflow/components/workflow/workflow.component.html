@@ -359,6 +359,65 @@
   </ng-template>
 </p-dialog>
 
+<!-- Recall Submission Dialog -->
+<p-dialog
+  [visible]="showRecallDialog()"
+  [header]="'message.workflow.recallTitle' | translate"
+  [modal]="true"
+  [closable]="true"
+  [style]="{ width: '500px' }"
+  (onHide)="closeRecallDialog()"
+  (visibleChange)="onRecallDialogVisibleChange($event)"
+  appendTo="body"
+>
+  <div class="flex flex-col gap-4">
+    <!-- Question -->
+    <p class="m-0" style="color: #5c5e60;">
+      {{ 'message.workflow.recallQuestion' | translate }}
+    </p>
+
+    <!-- Info Box (Light Blue) -->
+    <div class="p-4 rounded-lg flex items-start gap-2" style="background-color: #e3f2fd; border: 1px solid rgba(0, 146, 209, 0.2);">
+      <i class="pi pi-info-circle" style="color: #005a8a;"></i>
+      <p class="m-0" style="color: #005a8a;">
+        {{ 'message.workflow.recallNotice' | translate }}
+      </p>
+    </div>
+
+    <!-- Justification Textarea -->
+    <div class="flex flex-col gap-2">
+      <label class="font-semibold">{{ 'message.workflow.recallReason' | translate }}</label>
+      <textarea
+        pTextarea
+        [ngModel]="recallComment()"
+        (ngModelChange)="recallComment.set($event)"
+        [rows]="4"
+        class="w-full"
+        [placeholder]="'message.workflow.enterRecallReason' | translate"
+      ></textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end gap-2">
+      <p-button
+        [label]="'button.cancel' | translate"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="closeRecallDialog()"
+        [disabled]="isActionInProgress()"
+      />
+      <p-button
+        [label]="'button.workflow.recall' | translate"
+        severity="secondary"
+        (onClick)="confirmRecall()"
+        [loading]="isActionInProgress()"
+        [disabled]="!recallComment().trim()"
+      />
+    </div>
+  </ng-template>
+</p-dialog>
+
 <!-- Unmet Requirements Dialog (Server-Side Validation Failures) -->
 <p-dialog
   [visible]="showUnmetRequirementsDialog()"
