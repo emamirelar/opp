@@ -485,7 +485,7 @@ public class ContactIntegrationTests : IntegrationTestBase
 
         // Assert
         result.Should().NotBeNull();
-        result!.PartnerId.Should().BeNull();
+        result!.PartnerId.Should().Be(0);
     }
 
     [Fact]
@@ -989,13 +989,13 @@ public class ContactIntegrationTests : IntegrationTestBase
         // Arrange
         await Context.Contacts.AddRangeAsync(new[]
         {
-            new Contact { Id = 1, Name = "WithPartner", FirstName = "W", LastName = "P", Email = "wp@t.com", Title = "T", PartnerId = null, Status = EntityStatus.Active },
-            new Contact { Id = 2, Name = "NoPartner", FirstName = "N", LastName = "P", Email = "np@t.com", Title = "T", PartnerId = null, Status = EntityStatus.Active }
+            new Contact { Id = 1, Name = "WithPartner", FirstName = "W", LastName = "P", Email = "wp@t.com", Title = "T", Status = EntityStatus.Active },
+            new Contact { Id = 2, Name = "NoPartner", FirstName = "N", LastName = "P", Email = "np@t.com", Title = "T", Status = EntityStatus.Active }
         });
         await SaveChangesAsync();
 
         // Act
-        var orphans = await Context.Contacts.Where(c => c.PartnerId == null).ToListAsync();
+        var orphans = await Context.Contacts.Where(c => c.PartnerId == 0).ToListAsync();
 
         // Assert
         orphans.Should().HaveCount(2);
