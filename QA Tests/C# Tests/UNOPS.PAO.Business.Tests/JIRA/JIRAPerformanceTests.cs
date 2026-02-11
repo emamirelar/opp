@@ -157,7 +157,7 @@ namespace UNOPS.PAO.Business.Tests.JIRA
         #region Concurrent User Load Tests
 
         [Fact]
-        public void LOAD_001_TenConcurrentUsers_SearchPerformance()
+        public async Task LOAD_001_TenConcurrentUsers_SearchPerformance()
         {
             // Arrange
             var concurrentUsers = 10;
@@ -170,7 +170,7 @@ namespace UNOPS.PAO.Business.Tests.JIRA
                 tasks.Add(Task.Run(() => SimulateUserSearch()));
             }
 
-            Task.WaitAll(tasks.ToArray());
+            await Task.WhenAll(tasks);
 
             // Assert
             var maxTime = tasks.Max(t => t.Result);
@@ -178,7 +178,7 @@ namespace UNOPS.PAO.Business.Tests.JIRA
         }
 
         [Fact]
-        public void LOAD_002_FiftyConcurrentUsers_SearchPerformance()
+        public async Task LOAD_002_FiftyConcurrentUsers_SearchPerformance()
         {
             // Arrange
             var concurrentUsers = 50;
@@ -191,7 +191,7 @@ namespace UNOPS.PAO.Business.Tests.JIRA
                 tasks.Add(Task.Run(() => SimulateUserSearch()));
             }
 
-            Task.WaitAll(tasks.ToArray());
+            await Task.WhenAll(tasks);
 
             // Assert
             var averageTime = tasks.Average(t => t.Result);
@@ -199,7 +199,7 @@ namespace UNOPS.PAO.Business.Tests.JIRA
         }
 
         [Fact]
-        public void LOAD_003_TenConcurrentUsers_PartnerListLoad()
+        public async Task LOAD_003_TenConcurrentUsers_PartnerListLoad()
         {
             // Arrange
             var concurrentUsers = 10;
@@ -212,7 +212,7 @@ namespace UNOPS.PAO.Business.Tests.JIRA
                 tasks.Add(Task.Run(() => SimulatePartnerListLoad()));
             }
 
-            Task.WaitAll(tasks.ToArray());
+            await Task.WhenAll(tasks);
 
             // Assert
             var maxTime = tasks.Max(t => t.Result);
