@@ -3123,6 +3123,7 @@
   "label.workflow.cancellationReason": "Motif d'annulation",
   "label.workflow.rejectionReason": "Motif du rejet",
   "message.workflow.cancelledStatusInfo": "Cette opportunité a été annulée et est en statut <b>Fermé</b>. Elle est en lecture seule. Le Responsable de l'Opportunité peut la rouvrir si les circonstances changent.",
+  "message.workflow.pendingApprovalReadOnlyInfo": "Cette opportunité a été soumise pour approbation et est en lecture seule pendant l'attente de la décision. Le soumetteur ou le Responsable de l'Opportunité peut rappeler la soumission si nécessaire.",
   "label.stage.cancelled": "ANNULÉE",
   "label.stage.noGo": "NO GO",
   "message.workflow.nonOMWarningTitle": "Avertissement de soumetteur",

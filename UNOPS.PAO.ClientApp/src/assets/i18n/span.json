@@ -3072,6 +3072,7 @@
   "label.workflow.cancellationReason": "Motivo de cancelación",
   "label.workflow.rejectionReason": "Motivo de rechazo",
   "message.workflow.cancelledStatusInfo": "Esta oportunidad ha sido cancelada y está en estado <b>Cerrado</b>. Es de solo lectura. El Gerente de Oportunidad puede reabrirla si las circunstancias cambian.",
+  "message.workflow.pendingApprovalReadOnlyInfo": "Esta oportunidad ha sido enviada para aprobación y es de solo lectura mientras espera la decisión. El remitente o el Gerente de Oportunidad pueden revocar el envío si es necesario.",
   "label.stage.cancelled": "CANCELADA",
   "label.stage.noGo": "NO GO",
   "message.workflow.nonOMWarningTitle": "Advertencia de remitente",

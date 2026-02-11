@@ -235,6 +235,14 @@
     </p-tabpanels>
   </p-tabs>
 
+  <!-- Pending Approval Read-Only Message (visible when submitted for Go Decision) -->
+  @if (workflowData()?.isInWorkflow === true) {
+    <div class="mt-4 p-4 rounded-lg flex items-start gap-3" style="background-color: #e3f2fd; border: 1px solid rgba(0, 146, 209, 0.2);">
+      <i class="pi pi-lock" style="color: #005a8a; font-size: 1.25rem; margin-top: 2px;"></i>
+      <p class="m-0" style="color: #005a8a;" [innerHTML]="'message.workflow.pendingApprovalReadOnlyInfo' | translate"></p>
+    </div>
+  }
+
   <!-- Rejection Reason Display (visible when NO GO) -->
   @if (isNoGo() && rejectionReason()) {
     <div class="mt-4 p-4 rounded-lg" style="background-color: #fce7f3; border: 1px solid #fbcfe8;">
