@@ -1,3 +1,52 @@
+-- =============================================================================
+-- Fix AspNetUsers ID conflicts: migrate users from placeholder IDs to Resource IDs
+--
+-- Uses users where Id <= 999 and Id > 0 (placeholder IDs).
+-- Migration map: static list of users present in BigQuery (Resource IDs).
+-- =============================================================================
+
+DROP TABLE IF EXISTS _aspnetusers_migration_map;
+CREATE TEMP TABLE _aspnetusers_migration_map (
+    normalized_user_name text PRIMARY KEY,
+    new_id int NOT NULL
+);
+
+INSERT INTO _aspnetusers_migration_map (normalized_user_name, new_id)
+VALUES
+    ('STEPHENP@UNOPS.ORG', 70499),
+    ('BIBIANENB@UNOPS.ORG', 214245),
+    ('CLAUDIAR@UNOPS.ORG', 222886),
+    ('PETRAK@UNOPS.ORG', 231187),
+    ('PRODYUTP@UNOPS.ORG', 234967),
+    ('WISNELT@UNOPS.ORG', 236080),
+    ('AHMETS@UNOPS.ORG', 241154),
+    ('QUEIROZJ@UNOPS.ORG', 241253),
+    ('MEGANFD@UNOPS.ORG', 241346),
+    ('SANAAA@UNOPS.ORG', 241363),
+    ('CHAPIOUH@UNOPS.ORG', 241398),
+    ('JOAOM@UNOPS.ORG', 241413),
+    ('SAIDE@UNOPS.ORG', 241483),
+    ('YIDIDIYAG@UNOPS.ORG', 241513),
+    ('STEPHENOM@UNOPS.ORG', 241550),
+    ('MONICAD@UNOPS.ORG', 241624),
+    ('MORUKD@UNOPS.ORG', 241713),
+    ('ARIELP@UNOPS.ORG', 243960),
+    ('ARWAM@UNOPS.ORG', 243973),
+    ('THONGCHANK@UNOPS.ORG', 243983),
+    ('MUXAMMADRIZOA@UNOPS.ORG', 243984),
+    ('BEXZADY@UNOPS.ORG', 243993),
+    ('MOHAMMADNABISA@UNOPS.ORG', 244028),
+    ('DOAAAB@UNOPS.ORG', 244030),
+    ('MOHAMEDSA@UNOPS.ORG', 244065),
+    ('KARINO@UNOPS.ORG', 244082),
+    ('KHALIFASA@UNOPS.ORG', 244138),
+    ('ALAAF@UNOPS.ORG', 244220),
+    ('BENINGODFREYL@UNOPS.ORG', 244353),
+    ('ELONAW@UNOPS.ORG', 244541),
+    ('ALESSIOAM@UNOPS.ORG', 244555),
+    ('MAALEXANDRAM@UNOPS.ORG', 244579),
+    ('LINADA@UNOPS.ORG', 244821);
+
 DO $$
 DECLARE
     rec RECORD;
@@ -5,28 +54,19 @@ DECLARE
     new_id INT;
 BEGIN
     FOR rec IN
-        SELECT u."Id" AS old_id,
-               CASE UPPER(u."NormalizedUserName")
-                   WHEN 'BIBIANENB@UNOPS.ORG' THEN 214245
-                   WHEN 'CHAPIOUH@UNOPS.ORG' THEN 241398
-                   WHEN 'SAIDE@UNOPS.ORG' THEN 241483
-                   WHEN 'PRODYUTP@UNOPS.ORG' THEN 234967
-                   WHEN 'AHMETS@UNOPS.ORG' THEN 241154
-                   WHEN 'CLAUDIAR@UNOPS.ORG' THEN 222886
-                   ELSE NULL
-               END AS new_id
+        SELECT u."Id" AS old_id, m.new_id
         FROM public."AspNetUsers" u
-        WHERE UPPER(u."NormalizedUserName") IN (
-            'BIBIANENB@UNOPS.ORG', 'CHAPIOUH@UNOPS.ORG', 'SAIDE@UNOPS.ORG',
-            'PRODYUTP@UNOPS.ORG', 'AHMETS@UNOPS.ORG', 'CLAUDIAR@UNOPS.ORG'
-        )
-        AND u."Id" NOT IN (214245, 241398, 241483, 234967, 241154, 222886)
+        INNER JOIN _aspnetusers_migration_map m ON UPPER(u."NormalizedUserName") = m.normalized_user_name
+        WHERE u."Id" <= 999
+          AND u."Id" > 0
+          AND u."UserName" LIKE '%unops.org%'
+          AND u."Id" != m.new_id
     LOOP
         old_id := rec.old_id;
         new_id := rec.new_id;
 
-        IF new_id IS NULL THEN
-            RAISE NOTICE 'Skipping user Id % - no mapping', old_id;
+        IF new_id IS NULL OR new_id <= 0 THEN
+            RAISE NOTICE 'Skipping user Id % - no valid mapping', old_id;
             CONTINUE;
         END IF;
 
@@ -109,3 +149,5 @@ BEGIN
         RAISE NOTICE 'Done migrating % -> %', old_id, new_id;
     END LOOP;
 END $$;
+
+DROP TABLE IF EXISTS _aspnetusers_migration_map;
