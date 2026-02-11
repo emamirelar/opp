@@ -1,5 +1,5 @@
 metadata:
-  name: "OrganizationHierarchies Sync"
+  name: "organization-hierarchies"
   description: "Organization Hierarchies data sync"
   version: "1.0"
   enabled: true

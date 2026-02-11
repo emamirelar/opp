@@ -1,0 +1,62 @@
+name: "run-all"
+description: "Complete synchronization of all PAO external data - order matches config/01-12"
+enabled: true
+
+# Define execution stages - matches config file order (01-aspnetusers through 12-exchange-rates)
+# Stages run sequentially; syncs within a stage can run in parallel
+execution_stages:
+  # Stage 1: 01-03 - Users and user-dependent data
+  - name: "users-and-roles"
+    description: "01 users, 02 user-profiles, 03 user-roles"
+    syncs:
+      - "users"
+      - "user-profiles"
+      - "user-roles"
+    fail_fast: false
+
+  # Stage 2: 04-05 - Reference data
+  - name: "reference-data"
+    description: "04 countries, 05 currencies"
+    syncs:
+      - "countries"
+      - "currencies"
+    fail_fast: false
+
+  # Stage 3: 06-08 - Engagements and agreements (engagements BEFORE engagement-partners)
+  - name: "engagements-and-agreements"
+    description: "06 engagements, 07 engagement-partners, 08 partner-agreements"
+    syncs:
+      - "engagements"
+      - "engagement-partners"
+      - "partner-agreements"
+    fail_fast: false
+
+  # Stage 4: 09 - Organization hierarchies
+  - name: "organization-hierarchies"
+    description: "09 organization-hierarchies - foundation for entity roles"
+    syncs:
+      - "organization-hierarchies"
+    fail_fast: false
+
+  # Stage 5: 10-11 - Entity user roles (same table, sequential)
+  - name: "entity-user-roles"
+    description: "10 entity-user-roles-doa, 11 entity-user-roles-mgmt"
+    syncs:
+      - "entity-user-roles-doa"
+      - "entity-user-roles-mgmt"
+    fail_fast: false
+
+  # Stage 6: 12 - Exchange rates
+  - name: "exchange-rates"
+    description: "12 exchange-rates"
+    syncs:
+      - "exchange-rates"
+    fail_fast: false
+
+# Execution behavior configuration
+options:
+  parallel_execution: true
+  max_parallel_syncs: 4
+  fail_fast: false
+  delay_between_stages_seconds: 5
+  continue_on_error: true

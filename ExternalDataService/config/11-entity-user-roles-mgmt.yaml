@@ -1,5 +1,5 @@
 metadata:
-  name: "EntityUserRoles Management Sync"
+  name: "entity-user-roles-mgmt"
   description: "Organization Management roles sync (Regional Directors, Hub Directors, OrgUnit Directors and Deputies)"
   version: "1.0"
   enabled: true
