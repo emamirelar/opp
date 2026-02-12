@@ -1,4 +1,4 @@
-﻿namespace UNOPS.PAO.UNOPSIdentity;
+namespace UNOPS.PAO.UNOPSIdentity;
 
 using System;
 using System.Collections.Generic;
