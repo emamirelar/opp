@@ -120,56 +120,52 @@ These items were originally logged as developer defects (DEF-XXX) but have been 
 **Workaround Applied:** Try-catch in `GlobalExceptionHandler.TryHandleAsync()` with fallback serialization.  
 **Proper Fix:** Wait for .NET 9 patch or upgrade when available.
 
-### PrimeNG/Playwright Compatibility & Test Infrastructure Issues
+### Active QA Issues
 
-| QA ID | Severity | Title | Category | Date | Status |
-|-------|----------|-------|----------|------|--------|
-| QA-007 | 🟠 High | Business Card Scanner signal not set in Playwright | PrimeNG | 2026-01-30 | Open |
-| QA-008 | 🟠 High | PrimeNG DynamicDialog not created in Playwright | PrimeNG | 2026-01-30 | Workaround Applied |
-| QA-009 | 🟠 High | Z.EntityFramework.Extensions fails with InMemory DB | Infrastructure | 2026-01-31 | Workaround Applied |
-| QA-010 | 🟡 Medium | AutoMapper EntityArtifactValueResolver requires DI | Infrastructure | 2026-01-31 | **Resolved** |
-| QA-011 | 🟡 Medium | Playwright tests skipped — incomplete API mocking | Mocking | 2026-02-01 | Partially Resolved |
-| QA-012 | 🟡 Medium | 5 Business.Tests files excluded (IntegrationTests dep) | Infrastructure | 2026-02-01 | **Resolved** |
-| QA-013 | 🟢 Low | Bash arithmetic bug in qa-tests.yml | CI/CD | 2026-02-01 | **Resolved** |
-| QA-014 | 🟠 High | oUP Integration Tests BLOCKED — Missing Credentials | Credentials | 2026-02-02 | Open |
-| QA-015 | 🟢 Low | oUP "Go to oUP" button — production only testing | Environment | 2026-02-02 | Open |
-| QA-016 | 🟡 Medium | Go Decision tests — partially unblocked, core workflow testable | Blocked by DEF-008 | 2026-02-02 | Partially Resolved |
-| QA-017 | 🟡 Medium | Playwright tests FAILED — Angular dev server not running | Infrastructure | 2026-02-02 | **Resolved** |
-| QA-021 | 🟡 Medium | Login.spec.ts tests require real backend | Environment | 2026-02-04 | Workaround Applied |
-| QA-022 | 🟡 Medium | Hash-based routing issue in Playwright tests | Test Maintenance | 2026-02-04 | **Resolved** |
-| QA-023 | 🟡 Medium | Navigation-tabs.spec.ts visibility failures | Test Maintenance | 2026-02-04 | **Resolved** |
-| QA-024 | 🟡 Medium | Partner-item.spec.ts timeouts and visibility failures | Test Maintenance | 2026-02-04 | **Resolved** |
-| QA-025 | 🟡 Medium | Opportunity-item-basic.spec.ts assertion failures | Test Maintenance | 2026-02-04 | **Resolved** |
-| QA-028 | 🟠 High | Playwright webServer not auto-starting Angular | Tooling | 2026-02-05 | **Resolved** |
-| QA-029 | 🟡 Medium | Test reporter finds no .trx files in CI | CI/CD | 2026-02-05 | **Resolved** |
-| QA-036 | 🟡 Medium | Audit & rewrite Playwright non-existent data-testid selectors | Test Maintenance | 2026-02-07 | Partially Resolved |
-| QA-039 | 🟡 Medium | authenticateWithRealBackend always returns Administrator role | Mocking | 2026-02-09 | **Resolved** |
+| QA ID | Severity | Title | Category | Impact | Related DEF | Date | Status |
+|-------|----------|-------|----------|--------|-------------|------|--------|
+| QA-007 | 🟠 High | Business Card Scanner signal not set in Playwright | Tooling | 1 test unblocked | N/A | 2026-01-30 | Resolved |
+| QA-008 | 🟠 High | PrimeNG DynamicDialog not created in Playwright | Tooling | 5 tests skipped | N/A | 2026-01-30 | Workaround Applied |
+| QA-009 | 🟠 High | Z.EntityFramework.Extensions fails with InMemory DB | Infrastructure | 111 tests skipped | N/A | 2026-01-31 | Workaround Applied |
+| QA-011 | 🟡 Medium | Playwright tests skipped — incomplete API mocking | Mocking | ~17 tests skipped | N/A | 2026-02-01 | Partially Resolved |
+| QA-014 | 🟠 High | oUP Integration Tests BLOCKED — Missing Credentials | Credentials | 34 tests blocked | N/A | 2026-02-02 | Open |
+| QA-015 | 🟢 Low | oUP "Go to oUP" button — production only testing | Environment | 1 test blocked | N/A | 2026-02-02 | Open |
+| QA-016 | 🟡 Medium | Go Decision tests — partially unblocked, core workflow testable | Test Execution | 60 tests skipped | DEF-008, DEF-010, DEF-011 | 2026-02-02 | Partially Resolved |
+| QA-021 | 🟡 Medium | Login.spec.ts tests require real backend | Environment | 7 tests skipped | N/A | 2026-02-04 | Workaround Applied |
+| QA-036 | 🟡 Medium | Audit & rewrite Playwright non-existent data-testid selectors | Test Maintenance | Audit ongoing | N/A | 2026-02-07 | Partially Resolved |
+| QA-041 | 🟡 Medium | Playwright full suite crashes after ~287 tests | Test Performance | Full suite must run in batches | N/A | 2026-02-11 | Open |
 
 ---
 
 #### QA-007: Business Card Scanner signal not set in Playwright tests
 
-**Status:** Open  
-**Category:** PrimeNG/Playwright Compatibility  
-**Requires:** Real Backend Testing
+**Status:** Resolved  
+**Category:** Tooling (Playwright/PrimeNG Interaction)  
+**Resolution Date:** 2026-02-12
 
-Button click succeeds but `showBusinessCardScanner` signal is never set, preventing component from rendering.
+**Root Causes Identified:**
+1. **Camera mocks never initialized**: `setupCameraMocks()` was imported but never called in `beforeEach`. Without it, the scanner component's `startCamera()` fails in headless Playwright, and the test was prematurely skipped as "requires real backend".
+2. **`clickScannerButton()` waited for wrong element**: The page object called `waitForDialog()`, which waits for a `<p-dialog>` element. But the Business Card Scanner uses a custom div-based modal (not PrimeNG dialog), so it would always timeout.
+3. **Test skipped prematurely**: The test was marked `test.skip` assuming it needs a real backend. In reality, the scanner component only needs camera mocks + `canCreate` permission (both mockable).
 
-**Possible Root Causes:**
-1. Permission check fails silently in test environment
-2. PrimeNG button event handler doesn't fire with Playwright force click
-3. Angular change detection doesn't run after `signal.set()`
+**Fix Applied:**
+- Added `setupCameraMocks(page)` call in `beforeEach` before navigation (must be registered before page load via `addInitScript`)
+- Updated `ContactsPage.clickScannerButton()` to wait for `app-business-card-scanner` component instead of `p-dialog`
+- Removed `force: true` click and retry logic — normal click on `<p-button>` works correctly
+- Unskipped and simplified the scanner test to verify signal sets and component renders
 
-**Note:** Scanner works in production — this is a Playwright/PrimeNG interaction issue.
+**Files Changed:**
+- `QA Tests/Playwright Tests/contacts.spec.ts` — camera mocks in beforeEach, unskipped test
+- `QA Tests/Playwright Tests/pages/contacts.page.ts` — fixed wait target, added scanner locators
 
-**Reproduction:** `npx playwright test contacts.spec.ts --grep "scanner"` → button click succeeds → component count = 0
+**Verification:** `npx playwright test contacts.spec.ts --grep "scanner"` → button click → component renders in DOM
 
 ---
 
 #### QA-008: PrimeNG DynamicDialog not created in Playwright tests
 
 **Status:** Workaround Applied  
-**Category:** PrimeNG/Playwright Compatibility  
+**Category:** Tooling (Playwright/PrimeNG Interaction)  
 **Requires:** Real Backend Testing
 
 `dialogService.open()` is called but dialogs don't appear in Playwright tests.
@@ -206,16 +202,6 @@ Button click succeeds but `showBusinessCardScanner` signal is never set, prevent
 
 ---
 
-#### QA-010: AutoMapper EntityArtifactValueResolver requires DI container
-
-**Status:** Resolved ✅ (2026-02-03)  
-**Category:** Infrastructure  
-**Impact:** ~5+ Opportunity tests were failing
-
-**Fix:** Added parameterless constructor to `EntityArtifactValueResolver`. When instantiated without DI (in tests), returns empty artifact list. **Result:** ~40 tests now passing.
-
----
-
 #### QA-011: Playwright tests skipped due to incomplete API mocking
 
 **Status:** Partially Resolved (2026-02-09)  
@@ -231,23 +217,6 @@ Button click succeeds but `showBusinessCardScanner` signal is never set, prevent
 
 **Remaining:** ~17 tests still conditionally skipping (jira-requirements features not available in mock env).  
 **Proper Fix:** Run against real backend OR implement more comprehensive API mocking.
-
----
-
-#### QA-012: 5 Business.Tests files excluded due to IntegrationTests dependency
-
-**Status:** Resolved ✅ (2026-02-07)  
-**Related:** DEF-007
-
-Removed Compile Remove directives, re-enabled IntegrationTests project reference. All 5 files now compile and run.  
-**Result:** Business.Tests went from 1,855 to 3,721 total tests (+1,866 recovered). 3,445 pass, 3 fail (InMemory limitation), 273 skipped.
-
----
-
-#### QA-013: Bash arithmetic bug in qa-tests.yml workflow
-
-**Status:** Resolved ✅ (2026-02-01)  
-**Fix:** Changed `((SUCCESS_COUNT++))` to `SUCCESS_COUNT=$((SUCCESS_COUNT + 1))`. Bash `((0))` returns exit code 1.
 
 ---
 
@@ -288,7 +257,8 @@ Per documentation: "Go to oUP" button is only testable in production.
 #### QA-016: Go Decision Test Cases — Partially Blocked by DEF-008
 
 **Status:** Partially Resolved (2026-02-11)  
-**Category:** Blocked by DEF-008 (remaining gaps)  
+**Category:** Test Execution  
+**Related DEF:** DEF-008, DEF-010, DEF-011  
 **Impact:** ~50 of 55 manual test cases awaiting execution; automated tests: 509 passed, 60 skipped
 
 **Update (2026-02-11):** Core workflow now operational — significant implementation progress by Tafazzul. Authoritative test case document restructured to 397 cases across 10 categories. Full automated test execution completed with **0 failures**.
@@ -333,16 +303,6 @@ Per documentation: "Go to oUP" button is only testable in production.
 
 ---
 
-#### QA-017: Playwright Tests FAILED — Angular Dev Server Not Running
-
-**Status:** Resolved ✅ (2026-02-02)  
-**Category:** Infrastructure
-
-Playwright webServer config now auto-starts `ng serve --port 4200 --host 127.0.0.1`.  
-**Result:** 135 passed, 74 failed (test-specific, not server-related), 40 skipped.
-
----
-
 #### QA-021: Login.spec.ts tests require real backend
 
 **Status:** Workaround Applied (2026-02-04)  
@@ -350,56 +310,6 @@ Playwright webServer config now auto-starts `ng serve --port 4200 --host 127.0.0
 **Impact:** 7 login tests skipped in CI
 
 Tests use `LoginPage.login()` which calls real `/user/login` endpoint. Added `test.skip()` condition for CI environment. Tests run locally against real backend.
-
----
-
-#### QA-022: Hash-based routing issue in Playwright tests
-
-**Status:** Resolved ✅ (2026-02-04)
-
-Angular uses hash-based routing (`/#/login`) but tests used `/login`.  
-**Fix:** Updated `BasePage.goto()` to auto-convert URLs. **Result:** 21 tests now passing.
-
----
-
-#### QA-023: Navigation-tabs.spec.ts visibility failures
-
-**Status:** Resolved ✅ (2026-02-04)
-
-Updated 4 tests to use flexible tab selectors (PrimeNG, ARIA roles). All 4 tests passing.
-
----
-
-#### QA-024: Partner-item.spec.ts timeouts and visibility failures
-
-**Status:** Resolved ✅ (2026-02-07)
-
-Rewrote `partner-item.page.ts` with real `data-testid` attributes. Switched to real backend data. **Result:** All 23 tests passing (was 5 failing).
-
----
-
-#### QA-025: Opportunity-item-basic.spec.ts assertion failures
-
-**Status:** Resolved ✅ (2026-02-04)
-
-Updated card/loading/error selectors to be more specific. Enhanced API mocks. **Result:** All 3 tests passing.
-
----
-
-#### QA-028: Playwright webServer not auto-starting Angular dev server
-
-**Status:** Resolved ✅ (2026-02-05)
-
-Changed `stdout`/`stderr` to `'pipe'`, increased timeout to 6 min, added `--no-open` flag.  
-**Result:** 265 tests now passing (was 2), connection refused errors eliminated.
-
----
-
-#### QA-029: Test reporter finds no .trx files in CI
-
-**Status:** Resolved ✅ (2026-02-07)
-
-Build errors (method name typos, duplicate classes) caused tests to never run. All fixed. Build succeeds, `.trx` files generated.
 
 ---
 
@@ -417,56 +327,6 @@ Build errors (method name typos, duplicate classes) caused tests to never run. A
 
 **Remaining:** Audit remaining spec files for non-existent selectors.  
 **Reference:** https://playwright.dev/docs/locators#quick-guide — Priority: role > text > test id
-
----
-
-#### QA-039: authenticateWithRealBackend always returns Administrator role
-
-**Status:** Resolved ✅ (2026-02-09)  
-**Category:** Mocking
-
-`authenticateWithRealBackend()` always mocked `/user/claims` with `role: 'Administrator'` regardless of user email.  
-**Fix:** Added `RESTRICTED_TEST_USERS` map with role-differentiated claims + permission mock overrides. Updated `contacts.spec.ts` to use `test-readonly@playwright.local`.
-
----
-
-#### QA-040: API mock catch-all exclusion patterns too broad — causes Playwright test hangs
-
-**Status:** Resolved ✅ (2026-02-11)  
-**Category:** Mocking  
-**Impact:** All Playwright tests beyond ~test 300 would hang indefinitely
-
-**Root Cause:** The catch-all route handler in `api-mocks.helper.ts` used overly broad exclusion patterns for entity detail endpoints. For example, `!/\/api\/opportunity\/\d+/.test(urlString)` excluded **all** URLs matching `/api/opportunity/{id}/...` from the catch-all, including sub-resource URLs like:
-- `/api/opportunity/1/generate-images`
-- `/api/opportunity/1/insights`
-- `/api/opportunity/1/source-interactions`
-- `/api/opportunity/1/dst-risks`
-- `/api/opportunity/1/relevant-people`
-- `/api/opportunity/1/framework-status`
-- `/api/opportunity/1/extract-deliverables`
-- `/api/opportunity/1/dst-recommendations`
-- `/api/opportunity/1/similar-opportunities`
-- `/api/opportunity/1/similar-projects`
-
-These sub-resource URLs didn't have specific mocks (the specific mock only matched `/api/opportunity/\d+$` with a `$` anchor), AND were excluded from the catch-all (without a `$` anchor). As a result, they passed through to the Vite dev server proxy, which tried to connect to a real backend that wasn't running, resulting in `ECONNREFUSED` errors and browser timeouts that hung the test runner.
-
-Similarly, the workflow exclusion `!/\/api\/workflow\//` excluded ALL workflow URLs, but only `/api/workflow/{entity}/{id}` had a specific mock. URLs like `/api/workflow/opportunity` (without an ID) fell through.
-
-**Fix Applied:**
-1. Added `$` anchors to catch-all entity detail exclusions:
-   - `!/\/api\/partner\/\d+$/.test(urlString)` (was `!/\/api\/partner\/\d+/`)
-   - `!/\/api\/opportunity\/\d+$/.test(urlString)` (was `!/\/api\/opportunity\/\d+/`)
-   - `!/\/api\/contact\/\d+$/.test(urlString)` (was `!/\/api\/contact\/\d+/`)
-   - `!/\/api\/interaction\/\d+$/.test(urlString)` (was `!/\/api\/interaction\/\d+/`)
-2. Added explicit exclusions for permissions endpoints:
-   - `!/\/api\/partner\/\d+\/permissions/`
-   - `!/\/api\/opportunity\/\d+\/permissions/`
-3. Fixed workflow exclusion to only exclude URLs with entity AND id:
-   - `!/\/api\/workflow\/\w+\/\d+/` (was `!/\/api\/workflow\//`)
-4. Fixed interaction list mock to match plural form `/api/interactions` (app uses plural)
-
-**Files Modified:** `QA Tests/Playwright Tests/helpers/api-mocks.helper.ts`  
-**Verification:** Ran WHAT Section tests (previously hanging) — all 16 passed in 1.6m. Full chromium suite: 547 passed, 0 failed.
 
 ---
 

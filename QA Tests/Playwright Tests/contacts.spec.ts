@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { ContactsPage } from './pages/contacts.page';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
-import { assertUrlMatches, assertDialogOpen } from './helpers/assertions.helper';
+// Note: assertUrlMatches/assertDialogOpen available from './helpers/assertions.helper' if needed
 import { setupCameraMocks } from './helpers/api-mocks.helper';
 
 /**
@@ -22,6 +22,11 @@ test.describe('Contacts List - WITH Permissions', () => {
   
   test.beforeEach(async ({ page }) => {
     contactsPage = new ContactsPage(page);
+    
+    // QA-007 FIX: Setup camera mocks BEFORE navigation (addInitScript must be registered before page load)
+    // This ensures navigator.mediaDevices.getUserMedia returns a mock MediaStream
+    // when the Business Card Scanner component initializes
+    await setupCameraMocks(page);
     
     // Use shared auth helper with API mocks (matching partners/interactions/opportunities pattern)
     await authenticateWithRealBackend(page, '/#/partnerships/contacts', TEST_USER_WITH_PERMISSIONS);
@@ -295,92 +300,29 @@ test.describe('Contacts List - WITH Permissions', () => {
     expect(responsivePageWorks).toBeTruthy();
   });
   
-  // QA-007: Testing with REAL BACKEND - checking if scanner works without mocks
-  // SKIP in smoke tests (mocked mode) - requires real backend to function properly
-  test.skip('should open business card scanner dialog', async ({ page }) => {
-    // NOTE: This test is skipped in mocked smoke tests because:
-    // 1. The scanner component requires real AI backend services
-    // 2. Opening the scanner triggers API calls that aren't fully mocked
-    // 3. This test should only run in full E2E tests with real backend
-    // 
-    // Re-enable this test by removing .skip when running full E2E suite
+  // QA-007 FIX: Scanner test now works with mocked backend
+  // Root causes fixed:
+  //   1. Camera mocks (setupCameraMocks) now called in beforeEach before navigation
+  //   2. clickScannerButton() now waits for app-business-card-scanner (not p-dialog)
+  //   3. Removed force:true click — normal click on p-button works correctly
+  // The scanner component only needs: camera mocks + canCreate permission (both mocked)
+  // We verify the signal sets correctly and the component renders in the DOM.
+  // AI scanning itself is NOT tested here (that requires real backend).
+  test('should open business card scanner dialog', async ({ page }) => {
     await contactsPage.waitForPermissions();
     
-    // Capture console errors during scanner open (excluding known Google API warnings)
-    const consoleErrors: string[] = [];
-    page.on('console', msg => {
-      if (msg.type() === 'error' && !msg.text().includes('Google') && !msg.text().includes('GSI_LOGGER')) {
-        consoleErrors.push(msg.text());
-      }
-    });
-    
+    // Step 1: Verify scanner button is visible (requires canCreate permission)
     const isVisible = await contactsPage.isScannerButtonVisible();
-    console.log(`[Test Debug] Scanner button visible: ${isVisible}`);
+    expect(isVisible, 'Scanner button should be visible for users with canCreate permission').toBe(true);
     
-    if (isVisible) {
-      // Click the scanner button - camera mocks are in place
-      const scannerButton = contactsPage.scannerButton;
-      
-      console.log('[Test] Attempting to click scanner button...');
-      
-      // Use force click to bypass any overlays (tour dialogs, etc.)
-      let clickSucceeded = false;
-      await scannerButton.click({ force: true, timeout: 10000 })
-        .then(() => {
-          clickSucceeded = true;
-          console.log('[Test] ✅ Scanner button clicked successfully');
-        })
-        .catch(async (error) => {
-          console.warn('[Test] ⚠️ Direct click failed:', error.message);
-          // Wait for any overlays to clear
-          await page.waitForTimeout(3000);
-          await scannerButton.click({ force: true })
-            .then(() => {
-              clickSucceeded = true;
-              console.log('[Test] ✅ Scanner button clicked successfully (retry)');
-            })
-            .catch((retryError) => {
-              console.error('[Test] ❌ Scanner button click failed completely:', retryError.message);
-            });
-        });
-      
-      if (!clickSucceeded) {
-        console.error('[Test] ❌ Could not click scanner button');
-        expect(true).toBeTruthy();
-        return;
-      }
-      
-      // Wait for component rendering and Angular change detection
-      console.log('[Test] Waiting for component rendering...');
-      await page.waitForTimeout(3000);
-      
-      // REAL BACKEND TEST: Check if scanner component is added to DOM
-      const componentCount = await page.locator('app-business-card-scanner').count();
-      console.log(`[Test Debug] Scanner components in DOM: ${componentCount}`);
-      console.log(`[Test Debug] Console errors: ${consoleErrors.length > 0 ? consoleErrors.join('; ') : 'none'}`);
-      
-      if (componentCount > 0) {
-        console.log('[Test] ✅ QA-007 RESOLVED: Scanner component added to DOM with real backend!');
-        expect(componentCount).toBeGreaterThan(0);
-        
-        const scannerComponent = page.locator('app-business-card-scanner').first();
-        const scannerVisible = await scannerComponent.isVisible().catch(() => false);
-        
-        if (scannerVisible) {
-          console.log('[Test] ✅ Scanner component is visible!');
-          console.log('[Test] ⚠️ Note: Camera permission prompt may appear');
-        } else {
-          console.warn('[Test] ⚠️ Component in DOM but not visible (CSS/animation issue)');
-        }
-      } else {
-        console.error('[Test] ❌ QA-007 STILL FAILING: Scanner component not in DOM with real backend');
-        console.error('[Test] This indicates signal is not being set even with real services');
-        expect(componentCount).toBeGreaterThan(0); // Will fail
-      }
-    } else {
-      console.warn('[Test] ⚠️ Scanner button not visible - skipping test');
-      expect(true).toBeTruthy();
-    }
+    // Step 2: Click the scanner button using the page object
+    // This clicks the button and waits for app-business-card-scanner to appear
+    await contactsPage.clickScannerButton();
+    
+    // Step 3: Verify scanner component was added to the DOM
+    // (showBusinessCardScanner signal was set to true)
+    const scannerVisible = await contactsPage.isScannerComponentVisible();
+    expect(scannerVisible, 'Scanner component should be visible after clicking the button').toBe(true);
   });
 });
 
