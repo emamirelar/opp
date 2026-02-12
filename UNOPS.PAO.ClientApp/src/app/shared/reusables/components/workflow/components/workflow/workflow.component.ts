@@ -162,6 +162,10 @@ export class WorkflowComponent implements OnInit {
   // Rejection to NO GO dialog state
   rejectToNoGoComment = signal('');
 
+  // Recall dialog state
+  showRecallDialog = signal(false);
+  recallComment = signal('');
+
   // Unmet requirements dialog state (for server-side validation failures)
   showUnmetRequirementsDialog = signal(false);
   unmetRequirements = signal<string[]>([]);
@@ -454,11 +458,11 @@ export class WorkflowComponent implements OnInit {
     this.changeDetectorRef.detectChanges();
   }
 
-  handleOnRecall() {
+  handleOnRecall(): void {
     this.nextStage.set(this.workflowInfo()?.nextStage || '');
     this.nextStageActionName.set('Recall');
-    this.commentMode.set(this.workflowInfo()?.recallComment || 'mandatory');
-    this.showCommentDialog = true;
+    this.recallComment.set('');
+    this.showRecallDialog.set(true);
     this.changeDetectorRef.detectChanges();
   }
 
@@ -727,6 +731,39 @@ export class WorkflowComponent implements OnInit {
   onRejectToNoGoDialogVisibleChange(visible: boolean): void {
     if (!visible) {
       this.closeRejectToNoGoDialog();
+    }
+  }
+
+  /**
+   * Confirm and execute recall action
+   */
+  confirmRecall(): void {
+    const comment = this.recallComment().trim();
+    if (!comment) {
+      this.feedbackDialogService?.showInfoToast({
+        detail: this.translateService.instant('message.workflow.recallReasonRequired'),
+      });
+      return;
+    }
+
+    this.showRecallDialog.set(false);
+    this._executeWorkflowAction('recall', comment);
+  }
+
+  /**
+   * Close recall dialog
+   */
+  closeRecallDialog(): void {
+    this.showRecallDialog.set(false);
+    this.recallComment.set('');
+  }
+
+  /**
+   * Handle recall dialog visibility change (for X button close)
+   */
+  onRecallDialogVisibleChange(visible: boolean): void {
+    if (!visible) {
+      this.closeRecallDialog();
     }
   }
 
