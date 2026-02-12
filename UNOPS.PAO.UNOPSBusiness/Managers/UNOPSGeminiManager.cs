@@ -5689,13 +5689,11 @@ public class UNOPSGeminiManager : IGeminiManager
                     throw new InvalidOperationException("UNOPSOpportunityManager is required for statement validation");
                 }
 
-                // Step 3: Get comprehensive opportunity data (same as generation)
+                // Step 3: Get comprehensive opportunity data including statement markdown (for validation context)
                 _logger.LogInformation($"📊 [STATEMENT-VALIDATION] Retrieving opportunity details...");
-                var opportunityDetails = await opportunityManager.GetOpportunityDetailsForAIAsync(opportunityId);
+                var opportunityDetails = await opportunityManager.GetOpportunityDetailsForStatementValidationAsync(opportunityId);
 
-                // Specifically remove the statementMarkdown, workflowStageName, and status fields from the opportunity details
-                // NOTE: targetSigningDate is now included for Timeline section validation
-                opportunityDetails["opportunityStatementMarkdown"] = null;
+                // Remove workflowStageName and status so validation focuses on factual data; keep opportunityStatementMarkdown for context
                 opportunityDetails["workflowStageName"] = null;
                 opportunityDetails["status"] = null;
 
@@ -5849,6 +5847,14 @@ public class UNOPSGeminiManager : IGeminiManager
 
                 validationResult.OpportunityId = opportunityId;
                 validationResult.FreshlyGeneratedStatement = null; // No longer generating fresh markdown
+
+                // Remove any "acceptable" items: [Information not available] vs "No primary SDGs selected" / "No risks identified" etc. are the same — do not show as misalignments
+                if (validationResult.MisalignmentItems != null && validationResult.MisalignmentItems.Count > 0)
+                {
+                    validationResult.MisalignmentItems = validationResult.MisalignmentItems
+                        .Where(item => !item.Contains("This is acceptable", StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+                }
 
                 // Defensive check: Ensure isAligned is consistent with misalignmentItems array
                 var hasNoMisalignments = validationResult.MisalignmentItems == null || validationResult.MisalignmentItems.Count == 0;
