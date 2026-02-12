@@ -3203,6 +3203,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("ActiveUser")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text");

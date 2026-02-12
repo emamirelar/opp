@@ -122,10 +122,10 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
                         _logger.LogInformation("🔄 [MIDDLEWARE-IMPERSONATION] Trusted service account {AuthUser} requesting impersonation of {TargetUser}", 
                             authenticatedEmail, middlewareImpersonatedEmail);
                         
-                        // Look up the impersonated user
+                        // Look up the impersonated user (must be active)
                         var middlewareNormalizedEmail = _userManager.NormalizeEmail(middlewareImpersonatedEmail);
                         var middlewareImpersonatedUser = await _userManager.Users
-                            .FirstOrDefaultAsync(u => u.NormalizedEmail == middlewareNormalizedEmail);
+                            .FirstOrDefaultAsync(u => u.NormalizedEmail == middlewareNormalizedEmail && u.ActiveUser);
                         
                         if (middlewareImpersonatedUser != null)
                         {
@@ -282,6 +282,11 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         // Find or create user based on Google identity
         _logger.LogInformation("🔍 [AUTH] Looking up user by email: {Email}", userEmail);
         var user = await _userManager.FindByEmailAsync(userEmail);
+        if (user != null && !user.ActiveUser)
+        {
+            _logger.LogWarning("User account is inactive: {Email}", userEmail);
+            return AuthenticateResult.Fail("User account is inactive");
+        }
         if (user == null)
         {
             // Auto-provision user if enabled
@@ -402,7 +407,7 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
                         impersonatedEmail, normalizedEmail);
                     
                     var impersonatedUser = await _userManager.Users
-                        .FirstOrDefaultAsync(u => u.NormalizedEmail == normalizedEmail);
+                        .FirstOrDefaultAsync(u => u.NormalizedEmail == normalizedEmail && u.ActiveUser);
                     
                     if (impersonatedUser != null)
                     {

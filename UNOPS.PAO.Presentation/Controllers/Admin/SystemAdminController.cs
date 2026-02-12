@@ -1,8 +1,9 @@
-﻿namespace UNOPS.PAO.Presentation.Controllers.Admin;
+namespace UNOPS.PAO.Presentation.Controllers.Admin;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using UNOPS.PAO.Business.Interfaces;
@@ -13,6 +14,7 @@ using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Presentation.Security;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDataAccess.Seed.Seeders;
+using UNOPS.PAO.UNOPSDataAccess.Utilities;
 
 [Route("/")]
 [ApiController]
@@ -130,6 +132,15 @@ public class SystemAdminController : ControllerBase
                 method = "POST",
                 path = APIDictionary.SystemAdmin + "/output-embeddings/generate",
                 description = "Generate embeddings and keywords for all Output entities (takes ~2 minutes)",
+                parameters = Array.Empty<object>(),
+                permission = "CanRunSeedings",
+                examples = (string[]?)null
+            },
+            new
+            {
+                method = "POST",
+                path = APIDictionary.SystemAdmin + "/clean-up-users",
+                description = "Migrate placeholder AspNetUsers IDs to ERP Resource IDs (runs Fix_AspNetUsers_conflicts.sql)",
                 parameters = Array.Empty<object>(),
                 permission = "CanRunSeedings",
                 examples = (string[]?)null
@@ -293,6 +304,36 @@ public class SystemAdminController : ControllerBase
         {
             logger.LogError(ex, "❌ Error generating output embeddings");
             return StatusCode(500, new { error = "Failed to generate output embeddings", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Run AspNetUsers cleanup script: migrate placeholder IDs to ERP Resource IDs.
+    /// Use when EDS fails due to placeholder vs ERP ID conflict (manual intervention).
+    /// </summary>
+    [HttpPost(APIDictionary.SystemAdmin + "/clean-up-users")]
+    [PermissionAuthorize(PermissionNames.CanRunSeedings)]
+    public async Task<IActionResult> CleanUpUsers()
+    {
+        try
+        {
+            logger.LogInformation("Starting AspNetUsers cleanup (Fix_AspNetUsers_conflicts.sql)");
+
+            var sqlScript = MigrationSqlScriptExecutor.ReadSqlScript("Fix_AspNetUsers_conflicts.sql");
+            await unopsContext.Database.ExecuteSqlRawAsync(sqlScript);
+
+            logger.LogInformation("AspNetUsers cleanup completed successfully");
+
+            return Ok(new
+            {
+                message = "AspNetUsers cleanup completed successfully",
+                note = "Placeholder user IDs have been migrated to ERP Resource IDs where applicable"
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error running AspNetUsers cleanup");
+            return StatusCode(500, new { error = "Failed to run AspNetUsers cleanup", details = ex.Message });
         }
     }
 }

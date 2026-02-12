@@ -12,8 +12,8 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 {
     [DbContext(typeof(UNOPSAppDbContext))]
-    [Migration("20260211124513_CleanupAspNetUsers")]
-    partial class CleanupAspNetUsers
+    [Migration("20260212193058_RevertCompositeKeyAddActiveUser")]
+    partial class RevertCompositeKeyAddActiveUser
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

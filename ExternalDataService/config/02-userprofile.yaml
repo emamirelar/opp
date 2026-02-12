@@ -63,6 +63,7 @@ destination:
   composite_unique_keys:
     - fields:
         - "UserId"
+        - "Id"
       index_name: "PK_UserProfile"
   
   field_mappings:

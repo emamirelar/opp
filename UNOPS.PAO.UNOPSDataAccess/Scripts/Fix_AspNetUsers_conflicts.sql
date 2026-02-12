@@ -11,6 +11,7 @@ CREATE TEMP TABLE _aspnetusers_migration_map (
     new_id int NOT NULL
 );
 
+-- 33
 INSERT INTO _aspnetusers_migration_map (normalized_user_name, new_id)
 VALUES
     ('STEPHENP@UNOPS.ORG', 70499),
@@ -61,6 +62,7 @@ BEGIN
           AND u."Id" > 0
           AND u."UserName" LIKE '%unops.org%'
           AND u."Id" != m.new_id
+          AND NOT EXISTS (SELECT 1 FROM public."AspNetUsers" a WHERE a."Id" = m.new_id)
     LOOP
         old_id := rec.old_id;
         new_id := rec.new_id;
@@ -83,7 +85,7 @@ BEGIN
             "Id", "UserName", "NormalizedUserName", "Email", "NormalizedEmail",
             "EmailConfirmed", "PasswordHash", "SecurityStamp", "ConcurrencyStamp",
             "PhoneNumber", "PhoneNumberConfirmed", "TwoFactorEnabled", "LockoutEnd",
-            "LockoutEnabled", "AccessFailedCount", "IsInternal"
+            "LockoutEnabled", "AccessFailedCount", "IsInternal", "ActiveUser"
         )
         SELECT
             new_id,
@@ -92,7 +94,7 @@ BEGIN
             "Email", "NormalizedEmail",
             "EmailConfirmed", "PasswordHash", "SecurityStamp", "ConcurrencyStamp",
             "PhoneNumber", "PhoneNumberConfirmed", "TwoFactorEnabled", "LockoutEnd",
-            "LockoutEnabled", "AccessFailedCount", "IsInternal"
+            "LockoutEnabled", "AccessFailedCount", "IsInternal", COALESCE("ActiveUser", true)
         FROM public."AspNetUsers" WHERE "Id" = old_id;
 
         -- Update all references
