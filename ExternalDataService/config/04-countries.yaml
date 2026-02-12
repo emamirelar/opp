@@ -1,6 +1,6 @@
 metadata:
-  name: "Currencies Sync"
-  description: "Currency master data sync from ERP"
+  name: "countries"
+  description: "Country master data sync from ERP"
   version: "1.0"
   enabled: true
   max_retry_attempts: 1
@@ -11,20 +11,23 @@ source:
   
   query: |
     SELECT
-      Currency
-      , Currency_Description AS Name
+      Country AS Country_ISO2
+      , Country_ISO3
+      , Country_Description AS Name
+      , Region_Description
+      , Continent_Description
       , 1 AS Status
       , CURRENT_TIMESTAMP() as last_modified
     FROM
-      `unopsreporting.General_Ledger.Currency`
+      `unopsreporting.Partners.Country`
     WHERE
-      Currency_System_Status = 'N'
+      Country_Status = 'N'
   
-  primary_key_field: "Currency"
+  primary_key_field: "Country_ISO2"
   batch_size: 1000
 
 destination:
-  table_name: "Currencies"
+  table_name: "Countries"
   schema: "public"
   manage_table_structure: true
   add_standard_fields: true
@@ -40,11 +43,26 @@ destination:
       data_type: "integer"         # Must be integer (IBaseBusinessEntity requirement)
       is_required: false
 
-    - source_field: "Currency"
-      destination_field: "Code"
-      data_type: "varchar(3)"
+    - source_field: "Country_ISO2"
+      destination_field: "Iso2Code"
+      data_type: "varchar(5)"
       is_required: true
       is_unique: true
+    
+    - source_field: "Country_ISO3"
+      destination_field: "Iso3Code"
+      data_type: "varchar(3)"
+      is_required: false
+    
+    - source_field: "Region_Description"
+      destination_field: "RegionDescription"
+      data_type: "varchar(255)"
+      is_required: false
+    
+    - source_field: "Continent_Description"
+      destination_field: "ContinentDescription"
+      data_type: "varchar(255)"
+      is_required: false
 
 sync_options:
   sync_mode: Upsert
@@ -52,7 +70,7 @@ sync_options:
 
 validation:
   required_source_fields:
-    - "Currency"
+    - "Country_ISO2"
     - "Name"
   
 error_handling:

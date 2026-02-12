@@ -1,5 +1,5 @@
 metadata:
-  name: "UserProfile Sync"
+  name: "user-profiles"
   description: "UserProfile data sync"
   version: "1.0"
   enabled: true
@@ -50,7 +50,16 @@ destination:
   schema: "public"
   manage_table_structure: false  # Only validate, don't create/alter
   add_standard_fields: false
-  
+
+  # Skip records when UserId does not exist in AspNetUsers (avoids FK errors)
+  foreign_key_mappings:
+    - source_field: "UserId"
+      lookup_table: "AspNetUsers"
+      lookup_field: "Id"
+      lookup_return_field: "Id"
+      destination_field: "UserId"
+      on_lookup_fail: FailRecord
+
   field_mappings:
     - source_field: "Id"
       destination_field: "Id"

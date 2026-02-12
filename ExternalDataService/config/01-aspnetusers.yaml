@@ -1,10 +1,10 @@
 metadata:
-  name: "ASPNetUsers Sync"
+  name: "users"
   description: "ASPNetUsers data sync"
   version: "1.0"
   enabled: true
   max_retry_attempts: 1
-  timeout_minutes: 5
+  timeout_minutes: 15   # ~8k records × ~50ms ≈ 7+ min; buffer for full run
 
 source:
   type: "bigquery"
@@ -147,6 +147,6 @@ error_handling:
   on_mapping_error: SkipRecord
 
 logging:
-  log_level: "Debug"
-  log_sql_queries: true
-  log_record_details: true
+  log_level: "Info"
+  log_sql_queries: false   # Reduces I/O; set true only for debugging
+  log_record_details: false # Reduces I/O; set true only for debugging

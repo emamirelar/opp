@@ -1,5 +1,5 @@
 metadata:
-  name: "Partner Agreements Sync"
+  name: "partner-agreements"
   description: "Partner Agreement master data sync from ERP"
   version: "1.0"
   enabled: true

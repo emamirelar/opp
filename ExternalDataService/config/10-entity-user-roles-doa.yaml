@@ -1,5 +1,5 @@
 metadata:
-  name: "EntityUserRoles DoA Sync"
+  name: "entity-user-roles-doa"
   description: "Delegation of Authority (DoA) roles sync for Engagement Acceptance"
   version: "1.0"
   enabled: true
