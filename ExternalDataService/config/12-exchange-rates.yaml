@@ -4,7 +4,7 @@ metadata:
   version: "1.0"
   enabled: true
   max_retry_attempts: 1
-  timeout_minutes: 20   # ~35k+ records; 35 batches × ~200ms + BigQuery fetch; buffer for full run
+  timeout_minutes: 30   # ~35k+ records; 35 batches × ~200ms + BigQuery fetch; buffer for full run
 
 source:
   type: "bigquery"
