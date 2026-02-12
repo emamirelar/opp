@@ -1,0 +1,28 @@
+name: "user-update"
+description: "Synchronize user-related data: AspNetUsers, user profiles, and user roles"
+enabled: true
+
+# Execution order: users first (foundation), then user-profiles and user-roles (both depend on users)
+execution_stages:
+  # Stage 1: Users (AspNetUsers) - foundation for profiles and roles
+  - name: "users"
+    description: "01 AspNetUsers from UNOPS Resource data"
+    syncs:
+      - "users"
+    fail_fast: true
+
+  # Stage 2: User-dependent data (profiles and roles reference users)
+  - name: "user-profiles-and-roles"
+    description: "02 user-profiles, 03 user-roles"
+    syncs:
+      - "user-profiles"
+      - "user-roles"
+    fail_fast: false
+
+# Execution behavior configuration
+options:
+  parallel_execution: true
+  max_parallel_syncs: 2
+  fail_fast: false
+  delay_between_stages_seconds: 5
+  continue_on_error: true

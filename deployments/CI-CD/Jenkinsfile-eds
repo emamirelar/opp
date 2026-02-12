@@ -102,6 +102,10 @@ node(agentLabel) {
             TIMEOUT = envConfig.timeout
             INVOKER_SERVICE_ACCOUNTS = envConfig.invoker_service_accounts
             
+            // Cloud Scheduler Configuration
+            SCHEDULER_ENABLED = envConfig.scheduler_enabled ?: false
+            SCHEDULER_SETUP_SCRIPT = envConfig.scheduler_setup_script ?: ""
+            
             echo "Configuration loaded for External Data Service environment: ${environment}"
             echo "Project ID: ${PROJECT_ID}"
             echo "Service Name: ${SERVICE_NAME}"
@@ -109,6 +113,10 @@ node(agentLabel) {
             echo "Branch: ${currentBranch}"
             echo "Invoker Service Accounts: ${INVOKER_SERVICE_ACCOUNTS}"
             echo "Configuration Path will be: ../ExternalDataService/config (relative to submodule)"
+            echo "Cloud Scheduler Enabled: ${SCHEDULER_ENABLED}"
+            if (SCHEDULER_ENABLED) {
+                echo "Scheduler Setup Script: ${SCHEDULER_SETUP_SCRIPT}"
+            }
         }
 
         stage('Ensure Artifact Registry Exists') {
@@ -251,12 +259,134 @@ node(agentLabel) {
             }
         }
         
+        // Conditional Cloud Scheduler Setup
+        if (SCHEDULER_ENABLED == true) {
+            stage('Setup Cloud Scheduler Jobs') {
+                withCredentials([file(credentialsId: CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                    script {
+                        // Get the deployed service URL
+                        def serviceUrl = sh(
+                            script: """
+                            gcloud auth activate-service-account --key-file=\${GOOGLE_APPLICATION_CREDENTIALS}
+                            gcloud config set project ${PROJECT_ID}
+                            gcloud run services describe ${SERVICE_NAME} \\
+                                --region=${REGION} \\
+                                --project=${PROJECT_ID} \\
+                                --format='value(status.url)'
+                            """,
+                            returnStdout: true
+                        ).trim()
+                        
+                        echo "Deployed Service URL: ${serviceUrl}"
+                        
+                        // Extract project number from service URL for YAML variable substitution
+                        def projectNumber = ""
+                        try {
+                            projectNumber = sh(
+                                script: "echo '${serviceUrl}' | grep -oE '[0-9]{12}' || echo ''",
+                                returnStdout: true
+                            ).trim()
+                            echo "Extracted Project Number: ${projectNumber}"
+                        } catch (Exception e) {
+                            echo "Warning: Could not extract project number from service URL: ${e.getMessage()}"
+                        }
+                        
+                        // Generate scheduler commands from YAML configuration
+                        def schedulerCommands = ""
+                        if (SCHEDULER_ENABLED) {
+                            try {
+                                echo "Loading scheduler jobs configuration from YAML..."
+                                def schedulerYaml = readFile('ExternalDataService/deploy/cloud-scheduler-jobs.yaml')
+                                def yaml = new org.yaml.snakeyaml.Yaml()
+                                def schedulerConfig = yaml.load(schedulerYaml)
+                                
+                                def commandsList = []
+                                schedulerConfig.each { jobKey, jobConfig ->
+                                    // Replace placeholders in job name and URI
+                                    def jobName = jobConfig.name
+                                        .replace('${ENVIRONMENT}', environment.toLowerCase())
+                                        .replace('${PROJECT_ID}', PROJECT_ID)
+                                        .replace('${REGION}', REGION)
+                                    
+                                    def uri = jobConfig.httpTarget.uri
+                                        .replace('${ENVIRONMENT}', environment.toLowerCase())
+                                        .replace('${PROJECT_NUMBER}', projectNumber)
+                                        .replace('${PROJECT_ID}', PROJECT_ID)
+                                        .replace('${REGION}', REGION)
+                                    
+                                    // Extract endpoint from full URI (path portion)
+                                    def endpoint = uri.replaceAll('https://external-data-service-.*\\.run\\.app', '')
+                                    
+                                    // Extract timeout (remove 's' suffix)
+                                    def timeout = jobConfig.attemptDeadline.toString().replace('s', '')
+                                    
+                                    // Generate create_scheduler_job command
+                                    def command = """create_scheduler_job \\
+    "${jobName}" \\
+    "${jobConfig.description}" \\
+    "${jobConfig.schedule}" \\
+    "${endpoint}" \\
+    "${timeout}" \\
+    "${jobConfig.retryConfig.retryCount}" \\
+    "${jobConfig.httpTarget.httpMethod}\""""
+                                    
+                                    commandsList.add(command)
+                                }
+                                
+                                schedulerCommands = commandsList.join('\n\n')
+                                echo "✓ Generated ${commandsList.size()} scheduler job commands from YAML"
+                                
+                            } catch (Exception e) {
+                                echo "⚠️ Warning: Failed to load scheduler YAML configuration: ${e.getMessage()}"
+                                echo "Scheduler jobs will use hardcoded definitions from shell script"
+                                schedulerCommands = ""
+                            }
+                        }
+                        
+                        // Make setup script executable and run it
+                        // Script parameters: <project-id> <environment> <region> [oauth-client-id]
+                        // OAuth Client ID is auto-read from appsettings.{Env}.json if not provided
+                        sh """
+                        chmod +x ${SCHEDULER_SETUP_SCRIPT}
+                        
+                        echo "Setting up Cloud Scheduler jobs for PAO External Data Service..."
+                        echo "Environment: ${environment.toLowerCase()}"
+                        echo "Service URL (for reference): ${serviceUrl}"
+                        
+                        # Export generated scheduler commands as environment variable
+                        export SCHEDULER_COMMANDS='${schedulerCommands}'
+                        
+                        # Parameters: project-id, environment, region
+                        # OAuth Client ID and other settings are auto-read from appsettings.{Env}.json
+                        ${SCHEDULER_SETUP_SCRIPT} \\
+                            "${PROJECT_ID}" \\
+                            "${environment.toLowerCase()}" \\
+                            "${REGION}"
+                        """
+                        
+                        echo "✓ Cloud Scheduler jobs setup completed successfully"
+                    }
+                }
+            }
+        }
+        
         stage('Post-Deploy Actions') {
             echo 'External Data Service build completed successfully!'
             echo "External Data Service: https://console.cloud.google.com/run/detail/${REGION}/${SERVICE_NAME}"
             echo "Service Account: ${SERVICE_ACCOUNT}"
             echo "Environment: ${environment}"
             echo "Configuration: Uses ExternalDataService/appsettings.Development.json from project root"
+            
+            if (SCHEDULER_ENABLED == true) {
+                // Note: Scheduler region may differ from Cloud Run region (e.g., europe-west4 -> europe-west3)
+                def schedulerRegion = REGION == "europe-west4" ? "europe-west3" : REGION
+                echo ""
+                echo "Cloud Scheduler Jobs:"
+                echo "  View Jobs: https://console.cloud.google.com/cloudscheduler?project=${PROJECT_ID}"
+                echo "  Job Prefix: pao-external-data-*"
+                echo "  Scheduler Region: ${schedulerRegion}"
+                echo "  Manual Trigger: gcloud scheduler jobs run JOB_NAME --location=${schedulerRegion} --project=${PROJECT_ID}"
+            }
             
             publishChecks name: CHECK_NAME,
                           status: 'COMPLETED',

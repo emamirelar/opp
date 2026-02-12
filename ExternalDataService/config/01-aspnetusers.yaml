@@ -27,6 +27,7 @@ source:
       , NULL as LockoutEnd
       , true as LockoutEnabled
       , 0 as AccessFailedCount
+      , CONCAT(CAST(PARSE_NUMERIC(Resource) AS STRING), '|', UPPER(Resource_Email_Address_Primary)) AS composite_key
     FROM
       unopsreporting.Employment.People_Search_Report
     WHERE
@@ -39,7 +40,7 @@ source:
           ORDER BY Resource_Email_Address_Primary
         ) = 1
   
-  primary_key_field: "Id"
+  primary_key_field: "composite_key"
   batch_size: 1000
 
 destination:
@@ -47,6 +48,12 @@ destination:
   schema: "public"
   manage_table_structure: false  # Only validate, don't create/alter
   add_standard_fields: false
+  
+  composite_unique_keys:
+    - fields:
+        - "Id"
+        - "NormalizedUserName"
+      index_name: "IX_AspNetUsers_Id_NormalizedUserName"
   
   field_mappings:
     - source_field: "Id"
@@ -141,6 +148,7 @@ validation:
   required_source_fields:
     - "Id"
     - "UserName"
+    - "composite_key"
   
 error_handling:
   on_connection_error: RetryWithBackoff
