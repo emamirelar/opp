@@ -41,7 +41,7 @@ destination:
       lookup_field: "Id"
       lookup_return_field: "Id"
       destination_field: "UserId"
-      on_lookup_fail: SkipRecord
+      on_lookup_fail: LogWarning
 
   # Composite unique key: The combination of UserId + RoleId must be unique
   composite_unique_keys:

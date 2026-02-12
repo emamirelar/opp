@@ -4759,6 +4759,24 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
     }
 
     /// <summary>
+    /// Gets opportunity details for statement validation. Same as GetOpportunityDetailsForAIAsync but includes
+    /// opportunityStatementMarkdown so the validation AI receives the current statement alongside structured data.
+    /// </summary>
+    /// <param name="id">Opportunity ID</param>
+    /// <returns>Dictionary of opportunity details including opportunityStatementMarkdown</returns>
+    public async Task<Dictionary<string, object>> GetOpportunityDetailsForStatementValidationAsync(int id)
+    {
+        var result = await GetOpportunityDetailsForAIAsync(id);
+        var statement = await context.Set<Opportunity>()
+            .AsNoTracking()
+            .Where(o => o.Id == id)
+            .Select(o => o.OpportunityStatementMarkdown)
+            .FirstOrDefaultAsync();
+        result["opportunityStatementMarkdown"] = statement ?? "";
+        return result;
+    }
+
+    /// <summary>
     /// Gets basic entity information for authorization and permission checks
     /// Required by BaseUNOPSManager abstract method
     /// </summary>

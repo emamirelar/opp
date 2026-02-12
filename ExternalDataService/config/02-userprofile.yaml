@@ -58,7 +58,7 @@ destination:
       lookup_field: "Id"
       lookup_return_field: "Id"
       destination_field: "UserId"
-      on_lookup_fail: SkipRecord
+      on_lookup_fail: LogWarning
 
   composite_unique_keys:
     - fields:
