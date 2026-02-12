@@ -1,20 +1,38 @@
 /**
  * @fileoverview API Mocking Helper
  * Provides route mocking for backend APIs during E2E tests
+ * 
+ * QA-041 FIX: Added DEBUG_MOCKS flag to control verbose logging.
+ * Previously every mock call logged to console, generating ~30 lines per test x 600+ tests
+ * = 18,000+ log lines that consumed Node.js heap memory and caused crashes after ~287 tests.
  */
 
 import { Page } from '@playwright/test';
+
+/**
+ * Set to true to enable verbose mock logging (useful for debugging individual tests).
+ * Set to false for full suite runs to prevent memory exhaustion from console output.
+ * Can also be controlled via PLAYWRIGHT_DEBUG_MOCKS=true environment variable.
+ */
+const DEBUG_MOCKS = process.env.PLAYWRIGHT_DEBUG_MOCKS === 'true';
+
+/** Conditional logger that only outputs when DEBUG_MOCKS is enabled */
+function mockLog(message: string): void {
+  if (DEBUG_MOCKS) {
+    console.log(message);
+  }
+}
 
 /**
  * Setup API mocks for authentication and configuration
  * @param page - Playwright page object
  */
 export async function setupAPIMocks(page: Page): Promise<void> {
-  console.log('[API Mock] Setting up route interceptions...');
+  mockLog('[API Mock] Setting up route interceptions...');
   
   // Mock /api/configuration endpoint
   await page.route(url => url.toString().includes('/api/configuration'), async (route) => {
-    console.log('[API Mock] Intercepted: /api/configuration');
+    mockLog('[API Mock] Intercepted: /api/configuration');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -32,7 +50,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
 
   // Mock /user/claims endpoint - Return empty array (not authenticated)
   await page.route(url => url.toString().includes('/user/claims'), async (route) => {
-    console.log('[API Mock] Intercepted: /user/claims');
+    mockLog('[API Mock] Intercepted: /user/claims');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -42,7 +60,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
 
   // Mock /api/global/preferred-language endpoint
   await page.route(url => url.toString().includes('/api/global/preferred-language'), async (route) => {
-    console.log('[API Mock] Intercepted: /api/global/preferred-language');
+    mockLog('[API Mock] Intercepted: /api/global/preferred-language');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -52,7 +70,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
 
   // Mock /user/login endpoint - Authentication endpoint (must be before catch-all)
   await page.route(url => url.toString().includes('/user/login'), async (route) => {
-    console.log('[API Mock] Intercepted: /user/login (authentication)');
+    mockLog('[API Mock] Intercepted: /user/login (authentication)');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -66,7 +84,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
 
   // Mock /user/register endpoint
   await page.route(url => url.toString().includes('/user/register'), async (route) => {
-    console.log('[API Mock] Intercepted: /user/register');
+    mockLog('[API Mock] Intercepted: /user/register');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -76,7 +94,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
 
   // Mock /user/googleSignIn endpoint
   await page.route(url => url.toString().includes('/user/googleSignIn'), async (route) => {
-    console.log('[API Mock] Intercepted: /user/googleSignIn');
+    mockLog('[API Mock] Intercepted: /user/googleSignIn');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -90,7 +108,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
   
   // Mock /api/values/partners - Partners dropdown
   await page.route(url => url.toString().includes('/api/values/partners'), async (route) => {
-    console.log('[API Mock] Intercepted: /api/values/partners');
+    mockLog('[API Mock] Intercepted: /api/values/partners');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -104,7 +122,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
 
   // Mock /api/values/organization-units - Organization units dropdown
   await page.route(url => url.toString().includes('/api/values/organization-units'), async (route) => {
-    console.log('[API Mock] Intercepted: /api/values/organization-units');
+    mockLog('[API Mock] Intercepted: /api/values/organization-units');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -118,7 +136,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
 
   // Mock /api/partner-tree-structure - Hierarchical partner structure
   await page.route(url => url.toString().includes('/api/partner-tree-structure'), async (route) => {
-    console.log('[API Mock] Intercepted: /api/partner-tree-structure');
+    mockLog('[API Mock] Intercepted: /api/partner-tree-structure');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -142,7 +160,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
 
   // Mock /api/values/liaison-offices - Liaison offices dropdown
   await page.route(url => url.toString().includes('/api/values/liaison-offices'), async (route) => {
-    console.log('[API Mock] Intercepted: /api/values/liaison-offices');
+    mockLog('[API Mock] Intercepted: /api/values/liaison-offices');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -156,7 +174,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
 
   // Mock /api/values/contacts - Contacts dropdown
   await page.route(url => url.toString().includes('/api/values/contacts'), async (route) => {
-    console.log('[API Mock] Intercepted: /api/values/contacts');
+    mockLog('[API Mock] Intercepted: /api/values/contacts');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -170,7 +188,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
 
   // Mock /api/values/users/paged - Users paged endpoint (POST)
   await page.route(url => url.toString().includes('/api/values/users/paged'), async (route) => {
-    console.log('[API Mock] Intercepted: POST /api/values/users/paged');
+    mockLog('[API Mock] Intercepted: POST /api/values/users/paged');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -194,7 +212,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
   
   // Mock /api/values/salutations - Salutation dropdown (Mr., Ms., Dr., etc.)
   await page.route(url => url.toString().includes('/api/values/salutations'), async (route) => {
-    console.log('[API Mock] Intercepted: /api/values/salutations');
+    mockLog('[API Mock] Intercepted: /api/values/salutations');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -210,7 +228,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
 
   // Mock /api/values/status - Status dropdown (Active, Inactive, etc.)
   await page.route(url => url.toString().includes('/api/values/status'), async (route) => {
-    console.log('[API Mock] Intercepted: /api/values/status');
+    mockLog('[API Mock] Intercepted: /api/values/status');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -223,7 +241,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
 
   // Mock /api/values/pronouns - Pronouns dropdown
   await page.route(url => url.toString().includes('/api/values/pronouns'), async (route) => {
-    console.log('[API Mock] Intercepted: /api/values/pronouns');
+    mockLog('[API Mock] Intercepted: /api/values/pronouns');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -238,7 +256,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
 
   // Mock /api/values/countries - Countries dropdown
   await page.route(url => url.toString().includes('/api/values/countries'), async (route) => {
-    console.log('[API Mock] Intercepted: /api/values/countries');
+    mockLog('[API Mock] Intercepted: /api/values/countries');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -255,7 +273,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
 
   // Mock /api/values/states - States/Provinces dropdown
   await page.route(url => url.toString().includes('/api/values/states'), async (route) => {
-    console.log('[API Mock] Intercepted: /api/values/states');
+    mockLog('[API Mock] Intercepted: /api/values/states');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -279,7 +297,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
            !urlString.includes('/api/partner-tree-structure') &&
            !urlString.includes('/api/partner/');
   }, async (route) => {
-    console.log('[API Mock] Intercepted: GET /api/partner (list)');
+    mockLog('[API Mock] Intercepted: GET /api/partner (list)');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -296,7 +314,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
 
   // Mock /api/partner/search - Partner search endpoint
   await page.route(url => /\/api\/partner\/search/.test(url.toString()), async (route) => {
-    console.log('[API Mock] Intercepted: GET /api/partner/search');
+    mockLog('[API Mock] Intercepted: GET /api/partner/search');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -314,7 +332,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
     const urlString = url.toString();
     return /\/api\/contact(\?|$)/.test(urlString) && !urlString.includes('/api/contact/');
   }, async (route) => {
-    console.log('[API Mock] Intercepted: GET /api/contact (list)');
+    mockLog('[API Mock] Intercepted: GET /api/contact (list)');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -331,7 +349,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
 
   // Mock /api/contact/search - Contact search endpoint
   await page.route(url => /\/api\/contact\/search/.test(url.toString()), async (route) => {
-    console.log('[API Mock] Intercepted: GET /api/contact/search');
+    mockLog('[API Mock] Intercepted: GET /api/contact/search');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -350,7 +368,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
     const urlString = url.toString();
     return /\/api\/interactions?(\?|$)/.test(urlString) && !urlString.includes('/api/interaction/');
   }, async (route) => {
-    console.log('[API Mock] Intercepted: GET /api/interaction(s) (list)');
+    mockLog('[API Mock] Intercepted: GET /api/interaction(s) (list)');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -367,7 +385,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
 
   // Mock /api/interaction/search - Interaction search endpoint
   await page.route(url => /\/api\/interaction\/search/.test(url.toString()), async (route) => {
-    console.log('[API Mock] Intercepted: GET /api/interaction/search');
+    mockLog('[API Mock] Intercepted: GET /api/interaction/search');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -385,7 +403,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
     const urlString = url.toString();
     return /\/api\/opportunity(\?|$)/.test(urlString) && !urlString.includes('/api/opportunity/');
   }, async (route) => {
-    console.log('[API Mock] Intercepted: GET /api/opportunity (list)');
+    mockLog('[API Mock] Intercepted: GET /api/opportunity (list)');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -402,7 +420,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
 
   // Mock /api/opportunity/search - Opportunity search endpoint
   await page.route(url => /\/api\/opportunity\/search/.test(url.toString()), async (route) => {
-    console.log('[API Mock] Intercepted: GET /api/opportunity/search');
+    mockLog('[API Mock] Intercepted: GET /api/opportunity/search');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -426,7 +444,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
   }, async (route) => {
     const url = route.request().url();
     const partnerId = url.match(/\/api\/partner\/(\d+)/)?.[1] || '1';
-    console.log(`[API Mock] Intercepted: /api/partner/${partnerId}`);
+    mockLog(`[API Mock] Intercepted: /api/partner/${partnerId}`);
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -465,7 +483,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
     const urlString = url.toString();
     return /\/api\/partner\/\d+\/permissions/.test(urlString);
   }, async (route) => {
-    console.log('[API Mock] Intercepted: /api/partner/{id}/permissions');
+    mockLog('[API Mock] Intercepted: /api/partner/{id}/permissions');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -489,7 +507,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
     const url = route.request().url();
     const opportunityId = url.match(/\/api\/opportunity\/(\d+)/)?.[1] || '1';
     const id = parseInt(opportunityId);
-    console.log(`[API Mock] Intercepted: /api/opportunity/${opportunityId}`);
+    mockLog(`[API Mock] Intercepted: /api/opportunity/${opportunityId}`);
     
     // Different mock data based on ID for testing various states
     const stageByIdRange = id <= 3 ? 'Draft' : id <= 6 ? 'Active' : id <= 9 ? 'Pending Decision' : 'Active';
@@ -572,7 +590,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
     const urlString = url.toString();
     return /\/api\/opportunity\/\d+\/permissions/.test(urlString);
   }, async (route) => {
-    console.log('[API Mock] Intercepted: /api/opportunity/{id}/permissions');
+    mockLog('[API Mock] Intercepted: /api/opportunity/{id}/permissions');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -595,7 +613,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
   }, async (route) => {
     const url = route.request().url();
     const contactId = url.match(/\/api\/contact\/(\d+)/)?.[1] || '1';
-    console.log(`[API Mock] Intercepted: /api/contact/${contactId}`);
+    mockLog(`[API Mock] Intercepted: /api/contact/${contactId}`);
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -623,7 +641,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
   }, async (route) => {
     const url = route.request().url();
     const interactionId = url.match(/\/api\/interaction\/(\d+)/)?.[1] || '1';
-    console.log(`[API Mock] Intercepted: /api/interaction/${interactionId}`);
+    mockLog(`[API Mock] Intercepted: /api/interaction/${interactionId}`);
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -654,7 +672,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
     const urlString = url.toString();
     return /\/api\/workflow\/\w+\/\d+/.test(urlString);
   }, async (route) => {
-    console.log('[API Mock] Intercepted: /api/workflow/{entity}/{id}');
+    mockLog('[API Mock] Intercepted: /api/workflow/{entity}/{id}');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -714,7 +732,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
   }, async (route) => {
     const url = route.request().url();
     const method = route.request().method();
-    console.log(`[API Mock] Catch-all intercepted: ${method} ${url}`);
+    mockLog(`[API Mock] Catch-all intercepted: ${method} ${url}`);
     
     // Smart responses based on URL patterns
     if (method === 'GET') {
@@ -831,7 +849,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
     }
   });
 
-  console.log('[API Mock] All API routes configured (including catch-all)');
+  mockLog('[API Mock] All API routes configured (including catch-all)');
 }
 
 /**
@@ -843,7 +861,7 @@ export async function setupAuthenticatedUserMock(page: Page, email: string): Pro
   // Mock /user/claims endpoint - Return authenticated user claims
   await page.unroute(url => url.toString().includes('/user/claims')); // Remove existing mock
   await page.route(url => url.toString().includes('/user/claims'), async (route) => {
-    console.log('[API Mock] Intercepted: /user/claims (authenticated)');
+    mockLog('[API Mock] Intercepted: /user/claims (authenticated)');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -861,7 +879,7 @@ export async function setupAuthenticatedUserMock(page: Page, email: string): Pro
  * @param page - Playwright page object
  */
 export async function setupCameraMocks(page: Page): Promise<void> {
-  console.log('[API Mock] Setting up camera/MediaDevices mocks...');
+  mockLog('[API Mock] Setting up camera/MediaDevices mocks...');
   
   await page.addInitScript(() => {
     // Mock getUserMedia for camera access
@@ -946,7 +964,7 @@ export async function setupCameraMocks(page: Page): Promise<void> {
     }
   });
   
-  console.log('[API Mock] Camera/MediaDevices mocks configured');
+  mockLog('[API Mock] Camera/MediaDevices mocks configured');
 }
 
 /**
@@ -956,5 +974,5 @@ export async function setupCameraMocks(page: Page): Promise<void> {
 export async function clearAPIMocks(page: Page): Promise<void> {
   // Unroute all routes - Playwright allows unrouting all at once
   await page.unrouteAll({ behavior: 'ignoreErrors' });
-  console.log('[API Mock] All API routes cleared');
+  mockLog('[API Mock] All API routes cleared');
 }

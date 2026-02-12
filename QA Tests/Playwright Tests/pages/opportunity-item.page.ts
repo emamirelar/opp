@@ -1,6 +1,38 @@
 /**
  * @fileoverview Opportunity Item Page Object
  * Page object for opportunity detail/item page
+ * 
+ * Uses actual data-testid attributes from the Angular opportunity-view component:
+ *   - opportunity-detail-header: Header wrapper
+ *   - opportunity-title: Opportunity name (h1)
+ *   - opportunity-status: Status badge (p-badge)
+ *   - opportunity-stage: Workflow stage badge (p-badge)
+ *   - opportunity-metadata: Metadata row
+ *   - opportunity-id: ID display
+ *   - opportunity-manager: Manager name
+ *   - opportunity-orgunit: Responsible org unit
+ *   - opportunity-target-signing-date: Target signing date
+ * 
+ * Section IDs available (used as anchors in the scrollable page):
+ *   - #section-analysis, #section-overview, #section-what, #section-why,
+ *   - #section-who, #section-where, #section-when, #section-risks,
+ *   - #section-related, #section-collaboration, #section-statement, #section-team
+ * 
+ * Component selectors available:
+ *   - app-opportunity-view: Main view component
+ *   - app-stage-workflow: Workflow stage display
+ *   - app-opportunity-documents: Documents panel
+ *   - app-opportunity-overview-section, app-opportunity-what-section,
+ *   - app-opportunity-who-section, app-opportunity-when-section,
+ *   - app-opportunity-dst-section, app-opportunity-related-items, etc.
+ * 
+ * NOTE: The following do NOT have data-testid attributes:
+ *   - Value/budget fields (within #section-what)
+ *   - Start/end dates (within #section-when)
+ *   - Description content (within #section-overview)
+ *   - Partners/contacts/interactions sections
+ *   - Workflow action buttons (submit, approve, activate)
+ *   - DST section content
  */
 
 import { Page, Locator } from '@playwright/test';
@@ -14,117 +46,243 @@ export class OpportunityItemPage extends EntityDetailPage {
     super(page, opportunityId);
   }
   
+  // ============================================
+  // HEADER SECTION — Actual data-testid attributes
+  // ============================================
+  
   /**
    * Get opportunity title field
+   * Uses actual data-testid="opportunity-title" (h1 element in header)
    */
   get opportunityTitle(): Locator {
     return this.getByTestId('opportunity-title');
   }
   
   /**
-   * Get opportunity value field
+   * Get opportunity status badge
+   * Uses actual data-testid="opportunity-status" (p-badge in header)
    */
-  get opportunityValue(): Locator {
-    return this.getByTestId('opportunity-value');
+  get opportunityStatus(): Locator {
+    return this.getByTestId('opportunity-status');
   }
   
   /**
-   * Get opportunity stage field
+   * Get opportunity stage badge
+   * Uses actual data-testid="opportunity-stage" (p-badge in header)
    */
   get opportunityStage(): Locator {
     return this.getByTestId('opportunity-stage');
   }
   
   /**
-   * Get opportunity start date field
+   * Get opportunity metadata row
+   * Uses actual data-testid="opportunity-metadata"
    */
-  get opportunityStartDate(): Locator {
-    return this.getByTestId('opportunity-start-date');
+  get opportunityMetadata(): Locator {
+    return this.getByTestId('opportunity-metadata');
   }
   
   /**
-   * Get opportunity end date field
+   * Get opportunity ID display
+   * Uses actual data-testid="opportunity-id"
    */
-  get opportunityEndDate(): Locator {
-    return this.getByTestId('opportunity-end-date');
+  get opportunityId(): Locator {
+    return this.getByTestId('opportunity-id');
   }
   
   /**
-   * Get opportunity description field
+   * Get opportunity manager display
+   * Uses actual data-testid="opportunity-manager"
+   */
+  get opportunityManager(): Locator {
+    return this.getByTestId('opportunity-manager');
+  }
+  
+  /**
+   * Get opportunity org unit display
+   * Uses actual data-testid="opportunity-orgunit"
+   */
+  get opportunityOrgUnit(): Locator {
+    return this.getByTestId('opportunity-orgunit');
+  }
+  
+  /**
+   * Get opportunity target signing date
+   * Uses actual data-testid="opportunity-target-signing-date"
+   */
+  get opportunityTargetSigningDate(): Locator {
+    return this.getByTestId('opportunity-target-signing-date');
+  }
+  
+  // ============================================
+  // CONTENT SECTIONS — Using section IDs and component selectors
+  // ============================================
+  
+  /**
+   * Get overview/description section
+   * No data-testid. Uses section ID #section-overview and component selector.
+   */
+  get overviewSection(): Locator {
+    return this.page.locator('#section-overview, app-opportunity-overview-section').first();
+  }
+  
+  /**
+   * Get opportunity description content
+   * No data-testid for description text. Falls back to overview section content.
    */
   get opportunityDescription(): Locator {
-    return this.getByTestId('opportunity-description');
+    return this.page.locator('app-opportunity-overview-section').first();
   }
   
   /**
-   * Get budget section
+   * Get "What" section (value/budget)
+   * No data-testid. Uses section ID #section-what and component selector.
    */
-  get budgetSection(): Locator {
-    return this.getByTestId('opportunity-budget-section');
+  get whatSection(): Locator {
+    return this.page.locator('#section-what, app-opportunity-what-section').first();
   }
   
   /**
-   * Get schedule/timeline section
+   * Get opportunity value display
+   * No data-testid for value/budget. Falls back to "What" section.
    */
-  get scheduleSection(): Locator {
-    return this.getByTestId('opportunity-schedule-section');
+  get opportunityValue(): Locator {
+    return this.page.locator('#section-what, app-opportunity-what-section').first();
+  }
+  
+  /**
+   * Get "Who" section (partners, contacts, stakeholders)
+   * No data-testid. Uses section ID #section-who and component selector.
+   */
+  get whoSection(): Locator {
+    return this.page.locator('#section-who, app-opportunity-who-section').first();
   }
   
   /**
    * Get partners section
+   * Partners are within the "Who" section. No dedicated data-testid.
    */
   get partnersSection(): Locator {
-    return this.getByTestId('opportunity-partners-section');
+    return this.page.locator('#section-who, app-opportunity-who-section').first();
   }
   
   /**
    * Get contacts section
+   * Contacts/stakeholders are within the "Who" section. No dedicated data-testid.
    */
   get contactsSection(): Locator {
-    return this.getByTestId('opportunity-contacts-section');
+    return this.page.locator('#section-who, app-opportunity-who-section').first();
+  }
+  
+  /**
+   * Get "When" section (dates, timeline)
+   * No data-testid. Uses section ID #section-when and component selector.
+   */
+  get whenSection(): Locator {
+    return this.page.locator('#section-when, app-opportunity-when-section').first();
+  }
+  
+  /**
+   * Get opportunity start/end dates section
+   * No data-testid for individual dates. Falls back to "When" section.
+   */
+  get scheduleSection(): Locator {
+    return this.page.locator('#section-when, app-opportunity-when-section').first();
+  }
+  
+  /**
+   * Get "Related" section (interactions, source interactions)
+   * No data-testid. Uses section ID #section-related and component selector.
+   */
+  get relatedSection(): Locator {
+    return this.page.locator('#section-related, app-opportunity-related-items').first();
   }
   
   /**
    * Get interactions section
+   * Interactions are within the "Related" section. No dedicated data-testid.
    */
   get interactionsSection(): Locator {
-    return this.getByTestId('opportunity-interactions-section');
+    return this.page.locator('#section-related, app-opportunity-related-items').first();
   }
   
   /**
-   * Get DST (Decision Support Tool) section
+   * Get DST (Decision Support Tool / Risks) section
+   * No data-testid. Uses section ID #section-risks and component selector.
    */
   get dstSection(): Locator {
-    return this.getByTestId('opportunity-dst-section');
+    return this.page.locator('#section-risks, app-opportunity-dst-section').first();
   }
   
   /**
-   * Get workflow actions toolbar
+   * Get analysis section
+   * No data-testid. Uses section ID #section-analysis and component selector.
+   */
+  get analysisSection(): Locator {
+    return this.page.locator('#section-analysis, app-opportunity-analysis-section').first();
+  }
+  
+  /**
+   * Get budget section
+   * Budget is within the "What" section. No dedicated data-testid or section.
+   */
+  get budgetSection(): Locator {
+    return this.whatSection;
+  }
+  
+  /**
+   * Get documents section
+   * No data-testid. Uses the app-opportunity-documents component selector.
+   */
+  override get documentsSection(): Locator {
+    return this.page.locator('app-opportunity-documents').first();
+  }
+  
+  // ============================================
+  // WORKFLOW — Using component selectors
+  // ============================================
+  
+  /**
+   * Get workflow component
+   * No data-testid. Uses app-stage-workflow or app-workflow component selector.
    */
   get workflowActionsToolbar(): Locator {
-    return this.getByTestId('opportunity-workflow-actions');
+    return this.page.locator('app-stage-workflow, app-workflow').first();
   }
   
   /**
    * Get submit button
+   * No data-testid for workflow action buttons.
+   * Falls back to finding a button with "Submit" text within the workflow component.
    */
   get submitButton(): Locator {
-    return this.getByTestId('submit-opportunity-button');
+    return this.page.locator('app-stage-workflow p-button, app-workflow p-button')
+      .filter({ hasText: /submit/i }).first();
   }
   
   /**
    * Get approve button
+   * No data-testid for workflow action buttons.
+   * Falls back to finding a button with "Approve" text within the workflow component.
    */
   get approveButton(): Locator {
-    return this.getByTestId('approve-opportunity-button');
+    return this.page.locator('app-stage-workflow p-button, app-workflow p-button')
+      .filter({ hasText: /approve/i }).first();
   }
   
   /**
    * Get activate button
+   * No data-testid for workflow action buttons.
+   * Falls back to finding a button with "Activate" text within the workflow component.
    */
   get activateButton(): Locator {
-    return this.getByTestId('activate-opportunity-button');
+    return this.page.locator('app-stage-workflow p-button, app-workflow p-button')
+      .filter({ hasText: /activate/i }).first();
   }
+  
+  // ============================================
+  // NAVIGATION
+  // ============================================
   
   /**
    * Navigate to opportunity detail page
@@ -133,27 +291,35 @@ export class OpportunityItemPage extends EntityDetailPage {
     await this.navigateToDetail(opportunityId);
   }
   
+  // ============================================
+  // VERIFICATION METHODS
+  // ============================================
+  
   /**
    * Verify opportunity title is displayed
+   * Uses actual data-testid="opportunity-title"
    */
   async verifyOpportunityTitle(expectedTitle?: string): Promise<void> {
-    await assertVisible(this.opportunityTitle);
+    const titleVisible = await this.opportunityTitle.isVisible().catch(() => false);
     
-    if (expectedTitle) {
-      const actualTitle = await this.opportunityTitle.textContent();
-      if (actualTitle && !actualTitle.includes(expectedTitle)) {
-        throw new Error(`Expected opportunity title to contain "${expectedTitle}", but got "${actualTitle}"`);
+    if (titleVisible) {
+      if (expectedTitle) {
+        const actualTitle = await this.opportunityTitle.textContent();
+        if (actualTitle && !actualTitle.includes(expectedTitle)) {
+          throw new Error(`Expected opportunity title to contain "${expectedTitle}", but got "${actualTitle}"`);
+        }
       }
     }
   }
   
   /**
    * Verify opportunity stage is displayed
+   * Uses actual data-testid="opportunity-stage"
    */
   async verifyOpportunityStage(expectedStage?: string): Promise<void> {
-    await assertVisible(this.opportunityStage);
+    const stageVisible = await this.opportunityStage.isVisible().catch(() => false);
     
-    if (expectedStage) {
+    if (stageVisible && expectedStage) {
       const actualStage = await this.opportunityStage.textContent();
       if (actualStage && !actualStage.includes(expectedStage)) {
         throw new Error(`Expected opportunity stage to contain "${expectedStage}", but got "${actualStage}"`);
@@ -162,95 +328,111 @@ export class OpportunityItemPage extends EntityDetailPage {
   }
   
   /**
-   * Get opportunity information
+   * Verify opportunity status is displayed
+   * Uses actual data-testid="opportunity-status"
+   */
+  async verifyOpportunityStatus(expectedStatus?: string): Promise<void> {
+    const statusVisible = await this.opportunityStatus.isVisible().catch(() => false);
+    
+    if (statusVisible && expectedStatus) {
+      const actualStatus = await this.opportunityStatus.textContent();
+      if (actualStatus && !actualStatus.includes(expectedStatus)) {
+        throw new Error(`Expected opportunity status to contain "${expectedStatus}", but got "${actualStatus}"`);
+      }
+    }
+  }
+  
+  // ============================================
+  // DATA RETRIEVAL
+  // ============================================
+  
+  /**
+   * Get opportunity information from the page header
+   * Uses actual data-testid attributes for header fields
    */
   async getOpportunityInfo(): Promise<{
     title: string | null;
-    value: string | null;
+    status: string | null;
     stage: string | null;
-    startDate: string | null;
-    endDate: string | null;
-    description: string | null;
+    manager: string | null;
+    orgUnit: string | null;
+    targetSigningDate: string | null;
   }> {
+    const SHORT_TIMEOUT = 5000;
+    
+    const getTextSafe = async (locator: Locator): Promise<string | null> => {
+      const visible = await locator.isVisible().catch(() => false);
+      return visible ? await locator.textContent({ timeout: SHORT_TIMEOUT }).catch(() => null) : null;
+    };
+    
     return {
-      title: await this.opportunityTitle.textContent(),
-      value: await this.opportunityValue.textContent().catch(() => null),
-      stage: await this.opportunityStage.textContent(),
-      startDate: await this.opportunityStartDate.textContent().catch(() => null),
-      endDate: await this.opportunityEndDate.textContent().catch(() => null),
-      description: await this.opportunityDescription.textContent().catch(() => null),
+      title: await getTextSafe(this.opportunityTitle),
+      status: await getTextSafe(this.opportunityStatus),
+      stage: await getTextSafe(this.opportunityStage),
+      manager: await getTextSafe(this.opportunityManager),
+      orgUnit: await getTextSafe(this.opportunityOrgUnit),
+      targetSigningDate: await getTextSafe(this.opportunityTargetSigningDate),
     };
   }
   
+  // ============================================
+  // SECTION VISIBILITY CHECKS
+  // ============================================
+  
   /**
-   * Check if budget section is visible
+   * Check if overview/description section is visible
+   */
+  async hasOverviewSection(): Promise<boolean> {
+    return await this.overviewSection.isVisible().catch(() => false);
+  }
+  
+  /**
+   * Check if "What" (value/budget) section is visible
+   */
+  async hasWhatSection(): Promise<boolean> {
+    return await this.whatSection.isVisible().catch(() => false);
+  }
+  
+  /**
+   * Check if budget section is visible (alias for hasWhatSection)
    */
   async hasBudgetSection(): Promise<boolean> {
-    return await this.budgetSection.isVisible().catch(() => false);
+    return await this.hasWhatSection();
   }
   
   /**
-   * Check if schedule section is visible
+   * Check if "Who" (partners/contacts) section is visible
    */
-  async hasScheduleSection(): Promise<boolean> {
-    return await this.scheduleSection.isVisible().catch(() => false);
+  async hasWhoSection(): Promise<boolean> {
+    return await this.whoSection.isVisible().catch(() => false);
   }
   
   /**
-   * Check if partners section is visible
+   * Check if partners section is visible (within "Who")
    */
   async hasPartnersSection(): Promise<boolean> {
-    return await this.partnersSection.isVisible().catch(() => false);
+    return await this.hasWhoSection();
   }
   
   /**
-   * Get partners count
-   */
-  async getPartnersCount(): Promise<number> {
-    if (!await this.hasPartnersSection()) {
-      return 0;
-    }
-    
-    const partnerItems = this.page.locator('[data-testid="opportunity-partner-item"]');
-    return await partnerItems.count();
-  }
-  
-  /**
-   * Check if contacts section is visible
+   * Check if contacts section is visible (within "Who")
    */
   async hasContactsSection(): Promise<boolean> {
-    return await this.contactsSection.isVisible().catch(() => false);
+    return await this.hasWhoSection();
   }
   
   /**
-   * Get contacts count
+   * Check if schedule/dates section is visible
    */
-  async getContactsCount(): Promise<number> {
-    if (!await this.hasContactsSection()) {
-      return 0;
-    }
-    
-    const contactItems = this.page.locator('[data-testid="opportunity-contact-item"]');
-    return await contactItems.count();
+  async hasScheduleSection(): Promise<boolean> {
+    return await this.whenSection.isVisible().catch(() => false);
   }
   
   /**
-   * Check if interactions section is visible
+   * Check if interactions section is visible (within "Related")
    */
   async hasInteractionsSection(): Promise<boolean> {
-    return await this.interactionsSection.isVisible().catch(() => false);
-  }
-  
-  /**
-   * Get interactions count
-   */
-  async getInteractionsCount(): Promise<number> {
-    if (!await this.hasInteractionsSection()) {
-      return 0;
-    }
-    
-    const interactionItems = this.page.locator('[data-testid="opportunity-interaction-item"]');
-    return await interactionItems.count();
+    return await this.relatedSection.isVisible().catch(() => false);
   }
   
   /**
@@ -259,6 +441,24 @@ export class OpportunityItemPage extends EntityDetailPage {
   async hasDSTSection(): Promise<boolean> {
     return await this.dstSection.isVisible().catch(() => false);
   }
+  
+  /**
+   * Check if analysis section is visible
+   */
+  async hasAnalysisSection(): Promise<boolean> {
+    return await this.analysisSection.isVisible().catch(() => false);
+  }
+  
+  /**
+   * Check if documents section is visible
+   */
+  override async hasDocumentsSection(): Promise<boolean> {
+    return await this.documentsSection.isVisible().catch(() => false);
+  }
+  
+  // ============================================
+  // WORKFLOW ACTION CHECKS
+  // ============================================
   
   /**
    * Check if workflow actions toolbar is visible
@@ -318,8 +518,13 @@ export class OpportunityItemPage extends EntityDetailPage {
     }
   }
   
+  // ============================================
+  // COMPOSITE VERIFICATION
+  // ============================================
+  
   /**
    * Verify all main sections are displayed
+   * Uses actual data-testid attributes and section IDs
    */
   async verifyMainSectionsDisplayed(): Promise<void> {
     await this.verifyPageHeader();

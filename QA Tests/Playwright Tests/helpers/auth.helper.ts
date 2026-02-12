@@ -10,6 +10,18 @@ import { waitForPageReady, waitForAngularReady } from './wait.helper';
 import path from 'path';
 
 /**
+ * QA-041 FIX: Conditional logging to prevent memory exhaustion in large suite runs.
+ * Enable verbose auth logs with PLAYWRIGHT_DEBUG_AUTH=true environment variable.
+ */
+const DEBUG_AUTH = process.env.PLAYWRIGHT_DEBUG_AUTH === 'true' || process.env.PLAYWRIGHT_DEBUG_MOCKS === 'true';
+
+function authLog(message: string): void {
+  if (DEBUG_AUTH) {
+    console.log(message);
+  }
+}
+
+/**
  * ✅ REAL BACKEND AUTHENTICATION (Cookie-Based)
  * Use this for testing with real backend at http://localhost:5159
  * 
@@ -78,7 +90,7 @@ export async function authenticateWithRealBackend(
   
   // Step 2: Setup API mocks BEFORE navigation (FIX for DEF-001)
   // This ensures permission checks pass even when backend is not running
-  console.log('[Auth] Setting up API mocks for authenticateWithRealBackend...');
+  authLog('[Auth] Setting up API mocks for authenticateWithRealBackend...');
   await setupAPIMocks(page);
   
   // Step 3: Setup authenticated user claims mock
@@ -108,7 +120,7 @@ export async function authenticateWithRealBackend(
   await page.unroute(url => url.toString().includes('/user/claims'));
   await page.route(url => url.toString().includes('/user/claims'), async (route) => {
     const roleDesc = restrictedUser ? restrictedUser.roles.join(',') : 'Administrator';
-    console.log(`[API Mock] Intercepted: /user/claims (user=${testUserEmail}, roles=${roleDesc})`);
+    authLog(`[API Mock] Intercepted: /user/claims (user=${testUserEmail}, roles=${roleDesc})`);
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -120,11 +132,11 @@ export async function authenticateWithRealBackend(
   // setupAPIMocks() returns full admin permissions for all endpoints.
   // For restricted users, override the catch-all permission check to deny create/edit/delete.
   if (restrictedUser) {
-    console.log(`[Auth] Overriding permission mocks for restricted user: ${testUserEmail}`);
+    authLog(`[Auth] Overriding permission mocks for restricted user: ${testUserEmail}`);
     
     // Override /api/permissions/check/* — route-level permission checks
     await page.route(url => url.toString().includes('/api/permissions/check/'), async (route) => {
-      console.log(`[API Mock] Intercepted: /api/permissions/check/ (RESTRICTED for ${testUserEmail})`);
+      authLog(`[API Mock] Intercepted: /api/permissions/check/ (RESTRICTED for ${testUserEmail})`);
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -150,7 +162,7 @@ export async function authenticateWithRealBackend(
 
     // Override /api/{entity}/{id}/permissions — entity-level permission checks
     await page.route(url => /\/api\/\w+\/\d+\/permissions/.test(url.toString()), async (route) => {
-      console.log(`[API Mock] Intercepted: entity permissions (RESTRICTED for ${testUserEmail})`);
+      authLog(`[API Mock] Intercepted: entity permissions (RESTRICTED for ${testUserEmail})`);
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -192,7 +204,7 @@ export async function authenticateWithRealBackend(
   // Step 5: Navigate to target page with cookies and mocks already set
   const baseURL = 'http://127.0.0.1:4200';
   const fullUrl = targetUrl.startsWith('http') ? targetUrl : `${baseURL}${targetUrl}`;
-  console.log(`[Auth] Navigating to ${fullUrl} with mocks and cookies set...`);
+  authLog(`[Auth] Navigating to ${fullUrl} with mocks and cookies set...`);
   await page.goto(fullUrl);
   
   // Step 6: Wait for page to load (use 'load' not 'networkidle' for faster tests)
@@ -200,7 +212,7 @@ export async function authenticateWithRealBackend(
   
   // Step 7: Give Angular time to initialize routing
   await page.waitForTimeout(2000);
-  console.log('[Auth] authenticateWithRealBackend complete');
+  authLog('[Auth] authenticateWithRealBackend complete');
 }
 
 /**
@@ -233,48 +245,51 @@ export async function login(
   const userPassword = password || credentials.password;
   
   // Setup API mocks BEFORE navigation
-  console.log('[Auth] Setting up API mocks...');
+  authLog('[Auth] Setting up API mocks...');
   await setupAPIMocks(page);
   
   // Webkit: Give extra time for route handlers to be registered
   const webkit = isWebkitBrowser(page);
   if (webkit) {
     await page.waitForTimeout(500);
-    console.log('[Auth] API mocks ready (webkit extra wait applied)');
+    authLog('[Auth] API mocks ready (webkit extra wait applied)');
   }
   
-  // Listen for console errors and page crashes
-  page.on('console', msg => {
-    if (msg.type() === 'error') {
-      console.error('Browser console error:', msg.text());
-    }
-  });
-  
-  page.on('pageerror', error => {
-    console.error('Page error:', error.message);
-  });
-  
-  page.on('crash', () => {
-    console.error('Page crashed!');
-  });
+  // QA-041 FIX: Only attach event listeners when debugging to prevent memory accumulation.
+  // Previously these were attached for every login() call, generating thousands of log entries
+  // and accumulating event handlers across tests within the same worker process.
+  if (DEBUG_AUTH) {
+    page.on('console', msg => {
+      if (msg.type() === 'error') {
+        console.error('Browser console error:', msg.text());
+      }
+    });
+    
+    page.on('pageerror', error => {
+      console.error('Page error:', error.message);
+    });
+    
+    page.on('crash', () => {
+      console.error('Page crashed!');
+    });
 
-  // Log all network requests for debugging
-  page.on('request', request => {
-    const url = request.url();
-    const method = request.method();
-    if (url.includes('/api/') || url.includes('/user/')) {
-      console.log(`[Request] ${method} ${url}`);
-    }
-  });
+    page.on('request', request => {
+      const url = request.url();
+      const method = request.method();
+      if (url.includes('/api/') || url.includes('/user/')) {
+        console.log(`[Request] ${method} ${url}`);
+      }
+    });
+  }
   
   // Navigate to login page
   // Use baseURL from Playwright config or construct absolute URL
   const baseURL = (page.context() as any)._options?.baseURL || 'http://127.0.0.1:4200';
   const loginUrl = `${baseURL}/login`;
   
-  console.log(`Navigating to ${loginUrl}...`);
+  authLog(`Navigating to ${loginUrl}...`);
   if (webkit) {
-    console.log('[Auth] Webkit browser detected - using optimized navigation strategy');
+    authLog('[Auth] Webkit browser detected - using optimized navigation strategy');
   }
   
   try {
@@ -285,18 +300,18 @@ export async function login(
       // Webkit: use 2-minute timeout; Others: use 1-minute timeout
       timeout: webkit ? 120000 : 60000
     });
-    console.log('Navigation to /login complete');
+    authLog('Navigation to /login complete');
     
     // Additional stabilization for webkit
     if (webkit) {
-      console.log('[Auth] Webkit - adding stabilization waits');
+      authLog('[Auth] Webkit - adding stabilization waits');
       // Give webkit extra time to stabilize after DOM load
       await page.waitForTimeout(2000);
       // Wait for network to be idle
       await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {
-        console.log('[Auth] Network idle timeout (non-critical for webkit)');
+        authLog('[Auth] Network idle timeout (non-critical for webkit)');
       });
-      console.log('[Auth] Webkit stabilization complete');
+      authLog('[Auth] Webkit stabilization complete');
     }
   } catch (navError: any) {
     console.error('Navigation failed:', navError.message);
@@ -332,7 +347,7 @@ export async function login(
   // Now wait for auth check to complete if it's showing
   const isCheckingAuth = await page.locator('[data-testid="auth-checking-container"]').isVisible().catch(() => false);
   if (isCheckingAuth) {
-    console.log('Waiting for authentication check to complete...');
+    authLog('Waiting for authentication check to complete...');
     await page.waitForSelector('[data-testid="auth-checking-container"]', {
       state: 'hidden',
       timeout: getTimeout('long')
@@ -342,7 +357,7 @@ export async function login(
   // Check if already authenticated with IAP
   const isIapAuth = await page.locator('[data-testid="iap-authenticated-container"]').isVisible().catch(() => false);
   if (isIapAuth) {
-    console.log('Already authenticated with IAP, waiting for redirect...');
+    authLog('Already authenticated with IAP, waiting for redirect...');
     await page.waitForURL(/\/home|\/dashboard/, { timeout: getTimeout('default') });
     return;
   }
@@ -360,10 +375,10 @@ export async function login(
   
   // Before clicking login, update the /user/claims mock to return authenticated user
   // This simulates successful authentication
-  console.log('[Auth] Updating /user/claims mock to authenticated state...');
+  authLog('[Auth] Updating /user/claims mock to authenticated state...');
   await page.unroute(url => url.toString().includes('/user/claims')); // Remove unauthenticated mock
   await page.route(url => url.toString().includes('/user/claims'), async (route) => {
-    console.log('[API Mock] Intercepted: /user/claims (authenticated after login)');
+    authLog('[API Mock] Intercepted: /user/claims (authenticated after login)');
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -377,23 +392,23 @@ export async function login(
   });
   
   // Click login button and wait for navigation
-  console.log('Clicking login button...');
+  authLog('Clicking login button...');
   await Promise.all([
     page.waitForURL(url => {
       const path = new URL(url).pathname;
       // Accept root, home, or dashboard as valid redirect targets
       const validPaths = ['/', '/home', '/dashboard'];
       const isValid = validPaths.some(validPath => path === validPath || path.startsWith(validPath + '/'));
-      console.log(`[Auth] Navigation check: ${path} - Valid: ${isValid}`);
+      authLog(`[Auth] Navigation check: ${path} - Valid: ${isValid}`);
       return isValid;
     }, { timeout: getTimeout('long') }),
     page.locator('[data-testid="login-button"]').click(),
   ]);
   
-  console.log('Login successful! Redirected to:', page.url());
+  authLog('Login successful! Redirected to: ' + page.url());
   
   // Wait for any loading overlays to disappear after login
-  console.log('[Auth] Waiting for page to be ready after login...');
+  authLog('[Auth] Waiting for page to be ready after login...');
   await waitForPageReady(page);
 }
 
@@ -415,7 +430,7 @@ export async function loginAndNavigate(
   // Dismiss welcome tour dialog if present (appears after login on dashboard)
   // The dialog may take a moment to render, so we give it extra time
   // This dialog is modal and blocks navigation to other pages
-  console.log('[Auth] Checking for welcome tour dialog...');
+  authLog('[Auth] Checking for welcome tour dialog...');
   
   // Wait a bit for the dialog to appear (it renders after dashboard loads)
   await page.waitForTimeout(1000);
@@ -432,7 +447,7 @@ export async function loginAndNavigate(
       .catch(() => false);
     
     if (isDialogVisible) {
-      console.log(`[Auth] Dismissing welcome tour dialog (attempt ${attempt})...`);
+      authLog(`[Auth] Dismissing welcome tour dialog (attempt ${attempt})...`);
       try {
         // Click the Close button (X) to dismiss the dialog
         const closeButton = page.locator('[role="dialog"] button').first();
@@ -443,15 +458,15 @@ export async function loginAndNavigate(
         // Verify dialog is actually gone
         const stillVisible = await welcomeDialog.isVisible({ timeout: 500 }).catch(() => false);
         if (!stillVisible) {
-          console.log('[Auth] Welcome dialog dismissed successfully');
+          authLog('[Auth] Welcome dialog dismissed successfully');
           dialogDismissed = true;
           break;
         }
       } catch (error) {
-        console.log(`[Auth] Failed to dismiss dialog on attempt ${attempt}`);
+        authLog(`[Auth] Failed to dismiss dialog on attempt ${attempt}`);
       }
     } else if (attempt === 1) {
-      console.log('[Auth] No welcome dialog found, continuing...');
+      authLog('[Auth] No welcome dialog found, continuing...');
       break;
     }
     
@@ -465,10 +480,10 @@ export async function loginAndNavigate(
   const baseURL = (page.context() as any)._options?.baseURL || 'http://127.0.0.1:4200';
   const fullUrl = targetUrl.startsWith('http') ? targetUrl : `${baseURL}${targetUrl}`;
   
-  console.log(`[Auth] Navigating to ${fullUrl}...`);
+  authLog(`[Auth] Navigating to ${fullUrl}...`);
   await page.goto(fullUrl);
   await waitForPageReady(page);
-  console.log(`[Auth] Navigation to ${fullUrl} complete`);
+  authLog(`[Auth] Navigation to ${fullUrl} complete`);
 }
 
 /**

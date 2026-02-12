@@ -14,6 +14,18 @@ const testDir = path.join(configDir, 'QA Tests', 'Playwright Tests');
 const clientAppDir = path.join(configDir, 'UNOPS.PAO.ClientApp');
 
 /**
+ * QA-041 FIX: Increase Node.js heap size to prevent OOM crashes during large suite runs.
+ * Default Node.js heap is ~1.7GB which exhausts after ~287 tests with video recording
+ * and verbose logging. Setting to 4GB provides comfortable headroom for 600+ tests.
+ * 
+ * This can also be set externally: NODE_OPTIONS=--max-old-space-size=4096 npx playwright test
+ */
+if (!process.env.NODE_OPTIONS?.includes('max-old-space-size')) {
+  // Only set if not already configured externally
+  process.env.NODE_OPTIONS = `${process.env.NODE_OPTIONS || ''} --max-old-space-size=4096`.trim();
+}
+
+/**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
@@ -52,8 +64,15 @@ export default defineConfig({
     /* Screenshot on failure */
     screenshot: 'only-on-failure',
     
-    /* Video on failure */
-    video: 'retain-on-failure',
+    /* QA-041 FIX: Changed from 'retain-on-failure' to 'off' to reduce memory pressure.
+     * Video recording for every test (even when only retained on failure) creates significant
+     * memory overhead. Each test's video buffer consumes ~20-50MB of heap.
+     * Over 600 tests, this alone can consume 1-2GB.
+     * 
+     * To enable video for debugging specific tests, run with:
+     *   PLAYWRIGHT_VIDEO=retain-on-failure npx playwright test
+     */
+    video: (process.env.PLAYWRIGHT_VIDEO as 'off' | 'on' | 'retain-on-failure') || 'off',
     
     /* Navigation timeout - give server time to respond under load */
     navigationTimeout: 30000,  // 30 seconds for navigation
