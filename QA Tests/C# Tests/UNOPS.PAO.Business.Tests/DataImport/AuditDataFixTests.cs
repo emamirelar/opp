@@ -11,6 +11,7 @@ using Moq;
 using UNOPS.PAO.Business.Tests.TestBase;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.UNOPSDomain.Entities;
 using Xunit;
 
 namespace UNOPS.PAO.Business.Tests.DataImport;
@@ -42,7 +43,7 @@ public class AuditDataFixTests : IDisposable
     public async Task AuditFix_WhenUserIdIsMinusOne_ShouldBeRecognizedAsSystemUser()
     {
         // Arrange - Create partner with system user (-1) as creator
-        var partner = new Partner
+        var partner = new UNOPSPartner
         {
             Name = "Test Partner",
             PartnerShortDescription = "Test Description",
@@ -70,7 +71,7 @@ public class AuditDataFixTests : IDisposable
     public async Task AuditFix_WhenCreatedByIsLarsJUser_ShouldBeUpdatedToSystemUser()
     {
         // Arrange - Simulate partner with legacy larsJUser (value 0)
-        var partner = new Partner
+        var partner = new UNOPSPartner
         {
             Name = "Legacy Partner",
             PartnerShortDescription = "Legacy Description",
@@ -117,7 +118,7 @@ public class AuditDataFixTests : IDisposable
     public async Task PartnerAuditFix_ShouldPreserveLastModifiedDateDuringFix()
     {
         // Arrange
-        var partner = new Partner
+        var partner = new UNOPSPartner
         {
             Name = "Partner With History",
             PartnerShortDescription = "Has audit history",
@@ -147,12 +148,12 @@ public class AuditDataFixTests : IDisposable
     public async Task PartnerAuditFix_WhenMultiplePartnersNeedFix_ShouldFixAll()
     {
         // Arrange - Create multiple partners with legacy user IDs
-        var partners = new List<Partner>
+        var partners = new List<UNOPSPartner>
         {
-            new Partner { Name = "Partner 1", PartnerShortDescription = "Desc 1", CreatedBy = LARS_USER_ID, LastModifiedBy = LARS_USER_ID, Status = EntityStatus.Active },
-            new Partner { Name = "Partner 2", PartnerShortDescription = "Desc 2", CreatedBy = LARS_USER_ID, LastModifiedBy = 1, Status = EntityStatus.Active },
-            new Partner { Name = "Partner 3", PartnerShortDescription = "Desc 3", CreatedBy = 1, LastModifiedBy = LARS_USER_ID, Status = EntityStatus.Active },
-            new Partner { Name = "Partner 4", PartnerShortDescription = "Desc 4", CreatedBy = 1, LastModifiedBy = 1, Status = EntityStatus.Active }
+            new UNOPSPartner { Name = "Partner 1", PartnerShortDescription = "Desc 1", CreatedBy = LARS_USER_ID, LastModifiedBy = LARS_USER_ID, Status = EntityStatus.Active },
+            new UNOPSPartner { Name = "Partner 2", PartnerShortDescription = "Desc 2", CreatedBy = LARS_USER_ID, LastModifiedBy = 1, Status = EntityStatus.Active },
+            new UNOPSPartner { Name = "Partner 3", PartnerShortDescription = "Desc 3", CreatedBy = 1, LastModifiedBy = LARS_USER_ID, Status = EntityStatus.Active },
+            new UNOPSPartner { Name = "Partner 4", PartnerShortDescription = "Desc 4", CreatedBy = 1, LastModifiedBy = 1, Status = EntityStatus.Active }
         };
 
         await _context.Partners.AddRangeAsync(partners);
@@ -187,7 +188,7 @@ public class AuditDataFixTests : IDisposable
     public async Task InteractionAuditFix_ShouldUpdateSystemUserAuditFields()
     {
         // Arrange
-        var interaction = new Interaction
+        var interaction = new UNOPSInteraction
         {
             Name = "Test Interaction",
             Subject = "Test Interaction",
@@ -221,10 +222,10 @@ public class AuditDataFixTests : IDisposable
     public async Task AuditFix_WhenNoRecordsNeedFix_ShouldCompleteWithoutErrors()
     {
         // Arrange - Create partners with valid user IDs only
-        var partners = new List<Partner>
+        var partners = new List<UNOPSPartner>
         {
-            new Partner { Name = "Valid Partner 1", PartnerShortDescription = "Desc", CreatedBy = 1, LastModifiedBy = 1 },
-            new Partner { Name = "Valid Partner 2", PartnerShortDescription = "Desc", CreatedBy = 2, LastModifiedBy = 2 }
+            new UNOPSPartner { Name = "Valid Partner 1", PartnerShortDescription = "Desc", CreatedBy = 1, LastModifiedBy = 1 },
+            new UNOPSPartner { Name = "Valid Partner 2", PartnerShortDescription = "Desc", CreatedBy = 2, LastModifiedBy = 2 }
         };
 
         await _context.Partners.AddRangeAsync(partners);
@@ -243,7 +244,7 @@ public class AuditDataFixTests : IDisposable
     public async Task AuditFix_WhenPartnerHasMixedAuditFields_ShouldOnlyFixInvalidOnes()
     {
         // Arrange - Partner created by system but modified by regular user
-        var partner = new Partner
+        var partner = new UNOPSPartner
         {
             Name = "Mixed Audit Partner",
             PartnerShortDescription = "Mixed",
@@ -300,7 +301,7 @@ public class AuditDataFixTests : IDisposable
         using (var setupContext = TestDbContextFactory.Create(dbName))
         {
             var partners = Enumerable.Range(1, 10)
-                .Select(i => new Partner
+                .Select(i => new UNOPSPartner
                 {
                     Name = $"Concurrent Partner {i}",
                     PartnerShortDescription = $"Description {i}",

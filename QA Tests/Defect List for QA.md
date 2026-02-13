@@ -280,7 +280,7 @@ Per documentation: "Go to oUP" button is only testable in production.
 
 **Manual QA Status:**
 - **2 PASSED:** TC-005 (OM Cancel), TC-007 (OM Reopen from Cancelled) — verified by Silvia on QA env, 2026-02-10
-- **~3 BLOCKED:** TC-039 (PNO-1193 OM role transfer), TC-033 (inactive OM needs DB deactivation), TC-042 (Collaborator not implemented)
+- **~2 BLOCKED:** TC-039 (PNO-1193 OM role transfer), TC-033 (inactive OM needs DB deactivation)
 - **~50 AWAITING:** Require systematic QA execution pass on QA/TEST environment
 
 **Active Bugs Affecting Tests:**
@@ -292,7 +292,7 @@ Per documentation: "Go to oUP" button is only testable in production.
 - Automated tests: ✅ **509 passed, 0 failed, 60 skipped** (all skips intentional)
 - Manual QA: 🟡 In progress — 2/55 passed, ~50 awaiting execution
 - Playwright automation: ⬜ Scaffolded in `go-decision.spec.ts`, conditional skips for unimplemented features
-- Execution: 🟡 Partially unblocked — core workflow testable, Collaborator role + notifications still blocked
+- Execution: 🟡 Partially unblocked — core workflow testable, notifications still blocked. Collaborator assignment feature confirmed implemented (2026-02-13)
 
 **Related Files:**
 - Test Cases (authoritative): `QA Tests/Opportunity Tests/BusinessLogic/PNO-969_GoDecision_TestCases.md` (397 tests, 10 categories, 2026-02-11)
@@ -426,7 +426,7 @@ Three compounding factors caused Node.js OOM after ~287 tests:
   - **Playwright Tests:** 1 passed, 20 skipped (`GO_DECISION_IMPLEMENTED` env var not set)
   - **2 of 55 manual test cases PASSED** (TC-005 Cancel, TC-007 Reopen — Silvia verified on QA)
   - **~50 manual test cases AWAITING** systematic QA execution
-  - **~3 test cases BLOCKED** by PNO-1193 (role transfer), inactive OM (DB), Collaborator (not implemented)
+  - **~2 test cases BLOCKED** by PNO-1193 (role transfer), inactive OM (DB). Collaborator blocker resolved — feature is implemented as assignment, not a role (2026-02-13)
   - **2 new developer defects discovered:** DEF-010 (PNO-1193), DEF-011 (PNO-1171)
   - **0 new defects from automated execution** — all tests passed or skipped intentionally
 - **Full Suite Re-Execution (2026-02-09):**
@@ -769,7 +769,7 @@ Three compounding factors caused Node.js OOM after ~287 tests:
 | **QA-009 (InMemory DB)** | **~72+ Opportunity tests** | Need real PostgreSQL or repository mocking |
 | ~~QA-039 (Permission Mock)~~ | ~~1 Playwright test~~ | ✅ **RESOLVED (2026-02-09)** - Added RESTRICTED_TEST_USERS map + permission overrides |
 | QA-014 (oUP Credentials) | 34+ Playwright + C# tests | Request credentials from IT |
-| DEF-008 (Go Decision) | 60 automated skips (40 C# + 20 Playwright) + ~3 manual blocked + ~50 manual awaiting | Core workflow operational — **509 automated passed, 0 failed**. Collaborator, notifications, UI remain |
+| DEF-008 (Go Decision) | 60 automated skips (40 C# + 20 Playwright) + ~2 manual blocked + ~50 manual awaiting | Core workflow operational — **532 automated passed, 0 failed** (2026-02-13). Collaborator assignment confirmed implemented. Notifications, UI remain |
 | DEF-010 (PNO-1193) | TC-039 + role transfer tests | OM role transfer not working |
 | DEF-011 (PNO-1171) | TC-030 (workflow history accuracy) | Reject appears twice in history |
 | QA-008 (PrimeNG Dialog) | ~5 Playwright tests (all skipped, 0 failing) | ✅ All dialog tests now use conditional `test.skip()` |

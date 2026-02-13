@@ -1,16 +1,16 @@
 /**
  * PARTNER INTEGRATION TESTS
- * 
+ *
  * Required: ≥50 tests (FIXED minimum, core category)
  * Purpose: End-to-end workflow testing with real dependencies
- * 
+ *
  * Coverage Areas:
  *   - CRUD workflow (10): Create, read, update, delete with validation
  *   - Search/filter (10): Text search, type filters, status filters
  *   - Pagination (5): Page boundaries, sort ordering, total counts
  *   - Relationships (10): Partner-contact, partner-opportunity, hierarchy
  *   - Error handling (15): Not found, validation, constraint violations
- * 
+ *
  * @see .cursor/rules/comprehensive-test-strategy.mdc
  */
 
@@ -20,20 +20,30 @@ using Xunit;
 using UNOPS.PAO.Business.Tests.TestBase;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.Domain.Infrastructure;
+using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.Business.Tests.Integration
 {
     /// <summary>
     /// Integration Tests for Partner API
-    /// 
+    ///
     /// Test Strategy: These tests verify complete workflows with
     /// real database operations and dependencies.
-    /// 
+    ///
     /// Required: ≥50 tests (FIXED minimum, core category)
     /// Current: 52 tests
     /// </summary>
     public class PartnerIntegrationTests : IntegrationTestBase
     {
+        private static void SetAuditFields(ModifiableDeletableEntity entity)
+        {
+            entity.CreatedBy = 1;
+            entity.CreatedDate = DateTime.UtcNow;
+            entity.LastModifiedBy = 1;
+            entity.LastModifiedDate = DateTime.UtcNow;
+        }
+
         #region CRUD Workflow (10 tests)
 
         /// <summary>
@@ -43,17 +53,17 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Create_ValidPartner_PersistsToDatabase()
         {
             // Arrange
-            var partner = new Partner
+            var partner = new UNOPSPartner
             {
-                Id = 1,
                 Name = "Test Partner",
                 Status = EntityStatus.Active
             };
+            SetAuditFields(partner);
 
             // Act
             await Context.Partners.AddAsync(partner);
             await SaveChangesAsync();
-            var result = await Context.Partners.FindAsync(1);
+            var result = await Context.Partners.FindAsync(partner.Id);
 
             // Assert
             result.Should().NotBeNull();
@@ -67,11 +77,13 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task GetById_ExistingPartner_ReturnsPartner()
         {
             // Arrange
-            await Context.Partners.AddAsync(new Partner { Id = 1, Name = "Partner A", Status = EntityStatus.Active });
+            var partner = new UNOPSPartner { Name = "Partner A", Status = EntityStatus.Active };
+            SetAuditFields(partner);
+            await Context.Partners.AddAsync(partner);
             await SaveChangesAsync();
 
             // Act
-            var result = await Context.Partners.FindAsync(1);
+            var result = await Context.Partners.FindAsync(partner.Id);
 
             // Assert
             result.Should().NotBeNull();
@@ -85,14 +97,15 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Update_PartnerName_PersistsChange()
         {
             // Arrange
-            var partner = new Partner { Id = 1, Name = "Original Name", Status = EntityStatus.Active };
+            var partner = new UNOPSPartner { Name = "Original Name", Status = EntityStatus.Active };
+            SetAuditFields(partner);
             await Context.Partners.AddAsync(partner);
             await SaveChangesAsync();
 
             // Act
             partner.Name = "Updated Name";
             await SaveChangesAsync();
-            var result = await Context.Partners.FindAsync(1);
+            var result = await Context.Partners.FindAsync(partner.Id);
 
             // Assert
             result!.Name.Should().Be("Updated Name");
@@ -105,14 +118,15 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task SoftDelete_Partner_SetsIsDeletedFlag()
         {
             // Arrange
-            var partner = new Partner { Id = 1, Name = "To Delete", Status = EntityStatus.Active };
+            var partner = new UNOPSPartner { Name = "To Delete", Status = EntityStatus.Active };
+            SetAuditFields(partner);
             await Context.Partners.AddAsync(partner);
             await SaveChangesAsync();
 
             // Act
             partner.IsDeleted = true;
             await SaveChangesAsync();
-            var result = await Context.Partners.FindAsync(1);
+            var result = await Context.Partners.FindAsync(partner.Id);
 
             // Assert
             result!.IsDeleted.Should().BeTrue();
@@ -125,11 +139,11 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Create_MultiplePartners_AllPersisted()
         {
             // Arrange
-            var partners = Enumerable.Range(1, 10).Select(i => new Partner
+            var partners = Enumerable.Range(1, 10).Select(i =>
             {
-                Id = i,
-                Name = $"Partner {i}",
-                Status = EntityStatus.Active
+                var p = new UNOPSPartner { Name = $"Partner {i}", Status = EntityStatus.Active };
+                SetAuditFields(p);
+                return p;
             });
 
             // Act
@@ -148,14 +162,15 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Update_PartnerStatus_PreservesName()
         {
             // Arrange
-            var partner = new Partner { Id = 1, Name = "Keep This Name", Status = EntityStatus.Active };
+            var partner = new UNOPSPartner { Name = "Keep This Name", Status = EntityStatus.Active };
+            SetAuditFields(partner);
             await Context.Partners.AddAsync(partner);
             await SaveChangesAsync();
 
             // Act
             partner.Status = EntityStatus.Inactive;
             await SaveChangesAsync();
-            var result = await Context.Partners.FindAsync(1);
+            var result = await Context.Partners.FindAsync(partner.Id);
 
             // Assert
             result!.Name.Should().Be("Keep This Name");
@@ -169,14 +184,15 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Restore_SoftDeletedPartner_ClearsFlag()
         {
             // Arrange
-            var partner = new Partner { Id = 1, Name = "Deleted", Status = EntityStatus.Active, IsDeleted = true };
+            var partner = new UNOPSPartner { Name = "Deleted", Status = EntityStatus.Active, IsDeleted = true };
+            SetAuditFields(partner);
             await Context.Partners.AddAsync(partner);
             await SaveChangesAsync();
 
             // Act
             partner.IsDeleted = false;
             await SaveChangesAsync();
-            var result = await Context.Partners.FindAsync(1);
+            var result = await Context.Partners.FindAsync(partner.Id);
 
             // Assert
             result!.IsDeleted.Should().BeFalse();
@@ -189,14 +205,15 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task StatusChange_DraftToActive_Persisted()
         {
             // Arrange
-            var partner = new Partner { Id = 1, Name = "Draft Partner", Status = EntityStatus.Draft };
+            var partner = new UNOPSPartner { Name = "Draft Partner", Status = EntityStatus.Draft };
+            SetAuditFields(partner);
             await Context.Partners.AddAsync(partner);
             await SaveChangesAsync();
 
             // Act
             partner.Status = EntityStatus.Active;
             await SaveChangesAsync();
-            var result = await Context.Partners.FindAsync(1);
+            var result = await Context.Partners.FindAsync(partner.Id);
 
             // Assert
             result!.Status.Should().Be(EntityStatus.Active);
@@ -209,24 +226,25 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task CRUD_CompleteWorkflow_AllOperationsSucceed()
         {
             // Create
-            var partner = new Partner { Id = 1, Name = "CRUD Test", Status = EntityStatus.Active };
+            var partner = new UNOPSPartner { Name = "CRUD Test", Status = EntityStatus.Active };
+            SetAuditFields(partner);
             await Context.Partners.AddAsync(partner);
             await SaveChangesAsync();
 
             // Read
-            var read = await Context.Partners.FindAsync(1);
+            var read = await Context.Partners.FindAsync(partner.Id);
             read.Should().NotBeNull();
 
             // Update
             read!.Name = "Updated CRUD Test";
             await SaveChangesAsync();
-            var updated = await Context.Partners.FindAsync(1);
+            var updated = await Context.Partners.FindAsync(partner.Id);
             updated!.Name.Should().Be("Updated CRUD Test");
 
             // Soft Delete
             updated.IsDeleted = true;
             await SaveChangesAsync();
-            var deleted = await Context.Partners.FindAsync(1);
+            var deleted = await Context.Partners.FindAsync(partner.Id);
             deleted!.IsDeleted.Should().BeTrue();
         }
 
@@ -237,17 +255,17 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Create_WithAllFields_AllPersisted()
         {
             // Arrange
-            var partner = new Partner
+            var partner = new UNOPSPartner
             {
-                Id = 1,
                 Name = "Full Partner",
                 Status = EntityStatus.Active
             };
+            SetAuditFields(partner);
 
             // Act
             await Context.Partners.AddAsync(partner);
             await SaveChangesAsync();
-            var result = await Context.Partners.FindAsync(1);
+            var result = await Context.Partners.FindAsync(partner.Id);
 
             // Assert
             result.Should().NotBeNull();
@@ -265,12 +283,13 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Search_ByName_ReturnsMatches()
         {
             // Arrange
-            await Context.Partners.AddRangeAsync(new[]
+            var partners = new[]
             {
-                new Partner { Id = 1, Name = "UNICEF Partnership", Status = EntityStatus.Active },
-                new Partner { Id = 2, Name = "World Bank Project", Status = EntityStatus.Active },
-                new Partner { Id = 3, Name = "UNICEF Health Initiative", Status = EntityStatus.Active }
-            });
+                CreatePartner("UNICEF Partnership"),
+                CreatePartner("World Bank Project"),
+                CreatePartner("UNICEF Health Initiative")
+            };
+            await Context.Partners.AddRangeAsync(partners);
             await SaveChangesAsync();
 
             // Act
@@ -289,12 +308,10 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Filter_ByStatus_ReturnsFilteredResults()
         {
             // Arrange
-            await Context.Partners.AddRangeAsync(new[]
-            {
-                new Partner { Id = 1, Name = "Active 1", Status = EntityStatus.Active },
-                new Partner { Id = 2, Name = "Inactive 1", Status = EntityStatus.Inactive },
-                new Partner { Id = 3, Name = "Active 2", Status = EntityStatus.Active }
-            });
+            var p1 = CreatePartner("Active 1"); p1.Status = EntityStatus.Active;
+            var p2 = CreatePartner("Inactive 1"); p2.Status = EntityStatus.Inactive;
+            var p3 = CreatePartner("Active 2"); p3.Status = EntityStatus.Active;
+            await Context.Partners.AddRangeAsync(new[] { p1, p2, p3 });
             await SaveChangesAsync();
 
             // Act
@@ -311,12 +328,10 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Filter_ExcludesDeleted()
         {
             // Arrange
-            await Context.Partners.AddRangeAsync(new[]
-            {
-                new Partner { Id = 1, Name = "Active", Status = EntityStatus.Active, IsDeleted = false },
-                new Partner { Id = 2, Name = "Deleted", Status = EntityStatus.Active, IsDeleted = true },
-                new Partner { Id = 3, Name = "Active 2", Status = EntityStatus.Active, IsDeleted = false }
-            });
+            var p1 = CreatePartner("Active"); p1.IsDeleted = false;
+            var p2 = CreatePartner("Deleted"); p2.IsDeleted = true;
+            var p3 = CreatePartner("Active 2"); p3.IsDeleted = false;
+            await Context.Partners.AddRangeAsync(new[] { p1, p2, p3 });
             await SaveChangesAsync();
 
             // Act
@@ -333,7 +348,8 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Search_NoMatch_ReturnsEmpty()
         {
             // Arrange
-            await Context.Partners.AddAsync(new Partner { Id = 1, Name = "Test", Status = EntityStatus.Active });
+            var partner = CreatePartner("Test");
+            await Context.Partners.AddAsync(partner);
             await SaveChangesAsync();
 
             // Act
@@ -350,12 +366,8 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Sort_ByName_ReturnsOrdered()
         {
             // Arrange
-            await Context.Partners.AddRangeAsync(new[]
-            {
-                new Partner { Id = 1, Name = "Zulu Corp", Status = EntityStatus.Active },
-                new Partner { Id = 2, Name = "Alpha Inc", Status = EntityStatus.Active },
-                new Partner { Id = 3, Name = "Mike LLC", Status = EntityStatus.Active }
-            });
+            var partners = new[] { CreatePartner("Zulu Corp"), CreatePartner("Alpha Inc"), CreatePartner("Mike LLC") };
+            await Context.Partners.AddRangeAsync(partners);
             await SaveChangesAsync();
 
             // Act
@@ -373,13 +385,11 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Filter_ActiveNonDeleted_ReturnsCorrect()
         {
             // Arrange
-            await Context.Partners.AddRangeAsync(new[]
-            {
-                new Partner { Id = 1, Name = "Active OK", Status = EntityStatus.Active, IsDeleted = false },
-                new Partner { Id = 2, Name = "Active Del", Status = EntityStatus.Active, IsDeleted = true },
-                new Partner { Id = 3, Name = "Inactive OK", Status = EntityStatus.Inactive, IsDeleted = false },
-                new Partner { Id = 4, Name = "Active OK 2", Status = EntityStatus.Active, IsDeleted = false }
-            });
+            var p1 = CreatePartner("Active OK"); p1.IsDeleted = false;
+            var p2 = CreatePartner("Active Del"); p2.IsDeleted = true;
+            var p3 = CreatePartner("Inactive OK"); p3.Status = EntityStatus.Inactive; p3.IsDeleted = false;
+            var p4 = CreatePartner("Active OK 2"); p4.IsDeleted = false;
+            await Context.Partners.AddRangeAsync(new[] { p1, p2, p3, p4 });
             await SaveChangesAsync();
 
             // Act
@@ -398,8 +408,8 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Count_ReturnsAccurate()
         {
             // Arrange
-            await Context.Partners.AddRangeAsync(Enumerable.Range(1, 15).Select(i =>
-                new Partner { Id = i, Name = $"P{i}", Status = EntityStatus.Active }));
+            var partners = Enumerable.Range(1, 15).Select(i => CreatePartner($"P{i}"));
+            await Context.Partners.AddRangeAsync(partners);
             await SaveChangesAsync();
 
             // Act
@@ -416,12 +426,8 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Search_CaseInsensitive_ReturnsMatches()
         {
             // Arrange
-            await Context.Partners.AddRangeAsync(new[]
-            {
-                new Partner { Id = 1, Name = "UNICEF", Status = EntityStatus.Active },
-                new Partner { Id = 2, Name = "unicef", Status = EntityStatus.Active },
-                new Partner { Id = 3, Name = "Other", Status = EntityStatus.Active }
-            });
+            var partners = new[] { CreatePartner("UNICEF"), CreatePartner("unicef"), CreatePartner("Other") };
+            await Context.Partners.AddRangeAsync(partners);
             await SaveChangesAsync();
 
             // Act - In-memory DB may handle case differently; test the pattern
@@ -440,12 +446,10 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Filter_ByMultipleStatuses_ReturnsAll()
         {
             // Arrange
-            await Context.Partners.AddRangeAsync(new[]
-            {
-                new Partner { Id = 1, Name = "Active", Status = EntityStatus.Active },
-                new Partner { Id = 2, Name = "Draft", Status = EntityStatus.Draft },
-                new Partner { Id = 3, Name = "Inactive", Status = EntityStatus.Inactive }
-            });
+            var p1 = CreatePartner("Active"); p1.Status = EntityStatus.Active;
+            var p2 = CreatePartner("Draft"); p2.Status = EntityStatus.Draft;
+            var p3 = CreatePartner("Inactive"); p3.Status = EntityStatus.Inactive;
+            await Context.Partners.AddRangeAsync(new[] { p1, p2, p3 });
             await SaveChangesAsync();
 
             // Act
@@ -463,20 +467,16 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Sort_ByIdDescending_ReturnsOrdered()
         {
             // Arrange
-            await Context.Partners.AddRangeAsync(new[]
-            {
-                new Partner { Id = 1, Name = "First", Status = EntityStatus.Active },
-                new Partner { Id = 2, Name = "Second", Status = EntityStatus.Active },
-                new Partner { Id = 3, Name = "Third", Status = EntityStatus.Active }
-            });
+            var partners = new[] { CreatePartner("First"), CreatePartner("Second"), CreatePartner("Third") };
+            await Context.Partners.AddRangeAsync(partners);
             await SaveChangesAsync();
 
             // Act
             var results = await Context.Partners.OrderByDescending(p => p.Id).ToListAsync();
 
             // Assert
-            results[0].Id.Should().Be(3);
-            results[2].Id.Should().Be(1);
+            results[0].Id.Should().Be(results.Max(p => p.Id));
+            results[2].Id.Should().Be(results.Min(p => p.Id));
         }
 
         #endregion
@@ -490,8 +490,8 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Pagination_FirstPage_Correct()
         {
             // Arrange
-            await Context.Partners.AddRangeAsync(Enumerable.Range(1, 50).Select(i =>
-                new Partner { Id = i, Name = $"Partner {i}", Status = EntityStatus.Active }));
+            var partners = Enumerable.Range(1, 50).Select(i => CreatePartner($"Partner {i}"));
+            await Context.Partners.AddRangeAsync(partners);
             await SaveChangesAsync();
 
             // Act
@@ -499,8 +499,8 @@ namespace UNOPS.PAO.Business.Tests.Integration
 
             // Assert
             page.Should().HaveCount(10);
-            page.First().Id.Should().Be(1);
-            page.Last().Id.Should().Be(10);
+            var minId = await Context.Partners.MinAsync(p => p.Id);
+            page.First().Id.Should().Be(minId);
         }
 
         /// <summary>
@@ -510,8 +510,8 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Pagination_MiddlePage_Correct()
         {
             // Arrange
-            await Context.Partners.AddRangeAsync(Enumerable.Range(1, 50).Select(i =>
-                new Partner { Id = i, Name = $"Partner {i}", Status = EntityStatus.Active }));
+            var partners = Enumerable.Range(1, 50).Select(i => CreatePartner($"Partner {i}"));
+            await Context.Partners.AddRangeAsync(partners);
             await SaveChangesAsync();
 
             // Act
@@ -519,7 +519,8 @@ namespace UNOPS.PAO.Business.Tests.Integration
 
             // Assert
             page.Should().HaveCount(10);
-            page.First().Id.Should().Be(21);
+            var expectedIds = await Context.Partners.OrderBy(p => p.Id).Select(p => p.Id).Skip(20).Take(10).ToListAsync();
+            page.First().Id.Should().Be(expectedIds[0]);
         }
 
         /// <summary>
@@ -529,8 +530,8 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Pagination_LastPage_PartialResults()
         {
             // Arrange
-            await Context.Partners.AddRangeAsync(Enumerable.Range(1, 23).Select(i =>
-                new Partner { Id = i, Name = $"Partner {i}", Status = EntityStatus.Active }));
+            var partners = Enumerable.Range(1, 23).Select(i => CreatePartner($"Partner {i}"));
+            await Context.Partners.AddRangeAsync(partners);
             await SaveChangesAsync();
 
             // Act
@@ -547,8 +548,8 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Pagination_BeyondData_ReturnsEmpty()
         {
             // Arrange
-            await Context.Partners.AddRangeAsync(Enumerable.Range(1, 5).Select(i =>
-                new Partner { Id = i, Name = $"Partner {i}", Status = EntityStatus.Active }));
+            var partners = Enumerable.Range(1, 5).Select(i => CreatePartner($"Partner {i}"));
+            await Context.Partners.AddRangeAsync(partners);
             await SaveChangesAsync();
 
             // Act
@@ -565,8 +566,8 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Pagination_TotalCount_Accurate()
         {
             // Arrange
-            await Context.Partners.AddRangeAsync(Enumerable.Range(1, 47).Select(i =>
-                new Partner { Id = i, Name = $"Partner {i}", Status = EntityStatus.Active }));
+            var partners = Enumerable.Range(1, 47).Select(i => CreatePartner($"Partner {i}"));
+            await Context.Partners.AddRangeAsync(partners);
             await SaveChangesAsync();
 
             // Act
@@ -589,16 +590,20 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Partner_WithContacts_LoadedViaInclude()
         {
             // Arrange
-            await Context.Partners.AddAsync(new Partner { Id = 1, Name = "With Contacts", Status = EntityStatus.Active });
-            await Context.Contacts.AddRangeAsync(new[]
+            var partner = CreatePartner("With Contacts");
+            await Context.Partners.AddAsync(partner);
+            await SaveChangesAsync();
+
+            var contacts = new[]
             {
-                new Contact { Id = 1, Name = "C1", FirstName = "C", LastName = "1", Email = "c1@t.com", Title = "T", PartnerId = 1, Status = EntityStatus.Active },
-                new Contact { Id = 2, Name = "C2", FirstName = "C", LastName = "2", Email = "c2@t.com", Title = "T", PartnerId = 1, Status = EntityStatus.Active }
-            });
+                CreateContact("C1", "C", "1", "c1@t.com", partner.Id),
+                CreateContact("C2", "C", "2", "c2@t.com", partner.Id)
+            };
+            await Context.Contacts.AddRangeAsync(contacts);
             await SaveChangesAsync();
 
             // Act
-            var result = await Context.Partners.Include(p => p.Contacts).FirstOrDefaultAsync(p => p.Id == 1);
+            var result = await Context.Partners.Include(p => p.Contacts).FirstOrDefaultAsync(p => p.Id == partner.Id);
 
             // Assert
             result!.Contacts.Should().HaveCount(2);
@@ -611,11 +616,12 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Partner_WithoutContacts_EmptyCollection()
         {
             // Arrange
-            await Context.Partners.AddAsync(new Partner { Id = 1, Name = "No Contacts", Status = EntityStatus.Active });
+            var partner = CreatePartner("No Contacts");
+            await Context.Partners.AddAsync(partner);
             await SaveChangesAsync();
 
             // Act
-            var result = await Context.Partners.Include(p => p.Contacts).FirstOrDefaultAsync(p => p.Id == 1);
+            var result = await Context.Partners.Include(p => p.Contacts).FirstOrDefaultAsync(p => p.Id == partner.Id);
 
             // Assert
             result!.Contacts.Should().BeEmpty();
@@ -628,27 +634,25 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Partners_ContactsIsolated_NoLeakage()
         {
             // Arrange
-            await Context.Partners.AddRangeAsync(new[]
-            {
-                new Partner { Id = 1, Name = "Partner A", Status = EntityStatus.Active },
-                new Partner { Id = 2, Name = "Partner B", Status = EntityStatus.Active }
-            });
-            await Context.Contacts.AddRangeAsync(new[]
-            {
-                new Contact { Id = 1, Name = "C1", FirstName = "C", LastName = "1", Email = "c1@t.com", Title = "T", PartnerId = 1, Status = EntityStatus.Active },
-                new Contact { Id = 2, Name = "C2", FirstName = "C", LastName = "2", Email = "c2@t.com", Title = "T", PartnerId = 2, Status = EntityStatus.Active }
-            });
+            var partnerA = CreatePartner("Partner A");
+            var partnerB = CreatePartner("Partner B");
+            await Context.Partners.AddRangeAsync(new[] { partnerA, partnerB });
+            await SaveChangesAsync();
+
+            var c1 = CreateContact("C1", "C", "1", "c1@t.com", partnerA.Id);
+            var c2 = CreateContact("C2", "C", "2", "c2@t.com", partnerB.Id);
+            await Context.Contacts.AddRangeAsync(new[] { c1, c2 });
             await SaveChangesAsync();
 
             // Act
-            var partnerA = await Context.Partners.Include(p => p.Contacts).FirstOrDefaultAsync(p => p.Id == 1);
-            var partnerB = await Context.Partners.Include(p => p.Contacts).FirstOrDefaultAsync(p => p.Id == 2);
+            var loadedA = await Context.Partners.Include(p => p.Contacts).FirstOrDefaultAsync(p => p.Id == partnerA.Id);
+            var loadedB = await Context.Partners.Include(p => p.Contacts).FirstOrDefaultAsync(p => p.Id == partnerB.Id);
 
             // Assert
-            partnerA!.Contacts.Should().HaveCount(1);
-            partnerB!.Contacts.Should().HaveCount(1);
-            partnerA.Contacts.First().Name.Should().Be("C1");
-            partnerB.Contacts.First().Name.Should().Be("C2");
+            loadedA!.Contacts.Should().HaveCount(1);
+            loadedB!.Contacts.Should().HaveCount(1);
+            loadedA.Contacts!.First().Name.Should().Be("C1");
+            loadedB.Contacts!.First().Name.Should().Be("C2");
         }
 
         /// <summary>
@@ -658,16 +662,19 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Partner_ExcludesDeletedContacts_InQuery()
         {
             // Arrange
-            await Context.Partners.AddAsync(new Partner { Id = 1, Name = "Has Deleted Contact", Status = EntityStatus.Active });
-            await Context.Contacts.AddRangeAsync(new[]
-            {
-                new Contact { Id = 1, Name = "Active", FirstName = "A", LastName = "1", Email = "a@t.com", Title = "T", PartnerId = 1, Status = EntityStatus.Active, IsDeleted = false },
-                new Contact { Id = 2, Name = "Deleted", FirstName = "D", LastName = "2", Email = "d@t.com", Title = "T", PartnerId = 1, Status = EntityStatus.Active, IsDeleted = true }
-            });
+            var partner = CreatePartner("Has Deleted Contact");
+            await Context.Partners.AddAsync(partner);
+            await SaveChangesAsync();
+
+            var activeContact = CreateContact("Active", "A", "1", "a@t.com", partner.Id);
+            activeContact.IsDeleted = false;
+            var deletedContact = CreateContact("Deleted", "D", "2", "d@t.com", partner.Id);
+            deletedContact.IsDeleted = true;
+            await Context.Contacts.AddRangeAsync(new[] { activeContact, deletedContact });
             await SaveChangesAsync();
 
             // Act
-            var activeContacts = await Context.Contacts.Where(c => c.PartnerId == 1 && !c.IsDeleted).ToListAsync();
+            var activeContacts = await Context.Contacts.Where(c => c.PartnerId == partner.Id && !c.IsDeleted).ToListAsync();
 
             // Assert
             activeContacts.Should().HaveCount(1);
@@ -680,21 +687,32 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Partner_InteractionsViaContacts_Linked()
         {
             // Arrange
-            await Context.Partners.AddAsync(new Partner { Id = 1, Name = "Interactive Partner", Status = EntityStatus.Active });
-            await Context.Contacts.AddAsync(new Contact
+            var partner = CreatePartner("Interactive Partner");
+            await Context.Partners.AddAsync(partner);
+            await SaveChangesAsync();
+
+            var contact = CreateContact("C1", "C", "1", "c@t.com", partner.Id);
+            await Context.Contacts.AddAsync(contact);
+            await SaveChangesAsync();
+
+            var interaction = new UNOPSInteraction
             {
-                Id = 1, Name = "C1", FirstName = "C", LastName = "1", Email = "c@t.com", Title = "T", PartnerId = 1, Status = EntityStatus.Active
-            });
-            await Context.Interactions.AddAsync(new Interaction
-            {
-                Id = 1, Name = "Meeting", Subject = "Meeting", Type = InteractionType.InPersonMeeting, Date = DateTime.UtcNow, Status = EntityStatus.Active
-            });
-            await Context.InteractionContacts.AddAsync(new InteractionContact { ContactId = 1, InteractionId = 1 });
+                Name = "Meeting",
+                Subject = "Meeting",
+                Type = InteractionType.InPersonMeeting,
+                Date = DateTime.UtcNow,
+                Status = EntityStatus.Active
+            };
+            SetAuditFields(interaction);
+            await Context.Interactions.AddAsync(interaction);
+            await SaveChangesAsync();
+
+            await Context.InteractionContacts.AddAsync(new InteractionContact { ContactId = contact.Id, InteractionId = interaction.Id });
             await SaveChangesAsync();
 
             // Act
             var contactInteractionCount = await Context.InteractionContacts
-                .Where(ic => ic.ContactId == 1)
+                .Where(ic => ic.ContactId == contact.Id)
                 .CountAsync();
 
             // Assert
@@ -708,17 +726,18 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Partner_ContactCount_ExcludesDeleted()
         {
             // Arrange
-            await Context.Partners.AddAsync(new Partner { Id = 1, Name = "Counter", Status = EntityStatus.Active });
-            await Context.Contacts.AddRangeAsync(new[]
-            {
-                new Contact { Id = 1, Name = "C1", FirstName = "C", LastName = "1", Email = "c1@t.com", Title = "T", PartnerId = 1, Status = EntityStatus.Active, IsDeleted = false },
-                new Contact { Id = 2, Name = "C2", FirstName = "C", LastName = "2", Email = "c2@t.com", Title = "T", PartnerId = 1, Status = EntityStatus.Active, IsDeleted = false },
-                new Contact { Id = 3, Name = "C3", FirstName = "C", LastName = "3", Email = "c3@t.com", Title = "T", PartnerId = 1, Status = EntityStatus.Active, IsDeleted = true }
-            });
+            var partner = CreatePartner("Counter");
+            await Context.Partners.AddAsync(partner);
+            await SaveChangesAsync();
+
+            var c1 = CreateContact("C1", "C", "1", "c1@t.com", partner.Id); c1.IsDeleted = false;
+            var c2 = CreateContact("C2", "C", "2", "c2@t.com", partner.Id); c2.IsDeleted = false;
+            var c3 = CreateContact("C3", "C", "3", "c3@t.com", partner.Id); c3.IsDeleted = true;
+            await Context.Contacts.AddRangeAsync(new[] { c1, c2, c3 });
             await SaveChangesAsync();
 
             // Act
-            var count = await Context.Contacts.CountAsync(c => c.PartnerId == 1 && !c.IsDeleted);
+            var count = await Context.Contacts.CountAsync(c => c.PartnerId == partner.Id && !c.IsDeleted);
 
             // Assert
             count.Should().Be(2);
@@ -731,21 +750,20 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Partner_AddContact_IncrementsCount()
         {
             // Arrange
-            await Context.Partners.AddAsync(new Partner { Id = 1, Name = "Growing", Status = EntityStatus.Active });
-            await Context.Contacts.AddAsync(new Contact
-            {
-                Id = 1, Name = "C1", FirstName = "C", LastName = "1", Email = "c1@t.com", Title = "T", PartnerId = 1, Status = EntityStatus.Active
-            });
+            var partner = CreatePartner("Growing");
+            await Context.Partners.AddAsync(partner);
             await SaveChangesAsync();
-            var initialCount = await Context.Contacts.CountAsync(c => c.PartnerId == 1);
+
+            var c1 = CreateContact("C1", "C", "1", "c1@t.com", partner.Id);
+            await Context.Contacts.AddAsync(c1);
+            await SaveChangesAsync();
+            var initialCount = await Context.Contacts.CountAsync(c => c.PartnerId == partner.Id);
 
             // Act
-            await Context.Contacts.AddAsync(new Contact
-            {
-                Id = 2, Name = "C2", FirstName = "C", LastName = "2", Email = "c2@t.com", Title = "T", PartnerId = 1, Status = EntityStatus.Active
-            });
+            var c2 = CreateContact("C2", "C", "2", "c2@t.com", partner.Id);
+            await Context.Contacts.AddAsync(c2);
             await SaveChangesAsync();
-            var newCount = await Context.Contacts.CountAsync(c => c.PartnerId == 1);
+            var newCount = await Context.Contacts.CountAsync(c => c.PartnerId == partner.Id);
 
             // Assert
             newCount.Should().Be(initialCount + 1);
@@ -758,24 +776,30 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task MultiplePartners_EachWithContacts_Independent()
         {
             // Arrange
+            var partners = new List<Partner>();
             for (int i = 1; i <= 3; i++)
             {
-                await Context.Partners.AddAsync(new Partner { Id = i, Name = $"Partner {i}", Status = EntityStatus.Active });
-                for (int j = 1; j <= i; j++) // Partner 1 gets 1 contact, Partner 2 gets 2, etc.
+                var p = CreatePartner($"Partner {i}");
+                await Context.Partners.AddAsync(p);
+                partners.Add(p);
+            }
+            await SaveChangesAsync();
+
+            for (int i = 0; i < 3; i++)
+            {
+                var partnerId = partners[i].Id;
+                for (int j = 1; j <= i + 1; j++)
                 {
-                    await Context.Contacts.AddAsync(new Contact
-                    {
-                        Id = (i - 1) * 3 + j, Name = $"C{i}-{j}", FirstName = $"C{j}", LastName = $"P{i}",
-                        Email = $"c{i}{j}@t.com", Title = "T", PartnerId = i, Status = EntityStatus.Active
-                    });
+                    var c = CreateContact($"C{i + 1}-{j}", $"C{j}", $"P{i + 1}", $"c{i + 1}{j}@t.com", partnerId);
+                    await Context.Contacts.AddAsync(c);
                 }
             }
             await SaveChangesAsync();
 
             // Act & Assert
-            (await Context.Contacts.CountAsync(c => c.PartnerId == 1)).Should().Be(1);
-            (await Context.Contacts.CountAsync(c => c.PartnerId == 2)).Should().Be(2);
-            (await Context.Contacts.CountAsync(c => c.PartnerId == 3)).Should().Be(3);
+            (await Context.Contacts.CountAsync(c => c.PartnerId == partners[0].Id)).Should().Be(1);
+            (await Context.Contacts.CountAsync(c => c.PartnerId == partners[1].Id)).Should().Be(2);
+            (await Context.Contacts.CountAsync(c => c.PartnerId == partners[2].Id)).Should().Be(3);
         }
 
         /// <summary>
@@ -785,19 +809,20 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task SoftDeletePartner_ContactsRemain()
         {
             // Arrange
-            await Context.Partners.AddAsync(new Partner { Id = 1, Name = "To Delete", Status = EntityStatus.Active });
-            await Context.Contacts.AddAsync(new Contact
-            {
-                Id = 1, Name = "Survivor", FirstName = "S", LastName = "1", Email = "s@t.com", Title = "T", PartnerId = 1, Status = EntityStatus.Active
-            });
+            var partner = CreatePartner("To Delete");
+            await Context.Partners.AddAsync(partner);
+            await SaveChangesAsync();
+
+            var contact = CreateContact("Survivor", "S", "1", "s@t.com", partner.Id);
+            await Context.Contacts.AddAsync(contact);
             await SaveChangesAsync();
 
             // Act
-            var partner = await Context.Partners.FindAsync(1);
-            partner!.IsDeleted = true;
+            var loadedPartner = await Context.Partners.FindAsync(partner.Id);
+            loadedPartner!.IsDeleted = true;
             await SaveChangesAsync();
 
-            var contactExists = await Context.Contacts.AnyAsync(c => c.Id == 1);
+            var contactExists = await Context.Contacts.AnyAsync(c => c.Id == contact.Id);
 
             // Assert
             contactExists.Should().BeTrue("Contact should survive partner soft delete");
@@ -810,25 +835,23 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task TransferContact_BetweenPartners_UpdatesRelationship()
         {
             // Arrange
-            await Context.Partners.AddRangeAsync(new[]
-            {
-                new Partner { Id = 1, Name = "Source", Status = EntityStatus.Active },
-                new Partner { Id = 2, Name = "Target", Status = EntityStatus.Active }
-            });
-            await Context.Contacts.AddAsync(new Contact
-            {
-                Id = 1, Name = "Transferable", FirstName = "T", LastName = "1", Email = "t@t.com", Title = "T", PartnerId = 1, Status = EntityStatus.Active
-            });
+            var sourcePartner = CreatePartner("Source");
+            var targetPartner = CreatePartner("Target");
+            await Context.Partners.AddRangeAsync(new[] { sourcePartner, targetPartner });
+            await SaveChangesAsync();
+
+            var contact = CreateContact("Transferable", "T", "1", "t@t.com", sourcePartner.Id);
+            await Context.Contacts.AddAsync(contact);
             await SaveChangesAsync();
 
             // Act
-            var contact = await Context.Contacts.FindAsync(1);
-            contact!.PartnerId = 2;
+            var loadedContact = await Context.Contacts.FindAsync(contact.Id);
+            loadedContact!.PartnerId = targetPartner.Id;
             await SaveChangesAsync();
 
             // Assert
-            var sourceCount = await Context.Contacts.CountAsync(c => c.PartnerId == 1);
-            var targetCount = await Context.Contacts.CountAsync(c => c.PartnerId == 2);
+            var sourceCount = await Context.Contacts.CountAsync(c => c.PartnerId == sourcePartner.Id);
+            var targetCount = await Context.Contacts.CountAsync(c => c.PartnerId == targetPartner.Id);
             sourceCount.Should().Be(0);
             targetCount.Should().Be(1);
         }
@@ -861,7 +884,9 @@ namespace UNOPS.PAO.Business.Tests.Integration
         [Fact]
         public async Task Create_DuplicateId_ThrowsException()
         {
-            await Context.Partners.AddAsync(new Partner { Id = 1, Name = "First", Status = EntityStatus.Active });
+            var partner1 = new UNOPSPartner { Name = "First", Status = EntityStatus.Active };
+            SetAuditFields(partner1);
+            await Context.Partners.AddAsync(partner1);
             await SaveChangesAsync();
 
             // The duplicate AddAsync throws InvalidOperationException immediately because the entity
@@ -869,7 +894,9 @@ namespace UNOPS.PAO.Business.Tests.Integration
             // and SaveChangesAsync in the act lambda to capture the exception properly.
             var act = async () =>
             {
-                await Context.Partners.AddAsync(new Partner { Id = 1, Name = "Duplicate", Status = EntityStatus.Active });
+                var partner2 = new UNOPSPartner { Id = partner1.Id, Name = "Duplicate", Status = EntityStatus.Active };
+                SetAuditFields(partner2);
+                await Context.Partners.AddAsync(partner2);
                 await SaveChangesAsync();
             };
             await act.Should().ThrowAsync<Exception>();
@@ -892,7 +919,8 @@ namespace UNOPS.PAO.Business.Tests.Integration
         [Fact]
         public async Task FirstOrDefault_NoMatch_ReturnsNull()
         {
-            await Context.Partners.AddAsync(new Partner { Id = 1, Name = "Exists", Status = EntityStatus.Active });
+            var partner = CreatePartner("Exists");
+            await Context.Partners.AddAsync(partner);
             await SaveChangesAsync();
 
             var result = await Context.Partners.FirstOrDefaultAsync(p => p.Name == "NonExistent");
@@ -902,11 +930,9 @@ namespace UNOPS.PAO.Business.Tests.Integration
         [Fact]
         public async Task Filter_AllDeleted_ReturnsEmpty()
         {
-            await Context.Partners.AddRangeAsync(new[]
-            {
-                new Partner { Id = 1, Name = "Del1", Status = EntityStatus.Active, IsDeleted = true },
-                new Partner { Id = 2, Name = "Del2", Status = EntityStatus.Active, IsDeleted = true }
-            });
+            var p1 = CreatePartner("Del1"); p1.IsDeleted = true;
+            var p2 = CreatePartner("Del2"); p2.IsDeleted = true;
+            await Context.Partners.AddRangeAsync(new[] { p1, p2 });
             await SaveChangesAsync();
 
             var results = await Context.Partners.Where(p => !p.IsDeleted).ToListAsync();
@@ -917,7 +943,10 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task BulkInsert_LargeDataset_Succeeds()
         {
             var partners = Enumerable.Range(1, 100).Select(i =>
-                new Partner { Id = i, Name = $"Bulk {i}", Status = EntityStatus.Active });
+            {
+                var p = CreatePartner($"Bulk {i}");
+                return p;
+            });
 
             await Context.Partners.AddRangeAsync(partners);
             await SaveChangesAsync();
@@ -936,11 +965,12 @@ namespace UNOPS.PAO.Business.Tests.Integration
         [Fact]
         public async Task Concurrent_Reads_ConsistentData()
         {
-            await Context.Partners.AddAsync(new Partner { Id = 1, Name = "Consistent", Status = EntityStatus.Active });
+            var partner = CreatePartner("Consistent");
+            await Context.Partners.AddAsync(partner);
             await SaveChangesAsync();
 
-            var r1 = await Context.Partners.FindAsync(1);
-            var r2 = await Context.Partners.FindAsync(1);
+            var r1 = await Context.Partners.FindAsync(partner.Id);
+            var r2 = await Context.Partners.FindAsync(partner.Id);
 
             r1!.Name.Should().Be(r2!.Name);
         }
@@ -948,7 +978,8 @@ namespace UNOPS.PAO.Business.Tests.Integration
         [Fact]
         public async Task Query_AfterClear_ReturnsEmpty()
         {
-            await Context.Partners.AddAsync(new Partner { Id = 1, Name = "WillClear", Status = EntityStatus.Active });
+            var partner = CreatePartner("WillClear");
+            await Context.Partners.AddAsync(partner);
             await SaveChangesAsync();
 
             ClearDatabase();
@@ -959,13 +990,14 @@ namespace UNOPS.PAO.Business.Tests.Integration
         [Fact]
         public async Task Delete_AlreadyDeleted_RemainsDeleted()
         {
-            var partner = new Partner { Id = 1, Name = "AlreadyDel", Status = EntityStatus.Active, IsDeleted = true };
+            var partner = new UNOPSPartner { Name = "AlreadyDel", Status = EntityStatus.Active, IsDeleted = true };
+            SetAuditFields(partner);
             await Context.Partners.AddAsync(partner);
             await SaveChangesAsync();
 
             partner.IsDeleted = true; // Re-delete
             await SaveChangesAsync();
-            var result = await Context.Partners.FindAsync(1);
+            var result = await Context.Partners.FindAsync(partner.Id);
 
             result!.IsDeleted.Should().BeTrue();
         }
@@ -973,13 +1005,14 @@ namespace UNOPS.PAO.Business.Tests.Integration
         [Fact]
         public async Task Update_AfterSoftDelete_StillPersists()
         {
-            var partner = new Partner { Id = 1, Name = "Deleted But Updated", Status = EntityStatus.Active, IsDeleted = true };
+            var partner = new UNOPSPartner { Name = "Deleted But Updated", Status = EntityStatus.Active, IsDeleted = true };
+            SetAuditFields(partner);
             await Context.Partners.AddAsync(partner);
             await SaveChangesAsync();
 
             partner.Name = "Updated After Delete";
             await SaveChangesAsync();
-            var result = await Context.Partners.FindAsync(1);
+            var result = await Context.Partners.FindAsync(partner.Id);
 
             result!.Name.Should().Be("Updated After Delete");
             result.IsDeleted.Should().BeTrue();
@@ -988,7 +1021,8 @@ namespace UNOPS.PAO.Business.Tests.Integration
         [Fact]
         public async Task MultipleStatusChanges_TracksLatest()
         {
-            var partner = new Partner { Id = 1, Name = "StatusTrack", Status = EntityStatus.Draft };
+            var partner = new UNOPSPartner { Name = "StatusTrack", Status = EntityStatus.Draft };
+            SetAuditFields(partner);
             await Context.Partners.AddAsync(partner);
             await SaveChangesAsync();
 
@@ -997,7 +1031,7 @@ namespace UNOPS.PAO.Business.Tests.Integration
             partner.Status = EntityStatus.Inactive;
             await SaveChangesAsync();
 
-            var result = await Context.Partners.FindAsync(1);
+            var result = await Context.Partners.FindAsync(partner.Id);
             result!.Status.Should().Be(EntityStatus.Inactive);
         }
 
@@ -1009,8 +1043,8 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Partner_BulkStatusUpdate_AppliesCorrectly()
         {
             // Arrange
-            await Context.Partners.AddRangeAsync(Enumerable.Range(1, 6).Select(i =>
-                new Partner { Id = i, Name = $"P{i}", Status = EntityStatus.Active }));
+            var partners = Enumerable.Range(1, 6).Select(i => CreatePartner($"P{i}"));
+            await Context.Partners.AddRangeAsync(partners);
             await SaveChangesAsync();
 
             // Act - Deactivate even IDs
@@ -1029,24 +1063,48 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public async Task Partner_WithMixedContactStatuses_CountsCorrectly()
         {
             // Arrange
-            await Context.Partners.AddAsync(new Partner { Id = 1, Name = "Mixed", Status = EntityStatus.Active });
-            await Context.Contacts.AddRangeAsync(new[]
-            {
-                new Contact { Id = 1, Name = "Active1", FirstName = "A", LastName = "1", Email = "a1@t.com", Title = "T", PartnerId = 1, Status = EntityStatus.Active, IsDeleted = false },
-                new Contact { Id = 2, Name = "Active2", FirstName = "A", LastName = "2", Email = "a2@t.com", Title = "T", PartnerId = 1, Status = EntityStatus.Active, IsDeleted = false },
-                new Contact { Id = 3, Name = "Inactive", FirstName = "I", LastName = "3", Email = "i@t.com", Title = "T", PartnerId = 1, Status = EntityStatus.Inactive, IsDeleted = false },
-                new Contact { Id = 4, Name = "Deleted", FirstName = "D", LastName = "4", Email = "d@t.com", Title = "T", PartnerId = 1, Status = EntityStatus.Active, IsDeleted = true }
-            });
+            var partner = CreatePartner("Mixed");
+            await Context.Partners.AddAsync(partner);
+            await SaveChangesAsync();
+
+            var c1 = CreateContact("Active1", "A", "1", "a1@t.com", partner.Id); c1.IsDeleted = false;
+            var c2 = CreateContact("Active2", "A", "2", "a2@t.com", partner.Id); c2.IsDeleted = false;
+            var c3 = CreateContact("Inactive", "I", "3", "i@t.com", partner.Id); c3.Status = EntityStatus.Inactive; c3.IsDeleted = false;
+            var c4 = CreateContact("Deleted", "D", "4", "d@t.com", partner.Id); c4.IsDeleted = true;
+            await Context.Contacts.AddRangeAsync(new[] { c1, c2, c3, c4 });
             await SaveChangesAsync();
 
             // Act
             var activeNonDeleted = await Context.Contacts
-                .CountAsync(c => c.PartnerId == 1 && c.Status == EntityStatus.Active && !c.IsDeleted);
+                .CountAsync(c => c.PartnerId == partner.Id && c.Status == EntityStatus.Active && !c.IsDeleted);
 
             // Assert
             activeNonDeleted.Should().Be(2);
         }
 
         #endregion
+
+        private static UNOPSPartner CreatePartner(string name)
+        {
+            var p = new UNOPSPartner { Name = name, Status = EntityStatus.Active };
+            SetAuditFields(p);
+            return p;
+        }
+
+        private static UNOPSContact CreateContact(string name, string firstName, string lastName, string email, int partnerId)
+        {
+            var c = new UNOPSContact
+            {
+                Name = name,
+                FirstName = firstName,
+                LastName = lastName,
+                Email = email,
+                Title = "T",
+                PartnerId = partnerId,
+                Status = EntityStatus.Active
+            };
+            SetAuditFields(c);
+            return c;
+        }
     }
 }

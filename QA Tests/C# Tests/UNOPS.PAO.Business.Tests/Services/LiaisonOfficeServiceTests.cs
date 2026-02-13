@@ -1,6 +1,7 @@
 /**
  * @fileoverview Comprehensive unit tests for LiaisonOfficeService
  * Tests liaison office lookups, filtering, CRUD operations, and edge cases
+ * Uses test markers for PostgreSQL data isolation.
  * @author UNOPS Opportunity+ System Development Team
  */
 
@@ -12,23 +13,28 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 using UNOPS.PAO.DataAccess.Context;
+using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Business.Tests.TestBase;
 
 namespace UNOPS.PAO.Business.Tests.Services
 {
     /// <summary>
-    /// Test suite for LiaisonOfficeService
-    /// Tests liaison office lookups, filtering, partner associations, and validation
+    /// Test suite for LiaisonOfficeService.
+    /// Uses unique test markers per test run for PostgreSQL data isolation.
+    /// Uses UNOPSAppDbContext to ensure proper DbSet property access (avoids
+    /// the 'new' keyword hiding issue with AppDbContext.LiaisonOffices).
     /// </summary>
     public class LiaisonOfficeServiceTests : IDisposable
     {
-        private readonly AppDbContext _context;
+        private readonly UNOPSAppDbContext _context;
+        private readonly string _testMarker = $"LO_{Guid.NewGuid():N}";
+        private readonly List<int> _createdIds = new();
 
         public LiaisonOfficeServiceTests()
         {
-            _context = TestDbContextFactory.Create();
-            SeedTestData().Wait();
+            _context = TestDbContextFactory.CreateUNOPS();
+            SeedTestData().GetAwaiter().GetResult();
         }
 
         private async Task SeedTestData()
@@ -37,36 +43,36 @@ namespace UNOPS.PAO.Business.Tests.Services
             {
                 new LiaisonOffice 
                 { 
-                    Name = "Nairobi Office", 
-                    Code = "NBO", 
+                    Name = $"Nairobi Office {_testMarker}", 
+                    Code = $"NBO_{_testMarker}", 
                     IsActive = true,
                     IsDeleted = false
                 },
                 new LiaisonOffice 
                 { 
-                    Name = "Kampala Office", 
-                    Code = "KLA", 
+                    Name = $"Kampala Office {_testMarker}", 
+                    Code = $"KLA_{_testMarker}", 
                     IsActive = true,
                     IsDeleted = false
                 },
                 new LiaisonOffice 
                 { 
-                    Name = "Dar es Salaam Office", 
-                    Code = "DAR", 
+                    Name = $"Dar es Salaam Office {_testMarker}", 
+                    Code = $"DAR_{_testMarker}", 
                     IsActive = true,
                     IsDeleted = false
                 },
                 new LiaisonOffice 
                 { 
-                    Name = "Inactive Office", 
-                    Code = "INA", 
+                    Name = $"Inactive Office {_testMarker}", 
+                    Code = $"INA_{_testMarker}", 
                     IsActive = false,
                     IsDeleted = false
                 },
                 new LiaisonOffice 
                 { 
-                    Name = "Deleted Office", 
-                    Code = "DEL", 
+                    Name = $"Deleted Office {_testMarker}", 
+                    Code = $"DEL_{_testMarker}", 
                     IsActive = true,
                     IsDeleted = true
                 }
@@ -74,12 +80,27 @@ namespace UNOPS.PAO.Business.Tests.Services
 
             await _context.LiaisonOffices.AddRangeAsync(liaisonOffices);
             await _context.SaveChangesAsync();
+            _createdIds.AddRange(liaisonOffices.Select(lo => lo.Id));
         }
 
         public void Dispose()
         {
+            // Clean up test data
+            try
+            {
+                if (_createdIds.Any())
+                {
+                    var ids = string.Join(",", _createdIds);
+                    _context.Database.ExecuteSqlRaw($"DELETE FROM public.\"LiaisonOffices\" WHERE \"Id\" IN ({ids})");
+                }
+            }
+            catch { /* Best-effort cleanup */ }
             _context?.Dispose();
         }
+
+        /// <summary>Helper: Query only liaison offices created by this test instance.</summary>
+        private IQueryable<LiaisonOffice> TestOffices =>
+            _context.LiaisonOffices.Where(lo => lo.Code.Contains(_testMarker));
 
         #region Basic Lookup Tests
 
@@ -87,21 +108,21 @@ namespace UNOPS.PAO.Business.Tests.Services
         public async Task GetAllLiaisonOffices_ReturnsActiveNonDeletedOnly()
         {
             // Act
-            var offices = await _context.LiaisonOffices
+            var offices = await TestOffices
                 .Where(lo => lo.IsActive && !lo.IsDeleted)
                 .ToListAsync();
 
             // Assert
             offices.Should().HaveCount(3);
-            offices.Should().NotContain(lo => lo.Name == "Inactive Office");
-            offices.Should().NotContain(lo => lo.Name == "Deleted Office");
+            offices.Should().NotContain(lo => lo.Name.Contains("Inactive Office"));
+            offices.Should().NotContain(lo => lo.Name.Contains("Deleted Office"));
         }
 
         [Fact]
         public async Task GetLiaisonOfficeById_ExistingId_ReturnsOffice()
         {
             // Arrange
-            var firstOffice = await _context.LiaisonOffices.FirstAsync();
+            var firstOffice = await TestOffices.FirstAsync();
 
             // Act
             var office = await _context.LiaisonOffices
@@ -109,14 +130,14 @@ namespace UNOPS.PAO.Business.Tests.Services
 
             // Assert
             office.Should().NotBeNull();
-            office!.Name.Should().Be("Nairobi Office");
+            office!.Name.Should().Contain("Nairobi Office");
         }
 
         [Fact]
         public async Task GetLiaisonOfficeByCode_ValidCode_ReturnsOffice()
         {
             // Arrange
-            var targetCode = "NBO";
+            var targetCode = $"NBO_{_testMarker}";
 
             // Act
             var office = await _context.LiaisonOffices
@@ -124,14 +145,14 @@ namespace UNOPS.PAO.Business.Tests.Services
 
             // Assert
             office.Should().NotBeNull();
-            office!.Name.Should().Be("Nairobi Office");
+            office!.Name.Should().Contain("Nairobi Office");
         }
 
         [Fact]
         public async Task GetLiaisonOfficeByCode_InvalidCode_ReturnsNull()
         {
             // Arrange
-            var invalidCode = "INVALID";
+            var invalidCode = "INVALID_ZZZZZ";
 
             // Act
             var office = await _context.LiaisonOffices
@@ -149,7 +170,7 @@ namespace UNOPS.PAO.Business.Tests.Services
         public async Task GetLiaisonOffices_ActiveOnly_FiltersCorrectly()
         {
             // Act
-            var activeOffices = await _context.LiaisonOffices
+            var activeOffices = await TestOffices
                 .Where(lo => lo.IsActive)
                 .ToListAsync();
 
@@ -162,24 +183,21 @@ namespace UNOPS.PAO.Business.Tests.Services
         public async Task GetLiaisonOffices_IncludingInactive_ReturnsAll()
         {
             // Act
-            var allOffices = await _context.LiaisonOffices
+            var allOffices = await TestOffices
                 .Where(lo => !lo.IsDeleted)
                 .ToListAsync();
 
             // Assert
             allOffices.Should().HaveCount(4); // Active + Inactive
-            allOffices.Should().Contain(lo => lo.Name == "Inactive Office");
+            allOffices.Should().Contain(lo => lo.Name.Contains("Inactive Office"));
         }
 
         [Fact]
         public async Task SearchLiaisonOffices_ByName_ReturnsMatches()
         {
-            // Arrange
-            var searchTerm = "Nairobi";
-
             // Act
-            var offices = await _context.LiaisonOffices
-                .Where(lo => lo.Name.Contains(searchTerm) && lo.IsActive && !lo.IsDeleted)
+            var offices = await TestOffices
+                .Where(lo => lo.Name.Contains("Nairobi") && lo.IsActive && !lo.IsDeleted)
                 .ToListAsync();
 
             // Assert
@@ -190,17 +208,14 @@ namespace UNOPS.PAO.Business.Tests.Services
         [Fact]
         public async Task SearchLiaisonOffices_ByCode_ReturnsMatches()
         {
-            // Arrange
-            var searchCode = "K";
-
             // Act
-            var offices = await _context.LiaisonOffices
-                .Where(lo => lo.Code.Contains(searchCode) && lo.IsActive && !lo.IsDeleted)
+            var offices = await TestOffices
+                .Where(lo => lo.Code.Contains("KLA") && lo.IsActive && !lo.IsDeleted)
                 .ToListAsync();
 
             // Assert
             offices.Should().HaveCount(1);
-            offices[0].Code.Should().Be("KLA");
+            offices[0].Code.Should().Contain("KLA");
         }
 
         #endregion
@@ -213,8 +228,8 @@ namespace UNOPS.PAO.Business.Tests.Services
             // Arrange
             var newOffice = new LiaisonOffice
             {
-                Name = "New York Office",
-                Code = "NYC",
+                Name = $"New York Office {_testMarker}",
+                Code = $"NYC_{_testMarker}",
                 IsActive = true,
                 IsDeleted = false
             };
@@ -222,13 +237,14 @@ namespace UNOPS.PAO.Business.Tests.Services
             // Act
             await _context.LiaisonOffices.AddAsync(newOffice);
             await _context.SaveChangesAsync();
+            _createdIds.Add(newOffice.Id);
 
             // Assert
             var savedOffice = await _context.LiaisonOffices
-                .FirstOrDefaultAsync(lo => lo.Code == "NYC");
+                .FirstOrDefaultAsync(lo => lo.Code == $"NYC_{_testMarker}");
             
             savedOffice.Should().NotBeNull();
-            savedOffice!.Name.Should().Be("New York Office");
+            savedOffice!.Name.Should().Contain("New York Office");
             savedOffice.Id.Should().BeGreaterThan(0);
         }
 
@@ -236,16 +252,17 @@ namespace UNOPS.PAO.Business.Tests.Services
         public async Task UpdateLiaisonOffice_ValidData_UpdatesSuccessfully()
         {
             // Arrange
-            var office = await _context.LiaisonOffices.FirstAsync();
+            var office = await TestOffices.FirstAsync();
             var originalName = office.Name;
 
             // Act
-            office.Name = "Updated Office Name";
+            office.Name = $"Updated Office Name {_testMarker}";
             await _context.SaveChangesAsync();
 
             // Assert
+            _context.ChangeTracker.Clear();
             var updatedOffice = await _context.LiaisonOffices.FindAsync(office.Id);
-            updatedOffice!.Name.Should().Be("Updated Office Name");
+            updatedOffice!.Name.Should().Contain("Updated Office Name");
             updatedOffice.Name.Should().NotBe(originalName);
         }
 
@@ -253,13 +270,14 @@ namespace UNOPS.PAO.Business.Tests.Services
         public async Task DeleteLiaisonOffice_SoftDelete_SetsIsDeletedTrue()
         {
             // Arrange
-            var office = await _context.LiaisonOffices.FirstAsync(lo => !lo.IsDeleted);
+            var office = await TestOffices.FirstAsync(lo => !lo.IsDeleted);
 
             // Act - Soft delete
             office.IsDeleted = true;
             await _context.SaveChangesAsync();
 
             // Assert
+            _context.ChangeTracker.Clear();
             var deletedOffice = await _context.LiaisonOffices.FindAsync(office.Id);
             deletedOffice!.IsDeleted.Should().BeTrue();
         }
@@ -268,13 +286,14 @@ namespace UNOPS.PAO.Business.Tests.Services
         public async Task DeactivateLiaisonOffice_SetsIsActiveFalse()
         {
             // Arrange
-            var office = await _context.LiaisonOffices.FirstAsync(lo => lo.IsActive && !lo.IsDeleted);
+            var office = await TestOffices.FirstAsync(lo => lo.IsActive && !lo.IsDeleted);
 
             // Act
             office.IsActive = false;
             await _context.SaveChangesAsync();
 
             // Assert
+            _context.ChangeTracker.Clear();
             var deactivatedOffice = await _context.LiaisonOffices.FindAsync(office.Id);
             deactivatedOffice!.IsActive.Should().BeFalse();
         }
@@ -287,13 +306,7 @@ namespace UNOPS.PAO.Business.Tests.Services
         public async Task CreateLiaisonOffice_DuplicateCode_ShouldBeDetectable()
         {
             // Arrange
-            var existingCode = "NBO";
-            var duplicateOffice = new LiaisonOffice
-            {
-                Name = "Duplicate Office",
-                Code = existingCode,
-                IsActive = true
-            };
+            var existingCode = $"NBO_{_testMarker}";
 
             // Act - Check for existing code before insert
             var exists = await _context.LiaisonOffices
@@ -382,8 +395,8 @@ namespace UNOPS.PAO.Business.Tests.Services
 
             // Act
             var offices = string.IsNullOrEmpty(searchTerm)
-                ? await _context.LiaisonOffices.Where(lo => lo.IsActive && !lo.IsDeleted).ToListAsync()
-                : await _context.LiaisonOffices
+                ? await TestOffices.Where(lo => lo.IsActive && !lo.IsDeleted).ToListAsync()
+                : await TestOffices
                     .Where(lo => lo.Name.Contains(searchTerm) && lo.IsActive && !lo.IsDeleted)
                     .ToListAsync();
 
@@ -409,11 +422,16 @@ namespace UNOPS.PAO.Business.Tests.Services
         [Fact]
         public async Task GetLiaisonOffices_ConcurrentReads_HandledCorrectly()
         {
-            // Act - Multiple concurrent reads
+            // Act - Multiple concurrent reads (use separate contexts for concurrency safety)
             var tasks = Enumerable.Range(0, 10)
-                .Select(_ => _context.LiaisonOffices
-                    .Where(lo => lo.IsActive && !lo.IsDeleted)
-                    .ToListAsync());
+                .Select(_ => Task.Run(async () =>
+                {
+                    using var ctx = TestDbContextFactory.CreateUNOPS();
+                    var marker = _testMarker;
+                    return await ctx.LiaisonOffices
+                        .Where(lo => lo.Code.Contains(marker) && lo.IsActive && !lo.IsDeleted)
+                        .ToListAsync();
+                }));
 
             var results = await Task.WhenAll(tasks);
 
@@ -425,7 +443,8 @@ namespace UNOPS.PAO.Business.Tests.Services
         public async Task GetLiaisonOfficeByCode_CaseInsensitive_ShouldMatch()
         {
             // Arrange
-            var codes = new[] { "nbo", "NBO", "Nbo", "nBo" };
+            var baseCode = $"NBO_{_testMarker}";
+            var codes = new[] { baseCode.ToLower(), baseCode.ToUpper(), baseCode };
 
             // Act & Assert
             foreach (var code in codes)
@@ -445,7 +464,7 @@ namespace UNOPS.PAO.Business.Tests.Services
             var pageNumber = 1;
 
             // Act
-            var pagedOffices = await _context.LiaisonOffices
+            var pagedOffices = await TestOffices
                 .Where(lo => lo.IsActive && !lo.IsDeleted)
                 .OrderBy(lo => lo.Name)
                 .Skip(pageNumber * pageSize)
@@ -460,7 +479,7 @@ namespace UNOPS.PAO.Business.Tests.Services
         public async Task GetLiaisonOffices_SortedByName_ReturnsAlphabetically()
         {
             // Act
-            var sortedOffices = await _context.LiaisonOffices
+            var sortedOffices = await TestOffices
                 .Where(lo => lo.IsActive && !lo.IsDeleted)
                 .OrderBy(lo => lo.Name)
                 .ToListAsync();
@@ -480,8 +499,8 @@ namespace UNOPS.PAO.Business.Tests.Services
             var additionalOffices = Enumerable.Range(1, 100)
                 .Select(i => new LiaisonOffice
                 {
-                    Name = $"Office {i}",
-                    Code = $"OF{i:D3}",
+                    Name = $"Office {i} {_testMarker}",
+                    Code = $"OF{i:D3}_{_testMarker}",
                     IsActive = true,
                     IsDeleted = false
                 })
@@ -489,10 +508,11 @@ namespace UNOPS.PAO.Business.Tests.Services
 
             await _context.LiaisonOffices.AddRangeAsync(additionalOffices);
             await _context.SaveChangesAsync();
+            _createdIds.AddRange(additionalOffices.Select(lo => lo.Id));
 
             // Act
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            var offices = await _context.LiaisonOffices
+            var offices = await TestOffices
                 .Where(lo => lo.IsActive && !lo.IsDeleted)
                 .ToListAsync();
             stopwatch.Stop();
@@ -509,8 +529,8 @@ namespace UNOPS.PAO.Business.Tests.Services
             var additionalOffices = Enumerable.Range(1, 100)
                 .Select(i => new LiaisonOffice
                 {
-                    Name = $"Performance Test Office {i}",
-                    Code = $"PTO{i:D3}",
+                    Name = $"Performance Test Office {i} {_testMarker}",
+                    Code = $"PTO{i:D3}_{_testMarker}",
                     IsActive = true,
                     IsDeleted = false
                 })
@@ -518,10 +538,11 @@ namespace UNOPS.PAO.Business.Tests.Services
 
             await _context.LiaisonOffices.AddRangeAsync(additionalOffices);
             await _context.SaveChangesAsync();
+            _createdIds.AddRange(additionalOffices.Select(lo => lo.Id));
 
             // Act
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            var offices = await _context.LiaisonOffices
+            var offices = await TestOffices
                 .Where(lo => lo.Name.Contains("Performance") && lo.IsActive && !lo.IsDeleted)
                 .ToListAsync();
             stopwatch.Stop();
@@ -539,7 +560,7 @@ namespace UNOPS.PAO.Business.Tests.Services
         public async Task ActivateLiaisonOffice_WhenInactive_SetsIsActiveTrue()
         {
             // Arrange
-            var inactiveOffice = await _context.LiaisonOffices
+            var inactiveOffice = await TestOffices
                 .FirstAsync(lo => !lo.IsActive && !lo.IsDeleted);
 
             // Act
@@ -547,6 +568,7 @@ namespace UNOPS.PAO.Business.Tests.Services
             await _context.SaveChangesAsync();
 
             // Assert
+            _context.ChangeTracker.Clear();
             var activatedOffice = await _context.LiaisonOffices.FindAsync(inactiveOffice.Id);
             activatedOffice!.IsActive.Should().BeTrue();
         }
@@ -555,7 +577,7 @@ namespace UNOPS.PAO.Business.Tests.Services
         public async Task RestoreLiaisonOffice_WhenSoftDeleted_SetsIsDeletedFalse()
         {
             // Arrange
-            var deletedOffice = await _context.LiaisonOffices
+            var deletedOffice = await TestOffices
                 .FirstAsync(lo => lo.IsDeleted);
 
             // Act
@@ -563,6 +585,7 @@ namespace UNOPS.PAO.Business.Tests.Services
             await _context.SaveChangesAsync();
 
             // Assert
+            _context.ChangeTracker.Clear();
             var restoredOffice = await _context.LiaisonOffices.FindAsync(deletedOffice.Id);
             restoredOffice!.IsDeleted.Should().BeFalse();
         }
@@ -571,7 +594,7 @@ namespace UNOPS.PAO.Business.Tests.Services
         public async Task GetActiveLiaisonOfficesCount_ReturnsCorrectCount()
         {
             // Act
-            var count = await _context.LiaisonOffices
+            var count = await TestOffices
                 .CountAsync(lo => lo.IsActive && !lo.IsDeleted);
 
             // Assert
@@ -582,7 +605,7 @@ namespace UNOPS.PAO.Business.Tests.Services
         public async Task GetTotalLiaisonOfficesCount_IncludingAll_ReturnsCorrectCount()
         {
             // Act
-            var totalCount = await _context.LiaisonOffices.CountAsync();
+            var totalCount = await TestOffices.CountAsync();
 
             // Assert
             totalCount.Should().Be(5); // 3 active + 1 inactive + 1 deleted
@@ -591,4 +614,3 @@ namespace UNOPS.PAO.Business.Tests.Services
         #endregion
     }
 }
-

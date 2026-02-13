@@ -36,7 +36,7 @@
 | Item | Decision | Source |
 |------|----------|--------|
 | **Initial status** | **Draft** (not Active) | Issam workflow map (2026-02-10) |
-| **Collaborator role** | **Not yet implemented** — only OM can perform workflow actions | Issam (2026-01-23) |
+| **Collaborator** | **Assignment, not a role** — users assigned as `OpportunityCollaborator` can edit all opportunity fields but cannot perform workflow stage transitions (Submit, Cancel, Reopen, Approve, Reject). Only OM and Partnership Lead (DoA2) can perform workflow actions. | Codebase (`OpportunityCollaborator` entity, `StateMachineStageChangeRoleSeeder`) |
 | **Cancel = Closed** | Cancel moves stage to CANCELLED, status to Closed | Fouad/Roz (2026-01-23) |
 | **Rejection = NO GO** | Rejection moves stage to NO GO (not back to I&P) | PRD and AC Section 5 |
 | **DoA2 = Decision Maker** | Lowest level DoA starting at Level 2 for responsible org unit | AC Section 5 |
@@ -48,15 +48,15 @@
 | # | Role | Current Stage | Current Status | Action | Target Stage | Target Status |
 |---|------|---------------|----------------|--------|-------------|---------------|
 | 1 | OM | Identify & Profile | Draft | Submit for Go | GO | Active |
-| 2 | Collaborator | Identify & Profile | Draft | Submit for Go | Access Denied | — |
+| 2 | Collaborator (assigned user) | Identify & Profile | Draft | Submit for Go | Access Denied — not a workflow role | — |
 | 3 | OM | Identify & Profile | Draft | Reject | NO GO | Closed |
-| 4 | Collaborator | Identify & Profile | Draft | Reject | Access Denied | — |
+| 4 | Collaborator (assigned user) | Identify & Profile | Draft | Reject | Access Denied — not a workflow role | — |
 | 5 | OM | Identify & Profile | Draft | Cancel | CANCELLED | Closed |
-| 6 | Collaborator | Identify & Profile | Draft | Cancel | Access Denied | — |
+| 6 | Collaborator (assigned user) | Identify & Profile | Draft | Cancel | Access Denied — not a workflow role | — |
 | 7 | OM | Cancelled | Closed | Reopen | Identify & Profile | Draft |
-| 8 | Collaborator | Cancelled | Closed | Reopen | Access Denied | — |
+| 8 | Collaborator (assigned user) | Cancelled | Closed | Reopen | Access Denied — not a workflow role | — |
 | 9 | OM | No-Go | Closed | Reopen | Identify & Profile | Draft |
-| 10 | Collaborator | No-Go | Closed | Reopen | Access Denied | — |
+| 10 | Collaborator (assigned user) | No-Go | Closed | Reopen | Access Denied — not a workflow role | — |
 
 ---
 
@@ -66,7 +66,7 @@
 |---------|-------|-------------------|
 | PNO-1193 | OM role transfer not working (DEF-010) | POS-029 blocked |
 | PNO-1171 | Reject action appears twice in history (DEF-011) | FUN-040 affected |
-| — | Collaborator role not implemented | NEG-001 through NEG-010 verify access denial (expected) |
+| — | Collaborator is an assignment, not a system role | NEG-001 through NEG-010 verify workflow action denial for assigned collaborators (collaborators can edit content but cannot perform stage transitions) |
 | — | Initial status "Draft" vs AC saying "Active" | Pending requirements from Roz/Issam |
 | — | Inactive OM visibility requires DB deactivation | FUN-033 blocked |
 | — | Additional Remarks missing character count | BND-033 — refinement ticket needed |
@@ -291,20 +291,22 @@
 
 > **Count: 70** | **Minimum: Max(50, 2×35=70)** | ✅ COMPLIANT
 
-### 2.1 Collaborator Access Denial (10 tests)
+### 2.1 Collaborator Workflow Action Denial (10 tests)
 
-| ID | Action Attempted | Role | Current State | Expected Result | Priority |
-|----|-----------------|------|---------------|-----------------|----------|
-| NEG-001 | Submit for Go | Collaborator | I&P/Draft | Access Denied — Submit button not visible or disabled | P0 |
-| NEG-002 | Reject workflow | Collaborator | I&P/Draft | Access Denied | P0 |
-| NEG-003 | Cancel opportunity | Collaborator | I&P/Draft | Access Denied — Cancel action not available | P0 |
-| NEG-004 | Reopen from Cancelled | Collaborator | CANCELLED/Closed | Access Denied | P0 |
-| NEG-005 | Reopen from No-Go | Collaborator | NO GO/Closed | Access Denied | P0 |
-| NEG-006 | Recall submission | Collaborator | GO/Active | Access Denied — Recall not available | P0 |
-| NEG-007 | Approve opportunity | Collaborator | GO/Active | Access Denied — Approve not available | P0 |
-| NEG-008 | Change OM assignment | Collaborator | I&P/Draft | Access Denied — OM field read-only | P1 |
-| NEG-009 | Edit during workflow | Collaborator | GO/Active | All fields read-only | P1 |
-| NEG-010 | View DoA pathway | Collaborator | GO/Active | Can view but not modify DoA pathway | P1 |
+> **Note:** "Collaborator" refers to a user assigned as an `OpportunityCollaborator` on the opportunity (part of the Opportunity Development Team). Collaborators **can edit all content fields** but **cannot perform workflow stage transitions** — those are restricted to the Opportunity Manager (OM) and Partnership Lead (DoA2) per the `StateMachineStageChangeRoleSeeder`. The collaborator feature is implemented via the `OpportunityCollaborators` table and Team section UI.
+
+| ID | Action Attempted | User Type | Current State | Expected Result | Priority |
+|----|-----------------|-----------|---------------|-----------------|----------|
+| NEG-001 | Submit for Go | Assigned Collaborator | I&P/Draft | Access Denied — Submit button not visible or disabled (only OM can submit) | P0 |
+| NEG-002 | Reject workflow | Assigned Collaborator | I&P/Draft | Access Denied — only DoA2 can reject | P0 |
+| NEG-003 | Cancel opportunity | Assigned Collaborator | I&P/Draft | Access Denied — Cancel action not available (only OM can cancel) | P0 |
+| NEG-004 | Reopen from Cancelled | Assigned Collaborator | CANCELLED/Closed | Access Denied — only OM can reopen | P0 |
+| NEG-005 | Reopen from No-Go | Assigned Collaborator | NO GO/Closed | Access Denied — only OM can reopen | P0 |
+| NEG-006 | Recall submission | Assigned Collaborator | GO/Active | Access Denied — Recall not available (only OM can recall) | P0 |
+| NEG-007 | Approve opportunity | Assigned Collaborator | GO/Active | Access Denied — Approve not available (only DoA2 can approve) | P0 |
+| NEG-008 | Change OM assignment | Assigned Collaborator | I&P/Draft | Access Denied — OM field read-only for collaborators | P1 |
+| NEG-009 | Edit during workflow | Assigned Collaborator | GO/Active | All fields read-only (same as OM — entire record locked during workflow) | P1 |
+| NEG-010 | View DoA pathway | Assigned Collaborator | GO/Active | Can view but not modify DoA pathway | P1 |
 
 ### 2.2 Invalid State Transitions (10 tests)
 
@@ -500,7 +502,7 @@
 | BND-067 | Workflow with exactly 1ms between actions | Rapid sequential actions | All recorded with distinct timestamps | P2 |
 | BND-068 | Submit with all collections at minimum (1 each) | Minimum viable data | ✅ Accept | P1 |
 | BND-069 | Stage stepper at last possible stage | GO/Closed (approved) | Stepper shows completion | P1 |
-| BND-070 | Opportunity with 0 collaborators | OM only | ✅ All workflow actions work | P1 |
+| BND-070 | Opportunity with 0 assigned collaborators | OM only, no collaborators assigned | ✅ All workflow actions work for OM | P1 |
 
 ---
 
@@ -517,7 +519,7 @@
 | FUN-003 | OM recall returns to I&P/Draft | OM recalls from GO/Active | Stage→I&P, Status→Draft | P0 |
 | FUN-004 | Only OM can recall (not submitter-specific) | Any OM of the opp recalls | Recall succeeds regardless of who submitted | P0 |
 | FUN-005 | Read-only after submission for OM | Opp in GO/Active | All content fields disabled/read-only for OM | P0 |
-| FUN-006 | Read-only after submission for Collaborator | Opp in GO/Active | All fields read-only for Collaborator | P0 |
+| FUN-006 | Read-only after submission for assigned Collaborator | Opp in GO/Active | All fields read-only for assigned Collaborator (same as OM — record locked during workflow) | P0 |
 | FUN-007 | Reopen from NO GO restores editability | Reopen rejected opp | Fields become editable again | P1 |
 | FUN-008 | Reopen from CANCELLED restores editability | Reopen cancelled opp | Fields become editable again | P1 |
 | FUN-009 | GO decision is final (no further edits) | Opp approved (GO/Closed) | Permanently read-only | P0 |
@@ -545,7 +547,7 @@
 | FUN-026 | Funding partner must have currency | Amount specified | No currency → error | P1 |
 | FUN-027 | Name field max length enforced | 255 chars | 256+ → error | P2 |
 | FUN-028 | Country-Org Unit mismatch warning | Country ≠ org unit country | Warning displayed (non-blocking) | P1 |
-| FUN-029 | Collaborator submission warning | Collaborator submits (future) | Non-OM submitter warning dialog | P1 |
+| FUN-029 | Collaborator cannot initiate submission | Assigned Collaborator attempts Submit for Go | Submit action not available — only OM can initiate workflow | P1 |
 | FUN-030 | High risk requires acknowledgement | High risk flagged | Must acknowledge before submit | P1 |
 
 ### 4.3 Constraint Rules (10 tests)
@@ -688,7 +690,7 @@
 | SEC-012 | General User (no role) | POST /api/opportunity/{id}/submit | 403 Forbidden | P0 |
 | SEC-013 | OM of opp A | POST /api/opportunity/{oppB}/submit | 403 Forbidden | P0 |
 | SEC-014 | DoA2 of org unit X | POST /api/opportunity/{orgY}/approve | 403 Forbidden | P0 |
-| SEC-015 | Collaborator | POST /api/opportunity/{id}/cancel | 403 Forbidden | P0 |
+| SEC-015 | Assigned Collaborator | POST /api/opportunity/{id}/cancel | 403 Forbidden — collaborators cannot perform workflow actions | P0 |
 | SEC-016 | Partner User | POST /api/opportunity/{id}/recall | 403 Forbidden | P1 |
 | SEC-017 | Expired session | POST /api/opportunity/{id}/submit | 401 + redirect to login | P1 |
 | SEC-018 | Revoked permissions (mid-session) | Approve after role removed | 403 Forbidden | P1 |
@@ -916,9 +918,10 @@
 | AC Section | AC Requirement | Test Cases |
 |------------|---------------|------------|
 | **1. Roles** | OM is primary caretaker, field never blank | POS-016, FUN-032 |
-| | Collaborator can edit content | NEG-001 to NEG-010 (access denied — not implemented) |
+| | Assigned Collaborator can edit all content fields (OpportunityCollaborator entity) | FUN-006, NEG-009 (read-only only during workflow) |
+| | Assigned Collaborator cannot perform workflow stage transitions | NEG-001 to NEG-010 (workflow actions restricted to OM/DoA2) |
 | | OM can transfer role | POS-029 (**BLOCKED: PNO-1193**), FUN-048 |
-| | OM or Collaborator can initiate submission | POS-001, NEG-001, FUN-029 |
+| | Only OM can initiate submission (not Collaborator) | POS-001, NEG-001, FUN-029 |
 | | Standardized position titles | POS-017 |
 | | Decision Maker = DoA2 | POS-007, POS-008, INT-028, INT-030 |
 | | Original decision makers visible | POS-018 |
@@ -934,7 +937,7 @@
 | | DoA2 server-side validation | NEG-037 to NEG-041, FUN-018 |
 | | Country-Org Unit mismatch warning | FUN-028 |
 | **5. Workflow** | Stage transitions (all) | POS-001 to POS-006, Matrix rows 1-10 |
-| | Access denial (Collaborator) | NEG-001 to NEG-010 |
+| | Workflow action denial (assigned Collaborators) | NEG-001 to NEG-010 |
 | | Cancel only from I&P not in workflow | FUN-002, NEG-011 |
 | | DoA pathway display | POS-032 |
 | | On-screen confirmation | POS-013 |
@@ -951,7 +954,7 @@
 - DoA2 for B5503 (India) = Dominic (configured by Tafazzul)
 - DoA2 for B5505 (Sri Lanka) = Perminder (configured by Tafazzul)
 - OM user with access to create/edit opportunities
-- Non-OM user for access denial tests (Collaborator)
+- User assigned as Collaborator on a test opportunity (via OpportunityCollaborators) for workflow action denial tests
 - General User account (no opportunity permissions)
 
 **URLs:**

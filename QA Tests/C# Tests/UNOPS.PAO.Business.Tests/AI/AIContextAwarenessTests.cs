@@ -476,7 +476,10 @@ namespace UNOPS.PAO.Business.Tests.AI
 
         public void Dispose()
         {
-            _context.Database.EnsureDeleted();
+            if (TestEnvironment.UseInMemory)
+            {
+                _context.Database.EnsureDeleted();
+            }
             _context.Dispose();
         }
     }

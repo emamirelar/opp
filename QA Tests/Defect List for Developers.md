@@ -57,7 +57,7 @@ This document tracks **production code defects** discovered during testing. Thes
 - **Manual QA Passed:** 2 (TC-005 Cancel, TC-007 Reopen — verified by Silvia on QA, 2026-02-10)
 - **Automated Tests Executed (2026-02-11):** 569 total across C# and Playwright
   - **509 passed, 0 failed, 60 skipped** (all skips intentional — DEF-008 blocked or env var not set)
-- **Tests Blocked:** ~3 (PNO-1193 role transfer, inactive OM, Collaborator role)
+- **Tests Blocked:** ~2 (PNO-1193 role transfer, inactive OM)
 - **Tests Awaiting Manual QA Execution:** ~50 of 55 Playwright E2E tests (require `GO_DECISION_IMPLEMENTED=true`)
 
 **Now Implemented (confirmed by QA testing 2026-02-05 through 2026-02-10):**
@@ -79,11 +79,14 @@ This document tracks **production code defects** discovered during testing. Thes
 
 **Remaining Gaps (Not Yet Implemented or Unverified):**
 
-**1. Collaborator Role (Not Implemented):**
-- ❌ Collaborator can edit all content in I&P stage
-- ❌ Collaborator can initiate "Submit for Go" (AC Section 1)
-- ❌ Non-OM submitter warning when Collaborator submits
-- ℹ️ Per Issam (2026-01-23): "collaborator role is not yet implemented" — all Collaborator test cases verify access denial as expected current behavior
+**1. Collaborator Assignment (Clarified 2026-02-13):**
+- ✅ **RESOLVED:** "Collaborator" is NOT a system role — it is an **assignment** via the `OpportunityCollaborator` entity (part of the Opportunity Development Team). The feature is already implemented:
+  - ✅ `OpportunityCollaborators` table exists with Add/Edit/Remove UI in Team section
+  - ✅ Assigned Collaborators **can edit all content fields** of the opportunity (checked via `IsOpportunityTeamMemberAsync` in `PermissionService`)
+  - ✅ Assigned Collaborators **cannot perform workflow stage transitions** (Submit, Cancel, Reopen, Approve, Reject) — these are restricted to OM and Partnership Lead (DoA2) per `StateMachineStageChangeRoleSeeder`
+  - ✅ Collaborator expertise assignment supported via `OpportunityCollaboratorExpertise`
+- ℹ️ Previous note from Issam (2026-01-23) about "collaborator role not implemented" referred to the assignment feature which has **since been implemented**
+- ℹ️ NEG-001 through NEG-010 test cases updated: verify that assigned Collaborators cannot perform workflow actions (correct by design, not a blocker)
 
 **2. Notifications (Unverified):**
 - ❌ Email notification to DoA2 on submission (template content unverified)
@@ -235,7 +238,7 @@ The following items were previously logged as developer defects but have been re
 - 🟡 **Medium Priority:** 1 (DEF-011 PNO-1171 duplicate reject in history)
 - 🟢 **Low Priority:** 0
 - **New Defects Found (2026-02-11 PNO-969 Testing):** 2 — DEF-010 (OM role transfer bug), DEF-011 (duplicate workflow history entry)
-- **DEF-008 Progress:** Core Go Decision workflow now operational (submit, cancel, reopen, reject, DoA2 lookup all working). Remaining: Collaborator role, notifications, UI components, role transfer (DEF-010).
+- **DEF-008 Progress:** Core Go Decision workflow now operational (submit, cancel, reopen, reject, DoA2 lookup all working). Collaborator assignment feature confirmed implemented (2026-02-13). Remaining: notifications, UI components, role transfer (DEF-010).
 - **PNO-969 Full Test Execution (2026-02-11):** **509 passed, 0 failed, 60 skipped** across all C# and Playwright PNO-969 tests. No new product defects discovered.
 - **Playwright Improvement (2026-02-09):** 511+ passed (was 289, **+222**), ~100 skipped (was 322, **-222**). 222 more tests now executing and passing. **0 failures.**
 - **DEF-007 RESOLVED:** Integration Tests build restored (4,675 → 0 errors). Business.Tests recovered +1,866 tests (3,445 now passing).

@@ -3,42 +3,62 @@ using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Business.Tests.TestBase;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.UNOPSDomain.Entities;
 using Xunit;
 
 namespace UNOPS.PAO.Business.Tests.Concurrency;
 
 /// <summary>
-/// Concurrency tests for Contact operations
+/// Concurrency tests for Contact operations against PostgreSQL.
+/// Uses UNOPSContact and creates parent Partners for FK constraints.
+/// Uses test markers to filter own data from the shared database.
 /// </summary>
 public class ContactConcurrencyTests : ConcurrencyTestBase
 {
+    private readonly string _testMarker = $"CONC_{Guid.NewGuid():N}";
+
     [Fact]
     public async Task ConcurrentGetContacts_ShouldReturnConsistent()
     {
         // Arrange
+        var partnerId = await CreateTestPartnerAsync($"Partner_{_testMarker}");
+        var contactIds = new List<int>();
         using (var context = CreateContext())
         {
             var contacts = Enumerable.Range(1, 20)
-                .Select(i => new Contact
+                .Select(i => new UNOPSContact
                 {
-                    Id = i,
-                    Name = $"Contact {i}",
+                    Name = $"Contact {i} {_testMarker}",
                     FirstName = $"First{i}",
                     LastName = $"Last{i}",
-                    Email = $"contact{i}@test.com",
+                    Email = $"contact{i}_{_testMarker}@test.com",
                     Title = $"Title{i}",
-                    Status = EntityStatus.Active
+                    PartnerId = partnerId,
+                    Status = EntityStatus.Active,
+                    CreatedBy = 1,
+                    LastModifiedBy = 1,
+                    LastModifiedDate = DateTime.UtcNow
                 })
                 .ToList();
             await context.Contacts.AddRangeAsync(contacts);
             await context.SaveChangesAsync();
+            contactIds.AddRange(contacts.Select(c => c.Id));
         }
+        RegisterCleanup(async () =>
+        {
+            using var ctx = TestDbContextFactory.Create();
+            var ids = string.Join(",", contactIds);
+            await ctx.Database.ExecuteSqlRawAsync($"DELETE FROM public.\"Contacts\" WHERE \"Id\" IN ({ids})");
+        });
 
         // Act
+        var marker = _testMarker;
         var results = await ExecuteConcurrentlyAsync(10, async (index) =>
         {
             using var context = CreateContext();
-            return await context.Contacts.ToListAsync();
+            return await context.Contacts
+                .Where(c => c.Name.Contains(marker))
+                .ToListAsync();
         });
 
         // Assert
@@ -49,28 +69,43 @@ public class ContactConcurrencyTests : ConcurrencyTestBase
     [Fact]
     public async Task ConcurrentContactCreation_ShouldCreateAll()
     {
+        // Arrange
+        var partnerId = await CreateTestPartnerAsync($"Partner_{_testMarker}");
+        var createdIds = new System.Collections.Concurrent.ConcurrentBag<int>();
+        var marker = _testMarker;
+
         // Act
         await ExecuteConcurrentlyAsync(10, async (index) =>
         {
             using var context = CreateContext();
-            var contact = new Contact
+            var contact = new UNOPSContact
             {
-                Id = index + 1,
-                Name = $"Contact {index}",
+                Name = $"Contact {index} {marker}",
                 FirstName = $"First{index}",
                 LastName = $"Last{index}",
-                Email = $"contact{index}@test.com",
+                Email = $"contact{index}_{marker}@test.com",
                 Title = $"Title{index}",
-                Status = EntityStatus.Active
+                PartnerId = partnerId,
+                Status = EntityStatus.Active,
+                CreatedBy = 1,
+                LastModifiedBy = 1,
+                LastModifiedDate = DateTime.UtcNow
             };
             await context.Contacts.AddAsync(contact);
             await context.SaveChangesAsync();
+            createdIds.Add(contact.Id);
             return contact;
+        });
+        RegisterCleanup(async () =>
+        {
+            using var ctx = TestDbContextFactory.Create();
+            var ids = string.Join(",", createdIds);
+            await ctx.Database.ExecuteSqlRawAsync($"DELETE FROM public.\"Contacts\" WHERE \"Id\" IN ({ids})");
         });
 
         // Assert
         using var verifyContext = CreateContext();
-        var count = await verifyContext.Contacts.CountAsync();
+        var count = await verifyContext.Contacts.CountAsync(c => c.Name.Contains(_testMarker));
         count.Should().Be(10);
     }
 
@@ -78,31 +113,46 @@ public class ContactConcurrencyTests : ConcurrencyTestBase
     public async Task ConcurrentOperations_ShouldCompleteWithinTimeout()
     {
         // Arrange
+        var partnerId = await CreateTestPartnerAsync($"Partner_{_testMarker}");
+        var contactIds = new List<int>();
         using (var context = CreateContext())
         {
             var contacts = Enumerable.Range(1, 50)
-                .Select(i => new Contact
+                .Select(i => new UNOPSContact
                 {
-                    Id = i,
-                    Name = $"Contact {i}",
+                    Name = $"Contact {i} {_testMarker}",
                     FirstName = $"First{i}",
                     LastName = $"Last{i}",
-                    Email = $"contact{i}@test.com",
+                    Email = $"contact{i}_{_testMarker}@test.com",
                     Title = $"Title{i}",
-                    Status = EntityStatus.Active
+                    PartnerId = partnerId,
+                    Status = EntityStatus.Active,
+                    CreatedBy = 1,
+                    LastModifiedBy = 1,
+                    LastModifiedDate = DateTime.UtcNow
                 })
                 .ToList();
             await context.Contacts.AddRangeAsync(contacts);
             await context.SaveChangesAsync();
+            contactIds.AddRange(contacts.Select(c => c.Id));
         }
+        RegisterCleanup(async () =>
+        {
+            using var ctx = TestDbContextFactory.Create();
+            var ids = string.Join(",", contactIds);
+            await ctx.Database.ExecuteSqlRawAsync($"DELETE FROM public.\"Contacts\" WHERE \"Id\" IN ({ids})");
+        });
 
         // Act
+        var marker = _testMarker;
         var completed = await ExecuteWithTimeoutAsync(async () =>
         {
             await ExecuteConcurrentlyAsync(20, async (index) =>
             {
                 using var context = CreateContext();
-                return await context.Contacts.ToListAsync();
+                return await context.Contacts
+                    .Where(c => c.Name.Contains(marker))
+                    .ToListAsync();
             });
         }, timeoutMs: 10000);
 
@@ -114,25 +164,38 @@ public class ContactConcurrencyTests : ConcurrencyTestBase
     public async Task ConcurrentReadAndWrite_ShouldNotDeadlock()
     {
         // Arrange
+        var partnerId = await CreateTestPartnerAsync($"Partner_{_testMarker}");
+        var contactIds = new List<int>();
         using (var context = CreateContext())
         {
             var contacts = Enumerable.Range(1, 10)
-                .Select(i => new Contact
+                .Select(i => new UNOPSContact
                 {
-                    Id = i,
-                    Name = $"Contact {i}",
+                    Name = $"Contact {i} {_testMarker}",
                     FirstName = $"First{i}",
                     LastName = $"Last{i}",
-                    Email = $"contact{i}@test.com",
+                    Email = $"contact{i}_{_testMarker}@test.com",
                     Title = $"Title{i}",
-                    Status = EntityStatus.Active
+                    PartnerId = partnerId,
+                    Status = EntityStatus.Active,
+                    CreatedBy = 1,
+                    LastModifiedBy = 1,
+                    LastModifiedDate = DateTime.UtcNow
                 })
                 .ToList();
             await context.Contacts.AddRangeAsync(contacts);
             await context.SaveChangesAsync();
+            contactIds.AddRange(contacts.Select(c => c.Id));
         }
+        RegisterCleanup(async () =>
+        {
+            using var ctx = TestDbContextFactory.Create();
+            var ids = string.Join(",", contactIds);
+            await ctx.Database.ExecuteSqlRawAsync($"DELETE FROM public.\"Contacts\" WHERE \"Id\" IN ({ids})");
+        });
 
         // Act - Mix of reads and writes
+        var marker = _testMarker;
         var completed = await ExecuteWithTimeoutAsync(async () =>
         {
             await ExecuteConcurrentlyAsync(15, async (index) =>
@@ -141,12 +204,15 @@ public class ContactConcurrencyTests : ConcurrencyTestBase
                 if (index % 2 == 0)
                 {
                     // Read operation
-                    return await context.Contacts.ToListAsync();
+                    return await context.Contacts
+                        .Where(c => c.Name.Contains(marker))
+                        .ToListAsync();
                 }
                 else
                 {
-                    // Write operation
-                    var contact = await context.Contacts.FindAsync((index % 10) + 1);
+                    // Write operation - find by our test marker contacts
+                    var contactId = contactIds[index % contactIds.Count];
+                    var contact = await context.Contacts.FindAsync(contactId);
                     if (contact != null)
                     {
                         contact.FirstName = $"Updated{index}";
@@ -161,4 +227,3 @@ public class ContactConcurrencyTests : ConcurrencyTestBase
         completed.Should().BeTrue();
     }
 }
-

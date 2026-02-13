@@ -8,6 +8,7 @@ using UNOPS.PAO.Business.Tests.TestBase;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.Business.Tests.Managers
 {
@@ -50,9 +51,8 @@ namespace UNOPS.PAO.Business.Tests.Managers
             _context.Countries.AddRange(countries);
 
             // Seed Partner first (required for Contacts)
-            var partner = new Partner
+            var partner = new UNOPSPartner
             {
-                Id = 1,
                 Name = "Test Partner",
                 PartnerShortDescription = "Test Partner for Values Manager Tests",
                 CreatedBy = 1,
@@ -64,11 +64,11 @@ namespace UNOPS.PAO.Business.Tests.Managers
             _context.Partners.Add(partner);
 
             // Seed Contacts
-            var contacts = new List<Contact>
+            var contacts = new List<UNOPSContact>
             {
-                new Contact { Id = 1, Name = "John Doe", FirstName = "John", LastName = "Doe", Title = "Mr.", Email = "john.doe@test.com", PartnerId = 1, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new Contact { Id = 2, Name = "Jane Smith", FirstName = "Jane", LastName = "Smith", Title = "Ms.", Email = "jane.smith@test.com", PartnerId = 1, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new Contact { Id = 3, Name = "Bob Wilson", FirstName = "Bob", LastName = "Wilson", Title = "Mr.", Email = "bob.wilson@test.com", PartnerId = 1, Status = EntityStatus.Inactive, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow }
+                new UNOPSContact { Name = "John Doe", FirstName = "John", LastName = "Doe", Title = "Mr.", Email = "john.doe@test.com", Partner = partner, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new UNOPSContact { Name = "Jane Smith", FirstName = "Jane", LastName = "Smith", Title = "Ms.", Email = "jane.smith@test.com", Partner = partner, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new UNOPSContact { Name = "Bob Wilson", FirstName = "Bob", LastName = "Wilson", Title = "Mr.", Email = "bob.wilson@test.com", Partner = partner, Status = EntityStatus.Inactive, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow }
             };
             _context.Contacts.AddRange(contacts);
 
@@ -431,7 +431,10 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         public void Dispose()
         {
-            _context.Database.EnsureDeleted();
+            if (TestEnvironment.UseInMemory)
+            {
+                _context.Database.EnsureDeleted();
+            }
             _context.Dispose();
         }
     }

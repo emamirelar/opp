@@ -16,14 +16,17 @@ using UNOPS.PAO.UNOPSBusiness.Managers;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.DataAccess.Interfaces;
+using UNOPS.PAO.Business.Tests.TestBase;
 
 namespace UNOPS.PAO.Business.Tests.Opportunity;
 
 /// <summary>
-/// Base class for integration tests
-/// Uses in-memory database with real services (no mocks)
-/// Note: Tests that use Z.EntityFramework.Extensions (BulkUpdate, SingleUpdateAsync) 
-/// will fail with InMemory provider - these should be skipped or run with real database
+/// Base class for integration tests.
+/// Supports both InMemory (default) and real PostgreSQL databases.
+/// Set TEST_DB_CONNECTION_STRING env var to use real PostgreSQL.
+/// 
+/// When using PostgreSQL, Z.EntityFramework.Extensions (BulkUpdate, SingleUpdateAsync)
+/// will work correctly — these operations require a relational database.
 /// </summary>
 public abstract class IntegrationTestBase : IDisposable
 {
@@ -35,11 +38,8 @@ public abstract class IntegrationTestBase : IDisposable
 
     protected IntegrationTestBase()
     {
-        // Setup in-memory database with a unique name per test
-        var dbContextOptions = new DbContextOptionsBuilder<UNOPSAppDbContext>()
-            .UseInMemoryDatabase(databaseName: $"IntegrationTestDb_{Guid.NewGuid()}")
-            .EnableSensitiveDataLogging()
-            .Options;
+        // Use TestEnvironment to create database options (InMemory or PostgreSQL)
+        var dbContextOptions = TestEnvironment.CreateUNOPSDbContextOptions();
 
         var mockUserServiceHttpContextAccessor = new Mock<IHttpContextAccessor>();
         var mockUserServiceHttpContext = new Mock<HttpContext>();
@@ -64,9 +64,11 @@ public abstract class IntegrationTestBase : IDisposable
 
         Context = new UNOPSAppDbContext(dbContextOptions, userResolverService, mockDbSchema.Object);
         
-        // Ensure EF Core model is finalized for in-memory database
-        // This creates the database schema and finalizes the model
-        Context.Database.EnsureCreated();
+        // For InMemory: create the schema. For PostgreSQL: schema already exists from migrations.
+        if (TestEnvironment.UseInMemory)
+        {
+            Context.Database.EnsureCreated();
+        }
 
         // Setup real AutoMapper
         var mapperConfig = new MapperConfiguration(cfg =>
@@ -76,23 +78,8 @@ public abstract class IntegrationTestBase : IDisposable
         });
         Mapper = mapperConfig.CreateMapper();
 
-        // Setup real Configuration
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["IsUNOPSOverride"] = "true",
-                ["ExchangeRate:ApiKey"] = "test-key",
-                ["ExchangeRate:BaseUrl"] = "https://test-api.example.com",
-                ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=test_db;",
-                ["ConnectionStrings:DbSchema"] = "public",
-                ["AISettings:DisableExternalCalls"] = "true",
-                ["AISettings:ModelName"] = "gemini-pro",
-                ["AISettings:ProjectId"] = "test-project",
-                ["AISettings:Location"] = "us-central1",
-                ["GoogleCloud:ProjectId"] = "test-project",
-                ["GoogleCloud:PubSubTopic"] = "test-topic"
-            })
-            .Build();
+        // Setup real Configuration using TestEnvironment
+        var configuration = TestEnvironment.CreateTestConfiguration();
 
         // Setup test user
         TestUser = new ClaimsPrincipal(new ClaimsIdentity(new[]
@@ -119,10 +106,28 @@ public abstract class IntegrationTestBase : IDisposable
         var services = new ServiceCollection();
         services.AddSingleton<IConfiguration>(configuration);
         services.AddSingleton(Mapper);
-        services.AddDbContext<UNOPSAppDbContext>(options => 
-            options.UseInMemoryDatabase($"IntegrationTestDb_{Guid.NewGuid()}"));
-        services.AddDbContextFactory<UNOPSAppDbContext>(options => 
-            options.UseInMemoryDatabase($"IntegrationTestDb_{Guid.NewGuid()}"));
+        // Register DbContext and Factory using TestEnvironment configuration
+        if (TestEnvironment.UsePostgreSQL)
+        {
+            if (TestEnvironment.DataSource != null)
+            {
+                // Use pre-built data source (handles IAM auth and connection pooling)
+                services.AddDbContext<UNOPSAppDbContext>(options => options.UseNpgsql(TestEnvironment.DataSource));
+                services.AddDbContextFactory<UNOPSAppDbContext>(options => options.UseNpgsql(TestEnvironment.DataSource));
+            }
+            else
+            {
+                var connStr = TestEnvironment.ConnectionString!;
+                services.AddDbContext<UNOPSAppDbContext>(options => options.UseNpgsql(connStr));
+                services.AddDbContextFactory<UNOPSAppDbContext>(options => options.UseNpgsql(connStr));
+            }
+        }
+        else
+        {
+            var dbName = $"IntegrationTestDb_{Guid.NewGuid()}";
+            services.AddDbContext<UNOPSAppDbContext>(options => options.UseInMemoryDatabase(dbName));
+            services.AddDbContextFactory<UNOPSAppDbContext>(options => options.UseInMemoryDatabase(dbName));
+        }
         
         // Setup mock permission service for testing (using Moq)
         var mockPermissionService = new Mock<IPermissionService>();
@@ -230,7 +235,11 @@ public abstract class IntegrationTestBase : IDisposable
 
     public virtual void Dispose()
     {
-        Context.Database.EnsureDeleted();
+        // For InMemory: cleanup is automatic. For PostgreSQL: do NOT delete the real database.
+        if (TestEnvironment.UseInMemory)
+        {
+            Context.Database.EnsureDeleted();
+        }
         Context.Dispose();
         if (ServiceProvider is IDisposable disposable)
         {

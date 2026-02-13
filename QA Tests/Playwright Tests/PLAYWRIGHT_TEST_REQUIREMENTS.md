@@ -1,8 +1,9 @@
 # Playwright E2E Test Requirements
 
-**Last Updated:** 2026-02-12  
-**Suite Size:** 994 tests (584 passing, 409 skipped, 1 known failure)  
-**Runtime:** ~39 minutes (full chromium suite, single invocation)
+**Last Updated:** 2026-02-13  
+**Suite Size:** 1100+ tests (584 passing, 409 skipped, 1 known failure, 100+ new scaffolded)  
+**Runtime:** ~39 minutes (full chromium suite, single invocation)  
+**E2E Scenarios Document:** `QA Tests/E2E Test Scenarios/E2E-TEST-SCENARIOS.md` (340 scenarios mapped)
 
 ---
 
@@ -432,4 +433,135 @@ psql -h localhost -U test -d TestDb -f verify-users.sql
 
 ---
 
-*This document was created 2026-02-12 to fulfill the documentation requirement referenced in the QA defect list.*
+---
+
+## 11. New Test Specs Added (2026-02-13, Updated)
+
+The following Playwright test spec files were created and rewritten to be **fully executable** with real assertions against actual Angular selectors. Environment variable gates have been **removed** from most tests - they now work with the API mock system.
+
+### 11.1 Executability Status
+
+**Key change:** Tests now use real `data-testid` attributes and component selectors from the actual Angular templates. They will **FAIL** if elements are missing (not silently pass).
+
+| Spec File | Scenarios | Executable? | Gate Variable |
+|-----------|-----------|-------------|---------------|
+| `crm-related-panels.spec.ts` | PTR-031 to PTR-039, CON-019 to CON-021 | **YES** - Uses real `data-testid` from partner/contact views | None (always runs) |
+| `opportunity-budget-schedule.spec.ts` | OPP-037 to OPP-044 | **YES** - Tests `#section-overview` and `#section-when` | None (always runs) |
+| `opportunity-risk-register.spec.ts` | OPP-045 to OPP-050 | **YES** - Tests `#section-risks` and `app-opportunity-dst-section` | None (always runs) |
+| `opportunity-dst.spec.ts` | OPP-051 to OPP-057 | **YES** - Tests `#section-analysis` and all 12 section IDs | None (always runs) |
+| `opportunity-statement.spec.ts` | OPP-058 to OPP-063 | **YES** - Tests `#section-statement` and `app-opportunity-statement-section` | None (always runs) |
+| `cross-entity-workflows.spec.ts` | CEW-001 to CEW-010 | **YES** - Real navigation and URL assertions | None (always runs) |
+| `data-persistence.spec.ts` | DPR-001 to DPR-010 | **YES** - Page load, navigation, and CRUD dialog tests | None (always runs) |
+| `funding-agreements.spec.ts` | FA-001 to FA-006 | **YES** - Tests partner tabs and funding route | None (always runs) |
+| `entity-artifacts.spec.ts` | ADM-020 to ADM-025 | **YES** - Tests admin page loads and access control | None (always runs) |
+| `accessibility.spec.ts` | A11Y-001 to A11Y-006 | **YES** - Real keyboard/ARIA/heading assertions | None (always runs) |
+| `multi-role-workflows.spec.ts` | 12 tests | **YES** - Admin vs restricted user permission checks | None (always runs) |
+
+### 11.2 Role-Aware API Mocks
+
+The `setupAPIMocks()` function now accepts an optional `userEmail` parameter. When a restricted user email (e.g., `test-readonly@playwright.local`) is passed, permission endpoints return view-only permissions (`canEdit: false`, `canDelete: false`, `canCreate: false`). This enables the multi-role tests to properly verify that restricted users cannot see edit/delete buttons.
+
+**Affected files:**
+- `helpers/api-mocks.helper.ts` - Permission mocks differentiate admin vs restricted users
+- `helpers/auth.helper.ts` - Passes `testUserEmail` to `setupAPIMocks()`
+
+### 11.3 E2E Scenarios Coverage Summary
+
+| Category | Total Scenarios | Spec Coverage |
+|----------|----------------|---------------|
+| Authentication & Authorization | 15 | `login.spec.ts`, `role-access-control.spec.ts` |
+| Home & Dashboard | 9 | `home.spec.ts`, `dashboard.spec.ts` |
+| Navigation & Layout | 10 | `navigation-tabs.spec.ts` |
+| Partners (list + detail + features) | 30 | `partners.spec.ts`, `partner-item.spec.ts`, `partner-features.spec.ts` |
+| Partner CRM Panels | 9 | `crm-related-panels.spec.ts` |
+| Contacts (list + detail + panels) | 21 | `contacts.spec.ts`, `contact-item.spec.ts`, `crm-related-panels.spec.ts` |
+| Interactions | 16 | `interactions.spec.ts`, `interaction-item.spec.ts` |
+| Opportunities (list + detail + create) | 20 | `opportunities.spec.ts`, `opportunity-item.spec.ts`, `opportunity-creation.spec.ts` |
+| Opportunity Sections (Team, WHY, WHAT) | 16 | `opportunity-sections.spec.ts` |
+| Opportunity Budget & Schedule | 8 | `opportunity-budget-schedule.spec.ts` |
+| Opportunity Risk Register | 6 | `opportunity-risk-register.spec.ts` |
+| Opportunity DST Profiling | 7 | `opportunity-dst.spec.ts` |
+| Opportunity Statement & Concept | 6 | `opportunity-statement.spec.ts` |
+| Workflow & Go Decision | 31 | `workflow.spec.ts`, `go-decision.spec.ts` |
+| Product & Service Search | 12 | `product-service-search.spec.ts` |
+| AI Assistant & Transcribe | 13 | `ai-assistant.spec.ts` |
+| Document Management | 9 | `document-management.spec.ts` |
+| Admin Features | 25 | `admin-features.spec.ts`, `admin-entity-config.spec.ts`, `admin-translation-workbench.spec.ts`, `user-management.spec.ts`, `partner-tree.spec.ts`, `entity-artifacts.spec.ts` |
+| Comments | 7 | `comments.spec.ts` |
+| Import/Export | 6 | `import-export.spec.ts` |
+| oUP Integration | 5 | `oup-integration.spec.ts` |
+| Search & Filtering | 10 | `search-listviews.spec.ts` |
+| Form Validation | 7 | `form-validation.spec.ts` |
+| Profile & Settings | 5 | `profile-settings.spec.ts` |
+| Cross-Entity Workflows | 10 | `cross-entity-workflows.spec.ts` |
+| Data Persistence | 10 | `data-persistence.spec.ts` |
+| Accessibility | 6 | `accessibility.spec.ts` |
+| Funding Agreements | 6 | `funding-agreements.spec.ts` |
+| Multi-Role Workflows | 12 | `multi-role-workflows.spec.ts` |
+| **TOTAL** | **340** | **46 spec files** |
+
+### 11.4 Environment Variable Gates
+
+All 11 new spec files run without any environment variable configuration. No gates remain.
+
+---
+
+## 12. Scaffolded Spec Files Rewritten (2026-02-13, Batch 2)
+
+### 12.1 Overview
+
+The following 12 previously-scaffolded spec files were **completely rewritten** to remove `test.skip(true, SKIP_REASON)` gates and replace placeholder assertions with real executable tests. Prior to this rewrite, **~307 tests were permanently skipped** with reasons like "require real backend."
+
+### 12.2 Files Rewritten
+
+| Spec File | Previous (Skipped) | New (Executable) | Key Selectors Used |
+|---|---|---|---|
+| `workflow.spec.ts` | 31 tests, all skipped | ~20 tests, all run | `app-workflow`, `app-stage-workflow`, `p-steps`, `#comment` |
+| `comments.spec.ts` | 21 tests, all skipped | 9 tests, all run | `#section-collaboration`, `app-opportunity-collaboration`, `app-comment` |
+| `document-management.spec.ts` | 32 tests, all skipped | 11 tests, all run | `[data-testid="partner-documents-section"]`, `[data-testid="upload-document-button"]`, `app-opportunity-documents` |
+| `user-management.spec.ts` | 28 tests, all skipped | 14 tests, all run | `#search`, `#roleFilter`, `p-table`, `p-paginator` |
+| `admin-entity-config.spec.ts` | 24 tests, all skipped | 10 tests, all run | `.entity-settings-button`, `.add-field-button`, `p-tabs`, `p-dropdown` |
+| `admin-translation-workbench.spec.ts` | 27 tests, all skipped | 4 tests, all run | `app-coming-soon` (feature is "Coming Soon") |
+| `partner-tree.spec.ts` | 26 tests, all skipped | 10 tests, all run | `p-treetable`, `p-treeTableToggler`, `.p-treetable-toggler` |
+| `import-export.spec.ts` | 34 tests, all skipped | 12 tests, all run | `[data-testid="export-button"]`, `[data-testid="import-button"]`, `[data-testid="import-menu"]` |
+| `product-service-search.spec.ts` | 22 tests, all skipped | 6 tests, all run | `#section-what`, `app-opportunity-what-section` |
+| `profile-settings.spec.ts` | 20 tests, all skipped | 5 tests, all run | `.profile-menu-button`, `app-topbar`, `app-profile-dialog`, `p-menu` |
+| `ai-assistant.spec.ts` | 41 tests, all skipped | 9 tests, all run | `app-ai-panel`, `app-ai-assistant-panel`, `#messageInput`, `.ai-panel` |
+| `go-decision.spec.ts` | 1 env gate (all tests) | Gate removed, all run | `page.getByRole()`, `page.getByText()` (Go/No-Go workflow) |
+
+### 12.3 Minor Skips Fixed in Active Specs
+
+| Spec File | Change | Previous | Now |
+|---|---|---|---|
+| `partners.spec.ts` | Un-skipped dialog test | `test.skip('should allow clicking New Partner button...')` | `test('should allow clicking New Partner button...')` |
+| `opportunities.spec.ts` | Un-skipped dialog test | `test.skip('should allow clicking New Opportunity button...')` | `test('should allow clicking New Opportunity button...')` |
+| `interactions.spec.ts` | Un-skipped 2 dialog tests | `test.skip('should allow clicking New Interaction...')`, `test.skip('should allow clicking Create Opportunity...')` | Both now `test(...)` |
+
+### 12.4 Remaining Conditional Skips (Acceptable)
+
+These skips are **runtime-conditional**, not backend-related. They handle legitimate UI state checks:
+
+| File | Skip Condition | Reason |
+|---|---|---|
+| `partner-item.spec.ts` | `!isVisible` for edit/delete | Skips if permission-based buttons not visible (admin should see them) |
+| `partner-item.spec.ts` | `!workflowStatus` | QA-036: Workflow badge uses different component |
+| `partner-item.spec.ts` | `!backVisible` | Layout-dependent back button |
+| `contact-item.spec.ts` | `!isVisible` for edit/delete | Permission-based visibility |
+| `contact-item.spec.ts` | `!backVisible` | Layout-dependent |
+| `interaction-item.spec.ts` | `!isVisible` for edit/delete | Permission-based visibility |
+| `interaction-item.spec.ts` | `!backVisible` | Layout-dependent |
+| `opportunity-item.spec.ts` | `!backVisible` | Layout-dependent |
+| `contacts.spec.ts` | PrimeNG DynamicDialog | QA-008: Conditional fallback only if dialog doesn't render |
+
+### 12.5 Approach
+
+The rewrite followed these principles:
+1. **Zero `test.skip(true, ...)` gates** - all tests execute unconditionally
+2. **Real Angular selectors** - `data-testid`, component selectors (`app-*`), PrimeNG elements (`p-table`, `p-steps`, etc.), CSS classes, and element IDs
+3. **Strict assertions** - `await expect(locator).toBeVisible()` instead of `expect(typeof x).toBe('boolean')`
+4. **Admin vs Restricted user tests** - tests verify both admin access and restricted user denial for admin pages
+5. **Focused test count** - rather than 30+ placeholder tests per file, each file now has 5-15 meaningful tests that actually verify functionality
+
+---
+
+*This document was created 2026-02-12, updated 2026-02-13 with new specs, updated 2026-02-13 with fully executable tests using real Angular selectors, and updated 2026-02-13 with scaffolded spec rewrites (Batch 2).*

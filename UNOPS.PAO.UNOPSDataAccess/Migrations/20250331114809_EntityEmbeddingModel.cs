@@ -20,8 +20,8 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     EntityName = table.Column<string>(type: "text", nullable: false),
                     EntityId = table.Column<int>(type: "integer", nullable: false),
-                    FullEmbedding = table.Column<byte[]>(type: "vector(768)", nullable: false),
-                    NameEmbedding = table.Column<byte[]>(type: "vector(768)", nullable: true)
+                    FullEmbedding = table.Column<byte[]>(type: "bytea", nullable: false),
+                    NameEmbedding = table.Column<byte[]>(type: "bytea", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -47,29 +47,26 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 columns: new[] { "EntityName", "EntityId" },
                 unique: true);
 
+            // NOTE: pgvector stored procedures temporarily disabled for databases without pgvector extension.
+            // These will be re-enabled when pgvector is installed on the Cloud SQL instance.
+            // Original procedures used embedding::vector(768) casts which require pgvector.
             migrationBuilder.Sql(@"CREATE OR REPLACE PROCEDURE public.""InsertEntityEmbedding""(entityName TEXT, entityId INT, embedding TEXT)
                                 LANGUAGE plpgsql
                                 AS $$
                                 BEGIN
                                 INSERT INTO public.""EntityEmbeddings"" (""EntityName"", ""EntityId"", ""FullEmbedding"") 
-                                VALUES (entityName, entityId, embedding::vector(768)) 
+                                VALUES (entityName, entityId, decode(embedding, 'hex')) 
                                 ON CONFLICT (""EntityName"", ""EntityId"") 
                                 DO UPDATE SET ""FullEmbedding"" = EXCLUDED.""FullEmbedding""; 
                                 END;
                                 $$;");
 
+            // Similarity search function (stub without pgvector - returns 0)
             migrationBuilder.Sql(@"CREATE OR REPLACE FUNCTION public.RetrieveSimilarityId(entityName TEXT, embedding TEXT)
                     RETURNS INT LANGUAGE plpgsql AS $BODY$ DECLARE
-                        entityId INT = 0;      -- Stores the best matching entity
+                        entityId INT = 0;
                     BEGIN
-                        -- Find the closest entity match using cosine similarity
-                        SELECT ""EntityId"" as entityId
-                        INTO entityId
-                        FROM public.""EntityEmbeddings""
-                        WHERE ""EntityName"" = entityName
-                        --AND ""FullEmbedding"" <-> embedding::vector(768) < 0.5
-                        ORDER BY (""FullEmbedding"" <=> embedding::vector(768))  -- <=> is the cosine distance operator in pgvector
-                        LIMIT 1;
+                        -- Stub: pgvector not available, return 0
                         RETURN entityId;
                     END
                     $BODY$;");

@@ -1,278 +1,155 @@
 /**
- * @fileoverview User Management E2E Tests
+ * @fileoverview User Management Admin E2E Tests
+ * Tests for the User Management admin page.
  * 
- * Comprehensive tests for user administration: CRUD, role assignment,
- * permission matrix, search, and validation.
- * Expands on the existing admin-features.spec.ts User Roles section.
+ * Route: /admin/user-management
+ * Component: app-user-management
+ * Key elements: #search input, #roleFilter multiselect, p-table for users,
+ *   p-dialog for role editing, p-paginator
  * 
- * Coverage:
- * - Page load & access control (4 tests)
- * - User listing & search (5 tests)
- * - User CRUD (6 tests)
- * - Role assignment (5 tests)
- * - Permission matrix (4 tests)
- * - Validation & error handling (4 tests)
- * 
- * Total: ~28 test cases
- * 
- * @requires Admin role access
- * @author QA Team
- * @since 2026-02-12
+ * All tests are EXECUTABLE - no skips.
  */
 
 import { test, expect } from '@playwright/test';
-import { UserManagementPage } from './pages/admin.page';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
 
-const SKIP_REASON = 'User Management tests require admin access and real backend. Enable when available.';
-
-// ============================================================================
-// PAGE LOAD & ACCESS CONTROL
-// ============================================================================
-
 test.describe('User Management - Access Control', () => {
-  let userPage: UserManagementPage;
-
-  test.beforeEach(async ({ page }) => {
-    userPage = new UserManagementPage(page);
-  });
-
   test('UM-001: Admin can access user management page', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
     await authenticateWithRealBackend(page, '/#/admin/user-management');
     await page.waitForTimeout(3000);
-    const isLoaded = await userPage.isPageLoaded();
-    expect(isLoaded).toBe(true);
+
+    // Page should load (not redirected)
+    expect(page.url()).toContain('user-management');
+    expect(page.url()).not.toContain('access-denied');
   });
 
-  test('UM-002: Page header displays correctly', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
+  test('UM-002: Page has a header/title', async ({ page }) => {
     await authenticateWithRealBackend(page, '/#/admin/user-management');
-    const hasHeader = await userPage.pageHeader.isVisible().catch(() => false);
-    expect(hasHeader).toBe(true);
+
+    // Look for page header with "User Management" text
+    const header = page.getByText(/user management/i).first();
+    await expect(header).toBeVisible({ timeout: 10000 });
   });
 
-  test('UM-003: Non-admin redirected from user management', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    // Authenticate as non-admin user
-    await authenticateWithRealBackend(page, '/#/admin/user-management', 'test-viewer@playwright.local');
+  test('UM-003: Non-admin cannot access user management', async ({ page }) => {
+    await authenticateWithRealBackend(page, '/#/admin/user-management', 'test-readonly@playwright.local');
     await page.waitForTimeout(3000);
+
     const url = page.url();
-    const isRedirected = !url.includes('user-management') || url.includes('access-denied');
-    expect(isRedirected || true).toBeTruthy();
-  });
-
-  test('UM-004: User management accessible from admin menu', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    await authenticateWithRealBackend(page, '/#/admin');
-    const menuItem = page.locator('a:has-text("User Management"), [data-testid="admin-user-management"]').first();
-    const isVisible = await menuItem.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
+    const body = await page.textContent('body');
+    const isBlocked = url.includes('access-denied') ||
+                      url.includes('login') ||
+                      !url.includes('user-management') ||
+                      (body && /access denied|forbidden|unauthorized/i.test(body));
+    expect(isBlocked).toBeTruthy();
   });
 });
 
-// ============================================================================
-// USER LISTING & SEARCH
-// ============================================================================
-
-test.describe('User Management - Listing & Search', () => {
-  let userPage: UserManagementPage;
-
+test.describe('User Management - Search & Filters', () => {
   test.beforeEach(async ({ page }) => {
-    userPage = new UserManagementPage(page);
     await authenticateWithRealBackend(page, '/#/admin/user-management');
   });
 
-  test('UM-005: User table displays users', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    await page.waitForTimeout(3000);
-    const count = await userPage.getUserCount();
-    expect(count).toBeGreaterThan(0);
+  test('UM-004: Search input is visible', async ({ page }) => {
+    const searchInput = page.locator('#search, input[type="text"]').first();
+    await expect(searchInput).toBeVisible({ timeout: 10000 });
   });
 
-  test('UM-006: User table shows name, email, and role', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    const headers = page.locator('th');
-    const headerCount = await headers.count();
-    expect(headerCount).toBeGreaterThanOrEqual(3);
+  test('UM-005: Role filter multiselect is visible', async ({ page }) => {
+    const roleFilter = page.locator('#roleFilter, p-multiSelect').first();
+    await expect(roleFilter).toBeVisible({ timeout: 10000 });
   });
 
-  test('UM-007: Search users by name', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    await page.waitForTimeout(3000);
-    await userPage.searchUser('Admin');
-    const count = await userPage.getUserCount();
-    expect(count).toBeGreaterThanOrEqual(0);
+  test('UM-006: Org unit filter is visible', async ({ page }) => {
+    const orgFilter = page.locator('#orgUnitFilter, p-multiSelect').nth(1);
+    const orgFilterVisible = await orgFilter.isVisible({ timeout: 5000 }).catch(() => false);
+
+    // Org unit filter should be present
+    expect(orgFilterVisible).toBeTruthy();
   });
 
-  test('UM-008: Search users by email', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    await userPage.searchUser('@unops.org');
-    const count = await userPage.getUserCount();
-    expect(count).toBeGreaterThanOrEqual(0);
-  });
+  test('UM-007: Clear filters button exists', async ({ page }) => {
+    const clearBtn = page.getByText(/clear filters/i).first();
+    const clearVisible = await clearBtn.isVisible({ timeout: 5000 }).catch(() => false);
 
-  test('UM-009: Clear search restores full list', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    await userPage.searchUser('nonexistent');
-    await userPage.searchUser('');
-    const count = await userPage.getUserCount();
-    expect(count).toBeGreaterThan(0);
+    expect(clearVisible).toBeTruthy();
   });
 });
 
-// ============================================================================
-// USER CRUD
-// ============================================================================
-
-test.describe('User Management - CRUD Operations', () => {
-  let userPage: UserManagementPage;
-
+test.describe('User Management - User List', () => {
   test.beforeEach(async ({ page }) => {
-    userPage = new UserManagementPage(page);
     await authenticateWithRealBackend(page, '/#/admin/user-management');
   });
 
-  test('UM-010: Add user button visible', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    await page.waitForTimeout(3000);
-    const isVisible = await userPage.addUserButton.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
+  test('UM-008: User list table is visible', async ({ page }) => {
+    const table = page.locator('p-table, table').first();
+    await expect(table).toBeVisible({ timeout: 10000 });
   });
 
-  test('UM-011: Add user dialog opens', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    await userPage.clickAddUser();
-    const isOpen = await userPage.userDialog.isVisible().catch(() => false);
-    expect(isOpen).toBe(true);
+  test('UM-009: User list has column headers', async ({ page }) => {
+    const table = page.locator('p-table, table').first();
+    await expect(table).toBeVisible({ timeout: 10000 });
+
+    // Should have Name, Email, Org Unit, Roles columns
+    const nameHeader = table.getByText(/name/i).first();
+    const emailHeader = table.getByText(/email/i).first();
+
+    const nameVisible = await nameHeader.isVisible({ timeout: 5000 }).catch(() => false);
+    const emailVisible = await emailHeader.isVisible({ timeout: 5000 }).catch(() => false);
+
+    expect(nameVisible || emailVisible).toBeTruthy();
   });
 
-  test('UM-012: Create new user with valid data', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    expect(true).toBeTruthy();
+  test('UM-010: User list has rows', async ({ page }) => {
+    const table = page.locator('p-table, table').first();
+    await expect(table).toBeVisible({ timeout: 10000 });
+
+    const rows = table.locator('tbody tr, .p-datatable-tbody tr');
+    const rowCount = await rows.count();
+
+    // Should have at least one user row
+    expect(rowCount).toBeGreaterThan(0);
   });
 
-  test('UM-013: Edit existing user', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    await page.waitForTimeout(3000);
-    await userPage.clickUserRow(0);
-    const editBtn = page.locator('button:has-text("Edit"), [data-testid="edit-user"]').first();
-    const isVisible = await editBtn.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
-  });
+  test('UM-011: Paginator is visible for user list', async ({ page }) => {
+    const paginator = page.locator('p-paginator').first();
+    const paginatorVisible = await paginator.isVisible({ timeout: 10000 }).catch(() => false);
 
-  test('UM-014: Deactivate user shows confirmation', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    expect(true).toBeTruthy();
-  });
-
-  test('UM-015: View user details', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    await page.waitForTimeout(3000);
-    await userPage.clickUserRow(0);
-    await page.waitForTimeout(1000);
-    // Should show user detail or navigate to detail view
-    expect(true).toBeTruthy();
+    // Paginator should be present
+    expect(paginatorVisible).toBeTruthy();
   });
 });
 
-// ============================================================================
-// ROLE ASSIGNMENT
-// ============================================================================
-
-test.describe('User Management - Role Assignment', () => {
-  let userPage: UserManagementPage;
-
+test.describe('User Management - Actions', () => {
   test.beforeEach(async ({ page }) => {
-    userPage = new UserManagementPage(page);
     await authenticateWithRealBackend(page, '/#/admin/user-management');
   });
 
-  test('UM-016: Role dropdown available on user form', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    const roleDropdown = userPage.roleDropdown;
-    const isVisible = await roleDropdown.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
+  test('UM-012: Refresh button is visible', async ({ page }) => {
+    const refreshBtn = page.getByText(/refresh/i).first();
+    const refreshVisible = await refreshBtn.isVisible({ timeout: 10000 }).catch(() => false);
+
+    const refreshIcon = page.locator('button .pi-refresh, button[icon*="refresh"]').first();
+    const iconVisible = await refreshIcon.isVisible({ timeout: 3000 }).catch(() => false);
+
+    expect(refreshVisible || iconVisible).toBeTruthy();
   });
 
-  test('UM-017: Multiple roles can be assigned', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    expect(true).toBeTruthy();
+  test('UM-013: Import button is visible for admin', async ({ page }) => {
+    const importBtn = page.getByText(/import/i).first();
+    const importVisible = await importBtn.isVisible({ timeout: 10000 }).catch(() => false);
+
+    expect(importVisible).toBeTruthy();
   });
 
-  test('UM-018: Role changes saved successfully', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    expect(true).toBeTruthy();
-  });
+  test('UM-014: User row has action buttons', async ({ page }) => {
+    const table = page.locator('p-table, table').first();
+    await expect(table).toBeVisible({ timeout: 10000 });
 
-  test('UM-019: Remove role from user', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    expect(true).toBeTruthy();
-  });
+    // First row should have action buttons (edit roles)
+    const firstRowActions = table.locator('tbody tr:first-child button, .p-datatable-tbody tr:first-child button').first();
+    const actionsVisible = await firstRowActions.isVisible({ timeout: 5000 }).catch(() => false);
 
-  test('UM-020: Cannot remove last admin role', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    expect(true).toBeTruthy();
-  });
-});
-
-// ============================================================================
-// PERMISSION MATRIX
-// ============================================================================
-
-test.describe('User Management - Permission Matrix', () => {
-  let userPage: UserManagementPage;
-
-  test.beforeEach(async ({ page }) => {
-    userPage = new UserManagementPage(page);
-    await authenticateWithRealBackend(page, '/#/admin/user-management');
-  });
-
-  test('UM-021: Permission matrix visible', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    const hasMatrix = await userPage.permissionMatrix.isVisible().catch(() => false);
-    expect(typeof hasMatrix).toBe('boolean');
-  });
-
-  test('UM-022: Permission matrix shows all entities', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    expect(true).toBeTruthy();
-  });
-
-  test('UM-023: Permission toggles update on click', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    expect(true).toBeTruthy();
-  });
-
-  test('UM-024: Permission changes require save', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    expect(true).toBeTruthy();
-  });
-});
-
-// ============================================================================
-// VALIDATION & ERROR HANDLING
-// ============================================================================
-
-test.describe('User Management - Validation', () => {
-
-  test('UM-025: Duplicate email shows error', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    expect(true).toBeTruthy();
-  });
-
-  test('UM-026: Invalid email format rejected', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    expect(true).toBeTruthy();
-  });
-
-  test('UM-027: Required fields validation', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    expect(true).toBeTruthy();
-  });
-
-  test('UM-028: Concurrent user edits handled', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    expect(true).toBeTruthy();
+    expect(actionsVisible).toBeTruthy();
   });
 });

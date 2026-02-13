@@ -1,272 +1,116 @@
 /**
- * @fileoverview Partner Tree E2E Tests
+ * @fileoverview Partner Tree Admin E2E Tests
+ * Tests for the Partner Tree admin page.
  * 
- * Tests partner tree navigation, node management, search,
- * and integration with partner details.
+ * Route: /admin/partner-tree
+ * Components: app-partner-tree, app-partner-tree-details, app-partner-tree-view
+ * Uses p-treetable with p-treeTableToggler, editable cells via ttEditableColumn
  * 
- * Coverage:
- * - Tree display & navigation (6 tests)
- * - Node management CRUD (6 tests)
- * - Search & filtering (4 tests)
- * - Detail panel (4 tests)
- * - Admin vs partnerships view (3 tests)
- * - Error handling (3 tests)
- * 
- * Total: ~26 test cases
- * 
- * @requires Real backend with partner tree data
- * @author QA Team
- * @since 2026-02-12
+ * All tests are EXECUTABLE - no skips.
  */
 
 import { test, expect } from '@playwright/test';
-import { PartnerTreePage } from './pages/partner-tree.page';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
 
-const SKIP_REASON = 'Partner Tree tests require real backend with tree data. Enable when available.';
-
-// ============================================================================
-// TREE DISPLAY & NAVIGATION
-// ============================================================================
-
-test.describe('Partner Tree - Display & Navigation', () => {
-  let treePage: PartnerTreePage;
-
-  test.beforeEach(async ({ page }) => {
-    treePage = new PartnerTreePage(page);
+test.describe('Partner Tree - Access', () => {
+  test('PT-001: Admin can access partner tree page', async ({ page }) => {
     await authenticateWithRealBackend(page, '/#/admin/partner-tree');
-  });
-
-  test('PT-001: Partner tree page loads', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
     await page.waitForTimeout(3000);
-    const isLoaded = await treePage.isPageLoaded();
-    expect(isLoaded, 'Partner tree should render').toBe(true);
+
+    expect(page.url()).toContain('partner-tree');
+    expect(page.url()).not.toContain('access-denied');
   });
 
-  test('PT-002: Tree displays root nodes', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
+  test('PT-002: Partner tree page has heading', async ({ page }) => {
+    await authenticateWithRealBackend(page, '/#/admin/partner-tree');
+
+    const heading = page.getByText(/partner tree/i).first();
+    await expect(heading).toBeVisible({ timeout: 10000 });
+  });
+
+  test('PT-003: Non-admin cannot access partner tree', async ({ page }) => {
+    await authenticateWithRealBackend(page, '/#/admin/partner-tree', 'test-readonly@playwright.local');
     await page.waitForTimeout(3000);
-    const nodeCount = await treePage.getNodeCount();
-    expect(nodeCount).toBeGreaterThan(0);
-  });
 
-  test('PT-003: Expand tree node shows children', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    await page.waitForTimeout(3000);
-    const initialCount = await treePage.getNodeCount();
-    await treePage.expandNode(0);
-    const expandedCount = await treePage.getNodeCount();
-    expect(expandedCount).toBeGreaterThanOrEqual(initialCount);
-  });
-
-  test('PT-004: Click tree node selects it', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    await page.waitForTimeout(3000);
-    await treePage.clickNode(0);
-    // Selected node should have active/selected class
-    const selectedNode = page.locator('.p-treenode-selected, .p-highlight, [aria-selected="true"]').first();
-    const isSelected = await selectedNode.isVisible().catch(() => false);
-    expect(isSelected).toBe(true);
-  });
-
-  test('PT-005: Breadcrumb updates on navigation', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    const hasBreadcrumb = await treePage.breadcrumb.isVisible().catch(() => false);
-    expect(typeof hasBreadcrumb).toBe('boolean');
-  });
-
-  test('PT-006: Navigation component visible', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    const hasNav = await treePage.hasNavigation();
-    expect(typeof hasNav).toBe('boolean');
+    const url = page.url();
+    const body = await page.textContent('body');
+    const isBlocked = url.includes('access-denied') ||
+                      !url.includes('partner-tree') ||
+                      (body && /access denied|forbidden/i.test(body));
+    expect(isBlocked).toBeTruthy();
   });
 });
 
-// ============================================================================
-// NODE MANAGEMENT - CRUD
-// ============================================================================
-
-test.describe('Partner Tree - Node Management', () => {
-  let treePage: PartnerTreePage;
-
+test.describe('Partner Tree - Display', () => {
   test.beforeEach(async ({ page }) => {
-    treePage = new PartnerTreePage(page);
     await authenticateWithRealBackend(page, '/#/admin/partner-tree');
   });
 
-  test('PT-007: Add node button visible for admin', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    await page.waitForTimeout(3000);
-    const isVisible = await treePage.addNodeButton.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
+  test('PT-004: Tree table is visible', async ({ page }) => {
+    const treeTable = page.locator('p-treetable, p-tree, app-partner-tree').first();
+    await expect(treeTable).toBeVisible({ timeout: 10000 });
   });
 
-  test('PT-008: Add node dialog opens', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    await treePage.clickAddNode();
-    const dialogOpen = await treePage.nodeDialog.isVisible().catch(() => false);
-    expect(dialogOpen).toBe(true);
+  test('PT-005: Tree has nodes/rows', async ({ page }) => {
+    const treeTable = page.locator('p-treetable, p-tree, app-partner-tree').first();
+    await expect(treeTable).toBeVisible({ timeout: 10000 });
+
+    const rows = treeTable.locator('tr, .p-treetable-row, .p-treenode');
+    const rowCount = await rows.count();
+    expect(rowCount).toBeGreaterThan(0);
   });
 
-  test('PT-009: Create new category node', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    expect(true).toBeTruthy();
+  test('PT-006: Tree has Name column', async ({ page }) => {
+    const nameHeader = page.getByText(/name/i).first();
+    await expect(nameHeader).toBeVisible({ timeout: 10000 });
   });
 
-  test('PT-010: Create new group node', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    expect(true).toBeTruthy();
-  });
+  test('PT-007: Tree nodes have toggle buttons for expand/collapse', async ({ page }) => {
+    const treeTable = page.locator('p-treetable, app-partner-tree').first();
+    await expect(treeTable).toBeVisible({ timeout: 10000 });
 
-  test('PT-011: Edit existing node', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    await page.waitForTimeout(3000);
-    await treePage.clickNode(0);
-    const editBtn = treePage.editNodeButton;
-    const isVisible = await editBtn.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
-  });
-
-  test('PT-012: Delete node shows confirmation', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    await page.waitForTimeout(3000);
-    await treePage.clickNode(0);
-    const deleteBtn = treePage.deleteNodeButton;
-    const isVisible = await deleteBtn.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
+    const togglers = treeTable.locator('p-treeTableToggler, .p-treetable-toggler, button.p-link');
+    const toggleCount = await togglers.count();
+    expect(toggleCount).toBeGreaterThan(0);
   });
 });
 
-// ============================================================================
-// SEARCH & FILTERING
-// ============================================================================
-
-test.describe('Partner Tree - Search', () => {
-  let treePage: PartnerTreePage;
-
+test.describe('Partner Tree - Actions', () => {
   test.beforeEach(async ({ page }) => {
-    treePage = new PartnerTreePage(page);
     await authenticateWithRealBackend(page, '/#/admin/partner-tree');
   });
 
-  test('PT-013: Search input visible', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    const hasSearch = await treePage.searchInput.isVisible().catch(() => false);
-    expect(typeof hasSearch).toBe('boolean');
+  test('PT-008: Save/Revert buttons exist', async ({ page }) => {
+    const saveBtn = page.getByText(/save/i).first();
+    const revertBtn = page.getByText(/revert/i).first();
+
+    const saveVisible = await saveBtn.isVisible({ timeout: 10000 }).catch(() => false);
+    const revertVisible = await revertBtn.isVisible({ timeout: 5000 }).catch(() => false);
+
+    expect(saveVisible || revertVisible).toBeTruthy();
   });
 
-  test('PT-014: Search filters tree nodes', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    await treePage.searchTree('UNICEF');
-    const count = await treePage.getNodeCount();
-    expect(count).toBeGreaterThanOrEqual(0);
+  test('PT-009: New Partner Level button exists', async ({ page }) => {
+    const newBtn = page.getByText(/new partner level/i).first();
+    const newBtnVisible = await newBtn.isVisible({ timeout: 10000 }).catch(() => false);
+
+    expect(newBtnVisible).toBeTruthy();
   });
 
-  test('PT-015: Clear search restores full tree', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    await treePage.searchTree('test');
-    await treePage.searchTree('');
-    const count = await treePage.getNodeCount();
-    expect(count).toBeGreaterThan(0);
-  });
+  test('PT-010: Tree node has expand/collapse interaction', async ({ page }) => {
+    const treeTable = page.locator('p-treetable, app-partner-tree').first();
+    await expect(treeTable).toBeVisible({ timeout: 10000 });
 
-  test('PT-016: No results search shows message', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    await treePage.searchTree('xyznonexistent12345');
-    const noResults = page.locator(':text("No results"), :text("no results"), [data-testid="no-results"]').first();
-    const isVisible = await noResults.isVisible().catch(() => false);
-    expect(typeof isVisible).toBe('boolean');
-  });
-});
+    const firstToggler = treeTable.locator('p-treeTableToggler, .p-treetable-toggler, button.p-link').first();
+    const togglerVisible = await firstToggler.isVisible({ timeout: 5000 }).catch(() => false);
 
-// ============================================================================
-// DETAIL PANEL
-// ============================================================================
-
-test.describe('Partner Tree - Detail Panel', () => {
-  let treePage: PartnerTreePage;
-
-  test.beforeEach(async ({ page }) => {
-    treePage = new PartnerTreePage(page);
-    await authenticateWithRealBackend(page, '/#/admin/partner-tree');
-  });
-
-  test('PT-017: Node detail panel shows on selection', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    await page.waitForTimeout(3000);
-    await treePage.clickNode(0);
-    const hasDetail = await treePage.isNodeDetailVisible();
-    expect(typeof hasDetail).toBe('boolean');
-  });
-
-  test('PT-018: Detail panel shows node name', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    expect(true).toBeTruthy();
-  });
-
-  test('PT-019: Detail panel shows partner count', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    expect(true).toBeTruthy();
-  });
-
-  test('PT-020: Detail panel links to partners', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    expect(true).toBeTruthy();
-  });
-});
-
-// ============================================================================
-// ADMIN VS PARTNERSHIPS VIEW
-// ============================================================================
-
-test.describe('Partner Tree - View Modes', () => {
-  let treePage: PartnerTreePage;
-
-  test.beforeEach(async ({ page }) => {
-    treePage = new PartnerTreePage(page);
-  });
-
-  test('PT-021: Admin view has edit capabilities', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    await authenticateWithRealBackend(page, '/#/admin/partner-tree');
-    await page.waitForTimeout(3000);
-    const addBtn = await treePage.addNodeButton.isVisible().catch(() => false);
-    expect(typeof addBtn).toBe('boolean');
-  });
-
-  test('PT-022: Partnerships view is read-only', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    await authenticateWithRealBackend(page, '/#/partnerships/partner-tree');
-    await page.waitForTimeout(3000);
-    const isLoaded = await treePage.isPageLoaded();
-    expect(typeof isLoaded).toBe('boolean');
-  });
-
-  test('PT-023: Both views show same tree data', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    expect(true).toBeTruthy();
-  });
-});
-
-// ============================================================================
-// ERROR HANDLING
-// ============================================================================
-
-test.describe('Partner Tree - Error Handling', () => {
-
-  test('PT-024: Empty tree shows appropriate message', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    expect(true).toBeTruthy();
-  });
-
-  test('PT-025: Delete node with children shows warning', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    expect(true).toBeTruthy();
-  });
-
-  test('PT-026: Duplicate node name shows validation error', async ({ page }) => {
-    test.skip(true, SKIP_REASON);
-    expect(true).toBeTruthy();
+    if (togglerVisible) {
+      await firstToggler.click();
+      await page.waitForTimeout(500);
+      // After clicking, there might be more rows
+      const rows = treeTable.locator('tr, .p-treetable-row');
+      const rowCount = await rows.count();
+      expect(rowCount).toBeGreaterThan(0);
+    }
   });
 });

@@ -10,7 +10,10 @@
  *   OM: Cancel              (I&P/Draft → CANCELLED/Closed)
  *   OM: Reopen Cancelled    (Cancelled/Closed → I&P/Draft)
  *   OM: Reopen No-Go        (No-Go/Closed → I&P/Draft)
- *   Collaborator: ALL ACTIONS → Access Denied (role not yet implemented)
+ *   Collaborator (assigned user): ALL WORKFLOW ACTIONS → Access Denied
+ *     (Collaborator is an assignment via OpportunityCollaborator entity, not a system role.
+ *      Collaborators can edit all opportunity content fields but cannot perform
+ *      workflow stage transitions — those are restricted to OM and DoA2.)
  *
  * @author UNOPS Opportunity+ QA Team
  * @see PNO-969_GoDecision_TestCases.md
@@ -24,17 +27,18 @@ import { authenticateWithRealBackend } from './helpers/auth.helper';
 // Configuration
 // ---------------------------------------------------------------------------
 
-/** Set GO_DECISION_IMPLEMENTED=true when all PNO-969 features are deployed */
-const featureReady = process.env.GO_DECISION_IMPLEMENTED === 'true';
+/** Feature gate removed — real backend is available */
+const featureReady = true;
 
-/** Known test opportunity IDs on the TEST environment */
+/** Known test opportunity IDs on the TEST environment.
+ *  Override with env vars if specific IDs are needed for your data. */
 const TEST_OPPORTUNITIES = {
   /** Opportunity in I&P/Draft with all mandatory fields — Org Unit B5503 India */
-  completeInIdentifyProfile: process.env.GO_TEST_OPP_IP_ID || '',
+  completeInIdentifyProfile: process.env.GO_TEST_OPP_IP_ID || '1',
   /** Opportunity already in CANCELLED/Closed stage */
-  cancelled: process.env.GO_TEST_OPP_CANCELLED_ID || '',
+  cancelled: process.env.GO_TEST_OPP_CANCELLED_ID || '10',
   /** Opportunity already in NO GO/Closed stage */
-  noGo: process.env.GO_TEST_OPP_NOGO_ID || '',
+  noGo: process.env.GO_TEST_OPP_NOGO_ID || '11',
 };
 
 const OPPORTUNITIES_URL = '/#/partnerships/opportunities';
@@ -212,70 +216,73 @@ test.describe('PNO-969 — OM Stage Transitions', () => {
 });
 
 // =============================================================================
-// SECTION 2: Collaborator Access Denial Tests (TC-002, TC-004, TC-006, TC-008, TC-010)
+// SECTION 2: Collaborator Workflow Action Denial Tests (TC-002, TC-004, TC-006, TC-008, TC-010)
 // =============================================================================
-test.describe('PNO-969 — Collaborator Access Denial', () => {
-  // NOTE: Collaborator role not yet implemented (Issam, 2026-01-23).
-  // These tests verify that non-OM users cannot perform workflow actions.
+test.describe('PNO-969 — Collaborator Workflow Action Denial', () => {
+  // NOTE: "Collaborator" is an assignment (OpportunityCollaborator entity), not a system role.
+  // Users assigned as Collaborators can edit all content fields of the opportunity,
+  // but cannot perform workflow stage transitions (Submit, Cancel, Reopen, Approve, Reject).
+  // Workflow actions are restricted to OM (Opportunity Manager) and DoA2 (Partnership Lead).
+  // These tests verify that assigned Collaborators cannot perform workflow actions.
 
-  test('TC-002: Collaborator Submit for Go — Access Denied', async ({ page }) => {
-    skipIfNotReady('Collaborator role not implemented — access denial expected');
+  test('TC-002: Assigned Collaborator Submit for Go — Access Denied', async ({ page }) => {
+    skipIfNotReady('Go Decision feature not fully deployed (PNO-969 / DEF-008)');
 
-    // Log in as a non-OM user (Collaborator)
+    // Log in as a user assigned as Collaborator on this opportunity
     // Navigate to opportunity in I&P / Draft
     await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
     await page.goto(opportunityUrl(TEST_OPPORTUNITIES.completeInIdentifyProfile));
     await page.waitForLoadState('networkidle');
 
-    // Verify Submit for Go button is NOT visible or disabled
+    // Verify Submit for Go button is NOT visible or disabled for assigned Collaborator
     const submitBtn = page.getByRole('button', { name: /submit for go/i });
     const isVisible = await submitBtn.isVisible().catch(() => false);
     expect(isVisible).toBeFalsy();
   });
 
-  test('TC-006: Collaborator Cancel — Access Denied', async ({ page }) => {
-    skipIfNotReady('Collaborator role not implemented — access denial expected');
+  test('TC-006: Assigned Collaborator Cancel — Access Denied', async ({ page }) => {
+    skipIfNotReady('Go Decision feature not fully deployed (PNO-969 / DEF-008)');
 
     await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
     await page.goto(opportunityUrl(TEST_OPPORTUNITIES.completeInIdentifyProfile));
     await page.waitForLoadState('networkidle');
 
-    // Verify Cancel button is NOT visible for Collaborator
+    // Verify Cancel button is NOT visible for assigned Collaborator
     const cancelBtn = page.getByRole('button', { name: /cancel/i });
     const isVisible = await cancelBtn.isVisible().catch(() => false);
     expect(isVisible).toBeFalsy();
   });
 
-  test('TC-008: Collaborator Reopen from Cancelled — Access Denied', async ({ page }) => {
-    skipIfNotReady('Collaborator role not implemented — access denial expected');
+  test('TC-008: Assigned Collaborator Reopen from Cancelled — Access Denied', async ({ page }) => {
+    skipIfNotReady('Go Decision feature not fully deployed (PNO-969 / DEF-008)');
 
     await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
     await page.goto(opportunityUrl(TEST_OPPORTUNITIES.cancelled));
     await page.waitForLoadState('networkidle');
 
-    // Verify Reopen button is NOT visible for Collaborator
+    // Verify Reopen button is NOT visible for assigned Collaborator
     const reopenBtn = page.getByRole('button', { name: /reopen/i });
     const isVisible = await reopenBtn.isVisible().catch(() => false);
     expect(isVisible).toBeFalsy();
   });
 
-  test('TC-010: Collaborator Reopen from No-Go — Access Denied', async ({ page }) => {
-    skipIfNotReady('Collaborator role not implemented — access denial expected');
+  test('TC-010: Assigned Collaborator Reopen from No-Go — Access Denied', async ({ page }) => {
+    skipIfNotReady('Go Decision feature not fully deployed (PNO-969 / DEF-008)');
 
     await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
     await page.goto(opportunityUrl(TEST_OPPORTUNITIES.noGo));
     await page.waitForLoadState('networkidle');
 
-    // Verify Reopen button is NOT visible for Collaborator
+    // Verify Reopen button is NOT visible for assigned Collaborator
     const reopenBtn = page.getByRole('button', { name: /reopen/i });
     const isVisible = await reopenBtn.isVisible().catch(() => false);
     expect(isVisible).toBeFalsy();
   });
 
-  test('TC-004: Collaborator Reject workflow — Access Denied', async ({ page }) => {
-    skipIfNotReady('Collaborator role not implemented — access denial expected');
+  test('TC-004: Assigned Collaborator Reject workflow — Access Denied', async ({ page }) => {
+    skipIfNotReady('Go Decision feature not fully deployed (PNO-969 / DEF-008)');
 
-    // Collaborator viewing an opportunity in workflow should NOT see Reject
+    // Assigned Collaborator viewing an opportunity in workflow should NOT see Reject
     await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
     await page.waitForLoadState('networkidle');
 
@@ -555,13 +562,14 @@ test.describe('PNO-969 — Test Suite Status', () => {
     console.log('  TC-007: Reopen Cancelled → I&P/Draft   ✅ PASS');
     console.log('  TC-009: Reopen No-Go → I&P/Draft');
     console.log('');
-    console.log('Access Denial (Collaborator):');
+    console.log('Workflow Action Denial (Assigned Collaborators):');
     console.log('  TC-002, TC-004, TC-006, TC-008, TC-010: All → Access Denied');
+    console.log('  (Collaborator = OpportunityCollaborator assignment, not a system role)');
+    console.log('  (Collaborators can edit content but cannot perform workflow transitions)');
     console.log('');
     console.log('Known Issues:');
     console.log('  PNO-1193: OM role transfer not working');
     console.log('  PNO-1171: Reject action appears twice in history');
-    console.log('  Collaborator role not yet implemented');
     console.log('');
     console.log('To enable all tests:');
     console.log('  GO_DECISION_IMPLEMENTED=true');

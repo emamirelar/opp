@@ -272,7 +272,10 @@ namespace UNOPS.PAO.Business.Tests.Performance
 
         public void Dispose()
         {
-            _context.Database.EnsureDeleted();
+            if (TestEnvironment.UseInMemory)
+            {
+                _context.Database.EnsureDeleted();
+            }
             _context.Dispose();
         }
     }

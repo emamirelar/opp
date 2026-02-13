@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Business.Tests.TestBase;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.UNOPSDomain.Entities;
 using Xunit;
 
 namespace UNOPS.PAO.Business.Tests.DataImport;
@@ -100,14 +101,14 @@ public class PartnerErpDimValueFixTests : IDisposable
     public async Task FixErpDimValues_WhenPartnersHaveValuesAbove9999_ShouldReassignValidValues()
     {
         // Arrange - Create partners with valid and invalid ErpDimValues
-        var partners = new List<Partner>
+        var partners = new List<UNOPSPartner>
         {
-            new Partner { Name = "Valid Partner 1", PartnerShortDescription = "Desc", ErpDimValue = 1000 },
-            new Partner { Name = "Valid Partner 2", PartnerShortDescription = "Desc", ErpDimValue = 1001 },
-            new Partner { Name = "Valid Partner 3", PartnerShortDescription = "Desc", ErpDimValue = 1002 },
-            new Partner { Name = "Invalid Partner 1", PartnerShortDescription = "Desc", ErpDimValue = 10001 },
-            new Partner { Name = "Invalid Partner 2", PartnerShortDescription = "Desc", ErpDimValue = 10002 },
-            new Partner { Name = "Invalid Partner 3", PartnerShortDescription = "Desc", ErpDimValue = 10003 }
+            new UNOPSPartner { Name = "Valid Partner 1", PartnerShortDescription = "Desc", ErpDimValue = 1000, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = "Valid Partner 2", PartnerShortDescription = "Desc", ErpDimValue = 1001, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = "Valid Partner 3", PartnerShortDescription = "Desc", ErpDimValue = 1002, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = "Invalid Partner 1", PartnerShortDescription = "Desc", ErpDimValue = 10001, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = "Invalid Partner 2", PartnerShortDescription = "Desc", ErpDimValue = 10002, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = "Invalid Partner 3", PartnerShortDescription = "Desc", ErpDimValue = 10003, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
         };
 
         await _context.Partners.AddRangeAsync(partners);
@@ -167,11 +168,11 @@ public class PartnerErpDimValueFixTests : IDisposable
     public async Task FixErpDimValues_WhenNoInvalidPartners_ShouldCompleteWithoutChanges()
     {
         // Arrange - Only valid partners
-        var partners = new List<Partner>
+        var partners = new List<UNOPSPartner>
         {
-            new Partner { Name = "Valid Partner 1", PartnerShortDescription = "Desc", ErpDimValue = 1000 },
-            new Partner { Name = "Valid Partner 2", PartnerShortDescription = "Desc", ErpDimValue = 1001 },
-            new Partner { Name = "Reserved Partner", PartnerShortDescription = "Desc", ErpDimValue = 8500 }
+            new UNOPSPartner { Name = "Valid Partner 1", PartnerShortDescription = "Desc", ErpDimValue = 1000, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = "Valid Partner 2", PartnerShortDescription = "Desc", ErpDimValue = 1001, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = "Reserved Partner", PartnerShortDescription = "Desc", ErpDimValue = 8500, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
         };
 
         await _context.Partners.AddRangeAsync(partners);
@@ -194,10 +195,10 @@ public class PartnerErpDimValueFixTests : IDisposable
     public async Task FixErpDimValues_WhenReassigning_ShouldSkipReservedRange()
     {
         // Arrange - Create partners where next sequential value would be in reserved range
-        var partners = new List<Partner>
+        var partners = new List<UNOPSPartner>
         {
-            new Partner { Name = "Last Valid Partner", PartnerShortDescription = "Desc", ErpDimValue = 7999 },
-            new Partner { Name = "Invalid Partner", PartnerShortDescription = "Desc", ErpDimValue = 10001 }
+            new UNOPSPartner { Name = "Last Valid Partner", PartnerShortDescription = "Desc", ErpDimValue = 7999, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = "Invalid Partner", PartnerShortDescription = "Desc", ErpDimValue = 10001, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
         };
 
         await _context.Partners.AddRangeAsync(partners);
@@ -232,11 +233,11 @@ public class PartnerErpDimValueFixTests : IDisposable
     public async Task FixErpDimValues_WhenExistingValuesInReservedRange_ShouldPreserveThem()
     {
         // Arrange - Create reserved partner and invalid partner
-        var partners = new List<Partner>
+        var partners = new List<UNOPSPartner>
         {
-            new Partner { Name = "Reserved Partner", PartnerShortDescription = "Desc", ErpDimValue = 8500 },
-            new Partner { Name = "Another Reserved", PartnerShortDescription = "Desc", ErpDimValue = 9000 },
-            new Partner { Name = "Valid Partner", PartnerShortDescription = "Desc", ErpDimValue = 1000 }
+            new UNOPSPartner { Name = "Reserved Partner", PartnerShortDescription = "Desc", ErpDimValue = 8500, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = "Another Reserved", PartnerShortDescription = "Desc", ErpDimValue = 9000, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = "Valid Partner", PartnerShortDescription = "Desc", ErpDimValue = 1000, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
         };
 
         await _context.Partners.AddRangeAsync(partners);
@@ -262,13 +263,13 @@ public class PartnerErpDimValueFixTests : IDisposable
     public async Task FixErpDimValues_ShouldAssignUniqueValues()
     {
         // Arrange - Create partners with some gaps in ErpDimValues
-        var partners = new List<Partner>
+        var partners = new List<UNOPSPartner>
         {
-            new Partner { Name = "Partner 1", PartnerShortDescription = "Desc", ErpDimValue = 1000 },
-            new Partner { Name = "Partner 2", PartnerShortDescription = "Desc", ErpDimValue = 1002 }, // Skip 1001
-            new Partner { Name = "Partner 3", PartnerShortDescription = "Desc", ErpDimValue = 1003 },
-            new Partner { Name = "Invalid 1", PartnerShortDescription = "Desc", ErpDimValue = 10001 },
-            new Partner { Name = "Invalid 2", PartnerShortDescription = "Desc", ErpDimValue = 10002 }
+            new UNOPSPartner { Name = "Partner 1", PartnerShortDescription = "Desc", ErpDimValue = 1000, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = "Partner 2", PartnerShortDescription = "Desc", ErpDimValue = 1002, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }, // Skip 1001
+            new UNOPSPartner { Name = "Partner 3", PartnerShortDescription = "Desc", ErpDimValue = 1003, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = "Invalid 1", PartnerShortDescription = "Desc", ErpDimValue = 10001, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = "Invalid 2", PartnerShortDescription = "Desc", ErpDimValue = 10002, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
         };
 
         await _context.Partners.AddRangeAsync(partners);
@@ -321,12 +322,12 @@ public class PartnerErpDimValueFixTests : IDisposable
     public async Task FixErpDimValues_ShouldConsiderSoftDeletedPartners()
     {
         // Arrange - Create partners including soft-deleted ones
-        var partners = new List<Partner>
+        var partners = new List<UNOPSPartner>
         {
-            new Partner { Name = "Active Partner", PartnerShortDescription = "Desc", ErpDimValue = 1000, IsDeleted = false },
-            new Partner { Name = "Deleted Partner", PartnerShortDescription = "Desc", ErpDimValue = 1001, IsDeleted = true },
-            new Partner { Name = "Active Partner 2", PartnerShortDescription = "Desc", ErpDimValue = 1002, IsDeleted = false },
-            new Partner { Name = "Invalid Partner", PartnerShortDescription = "Desc", ErpDimValue = 10001, IsDeleted = false }
+            new UNOPSPartner { Name = "Active Partner", PartnerShortDescription = "Desc", ErpDimValue = 1000, IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = "Deleted Partner", PartnerShortDescription = "Desc", ErpDimValue = 1001, IsDeleted = true, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = "Active Partner 2", PartnerShortDescription = "Desc", ErpDimValue = 1002, IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = "Invalid Partner", PartnerShortDescription = "Desc", ErpDimValue = 10001, IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
         };
 
         await _context.Partners.AddRangeAsync(partners);
@@ -382,10 +383,10 @@ public class PartnerErpDimValueFixTests : IDisposable
     public async Task FixErpDimValues_WhenPartnerHasNullErpDimValue_ShouldNotBeAffected()
     {
         // Arrange
-        var partners = new List<Partner>
+        var partners = new List<UNOPSPartner>
         {
-            new Partner { Name = "No ErpDimValue", PartnerShortDescription = "Desc", ErpDimValue = null },
-            new Partner { Name = "Has ErpDimValue", PartnerShortDescription = "Desc", ErpDimValue = 1000 }
+            new UNOPSPartner { Name = "No ErpDimValue", PartnerShortDescription = "Desc", ErpDimValue = null, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = "Has ErpDimValue", PartnerShortDescription = "Desc", ErpDimValue = 1000, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
         };
 
         await _context.Partners.AddRangeAsync(partners);
@@ -407,11 +408,14 @@ public class PartnerErpDimValueFixTests : IDisposable
     public async Task FixErpDimValues_WhenValueExactly9999_ShouldNotBeFlagged()
     {
         // Arrange - 9999 is the upper bound of reserved range, NOT invalid
-        var partner = new Partner
+        var partner = new UNOPSPartner
         {
             Name = "Upper Reserved Bound",
             PartnerShortDescription = "Desc",
-            ErpDimValue = 9999
+            ErpDimValue = 9999,
+            CreatedBy = 1,
+            LastModifiedBy = 1,
+            LastModifiedDate = DateTime.UtcNow
         };
 
         await _context.Partners.AddAsync(partner);
@@ -430,11 +434,14 @@ public class PartnerErpDimValueFixTests : IDisposable
     public async Task FixErpDimValues_WhenValueExactly10000_ShouldBeFlagged()
     {
         // Arrange - 10000 is the first invalid value
-        var partner = new Partner
+        var partner = new UNOPSPartner
         {
             Name = "First Invalid",
             PartnerShortDescription = "Desc",
-            ErpDimValue = 10000
+            ErpDimValue = 10000,
+            CreatedBy = 1,
+            LastModifiedBy = 1,
+            LastModifiedDate = DateTime.UtcNow
         };
 
         await _context.Partners.AddAsync(partner);
@@ -458,14 +465,17 @@ public class PartnerErpDimValueFixTests : IDisposable
     public async Task FixErpDimValues_WithManyPartners_ShouldCompleteEfficiently()
     {
         // Arrange - Create many partners
-        var partners = new List<Partner>();
+        var partners = new List<UNOPSPartner>();
         for (int i = 0; i < 100; i++)
         {
-            partners.Add(new Partner
+            partners.Add(new UNOPSPartner
             {
                 Name = $"Partner {i}",
                 PartnerShortDescription = $"Description {i}",
-                ErpDimValue = i < 50 ? 1000 + i : 10000 + i // 50 valid, 50 invalid
+                ErpDimValue = i < 50 ? 1000 + i : 10000 + i, // 50 valid, 50 invalid
+                CreatedBy = 1,
+                LastModifiedBy = 1,
+                LastModifiedDate = DateTime.UtcNow
             });
         }
 

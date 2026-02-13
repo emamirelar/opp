@@ -24,10 +24,25 @@ function mockLog(message: string): void {
 }
 
 /**
- * Setup API mocks for authentication and configuration
- * @param page - Playwright page object
+ * List of restricted user emails that should receive view-only permissions.
+ * Used by permission mocks to differentiate admin vs restricted user responses.
  */
-export async function setupAPIMocks(page: Page): Promise<void> {
+const RESTRICTED_MOCK_USERS = [
+  'test-readonly@playwright.local',
+  'test-no-permissions@playwright.local',
+  'viewer@example.com',
+  'doa2@example.com',
+];
+
+/**
+ * Setup API mocks for authentication and configuration.
+ * @param page - Playwright page object
+ * @param userEmail - Optional user email to customize permission responses.
+ *   Restricted users receive view-only permissions (canEdit: false, canDelete: false).
+ *   Default/admin users receive full permissions.
+ */
+export async function setupAPIMocks(page: Page, userEmail?: string): Promise<void> {
+  const isRestrictedUser = userEmail ? RESTRICTED_MOCK_USERS.includes(userEmail) : false;
   mockLog('[API Mock] Setting up route interceptions...');
   
   // Mock /api/configuration endpoint
@@ -479,15 +494,24 @@ export async function setupAPIMocks(page: Page): Promise<void> {
   });
 
   // Mock /api/partner/{id}/permissions - Partner permissions
+  // Returns restricted permissions for restricted users, full permissions for admin
   await page.route(url => {
     const urlString = url.toString();
     return /\/api\/partner\/\d+\/permissions/.test(urlString);
   }, async (route) => {
-    mockLog('[API Mock] Intercepted: /api/partner/{id}/permissions');
+    mockLog(`[API Mock] Intercepted: /api/partner/{id}/permissions (restricted=${isRestrictedUser})`);
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
+      body: JSON.stringify(isRestrictedUser ? {
+        canView: true,
+        canEdit: false,
+        canDelete: false,
+        canSubmit: false,
+        canApprove: false,
+        canActivate: false,
+        canCancel: false,
+      } : {
         canView: true,
         canEdit: true,
         canDelete: true,
@@ -586,15 +610,24 @@ export async function setupAPIMocks(page: Page): Promise<void> {
   });
 
   // Mock /api/opportunity/{id}/permissions - Opportunity permissions
+  // Returns restricted permissions for restricted users, full permissions for admin
   await page.route(url => {
     const urlString = url.toString();
     return /\/api\/opportunity\/\d+\/permissions/.test(urlString);
   }, async (route) => {
-    mockLog('[API Mock] Intercepted: /api/opportunity/{id}/permissions');
+    mockLog(`[API Mock] Intercepted: /api/opportunity/{id}/permissions (restricted=${isRestrictedUser})`);
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
+      body: JSON.stringify(isRestrictedUser ? {
+        canView: true,
+        canEdit: false,
+        canDelete: false,
+        canSubmit: false,
+        canApprove: false,
+        canActivate: false,
+        canCancel: false,
+      } : {
         canView: true,
         canEdit: true,
         canDelete: false,
@@ -737,6 +770,7 @@ export async function setupAPIMocks(page: Page): Promise<void> {
     // Smart responses based on URL patterns
     if (method === 'GET') {
       // Permission check endpoints - return correct structure matching Angular PermissionService expectations
+      // Restricted users get view-only permissions
       if (url.includes('/api/permissions/check/')) {
         await route.fulfill({
           status: 200,
@@ -745,7 +779,18 @@ export async function setupAPIMocks(page: Page): Promise<void> {
             hasAccess: true, // ✅ Required field
             route: url, // ✅ Required field
             entity: 'Contact', // ✅ Required field
-            permissions: {
+            permissions: isRestrictedUser ? {
+              canRead: true,
+              canCreate: false,
+              canUpdate: false,
+              canDelete: false,
+              canExport: false,
+              canImport: false,
+              canApprove: false,
+              canActivate: false,
+              canClose: false,
+              canArchive: false,
+            } : {
               canRead: true, // ✅ Note: canRead, not canView
               canCreate: true,
               canUpdate: true, // ✅ Note: canUpdate, not canEdit

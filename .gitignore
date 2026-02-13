@@ -539,3 +539,18 @@ FodyWeavers.xsd
 # ===========================
 
 QAProject*
+
+# ===========================
+# Cloud SQL Proxy binary
+# ===========================
+
+cloud_sql_proxy
+cloud_sql_proxy.exe
+cloud-sql-proxy
+cloud-sql-proxy.exe
+
+# ===========================
+# Test database configuration (user-specific connection strings)
+# ===========================
+
+QA Tests/C# Tests/UNOPS.PAO.Business.Tests/appsettings.Testing.json

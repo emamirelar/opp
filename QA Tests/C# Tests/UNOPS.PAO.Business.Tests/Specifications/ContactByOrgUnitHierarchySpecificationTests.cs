@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
+using UNOPS.PAO.Business.Tests.TestBase;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Moq;
@@ -68,7 +69,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             // Note: OrganizationUnitRelationships filtering is now handled via ApplyOrgUnitFilter method
         }
 
-        [Fact(Skip = "Requires real PostgreSQL database - OrganizationUnitRelationship queries not fully supported in in-memory database")]
+        [SkipIfInMemoryFact]
         public async Task Criteria_FiltersContactsByPartnerOrgUnit()
         {
             // Arrange
@@ -111,7 +112,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             results.Should().NotContain(c => c.Id == contact3.Id);
         }
 
-        [Fact(Skip = "Requires real PostgreSQL database - OrganizationUnitRelationship queries not fully supported in in-memory database")]
+        [SkipIfInMemoryFact]
         public async Task Criteria_WithMultipleOrgUnitIds_FiltersCorrectly()
         {
             // Arrange
@@ -233,7 +234,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             results.Should().NotContain(c => c.Id == contactWithoutPartner.Id);
         }
 
-        [Fact(Skip = "Requires real PostgreSQL database - OrganizationUnitRelationship queries not fully supported in in-memory database")]
+        [SkipIfInMemoryFact]
         public async Task Criteria_ExcludesContactsWherePartnerHasNullOfficeId()
         {
             // Arrange

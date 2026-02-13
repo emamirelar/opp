@@ -72,9 +72,7 @@ test.describe('Login Flow - UI Tests', () => {
 test.describe('Login Flow - Backend Tests', () => {
   let loginPage: LoginPage;
   
-  // Skip these tests - they require real backend authentication
-  // The API mocks don't simulate login failure or validation behavior
-  test.skip(true, 'Login backend tests require real backend - skipped in mocked environment');
+  // Previously skipped - now real backend is available for authentication tests
   
   test.beforeEach(async ({ page }) => {
     loginPage = new LoginPage(page);

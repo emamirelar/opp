@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using FluentAssertions;
+using UNOPS.PAO.Business.Tests.TestBase;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Moq;
@@ -70,7 +71,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             specification.Should().NotBeNull();
         }
 
-        [Fact(Skip = "Requires real PostgreSQL database - OrganizationUnitRelationship queries not fully supported in in-memory database")]
+        [SkipIfInMemoryFact]
         public async Task Criteria_FiltersPartnersByDirectOrgUnitLink()
         {
             // Arrange
@@ -106,7 +107,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             results.Should().NotContain(p => p.Id == partner3.Id);
         }
 
-        [Fact(Skip = "Requires real PostgreSQL database - OrganizationUnitRelationship queries not fully supported in in-memory database")]
+        [SkipIfInMemoryFact]
         public async Task Criteria_FiltersPartnersByIndirectContactRelation()
         {
             // Arrange
@@ -399,7 +400,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             results.Should().BeEmpty();
         }
 
-        [Fact(Skip = "Requires real PostgreSQL database - OrganizationUnitRelationship queries not fully supported in in-memory database")]
+        [SkipIfInMemoryFact]
         public async Task Criteria_WithMultipleOrgUnitIds_FiltersCorrectly()
         {
             // Arrange
@@ -439,7 +440,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             results.Select(p => p.Id).Should().BeEquivalentTo(new[] { 1, 2, 3 });
         }
 
-        [Fact(Skip = "Requires real PostgreSQL database - OrganizationUnitRelationship queries not fully supported in in-memory database")]
+        [SkipIfInMemoryFact]
         public async Task Criteria_WithMultipleUserIds_FiltersCorrectly()
         {
             // Arrange

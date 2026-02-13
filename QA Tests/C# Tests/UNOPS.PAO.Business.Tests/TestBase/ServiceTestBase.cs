@@ -33,8 +33,11 @@ public abstract class ServiceTestBase : IDisposable
     /// </summary>
     protected void ClearDatabase()
     {
-        Context.Database.EnsureDeleted();
-        Context.Database.EnsureCreated();
+        if (TestEnvironment.UseInMemory)
+        {
+            Context.Database.EnsureDeleted();
+            Context.Database.EnsureCreated();
+        }
     }
 
     public void Dispose()

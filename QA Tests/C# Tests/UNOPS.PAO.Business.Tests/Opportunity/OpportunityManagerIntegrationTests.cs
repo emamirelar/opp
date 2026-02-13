@@ -3,6 +3,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Business.Tests.TestBase;
 using Xunit;
 
 namespace UNOPS.PAO.Business.Tests.Opportunity;
@@ -20,7 +21,7 @@ public class OpportunityManagerIntegrationTests : IntegrationTestBase
 
     #region P0 - Create Opportunity Integration Tests
 
-    [Fact(Skip = SkipReason)]
+    [SkipIfInMemoryFact]
     [Trait("Category", "P0")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-CREATE-001")]
@@ -50,7 +51,7 @@ public class OpportunityManagerIntegrationTests : IntegrationTestBase
         savedOpportunity!.Name.Should().Be(request.Name);
     }
 
-    [Fact(Skip = SkipReason)]
+    [SkipIfInMemoryFact]
     [Trait("Category", "P0")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-CREATE-002")]
@@ -77,7 +78,7 @@ public class OpportunityManagerIntegrationTests : IntegrationTestBase
         savedOpportunity!.InitiativeBudgetUSD.Should().Be(2500000.00m);
     }
 
-    [Fact(Skip = SkipReason)]
+    [SkipIfInMemoryFact]
     [Trait("Category", "P0")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-CREATE-003")]
@@ -110,7 +111,7 @@ public class OpportunityManagerIntegrationTests : IntegrationTestBase
 
     #region P0 - Read Opportunity Integration Tests
 
-    [Fact(Skip = SkipReason)]
+    [SkipIfInMemoryFact]
     [Trait("Category", "P0")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-READ-001")]
@@ -137,7 +138,7 @@ public class OpportunityManagerIntegrationTests : IntegrationTestBase
         result.Description.Should().Be(createRequest.Description);
     }
 
-    [Fact(Skip = SkipReason)]
+    [SkipIfInMemoryFact]
     [Trait("Category", "P0")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-READ-002")]
@@ -154,7 +155,7 @@ public class OpportunityManagerIntegrationTests : IntegrationTestBase
 
     #region P1 - Update Opportunity Integration Tests
 
-    [Fact(Skip = SkipReason)]
+    [SkipIfInMemoryFact]
     [Trait("Category", "P1")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-UPDATE-001")]
@@ -190,7 +191,7 @@ public class OpportunityManagerIntegrationTests : IntegrationTestBase
         savedOpportunity!.Name.Should().Be("Updated Name");
     }
 
-    [Fact(Skip = SkipReason)]
+    [SkipIfInMemoryFact]
     [Trait("Category", "P1")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-UPDATE-002")]
@@ -225,7 +226,7 @@ public class OpportunityManagerIntegrationTests : IntegrationTestBase
         savedOpportunity!.InitiativeBudgetUSD.Should().Be(2000000m);
     }
 
-    [Fact(Skip = SkipReason)]
+    [SkipIfInMemoryFact]
     [Trait("Category", "P1")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-UPDATE-003")]
@@ -265,7 +266,7 @@ public class OpportunityManagerIntegrationTests : IntegrationTestBase
 
     #region P1 - Delete Opportunity Integration Tests
 
-    [Fact(Skip = SkipReason)]
+    [SkipIfInMemoryFact]
     [Trait("Category", "P1")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-DELETE-001")]
@@ -294,7 +295,7 @@ public class OpportunityManagerIntegrationTests : IntegrationTestBase
         deletedOpportunity!.IsDeleted.Should().BeTrue();
     }
 
-    [Fact(Skip = SkipReason)]
+    [SkipIfInMemoryFact]
     [Trait("Category", "P1")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-DELETE-002")]
@@ -311,7 +312,7 @@ public class OpportunityManagerIntegrationTests : IntegrationTestBase
 
     #region P1 - Complete Lifecycle Integration Test
 
-    [Fact(Skip = SkipReason)]
+    [SkipIfInMemoryFact]
     [Trait("Category", "P1")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-LIFECYCLE-001")]
@@ -363,7 +364,7 @@ public class OpportunityManagerIntegrationTests : IntegrationTestBase
 
     #region P2 - List Operations Integration Tests
 
-    [Fact(Skip = SkipReason)]
+    [SkipIfInMemoryFact]
     [Trait("Category", "P2")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-LIST-001")]

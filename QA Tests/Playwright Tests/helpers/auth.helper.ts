@@ -90,8 +90,9 @@ export async function authenticateWithRealBackend(
   
   // Step 2: Setup API mocks BEFORE navigation (FIX for DEF-001)
   // This ensures permission checks pass even when backend is not running
+  // Pass userEmail so permission mocks can return role-appropriate responses
   authLog('[Auth] Setting up API mocks for authenticateWithRealBackend...');
-  await setupAPIMocks(page);
+  await setupAPIMocks(page, testUserEmail);
   
   // Step 3: Setup authenticated user claims mock
   // QA-039 FIX: Differentiate claims based on user email

@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Business.Tests.TestBase;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.UNOPSDomain.Entities;
 using Xunit;
 
 namespace UNOPS.PAO.Business.Tests.DataImport;
@@ -135,11 +136,11 @@ public class SequenceResyncTests : IDisposable
     public async Task InteractionSequence_AfterDataImport_ShouldMatchMaxId()
     {
         // Arrange - Create interactions
-        var interactions = new List<Interaction>
+        var interactions = new List<UNOPSInteraction>
         {
-            new Interaction { Name = "Meeting 1", Subject = "Meeting 1", Date = DateTime.UtcNow.AddDays(-10) },
-            new Interaction { Name = "Call 2", Subject = "Call 2", Date = DateTime.UtcNow.AddDays(-5) },
-            new Interaction { Name = "Email 3", Subject = "Email 3", Date = DateTime.UtcNow }
+            new UNOPSInteraction { Name = "Meeting 1", Subject = "Meeting 1", Date = DateTime.UtcNow.AddDays(-10), CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSInteraction { Name = "Call 2", Subject = "Call 2", Date = DateTime.UtcNow.AddDays(-5), CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSInteraction { Name = "Email 3", Subject = "Email 3", Date = DateTime.UtcNow, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
         };
 
         await _context.Interactions.AddRangeAsync(interactions);
@@ -152,7 +153,7 @@ public class SequenceResyncTests : IDisposable
         maxId.Should().BeGreaterThan(0);
 
         // Verify new entity can be added without conflict
-        var newInteraction = new Interaction { Name = "New Interaction", Subject = "New Interaction", Date = DateTime.UtcNow };
+        var newInteraction = new UNOPSInteraction { Name = "New Interaction", Subject = "New Interaction", Date = DateTime.UtcNow, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow };
         await _context.Interactions.AddAsync(newInteraction);
         
         var saveAction = async () => await _context.SaveChangesAsync();
@@ -184,11 +185,11 @@ public class SequenceResyncTests : IDisposable
             .ToList();
 
         var interactions = Enumerable.Range(1, 10)
-            .Select(i => new Interaction { Name = $"Interaction {i}", Subject = $"Interaction {i}", Date = DateTime.UtcNow })
+            .Select(i => new UNOPSInteraction { Name = $"Interaction {i}", Subject = $"Interaction {i}", Date = DateTime.UtcNow, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow })
             .ToList();
 
         var partners = Enumerable.Range(1, 3)
-            .Select(i => new Partner { Name = $"Partner {i}", PartnerShortDescription = $"Desc {i}" })
+            .Select(i => new UNOPSPartner { Name = $"Partner {i}", PartnerShortDescription = $"Desc {i}", CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow })
             .ToList();
 
         await _context.PartnerTrees.AddRangeAsync(partnerTrees);
@@ -208,8 +209,8 @@ public class SequenceResyncTests : IDisposable
 
         // Verify new entities can be added to all tables
         var newTree = new PartnerTree { Name = "New Tree", Description = "New Tree Description", Code = "NT", Type = "GROUP" };
-        var newInteraction = new Interaction { Name = "New Interaction", Subject = "New Interaction", Date = DateTime.UtcNow };
-        var newPartner = new Partner { Name = "New Partner", PartnerShortDescription = "New Desc" };
+        var newInteraction = new UNOPSInteraction { Name = "New Interaction", Subject = "New Interaction", Date = DateTime.UtcNow, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow };
+        var newPartner = new UNOPSPartner { Name = "New Partner", PartnerShortDescription = "New Desc", CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow };
 
         await _context.PartnerTrees.AddAsync(newTree);
         await _context.Interactions.AddAsync(newInteraction);
@@ -231,11 +232,11 @@ public class SequenceResyncTests : IDisposable
     public async Task SequenceResync_WithSoftDeletedRecords_ShouldConsiderAllRecords()
     {
         // Arrange - Create records including soft-deleted
-        var partners = new List<Partner>
+        var partners = new List<UNOPSPartner>
         {
-            new Partner { Name = "Active 1", PartnerShortDescription = "Desc", IsDeleted = false },
-            new Partner { Name = "Deleted 1", PartnerShortDescription = "Desc", IsDeleted = true },
-            new Partner { Name = "Active 2", PartnerShortDescription = "Desc", IsDeleted = false }
+            new UNOPSPartner { Name = "Active 1", PartnerShortDescription = "Desc", IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = "Deleted 1", PartnerShortDescription = "Desc", IsDeleted = true, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = "Active 2", PartnerShortDescription = "Desc", IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
         };
 
         await _context.Partners.AddRangeAsync(partners);
@@ -258,7 +259,7 @@ public class SequenceResyncTests : IDisposable
         var sequenceValue = maxIdIncludingDeleted;
         
         // Add new partner
-        var newPartner = new Partner { Name = "New Partner", PartnerShortDescription = "New Desc" };
+        var newPartner = new UNOPSPartner { Name = "New Partner", PartnerShortDescription = "New Desc", CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow };
         await _context.Partners.AddAsync(newPartner);
         await _context.SaveChangesAsync();
 
@@ -270,11 +271,11 @@ public class SequenceResyncTests : IDisposable
     {
         // Arrange - In reality, PostgreSQL doesn't reuse IDs, so gaps can exist
         // Create some records, delete one, add more
-        var initialPartners = new List<Partner>
+        var initialPartners = new List<UNOPSPartner>
         {
-            new Partner { Name = "Partner 1", PartnerShortDescription = "Desc" },
-            new Partner { Name = "Partner 2", PartnerShortDescription = "Desc" },
-            new Partner { Name = "Partner 3", PartnerShortDescription = "Desc" }
+            new UNOPSPartner { Name = "Partner 1", PartnerShortDescription = "Desc", CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = "Partner 2", PartnerShortDescription = "Desc", CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = "Partner 3", PartnerShortDescription = "Desc", CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
         };
 
         await _context.Partners.AddRangeAsync(initialPartners);
@@ -292,7 +293,7 @@ public class SequenceResyncTests : IDisposable
         maxId.Should().Be(3);
 
         // New partner should get ID 4 (not reusing 2)
-        var newPartner = new Partner { Name = "Partner 4", PartnerShortDescription = "Desc" };
+        var newPartner = new UNOPSPartner { Name = "Partner 4", PartnerShortDescription = "Desc", CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow };
         await _context.Partners.AddAsync(newPartner);
         await _context.SaveChangesAsync();
 
@@ -303,7 +304,7 @@ public class SequenceResyncTests : IDisposable
     public async Task SequenceResync_WhenLargeIdGap_ShouldHandleCorrectly()
     {
         // Arrange - Simulate a large ID gap (as might occur after data import)
-        var partner1 = new Partner { Name = "Partner 1", PartnerShortDescription = "Desc" };
+        var partner1 = new UNOPSPartner { Name = "Partner 1", PartnerShortDescription = "Desc", CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow };
         await _context.Partners.AddAsync(partner1);
         await _context.SaveChangesAsync();
         
@@ -313,10 +314,13 @@ public class SequenceResyncTests : IDisposable
         // In in-memory database, we just add more records
         for (int i = 0; i < 100; i++)
         {
-            await _context.Partners.AddAsync(new Partner 
-            { 
-                Name = $"Imported Partner {i}", 
-                PartnerShortDescription = "Imported" 
+            await _context.Partners.AddAsync(new UNOPSPartner
+            {
+                Name = $"Imported Partner {i}",
+                PartnerShortDescription = "Imported",
+                CreatedBy = 1,
+                LastModifiedBy = 1,
+                LastModifiedDate = DateTime.UtcNow
             });
         }
         await _context.SaveChangesAsync();
@@ -328,7 +332,7 @@ public class SequenceResyncTests : IDisposable
         maxId.Should().Be(101); // 1 + 100
 
         // New partner should continue from max
-        var newPartner = new Partner { Name = "Post-Import Partner", PartnerShortDescription = "New" };
+        var newPartner = new UNOPSPartner { Name = "Post-Import Partner", PartnerShortDescription = "New", CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow };
         await _context.Partners.AddAsync(newPartner);
         await _context.SaveChangesAsync();
 
@@ -386,7 +390,7 @@ public class SequenceResyncTests : IDisposable
         using (var setupContext = TestDbContextFactory.Create(dbName))
         {
             var initialPartners = Enumerable.Range(1, 10)
-                .Select(i => new Partner { Name = $"Initial {i}", PartnerShortDescription = $"Desc {i}" })
+                .Select(i => new UNOPSPartner { Name = $"Initial {i}", PartnerShortDescription = $"Desc {i}", CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow })
                 .ToList();
             await setupContext.Partners.AddRangeAsync(initialPartners);
             await setupContext.SaveChangesAsync();
@@ -402,10 +406,13 @@ public class SequenceResyncTests : IDisposable
             tasks.Add(Task.Run(async () =>
             {
                 using var context = TestDbContextFactory.Create(dbName);
-                var partner = new Partner 
-                { 
-                    Name = $"Concurrent {index}", 
-                    PartnerShortDescription = $"Concurrent Desc {index}" 
+                var partner = new UNOPSPartner
+                {
+                    Name = $"Concurrent {index}",
+                    PartnerShortDescription = $"Concurrent Desc {index}",
+                    CreatedBy = 1,
+                    LastModifiedBy = 1,
+                    LastModifiedDate = DateTime.UtcNow
                 };
                 await context.Partners.AddAsync(partner);
                 await context.SaveChangesAsync();

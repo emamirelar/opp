@@ -144,8 +144,8 @@ test.describe('Interactions List', () => {
     expect(contentLoaded).toBeTruthy();
   });
   
-  // QA-008: PrimeNG DynamicDialog not created in Playwright tests - modal doesn't appear after button click
-  test.skip('should allow clicking New Interaction button to open modal', async ({ page }) => {
+  // QA-008: Previously skipped - PrimeNG dialog issue. Now enabled with real backend.
+  test('should allow clicking New Interaction button to open modal', async ({ page }) => {
     // Wait for page to load
     await page.waitForTimeout(2000);
     
@@ -169,8 +169,8 @@ test.describe('Interactions List', () => {
     expect(true).toBeTruthy();
   });
   
-  // QA-008: PrimeNG DynamicDialog not created in Playwright tests - dialog doesn't appear after button click
-  test.skip('should allow clicking Create Opportunity button to open dialog', async ({ page }) => {
+  // QA-008: Previously skipped - PrimeNG dialog issue. Now enabled with real backend.
+  test('should allow clicking Create Opportunity button to open dialog', async ({ page }) => {
     // Wait for page to load
     await page.waitForTimeout(2000);
     
