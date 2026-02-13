@@ -8,8 +8,8 @@
 #
 # URL Pattern (TO BE PROVIDED BY INFRA):
 #   prod:        https://eds.opportunityplus.unops.org
-#   qa:          https://eds.opportunityplus-qa.unops.org
-#   dev/test:    https://eds.opportunityplus-{ENVIRONMENT}.unops.org
+#   qa:          https://eds.opportunityplus.qa.unops.org
+#   dev/test:    https://eds.opportunityplus.{ENVIRONMENT}.unops.org
 #
 # Scheduler Region Mapping (Cloud Scheduler doesn't support all regions):
 #   europe-west4 (Cloud Run) -> europe-west3 (Scheduler)
