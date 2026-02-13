@@ -1808,6 +1808,7 @@
   "message.notSet": "Non DÃ©fini",
   "message.opportunity.createdSuccessfully": "Opportunity \"{{name}}\" created successfully",
   "message.opportunity.loadingInsights": "Chargement des insights et suggestions IA...",
+  "message.opportunity.refreshingInsights": "Actualisation des insights...",
   "message.opportunity.noDeliverables": "Aucun produit ou service pour le moment",
   "message.opportunity.noInsights": "Aucune analyse disponible pour le moment",
   "message.opportunity.noSDGs": "Aucun ODD alignÃ© pour le moment",

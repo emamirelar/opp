@@ -643,6 +643,8 @@ export class OpportunityViewComponent
   allSuggestions = signal<any[]>([]);
   insightsLoading = signal<boolean>(false);
   insightsError = signal<string | null>(null);
+  /** True when insights are being refreshed after a section save (includes 3s delay before API call) */
+  insightsRefreshingPending = signal<boolean>(false);
 
   // Computed suggestions filtered by section
   whoSuggestions = computed(() =>
@@ -667,6 +669,11 @@ export class OpportunityViewComponent
 
   teamSuggestions = computed(() =>
     this.allSuggestions().filter((s) => s.actionTarget === 'TEAM'),
+  );
+
+  /** True when insights/suggestions are loading or refreshing - pass to sections for loading indicator */
+  loadingInsightsSuggestions = computed(
+    () => this.insightsLoading() || this.insightsRefreshingPending()
   );
 
   // Filtered stakeholder lists
@@ -744,11 +751,12 @@ export class OpportunityViewComponent
       
       // Only reload if trigger has changed (skip initial value of 0)
       if (trigger > 0) {
+        this.insightsRefreshingPending.set(true);
         console.log('🔄 Parent: Section save detected, reloading insights');
         
         // Delay to prevent overwhelming the backend
         setTimeout(() => {
-          this._loadInsights();
+          this._loadInsights(true); // forceRefresh: bypass cache for fresh insights after save
         }, 3000);
       }
     });
@@ -1145,8 +1153,9 @@ export class OpportunityViewComponent
   /**
    * Load AI insights and suggestions for the opportunity (SINGLE API CALL)
    * This data is then passed to child components to avoid duplicate API requests
+   * @param forceRefresh - When true, bypasses AI cache for fresh Gemini response (after section save or manual refresh)
    */
-  private _loadInsights(): void {
+  private _loadInsights(forceRefresh = false): void {
     const opportunityId = this.opportunity()?.id;
     if (!opportunityId) {
       this.updateLoadingProgress('insights', 'error', undefined, 'No opportunity ID');
@@ -1156,12 +1165,13 @@ export class OpportunityViewComponent
     this.insightsLoading.set(true);
     this.insightsError.set(null);
 
-    this.opportunityService.getInsights(opportunityId).subscribe({
+    this.opportunityService.getInsights(opportunityId, forceRefresh).subscribe({
       next: (response) => {
         // Store both insights and suggestions for use across child components
         this.allInsights.set(response.insights || []);
         this.allSuggestions.set(response.suggestions || []);
         this.insightsLoading.set(false);
+        this.insightsRefreshingPending.set(false);
         this.updateLoadingProgress('insights', 'completed');
 
         // Mark analysis section as complete (it uses insights from parent)
@@ -1176,6 +1186,7 @@ export class OpportunityViewComponent
         console.error('❌ Error loading insights:', error);
         this.insightsError.set('Failed to load AI insights');
         this.insightsLoading.set(false);
+        this.insightsRefreshingPending.set(false);
         this.updateLoadingProgress('insights', 'error', undefined, error.message);
         this.updateLoadingProgress(
           'analysis',
@@ -1533,7 +1544,7 @@ export class OpportunityViewComponent
    */
   handleInsightsRefresh(): void {
     console.log('🔄 Manual insights refresh requested');
-    this._loadInsights();
+    this._loadInsights(true); // forceRefresh: bypass cache for fresh insights
   }
 
   /**

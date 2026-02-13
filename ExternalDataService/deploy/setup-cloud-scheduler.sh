@@ -42,8 +42,8 @@ if [ $# -lt 3 ]; then
     echo ""
     echo "URL Pattern (TO BE PROVIDED BY INFRA):"
     echo "  prod:        https://eds.opportunityplus.unops.org"
-    echo "  qa:          https://eds.opportunityplus-qa.unops.org"
-    echo "  dev/test:    https://eds.opportunityplus-{env}.unops.org"
+    echo "  qa:          https://eds.opportunityplus.qa.unops.org"
+    echo "  dev/test:    https://eds.opportunityplus.{env}.unops.org"
     exit 1
 fi
 
@@ -113,14 +113,14 @@ fi
 # Auto-construct Service URL based on environment
 # Pattern (TO BE PROVIDED BY INFRA - using placeholder pattern):
 #   prod:        https://eds.opportunityplus.unops.org
-#   qa:          https://eds.opportunityplus-qa.unops.org
-#   dev/test:    https://eds.opportunityplus-{env}.unops.org
+#   qa:          https://eds.opportunityplus.qa.unops.org
+#   dev/test:    https://eds.opportunityplus.{env}.unops.org
 if [ "$ENVIRONMENT" = "prod" ] || [ "$ENVIRONMENT" = "production" ]; then
     SERVICE_URL="https://eds.opportunityplus.unops.org"
 elif [ "$ENVIRONMENT" = "qa" ]; then
-    SERVICE_URL="https://eds.opportunityplus-qa.unops.org"
+    SERVICE_URL="https://eds.opportunityplus.qa.unops.org"
 else
-    SERVICE_URL="https://eds.opportunityplus-${ENVIRONMENT}.unops.org"
+    SERVICE_URL="https://eds.opportunityplus.${ENVIRONMENT}.unops.org"
 fi
 
 # Map Cloud Run region to nearest Scheduler region if not specified

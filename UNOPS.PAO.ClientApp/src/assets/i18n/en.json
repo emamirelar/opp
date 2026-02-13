@@ -2005,6 +2005,7 @@
   "message.opportunity.editComingSoon": "Edit functionality is coming soon.",
   "message.opportunity.loadFailed": "Failed to load opportunity details. Please try again.",
   "message.opportunity.loadingInsights": "Loading AI insights and suggestions...",
+  "message.opportunity.refreshingInsights": "Refreshing insights...",
   "message.opportunity.noDeliverables": "No products or services yet",
   "message.opportunity.noInsights": "No insights available at this time",
   "message.opportunity.noSDGs": "No SDGs aligned yet",

@@ -362,12 +362,14 @@ export class OpportunityService {
   /**
    * Get AI-generated insights and suggestions for an opportunity
    * @param id - Opportunity ID
+   * @param forceRefresh - When true, bypasses AI cache for fresh Gemini response (e.g. after section save)
    * @returns Observable with insights and suggestions
    */
-  getInsights(id: number): Observable<OpportunityInsightsResponse> {
-    return this.http.get<OpportunityInsightsResponse>(
-      `${this.apiUrl}/${id}/insights`,
-    );
+  getInsights(id: number, forceRefresh = false): Observable<OpportunityInsightsResponse> {
+    const url = `${this.apiUrl}/${id}/insights`;
+    return forceRefresh
+      ? this.http.get<OpportunityInsightsResponse>(url, { params: { forceRefresh: 'true' } })
+      : this.http.get<OpportunityInsightsResponse>(url);
   }
 
   /**
