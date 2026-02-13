@@ -13,7 +13,7 @@ environments:
     env_vars: "ASPNETCORE_ENVIRONMENT=Production,GOOGLE_CLOUD_PROJECT=unops-opportunityplus-prod,ExternalDataService__ConfigurationPath=./ExternalDataService/config"
     credentials_id: "cicd-sa-oplus-prod"
     service_account: "eds-service@unops-opportunityplus-prod.iam.gserviceaccount.com"
-    invoker_service_accounts: "service-70092411004@gcp-sa-iap.iam.gserviceaccount.com"
+    invoker_service_accounts: "service-70092411004@gcp-sa-iap.iam.gserviceaccount.com,cloud-scheduler-invoker@unops-opportunityplus-prod.iam.gserviceaccount.com"
     dockerfile: "Dockerfile"
     port: "8080"
     min_instances: "0"
@@ -21,6 +21,9 @@ environments:
     memory: "2Gi"
     cpu: "1"
     timeout: "900"
+    # Cloud Scheduler Configuration
+    scheduler_enabled: true
+    scheduler_setup_script: "./ExternalDataService/deploy/setup-cloud-scheduler.sh"
 
   test:
     branch_pattern: "^test$"
@@ -36,7 +39,7 @@ environments:
     env_vars: "ASPNETCORE_ENVIRONMENT=Test,GOOGLE_CLOUD_PROJECT=unops-opportunityplus-test,ExternalDataService__ConfigurationPath=./ExternalDataService/config"
     credentials_id: "cicd-sa-oplus-test"
     service_account: "eds-service@unops-opportunityplus-test.iam.gserviceaccount.com"
-    invoker_service_accounts: "service-11994381361@gcp-sa-iap.iam.gserviceaccount.com"
+    invoker_service_accounts: "service-11994381361@gcp-sa-iap.iam.gserviceaccount.com,cloud-scheduler-invoker@unops-opportunityplus-test.iam.gserviceaccount.com"
     dockerfile: "Dockerfile"
     port: "8080"
     min_instances: "0"
@@ -44,6 +47,9 @@ environments:
     memory: "2Gi"
     cpu: "1"
     timeout: "900"
+    # Cloud Scheduler Configuration
+    scheduler_enabled: true
+    scheduler_setup_script: "./ExternalDataService/deploy/setup-cloud-scheduler.sh"
 
   qa:
     branch_pattern: "^development$"
@@ -59,7 +65,7 @@ environments:
     env_vars: "ASPNETCORE_ENVIRONMENT=QA,GOOGLE_CLOUD_PROJECT=unops-opportunityplus-qa,ExternalDataService__ConfigurationPath=./ExternalDataService/config"
     credentials_id: "cicd-sa-oplus-qa"
     service_account: "eds-service@unops-opportunityplus-qa.iam.gserviceaccount.com"
-    invoker_service_accounts: "service-11994381361@gcp-sa-iap.iam.gserviceaccount.com"
+    invoker_service_accounts: "service-11994381361@gcp-sa-iap.iam.gserviceaccount.com,cloud-scheduler-invoker@unops-opportunityplus-qa.iam.gserviceaccount.com"
     dockerfile: "Dockerfile"
     port: "8080"
     min_instances: "0"
@@ -67,6 +73,9 @@ environments:
     memory: "2Gi"
     cpu: "1"
     timeout: "900"
+    # Cloud Scheduler Configuration
+    scheduler_enabled: true
+    scheduler_setup_script: "./ExternalDataService/deploy/setup-cloud-scheduler.sh"
 
 
 
@@ -84,7 +93,7 @@ environments:
     env_vars: "ASPNETCORE_ENVIRONMENT=Development,GOOGLE_CLOUD_PROJECT=unops-opportunityplus-dev,ExternalDataService__ConfigurationPath=./ExternalDataService/config"
     credentials_id: "cicd-sa-oplus-dev"
     service_account: "eds-service@unops-opportunityplus-dev.iam.gserviceaccount.com"
-    invoker_service_accounts: "service-11994381361@gcp-sa-iap.iam.gserviceaccount.com"
+    invoker_service_accounts: "service-11994381361@gcp-sa-iap.iam.gserviceaccount.com,cloud-scheduler-invoker@unops-opportunityplus-dev.iam.gserviceaccount.com"
     dockerfile: "Dockerfile"
     port: "8080"
     min_instances: "0"
@@ -92,3 +101,6 @@ environments:
     memory: "2Gi"
     cpu: "1"
     timeout: "900"
+    # Cloud Scheduler Configuration
+    scheduler_enabled: true
+    scheduler_setup_script: "./ExternalDataService/deploy/setup-cloud-scheduler.sh"

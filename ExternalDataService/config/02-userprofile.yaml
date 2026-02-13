@@ -1,5 +1,5 @@
 metadata:
-  name: "UserProfile Sync"
+  name: "user-profiles"
   description: "UserProfile data sync"
   version: "1.0"
   enabled: true
@@ -50,17 +50,26 @@ destination:
   schema: "public"
   manage_table_structure: false  # Only validate, don't create/alter
   add_standard_fields: false
+
+  # Skip records when UserId does not exist in AspNetUsers (avoids FK errors)
+  foreign_key_mappings:
+    - source_field: "UserId"
+      lookup_table: "AspNetUsers"
+      lookup_field: "Id"
+      lookup_return_field: "Id"
+      destination_field: "UserId"
+      on_lookup_fail: LogWarning
+
+  composite_unique_keys:
+    - fields:
+        - "UserId"
+        - "Id"
+      index_name: "PK_UserProfile"
   
   field_mappings:
     - source_field: "Id"
       destination_field: "Id"
       data_type: "integer"
-      is_required: true
-
-    - source_field: "UserId"
-      destination_field: "UserId"
-      data_type: "integer"
-      is_unique: true  # IMPORTANT: Used for UPSERT operations (since the UserProfile table has made this the PK instead of ID!!)
       is_required: true
 
     - source_field: "Name"

@@ -1,0 +1,35 @@
+name: "entity-roles-update"
+description: "Synchronize organization hierarchies and entity user roles (DOA and management)"
+enabled: true
+
+# Execution order: organization-hierarchies first, then entity-user-roles (sequential - same table)
+execution_stages:
+  # Stage 1: Organization hierarchies - foundation for entity role assignments
+  - name: "organization-hierarchies"
+    description: "09 organization-hierarchies"
+    syncs:
+      - "organization-hierarchies"
+    fail_fast: true
+
+  # Stage 2: DoA roles (Delegation of Authority) - must complete before mgmt
+  - name: "entity-user-roles-doa"
+    description: "10 entity-user-roles-doa - Delegation of Authority"
+    syncs:
+      - "entity-user-roles-doa"
+    fail_fast: false
+
+  # Stage 3: Management roles (Directors/Deputies) - runs after DOA
+  - name: "entity-user-roles-mgmt"
+    description: "11 entity-user-roles-mgmt - Regional/Hub/OrgUnit Directors"
+    syncs:
+      - "entity-user-roles-mgmt"
+    fail_fast: false
+
+# Execution behavior configuration
+# Entity user roles run sequentially (separate stages) - both write to same EntityUserRoles table
+options:
+  parallel_execution: true
+  max_parallel_syncs: 2
+  fail_fast: false
+  delay_between_stages_seconds: 5
+  continue_on_error: true

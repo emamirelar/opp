@@ -1,5 +1,5 @@
 metadata:
-  name: "ASPNetUserRoles Sync"
+  name: "user-roles"
   description: "ASPNetUserRoles data sync"
   version: "1.0"
   enabled: true
@@ -33,7 +33,16 @@ destination:
   schema: "public"
   manage_table_structure: false  # Only validate, don't create/alter
   add_standard_fields: false
-  
+
+  # Skip records when UserId does not exist in AspNetUsers (avoids FK errors)
+  foreign_key_mappings:
+    - source_field: "UserId"
+      lookup_table: "AspNetUsers"
+      lookup_field: "Id"
+      lookup_return_field: "Id"
+      destination_field: "UserId"
+      on_lookup_fail: LogWarning
+
   # Composite unique key: The combination of UserId + RoleId must be unique
   composite_unique_keys:
     - fields:
@@ -42,11 +51,6 @@ destination:
       index_name: "PK_AspNetUserRoles"
   
   field_mappings:
-    - source_field: "UserId"
-      destination_field: "UserId"
-      data_type: "integer"
-      is_required: true
-
     - source_field: "RoleId"
       destination_field: "RoleId"
       data_type: "integer"

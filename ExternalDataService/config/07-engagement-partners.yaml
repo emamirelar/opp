@@ -1,5 +1,5 @@
 metadata:
-  name: "Engagement Partners Sync"
+  name: "engagement-partners"
   description: "Engagement partners data sync"
   version: "1.0"
   enabled: true
