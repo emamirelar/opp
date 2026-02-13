@@ -192,7 +192,7 @@ public class GeminiManager : IGeminiManager
         throw new NotImplementedException();
     }
     
-    public Task<OpportunityInsightsResponse> GenerateOpportunityInsightsAsync(int opportunityId, ClaimsPrincipal user = null)                                                                             
+    public Task<OpportunityInsightsResponse> GenerateOpportunityInsightsAsync(int opportunityId, ClaimsPrincipal user = null, bool forceRefresh = false)
     {
         throw new NotImplementedException();
     }

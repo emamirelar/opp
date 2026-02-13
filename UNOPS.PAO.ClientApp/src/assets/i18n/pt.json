@@ -1800,6 +1800,7 @@
   "message.notSet": "NÃ£o Definido",
   "message.opportunity.createdSuccessfully": "Opportunity \"{{name}}\" created successfully",
   "message.opportunity.loadingInsights": "Carregando insights e sugestÃµes de IA...",
+  "message.opportunity.refreshingInsights": "Atualizando insights...",
   "message.opportunity.noDeliverables": "Nenhum produto ou serviÃ§o ainda",
   "message.opportunity.noInsights": "Nenhuma anÃ¡lise disponÃ­vel no momento",
   "message.opportunity.noSDGs": "Nenhum ODS alinhado ainda",

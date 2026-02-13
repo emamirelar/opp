@@ -1776,6 +1776,7 @@
   "message.notSet": "No Establecido",
   "message.opportunity.createdSuccessfully": "Opportunity \"{{name}}\" created successfully",
   "message.opportunity.loadingInsights": "Cargando insights y sugerencias de IA...",
+  "message.opportunity.refreshingInsights": "Actualizando insights...",
   "message.opportunity.noDeliverables": "AÃºn no hay productos o servicios",
   "message.opportunity.noInsights": "No hay anÃ¡lisis disponibles en este momento",
   "message.opportunity.noSDGs": "AÃºn no hay ODS alineados",

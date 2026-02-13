@@ -107,6 +107,8 @@ export class OpportunityWhySectionComponent implements OnInit {
    */
   readonly opportunity = input.required<Opportunity>();
   readonly suggestions = input<any[]>([]);
+  /** True when insights/suggestions are loading or refreshing - show loading indicator */
+  readonly loadingInsightsSuggestions = input<boolean>(false);
 
   /**
    * @description Input signal for update permission - controls visibility of edit button
