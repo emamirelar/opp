@@ -4,6 +4,10 @@
       <div class="flex items-center gap-2">
         <i class="pi pi-chart-bar text-unops-secondary"></i>
         <span class="font-semibold">{{ 'label.opportunity.analysisInsights' | translate }}</span>
+        @if (isRefreshingInsights()) {
+          <i class="pi pi-spin pi-spinner text-xl text-unops-primary"></i>
+          <span class="text-sm text-unops-neutral-600">{{ 'message.opportunity.refreshingInsights' | translate }}</span>
+        }
       </div>
       <p-button
         icon="pi pi-refresh"
@@ -11,6 +15,7 @@
         [rounded]="true"
         size="small"
         [loading]="loadingInsights()"
+        [disabled]="isRefreshingInsights()"
         (onClick)="refreshInsights()"
         pTooltip="{{ 'button.refreshInsights' | translate }}"
         tooltipPosition="left"
@@ -128,11 +133,11 @@
 
     <!-- Insights & Suggestions -->
     <div class="space-y-4">
-      <!-- Loading State -->
-      @if (loadingInsights()) {
-        <div class="bg-unops-surface-secondary rounded-unops-lg p-4 border border-unops-neutral-300 text-center">
-          <i class="pi pi-spinner pi-spin text-2xl text-unops-neutral-400 mb-2"></i>
-          <p class="text-xs text-unops-neutral-600">{{ 'message.opportunity.loadingInsights' | translate }}</p>
+      <!-- Loading/Refreshing State - Statement-style indicator like "Validating..." -->
+      @if (isRefreshingInsights()) {
+        <div class="flex items-center gap-3 p-4 bg-unops-surface-secondary rounded-unops-md border border-unops-neutral-light">
+          <i class="pi pi-spin pi-spinner text-xl text-unops-primary"></i>
+          <span class="text-unops-neutral-700">{{ 'message.opportunity.refreshingInsights' | translate }}</span>
         </div>
       }
       

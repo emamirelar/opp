@@ -3,7 +3,7 @@
  * @author UNOPS Opportunity+ System Development Team
  */
 
-import { Component, input, output, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, inject, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
@@ -82,6 +82,20 @@ export class OpportunityAnalysisSectionComponent {
    * @since 2.1.0
    */
   readonly loadingInsights = input<boolean>(false);
+
+  /**
+   * @description True when insights are being refreshed after a section save (includes delay before API call)
+   * @type {Signal<boolean>}
+   * @since 2.1.0
+   */
+  readonly insightsRefreshingPending = input<boolean>(false);
+
+  /**
+   * @description Computed: true when insights are loading or refreshing (show loading indicator)
+   */
+  readonly isRefreshingInsights = computed(
+    () => this.loadingInsights() || this.insightsRefreshingPending()
+  );
 
   /**
    * @description Error message for insights loading passed from parent

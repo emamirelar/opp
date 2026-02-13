@@ -50,7 +50,8 @@ public interface IGeminiManager
     /// <summary>
     /// Generates AI-powered insights and suggestions for an opportunity
     /// </summary>
-    Task<OpportunityInsightsResponse> GenerateOpportunityInsightsAsync(int opportunityId, ClaimsPrincipal user = null);
+    /// <param name="forceRefresh">When true, bypasses cache to ensure fresh Gemini response (e.g. after section save)</param>
+    Task<OpportunityInsightsResponse> GenerateOpportunityInsightsAsync(int opportunityId, ClaimsPrincipal user = null, bool forceRefresh = false);
     
     /// <summary>
     /// Generates AI-powered opportunity proposal from multiple sources (interactions, documents, etc.)

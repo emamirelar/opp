@@ -1436,9 +1436,10 @@ public class OpportunityController : BaseController
     /// <summary>
     /// Gets AI-generated insights and suggestions for an opportunity
     /// </summary>
+    /// <param name="forceRefresh">When true, bypasses AI cache to ensure fresh Gemini response (e.g. after section save)</param>
     [HttpGet(APIDictionary.Opportunity + "/{id}/insights")]
     [AccessControlled(EntityTypes.Opportunity, "read")]
-    public async Task<ActionResult<OpportunityInsightsResponse>> GetInsights(int id)
+    public async Task<ActionResult<OpportunityInsightsResponse>> GetInsights(int id, [FromQuery] bool forceRefresh = false)
     {
         try
         {
@@ -1452,7 +1453,7 @@ public class OpportunityController : BaseController
                 return NotFound(new { error = $"Opportunity with ID {id} not found" });
             }
 
-            var response = await _geminiManager.GenerateOpportunityInsightsAsync(id, User);
+            var response = await _geminiManager.GenerateOpportunityInsightsAsync(id, User, forceRefresh);
 
             _logger.LogInformation("✅ [API] Successfully generated {InsightCount} insights and {SuggestionCount} suggestions for opportunity {OpportunityId}", 
                 response.Insights?.Count ?? 0, 

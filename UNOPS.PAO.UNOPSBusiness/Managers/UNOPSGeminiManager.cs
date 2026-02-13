@@ -4233,8 +4233,9 @@ public class UNOPSGeminiManager : IGeminiManager
         /// Uses the opportunity_generate_insights AI prompt
         /// </summary>
         public async Task<UNOPS.PAO.Models.OpportunityInsightsResponse> GenerateOpportunityInsightsAsync(
-            int opportunityId, 
-            ClaimsPrincipal? user = null)
+            int opportunityId,
+            ClaimsPrincipal? user = null,
+            bool forceRefresh = false)
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             
@@ -4269,7 +4270,7 @@ public class UNOPSGeminiManager : IGeminiManager
 
                 // Call AI service to generate insights
                 var opportunityContextJson = JsonConvert.SerializeObject(opportunityDetails);
-                var aiResponse = await _aiService.FetchResultFromGemini(insightsPrompt, opportunityContextJson, entityId: opportunityId.ToString(), bypassCache: false);
+                var aiResponse = await _aiService.FetchResultFromGemini(insightsPrompt, opportunityContextJson, entityId: opportunityId.ToString(), bypassCache: forceRefresh);
 
                 _logger.LogInformation($"📝 [INSIGHTS] Received AI response: {aiResponse?.Substring(0, Math.Min(200, aiResponse?.Length ?? 0))}...");
 
