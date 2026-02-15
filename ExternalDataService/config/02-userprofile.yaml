@@ -4,7 +4,7 @@ metadata:
   version: "1.0"
   enabled: true
   max_retry_attempts: 1
-  timeout_minutes: 5
+  timeout_minutes: 30
 
 source:
   type: "bigquery"
@@ -58,7 +58,7 @@ destination:
       lookup_field: "Id"
       lookup_return_field: "Id"
       destination_field: "UserId"
-      on_lookup_fail: LogWarning
+      on_lookup_fail: FailRecord
 
   composite_unique_keys:
     - fields:
@@ -156,6 +156,7 @@ destination:
 sync_options:
   sync_mode: Upsert
   batch_processing: true
+  use_bulk_upsert: true   # Requires unique (UserId, Id); run UNOPSDataAccess/Scripts/AddBulkUpsertUniqueConstraints.sql
 
 validation:
   required_source_fields:

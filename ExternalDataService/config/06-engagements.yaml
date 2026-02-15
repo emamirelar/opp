@@ -206,6 +206,7 @@ destination:
 sync_options:
   sync_mode: Upsert
   batch_processing: true
+  use_bulk_upsert: true  # Requires unique BaseEngagement; run AddUniqueConstraintsForTables migration
 
 validation:
   required_source_fields:

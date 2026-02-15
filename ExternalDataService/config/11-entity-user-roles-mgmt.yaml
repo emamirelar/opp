@@ -329,6 +329,7 @@ destination:
 sync_options:
   sync_mode: Upsert  # Insert new or update ALL existing records
   batch_processing: true
+  use_bulk_upsert: true  # Uses Id (PK); no additional index needed
   delete_orphaned_records: false  # Don't delete existing management records not in BigQuery
   # Note: Updates all records on every sync to ensure latest data
   # Use CreatedDate vs LastModifiedDate to distinguish inserts from updates
