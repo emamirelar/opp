@@ -238,6 +238,7 @@ destination:
 sync_options:
   sync_mode: Upsert
   batch_processing: true
+  use_bulk_upsert: true  # Uses Id (PK); no additional index needed
 
 validation:
   required_source_fields:

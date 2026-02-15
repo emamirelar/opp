@@ -4,7 +4,7 @@ metadata:
   version: "1.0"
   enabled: true
   max_retry_attempts: 1
-  timeout_minutes: 5
+  timeout_minutes: 30
 
 source:
   type: "bigquery"
@@ -57,8 +57,9 @@ destination:
       is_required: true
 
 sync_options:
-  sync_mode: InsertOnly
+  sync_mode: Upsert   # Bulk upsert; table has only key columns so update is no-op (same as InsertOnly)
   batch_processing: true
+  use_bulk_upsert: true   # Requires unique (UserId, RoleId); run UNOPSDataAccess/Scripts/AddBulkUpsertUniqueConstraints.sql
 
 validation:
   required_source_fields:
