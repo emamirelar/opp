@@ -37,6 +37,9 @@ This document tracks **production code defects** discovered during testing. Thes
 | DEF-010 | 🟠 High | PNO-1193: OM role transfer not working | OpportunityWorkflow | 2026-02-11 | Open |
 | DEF-011 | 🟡 Medium | PNO-1171: Reject action appears twice in workflow history | WorkflowHistory | 2026-02-11 | Open |
 | DEF-012 | 🟡 Medium | ForAllMembers overrides Ignore() rules in OpportunityMappingProfile | OpportunityMappingProfile | 2026-02-16 | Open |
+| DEF-013 | 🟡 Medium | LiaisonOfficeManager not registered in IManagerWrapper | ManagerWrapper | 2026-02-16 | Open |
+| DEF-014 | 🟡 Medium | FocalPointManager not registered in IManagerWrapper | ManagerWrapper | 2026-02-16 | Open |
+| DEF-015 | 🟡 Medium | DashboardController has zero test coverage — 10+ endpoints | DashboardController | 2026-02-16 | Open |
 
 ---
 
@@ -262,6 +265,111 @@ However, the Ignore rules create a **false sense of safety**. If a caller ever p
 
 ---
 
+### DEF-013: LiaisonOfficeManager not registered in IManagerWrapper
+
+**Severity:** 🟡 Medium  
+**Component:** ManagerWrapper (`UNOPS.PAO.Business/Managers/ManagerWrapper.cs`)  
+**Date Reported:** 2026-02-16  
+**Status:** Open  
+**Priority:** P2 — Feature implementation incomplete  
+**Related QA:** QA-044
+
+**Description:**
+The `LiaisonOffice` entity exists in the domain model and a `LiaisonOfficeManager` class exists, but the manager is not registered in `IManagerWrapper` or `ManagerWrapper`. This means:
+- The manager cannot be resolved via dependency injection
+- Controller endpoints referencing the manager will fail
+- 9 existing integration tests (`PartnerLiaisonOfficeManagerTests`) cannot execute
+
+**Root Cause:** Entity and manager partially implemented but not wired into the DI container and facade pattern.
+
+**Proper Fix:**
+1. Register `LiaisonOfficeManager` in `ManagerWrapper` constructor
+2. Add `ILiaisonOfficeManager` property to `IManagerWrapper` interface
+3. Expose the manager via `ManagerWrapper` public property
+4. Verify all CRUD methods are implemented (`CreateLiaisonOfficeAsync`, `GetLiaisonOfficesByPartnerIdAsync`, `DeleteLiaisonOfficeAsync`)
+
+**Wrong Fix:** Do not create test stubs/mocks as a workaround — the manager needs to be properly implemented and registered.
+
+**Impact:** 9 tests blocked (QA-044), liaison office feature non-functional
+
+**Repro Steps:**
+1. Navigate to `IManagerWrapper.cs`
+2. Search for "LiaisonOffice" — no property found
+3. Attempt to call `managerWrapper.LiaisonOfficeManager` — compilation error
+
+**Expected Result:** `IManagerWrapper` exposes a `LiaisonOfficeManager` property.
+
+**Actual Result:** No such property exists; the manager is not registered.
+
+---
+
+### DEF-014: FocalPointManager not registered in IManagerWrapper
+
+**Severity:** 🟡 Medium  
+**Component:** ManagerWrapper (`UNOPS.PAO.Business/Managers/ManagerWrapper.cs`)  
+**Date Reported:** 2026-02-16  
+**Status:** Open  
+**Priority:** P2 — Feature implementation incomplete  
+**Related QA:** QA-045
+
+**Description:**
+The `FocalPoint` entity exists in the domain model and a `FocalPointManager` class exists, but the manager is not registered in `IManagerWrapper` or `ManagerWrapper`. This follows the same pattern as DEF-013.
+
+**Root Cause:** Entity and manager partially implemented but not wired into the DI container and facade pattern.
+
+**Proper Fix:**
+1. Register `FocalPointManager` in `ManagerWrapper` constructor
+2. Add `IFocalPointManager` property to `IManagerWrapper` interface
+3. Expose the manager via `ManagerWrapper` public property
+4. Verify all CRUD methods are implemented
+
+**Wrong Fix:** Do not create test stubs/mocks as a workaround — the manager needs to be properly implemented and registered.
+
+**Impact:** 12 tests blocked (QA-045), focal point feature non-functional
+
+**Repro Steps:**
+1. Navigate to `IManagerWrapper.cs`
+2. Search for "FocalPoint" — no property found
+3. Attempt to call `managerWrapper.FocalPointManager` — compilation error
+
+**Expected Result:** `IManagerWrapper` exposes a `FocalPointManager` property.
+
+**Actual Result:** No such property exists; the manager is not registered.
+
+---
+
+### DEF-015: DashboardController has zero test coverage — 10+ endpoints
+
+**Severity:** 🟡 Medium  
+**Component:** DashboardController (`UNOPS.PAO.API/Controllers/DashboardController.cs`)  
+**Date Reported:** 2026-02-16  
+**Status:** Open  
+**Priority:** P2 — High-traffic feature with no test safety net  
+
+**Description:**
+The `DashboardController` is the landing page controller for all users and exposes 10+ endpoints for widget data, metrics, charts, and summary information. Despite being the most-visited page in the application, it has zero dedicated test files — no integration tests, no unit tests.
+
+**Impact:**
+- Any regression in dashboard endpoints would be undetected until users report it
+- Dashboard is the first thing every user sees after login
+- Widget data endpoints involve complex aggregation queries that are prone to regression
+
+**Endpoints Requiring Coverage:**
+- Dashboard summary/metrics endpoints
+- Widget data endpoints (partner counts, opportunity pipeline, recent activity)
+- Chart data endpoints (trends, distributions)
+- User-specific dashboard data
+
+**Proper Fix:**
+1. Create `DashboardControllerTests.cs` for integration-level endpoint testing
+2. Create `DashboardManagerTests.cs` for unit-level business logic testing
+3. Prioritize the most-used widget endpoints first
+4. Include permission-based testing (different users see different dashboard data)
+
+**Note:** Some dashboard-related tests may exist in the 58 excluded integration test files (DEF-007). Unblocking those files should be attempted first before writing new tests from scratch.
+
+---
+
 ## Resolved Defects
 
 _(No resolved defects yet)_
@@ -282,17 +390,17 @@ The following items were previously logged as developer defects but have been re
 
 ---
 
-## Defect Statistics (Updated 2026-02-11 — PNO-969 Full Test Execution)
+## Defect Statistics (Updated 2026-02-16 — Coverage Gap Analysis)
 
-- **Total Open:** 3
+- **Total Open:** 6 (DEF-010, DEF-011, DEF-012, DEF-013, DEF-014, DEF-015)
 - **Total Partially Resolved:** 1 (DEF-008 — significant implementation progress, remaining gaps tracked)
 - **Total Resolved:** 0
 - **Total Reclassified:** 3 (moved to appropriate trackers)
 - 🔴 **Critical:** 0
 - 🟠 **High Priority:** 2 (DEF-008 remaining gaps, DEF-010 PNO-1193 OM role transfer)
-- 🟡 **Medium Priority:** 1 (DEF-011 PNO-1171 duplicate reject in history)
+- 🟡 **Medium Priority:** 4 (DEF-011 duplicate reject, DEF-012 AutoMapper Ignore override, DEF-013 LiaisonOffice not registered, DEF-014 FocalPoint not registered, DEF-015 Dashboard no coverage)
 - 🟢 **Low Priority:** 0
-- **New Defects Found (2026-02-11 PNO-969 Testing):** 2 — DEF-010 (OM role transfer bug), DEF-011 (duplicate workflow history entry)
+- **New Defects Found (2026-02-16 Coverage Gap Analysis):** 3 — DEF-013 (LiaisonOfficeManager not in IManagerWrapper), DEF-014 (FocalPointManager not in IManagerWrapper), DEF-015 (DashboardController zero test coverage)
 - **DEF-008 Progress:** Core Go Decision workflow now operational (submit, cancel, reopen, reject, DoA2 lookup all working). Collaborator assignment feature confirmed implemented (2026-02-13). Remaining: notifications, UI components, role transfer (DEF-010).
 - **PNO-969 Full Test Execution (2026-02-11):** **509 passed, 0 failed, 60 skipped** across all C# and Playwright PNO-969 tests. No new product defects discovered.
 - **Playwright Improvement (2026-02-09):** 511+ passed (was 289, **+222**), ~100 skipped (was 322, **-222**). 222 more tests now executing and passing. **0 failures.**

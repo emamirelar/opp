@@ -134,6 +134,12 @@ These items were originally logged as developer defects (DEF-XXX) but have been 
 | QA-021 | 🟡 Medium | Login.spec.ts tests require real backend | Environment | 7 tests skipped | N/A | 2026-02-04 | Workaround Applied |
 | QA-036 | 🟡 Medium | Audit & rewrite Playwright non-existent data-testid selectors | Test Maintenance | All 4 page objects rewritten | N/A | 2026-02-07 | Resolved |
 | QA-041 | 🟡 Medium | Playwright full suite crashes after ~287 tests | Test Performance | Full suite must run in batches | N/A | 2026-02-11 | Open |
+| QA-042 | 🟡 Medium | DSTCacheDeduplicationTests blocked — AI/Gemini dependency | Third-party | 28 tests skipped | N/A | 2026-02-16 | Open |
+| QA-043 | 🟡 Medium | ExternalDataIntegrationServiceTests blocked — BigQuery config | Third-party | 35 tests skipped | N/A | 2026-02-16 | Open |
+| QA-044 | 🟡 Medium | PartnerLiaisonOfficeManagerTests blocked — entity not implemented | Test Execution | 9 tests skipped | N/A | 2026-02-16 | Open |
+| QA-045 | 🟡 Medium | PartnerFocalPointManagerTests blocked — entity not implemented | Test Execution | 12 tests skipped | N/A | 2026-02-16 | Open |
+| QA-046 | 🟡 Medium | Zero test coverage — 6 UNOPS managers have no tests | Test Coverage | 0 tests | N/A | 2026-02-16 | Open |
+| QA-047 | 🟢 Low | Zero test coverage — 3 controllers have no tests | Test Coverage | 0 tests | N/A | 2026-02-16 | Open |
 
 ---
 
@@ -364,6 +370,129 @@ Three compounding factors caused Node.js OOM after ~287 tests:
 
 ---
 
+#### QA-042: DSTCacheDeduplicationTests blocked — AI/Gemini dependency
+
+**Status:** Open  
+**Category:** Third-party  
+**Impact:** 28 tests skipped  
+**Date:** 2026-02-16
+
+**Description:** The `DSTCacheDeduplicationTests` test suite (`UNOPS.PAO.Business.Tests/Managers/DSTCacheDeduplicationTests.cs`) depends on the DST (Data Science Toolkit) service, which requires a configured Gemini/AI backend connection. The service is not available in the test environment and no mock or stub exists for it.
+
+**Blocked Tests:**
+- 28 tests covering DST cache deduplication logic
+
+**Root Cause:** External AI/ML service dependency that is not mockable in the current test infrastructure. The DST service makes calls to Google Gemini endpoints for deduplication scoring.
+
+**Temporary Fix (QA):** Tests are skipped with `[Skip]` attributes.  
+**Permanent Fix:** Create a mock/stub for the DST service that returns deterministic responses, or configure CI with a sandbox Gemini API key.
+
+---
+
+#### QA-043: ExternalDataIntegrationServiceTests blocked — BigQuery config
+
+**Status:** Open  
+**Category:** Third-party  
+**Impact:** 35 tests skipped (approximately)  
+**Date:** 2026-02-16
+
+**Description:** The `ExternalDataIntegrationServiceTests` test suite depends on Google BigQuery for external data integration. Tests require valid GCP credentials and a configured BigQuery project, which are not available in the local or CI test environment.
+
+**Blocked Tests:**
+- ~35 tests covering external data import/sync from BigQuery
+
+**Root Cause:** External GCP/BigQuery service dependency with no test double or sandbox environment configured.
+
+**Temporary Fix (QA):** Tests are skipped or excluded from build.  
+**Permanent Fix:** Create a mock BigQuery client for test environments, or configure CI with GCP service account credentials for a sandbox project.
+
+---
+
+#### QA-044: PartnerLiaisonOfficeManagerTests blocked — entity not implemented
+
+**Status:** Open  
+**Category:** Test Execution  
+**Impact:** 9 tests skipped  
+**Date:** 2026-02-16
+
+**Description:** The `PartnerLiaisonOfficeManagerTests` test suite references the `LiaisonOffice` entity and its manager, which are not yet fully implemented in the backend. The entity exists in the domain model but the manager methods needed by the tests (`CreateLiaisonOfficeAsync`, `GetLiaisonOfficesByPartnerIdAsync`, `DeleteLiaisonOfficeAsync`) are not wired into `IManagerWrapper`.
+
+**Blocked Tests:**
+- 9 tests covering liaison office CRUD and partner association
+
+**Root Cause:** Backend implementation incomplete — entity defined but manager not fully exposed via `IManagerWrapper`.
+
+**Temporary Fix (QA):** Tests are skipped with appropriate skip reasons.  
+**Permanent Fix:** Backend team to complete `LiaisonOfficeManager` implementation and register it in `IManagerWrapper` and `ManagerWrapper`.
+
+**Related:** DEF-007 (Integration tests out of sync with production code)
+
+---
+
+#### QA-045: PartnerFocalPointManagerTests blocked — entity not implemented
+
+**Status:** Open  
+**Category:** Test Execution  
+**Impact:** 12 tests skipped  
+**Date:** 2026-02-16
+
+**Description:** The `PartnerFocalPointManagerTests` test suite references the `FocalPoint` entity and its manager, which are not yet fully implemented in the backend. Similar to QA-044, the entity model exists but the manager methods are not exposed through `IManagerWrapper`.
+
+**Blocked Tests:**
+- 12 tests covering focal point assignment, CRUD, and partner association
+
+**Root Cause:** Backend implementation incomplete — entity defined but manager not fully exposed via `IManagerWrapper`.
+
+**Temporary Fix (QA):** Tests are skipped with appropriate skip reasons.  
+**Permanent Fix:** Backend team to complete `FocalPointManager` implementation and register it in `IManagerWrapper` and `ManagerWrapper`.
+
+**Related:** DEF-007 (Integration tests out of sync with production code)
+
+---
+
+#### QA-046: Zero test coverage — 6 UNOPS managers have no tests
+
+**Status:** Open  
+**Category:** Test Coverage  
+**Impact:** 0 tests exist for these managers  
+**Date:** 2026-02-16
+
+**Description:** The following UNOPS managers have no dedicated test files and zero test coverage. These are all active production managers with business logic that should be tested:
+
+| Manager | Risk Level | Description |
+|---------|-----------|-------------|
+| `UNOPSRiskManager` | High | Risk register is a core opportunity feature — full risk CRUD, risk scoring, risk matrix |
+| `UNOPSUserManagementManager` | High | User invite, role assignment, deactivation — authorization-critical |
+| `UNOPSEntityConfigurationManager` | Medium | Entity configuration CRUD — affects all configurable entities |
+| `UNOPSAiPromptManager` | Medium | AI prompt management — affects AI assistant behavior |
+| `BaseEngagementManager` | Medium | Base engagement CRUD — UNOPS-specific feature |
+| `ImageGenerationManager` | Low | Image generation for opportunities — AI feature |
+
+**Permanent Fix:** Create dedicated test files for each manager following the existing `ManagerTestBase` pattern. Priority order: `UNOPSRiskManager` > `UNOPSUserManagementManager` > `UNOPSEntityConfigurationManager` > `BaseEngagementManager` > `UNOPSAiPromptManager` > `ImageGenerationManager`.
+
+---
+
+#### QA-047: Zero test coverage — 3 controllers have no tests
+
+**Status:** Open  
+**Category:** Test Coverage  
+**Impact:** 0 tests exist for these controllers  
+**Date:** 2026-02-16
+
+**Description:** The following controllers have active endpoints in production but no dedicated integration or unit test files:
+
+| Controller | Endpoints | Risk Level | Description |
+|------------|-----------|-----------|-------------|
+| `DashboardController` | 10+ endpoints | High | Landing page for all users — widget data, metrics, charts |
+| `AuditLogController` | Latest audit logs | Low | Internal tooling — audit trail queries |
+| `AIRetrieverController` | Vector search, URL convert | Low | AI feature — retrieval-augmented generation endpoints |
+
+**Note:** Additional controllers like `CommentController`, `SavedFilterController`, `NotificationController`, `UserPreferenceController`, `EntityArtifactController`, `BaseEngagementController`, and `RoleController` are partially covered by the 58 excluded integration test files documented in `UNOPS.PAO.IntegrationTests.csproj` (related to DEF-007). Unblocking those files would add coverage for many of these controllers.
+
+**Permanent Fix:** For `DashboardController` (high priority), create a dedicated test file. For `AuditLogController` and `AIRetrieverController`, add tests when the excluded integration test files are unblocked (DEF-007) or create standalone tests.
+
+---
+
 ## Resolved QA Issues
 
 | QA ID | Title | Date Resolved | Resolution Summary |
@@ -400,9 +529,9 @@ Three compounding factors caused Node.js OOM after ~287 tests:
 
 ---
 
-## QA Issue Statistics (Updated 2026-02-11 — Full Test Suite Run + Fixes)
+## QA Issue Statistics (Updated 2026-02-16 — Coverage Gap Analysis)
 
-- **Total Open:** 6 ⚠️ (QA-007, QA-008, QA-014, QA-015, QA-019, QA-020)
+- **Total Open:** 12 ⚠️ (QA-007, QA-008, QA-014, QA-015, QA-019, QA-020, QA-041, QA-042, QA-043, QA-044, QA-045, QA-046, QA-047)
 - **Total Partially Resolved:** 2 (QA-011, QA-016)
 - **Total Resolved/Workaround:** 34 ✅ (QA-009, QA-010, QA-012, QA-013, QA-017, QA-018, QA-021 through QA-025, QA-028 through QA-041, and 8 others)
 - **Test Infrastructure:** 39 (28 resolved/workaround, 3 partially resolved, 8 open)
@@ -414,10 +543,12 @@ Three compounding factors caused Node.js OOM after ~287 tests:
 - **Mocking/Stubbing:** 4 (QA-031 RESOLVED ✅, QA-032 RESOLVED ✅, QA-033 RESOLVED ✅, **QA-039 RESOLVED ✅**)
 - **Temporary Workarounds:** 4 (QA-005, QA-009, QA-020, QA-021)
 - **Blocked by Credentials:** 2 (QA-014, QA-015 - oUP integration testing)
-- **Blocked by Implementation:** 1 (QA-016 - Go Decision partially unblocked, core workflow testable, remaining gaps tracked in DEF-008/DEF-010/DEF-011)
+- **Blocked by Implementation:** 3 (QA-016 Go Decision, QA-044 LiaisonOffice, QA-045 FocalPoint)
+- **Blocked by Third-party:** 2 (QA-042 DST/Gemini, QA-043 BigQuery)
+- **Test Coverage Gaps:** 2 (QA-046 zero-coverage managers, QA-047 zero-coverage controllers)
 - 🔴 **Critical:** 0
 - 🟠 **High Priority:** 3 (QA-007, QA-008, QA-014)
-- 🟡 **Medium Priority:** 2 (QA-026, QA-027)
+- 🟡 **Medium Priority:** 7 (QA-026, QA-027, QA-042, QA-043, QA-044, QA-045, QA-046)
 - **Role-Based Access Control Coverage:** 161 E2E tests ✅ ALL PASSING (5 roles × 4 entities × multiple permission checks, executed 2026-02-07)
 - **PNO-969 Go Decision Testing (2026-02-11):**
   - **QA-016 PARTIALLY UNBLOCKED:** Core workflow now operational — Submit, Cancel, Reopen, Reject, DoA2 lookup all working
@@ -637,6 +768,8 @@ Three compounding factors caused Node.js OOM after ~287 tests:
 | QA-016 | DEF-008 | Go Decision tests partially blocked by DEF-008 remaining gaps. Core workflow now testable. |
 | QA-016 | DEF-010 | PNO-1193 OM role transfer bug blocks TC-039 |
 | QA-016 | DEF-011 | PNO-1171 duplicate reject in history affects TC-030 accuracy |
+| QA-044 | DEF-013 | LiaisonOfficeManager not registered in IManagerWrapper — 9 tests blocked |
+| QA-045 | DEF-014 | FocalPointManager not registered in IManagerWrapper — 12 tests blocked |
 
 ---
 
@@ -773,6 +906,12 @@ Three compounding factors caused Node.js OOM after ~287 tests:
 | DEF-010 (PNO-1193) | TC-039 + role transfer tests | OM role transfer not working |
 | DEF-011 (PNO-1171) | TC-030 (workflow history accuracy) | Reject appears twice in history |
 | QA-008 (PrimeNG Dialog) | ~5 Playwright tests (all skipped, 0 failing) | ✅ All dialog tests now use conditional `test.skip()` |
+| QA-042 (DST/Gemini) | 28 tests skipped | Need DST mock or sandbox Gemini API key |
+| QA-043 (BigQuery) | ~35 tests skipped | Need BigQuery mock or GCP sandbox credentials |
+| DEF-013 (LiaisonOffice) | 9 tests blocked | Backend: Register LiaisonOfficeManager in IManagerWrapper |
+| DEF-014 (FocalPoint) | 12 tests blocked | Backend: Register FocalPointManager in IManagerWrapper |
+| QA-046 (Manager coverage) | 6 managers, 0 tests | Create test files for UNOPSRiskManager, UNOPSUserManagementManager, etc. |
+| QA-047 (Controller coverage) | 3 controllers, 0 tests | Create test files for DashboardController, AuditLogController, AIRetrieverController |
 
 ### Immediate (Next Sprint):
 - [x] ~~**QA-039:** Fix `authenticateWithRealBackend` to differentiate claims by user email~~ — **RESOLVED (2026-02-09):** Added `RESTRICTED_TEST_USERS` map + permission mock overrides. Negative permission tests now pass.
