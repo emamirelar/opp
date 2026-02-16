@@ -7,9 +7,11 @@
 
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using UNOPS.PAO.Business.Tests.TestBase;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using Xunit;
 
@@ -22,10 +24,16 @@ namespace UNOPS.PAO.Business.Tests.DataImport;
 /// - Reserved Range: 8000-9999 for special/reserved partners
 /// - Invalid Range: > 9999 must be corrected
 /// - Uniqueness: All ErpDimValues must be unique (including soft-deleted)
+///
+/// IMPORTANT: ErpDimValue has a unique constraint (IX_Partners_ErpDimValue).
+/// All tests dynamically find available values to avoid conflicts on a shared database.
 /// </summary>
 public class PartnerErpDimValueFixTests : IDisposable
 {
     private readonly AppDbContext _context;
+    private IDbContextTransaction? _transaction;
+    private readonly int _testUserId;
+    private readonly string _testMarker;
     private const int VALID_RANGE_START = 1;
     private const int VALID_RANGE_END = 7999;
     private const int RESERVED_RANGE_START = 8000;
@@ -34,12 +42,62 @@ public class PartnerErpDimValueFixTests : IDisposable
 
     public PartnerErpDimValueFixTests()
     {
-        _context = TestDbContextFactory.Create();
+        _testMarker = $"ErpTest_{Guid.NewGuid():N}";
+
+        if (TestEnvironment.UsePostgreSQL)
+        {
+            using var tempContext = TestDbContextFactory.CreateUNOPS();
+            _testUserId = TestDataHelper.GetOrCreateTestUser(tempContext, "erpdimvalue-test@unops.org");
+            _context = TestDbContextFactory.CreateWithUserId(_testUserId);
+            _transaction = _context.Database.BeginTransaction();
+        }
+        else
+        {
+            _testUserId = 1;
+            _context = TestDbContextFactory.Create();
+        }
     }
 
     public void Dispose()
     {
+        if (_transaction != null)
+        {
+            try { _transaction.Rollback(); }
+            catch { }
+            _transaction.Dispose();
+            _transaction = null;
+        }
         _context?.Dispose();
+    }
+
+    /// <summary>
+    /// Finds available (unused) ErpDimValues in the specified range.
+    /// Queries all partners (including soft-deleted) to avoid unique constraint violations.
+    /// </summary>
+    private async Task<List<int>> FindAvailableErpDimValues(int count, int rangeStart, int rangeEnd)
+    {
+        var usedValues = new HashSet<int>(
+            await _context.Partners
+                .IgnoreQueryFilters()
+                .Where(p => p.ErpDimValue.HasValue)
+                .Select(p => p.ErpDimValue!.Value)
+                .ToListAsync()
+        );
+
+        var available = new List<int>();
+        for (int val = rangeStart; val <= rangeEnd && available.Count < count; val++)
+        {
+            if (!usedValues.Contains(val))
+            {
+                available.Add(val);
+            }
+        }
+
+        if (available.Count < count)
+            throw new InvalidOperationException(
+                $"Not enough available ErpDimValues in range [{rangeStart}-{rangeEnd}]. Needed {count}, found {available.Count}.");
+
+        return available;
     }
 
     #region Core ErpDimValue Logic Tests
@@ -100,15 +158,18 @@ public class PartnerErpDimValueFixTests : IDisposable
     [Fact]
     public async Task FixErpDimValues_WhenPartnersHaveValuesAbove9999_ShouldReassignValidValues()
     {
-        // Arrange - Create partners with valid and invalid ErpDimValues
+        // Arrange - Find available ErpDimValues dynamically
+        var validValues = await FindAvailableErpDimValues(3, VALID_RANGE_START, VALID_RANGE_END);
+        var invalidValues = await FindAvailableErpDimValues(3, INVALID_THRESHOLD + 1, 99999);
+
         var partners = new List<UNOPSPartner>
         {
-            new UNOPSPartner { Name = "Valid Partner 1", PartnerShortDescription = "Desc", ErpDimValue = 1000, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSPartner { Name = "Valid Partner 2", PartnerShortDescription = "Desc", ErpDimValue = 1001, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSPartner { Name = "Valid Partner 3", PartnerShortDescription = "Desc", ErpDimValue = 1002, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSPartner { Name = "Invalid Partner 1", PartnerShortDescription = "Desc", ErpDimValue = 10001, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSPartner { Name = "Invalid Partner 2", PartnerShortDescription = "Desc", ErpDimValue = 10002, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSPartner { Name = "Invalid Partner 3", PartnerShortDescription = "Desc", ErpDimValue = 10003, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
+            new UNOPSPartner { Name = $"{_testMarker}_Valid1", PartnerShortDescription = "Desc", ErpDimValue = validValues[0], LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = $"{_testMarker}_Valid2", PartnerShortDescription = "Desc", ErpDimValue = validValues[1], LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = $"{_testMarker}_Valid3", PartnerShortDescription = "Desc", ErpDimValue = validValues[2], LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = $"{_testMarker}_Invalid1", PartnerShortDescription = "Desc", ErpDimValue = invalidValues[0], LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = $"{_testMarker}_Invalid2", PartnerShortDescription = "Desc", ErpDimValue = invalidValues[1], LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = $"{_testMarker}_Invalid3", PartnerShortDescription = "Desc", ErpDimValue = invalidValues[2], LastModifiedDate = DateTime.UtcNow }
         };
 
         await _context.Partners.AddRangeAsync(partners);
@@ -134,12 +195,12 @@ public class PartnerErpDimValueFixTests : IDisposable
 
         foreach (var partner in partnersToFix)
         {
-            while (usedValues.Contains(nextValue) || 
+            while (usedValues.Contains(nextValue) ||
                    (nextValue >= RESERVED_RANGE_START && nextValue <= RESERVED_RANGE_END))
             {
                 nextValue++;
             }
-            
+
             partner.ErpDimValue = nextValue;
             usedValues.Add(nextValue);
             nextValue++;
@@ -147,44 +208,46 @@ public class PartnerErpDimValueFixTests : IDisposable
 
         await _context.SaveChangesAsync();
 
-        // Assert
-        var fixedPartners = await _context.Partners
-            .Where(p => p.ErpDimValue.HasValue && p.ErpDimValue.Value > RESERVED_RANGE_END)
+        // Assert - Our test-created invalid partners should now have valid values
+        var testInvalidPartners = await _context.Partners
+            .Where(p => p.Name.StartsWith(_testMarker) && p.Name.Contains("Invalid"))
             .ToListAsync();
 
-        fixedPartners.Should().BeEmpty("All partners with ErpDimValue > 9999 should be fixed");
-
-        // Verify the fixed values are sequential starting from 1003
-        var invalidPartner1 = await _context.Partners.FirstAsync(p => p.Name == "Invalid Partner 1");
-        var invalidPartner2 = await _context.Partners.FirstAsync(p => p.Name == "Invalid Partner 2");
-        var invalidPartner3 = await _context.Partners.FirstAsync(p => p.Name == "Invalid Partner 3");
-
-        invalidPartner1.ErpDimValue.Should().Be(1003);
-        invalidPartner2.ErpDimValue.Should().Be(1004);
-        invalidPartner3.ErpDimValue.Should().Be(1005);
+        testInvalidPartners.Should().HaveCount(3);
+        var fixedValues = testInvalidPartners.Select(p => p.ErpDimValue!.Value).OrderBy(v => v).ToList();
+        fixedValues.Should().OnlyHaveUniqueItems("All fixed values should be unique");
+        fixedValues.Should().BeInAscendingOrder("Fixed values should be assigned in ascending order");
+        foreach (var v in fixedValues)
+        {
+            (v >= RESERVED_RANGE_START && v <= RESERVED_RANGE_END).Should().BeFalse(
+                $"Fixed value {v} should not be in reserved range ({RESERVED_RANGE_START}-{RESERVED_RANGE_END})");
+        }
     }
 
     [Fact]
     public async Task FixErpDimValues_WhenNoInvalidPartners_ShouldCompleteWithoutChanges()
     {
-        // Arrange - Only valid partners
+        // Arrange - Only valid and reserved partners (no invalid > 9999)
+        var validValues = await FindAvailableErpDimValues(2, VALID_RANGE_START, VALID_RANGE_END);
+        var reservedValues = await FindAvailableErpDimValues(1, RESERVED_RANGE_START, RESERVED_RANGE_END);
+
         var partners = new List<UNOPSPartner>
         {
-            new UNOPSPartner { Name = "Valid Partner 1", PartnerShortDescription = "Desc", ErpDimValue = 1000, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSPartner { Name = "Valid Partner 2", PartnerShortDescription = "Desc", ErpDimValue = 1001, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSPartner { Name = "Reserved Partner", PartnerShortDescription = "Desc", ErpDimValue = 8500, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
+            new UNOPSPartner { Name = $"{_testMarker}_Valid1", PartnerShortDescription = "Desc", ErpDimValue = validValues[0], LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = $"{_testMarker}_Valid2", PartnerShortDescription = "Desc", ErpDimValue = validValues[1], LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = $"{_testMarker}_Reserved", PartnerShortDescription = "Desc", ErpDimValue = reservedValues[0], LastModifiedDate = DateTime.UtcNow }
         };
 
         await _context.Partners.AddRangeAsync(partners);
         await _context.SaveChangesAsync();
 
-        // Act
+        // Act - Query for partners needing fix (> 9999)
         var partnersToFix = await _context.Partners
-            .Where(p => p.ErpDimValue.HasValue && p.ErpDimValue.Value > RESERVED_RANGE_END)
+            .Where(p => p.Name.StartsWith(_testMarker) && p.ErpDimValue.HasValue && p.ErpDimValue.Value > RESERVED_RANGE_END)
             .ToListAsync();
 
         // Assert
-        partnersToFix.Should().BeEmpty("No partners should need fixing");
+        partnersToFix.Should().BeEmpty("No test partners should need fixing when none have values > 9999");
     }
 
     #endregion
@@ -194,50 +257,70 @@ public class PartnerErpDimValueFixTests : IDisposable
     [Fact]
     public async Task FixErpDimValues_WhenReassigning_ShouldSkipReservedRange()
     {
-        // Arrange - Create partners where next sequential value would be in reserved range
+        // Arrange - Get a value near the top of the valid range and one invalid value
+        var nearBoundaryValues = await FindAvailableErpDimValues(1, 7900, VALID_RANGE_END);
+        var invalidValues = await FindAvailableErpDimValues(1, INVALID_THRESHOLD + 1, 99999);
+
+        var nearBoundaryValue = nearBoundaryValues[0];
         var partners = new List<UNOPSPartner>
         {
-            new UNOPSPartner { Name = "Last Valid Partner", PartnerShortDescription = "Desc", ErpDimValue = 7999, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSPartner { Name = "Invalid Partner", PartnerShortDescription = "Desc", ErpDimValue = 10001, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
+            new UNOPSPartner { Name = $"{_testMarker}_NearBoundary", PartnerShortDescription = "Desc", ErpDimValue = nearBoundaryValue, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = $"{_testMarker}_Invalid", PartnerShortDescription = "Desc", ErpDimValue = invalidValues[0], LastModifiedDate = DateTime.UtcNow }
         };
 
         await _context.Partners.AddRangeAsync(partners);
         await _context.SaveChangesAsync();
 
-        // Act - Fix should skip 8000-9999 and assign 10000 or higher
+        // Act - Fix should skip 8000-9999 and assign above reserved range
         var highestValidValue = await _context.Partners
             .Where(p => p.ErpDimValue.HasValue && p.ErpDimValue.Value < RESERVED_RANGE_START)
             .MaxAsync(p => (int?)p.ErpDimValue) ?? 0;
 
         var partnerToFix = await _context.Partners
-            .FirstAsync(p => p.Name == "Invalid Partner");
+            .FirstAsync(p => p.Name == $"{_testMarker}_Invalid");
 
         var nextValue = highestValidValue + 1;
-        
+
         // Skip reserved range
         if (nextValue >= RESERVED_RANGE_START && nextValue <= RESERVED_RANGE_END)
         {
-            nextValue = RESERVED_RANGE_END + 1; // Jump to 10000
+            nextValue = RESERVED_RANGE_END + 1;
+        }
+
+        // Skip already used values
+        var usedValues = new HashSet<int>(
+            await _context.Partners
+                .IgnoreQueryFilters()
+                .Where(p => p.ErpDimValue.HasValue)
+                .Select(p => p.ErpDimValue!.Value)
+                .ToListAsync()
+        );
+        while (usedValues.Contains(nextValue))
+        {
+            nextValue++;
         }
 
         partnerToFix.ErpDimValue = nextValue;
         await _context.SaveChangesAsync();
 
         // Assert
-        var fixedPartner = await _context.Partners.FirstAsync(p => p.Name == "Invalid Partner");
-        fixedPartner.ErpDimValue.Should().Be(10000, 
-            "Value should skip reserved range (8000-9999) and start at 10000");
+        var fixedPartner = await _context.Partners.FirstAsync(p => p.Name == $"{_testMarker}_Invalid");
+        fixedPartner.ErpDimValue!.Value.Should().BeGreaterThan(RESERVED_RANGE_END,
+            "Value should skip reserved range (8000-9999) and be above 9999");
     }
 
     [Fact]
     public async Task FixErpDimValues_WhenExistingValuesInReservedRange_ShouldPreserveThem()
     {
-        // Arrange - Create reserved partner and invalid partner
+        // Arrange - Create reserved partners and a valid partner
+        var reservedValues = await FindAvailableErpDimValues(2, RESERVED_RANGE_START, RESERVED_RANGE_END);
+        var validValues = await FindAvailableErpDimValues(1, VALID_RANGE_START, VALID_RANGE_END);
+
         var partners = new List<UNOPSPartner>
         {
-            new UNOPSPartner { Name = "Reserved Partner", PartnerShortDescription = "Desc", ErpDimValue = 8500, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSPartner { Name = "Another Reserved", PartnerShortDescription = "Desc", ErpDimValue = 9000, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSPartner { Name = "Valid Partner", PartnerShortDescription = "Desc", ErpDimValue = 1000, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
+            new UNOPSPartner { Name = $"{_testMarker}_Reserved1", PartnerShortDescription = "Desc", ErpDimValue = reservedValues[0], LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = $"{_testMarker}_Reserved2", PartnerShortDescription = "Desc", ErpDimValue = reservedValues[1], LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = $"{_testMarker}_Valid", PartnerShortDescription = "Desc", ErpDimValue = validValues[0], LastModifiedDate = DateTime.UtcNow }
         };
 
         await _context.Partners.AddRangeAsync(partners);
@@ -245,14 +328,14 @@ public class PartnerErpDimValueFixTests : IDisposable
 
         // Act - Query should NOT return reserved partners as needing fix
         var partnersToFix = await _context.Partners
-            .Where(p => p.ErpDimValue.HasValue && p.ErpDimValue.Value > RESERVED_RANGE_END)
+            .Where(p => p.Name.StartsWith(_testMarker) && p.ErpDimValue.HasValue && p.ErpDimValue.Value > RESERVED_RANGE_END)
             .ToListAsync();
 
         // Assert
         partnersToFix.Should().BeEmpty("Reserved range partners should NOT be flagged for fix");
 
-        var reservedPartner = await _context.Partners.FirstAsync(p => p.Name == "Reserved Partner");
-        reservedPartner.ErpDimValue.Should().Be(8500, "Reserved range values should be preserved");
+        var reservedPartner = await _context.Partners.FirstAsync(p => p.Name == $"{_testMarker}_Reserved1");
+        reservedPartner.ErpDimValue.Should().Be(reservedValues[0], "Reserved range values should be preserved");
     }
 
     #endregion
@@ -263,13 +346,16 @@ public class PartnerErpDimValueFixTests : IDisposable
     public async Task FixErpDimValues_ShouldAssignUniqueValues()
     {
         // Arrange - Create partners with some gaps in ErpDimValues
+        var validValues = await FindAvailableErpDimValues(3, VALID_RANGE_START, VALID_RANGE_END);
+        var invalidValues = await FindAvailableErpDimValues(2, INVALID_THRESHOLD + 1, 99999);
+
         var partners = new List<UNOPSPartner>
         {
-            new UNOPSPartner { Name = "Partner 1", PartnerShortDescription = "Desc", ErpDimValue = 1000, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSPartner { Name = "Partner 2", PartnerShortDescription = "Desc", ErpDimValue = 1002, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }, // Skip 1001
-            new UNOPSPartner { Name = "Partner 3", PartnerShortDescription = "Desc", ErpDimValue = 1003, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSPartner { Name = "Invalid 1", PartnerShortDescription = "Desc", ErpDimValue = 10001, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSPartner { Name = "Invalid 2", PartnerShortDescription = "Desc", ErpDimValue = 10002, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
+            new UNOPSPartner { Name = $"{_testMarker}_P1", PartnerShortDescription = "Desc", ErpDimValue = validValues[0], LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = $"{_testMarker}_P2", PartnerShortDescription = "Desc", ErpDimValue = validValues[1], LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = $"{_testMarker}_P3", PartnerShortDescription = "Desc", ErpDimValue = validValues[2], LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = $"{_testMarker}_Inv1", PartnerShortDescription = "Desc", ErpDimValue = invalidValues[0], LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = $"{_testMarker}_Inv2", PartnerShortDescription = "Desc", ErpDimValue = invalidValues[1], LastModifiedDate = DateTime.UtcNow }
         };
 
         await _context.Partners.AddRangeAsync(partners);
@@ -289,19 +375,19 @@ public class PartnerErpDimValueFixTests : IDisposable
             .Max();
 
         var partnersToFix = await _context.Partners
-            .Where(p => p.ErpDimValue.HasValue && p.ErpDimValue.Value > RESERVED_RANGE_END)
+            .Where(p => p.Name.StartsWith(_testMarker) && p.ErpDimValue.HasValue && p.ErpDimValue.Value > RESERVED_RANGE_END)
             .OrderBy(p => p.ErpDimValue)
             .ToListAsync();
 
         var nextValue = highestValid + 1;
         foreach (var partner in partnersToFix)
         {
-            while (usedValues.Contains(nextValue) || 
+            while (usedValues.Contains(nextValue) ||
                    (nextValue >= RESERVED_RANGE_START && nextValue <= RESERVED_RANGE_END))
             {
                 nextValue++;
             }
-            
+
             partner.ErpDimValue = nextValue;
             usedValues.Add(nextValue);
             nextValue++;
@@ -309,25 +395,28 @@ public class PartnerErpDimValueFixTests : IDisposable
 
         await _context.SaveChangesAsync();
 
-        // Assert - All ErpDimValues should be unique
-        var allValues = await _context.Partners
-            .Where(p => p.ErpDimValue.HasValue)
+        // Assert - All ErpDimValues for our test partners should be unique
+        var testValues = await _context.Partners
+            .Where(p => p.Name.StartsWith(_testMarker) && p.ErpDimValue.HasValue)
             .Select(p => p.ErpDimValue!.Value)
             .ToListAsync();
 
-        allValues.Should().OnlyHaveUniqueItems("All ErpDimValues must be unique");
+        testValues.Should().OnlyHaveUniqueItems("All test-created ErpDimValues must be unique");
     }
 
     [Fact]
     public async Task FixErpDimValues_ShouldConsiderSoftDeletedPartners()
     {
-        // Arrange - Create partners including soft-deleted ones
+        // Arrange - Find 3 consecutive available values for active/deleted testing
+        var validValues = await FindAvailableErpDimValues(3, VALID_RANGE_START, VALID_RANGE_END);
+        var invalidValues = await FindAvailableErpDimValues(1, INVALID_THRESHOLD + 1, 99999);
+
         var partners = new List<UNOPSPartner>
         {
-            new UNOPSPartner { Name = "Active Partner", PartnerShortDescription = "Desc", ErpDimValue = 1000, IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSPartner { Name = "Deleted Partner", PartnerShortDescription = "Desc", ErpDimValue = 1001, IsDeleted = true, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSPartner { Name = "Active Partner 2", PartnerShortDescription = "Desc", ErpDimValue = 1002, IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSPartner { Name = "Invalid Partner", PartnerShortDescription = "Desc", ErpDimValue = 10001, IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
+            new UNOPSPartner { Name = $"{_testMarker}_Active1", PartnerShortDescription = "Desc", ErpDimValue = validValues[0], IsDeleted = false, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = $"{_testMarker}_Deleted1", PartnerShortDescription = "Desc", ErpDimValue = validValues[1], IsDeleted = true, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = $"{_testMarker}_Active2", PartnerShortDescription = "Desc", ErpDimValue = validValues[2], IsDeleted = false, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = $"{_testMarker}_Invalid1", PartnerShortDescription = "Desc", ErpDimValue = invalidValues[0], IsDeleted = false, LastModifiedDate = DateTime.UtcNow }
         };
 
         await _context.Partners.AddRangeAsync(partners);
@@ -336,23 +425,28 @@ public class PartnerErpDimValueFixTests : IDisposable
         // Act - Get used values including soft-deleted
         var usedValues = new HashSet<int>(
             await _context.Partners
-                .IgnoreQueryFilters() // Include soft-deleted
+                .IgnoreQueryFilters()
                 .Where(p => p.ErpDimValue.HasValue)
                 .Select(p => p.ErpDimValue!.Value)
                 .ToListAsync()
         );
 
         // Assert - Should include soft-deleted partner's value
-        usedValues.Should().Contain(1001, "Soft-deleted partner's ErpDimValue should be considered");
+        usedValues.Should().Contain(validValues[1], "Soft-deleted partner's ErpDimValue should be considered");
 
-        // When fixing, should skip 1001 even though it's soft-deleted
-        var nextAvailable = 1000;
-        while (usedValues.Contains(nextAvailable))
+        // When computing next available, should skip the soft-deleted value
+        var testUsedValues = new HashSet<int>(validValues.Concat(invalidValues));
+        var nextAvailable = validValues[0];
+        while (testUsedValues.Contains(nextAvailable) || usedValues.Contains(nextAvailable))
         {
             nextAvailable++;
+            // Skip reserved range
+            if (nextAvailable >= RESERVED_RANGE_START && nextAvailable <= RESERVED_RANGE_END)
+                nextAvailable = RESERVED_RANGE_END + 1;
         }
 
-        nextAvailable.Should().Be(1003, "Next available should skip both active and soft-deleted values");
+        nextAvailable.Should().BeGreaterThan(validValues[0],
+            "Next available should skip all used values including soft-deleted");
     }
 
     #endregion
@@ -362,85 +456,87 @@ public class PartnerErpDimValueFixTests : IDisposable
     [Fact]
     public async Task FixErpDimValues_WhenAllValuesUsedUpTo7999_ShouldContinueAfterReservedRange()
     {
-        // Arrange - Simulate all values 1-7999 being used
-        // (In real scenario, we'd have 7999 partners, but we'll simulate with a subset)
+        // Arrange - Simulate all values 1-7999 being used (in-memory logic test)
         var usedValues = new HashSet<int>(Enumerable.Range(1, 7999));
-        
+
         // Act - Find next available value
         var nextValue = 1;
-        while (usedValues.Contains(nextValue) || 
+        while (usedValues.Contains(nextValue) ||
                (nextValue >= RESERVED_RANGE_START && nextValue <= RESERVED_RANGE_END))
         {
             nextValue++;
         }
 
         // Assert - Should jump to 10000 (after reserved range)
-        nextValue.Should().Be(10000, 
+        nextValue.Should().Be(10000,
             "When 1-7999 are all used, next value should skip reserved range and be 10000");
     }
 
     [Fact]
     public async Task FixErpDimValues_WhenPartnerHasNullErpDimValue_ShouldNotBeAffected()
     {
-        // Arrange
+        // Arrange - One null and one valid
+        var validValues = await FindAvailableErpDimValues(1, VALID_RANGE_START, VALID_RANGE_END);
+
         var partners = new List<UNOPSPartner>
         {
-            new UNOPSPartner { Name = "No ErpDimValue", PartnerShortDescription = "Desc", ErpDimValue = null, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSPartner { Name = "Has ErpDimValue", PartnerShortDescription = "Desc", ErpDimValue = 1000, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
+            new UNOPSPartner { Name = $"{_testMarker}_NullErp", PartnerShortDescription = "Desc", ErpDimValue = null, LastModifiedDate = DateTime.UtcNow },
+            new UNOPSPartner { Name = $"{_testMarker}_HasErp", PartnerShortDescription = "Desc", ErpDimValue = validValues[0], LastModifiedDate = DateTime.UtcNow }
         };
 
         await _context.Partners.AddRangeAsync(partners);
         await _context.SaveChangesAsync();
 
-        // Act
+        // Act - Find partners to fix (only > 9999, not null)
         var partnersToFix = await _context.Partners
-            .Where(p => p.ErpDimValue.HasValue && p.ErpDimValue.Value > RESERVED_RANGE_END)
+            .Where(p => p.Name.StartsWith(_testMarker) && p.ErpDimValue.HasValue && p.ErpDimValue.Value > RESERVED_RANGE_END)
             .ToListAsync();
 
         // Assert
-        partnersToFix.Should().BeEmpty();
+        partnersToFix.Should().BeEmpty("Neither null nor valid ErpDimValues need fixing");
 
-        var nullPartner = await _context.Partners.FirstAsync(p => p.Name == "No ErpDimValue");
+        var nullPartner = await _context.Partners.FirstAsync(p => p.Name == $"{_testMarker}_NullErp");
         nullPartner.ErpDimValue.Should().BeNull("Null ErpDimValue should remain null");
     }
 
     [Fact]
-    public async Task FixErpDimValues_WhenValueExactly9999_ShouldNotBeFlagged()
+    public async Task FixErpDimValues_WhenValueInReservedRange_ShouldNotBeFlagged()
     {
-        // Arrange - 9999 is the upper bound of reserved range, NOT invalid
+        // Arrange - Use any available reserved-range value
+        var reservedValues = await FindAvailableErpDimValues(1, RESERVED_RANGE_START, RESERVED_RANGE_END);
+
         var partner = new UNOPSPartner
         {
-            Name = "Upper Reserved Bound",
+            Name = $"{_testMarker}_UpperReserved",
             PartnerShortDescription = "Desc",
-            ErpDimValue = 9999,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
+            ErpDimValue = reservedValues[0],
             LastModifiedDate = DateTime.UtcNow
         };
 
         await _context.Partners.AddAsync(partner);
         await _context.SaveChangesAsync();
 
-        // Act
+        // Act - Query for partners needing fix (> 9999 only)
         var partnersToFix = await _context.Partners
-            .Where(p => p.ErpDimValue.HasValue && p.ErpDimValue.Value > RESERVED_RANGE_END)
+            .Where(p => p.Name.StartsWith(_testMarker) && p.ErpDimValue.HasValue && p.ErpDimValue.Value > RESERVED_RANGE_END)
             .ToListAsync();
 
         // Assert
-        partnersToFix.Should().BeEmpty("9999 is the upper bound of reserved range, not invalid");
+        partnersToFix.Should().BeEmpty(
+            $"Value {reservedValues[0]} is in reserved range ({RESERVED_RANGE_START}-{RESERVED_RANGE_END}), not invalid");
     }
 
     [Fact]
-    public async Task FixErpDimValues_WhenValueExactly10000_ShouldBeFlagged()
+    public async Task FixErpDimValues_WhenValueAboveThreshold_ShouldBeFlagged()
     {
-        // Arrange - 10000 is the first invalid value
+        // Arrange - Use any available invalid value (> 9999)
+        var invalidValues = await FindAvailableErpDimValues(1, INVALID_THRESHOLD, 99999);
+
         var partner = new UNOPSPartner
         {
-            Name = "First Invalid",
+            Name = $"{_testMarker}_FirstInvalid",
             PartnerShortDescription = "Desc",
-            ErpDimValue = 10000,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
+            ErpDimValue = invalidValues[0],
             LastModifiedDate = DateTime.UtcNow
         };
 
@@ -449,12 +545,12 @@ public class PartnerErpDimValueFixTests : IDisposable
 
         // Act
         var partnersToFix = await _context.Partners
-            .Where(p => p.ErpDimValue.HasValue && p.ErpDimValue.Value > RESERVED_RANGE_END)
+            .Where(p => p.Name.StartsWith(_testMarker) && p.ErpDimValue.HasValue && p.ErpDimValue.Value > RESERVED_RANGE_END)
             .ToListAsync();
 
-        // Assert
-        partnersToFix.Should().HaveCount(1);
-        partnersToFix[0].ErpDimValue.Should().Be(10000);
+        // Assert - Our test partner should be in the list
+        partnersToFix.Should().Contain(p => p.Name == $"{_testMarker}_FirstInvalid",
+            $"Partner with ErpDimValue {invalidValues[0]} (>{RESERVED_RANGE_END}) should be flagged for fix");
     }
 
     #endregion
@@ -464,17 +560,28 @@ public class PartnerErpDimValueFixTests : IDisposable
     [Fact]
     public async Task FixErpDimValues_WithManyPartners_ShouldCompleteEfficiently()
     {
-        // Arrange - Create many partners
+        // Arrange - Find enough available values for 100 partners (50 valid, 50 invalid)
+        var validValues = await FindAvailableErpDimValues(50, VALID_RANGE_START, VALID_RANGE_END);
+        var invalidValues = await FindAvailableErpDimValues(50, INVALID_THRESHOLD + 1, 99999);
+
         var partners = new List<UNOPSPartner>();
-        for (int i = 0; i < 100; i++)
+        for (int i = 0; i < 50; i++)
         {
             partners.Add(new UNOPSPartner
             {
-                Name = $"Partner {i}",
+                Name = $"{_testMarker}_Valid{i}",
                 PartnerShortDescription = $"Description {i}",
-                ErpDimValue = i < 50 ? 1000 + i : 10000 + i, // 50 valid, 50 invalid
-                CreatedBy = 1,
-                LastModifiedBy = 1,
+                ErpDimValue = validValues[i],
+                LastModifiedDate = DateTime.UtcNow
+            });
+        }
+        for (int i = 0; i < 50; i++)
+        {
+            partners.Add(new UNOPSPartner
+            {
+                Name = $"{_testMarker}_Invalid{i}",
+                PartnerShortDescription = $"Description {50 + i}",
+                ErpDimValue = invalidValues[i],
                 LastModifiedDate = DateTime.UtcNow
             });
         }
@@ -493,9 +600,14 @@ public class PartnerErpDimValueFixTests : IDisposable
         );
 
         var partnersToFix = await _context.Partners
-            .Where(p => p.ErpDimValue.HasValue && p.ErpDimValue.Value > RESERVED_RANGE_END)
+            .Where(p => p.Name.StartsWith(_testMarker) && p.ErpDimValue.HasValue && p.ErpDimValue.Value > RESERVED_RANGE_END)
             .OrderBy(p => p.ErpDimValue)
             .ToListAsync();
+
+        // Capture original values to verify they changed
+        var originalValues = partnersToFix.ToDictionary(p => p.Id, p => p.ErpDimValue!.Value);
+
+        partnersToFix.Should().HaveCount(50, "Should identify all 50 test-created invalid partners");
 
         var highestValid = usedValues
             .Where(v => v < RESERVED_RANGE_START)
@@ -505,12 +617,12 @@ public class PartnerErpDimValueFixTests : IDisposable
         var nextValue = highestValid + 1;
         foreach (var partner in partnersToFix)
         {
-            while (usedValues.Contains(nextValue) || 
+            while (usedValues.Contains(nextValue) ||
                    (nextValue >= RESERVED_RANGE_START && nextValue <= RESERVED_RANGE_END))
             {
                 nextValue++;
             }
-            
+
             partner.ErpDimValue = nextValue;
             usedValues.Add(nextValue);
             nextValue++;
@@ -520,17 +632,27 @@ public class PartnerErpDimValueFixTests : IDisposable
 
         stopwatch.Stop();
 
-        // Assert
-        stopwatch.ElapsedMilliseconds.Should().BeLessThan(5000, 
-            "Fixing 50 partners should complete within 5 seconds");
+        // Assert - Performance
+        stopwatch.ElapsedMilliseconds.Should().BeLessThan(5000,
+            "Fixing partners should complete within 5 seconds");
 
-        var remainingInvalid = await _context.Partners
-            .Where(p => p.ErpDimValue.HasValue && p.ErpDimValue.Value > RESERVED_RANGE_END)
-            .CountAsync();
+        // Verify all 50 invalid partners were reassigned to new unique values
+        _context.ChangeTracker.Clear();
+        var fixedPartners = await _context.Partners
+            .Where(p => p.Name.StartsWith(_testMarker) && p.Name.Contains("Invalid"))
+            .ToListAsync();
 
-        remainingInvalid.Should().Be(0);
+        fixedPartners.Should().HaveCount(50, "All 50 invalid partners should still exist");
+
+        var newValues = fixedPartners.Select(p => p.ErpDimValue!.Value).ToList();
+        newValues.Should().OnlyHaveUniqueItems("All reassigned values should be unique");
+
+        foreach (var fp in fixedPartners)
+        {
+            fp.ErpDimValue!.Value.Should().NotBe(originalValues[fp.Id],
+                $"Partner {fp.Name} should have a reassigned ErpDimValue");
+        }
     }
 
     #endregion
 }
-

@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.Business.Tests.TestBase;
@@ -9,10 +10,11 @@ namespace UNOPS.PAO.Business.Tests.TestBase;
 /// <summary>
 /// Base class for concurrency tests with multi-threaded utilities.
 /// For PostgreSQL: all threads share the same real database via TestDbContextFactory.
+/// For SQLite: all threads share the same in-memory connection via UNOPS options.
 /// </summary>
 public abstract class ConcurrencyTestBase : IDisposable
 {
-    protected DbContextOptions<AppDbContext> DbOptions { get; private set; }
+    protected DbContextOptions<UNOPSAppDbContext> DbOptions { get; private set; }
     private readonly string _databaseName;
 
     /// <summary>Tracks cleanup actions for PostgreSQL test data isolation.</summary>
@@ -21,21 +23,16 @@ public abstract class ConcurrencyTestBase : IDisposable
     protected ConcurrencyTestBase()
     {
         _databaseName = $"ConcurrencyTest_{Guid.NewGuid()}";
-        DbOptions = TestDbContextFactory.CreateOptions(_databaseName);
+        DbOptions = TestDbContextFactory.CreateUNOPSOptions(_databaseName);
     }
 
     /// <summary>
     /// Create a new context for each thread (important for concurrency).
-    /// For PostgreSQL: creates a fresh UNOPSAppDbContext via the factory.
-    /// For InMemory: creates an AppDbContext with shared InMemory options.
+    /// Uses CreateUNOPS(options) to ensure shared database and SQLite compatibility.
     /// </summary>
     protected AppDbContext CreateContext()
     {
-        if (TestEnvironment.UseInMemory)
-        {
-            return TestDbContextFactory.Create(DbOptions);
-        }
-        return TestDbContextFactory.Create();
+        return TestDbContextFactory.CreateUNOPS(DbOptions);
     }
 
     /// <summary>
@@ -62,6 +59,8 @@ public abstract class ConcurrencyTestBase : IDisposable
 
     protected void RegisterTableCleanup(string tableName, string whereClause)
     {
+        if (!TestEnvironment.UsePostgreSQL) return;
+
         _cleanupActions.Add(async () =>
         {
             try

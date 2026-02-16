@@ -17,7 +17,7 @@ public class ContactConcurrencyTests : ConcurrencyTestBase
 {
     private readonly string _testMarker = $"CONC_{Guid.NewGuid():N}";
 
-    [Fact]
+    [SkipIfNotPostgreSQLFact]
     public async Task ConcurrentGetContacts_ShouldReturnConsistent()
     {
         // Arrange
@@ -46,9 +46,12 @@ public class ContactConcurrencyTests : ConcurrencyTestBase
         }
         RegisterCleanup(async () =>
         {
-            using var ctx = TestDbContextFactory.Create();
-            var ids = string.Join(",", contactIds);
-            await ctx.Database.ExecuteSqlRawAsync($"DELETE FROM public.\"Contacts\" WHERE \"Id\" IN ({ids})");
+            if (TestEnvironment.UsePostgreSQL)
+            {
+                using var ctx = TestDbContextFactory.Create();
+                var ids = string.Join(",", contactIds);
+                await ctx.Database.ExecuteSqlRawAsync($"DELETE FROM public.\"Contacts\" WHERE \"Id\" IN ({ids})");
+            }
         });
 
         // Act
@@ -66,7 +69,7 @@ public class ContactConcurrencyTests : ConcurrencyTestBase
         results.Should().OnlyContain(list => list.Count == 20);
     }
 
-    [Fact]
+    [SkipIfNotPostgreSQLFact]
     public async Task ConcurrentContactCreation_ShouldCreateAll()
     {
         // Arrange
@@ -98,9 +101,12 @@ public class ContactConcurrencyTests : ConcurrencyTestBase
         });
         RegisterCleanup(async () =>
         {
-            using var ctx = TestDbContextFactory.Create();
-            var ids = string.Join(",", createdIds);
-            await ctx.Database.ExecuteSqlRawAsync($"DELETE FROM public.\"Contacts\" WHERE \"Id\" IN ({ids})");
+            if (TestEnvironment.UsePostgreSQL)
+            {
+                using var ctx = TestDbContextFactory.Create();
+                var ids = string.Join(",", createdIds);
+                await ctx.Database.ExecuteSqlRawAsync($"DELETE FROM public.\"Contacts\" WHERE \"Id\" IN ({ids})");
+            }
         });
 
         // Assert
@@ -138,9 +144,12 @@ public class ContactConcurrencyTests : ConcurrencyTestBase
         }
         RegisterCleanup(async () =>
         {
-            using var ctx = TestDbContextFactory.Create();
-            var ids = string.Join(",", contactIds);
-            await ctx.Database.ExecuteSqlRawAsync($"DELETE FROM public.\"Contacts\" WHERE \"Id\" IN ({ids})");
+            if (TestEnvironment.UsePostgreSQL)
+            {
+                using var ctx = TestDbContextFactory.Create();
+                var ids = string.Join(",", contactIds);
+                await ctx.Database.ExecuteSqlRawAsync($"DELETE FROM public.\"Contacts\" WHERE \"Id\" IN ({ids})");
+            }
         });
 
         // Act
@@ -189,9 +198,12 @@ public class ContactConcurrencyTests : ConcurrencyTestBase
         }
         RegisterCleanup(async () =>
         {
-            using var ctx = TestDbContextFactory.Create();
-            var ids = string.Join(",", contactIds);
-            await ctx.Database.ExecuteSqlRawAsync($"DELETE FROM public.\"Contacts\" WHERE \"Id\" IN ({ids})");
+            if (TestEnvironment.UsePostgreSQL)
+            {
+                using var ctx = TestDbContextFactory.Create();
+                var ids = string.Join(",", contactIds);
+                await ctx.Database.ExecuteSqlRawAsync($"DELETE FROM public.\"Contacts\" WHERE \"Id\" IN ({ids})");
+            }
         });
 
         // Act - Mix of reads and writes

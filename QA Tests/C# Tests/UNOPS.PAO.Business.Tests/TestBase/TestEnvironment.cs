@@ -1,3 +1,4 @@
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
@@ -14,7 +15,11 @@ namespace UNOPS.PAO.Business.Tests.TestBase;
 /// This is the standard workflow — Cloud SQL Proxy must be running.
 /// IAM authentication is configured automatically when UseIamAuthentication=true in appsettings.
 /// 
-/// To fall back to InMemory (e.g., CI without a database, or proxy not running):
+/// FALLBACK: When USE_INMEMORY_DB=true, uses SQLite in-memory instead of InMemory provider.
+/// SQLite supports relational model features (Z.EntityFramework.Extensions, raw SQL, etc.)
+/// that the EF Core InMemory provider does not, enabling ~118 previously-skipped tests.
+/// 
+/// To fall back to SQLite in-memory (e.g., CI without a database, or proxy not running):
 ///   $env:USE_INMEMORY_DB = "true"
 ///   dotnet test ...
 /// 
@@ -76,9 +81,27 @@ public static class TestEnvironment
     public static NpgsqlDataSource? DataSource => _dataSource;
 
     /// <summary>
-    /// Skip reason for tests that require a relational database but InMemory is active
+    /// Whether we are using SQLite in-memory (same as UseInMemory — SQLite replaced InMemory provider)
     /// </summary>
-    public const string RequiresRelationalDb = "Requires relational database (PostgreSQL). Running in InMemory mode (USE_INMEMORY_DB=true).";
+    public static bool UseSQLite => !UsePostgreSQL;
+
+    /// <summary>
+    /// Skip reason for tests that require PostgreSQL-specific features (similarity(), pg_trgm, etc.)
+    /// </summary>
+    public const string RequiresPostgreSQL = "Requires PostgreSQL-specific features (similarity, pg_trgm). Running in SQLite mode (USE_INMEMORY_DB=true).";
+
+    /// <summary>
+    /// Skip reason for tests that require a relational database but InMemory is active.
+    /// NOTE: Most tests previously skipped with this reason now run under SQLite.
+    /// </summary>
+    public const string RequiresRelationalDb = "Requires relational database (PostgreSQL). Running in SQLite mode (USE_INMEMORY_DB=true).";
+
+    /// <summary>
+    /// Tracks open SQLite connections to prevent GC from closing them
+    /// (in-memory databases are destroyed when their connection closes).
+    /// Connections are cleaned up at process exit.
+    /// </summary>
+    private static readonly List<SqliteConnection> _sqliteConnections = new();
 
     static TestEnvironment()
     {
@@ -179,11 +202,8 @@ public static class TestEnvironment
         // Configure connection pool settings (matching main app pattern)
         var connectionStringBuilder = new NpgsqlConnectionStringBuilder(connectionString)
         {
-            MinPoolSize = 2,
-            MaxPoolSize = 20,
-            ConnectionLifetime = 300,
-            ConnectionIdleLifetime = 60,
-            Timeout = 30,
+            Pooling = false,
+            Timeout = 60,
         };
 
         // When using IAM auth, password must be null (provided dynamically by the callback)
@@ -223,7 +243,7 @@ public static class TestEnvironment
 
     /// <summary>
     /// Creates DbContextOptions for AppDbContext based on the test environment.
-    /// Default: PostgreSQL (with optional IAM auth). Fallback: InMemory (when USE_INMEMORY_DB=true).
+    /// Default: PostgreSQL (with optional IAM auth). Fallback: SQLite in-memory (when USE_INMEMORY_DB=true).
     /// </summary>
     public static DbContextOptions<AppDbContext> CreateAppDbContextOptions(string? databaseName = null)
     {
@@ -233,27 +253,30 @@ public static class TestEnvironment
         {
             if (_dataSource != null)
             {
-                // Use the pre-built data source (handles IAM auth and connection pooling)
                 builder.UseNpgsql(_dataSource, npgsqlOptions =>
                 {
                     npgsqlOptions.CommandTimeout(60);
+                    // NOTE: Do NOT use EnableRetryOnFailure — incompatible with
+                    // user-initiated transactions (BeginTransaction) used for test isolation.
                 });
             }
             else
             {
-                // Fallback to raw connection string (no IAM)
                 builder.UseNpgsql(_connectionString, npgsqlOptions =>
                 {
                     npgsqlOptions.CommandTimeout(60);
+                    // NOTE: Do NOT use EnableRetryOnFailure — incompatible with
+                    // user-initiated transactions (BeginTransaction) used for test isolation.
                 });
             }
             builder.EnableSensitiveDataLogging();
         }
         else
         {
-            builder.UseInMemoryDatabase(databaseName: databaseName ?? $"TestDb_{Guid.NewGuid()}");
-            builder.ConfigureWarnings(w =>
-                w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning));
+            // Use SQLite in-memory instead of InMemory provider.
+            // SQLite supports relational model features needed by Z.EntityFramework.Extensions.
+            var connection = CreateSqliteConnection();
+            builder.UseSqlite(connection);
         }
 
         return builder.Options;
@@ -261,7 +284,7 @@ public static class TestEnvironment
 
     /// <summary>
     /// Creates DbContextOptions for UNOPSAppDbContext based on the test environment.
-    /// Default: PostgreSQL (with optional IAM auth). Fallback: InMemory (when USE_INMEMORY_DB=true).
+    /// Default: PostgreSQL (with optional IAM auth). Fallback: SQLite in-memory (when USE_INMEMORY_DB=true).
     /// </summary>
     public static DbContextOptions<UNOPSAppDbContext> CreateUNOPSDbContextOptions(string? databaseName = null)
     {
@@ -274,6 +297,8 @@ public static class TestEnvironment
                 builder.UseNpgsql(_dataSource, npgsqlOptions =>
                 {
                     npgsqlOptions.CommandTimeout(60);
+                    // NOTE: Do NOT use EnableRetryOnFailure — incompatible with
+                    // user-initiated transactions (BeginTransaction) used for test isolation.
                 });
             }
             else
@@ -281,18 +306,45 @@ public static class TestEnvironment
                 builder.UseNpgsql(_connectionString, npgsqlOptions =>
                 {
                     npgsqlOptions.CommandTimeout(60);
+                    // NOTE: Do NOT use EnableRetryOnFailure — incompatible with
+                    // user-initiated transactions (BeginTransaction) used for test isolation.
                 });
             }
             builder.EnableSensitiveDataLogging();
         }
         else
         {
-            builder.UseInMemoryDatabase(databaseName: databaseName ?? $"TestDb_{Guid.NewGuid()}");
-            builder.ConfigureWarnings(w =>
-                w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning));
+            // Use SQLite in-memory instead of InMemory provider.
+            // SQLite supports relational model features needed by Z.EntityFramework.Extensions.
+            var connection = CreateSqliteConnection();
+            builder.UseSqlite(connection);
         }
 
         return builder.Options;
+    }
+
+    /// <summary>
+    /// Creates a new SQLite in-memory connection, opens it, and tracks it to prevent GC.
+    /// Each call returns a fresh connection with its own isolated in-memory database.
+    /// Foreign key enforcement is disabled to match InMemory provider behavior —
+    /// tests insert data with non-existent FK references (e.g., CreatedBy = 1).
+    /// </summary>
+    private static SqliteConnection CreateSqliteConnection()
+    {
+        var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+
+        // Disable FK enforcement so tests can insert data with non-existent FK references,
+        // matching the behavior of the EF Core InMemory provider.
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = "PRAGMA foreign_keys = OFF;";
+        cmd.ExecuteNonQuery();
+
+        lock (_sqliteConnections)
+        {
+            _sqliteConnections.Add(connection);
+        }
+        return connection;
     }
 
     /// <summary>
@@ -334,7 +386,7 @@ public static class TestEnvironment
 
     /// <summary>
     /// Ensures the test database schema exists.
-    /// For InMemory: creates the schema (each test gets a fresh DB by default).
+    /// For SQLite/InMemory: creates the schema (each test gets a fresh DB by default).
     /// For PostgreSQL: no-op — the real database schema is managed by EF migrations.
     /// NEVER call EnsureCreated/EnsureDeleted on a real PostgreSQL database.
     /// </summary>
@@ -342,7 +394,7 @@ public static class TestEnvironment
     {
         if (UseInMemory)
         {
-            // InMemory databases need EnsureCreated to build the schema
+            // SQLite in-memory databases need EnsureCreated to build the schema
             context.Database.EnsureCreated();
         }
         // PostgreSQL: schema already exists from migrations — do NOT call EnsureCreated/EnsureDeleted

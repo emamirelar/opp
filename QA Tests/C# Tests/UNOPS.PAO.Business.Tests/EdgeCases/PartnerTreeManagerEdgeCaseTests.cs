@@ -2,6 +2,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Business.Tests.TestBase;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.UNOPSDomain.Entities;
 using Xunit;
 
 namespace UNOPS.PAO.Business.Tests.EdgeCases;
@@ -28,7 +29,7 @@ public class PartnerTreeManagerEdgeCaseTests : ManagerTestBase
     public async Task PartnerTree_WithEmptyCode_Should_BeHandled()
     {
         // Arrange
-        var tree = new PartnerTree
+        var tree = new UNOPSPartnerTree
         {
             Code = "",
             Name = $"Empty Code Tree {_testMarker}",
@@ -52,7 +53,7 @@ public class PartnerTreeManagerEdgeCaseTests : ManagerTestBase
     public async Task PartnerTree_WithSelfReference_Should_BeStorable()
     {
         // Arrange - Note: This tests storage capability, not validity
-        var tree = new PartnerTree
+        var tree = new UNOPSPartnerTree
         {
             Code = $"SELF_{_testMarker}",
             Name = $"Self Reference {_testMarker}",
@@ -76,7 +77,7 @@ public class PartnerTreeManagerEdgeCaseTests : ManagerTestBase
     public async Task PartnerTree_WithNonExistentParent_Should_BeStorable()
     {
         // Arrange
-        var tree = new PartnerTree
+        var tree = new UNOPSPartnerTree
         {
             Code = $"ORPHAN_{_testMarker}",
             Name = $"Orphan Node {_testMarker}",
@@ -100,7 +101,7 @@ public class PartnerTreeManagerEdgeCaseTests : ManagerTestBase
     public async Task PartnerTree_WithSpecialCharactersInCode_Should_BeHandled()
     {
         // Arrange
-        var tree = new PartnerTree
+        var tree = new UNOPSPartnerTree
         {
             Code = $"CODE-WITH_SPECIAL.CHARS_{_testMarker}",
             Name = $"Special Code {_testMarker}",
@@ -125,7 +126,7 @@ public class PartnerTreeManagerEdgeCaseTests : ManagerTestBase
     {
         // Arrange
         var longName = new string('A', 500);
-        var tree = new PartnerTree
+        var tree = new UNOPSPartnerTree
         {
             Code = $"LONG_{_testMarker}",
             Name = longName,
@@ -150,7 +151,7 @@ public class PartnerTreeManagerEdgeCaseTests : ManagerTestBase
     {
         // Arrange
         var trees = Enumerable.Range(1, 10)
-            .Select(i => new PartnerTree
+            .Select(i => new UNOPSPartnerTree
             {
                 Code = $"ROOT{i}_{_testMarker}",
                 Name = $"Root {i} {_testMarker}",
@@ -176,7 +177,7 @@ public class PartnerTreeManagerEdgeCaseTests : ManagerTestBase
     public async Task PartnerTree_WithUnicodeInName_Should_BeHandled()
     {
         // Arrange
-        var tree = new PartnerTree
+        var tree = new UNOPSPartnerTree
         {
             Code = $"UNICODE_{_testMarker}",
             Name = $"분류 🌳 Категория {_testMarker}",
@@ -200,7 +201,7 @@ public class PartnerTreeManagerEdgeCaseTests : ManagerTestBase
     public async Task GetPartnerTrees_EmptyParentVsNullParent_Should_BothBeRoots()
     {
         // Arrange
-        var trees = new List<PartnerTree>
+        var trees = new List<UNOPSPartnerTree>
         {
             new() { Code = $"NULL_PARENT_{_testMarker}", Name = $"Null Parent {_testMarker}", Type = "Category", Description = "Null Parent Description", Parent = null },
             new() { Code = $"EMPTY_PARENT_{_testMarker}", Name = $"Empty Parent {_testMarker}", Type = "Category", Description = "Empty Parent Description", Parent = "" }

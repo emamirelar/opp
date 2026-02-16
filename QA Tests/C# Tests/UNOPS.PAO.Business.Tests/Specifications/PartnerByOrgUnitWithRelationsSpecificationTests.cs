@@ -6,8 +6,10 @@ using FluentAssertions;
 using UNOPS.PAO.Business.Tests.TestBase;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Moq;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Domain.Specifications.PartnerSpecifications;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.DataAccess.Services;
@@ -19,24 +21,17 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
     public class PartnerByOrgUnitWithRelationsSpecificationTests : IDisposable
     {
         private readonly AppDbContext _dbContext;
+        private IDbContextTransaction? _transaction;
 
         public PartnerByOrgUnitWithRelationsSpecificationTests()
         {
-            // Setup in-memory database
-            var options = new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-                .Options;
-            
-            // Setup mocks for AppDbContext
-            var mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
-            var httpContext = new DefaultHttpContext();
-            mockHttpContextAccessor.Setup(x => x.HttpContext).Returns(httpContext);
-            
-            var userResolverService = new UserResolverService<int>(mockHttpContextAccessor.Object);
-            var mockDbContextSchema = new Mock<IDbContextSchema>();
-            mockDbContextSchema.Setup(x => x.Schema).Returns("public");
-            
-            _dbContext = new AppDbContext(options, userResolverService, mockDbContextSchema.Object);
+            // Use the centralized test factory which provides SQLite in-memory
+            // (supports relational features) instead of EF Core InMemory provider.
+            _dbContext = TestDbContextFactory.Create();
+            if (TestEnvironment.UsePostgreSQL)
+            {
+                _transaction = _dbContext.Database.BeginTransaction();
+            }
         }
 
         [Fact]
@@ -74,24 +69,15 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
         [SkipIfInMemoryFact]
         public async Task Criteria_FiltersPartnersByDirectOrgUnitLink()
         {
-            // Arrange
-            var orgUnitId = 5;
-            var partner1 = CreatePartnerWithOrgUnit(1, "Partner 1", orgUnitId);
-            var partner2 = CreatePartnerWithOrgUnit(2, "Partner 2", 999);
-            var partner3 = CreatePartnerWithoutOrgUnit(3, "Partner 3");
-
-            await _dbContext.Partners.AddRangeAsync(partner1, partner2, partner3);
-            await _dbContext.SaveChangesAsync();
-            
-            // Add OrganizationUnitRelationships to database
-            if (partner1.OrganizationUnitRelationships != null)
-                await _dbContext.OrganizationUnitRelationships.AddRangeAsync(partner1.OrganizationUnitRelationships);
-            if (partner2.OrganizationUnitRelationships != null)
-                await _dbContext.OrganizationUnitRelationships.AddRangeAsync(partner2.OrganizationUnitRelationships);
-            await _dbContext.SaveChangesAsync();
+            // Arrange - create org hierarchies first (FK constraint)
+            var orgUnit1 = await CreateOrganizationHierarchyAsync("OU1", "Org Unit 1");
+            var orgUnit2 = await CreateOrganizationHierarchyAsync("OU2", "Org Unit 2");
+            var partner1 = await CreatePartnerWithOrgUnitAsync("Partner 1", orgUnit1.Id);
+            var partner2 = await CreatePartnerWithOrgUnitAsync("Partner 2", orgUnit2.Id);
+            var partner3 = await CreatePartnerWithoutOrgUnitAsync("Partner 3");
 
             var specification = new PartnerByOrgUnitWithRelationsSpecification(
-                new List<int> { orgUnitId }, 
+                new List<int> { orgUnit1.Id },
                 new List<string>()
             );
 
@@ -110,96 +96,52 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
         [SkipIfInMemoryFact]
         public async Task Criteria_FiltersPartnersByIndirectContactRelation()
         {
-            // Arrange
-            var userId = 100;
+            // Arrange - create test user (FK constraint)
+            var userId = await CreateTestUserAsync($"indirect_{Guid.NewGuid():N}@test.unops.org");
             
             // Create partners
-            var partner1 = new Partner 
-            { 
-                Id = 1, 
-                // Enhanced Partner structure
-                Name = "Partner 1",
-                PartnerShortDescription = "P1",
-                PartnerCategoryId = 1,
-                LiaisonOfficeId = 1,
-                UNAndStateEntity = false,
-                Status = Domain.Entities.EntityStatus.Active,
-                CanCreateNewOpportunities = true, // "true" equivalent
-                PooledFund = false, // "false" equivalent
-                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired, // "false" equivalent
-                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved, // "false" equivalent
-                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply // "false" equivalent
-            };
-            var partner2 = new Partner 
-            { 
-                Id = 2, 
-                // Enhanced Partner structure
-                Name = "Partner 2",
-                PartnerShortDescription = "P2",
-                PartnerCategoryId = 1,
-                LiaisonOfficeId = 1,
-                UNAndStateEntity = false,
-                Status = Domain.Entities.EntityStatus.Active,
-                CanCreateNewOpportunities = true, // "true" equivalent
-                PooledFund = false, // "false" equivalent
-                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired, // "false" equivalent
-                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved, // "false" equivalent
-                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply // "false" equivalent
-            };
+            var partner1 = await CreatePartnerWithoutOrgUnitAsync("Partner 1");
+            var partner2 = await CreatePartnerWithoutOrgUnitAsync("Partner 2");
             
-            // Create contacts
-            var contact1 = new Contact 
-            { 
-                Id = 1, 
-                FirstName = "Contact", 
+            // Create contacts linked to partners
+            var contact1 = new Contact
+            {
+                FirstName = "Contact",
                 LastName = "One",
                 Name = "Contact One",
                 Title = "Manager",
                 Email = "contact.one@example.com",
-                Status = EntityStatus.Active
+                Status = EntityStatus.Active,
+                PartnerId = partner1.Id
             };
-            var contact2 = new Contact 
-            { 
-                Id = 2, 
-                FirstName = "Contact", 
+            var contact2 = new Contact
+            {
+                FirstName = "Contact",
                 LastName = "Two",
                 Name = "Contact Two",
                 Title = "Director",
                 Email = "contact.two@example.com",
-                Status = EntityStatus.Active
+                Status = EntityStatus.Active,
+                PartnerId = partner2.Id
             };
-            
-            // Link contacts to partners
-            partner1.Contacts = new List<Contact> { contact1 };
-            partner2.Contacts = new List<Contact> { contact2 };
-            
-            // Create interaction with user
-            var interaction = new Interaction 
-            { 
-                Id = 1,
-                Name = "Test Interaction", // Required by ModifiableDeletableEntity
-                Type = Domain.Enums.InteractionType.Email,
-                Date = DateTime.Now,
-                Subject = "Test interaction subject",
-                Description = "Test interaction"
-            };
-            
-            // Link interaction to contact1 and user
-            interaction.InteractionContacts = new List<InteractionContact>
-            {
-                new InteractionContact { InteractionId = 1, ContactId = 1 }
-            };
-            
-            interaction.InteractionUsers = new List<InteractionUser>
-            {
-                new InteractionUser { InteractionId = 1, UserId = userId }
-            };
-            
-            contact1.Interactions = new List<Interaction> { interaction };
-
-            await _dbContext.Partners.AddRangeAsync(partner1, partner2);
             await _dbContext.Contacts.AddRangeAsync(contact1, contact2);
+            await _dbContext.SaveChangesAsync();
+            
+            // Create interaction (ContactId populates Contact.Interactions for specification)
+            var interaction = new Interaction
+            {
+                Name = "Test Interaction",
+                Type = Domain.Enums.InteractionType.Email,
+                Date = DateTime.UtcNow,
+                Subject = "Test interaction subject",
+                Description = "Test interaction",
+                ContactId = contact1.Id
+            };
             await _dbContext.Interactions.AddAsync(interaction);
+            await _dbContext.SaveChangesAsync();
+            
+            // Link interaction to user
+            _dbContext.Set<InteractionUser>().Add(new InteractionUser { InteractionId = interaction.Id, UserId = userId });
             await _dbContext.SaveChangesAsync();
 
             var specification = new PartnerByOrgUnitWithRelationsSpecification(
@@ -224,120 +166,48 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
         [Fact]
         public async Task Criteria_FiltersPartnersByBothDirectAndIndirectRelations()
         {
-            // Arrange
-            var orgUnitId = 5;
-            var userId = 100;
+            // Arrange - create org hierarchy and test user (FK constraints)
+            var orgUnit = await CreateOrganizationHierarchyAsync("OU", "Test Org Unit");
+            var userId = await CreateTestUserAsync($"both_{Guid.NewGuid():N}@test.unops.org");
             
             // Partner with direct org unit link
-            var partner1 = new Partner 
-            { 
-                Id = 1, 
-                // Enhanced Partner structure
-                Name = "Direct Partner", 
-                PartnerShortDescription = "DP",
-                PartnerCategoryId = 1,
-                LiaisonOfficeId = 1,
-                UNAndStateEntity = false,
-                Status = Domain.Entities.EntityStatus.Active,
-                CanCreateNewOpportunities = true, // "true" equivalent
-                PooledFund = false, // "false" equivalent
-                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired, // "false" equivalent
-                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved, // "false" equivalent
-                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply, // "false" equivalent
-                OrganizationUnitRelationships = new List<OrganizationUnitRelationship>
-                {
-                    new OrganizationUnitRelationship
-                    {
-                        Name = $"Partner-1-OrgUnit-{orgUnitId}", // Required by ModifiableDeletableEntity
-                        OrganizationHierarchyId = orgUnitId,
-                        EntityId = 1,
-                        EntityType = nameof(Partner),
-                        Status = Domain.Entities.EntityStatus.Active
-                    }
-                }
-            };
+            var partner1 = await CreatePartnerWithOrgUnitAsync("Direct Partner", orgUnit.Id);
             
             // Partner with indirect contact relation
-            var partner2 = new Partner 
-            { 
-                Id = 2, 
-                // Enhanced Partner structure
-                Name = "Indirect Partner",
-                PartnerShortDescription = "IP",
-                PartnerCategoryId = 1,
-                LiaisonOfficeId = 1,
-                UNAndStateEntity = false,
-                Status = Domain.Entities.EntityStatus.Active,
-                CanCreateNewOpportunities = true, // "true" equivalent
-                PooledFund = false, // "false" equivalent
-                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired, // "false" equivalent
-                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved, // "false" equivalent
-                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply // "false" equivalent
-            };
-            var contact = new Contact 
-            { 
-                Id = 1, 
-                PartnerId = 2, // Link contact to partner2
-                FirstName = "Test", 
+            var partner2 = await CreatePartnerWithoutOrgUnitAsync("Indirect Partner");
+            var contact = new Contact
+            {
+                PartnerId = partner2.Id,
+                FirstName = "Test",
                 LastName = "Contact",
                 Name = "Test Contact",
                 Title = "Manager",
                 Email = "test.contact@example.com",
                 Status = EntityStatus.Active
             };
-            partner2.Contacts = new List<Contact> { contact };
+            await _dbContext.Contacts.AddAsync(contact);
+            await _dbContext.SaveChangesAsync();
             
-            var interaction = new Interaction 
-            { 
-                Id = 1,
-                Name = "Test Interaction", // Required by ModifiableDeletableEntity
+            var interaction = new Interaction
+            {
+                Name = "Test Interaction",
                 Type = Domain.Enums.InteractionType.Email,
-                Date = DateTime.Now,
+                Date = DateTime.UtcNow,
                 Subject = "Test interaction subject",
                 Description = "Test interaction",
-                InteractionContacts = new List<InteractionContact>
-                {
-                    new InteractionContact { InteractionId = 1, ContactId = 1 }
-                },
-                InteractionUsers = new List<InteractionUser>
-                {
-                    new InteractionUser { InteractionId = 1, UserId = userId }
-                }
+                ContactId = contact.Id
             };
-            contact.Interactions = new List<Interaction> { interaction };
-            
-            // Partner with no relation
-            var partner3 = new Partner 
-            { 
-                Id = 3, 
-                // Enhanced Partner structure
-                Name = "Unrelated Partner",
-                PartnerShortDescription = "UP",
-                PartnerCategoryId = 1,
-                LiaisonOfficeId = 1,
-                UNAndStateEntity = false,
-                Status = Domain.Entities.EntityStatus.Active,
-                CanCreateNewOpportunities = true, // "true" equivalent
-                PooledFund = false, // "false" equivalent
-                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired, // "false" equivalent
-                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved, // "false" equivalent
-                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply // "false" equivalent
-            };
-
-            await _dbContext.Partners.AddRangeAsync(partner1, partner2, partner3);
-            await _dbContext.Contacts.AddAsync(contact);
             await _dbContext.Interactions.AddAsync(interaction);
             await _dbContext.SaveChangesAsync();
             
-            // Add OrganizationUnitRelationships for partner1
-            if (partner1.OrganizationUnitRelationships != null)
-            {
-                await _dbContext.OrganizationUnitRelationships.AddRangeAsync(partner1.OrganizationUnitRelationships);
-                await _dbContext.SaveChangesAsync();
-            }
+            _dbContext.Set<InteractionUser>().Add(new InteractionUser { InteractionId = interaction.Id, UserId = userId });
+            await _dbContext.SaveChangesAsync();
+            
+            // Partner with no relation
+            var partner3 = await CreatePartnerWithoutOrgUnitAsync("Unrelated Partner");
 
             var specification = new PartnerByOrgUnitWithRelationsSpecification(
-                new List<int> { orgUnitId }, 
+                new List<int> { orgUnit.Id },
                 new List<string> { userId.ToString() }
             );
 
@@ -365,9 +235,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
         public async Task Criteria_WithEmptyLists_ReturnsNoResults()
         {
             // Arrange
-            var partner = CreatePartnerWithoutOrgUnit(1, "Test Partner");
-            await _dbContext.Partners.AddAsync(partner);
-            await _dbContext.SaveChangesAsync();
+            await CreatePartnerWithoutOrgUnitAsync("Test Partner");
 
             var specification = new PartnerByOrgUnitWithRelationsSpecification(
                 new List<int>(), 
@@ -386,9 +254,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
         public async Task Criteria_WithNullLists_ReturnsNoResults()
         {
             // Arrange
-            var partner = CreatePartnerWithoutOrgUnit(1, "Test Partner");
-            await _dbContext.Partners.AddAsync(partner);
-            await _dbContext.SaveChangesAsync();
+            await CreatePartnerWithoutOrgUnitAsync("Test Partner");
 
             var specification = new PartnerByOrgUnitWithRelationsSpecification(null, null);
 
@@ -403,27 +269,17 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
         [SkipIfInMemoryFact]
         public async Task Criteria_WithMultipleOrgUnitIds_FiltersCorrectly()
         {
-            // Arrange
-            var orgUnitIds = new List<int> { 5, 6, 7 };
+            // Arrange - create org hierarchies first (FK constraint)
+            var orgUnit1 = await CreateOrganizationHierarchyAsync("OU1", "Org Unit 1");
+            var orgUnit2 = await CreateOrganizationHierarchyAsync("OU2", "Org Unit 2");
+            var orgUnit3 = await CreateOrganizationHierarchyAsync("OU3", "Org Unit 3");
+            var orgUnit4 = await CreateOrganizationHierarchyAsync("OU4", "Org Unit 4");
+            var orgUnitIds = new List<int> { orgUnit1.Id, orgUnit2.Id, orgUnit3.Id };
             
-            var partner1 = CreatePartnerWithOrgUnit(1, "Partner 1", 5);
-            var partner2 = CreatePartnerWithOrgUnit(2, "Partner 2", 6);
-            var partner3 = CreatePartnerWithOrgUnit(3, "Partner 3", 7);
-            var partner4 = CreatePartnerWithOrgUnit(4, "Partner 4", 999);
-
-            await _dbContext.Partners.AddRangeAsync(partner1, partner2, partner3, partner4);
-            await _dbContext.SaveChangesAsync();
-            
-            // Add OrganizationUnitRelationships for all partners
-            if (partner1.OrganizationUnitRelationships != null)
-                await _dbContext.OrganizationUnitRelationships.AddRangeAsync(partner1.OrganizationUnitRelationships);
-            if (partner2.OrganizationUnitRelationships != null)
-                await _dbContext.OrganizationUnitRelationships.AddRangeAsync(partner2.OrganizationUnitRelationships);
-            if (partner3.OrganizationUnitRelationships != null)
-                await _dbContext.OrganizationUnitRelationships.AddRangeAsync(partner3.OrganizationUnitRelationships);
-            if (partner4.OrganizationUnitRelationships != null)
-                await _dbContext.OrganizationUnitRelationships.AddRangeAsync(partner4.OrganizationUnitRelationships);
-            await _dbContext.SaveChangesAsync();
+            var partner1 = await CreatePartnerWithOrgUnitAsync("Partner 1", orgUnit1.Id);
+            var partner2 = await CreatePartnerWithOrgUnitAsync("Partner 2", orgUnit2.Id);
+            var partner3 = await CreatePartnerWithOrgUnitAsync("Partner 3", orgUnit3.Id);
+            await CreatePartnerWithOrgUnitAsync("Partner 4", orgUnit4.Id);
 
             var specification = new PartnerByOrgUnitWithRelationsSpecification(
                 orgUnitIds, 
@@ -437,163 +293,89 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
 
             // Assert
             results.Should().HaveCount(3);
-            results.Select(p => p.Id).Should().BeEquivalentTo(new[] { 1, 2, 3 });
+            results.Select(p => p.Id).Should().BeEquivalentTo(new[] { partner1.Id, partner2.Id, partner3.Id });
         }
 
         [SkipIfInMemoryFact]
         public async Task Criteria_WithMultipleUserIds_FiltersCorrectly()
         {
-            // Arrange
-            var userIds = new List<string> { "100", "101", "102" };
+            // Arrange - create test users (FK constraint)
+            var user1Id = await CreateTestUserAsync($"multi1_{Guid.NewGuid():N}@test.unops.org");
+            var user2Id = await CreateTestUserAsync($"multi2_{Guid.NewGuid():N}@test.unops.org");
+            var user3Id = await CreateTestUserAsync($"multi3_{Guid.NewGuid():N}@test.unops.org"); // Partner3's user - NOT in filter
+            var userIds = new List<string> { user1Id.ToString(), user2Id.ToString() }; // Filter: only users 1 and 2
             
-            var partner1 = new Partner 
-            { 
-                Id = 1, 
-                // Enhanced Partner structure
-                Name = "Partner 1",
-                PartnerShortDescription = "P1",
-                PartnerCategoryId = 1,
-                LiaisonOfficeId = 1,
-                UNAndStateEntity = false,
-                Status = Domain.Entities.EntityStatus.Active,
-                CanCreateNewOpportunities = true, // "true" equivalent
-                PooledFund = false, // "false" equivalent
-                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired, // "false" equivalent
-                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved, // "false" equivalent
-                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply // "false" equivalent
-            };
-            var partner2 = new Partner 
-            { 
-                Id = 2, 
-                // Enhanced Partner structure
-                Name = "Partner 2",
-                PartnerShortDescription = "P2",
-                PartnerCategoryId = 1,
-                LiaisonOfficeId = 1,
-                UNAndStateEntity = false,
-                Status = Domain.Entities.EntityStatus.Active,
-                CanCreateNewOpportunities = true, // "true" equivalent
-                PooledFund = false, // "false" equivalent
-                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired, // "false" equivalent
-                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved, // "false" equivalent
-                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply // "false" equivalent
-            };
-            var partner3 = new Partner 
-            { 
-                Id = 3, 
-                // Enhanced Partner structure
-                Name = "Partner 3",
-                PartnerShortDescription = "P3",
-                PartnerCategoryId = 1,
-                LiaisonOfficeId = 1,
-                UNAndStateEntity = false,
-                Status = Domain.Entities.EntityStatus.Active,
-                CanCreateNewOpportunities = true, // "true" equivalent
-                PooledFund = false, // "false" equivalent
-                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired, // "false" equivalent
-                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved, // "false" equivalent
-                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply // "false" equivalent
-            };
+            var partner1 = await CreatePartnerWithoutOrgUnitAsync("Partner 1");
+            var partner2 = await CreatePartnerWithoutOrgUnitAsync("Partner 2");
+            var partner3 = await CreatePartnerWithoutOrgUnitAsync("Partner 3");
             
-            // Create contacts
-            var contact1 = new Contact 
-            { 
-                Id = 1, 
-                FirstName = "C1", 
+            var contact1 = new Contact
+            {
+                FirstName = "C1",
                 LastName = "L1",
                 Name = "C1 L1",
                 Title = "Manager",
                 Email = "c1.l1@example.com",
-                Status = EntityStatus.Active
+                Status = EntityStatus.Active,
+                PartnerId = partner1.Id
             };
-            var contact2 = new Contact 
-            { 
-                Id = 2, 
-                FirstName = "C2", 
+            var contact2 = new Contact
+            {
+                FirstName = "C2",
                 LastName = "L2",
                 Name = "C2 L2",
                 Title = "Director",
                 Email = "c2.l2@example.com",
-                Status = EntityStatus.Active
+                Status = EntityStatus.Active,
+                PartnerId = partner2.Id
             };
-            var contact3 = new Contact 
-            { 
-                Id = 3, 
-                FirstName = "C3", 
+            var contact3 = new Contact
+            {
+                FirstName = "C3",
                 LastName = "L3",
                 Name = "C3 L3",
                 Title = "VP",
                 Email = "c3.l3@example.com",
-                Status = EntityStatus.Active
+                Status = EntityStatus.Active,
+                PartnerId = partner3.Id
             };
+            await _dbContext.Contacts.AddRangeAsync(contact1, contact2, contact3);
+            await _dbContext.SaveChangesAsync();
             
-            partner1.Contacts = new List<Contact> { contact1 };
-            partner2.Contacts = new List<Contact> { contact2 };
-            partner3.Contacts = new List<Contact> { contact3 };
-            
-            // Create interactions with different users
-            var interaction1 = new Interaction 
-            { 
-                Id = 1,
-                Name = "Interaction 1", // Required by ModifiableDeletableEntity
+            var interaction1 = new Interaction
+            {
+                Name = "Interaction 1",
                 Type = Domain.Enums.InteractionType.Email,
-                Date = DateTime.Now,
+                Date = DateTime.UtcNow,
                 Subject = "Interaction 1 subject",
                 Description = "Interaction 1",
-                InteractionContacts = new List<InteractionContact>
-                {
-                    new InteractionContact { InteractionId = 1, ContactId = 1 }
-                },
-                InteractionUsers = new List<InteractionUser>
-                {
-                    new InteractionUser { InteractionId = 1, UserId = 100 }
-                }
+                ContactId = contact1.Id
             };
-            
-            var interaction2 = new Interaction 
-            { 
-                Id = 2,
-                Name = "Interaction 2", // Required by ModifiableDeletableEntity
+            var interaction2 = new Interaction
+            {
+                Name = "Interaction 2",
                 Type = Domain.Enums.InteractionType.Email,
-                Date = DateTime.Now,
+                Date = DateTime.UtcNow,
                 Subject = "Interaction 2 subject",
                 Description = "Interaction 2",
-                InteractionContacts = new List<InteractionContact>
-                {
-                    new InteractionContact { InteractionId = 2, ContactId = 2 }
-                },
-                InteractionUsers = new List<InteractionUser>
-                {
-                    new InteractionUser { InteractionId = 2, UserId = 101 }
-                }
+                ContactId = contact2.Id
             };
-            
-            // Interaction with user not in the list
-            var interaction3 = new Interaction 
-            { 
-                Id = 3,
-                Name = "Interaction 3", // Required by ModifiableDeletableEntity
+            var interaction3 = new Interaction
+            {
+                Name = "Interaction 3",
                 Type = Domain.Enums.InteractionType.Email,
-                Date = DateTime.Now,
+                Date = DateTime.UtcNow,
                 Subject = "Interaction 3 subject",
                 Description = "Interaction 3",
-                InteractionContacts = new List<InteractionContact>
-                {
-                    new InteractionContact { InteractionId = 3, ContactId = 3 }
-                },
-                InteractionUsers = new List<InteractionUser>
-                {
-                    new InteractionUser { InteractionId = 3, UserId = 999 }
-                }
+                ContactId = contact3.Id
             };
-            
-            contact1.Interactions = new List<Interaction> { interaction1 };
-            contact2.Interactions = new List<Interaction> { interaction2 };
-            contact3.Interactions = new List<Interaction> { interaction3 };
-
-            await _dbContext.Partners.AddRangeAsync(partner1, partner2, partner3);
-            await _dbContext.Contacts.AddRangeAsync(contact1, contact2, contact3);
             await _dbContext.Interactions.AddRangeAsync(interaction1, interaction2, interaction3);
+            await _dbContext.SaveChangesAsync();
+            _dbContext.Set<InteractionUser>().AddRange(
+                new InteractionUser { InteractionId = interaction1.Id, UserId = user1Id },
+                new InteractionUser { InteractionId = interaction2.Id, UserId = user2Id },
+                new InteractionUser { InteractionId = interaction3.Id, UserId = user3Id }
+            );
             await _dbContext.SaveChangesAsync();
 
             var specification = new PartnerByOrgUnitWithRelationsSpecification(
@@ -611,24 +393,60 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
 
             // Assert
             results.Should().HaveCount(2);
-            results.Select(p => p.Id).Should().BeEquivalentTo(new[] { 1, 2 });
+            results.Select(p => p.Id).Should().BeEquivalentTo(new[] { partner1.Id, partner2.Id });
         }
 
         public void Dispose()
         {
+            if (_transaction != null)
+            {
+                try { _transaction.Rollback(); }
+                catch { }
+                _transaction.Dispose();
+                _transaction = null;
+            }
             _dbContext?.Dispose();
         }
 
-        private Partner CreatePartnerWithOrgUnit(int id, string name, int organizationHierarchyId)
+        private async Task<int> CreateTestUserAsync(string email)
         {
-            var partner = new Partner 
-            { 
-                Id = id, 
-                // Enhanced Partner structure
+            var user = _dbContext.PAOUsers.FirstOrDefault(u => u.Email == email);
+            if (user != null)
+                return user.Id;
+
+            // Use raw SQL to insert user with all AspNetUsers required columns (IsInternal as param to avoid literal issues)
+            var normalized = email.ToUpperInvariant();
+            var result = await _dbContext.Database.SqlQueryRaw<int>(
+                "INSERT INTO \"AspNetUsers\" (\"IsInternal\", \"Email\", \"NormalizedEmail\", \"EmailConfirmed\", \"UserName\", \"NormalizedUserName\", " +
+                "\"PhoneNumberConfirmed\", \"TwoFactorEnabled\", \"LockoutEnabled\", \"AccessFailedCount\") " +
+                "VALUES ({0}, {1}, {2}, true, {3}, {4}, false, false, false, 0) RETURNING \"Id\"",
+                false, email, normalized, email, normalized).ToListAsync();
+            return result[0];
+        }
+
+        private async Task<OrganizationHierarchy> CreateOrganizationHierarchyAsync(string code, string name)
+        {
+            var org = new OrganizationHierarchy
+            {
+                Code = code,
                 Name = name,
-                PartnerShortDescription = $"P{id}",
-                PartnerCategoryId = 1, // Default test category
-                LiaisonOfficeId = 1, // Default test liaison office
+                Type = OrganizationUnitType.OrgUnit,
+                Description = name,
+                Status = Domain.Entities.EntityStatus.Active
+            };
+            await _dbContext.Set<OrganizationHierarchy>().AddAsync(org);
+            await _dbContext.SaveChangesAsync();
+            return org;
+        }
+
+        private async Task<Partner> CreatePartnerWithOrgUnitAsync(string name, int organizationHierarchyId)
+        {
+            var partner = new Partner
+            {
+                Name = name,
+                PartnerShortDescription = name.Length > 10 ? name.Substring(0, 10) : name,
+                PartnerCategoryId = 1,
+                LiaisonOfficeId = 1,
                 UNAndStateEntity = false,
                 Status = Domain.Entities.EntityStatus.Active,
                 CanCreateNewOpportunities = true,
@@ -638,32 +456,31 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
                 PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply
             };
 
-            // Add organization unit relationship
-            partner.OrganizationUnitRelationships = new List<OrganizationUnitRelationship>
+            await _dbContext.Partners.AddAsync(partner);
+            await _dbContext.SaveChangesAsync();
+
+            var orgRelationship = new OrganizationUnitRelationship
             {
-                new OrganizationUnitRelationship
-                {
-                    Name = $"Partner-{partner.Id}-OrgUnit-{organizationHierarchyId}", // Required by ModifiableDeletableEntity
-                    OrganizationHierarchyId = organizationHierarchyId,
-                    EntityId = partner.Id,
-                    EntityType = nameof(Partner),
-                    Status = Domain.Entities.EntityStatus.Active
-                }
+                Name = $"Partner-{partner.Id}-OrgUnit-{organizationHierarchyId}",
+                OrganizationHierarchyId = organizationHierarchyId,
+                EntityId = partner.Id,
+                EntityType = nameof(Partner),
+                Status = Domain.Entities.EntityStatus.Active
             };
+            _dbContext.Set<OrganizationUnitRelationship>().Add(orgRelationship);
+            await _dbContext.SaveChangesAsync();
 
             return partner;
         }
 
-        private Partner CreatePartnerWithoutOrgUnit(int id, string name)
+        private async Task<Partner> CreatePartnerWithoutOrgUnitAsync(string name)
         {
-            return new Partner 
-            { 
-                Id = id, 
-                // Enhanced Partner structure
+            var partner = new Partner
+            {
                 Name = name,
-                PartnerShortDescription = $"P{id}",
-                PartnerCategoryId = 1, // Default test category
-                LiaisonOfficeId = 1, // Default test liaison office
+                PartnerShortDescription = name.Length > 10 ? name.Substring(0, 10) : name,
+                PartnerCategoryId = 1,
+                LiaisonOfficeId = 1,
                 UNAndStateEntity = false,
                 Status = Domain.Entities.EntityStatus.Active,
                 CanCreateNewOpportunities = true,
@@ -672,6 +489,9 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
                 DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved,
                 PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply
             };
+            await _dbContext.Partners.AddAsync(partner);
+            await _dbContext.SaveChangesAsync();
+            return partner;
         }
     }
 }

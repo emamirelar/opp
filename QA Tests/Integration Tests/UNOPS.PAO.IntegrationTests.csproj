@@ -37,98 +37,158 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Exclude test files that depend on UNOPS.Workflow (separate repository) -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════
+         EXCLUDED TEST FILES — DEF-007 (Updated 2026-02-16)
+         
+         These tests were written AHEAD of production implementation. They reference
+         managers, methods, models, and endpoints that do not yet exist or have
+         different API signatures in the current codebase.
+         
+         CATEGORY A: Manager not in IManagerWrapper (31 files)
+           → Requires new production managers to be created and registered.
+         CATEGORY B: Manager exists but API signatures differ (15 files)
+           → Requires rewriting tests to match current production API.
+         CATEGORY C: External dependency (1 file)
+           → Requires UNOPS.Workflow repository reference.
+         CATEGORY D: Controller tests with non-existent endpoints/models (7 files)
+           → Requires new endpoints/models or test URL/assertion rewrites.
+         ═══════════════════════════════════════════════════════════════════════════ -->
+
+    <!-- ─── CATEGORY C: External dependency (1 file) ─── -->
     <Compile Remove="Controllers\WorkflowControllerTests.cs" />
+    <!-- Depends on UNOPS.Workflow (separate repository, project references commented out) -->
 
-    <!-- DEF-007: Exclude test files referencing managers not yet implemented in production.
-         These tests were written ahead of implementation. Re-enable when managers are built.
-         See: QA Tests/Defect List for Developers.md (DEF-007) -->
+    <!-- ─── CATEGORY A: Manager not in IManagerWrapper (31 files) ───
+         These test files reference managers that are NOT exposed via IManagerWrapper.
+         To re-enable: create the manager interface, implementation, and register in
+         IManagerWrapper / ManagerWrapper / UNOPSManagerWrapper. -->
 
-    <!-- Dashboard/ - DashboardManager does not exist -->
+    <!-- Dashboard/ — Tests call IManagerWrapper.DashboardManager (not implemented) -->
     <Compile Remove="Dashboard\DashboardEdgeCaseTests.cs" />
     <Compile Remove="Dashboard\DashboardNegativeTests.cs" />
     <Compile Remove="Dashboard\DashboardSecurityTests.cs" />
     <Compile Remove="Dashboard\DashboardValidationTests.cs" />
 
-    <!-- PartnerAnalytics/ - PartnerAnalyticsManager does not exist -->
+    <!-- PartnerAnalytics/ — Tests call IManagerWrapper.PartnerAnalyticsManager (not implemented) -->
     <Compile Remove="PartnerAnalytics\AnalyticsEdgeCaseTests.cs" />
     <Compile Remove="PartnerAnalytics\AnalyticsNegativeTests.cs" />
     <Compile Remove="PartnerAnalytics\AnalyticsSecurityTests.cs" />
     <Compile Remove="PartnerAnalytics\AnalyticsValidationTests.cs" />
 
-    <!-- ContactAnalytics/ - ContactAnalyticsManager does not exist -->
+    <!-- ContactAnalytics/ — Tests call IManagerWrapper.ContactAnalyticsManager (not implemented) -->
     <Compile Remove="ContactAnalytics\ContactAnalyticsEdgeCaseTests.cs" />
     <Compile Remove="ContactAnalytics\ContactAnalyticsNegativeTests.cs" />
     <Compile Remove="ContactAnalytics\ContactAnalyticsSecurityTests.cs" />
     <Compile Remove="ContactAnalytics\ContactAnalyticsValidationTests.cs" />
 
-    <!-- OrgHierarchy/ - OrganizationManager does not exist -->
+    <!-- OrgHierarchy/ — Tests call IManagerWrapper.OrganizationManager (not implemented) -->
     <Compile Remove="OrgHierarchy\OrgHierarchyEdgeCaseTests.cs" />
     <Compile Remove="OrgHierarchy\OrgHierarchyNegativeTests.cs" />
     <Compile Remove="OrgHierarchy\OrgHierarchySecurityTests.cs" />
     <Compile Remove="OrgHierarchy\OrgHierarchyValidationTests.cs" />
 
-    <!-- UserProfile/ - UserProfileManager does not exist -->
+    <!-- UserProfile/ — Tests call IManagerWrapper.UserProfileManager (not implemented) -->
     <Compile Remove="UserProfile\UserProfileEdgeCaseTests.cs" />
     <Compile Remove="UserProfile\UserProfileNegativeTests.cs" />
     <Compile Remove="UserProfile\UserProfileSecurityTests.cs" />
 
-    <!-- Roles/ - Custom RoleManager does not exist (only ASP.NET Identity RoleManager) -->
+    <!-- Roles/ — Tests call custom RoleManager (only ASP.NET Identity RoleManager exists) -->
     <Compile Remove="Roles\RoleEdgeCaseTests.cs" />
     <Compile Remove="Roles\RoleNegativeTests.cs" />
     <Compile Remove="Roles\RoleSecurityTests.cs" />
     <Compile Remove="Roles\RoleValidationTests.cs" />
 
-    <!-- Permissions/ - PermissionManager does not exist -->
+    <!-- Permissions/ — Tests call IManagerWrapper.PermissionManager (not implemented) -->
     <Compile Remove="Permissions\PermissionEdgeCaseTests.cs" />
     <Compile Remove="Permissions\PermissionNegativeTests.cs" />
     <Compile Remove="Permissions\PermissionSecurityTests.cs" />
     <Compile Remove="Permissions\PermissionValidationTests.cs" />
 
-    <!-- LiaisonOffice/ - LiaisonOfficeManager does not exist -->
+    <!-- LiaisonOffice/ — Tests call IManagerWrapper.LiaisonOfficeManager (not implemented;
+         LiaisonOfficeService exists but is not exposed as a manager in IManagerWrapper) -->
     <Compile Remove="LiaisonOffice\LiaisonOfficeEdgeCaseTests.cs" />
     <Compile Remove="LiaisonOffice\LiaisonOfficeNegativeTests.cs" />
     <Compile Remove="LiaisonOffice\LiaisonOfficeSecurityTests.cs" />
     <Compile Remove="LiaisonOffice\LiaisonOfficeValidationTests.cs" />
 
-    <!-- SystemAdmin/ - UpdateSystemSettingsRequest, ExecuteMaintenanceTaskAsync, etc. do not exist -->
+    <!-- ─── CATEGORY B: Manager exists but API differs (15 files) ───
+         These tests reference managers available in IManagerWrapper but call methods
+         with wrong names/signatures. To re-enable: rewrite test methods to match
+         the current production API signatures. -->
+
+    <!-- SystemAdmin/ — ISystemAdminManager exists (RunMigrations, RunSeeding, etc.)
+         but tests call GetSystemSettingsAsync, UpdateSystemSettingsAsync,
+         GetAuditLogsAsync, ExecuteMaintenanceTaskAsync (not implemented) -->
     <Compile Remove="SystemAdmin\SystemAdminEdgeCaseTests.cs" />
     <Compile Remove="SystemAdmin\SystemAdminNegativeTests.cs" />
     <Compile Remove="SystemAdmin\SystemAdminSecurityTests.cs" />
     <Compile Remove="SystemAdmin\SystemAdminValidationTests.cs" />
 
-    <!-- PartnerTree/ - AddChildPartnerAsync, MovePartnerAsync, etc. do not exist -->
+    <!-- PartnerTree/ — IPartnerTreeManager exists (CreatePartnerTreeAsync,
+         GetPartnerTreesAsync, etc.) but tests call PartnerManager.AddChildPartnerAsync,
+         MovePartnerAsync, GetPartnerChildrenAsync (not on IPartnerTreeManager) -->
     <Compile Remove="PartnerTree\PartnerTreeEdgeCaseTests.cs" />
     <Compile Remove="PartnerTree\PartnerTreeNegativeTests.cs" />
     <Compile Remove="PartnerTree\PartnerTreeSecurityTests.cs" />
     <Compile Remove="PartnerTree\PartnerTreeValidationTests.cs" />
 
-    <!-- UserManagement/ - CreateUserRequest, UpdateUserRequest do not exist -->
+    <!-- Documents/ — IDocumentManager exists (GetDocumentsByEntityAsync, etc.) but tests
+         call UploadDocumentAsync(byte[], string, string, int, ClaimsPrincipal) and
+         DeleteDocumentAsync(int, ClaimsPrincipal) which have different signatures.
+         UNOPSDocumentManager has UploadDocumentAsync(DocumentUploadModel, string). -->
+    <Compile Remove="Documents\DocumentEdgeCaseTests.cs" />
+    <Compile Remove="Documents\DocumentNegativeTests.cs" />
+    <Compile Remove="Documents\DocumentSecurityAndConcurrencyTests.cs" />
+
+    <!-- UserManagement/ — IUserManagementManager exists in IManagerWrapper but tests use
+         UserManager with CreateUserAsync(CreateUserRequest, user),
+         AssignRolesAsync, etc. (ASP.NET Identity UserManager has different API) -->
     <Compile Remove="UserManagement\UserManagementEdgeCaseTests.cs" />
     <Compile Remove="UserManagement\UserManagementNegativeTests.cs" />
     <Compile Remove="UserManagement\UserManagementSecurityTests.cs" />
     <Compile Remove="UserManagement\UserManagementValidationTests.cs" />
 
-    <!-- EntityConfiguration/ - CreateEntityConfigRequest, AddFieldRequest, EntityConfigManager do not exist -->
+    <!-- EntityConfiguration/ — IUNOPSEntityConfigurationManager exists in UNOPSManagerWrapper
+         but tests reference EntityConfigManager (not in IManagerWrapper) and use
+         CreateEntityConfigRequest, AddFieldRequest models that don't exist -->
     <Compile Remove="EntityConfiguration\EntityConfigEdgeCaseTests.cs" />
     <Compile Remove="EntityConfiguration\EntityConfigNegativeTests.cs" />
     <Compile Remove="EntityConfiguration\EntityConfigSecurityTests.cs" />
     <Compile Remove="EntityConfiguration\EntityConfigValidationTests.cs" />
 
-    <!-- Documents/ - UploadDocumentAsync and DeleteDocumentAsync have wrong signatures (CS1501) -->
-    <Compile Remove="Documents\DocumentEdgeCaseTests.cs" />
-    <Compile Remove="Documents\DocumentNegativeTests.cs" />
-    <Compile Remove="Documents\DocumentSecurityAndConcurrencyTests.cs" />
+    <!-- ─── CATEGORY D: Controller tests with non-existent endpoints/models (7 files) ───
+         Tests make HTTP requests to endpoints that don't exist or have different routes,
+         and/or reference model types that are not defined. -->
 
-    <!-- Controller tests referencing non-existent model types (WidgetDataModel, DashboardSummaryModel, etc.) -->
+    <!-- NotificationController — Tests hit /api/notifications/{id}, /api/notifications/send,
+         /api/notifications/send-bulk, etc. Real controller only has GET /api/notifications
+         and PUT /api/notifications/{id}/read -->
     <Compile Remove="Controllers\NotificationControllerTests.cs" />
+
+    <!-- DashboardController — Tests hit /api/dashboard/summary, /api/dashboard/partners/stats,
+         /api/dashboard/widgets/*, etc. Real controller uses /api/dashboard/my-partners,
+         /api/dashboard/content. Tests reference DashboardSummaryModel, WidgetDataModel, etc.
+         which don't exist in UNOPS.PAO.Models.Dashboard -->
     <Compile Remove="Controllers\DashboardControllerTests.cs" />
+
+    <!-- CommonEntitiesController — Tests hit /api/common/* endpoints (statuses, currencies, etc.)
+         Real controller has no action methods implemented -->
     <Compile Remove="Controllers\CommonEntitiesControllerTests.cs" />
+
+    <!-- EntityConfigurationController — Tests use /api/admin/entity-configuration/* but real
+         routes are /api/entities and /api/entity-configuration/* -->
     <Compile Remove="Controllers\EntityConfigurationControllerTests.cs" />
+
+    <!-- ConfigurationController — Tests use /api/configuration/public, /api/configuration/version,
+         /api/admin/configuration/*, etc. Real controller only has GET /api/configuration -->
     <Compile Remove="Controllers\ConfigurationControllerTests.cs" />
 
-    <!-- Controller tests using wrong entity types (Partner vs UNOPSPartner, missing Contact properties) -->
+    <!-- ContactAnalyticsController — Tests use /api/contacts/analytics/* but real routes are
+         /api/contact-analytics/* (singular). Also references dynamic typed responses. -->
     <Compile Remove="Controllers\ContactAnalyticsControllerTests.cs" />
+
+    <!-- PartnerAnalyticsController — Tests use /api/partners/analytics/* but real routes are
+         /api/partner/analytics/* (singular). Different action names and response types. -->
     <Compile Remove="Controllers\PartnerAnalyticsControllerTests.cs" />
   </ItemGroup>
 

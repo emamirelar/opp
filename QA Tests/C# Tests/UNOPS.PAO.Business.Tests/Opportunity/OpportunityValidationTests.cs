@@ -2,6 +2,7 @@ using AutoMapper;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using System;
@@ -36,6 +37,7 @@ public class OpportunityValidationTests : IDisposable
 {
     private readonly DbContextOptions<UNOPSAppDbContext> _dbContextOptions;
     private readonly UNOPSAppDbContext _context;
+    private IDbContextTransaction? _transaction;
     private readonly string _testMarker = $"VAL_{Guid.NewGuid():N}";
     private readonly List<int> _createdOpportunityIds = new();
     private int _currencyId;
@@ -55,39 +57,31 @@ public class OpportunityValidationTests : IDisposable
     public OpportunityValidationTests()
     {
         _dbContextOptions = TestEnvironment.CreateUNOPSDbContextOptions($"OpportunityValidationTestDb_{Guid.NewGuid()}");
-
-        // Setup mock HttpContextAccessor for UserResolverService
-        var mockUserServiceHttpContextAccessor = new Mock<IHttpContextAccessor>();
-        var mockUserServiceHttpContext = new Mock<HttpContext>();
-        var mockRequest = new Mock<HttpRequest>();
-        var mockHeaders = new HeaderDictionary();
-
-        mockRequest.Setup(r => r.Headers).Returns(mockHeaders);
-        mockUserServiceHttpContext.Setup(m => m.Request).Returns(mockRequest.Object);
-        mockUserServiceHttpContextAccessor.Setup(m => m.HttpContext).Returns(mockUserServiceHttpContext.Object);
-
-        var userResolverService = new UserResolverService<int>(mockUserServiceHttpContextAccessor.Object, null);
         var mockDbSchema = new Mock<IDbContextSchema>();
         mockDbSchema.Setup(s => s.Schema).Returns("public");
 
-        _context = new UNOPSAppDbContext(_dbContextOptions, userResolverService, mockDbSchema.Object);
-
-        // Ensure EF Core model is finalized for in-memory database
-        if (TestEnvironment.UseInMemory)
+        // Phase 1: Resolve the test user ID using a temporary context (outside transaction).
+        // AuditableDbContext caches _currentUserId at construction, so we must know the
+        // real user ID before creating the main context.
         {
-            _context.Database.EnsureCreated();
+            var tempAccessor = CreateMockHttpContextAccessor("0");
+            var tempResolver = new UserResolverService<int>(tempAccessor.Object, null);
+            using var tempCtx = UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.CreateUNOPS(_dbContextOptions, tempResolver, mockDbSchema.Object);
+            _paoUserId = TestDataHelper.GetOrCreateTestUser(tempCtx, "testuser@unops.org");
         }
 
-        // Seed test data first so _paoUserId is available
-        SeedTestData();
+        // Phase 2: Create the MAIN context with the ACTUAL test user ID in claims.
+        var mainAccessor = CreateMockHttpContextAccessor(_paoUserId.ToString());
+        var userResolverService = new UserResolverService<int>(mainAccessor.Object, null);
+        _context = UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.CreateUNOPS(_dbContextOptions, userResolverService, mockDbSchema.Object);
 
-        var userServiceTestUser = new ClaimsPrincipal(new ClaimsIdentity(new[]
+        if (TestEnvironment.UsePostgreSQL)
         {
-            new Claim(ClaimTypes.NameIdentifier, _paoUserId.ToString()),
-            new Claim(ClaimTypes.Name, "Test User"),
-            new Claim(ClaimTypes.Email, "testuser@unops.org")
-        }, "TestAuthType"));
-        mockUserServiceHttpContext.Setup(m => m.User).Returns(userServiceTestUser);
+            _transaction = _context.Database.BeginTransaction();
+        }
+
+        // Seed remaining reference data (test user already exists from Phase 1)
+        SeedTestData();
 
         // Setup real AutoMapper
         var mapperConfig = new MapperConfiguration(cfg =>
@@ -96,7 +90,6 @@ public class OpportunityValidationTests : IDisposable
         });
         _mapper = mapperConfig.CreateMapper();
         
-        // Build real configuration from test data
         _configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
@@ -130,7 +123,12 @@ public class OpportunityValidationTests : IDisposable
         _mockHttpContextAccessor.Setup(m => m.HttpContext).Returns(mockHttpContext.Object);
 
         _mockDbContextFactory.Setup(f => f.CreateDbContextAsync(It.IsAny<System.Threading.CancellationToken>()))
-            .ReturnsAsync(() => new UNOPSAppDbContext(_dbContextOptions, userResolverService, mockDbSchema.Object));
+            .ReturnsAsync(() =>
+            {
+                var factoryAccessor = CreateMockHttpContextAccessor(_paoUserId.ToString());
+                var factoryResolver = new UserResolverService<int>(factoryAccessor.Object, null);
+                return UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.CreateUNOPS(_dbContextOptions, factoryResolver, mockDbSchema.Object);
+            });
 
         _manager = new UNOPSOpportunityManager(
             _mapper,
@@ -142,7 +140,6 @@ public class OpportunityValidationTests : IDisposable
             _mockHttpContextAccessor.Object,
             _mockServiceProvider.Object
         );
-
     }
 
     private void SeedTestData()
@@ -184,14 +181,7 @@ public class OpportunityValidationTests : IDisposable
         }
         _proposedInitiativeTypeId = proposedInitiativeType.Id;
 
-        var paoUser = _context.PAOUsers.FirstOrDefault(u => u.Email == "testuser@unops.org");
-        if (paoUser == null)
-        {
-            paoUser = new PAOUser { Email = "testuser@unops.org" };
-            _context.PAOUsers.Add(paoUser);
-            _context.SaveChanges();
-        }
-        _paoUserId = paoUser.Id;
+        _paoUserId = TestDataHelper.GetOrCreateTestUser(_context, "testuser@unops.org");
 
         _context.ChangeTracker.Clear();
     }
@@ -213,6 +203,8 @@ public class OpportunityValidationTests : IDisposable
             Status = status,
             CreatedBy = _paoUserId,
             CreatedDate = DateTime.UtcNow,
+            LastModifiedBy = _paoUserId,
+            LastModifiedDate = DateTime.UtcNow,
             IsDeleted = false,
             InitiativeBudgetUSD = budgetUSD,
             ResponsibleOrgUnitId = responsibleOrgUnitId,
@@ -497,7 +489,10 @@ public class OpportunityValidationTests : IDisposable
         var exception = await Record.ExceptionAsync(act);
         if (exception != null)
         {
-            exception.Message.Should().MatchRegex("challenge|length|1020", because: "should validate challenges field length");
+            // Check full exception chain (EF Core wraps DB errors in DbUpdateException)
+            var fullMessage = GetFullExceptionMessage(exception);
+            fullMessage.Should().MatchRegex("challenge|length|1020|value too long|22001",
+                because: "should validate challenges field length");
         }
     }
 
@@ -552,7 +547,10 @@ public class OpportunityValidationTests : IDisposable
 
         if (exception != null)
         {
-            exception.Message.Should().MatchRegex("impact|length|510", because: "should validate impact field length");
+            // Check full exception chain (EF Core wraps DB errors in DbUpdateException)
+            var fullMessage = GetFullExceptionMessage(exception);
+            fullMessage.Should().MatchRegex("impact|length|510|value too long|22001",
+                because: "should validate impact field length");
         }
         else if (created != null)
         {
@@ -753,11 +751,46 @@ public class OpportunityValidationTests : IDisposable
 
     #endregion
 
+    /// <summary>
+    /// Concatenates all messages in the exception chain (outer + inner exceptions).
+    /// EF Core wraps database errors in DbUpdateException; the actual PostgreSQL
+    /// error details are in inner exceptions.
+    /// </summary>
+    private static string GetFullExceptionMessage(Exception ex)
+    {
+        var messages = new List<string>();
+        var current = ex;
+        while (current != null)
+        {
+            messages.Add(current.Message);
+            current = current.InnerException;
+        }
+        return string.Join(" | ", messages);
+    }
+
+    private static Mock<IHttpContextAccessor> CreateMockHttpContextAccessor(string userId)
+    {
+        var accessor = new Mock<IHttpContextAccessor>();
+        var httpContext = new Mock<HttpContext>();
+        var request = new Mock<HttpRequest>();
+        request.Setup(r => r.Headers).Returns(new HeaderDictionary());
+        var user = new ClaimsPrincipal(new ClaimsIdentity(new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, userId),
+            new Claim(ClaimTypes.Name, "Test User"),
+            new Claim(ClaimTypes.Email, "testuser@unops.org")
+        }, "TestAuthType"));
+        httpContext.Setup(m => m.User).Returns(user);
+        httpContext.Setup(m => m.Request).Returns(request.Object);
+        accessor.Setup(m => m.HttpContext).Returns(httpContext.Object);
+        return accessor;
+    }
+
     public void Dispose()
     {
         try
         {
-            if (_createdOpportunityIds.Any())
+            if (TestEnvironment.UsePostgreSQL && _createdOpportunityIds.Any())
             {
                 var ids = string.Join(",", _createdOpportunityIds);
                 _context.Database.ExecuteSqlRaw($"DELETE FROM public.\"Opportunities\" WHERE \"Id\" IN ({ids})");
@@ -768,6 +801,13 @@ public class OpportunityValidationTests : IDisposable
         if (TestEnvironment.UseInMemory)
         {
             _context.Database.EnsureDeleted();
+        }
+        if (_transaction != null)
+        {
+            try { _transaction.Rollback(); }
+            catch { }
+            _transaction.Dispose();
+            _transaction = null;
         }
         _context.Dispose();
     }

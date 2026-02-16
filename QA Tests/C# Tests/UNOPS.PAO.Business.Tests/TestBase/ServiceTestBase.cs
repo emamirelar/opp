@@ -1,27 +1,39 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Moq;
 using AutoMapper;
 using UNOPS.PAO.DataAccess.Context;
+using UNOPS.PAO.UNOPSDataAccess.Context;
 
 namespace UNOPS.PAO.Business.Tests.TestBase;
 
 /// <summary>
-/// Base class for all service unit tests providing common setup and utilities
+/// Base class for all service unit tests providing common setup and utilities.
+/// 
+/// PostgreSQL isolation: Each test runs inside a database transaction that is
+/// rolled back on Dispose, ensuring no test data reaches the shared database.
 /// </summary>
 public abstract class ServiceTestBase : IDisposable
 {
-    protected AppDbContext Context { get; private set; }
+    protected UNOPSAppDbContext Context { get; private set; }
     protected Mock<IMapper> MockMapper { get; private set; }
     protected IMapper Mapper => MockMapper.Object;
 
+    private IDbContextTransaction? _transaction;
+
     protected ServiceTestBase()
     {
-        Context = TestDbContextFactory.Create();
+        Context = (UNOPSAppDbContext)TestDbContextFactory.Create();
         MockMapper = new Mock<IMapper>();
+
+        if (TestEnvironment.UsePostgreSQL)
+        {
+            _transaction = Context.Database.BeginTransaction();
+        }
     }
 
     /// <summary>
-    /// Save changes to in-memory database
+    /// Save changes to database
     /// </summary>
     protected async Task<int> SaveChangesAsync()
     {
@@ -42,6 +54,13 @@ public abstract class ServiceTestBase : IDisposable
 
     public void Dispose()
     {
+        if (_transaction != null)
+        {
+            try { _transaction.Rollback(); }
+            catch { }
+            _transaction.Dispose();
+            _transaction = null;
+        }
         Context?.Dispose();
         GC.SuppressFinalize(this);
     }

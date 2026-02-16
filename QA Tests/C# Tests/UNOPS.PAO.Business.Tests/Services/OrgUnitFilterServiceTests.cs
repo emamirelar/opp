@@ -24,6 +24,7 @@ using UNOPS.PAO.UNOPSDomain.Specifications;
 using Xunit;
 using UNOPS.PAO.Models.Contacts;
 using UNOPS.PAO.Models.Interactions;
+using UNOPS.PAO.Business.Tests.TestBase;
 
 namespace UNOPS.PAO.IntegrationTests.UnitTests.Services
 {
@@ -53,7 +54,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Services
             _mockDbContextSchema = new Mock<IDbContextSchema>();
             _mockDbContextSchema.Setup(x => x.Schema).Returns("public");
             
-            _dbContext = new UNOPSAppDbContext(options, userResolverService, _mockDbContextSchema.Object);
+            _dbContext = TestDbContextFactory.CreateUNOPS(options, userResolverService, _mockDbContextSchema.Object);
 
             // Setup mocks
             _mockPermissionService = new Mock<IPermissionService>();

@@ -30,6 +30,7 @@ using UNOPS.PAO.UNOPSBusiness.Repositories;
 using UNOPS.PAO.Domain.Specifications.PartnerSpecifications;
 using UNOPS.PAO.UNOPSBusiness.Specifications;
 using UNOPS.PAO.UNOPSDomain.Specifications;
+using UNOPS.PAO.Business.Tests.TestBase;
 using Xunit;
 using UNOPS.PAO.Models.Partners;
 using UNOPS.PAO.Models.Shared;
@@ -68,7 +69,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             _mockDbContextSchema = new Mock<IDbContextSchema>();
             _mockDbContextSchema.Setup(x => x.Schema).Returns("public");
             
-            _dbContext = new UNOPSAppDbContext(options, userResolverService, _mockDbContextSchema.Object);
+            _dbContext = TestDbContextFactory.CreateUNOPS(options, userResolverService, _mockDbContextSchema.Object);
 
             // Setup mocks
             _mockMapper = new Mock<IMapper>();

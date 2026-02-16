@@ -125,10 +125,11 @@ public class OrganizationHierarchyManagerEdgeCaseTests : ManagerTestBase
         result.Should().BeEmpty();
     }
 
-    [Fact]
-    public async Task Organization_WithNonExistentParentId_Should_BeStorable()
+    [SkipIfNotPostgreSQLFact]
+    public async Task Organization_WithNonExistentParentId_ShouldBeRejectedByForeignKey()
     {
-        // Arrange
+        // Arrange - PostgreSQL enforces FK constraints, so a non-existent ParentId
+        // should be rejected. This is the correct referential integrity behavior.
         var org = new OrganizationHierarchy
         {
             Code = $"ORPHAN_{_testMarker}",
@@ -138,15 +139,11 @@ public class OrganizationHierarchyManagerEdgeCaseTests : ManagerTestBase
             ParentId = 999999 // Non-existent parent
         };
         await Context.OrganizationHierarchies.AddAsync(org);
-        await SaveChangesAsync();
-        RegisterTableCleanup("OrganizationHierarchies", $"\"Id\" = {org.Id}");
 
-        // Act
-        var result = await Context.OrganizationHierarchies.FindAsync(org.Id);
-
-        // Assert
-        result.Should().NotBeNull();
-        result!.ParentId.Should().Be(999999);
+        // Act & Assert - FK constraint should reject the orphan record
+        var action = async () => await SaveChangesAsync();
+        await action.Should().ThrowAsync<DbUpdateException>(
+            "PostgreSQL enforces FK constraints - non-existent ParentId should be rejected");
     }
 
     [Fact]

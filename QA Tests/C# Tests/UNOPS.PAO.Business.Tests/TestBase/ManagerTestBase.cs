@@ -1,8 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Moq;
 using AutoMapper;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.Business.Tests.TestBase;
@@ -10,19 +12,38 @@ namespace UNOPS.PAO.Business.Tests.TestBase;
 /// <summary>
 /// Base class for all manager unit tests providing common setup and utilities.
 /// Provides helpers for creating prerequisite entities (e.g., partner for FK constraints).
+/// 
+/// PostgreSQL isolation: Each test runs inside a database transaction that is
+/// rolled back on Dispose, ensuring no test data reaches the shared database.
+/// Uses two-phase user resolution to ensure AuditableDbContext caches a valid user ID.
 /// </summary>
 public abstract class ManagerTestBase : IDisposable
 {
-    protected AppDbContext Context { get; private set; }
+    protected UNOPSAppDbContext Context { get; private set; }
     protected Mock<IMapper> MockMapper { get; private set; }
     protected IMapper Mapper => MockMapper.Object;
+    protected int TestUserId { get; private set; }
 
-    /// <summary>Tracks entity IDs for cleanup on PostgreSQL.</summary>
-    private readonly List<Func<Task>> _cleanupActions = new();
+    private IDbContextTransaction? _transaction;
 
     protected ManagerTestBase()
     {
-        Context = TestDbContextFactory.Create();
+        if (TestEnvironment.UsePostgreSQL)
+        {
+            // Phase 1: Resolve (or create) the test user using a temporary context
+            using var tempContext = TestDbContextFactory.CreateUNOPS();
+            TestUserId = TestDataHelper.GetOrCreateTestUser(tempContext, "managertest@unops.org");
+
+            // Phase 2: Create main context with correct user ID in claims
+            Context = TestDbContextFactory.CreateUNOPSWithUserId(TestUserId);
+            _transaction = Context.Database.BeginTransaction();
+        }
+        else
+        {
+            TestUserId = 1;
+            Context = (UNOPSAppDbContext)TestDbContextFactory.Create();
+        }
+
         MockMapper = new Mock<IMapper>();
     }
 
@@ -44,39 +65,22 @@ public abstract class ManagerTestBase : IDisposable
         {
             Name = name,
             Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
             LastModifiedDate = DateTime.UtcNow
         };
         await Context.Partners.AddAsync(partner);
         await Context.SaveChangesAsync();
-        RegisterTableCleanup("Partners", $"\"Id\" = {partner.Id}");
         return partner.Id;
     }
 
     /// <summary>
-    /// Register a cleanup action to run on Dispose (removes test data from PostgreSQL).
+    /// Register a cleanup action (no-op with transaction rollback).
     /// </summary>
-    protected void RegisterCleanup(Func<Task> cleanupAction)
-    {
-        _cleanupActions.Add(cleanupAction);
-    }
+    protected void RegisterCleanup(Func<Task> cleanupAction) { }
 
     /// <summary>
-    /// Remove test entities by executing raw SQL DELETE.
+    /// Register table cleanup (no-op with transaction rollback).
     /// </summary>
-    protected void RegisterTableCleanup(string tableName, string whereClause)
-    {
-        _cleanupActions.Add(async () =>
-        {
-            try
-            {
-                await Context.Database.ExecuteSqlRawAsync(
-                    $"DELETE FROM public.\"{tableName}\" WHERE {whereClause}");
-            }
-            catch { /* Best-effort cleanup */ }
-        });
-    }
+    protected void RegisterTableCleanup(string tableName, string whereClause) { }
 
     /// <summary>
     /// Clear all entities from database
@@ -92,13 +96,13 @@ public abstract class ManagerTestBase : IDisposable
 
     public void Dispose()
     {
-        // Run cleanup actions (child tables first, parent tables last)
-        for (int i = _cleanupActions.Count - 1; i >= 0; i--)
+        if (_transaction != null)
         {
-            try { _cleanupActions[i]().GetAwaiter().GetResult(); }
-            catch { /* Best-effort cleanup */ }
+            try { _transaction.Rollback(); }
+            catch { }
+            _transaction.Dispose();
+            _transaction = null;
         }
-        _cleanupActions.Clear();
         Context?.Dispose();
         GC.SuppressFinalize(this);
     }

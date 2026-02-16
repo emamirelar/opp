@@ -1,17 +1,20 @@
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.Business.Tests.TestBase;
 
 /// <summary>
-/// Base class for performance tests with timing utilities
+/// Base class for performance tests with timing utilities.
+/// PostgreSQL isolation via transaction rollback.
 /// </summary>
 public abstract class PerformanceTestBase : IDisposable
 {
-    protected AppDbContext Context { get; private set; }
+    protected UNOPSAppDbContext Context { get; private set; }
     protected Stopwatch Stopwatch { get; private set; }
 
     // Performance thresholds (in milliseconds)
@@ -20,13 +23,17 @@ public abstract class PerformanceTestBase : IDisposable
     protected const int SlowOperationThreshold = 1000;
     protected const int BulkOperationThreshold = 2000;
 
-    /// <summary>Tracks cleanup actions for PostgreSQL test data isolation.</summary>
-    private readonly List<Func<Task>> _cleanupActions = new();
+    private IDbContextTransaction? _transaction;
 
     protected PerformanceTestBase()
     {
-        Context = TestDbContextFactory.Create();
+        Context = (UNOPSAppDbContext)TestDbContextFactory.Create();
         Stopwatch = new Stopwatch();
+
+        if (TestEnvironment.UsePostgreSQL)
+        {
+            _transaction = Context.Database.BeginTransaction();
+        }
     }
 
     /// <summary>
@@ -44,20 +51,11 @@ public abstract class PerformanceTestBase : IDisposable
         };
         await Context.Partners.AddAsync(partner);
         await Context.SaveChangesAsync();
-        RegisterTableCleanup("Partners", $"\"Id\" = {partner.Id}");
         return partner.Id;
     }
 
-    protected void RegisterCleanup(Func<Task> cleanupAction) => _cleanupActions.Add(cleanupAction);
-
-    protected void RegisterTableCleanup(string tableName, string whereClause)
-    {
-        _cleanupActions.Add(async () =>
-        {
-            try { await Context.Database.ExecuteSqlRawAsync($"DELETE FROM public.\"{tableName}\" WHERE {whereClause}"); }
-            catch { /* Best-effort cleanup */ }
-        });
-    }
+    protected void RegisterCleanup(Func<Task> cleanupAction) { }
+    protected void RegisterTableCleanup(string tableName, string whereClause) { }
 
     /// <summary>
     /// Execute and measure operation time
@@ -126,12 +124,13 @@ public abstract class PerformanceTestBase : IDisposable
 
     public void Dispose()
     {
-        for (int i = _cleanupActions.Count - 1; i >= 0; i--)
+        if (_transaction != null)
         {
-            try { _cleanupActions[i]().GetAwaiter().GetResult(); }
-            catch { /* Best-effort cleanup */ }
+            try { _transaction.Rollback(); }
+            catch { }
+            _transaction.Dispose();
+            _transaction = null;
         }
-        _cleanupActions.Clear();
         Context?.Dispose();
         GC.SuppressFinalize(this);
     }

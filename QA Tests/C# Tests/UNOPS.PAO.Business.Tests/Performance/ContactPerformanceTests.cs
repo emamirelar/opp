@@ -43,7 +43,7 @@ public class ContactPerformanceTests : PerformanceTestBase
         foreach (var c in contacts) { _createdContactIds.Add(c.Id); }
         RegisterCleanup(async () =>
         {
-            if (_createdContactIds.Any())
+            if (TestEnvironment.UsePostgreSQL && _createdContactIds.Any())
             {
                 var ids = string.Join(",", _createdContactIds);
                 await Context.Database.ExecuteSqlRawAsync($"DELETE FROM public.\"Contacts\" WHERE \"Id\" IN ({ids})");
@@ -115,8 +115,11 @@ public class ContactPerformanceTests : PerformanceTestBase
         var createdIds = contacts.Select(c => c.Id).ToList();
         RegisterCleanup(async () =>
         {
-            var ids = string.Join(",", createdIds);
-            await Context.Database.ExecuteSqlRawAsync($"DELETE FROM public.\"Contacts\" WHERE \"Id\" IN ({ids})");
+            if (TestEnvironment.UsePostgreSQL)
+            {
+                var ids = string.Join(",", createdIds);
+                await Context.Database.ExecuteSqlRawAsync($"DELETE FROM public.\"Contacts\" WHERE \"Id\" IN ({ids})");
+            }
         });
 
         // Act
@@ -160,8 +163,11 @@ public class ContactPerformanceTests : PerformanceTestBase
         var createdIds = contacts.Select(c => c.Id).ToList();
         RegisterCleanup(async () =>
         {
-            var ids = string.Join(",", createdIds);
-            await Context.Database.ExecuteSqlRawAsync($"DELETE FROM public.\"Contacts\" WHERE \"Id\" IN ({ids})");
+            if (TestEnvironment.UsePostgreSQL)
+            {
+                var ids = string.Join(",", createdIds);
+                await Context.Database.ExecuteSqlRawAsync($"DELETE FROM public.\"Contacts\" WHERE \"Id\" IN ({ids})");
+            }
         });
 
         // Assert

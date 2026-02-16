@@ -1,7 +1,7 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -35,56 +35,53 @@ public abstract class IntegrationTestBase : IDisposable
     protected readonly IMapper Mapper;
     protected readonly ClaimsPrincipal TestUser;
     protected readonly IServiceProvider ServiceProvider;
+    private IDbContextTransaction? _transaction;
 
     protected IntegrationTestBase()
     {
-        // Use TestEnvironment to create database options (InMemory or PostgreSQL)
         var dbContextOptions = TestEnvironment.CreateUNOPSDbContextOptions();
-
-        var mockUserServiceHttpContextAccessor = new Mock<IHttpContextAccessor>();
-        var mockUserServiceHttpContext = new Mock<HttpContext>();
-        var mockRequest = new Mock<HttpRequest>();
-        var mockHeaders = new HeaderDictionary();
-        
-        var userServiceTestUser = new ClaimsPrincipal(new ClaimsIdentity(new[]
-        {
-            new Claim(ClaimTypes.NameIdentifier, "1"),
-            new Claim(ClaimTypes.Name, "Test User"),
-            new Claim(ClaimTypes.Email, "testuser@unops.org")
-        }, "TestAuthType"));
-        
-        mockRequest.Setup(r => r.Headers).Returns(mockHeaders);
-        mockUserServiceHttpContext.Setup(m => m.User).Returns(userServiceTestUser);
-        mockUserServiceHttpContext.Setup(m => m.Request).Returns(mockRequest.Object);
-        mockUserServiceHttpContextAccessor.Setup(m => m.HttpContext).Returns(mockUserServiceHttpContext.Object);
-
-        var userResolverService = new UserResolverService<int>(mockUserServiceHttpContextAccessor.Object, null);
         var mockDbSchema = new Mock<IDbContextSchema>();
         mockDbSchema.Setup(s => s.Schema).Returns("public");
 
-        Context = new UNOPSAppDbContext(dbContextOptions, userResolverService, mockDbSchema.Object);
-        
-        // For InMemory: create the schema. For PostgreSQL: schema already exists from migrations.
-        if (TestEnvironment.UseInMemory)
+        // Phase 1: Resolve the test user ID using a temporary context (outside transaction).
+        // AuditableDbContext caches _currentUserId at construction, so we must know the
+        // real user ID before creating the main context.
+        int testUserId;
         {
-            Context.Database.EnsureCreated();
+            var tempAccessor = CreateMockHttpContextAccessor("0");
+            var tempResolver = new UserResolverService<int>(tempAccessor.Object, null);
+            using var tempCtx = UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.CreateUNOPS(dbContextOptions, tempResolver, mockDbSchema.Object);
+            testUserId = TestDataHelper.GetOrCreateTestUser(tempCtx, "testuser@unops.org");
         }
+
+        // Phase 2: Create the MAIN context with the ACTUAL test user ID in claims.
+        var mainAccessor = CreateMockHttpContextAccessor(testUserId.ToString());
+        var userResolverService = new UserResolverService<int>(mainAccessor.Object, null);
+        Context = UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.CreateUNOPS(dbContextOptions, userResolverService, mockDbSchema.Object);
+
+        // Begin transaction for PostgreSQL test isolation (rollback in Dispose)
+        if (TestEnvironment.UsePostgreSQL)
+        {
+            _transaction = Context.Database.BeginTransaction();
+        }
+
+        // Seed reference data (test user already exists from Phase 1)
+        SeedTestData();
+
+        var actualUserId = SeededTestUserId.ToString();
 
         // Setup real AutoMapper
         var mapperConfig = new MapperConfiguration(cfg =>
         {
-            // Add all profiles from the main application
             cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies());
         });
         Mapper = mapperConfig.CreateMapper();
 
-        // Setup real Configuration using TestEnvironment
         var configuration = TestEnvironment.CreateTestConfiguration();
 
-        // Setup test user
         TestUser = new ClaimsPrincipal(new ClaimsIdentity(new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, "1"),
+            new Claim(ClaimTypes.NameIdentifier, actualUserId),
             new Claim(ClaimTypes.Name, "Test User"),
             new Claim(ClaimTypes.Email, "testuser@unops.org"),
             new Claim(ClaimTypes.Role, "Administrator")
@@ -106,12 +103,10 @@ public abstract class IntegrationTestBase : IDisposable
         var services = new ServiceCollection();
         services.AddSingleton<IConfiguration>(configuration);
         services.AddSingleton(Mapper);
-        // Register DbContext and Factory using TestEnvironment configuration
         if (TestEnvironment.UsePostgreSQL)
         {
             if (TestEnvironment.DataSource != null)
             {
-                // Use pre-built data source (handles IAM auth and connection pooling)
                 services.AddDbContext<UNOPSAppDbContext>(options => options.UseNpgsql(TestEnvironment.DataSource));
                 services.AddDbContextFactory<UNOPSAppDbContext>(options => options.UseNpgsql(TestEnvironment.DataSource));
             }
@@ -128,15 +123,12 @@ public abstract class IntegrationTestBase : IDisposable
             services.AddDbContext<UNOPSAppDbContext>(options => options.UseInMemoryDatabase(dbName));
             services.AddDbContextFactory<UNOPSAppDbContext>(options => options.UseInMemoryDatabase(dbName));
         }
-        
-        // Setup mock permission service for testing (using Moq)
+
         var mockPermissionService = new Mock<IPermissionService>();
         mockPermissionService.Setup(s => s.HasPermissionAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(true);
         mockPermissionService.Setup(s => s.CanPerformActionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ClaimsPrincipal>(), It.IsAny<object>()))
             .ReturnsAsync(true);
-        // Note: ApplyAccessControlFiltersAsync is NOT mocked here - tests that need it will set up their own specific implementation
-        // Removed generic mock that was causing Moq errors: "Type matchers may not be used as the type for 'Callback' or 'Returns' parameters"
         mockPermissionService.Setup(s => s.GetUserOrgUnitAsync(It.IsAny<ClaimsPrincipal>()))
             .ReturnsAsync("1");
         mockPermissionService.Setup(s => s.HasInstanceAccessAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<ClaimsPrincipal>(), It.IsAny<string>()))
@@ -149,11 +141,9 @@ public abstract class IntegrationTestBase : IDisposable
             .Returns(true);
         mockPermissionService.Setup(s => s.CanImport(It.IsAny<ClaimsPrincipal>()))
             .Returns(true);
-        
+
         services.AddSingleton(mockPermissionService.Object);
         services.AddSingleton<IHttpContextAccessor>(httpContextAccessor);
-        
-        // Add test exchange rate service for testing
         services.AddSingleton<IExchangeRateService, TestExchangeRateService>();
 
         ServiceProvider = services.BuildServiceProvider();
@@ -169,72 +159,104 @@ public abstract class IntegrationTestBase : IDisposable
             httpContextAccessor,
             ServiceProvider
         );
-
-        // Seed test data
-        SeedTestData();
     }
+
+    /// <summary>IDs resolved during seeding, available to derived test classes.</summary>
+    protected int SeededCurrencyUsdId { get; private set; }
+    protected int SeededCurrencyEurId { get; private set; }
+    protected int SeededCountryBdId { get; private set; }
+    protected int SeededCountryNpId { get; private set; }
+    protected int SeededCountryMmId { get; private set; }
+    protected int SeededOrgHierarchySahId { get; private set; }
+    protected int SeededOrgHierarchyBdoId { get; private set; }
+    protected int SeededProposedInitProjectId { get; private set; }
+    protected int SeededProposedInitProgrammeId { get; private set; }
+    protected int SeededProposedInitAdvisoryId { get; private set; }
+    protected int SeededTestUserId { get; private set; }
 
     protected virtual void SeedTestData()
     {
-        // Seed Currencies
-        Context.Currencies.AddRange(new[]
-        {
-            new Currency { Id = 1, Code = "USD", Name = "US Dollar", IsDeleted = false },
-            new Currency { Id = 2, Code = "EUR", Name = "Euro", IsDeleted = false }
-        });
+        // Seed Currencies (get-or-create to work with existing PostgreSQL data)
+        var usd = Context.Currencies.FirstOrDefault(c => c.Code == "USD");
+        if (usd == null) { usd = new Currency { Code = "USD", Name = "US Dollar", IsDeleted = false }; Context.Currencies.Add(usd); Context.SaveChanges(); }
+        SeededCurrencyUsdId = usd.Id;
+
+        var eur = Context.Currencies.FirstOrDefault(c => c.Code == "EUR");
+        if (eur == null) { eur = new Currency { Code = "EUR", Name = "Euro", IsDeleted = false }; Context.Currencies.Add(eur); Context.SaveChanges(); }
+        SeededCurrencyEurId = eur.Id;
 
         // Seed Countries
-        Context.Countries.AddRange(new[]
-        {
-            new Country { Id = 1, Name = "Bangladesh", Iso2Code = "BD" },
-            new Country { Id = 2, Name = "Nepal", Iso2Code = "NP" },
-            new Country { Id = 3, Name = "Myanmar", Iso2Code = "MM" }
-        });
+        var bd = Context.Countries.FirstOrDefault(c => c.Iso2Code == "BD");
+        if (bd == null) { bd = new Country { Name = "Bangladesh", Iso2Code = "BD" }; Context.Countries.Add(bd); Context.SaveChanges(); }
+        SeededCountryBdId = bd.Id;
+
+        var np = Context.Countries.FirstOrDefault(c => c.Iso2Code == "NP");
+        if (np == null) { np = new Country { Name = "Nepal", Iso2Code = "NP" }; Context.Countries.Add(np); Context.SaveChanges(); }
+        SeededCountryNpId = np.Id;
+
+        var mm = Context.Countries.FirstOrDefault(c => c.Iso2Code == "MM");
+        if (mm == null) { mm = new Country { Name = "Myanmar", Iso2Code = "MM" }; Context.Countries.Add(mm); Context.SaveChanges(); }
+        SeededCountryMmId = mm.Id;
 
         // Seed Organization Hierarchies
-        Context.OrganizationHierarchies.AddRange(new[]
-        {
-            new OrganizationHierarchy 
-            { 
-                Id = 1, 
-                Name = "South Asia Hub", 
-                Code = "SAH", 
-                Description = "South Asia Regional Hub", 
-                IsDeleted = false 
-            },
-            new OrganizationHierarchy 
-            { 
-                Id = 2, 
-                Name = "Bangladesh Office", 
-                Code = "BDO", 
-                Description = "Bangladesh Country Office", 
-                ParentId = 1, 
-                IsDeleted = false 
-            }
-        });
+        var sah = Context.OrganizationHierarchies.FirstOrDefault(o => o.Code == "SAH" && !o.IsDeleted);
+        if (sah == null) { sah = new OrganizationHierarchy { Name = "South Asia Hub", Code = "SAH", Description = "South Asia Regional Hub", IsDeleted = false }; Context.OrganizationHierarchies.Add(sah); Context.SaveChanges(); }
+        SeededOrgHierarchySahId = sah.Id;
 
-        // Workflow stages are now stored as string values in Opportunity.Stage property
+        var bdo = Context.OrganizationHierarchies.FirstOrDefault(o => o.Code == "BDO" && !o.IsDeleted);
+        if (bdo == null) { bdo = new OrganizationHierarchy { Name = "Bangladesh Office", Code = "BDO", Description = "Bangladesh Country Office", ParentId = SeededOrgHierarchySahId, IsDeleted = false }; Context.OrganizationHierarchies.Add(bdo); Context.SaveChanges(); }
+        SeededOrgHierarchyBdoId = bdo.Id;
 
         // Seed Proposed Initiative Types
-        Context.ProposedInitiativeTypes.AddRange(new[]
-        {
-            new ProposedInitiativeType { Id = 1, Name = "Project", IsDeleted = false },
-            new ProposedInitiativeType { Id = 2, Name = "Programme", IsDeleted = false },
-            new ProposedInitiativeType { Id = 3, Name = "Advisory", IsDeleted = false }
-        });
+        var project = Context.ProposedInitiativeTypes.FirstOrDefault(p => p.Name == "Project" && !p.IsDeleted);
+        if (project == null) { project = new ProposedInitiativeType { Name = "Project", IsDeleted = false }; Context.ProposedInitiativeTypes.Add(project); Context.SaveChanges(); }
+        SeededProposedInitProjectId = project.Id;
 
-        // Seed test user
-        Context.PAOUsers.Add(new PAOUser
-        {
-            Id = 1,
-            Email = "testuser@unops.org"
-        });
+        var programme = Context.ProposedInitiativeTypes.FirstOrDefault(p => p.Name == "Programme" && !p.IsDeleted);
+        if (programme == null) { programme = new ProposedInitiativeType { Name = "Programme", IsDeleted = false }; Context.ProposedInitiativeTypes.Add(programme); Context.SaveChanges(); }
+        SeededProposedInitProgrammeId = programme.Id;
 
-        Context.SaveChanges();
+        var advisory = Context.ProposedInitiativeTypes.FirstOrDefault(p => p.Name == "Advisory" && !p.IsDeleted);
+        if (advisory == null) { advisory = new ProposedInitiativeType { Name = "Advisory", IsDeleted = false }; Context.ProposedInitiativeTypes.Add(advisory); Context.SaveChanges(); }
+        SeededProposedInitAdvisoryId = advisory.Id;
+
+        // Seed test user (raw SQL for PostgreSQL to handle all AspNetUsers required columns)
+        SeededTestUserId = TestDataHelper.GetOrCreateTestUser(Context, "testuser@unops.org");
+
+        Context.ChangeTracker.Clear();
+    }
+
+    /// <summary>
+    /// Creates a mock IHttpContextAccessor configured with the given user ID claim.
+    /// </summary>
+    private static Mock<IHttpContextAccessor> CreateMockHttpContextAccessor(string userId)
+    {
+        var accessor = new Mock<IHttpContextAccessor>();
+        var httpContext = new Mock<HttpContext>();
+        var request = new Mock<HttpRequest>();
+        request.Setup(r => r.Headers).Returns(new HeaderDictionary());
+        var user = new ClaimsPrincipal(new ClaimsIdentity(new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, userId),
+            new Claim(ClaimTypes.Name, "Test User"),
+            new Claim(ClaimTypes.Email, "testuser@unops.org")
+        }, "TestAuthType"));
+        httpContext.Setup(m => m.User).Returns(user);
+        httpContext.Setup(m => m.Request).Returns(request.Object);
+        accessor.Setup(m => m.HttpContext).Returns(httpContext.Object);
+        return accessor;
     }
 
     public virtual void Dispose()
     {
+        // For PostgreSQL: rollback transaction to undo all test data changes
+        if (_transaction != null)
+        {
+            try { _transaction.Rollback(); } catch { }
+            _transaction.Dispose();
+            _transaction = null;
+        }
+
         // For InMemory: cleanup is automatic. For PostgreSQL: do NOT delete the real database.
         if (TestEnvironment.UseInMemory)
         {
@@ -265,23 +287,7 @@ public class TestDbContextFactory : IDbContextFactory<UNOPSAppDbContext>
         var mockUserService = new Mock<UserResolverService<int>>(MockBehavior.Loose, new object?[] { null });
         var mockDbSchema = new Mock<IDbContextSchema>();
         mockDbSchema.Setup(s => s.Schema).Returns("public");
-        var context = new UNOPSAppDbContext(_options, mockUserService.Object, mockDbSchema.Object);
-        
-        // Finalize model for factory-created contexts
-        try
-        {
-            var model = context.Model;
-            if (model is IMutableModel mutableModel)
-            {
-                model = mutableModel.FinalizeModel();
-            }
-        }
-        catch
-        {
-            // Ignore finalization errors for factory contexts
-        }
-        
-        return context;
+        return UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.CreateUNOPS(_options, mockUserService.Object, mockDbSchema.Object);
     }
 
     public async Task<UNOPSAppDbContext> CreateDbContextAsync(CancellationToken cancellationToken = default)

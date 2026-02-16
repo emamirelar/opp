@@ -1154,6 +1154,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
     public async Task<OpportunityModel?> UpdateOpportunityAsync(UpdateOpportunityRequest model)
     {
+        ArgumentNullException.ThrowIfNull(model);
+
         // ✅ Validate name if provided
         if (!string.IsNullOrEmpty(model.Name))
         {

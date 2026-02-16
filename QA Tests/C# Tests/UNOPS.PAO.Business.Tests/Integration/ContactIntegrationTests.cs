@@ -30,41 +30,83 @@ namespace UNOPS.PAO.Business.Tests.Integration;
 /// Test Strategy: These tests verify complete workflows with
 /// real database operations and dependencies.
 /// 
+/// PostgreSQL: Tests run inside a transaction that is rolled back on Dispose.
+/// Pre-existing database data is visible, so assertions scope to test-created data
+/// using unique markers (email prefix per test) rather than assuming empty tables.
+/// 
 /// Required: ≥50 tests (FIXED minimum, core category)
 /// Current: 52 tests
 /// </summary>
 public class ContactIntegrationTests : IntegrationTestBase
 {
+    /// <summary>
+    /// Creates a UNOPSContact with valid audit FKs and default test partner.
+    /// </summary>
+    private UNOPSContact MakeContact(
+        string firstName, string lastName, string email,
+        string title = "Staff", EntityStatus status = EntityStatus.Active,
+        int? partnerId = null, bool isDeleted = false)
+    {
+        return new UNOPSContact
+        {
+            Name = $"{firstName} {lastName}",
+            FirstName = firstName,
+            LastName = lastName,
+            Email = email,
+            Title = title,
+            Status = status,
+            PartnerId = partnerId ?? DefaultTestPartnerId,
+            IsDeleted = isDeleted,
+            CreatedBy = TestUserId,
+            LastModifiedBy = TestUserId,
+            LastModifiedDate = DateTime.UtcNow
+        };
+    }
+
+    /// <summary>
+    /// Creates a UNOPSPartner with valid audit FKs.
+    /// </summary>
+    private UNOPSPartner MakePartner(string name)
+    {
+        return new UNOPSPartner
+        {
+            Name = name,
+            Status = EntityStatus.Active,
+            CreatedBy = TestUserId,
+            LastModifiedBy = TestUserId,
+            LastModifiedDate = DateTime.UtcNow
+        };
+    }
+
+    /// <summary>
+    /// Creates a UNOPSInteraction with valid audit FKs.
+    /// </summary>
+    private UNOPSInteraction MakeInteraction(string subject, InteractionType type = InteractionType.InPersonMeeting)
+    {
+        return new UNOPSInteraction
+        {
+            Name = subject,
+            Subject = subject,
+            Type = type,
+            Date = DateTime.UtcNow,
+            Status = EntityStatus.Active,
+            CreatedBy = TestUserId,
+            LastModifiedBy = TestUserId,
+            LastModifiedDate = DateTime.UtcNow
+        };
+    }
+
     #region CRUD Workflow (10 tests)
 
     [Fact]
     public async Task Contact_CanBeCreatedWithPartner()
     {
         // Arrange
-        var partner = new UNOPSPartner
-        {
-            Name = "Test Partner",
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        };
+        var partner = MakePartner("Test Partner CRUD");
         await Context.Partners.AddAsync(partner);
         await SaveChangesAsync();
 
-        var contact = new UNOPSContact
-        {
-            Name = "John Doe",
-            FirstName = "John",
-            LastName = "Doe",
-            Email = "john@test.com",
-            Title = "Manager",
-            PartnerId = partner.Id,
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        };
+        var contact = MakeContact("John", "Doe", "john-crud@test.com", "Manager", partnerId: partner.Id);
 
         // Act
         await Context.Contacts.AddAsync(contact);
@@ -74,25 +116,14 @@ public class ContactIntegrationTests : IntegrationTestBase
         // Assert
         result.Should().NotBeNull();
         result!.Partner.Should().NotBeNull();
-        result.Partner!.Name.Should().Be("Test Partner");
+        result.Partner!.Name.Should().Be("Test Partner CRUD");
     }
 
     [Fact]
     public async Task Contact_CanBeRetrievedById()
     {
         // Arrange
-        var contact = new UNOPSContact
-        {
-            Name = "Jane Smith",
-            FirstName = "Jane",
-            LastName = "Smith",
-            Email = "jane@test.com",
-            Title = "Director",
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        };
+        var contact = MakeContact("Jane", "Smith", "jane-retrieve@test.com", "Director");
         await Context.Contacts.AddAsync(contact);
         await SaveChangesAsync();
 
@@ -109,49 +140,27 @@ public class ContactIntegrationTests : IntegrationTestBase
     public async Task Contact_CanBeUpdated()
     {
         // Arrange
-        var contact = new UNOPSContact
-        {
-            Name = "John Doe",
-            FirstName = "John",
-            LastName = "Doe",
-            Email = "john@test.com",
-            Title = "Manager",
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        };
+        var contact = MakeContact("John", "Doe", "john-update@test.com", "Manager");
         await Context.Contacts.AddAsync(contact);
         await SaveChangesAsync();
 
         // Act
         contact.Title = "Senior Manager";
-        contact.Email = "john.doe@test.com";
+        contact.Email = "john.doe-updated@test.com";
         await SaveChangesAsync();
 
         var result = await Context.Contacts.FindAsync(contact.Id);
 
         // Assert
         result!.Title.Should().Be("Senior Manager");
-        result.Email.Should().Be("john.doe@test.com");
+        result.Email.Should().Be("john.doe-updated@test.com");
     }
 
     [Fact]
     public async Task Contact_SoftDelete_SetsIsDeleted()
     {
         // Arrange
-        var contact = new UNOPSContact
-        {
-            Name = "To Delete",
-            FirstName = "To",
-            LastName = "Delete",
-            Email = "delete@test.com",
-            Title = "Test",
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        };
+        var contact = MakeContact("To", "Delete", "delete-sd@test.com", "Test");
         await Context.Contacts.AddAsync(contact);
         await SaveChangesAsync();
 
@@ -168,40 +177,31 @@ public class ContactIntegrationTests : IntegrationTestBase
     [Fact]
     public async Task Contact_SoftDeleted_ExcludedFromActiveQueries()
     {
-        // Arrange
+        // Arrange - use unique email prefix to scope assertions to test data
+        var prefix = $"sde-{Guid.NewGuid():N}";
         await Context.Contacts.AddRangeAsync(new[]
         {
-            new UNOPSContact { Name = "Active1", FirstName = "A", LastName = "One", Email = "a@test.com", Title = "T", Status = EntityStatus.Active, IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSContact { Name = "Deleted", FirstName = "D", LastName = "Two", Email = "d@test.com", Title = "T", Status = EntityStatus.Active, IsDeleted = true, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSContact { Name = "Active2", FirstName = "A", LastName = "Three", Email = "b@test.com", Title = "T", Status = EntityStatus.Active, IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
+            MakeContact("A", "One", $"{prefix}-a@test.com", isDeleted: false),
+            MakeContact("D", "Two", $"{prefix}-d@test.com", isDeleted: true),
+            MakeContact("A", "Three", $"{prefix}-b@test.com", isDeleted: false)
         });
         await SaveChangesAsync();
 
-        // Act
-        var activeContacts = await Context.Contacts.Where(c => !c.IsDeleted).ToListAsync();
+        // Act - scope to test data
+        var activeContacts = await Context.Contacts
+            .Where(c => !c.IsDeleted && c.Email!.StartsWith(prefix))
+            .ToListAsync();
 
         // Assert
         activeContacts.Should().HaveCount(2);
-        activeContacts.Should().NotContain(c => c.Name == "Deleted");
+        activeContacts.Should().NotContain(c => c.Email!.Contains("-d@"));
     }
 
     [Fact]
     public async Task Contact_CanBeRestoredAfterSoftDelete()
     {
         // Arrange
-        var contact = new UNOPSContact
-        {
-            Name = "Restorable",
-            FirstName = "Re",
-            LastName = "Store",
-            Email = "restore@test.com",
-            Title = "T",
-            Status = EntityStatus.Active,
-            IsDeleted = true,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        };
+        var contact = MakeContact("Re", "Store", "restore@test.com", isDeleted: true);
         await Context.Contacts.AddAsync(contact);
         await SaveChangesAsync();
 
@@ -218,24 +218,15 @@ public class ContactIntegrationTests : IntegrationTestBase
     [Fact]
     public async Task Contact_CreateMultiple_AllPersisted()
     {
-        // Arrange
-        var contacts = Enumerable.Range(1, 10).Select(i => new UNOPSContact
-        {
-            Name = $"Contact {i}",
-            FirstName = $"First{i}",
-            LastName = $"Last{i}",
-            Email = $"contact{i}@test.com",
-            Title = "Staff",
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        });
+        // Arrange - use unique email prefix to scope count to test data
+        var prefix = $"multi-{Guid.NewGuid():N}";
+        var contacts = Enumerable.Range(1, 10).Select(i =>
+            MakeContact($"First{i}", $"Last{i}", $"{prefix}-{i}@test.com"));
 
         // Act
         await Context.Contacts.AddRangeAsync(contacts);
         await SaveChangesAsync();
-        var count = await Context.Contacts.CountAsync();
+        var count = await Context.Contacts.CountAsync(c => c.Email!.StartsWith(prefix));
 
         // Assert
         count.Should().Be(10);
@@ -245,18 +236,7 @@ public class ContactIntegrationTests : IntegrationTestBase
     public async Task Contact_Update_PreservesOtherFields()
     {
         // Arrange
-        var contact = new UNOPSContact
-        {
-            Name = "Original Name",
-            FirstName = "Original",
-            LastName = "Name",
-            Email = "original@test.com",
-            Title = "Manager",
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        };
+        var contact = MakeContact("Original", "Name", "original-pres@test.com", "Manager");
         await Context.Contacts.AddAsync(contact);
         await SaveChangesAsync();
 
@@ -267,7 +247,7 @@ public class ContactIntegrationTests : IntegrationTestBase
 
         // Assert
         result!.Title.Should().Be("Director");
-        result.Email.Should().Be("original@test.com", "Email should not change");
+        result.Email.Should().Be("original-pres@test.com", "Email should not change");
         result.FirstName.Should().Be("Original", "Name should not change");
     }
 
@@ -275,18 +255,7 @@ public class ContactIntegrationTests : IntegrationTestBase
     public async Task Contact_CreateWithAllFields_Persisted()
     {
         // Arrange
-        var contact = new UNOPSContact
-        {
-            Name = "Full Contact",
-            FirstName = "Full",
-            LastName = "Contact",
-            Email = "full@test.com",
-            Title = "CEO",
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        };
+        var contact = MakeContact("Full", "Contact", "full-all@test.com", "CEO");
 
         // Act
         await Context.Contacts.AddAsync(contact);
@@ -295,7 +264,7 @@ public class ContactIntegrationTests : IntegrationTestBase
 
         // Assert
         result.Should().NotBeNull();
-        result!.Email.Should().Be("full@test.com");
+        result!.Email.Should().Be("full-all@test.com");
         result.Title.Should().Be("CEO");
     }
 
@@ -303,18 +272,7 @@ public class ContactIntegrationTests : IntegrationTestBase
     public async Task Contact_StatusChange_Persisted()
     {
         // Arrange
-        var contact = new UNOPSContact
-        {
-            Name = "Status Test",
-            FirstName = "Status",
-            LastName = "Test",
-            Email = "status@test.com",
-            Title = "Staff",
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        };
+        var contact = MakeContact("Status", "Test", "status-chg@test.com");
         await Context.Contacts.AddAsync(contact);
         await SaveChangesAsync();
 
@@ -335,25 +293,14 @@ public class ContactIntegrationTests : IntegrationTestBase
     public async Task Contact_CanHaveMultipleInteractions()
     {
         // Arrange
-        var contact = new UNOPSContact
-        {
-            Name = "John Doe",
-            FirstName = "John",
-            LastName = "Doe",
-            Email = "john@test.com",
-            Title = "Manager",
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        };
+        var contact = MakeContact("John", "Doe", "john-intx@test.com", "Manager");
         await Context.Contacts.AddAsync(contact);
         await SaveChangesAsync();
 
         var interactions = new List<UNOPSInteraction>
         {
-            new() { Name = "Meeting 1", Subject = "Meeting 1", Type = InteractionType.InPersonMeeting, Date = DateTime.UtcNow, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new() { Name = "Call 1", Subject = "Call 1", Type = InteractionType.Call, Date = DateTime.UtcNow, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
+            MakeInteraction("Meeting 1"),
+            MakeInteraction("Call 1", InteractionType.Call)
         };
         await Context.Interactions.AddRangeAsync(interactions);
         await SaveChangesAsync();
@@ -377,21 +324,14 @@ public class ContactIntegrationTests : IntegrationTestBase
     public async Task Partner_CanHaveMultipleContacts()
     {
         // Arrange
-        var partner = new UNOPSPartner
-        {
-            Name = "Test Partner",
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        };
+        var partner = MakePartner("MultiContact Partner");
         await Context.Partners.AddAsync(partner);
         await SaveChangesAsync();
 
         var contacts = new List<UNOPSContact>
         {
-            new() { Name = "John Doe", FirstName = "John", LastName = "Doe", Email = "john@test.com", Title = "Manager", PartnerId = partner.Id, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new() { Name = "Jane Smith", FirstName = "Jane", LastName = "Smith", Email = "jane@test.com", Title = "Director", PartnerId = partner.Id, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
+            MakeContact("John", "Doe", "john-mc@test.com", partnerId: partner.Id),
+            MakeContact("Jane", "Smith", "jane-mc@test.com", partnerId: partner.Id)
         };
         await Context.Contacts.AddRangeAsync(contacts);
         await SaveChangesAsync();
@@ -410,30 +350,11 @@ public class ContactIntegrationTests : IntegrationTestBase
     public async Task Contact_PartnerRelationship_LoadedCorrectly()
     {
         // Arrange
-        var partner = new UNOPSPartner
-        {
-            Name = "Partner A",
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        };
+        var partner = MakePartner("Partner A Rel");
         await Context.Partners.AddAsync(partner);
         await SaveChangesAsync();
 
-        var contact = new UNOPSContact
-        {
-            Name = "Contact 1",
-            FirstName = "C",
-            LastName = "One",
-            Email = "c1@test.com",
-            Title = "Staff",
-            PartnerId = partner.Id,
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        };
+        var contact = MakeContact("C", "One", "c1-rel@test.com", partnerId: partner.Id);
         await Context.Contacts.AddAsync(contact);
         await SaveChangesAsync();
 
@@ -442,7 +363,7 @@ public class ContactIntegrationTests : IntegrationTestBase
 
         // Assert
         result!.Partner.Should().NotBeNull();
-        result.Partner!.Name.Should().Be("Partner A");
+        result.Partner!.Name.Should().Be("Partner A Rel");
         result.PartnerId.Should().Be(partner.Id);
     }
 
@@ -450,16 +371,16 @@ public class ContactIntegrationTests : IntegrationTestBase
     public async Task Contact_DifferentPartners_IsolatedCorrectly()
     {
         // Arrange
-        var partnerA = new UNOPSPartner { Name = "Partner A", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow };
-        var partnerB = new UNOPSPartner { Name = "Partner B", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow };
+        var partnerA = MakePartner("PartnerA Iso");
+        var partnerB = MakePartner("PartnerB Iso");
         await Context.Partners.AddRangeAsync(new[] { partnerA, partnerB });
         await SaveChangesAsync();
 
         var contacts = new List<UNOPSContact>
         {
-            new() { Name = "Contact A1", FirstName = "A", LastName = "1", Email = "a1@test.com", Title = "T", PartnerId = partnerA.Id, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new() { Name = "Contact A2", FirstName = "A", LastName = "2", Email = "a2@test.com", Title = "T", PartnerId = partnerA.Id, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new() { Name = "Contact B1", FirstName = "B", LastName = "1", Email = "b1@test.com", Title = "T", PartnerId = partnerB.Id, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
+            MakeContact("A", "1", "a1-iso@test.com", partnerId: partnerA.Id),
+            MakeContact("A", "2", "a2-iso@test.com", partnerId: partnerA.Id),
+            MakeContact("B", "1", "b1-iso@test.com", partnerId: partnerB.Id)
         };
         await Context.Contacts.AddRangeAsync(contacts);
         await SaveChangesAsync();
@@ -477,8 +398,8 @@ public class ContactIntegrationTests : IntegrationTestBase
     public async Task Contact_InteractionLink_BothDirections()
     {
         // Arrange
-        var contact = new UNOPSContact { Name = "C1", FirstName = "C", LastName = "1", Email = "c@test.com", Title = "T", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow };
-        var interaction = new UNOPSInteraction { Name = "Meeting", Subject = "Meeting", Type = InteractionType.InPersonMeeting, Date = DateTime.UtcNow, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow };
+        var contact = MakeContact("C", "1", "c-bidir@test.com");
+        var interaction = MakeInteraction("Meeting BiDir");
 
         await Context.Contacts.AddAsync(contact);
         await Context.Interactions.AddAsync(interaction);
@@ -501,12 +422,12 @@ public class ContactIntegrationTests : IntegrationTestBase
         // Arrange
         var contacts = new List<UNOPSContact>
         {
-            new() { Name = "C1", FirstName = "C", LastName = "1", Email = "c1@t.com", Title = "T", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new() { Name = "C2", FirstName = "C", LastName = "2", Email = "c2@t.com", Title = "T", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new() { Name = "C3", FirstName = "C", LastName = "3", Email = "c3@t.com", Title = "T", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
+            MakeContact("C", "1", "c1-group@t.com"),
+            MakeContact("C", "2", "c2-group@t.com"),
+            MakeContact("C", "3", "c3-group@t.com")
         };
         await Context.Contacts.AddRangeAsync(contacts);
-        var interaction = new UNOPSInteraction { Name = "Group Meeting", Subject = "Group Meeting", Type = InteractionType.InPersonMeeting, Date = DateTime.UtcNow, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow };
+        var interaction = MakeInteraction("Group Meeting");
         await Context.Interactions.AddAsync(interaction);
         await SaveChangesAsync();
         await Context.InteractionContacts.AddRangeAsync(new[]
@@ -525,21 +446,10 @@ public class ContactIntegrationTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task Contact_WithoutPartner_StillPersists()
+    public async Task Contact_WithoutExplicitPartner_UsesDefault()
     {
-        // Arrange - Contact without PartnerId
-        var contact = new UNOPSContact
-        {
-            Name = "Unlinked",
-            FirstName = "Un",
-            LastName = "Linked",
-            Email = "unlinked@test.com",
-            Title = "Consultant",
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        };
+        // Arrange - Contact with default partner
+        var contact = MakeContact("Un", "Linked", "unlinked@test.com", "Consultant");
 
         // Act
         await Context.Contacts.AddAsync(contact);
@@ -548,36 +458,17 @@ public class ContactIntegrationTests : IntegrationTestBase
 
         // Assert
         result.Should().NotBeNull();
-        result!.PartnerId.Should().Be(0);
+        result!.PartnerId.Should().Be(DefaultTestPartnerId);
     }
 
     [Fact]
     public async Task Contact_PartnerDeletion_ContactRemains()
     {
         // Arrange
-        var partner = new UNOPSPartner
-        {
-            Name = "To Delete",
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        };
+        var partner = MakePartner("To Delete Partner");
         await Context.Partners.AddAsync(partner);
         await SaveChangesAsync();
-        var contact = new UNOPSContact
-        {
-            Name = "Orphan",
-            FirstName = "Or",
-            LastName = "Phan",
-            Email = "orphan@test.com",
-            Title = "T",
-            PartnerId = partner.Id,
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        };
+        var contact = MakeContact("Or", "Phan", "orphan@test.com", partnerId: partner.Id);
         await Context.Contacts.AddAsync(contact);
         await SaveChangesAsync();
 
@@ -594,23 +485,11 @@ public class ContactIntegrationTests : IntegrationTestBase
     public async Task Contact_TransferPartner_UpdatesRelationship()
     {
         // Arrange
-        var partnerA = new UNOPSPartner { Name = "Partner A", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow };
-        var partnerB = new UNOPSPartner { Name = "Partner B", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow };
+        var partnerA = MakePartner("Partner A Xfer");
+        var partnerB = MakePartner("Partner B Xfer");
         await Context.Partners.AddRangeAsync(new[] { partnerA, partnerB });
         await SaveChangesAsync();
-        var contact = new UNOPSContact
-        {
-            Name = "Transfer",
-            FirstName = "Trans",
-            LastName = "Fer",
-            Email = "transfer@test.com",
-            Title = "T",
-            PartnerId = partnerA.Id,
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        };
+        var contact = MakeContact("Trans", "Fer", "transfer@test.com", partnerId: partnerA.Id);
         await Context.Contacts.AddAsync(contact);
         await SaveChangesAsync();
 
@@ -621,7 +500,7 @@ public class ContactIntegrationTests : IntegrationTestBase
 
         // Assert
         result!.PartnerId.Should().Be(partnerB.Id);
-        result.Partner!.Name.Should().Be("Partner B");
+        result.Partner!.Name.Should().Be("Partner B Xfer");
     }
 
     #endregion
@@ -631,17 +510,20 @@ public class ContactIntegrationTests : IntegrationTestBase
     [Fact]
     public async Task Search_ByFirstName_ReturnsMatches()
     {
-        // Arrange
+        // Arrange - use unique last name to scope assertions
+        var marker = $"SrchFN-{Guid.NewGuid():N}";
         await Context.Contacts.AddRangeAsync(new[]
         {
-            new UNOPSContact { Name = "John Doe", FirstName = "John", LastName = "Doe", Email = "j@t.com", Title = "T", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSContact { Name = "Jane Doe", FirstName = "Jane", LastName = "Doe", Email = "ja@t.com", Title = "T", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSContact { Name = "John Smith", FirstName = "John", LastName = "Smith", Email = "js@t.com", Title = "T", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
+            MakeContact("John", marker, $"j-{marker}@t.com"),
+            MakeContact("Jane", marker, $"ja-{marker}@t.com"),
+            MakeContact("John", marker, $"js-{marker}@t.com")
         });
         await SaveChangesAsync();
 
         // Act
-        var results = await Context.Contacts.Where(c => c.FirstName == "John").ToListAsync();
+        var results = await Context.Contacts
+            .Where(c => c.FirstName == "John" && c.LastName == marker)
+            .ToListAsync();
 
         // Assert
         results.Should().HaveCount(2);
@@ -650,17 +532,20 @@ public class ContactIntegrationTests : IntegrationTestBase
     [Fact]
     public async Task Search_ByLastName_ReturnsMatches()
     {
-        // Arrange
+        // Arrange - use unique email prefix to scope
+        var marker = $"SrchLN-{Guid.NewGuid():N}";
         await Context.Contacts.AddRangeAsync(new[]
         {
-            new UNOPSContact { Name = "John Doe", FirstName = "John", LastName = "Doe", Email = "j@t.com", Title = "T", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSContact { Name = "Jane Doe", FirstName = "Jane", LastName = "Doe", Email = "ja@t.com", Title = "T", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSContact { Name = "Bob Smith", FirstName = "Bob", LastName = "Smith", Email = "b@t.com", Title = "T", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
+            MakeContact("John", "DoeTest", $"{marker}-j@t.com"),
+            MakeContact("Jane", "DoeTest", $"{marker}-ja@t.com"),
+            MakeContact("Bob", "SmithTest", $"{marker}-b@t.com")
         });
         await SaveChangesAsync();
 
         // Act
-        var results = await Context.Contacts.Where(c => c.LastName == "Doe").ToListAsync();
+        var results = await Context.Contacts
+            .Where(c => c.LastName == "DoeTest" && c.Email!.StartsWith(marker))
+            .ToListAsync();
 
         // Assert
         results.Should().HaveCount(2);
@@ -670,16 +555,17 @@ public class ContactIntegrationTests : IntegrationTestBase
     public async Task Search_ByEmail_ReturnsExactMatch()
     {
         // Arrange
+        var uniqueEmail = $"unique-{Guid.NewGuid():N}@test.com";
         var contacts = new List<UNOPSContact>
         {
-            new() { Name = "C1", FirstName = "C", LastName = "1", Email = "unique@test.com", Title = "T", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new() { Name = "C2", FirstName = "C", LastName = "2", Email = "other@test.com", Title = "T", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
+            MakeContact("C", "1", uniqueEmail),
+            MakeContact("C", "2", "other-srch@test.com")
         };
         await Context.Contacts.AddRangeAsync(contacts);
         await SaveChangesAsync();
 
         // Act
-        var result = await Context.Contacts.FirstOrDefaultAsync(c => c.Email == "unique@test.com");
+        var result = await Context.Contacts.FirstOrDefaultAsync(c => c.Email == uniqueEmail);
 
         // Assert
         result.Should().NotBeNull();
@@ -689,17 +575,20 @@ public class ContactIntegrationTests : IntegrationTestBase
     [Fact]
     public async Task Filter_ByStatus_Active_ReturnsOnlyActive()
     {
-        // Arrange
+        // Arrange - use unique email prefix
+        var prefix = $"fstat-{Guid.NewGuid():N}";
         await Context.Contacts.AddRangeAsync(new[]
         {
-            new UNOPSContact { Name = "Active", FirstName = "A", LastName = "1", Email = "a@t.com", Title = "T", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSContact { Name = "Inactive", FirstName = "I", LastName = "2", Email = "i@t.com", Title = "T", Status = EntityStatus.Inactive, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSContact { Name = "Active2", FirstName = "A", LastName = "3", Email = "a2@t.com", Title = "T", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
+            MakeContact("A", "1", $"{prefix}-a@t.com", status: EntityStatus.Active),
+            MakeContact("I", "2", $"{prefix}-i@t.com", status: EntityStatus.Inactive),
+            MakeContact("A", "3", $"{prefix}-a2@t.com", status: EntityStatus.Active)
         });
         await SaveChangesAsync();
 
         // Act
-        var results = await Context.Contacts.Where(c => c.Status == EntityStatus.Active).ToListAsync();
+        var results = await Context.Contacts
+            .Where(c => c.Status == EntityStatus.Active && c.Email!.StartsWith(prefix))
+            .ToListAsync();
 
         // Assert
         results.Should().HaveCount(2);
@@ -709,15 +598,15 @@ public class ContactIntegrationTests : IntegrationTestBase
     public async Task Filter_ByPartner_ReturnsOnlyPartnerContacts()
     {
         // Arrange
-        var partner1 = new UNOPSPartner { Name = "P1", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow };
-        var partner2 = new UNOPSPartner { Name = "P2", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow };
+        var partner1 = MakePartner("FP1");
+        var partner2 = MakePartner("FP2");
         await Context.Partners.AddRangeAsync(new[] { partner1, partner2 });
         await SaveChangesAsync();
         await Context.Contacts.AddRangeAsync(new[]
         {
-            new UNOPSContact { Name = "C1", FirstName = "C", LastName = "1", Email = "c1@t.com", Title = "T", PartnerId = partner1.Id, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSContact { Name = "C2", FirstName = "C", LastName = "2", Email = "c2@t.com", Title = "T", PartnerId = partner1.Id, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSContact { Name = "C3", FirstName = "C", LastName = "3", Email = "c3@t.com", Title = "T", PartnerId = partner2.Id, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
+            MakeContact("C", "1", "c1-fp@t.com", partnerId: partner1.Id),
+            MakeContact("C", "2", "c2-fp@t.com", partnerId: partner1.Id),
+            MakeContact("C", "3", "c3-fp@t.com", partnerId: partner2.Id)
         });
         await SaveChangesAsync();
 
@@ -731,16 +620,19 @@ public class ContactIntegrationTests : IntegrationTestBase
     [Fact]
     public async Task Filter_ExcludesDeleted_ByDefault()
     {
-        // Arrange
+        // Arrange - use unique prefix
+        var prefix = $"fdel-{Guid.NewGuid():N}";
         await Context.Contacts.AddRangeAsync(new[]
         {
-            new UNOPSContact { Name = "Active", FirstName = "A", LastName = "1", Email = "a@t.com", Title = "T", Status = EntityStatus.Active, IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSContact { Name = "Deleted", FirstName = "D", LastName = "2", Email = "d@t.com", Title = "T", Status = EntityStatus.Active, IsDeleted = true, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
+            MakeContact("A", "1", $"{prefix}-a@t.com", isDeleted: false),
+            MakeContact("D", "2", $"{prefix}-d@t.com", isDeleted: true)
         });
         await SaveChangesAsync();
 
         // Act
-        var results = await Context.Contacts.Where(c => !c.IsDeleted).ToListAsync();
+        var results = await Context.Contacts
+            .Where(c => !c.IsDeleted && c.Email!.StartsWith(prefix))
+            .ToListAsync();
 
         // Assert
         results.Should().HaveCount(1);
@@ -750,22 +642,11 @@ public class ContactIntegrationTests : IntegrationTestBase
     public async Task Search_NoResults_ReturnsEmptyList()
     {
         // Arrange
-        await Context.Contacts.AddAsync(new UNOPSContact
-        {
-            Name = "John",
-            FirstName = "John",
-            LastName = "Doe",
-            Email = "j@t.com",
-            Title = "T",
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        });
+        await Context.Contacts.AddAsync(MakeContact("John", "Doe", "j-norez@t.com"));
         await SaveChangesAsync();
 
         // Act
-        var results = await Context.Contacts.Where(c => c.FirstName == "NonExistent").ToListAsync();
+        var results = await Context.Contacts.Where(c => c.FirstName == "NonExistent-XYZ-99").ToListAsync();
 
         // Assert
         results.Should().BeEmpty();
@@ -775,57 +656,50 @@ public class ContactIntegrationTests : IntegrationTestBase
     public async Task Filter_CombinedCriteria_WorksCorrectly()
     {
         // Arrange
-        var partner = new UNOPSPartner { Name = "P1", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow };
+        var partner = MakePartner("CombP1");
         await Context.Partners.AddAsync(partner);
         await SaveChangesAsync();
-        var contact = new UNOPSContact
-        {
-            Name = "Active P1",
-            FirstName = "A",
-            LastName = "1",
-            Email = "a1@t.com",
-            Title = "T",
-            PartnerId = partner.Id,
-            Status = EntityStatus.Active,
-            IsDeleted = false,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        };
+        var prefix = $"comb-{Guid.NewGuid():N}";
+        var activeContact = MakeContact("A", "1", $"{prefix}-a1@t.com", partnerId: partner.Id);
         await Context.Contacts.AddRangeAsync(new[]
         {
-            contact,
-            new UNOPSContact { Name = "Inactive P1", FirstName = "I", LastName = "2", Email = "i@t.com", Title = "T", PartnerId = partner.Id, Status = EntityStatus.Inactive, IsDeleted = false, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSContact { Name = "Deleted P1", FirstName = "D", LastName = "3", Email = "d@t.com", Title = "T", PartnerId = partner.Id, Status = EntityStatus.Active, IsDeleted = true, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
+            activeContact,
+            MakeContact("I", "2", $"{prefix}-i@t.com", status: EntityStatus.Inactive, partnerId: partner.Id),
+            MakeContact("D", "3", $"{prefix}-d@t.com", isDeleted: true, partnerId: partner.Id)
         });
         await SaveChangesAsync();
 
-        // Act - Active, non-deleted, for partner 1
+        // Act - Active, non-deleted, for this partner
         var results = await Context.Contacts
-            .Where(c => c.PartnerId == partner.Id && c.Status == EntityStatus.Active && !c.IsDeleted)
+            .Where(c => c.PartnerId == partner.Id && c.Status == EntityStatus.Active && !c.IsDeleted && c.Email!.StartsWith(prefix))
             .ToListAsync();
 
         // Assert
         results.Should().HaveCount(1);
-        results.First().Id.Should().Be(contact.Id);
+        results.First().Id.Should().Be(activeContact.Id);
     }
 
     [Fact]
     public async Task Sort_ByLastName_ReturnsOrdered()
     {
-        // Arrange
+        // Arrange - use unique prefix to scope data
+        var prefix = $"sort-{Guid.NewGuid():N}";
         await Context.Contacts.AddRangeAsync(new[]
         {
-            new UNOPSContact { Name = "Charlie Z", FirstName = "Charlie", LastName = "Zulu", Email = "c@t.com", Title = "T", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSContact { Name = "Alice A", FirstName = "Alice", LastName = "Alpha", Email = "a@t.com", Title = "T", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSContact { Name = "Bob M", FirstName = "Bob", LastName = "Mike", Email = "b@t.com", Title = "T", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
+            MakeContact("Charlie", "Zulu", $"{prefix}-c@t.com"),
+            MakeContact("Alice", "Alpha", $"{prefix}-a@t.com"),
+            MakeContact("Bob", "Mike", $"{prefix}-b@t.com")
         });
         await SaveChangesAsync();
 
         // Act
-        var results = await Context.Contacts.OrderBy(c => c.LastName).ToListAsync();
+        var results = await Context.Contacts
+            .Where(c => c.Email!.StartsWith(prefix))
+            .OrderBy(c => c.LastName)
+            .ToListAsync();
 
         // Assert
+        results.Should().HaveCount(3);
         results[0].LastName.Should().Be("Alpha");
         results[1].LastName.Should().Be("Mike");
         results[2].LastName.Should().Be("Zulu");
@@ -834,17 +708,20 @@ public class ContactIntegrationTests : IntegrationTestBase
     [Fact]
     public async Task Search_ByTitle_ReturnsMatches()
     {
-        // Arrange
+        // Arrange - use unique prefix
+        var prefix = $"stit-{Guid.NewGuid():N}";
         await Context.Contacts.AddRangeAsync(new[]
         {
-            new UNOPSContact { Name = "C1", FirstName = "C", LastName = "1", Email = "c1@t.com", Title = "Director", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSContact { Name = "C2", FirstName = "C", LastName = "2", Email = "c2@t.com", Title = "Manager", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSContact { Name = "C3", FirstName = "C", LastName = "3", Email = "c3@t.com", Title = "Director", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
+            MakeContact("C", "1", $"{prefix}-1@t.com", "DirectorXQ"),
+            MakeContact("C", "2", $"{prefix}-2@t.com", "ManagerXQ"),
+            MakeContact("C", "3", $"{prefix}-3@t.com", "DirectorXQ")
         });
         await SaveChangesAsync();
 
         // Act
-        var results = await Context.Contacts.Where(c => c.Title == "Director").ToListAsync();
+        var results = await Context.Contacts
+            .Where(c => c.Title == "DirectorXQ" && c.Email!.StartsWith(prefix))
+            .ToListAsync();
 
         // Assert
         results.Should().HaveCount(2);
@@ -857,24 +734,19 @@ public class ContactIntegrationTests : IntegrationTestBase
     [Fact]
     public async Task Pagination_FirstPage_ReturnsCorrectResults()
     {
-        // Arrange
-        var contacts = Enumerable.Range(1, 25).Select(i => new UNOPSContact
-        {
-            Name = $"Contact {i}",
-            FirstName = $"F{i}",
-            LastName = $"L{i}",
-            Email = $"c{i}@t.com",
-            Title = "T",
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        });
+        // Arrange - use unique prefix and scope pagination to test data
+        var prefix = $"pg1-{Guid.NewGuid():N}";
+        var contacts = Enumerable.Range(1, 25).Select(i =>
+            MakeContact($"F{i}", $"L{i}", $"{prefix}-{i}@t.com"));
         await Context.Contacts.AddRangeAsync(contacts);
         await SaveChangesAsync();
 
-        // Act
-        var page = await Context.Contacts.OrderBy(c => c.Id).Take(10).ToListAsync();
+        // Act - paginate within test data only
+        var page = await Context.Contacts
+            .Where(c => c.Email!.StartsWith(prefix))
+            .OrderBy(c => c.Id)
+            .Take(10)
+            .ToListAsync();
 
         // Assert
         page.Should().HaveCount(10);
@@ -885,27 +757,28 @@ public class ContactIntegrationTests : IntegrationTestBase
     public async Task Pagination_SecondPage_ReturnsCorrectResults()
     {
         // Arrange
-        var contacts = Enumerable.Range(1, 25).Select(i => new UNOPSContact
-        {
-            Name = $"Contact {i}",
-            FirstName = $"F{i}",
-            LastName = $"L{i}",
-            Email = $"c{i}@t.com",
-            Title = "T",
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        });
+        var prefix = $"pg2-{Guid.NewGuid():N}";
+        var contacts = Enumerable.Range(1, 25).Select(i =>
+            MakeContact($"F{i}", $"L{i}", $"{prefix}-{i}@t.com"));
         await Context.Contacts.AddRangeAsync(contacts);
         await SaveChangesAsync();
 
         // Act
-        var page = await Context.Contacts.OrderBy(c => c.Id).Skip(10).Take(10).ToListAsync();
+        var allIds = await Context.Contacts
+            .Where(c => c.Email!.StartsWith(prefix))
+            .OrderBy(c => c.Id)
+            .Select(c => c.Id)
+            .ToListAsync();
+
+        var page = await Context.Contacts
+            .Where(c => c.Email!.StartsWith(prefix))
+            .OrderBy(c => c.Id)
+            .Skip(10)
+            .Take(10)
+            .ToListAsync();
 
         // Assert
         page.Should().HaveCount(10);
-        var allIds = await Context.Contacts.OrderBy(c => c.Id).Select(c => c.Id).ToListAsync();
         page.First().Id.Should().Be(allIds[10]);
         page.Last().Id.Should().Be(allIds[19]);
     }
@@ -914,23 +787,19 @@ public class ContactIntegrationTests : IntegrationTestBase
     public async Task Pagination_LastPage_ReturnRemainingResults()
     {
         // Arrange
-        var contacts = Enumerable.Range(1, 25).Select(i => new UNOPSContact
-        {
-            Name = $"Contact {i}",
-            FirstName = $"F{i}",
-            LastName = $"L{i}",
-            Email = $"c{i}@t.com",
-            Title = "T",
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        });
+        var prefix = $"pg3-{Guid.NewGuid():N}";
+        var contacts = Enumerable.Range(1, 25).Select(i =>
+            MakeContact($"F{i}", $"L{i}", $"{prefix}-{i}@t.com"));
         await Context.Contacts.AddRangeAsync(contacts);
         await SaveChangesAsync();
 
         // Act
-        var page = await Context.Contacts.OrderBy(c => c.Id).Skip(20).Take(10).ToListAsync();
+        var page = await Context.Contacts
+            .Where(c => c.Email!.StartsWith(prefix))
+            .OrderBy(c => c.Id)
+            .Skip(20)
+            .Take(10)
+            .ToListAsync();
 
         // Assert
         page.Should().HaveCount(5); // Only 5 remaining
@@ -940,23 +809,19 @@ public class ContactIntegrationTests : IntegrationTestBase
     public async Task Pagination_BeyondData_ReturnsEmpty()
     {
         // Arrange
-        var contacts = Enumerable.Range(1, 5).Select(i => new UNOPSContact
-        {
-            Name = $"Contact {i}",
-            FirstName = $"F{i}",
-            LastName = $"L{i}",
-            Email = $"c{i}@t.com",
-            Title = "T",
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        });
+        var prefix = $"pg4-{Guid.NewGuid():N}";
+        var contacts = Enumerable.Range(1, 5).Select(i =>
+            MakeContact($"F{i}", $"L{i}", $"{prefix}-{i}@t.com"));
         await Context.Contacts.AddRangeAsync(contacts);
         await SaveChangesAsync();
 
         // Act
-        var page = await Context.Contacts.OrderBy(c => c.Id).Skip(100).Take(10).ToListAsync();
+        var page = await Context.Contacts
+            .Where(c => c.Email!.StartsWith(prefix))
+            .OrderBy(c => c.Id)
+            .Skip(100)
+            .Take(10)
+            .ToListAsync();
 
         // Assert
         page.Should().BeEmpty();
@@ -966,23 +831,14 @@ public class ContactIntegrationTests : IntegrationTestBase
     public async Task Pagination_TotalCount_Accurate()
     {
         // Arrange
-        var contacts = Enumerable.Range(1, 33).Select(i => new UNOPSContact
-        {
-            Name = $"Contact {i}",
-            FirstName = $"F{i}",
-            LastName = $"L{i}",
-            Email = $"c{i}@t.com",
-            Title = "T",
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        });
+        var prefix = $"pg5-{Guid.NewGuid():N}";
+        var contacts = Enumerable.Range(1, 33).Select(i =>
+            MakeContact($"F{i}", $"L{i}", $"{prefix}-{i}@t.com"));
         await Context.Contacts.AddRangeAsync(contacts);
         await SaveChangesAsync();
 
         // Act
-        var totalCount = await Context.Contacts.CountAsync();
+        var totalCount = await Context.Contacts.CountAsync(c => c.Email!.StartsWith(prefix));
         var pageSize = 10;
         var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
 
@@ -999,7 +855,7 @@ public class ContactIntegrationTests : IntegrationTestBase
     public async Task GetById_NonExistent_ReturnsNull()
     {
         // Act
-        var result = await Context.Contacts.FindAsync(999);
+        var result = await Context.Contacts.FindAsync(999999);
 
         // Assert
         result.Should().BeNull();
@@ -1029,35 +885,14 @@ public class ContactIntegrationTests : IntegrationTestBase
     public async Task Create_WithDuplicateId_ThrowsException()
     {
         // Arrange - Create first contact and save to get auto-generated ID
-        var firstContact = new UNOPSContact
-        {
-            Name = "First",
-            FirstName = "F",
-            LastName = "1",
-            Email = "f@t.com",
-            Title = "T",
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        };
+        var firstContact = MakeContact("F", "1", "f-dup@t.com");
         await Context.Contacts.AddAsync(firstContact);
         await SaveChangesAsync();
 
         // Act & Assert - Create second contact with same ID to trigger duplicate key violation
-        var duplicateContact = new UNOPSContact
-        {
-            Id = firstContact.Id,
-            Name = "Duplicate",
-            FirstName = "D",
-            LastName = "2",
-            Email = "d@t.com",
-            Title = "T",
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        };
+        var duplicateContact = MakeContact("D", "2", "d-dup@t.com");
+        duplicateContact.Id = firstContact.Id;
+
         var act = async () =>
         {
             await Context.Contacts.AddAsync(duplicateContact);
@@ -1067,20 +902,24 @@ public class ContactIntegrationTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task Query_EmptyTable_ReturnsEmptyList()
+    public async Task Query_NoTestData_ReturnsNoTestMatches()
     {
-        // Act
-        var results = await Context.Contacts.ToListAsync();
+        // Act - query for a marker that no test data uses
+        var uniqueMarker = $"empty-{Guid.NewGuid():N}";
+        var results = await Context.Contacts
+            .Where(c => c.Email!.StartsWith(uniqueMarker))
+            .ToListAsync();
 
         // Assert
         results.Should().BeEmpty();
     }
 
     [Fact]
-    public async Task Count_EmptyTable_ReturnsZero()
+    public async Task Count_NoTestData_ReturnsZero()
     {
-        // Act
-        var count = await Context.Contacts.CountAsync();
+        // Act - count only contacts with a marker that doesn't exist
+        var uniqueMarker = $"count0-{Guid.NewGuid():N}";
+        var count = await Context.Contacts.CountAsync(c => c.Email!.StartsWith(uniqueMarker));
 
         // Assert
         count.Should().Be(0);
@@ -1090,22 +929,11 @@ public class ContactIntegrationTests : IntegrationTestBase
     public async Task FirstOrDefault_NoMatch_ReturnsNull()
     {
         // Arrange
-        await Context.Contacts.AddAsync(new UNOPSContact
-        {
-            Name = "Exists",
-            FirstName = "E",
-            LastName = "1",
-            Email = "e@t.com",
-            Title = "T",
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        });
+        await Context.Contacts.AddAsync(MakeContact("E", "1", "e-nomatch@t.com"));
         await SaveChangesAsync();
 
         // Act
-        var result = await Context.Contacts.FirstOrDefaultAsync(c => c.Email == "nonexistent@test.com");
+        var result = await Context.Contacts.FirstOrDefaultAsync(c => c.Email == "nonexistent-xyz-999@test.com");
 
         // Assert
         result.Should().BeNull();
@@ -1114,24 +942,15 @@ public class ContactIntegrationTests : IntegrationTestBase
     [Fact]
     public async Task Filter_DeletedOnly_EmptyWhenNoneDeleted()
     {
-        // Arrange
-        await Context.Contacts.AddAsync(new UNOPSContact
-        {
-            Name = "Active",
-            FirstName = "A",
-            LastName = "1",
-            Email = "a@t.com",
-            Title = "T",
-            Status = EntityStatus.Active,
-            IsDeleted = false,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        });
+        // Arrange - create only active contacts with unique prefix
+        var prefix = $"delonly-{Guid.NewGuid():N}";
+        await Context.Contacts.AddAsync(MakeContact("A", "1", $"{prefix}-a@t.com", isDeleted: false));
         await SaveChangesAsync();
 
-        // Act
-        var deletedContacts = await Context.Contacts.Where(c => c.IsDeleted).ToListAsync();
+        // Act - check among our test data
+        var deletedContacts = await Context.Contacts
+            .Where(c => c.IsDeleted && c.Email!.StartsWith(prefix))
+            .ToListAsync();
 
         // Assert
         deletedContacts.Should().BeEmpty();
@@ -1141,7 +960,7 @@ public class ContactIntegrationTests : IntegrationTestBase
     public async Task Update_NonExistentContact_ThrowsException()
     {
         // Act
-        var nonExistent = await Context.Contacts.FindAsync(999);
+        var nonExistent = await Context.Contacts.FindAsync(999999);
 
         // Assert
         nonExistent.Should().BeNull("Cannot update a contact that doesn't exist");
@@ -1150,64 +969,46 @@ public class ContactIntegrationTests : IntegrationTestBase
     [Fact]
     public async Task BulkInsert_LargeDataset_Succeeds()
     {
-        // Arrange
-        var contacts = Enumerable.Range(1, 100).Select(i => new UNOPSContact
-        {
-            Name = $"Bulk {i}",
-            FirstName = $"F{i}",
-            LastName = $"L{i}",
-            Email = $"bulk{i}@t.com",
-            Title = "Staff",
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        });
+        // Arrange - use unique prefix
+        var prefix = $"bulk-{Guid.NewGuid():N}";
+        var contacts = Enumerable.Range(1, 100).Select(i =>
+            MakeContact($"F{i}", $"L{i}", $"{prefix}-{i}@t.com"));
 
         // Act
         await Context.Contacts.AddRangeAsync(contacts);
         await SaveChangesAsync();
-        var count = await Context.Contacts.CountAsync();
+        var count = await Context.Contacts.CountAsync(c => c.Email!.StartsWith(prefix));
 
         // Assert
         count.Should().Be(100);
     }
 
     [Fact]
-    public async Task Query_WithNoPartner_ReturnsOrphanContacts()
+    public async Task Query_WithDefaultPartner_ReturnsDefaultPartnerContacts()
     {
-        // Arrange
+        // Arrange - create contacts with the default test partner
+        var prefix = $"defp-{Guid.NewGuid():N}";
         await Context.Contacts.AddRangeAsync(new[]
         {
-            new UNOPSContact { Name = "WithPartner", FirstName = "W", LastName = "P", Email = "wp@t.com", Title = "T", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
-            new UNOPSContact { Name = "NoPartner", FirstName = "N", LastName = "P", Email = "np@t.com", Title = "T", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
+            MakeContact("W", "P", $"{prefix}-wp@t.com"),
+            MakeContact("N", "P", $"{prefix}-np@t.com")
         });
         await SaveChangesAsync();
 
-        // Act
-        var orphans = await Context.Contacts.Where(c => c.PartnerId == 0).ToListAsync();
+        // Act - query contacts belonging to default partner within our prefix
+        var contacts = await Context.Contacts
+            .Where(c => c.PartnerId == DefaultTestPartnerId && c.Email!.StartsWith(prefix))
+            .ToListAsync();
 
         // Assert
-        orphans.Should().HaveCount(2);
+        contacts.Should().HaveCount(2);
     }
 
     [Fact]
     public async Task Delete_AlreadyDeleted_RemainsDeleted()
     {
         // Arrange
-        var contact = new UNOPSContact
-        {
-            Name = "AlreadyDel",
-            FirstName = "A",
-            LastName = "D",
-            Email = "ad@t.com",
-            Title = "T",
-            Status = EntityStatus.Active,
-            IsDeleted = true,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        };
+        var contact = MakeContact("A", "D", "ad-already@t.com", isDeleted: true);
         await Context.Contacts.AddAsync(contact);
         await SaveChangesAsync();
 
@@ -1234,18 +1035,7 @@ public class ContactIntegrationTests : IntegrationTestBase
     public async Task Concurrent_Reads_ReturnConsistentData()
     {
         // Arrange
-        var contact = new UNOPSContact
-        {
-            Name = "Consistent",
-            FirstName = "C",
-            LastName = "1",
-            Email = "c@t.com",
-            Title = "T",
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        };
+        var contact = MakeContact("C", "1", "c-consist@t.com");
         await Context.Contacts.AddAsync(contact);
         await SaveChangesAsync();
 
@@ -1258,29 +1048,18 @@ public class ContactIntegrationTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task Query_AfterClearDatabase_ReturnsEmpty()
+    public async Task Query_WithUniqueMarker_ReturnsOnlyTestData()
     {
-        // Arrange
-        await Context.Contacts.AddAsync(new UNOPSContact
-        {
-            Name = "WillBeCleared",
-            FirstName = "W",
-            LastName = "C",
-            Email = "w@t.com",
-            Title = "T",
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        });
+        // Arrange - create data with a unique marker
+        var prefix = $"marker-{Guid.NewGuid():N}";
+        await Context.Contacts.AddAsync(MakeContact("W", "C", $"{prefix}-w@t.com"));
         await SaveChangesAsync();
 
         // Act
-        ClearDatabase();
-        var count = await Context.Contacts.CountAsync();
+        var count = await Context.Contacts.CountAsync(c => c.Email!.StartsWith(prefix));
 
-        // Assert
-        count.Should().Be(0);
+        // Assert - exactly 1 (only our test data)
+        count.Should().Be(1);
     }
 
     #endregion
@@ -1291,18 +1070,7 @@ public class ContactIntegrationTests : IntegrationTestBase
     public async Task Contact_MultipleStatusChanges_TracksLatest()
     {
         // Arrange
-        var contact = new UNOPSContact
-        {
-            Name = "StatusTrack",
-            FirstName = "S",
-            LastName = "T",
-            Email = "st@t.com",
-            Title = "T",
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        };
+        var contact = MakeContact("S", "T", "st-multi@t.com");
         await Context.Contacts.AddAsync(contact);
         await SaveChangesAsync();
 
@@ -1322,31 +1090,29 @@ public class ContactIntegrationTests : IntegrationTestBase
     [Fact]
     public async Task Contact_BulkStatusUpdate_AppliesCorrectly()
     {
-        // Arrange
-        var contacts = Enumerable.Range(1, 5).Select(i => new UNOPSContact
-        {
-            Name = $"Bulk{i}",
-            FirstName = $"B{i}",
-            LastName = $"U{i}",
-            Email = $"bu{i}@t.com",
-            Title = "T",
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        }).ToList();
+        // Arrange - use unique prefix to scope
+        var prefix = $"blkst-{Guid.NewGuid():N}";
+        var contacts = Enumerable.Range(1, 5).Select(i =>
+            MakeContact($"B{i}", $"U{i}", $"{prefix}-{i}@t.com")).ToList();
         await Context.Contacts.AddRangeAsync(contacts);
         await SaveChangesAsync();
 
         // Act - Deactivate first, third, fifth contacts (by Id order)
-        var ordered = await Context.Contacts.OrderBy(c => c.Id).ToListAsync();
-        var toDeactivate = ordered.Where((c, i) => i % 2 == 0).ToList();
+        var ordered = await Context.Contacts
+            .Where(c => c.Email!.StartsWith(prefix))
+            .OrderBy(c => c.Id)
+            .ToListAsync();
+        var toDeactivate = ordered.Where((_, i) => i % 2 == 0).ToList();
         foreach (var c in toDeactivate) c.Status = EntityStatus.Inactive;
         await SaveChangesAsync();
 
-        // Assert
-        var active = await Context.Contacts.Where(c => c.Status == EntityStatus.Active).CountAsync();
-        var inactive = await Context.Contacts.Where(c => c.Status == EntityStatus.Inactive).CountAsync();
+        // Assert - scoped to test data
+        var active = await Context.Contacts
+            .Where(c => c.Email!.StartsWith(prefix) && c.Status == EntityStatus.Active)
+            .CountAsync();
+        var inactive = await Context.Contacts
+            .Where(c => c.Email!.StartsWith(prefix) && c.Status == EntityStatus.Inactive)
+            .CountAsync();
         active.Should().Be(2);
         inactive.Should().Be(3);
     }

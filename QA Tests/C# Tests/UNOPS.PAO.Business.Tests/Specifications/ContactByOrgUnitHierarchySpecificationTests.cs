@@ -6,8 +6,10 @@ using FluentAssertions;
 using UNOPS.PAO.Business.Tests.TestBase;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Moq;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Domain.Specifications.ContactSpecifications;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.DataAccess.Services;
@@ -19,24 +21,17 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
     public class ContactByOrgUnitHierarchySpecificationTests : IDisposable
     {
         private readonly AppDbContext _dbContext;
+        private IDbContextTransaction? _transaction;
 
         public ContactByOrgUnitHierarchySpecificationTests()
         {
-            // Setup in-memory database
-            var options = new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-                .Options;
-            
-            // Setup mocks for AppDbContext
-            var mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
-            var httpContext = new DefaultHttpContext();
-            mockHttpContextAccessor.Setup(x => x.HttpContext).Returns(httpContext);
-            
-            var userResolverService = new UserResolverService<int>(mockHttpContextAccessor.Object);
-            var mockDbContextSchema = new Mock<IDbContextSchema>();
-            mockDbContextSchema.Setup(x => x.Schema).Returns("public");
-            
-            _dbContext = new AppDbContext(options, userResolverService, mockDbContextSchema.Object);
+            // Use the centralized test factory which provides SQLite in-memory
+            // (supports relational features) instead of EF Core InMemory provider.
+            _dbContext = TestDbContextFactory.Create();
+            if (TestEnvironment.UsePostgreSQL)
+            {
+                _transaction = _dbContext.Database.BeginTransaction();
+            }
         }
 
         [Fact]
@@ -72,31 +67,21 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
         [SkipIfInMemoryFact]
         public async Task Criteria_FiltersContactsByPartnerOrgUnit()
         {
-            // Arrange
-            var orgUnitId = 5;
+            // Arrange - create org hierarchies first (FK constraint)
+            var orgUnit1 = await CreateOrganizationHierarchyAsync("OU1", "Org Unit 1");
+            var orgUnit2 = await CreateOrganizationHierarchyAsync("OU2", "Org Unit 2");
             
             // Create partners with different org units
-            var partner1 = CreateTestPartner(1, "Partner 1", orgUnitId);
-            var partner2 = CreateTestPartner(2, "Partner 2", 999);
-            var partner3 = CreateTestPartner(3, "Partner 3", null);
-            
-            await _dbContext.Partners.AddRangeAsync(partner1, partner2, partner3);
-            await _dbContext.SaveChangesAsync();
-            
-            // Add OrganizationUnitRelationships
-            await _dbContext.OrganizationUnitRelationships.AddRangeAsync(partner1.OrganizationUnitRelationships);
-            await _dbContext.OrganizationUnitRelationships.AddRangeAsync(partner2.OrganizationUnitRelationships);
-            await _dbContext.SaveChangesAsync();
+            var partner1 = await CreateTestPartnerAsync("Partner 1", orgUnit1.Id);
+            var partner2 = await CreateTestPartnerAsync("Partner 2", orgUnit2.Id);
+            var partner3 = await CreateTestPartnerAsync("Partner 3", null);
             
             // Create contacts for each partner
-            var contact1 = CreateTestContact(1, "Contact", "One", partner1.Id);
-            var contact2 = CreateTestContact(2, "Contact", "Two", partner2.Id);
-            var contact3 = CreateTestContact(3, "Contact", "Three", partner3.Id);
-            
-            await _dbContext.Contacts.AddRangeAsync(contact1, contact2, contact3);
-            await _dbContext.SaveChangesAsync();
+            var contact1 = await CreateTestContactAsync("Contact", "One", partner1.Id);
+            var contact2 = await CreateTestContactAsync("Contact", "Two", partner2.Id);
+            var contact3 = await CreateTestContactAsync("Contact", "Three", partner3.Id);
 
-            var specification = new ContactByOrgUnitHierarchySpecification(new List<int> { orgUnitId });
+            var specification = new ContactByOrgUnitHierarchySpecification(new List<int> { orgUnit1.Id });
 
             // Act
             var query = _dbContext.Contacts
@@ -115,33 +100,24 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
         [SkipIfInMemoryFact]
         public async Task Criteria_WithMultipleOrgUnitIds_FiltersCorrectly()
         {
-            // Arrange
-            var orgUnitIds = new List<int> { 5, 6, 7 };
+            // Arrange - create org hierarchies first (FK constraint)
+            var orgUnit1 = await CreateOrganizationHierarchyAsync("OU1", "Org Unit 1");
+            var orgUnit2 = await CreateOrganizationHierarchyAsync("OU2", "Org Unit 2");
+            var orgUnit3 = await CreateOrganizationHierarchyAsync("OU3", "Org Unit 3");
+            var orgUnit4 = await CreateOrganizationHierarchyAsync("OU4", "Org Unit 4");
+            var orgUnitIds = new List<int> { orgUnit1.Id, orgUnit2.Id, orgUnit3.Id };
             
             // Create partners with different org units
-            var partner1 = CreateTestPartner(1, "Partner 1", 5);
-            var partner2 = CreateTestPartner(2, "Partner 2", 6);
-            var partner3 = CreateTestPartner(3, "Partner 3", 7);
-            var partner4 = CreateTestPartner(4, "Partner 4", 999);
-            
-            await _dbContext.Partners.AddRangeAsync(partner1, partner2, partner3, partner4);
-            await _dbContext.SaveChangesAsync();
-            
-            // Add OrganizationUnitRelationships
-            await _dbContext.OrganizationUnitRelationships.AddRangeAsync(partner1.OrganizationUnitRelationships);
-            await _dbContext.OrganizationUnitRelationships.AddRangeAsync(partner2.OrganizationUnitRelationships);
-            await _dbContext.OrganizationUnitRelationships.AddRangeAsync(partner3.OrganizationUnitRelationships);
-            await _dbContext.OrganizationUnitRelationships.AddRangeAsync(partner4.OrganizationUnitRelationships);
-            await _dbContext.SaveChangesAsync();
+            var partner1 = await CreateTestPartnerAsync("Partner 1", orgUnit1.Id);
+            var partner2 = await CreateTestPartnerAsync("Partner 2", orgUnit2.Id);
+            var partner3 = await CreateTestPartnerAsync("Partner 3", orgUnit3.Id);
+            var partner4 = await CreateTestPartnerAsync("Partner 4", orgUnit4.Id);
             
             // Create contacts
-            var contact1 = CreateTestContact(1, "C1", "L1", partner1.Id);
-            var contact2 = CreateTestContact(2, "C2", "L2", partner2.Id);
-            var contact3 = CreateTestContact(3, "C3", "L3", partner3.Id);
-            var contact4 = CreateTestContact(4, "C4", "L4", partner4.Id);
-            
-            await _dbContext.Contacts.AddRangeAsync(contact1, contact2, contact3, contact4);
-            await _dbContext.SaveChangesAsync();
+            var contact1 = await CreateTestContactAsync("C1", "L1", partner1.Id);
+            var contact2 = await CreateTestContactAsync("C2", "L2", partner2.Id);
+            var contact3 = await CreateTestContactAsync("C3", "L3", partner3.Id);
+            var contact4 = await CreateTestContactAsync("C4", "L4", partner4.Id);
 
             var specification = new ContactByOrgUnitHierarchySpecification(orgUnitIds);
 
@@ -154,21 +130,16 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
 
             // Assert
             results.Should().HaveCount(3);
-            results.Select(c => c.Id).Should().BeEquivalentTo(new[] { 1, 2, 3 });
+            results.Select(c => c.Id).Should().BeEquivalentTo(new[] { contact1.Id, contact2.Id, contact3.Id });
             results.Should().NotContain(c => c.Id == contact4.Id);
         }
 
         [Fact]
         public async Task Criteria_WithEmptyOrgUnitList_ReturnsNoResults()
         {
-            // Arrange
-            var partner = CreateTestPartner(1, "Test Partner", 5);
-            await _dbContext.Partners.AddAsync(partner);
-            await _dbContext.SaveChangesAsync();
-            
-            var contact = CreateTestContact(1, "Test", "Contact", partner.Id);
-            await _dbContext.Contacts.AddAsync(contact);
-            await _dbContext.SaveChangesAsync();
+            // Arrange - partner without org unit (spec uses empty list, so no match needed)
+            var partner = await CreateTestPartnerAsync("Test Partner", null);
+            var contact = await CreateTestContactAsync("Test", "Contact", partner.Id);
 
             var specification = new ContactByOrgUnitHierarchySpecification(new List<int>());
 
@@ -183,14 +154,9 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
         [Fact]
         public async Task Criteria_WithNullOrgUnitList_ReturnsNoResults()
         {
-            // Arrange
-            var partner = CreateTestPartner(1, "Test Partner", 5);
-            await _dbContext.Partners.AddAsync(partner);
-            await _dbContext.SaveChangesAsync();
-            
-            var contact = CreateTestContact(1, "Test", "Contact", partner.Id);
-            await _dbContext.Contacts.AddAsync(contact);
-            await _dbContext.SaveChangesAsync();
+            // Arrange - partner without org unit (spec uses null list, so no match needed)
+            var partner = await CreateTestPartnerAsync("Test Partner", null);
+            var contact = await CreateTestContactAsync("Test", "Contact", partner.Id);
 
             var specification = new ContactByOrgUnitHierarchySpecification(null);
 
@@ -205,30 +171,27 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
         [Fact]
         public async Task Criteria_ExcludesContactsWithNullPartner()
         {
-            // Arrange
-            var orgUnitId = 5;
+            // Arrange - create org hierarchy first (FK constraint)
+            var orgUnit = await CreateOrganizationHierarchyAsync("OU", "Test Org Unit");
             
-            // Create a partner with the org unit
-            var partner = CreateTestPartner(1, "Test Partner", orgUnitId);
-            await _dbContext.Partners.AddAsync(partner);
-            await _dbContext.SaveChangesAsync();
+            // Create partners - one with org unit (included by spec), one without (excluded)
+            var partnerWithOrgUnit = await CreateTestPartnerAsync("Test Partner", orgUnit.Id);
+            var partnerWithoutOrgUnit = await CreateTestPartnerAsync("Other Partner", null);
             
-            // Create contacts - one with partner, one without (orphaned)
-            var contactWithPartner = CreateTestContact(1, "With", "Partner", partner.Id);
-            var contactWithoutPartner = CreateTestContact(2, "Without", "Partner", 0); // Invalid partner ID
-            
-            await _dbContext.Contacts.AddRangeAsync(contactWithPartner, contactWithoutPartner);
-            await _dbContext.SaveChangesAsync();
+            // Create contacts - one with partner in org unit, one with partner NOT in org unit
+            var contactWithPartner = await CreateTestContactAsync("With", "Partner", partnerWithOrgUnit.Id);
+            var contactWithoutPartner = await CreateTestContactAsync("Without", "Partner", partnerWithoutOrgUnit.Id);
 
-            var specification = new ContactByOrgUnitHierarchySpecification(new List<int> { orgUnitId });
+            var specification = new ContactByOrgUnitHierarchySpecification(new List<int> { orgUnit.Id });
 
             // Act
             var query = _dbContext.Contacts
                 .Include(c => c.Partner)
                 .Where(specification.Criteria);
+            query = specification.ApplyOrgUnitFilter(query, _dbContext);
             var results = await query.ToListAsync();
 
-            // Assert
+            // Assert - only contact whose partner has org unit relationship is included
             results.Should().HaveCount(1);
             results.Should().Contain(c => c.Id == contactWithPartner.Id);
             results.Should().NotContain(c => c.Id == contactWithoutPartner.Id);
@@ -237,31 +200,18 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
         [SkipIfInMemoryFact]
         public async Task Criteria_ExcludesContactsWherePartnerHasNullOfficeId()
         {
-            // Arrange
-            var orgUnitId = 5;
+            // Arrange - create org hierarchy first (FK constraint)
+            var orgUnit = await CreateOrganizationHierarchyAsync("OU", "Test Org Unit");
             
             // Create partners - one with office ID, one without
-            var partnerWithOffice = CreateTestPartner(1, "Partner With Office", orgUnitId);
-            var partnerWithoutOffice = CreateTestPartner(2, "Partner Without Office", null);
-            
-            await _dbContext.Partners.AddRangeAsync(partnerWithOffice, partnerWithoutOffice);
-            await _dbContext.SaveChangesAsync();
-            
-            // Add OrganizationUnitRelationships for partner with office
-            if (partnerWithOffice.OrganizationUnitRelationships != null)
-            {
-                await _dbContext.OrganizationUnitRelationships.AddRangeAsync(partnerWithOffice.OrganizationUnitRelationships);
-                await _dbContext.SaveChangesAsync();
-            }
+            var partnerWithOffice = await CreateTestPartnerAsync("Partner With Office", orgUnit.Id);
+            var partnerWithoutOffice = await CreateTestPartnerAsync("Partner Without Office", null);
             
             // Create contacts for each partner
-            var contact1 = CreateTestContact(1, "Contact", "One", partnerWithOffice.Id);
-            var contact2 = CreateTestContact(2, "Contact", "Two", partnerWithoutOffice.Id);
-            
-            await _dbContext.Contacts.AddRangeAsync(contact1, contact2);
-            await _dbContext.SaveChangesAsync();
+            var contact1 = await CreateTestContactAsync("Contact", "One", partnerWithOffice.Id);
+            var contact2 = await CreateTestContactAsync("Contact", "Two", partnerWithoutOffice.Id);
 
-            var specification = new ContactByOrgUnitHierarchySpecification(new List<int> { orgUnitId });
+            var specification = new ContactByOrgUnitHierarchySpecification(new List<int> { orgUnit.Id });
 
             // Act
             var query = _dbContext.Contacts
@@ -276,51 +226,64 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             results.Should().NotContain(c => c.Id == contact2.Id);
         }
 
-        private static Partner CreateTestPartner(int id, string name, int? organizationHierarchyId)
+        private async Task<OrganizationHierarchy> CreateOrganizationHierarchyAsync(string code, string name)
+        {
+            var org = new OrganizationHierarchy
+            {
+                Code = code,
+                Name = name,
+                Type = OrganizationUnitType.OrgUnit,
+                Description = name,
+                Status = Domain.Entities.EntityStatus.Active
+            };
+            await _dbContext.Set<OrganizationHierarchy>().AddAsync(org);
+            await _dbContext.SaveChangesAsync();
+            return org;
+        }
+
+        private async Task<Partner> CreateTestPartnerAsync(string name, int? organizationHierarchyId)
         {
             var partner = new Partner
             {
-                Id = id,
-                // Enhanced Partner structure
                 Name = name,
                 PartnerShortDescription = name.Length > 10 ? name.Substring(0, 10) : name,
-                PartnerCategoryId = 1, // Default test category
-                LiaisonOfficeId = 1, // Default test liaison office
+                PartnerCategoryId = 1,
+                LiaisonOfficeId = 1,
                 UNAndStateEntity = false,
                 Status = Domain.Entities.EntityStatus.Active,
-                CanCreateNewOpportunities = false, // Default "No" equivalent
-                PooledFund = false, // Default "No" equivalent
-                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired, // Default "No" equivalent
-                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved, // Default "No" equivalent
-                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply, // Default "No" equivalent
+                CanCreateNewOpportunities = false,
+                PooledFund = false,
+                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired,
+                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved,
+                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply,
                 CreatedBy = 1,
                 CreatedDate = DateTime.UtcNow
             };
 
-            // Add organization unit relationship if specified
+            await _dbContext.Partners.AddAsync(partner);
+            await _dbContext.SaveChangesAsync();
+
             if (organizationHierarchyId.HasValue)
             {
-                partner.OrganizationUnitRelationships = new List<OrganizationUnitRelationship>
+                var orgRelationship = new OrganizationUnitRelationship
                 {
-                    new OrganizationUnitRelationship
-                    {
-                        Name = $"Partner-{partner.Id}-OrgUnit-{organizationHierarchyId.Value}", // Required by ModifiableDeletableEntity
-                        OrganizationHierarchyId = organizationHierarchyId.Value,
-                        EntityId = partner.Id,
-                        EntityType = nameof(Partner),
-                        Status = Domain.Entities.EntityStatus.Active
-                    }
+                    Name = $"Partner-{partner.Id}-OrgUnit-{organizationHierarchyId.Value}",
+                    OrganizationHierarchyId = organizationHierarchyId.Value,
+                    EntityId = partner.Id,
+                    EntityType = nameof(Partner),
+                    Status = Domain.Entities.EntityStatus.Active
                 };
+                _dbContext.Set<OrganizationUnitRelationship>().Add(orgRelationship);
+                await _dbContext.SaveChangesAsync();
             }
 
             return partner;
         }
 
-        private static Contact CreateTestContact(int id, string firstName, string lastName, int partnerId)
+        private async Task<Contact> CreateTestContactAsync(string firstName, string lastName, int partnerId)
         {
-            return new Contact
+            var contact = new Contact
             {
-                Id = id,
                 FirstName = firstName,
                 LastName = lastName,
                 Name = $"{firstName} {lastName}",
@@ -331,10 +294,20 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
                 CreatedBy = 1,
                 CreatedDate = DateTime.UtcNow
             };
+            await _dbContext.Contacts.AddAsync(contact);
+            await _dbContext.SaveChangesAsync();
+            return contact;
         }
 
         public void Dispose()
         {
+            if (_transaction != null)
+            {
+                try { _transaction.Rollback(); }
+                catch { }
+                _transaction.Dispose();
+                _transaction = null;
+            }
             _dbContext?.Dispose();
         }
     }

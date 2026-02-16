@@ -26,6 +26,7 @@ using Microsoft.Extensions.Caching.Memory;
 using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.Models.Partners;
 using UNOPS.PAO.Models.Shared;
+using UNOPS.PAO.Business.Tests.TestBase;
 
 namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
 {
@@ -69,7 +70,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             var mockDbContextSchema = new Mock<IDbContextSchema>();
             mockDbContextSchema.Setup(x => x.Schema).Returns("public");
             
-            _dbContext = new UNOPSAppDbContext(options, userResolverService, mockDbContextSchema.Object);
+            _dbContext = TestDbContextFactory.CreateUNOPS(options, userResolverService, mockDbContextSchema.Object);
             
             // Setup other mocks
             _mockMapper = new Mock<IMapper>();
