@@ -1084,6 +1084,24 @@ public class UNOPSOpportunityManagerTests : IDisposable
 
     #endregion
 
+    #region P0 - Null Guard Tests
+
+    [SkipIfInMemoryFact]
+    [Trait("Category", "P0")]
+    [Trait("Type", "Validation")]
+    [Trait("TestId", "TC-UNOPS-OPP-032")]
+    public async Task UpdateOpportunity_NullRequest_ShouldThrowArgumentNullException()
+    {
+        // Act
+        Func<Task> act = async () => await _manager.UpdateOpportunityAsync(null!);
+
+        // Assert
+        await act.Should().ThrowAsync<ArgumentNullException>()
+            .Where(ex => ex.ParamName == "model");
+    }
+
+    #endregion
+
     private static Mock<IHttpContextAccessor> CreateMockHttpContextAccessor(string userId)
     {
         var accessor = new Mock<IHttpContextAccessor>();

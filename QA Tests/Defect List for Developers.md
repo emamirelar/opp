@@ -36,6 +36,7 @@ This document tracks **production code defects** discovered during testing. Thes
 | DEF-008 | 🟠 High | Go Decision Feature — Remaining Implementation Gaps | OpportunityStageRequirements | 2026-02-02 | Partially Resolved |
 | DEF-010 | 🟠 High | PNO-1193: OM role transfer not working | OpportunityWorkflow | 2026-02-11 | Open |
 | DEF-011 | 🟡 Medium | PNO-1171: Reject action appears twice in workflow history | WorkflowHistory | 2026-02-11 | Open |
+| DEF-012 | 🟡 Medium | ForAllMembers overrides Ignore() rules in OpportunityMappingProfile | OpportunityMappingProfile | 2026-02-16 | Open |
 
 ---
 
@@ -204,6 +205,60 @@ When a DoA2 rejects a workflow for "Submit for Go Decision", the reject action i
 **Environment:** QA / TEST  
 **Error/Logs:** N/A — no error, visual duplication in history  
 **Reporter:** Perminder (QA testing, JIRA PNO-1171)
+
+### DEF-012: ForAllMembers Overrides Ignore() Rules in OpportunityMappingProfile
+
+**Severity:** 🟡 Medium  
+**Component:** OpportunityMappingProfile (`UNOPS.PAO.UNOPSBusiness/Managers/Mapping/OpportunityMappingProfile.cs`)  
+**Date Reported:** 2026-02-16  
+**Status:** Open  
+**Priority:** P2 - Mapping correctness / potential data integrity risk  
+**Reporter:** QA Automation (discovered during unit test creation)
+
+**Description:**
+
+The `CreateMap<UpdateOpportunityRequest, Opportunity>()` mapping profile chains individual `.ForMember(dest => dest.X, opt => opt.Ignore())` rules for Id and six collection properties (FundingPartners, ClientPartners, Stakeholders, Deliverables, Countries, SDGs), followed by `.ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null))`.
+
+**Problem:** In AutoMapper, `ForAllMembers` overrides **all** preceding per-member configurations, including `Ignore()`. This renders the individual Ignore rules ineffective:
+
+- **Id (int, non-nullable):** Always mapped because `srcMember != null` is always true for `int`. The Ignore is completely overridden.
+- **Collections (nullable lists):** When the source list is non-null, AutoMapper maps (replaces) the destination collection. When null, AutoMapper still clears/initializes the destination collection to empty.
+
+**Impact:**
+
+The system currently works in production because:
+1. `UpdateOpportunityRequest.Id` always matches the entity Id (caller sets it correctly)
+2. `UpdateOpportunityAsync` processes collections separately after the `mapper.Map()` call, re-loading and reconciling them manually
+3. Callers typically set collection properties to null on the request
+
+However, the Ignore rules create a **false sense of safety**. If a caller ever passes non-null collections in the request, the loaded entity's collections (from `Include()`) would be silently replaced.
+
+**Root Cause:** AutoMapper's `ForAllMembers` is a destructive operation that resets all per-member configurations. The `Ignore()` calls before `ForAllMembers` have no effect.
+
+**Proper Fix:**
+- Option A: Move `ForAllMembers` BEFORE the individual `ForMember(Ignore)` calls, so the Ignore rules take precedence
+- Option B: Remove `ForAllMembers` and instead apply the null condition only to specific scalar members
+- Option C: Remove the redundant `Ignore()` rules and document that null-protection comes solely from the `ForAllMembers` condition (and that collections must always be null on the request)
+
+**Wrong Fix:** ❌ Removing the `ForAllMembers` condition entirely (would break null-protection for scalar properties)
+
+**Workaround:** Current code works because `UpdateOpportunityAsync` handles collections independently after the map call. No immediate production impact.
+
+**Related Tests:**
+- `OpportunityMappingProfileTests.cs` (11 tests verifying actual behavior)
+- `UNOPSOpportunityManagerTests.UpdateOpportunity_BasicFields_Success` (integration test verifying end-to-end update works)
+
+**Reproduction Steps:**
+1. Create an `Opportunity` entity with existing `FundingPartners` collection
+2. Create an `UpdateOpportunityRequest` with non-null `FundingPartners` list
+3. Call `mapper.Map(request, entity)`
+4. Observe: entity's `FundingPartners` is replaced with mapped request data (Ignore rule did not protect it)
+
+**Expected Result:** `FundingPartners` on the entity remains unchanged (Ignore rule should prevent mapping).
+
+**Actual Result:** `FundingPartners` on the entity is replaced by the mapped request data.
+
+**Environment:** All (unit test level — AutoMapper configuration issue)
 
 ---
 
