@@ -16,10 +16,10 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 "RevertCompositeKey_AddActiveUser.sql"
             });
 
-            MigrationSqlScriptExecutor.ExecuteSqlScripts(migrationBuilder, new[]
+           /* MigrationSqlScriptExecutor.ExecuteSqlScripts(migrationBuilder, new[]
             {
                 "Fix_AspNetUsers_conflicts.sql"
-            });
+            });*/
         }
 
         /// <inheritdoc />
