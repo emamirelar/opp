@@ -3205,7 +3205,7 @@
   "message.requirements.opportunity.initiativeTypeRequired": "ÉQUIPE > Type d'initiative proposé à développer",
   "message.requirements.opportunity.beneficiariesRequired": "POURQUOI > Bénéficiaires (soit 'sera recherché' doit être coché, soit les bénéficiaires directs et indirects doivent être spécifiés)",
   "message.requirements.opportunity.managerRequired": "ÉQUIPE > Gestionnaire d'opportunité",
-  "message.requirements.opportunity.doaHolderRequired": "ÉQUIPE > Le titulaire du DoA niveau 2 doit exister pour l'unité organisationnelle responsable",
+  "message.requirements.opportunity.doaHolderRequired": "ÉQUIPE > Le titulaire du DoA niveau 2 ou 3 doit exister pour l'unité organisationnelle responsable",
   "message.requirements.opportunity.impactRequired": "POURQUOI > Impact",
   "message.requirements.opportunity.outcomesRequired": "POURQUOI > Résultat(s)",
   "message.requirements.opportunity.sdgRequired": "POURQUOI > Alignement ODD",

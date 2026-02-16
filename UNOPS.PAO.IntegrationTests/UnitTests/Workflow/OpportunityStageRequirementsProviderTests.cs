@@ -257,8 +257,8 @@ public class OpportunityStageRequirementsProviderTests
         requirement!.FieldType.Should().Be("doaValidation");
         requirement.OnlyServerSideEvaluation.Should().BeTrue();
         requirement.CustomValidatorConfig.Should().NotBeNull();
-        requirement.CustomValidatorConfig!["validatorName"].Should().Be("DoA2HolderValidator");
-        requirement.CustomValidatorConfig["entityRoleCode"].Should().Be("DoA2_OrganizationHierarchy");
+        requirement.CustomValidatorConfig!["validatorName"].Should().Be("DoAHolderValidator");
+        requirement.CustomValidatorConfig["entityRoleCodes"].Should().BeEquivalentTo(new[] { "DoA2_OrganizationHierarchy", "DoA3_OrganizationHierarchy" });
     }
 
     [Fact]
