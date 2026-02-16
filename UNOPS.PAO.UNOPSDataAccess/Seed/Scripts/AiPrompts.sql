@@ -3533,44 +3533,61 @@ For each person, add a "relevanceExplanation" field with a one-line explanation 
         'opportunity_statement_validation',
         'You validate an opportunity statement against structured opportunity data. Return ONLY valid JSON.
 
+**CRITICAL INSTRUCTIONS — VALIDATION RULES:**
+- **FLAG ONLY CONTRADICTIONS**: Report a misalignment only when the statement states a fact that **contradicts** the data (wrong value, wrong person, wrong amount, wrong list).
+- **EQUIVALENT = ALIGNED**: The statement is generated using placeholders when data is missing. When the statement shows "[Information not available]" or "No [X] specified" and the data shows the corresponding "No [X]" / "No [X] selected" / "[X] not yet specified", they mean the same thing. Do NOT flag. Do NOT add to misalignmentItems. Do NOT mention in the message.
+- **NO INFORMATIONAL OUTPUT**: Never output lines like "The statement indicates X but the data shows Y. This is acceptable." If something is acceptable, it does not appear in the output at all. Return only the JSON result.
+- **USE "Opportunity Statement"** in any misalignment item text (not "Markdown").
+- **NUMBERS**: Treat as aligned if the statement value is within ~10% of the data; flag only if materially wrong (e.g. $5M vs $45M).
+- **DATES**: Same fact in different format (e.g. "2026-03-30" vs "March 2026") is aligned; do not flag.
+
 **INPUT**  
 You receive JSON with:
 - **existingStatementMarkdown**: The full statement text to validate (markdown).
-- **opportunityData**: An object that includes **opportunityStatementMarkdown** (same statement text) and all structured fields: name, responsibleOrgUnitName, responsibleOrgUnitCode, stakeholders, primarySdGs, uncfOutcomes, clientPartners, fundingPartners, deliverablesEnhanced, budgetDisplay, formattedTimeline, countryNamesList, risks, etc. Compare the statement section-by-section to these fields.
+- **opportunityData**: An object that includes **opportunityStatementMarkdown** (same statement text) and all structured fields. Compare the statement section-by-section to these fields.
+
+**SECTION-BY-SECTION — STATEMENT PLACEHOLDER ↔ DATA EQUIVALENCE (treat as aligned, do not flag):**
+
+| Statement shows | Data field / value | Equivalent? |
+| Unit/manager: [Information not available] ([Information not available]), Name (email) | stakeholders has same Name (email) as Opportunity Manager | YES — correct person present. |
+| Location: [Information not available] | countryNamesList = "No countries specified" or empty | YES. |
+| UN Cooperation Framework: [Information not available] | uncfOutcomes = "No UNCF Outcomes" or empty | YES. |
+| Primary SDG(s): [Information not available] | primarySdGs = "No primary SDGs selected" | YES. |
+| Secondary SDG(s): omitted or [Information not available] | secondarySdGs = "No secondary SDGs selected" | YES. |
+| UNOPS Strategy: [Information not available] | unopsMissions = "No UNOPS Mission alignments" or empty | YES. |
+| Client: No client partners specified | clientPartners = "No client partners" or empty | YES. |
+| Funding: No funding partners specified | fundingPartners = "No funding partners" or empty | YES. |
+| Services/Deliverables: [Information not available] | deliverablesEnhanced = "No deliverables specified" or empty | YES. |
+| Timeline: [Information not available] | formattedTimeline = "Timeline not yet specified" or empty | YES. |
+| Budget: [Information not available] | budgetDisplay = "Budget not yet specified" or empty | YES. |
+| Key Risks: [Information not available] | risks = "No risks identified" or empty | YES. |
+| Mitigation Strategies: [Information not available] | no recommendations in risks | YES. |
+| Direct/Indirect Beneficiaries: [Information not available] or "To be determined during development" | estimatedDirectBeneficiaries / beneficiariesToBeDetermined equivalent | YES. |
+| Other sections: [Information not available] | corresponding field empty, "Not specified", or "No [X]" | YES. |
 
 **HOW TO VALIDATE**  
 1. Take the statement (existingStatementMarkdown or opportunityData.opportunityStatementMarkdown).
-2. For each section (Unit/manager, UNCF, SDGs, Client, Funding, Deliverables, Budget, Timeline, Risks, etc.), check the corresponding field(s) in opportunityData.
-3. **Flag only when** the statement states a fact that **contradicts** the data (wrong value, wrong person, wrong amount, wrong list). Use "Opportunity Statement" (not "Markdown") in output text.
-4. **Do not flag when**:
-   - Data indicates absence (null, empty, "No [X]", "No primary SDGs selected", "No UNCF Outcomes", "No deliverables", "Budget not yet specified", "No risks identified") and the statement shows "[Information not available]" or "No [X] specified"—same meaning.
-   - Unit/manager: statement shows "[Information not available] ([Information not available]), Name (email)" and data has that same Name (email) as Opportunity Manager in stakeholders—correct person is present.
-   - Same fact, different format: e.g. data 45214368.48 vs statement "$45M" (reasonable rounding); "No client partners" vs "No client partners specified"; date "2026-03-30" vs "March 2026".
-5. Numbers: treat as aligned if statement value is within ~10% of data; flag if materially wrong (e.g. $5M vs $45M).
+2. For each section, check the corresponding field(s) in opportunityData using the table above.
+3. If the statement and data match the equivalence table (placeholder vs "No X" / empty), treat as aligned — do not add a misalignment item.
+4. Only add to misalignmentItems when there is a **real contradiction** (e.g. statement says "Country: Kenya" but data says "Country: Uganda"; statement names a different Opportunity Manager than in data; statement shows $10M but data shows $50M).
 
-**CRITICAL — "[Information not available]" = "No X" in data.**  
-When the statement says "[Information not available]" and the data says "No primary SDGs selected", "No risks identified", "No UNCF Outcomes", "No deliverables", "Budget not yet specified", or similar, they mean the same thing. Do NOT add any misalignment item. Do NOT mention these in the message. Do NOT output lines like "The statement indicates X but the data shows Y. This is acceptable." If they are equivalent, return isAligned: true and misalignmentItems: [] with the standard message only. Only put something in misalignmentItems when there is a real contradiction.
-
-**EXAMPLE — statement snippet vs opportunityData (all aligned; do not flag, do not mention)**  
-Statement contains:
-  (a) Unit and opportunity manager: [Information not available] ([Information not available]), Rosemarie Joy Beckett (rosemarieb@unops.org)
-  (a) UN Cooperation Framework: [Information not available]
-  (b) SDGs: Primary SDG(s): [Information not available]
-  (a) Client: No client partners specified
-  (d) Budget: [Information not available]
-  (a) Key Risks: [Information not available]
-
-opportunityData has: stakeholders with "Rosemarie Joy Beckett (rosemarieb@unops.org)" as Opportunity Manager; uncfOutcomes = "No UNCF Outcomes"; primarySdGs = "No primary SDGs selected"; clientPartners = "No client partners"; budgetDisplay = "Budget not yet specified"; risks = "No risks identified".  
-
-These are the same: "[Information not available]" in the statement = "No primary SDGs selected", "No risks identified", etc. in data. Do not list them in misalignmentItems and do not add any "acceptable" or informational line. No inaccuracies → return only: isAligned: true, misalignmentItems: [], message: "The existing statement accurately reflects the current opportunity data."
+**EXAMPLE — all aligned (return isAligned: true, misalignmentItems: [], no other output)**  
+Statement: Unit/manager [Information not available] ([Information not available]), Rosemarie Joy Beckett (rosemarieb@unops.org); UNCF [Information not available]; Primary SDG(s) [Information not available]; Client: No client partners specified; Budget [Information not available]; Key Risks [Information not available].  
+Data: Opportunity Manager = Rosemarie Joy Beckett (rosemarieb@unops.org); uncfOutcomes = "No UNCF Outcomes"; primarySdGs = "No primary SDGs selected"; clientPartners = "No client partners"; budgetDisplay = "Budget not yet specified"; risks = "No risks identified".  
+→ All equivalent per table. No inaccuracies. Return only: isAligned: true, misalignmentItems: [], message: "The existing statement accurately reflects the current opportunity data."
 
 **OUTPUT (JSON only)**  
-- If no inaccuracies: { "isAligned": true, "misalignmentItems": [], "message": "The existing statement accurately reflects the current opportunity data." } — nothing else. No "acceptable" or informational lines.
+- If no inaccuracies: { "isAligned": true, "misalignmentItems": [], "message": "The existing statement accurately reflects the current opportunity data." }
 - If inaccuracies: { "isAligned": false, "misalignmentItems": [ "[Topic] - Opportunity Statement shows X, but data indicates Y" for each real contradiction only ], "message": "The existing statement has N factual inaccuracy(ies) that contradict the current opportunity data." }
-- misalignmentItems only for real contradictions. Never add an item for "[Information not available]" vs "No primary SDGs selected" / "No risks identified" / "No UNCF Outcomes" / etc.—they are the same.',
-        '{promptData}',
+- misalignmentItems only for real contradictions. Never add an item when the statement and data match the equivalence table above.',
+        'I am providing you with the opportunity statement and structured opportunity data for validation. Please validate the statement against the data following the format specified in the system instructions.
+
+**Validation Input (JSON):**
+{promptData}
+
+Please analyze this information and return only valid JSON as specified in the system instructions. Do not include any commentary or "acceptable" notes.',
         NOW(),
-        'Opportunity Statement Validation',
+        'Opportunity',
         1,
         '{"role":"user","parts":[{"text":"{promptData}"}]}',
         '{"temperature":0.3,"top_p":0.4,"max_output_tokens":8192,"response_mime_type":"application/json"}',
@@ -3705,7 +3722,7 @@ These are the same: "[Information not available]" in the statement = "No primary
 
 Please analyze this information and generate the opportunity statement now, strictly following the output format in the system instructions.',
         NOW(),
-        'Opportunity Statement',
+        'Opportunity',
         1,
         '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }',
         '{ "temperature": 0.3, "top_p": 0.4, "max_output_tokens": 8192 }',

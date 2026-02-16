@@ -96,6 +96,16 @@ export class OpportunityStatementSectionComponent implements OnInit {
   readonly showApproverGuidance = input<boolean>(false);
 
   /**
+   * @description Input signal to trigger validation when any section saves.
+   * Parent increments this when a section (What, Why, Who, etc.) saves successfully.
+   * When it changes and a statement exists, validation is triggered.
+   * @type {Signal<number>}
+   * @default 0
+   * @since 1.0.0
+   */
+  readonly sectionSaveTrigger = input<number>(0);
+
+  /**
    * @description Output event when opportunity statement is generated/regenerated
    * @type {OutputEmitterRef<Opportunity>}
    * @param {Opportunity} opportunity - The updated opportunity with new statement
@@ -184,6 +194,14 @@ export class OpportunityStatementSectionComponent implements OnInit {
    */
   private skipNextValidation = false;
 
+  /**
+   * @description Last sectionSaveTrigger value we processed - prevents re-triggering when isValidating flips to false
+   * @type {number}
+   * @private
+   * @since 1.0.0
+   */
+  private lastProcessedSectionSaveTrigger = 0;
+
   constructor() {
     // Effect to watch for opportunity changes and re-run validation
     // This triggers when other sections are saved and opportunity data is updated
@@ -216,6 +234,26 @@ export class OpportunityStatementSectionComponent implements OnInit {
 
       // Update tracking
       this.lastKnownModifiedDate = currentModifiedDate;
+    });
+
+    // Effect to trigger validation when any section saves (explicit trigger from parent)
+    // Ensures validation runs on every section save when a statement exists
+    // Track lastProcessedSectionSaveTrigger to avoid infinite loop when isValidating flips to false
+    effect(() => {
+      const trigger = this.sectionSaveTrigger();
+      if (trigger <= 0 || trigger === this.lastProcessedSectionSaveTrigger) return;
+
+      const opp = this.opportunity();
+      if (!opp) return;
+
+      const hasStatement = !!(opp.opportunityStatementMarkdown?.trim());
+      if (!hasStatement) return;
+
+      // Skip if generating or already validating
+      if (this.generatingStatement() || this.isValidating()) return;
+
+      this.lastProcessedSectionSaveTrigger = trigger;
+      this.validateOpportunityStatement();
     });
   }
 

@@ -107,16 +107,21 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 }
                 
                 // Find all placeholders in format {propertyName} or {object.property}
+                // Only replace when the inner part looks like a property path (alphanumeric, dots, underscores)
+                // so that JSON examples in prompts (e.g. { "isAligned": true }) are not corrupted
                 var placeholderPattern = @"\{([^}]+)\}";
                 var matches = Regex.Matches(text, placeholderPattern);
-                
+                var simplePathPattern = new Regex(@"^[a-zA-Z0-9_.]+$");
+
                 foreach (Match match in matches)
                 {
                     var placeholder = match.Value; // e.g., "{partner.name}"
-                    var propertyPath = match.Groups[1].Value; // e.g., "partner.name"
-                    
+                    var propertyPath = match.Groups[1].Value.Trim();
+                    if (!simplePathPattern.IsMatch(propertyPath))
+                        continue; // Skip JSON-like content (e.g. " \"isAligned\": true")
+
                     var value = GetNestedPropertyValue(dataObject, propertyPath);
-                    
+
                     if (value != null)
                     {
                         result = result.Replace(placeholder, value);
