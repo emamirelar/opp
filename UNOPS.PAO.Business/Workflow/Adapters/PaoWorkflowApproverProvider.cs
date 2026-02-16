@@ -11,7 +11,8 @@ namespace UNOPS.PAO.Business.Workflow.Adapters;
 /// <summary>
 /// PAO implementation of IWorkflowApproverProvider.
 /// Provides entity-specific workflow approvers based on stakeholders and entity roles.
-/// For GO transition: Uses DoA Level 2 holders from the opportunity's ResponsibleOrgUnit.
+/// For GO transition: Uses DoA Level 2 holders from the opportunity's ResponsibleOrgUnit,
+/// with fallback to DoA Level 3 when no DoA2 holders exist.
 /// For other transitions: Uses stakeholder-based lookup.
 /// Uses DbContextFactory to create separate context instances for each operation,
 /// avoiding DbContext concurrency issues with other async workflow operations.
@@ -26,6 +27,11 @@ public class PaoWorkflowApproverProvider : IPaoWorkflowApproverProvider
     /// DoA Level 2 role code used for approver lookup on OrganizationHierarchy.
     /// </summary>
     private const string DoA2RoleCode = "DoA2_OrganizationHierarchy";
+
+    /// <summary>
+    /// DoA Level 3 role code used for fallback approver lookup when no DoA2 holders exist.
+    /// </summary>
+    private const string DoA3RoleCode = "DoA3_OrganizationHierarchy";
 
     public PaoWorkflowApproverProvider(
         IDbContextFactory<AppDbContext> contextFactory,
@@ -172,7 +178,8 @@ public class PaoWorkflowApproverProvider : IPaoWorkflowApproverProvider
 
     /// <summary>
     /// Gets approvers for an Opportunity based on the target stage.
-    /// For GO transition: Returns DoA Level 2 holders from the opportunity's ResponsibleOrgUnit.
+    /// For GO transition: Returns DoA holders from the opportunity's ResponsibleOrgUnit
+    /// (DoA2 first, DoA3 fallback when no DoA2 holders exist).
     /// For other transitions: Returns stakeholders with the required entity roles.
     /// </summary>
     private async Task<List<WorkflowApproverModel>> GetOpportunityApproversAsync(
@@ -180,7 +187,7 @@ public class PaoWorkflowApproverProvider : IPaoWorkflowApproverProvider
         List<string> roleNames,
         string toStage)
     {
-        // For GO transition, use DoA Level 2 holders from ResponsibleOrgUnit
+        // For GO transition, use DoA holders from ResponsibleOrgUnit (DoA2 first, DoA3 fallback)
         if (toStage == OpportunityWorkflow.Stages.Go)
         {
             return await GetDoA2HoldersForOpportunityAsync(opportunityId, toStage);
@@ -191,11 +198,12 @@ public class PaoWorkflowApproverProvider : IPaoWorkflowApproverProvider
     }
 
     /// <summary>
-    /// Gets DoA Level 2 holders for an opportunity's ResponsibleOrgUnit.
+    /// Gets DoA holders for an opportunity's ResponsibleOrgUnit.
+    /// Uses DoA2 first; falls back to DoA3 when no DoA2 holders exist.
     /// </summary>
     /// <param name="opportunityId">The opportunity ID.</param>
     /// <param name="toStage">The target workflow stage.</param>
-    /// <returns>List of DoA Level 2 approvers.</returns>
+    /// <returns>List of DoA approvers (DoA2 or DoA3).</returns>
     private async Task<List<WorkflowApproverModel>> GetDoA2HoldersForOpportunityAsync(
         int opportunityId,
         string toStage)
@@ -221,7 +229,25 @@ public class PaoWorkflowApproverProvider : IPaoWorkflowApproverProvider
             return new List<WorkflowApproverModel>();
         }
 
-        return await GetDoA2HoldersForOrgUnitAsync(opportunity.ResponsibleOrgUnitId.Value, toStage);
+        return await GetDoAHoldersForOrgUnitAsync(opportunity.ResponsibleOrgUnitId.Value, toStage);
+    }
+
+    /// <summary>
+    /// Gets DoA holders for a specific organization unit.
+    /// Uses DoA2 holders first; falls back to DoA3 when no DoA2 holders exist.
+    /// </summary>
+    /// <param name="orgUnitId">The organization unit ID.</param>
+    /// <param name="toStage">The target workflow stage.</param>
+    /// <returns>List of DoA approvers (DoA2 or DoA3).</returns>
+    private async Task<List<WorkflowApproverModel>> GetDoAHoldersForOrgUnitAsync(int orgUnitId, string toStage)
+    {
+        var doa2Holders = await GetDoA2HoldersForOrgUnitAsync(orgUnitId, toStage);
+        if (doa2Holders.Any())
+        {
+            return doa2Holders;
+        }
+
+        return await GetDoA3HoldersForOrgUnitAsync(orgUnitId, toStage);
     }
 
     /// <summary>
@@ -272,6 +298,51 @@ public class PaoWorkflowApproverProvider : IPaoWorkflowApproverProvider
     }
 
     /// <summary>
+    /// Gets DoA Level 3 holders for a specific organization unit.
+    /// Used as fallback when no DoA2 holders exist.
+    /// </summary>
+    /// <param name="orgUnitId">The organization unit ID.</param>
+    /// <param name="toStage">The target workflow stage.</param>
+    /// <returns>List of DoA Level 3 approvers.</returns>
+    private async Task<List<WorkflowApproverModel>> GetDoA3HoldersForOrgUnitAsync(int orgUnitId, string toStage)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+
+        var doaHolders = await context.Set<EntityUserRole>()
+            .AsNoTracking()
+            .Include(e => e.EntityRole)
+            .Include(e => e.User)
+                .ThenInclude(u => u!.UserProfile)
+            .Where(e => !e.IsDeleted &&
+                       e.EntityType == "OrganizationHierarchy" &&
+                       e.EntityId == orgUnitId &&
+                       e.EntityRole != null &&
+                       e.EntityRole.Code == DoA3RoleCode)
+            .ToListAsync();
+
+        if (!doaHolders.Any())
+        {
+            _logger?.LogWarning(
+                "No DoA Level 3 holders found for OrganizationHierarchy {OrgUnitId} (DoA2 fallback)",
+                orgUnitId);
+        }
+
+        return doaHolders
+            .Where(e => e.User != null)
+            .Select(e => new WorkflowApproverModel
+            {
+                UserId = e.UserId,
+                FirstName = e.User!.UserProfile?.Name?.Split(' ').FirstOrDefault() ?? string.Empty,
+                LastName = e.User!.UserProfile?.Name?.Split(' ').Skip(1).FirstOrDefault() ?? string.Empty,
+                Name = e.User!.UserProfile?.Name ?? e.User.Email,
+                Email = e.User!.Email ?? string.Empty,
+                Role = "DoA Level 3",
+                ToStage = toStage
+            })
+            .ToList();
+    }
+
+    /// <summary>
     /// Gets approvers for an Opportunity based on stakeholders with the required roles.
     /// Used for non-GO transitions.
     /// </summary>
@@ -311,7 +382,8 @@ public class PaoWorkflowApproverProvider : IPaoWorkflowApproverProvider
 
     /// <summary>
     /// Gets approval tasks for an Opportunity.
-    /// For GO transition: Returns DoA Level 2 holders from the opportunity's ResponsibleOrgUnit.
+    /// For GO transition: Returns DoA holders from the opportunity's ResponsibleOrgUnit
+    /// (DoA2 first, DoA3 fallback when no DoA2 holders exist).
     /// For other transitions: Returns stakeholders with the required entity roles.
     /// </summary>
     private async Task<List<WorkflowTaskModel>> GetOpportunityApproverTasksAsync(
@@ -319,10 +391,10 @@ public class PaoWorkflowApproverProvider : IPaoWorkflowApproverProvider
         List<string> roleNames,
         string toStage)
     {
-        // For GO transition, use DoA Level 2 holders from ResponsibleOrgUnit
+        // For GO transition, use DoA holders from ResponsibleOrgUnit (DoA2 first, DoA3 fallback)
         if (toStage == OpportunityWorkflow.Stages.Go)
         {
-            return await GetDoA2HolderTasksForOpportunityAsync(opportunityId);
+            return await GetDoAHolderTasksForOpportunityAsync(opportunityId);
         }
 
         await using var context = await _contextFactory.CreateDbContextAsync();
@@ -347,12 +419,13 @@ public class PaoWorkflowApproverProvider : IPaoWorkflowApproverProvider
     }
 
     /// <summary>
-    /// Gets DoA Level 2 holder tasks for an opportunity's ResponsibleOrgUnit.
+    /// Gets DoA holder tasks for an opportunity's ResponsibleOrgUnit.
+    /// Uses DoA2 holders first; falls back to DoA3 when no DoA2 holders exist.
     /// </summary>
-    private async Task<List<WorkflowTaskModel>> GetDoA2HolderTasksForOpportunityAsync(int opportunityId)
+    private async Task<List<WorkflowTaskModel>> GetDoAHolderTasksForOpportunityAsync(int opportunityId)
     {
         await using var context = await _contextFactory.CreateDbContextAsync();
-        
+
         // Get the opportunity's ResponsibleOrgUnitId
         var opportunity = await context.Set<Opportunity>()
             .AsNoTracking()
@@ -365,21 +438,46 @@ public class PaoWorkflowApproverProvider : IPaoWorkflowApproverProvider
             return new List<WorkflowTaskModel>();
         }
 
-        var doaHolders = await context.Set<EntityUserRole>()
+        var orgUnitId = opportunity.ResponsibleOrgUnitId.Value;
+
+        // Try DoA2 first
+        var doa2Holders = await context.Set<EntityUserRole>()
             .AsNoTracking()
             .Include(e => e.EntityRole)
             .Where(e => !e.IsDeleted &&
                        e.EntityType == "OrganizationHierarchy" &&
-                       e.EntityId == opportunity.ResponsibleOrgUnitId.Value &&
+                       e.EntityId == orgUnitId &&
                        e.EntityRole != null &&
                        e.EntityRole.Code == DoA2RoleCode)
             .ToListAsync();
 
-        return doaHolders
+        if (doa2Holders.Any())
+        {
+            return doa2Holders
+                .Select(e => new WorkflowTaskModel
+                {
+                    UserId = e.UserId,
+                    Role = "DoA Level 2"
+                })
+                .ToList();
+        }
+
+        // Fallback to DoA3
+        var doa3Holders = await context.Set<EntityUserRole>()
+            .AsNoTracking()
+            .Include(e => e.EntityRole)
+            .Where(e => !e.IsDeleted &&
+                       e.EntityType == "OrganizationHierarchy" &&
+                       e.EntityId == orgUnitId &&
+                       e.EntityRole != null &&
+                       e.EntityRole.Code == DoA3RoleCode)
+            .ToListAsync();
+
+        return doa3Holders
             .Select(e => new WorkflowTaskModel
             {
                 UserId = e.UserId,
-                Role = "DoA Level 2"
+                Role = "DoA Level 3"
             })
             .ToList();
     }
