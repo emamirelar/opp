@@ -1,0 +1,142 @@
+metadata:
+  name: "engagement-partners"
+  description: "Engagement partners data sync"
+  version: "1.0"
+  enabled: true
+  max_retry_attempts: 1
+  timeout_minutes: 5
+
+source:
+  type: "bigquery"
+  
+  query: |
+    WITH ENG AS (
+      SELECT
+        *
+      FROM
+        `unopsreporting.Engagements.Engagement` E
+      WHERE
+        E.Engagement_Stage NOT IN ('CANCELLED')
+        AND EXTRACT(YEAR FROM E.Engagement_Implementation_Start_Date) > 1900
+        AND E.Latest_Finalised_Flag = 'Yes'
+    )
+    , CLIENTS AS (
+    SELECT DISTINCT
+      CONCAT(E.Base_Engagement, '-CLIENT-', EC.Partner) AS Key
+      , E.Base_Engagement
+      , 'CLIENT' AS Partner_Type
+      , EC.Partner
+      , EC.Partner_Description
+    FROM
+      ENG E
+
+      CROSS JOIN UNNEST(E.Clients) AS EC
+    )
+    , DONORS AS (
+    SELECT DISTINCT
+      CONCAT(E.Base_Engagement, '-DONOR-', EF.Partner) AS Key
+      , E.Base_Engagement
+      , 'DONOR' AS Partner_Type
+      , EF.Partner
+      , EF.Partner_Description
+    FROM
+      ENG E
+
+      CROSS JOIN UNNEST(E.Funding_Sources) AS EF
+    )
+    SELECT
+      *
+      , 1 AS Status
+      , CURRENT_TIMESTAMP() as last_modified
+    FROM
+      CLIENTS
+    UNION ALL
+    SELECT
+      *
+      , 1 AS Status
+      , CURRENT_TIMESTAMP() as last_modified
+    FROM
+      DONORS
+  
+  primary_key_field: "Key"
+  batch_size: 1000
+
+destination:
+  table_name: "BaseEngagementPartners"
+  schema: "public"
+  manage_table_structure: true
+  add_standard_fields: true
+  
+  field_mappings:
+    - source_field: "Partner_Description"
+      destination_field: "Name"  # Needed to implement BaseBusinessEntity
+      data_type: "varchar(255)"
+      is_required: false
+
+    - source_field: "Status"
+      destination_field: "Status"  # Needed to implement BaseBusinessEntity
+      data_type: "integer"         # Must be integer (BaseBusinessEntity requirement)
+      is_required: false
+
+    - source_field: "Key"
+      destination_field: "Key"
+      data_type: "varchar(200)"
+      is_required: true
+      is_unique: true
+
+    - source_field: "Base_Engagement"
+      destination_field: "BaseEngagement"
+      data_type: "varchar(50)"
+      is_required: true
+      is_unique: false
+    
+    - source_field: "Partner_Type"
+      destination_field: "PartnerType"
+      data_type: "varchar(50)"
+      is_required: false
+    
+    - source_field: "Partner"
+      destination_field: "Partner"
+      data_type: "varchar(50)"
+      is_required: false
+    
+    - source_field: "Partner_Description"
+      destination_field: "PartnerDescription"
+      data_type: "varchar(255)"
+      is_required: false
+    
+  foreign_key_mappings:
+    - source_field: "Partner"
+      lookup_table: "Partners"
+      lookup_field: "ErpDimValue"
+      destination_field: "PartnerId"
+      lookup_return_field: "Id"
+      is_required: false
+      on_lookup_fail: LogWarning  # Don't fail in development
+
+    - source_field: "Base_Engagement"
+      lookup_table: "BaseEngagements"
+      lookup_field: "BaseEngagement"
+      destination_field: "BaseEngagementId"
+      lookup_return_field: "Id"
+      is_required: false
+      on_lookup_fail: LogWarning  # Don't fail in development
+
+sync_options:
+  sync_mode: Upsert
+  batch_processing: true
+  use_bulk_upsert: true  # Requires unique Key; run AddUniqueConstraintsForTables migration
+
+validation:
+  required_source_fields:
+    - "Key"
+    - "Partner"
+  
+error_handling:
+  on_connection_error: RetryWithBackoff
+  on_mapping_error: SkipRecord
+
+logging:
+  log_level: "Debug"
+  log_sql_queries: true
+  log_record_details: true

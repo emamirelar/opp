@@ -29,6 +29,7 @@ import { AvatarModule } from 'primeng/avatar';
 import { GlobalSearchBarComponent } from './global-search-bar/global-search-bar.component';
 import { RoleService } from '@core/services/auth';
 import { RoleDialogComponent } from './role-dialog/role-dialog.component';
+import { DoaRoleDialogComponent } from './doa-role-dialog/doa-role-dialog.component';
 import { ProfileDialogComponent } from '../profile-dialog/profile-dialog.component';
 
 import { GlobalFiltersDialogComponent } from './global-filters-dialog/global-filters-dialog.component';
@@ -83,6 +84,7 @@ interface UserInfo {
     DialogModule,
     GlobalSearchBarComponent,
     RoleDialogComponent,
+    DoaRoleDialogComponent,
     ProfileDialogComponent,
     GlobalFiltersDialogComponent,
     TranslateModule,
@@ -97,6 +99,7 @@ interface UserInfo {
 })
 export class TopbarComponent implements OnInit, OnDestroy {
   @ViewChild(RoleDialogComponent) roleDialog!: RoleDialogComponent;
+  @ViewChild(DoaRoleDialogComponent) doaRoleDialog!: DoaRoleDialogComponent;
   @ViewChild(ProfileDialogComponent) profileDialog!: ProfileDialogComponent;
 
   @ViewChild(GlobalFiltersDialogComponent) globalFiltersDialog!: GlobalFiltersDialogComponent;
@@ -292,6 +295,11 @@ export class TopbarComponent implements OnInit, OnDestroy {
         label: 'Impersonate Roles',
         icon: 'pi pi-users',
         command: () => this.showRoleDialog()
+      });
+      this.profileMenuItems.push({
+        label: 'Assign DoA Roles',
+        icon: 'pi pi-user-plus',
+        command: () => this.showDoaRoleDialog()
       });
     }
 
@@ -616,13 +624,19 @@ export class TopbarComponent implements OnInit, OnDestroy {
   getCategoryIcon(notification: Notification): string {
     const category = notification.category?.toLowerCase() || '';
     
+    // Check for workflow approval notifications (Go/No-Go decisions)
+    if (category.includes('workflow_approval') || category.includes('go_decision')) {
+      return 'pi pi-check-circle';
+    }
     // Check for specific entity types
-    if (category.includes('contact') || category.includes('_contact_')) {
+    else if (category.includes('contact') || category.includes('_contact_')) {
       return 'pi pi-user';
     } else if (category.includes('partner') || category.includes('_partner_')) {
       return 'pi pi-building';
     } else if (category.includes('interaction') || category.includes('_interaction_')) {
       return 'pi pi-comments';
+    } else if (category.includes('opportunity')) {
+      return 'pi pi-briefcase';
     } else if (category.includes('file') || category.includes('import') || category.includes('export')) {
       return 'pi pi-file';
     } else if (category.includes('analysis') || category.includes('ai')) {
@@ -639,12 +653,17 @@ export class TopbarComponent implements OnInit, OnDestroy {
   getCategoryIconColor(notification: Notification): string {
     const category = notification.category?.toLowerCase() || '';
     
-    if (category.includes('contact')) {
+    // Workflow approval notifications get primary color (important actions)
+    if (category.includes('workflow_approval') || category.includes('go_decision')) {
+      return '#0057a0'; // UNOPS Primary Blue for workflow approvals
+    } else if (category.includes('contact')) {
       return '#10b981'; // Green for contacts
     } else if (category.includes('partner')) {
       return '#3b82f6'; // Blue for partners
     } else if (category.includes('interaction')) {
       return '#f59e0b'; // Orange for interactions
+    } else if (category.includes('opportunity')) {
+      return '#6366f1'; // Indigo for opportunities
     } else if (category.includes('file') || category.includes('import') || category.includes('export')) {
       return '#8b5cf6'; // Purple for files
     } else if (category.includes('analysis') || category.includes('ai')) {
@@ -676,6 +695,15 @@ export class TopbarComponent implements OnInit, OnDestroy {
       }
       const route = `/partnerships/${pluralEntity}/${notification.entityId}/collaboration`;
       this.router.navigate([route]);
+      this.markNotificationAsRead(notification.id);
+      return;
+    }
+
+    // Handle workflow approval notifications (Go/No-Go decision requests)
+    const category = notification.category?.toLowerCase() || '';
+    if ((category.includes('workflow_approval') || category.includes('go_decision')) && notification.entityId) {
+      // Navigate to the opportunity for Go/No-Go decision
+      this.router.navigate(['/partnerships/opportunities', notification.entityId]);
       this.markNotificationAsRead(notification.id);
       return;
     }
@@ -967,6 +995,10 @@ export class TopbarComponent implements OnInit, OnDestroy {
 
   showRoleDialog() {
     this.roleDialog.show();
+  }
+
+  showDoaRoleDialog() {
+    this.doaRoleDialog.show();
   }
 
   showProfile() {

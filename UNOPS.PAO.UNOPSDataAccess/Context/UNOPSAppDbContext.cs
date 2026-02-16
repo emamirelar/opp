@@ -430,6 +430,20 @@ public class UNOPSAppDbContext : AppDbContext
 
         #endregion
 
+        #region Opportunity Configuration
+
+        // Configure Opportunity → Executive relationship
+        modelBuilder.Entity<Opportunity>(entity =>
+        {
+            // Executive assignment (set during Go decision)
+            entity.HasOne(e => e.Executive)
+                  .WithMany()
+                  .HasForeignKey(e => e.ExecutiveId)
+                  .OnDelete(DeleteBehavior.SetNull); // Executive deletion shouldn't delete Opportunity
+        });
+
+        #endregion
+
         #region Collaborator Expertise Configuration
 
         // Configure CollaboratorExpertise entity (lookup table)

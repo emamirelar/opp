@@ -82,13 +82,15 @@
               ({{ risks().length }})
               </span>
             </h3>
-            <p-button
-              [label]="'button.dst.addToRegister' | translate"
-              icon="pi pi-plus"
-              size="small"
-              [outlined]="true"
-              (onClick)="addToRiskRegister()"
-            />
+            @if (canUpdate()) {
+              <p-button
+                [label]="'button.dst.addToRegister' | translate"
+                icon="pi pi-plus"
+                size="small"
+                [outlined]="true"
+                (onClick)="addToRiskRegister()"
+              />
+            }
           </div>
 
         @if (loadingRisks()) {
@@ -130,28 +132,30 @@
                       [value]="getRiskImpactDisplay(risk)"
                       [severity]="getRiskSeverity(risk)"
                     />
-                    <p-button
-                      icon="pi pi-pencil"
-                      [rounded]="true"
-                      [text]="true"
-                      severity="primary"
-                      size="small"
-                      [pTooltip]="'button.edit' | translate"
-                      tooltipPosition="top"
-                      (onClick)="editRisk(risk)"
-                      [disabled]="isDeletingRisk() || isProcessingRisk()"
-                    />
-                    <p-button
-                      icon="pi pi-trash"
-                      [rounded]="true"
-                      [text]="true"
-                      severity="danger"
-                      size="small"
-                      [pTooltip]="'button.delete' | translate"
-                      tooltipPosition="top"
-                      (onClick)="confirmDeleteRisk(risk)"
-                      [disabled]="isDeletingRisk() || isProcessingRisk()"
-                    />
+                    @if (canUpdate()) {
+                      <p-button
+                        icon="pi pi-pencil"
+                        [rounded]="true"
+                        [text]="true"
+                        severity="primary"
+                        size="small"
+                        [pTooltip]="'button.edit' | translate"
+                        tooltipPosition="top"
+                        (onClick)="editRisk(risk)"
+                        [disabled]="isDeletingRisk() || isProcessingRisk()"
+                      />
+                      <p-button
+                        icon="pi pi-trash"
+                        [rounded]="true"
+                        [text]="true"
+                        severity="danger"
+                        size="small"
+                        [pTooltip]="'button.delete' | translate"
+                        tooltipPosition="top"
+                        (onClick)="confirmDeleteRisk(risk)"
+                        [disabled]="isDeletingRisk() || isProcessingRisk()"
+                      />
+                    }
                   </div>
                 </div>
 
@@ -593,6 +597,7 @@
   [(visible)]="showAddRiskDialog"
   [modal]="true"
   [style]="{ width: '60rem' }"
+  appendTo="body"
 >
   <!-- Loading state for lookups -->
   @if (loadingRiskLookups()) {

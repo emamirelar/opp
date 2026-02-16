@@ -117,6 +117,12 @@ public class OpportunityModel
     public List<OpportunityUNOPSMissionModel>? UNOPSMissions { get; set; }
     
     /// <summary>
+    /// Indicates whether UNOPS Strategic Missions alignment is not applicable for this opportunity.
+    /// When true, no missions need to be selected and validation will pass.
+    /// </summary>
+    public bool UNOPSMissionsNotApplicable { get; set; }
+    
+    /// <summary>
     /// Collaborators who have permissions to edit all fields of the opportunity.
     /// Part of the Opportunity Development Team.
     /// </summary>
@@ -145,6 +151,17 @@ public class OpportunityModel
     /// Historical max value for the org unit
     /// </summary>
     public decimal? OrgUnitHistoricalMaxValue { get; set; }
+    
+    /// <summary>
+    /// The Executive assigned to direct Opportunity development after Go decision.
+    /// Nullable until Go decision is made.
+    /// </summary>
+    public int? ExecutiveId { get; set; }
+    
+    /// <summary>
+    /// Display name of the assigned Executive.
+    /// </summary>
+    public string? ExecutiveName { get; set; }
     
     public DateTime? CreatedDate { get; set; }
     public DateTime? LastModifiedDate { get; set; }

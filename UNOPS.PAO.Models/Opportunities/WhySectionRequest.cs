@@ -62,5 +62,11 @@ public class WhySectionRequest
     /// List of UNOPS Mission alignments for the opportunity
     /// </summary>
     public List<OpportunityUNOPSMissionRequest>? UNOPSMissions { get; set; }
+    
+    /// <summary>
+    /// Indicates whether UNOPS Strategic Missions alignment is not applicable for this opportunity.
+    /// When true, no missions need to be selected and validation will pass.
+    /// </summary>
+    public bool UNOPSMissionsNotApplicable { get; set; }
 }
 

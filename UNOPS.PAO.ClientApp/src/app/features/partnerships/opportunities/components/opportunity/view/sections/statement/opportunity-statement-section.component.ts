@@ -10,6 +10,7 @@ import {
   output,
   signal,
   inject,
+  effect,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
 } from '@angular/core';
@@ -21,6 +22,7 @@ import { PanelModule } from 'primeng/panel';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { MessageModule } from 'primeng/message';
+import { TooltipModule } from 'primeng/tooltip';
 import { MarkdownModule } from 'ngx-markdown';
 
 // Services and Models
@@ -58,6 +60,7 @@ import { GoogleOAuthService } from '@core/services/auth/google-oauth.service';
     ButtonModule,
     DialogModule,
     MessageModule,
+    TooltipModule,
     MarkdownModule,
   ],
   templateUrl: './opportunity-statement-section.component.html',
@@ -83,6 +86,24 @@ export class OpportunityStatementSectionComponent implements OnInit {
    * @description Input signal for update permission - controls visibility of generate/export buttons
    */
   readonly canUpdate = input<boolean>(false);
+
+  /**
+   * @description Input signal to show approver guidance when user is an approver and opportunity is pending approval
+   * @type {Signal<boolean>}
+   * @default false
+   * @since 1.0.0
+   */
+  readonly showApproverGuidance = input<boolean>(false);
+
+  /**
+   * @description Input signal to trigger validation when any section saves.
+   * Parent increments this when a section (What, Why, Who, etc.) saves successfully.
+   * When it changes and a statement exists, validation is triggered.
+   * @type {Signal<number>}
+   * @default 0
+   * @since 1.0.0
+   */
+  readonly sectionSaveTrigger = input<number>(0);
 
   /**
    * @description Output event when opportunity statement is generated/regenerated
@@ -132,6 +153,14 @@ export class OpportunityStatementSectionComponent implements OnInit {
   showExportSuccessDialog = false;
 
   /**
+   * @description Controls visibility of fullscreen statement dialog
+   * @type {boolean}
+   * @default false
+   * @since 1.0.0
+   */
+  showFullscreenDialog = false;
+
+  /**
    * @description URL of the exported Google Doc
    * @type {string | null}
    * @default null
@@ -150,6 +179,85 @@ export class OpportunityStatementSectionComponent implements OnInit {
   );
 
   /**
+   * @description Track the last modified date to detect real changes vs initial load
+   * @type {string | null}
+   * @private
+   * @since 1.0.0
+   */
+  private lastKnownModifiedDate: string | null = null;
+
+  /**
+   * @description Flag to skip validation during statement generation
+   * @type {boolean}
+   * @private
+   * @since 1.0.0
+   */
+  private skipNextValidation = false;
+
+  /**
+   * @description Last sectionSaveTrigger value we processed - prevents re-triggering when isValidating flips to false
+   * @type {number}
+   * @private
+   * @since 1.0.0
+   */
+  private lastProcessedSectionSaveTrigger = 0;
+
+  constructor() {
+    // Effect to watch for opportunity changes and re-run validation
+    // This triggers when other sections are saved and opportunity data is updated
+    effect(() => {
+      const opp = this.opportunity();
+      if (!opp) return;
+
+      const currentModifiedDate = opp.lastModifiedDate?.toString() || null;
+      const hasStatement = !!opp.opportunityStatementMarkdown;
+
+      // Skip if we're currently generating (validation is triggered after generation completes)
+      if (this.generatingStatement() || this.skipNextValidation) {
+        this.skipNextValidation = false;
+        this.lastKnownModifiedDate = currentModifiedDate;
+        return;
+      }
+
+      // Only re-validate if:
+      // 1. There's a statement to validate
+      // 2. The opportunity was modified (lastModifiedDate changed)
+      // 3. We have a previous date to compare (not initial load - ngOnInit handles that)
+      if (
+        hasStatement &&
+        this.lastKnownModifiedDate !== null &&
+        currentModifiedDate !== this.lastKnownModifiedDate
+      ) {
+        // Re-run validation because opportunity data changed
+        this.validateOpportunityStatement();
+      }
+
+      // Update tracking
+      this.lastKnownModifiedDate = currentModifiedDate;
+    });
+
+    // Effect to trigger validation when any section saves (explicit trigger from parent)
+    // Ensures validation runs on every section save when a statement exists
+    // Track lastProcessedSectionSaveTrigger to avoid infinite loop when isValidating flips to false
+    effect(() => {
+      const trigger = this.sectionSaveTrigger();
+      if (trigger <= 0 || trigger === this.lastProcessedSectionSaveTrigger) return;
+
+      const opp = this.opportunity();
+      if (!opp) return;
+
+      const hasStatement = !!(opp.opportunityStatementMarkdown?.trim());
+      if (!hasStatement) return;
+
+      // Skip if generating or already validating
+      if (this.generatingStatement() || this.isValidating()) return;
+
+      this.lastProcessedSectionSaveTrigger = trigger;
+      this.validateOpportunityStatement();
+    });
+  }
+
+  /**
    * @description Generate or regenerate opportunity statement using AI
    * @returns {void}
    * @example
@@ -163,6 +271,8 @@ export class OpportunityStatementSectionComponent implements OnInit {
     if (!opportunityId) return;
 
     this.generatingStatement.set(true);
+    // Skip the effect-triggered validation since we manually call it after generation
+    this.skipNextValidation = true;
 
     this.opportunityService
       .generateOpportunityStatement(opportunityId)
@@ -196,6 +306,7 @@ export class OpportunityStatementSectionComponent implements OnInit {
         },
         error: () => {
           this.generatingStatement.set(false);
+          this.skipNextValidation = false; // Reset flag on error
           this.cdr.detectChanges();
           // Error handled by global interceptor
         },
@@ -245,8 +356,13 @@ export class OpportunityStatementSectionComponent implements OnInit {
    * @since 1.0.0
    */
   ngOnInit(): void {
+    const opp = this.opportunity();
+    
+    // Initialize tracking for the effect (prevents double validation on load)
+    this.lastKnownModifiedDate = opp?.lastModifiedDate?.toString() || null;
+    
     // Validate statement when component initializes if statement exists
-    const statement = this.opportunity()?.opportunityStatementMarkdown;
+    const statement = opp?.opportunityStatementMarkdown;
     if (statement) {
       this.validateOpportunityStatement();
     }
@@ -422,6 +538,28 @@ export class OpportunityStatementSectionComponent implements OnInit {
   closeExportDialog(): void {
     this.showExportSuccessDialog = false;
     this.exportedDocUrl = null;
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Open the fullscreen statement dialog
+   * @param {Event} event - Click event to stop propagation (prevents panel toggle)
+   * @returns {void}
+   * @since 1.0.0
+   */
+  openFullscreenDialog(event: Event): void {
+    event.stopPropagation();
+    this.showFullscreenDialog = true;
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Close the fullscreen statement dialog
+   * @returns {void}
+   * @since 1.0.0
+   */
+  closeFullscreenDialog(): void {
+    this.showFullscreenDialog = false;
     this.cdr.detectChanges();
   }
 

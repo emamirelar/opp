@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using UNOPS.PAO.Domain.Infrastructure;
 
 namespace UNOPS.PAO.Domain.Entities;
 
@@ -6,10 +7,18 @@ namespace UNOPS.PAO.Domain.Entities;
 /// Junction table for the many-to-many relationship between OpportunityCollaborator and CollaboratorExpertise.
 /// A collaborator can have multiple expertises, and an expertise can be assigned to multiple collaborators.
 /// </summary>
-public class OpportunityCollaboratorExpertise
+public class OpportunityCollaboratorExpertise : ModifiableDeletableEntity
 {
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int Id { get; set; }
+    public new int Id { get; set; }
+
+    public new string? Name { get; set; }
+
+    /// <summary>
+    /// Foreign key to the Opportunity (denormalized for easier querying)
+    /// </summary>
+    public int OpportunityId { get; set; }
+    public virtual Opportunity? Opportunity { get; set; }
 
     /// <summary>
     /// Foreign key to the OpportunityCollaborator

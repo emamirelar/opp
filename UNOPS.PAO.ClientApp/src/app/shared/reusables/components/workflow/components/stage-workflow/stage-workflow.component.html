@@ -1,8 +1,8 @@
-<p-panel #mainPanel>
-  <ng-template #header>
-    <div class="flex">
-      <div class="grow flex items-center gap-2">
-        <div class="font-semibold">{{ 'title.stage' | translate }}</div>
+<p-panel #mainPanel [toggleable]="true" [collapsed]="collapsed()">
+  <ng-template pTemplate="header">
+    <div class="flex items-center justify-between w-full pr-4">
+      <!-- Left side: Title and stage info -->
+      <div class="flex items-center gap-2 flex-wrap">
         @if (workflowDataLoading()) {
           <div class="flex flex-wrap gap-6 items-center">
             <p-skeleton height="1.5rem" width="8rem" class="ml-3 mr-3"></p-skeleton>
@@ -16,6 +16,8 @@
             </div>
           </div>
         } @else if (workflowData()?.isInWorkflow == true) {
+          <i class="pi pi-sitemap text-unops-secondary"></i>
+          <span class="font-semibold">{{ 'label.workflow.workflowStatus' | translate }}</span>
           <p-tag
             class="ml-3 mr-3"
             severity="warn"
@@ -47,21 +49,50 @@
           </div>
         }
       </div>
-    </div>
-  </ng-template>
-  <ng-template #icons>
-    <div>
-      <app-workflow
-        #workFlowComponent
-        [autoload]="false"
-        [entityName]="entityName()"
-        [entityId]="entityId()"
-        [isReadOnly]="!canChangeStage()"
-        [feedbackDialogService]="feedbackDialogService"
-        [beforeStageChange]="beforeStageChange.bind(this)"
-        [customStageChangeHandler]="customStageChangeHandler"
-        (stageChangeSuccess)="handleOnStageChangeSuccess($event)"
-      ></app-workflow>
+      
+      <!-- Right side: Action buttons -->
+      <div class="flex gap-2 items-center flex-shrink-0">
+        <!-- Cancel button - visible for OM when in IDENTIFY & PROFILE and not in workflow -->
+        @if (canCancel()) {
+          <p-button
+            [label]="'label.workflow.cancel' | translate"
+            severity="danger"
+            [outlined]="true"
+            icon="pi pi-times"
+            (onClick)="openCancelDialog()"
+            [disabled]="isActionInProgress()"
+          />
+        }
+
+        <!-- Reopen button - visible for OM when in NO GO or CANCELLED -->
+        @if (canReopen()) {
+          <p-button
+            [label]="'label.workflow.reopen' | translate"
+            severity="secondary"
+            [outlined]="true"
+            icon="pi pi-refresh"
+            (onClick)="openReopenDialog()"
+            [disabled]="isActionInProgress()"
+          />
+        }
+
+        <app-workflow
+          #workFlowComponent
+          [autoload]="false"
+          [entityName]="entityName()"
+          [entityId]="entityId()"
+          [isReadOnly]="!canChangeStage()"
+          [feedbackDialogService]="feedbackDialogService"
+          [responsibleOrgUnitName]="responsibleOrgUnitName()"
+          [beforeStageChange]="beforeStageChange.bind(this)"
+          [customStageChangeHandler]="customStageChangeHandler"
+          (stageChangeSuccess)="handleOnStageChangeSuccess($event)"
+          (goSubmissionSuccess)="handleGoSubmissionSuccess($event)"
+          (goApprovalSuccess)="handleGoApprovalSuccess($event)"
+          (requirementsValidationFailed)="handleRequirementsValidationFailed($event)"
+          (actionInProgressChange)="handleActionInProgressChange($event)"
+        ></app-workflow>
+      </div>
     </div>
   </ng-template>
 
@@ -84,7 +115,7 @@
             <p-skeleton height="3rem" width="8rem" shape="circle"></p-skeleton>
           </div>
         } @else {
-          <p-steps [activeIndex]="currentStageIndex" [model]="stages()" [readonly]="true" />
+          <p-steps [activeIndex]="displayStageIndex()" [model]="displayStages()" [readonly]="true" />
         }
       </p-tabpanel>
       @if (workflowData()?.isInWorkflow == true) {
@@ -174,7 +205,7 @@
                 <tr>
                   <th>{{ 'label.workflow.fromStage' | translate }}</th>
                   <th>{{ 'label.workflow.toStage' | translate }}</th>
-                  <th>{{ 'label.workflow.completedOn' | translate }}</th>
+                  <th>{{ 'label.workflow.actionDate' | translate }}</th>
                   <th>{{ 'label.workflow.action' | translate }}</th>
                   <th>{{ 'label.workflow.comment' | translate }}</th>
                   <th>{{ 'label.workflow.user' | translate }}</th>
@@ -203,4 +234,196 @@
       </p-tabpanel>
     </p-tabpanels>
   </p-tabs>
+
+  <!-- Pending Approval Read-Only Message (visible when submitted for Go Decision) -->
+  @if (workflowData()?.isInWorkflow === true) {
+    <div class="mt-4 p-4 rounded-lg flex items-start gap-3" style="background-color: #e3f2fd; border: 1px solid rgba(0, 146, 209, 0.2);">
+      <i class="pi pi-lock" style="color: #005a8a; font-size: 1.25rem; margin-top: 2px;"></i>
+      <p class="m-0" style="color: #005a8a;" [innerHTML]="'message.workflow.pendingApprovalReadOnlyInfo' | translate"></p>
+    </div>
+  }
+
+  <!-- Rejection Reason Display (visible when NO GO) -->
+  @if (isNoGo() && rejectionReason()) {
+    <div class="mt-4 p-4 rounded-lg" style="background-color: #fce7f3; border: 1px solid #fbcfe8;">
+      <p class="font-semibold m-0 mb-1" style="color: #991e66;">
+        {{ 'label.workflow.rejectionReason' | translate }}:
+      </p>
+      <p class="m-0" style="color: #991e66;">
+        "{{ rejectionReason() }}"
+      </p>
+    </div>
+  }
+
+  <!-- Cancellation Reason Display (visible when CANCELLED) -->
+  @if (isCancelled() && cancellationReason()) {
+    <div class="mt-4 p-4 rounded-lg" style="background-color: #fefce8; border: 1px solid #ca8a04;">
+      <p class="font-semibold m-0 mb-1" style="color: #854d0e;">
+        {{ 'label.workflow.cancellationReason' | translate }}:
+      </p>
+      <p class="m-0" style="color: #713f12;">
+        "{{ cancellationReason() }}"
+      </p>
+    </div>
+  }
+
+  <!-- Closed Status Message (visible when CANCELLED) -->
+  @if (isCancelled()) {
+    <div class="mt-4 p-4 rounded-lg flex items-start gap-3" style="background-color: #fefce8; border: 1px solid #ca8a04;">
+      <i class="pi pi-lock" style="color: #854d0e; font-size: 1.25rem; margin-top: 2px;"></i>
+      <p class="m-0" style="color: #713f12;" [innerHTML]="'message.workflow.cancelledStatusInfo' | translate"></p>
+    </div>
+  }
 </p-panel>
+
+<!-- Cancel Opportunity Dialog -->
+<p-dialog
+  [visible]="showCancelDialog()"
+  [header]="'message.workflow.cancelTitle' | translate"
+  [modal]="true"
+  [closable]="true"
+  [style]="{ width: '500px' }"
+  (onHide)="closeCancelDialog()"
+  (visibleChange)="onCancelDialogVisibleChange($event)"
+  appendTo="body"
+>
+  <div class="flex flex-col gap-4">
+    <!-- Initial Question -->
+    <p class="m-0" style="color: #5c5e60;">
+      {{ 'message.workflow.cancelQuestion' | translate }}
+    </p>
+
+    <!-- Consequences Box (Neutral Gray) -->
+    <div class="p-4 rounded-lg" style="background-color: #f3f4f6; border: 1px solid #e8e9ea;">
+      <p class="font-semibold mb-2 m-0" style="color: #5c5e60;">
+        {{ 'message.workflow.cancelConsequencesTitle' | translate }}
+      </p>
+      <ul class="m-0 pl-5 list-disc" style="color: #5c5e60;">
+        <li>{{ 'message.workflow.cancelConsequence1' | translate }}</li>
+        <li>{{ 'message.workflow.cancelConsequence2' | translate }}</li>
+        <li>{{ 'message.workflow.cancelConsequence3' | translate }}</li>
+      </ul>
+    </div>
+
+    <!-- Info Notice (Light Blue Box) -->
+    <div class="p-4 rounded-lg flex items-start gap-2" style="background-color: #e3f2fd; border: 1px solid rgba(0, 146, 209, 0.2);">
+      <i class="pi pi-info-circle" style="color: #005a8a;"></i>
+      <p class="m-0" style="color: #005a8a;">
+        {{ 'message.workflow.cancelReopenNotice' | translate }}
+      </p>
+    </div>
+
+    <!-- Reason Textarea -->
+    <div class="flex flex-col gap-2">
+      <label class="font-semibold">{{ 'message.workflow.cancelReason' | translate }}</label>
+      <textarea
+        pTextarea
+        [ngModel]="cancelReason()"
+        (ngModelChange)="cancelReason.set($event)"
+        [rows]="4"
+        class="w-full"
+        [placeholder]="'message.workflow.enterCancellationReason' | translate"
+      ></textarea>
+      <p class="text-sm m-0" style="color: #7a7c7e;">
+        {{ 'message.workflow.cancelReasonHint' | translate }}
+      </p>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end gap-2">
+      <p-button
+        [label]="'button.cancel' | translate"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="closeCancelDialog()"
+        [disabled]="isActionInProgress()"
+      />
+      <p-button
+        [label]="'message.workflow.cancelButton' | translate"
+        severity="danger"
+        (onClick)="confirmCancel()"
+        [loading]="isActionInProgress()"
+        [disabled]="!cancelReason().trim()"
+      />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Reopen Opportunity Dialog -->
+<p-dialog
+  [visible]="showReopenDialog()"
+  [header]="'message.workflow.reopenTitle' | translate"
+  [modal]="true"
+  [closable]="true"
+  [style]="{ width: '500px' }"
+  (onHide)="closeReopenDialog()"
+  (visibleChange)="onReopenDialogVisibleChange($event)"
+  appendTo="body"
+>
+  <div class="flex flex-col gap-4">
+    <!-- Initial Question -->
+    @if (currentStageName() === 'CANCELLED') {
+      <p class="m-0" style="color: #5c5e60;">
+        {{ 'message.workflow.reopenFromCancelledQuestion' | translate }}
+      </p>
+    } @else {
+      <p class="m-0" style="color: #5c5e60;">
+        {{ 'message.workflow.reopenQuestion' | translate }}
+      </p>
+    }
+
+    <!-- Success Box (Light Green) -->
+    <div class="p-4 rounded-lg" style="background-color: #d1fae5; border: 1px solid #a7f3d0;">
+      <p class="font-semibold mb-2 m-0" style="color: #059669;">
+        {{ 'message.workflow.reopenConsequencesTitle' | translate }}
+      </p>
+      <ul class="m-0 pl-5 list-disc" style="color: #059669;">
+        <li>{{ 'message.workflow.reopenConsequence1' | translate }}</li>
+        <li>{{ 'message.workflow.reopenConsequence2' | translate }}</li>
+        <li>{{ 'message.workflow.reopenConsequence3' | translate }}</li>
+      </ul>
+    </div>
+
+    <!-- Reason Textarea -->
+    <div class="flex flex-col gap-2">
+      <label class="font-semibold">
+        @if (reopenRequiresReason()) {
+          {{ 'message.workflow.reopenFromCancelledReason' | translate }}
+        } @else {
+          {{ 'message.workflow.reopenReasonOptional' | translate }}
+        }
+      </label>
+      <textarea
+        pTextarea
+        [ngModel]="reopenReason()"
+        (ngModelChange)="reopenReason.set($event)"
+        [rows]="4"
+        class="w-full"
+        [placeholder]="'message.workflow.enterReopenReason' | translate"
+      ></textarea>
+      <p class="text-sm m-0" style="color: #7a7c7e;">
+        {{ reopenRequiresReason() ? ('message.workflow.reopenReasonHintRequired' | translate) : '' }}
+      </p>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end gap-2">
+      <p-button
+        [label]="'button.cancel' | translate"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="closeReopenDialog()"
+        [disabled]="isActionInProgress()"
+      />
+      <p-button
+        [label]="'label.workflow.reopen' | translate"
+        severity="primary"
+        (onClick)="confirmReopen()"
+        [loading]="isActionInProgress()"
+        [disabled]="reopenRequiresReason() && !reopenReason().trim()"
+      />
+    </div>
+  </ng-template>
+</p-dialog>

@@ -3,7 +3,6 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "prestart": "node aspnetcore-https",
     "start": "run-script-os",
     "build": "ng build",
     "build:dev": "ng build --configuration dev",
@@ -23,8 +22,8 @@
     "extract-i18n": "ngx-translate-extract --input ./src --output ./public/assets/i18n/*.json --sort --format json && node sync_translation_keys.js",
     "extract-i18n:watch": "ngx-translate-extract --input ./src --output ./public/assets/i18n/*.json --sort --format json --watch",
     "sync-i18n": "node sync_translation_keys.js",
-    "start:windows": "ng serve --ssl --ssl-cert \"%APPDATA%\\ASP.NET\\https\\%npm_package_name%.pem\" --ssl-key \"%APPDATA%\\ASP.NET\\https\\%npm_package_name%.key\"",
-    "start:default": "ng serve --ssl --ssl-cert \"$HOME/.aspnet/https/${npm_package_name}.pem\" --ssl-key \"$HOME/.aspnet/https/${npm_package_name}.key\""
+    "start:windows": "ng serve",
+    "start:default": "ng serve"
   },
   "private": true,
   "dependencies": {

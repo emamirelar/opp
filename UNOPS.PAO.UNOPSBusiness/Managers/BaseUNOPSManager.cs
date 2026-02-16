@@ -1448,6 +1448,23 @@ public abstract class BaseUNOPSManager
     }
 
     /// <summary>
+    /// Marks an entity as modified to trigger automatic audit field updates (LastModifiedDate, LastModifiedBy).
+    /// Uses the existing AuditableDbContext mechanism for consistent audit trail.
+    /// This is useful when only child entities are modified but parent entity needs audit updates for Pub/Sub synchronization.
+    /// </summary>
+    /// <typeparam name="TEntity">The entity type to mark as modified</typeparam>
+    /// <param name="entity">The entity instance to mark as modified</param>
+    protected void MarkEntityAsModified<TEntity>(TEntity entity) where TEntity : class
+    {
+        if (entity != null)
+        {
+            // Mark as modified to trigger AuditableDbContext.ApplyAuditInformation()
+            // This will automatically set LastModifiedDate and LastModifiedBy
+            _context.Entry(entity).State = EntityState.Modified;
+        }
+    }
+
+    /// <summary>
     /// Gets comprehensive user profile information for AI context
     /// </summary>
     /// <param name="user">The current user claims principal</param>

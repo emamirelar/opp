@@ -70,7 +70,12 @@
   </ng-template>
 
   <!-- AI Suggestions -->
-  @if (suggestions() && suggestions().length > 0) {
+  @if (loadingInsightsSuggestions()) {
+    <div class="flex items-center gap-3 p-4 bg-unops-surface-secondary rounded-unops-md border border-unops-neutral-light mb-6">
+      <i class="pi pi-spin pi-spinner text-xl text-unops-primary"></i>
+      <span class="text-unops-neutral-700">{{ 'message.opportunity.refreshingInsights' | translate }}</span>
+    </div>
+  } @else if (suggestions() && suggestions().length > 0) {
     <div style="background-color: rgb(253, 250, 241);" class="rounded-unops-lg p-3 border border-unops-warning-light mb-6">
       <div class="flex items-start gap-2 mb-2">
         <i class="pi pi-lightbulb text-unops-warning-darker text-sm mt-0.5"></i>
@@ -267,7 +272,7 @@
         </div>
 
         <!-- Org Unit Responsible for Opportunity development* (mandatory) -->
-        <div>
+        <div id="field-responsibleOrgUnitId">
           <h4 class="text-sm font-semibold text-unops-neutral-700 mb-2">
             {{ 'label.opportunity.responsibleOrgUnit' | translate }} <span class="text-unops-error">*</span>
           </h4>
@@ -334,13 +339,9 @@
                   {{ 'title.notNormallyResponsible' | translate }}
                 </p>
                 @if (orgUnitConflictsWithNormalOrgUnits().affectedCountries.length === 1) {
-                  <p class="text-amber-800">
-                    {{ 'message.orgUnitNotNormallyResponsibleViewSingle' | translate: { country: orgUnitConflictsWithNormalOrgUnits().affectedCountries[0] } }}
-                  </p>
+                  <p class="text-amber-800" [innerHTML]="'message.orgUnitNotNormallyResponsibleViewSingle' | translate: { country: orgUnitConflictsWithNormalOrgUnits().affectedCountries[0] }"></p>
                 } @else {
-                  <p class="text-amber-800">
-                    {{ 'message.orgUnitNotNormallyResponsibleViewMultiple' | translate: { countries: orgUnitConflictsWithNormalOrgUnits().affectedCountries.join(', ') } }}
-                  </p>
+                  <p class="text-amber-800" [innerHTML]="'message.orgUnitNotNormallyResponsibleViewMultiple' | translate: { countries: orgUnitConflictsWithNormalOrgUnits().affectedCountries.join(', ') }"></p>
                 }
               </div>
             </div>
@@ -415,10 +416,7 @@
         <!-- ============================================ -->
         <!-- Proposed Initiative Type (moved to Opportunity Development Team) -->
         <!-- ============================================ -->
-        <div class="mt-4 pt-4 border-t border-unops-neutral-300">
-          <h4 class="text-sm font-semibold text-unops-neutral-700 mb-2">
-            {{ 'label.opportunity.initiativeType' | translate }} <span class="text-unops-error">*</span>
-          </h4>
+        <div id="field-proposedInitiativeTypeId" class="mt-4 pt-4 border-t border-unops-neutral-300">
           @if (isEditing()) {
             <p-floatlabel variant="on">
               <p-select
@@ -436,6 +434,9 @@
               <label for="initiativeType">{{ 'label.opportunity.initiativeType' | translate }} *</label>
             </p-floatlabel>
           } @else {
+            <h4 class="text-sm font-semibold text-unops-neutral-700 mb-2">
+              {{ 'label.opportunity.initiativeType' | translate }} *
+            </h4>
             <p class="text-unops-secondary">
               {{ opportunity().proposedInitiativeTypeName || '-' }}
             </p>
@@ -443,10 +444,10 @@
         </div>
 
         <!-- ============================================ -->
-        <!-- Opportunity Decision Making Pathway (DoA2 and DoA3) -->
+        <!-- Opportunity Decision Making Pathway (DoA2 and DoA3) - Responsible Org Unit Only -->
         <!-- ============================================ -->
-        @if (decisionMakingPathwayStakeholders().length > 0) {
-          <div class="mt-4 pt-4 border-t border-unops-neutral-300">
+        @if (responsibleOrgUnitDecisionMakingPathway().length > 0) {
+          <div id="field-doaHolders" class="mt-4 pt-4 border-t border-unops-neutral-300">
             <h4 class="text-sm font-semibold text-unops-neutral-700 mb-3 flex items-center gap-2">
               <i class="pi pi-sitemap text-unops-primary"></i>
               <span>{{ 'label.opportunity.decisionMakingPathway' | translate }}</span>
@@ -457,10 +458,10 @@
               <span>{{ 'label.opportunity.autoPopulatedFromOrgUnit' | translate }}</span>
             </div>
 
-            @for (group of decisionMakingPathwayStakeholders(); track group.orgUnitName) {
+            @for (group of responsibleOrgUnitDecisionMakingPathway(); track group.orgUnitName) {
               <div class="mb-4">
                 <!-- OrgUnit Group Header -->
-                <div class="text-sm font-semibold text-unops-primary mb-2 flex items-center gap-2">
+                <div class="text-sm font-semibold text-unops-primary mb-2 flex items-center gap-2 flex-wrap">
                   <i class="pi pi-building text-unops-primary"></i>
                   <span>{{ group.orgUnitName }}</span>
                   <span class="text-unops-neutral-500 font-normal text-xs">({{ group.stakeholders.length }})</span>
@@ -469,13 +470,13 @@
                 <!-- DoA Roles Display -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                   @for (stakeholder of group.stakeholders; track stakeholder.entityRoleId) {
-                    <div class="bg-amber-50 rounded-unops-md p-2.5 border border-amber-300">
+                    <div class="bg-emerald-50 rounded-unops-md p-2.5 border border-emerald-300">
                       <div class="flex items-center gap-2">
                         <p-avatar
                           label="D"
                           shape="circle"
                           size="normal"
-                          styleClass="bg-amber-100 text-amber-700 flex-shrink-0"
+                          styleClass="bg-emerald-100 text-emerald-700 flex-shrink-0"
                         />
                         <div class="min-w-0 flex-1">
                           <div class="font-semibold text-unops-secondary text-sm truncate">
@@ -543,7 +544,7 @@
       <div class="space-y-4">
 
         <!-- Team & Stakeholders (Internal) -->
-        <div>
+        <div id="field-stakeholders">
           <div class="flex items-center justify-between mb-3">
             <h3 class="text-sm font-semibold text-unops-secondary flex items-center gap-2">
               <i class="pi pi-users text-unops-primary text-base"></i>
@@ -575,7 +576,11 @@
                         />
                       }
                     </div>
-                    <div class="text-sm text-unops-primary">{{ getTranslatedRoleName(stakeholder) }}</div>
+                    <!-- Only show role for normally responsible stakeholders (they have various roles) -->
+                    <!-- User-added stakeholders are always "Internal Stakeholder" so role is redundant -->
+                    @if (stakeholder.isNormallyResponsible) {
+                      <div class="text-sm text-unops-primary">{{ getTranslatedRoleName(stakeholder) }}</div>
+                    }
                     @if (stakeholder.position) {
                       <div class="text-xs text-unops-neutral-600 mt-0.5">{{ stakeholder.position }}</div>
                     }
@@ -882,7 +887,7 @@
   </ng-template>
 </p-panel>
 
-<!-- Team & Stakeholders Dialog -->
+<!-- Add Internal Stakeholder Dialog -->
 <p-dialog
   [header]="isEditingStakeholder() ? ('title.editStakeholder' | translate) : ('title.addStakeholder' | translate)"
   [(visible)]="showStakeholderDialog"
@@ -892,7 +897,7 @@
 >
   @if (showStakeholderValidationError()) {
     <p-message severity="error" icon="pi pi-info-circle" styleClass="mb-4 w-full">
-      {{ 'message.validation.stakeholderRequired' | translate }}
+      {{ 'message.validation.userRequired' | translate }}
     </p-message>
   }
 
@@ -918,31 +923,6 @@
       @if (!userControl.value && showStakeholderValidationError()) {
         <p-message severity="error" variant="simple" styleClass="mt-2">
           {{ 'message.validation.userRequired' | translate }}
-        </p-message>
-      }
-    </div>
-
-    <!-- Role Selection -->
-    <div>
-      <p-floatlabel variant="on">
-        <p-select
-          id="stakeholderRole"
-          [formControl]="roleControl"
-          [options]="nonSmeRoles()"
-          optionLabel="name"
-          [filter]="true"
-          filterBy="name"
-          [showClear]="true"
-          [appendTo]="'body'"
-          [virtualScroll]="true"
-          [virtualScrollItemSize]="38"
-          class="w-full"
-        />
-        <label for="stakeholderRole">{{ 'label.role' | translate }} *</label>
-      </p-floatlabel>
-      @if (!roleControl.value && showStakeholderValidationError()) {
-        <p-message severity="error" variant="simple" styleClass="mt-2">
-          {{ 'message.validation.roleRequired' | translate }}
         </p-message>
       }
     </div>
@@ -1019,7 +999,6 @@
           filterBy="name"
           [appendTo]="'body'"
           [showClear]="true"
-          [placeholder]="'label.selectExpertise' | translate"
           class="w-full"
           styleClass="w-full"
         />

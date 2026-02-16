@@ -83,27 +83,35 @@ export interface WorkflowStateModel {
 }
 
 /**
- * Workflow history user model
+ * Workflow history user model (matches WorkflowUserResponse from backend)
  */
 export interface WorkflowHistoryUserModel {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  name: string;
+  userId: number;
+  userName?: string;
+  userEmail?: string;
+  /**
+   * User's standardized position/job title
+   */
+  positionTitle?: string;
+  /**
+   * User's DOA (Delegation of Authority) level (e.g., "DoA1", "DoA2", "DoA3")
+   * Only populated for approvers who have a DOA role
+   */
+  doaLevel?: string;
 }
 
 /**
- * Workflow history model
+ * Workflow history model (matches WorkflowHistoryResponse from backend)
  */
 export interface WorkflowHistoryModel {
   fromStage: string;
   toStage: string;
-  completedOn?: Date;
+  fromStageDisplayName?: string;
+  toStageDisplayName?: string;
   action: string;
   comment: string;
-  user?: WorkflowHistoryUserModel;
-  role?: string;
+  performedBy?: WorkflowHistoryUserModel;
+  performedOn?: Date;
   requiresApproval: boolean;
 }
 
@@ -114,3 +122,187 @@ export interface CustomStageChangeResult {
   proceed: boolean;
   comment?: string;
 }
+
+/**
+ * Extended workflow action model for submission with confirmation flags
+ */
+export interface WorkflowSubmitRequest extends WorkflowActionModel {
+  /**
+   * Confirmed that user is not the Opportunity Manager but wishes to proceed
+   */
+  confirmedNonOMSubmission?: boolean;
+
+  /**
+   * Confirmed country-org unit mismatch warning
+   */
+  confirmedOrgUnitWarning?: boolean;
+
+  /**
+   * User has acknowledged the submission statement
+   */
+  acknowledgedStatement?: boolean;
+
+  /**
+   * Optional additional remarks for the decision maker
+   */
+  additionalRemarks?: string;
+}
+
+/**
+ * Response from workflow submission with confirmation requirements
+ */
+export interface WorkflowSubmitResponse {
+  /**
+   * Whether the submission was successful
+   */
+  success: boolean;
+
+  /**
+   * Whether user confirmation is required before proceeding
+   */
+  requiresConfirmation?: boolean;
+
+  /**
+   * Type of confirmation required
+   */
+  confirmationType?: ConfirmationType;
+
+  /**
+   * Message to display in confirmation dialog
+   */
+  confirmationMessage?: string;
+
+  /**
+   * Opportunity Manager info for Non-OM warning (name and email)
+   */
+  opportunityManagerInfo?: string;
+
+  /**
+   * List of countries not related to the org unit (for OrgUnitCountryMismatch)
+   */
+  unrelatedCountries?: string[];
+
+  /**
+   * All implementation countries with their mapping status (for OrgUnitCountryMismatch)
+   */
+  countryMappings?: CountryMappingInfo[];
+
+  /**
+   * Name of the responsible org unit for display in dialogs
+   */
+  responsibleOrgUnitName?: string;
+
+  /**
+   * Whether acknowledgment statement is required
+   */
+  requiresAcknowledgment?: boolean;
+
+  /**
+   * Text of the acknowledgment statement
+   */
+  acknowledgmentText?: string;
+
+  /**
+   * The new stage after successful submission
+   */
+  newStage?: string;
+
+  /**
+   * Error message if submission failed
+   */
+  errorMessage?: string;
+
+  /**
+   * Whether requirements validation failed.
+   * Frontend should show the requirements panel with unmet items.
+   */
+  requirementsNotMet?: boolean;
+
+  /**
+   * List of unmet requirement messages to display.
+   */
+  unmetRequirements?: string[];
+}
+
+/**
+ * Types of confirmation dialogs
+ */
+export type ConfirmationType = 'NonOMSubmitter' | 'OrgUnitCountryMismatch';
+
+/**
+ * Country mapping information for org unit mismatch dialog
+ */
+export interface CountryMappingInfo {
+  /**
+   * Country name
+   */
+  countryName: string;
+
+  /**
+   * Whether the country is mapped to the selected org unit
+   */
+  isMapped: boolean;
+}
+
+/**
+ * Cancel/Reopen request model
+ */
+export interface WorkflowCancelReopenRequest {
+  entityName: string;
+  entityId: number;
+  comment?: string;
+}
+
+/**
+ * Model for pending workflow approvals
+ * Used to display tasks in the Actions Required dashboard card
+ */
+export interface PendingApprovalModel {
+  /**
+   * Entity type (e.g., 'Opportunity')
+   */
+  entityName: string;
+
+  /**
+   * Entity ID
+   */
+  entityId: number;
+
+  /**
+   * Display name of the entity (e.g., opportunity name)
+   */
+  entityDisplayName: string;
+
+  /**
+   * Current workflow stage
+   */
+  currentStage: string;
+
+  /**
+   * Stage waiting for approval
+   */
+  pendingStage: string;
+
+  /**
+   * User who submitted for approval
+   */
+  submittedBy: string;
+
+  /**
+   * Submission timestamp
+   */
+  submittedOn: Date;
+
+  /**
+   * Responsible org unit name
+   */
+  orgUnitName: string;
+
+  /**
+   * Optional submission comment/remarks
+   */
+  submissionComment?: string;
+}
+
+// Re-export requirement models for convenience
+export * from './requirement.models';

@@ -11,7 +11,7 @@ namespace UNOPS.PAO.Business.Workflow.Seeders;
 
 /// <summary>
 /// Seeds workflow role permissions for Opportunity workflow transitions.
-/// Includes role permissions for all 3 transitions: Go, No Go, and Reopen.
+/// Includes role permissions for all 5 transitions: Go, No Go, Reopen from No Go, Cancel, and Reopen from Cancelled.
 /// </summary>
 public static class StateMachineStageChangeRoleSeeder
 {
@@ -136,7 +136,7 @@ public static class StateMachineStageChangeRoleSeeder
 
     /// <summary>
     /// Returns the seed data for Opportunity workflow role permissions.
-    /// Includes permissions for all 3 transitions: Go, No Go, and Reopen.
+    /// Includes permissions for all 5 transitions: Go, No Go, Reopen from No Go, Cancel, and Reopen from Cancelled.
     /// </summary>
     private static List<StateMachineStageChangeRole> GetSeedStageChangeRoles(
         int opportunityManagerRoleId,
@@ -209,7 +209,7 @@ public static class StateMachineStageChangeRoleSeeder
             },
 
             // ========================================
-            // Transition: NO GO → IDENTIFY & PROFILE (Reopen)
+            // Transition: NO GO → IDENTIFY & PROFILE (Reopen from No Go)
             // ========================================
 
             // Opportunity Manager can trigger (reopen, no approval needed)
@@ -222,7 +222,43 @@ public static class StateMachineStageChangeRoleSeeder
                 RoleName = RoleNames.OpportunityManager,
                 CanTrigger = true,
                 CanApprove = false, // No approval needed for reopen
-                Name = "Opportunity Manager - Reopen",
+                Name = "Opportunity Manager - Reopen from No Go",
+                Status = EntityStatus.Active
+            },
+
+            // ========================================
+            // Transition: IDENTIFY & PROFILE → CANCELLED (Cancel)
+            // ========================================
+
+            // Opportunity Manager can trigger (cancel, no approval needed)
+            new StateMachineStageChangeRole
+            {
+                EntityType = OpportunityWorkflow.EntityName,
+                FromStage = OpportunityWorkflow.Stages.IdentifyAndProfile,
+                ToStage = OpportunityWorkflow.Stages.Cancelled,
+                RoleId = opportunityManagerRoleId,
+                RoleName = RoleNames.OpportunityManager,
+                CanTrigger = true,
+                CanApprove = false, // No approval needed for cancel
+                Name = "Opportunity Manager - Cancel",
+                Status = EntityStatus.Active
+            },
+
+            // ========================================
+            // Transition: CANCELLED → IDENTIFY & PROFILE (Reopen from Cancelled)
+            // ========================================
+
+            // Opportunity Manager can trigger (reopen from cancelled, no approval needed)
+            new StateMachineStageChangeRole
+            {
+                EntityType = OpportunityWorkflow.EntityName,
+                FromStage = OpportunityWorkflow.Stages.Cancelled,
+                ToStage = OpportunityWorkflow.Stages.IdentifyAndProfile,
+                RoleId = opportunityManagerRoleId,
+                RoleName = RoleNames.OpportunityManager,
+                CanTrigger = true,
+                CanApprove = false, // No approval needed for reopen
+                Name = "Opportunity Manager - Reopen from Cancelled",
                 Status = EntityStatus.Active
             }
         };

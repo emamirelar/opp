@@ -1,0 +1,1961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Send Opportunity for Go Decision - All Mockups</title>
+  <link href="https://cdn.jsdelivr.net/npm/primeicons@6.0.1/primeicons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ===================================== */
+    /* UNOPS DESIGN TOKENS */
+    /* ===================================== */
+    :root {
+      /* Primary Colors */
+      --unops-primary: #0092d1;
+      --unops-primary-light: #1aa3db;
+      --unops-primary-lighter: #4ec3e0;
+      --unops-primary-dark: #007bb8;
+      --unops-primary-darker: #005a8a;
+      --unops-primary-on: #ffffff;
+      --unops-primary-container: #b3e0f7;
+      --unops-primary-container-soft: #e3f2fd;
+      
+      /* Secondary Colors */
+      --unops-secondary: #004976;
+      --unops-secondary-on: #ffffff;
+      
+      /* Neutral Colors */
+      --unops-neutral-50: #f9fafb;
+      --unops-neutral-100: #f3f4f6;
+      --unops-neutral-200: #e8e9ea;
+      --unops-neutral-300: #d1d2d3;
+      --unops-neutral-400: #b8babb;
+      --unops-neutral-500: #97999b;
+      --unops-neutral-600: #7a7c7e;
+      --unops-neutral-700: #5c5e60;
+      --unops-neutral-800: #1a1b1c;
+      --unops-neutral-900: #00070a;
+      
+      /* Surface Colors */
+      --unops-surface-primary: #ffffff;
+      --unops-surface-secondary: #f8fafc;
+      --unops-surface-overlay: rgba(15, 23, 42, 0.8);
+      
+      /* State Colors */
+      --unops-error: #991e66;
+      --unops-error-light: #c2185b;
+      --unops-error-on: #ffffff;
+      --unops-success: #10b981;
+      --unops-success-dark: #059669;
+      --unops-success-on: #ffffff;
+      --unops-warning: #cc8400;
+      --unops-warning-light: #f59e0b;
+      --unops-warning-on: #ffffff;
+      --unops-info: #4ec3e0;
+      
+      /* Spacing */
+      --unops-spacing-xs: 4px;
+      --unops-spacing-sm: 8px;
+      --unops-spacing-md: 16px;
+      --unops-spacing-lg: 24px;
+      --unops-spacing-xl: 32px;
+      
+      /* Typography */
+      --unops-font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      --unops-font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      --unops-font-weight-regular: 400;
+      --unops-font-weight-medium: 500;
+      --unops-font-weight-semibold: 600;
+      --unops-font-weight-bold: 700;
+      --unops-font-size-body-small: 0.75rem;
+      --unops-font-size-body-medium: 0.875rem;
+      --unops-font-size-body-large: 1rem;
+      --unops-font-size-headline-small: 1.25rem;
+      --unops-font-size-headline-medium: 1.5rem;
+      
+      /* Border Radius */
+      --unops-radius-xs: 4px;
+      --unops-radius-sm: 6px;
+      --unops-radius-md: 8px;
+      --unops-radius-lg: 12px;
+      --unops-radius-xl: 16px;
+      --unops-radius-full: 9999px;
+      
+      /* Shadows */
+      --unops-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --unops-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --unops-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --unops-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      
+      /* Touch Targets */
+      --unops-min-touch: 44px;
+      
+      /* Transitions */
+      --unops-duration-short: 200ms;
+      --unops-easing-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ===================================== */
+    /* BASE STYLES */
+    /* ===================================== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      font-family: var(--unops-font-body);
+      font-size: var(--unops-font-size-body-medium);
+      color: var(--unops-neutral-900);
+      background-color: var(--unops-surface-secondary);
+      line-height: 1.5;
+    }
+
+    /* ===================================== */
+    /* NAVIGATION */
+    /* ===================================== */
+    .mockup-header {
+      background: var(--unops-primary);
+      color: var(--unops-primary-on);
+      padding: var(--unops-spacing-md) var(--unops-spacing-lg);
+      box-shadow: var(--unops-shadow-lg);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .mockup-header h1 {
+      font-family: var(--unops-font-display);
+      font-size: var(--unops-font-size-headline-small);
+      font-weight: var(--unops-font-weight-semibold);
+    }
+
+    .mockup-nav {
+      background: var(--unops-surface-primary);
+      border-bottom: 1px solid var(--unops-neutral-200);
+      padding: var(--unops-spacing-sm) var(--unops-spacing-lg);
+      position: sticky;
+      top: 56px;
+      z-index: 40;
+      overflow-x: auto;
+    }
+
+    .mockup-nav-inner {
+      display: flex;
+      gap: var(--unops-spacing-sm);
+      min-width: max-content;
+    }
+
+    .nav-btn {
+      padding: var(--unops-spacing-sm) var(--unops-spacing-md);
+      border: 1px solid transparent;
+      border-radius: var(--unops-radius-lg);
+      background: transparent;
+      color: var(--unops-neutral-700);
+      font-family: var(--unops-font-body);
+      font-size: var(--unops-font-size-body-medium);
+      font-weight: var(--unops-font-weight-medium);
+      cursor: pointer;
+      transition: all var(--unops-duration-short) var(--unops-easing-smooth);
+      white-space: nowrap;
+    }
+
+    .nav-btn:hover {
+      background: var(--unops-primary-container-soft);
+      color: var(--unops-primary-dark);
+    }
+
+    .nav-btn.active {
+      background: var(--unops-primary);
+      color: var(--unops-primary-on);
+    }
+
+    /* ===================================== */
+    /* MAIN CONTENT */
+    /* ===================================== */
+    .mockup-main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: var(--unops-spacing-lg);
+    }
+
+    .mockup-section {
+      display: none;
+    }
+
+    .mockup-section.active {
+      display: block;
+    }
+
+    .mockup-title {
+      margin-bottom: var(--unops-spacing-lg);
+    }
+
+    .mockup-title h2 {
+      font-family: var(--unops-font-display);
+      font-size: var(--unops-font-size-headline-medium);
+      font-weight: var(--unops-font-weight-semibold);
+      color: var(--unops-neutral-900);
+    }
+
+    .mockup-title p {
+      color: var(--unops-neutral-600);
+      margin-top: var(--unops-spacing-xs);
+    }
+
+    /* ===================================== */
+    /* CARD / PANEL STYLES */
+    /* ===================================== */
+    .unops-card {
+      background: var(--unops-surface-primary);
+      border: 1px solid var(--unops-neutral-200);
+      border-radius: var(--unops-radius-lg);
+      box-shadow: var(--unops-shadow-md);
+      margin-bottom: var(--unops-spacing-lg);
+    }
+
+    .unops-card-header {
+      padding: var(--unops-spacing-md) var(--unops-spacing-lg);
+      border-bottom: 1px solid var(--unops-neutral-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .unops-card-title {
+      font-family: var(--unops-font-display);
+      font-size: var(--unops-font-size-headline-small);
+      font-weight: var(--unops-font-weight-semibold);
+      color: var(--unops-neutral-900);
+    }
+
+    .unops-card-body {
+      padding: var(--unops-spacing-lg);
+    }
+
+    /* ===================================== */
+    /* PAGE HEADER */
+    /* ===================================== */
+    .page-header {
+      background: var(--unops-surface-primary);
+      border: 1px solid var(--unops-neutral-200);
+      border-radius: var(--unops-radius-lg);
+      padding: var(--unops-spacing-lg);
+      margin-bottom: var(--unops-spacing-lg);
+      box-shadow: var(--unops-shadow-md);
+    }
+
+    .page-header-back {
+      color: var(--unops-neutral-500);
+      font-size: var(--unops-font-size-body-medium);
+      text-decoration: none;
+      margin-bottom: var(--unops-spacing-sm);
+      display: inline-block;
+    }
+
+    .page-header-back:hover {
+      color: var(--unops-primary);
+    }
+
+    .page-header h1 {
+      font-family: var(--unops-font-display);
+      font-size: var(--unops-font-size-headline-medium);
+      font-weight: var(--unops-font-weight-bold);
+      color: var(--unops-neutral-900);
+    }
+
+    .page-header-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--unops-spacing-md);
+      margin-top: var(--unops-spacing-sm);
+      font-size: var(--unops-font-size-body-medium);
+      color: var(--unops-neutral-600);
+      flex-wrap: wrap;
+    }
+
+    .page-header-meta span {
+      display: flex;
+      align-items: center;
+    }
+
+    /* ===================================== */
+    /* BADGE / TAG STYLES */
+    /* ===================================== */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--unops-spacing-xs);
+      padding: 0.25rem 0.5rem;
+      border-radius: var(--unops-radius-sm);
+      font-size: var(--unops-font-size-body-small);
+      font-weight: var(--unops-font-weight-semibold);
+    }
+
+    .badge-primary {
+      background: var(--unops-primary-container-soft);
+      color: var(--unops-primary-dark);
+    }
+
+    .badge-success {
+      background: #d1fae5;
+      color: var(--unops-success-dark);
+    }
+
+    .badge-warning {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .badge-danger {
+      background: #fce7f3;
+      color: var(--unops-error);
+    }
+
+    .badge-neutral {
+      background: var(--unops-neutral-700);
+      color: var(--unops-neutral-50);
+    }
+
+    .badge-pill {
+      border-radius: var(--unops-radius-full);
+    }
+
+    /* ===================================== */
+    /* BUTTON STYLES (PrimeNG-like) */
+    /* ===================================== */
+    .p-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--unops-spacing-sm);
+      padding: var(--unops-spacing-sm) var(--unops-spacing-md);
+      border: 1px solid transparent;
+      border-radius: var(--unops-radius-lg);
+      font-family: var(--unops-font-body);
+      font-size: var(--unops-font-size-body-medium);
+      font-weight: var(--unops-font-weight-medium);
+      cursor: pointer;
+      transition: all var(--unops-duration-short) var(--unops-easing-smooth);
+      min-height: var(--unops-min-touch);
+      text-decoration: none;
+    }
+
+    .p-button-primary {
+      background: var(--unops-primary);
+      color: var(--unops-primary-on);
+      border-color: var(--unops-primary);
+    }
+
+    .p-button-primary:hover:not(:disabled) {
+      background: var(--unops-primary-dark);
+      border-color: var(--unops-primary-dark);
+      box-shadow: var(--unops-shadow-md);
+    }
+
+    .p-button-outlined {
+      background: transparent;
+      color: var(--unops-primary);
+      border-color: var(--unops-primary);
+    }
+
+    .p-button-outlined:hover:not(:disabled) {
+      background: var(--unops-primary-container-soft);
+      color: var(--unops-primary-dark);
+      border-color: var(--unops-primary-dark);
+    }
+
+    .p-button-text {
+      background: transparent;
+      color: var(--unops-neutral-700);
+      border: none;
+    }
+
+    .p-button-text:hover:not(:disabled) {
+      background: var(--unops-neutral-100);
+      color: var(--unops-neutral-900);
+    }
+
+    .p-button-danger {
+      background: var(--unops-error);
+      color: var(--unops-error-on);
+      border-color: var(--unops-error);
+    }
+
+    .p-button-danger:hover:not(:disabled) {
+      background: var(--unops-error-light);
+      border-color: var(--unops-error-light);
+    }
+
+    .p-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background: var(--unops-neutral-200);
+      color: var(--unops-neutral-500);
+      border-color: var(--unops-neutral-200);
+    }
+
+    /* ===================================== */
+    /* TABS */
+    /* ===================================== */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--unops-neutral-200);
+      padding: 0 var(--unops-spacing-lg);
+    }
+
+    .tab {
+      padding: var(--unops-spacing-md) var(--unops-spacing-md);
+      border: none;
+      background: transparent;
+      color: var(--unops-neutral-600);
+      font-family: var(--unops-font-body);
+      font-size: var(--unops-font-size-body-medium);
+      font-weight: var(--unops-font-weight-medium);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all var(--unops-duration-short) var(--unops-easing-smooth);
+    }
+
+    .tab:hover {
+      color: var(--unops-primary);
+    }
+
+    .tab.active {
+      color: var(--unops-primary);
+      border-bottom-color: var(--unops-primary);
+    }
+
+    /* ===================================== */
+    /* REQUIREMENTS VALIDATION (GMS Pattern) */
+    /* ===================================== */
+    /* Exact match of GMS app-requirements-validation component */
+    
+    .requirements-message {
+      --requirements-info-color: #2996f3;
+      --requirements-info-bg: #eaf6ff;
+      --requirements-info-border: #b5dbff;
+      
+      border: 1px solid var(--requirements-info-border);
+      border-radius: 0.375rem;
+      background-color: var(--requirements-info-bg);
+      color: var(--requirements-info-color);
+      margin-bottom: var(--unops-spacing-md);
+    }
+
+    .requirements-message-header {
+      cursor: pointer;
+      user-select: none;
+      padding: 1rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      font-weight: 500;
+      color: var(--requirements-info-color);
+    }
+
+    .requirements-message-icon {
+      flex-shrink: 0;
+      line-height: 1;
+      margin-top: 0.125rem;
+    }
+
+    .requirements-message-icon i {
+      font-size: 1.4rem;
+    }
+
+    .requirements-message-text {
+      flex-grow: 1;
+      line-height: 1.5;
+      font-weight: 500;
+      color: var(--requirements-info-color);
+    }
+
+    .requirements-message-toggle {
+      flex-shrink: 0;
+      font-size: 1rem;
+      line-height: 1;
+      margin-top: 0.125rem;
+      color: var(--requirements-info-color);
+    }
+
+    .requirements-validation-content {
+      padding: 0 1rem 1rem 1rem;
+      border-radius: 0.375rem;
+    }
+
+    .requirements-validation-content.loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 80px;
+    }
+
+    .requirements-list {
+      list-style: disc;
+      padding-left: 1.5rem;
+      margin: 0;
+      font-weight: 400;
+      color: var(--requirements-info-color);
+    }
+
+    .requirement-item {
+      margin-bottom: 0.75rem;
+    }
+
+    .requirement-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .requirement-text {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 400;
+    }
+
+    .requirement-item.clickable {
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .requirement-item.clickable:hover {
+      opacity: 0.8;
+    }
+
+    /* Collapsed state */
+    .requirements-message.collapsed .requirements-validation-content {
+      display: none;
+    }
+
+    .requirements-message.collapsed .requirements-message-toggle i {
+      transform: rotate(180deg);
+    }
+
+    /* ===================================== */
+    /* STEPPER */
+    /* ===================================== */
+    .stepper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--unops-spacing-lg);
+    }
+
+    .stepper-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .stepper-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: var(--unops-font-weight-bold);
+      font-size: var(--unops-font-size-body-large);
+    }
+
+    .stepper-circle.active {
+      background: var(--unops-primary);
+      color: var(--unops-primary-on);
+    }
+
+    .stepper-circle.completed {
+      background: var(--unops-neutral-400);
+      color: var(--unops-neutral-50);
+    }
+
+    .stepper-circle.pending {
+      background: var(--unops-neutral-300);
+      color: var(--unops-neutral-500);
+    }
+
+    .stepper-circle.error {
+      background: var(--unops-error);
+      color: var(--unops-error-on);
+    }
+
+    .stepper-circle.cancelled {
+      background: var(--unops-neutral-700);
+      color: var(--unops-neutral-50);
+    }
+
+    .stepper-label {
+      margin-top: var(--unops-spacing-sm);
+      font-size: var(--unops-font-size-body-medium);
+      font-weight: var(--unops-font-weight-medium);
+    }
+
+    .stepper-label.active {
+      color: var(--unops-primary);
+    }
+
+    .stepper-label.error {
+      color: var(--unops-error);
+    }
+
+    .stepper-label.cancelled {
+      color: var(--unops-neutral-700);
+    }
+
+    .stepper-sublabel {
+      font-size: var(--unops-font-size-body-small);
+      color: var(--unops-neutral-500);
+    }
+
+    .stepper-connector {
+      width: 100px;
+      height: 4px;
+      margin: 0 var(--unops-spacing-md);
+      background: var(--unops-neutral-300);
+    }
+
+    .stepper-connector.completed {
+      background: var(--unops-neutral-400);
+    }
+
+    .stepper-connector.error {
+      background: var(--unops-error);
+    }
+
+    .stepper-connector.cancelled {
+      background: var(--unops-neutral-700);
+    }
+
+    /* ===================================== */
+    /* DIALOG STYLES */
+    /* ===================================== */
+    .dialog-backdrop {
+      position: relative;
+      min-height: 500px;
+      margin-top: var(--unops-spacing-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dialog {
+      background: var(--unops-surface-primary);
+      border: 1px solid var(--unops-neutral-200);
+      border-radius: var(--unops-radius-xl);
+      box-shadow: var(--unops-shadow-xl);
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .dialog-lg {
+      max-width: 650px;
+    }
+
+    .dialog-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--unops-spacing-lg);
+      border-bottom: 1px solid var(--unops-neutral-200);
+    }
+
+    .dialog-header-content {
+      display: flex;
+      align-items: center;
+      gap: var(--unops-spacing-md);
+    }
+
+    .dialog-header-icon {
+      font-size: 1.5rem;
+    }
+
+    .dialog-header-icon.warning {
+      color: var(--unops-warning);
+    }
+
+    .dialog-header-icon.error {
+      color: var(--unops-error);
+    }
+
+    .dialog-header-icon.success {
+      color: var(--unops-success);
+    }
+
+    .dialog-header-icon.info {
+      color: var(--unops-primary);
+    }
+
+    .dialog-title {
+      font-family: var(--unops-font-display);
+      font-size: var(--unops-font-size-headline-small);
+      font-weight: var(--unops-font-weight-semibold);
+      color: var(--unops-neutral-900);
+    }
+
+    .dialog-close {
+      background: transparent;
+      border: none;
+      color: var(--unops-neutral-500);
+      font-size: 1.25rem;
+      cursor: pointer;
+      padding: var(--unops-spacing-xs);
+      border-radius: var(--unops-radius-md);
+      transition: all var(--unops-duration-short) var(--unops-easing-smooth);
+    }
+
+    .dialog-close:hover {
+      color: var(--unops-error);
+      background: var(--unops-neutral-100);
+    }
+
+    .dialog-body {
+      padding: var(--unops-spacing-lg);
+    }
+
+    .dialog-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: var(--unops-spacing-sm);
+      padding: var(--unops-spacing-lg);
+      border-top: 1px solid var(--unops-neutral-200);
+      background: var(--unops-surface-secondary);
+      border-radius: 0 0 var(--unops-radius-xl) var(--unops-radius-xl);
+    }
+
+    /* ===================================== */
+    /* ALERT BOXES */
+    /* ===================================== */
+    .alert {
+      padding: var(--unops-spacing-md);
+      border-radius: var(--unops-radius-md);
+      margin-bottom: var(--unops-spacing-md);
+    }
+
+    .alert-warning {
+      background: #fef3c7;
+      border: 1px solid #fde68a;
+      color: #92400e;
+    }
+
+    .alert-danger {
+      background: #fce7f3;
+      border: 1px solid #fbcfe8;
+      color: var(--unops-error);
+    }
+
+    .alert-info {
+      background: var(--unops-primary-container-soft);
+      border: 1px solid var(--unops-primary-container);
+      color: var(--unops-primary-darker);
+    }
+
+    .alert-success {
+      background: #d1fae5;
+      border: 1px solid #a7f3d0;
+      color: var(--unops-success-dark);
+    }
+
+    .alert-neutral {
+      background: var(--unops-neutral-100);
+      border: 1px solid var(--unops-neutral-200);
+      color: var(--unops-neutral-700);
+    }
+
+    /* ===================================== */
+    /* FORM ELEMENTS */
+    /* ===================================== */
+    .form-group {
+      margin-bottom: var(--unops-spacing-md);
+    }
+
+    .form-label {
+      display: block;
+      font-size: var(--unops-font-size-body-medium);
+      font-weight: var(--unops-font-weight-medium);
+      color: var(--unops-neutral-700);
+      margin-bottom: var(--unops-spacing-sm);
+    }
+
+    .form-label .required {
+      color: var(--unops-error);
+    }
+
+    .form-textarea {
+      width: 100%;
+      padding: var(--unops-spacing-md);
+      border: 1px solid var(--unops-neutral-300);
+      border-radius: var(--unops-radius-md);
+      font-family: var(--unops-font-body);
+      font-size: var(--unops-font-size-body-medium);
+      color: var(--unops-neutral-900);
+      resize: vertical;
+      transition: all var(--unops-duration-short) var(--unops-easing-smooth);
+    }
+
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--unops-primary);
+      box-shadow: 0 0 0 2px var(--unops-primary-container-soft);
+    }
+
+    .form-textarea::placeholder {
+      color: var(--unops-neutral-400);
+    }
+
+    .form-hint {
+      font-size: var(--unops-font-size-body-small);
+      color: var(--unops-neutral-500);
+      margin-top: var(--unops-spacing-xs);
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--unops-spacing-sm);
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      margin-top: 2px;
+      accent-color: var(--unops-primary);
+    }
+
+    /* ===================================== */
+    /* TABLE STYLES */
+    /* ===================================== */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table th {
+      text-align: left;
+      padding: var(--unops-spacing-md);
+      font-weight: var(--unops-font-weight-semibold);
+      color: var(--unops-neutral-700);
+      border-bottom: 2px solid var(--unops-neutral-200);
+      background: var(--unops-surface-secondary);
+    }
+
+    .data-table td {
+      padding: var(--unops-spacing-md);
+      border-bottom: 1px solid var(--unops-neutral-100);
+      color: var(--unops-neutral-700);
+    }
+
+    .data-table tr:hover {
+      background: var(--unops-primary-container-soft);
+    }
+
+    /* ===================================== */
+    /* USER AVATAR */
+    /* ===================================== */
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--unops-font-size-body-small);
+      font-weight: var(--unops-font-weight-semibold);
+      color: white;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: var(--unops-spacing-sm);
+    }
+
+    .user-details {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .user-name {
+      font-weight: var(--unops-font-weight-medium);
+      color: var(--unops-neutral-800);
+    }
+
+    .user-email {
+      font-size: var(--unops-font-size-body-small);
+      color: var(--unops-neutral-500);
+    }
+
+    /* ===================================== */
+    /* LOCK NOTICE */
+    /* ===================================== */
+    .lock-notice {
+      display: flex;
+      align-items: center;
+      gap: var(--unops-spacing-md);
+      padding: var(--unops-spacing-md);
+      border-radius: var(--unops-radius-lg);
+      margin-top: var(--unops-spacing-lg);
+    }
+
+    .lock-notice i {
+      font-size: 1.25rem;
+    }
+
+    /* ===================================== */
+    /* NOTES BOX */
+    /* ===================================== */
+    .mockup-notes {
+      margin-top: var(--unops-spacing-lg);
+      padding: var(--unops-spacing-md);
+      background: #fefce8;
+      border: 1px solid #fde68a;
+      border-radius: var(--unops-radius-lg);
+    }
+
+    .mockup-notes h3 {
+      font-weight: var(--unops-font-weight-semibold);
+      color: #92400e;
+      margin-bottom: var(--unops-spacing-sm);
+    }
+
+    .mockup-notes ul {
+      margin: 0;
+      padding-left: var(--unops-spacing-lg);
+      font-size: var(--unops-font-size-body-medium);
+      color: #78350f;
+    }
+
+    .mockup-notes li {
+      margin-bottom: var(--unops-spacing-xs);
+    }
+
+    /* ===================================== */
+    /* DIMMED BACKGROUND */
+    /* ===================================== */
+    .page-dimmed {
+      opacity: 0.5;
+    }
+
+    /* ===================================== */
+    /* FOOTER */
+    /* ===================================== */
+    .mockup-footer {
+      background: var(--unops-neutral-800);
+      color: var(--unops-neutral-300);
+      padding: var(--unops-spacing-md);
+      text-align: center;
+      font-size: var(--unops-font-size-body-small);
+      margin-top: var(--unops-spacing-xl);
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="mockup-header">
+    <h1>Send Opportunity for Go Decision - Mockups</h1>
+  </header>
+
+  <!-- Navigation -->
+  <nav class="mockup-nav">
+    <div class="mockup-nav-inner">
+      <button onclick="showMockup(1)" class="nav-btn active" data-mockup="1">1. Requirements</button>
+      <button onclick="showMockup(2)" class="nav-btn" data-mockup="2">2. Non-OM Warning</button>
+      <button onclick="showMockup(3)" class="nav-btn" data-mockup="3">3. Country Mismatch</button>
+      <button onclick="showMockup(4)" class="nav-btn" data-mockup="4">4. Acknowledgment</button>
+      <button onclick="showMockup(5)" class="nav-btn" data-mockup="5">5. In Progress</button>
+      <button onclick="showMockup('5b')" class="nav-btn" data-mockup="5b">5b. Approver View</button>
+      <button onclick="showMockup(6)" class="nav-btn" data-mockup="6">6. Rejection</button>
+      <button onclick="showMockup(7)" class="nav-btn" data-mockup="7">7. NO GO Stage</button>
+      <button onclick="showMockup(8)" class="nav-btn" data-mockup="8">8. Cancel Dialog</button>
+      <button onclick="showMockup(9)" class="nav-btn" data-mockup="9">9. CANCELLED Stage</button>
+      <button onclick="showMockup(10)" class="nav-btn" data-mockup="10">10. Reopen Dialog</button>
+      <button onclick="showMockup(11)" class="nav-btn" data-mockup="11">11. GO Stage</button>
+    </div>
+  </nav>
+
+  <main class="mockup-main">
+
+    <!-- ==================== MOCKUP 1 ==================== -->
+    <section id="mockup-1" class="mockup-section active">
+      <div class="mockup-title">
+        <h2>Mockup 1: Stage Requirements Panel</h2>
+        <p>Continuous validation showing required fields before submission</p>
+      </div>
+
+      <!-- Page Header -->
+      <div class="page-header">
+        <a href="#" class="page-header-back">← Back</a>
+        <h1>South Sudan Water Infrastructure Development</h1>
+        <div class="page-header-meta">
+          <span>ID: 123</span>
+          <span>|</span>
+          <span>Manager: Jane Smith</span>
+          <span>|</span>
+          <span>Org Unit: AFRO</span>
+          <span>|</span>
+          <span class="badge badge-primary">IDENTIFY & PROFILE</span>
+          <span>|</span>
+          <span class="badge badge-success">Status: Active</span>
+        </div>
+      </div>
+
+      <!-- Requirements Validation (app-requirements-validation - GMS Pattern) -->
+      <!-- Only shows when NOT all requirements are met. Hidden when all pass. -->
+      <div class="requirements-message">
+        <div class="requirements-message-header" onclick="this.parentElement.classList.toggle('collapsed')">
+          <span class="requirements-message-icon">
+            <i class="pi pi-info-circle"></i>
+          </span>
+          <span class="requirements-message-text">
+            The Opportunity cannot proceed to the Go stage until the following conditions are met
+          </span>
+          <span class="requirements-message-toggle">
+            <i class="pi pi-chevron-up"></i>
+          </span>
+        </div>
+        <!-- Content: Only shows UNMET requirements (isMet !== true) -->
+        <div class="requirements-validation-content">
+          <ul class="requirements-list">
+            <li class="requirement-item">
+              <span class="requirement-text">Proposed Budget for Initiative is required</span>
+            </li>
+            <li class="requirement-item">
+              <span class="requirement-text">At least one UNOPS Strategic Mission alignment is required</span>
+            </li>
+            <li class="requirement-item">
+              <span class="requirement-text">Expected Impact is required</span>
+            </li>
+            <li class="requirement-item">
+              <span class="requirement-text">At least one Expected Outcome is required</span>
+            </li>
+            <li class="requirement-item">
+              <span class="requirement-text">Beneficiaries information is required - either check 'to be determined' or provide both direct and indirect counts</span>
+            </li>
+            <li class="requirement-item">
+              <span class="requirement-text">DoA Level 2 holder must exist for responsible org unit</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Stage Panel (app-stage-workflow - SEPARATE COMPONENT from submodule) -->
+      <div class="unops-card">
+        <div class="unops-card-header">
+          <span class="unops-card-title">Stage</span>
+          <button class="p-button" disabled title="6 requirements not met">
+            Submit for Go Decision
+            <i class="pi pi-chevron-down"></i>
+          </button>
+        </div>
+        <!-- Submodule tabs: Overview, Approvers (only when in workflow), Stage Change History -->
+        <div class="tabs">
+          <button class="tab active">Overview</button>
+          <button class="tab">Stage Change History</button>
+        </div>
+        <!-- Overview tab shows the stepper -->
+        <div class="stepper">
+          <div class="stepper-step">
+            <div class="stepper-circle active">1</div>
+            <span class="stepper-label active">IDENTIFY & PROFILE</span>
+          </div>
+          <div class="stepper-connector"></div>
+          <div class="stepper-step">
+            <div class="stepper-circle pending">2</div>
+            <span class="stepper-label">GO</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mockup-notes">
+        <h3>Mockup Notes:</h3>
+        <ul>
+          <li><strong>GMS Pattern:</strong> <code>&lt;app-requirements-validation&gt;</code> component from GMS:
+            <ul>
+              <li>Blue info panel (not a card) - #2996f3 text, #eaf6ff background, #b5dbff border</li>
+              <li><strong>Only shows when requirements are NOT met</strong> - hidden when all pass</li>
+              <li><strong>Shows ONLY unmet requirements</strong> - no checkmarks for met items</li>
+              <li>Collapsible header with info icon and chevron toggle</li>
+            </ul>
+          </li>
+          <li><strong>Header message:</strong> "The {entity} cannot proceed to the {nextStage} stage until the following conditions are met"</li>
+          <li><strong>API Call:</strong> <code>GET /api/workflow/opportunity/{id}/requirements?currentStage=IDENTIFY%20%26%20PROFILE</code></li>
+          <li><strong>Submit button:</strong> Disabled until <code>allRequirementsMet()</code> returns true</li>
+          <li><strong>Real-time validation:</strong> Form value changes trigger re-validation automatically</li>
+          <li><strong>Server-side validation:</strong> DoA holder check uses <code>onlyServerSideEvaluation: true</code></li>
+          <li><strong>Stage panel:</strong> Separate <code>&lt;app-stage-workflow&gt;</code> component with Overview, Approvers*, History tabs</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ==================== MOCKUP 2 ==================== -->
+    <section id="mockup-2" class="mockup-section">
+      <div class="mockup-title">
+        <h2>Mockup 2: Non-OM Submission Warning</h2>
+        <p>Warning dialog when non-OM initiates submission</p>
+      </div>
+
+      <div class="page-header page-dimmed">
+        <h1>South Sudan Water Infrastructure Development</h1>
+        <div class="page-header-meta" style="margin-top: 8px;">
+          <span class="badge badge-primary">IDENTIFY & PROFILE</span>
+          <span>|</span>
+          <span class="badge badge-success">Status: Active</span>
+        </div>
+      </div>
+
+      <div class="dialog-backdrop">
+        <div class="dialog">
+          <div class="dialog-header">
+            <div class="dialog-header-content">
+              <i class="pi pi-exclamation-triangle dialog-header-icon warning"></i>
+              <span class="dialog-title">Confirmation Required</span>
+            </div>
+            <button class="dialog-close"><i class="pi pi-times"></i></button>
+          </div>
+          <div class="dialog-body">
+            <div class="alert alert-warning">
+              <p>You currently hold a <strong>Team Member</strong> role for this Opportunity.</p>
+              <p style="margin-top: 12px;">It is normally expected that the UNOPS personnel listed as the <strong>Opportunity Manager</strong> will perform the action of sending the Opportunity for a Go decision.</p>
+              <p style="margin-top: 12px; font-weight: 500;">Please confirm that you wish to proceed.</p>
+            </div>
+            <div class="alert alert-neutral" style="margin-bottom: 0;">
+              <p><strong>Opportunity Manager:</strong> Jane Smith (jane.smith@unops.org)</p>
+            </div>
+          </div>
+          <div class="dialog-footer">
+            <button class="p-button p-button-outlined">Cancel</button>
+            <button class="p-button p-button-primary">Proceed Anyway</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mockup-notes">
+        <h3>Mockup Notes:</h3>
+        <ul>
+          <li>This dialog appears when someone other than the OM tries to submit</li>
+          <li>Shows the user's current role on the opportunity</li>
+          <li>Identifies who the actual Opportunity Manager is</li>
+          <li>This scenario won't occur until Collaborator role is added (future-proofing)</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ==================== MOCKUP 3 ==================== -->
+    <section id="mockup-3" class="mockup-section">
+      <div class="mockup-title">
+        <h2>Mockup 3: Country-Org Unit Mismatch Warning</h2>
+        <p>Warning when org unit doesn't match implementation countries</p>
+      </div>
+
+      <div class="page-header page-dimmed">
+        <h1>South Sudan Water Infrastructure Development</h1>
+        <div class="page-header-meta" style="margin-top: 8px;">
+          <span class="badge badge-primary">IDENTIFY & PROFILE</span>
+          <span>|</span>
+          <span class="badge badge-success">Status: Active</span>
+        </div>
+      </div>
+
+      <div class="dialog-backdrop">
+        <div class="dialog">
+          <div class="dialog-header">
+            <div class="dialog-header-content">
+              <i class="pi pi-exclamation-triangle dialog-header-icon warning"></i>
+              <span class="dialog-title">Country-Org Unit Mismatch</span>
+            </div>
+            <button class="dialog-close"><i class="pi pi-times"></i></button>
+          </div>
+          <div class="dialog-body">
+            <div class="alert alert-warning">
+              <p>The org unit selected (<strong>AFRO</strong>) is not normally responsible for one/all of the country/ies of implementation.</p>
+              <p style="margin-top: 12px;">Please confirm that you wish to proceed.</p>
+            </div>
+            <div class="alert alert-neutral">
+              <p style="font-weight: 500; margin-bottom: 8px;">Implementation Countries:</p>
+              <ul style="margin: 0; padding-left: 20px;">
+                <li>South Sudan <span style="color: #dc2626;">(not mapped to AFRO)</span></li>
+                <li>Kenya <span style="color: #059669;">(mapped to AFRO)</span></li>
+                <li>Uganda <span style="color: #dc2626;">(not mapped to AFRO)</span></li>
+              </ul>
+            </div>
+            <div class="alert alert-info" style="margin-bottom: 0;">
+              <i class="pi pi-info-circle" style="margin-right: 8px;"></i>
+              The normally responsible org units will be listed as internal stakeholders and notified in the event of a Go decision.
+            </div>
+          </div>
+          <div class="dialog-footer">
+            <button class="p-button p-button-outlined">Cancel</button>
+            <button class="p-button p-button-primary">Proceed Anyway</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mockup-notes">
+        <h3>Mockup Notes:</h3>
+        <ul>
+          <li>Appears when implementation countries don't match the selected org unit</li>
+          <li>Uses OrganizationUnitRelationship to check country mappings</li>
+          <li>Shows which countries are/aren't mapped to the org unit</li>
+          <li>Internal stakeholders from responsible org units will be notified on Go decision</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ==================== MOCKUP 4 ==================== -->
+    <section id="mockup-4" class="mockup-section">
+      <div class="mockup-title">
+        <h2>Mockup 4: Acknowledgment & Remarks Dialog</h2>
+        <p>Final acknowledgment before submission with optional remarks</p>
+      </div>
+
+      <div class="page-header page-dimmed">
+        <h1>South Sudan Water Infrastructure Development</h1>
+        <div class="page-header-meta" style="margin-top: 8px;">
+          <span class="badge badge-primary">IDENTIFY & PROFILE</span>
+          <span>|</span>
+          <span class="badge badge-success">Status: Active</span>
+        </div>
+      </div>
+
+      <div class="dialog-backdrop">
+        <div class="dialog dialog-lg">
+          <div class="dialog-header">
+            <div class="dialog-header-content">
+              <i class="pi pi-file-check dialog-header-icon info"></i>
+              <span class="dialog-title">Submit for Go Decision</span>
+            </div>
+            <button class="dialog-close"><i class="pi pi-times"></i></button>
+          </div>
+          <div class="dialog-body">
+            <div class="alert alert-info">
+              <h4 style="font-weight: 500; margin-bottom: 12px; color: var(--unops-primary-darker);">Acknowledgment Statement</h4>
+              <p>All known information and materials relevant to this Opportunity have been provided and are summarized in the Opportunity Statement for your review.</p>
+              <p style="margin-top: 12px;">Please confirm whether UNOPS org unit <strong>AFRO (Africa Regional Office)</strong> is authorised to assign resources to continue development based on this information.</p>
+            </div>
+
+            <div class="checkbox-group" style="margin-bottom: 24px;">
+              <input type="checkbox" id="acknowledge">
+              <label for="acknowledge">I acknowledge and confirm the above statement</label>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Additional Remarks (Optional)</label>
+              <textarea class="form-textarea" rows="4" placeholder="Enter any additional remarks for the approvers..."></textarea>
+            </div>
+
+            <div class="alert alert-neutral" style="margin-bottom: 0;">
+              <i class="pi pi-info-circle" style="margin-right: 8px; color: var(--unops-neutral-500);"></i>
+              Please note that, where applicable, Internal Stakeholders from any other UNOPS Org Units normally responsible for any of the countries of Implementation will be notified of any decision to continue development of this Opportunity.
+            </div>
+          </div>
+          <div class="dialog-footer">
+            <button class="p-button p-button-outlined">Cancel</button>
+            <button class="p-button" disabled>Submit for Go Decision</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mockup-notes">
+        <h3>Mockup Notes:</h3>
+        <ul>
+          <li>Final step before submission - requires acknowledgment checkbox</li>
+          <li>Submit button disabled until acknowledgment is checked</li>
+          <li>Optional remarks field for additional context to approvers</li>
+          <li>On submit: triggers statement regeneration and sends to DoA2 holders</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ==================== MOCKUP 5 ==================== -->
+    <section id="mockup-5" class="mockup-section">
+      <div class="mockup-title">
+        <h2>Mockup 5: Workflow In Progress (Submitter/OM View)</h2>
+        <p>Read-only view showing pending approval with approvers list and Recall option</p>
+      </div>
+
+      <div class="page-header">
+        <a href="#" class="page-header-back">← Back</a>
+        <h1>South Sudan Water Infrastructure Development</h1>
+        <div class="page-header-meta">
+          <span>ID: 123</span>
+          <span>|</span>
+          <span>Manager: Jane Smith</span>
+          <span>|</span>
+          <span>Org Unit: AFRO</span>
+          <span>|</span>
+          <span class="badge badge-primary">IDENTIFY & PROFILE</span>
+          <span>|</span>
+          <span class="badge badge-success">Status: Active</span>
+        </div>
+      </div>
+
+      <div class="unops-card">
+        <div class="unops-card-header">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <span class="unops-card-title">Stage</span>
+            <span class="badge badge-warning badge-pill">
+              <i class="pi pi-clock"></i>
+              Approval Pending
+            </span>
+            <span style="font-size: 14px; color: var(--unops-neutral-600);">
+              Current Stage: <strong>IDENTIFY & PROFILE</strong>
+              <span style="margin: 0 8px;">→</span>
+              Next Stage: <strong>GO</strong>
+            </span>
+          </div>
+          <button class="p-button p-button-outlined">
+            <i class="pi pi-replay"></i>
+            Recall
+          </button>
+        </div>
+        <div class="tabs">
+          <button class="tab">Overview</button>
+          <button class="tab active">Approvers</button>
+          <button class="tab">Stage Change History</button>
+        </div>
+        <div class="unops-card-body">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Role</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div class="user-info">
+                    <div class="user-avatar" style="background: var(--unops-primary);">SJ</div>
+                    <div class="user-details">
+                      <span class="user-name">Sarah Johnson</span>
+                      <span class="user-email">sarah.johnson@unops.org</span>
+                    </div>
+                  </div>
+                </td>
+                <td>DoA Level 2</td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="user-info">
+                    <div class="user-avatar" style="background: var(--unops-success);">MC</div>
+                    <div class="user-details">
+                      <span class="user-name">Michael Chen</span>
+                      <span class="user-email">michael.chen@unops.org</span>
+                    </div>
+                  </div>
+                </td>
+                <td>DoA Level 2</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="lock-notice alert alert-warning">
+        <i class="pi pi-lock"></i>
+        <p>This opportunity is currently in workflow and cannot be edited. It will be unlocked after the approval decision is made.</p>
+      </div>
+
+      <div class="mockup-notes">
+        <h3>Mockup Notes:</h3>
+        <ul>
+          <li>Shows "Approval Pending" badge when in workflow</li>
+          <li>Approvers tab shows DoA Level 2 holders for the responsible org unit</li>
+          <li>Recall button visible to submitter (or OM)</li>
+          <li>Opportunity is read-only while in workflow</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ==================== MOCKUP 5b ==================== -->
+    <section id="mockup-5b" class="mockup-section">
+      <div class="mockup-title">
+        <h2>Mockup 5b: Workflow In Progress (Approver View)</h2>
+        <p>DoA holder view with Approve/Reject action buttons</p>
+      </div>
+
+      <div class="page-header">
+        <a href="#" class="page-header-back">← Back</a>
+        <h1>South Sudan Water Infrastructure Development</h1>
+        <div class="page-header-meta">
+          <span>ID: 123</span>
+          <span>|</span>
+          <span>Manager: Jane Smith</span>
+          <span>|</span>
+          <span>Org Unit: AFRO</span>
+          <span>|</span>
+          <span class="badge badge-primary">IDENTIFY & PROFILE</span>
+          <span>|</span>
+          <span class="badge badge-success">Status: Active</span>
+        </div>
+      </div>
+
+      <div class="unops-card">
+        <div class="unops-card-header">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <span class="unops-card-title">Stage</span>
+            <span class="badge badge-warning badge-pill">
+              <i class="pi pi-clock"></i>
+              Approval Pending
+            </span>
+            <span style="font-size: 14px; color: var(--unops-neutral-600);">
+              Current Stage: <strong>IDENTIFY & PROFILE</strong>
+              <span style="margin: 0 8px;">→</span>
+              Requested Stage: <strong>GO</strong>
+            </span>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="p-button p-button-outlined p-button-danger">
+              <i class="pi pi-times"></i>
+              Reject
+            </button>
+            <button class="p-button p-button-success">
+              <i class="pi pi-check"></i>
+              Approve
+            </button>
+          </div>
+        </div>
+        <div class="tabs">
+          <button class="tab active">Overview</button>
+          <button class="tab">Approvers</button>
+          <button class="tab">Stage Change History</button>
+        </div>
+        <div class="unops-card-body">
+          <!-- Stepper -->
+          <div class="stepper">
+            <div class="stepper-step">
+              <div class="stepper-circle active">1</div>
+              <span class="stepper-label active">IDENTIFY & PROFILE</span>
+            </div>
+            <div class="stepper-connector pending"></div>
+            <div class="stepper-step">
+              <div class="stepper-circle pending">2</div>
+              <span class="stepper-label">GO</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="lock-notice alert alert-warning">
+        <i class="pi pi-lock"></i>
+        <p>This opportunity is currently in workflow and cannot be edited. It will be unlocked after the approval decision is made.</p>
+      </div>
+
+      <div class="mockup-notes">
+        <h3>Mockup Notes:</h3>
+        <ul>
+          <li>DoA holder sees Approve/Reject buttons instead of Recall</li>
+          <li>Approve: Stage changes to GO, workflow completes</li>
+          <li>Reject: Opens rejection dialog (Mockup 6), stage changes to NO GO</li>
+          <li>Opportunity is read-only while in workflow</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ==================== MOCKUP 6 ==================== -->
+    <section id="mockup-6" class="mockup-section">
+      <div class="mockup-title">
+        <h2>Mockup 6: Rejection Confirmation Dialog</h2>
+        <p>DoA holder rejection dialog (sets opportunity to NO GO)</p>
+      </div>
+
+      <div class="page-header page-dimmed">
+        <h1>South Sudan Water Infrastructure Development</h1>
+        <div class="page-header-meta" style="margin-top: 8px;">
+          <span class="badge badge-primary">IDENTIFY & PROFILE</span>
+          <span>|</span>
+          <span class="badge badge-success">Status: Active</span>
+        </div>
+      </div>
+
+      <div class="dialog-backdrop">
+        <div class="dialog">
+          <div class="dialog-header">
+            <div class="dialog-header-content">
+              <i class="pi pi-exclamation-triangle dialog-header-icon error"></i>
+              <span class="dialog-title">Reject Opportunity</span>
+            </div>
+            <button class="dialog-close"><i class="pi pi-times"></i></button>
+          </div>
+          <div class="dialog-body">
+            <div class="alert alert-danger">
+              <p>Rejecting this opportunity will set its stage to <strong>NO GO</strong>.</p>
+              <p style="margin-top: 12px;">This means UNOPS will not proceed with further development of this opportunity at this time.</p>
+              <p style="margin-top: 12px;">The Opportunity Manager can reopen it later if circumstances change.</p>
+            </div>
+            <hr style="border: none; border-top: 1px solid var(--unops-neutral-200); margin: 24px 0;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Reason for rejection <span class="required">*</span></label>
+              <textarea class="form-textarea" rows="4" placeholder="Please provide the reason for rejecting this opportunity..."></textarea>
+              <p class="form-hint">Required - This will be shared with the submitter</p>
+            </div>
+          </div>
+          <div class="dialog-footer">
+            <button class="p-button p-button-outlined">Cancel</button>
+            <button class="p-button p-button-danger" disabled>
+              <i class="pi pi-times"></i>
+              Reject → NO GO
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mockup-notes">
+        <h3>Mockup Notes:</h3>
+        <ul>
+          <li>This is the DoA holder's rejection dialog</li>
+          <li>Reason is mandatory - button disabled until provided</li>
+          <li>Custom behavior: Rejection sets stage to NO GO (not back to IDENTIFY & PROFILE)</li>
+          <li>Submitter (OM) will be notified with the rejection reason</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ==================== MOCKUP 7 ==================== -->
+    <section id="mockup-7" class="mockup-section">
+      <div class="mockup-title">
+        <h2>Mockup 7: NO GO Stage with Reopen Option</h2>
+        <p>Opportunity in NO GO stage with Reopen option for OM</p>
+      </div>
+
+      <div class="page-header">
+        <a href="#" class="page-header-back">← Back</a>
+        <h1>South Sudan Water Infrastructure Development</h1>
+        <div class="page-header-meta">
+          <span>ID: 123</span>
+          <span>|</span>
+          <span>Manager: Jane Smith</span>
+          <span>|</span>
+          <span>Org Unit: AFRO</span>
+          <span>|</span>
+          <span class="badge badge-danger">NO GO</span>
+          <span>|</span>
+          <span class="badge badge-success">Status: Active</span>
+        </div>
+      </div>
+
+      <div class="unops-card">
+        <div class="unops-card-header">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <span class="unops-card-title">Stage</span>
+            <span class="badge badge-danger badge-pill">
+              <i class="pi pi-times-circle"></i>
+              NO GO
+            </span>
+            <span style="font-size: 14px; color: var(--unops-neutral-600);">
+              Current Stage: <strong>NO GO</strong>
+            </span>
+          </div>
+          <button class="p-button p-button-primary">
+            <i class="pi pi-replay"></i>
+            Reopen
+          </button>
+        </div>
+        <div class="tabs">
+          <button class="tab">Overview</button>
+          <button class="tab active">Stage Change History</button>
+        </div>
+        <div class="unops-card-body">
+          <!-- Stepper showing NO GO -->
+          <div class="stepper">
+            <div class="stepper-step">
+              <div class="stepper-circle completed"><i class="pi pi-check"></i></div>
+              <span class="stepper-label">IDENTIFY & PROFILE</span>
+            </div>
+            <div class="stepper-connector error"></div>
+            <div class="stepper-step">
+              <div class="stepper-circle error"><i class="pi pi-times"></i></div>
+              <span class="stepper-label error">NO GO</span>
+              <span class="stepper-sublabel">(current)</span>
+            </div>
+          </div>
+
+          <table class="data-table" style="margin-top: 24px;">
+            <thead>
+              <tr>
+                <th>From Stage</th>
+                <th>To Stage</th>
+                <th>Action</th>
+                <th>Date</th>
+                <th>User</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>IDENTIFY & PROFILE</td>
+                <td><span class="badge badge-danger">NO GO</span></td>
+                <td>Rejected → NO GO</td>
+                <td>22-Jan-2026 14:30</td>
+                <td>Sarah Johnson</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="alert alert-danger" style="margin-top: 24px;">
+            <h4 style="font-weight: 500; margin-bottom: 8px;">Rejection Reason:</h4>
+            <p>"Budget constraints and strategic priorities have changed. Recommend revisiting in Q3 2026 when new funding becomes available."</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mockup-notes">
+        <h3>Mockup Notes:</h3>
+        <ul>
+          <li>NO GO stage only appears in stepper when opportunity is in NO GO</li>
+          <li>Reopen button visible to Opportunity Manager only</li>
+          <li>Shows rejection reason from DoA holder</li>
+          <li>Opportunity is editable in NO GO stage (can make updates before reopening)</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ==================== MOCKUP 8 ==================== -->
+    <section id="mockup-8" class="mockup-section">
+      <div class="mockup-title">
+        <h2>Mockup 8: Cancel Confirmation Dialog</h2>
+        <p>OM cancellation dialog with mandatory justification</p>
+      </div>
+
+      <div class="page-header page-dimmed">
+        <h1>South Sudan Water Infrastructure Development</h1>
+        <div class="page-header-meta" style="margin-top: 8px;">
+          <span class="badge badge-primary">IDENTIFY & PROFILE</span>
+          <span>|</span>
+          <span class="badge badge-success">Status: Active</span>
+        </div>
+      </div>
+
+      <div class="dialog-backdrop">
+        <div class="dialog">
+          <div class="dialog-header">
+            <div class="dialog-header-content">
+              <i class="pi pi-exclamation-triangle dialog-header-icon warning"></i>
+              <span class="dialog-title">Cancel Opportunity</span>
+            </div>
+            <button class="dialog-close"><i class="pi pi-times"></i></button>
+          </div>
+          <div class="dialog-body">
+            <p style="margin-bottom: 16px;">Are you sure you want to cancel this opportunity?</p>
+            <div class="alert alert-neutral">
+              <p style="font-weight: 500; margin-bottom: 8px;">This will:</p>
+              <ul style="margin: 0; padding-left: 20px;">
+                <li>Set the stage to <strong>CANCELLED</strong></li>
+                <li>Change the status to <strong>Closed</strong></li>
+                <li>Make the opportunity read-only</li>
+              </ul>
+            </div>
+            <div class="alert alert-info">
+              <i class="pi pi-info-circle" style="margin-right: 8px;"></i>
+              You can reopen the opportunity later if circumstances change.
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Reason for cancellation <span class="required">*</span></label>
+              <textarea class="form-textarea" rows="4" placeholder="Please provide the reason for cancelling this opportunity..."></textarea>
+              <p class="form-hint">Required</p>
+            </div>
+          </div>
+          <div class="dialog-footer">
+            <button class="p-button p-button-outlined">Cancel</button>
+            <button class="p-button" disabled>
+              <i class="pi pi-ban"></i>
+              Confirm Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mockup-notes">
+        <h3>Mockup Notes:</h3>
+        <ul>
+          <li>Only visible to Opportunity Manager</li>
+          <li>Only available when opportunity is in IDENTIFY & PROFILE stage</li>
+          <li>Reason is mandatory - button disabled until provided</li>
+          <li>On confirm: Stage → CANCELLED, Status → Closed</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ==================== MOCKUP 9 ==================== -->
+    <section id="mockup-9" class="mockup-section">
+      <div class="mockup-title">
+        <h2>Mockup 9: CANCELLED Stage with Reopen Option</h2>
+        <p>Opportunity in CANCELLED stage with Reopen option</p>
+      </div>
+
+      <div class="page-header">
+        <a href="#" class="page-header-back">← Back</a>
+        <h1>South Sudan Water Infrastructure Development</h1>
+        <div class="page-header-meta">
+          <span>ID: 123</span>
+          <span>|</span>
+          <span>Manager: Jane Smith</span>
+          <span>|</span>
+          <span>Org Unit: AFRO</span>
+          <span>|</span>
+          <span class="badge badge-neutral">CANCELLED</span>
+          <span class="badge" style="background: var(--unops-neutral-200); color: var(--unops-neutral-600);">Status: Closed</span>
+        </div>
+      </div>
+
+      <div class="unops-card">
+        <div class="unops-card-header">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <span class="unops-card-title">Stage</span>
+            <span class="badge badge-neutral badge-pill">
+              <i class="pi pi-ban"></i>
+              CANCELLED
+            </span>
+            <span style="font-size: 14px; color: var(--unops-neutral-600);">
+              Current Stage: <strong>CANCELLED</strong> | Status: <strong>Closed</strong>
+            </span>
+          </div>
+          <button class="p-button p-button-primary">
+            <i class="pi pi-replay"></i>
+            Reopen
+          </button>
+        </div>
+        <div class="tabs">
+          <button class="tab">Overview</button>
+          <button class="tab active">Stage Change History</button>
+        </div>
+        <div class="unops-card-body">
+          <!-- Stepper showing CANCELLED -->
+          <div class="stepper">
+            <div class="stepper-step">
+              <div class="stepper-circle completed"><i class="pi pi-check"></i></div>
+              <span class="stepper-label">IDENTIFY & PROFILE</span>
+            </div>
+            <div class="stepper-connector cancelled"></div>
+            <div class="stepper-step">
+              <div class="stepper-circle cancelled"><i class="pi pi-ban"></i></div>
+              <span class="stepper-label cancelled">CANCELLED</span>
+              <span class="stepper-sublabel">(current)</span>
+            </div>
+          </div>
+
+          <table class="data-table" style="margin-top: 24px;">
+            <thead>
+              <tr>
+                <th>From Stage</th>
+                <th>To Stage</th>
+                <th>Action</th>
+                <th>Date</th>
+                <th>User</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>IDENTIFY & PROFILE</td>
+                <td><span class="badge badge-neutral">CANCELLED</span></td>
+                <td>Cancelled</td>
+                <td>23-Jan-2026 09:15</td>
+                <td>Jane Smith (OM)</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="alert alert-neutral" style="margin-top: 24px;">
+            <h4 style="font-weight: 500; margin-bottom: 8px;">Cancellation Reason:</h4>
+            <p>"Partner organization withdrew from the initiative. May revisit if new partners are identified."</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="lock-notice alert alert-neutral">
+        <i class="pi pi-lock"></i>
+        <p>This opportunity has been cancelled and is in <strong>Closed</strong> status. It is read-only. The Opportunity Manager can reopen it if circumstances change.</p>
+      </div>
+
+      <div class="mockup-notes">
+        <h3>Mockup Notes:</h3>
+        <ul>
+          <li>CANCELLED stage only appears in stepper when opportunity is in CANCELLED</li>
+          <li>Status is "Closed" - shown in header</li>
+          <li>Opportunity is read-only</li>
+          <li>Reopen button visible to Opportunity Manager only</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ==================== MOCKUP 10 ==================== -->
+    <section id="mockup-10" class="mockup-section">
+      <div class="mockup-title">
+        <h2>Mockup 10: Reopen from CANCELLED Dialog</h2>
+        <p>Reopen dialog with mandatory reason</p>
+      </div>
+
+      <div class="page-header page-dimmed">
+        <h1>South Sudan Water Infrastructure Development</h1>
+        <div class="page-header-meta" style="margin-top: 8px;">
+          <span class="badge badge-neutral">CANCELLED</span>
+          <span class="badge" style="background: var(--unops-neutral-200); color: var(--unops-neutral-600);">Status: Closed</span>
+        </div>
+      </div>
+
+      <div class="dialog-backdrop">
+        <div class="dialog">
+          <div class="dialog-header">
+            <div class="dialog-header-content">
+              <i class="pi pi-replay dialog-header-icon success"></i>
+              <span class="dialog-title">Reopen Opportunity</span>
+            </div>
+            <button class="dialog-close"><i class="pi pi-times"></i></button>
+          </div>
+          <div class="dialog-body">
+            <p style="margin-bottom: 16px;">This will reopen the cancelled opportunity.</p>
+            <div class="alert alert-success">
+              <p style="font-weight: 500; margin-bottom: 8px;">The opportunity will:</p>
+              <ul style="margin: 0; padding-left: 20px;">
+                <li>Return to <strong>IDENTIFY & PROFILE</strong> stage</li>
+                <li>Status will change back to <strong>Active</strong></li>
+                <li>Become fully editable</li>
+              </ul>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Reason for reopening <span class="required">*</span></label>
+              <textarea class="form-textarea" rows="4" placeholder="Please provide the reason for reopening this opportunity..."></textarea>
+              <p class="form-hint">Required</p>
+            </div>
+          </div>
+          <div class="dialog-footer">
+            <button class="p-button p-button-outlined">Cancel</button>
+            <button class="p-button p-button-primary" disabled>
+              <i class="pi pi-replay"></i>
+              Reopen
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mockup-notes">
+        <h3>Mockup Notes:</h3>
+        <ul>
+          <li>Only visible to Opportunity Manager</li>
+          <li>Available on both NO GO and CANCELLED stages</li>
+          <li>Reason is mandatory - button disabled until provided</li>
+          <li>On confirm: Stage → IDENTIFY & PROFILE, Status → Active</li>
+          <li>No approval required for reopen</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ==================== MOCKUP 11 ==================== -->
+    <section id="mockup-11" class="mockup-section">
+      <div class="mockup-title">
+        <h2>Mockup 11: GO Stage (Approved)</h2>
+        <p>Opportunity has been approved and is now at GO stage</p>
+      </div>
+
+      <div class="page-header">
+        <a href="#" class="page-header-back">← Back</a>
+        <h1>South Sudan Water Infrastructure Development</h1>
+        <div class="page-header-meta">
+          <span>ID: 123</span>
+          <span>|</span>
+          <span>Manager: Jane Smith</span>
+          <span>|</span>
+          <span>Org Unit: AFRO</span>
+          <span>|</span>
+          <span class="badge badge-success">GO</span>
+          <span>|</span>
+          <span class="badge badge-success">Status: Active</span>
+        </div>
+      </div>
+
+      <div class="unops-card">
+        <div class="unops-card-header">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <span class="unops-card-title">Stage</span>
+            <span class="badge badge-success badge-pill">
+              <i class="pi pi-check-circle"></i>
+              GO
+            </span>
+            <span style="font-size: 14px; color: var(--unops-neutral-600);">
+              Current Stage: <strong>GO</strong>
+            </span>
+          </div>
+        </div>
+        <div class="tabs">
+          <button class="tab">Overview</button>
+          <button class="tab active">Stage Change History</button>
+        </div>
+        <div class="unops-card-body">
+          <!-- Stepper showing completed path -->
+          <div class="stepper">
+            <div class="stepper-step">
+              <div class="stepper-circle completed"><i class="pi pi-check"></i></div>
+              <span class="stepper-label">IDENTIFY & PROFILE</span>
+            </div>
+            <div class="stepper-connector completed"></div>
+            <div class="stepper-step">
+              <div class="stepper-circle active"><i class="pi pi-check"></i></div>
+              <span class="stepper-label active">GO</span>
+              <span class="stepper-sublabel">(current)</span>
+            </div>
+          </div>
+
+          <table class="data-table" style="margin-top: 24px;">
+            <thead>
+              <tr>
+                <th>From Stage</th>
+                <th>To Stage</th>
+                <th>Action</th>
+                <th>Date</th>
+                <th>User</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>IDENTIFY & PROFILE</td>
+                <td><span class="badge badge-success">GO</span></td>
+                <td>Approved</td>
+                <td>23-Jan-2026 14:30</td>
+                <td>Sarah Johnson (DoA Level 2)</td>
+              </tr>
+              <tr>
+                <td>IDENTIFY & PROFILE</td>
+                <td><span class="badge badge-success">GO</span></td>
+                <td>Submitted for Go Decision</td>
+                <td>22-Jan-2026 10:15</td>
+                <td>Jane Smith (OM)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="mockup-notes">
+        <h3>Mockup Notes:</h3>
+        <ul>
+          <li>GO stage is the final approved state for this workflow</li>
+          <li>Opportunity is fully editable at GO stage</li>
+          <li>Stage Change History shows the approval timeline</li>
+          <li>No workflow actions available (workflow is complete)</li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="mockup-footer">
+    UNOPS PAO - Send Opportunity for Go Decision PRD Mockups
+  </footer>
+
+  <script>
+    function showMockup(num) {
+      document.querySelectorAll('.mockup-section').forEach(section => {
+        section.classList.remove('active');
+      });
+      document.getElementById('mockup-' + num).classList.add('active');
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.mockup == num) {
+          btn.classList.add('active');
+        }
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  </script>
+</body>
+</html>

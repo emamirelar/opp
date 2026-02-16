@@ -169,7 +169,22 @@ public class OpportunityController : BaseController
             return NotFound(new { error = $"Opportunity with ID {id} not found" });
         }
 
-        return Ok(result);
+        // Query base engagement number if opportunity has been synced to oUP
+        string? baseEngagementNumber = null;
+        var baseEngagement = await _unopsContext.BaseEngagements
+            .FirstOrDefaultAsync(be => be.OpportunityId == id && !be.IsDeleted);
+        
+        if (baseEngagement != null)
+        {
+            baseEngagementNumber = baseEngagement.EngagementNumber;
+        }
+
+        // Return opportunity with base engagement number
+        return Ok(new
+        {
+            opportunity = result,
+            baseEngagementNumber = baseEngagementNumber
+        });
     }
 
     /// <summary>
@@ -922,6 +937,13 @@ public class OpportunityController : BaseController
                 }
             }
 
+            // Default Implementation Start Date to Target Signing Date if not specified
+            // This implements the "Defaults to signing date if not specified" behavior
+            if (req.ImplementationStartDate == null && req.TargetSigningDate.HasValue)
+            {
+                req.ImplementationStartDate = req.TargetSigningDate;
+            }
+
             var result = await _manager.ApplyAiChangesAsync(id, req);
             
             // Create audit log
@@ -1275,6 +1297,41 @@ public class OpportunityController : BaseController
         }
     }
 
+    /// <summary>
+    /// Gets personnel for an opportunity's responsible org unit.
+    /// Used to populate the Executive dropdown in the Go Decision approval dialog.
+    /// Returns all users with roles on the opportunity's ResponsibleOrgUnit,
+    /// with Directors/Deputy Directors marked as "Suggested".
+    /// </summary>
+    /// <param name="id">The opportunity ID</param>
+    /// <returns>List of personnel with display label and user ID</returns>
+    [HttpGet(APIDictionary.Opportunity + "/{id}/executives")]
+    [AccessControlled(EntityTypes.Opportunity, "read")]
+    public async Task<ActionResult> GetExecutives(int id)
+    {
+        try
+        {
+            _logger.LogInformation("👔 [API] Getting executives for opportunity {OpportunityId}", id);
+
+            var executives = await _manager.GetExecutivesForOpportunityAsync(id);
+
+            _logger.LogInformation("✅ [API] Successfully retrieved {Count} executives for opportunity {OpportunityId}", 
+                executives.Count(), id);
+
+            return Ok(executives);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            _logger.LogWarning("Opportunity not found: {Message}", ex.Message);
+            return NotFound(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting executives for opportunity {OpportunityId}", id);
+            return StatusCode(500, new { error = "Internal server error while getting executives", details = ex.Message });
+        }
+    }
+
     #region Risk Lookups & Categories
 
     /// <summary>
@@ -1379,9 +1436,10 @@ public class OpportunityController : BaseController
     /// <summary>
     /// Gets AI-generated insights and suggestions for an opportunity
     /// </summary>
+    /// <param name="forceRefresh">When true, bypasses AI cache to ensure fresh Gemini response (e.g. after section save)</param>
     [HttpGet(APIDictionary.Opportunity + "/{id}/insights")]
     [AccessControlled(EntityTypes.Opportunity, "read")]
-    public async Task<ActionResult<OpportunityInsightsResponse>> GetInsights(int id)
+    public async Task<ActionResult<OpportunityInsightsResponse>> GetInsights(int id, [FromQuery] bool forceRefresh = false)
     {
         try
         {
@@ -1395,7 +1453,7 @@ public class OpportunityController : BaseController
                 return NotFound(new { error = $"Opportunity with ID {id} not found" });
             }
 
-            var response = await _geminiManager.GenerateOpportunityInsightsAsync(id, User);
+            var response = await _geminiManager.GenerateOpportunityInsightsAsync(id, User, forceRefresh);
 
             _logger.LogInformation("✅ [API] Successfully generated {InsightCount} insights and {SuggestionCount} suggestions for opportunity {OpportunityId}", 
                 response.Insights?.Count ?? 0, 
@@ -1620,6 +1678,13 @@ public class OpportunityController : BaseController
                     error = errorMessage,
                     validationErrors = validationErrors
                 });
+            }
+
+            // Default Implementation Start Date to Target Signing Date if not specified
+            // This implements the "Defaults to signing date if not specified" behavior
+            if (request.ImplementationStartDate == null && request.TargetSigningDate.HasValue)
+            {
+                request.ImplementationStartDate = request.TargetSigningDate;
             }
 
             // Create the opportunity using manager (handles deduplication, partner logic, etc.)

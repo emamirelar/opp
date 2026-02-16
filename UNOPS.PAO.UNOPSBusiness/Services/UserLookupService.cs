@@ -27,12 +27,12 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
             }
 
             var user = await _userManager.FindByEmailAsync(email);
-            if (user != null)
+            if (user != null && user.ActiveUser)
             {
                 return user.Id;
             }
 
-            // Return a default value if user not found
+            // Return 0 if user not found or inactive
             return 0;
         }
     }

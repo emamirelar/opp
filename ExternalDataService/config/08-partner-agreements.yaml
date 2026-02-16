@@ -1,0 +1,191 @@
+metadata:
+  name: "partner-agreements"
+  description: "Partner Agreement master data sync from ERP"
+  version: "1.0"
+  enabled: true
+  max_retry_attempts: 1
+  timeout_minutes: 10
+
+source:
+  type: "bigquery"
+  
+  query: |
+    SELECT
+      Partner_Agreement_Number
+      , Base_Partner_Agreement_Number
+      , Partner_Agreement_Description AS Name
+      , Partner_Agreement_Description_Long
+      , Partner_Agreement_Type
+      , Partner_Agreement_Type_Description
+      , Partner_Agreement_Scope
+      , Partner_Agreement_Scope_Decription AS Partner_Agreement_Scope_Description
+      , Partner_Agreement_Partner
+      , Partner_Agreement_Partner_Description
+      , Partner_Agreement_Responsible_Org_Unit
+      , Partner_Agreement_Responsible_Org_Unit_Description
+      , Partner_Agreement_Start_Date
+      , Partner_Agreement_End_Date
+      , Partner_Agreement_Signed_Date
+      , CASE WHEN Partner_Agreement_Service_Line_Infrastructure_Flag = 'Yes' THEN TRUE ELSE FALSE END AS Service_Line_Infrastructure
+      , CASE WHEN Partner_Agreement_Service_Line_Procurement_Flag = 'Yes' THEN TRUE ELSE FALSE END AS Service_Line_Procurement
+      , CASE WHEN Partner_Agreement_Service_Line_Project_Management_Flag = 'Yes' THEN TRUE ELSE FALSE END AS Service_Line_Project_Management
+      , CASE WHEN Partner_Agreement_Service_Line_Fund_Management_Flag = 'Yes' THEN TRUE ELSE FALSE END AS Service_Line_Fund_Management
+      , CASE WHEN Partner_Agreement_Service_Line_Human_Resources_Flag = 'Yes' THEN TRUE ELSE FALSE END AS Service_Line_Human_Resources
+      , CASE WHEN Partner_Agreement_Service_Line_Other_Flag = 'Yes' THEN TRUE ELSE FALSE END AS Service_Line_Other
+      , ARRAY_TO_STRING(
+          ARRAY(SELECT c.Country FROM UNNEST(Partner_Agreement_Countries) AS c), 
+          ','
+        ) AS Countries_List
+      , 1 AS Status
+      , Last_Updated
+    FROM
+      `unopsreporting.Partners.Partner_Agreement`
+    WHERE
+      Partner_Agreement_Status = 'ACTIVE'
+  
+  primary_key_field: "Partner_Agreement_Number"
+  batch_size: 500
+
+destination:
+  table_name: "PartnerAgreements"
+  schema: "public"
+  manage_table_structure: true
+  add_standard_fields: true
+  
+  field_mappings:
+    - source_field: "Name"
+      destination_field: "Name"
+      data_type: "varchar(500)"
+      is_required: true
+
+    - source_field: "Status"
+      destination_field: "Status"
+      data_type: "integer"
+      is_required: false
+
+    - source_field: "Base_Partner_Agreement_Number"
+      destination_field: "BasePartnerAgreementNumber"
+      data_type: "varchar(50)"
+      is_required: true
+
+    - source_field: "Partner_Agreement_Number"
+      destination_field: "PartnerAgreementNumber"
+      data_type: "varchar(50)"
+      is_required: true
+      is_unique: true
+    
+    - source_field: "Partner_Agreement_Description_Long"
+      destination_field: "PartnerAgreementDescriptionLong"
+      data_type: "varchar(4000)"
+      is_required: false
+    
+    - source_field: "Partner_Agreement_Type"
+      destination_field: "PartnerAgreementType"
+      data_type: "varchar(50)"
+      is_required: false
+    
+    - source_field: "Partner_Agreement_Type_Description"
+      destination_field: "PartnerAgreementTypeDescription"
+      data_type: "varchar(255)"
+      is_required: false
+    
+    - source_field: "Partner_Agreement_Scope"
+      destination_field: "PartnerAgreementScope"
+      data_type: "varchar(50)"
+      is_required: false
+    
+    - source_field: "Partner_Agreement_Scope_Description"
+      destination_field: "PartnerAgreementScopeDescription"
+      data_type: "varchar(255)"
+      is_required: false
+    
+    - source_field: "Partner_Agreement_Partner"
+      destination_field: "PartnerAgreementPartner"
+      data_type: "varchar(50)"
+      is_required: false
+    
+    - source_field: "Partner_Agreement_Partner_Description"
+      destination_field: "PartnerAgreementPartnerDescription"
+      data_type: "varchar(500)"
+      is_required: false
+    
+    - source_field: "Partner_Agreement_Start_Date"
+      destination_field: "PartnerAgreementStartDate"
+      data_type: "timestamp"
+      is_required: false
+    
+    - source_field: "Partner_Agreement_End_Date"
+      destination_field: "PartnerAgreementEndDate"
+      data_type: "timestamp"
+      is_required: false
+    
+    - source_field: "Partner_Agreement_Signed_Date"
+      destination_field: "PartnerAgreementSignedDate"
+      data_type: "timestamp"
+      is_required: false
+    
+    - source_field: "Partner_Agreement_Responsible_Org_Unit"
+      destination_field: "PartnerAgreementResponsibleOrgUnit"
+      data_type: "varchar(50)"
+      is_required: false
+    
+    - source_field: "Partner_Agreement_Responsible_Org_Unit_Description"
+      destination_field: "PartnerAgreementResponsibleOrgUnitDescription"
+      data_type: "varchar(500)"
+      is_required: false
+    
+    - source_field: "Service_Line_Infrastructure"
+      destination_field: "PartnerAgreementServiceLineInfrastructureFlag"
+      data_type: "boolean"
+      is_required: false
+    
+    - source_field: "Service_Line_Procurement"
+      destination_field: "PartnerAgreementServiceLineProcurementFlag"
+      data_type: "boolean"
+      is_required: false
+    
+    - source_field: "Service_Line_Project_Management"
+      destination_field: "PartnerAgreementServiceLineProjectManagementFlag"
+      data_type: "boolean"
+      is_required: false
+    
+    - source_field: "Service_Line_Fund_Management"
+      destination_field: "PartnerAgreementServiceLineFundManagementFlag"
+      data_type: "boolean"
+      is_required: false
+    
+    - source_field: "Service_Line_Human_Resources"
+      destination_field: "PartnerAgreementServiceLineHumanResourcesFlag"
+      data_type: "boolean"
+      is_required: false
+    
+    - source_field: "Service_Line_Other"
+      destination_field: "PartnerAgreementServiceLineOtherFlag"
+      data_type: "boolean"
+      is_required: false
+    
+    - source_field: "Countries_List"
+      destination_field: "PartnerAgreementCountries"
+      data_type: "varchar(4000)"
+      is_required: false
+
+sync_options:
+  sync_mode: Upsert
+  batch_processing: true
+  use_bulk_upsert: true  # Requires unique PartnerAgreementNumber; run AddUniqueConstraintsForTables migration
+
+validation:
+  required_source_fields:
+    - "Partner_Agreement_Number"
+    - "Name"
+  
+error_handling:
+  on_connection_error: RetryWithBackoff
+  on_mapping_error: SkipRecord
+
+logging:
+  log_level: "Debug"
+  log_sql_queries: true
+  log_record_details: true
+
+

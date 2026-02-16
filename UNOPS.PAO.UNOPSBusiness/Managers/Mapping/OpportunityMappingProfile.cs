@@ -36,7 +36,7 @@ public class OpportunityMappingProfile : Profile
                 var opportunityManagerStakeholder = src.Stakeholders?
                     .FirstOrDefault(s => s.EntityRole != null && 
                         s.EntityRole.Name != null && 
-                        s.EntityRole.Name.ToLower().Contains("manager") &&
+                        s.EntityRole.Name.ToLower() == "opportunity manager" &&
                         s.UserId.HasValue &&
                         s.User != null);
                 

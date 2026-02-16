@@ -22,7 +22,8 @@ import {
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 
 // PrimeNG imports
 import { PanelModule } from 'primeng/panel';
@@ -42,15 +43,25 @@ import { DropdownModule } from 'primeng/dropdown';
 import { SelectModule } from 'primeng/select';
 import { MarkdownModule } from 'ngx-markdown';
 
-// Workflow component
+// Workflow components
 import { StageWorkflowComponent } from '@shared/reusables/components/workflow/components/stage-workflow/stage-workflow.component';
+import {
+  RequirementsValidationComponent,
+  RequirementClickEvent,
+  ICustomFieldValidatorService,
+} from '@shared/reusables/components/workflow/components/requirements-validation/requirements-validation.component';
+import { StageRequirement } from '@shared/reusables/components/workflow/models/requirement.models';
+import { WorkflowService } from '@shared/reusables/components/workflow/services/workflow.service';
+import { WorkflowHistoryModel } from '@shared/reusables/components/workflow/models/workflow.models';
 
 // Services
 import { FeedbackDialogService } from '@shared/services/ui';
-import { PermissionUtilityService } from '@core/services/auth';
+import { PermissionUtilityService, AuthService } from '@core/services/auth';
+import { GoogleOAuthService } from '@core/services/auth/google-oauth.service';
 import { PageContextService } from '@shared/services/utils';
 import { OpportunityService } from '../../../services/opportunity.service';
-import { Opportunity } from '@shared/models/opportunity.model';
+import { Opportunity, GoDecisionPayload, NoGoDecisionPayload, Risk } from '@shared/models/opportunity.model';
+import { CustomStageChangeResult } from '@shared/reusables/components/workflow/models/workflow.models';
 import {
   LoadingProgress,
   LoadingSectionKey,
@@ -72,6 +83,11 @@ import { OpportunityDocumentsComponent } from './sections/document/opportunity-d
 import { OpportunityStatementSectionComponent } from './sections/statement/opportunity-statement-section.component';
 import { ValuesService } from '@app/shared/services/api/values.service';
 
+// Go/No-Go Decision Components
+import { ApproveOpportunityDialogComponent } from '../approve-opportunity-dialog/approve-opportunity-dialog.component';
+import { RejectOpportunityDialogComponent } from '../reject-opportunity-dialog/reject-opportunity-dialog.component';
+import { OpportunityDecisionInfoPanelComponent } from '../opportunity-decision-info-panel/opportunity-decision-info-panel.component';
+
 /**
  * @class OpportunityViewComponent
  * @description Unified Dashboard View - displays all opportunity information in a single scrolling page
@@ -91,6 +107,7 @@ import { ValuesService } from '@app/shared/services/api/values.service';
     CommonModule,
     TranslateModule,
     FormsModule,
+    ReactiveFormsModule,
     PanelModule,
     ButtonModule,
     DividerModule,
@@ -108,6 +125,7 @@ import { ValuesService } from '@app/shared/services/api/values.service';
     SelectModule,
     MarkdownModule,
     StageWorkflowComponent,
+    RequirementsValidationComponent,
     OpportunityCollaborationComponent,
     OpportunityAnalysisSectionComponent,
     OpportunityOverviewSectionComponent,
@@ -121,6 +139,9 @@ import { ValuesService } from '@app/shared/services/api/values.service';
     OpportunityRelatedItemsComponent,
     OpportunityDocumentsComponent,
     OpportunityStatementSectionComponent,
+    ApproveOpportunityDialogComponent,
+    RejectOpportunityDialogComponent,
+    OpportunityDecisionInfoPanelComponent,
   ],
   templateUrl: './opportunity-view.component.html',
   styleUrls: ['./opportunity-view.component.scss'],
@@ -141,12 +162,17 @@ export class OpportunityViewComponent
   feedbackDialogService = inject(FeedbackDialogService);
   confirmationService = inject(ConfirmationService);
   private pageContextService = inject(PageContextService);
+  private authService = inject(AuthService);
+  private googleOAuthService = inject(GoogleOAuthService);
+  private workflowService = inject(WorkflowService);
 
   // State
   loading = signal<boolean>(true);
   isRegeneratingBanner = signal<boolean>(false);
   recordId: string = '';
   opportunity = signal<Opportunity | null>(null);
+  baseEngagementNumber = signal<string | null>(null);
+  oupBaseUrl = signal<string>('');
 
   // Loading Progress State
   readonly loadingProgress = signal<LoadingProgress>(DEFAULT_LOADING_PROGRESS);
@@ -200,6 +226,74 @@ export class OpportunityViewComponent
   
   // Section save trigger - incremented when any section saves to notify WHAT section to refresh framework status
   sectionSaveTrigger = signal<number>(0);
+
+  // FormGroup for requirements validation - mirrors opportunity fields
+  // Used by app-requirements-validation to validate workflow stage transition requirements
+  opportunityForm = new FormGroup({
+    name: new FormControl(''),
+    description: new FormControl(''),
+    challenges: new FormControl(''),
+    expectedImpact: new FormControl(''),
+    expectedOutcomes: new FormControl(''),
+    opportunityStatementMarkdown: new FormControl(''),
+    initiativeBudgetUSD: new FormControl<number | null>(null),
+    unopsMissions: new FormControl<unknown[]>([]),
+    unopsMissionsNotApplicable: new FormControl<boolean>(false),
+    sdgs: new FormControl<unknown[]>([]),
+    fundingPartners: new FormControl<unknown[]>([]),
+    clientPartners: new FormControl<unknown[]>([]),
+    deliverables: new FormControl<unknown[]>([]),
+    countries: new FormControl<unknown[]>([]),
+    targetSigningDate: new FormControl<Date | null>(null),
+    implementationStartDate: new FormControl<Date | null>(null),
+    targetDeliveryDate: new FormControl<Date | null>(null),
+    responsibleOrgUnitId: new FormControl<number | null>(null),
+    proposedInitiativeTypeId: new FormControl<number | null>(null),
+    beneficiariesToBeDetermined: new FormControl<boolean>(false),
+    estimatedDirectBeneficiaries: new FormControl<number | null>(null),
+    estimatedIndirectBeneficiaries: new FormControl<number | null>(null),
+    stakeholders: new FormControl<unknown[]>([]),
+  });
+
+  /**
+   * Custom validators for workflow requirements validation.
+   * Handles the "conditional" field type for beneficiaries validation.
+   */
+  customValidators: Map<string, ICustomFieldValidatorService> = new Map([
+    [
+      'conditional',
+      {
+        validate: async (
+          requirement: StageRequirement,
+          formGroup: FormGroup
+        ): Promise<boolean> => {
+          // Handle beneficiaries validation
+          if (requirement.name === 'beneficiaries') {
+            const beneficiariesToBeDetermined = formGroup.get(
+              'beneficiariesToBeDetermined'
+            )?.value;
+            const estimatedDirectBeneficiaries = formGroup.get(
+              'estimatedDirectBeneficiaries'
+            )?.value;
+            const estimatedIndirectBeneficiaries = formGroup.get(
+              'estimatedIndirectBeneficiaries'
+            )?.value;
+
+            // Validation rule: Either TBD is true OR (Direct > 0 AND Indirect >= 0)
+            const isValid =
+              beneficiariesToBeDetermined === true ||
+              (estimatedDirectBeneficiaries > 0 &&
+                estimatedIndirectBeneficiaries !== null &&
+                estimatedIndirectBeneficiaries >= 0);
+
+            return isValid;
+          }
+          // Unknown conditional requirement - pass
+          return true;
+        },
+      },
+    ],
+  ]);
 
   @ViewChild('contentScrollContainer', { read: ElementRef })
   contentScrollContainer?: ElementRef;
@@ -272,20 +366,107 @@ export class OpportunityViewComponent
   // Computed canUpdate based on opportunity permissions (from backend including stakeholder check)
   canUpdate = computed(() => {
     const opp = this.opportunity();
-    // Check opportunity's inline permissions first (includes stakeholder check from backend)
-    if (opp?.permissions?.canUpdate) {
-      return true;
+    
+    // If opportunity has inline permissions, use them as the source of truth
+    // The backend sets canUpdate=false when the opportunity is immutable (GO, NO GO, CANCELLED stages)
+    if (opp?.permissions) {
+      // Explicitly check if canUpdate is false (immutable or no permission)
+      if (opp.permissions.canUpdate === false) {
+        return false;
+      }
+      // If canUpdate is explicitly true, allow editing
+      if (opp.permissions.canUpdate === true) {
+        return true;
+      }
     }
-    // Fallback to recordPermissions from utility service
+    
+    // Fallback to recordPermissions from utility service only if inline permissions are not available
     return this.permissionUtilityService.canUpdate(this.recordPermissions());
   });
 
   // Computed permission for changing workflow stage
+  // Note: Workflow actions (Recall, Approve, Reject) should be available even when canUpdate is false
+  // due to approval pending status. The workflow component will verify specific permissions (canRecall, canApprove)
   canChangeStage = computed(() => {
     const opp = this.opportunity();
-    // Check if user has update permissions (required for workflow actions)
-    return this.canUpdate() && opp?.id !== undefined;
+    if (!opp?.id) return false;
+    
+    // If in immutable stage (GO, NO GO, CANCELLED), no workflow actions allowed
+    if (opp.permissions?.isImmutable) return false;
+    
+    // If in approval pending status, allow workflow actions (the workflow component
+    // will check specific permissions like canRecall, canApprove from backend)
+    if (opp.permissions?.isApprovalPending || opp.isInWorkflow) return true;
+    
+    // Otherwise, check update permission (for initiating workflow submissions)
+    return this.canUpdate();
   });
+
+  // ===== Go/No-Go Decision State =====
+
+  /**
+   * @description Whether the entity is in an immutable state (after Go/No-Go decision)
+   */
+  isImmutable = computed(() => {
+    const opp = this.opportunity();
+    return opp?.permissions?.isImmutable ?? false;
+  });
+
+  /**
+   * @description Whether the entity is currently in an approval workflow (Approval Pending status)
+   */
+  isApprovalPending = computed(() => {
+    const opp = this.opportunity();
+    return opp?.permissions?.isApprovalPending ?? false;
+  });
+
+  /**
+   * @description Whether to show the instructional guidance for decision makers
+   * Shows when user is an approver and opportunity is in pending approval workflow stage
+   */
+  showDecisionGuidance = computed(() => {
+    const opp = this.opportunity();
+    if (!opp) return false;
+    
+    // Check if opportunity is in workflow and pending approval (SEND FOR GO DECISION stage)
+    const stage = opp.stage?.toUpperCase() || '';
+    const isPendingGoDecision = stage.includes('SEND FOR GO DECISION') || stage.includes('PENDING');
+    const isInWorkflow = opp.isInWorkflow;
+    
+    // Check if current user can take workflow actions (is an approver)
+    const canApprove = this.canChangeStage();
+    
+    return isPendingGoDecision && isInWorkflow && canApprove;
+  });
+
+  /**
+   * @description Whether to show the decision info panel
+   * Same conditions as showDecisionGuidance
+   */
+  showDecisionInfoPanel = computed(() => this.showDecisionGuidance());
+
+  /**
+   * @description Instructional guidance text for decision makers
+   */
+  readonly instructionalGuidanceText = 'workflow.goDecision.guidance.message';
+
+  // Dialog visibility signals
+  showApproveDialog = signal<boolean>(false);
+  showRejectDialog = signal<boolean>(false);
+
+  // Workflow action loading overlay state
+  // When true, shows a full-page blur overlay while workflow actions are in progress
+  workflowActionInProgress = signal<boolean>(false);
+
+  // Risks loaded from DST section (for decision info panel)
+  opportunityRisks = signal<Risk[]>([]);
+
+  // Workflow submission comment (sender remarks)
+  workflowSubmissionComment = signal<string | null>(null);
+
+  // Promise resolvers for custom stage change handler
+  private approveDialogResolver: ((result: CustomStageChangeResult) => void) | null = null;
+  private rejectDialogResolver: ((result: CustomStageChangeResult) => void) | null = null;
 
   // Computed properties for conditional display
   showAdditionalInfo = computed(() => {
@@ -302,6 +483,9 @@ export class OpportunityViewComponent
     );
   });
 
+  // Signal to store the current user's email (loaded from claims)
+  private currentUserEmail = signal<string>('');
+
   // Get opportunity manager from stakeholders (internal stakeholder with "Opportunity Manager" role)
   opportunityManager = computed(() => {
     const opp = this.opportunity();
@@ -317,6 +501,31 @@ export class OpportunityViewComponent
     );
 
     return manager ? manager.userName || manager.userEmail || '-' : '-';
+  });
+
+  // Get the opportunity manager stakeholder (for OM email comparison)
+  private opportunityManagerStakeholder = computed(() => {
+    const opp = this.opportunity();
+    if (!opp || !opp.stakeholders || opp.stakeholders.length === 0) return null;
+
+    return opp.stakeholders.find(
+      (s) =>
+        s.isInternal &&
+        s.entityRoleName &&
+        s.entityRoleName.toLowerCase().includes('opportunity') &&
+        s.entityRoleName.toLowerCase().includes('manager'),
+    ) || null;
+  });
+
+  // Determine if the current user is the Opportunity Manager
+  isCurrentUserOpportunityManager = computed(() => {
+    const email = this.currentUserEmail();
+    const omStakeholder = this.opportunityManagerStakeholder();
+    
+    if (!email || !omStakeholder?.userEmail) return false;
+    
+    // Compare emails (case-insensitive)
+    return omStakeholder.userEmail.toLowerCase() === email.toLowerCase();
   });
 
   // Check if target signing date is overdue (in the past) and opportunity is still in Identify & Profile or Decide stage
@@ -348,6 +557,16 @@ export class OpportunityViewComponent
 
   shouldShowSeeLessButton = computed(() => {
     return this.showAdditionalInfo() && this.showFullContent();
+  });
+
+  // Computed OUP engagement URL
+  oupEngagementUrl = computed(() => {
+    const baseUrl = this.oupBaseUrl();
+    const engagementNumber = this.baseEngagementNumber();
+    if (baseUrl && engagementNumber) {
+      return `${baseUrl}/${engagementNumber}/engagement/overview`;
+    }
+    return null;
   });
 
   // Computed stats from backend or calculated from child entities
@@ -424,6 +643,8 @@ export class OpportunityViewComponent
   allSuggestions = signal<any[]>([]);
   insightsLoading = signal<boolean>(false);
   insightsError = signal<string | null>(null);
+  /** True when insights are being refreshed after a section save (includes 3s delay before API call) */
+  insightsRefreshingPending = signal<boolean>(false);
 
   // Computed suggestions filtered by section
   whoSuggestions = computed(() =>
@@ -448,6 +669,11 @@ export class OpportunityViewComponent
 
   teamSuggestions = computed(() =>
     this.allSuggestions().filter((s) => s.actionTarget === 'TEAM'),
+  );
+
+  /** True when insights/suggestions are loading or refreshing - pass to sections for loading indicator */
+  loadingInsightsSuggestions = computed(
+    () => this.insightsLoading() || this.insightsRefreshingPending()
   );
 
   // Filtered stakeholder lists
@@ -525,11 +751,12 @@ export class OpportunityViewComponent
       
       // Only reload if trigger has changed (skip initial value of 0)
       if (trigger > 0) {
+        this.insightsRefreshingPending.set(true);
         console.log('🔄 Parent: Section save detected, reloading insights');
         
         // Delay to prevent overwhelming the backend
         setTimeout(() => {
-          this._loadInsights();
+          this._loadInsights(true); // forceRefresh: bypass cache for fresh insights after save
         }, 3000);
       }
     });
@@ -604,11 +831,47 @@ export class OpportunityViewComponent
         untracked(() => this.onDocumentsLoaded());
       }
     });
+
+    // Effect to sync opportunityForm when opportunity data changes
+    // This enables requirements validation to work with the current data
+    effect(() => {
+      const opp = this.opportunity();
+      if (opp) {
+        untracked(() => {
+          this.syncOpportunityFormValues(opp);
+        });
+      }
+    });
   }
 
   ngOnInit() {
     // Register component data for AI Assistant
     this.pageContextService.setComponentData(this);
+
+    // Load current user email from claims for OM comparison
+    this.authService.user().subscribe({
+      next: (claims) => {
+        const emailClaim = claims.find(c => 
+          c.type === 'email' || 
+          c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'
+        );
+        if (emailClaim?.value) {
+          this.currentUserEmail.set(emailClaim.value);
+        }
+      }
+    });
+
+    // Fetch OUP base URL from configuration
+    this.valuesService.getConfig().subscribe({
+      next: (config: any) => {
+        if (config?.oupSettings?.baseUrl) {
+          this.oupBaseUrl.set(config.oupSettings.baseUrl);
+        }
+      },
+      error: (error) => {
+        console.warn('Failed to load OUP settings:', error);
+      }
+    });
 
     // Subscribe to route parameter changes for both recordId and section
     this.activatedRoute.paramMap.subscribe({
@@ -698,6 +961,38 @@ export class OpportunityViewComponent
     }
   }
 
+  /**
+   * Syncs the opportunityForm values from the opportunity data.
+   * This allows the requirements-validation component to validate against current data.
+   */
+  private syncOpportunityFormValues(opp: Opportunity): void {
+    this.opportunityForm.patchValue({
+      name: opp.name || '',
+      description: opp.description || '',
+      challenges: opp.challenges || '',
+      expectedImpact: opp.expectedImpact || '',
+      expectedOutcomes: opp.expectedOutcomes || '',
+      opportunityStatementMarkdown: opp.opportunityStatementMarkdown || '',
+      initiativeBudgetUSD: opp.initiativeBudgetUSD ?? null,
+      unopsMissions: opp.unopsMissions || [],
+      unopsMissionsNotApplicable: opp.unopsMissionsNotApplicable || false,
+      sdgs: opp.sdGs || [],
+      fundingPartners: opp.fundingPartners || [],
+      clientPartners: opp.clientPartners || [],
+      deliverables: opp.deliverables || [],
+      countries: opp.countries || [],
+      targetSigningDate: opp.targetSigningDate ? new Date(opp.targetSigningDate) : null,
+      implementationStartDate: opp.implementationStartDate ? new Date(opp.implementationStartDate) : null,
+      targetDeliveryDate: opp.targetDeliveryDate ? new Date(opp.targetDeliveryDate) : null,
+      responsibleOrgUnitId: opp.responsibleOrgUnitId ?? null,
+      proposedInitiativeTypeId: opp.proposedInitiativeTypeId ?? null,
+      beneficiariesToBeDetermined: opp.beneficiariesToBeDetermined || false,
+      estimatedDirectBeneficiaries: opp.estimatedDirectBeneficiaries ?? null,
+      estimatedIndirectBeneficiaries: opp.estimatedIndirectBeneficiaries ?? null,
+      stakeholders: opp.stakeholders || [],
+    }, { emitEvent: true });
+  }
+
   ngOnDestroy(): void {
     // Clear component data for AI Assistant
     this.pageContextService.clearComponentData();
@@ -741,8 +1036,18 @@ export class OpportunityViewComponent
     this.updateLoadingProgress('opportunity', 'loading');
 
     this.opportunityService.getOpportunityById(+this.recordId).subscribe({
-      next: (data: Opportunity) => {
+      next: (response: any) => {
+        // Handle new response structure with opportunity and baseEngagementNumber
+        const data: Opportunity = response.opportunity || response;
         this.opportunity.set(data);
+        
+        // Store base engagement number if present
+        if (response.baseEngagementNumber) {
+          this.baseEngagementNumber.set(response.baseEngagementNumber);
+        } else {
+          this.baseEngagementNumber.set(null);
+        }
+        
         this.loading.set(false);
         this.updateLoadingProgress('opportunity', 'completed');
 
@@ -848,8 +1153,9 @@ export class OpportunityViewComponent
   /**
    * Load AI insights and suggestions for the opportunity (SINGLE API CALL)
    * This data is then passed to child components to avoid duplicate API requests
+   * @param forceRefresh - When true, bypasses AI cache for fresh Gemini response (after section save or manual refresh)
    */
-  private _loadInsights(): void {
+  private _loadInsights(forceRefresh = false): void {
     const opportunityId = this.opportunity()?.id;
     if (!opportunityId) {
       this.updateLoadingProgress('insights', 'error', undefined, 'No opportunity ID');
@@ -859,12 +1165,13 @@ export class OpportunityViewComponent
     this.insightsLoading.set(true);
     this.insightsError.set(null);
 
-    this.opportunityService.getInsights(opportunityId).subscribe({
+    this.opportunityService.getInsights(opportunityId, forceRefresh).subscribe({
       next: (response) => {
         // Store both insights and suggestions for use across child components
         this.allInsights.set(response.insights || []);
         this.allSuggestions.set(response.suggestions || []);
         this.insightsLoading.set(false);
+        this.insightsRefreshingPending.set(false);
         this.updateLoadingProgress('insights', 'completed');
 
         // Mark analysis section as complete (it uses insights from parent)
@@ -879,6 +1186,7 @@ export class OpportunityViewComponent
         console.error('❌ Error loading insights:', error);
         this.insightsError.set('Failed to load AI insights');
         this.insightsLoading.set(false);
+        this.insightsRefreshingPending.set(false);
         this.updateLoadingProgress('insights', 'error', undefined, error.message);
         this.updateLoadingProgress(
           'analysis',
@@ -1210,6 +1518,15 @@ export class OpportunityViewComponent
   }
 
   /**
+   * Handle the "Not Applicable" flag change for UNOPS Missions from WHY section.
+   * Updates the form control to enable real-time requirements validation.
+   * @param value The new value of the flag
+   */
+  handleUnopsMissionsNotApplicableChange(value: boolean): void {
+    this.opportunityForm.get('unopsMissionsNotApplicable')?.setValue(value);
+  }
+
+  /**
    * @description Reload opportunity data from API (e.g., after AI changes)
    * @returns {void}
    */
@@ -1227,7 +1544,7 @@ export class OpportunityViewComponent
    */
   handleInsightsRefresh(): void {
     console.log('🔄 Manual insights refresh requested');
-    this._loadInsights();
+    this._loadInsights(true); // forceRefresh: bypass cache for fresh insights
   }
 
   /**
@@ -1277,16 +1594,305 @@ export class OpportunityViewComponent
   /**
    * @description Handle successful workflow stage change
    * Reloads opportunity data to reflect the new stage and workflow status
+   * Note: Success toast is shown by the specific action handler (e.g., Reopen, Cancel, Submit)
    */
   handleStageChangeSuccess(): void {
     // Reload the opportunity to get the updated stage and workflow status
     this.reloadOpportunity();
-    
-    // Show success feedback
-    this.feedbackDialogService.showSuccessToast({
-      summary: this.translateService.instant('message.success'),
-      detail: this.translateService.instant('message.workflow.submitSuccess')
+    // Note: Success feedback is handled by the specific action (Cancel, Reopen, Submit, etc.)
+    // to show action-specific messages instead of a generic one
+  }
+
+  /**
+   * @description Handle workflow action in progress state change
+   * Shows/hides a full-page blur overlay while workflow actions are executing
+   * @param {boolean} inProgress - true when action starts, false when action completes
+   */
+  handleWorkflowActionInProgressChange(inProgress: boolean): void {
+    this.workflowActionInProgress.set(inProgress);
+  }
+
+  /**
+   * @description Handle successful GO submission
+   * Generates a PDF of the Opportunity Statement after successful submission to GO stage
+   * @param {object} data - Event data containing entityName, entityId, and newStage
+   */
+  async handleGoSubmissionSuccess(data: { entityName: string; entityId: number; newStage: string }): Promise<void> {
+    console.log('📄 GO submission successful, generating statement PDF...', data);
+
+    if (!this.documentsComponent) {
+      console.error('❌ Documents component not available for PDF generation');
+      return;
+    }
+
+    // Fetch fresh opportunity data to get the updated statement markdown
+    // (the backend regenerates the statement during submission)
+    try {
+      const response: any = await firstValueFrom(
+        this.opportunityService.getOpportunityById(data.entityId)
+      );
+      const freshOpp = response.opportunity || response;
+      
+      // Update local opportunity signal with fresh data
+      this.opportunity.set(freshOpp);
+
+      const markdown = freshOpp.opportunityStatementMarkdown;
+      if (!markdown) {
+        console.warn('⚠️ No opportunity statement markdown available - skipping PDF generation');
+        return;
+      }
+
+      // Generate PDF with submission filename: Opportunity_<ID>_Submission_YYYYMMDD_HHMM.pdf
+      // Include time so multiple submissions (after recall) can be differentiated
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+      const pdfFileName = `Opportunity_${data.entityId}_Submission_${dateStr}_${timeStr}.pdf`;
+      
+      await this.documentsComponent.generateStatementPdf(
+        markdown,
+        data.entityId,
+        pdfFileName
+      );
+    } catch (error) {
+      console.error('❌ Failed to generate statement PDF:', error);
+      // PDF generation errors are already handled in the documents component
+      // with appropriate user feedback, so we just log here
+    }
+  }
+
+  /**
+   * @description Handle successful GO approval
+   * Generates a PDF of the Opportunity Statement after successful approval (GO decision)
+   * Includes an audit trail footer with submission and approval details
+   * @param {object} data - Event data containing entityName, entityId, and approvedStage
+   */
+  async handleGoApprovalSuccess(data: { entityName: string; entityId: number; approvedStage: string }): Promise<void> {
+    console.log('📄 GO approval successful, generating statement PDF...', data);
+
+    if (!this.documentsComponent) {
+      console.error('❌ Documents component not available for PDF generation');
+      return;
+    }
+
+    try {
+      // Fetch fresh opportunity data
+      const response: any = await firstValueFrom(
+        this.opportunityService.getOpportunityById(data.entityId)
+      );
+      const freshOpp = response.opportunity || response;
+      
+      // Update local opportunity signal with fresh data
+      this.opportunity.set(freshOpp);
+
+      const markdown = freshOpp.opportunityStatementMarkdown;
+      if (!markdown) {
+        console.warn('⚠️ No opportunity statement markdown available - skipping PDF generation');
+        return;
+      }
+
+      // Fetch workflow history to get submission and approval details
+      const history = await firstValueFrom(
+        this.workflowService.getStageChangeHistory('Opportunity', data.entityId.toString())
+      );
+
+      // Build the audit trail section
+      const auditTrailMarkdown = this.buildAuditTrailMarkdown(history, freshOpp);
+
+      // Combine statement with audit trail
+      const fullMarkdown = markdown + '\n\n' + auditTrailMarkdown;
+
+      // Generate PDF with approval filename: Opportunity_<ID>_Approved_YYYYMMDD.pdf
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+      const pdfFileName = `Opportunity_${data.entityId}_Approved_${dateStr}.pdf`;
+      
+      await this.documentsComponent.generateStatementPdf(
+        fullMarkdown,
+        data.entityId,
+        pdfFileName
+      );
+    } catch (error) {
+      console.error('❌ Failed to generate statement PDF:', error);
+      // PDF generation errors are already handled in the documents component
+      // with appropriate user feedback, so we just log here
+    }
+  }
+
+  /**
+   * @description Build audit trail markdown section for the approved opportunity statement PDF
+   * Includes submission details, decision details, and acknowledgment statement
+   * @param {WorkflowHistoryModel[]} history - Workflow history entries
+   * @param {Opportunity} opportunity - The opportunity data
+   * @returns {string} Markdown formatted audit trail section
+   */
+  private buildAuditTrailMarkdown(history: WorkflowHistoryModel[], opportunity: any): string {
+    // Find the submission (Submit action) and approval (Approve action) records
+    // Sort by date descending to get the most recent
+    const sortedHistory = [...history].sort((a, b) => {
+      const dateA = a.performedOn ? new Date(a.performedOn).getTime() : 0;
+      const dateB = b.performedOn ? new Date(b.performedOn).getTime() : 0;
+      return dateB - dateA;
     });
+
+    const submitRecord = sortedHistory.find(h => h.action?.toLowerCase() === 'submit');
+    const approveRecord = sortedHistory.find(h => h.action?.toLowerCase() === 'approve');
+
+    // Format date helper
+    const formatDate = (date: Date | string | undefined): string => {
+      if (!date) return 'N/A';
+      const d = new Date(date);
+      return d.toLocaleDateString('en-GB', { 
+        day: '2-digit', 
+        month: 'short', 
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    };
+
+    // Build acknowledgment statement with actual values
+    const orgUnitCode = opportunity?.responsibleOrgUnitName || 'N/A';
+    const initiativeType = opportunity?.proposedInitiativeTypeName || 'initiative';
+    const acknowledgmentStatement = this.translateService.instant('workflow.goDecision.dialog.approve.confirmationStatement', {
+      orgUnitCode: orgUnitCode,
+      initiativeType: initiativeType,
+    });
+    
+    // Build the audit trail markdown
+    let auditTrail = `
+---
+
+## Go Decision Audit Trail
+
+### Submission Details
+| Field | Value |
+|-------|-------|
+| **Date of Submission** | ${formatDate(submitRecord?.performedOn)} |
+| **Submitted By** | ${submitRecord?.performedBy?.userName || 'N/A'} |
+| **Position Title** | ${submitRecord?.performedBy?.positionTitle || 'N/A'} |
+| **Remarks for Decision Maker** | ${submitRecord?.comment || 'None provided'} |
+
+### Decision Details
+| Field | Value |
+|-------|-------|
+| **Date of Decision** | ${formatDate(approveRecord?.performedOn)} |
+| **Decision Maker** | ${approveRecord?.performedBy?.userName || 'N/A'} |
+| **DOA Level** | ${approveRecord?.performedBy?.doaLevel || 'N/A'} |
+| **Position Title** | ${approveRecord?.performedBy?.positionTitle || 'N/A'} |
+| **Acknowledged Statement** | ${acknowledgmentStatement} |
+| **Decision Rationale** | ${approveRecord?.comment || 'None provided'} |
+
+---
+`;
+
+    return auditTrail;
+  }
+
+  // ===== Go/No-Go Decision Handlers =====
+
+  /**
+   * @description Custom stage change handler for Go/No-Go decisions
+   * Opens the appropriate dialog when Approve or Reject actions are triggered
+   * @param {string} nextStage - The target stage name
+   * @param {string} actionName - The action being performed (Approve, Reject, etc.)
+   * @returns {Promise<CustomStageChangeResult | undefined>} Result with proceed flag and comment
+   */
+  customStageChangeHandler = async (
+    nextStage: string,
+    actionName: string
+  ): Promise<CustomStageChangeResult | undefined> => {
+    // Only intercept Approve and Reject actions for opportunity-specific dialogs
+    if (actionName === 'Approve') {
+      this.showApproveDialog.set(true);
+      return new Promise<CustomStageChangeResult>((resolve) => {
+        this.approveDialogResolver = resolve;
+      });
+    }
+    
+    if (actionName === 'Reject') {
+      this.showRejectDialog.set(true);
+      return new Promise<CustomStageChangeResult>((resolve) => {
+        this.rejectDialogResolver = resolve;
+      });
+    }
+    
+    // For other actions, return undefined to use default behavior
+    return undefined;
+  };
+
+  /**
+   * @description Handle Go decision confirmation from approve dialog
+   * @param {GoDecisionPayload} payload - The approval payload with rationale and executive
+   */
+  async onApproveConfirmed(payload: GoDecisionPayload): Promise<void> {
+    const opportunityId = this.opportunity()?.id;
+    if (!opportunityId) return;
+
+    // The dialog already handles the API call and shows success/error toasts
+    // We resolve with proceed: false to prevent the workflow component from making a duplicate API call
+    if (this.approveDialogResolver) {
+      this.approveDialogResolver({
+        proceed: false, // API call already made by the dialog
+        comment: payload.rationale,
+      });
+      this.approveDialogResolver = null;
+    }
+
+    // Generate Approved PDF after successful Go decision (includes audit trail)
+    await this.handleGoApprovalSuccess({
+      entityName: 'Opportunity',
+      entityId: opportunityId,
+      approvedStage: 'GO',
+    });
+
+    // Reload opportunity to ensure UI is fully updated
+    this.reloadOpportunity();
+  }
+
+  /**
+   * @description Handle No-Go decision confirmation from reject dialog
+   * @param {NoGoDecisionPayload} payload - The rejection payload with rationale
+   */
+  onRejectConfirmed(payload: NoGoDecisionPayload): void {
+    const opportunityId = this.opportunity()?.id;
+    if (!opportunityId) return;
+
+    // The dialog already handles the API call and shows success/error toasts
+    // We resolve with proceed: false to prevent the workflow component from making a duplicate API call
+    if (this.rejectDialogResolver) {
+      this.rejectDialogResolver({
+        proceed: false, // API call already made by the dialog
+        comment: payload.rationale,
+      });
+      this.rejectDialogResolver = null;
+    }
+
+    // Reload opportunity to reflect new stage
+    this.reloadOpportunity();
+  }
+
+  /**
+   * @description Handle dialog cancellation
+   * Resolves the promise with proceed: false to cancel the workflow action
+   */
+  onDialogCancel(): void {
+    if (this.approveDialogResolver) {
+      this.approveDialogResolver({ proceed: false });
+      this.approveDialogResolver = null;
+    }
+    if (this.rejectDialogResolver) {
+      this.rejectDialogResolver({ proceed: false });
+      this.rejectDialogResolver = null;
+    }
+  }
+
+  /**
+   * @description Update risks signal when DST section loads risks
+   * @param {Risk[]} risks - Array of risks from DST section
+   */
+  updateRisks(risks: Risk[]): void {
+    this.opportunityRisks.set(risks);
   }
 
   /**
@@ -1561,6 +2167,16 @@ export class OpportunityViewComponent
   }
 
   /**
+   * Open OUP engagement in new tab
+   */
+  openOUPEngagement(): void {
+    const url = this.oupEngagementUrl();
+    if (url) {
+      window.open(url, '_blank');
+    }
+  }
+
+  /**
    * Format currency value
    */
   formatCurrency(value: number | undefined | null): string {
@@ -1607,6 +2223,8 @@ export class OpportunityViewComponent
     switch (status.toLowerCase()) {
       case 'active':
         return 'success';
+      case 'closed':
+        return 'warn';
       case 'pending':
         return 'warn';
       case 'onhold':
@@ -1675,6 +2293,48 @@ export class OpportunityViewComponent
         this.isScrolling = false;
       }, 800); // Reduced from 1500ms to 800ms
     }, 100);
+  }
+
+  /**
+   * Handle click on a requirement item in the requirements validation panel.
+   * Navigates to the section containing the required field and scrolls to the specific field.
+   * @param event - The requirement click event containing section and field information
+   */
+  handleRequirementClick(event: RequirementClickEvent): void {
+    if (event.section && this.isValidSection(event.section)) {
+      this.scrollToSection(event.section);
+
+      // After scrolling to section, scroll to the specific field and highlight it
+      if (event.fieldName) {
+        // Use a delay to allow section scroll to complete
+        setTimeout(() => {
+          this.scrollToFieldAndHighlight(event.fieldName!);
+        }, 600);
+      }
+    }
+  }
+
+  /**
+   * Scroll to a specific field element and apply highlight effect.
+   * @param fieldName - The field name to scroll to (matches id="field-{fieldName}")
+   */
+  private scrollToFieldAndHighlight(fieldName: string): void {
+    const fieldElement = document.getElementById(`field-${fieldName}`);
+    if (fieldElement) {
+      // Scroll the field into view with smooth behavior
+      fieldElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+
+      // Add highlight effect
+      fieldElement.classList.add('field-highlight');
+
+      // Remove highlight after animation completes
+      setTimeout(() => {
+        fieldElement.classList.remove('field-highlight');
+      }, 2000);
+    }
   }
 
   /**

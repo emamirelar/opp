@@ -164,6 +164,12 @@ public class Opportunity : ModifiableDeletableEntity
     public virtual ICollection<OpportunityUNOPSMission> UNOPSMissions { get; set; } = new HashSet<OpportunityUNOPSMission>();
     
     /// <summary>
+    /// Indicates whether UNOPS Strategic Missions alignment is not applicable for this opportunity.
+    /// When true, no missions need to be selected and validation will pass.
+    /// </summary>
+    public bool UNOPSMissionsNotApplicable { get; set; } = false;
+    
+    /// <summary>
     /// Collaborators who have permissions to edit all fields of the opportunity.
     /// Part of the Opportunity Development Team.
     /// </summary>
@@ -173,6 +179,18 @@ public class Opportunity : ModifiableDeletableEntity
     
     [NotMapped]
     public virtual ICollection<EntityRolePerson>? RoleAssignments { get; set; }
+    
+    /// <summary>
+    /// The Executive assigned to direct Opportunity development after Go decision.
+    /// Set by the decision-maker during Go approval. Nullable until Go decision is made.
+    /// </summary>
+    public int? ExecutiveId { get; set; }
+    
+    /// <summary>
+    /// Navigation property to the assigned Executive user.
+    /// </summary>
+    [ForeignKey(nameof(ExecutiveId))]
+    public virtual PAOUser? Executive { get; set; }
     
     // Audit user navigation properties
     [ForeignKey(nameof(CreatedBy))]

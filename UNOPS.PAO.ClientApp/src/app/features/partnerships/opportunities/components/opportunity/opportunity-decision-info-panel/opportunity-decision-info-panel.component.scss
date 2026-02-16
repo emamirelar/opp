@@ -1,0 +1,18 @@
+// opportunity-decision-info-panel.component.scss
+// Minimal styles - using Tailwind classes in template
+
+:host {
+  display: block;
+}
+
+// Custom panel styling for decision info
+::ng-deep .decision-info-panel {
+  .p-panel-header {
+    background-color: #eff6ff; // blue-50
+    border-color: #bfdbfe; // blue-200
+  }
+
+  .p-panel-content {
+    border-color: #bfdbfe; // blue-200
+  }
+}

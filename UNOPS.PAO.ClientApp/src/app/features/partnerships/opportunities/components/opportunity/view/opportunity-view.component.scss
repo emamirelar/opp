@@ -270,3 +270,73 @@ a:hover i {
     animation: none;
   }
 }
+
+// Field highlight animation for requirement click navigation
+// Applied globally since field elements are in child components
+:host ::ng-deep {
+  .field-highlight {
+    animation: fieldHighlightPulse 2s ease-in-out;
+    border-radius: 8px;
+  }
+}
+
+@keyframes fieldHighlightPulse {
+  0% {
+    background-color: transparent;
+    box-shadow: none;
+  }
+  20% {
+    background-color: rgba(0, 95, 136, 0.15);
+    box-shadow: 0 0 0 4px rgba(0, 95, 136, 0.2);
+  }
+  50% {
+    background-color: rgba(0, 95, 136, 0.1);
+    box-shadow: 0 0 0 4px rgba(0, 95, 136, 0.15);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: none;
+  }
+}
+
+// ========================================
+// Workflow Action Loading Overlay
+// Shows a blur effect with spinner during workflow actions
+// (Submit, Approve, Reject, Recall, Cancel, Reopen)
+// ========================================
+.workflow-action-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  // Semi-transparent backdrop with blur effect
+  background-color: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  
+  // Smooth fade-in animation
+  animation: overlayFadeIn 0.2s ease-out;
+}
+
+// Overlay fade-in animation
+@keyframes overlayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+// Reduced motion support for overlay
+@media (prefers-reduced-motion: reduce) {
+  .workflow-action-overlay {
+    animation: none;
+  }
+}

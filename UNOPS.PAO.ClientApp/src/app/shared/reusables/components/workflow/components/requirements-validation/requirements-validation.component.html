@@ -1,0 +1,48 @@
+@if (requirements().length > 0 && !allRequirementsMet()) {
+  <div class="requirements-message">
+    <div class="requirements-message-header" (click)="toggleCollapsed()">
+      <span class="requirements-message-icon">
+        <i class="pi pi-info-circle"></i>
+      </span>
+      <span class="requirements-message-text">{{ getValidationMessage() }}</span>
+      <span class="requirements-message-toggle">
+        <i class="pi" [class]="isCollapsed() ? 'pi-chevron-down' : 'pi-chevron-up'"></i>
+      </span>
+    </div>
+    @if (!isCollapsed()) {
+      @if (isLoading()) {
+        <div class="requirements-validation-content loading">
+          <i class="pi pi-spin pi-spinner"></i>
+        </div>
+      } @else {
+        <div class="requirements-validation-content">
+          <ul class="requirements-list">
+            @for (requirement of requirements(); track requirement.name) {
+              @if (requirement.isMet !== true) {
+                <li 
+                  class="requirement-item" 
+                  [class.clickable]="isRequirementClickable(requirement)"
+                  (click)="onRequirementClick(requirement)"
+                  [attr.role]="isRequirementClickable(requirement) ? 'button' : null"
+                  [attr.tabindex]="isRequirementClickable(requirement) ? 0 : null"
+                  (keydown.enter)="onRequirementClick(requirement)"
+                  (keydown.space)="onRequirementClick(requirement); $event.preventDefault()"
+                >
+                  <span class="requirement-text">{{ requirement.description | translate }}</span>
+
+                  @if (requirement.fieldType === 'documents' && requirement.documentTypes) {
+                    <ul class="document-types-list">
+                      @for (docType of requirement.documentTypes; track docType.code || docType.name) {
+                        <li class="document-type-item">{{ docType.name }} ({{ docType.code }})</li>
+                      }
+                    </ul>
+                  }
+                </li>
+              }
+            }
+          </ul>
+        </div>
+      }
+    }
+  </div>
+}

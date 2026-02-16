@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workflow Approval Request</title>
+    <title>PAO: {{EntityName}} - Action Required</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -44,7 +44,7 @@
         }
         .info-table td:first-child {
             font-weight: bold;
-            width: 150px;
+            width: 180px;
             color: #666;
         }
         .button {
@@ -58,12 +58,6 @@
         }
         .button:hover {
             background-color: #005a8e;
-        }
-        .button-approve {
-            background-color: #28a745;
-        }
-        .button-approve:hover {
-            background-color: #1e7e34;
         }
         .footer {
             background-color: #f1f1f1;
@@ -80,65 +74,71 @@
             margin: 15px 0;
             font-style: italic;
         }
+        .note-box {
+            background-color: #e7f3ff;
+            border: 1px solid #b8daff;
+            border-radius: 4px;
+            padding: 12px;
+            margin: 15px 0;
+            font-size: 13px;
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>Workflow Approval Request</h1>
+        <h1>Go Decision Required</h1>
     </div>
     
     <div class="content">
         <p>Hello {{ApproverName}},</p>
         
         <div class="highlight-box">
-            <strong>Action Required:</strong> You have been requested to review and approve a workflow stage change.
+            <strong>Action Required:</strong> As a <strong>{{ApproverRole}}</strong> for <strong>{{OrgUnitName}}</strong>, 
+            you have been requested to review and approve a Go Decision for the following opportunity.
         </div>
         
         <table class="info-table">
             <tr>
-                <td>Entity Type:</td>
-                <td>{{EntityType}}</td>
+                <td>Opportunity:</td>
+                <td><strong>{{EntityName}}</strong></td>
             </tr>
             <tr>
-                <td>Entity Name:</td>
-                <td>{{EntityName}}</td>
+                <td>Responsible Org Unit:</td>
+                <td>{{OrgUnitName}}</td>
             </tr>
             <tr>
-                <td>Current Stage:</td>
-                <td>{{CurrentStage}}</td>
-            </tr>
-            <tr>
-                <td>Requested Stage:</td>
-                <td>{{RequestedStage}}</td>
-            </tr>
-            <tr>
-                <td>Requested By:</td>
+                <td>Submitted By:</td>
                 <td>{{RequestedByName}}</td>
             </tr>
             <tr>
-                <td>Requested On:</td>
+                <td>Submitted On:</td>
                 <td>{{RequestedOn}}</td>
             </tr>
         </table>
         
         {{#if Comment}}
         <div class="comment-box">
-            <strong>Comment:</strong><br>
+            <strong>Submitter's Remarks:</strong><br>
             {{Comment}}
         </div>
         {{/if}}
         
-        <p>Please review this request and take appropriate action:</p>
+        <p>Please review the Opportunity Statement and make your Go Decision:</p>
         
         <p>
-            <a href="{{EntityUrl}}" class="button">View Details</a>
+            <a href="{{EntityUrl}}#statement" class="button">Review Opportunity Statement</a>
         </p>
         
-        <p>You can approve or reject this request from the entity detail page.</p>
+        <p>You can approve (Go) or reject (No Go) this request from the opportunity detail page.</p>
+        
+        <div class="note-box">
+            <strong>Note:</strong> If the Go Decision is approved, internal stakeholders from other org units 
+            normally responsible for the opportunity's implementation countries will be automatically notified.
+        </div>
     </div>
     
     <div class="footer">
-        <p>This is an automated notification from UNOPS Opportunity+ System.</p>
+        <p>This is an automated notification from UNOPS Opportunity+ System (PAO).</p>
         <p>If you have any questions, please contact your system administrator.</p>
     </div>
 </body>

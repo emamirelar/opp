@@ -38,6 +38,8 @@ import {
   DashboardCombinedResponse,
   DashboardData
 } from '@features/home/models/dashboard.model';
+import { WorkflowService } from '@shared/reusables/components/workflow/services/workflow.service';
+import { PendingApprovalModel } from '@shared/reusables/components/workflow/models/workflow.models';
 
 // Re-export RecentUpdate type for backward compatibility
 type RecentUpdate = DashboardRecentUpdate;
@@ -92,6 +94,7 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
   private dialogService = inject(DialogService);
   public layoutService = inject(LayoutService);
   private elementRef = inject(ElementRef);
+  private workflowService = inject(WorkflowService);
 
   // Dashboard Card Configurations specific to home dashboard
   private readonly DASHBOARD_CARD_CONFIGS = {
@@ -182,6 +185,10 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
 
   // Navigation loading state
   navigatingToEntity = signal<string | null>(null);
+
+  // Pending workflow approvals (Go/No-Go decisions)
+  pendingApprovals = signal<PendingApprovalModel[]>([]);
+  pendingApprovalsLoading = signal<boolean>(false);
 
   // Permission signals
   partnerPermissions = signal<any>({ permissions: { canCreate: false } });
@@ -434,6 +441,7 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
     this.checkMobileView();
     this.loadDashboardData();
     this.loadPermissions();
+    this.loadPendingApprovals();
     this.startTimestampUpdates();
 
     // Initialize component width tracking with polling approach
@@ -444,6 +452,7 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.loadDashboardData();
+        this.loadPendingApprovals();
       });
   }
 
@@ -485,6 +494,28 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
         this.permissionsLoading.set(false);
       }
     });
+  }
+
+  /**
+   * Load pending workflow approvals (Go/No-Go decisions awaiting user action)
+   */
+  private loadPendingApprovals(): void {
+    this.pendingApprovalsLoading.set(true);
+    
+    this.workflowService.getPendingApprovalsForUser()
+      .pipe(
+        catchError(() => of([]))
+      )
+      .subscribe({
+        next: (approvals) => {
+          this.pendingApprovals.set(approvals);
+          this.pendingApprovalsLoading.set(false);
+        },
+        error: () => {
+          this.pendingApprovals.set([]);
+          this.pendingApprovalsLoading.set(false);
+        }
+      });
   }
 
   private startTimestampUpdates() {
@@ -1241,19 +1272,26 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
 
   getTotalDraftActions(): number {
     const dashboardData = this.dashboardData();
-    if (!dashboardData) return 0;
+    const pendingApprovalsCount = this.pendingApprovals().length;
+    
+    if (!dashboardData) return pendingApprovalsCount;
     
     return dashboardData.draftActions.partners.length + 
            dashboardData.draftActions.contacts.length + 
            dashboardData.draftActions.interactions.length +
-           dashboardData.draftActions.opportunities.length;
+           dashboardData.draftActions.opportunities.length +
+           pendingApprovalsCount;
   }
 
   getDraftActionTypes(): string[] {
     const dashboardData = this.dashboardData();
-    if (!dashboardData) return [];
-    
     const types: string[] = [];
+    
+    // Add workflow approvals first (most important actions)
+    if (this.pendingApprovals().length > 0) types.push('Workflow Approvals');
+    
+    if (!dashboardData) return types;
+    
     if (dashboardData.draftActions.partners.length > 0) types.push('Partners');
     if (dashboardData.draftActions.contacts.length > 0) types.push('Contacts');
     if (dashboardData.draftActions.interactions.length > 0) types.push('Interactions');
@@ -1264,17 +1302,18 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
 
   getDraftActionCount(type: string): number {
     const dashboardData = this.dashboardData();
-    if (!dashboardData) return 0;
     
     switch (type) {
+      case 'Workflow Approvals':
+        return this.pendingApprovals().length;
       case 'Partners':
-        return dashboardData.draftActions.partners.length;
+        return dashboardData?.draftActions.partners.length || 0;
       case 'Contacts':
-        return dashboardData.draftActions.contacts.length;
+        return dashboardData?.draftActions.contacts.length || 0;
       case 'Interactions':
-        return dashboardData.draftActions.interactions.length;
+        return dashboardData?.draftActions.interactions.length || 0;
       case 'Opportunities':
-        return dashboardData.draftActions.opportunities.length;
+        return dashboardData?.draftActions.opportunities.length || 0;
       default:
         return 0;
     }
@@ -1287,34 +1326,93 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
 
   getDisplayedDraftActions(): any[] {
     const dashboardData = this.dashboardData();
-    if (!dashboardData) return [];
+    const pendingApprovals = this.pendingApprovals();
     
     const selectedType = this.selectedDraftActionType();
     if (!selectedType) {
-      // Return all draft actions combined
-      return [
-        ...dashboardData.draftActions.partners,
-        ...dashboardData.draftActions.contacts,
-        ...dashboardData.draftActions.interactions,
-        ...dashboardData.draftActions.opportunities
-      ];
+      // Return all actions combined (workflow approvals first, then drafts)
+      const allActions: any[] = [];
+      
+      // Add pending approvals as special "WorkflowApproval" type items
+      pendingApprovals.forEach(approval => {
+        allActions.push({
+          ...approval,
+          _actionType: 'WorkflowApproval'
+        });
+      });
+      
+      // Add draft actions
+      if (dashboardData) {
+        allActions.push(...dashboardData.draftActions.partners);
+        allActions.push(...dashboardData.draftActions.contacts);
+        allActions.push(...dashboardData.draftActions.interactions);
+        allActions.push(...dashboardData.draftActions.opportunities);
+      }
+      
+      return allActions;
     }
     
     switch (selectedType) {
+      case 'Workflow Approvals':
+        return pendingApprovals.map(approval => ({
+          ...approval,
+          _actionType: 'WorkflowApproval'
+        }));
       case 'Partners':
-        return dashboardData.draftActions.partners;
+        return dashboardData?.draftActions.partners || [];
       case 'Contacts':
-        return dashboardData.draftActions.contacts;
+        return dashboardData?.draftActions.contacts || [];
       case 'Interactions':
-        return dashboardData.draftActions.interactions;
+        return dashboardData?.draftActions.interactions || [];
       case 'Opportunities':
-        return dashboardData.draftActions.opportunities;
+        return dashboardData?.draftActions.opportunities || [];
       default:
         return [];
     }
   }
 
+  /**
+   * Check if an item is a workflow approval
+   */
+  isWorkflowApproval(item: any): boolean {
+    return item._actionType === 'WorkflowApproval';
+  }
+
+  /**
+   * Navigate to opportunity for Go/No-Go decision
+   * Navigates directly to the Statement section for reviewing the opportunity
+   */
+  navigateToApproval(approval: PendingApprovalModel): void {
+    const entityKey = `Opportunity-${approval.entityId}`;
+    this.navigatingToEntity.set(entityKey);
+    
+    // Navigate directly to the Statement section for Go/No-Go review
+    this.router.navigate(['partnerships', 'opportunities', approval.entityId.toString(), 'statement']).then(
+      (success) => {
+        if (!success) {
+          console.warn('Navigation to approval failed');
+          this.navigatingToEntity.set(null);
+        }
+      },
+      (error) => {
+        console.error('Navigation error:', error);
+        this.navigatingToEntity.set(null);
+      }
+    );
+  }
+
+  /**
+   * Check if navigating to a specific approval
+   */
+  isApprovalNavigating(approval: PendingApprovalModel): boolean {
+    const entityKey = `Opportunity-${approval.entityId}`;
+    return this.navigatingToEntity() === entityKey;
+  }
+
   getDraftActionEntityType(item: any): string {
+    // Check if it's a workflow approval
+    if (item._actionType === 'WorkflowApproval') return 'WorkflowApproval';
+    
     const dashboardData = this.dashboardData();
     if (!dashboardData) return 'Partner';
     
@@ -1331,6 +1429,8 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
     const entityType = this.getDraftActionEntityType(item);
     
     switch (entityType) {
+      case 'WorkflowApproval':
+        return item.entityDisplayName || 'Opportunity Approval';
       case 'Partner':
         return item.name || 'Unnamed Partner';
       case 'Contact':
@@ -1352,6 +1452,8 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
     const entityType = this.getDraftActionEntityType(item);
     
     switch (entityType) {
+      case 'WorkflowApproval':
+        return `Go Decision Required • ${item.orgUnitName || 'Unknown Org Unit'}`;
       case 'Contact':
         return item.title || '';
       case 'Interaction':

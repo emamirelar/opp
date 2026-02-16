@@ -89,7 +89,8 @@ public class UNOPSManagerWrapper : ManagerWrapper
         imageGenerationManager = new ImageGenerationManager(configuration, imageGenerationManagerLogger);
         
         // Create GeminiManager first (without userManagementManager dependency)
-        geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration, geminiManagerLogger, null, userInfoService, userManager, roleManager, userPreferenceService, userProfileCacheService, screenContextCacheService, geoTimeCacheService, aiPromptCacheService, memoryCache, httpClient);
+        // Pass dbContextFactory for thread-safe background operations (fire-and-forget tasks)
+        geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration, geminiManagerLogger, null, userInfoService, userManager, roleManager, userPreferenceService, userProfileCacheService, screenContextCacheService, geoTimeCacheService, aiPromptCacheService, memoryCache, httpClient, dbContextFactory);
         
         // Create UserManagementManager with GeminiManager dependency
         userManagementManager = new UNOPSUserManagementManager(mapper, opsContext, configuration, userManager, roleManager, permissionService, geminiManager, userManagementManagerLogger);

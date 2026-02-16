@@ -125,7 +125,7 @@ public class ValuesRepository
                    .Include(x => x.Partner);
 
     public IEnumerable<PAOUser> GetUsers()
-        => context.PAOUsers;
+        => context.PAOUsers.Where(u => u.ActiveUser);
 
     // Optimized user loading with pagination and search
     public async Task<(IEnumerable<PAOUser> Users, int TotalCount)> GetUsersPagedAsync(
@@ -142,7 +142,8 @@ public class ValuesRepository
         {
             var selectedUsers = await context.PAOUsers
                 .Include(u => u.UserProfile)
-                .Where(u => selectedUserIds.Contains(u.Id) && 
+                .Where(u => u.ActiveUser &&
+                           selectedUserIds.Contains(u.Id) && 
                            (!activeOnly || u.UserProfile == null || !u.UserProfile.IsDeleted))
                 .ToListAsync();
             
@@ -151,7 +152,7 @@ public class ValuesRepository
 
         var query = context.PAOUsers
             .Include(u => u.UserProfile)
-            .Where(u => !activeOnly || !u.UserProfile!.IsDeleted); // Filter active users if requested
+            .Where(u => u.ActiveUser && (!activeOnly || !u.UserProfile!.IsDeleted)); // Filter active users if requested
 
         // Exclude already selected users from the main query
         if (selectedUserIds != null && selectedUserIds.Length > 0)
@@ -211,7 +212,8 @@ public class ValuesRepository
         {
             var selectedUsers = await context.PAOUsers
                 .Include(u => u.UserProfile)
-                .Where(u => selectedUserIds.Contains(u.Id) && u.UserProfile != null && !u.UserProfile.IsDeleted)
+                .Where(u => u.ActiveUser &&
+                           selectedUserIds.Contains(u.Id) && u.UserProfile != null && !u.UserProfile.IsDeleted)
                 .ToListAsync();
             
             allUsers.AddRange(selectedUsers);
@@ -227,7 +229,8 @@ public class ValuesRepository
             
             var searchUsers = await context.PAOUsers
                 .Include(u => u.UserProfile)
-                .Where(u => u.UserProfile != null && !u.UserProfile.IsDeleted &&
+                .Where(u => u.ActiveUser &&
+                           u.UserProfile != null && !u.UserProfile.IsDeleted &&
                     !excludeIds.Contains(u.Id) &&
                     (u.Email.ToLower().Contains(searchLower) ||
                     (u.UserProfile.FirstName != null && u.UserProfile.FirstName.ToLower().Contains(searchLower)) ||
@@ -440,7 +443,7 @@ public class ValuesRepository
     {
         return await context.PAOUsers
             .Include(x => x.UserProfile)
-            .Where(x => x.IsInternal)
+            .Where(x => x.ActiveUser && x.IsInternal)
             .OrderBy(x => x.Email)
             .Select(x => new Models.Shared.SimpleValueModel
             {

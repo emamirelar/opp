@@ -667,17 +667,49 @@ public class Startup
                 .UseNpgsql(dataSource)
                 .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
 
+        // Register IDbContextFactory for AppDbContext (base context)
+        // Used by workflow adapters to avoid DbContext concurrency issues
+        services.AddDbContextFactory<DataAccess.Context.AppDbContext>(options =>
+            options
+                .UseNpgsql(dataSource)
+                .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
+
         services.AddDbContext<PAOIdentityDbContext>(options =>
             options
                 .UseNpgsql(dataSource)
                 .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
 
-        // NOTE: Workflow services registration removed to support CI/CD builds without workflow submodule
-        // When workflow submodule is available locally:
-        // 1. Uncomment workflow project references in UNOPS.PAO.Server.csproj
-        // 2. Add back workflow service registration here
-        // 3. Add back workflow seeding in Program.cs Main method
-        // See UNOPS.Workflow/README.md for full workflow integration instructions
+        // PERFORMANCE: Add DbContextFactory for PAOIdentityDbContext to support thread-safe parallel operations
+        // This allows code that needs to run identity queries in parallel to create separate context instances
+        services.AddDbContextFactory<PAOIdentityDbContext>(options =>
+            options
+                .UseNpgsql(dataSource)
+                .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
+
+        // ==========================================
+        // Workflow Submodule - DbContext and Services
+        // ==========================================
+        // Registers WorkflowDbContext with a separate "workflow" schema.
+        // Auto-creates schema and applies migrations on startup (like Hangfire).
+        // Uses the same connection string as the main AppDbContext.
+        // Also registers PAO-specific implementations:
+        // - PaoWorkflowUserContext (IWorkflowUserContext)
+        // - PaoEntityStageProvider (IEntityStageProvider)
+        // - PaoWorkflowApproverProvider (IWorkflowApproverProvider)
+        // - PaoWorkflowNotificationService (IWorkflowNotificationService)
+        services.AddPaoWorkflowServices(options =>
+        {
+            options.UsePostgreSqlStorage(optimizedConnectionString, "workflow");
+        });
+
+        // Override WorkflowDbContext registration to use dataSource (with IAM auth support)
+        // This ensures WorkflowDbContext uses the same IAM authentication as other DbContexts
+        services.AddDbContext<UNOPS.Workflow.DataAccess.WorkflowDbContext>(options =>
+            options
+                .UseNpgsql(dataSource, npgsql =>
+                {
+                    npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "workflow");
+                }));
 
     }
     private string? GetConnectionStringFromSecretManager()

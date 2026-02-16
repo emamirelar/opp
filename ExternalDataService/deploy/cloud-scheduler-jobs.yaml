@@ -1,0 +1,336 @@
+# Cloud Scheduler Jobs for UNOPS Opportunity+ (PAO) - External Data Integration Service
+# Deploy these after the External Data Service is running
+# These jobs are specific to the PAO application and its data synchronization needs
+#
+# ============================================================================
+# DEPLOYMENT CONFIGURATION
+# ============================================================================
+#
+# URL Pattern (TO BE PROVIDED BY INFRA):
+#   prod:        https://eds.opportunityplus.unops.org
+#   qa:          https://eds.opportunityplus.qa.unops.org
+#   dev/test:    https://eds.opportunityplus.{ENVIRONMENT}.unops.org
+#
+# Scheduler Region Mapping (Cloud Scheduler doesn't support all regions):
+#   europe-west4 (Cloud Run) -> europe-west3 (Scheduler)
+#
+# ============================================================================
+# ENVIRONMENT CONFIGURATION (from appsettings.{Env}.json)
+# ============================================================================
+#
+# OAuth Client IDs: TO_BE_PROVIDED_BY_INFRA for each environment
+#
+# ============================================================================
+# IMPORTANT: IAP (Identity-Aware Proxy) Configuration
+# ============================================================================
+#
+# When using load balancer URLs with IAP:
+#   - The oidcToken.audience MUST be the OAuth Client ID, NOT the service URL
+#   - The OAuth Client ID is stored in CloudScheduler.OAuthClientId in appsettings
+#   - The deployment scripts auto-read this value from the config files
+#
+# ============================================================================
+
+# ============================================================================
+# ORDER: Matches config/01-aspnetusers through config/12-exchange-rates
+# ============================================================================
+
+# 01 - Daily Users Sync - AspNetUsers from UNOPS Resource data
+users-daily-sync:
+  name: "pao-external-data-users-daily"
+  description: "Daily synchronization of AspNetUsers from UNOPS Resource data"
+  schedule: "0 2 * * *"  # 2:00 AM - 01
+  timeZone: "Europe/Copenhagen"
+  httpTarget:
+    uri: "/api/sync/execute/users"
+    httpMethod: "POST"
+    headers:
+      Content-Type: "application/json"
+    oidcToken:
+      serviceAccountEmail: "cloud-scheduler-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
+      audience: "${OAUTH_CLIENT_ID}"
+  retryConfig:
+    retryCount: 3
+    maxBackoffDuration: "3600s"
+    minBackoffDuration: "5s"
+  attemptDeadline: "1800s"
+
+# 02 - Daily User Profiles Sync (depends on users)
+user-profiles-daily-sync:
+  name: "pao-external-data-user-profiles-daily"
+  description: "Daily synchronization of user profile data"
+  schedule: "15 2 * * *"  # 2:15 AM - 02
+  timeZone: "Europe/Copenhagen"
+  httpTarget:
+    uri: "/api/sync/execute/user-profiles"
+    httpMethod: "POST"
+    headers:
+      Content-Type: "application/json"
+    oidcToken:
+      serviceAccountEmail: "cloud-scheduler-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
+      audience: "${OAUTH_CLIENT_ID}"
+  retryConfig:
+    retryCount: 3
+    maxBackoffDuration: "3600s"
+    minBackoffDuration: "5s"
+  attemptDeadline: "1800s"
+
+# 03 - Daily User Roles Sync - AspNetUserRoles (depends on users)
+user-roles-daily-sync:
+  name: "pao-external-data-user-roles-daily"
+  description: "Daily synchronization of AspNetUserRoles data"
+  schedule: "30 2 * * *"  # 2:30 AM - 03
+  timeZone: "Europe/Copenhagen"
+  httpTarget:
+    uri: "/api/sync/execute/user-roles"
+    httpMethod: "POST"
+    headers:
+      Content-Type: "application/json"
+    oidcToken:
+      serviceAccountEmail: "cloud-scheduler-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
+      audience: "${OAUTH_CLIENT_ID}"
+  retryConfig:
+    retryCount: 3
+    maxBackoffDuration: "3600s"
+    minBackoffDuration: "5s"
+  attemptDeadline: "1800s"
+
+# 04 - Daily Countries Sync - Geographic reference data
+countries-daily-sync:
+  name: "pao-external-data-countries-daily"
+  description: "Daily synchronization of country and geographic reference data"
+  schedule: "45 2 * * *"  # 2:45 AM - 04
+  timeZone: "Europe/Copenhagen"
+  httpTarget:
+    uri: "/api/sync/execute/countries"
+    httpMethod: "POST"
+    headers:
+      Content-Type: "application/json"
+    oidcToken:
+      serviceAccountEmail: "cloud-scheduler-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
+      audience: "${OAUTH_CLIENT_ID}"
+  retryConfig:
+    retryCount: 2
+    maxBackoffDuration: "3600s"
+    minBackoffDuration: "5s"
+  attemptDeadline: "1800s"
+
+# 05 - Daily Currencies Sync - Reference data
+currencies-daily-sync:
+  name: "pao-external-data-currencies-daily"
+  description: "Daily synchronization of currency reference data"
+  schedule: "0 3 * * *"  # 3:00 AM - 05
+  timeZone: "Europe/Copenhagen"
+  httpTarget:
+    uri: "/api/sync/execute/currencies"
+    httpMethod: "POST"
+    headers:
+      Content-Type: "application/json"
+    oidcToken:
+      serviceAccountEmail: "cloud-scheduler-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
+      audience: "${OAUTH_CLIENT_ID}"
+  retryConfig:
+    retryCount: 2
+    maxBackoffDuration: "3600s"
+    minBackoffDuration: "5s"
+  attemptDeadline: "1800s"
+
+# 06 - Daily Engagements Sync (MUST run before engagement-partners)
+engagements-daily-sync:
+  name: "pao-external-data-engagements-daily"
+  description: "Daily synchronization of engagements data"
+  schedule: "15 3 * * *"  # 3:15 AM - 06
+  timeZone: "Europe/Copenhagen"
+  httpTarget:
+    uri: "/api/sync/execute/engagements"
+    httpMethod: "POST"
+    headers:
+      Content-Type: "application/json"
+    oidcToken:
+      serviceAccountEmail: "cloud-scheduler-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
+      audience: "${OAUTH_CLIENT_ID}"
+  retryConfig:
+    retryCount: 3
+    maxBackoffDuration: "3600s"
+    minBackoffDuration: "5s"
+  attemptDeadline: "1800s"
+
+# 07 - Daily Engagement Partners Sync (depends on engagements)
+engagement-partners-daily-sync:
+  name: "pao-external-data-engagement-partners-daily"
+  description: "Daily synchronization of engagement partners data"
+  schedule: "30 3 * * *"  # 3:30 AM - 07
+  timeZone: "Europe/Copenhagen"
+  httpTarget:
+    uri: "/api/sync/execute/engagement-partners"
+    httpMethod: "POST"
+    headers:
+      Content-Type: "application/json"
+    oidcToken:
+      serviceAccountEmail: "cloud-scheduler-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
+      audience: "${OAUTH_CLIENT_ID}"
+  retryConfig:
+    retryCount: 3
+    maxBackoffDuration: "3600s"
+    minBackoffDuration: "5s"
+  attemptDeadline: "1800s"
+
+# 08 - Daily Partner Agreements Sync
+partner-agreements-daily-sync:
+  name: "pao-external-data-partner-agreements-daily"
+  description: "Daily synchronization of partner agreements data"
+  schedule: "45 3 * * *"  # 3:45 AM - 08
+  timeZone: "Europe/Copenhagen"
+  httpTarget:
+    uri: "/api/sync/execute/partner-agreements"
+    httpMethod: "POST"
+    headers:
+      Content-Type: "application/json"
+    oidcToken:
+      serviceAccountEmail: "cloud-scheduler-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
+      audience: "${OAUTH_CLIENT_ID}"
+  retryConfig:
+    retryCount: 2
+    maxBackoffDuration: "3600s"
+    minBackoffDuration: "5s"
+  attemptDeadline: "1800s"
+
+# 09 - Daily Organization Hierarchies Sync
+org-hierarchies-daily-sync:
+  name: "pao-external-data-org-hierarchies-daily"
+  description: "Daily synchronization of organization hierarchies data"
+  schedule: "0 4 * * *"  # 4:00 AM - 09
+  timeZone: "Europe/Copenhagen"
+  httpTarget:
+    uri: "/api/sync/execute/organization-hierarchies"
+    httpMethod: "POST"
+    headers:
+      Content-Type: "application/json"
+    oidcToken:
+      serviceAccountEmail: "cloud-scheduler-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
+      audience: "${OAUTH_CLIENT_ID}"
+  retryConfig:
+    retryCount: 2
+    maxBackoffDuration: "3600s"
+    minBackoffDuration: "5s"
+  attemptDeadline: "1800s"
+
+# 10 - Daily Entity User Roles DoA Sync (depends on organization-hierarchies)
+entity-user-roles-doa-daily-sync:
+  name: "pao-external-data-entity-user-roles-doa-daily"
+  description: "Daily synchronization of Delegation of Authority (DoA) roles for Engagement Acceptance"
+  schedule: "15 4 * * *"  # 4:15 AM - 10
+  timeZone: "Europe/Copenhagen"
+  httpTarget:
+    uri: "/api/sync/execute/entity-user-roles-doa"
+    httpMethod: "POST"
+    headers:
+      Content-Type: "application/json"
+    oidcToken:
+      serviceAccountEmail: "cloud-scheduler-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
+      audience: "${OAUTH_CLIENT_ID}"
+  retryConfig:
+    retryCount: 3
+    maxBackoffDuration: "3600s"
+    minBackoffDuration: "5s"
+  attemptDeadline: "1800s"
+
+# 11 - Daily Entity User Roles Management Sync (depends on organization-hierarchies)
+entity-user-roles-mgmt-daily-sync:
+  name: "pao-external-data-entity-user-roles-mgmt-daily"
+  description: "Daily synchronization of Organization Management roles (Directors, Deputies)"
+  schedule: "25 4 * * *"  # 4:25 AM - 11
+  timeZone: "Europe/Copenhagen"
+  httpTarget:
+    uri: "/api/sync/execute/entity-user-roles-mgmt"
+    httpMethod: "POST"
+    headers:
+      Content-Type: "application/json"
+    oidcToken:
+      serviceAccountEmail: "cloud-scheduler-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
+      audience: "${OAUTH_CLIENT_ID}"
+  retryConfig:
+    retryCount: 3
+    maxBackoffDuration: "3600s"
+    minBackoffDuration: "5s"
+  attemptDeadline: "1800s"
+
+# 12 - Daily Exchange Rates Sync
+exchange-rates-daily-sync:
+  name: "pao-external-data-exchange-rates-daily"
+  description: "Daily synchronization of exchange rates data"
+  schedule: "35 4 * * *"  # 4:35 AM - 12
+  timeZone: "Europe/Copenhagen"
+  httpTarget:
+    uri: "/api/sync/execute/exchange-rates"
+    httpMethod: "POST"
+    headers:
+      Content-Type: "application/json"
+    oidcToken:
+      serviceAccountEmail: "cloud-scheduler-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
+      audience: "${OAUTH_CLIENT_ID}"
+  retryConfig:
+    retryCount: 2
+    maxBackoffDuration: "3600s"
+    minBackoffDuration: "5s"
+  attemptDeadline: "1800s"
+
+# Weekly Full Sync - Complete data validation and refresh
+weekly-full-sync:
+  name: "pao-external-data-weekly-full-sync"
+  description: "Weekly comprehensive synchronization of all PAO external data"
+  schedule: "0 1 * * 1"  # Monday at 1 AM
+  timeZone: "Europe/Copenhagen"
+  httpTarget:
+    uri: "/api/sync/execute-all"
+    httpMethod: "POST"
+    headers:
+      Content-Type: "application/json"
+    oidcToken:
+      serviceAccountEmail: "cloud-scheduler-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
+      audience: "${OAUTH_CLIENT_ID}"
+  retryConfig:
+    retryCount: 2
+    maxBackoffDuration: "3600s"
+    minBackoffDuration: "30s"
+  attemptDeadline: "1800s"
+
+# Health Check Job - Monitor service availability
+health-check:
+  name: "pao-external-data-health-check"
+  description: "Regular health check of the PAO external data service"
+  schedule: "*/15 * * * *"  # Every 15 minutes
+  timeZone: "Europe/Copenhagen"
+  httpTarget:
+    uri: "/health"
+    httpMethod: "GET"
+    headers:
+      Content-Type: "application/json"
+    oidcToken:
+      serviceAccountEmail: "cloud-scheduler-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
+      audience: "${OAUTH_CLIENT_ID}"
+  retryConfig:
+    retryCount: 1
+    maxBackoffDuration: "30s"
+    minBackoffDuration: "5s"
+  attemptDeadline: "30s"
+
+# Configuration Status Check - Monitor sync configurations
+config-status-check:
+  name: "pao-external-data-config-status"
+  description: "Periodic status check of all PAO external data sync configurations"
+  schedule: "0 */4 * * *"  # Every 4 hours
+  timeZone: "Europe/Copenhagen"
+  httpTarget:
+    uri: "/api/sync/status"
+    httpMethod: "GET"
+    headers:
+      Content-Type: "application/json"
+    oidcToken:
+      serviceAccountEmail: "cloud-scheduler-invoker@${PROJECT_ID}.iam.gserviceaccount.com"
+      audience: "${OAUTH_CLIENT_ID}"
+  retryConfig:
+    retryCount: 1
+    maxBackoffDuration: "30s"
+    minBackoffDuration: "5s"
+  attemptDeadline: "180s"

@@ -32,6 +32,10 @@ print("🐍 Loading configuration modules...")
 from ai_assistant.utils.config import get_config
 from ai_assistant.utils.config import get_database_url
 
+# Patch ADK to use naive UTC for session timestamps (PostgreSQL + asyncpg compatibility)
+from ai_assistant.utils.adk_session_patch import apply_adk_session_timestamp_patch
+apply_adk_session_timestamp_patch()
+
 print("🐍 Loading routers...")
 # Routers
 from routers.chat import router as chat_router
@@ -186,6 +190,17 @@ try:
 except Exception as e:
     print(f"❌ Configuration loading failed: {e}")
     raise
+
+# Set Vertex AI env vars for google-genai/ADK (required after google-genai upgrade)
+# So the agent's model calls get project/location when not passed explicitly
+google_cloud = config.get("google_cloud", {})
+if google_cloud.get("use_vertex_ai", True):
+    if not os.environ.get("GOOGLE_GENAI_USE_VERTEXAI"):
+        os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "true"
+    if not os.environ.get("GOOGLE_CLOUD_PROJECT") and google_cloud.get("project"):
+        os.environ["GOOGLE_CLOUD_PROJECT"] = google_cloud["project"]
+    if not os.environ.get("GOOGLE_CLOUD_LOCATION") and google_cloud.get("location"):
+        os.environ["GOOGLE_CLOUD_LOCATION"] = google_cloud["location"]
 
 server_config = config.get('server')
 # Raise an error if the server config is not set

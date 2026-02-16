@@ -229,24 +229,6 @@
             "description": "PreDefined High Risk Checklist items from oUP (EAC questions)"
         },
         {
-            "order": 25,
-            "name": "OrgUnitDirectorRolesSeeder",
-            "type": "seeder",
-            "className": "OrgUnitDirectorRolesSeeder",
-            "methodName": "SeedOrgUnitDirectorRolesAsync",
-            "filePath": "Seeders/OrgUnitDirectorRolesSeeder.cs",
-            "description": "Seeds OrgUnit Director Roles"
-        },
-        {
-            "order": 26,
-            "name": "OrgUnitDOARolesSeeder",
-            "type": "seeder",
-            "className": "OrgUnitDOARolesSeeder",
-            "methodName": "SeedOrgUnitDOARolesAsync",
-            "filePath": "Seeders/OrgUnitDOARolesSeeder.cs",
-            "description": "Seeds OrgUnit DOA Roles"
-        },
-        {
             "order": 27,
             "name": "SequenceResync",
             "type": "seeder",

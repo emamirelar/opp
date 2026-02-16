@@ -1,0 +1,68 @@
+name: "run-all"
+description: "Complete synchronization of all PAO external data - staged by dependencies"
+enabled: true
+
+# Stages run SEQUENTIALLY; syncs within a stage run in PARALLEL
+# Dependencies: user-profiles/roles need users; engagement-partners/agreements need engagements
+execution_stages:
+  # Stage 1: Foundation data - no mutual dependencies (run in parallel)
+  - name: "foundation"
+    description: "01 users, 04 countries, 05 currencies, 12 exchange-rates"
+    syncs:
+      - "users"
+      - "countries"
+      - "currencies"
+      - "exchange-rates"
+    fail_fast: false
+
+  # Stage 2: User-dependent data (user-profiles and user-roles need users from Stage 1)
+  - name: "user-profiles-and-roles"
+    description: "02 user-profiles, 03 user-roles"
+    syncs:
+      - "user-profiles"
+      - "user-roles"
+    fail_fast: false
+
+  # Stage 3: Engagements alone (engagement-partners and partner-agreements depend on this)
+  - name: "engagements"
+    description: "06 engagements"
+    syncs:
+      - "engagements"
+    fail_fast: false
+
+  # Stage 4: Engagement-related (both depend on engagements)
+  - name: "engagement-partners-and-agreements"
+    description: "07 engagement-partners, 08 partner-agreements"
+    syncs:
+      - "engagement-partners"
+      - "partner-agreements"
+    fail_fast: false
+
+  # Stage 5: Organization hierarchies - foundation for entity roles
+  - name: "organization-hierarchies"
+    description: "09 organization-hierarchies"
+    syncs:
+      - "organization-hierarchies"
+    fail_fast: false
+
+  # Stage 6: Entity user roles - DOA first (sequential, same table)
+  - name: "entity-user-roles-doa"
+    description: "10 entity-user-roles-doa"
+    syncs:
+      - "entity-user-roles-doa"
+    fail_fast: false
+
+  # Stage 7: Entity user roles - Management (runs after DOA)
+  - name: "entity-user-roles-mgmt"
+    description: "11 entity-user-roles-mgmt"
+    syncs:
+      - "entity-user-roles-mgmt"
+    fail_fast: false
+
+# Execution behavior configuration
+options:
+  parallel_execution: true
+  max_parallel_syncs: 4
+  fail_fast: false
+  delay_between_stages_seconds: 5
+  continue_on_error: true

@@ -1,0 +1,76 @@
+metadata:
+  name: "user-roles"
+  description: "ASPNetUserRoles data sync"
+  version: "1.0"
+  enabled: true
+  max_retry_attempts: 1
+  timeout_minutes: 30
+
+source:
+  type: "bigquery"
+  
+  query: |
+    SELECT DISTINCT
+      PARSE_NUMERIC(Resource) as UserId
+      , 1 as RoleId
+    FROM
+      unopsreporting.Employment.People_Search_Report
+    WHERE
+      Effective_Date = CURRENT_DATE()
+      AND Employment_Status = 'N'
+      AND Employment_Type IN ('OPSSTAFF', 'OPSNONSTAFF')
+      AND UPPER(Resource_Email_Address_Primary) LIKE '%UNOPS.ORG'
+      QUALIFY ROW_NUMBER() OVER (
+          PARTITION BY PARSE_NUMERIC(Resource)
+          ORDER BY Resource_Email_Address_Primary
+        ) = 1;
+  
+  primary_key_field: "UserId"
+  batch_size: 1000
+
+destination:
+  table_name: "AspNetUserRoles"
+  schema: "public"
+  manage_table_structure: false  # Only validate, don't create/alter
+  add_standard_fields: false
+
+  # Skip records when UserId does not exist in AspNetUsers (avoids FK errors)
+  foreign_key_mappings:
+    - source_field: "UserId"
+      lookup_table: "AspNetUsers"
+      lookup_field: "Id"
+      lookup_return_field: "Id"
+      destination_field: "UserId"
+      on_lookup_fail: LogWarning
+
+  # Composite unique key: The combination of UserId + RoleId must be unique
+  composite_unique_keys:
+    - fields:
+        - "UserId"
+        - "RoleId"
+      index_name: "PK_AspNetUserRoles"
+  
+  field_mappings:
+    - source_field: "RoleId"
+      destination_field: "RoleId"
+      data_type: "integer"
+      is_required: true
+
+sync_options:
+  sync_mode: Upsert   # Bulk upsert; table has only key columns so update is no-op (same as InsertOnly)
+  batch_processing: true
+  use_bulk_upsert: true   # Requires unique (UserId, RoleId); run UNOPSDataAccess/Scripts/AddBulkUpsertUniqueConstraints.sql
+
+validation:
+  required_source_fields:
+    - "UserId"
+    - "RoleId"
+  
+error_handling:
+  on_connection_error: RetryWithBackoff
+  on_mapping_error: SkipRecord
+
+logging:
+  log_level: "Debug"
+  log_sql_queries: true
+  log_record_details: true

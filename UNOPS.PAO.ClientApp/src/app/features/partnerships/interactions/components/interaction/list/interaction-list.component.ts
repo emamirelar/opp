@@ -372,7 +372,7 @@ export class InteractionListComponent implements OnInit, OnDestroy {
       const url = this.router.serializeUrl(
         this.router.createUrlTree(['/partnerships/opportunities', opportunity.id])
       );
-      window.open(`/#${url}`, '_blank');
+      window.open(url, '_blank');
     }
   }
 

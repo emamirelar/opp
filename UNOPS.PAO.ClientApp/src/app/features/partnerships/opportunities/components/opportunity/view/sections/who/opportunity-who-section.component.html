@@ -70,7 +70,12 @@
 
   <div class="space-y-6">
     <!-- AI Suggestions -->
-    @if (suggestions() && suggestions().length > 0) {
+    @if (loadingInsightsSuggestions()) {
+      <div class="flex items-center gap-3 p-4 bg-unops-surface-secondary rounded-unops-md border border-unops-neutral-light">
+        <i class="pi pi-spin pi-spinner text-xl text-unops-primary"></i>
+        <span class="text-unops-neutral-700">{{ 'message.opportunity.refreshingInsights' | translate }}</span>
+      </div>
+    } @else if (suggestions() && suggestions().length > 0) {
       <div style="background-color: rgb(253, 250, 241);" class="rounded-unops-lg p-3 border border-unops-warning-light">
         <div class="flex items-start gap-2 mb-2">
           <i class="pi pi-lightbulb text-unops-warning-darker text-sm mt-0.5"></i>
@@ -130,11 +135,11 @@
     }
 
     <!-- Funding Partners -->
-    <div>
+    <div id="field-fundingPartners">
       <div class="flex items-center justify-between mb-3">
         <h3 class="text-sm font-semibold text-unops-secondary flex items-center gap-2">
           <i class="pi pi-dollar text-unops-success text-base"></i>
-          <span>{{ 'label.opportunity.fundingPartners' | translate }} ({{ fundingPartnerCount() }})</span>
+          <span>{{ 'label.opportunity.fundingPartners' | translate }} * ({{ fundingPartnerCount() }})</span>
         </h3>
         @if (isEditing()) {
           <p-button
@@ -182,7 +187,7 @@
                 />
                 <div class="flex-1">
                   <a
-                    [href]="'/#/partnerships/partners/' + partner.partnerId"
+                    [href]="'/partnerships/partners/' + partner.partnerId"
                     class="font-semibold text-gray-900 hover:text-unops-primary cursor-pointer"
                     target="_blank"
                   >
@@ -526,11 +531,11 @@
     <p-divider />
 
     <!-- Client Partners -->
-    <div>
+    <div id="field-clientPartners">
       <div class="flex items-center justify-between mb-3">
         <h3 class="text-sm font-semibold text-unops-secondary flex items-center gap-2">
           <i class="pi pi-building text-unops-primary text-base"></i>
-          <span>{{ 'label.opportunity.clientPartners' | translate }} ({{ clientPartnerCount() }})</span>
+          <span>{{ 'label.opportunity.clientPartners' | translate }} * ({{ clientPartnerCount() }})</span>
         </h3>
         @if (isEditing()) {
           <p-button
@@ -554,7 +559,7 @@
               />
               <div class="flex-1">
                 <a
-                  [href]="'/#/partnerships/partners/' + client.partnerId"
+                  [href]="'/partnerships/partners/' + client.partnerId"
                   class="font-semibold text-gray-900 hover:text-unops-primary cursor-pointer"
                   target="_blank"
                 >

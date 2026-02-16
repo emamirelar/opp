@@ -1,4 +1,5 @@
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.Filters;
 using UNOPS.PAO.Models.Opportunities;
 using UNOPS.PAO.Models.Search;
 using System.Security.Claims;
@@ -36,6 +37,23 @@ public interface IOpportunityManager
     /// <param name="acknowledged">Whether the high risks have been acknowledged</param>
     /// <returns>True if updated successfully</returns>
     Task<bool> UpdateHighRiskAcknowledgementAsync(int opportunityId, bool acknowledged);
+
+    /// <summary>
+    /// Assigns an Executive to an opportunity during Go decision approval.
+    /// The Executive is typically the Director/Manager/OiC of the responsible org unit.
+    /// </summary>
+    /// <param name="opportunityId">The opportunity ID</param>
+    /// <param name="executiveId">The user ID of the assigned Executive</param>
+    Task AssignExecutiveAsync(int opportunityId, int executiveId);
+
+    /// <summary>
+    /// Gets personnel for an opportunity's responsible org unit.
+    /// Used to populate the Executive dropdown in the Go Decision approval dialog.
+    /// Returns all personnel with roles on the org unit, with Directors/Deputy Directors marked as "Suggested".
+    /// </summary>
+    /// <param name="opportunityId">The opportunity ID</param>
+    /// <returns>List of personnel with display label and user ID</returns>
+    Task<IEnumerable<TypeaheadInput>> GetExecutivesForOpportunityAsync(int opportunityId);
 }
 
 

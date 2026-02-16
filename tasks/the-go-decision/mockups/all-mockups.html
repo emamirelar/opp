@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Go Decision - All Mockups</title>
+  <link href="https://cdn.jsdelivr.net/npm/primeicons@6.0.1/primeicons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+  <style>
+    /* ===================================== */
+    /* UNOPS DESIGN TOKENS (from actual codebase) */
+    /* ===================================== */
+    :root {
+      --unops-primary: #0092d1;
+      --unops-primary-dark: #007bb8;
+      --unops-primary-darker: #005a8a;
+      --unops-primary-on: #ffffff;
+      --unops-primary-container-soft: #e3f2fd;
+      
+      --unops-secondary: #004976;
+      
+      --unops-neutral-50: #f9fafb;
+      --unops-neutral-100: #f3f4f6;
+      --unops-neutral-200: #e8e9ea;
+      --unops-neutral-300: #d1d2d3;
+      --unops-neutral-400: #b8babb;
+      --unops-neutral-500: #97999b;
+      --unops-neutral-600: #7a7c7e;
+      --unops-neutral-700: #5c5e60;
+      --unops-neutral-800: #1a1b1c;
+      --unops-neutral-900: #00070a;
+      
+      --unops-surface-primary: #ffffff;
+      --unops-surface-secondary: #f8fafc;
+      --unops-surface-cool: #f1f5f9;
+      
+      --unops-error: #991e66;
+      --unops-success: #10b981;
+      --unops-success-dark: #059669;
+      --unops-warning: #cc8400;
+      --unops-info: #4ec3e0;
+      
+      --unops-accent-orange: #f97316;
+      --unops-accent-purple: #8b5cf6;
+      --unops-accent-teal: #14b8a6;
+      --unops-accent-lime: #84cc16;
+      
+      --unops-spacing-xs: 4px;
+      --unops-spacing-sm: 8px;
+      --unops-spacing-md: 16px;
+      --unops-spacing-lg: 24px;
+      --unops-spacing-xl: 32px;
+      
+      --unops-radius-sm: 6px;
+      --unops-radius-md: 8px;
+      --unops-radius-lg: 12px;
+      
+      --unops-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --unops-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 14px;
+      color: var(--unops-neutral-900);
+      background: var(--unops-surface-secondary);
+      line-height: 1.5;
+    }
+
+    /* Navigation */
+    .mockup-header {
+      background: var(--unops-primary);
+      color: white;
+      padding: 16px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .mockup-nav {
+      background: white;
+      border-bottom: 1px solid var(--unops-neutral-200);
+      padding: 8px 24px;
+      position: sticky;
+      top: 56px;
+      z-index: 90;
+      overflow-x: auto;
+    }
+    
+    .mockup-nav-inner {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .nav-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--unops-neutral-700);
+      font-size: 14px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    
+    .nav-btn:hover { background: var(--unops-primary-container-soft); }
+    .nav-btn.active { background: var(--unops-primary); color: white; }
+
+    .mockup-main {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    
+    .mockup-section { display: none; }
+    .mockup-section.active { display: block; }
+    
+    .mockup-title { margin-bottom: 24px; }
+    .mockup-title h2 { font-size: 24px; font-weight: 600; }
+    .mockup-title p { color: var(--unops-neutral-600); margin-top: 4px; }
+
+    /* Dashboard Grid - Matches actual implementation */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+      margin-bottom: 32px;
+    }
+
+    /* Dashboard Card (app-dashboard-card pattern) */
+    .dashboard-card {
+      background: white;
+      border: 1px solid var(--unops-neutral-200);
+      border-radius: var(--unops-radius-lg);
+      box-shadow: var(--unops-shadow-md);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 320px;
+    }
+    
+    .dashboard-card-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--unops-neutral-200);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .dashboard-card-header.warning {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+    }
+    
+    .dashboard-card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .dashboard-card-icon.warning { background: rgba(204, 132, 0, 0.1); color: var(--unops-warning); }
+    .dashboard-card-icon.info { background: rgba(78, 195, 224, 0.1); color: var(--unops-info); }
+    .dashboard-card-icon.primary { background: rgba(0, 146, 209, 0.1); color: var(--unops-primary); }
+    
+    .dashboard-card-title {
+      font-weight: 600;
+      color: var(--unops-neutral-900);
+    }
+    
+    .dashboard-card-subtitle {
+      font-size: 12px;
+      color: var(--unops-neutral-600);
+    }
+    
+    .dashboard-card-body {
+      padding: 16px 24px;
+      flex: 1;
+      overflow-y: auto;
+    }
+    
+    .dashboard-card-footer {
+      padding: 12px 24px;
+      border-top: 1px solid var(--unops-neutral-200);
+      text-align: center;
+    }
+    
+    .dashboard-card-footer a {
+      color: var(--unops-primary);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    /* Action Item in Dashboard Card */
+    .action-item {
+      padding: 10px 12px;
+      border: 1px solid var(--unops-neutral-200);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .action-item:hover {
+      border-color: var(--unops-warning);
+      background: rgba(204, 132, 0, 0.05);
+    }
+    
+    .action-item:last-child { margin-bottom: 0; }
+    
+    .action-item-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+      font-size: 11px;
+    }
+    
+    .action-item-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    
+    .action-item-dot.blue { background: #3b82f6; }
+    .action-item-dot.purple { background: var(--unops-accent-purple); }
+    
+    .action-item-type { color: var(--unops-neutral-500); }
+    
+    .action-item-title {
+      font-weight: 500;
+      color: var(--unops-neutral-900);
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .action-item-meta {
+      font-size: 12px;
+      color: var(--unops-neutral-600);
+    }
+    
+    .badge {
+      display: inline-flex;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    
+    .badge-warning { background: rgba(204, 132, 0, 0.1); color: #92400e; }
+    .badge-primary { background: var(--unops-primary-container-soft); color: var(--unops-primary-dark); }
+    .badge-success { background: #d1fae5; color: var(--unops-success-dark); }
+    .badge-purple { background: rgba(139, 92, 246, 0.1); color: var(--unops-accent-purple); }
+
+    /* Workflow Panel (app-stage-workflow pattern) */
+    .workflow-panel {
+      background: white;
+      border: 1px solid var(--unops-neutral-200);
+      border-radius: var(--unops-radius-lg);
+      box-shadow: var(--unops-shadow-md);
+      margin-bottom: 24px;
+    }
+    
+    .workflow-panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--unops-neutral-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .workflow-panel-header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .workflow-panel-title {
+      font-weight: 600;
+      color: var(--unops-neutral-900);
+    }
+    
+    .workflow-tag {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .workflow-tag.pending {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    
+    .workflow-stage-info {
+      display: flex;
+      gap: 24px;
+      font-size: 13px;
+    }
+    
+    .workflow-stage-info label {
+      font-weight: 600;
+      color: var(--unops-neutral-700);
+    }
+    
+    /* Workflow Action Buttons (app-workflow pattern) */
+    .workflow-actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .btn-success { background: var(--unops-success); color: white; }
+    .btn-danger { background: var(--unops-error); color: white; }
+    .btn-secondary { background: var(--unops-neutral-200); color: var(--unops-neutral-700); }
+    .btn-primary { background: var(--unops-primary); color: white; }
+    .btn-outlined { background: transparent; border: 1px solid var(--unops-primary); color: var(--unops-primary); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    
+    /* Workflow Tabs */
+    .workflow-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--unops-neutral-200);
+      padding: 0 20px;
+    }
+    
+    .workflow-tab {
+      padding: 12px 16px;
+      border: none;
+      background: transparent;
+      color: var(--unops-neutral-600);
+      font-size: 14px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+    
+    .workflow-tab.active {
+      color: var(--unops-primary);
+      border-bottom-color: var(--unops-primary);
+    }
+    
+    /* Stepper (p-steps pattern) */
+    .stepper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      gap: 8px;
+    }
+    
+    .stepper-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .stepper-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+    }
+    
+    .stepper-circle.active { background: var(--unops-primary); color: white; }
+    .stepper-circle.completed { background: var(--unops-success); color: white; }
+    .stepper-circle.pending { background: var(--unops-neutral-300); color: var(--unops-neutral-500); }
+    
+    .stepper-label {
+      margin-top: 8px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    
+    .stepper-label.active { color: var(--unops-primary); }
+    .stepper-label.completed { color: var(--unops-success); }
+    
+    .stepper-connector {
+      width: 80px;
+      height: 4px;
+      background: var(--unops-neutral-300);
+    }
+    
+    .stepper-connector.completed { background: var(--unops-success); }
+
+    /* Decision Info Panel (NEW component for this PRD) */
+    .decision-info-panel {
+      background: white;
+      border: 1px solid var(--unops-neutral-200);
+      border-radius: var(--unops-radius-lg);
+      margin-bottom: 24px;
+    }
+    
+    .decision-info-header {
+      padding: 16px 20px;
+      background: var(--unops-primary-container-soft);
+      border-bottom: 1px solid rgba(0, 146, 209, 0.2);
+      border-radius: var(--unops-radius-lg) var(--unops-radius-lg) 0 0;
+    }
+    
+    .decision-info-header h3 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--unops-primary-darker);
+      font-size: 15px;
+    }
+    
+    .decision-info-body { padding: 20px; }
+    
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    
+    .info-item {
+      padding: 12px;
+      background: var(--unops-neutral-50);
+      border-radius: 8px;
+    }
+    
+    .info-item-label {
+      font-size: 12px;
+      color: var(--unops-neutral-500);
+      margin-bottom: 4px;
+    }
+    
+    .info-item-value {
+      font-weight: 600;
+      color: var(--unops-neutral-800);
+    }
+    
+    .warning-section {
+      margin-bottom: 16px;
+    }
+    
+    .warning-section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      color: #92400e;
+      margin-bottom: 8px;
+    }
+    
+    .warning-list {
+      list-style: none;
+    }
+    
+    .warning-list li {
+      padding: 8px 12px;
+      background: #fef3c7;
+      border-radius: 6px;
+      margin-bottom: 6px;
+      font-size: 13px;
+      color: #92400e;
+    }
+    
+    .remarks-section {
+      padding: 12px 16px;
+      background: var(--unops-neutral-100);
+      border-left: 4px solid var(--unops-neutral-400);
+      border-radius: 0 8px 8px 0;
+    }
+    
+    .remarks-section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      color: var(--unops-neutral-700);
+      margin-bottom: 8px;
+    }
+    
+    .remarks-section p {
+      font-style: italic;
+      color: var(--unops-neutral-600);
+    }
+
+    /* Guidance Message */
+    .guidance-message {
+      background: var(--unops-primary-container-soft);
+      border: 1px solid rgba(0, 146, 209, 0.2);
+      border-radius: var(--unops-radius-lg);
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    
+    .guidance-message-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    
+    .guidance-message-header i { color: var(--unops-primary); font-size: 20px; }
+    .guidance-message-header h4 { color: var(--unops-primary-darker); font-weight: 600; }
+    
+    .guidance-message p { color: var(--unops-primary-dark); line-height: 1.6; }
+
+    /* Dialog */
+    .dialog-backdrop {
+      position: relative;
+      min-height: 450px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: var(--unops-radius-lg);
+      margin-top: 24px;
+    }
+    
+    .dialog {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 550px;
+    }
+    
+    .dialog-lg { max-width: 650px; }
+    
+    .dialog-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--unops-neutral-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .dialog-header-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .dialog-header-icon { font-size: 24px; }
+    .dialog-header-icon.success { color: var(--unops-success); }
+    .dialog-header-icon.danger { color: var(--unops-error); }
+    
+    .dialog-title { font-size: 18px; font-weight: 600; }
+    
+    .dialog-close {
+      background: transparent;
+      border: none;
+      font-size: 20px;
+      color: var(--unops-neutral-500);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 6px;
+    }
+    
+    .dialog-close:hover { background: var(--unops-neutral-100); color: var(--unops-error); }
+    
+    .dialog-body { padding: 24px; }
+    
+    .dialog-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--unops-neutral-200);
+      background: var(--unops-surface-secondary);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      border-radius: 0 0 16px 16px;
+    }
+
+    /* Form Elements */
+    .form-group { margin-bottom: 16px; }
+    
+    .form-label {
+      display: block;
+      font-weight: 500;
+      color: var(--unops-neutral-700);
+      margin-bottom: 8px;
+    }
+    
+    .required { color: var(--unops-error); }
+    
+    .form-textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--unops-neutral-300);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      resize: vertical;
+    }
+    
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--unops-primary);
+      box-shadow: 0 0 0 2px var(--unops-primary-container-soft);
+    }
+    
+    .form-hint {
+      font-size: 12px;
+      color: var(--unops-neutral-500);
+      margin-top: 6px;
+    }
+    
+    .checkbox-group {
+      display: flex;
+      gap: 10px;
+      padding: 12px;
+      background: var(--unops-neutral-50);
+      border: 1px solid var(--unops-neutral-200);
+      border-radius: 8px;
+    }
+    
+    .checkbox-group input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      margin-top: 2px;
+      accent-color: var(--unops-primary);
+    }
+    
+    .checkbox-group label { flex: 1; line-height: 1.5; }
+    
+    .form-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--unops-neutral-300);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      background: white;
+    }
+
+    /* Alert boxes */
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .alert-info { background: var(--unops-primary-container-soft); border: 1px solid rgba(0, 146, 209, 0.2); color: var(--unops-primary-darker); }
+    .alert-warning { background: #fef3c7; border: 1px solid #fde68a; color: #92400e; }
+    .alert-danger { background: #fce7f3; border: 1px solid #fbcfe8; color: var(--unops-error); }
+    .alert-neutral { background: var(--unops-neutral-100); border: 1px solid var(--unops-neutral-200); color: var(--unops-neutral-700); }
+    .alert-success { background: #d1fae5; border: 1px solid #a7f3d0; color: var(--unops-success-dark); }
+
+    /* Read-only banner */
+    .readonly-banner {
+      padding: 16px 20px;
+      background: var(--unops-neutral-100);
+      border: 1px solid var(--unops-neutral-300);
+      border-radius: var(--unops-radius-lg);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .readonly-banner i { font-size: 24px; color: var(--unops-neutral-600); }
+    .readonly-banner h4 { font-weight: 600; color: var(--unops-neutral-700); }
+    .readonly-banner p { font-size: 13px; color: var(--unops-neutral-500); }
+
+    /* Section navigation chips */
+    .section-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: none;
+      background: white;
+      color: var(--unops-neutral-700);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .section-chip:hover {
+      background: var(--unops-neutral-200);
+    }
+    
+    .section-chip.active {
+      background: var(--unops-primary);
+      color: white;
+      box-shadow: var(--unops-shadow-sm);
+    }
+    
+    .section-chip i {
+      font-size: 12px;
+    }
+
+    /* Mockup notes */
+    .mockup-notes {
+      margin-top: 24px;
+      padding: 16px;
+      background: #fefce8;
+      border: 1px solid #fde68a;
+      border-radius: var(--unops-radius-lg);
+    }
+    
+    .mockup-notes h3 { font-weight: 600; color: #92400e; margin-bottom: 8px; }
+    .mockup-notes ul { margin: 0; padding-left: 24px; color: #78350f; font-size: 13px; }
+    .mockup-notes li { margin-bottom: 4px; }
+    .mockup-notes code { background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+
+    .page-dimmed { opacity: 0.5; }
+
+    /* Page header */
+    .page-header {
+      background: white;
+      border: 1px solid var(--unops-neutral-200);
+      border-radius: var(--unops-radius-lg);
+      padding: 20px 24px;
+      margin-bottom: 24px;
+    }
+    
+    .page-header-back {
+      color: var(--unops-neutral-500);
+      text-decoration: none;
+      font-size: 14px;
+    }
+    
+    .page-header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--unops-secondary);
+      margin-top: 8px;
+    }
+    
+    .page-header-meta {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--unops-neutral-600);
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    /* Notification bell simulation */
+    .topbar-sim {
+      background: white;
+      border: 1px solid var(--unops-neutral-200);
+      border-radius: var(--unops-radius-lg);
+      padding: 16px 24px;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .topbar-logo { font-size: 18px; font-weight: 700; color: var(--unops-primary); }
+    .topbar-right { display: flex; align-items: center; gap: 24px; }
+    
+    .notification-bell {
+      position: relative;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 8px;
+    }
+    
+    .notification-bell:hover { background: var(--unops-neutral-100); }
+    .notification-bell i { font-size: 24px; color: var(--unops-neutral-600); }
+    
+    .notification-badge {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      background: var(--unops-error);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .notification-dropdown {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      width: 360px;
+      background: white;
+      border: 1px solid var(--unops-neutral-200);
+      border-radius: var(--unops-radius-lg);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      margin-top: 8px;
+      z-index: 50;
+    }
+    
+    .notification-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--unops-neutral-200);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+    }
+    
+    .notification-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--unops-neutral-200);
+    }
+    
+    .notification-tab {
+      flex: 1;
+      padding: 8px;
+      text-align: center;
+      background: transparent;
+      border: none;
+      font-size: 12px;
+      color: var(--unops-neutral-600);
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+    }
+    
+    .notification-tab.active { color: var(--unops-primary); border-bottom-color: var(--unops-primary); }
+    
+    .notification-list { max-height: 300px; overflow-y: auto; }
+    
+    .notification-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--unops-neutral-100);
+      cursor: pointer;
+    }
+    
+    .notification-item:hover { background: var(--unops-primary-container-soft); }
+    .notification-item.unread { background: var(--unops-neutral-50); border-left: 3px solid var(--unops-primary); }
+    
+    .notification-item-title { font-weight: 500; margin-bottom: 4px; }
+    .notification-item-subtitle { font-size: 12px; color: var(--unops-neutral-500); }
+    
+    .notification-footer {
+      padding: 8px;
+      text-align: center;
+      border-top: 1px solid var(--unops-neutral-200);
+    }
+    
+    .notification-footer a { color: var(--unops-primary); text-decoration: none; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <header class="mockup-header">
+    <h1>The Go Decision - UI Mockups</h1>
+  </header>
+
+  <nav class="mockup-nav">
+    <div class="mockup-nav-inner">
+      <button onclick="showMockup(1)" class="nav-btn active" data-mockup="1">1. Dashboard Cards</button>
+      <button onclick="showMockup(2)" class="nav-btn" data-mockup="2">2. Notification Bell</button>
+      <button onclick="showMockup(3)" class="nav-btn" data-mockup="3">3. Decision Review</button>
+      <button onclick="showMockup(4)" class="nav-btn" data-mockup="4">4. Go Decision Dialog</button>
+      <button onclick="showMockup(5)" class="nav-btn" data-mockup="5">5. No-Go Dialog</button>
+      <button onclick="showMockup(6)" class="nav-btn" data-mockup="6">6. Approved Record</button>
+    </div>
+  </nav>
+
+  <main class="mockup-main">
+
+    <!-- ==================== MOCKUP 1: Dashboard Cards ==================== -->
+    <section id="mockup-1" class="mockup-section active">
+      <div class="mockup-title">
+        <h2>Mockup 1: Dashboard with Actions Required Card</h2>
+        <p>Homepage showing 3-column grid layout with workflow approval task in Actions Required</p>
+      </div>
+
+      <!-- Dashboard 3-Column Grid (actual implementation pattern) -->
+      <div class="dashboard-grid">
+        
+        <!-- Left Panel: Actions Required (app-dashboard-card) -->
+        <div class="dashboard-card">
+          <div class="dashboard-card-header warning">
+            <div class="dashboard-card-icon warning">
+              <span class="material-symbols-outlined">priority_high</span>
+            </div>
+            <div>
+              <div class="dashboard-card-title">Actions Required</div>
+              <div class="dashboard-card-subtitle">3 items need attention</div>
+            </div>
+          </div>
+          <div class="dashboard-card-body">
+            <!-- Workflow Approval Item (NEW for this PRD) -->
+            <div class="action-item">
+              <div class="action-item-header">
+                <div class="action-item-dot blue"></div>
+                <span class="action-item-type">Opportunity</span>
+                <span class="badge badge-purple" style="margin-left: auto;">Workflow Approval</span>
+              </div>
+              <div class="action-item-title">South Sudan Water Infrastructure</div>
+              <div class="action-item-meta">AFRO • Jane Smith • 2 hours ago</div>
+            </div>
+            
+            <div class="action-item">
+              <div class="action-item-header">
+                <div class="action-item-dot blue"></div>
+                <span class="action-item-type">Opportunity</span>
+                <span class="badge badge-warning">Draft</span>
+              </div>
+              <div class="action-item-title">Kenya Agricultural Development</div>
+              <div class="action-item-meta">AFRO • 1 day ago</div>
+            </div>
+            
+            <div class="action-item">
+              <div class="action-item-header">
+                <div class="action-item-dot purple"></div>
+                <span class="action-item-type">Partner</span>
+                <span class="badge badge-warning">Draft</span>
+              </div>
+              <div class="action-item-title">World Health Organization</div>
+              <div class="action-item-meta">3 days ago</div>
+            </div>
+          </div>
+          <div class="dashboard-card-footer">
+            <a href="#">View All →</a>
+          </div>
+        </div>
+
+        <!-- Center Panel: Recent Activity -->
+        <div class="dashboard-card">
+          <div class="dashboard-card-header">
+            <div class="dashboard-card-icon info">
+              <span class="material-symbols-outlined">history</span>
+            </div>
+            <div>
+              <div class="dashboard-card-title">Recent Activity</div>
+              <div class="dashboard-card-subtitle">Latest updates from AFRO</div>
+            </div>
+          </div>
+          <div class="dashboard-card-body">
+            <div style="padding: 8px 0; border-bottom: 1px solid var(--unops-neutral-100);">
+              <div style="font-size: 12px; color: var(--unops-neutral-500);">Today</div>
+              <div style="font-weight: 500;">Partner Agreement Updated</div>
+              <div style="font-size: 12px; color: var(--unops-neutral-600);">by Michael Chen</div>
+            </div>
+            <div style="padding: 8px 0; border-bottom: 1px solid var(--unops-neutral-100);">
+              <div style="font-size: 12px; color: var(--unops-neutral-500);">Yesterday</div>
+              <div style="font-weight: 500;">New Contact Added</div>
+              <div style="font-size: 12px; color: var(--unops-neutral-600);">by Sarah Wilson</div>
+            </div>
+          </div>
+          <div class="dashboard-card-footer">
+            <a href="#">View All →</a>
+          </div>
+        </div>
+
+        <!-- Right Panel: My Workspace -->
+        <div class="dashboard-card">
+          <div class="dashboard-card-header">
+            <div class="dashboard-card-icon primary">
+              <span class="material-symbols-outlined">dashboard</span>
+            </div>
+            <div>
+              <div class="dashboard-card-title">My Workspace</div>
+              <div class="dashboard-card-subtitle">Partners, contacts, opportunities</div>
+            </div>
+          </div>
+          <div class="dashboard-card-body">
+            <div style="margin-bottom: 12px;">
+              <div style="font-size: 12px; font-weight: 600; color: var(--unops-neutral-700); margin-bottom: 6px;">Partners (5)</div>
+              <div style="font-size: 13px; padding: 4px 0;">Ministry of Water Resources</div>
+              <div style="font-size: 13px; padding: 4px 0;">UNICEF South Sudan</div>
+            </div>
+            <div>
+              <div style="font-size: 12px; font-weight: 600; color: var(--unops-neutral-700); margin-bottom: 6px;">Opportunities (3)</div>
+              <div style="font-size: 13px; padding: 4px 0;">Sudan Infrastructure Project</div>
+            </div>
+          </div>
+          <div class="dashboard-card-footer">
+            <a href="#">View All →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="mockup-notes">
+        <h3>Implementation Notes:</h3>
+        <ul>
+          <li><strong>Layout:</strong> Uses existing <code>grid-cols-3</code> layout with <code>&lt;app-dashboard-card&gt;</code> components</li>
+          <li><strong>NEW: Workflow Approval badge</strong> distinguishes workflow tasks from Draft items</li>
+          <li><strong>Click action:</strong> Navigates to Opportunity view for review</li>
+          <li><strong>Data source:</strong> NEW <code>GET /api/workflow/pending-approvals</code> endpoint returns <code>PendingApprovalResponse[]</code> where user is an approver</li>
+          <li><strong>Response fields:</strong> EntityName, EntityId, EntityDisplayName, CurrentStage, PendingStage, SubmittedBy, SubmittedOn, OrgUnitName</li>
+          <li><strong>Frontend service:</strong> <code>workflowService.getPendingApprovalsForUser()</code> called from <code>home-dashboard.component.ts</code></li>
+          <li><strong>Integration:</strong> Workflow tasks are merged with existing draft items in Actions Required card</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ==================== MOCKUP 2: Notification Bell ==================== -->
+    <section id="mockup-2" class="mockup-section">
+      <div class="mockup-title">
+        <h2>Mockup 2: Notification Bell with Workflow Notification</h2>
+        <p>Topbar notification dropdown showing pending Go decision notification</p>
+      </div>
+
+      <div class="topbar-sim" style="position: relative;">
+        <div class="topbar-logo">UNOPS Opportunity+</div>
+        <div class="topbar-right" style="position: relative;">
+          <div class="notification-bell">
+            <i class="pi pi-bell"></i>
+            <span class="notification-badge">2</span>
+            
+            <div class="notification-dropdown">
+              <div class="notification-header">
+                <i class="pi pi-bell"></i>
+                Notifications
+              </div>
+              <div class="notification-tabs">
+                <button class="notification-tab active">Unread (2)</button>
+                <button class="notification-tab">All</button>
+              </div>
+              <div class="notification-list">
+                <div class="notification-item unread">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span class="badge badge-primary" style="font-size: 10px;">NEW</span>
+                    <span style="font-size: 11px; color: var(--unops-neutral-500);">2 hours ago</span>
+                  </div>
+                  <div class="notification-item-title">Go Decision Required</div>
+                  <div class="notification-item-subtitle">
+                    South Sudan Water Infrastructure<br>
+                    <em>Submitted by Jane Smith</em>
+                  </div>
+                </div>
+                <div class="notification-item unread">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span class="badge badge-primary" style="font-size: 10px;">NEW</span>
+                    <span style="font-size: 11px; color: var(--unops-neutral-500);">1 day ago</span>
+                  </div>
+                  <div class="notification-item-title">Go Decision Required</div>
+                  <div class="notification-item-subtitle">Kenya Agricultural Development</div>
+                </div>
+                <div class="notification-item">
+                  <div class="notification-item-title">Document Analysis Complete</div>
+                  <div class="notification-item-subtitle">Partner Agreement Review • 3 days ago</div>
+                </div>
+              </div>
+              <div class="notification-footer">
+                <a href="#">View All Notifications</a>
+              </div>
+            </div>
+          </div>
+          <span>Robert Johnson (DoA2)</span>
+        </div>
+      </div>
+
+      <div class="mockup-notes">
+        <h3>Implementation Notes:</h3>
+        <ul>
+          <li><strong>Existing component:</strong> Uses existing topbar notification bell and <code>NotificationService</code></li>
+          <li><strong>NEW: In-system notifications</strong> created by <code>PaoWorkflowNotificationService.NotifyNewApprovalRequestAsync()</code> via <code>NotificationManager.CreateNotification()</code></li>
+          <li><strong>Notification category:</strong> <code>workflow_approval</code> with responseType <code>approval_request</code></li>
+          <li><strong>Notification message:</strong> "Go Decision Required: {Opportunity Name}"</li>
+          <li><strong>Click action:</strong> Navigates to Opportunity view (topbar handles <code>workflow_approval</code> category routing)</li>
+          <li><strong>Notification lifecycle:</strong> Created on submission, marked as done (<code>IsRead = true</code>, <code>Status = Done</code>) when decision is made</li>
+          <li><strong>Polling:</strong> Uses existing 15-second polling mechanism</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ==================== MOCKUP 3: Decision Review Interface ==================== -->
+    <section id="mockup-3" class="mockup-section">
+      <div class="mockup-title">
+        <h2>Mockup 3: Decision-Maker Review Interface</h2>
+        <p>Full opportunity view with Statement tab active, showing Decision Info Panel</p>
+      </div>
+
+      <!-- Full Opportunity View Container -->
+      <div style="background: var(--unops-surface-secondary); border-radius: var(--unops-radius-lg); overflow: hidden; border: 1px solid var(--unops-neutral-200);">
+        
+        <!-- Page Header (existing pattern) -->
+        <div style="background: white; padding: 20px 24px; border-bottom: 1px solid var(--unops-neutral-200);">
+          <a href="#" class="page-header-back">← Back to Opportunities</a>
+          <h1 style="font-size: 24px; font-weight: 700; color: var(--unops-secondary); margin-top: 8px;">South Sudan Water Infrastructure Development</h1>
+          <div class="page-header-meta">
+            <span><strong>ID:</strong> OPP-2024-0123</span>
+            <span style="color: var(--unops-neutral-300);">|</span>
+            <span><strong>Manager:</strong> Jane Smith</span>
+            <span style="color: var(--unops-neutral-300);">|</span>
+            <span><strong>Org Unit:</strong> AFRO</span>
+            <span class="badge badge-primary">IDENTIFY & PROFILE</span>
+            <span class="badge badge-warning">Pending Approval</span>
+          </div>
+        </div>
+
+        <!-- Workflow Panel (app-stage-workflow - EXISTING) -->
+        <div style="background: var(--unops-surface-secondary); padding: 16px 24px; border-bottom: 1px solid var(--unops-neutral-200);">
+          <div class="workflow-panel" style="margin-bottom: 0;">
+            <div class="workflow-panel-header">
+              <div class="workflow-panel-header-left">
+                <span class="workflow-panel-title">Stage</span>
+                <span class="workflow-tag pending">Approval Pending</span>
+                <div class="workflow-stage-info">
+                  <div><label>Current Stage:</label> IDENTIFY & PROFILE</div>
+                  <div><label>Next Stage:</label> GO</div>
+                </div>
+              </div>
+              <!-- app-workflow component in header (EXISTING) - Approve/Reject buttons -->
+              <div class="workflow-actions">
+                <button class="btn btn-danger">
+                  <i class="pi pi-times"></i> Reject
+                </button>
+                <button class="btn btn-success">
+                  <i class="pi pi-check"></i> Approve
+                </button>
+              </div>
+            </div>
+            <div class="workflow-tabs">
+              <button class="workflow-tab active">Overview</button>
+              <button class="workflow-tab">Approvers</button>
+              <button class="workflow-tab">Stage Change History</button>
+            </div>
+            <!-- Stepper (p-steps) -->
+            <div class="stepper">
+              <div class="stepper-step">
+                <div class="stepper-circle active">1</div>
+                <span class="stepper-label active">IDENTIFY & PROFILE</span>
+              </div>
+              <div class="stepper-connector"></div>
+              <div class="stepper-step">
+                <div class="stepper-circle pending">2</div>
+                <span class="stepper-label">GO</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Decision Guidance & Info Panel (NEW - placed between workflow and section tabs) -->
+        <div style="background: var(--unops-surface-secondary); padding: 16px 24px; border-bottom: 1px solid var(--unops-neutral-200);">
+          
+          <!-- Decision Guidance Message (NEW for this PRD - shown when isInWorkflow && userIsApprover) -->
+          <div class="guidance-message" style="margin-bottom: 16px;">
+            <div class="guidance-message-header">
+              <i class="pi pi-info-circle"></i>
+              <h4>Decision Guidance</h4>
+            </div>
+            <p>
+              You have been requested to review this opportunity in order to determine whether it merits further 
+              development based on your professional judgment and understanding of the partner, context and UNOPS 
+              strategic priorities.
+            </p>
+            <p style="margin-top: 12px;">
+              Please review the Opportunity Statement below and note the following details which may influence your 
+              decision. Once you have done so, please confirm your decision using the <strong>Approve</strong> or <strong>Reject</strong> buttons above.
+            </p>
+          </div>
+
+          <!-- Decision Info Panel (NEW component: app-opportunity-decision-info-panel) -->
+          <div class="decision-info-panel" style="margin-bottom: 0;">
+            <div class="decision-info-header">
+              <h3><i class="pi pi-list"></i> Key Information for Your Decision</h3>
+            </div>
+            <div class="decision-info-body">
+              <div class="info-grid">
+                <div class="info-item">
+                  <div class="info-item-label">Proposed Initiative Type</div>
+                  <div class="info-item-value">Project</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-item-label">Time to Target Signing</div>
+                  <div class="info-item-value">45 days remaining</div>
+                </div>
+              </div>
+
+              <div class="warning-section">
+                <div class="warning-section-title">
+                  <i class="pi pi-exclamation-triangle"></i> Partner Due Diligence Status
+                </div>
+                <ul class="warning-list">
+                  <li><strong>Ministry of Water Resources:</strong> Expiring Soon (3 months)</li>
+                </ul>
+              </div>
+
+              <div class="warning-section">
+                <div class="warning-section-title">
+                  <i class="pi pi-exclamation-triangle"></i> High Organizational Risks
+                </div>
+                <ul class="warning-list">
+                  <li>Security situation in project area (High Impact)</li>
+                  <li>Currency exchange volatility (High Impact)</li>
+                </ul>
+              </div>
+
+              <div class="remarks-section">
+                <div class="remarks-section-title">
+                  <i class="pi pi-comment"></i> Sender Remarks
+                </div>
+                <p>"Please note the partner has expressed urgency due to funding window closing in Q2."</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Navigation Chips (EXISTING) -->
+        <div style="background: var(--unops-surface-secondary); padding: 12px 24px; border-bottom: 1px solid var(--unops-neutral-200);">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="section-chip">
+              <i class="pi pi-chart-bar"></i> Analysis
+            </button>
+            <button class="section-chip">
+              <i class="pi pi-file"></i> Overview
+            </button>
+            <button class="section-chip">
+              <i class="pi pi-briefcase"></i> What
+            </button>
+            <button class="section-chip">
+              <i class="pi pi-lightbulb"></i> Why
+            </button>
+            <button class="section-chip">
+              <i class="pi pi-users"></i> Who
+            </button>
+            <button class="section-chip">
+              <i class="pi pi-building"></i> Team
+            </button>
+            <button class="section-chip">
+              <i class="pi pi-globe"></i> Where
+            </button>
+            <button class="section-chip">
+              <i class="pi pi-calendar"></i> When
+            </button>
+            <button class="section-chip">
+              <i class="pi pi-chart-line"></i> Risks
+            </button>
+            <button class="section-chip">
+              <i class="pi pi-link"></i> Related
+            </button>
+            <button class="section-chip">
+              <i class="pi pi-comments"></i> Comments
+            </button>
+            <button class="section-chip active">
+              <i class="pi pi-file-edit"></i> Statement
+            </button>
+          </div>
+        </div>
+
+        <!-- Main Content Area - Statement Section Active -->
+        <div style="padding: 24px; background: var(--unops-surface-secondary);">
+          
+          <!-- Opportunity Statement Content (EXISTING - app-opportunity-statement-section) -->
+          <div style="background: white; border: 1px solid var(--unops-neutral-200); border-radius: var(--unops-radius-lg); padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+              <h3 style="font-size: 18px; font-weight: 600; color: var(--unops-neutral-900); margin: 0;">
+                <i class="pi pi-file-edit" style="margin-right: 8px;"></i>
+                Opportunity Statement
+              </h3>
+              <span class="badge badge-primary">AI Generated</span>
+            </div>
+            
+            <!-- Statement Content Preview -->
+            <div style="background: var(--unops-neutral-50); border-radius: 8px; padding: 20px; border: 1px solid var(--unops-neutral-200);">
+              <h4 style="color: var(--unops-secondary); margin: 0 0 12px 0;">Executive Summary</h4>
+              <p style="color: var(--unops-neutral-700); line-height: 1.6; margin: 0 0 16px 0;">
+                The South Sudan Water Infrastructure Development initiative aims to improve access to clean water 
+                for 500,000 beneficiaries in rural communities across three states. This project aligns with 
+                UNOPS strategic priorities for sustainable infrastructure development in fragile contexts.
+              </p>
+              
+              <h4 style="color: var(--unops-secondary); margin: 0 0 12px 0;">Project Objectives</h4>
+              <p style="color: var(--unops-neutral-700); line-height: 1.6; margin: 0 0 16px 0;">
+                1. Rehabilitate 50 existing water points across target communities<br>
+                2. Construct 25 new boreholes with solar-powered pumping systems<br>
+                3. Train local technicians for sustainable maintenance...
+              </p>
+              
+              <div style="text-align: center; padding: 20px; color: var(--unops-neutral-500); font-style: italic;">
+                [... Full Opportunity Statement content continues ...]
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mockup-notes">
+        <h3>Implementation Notes:</h3>
+        <ul>
+          <li><strong>Full Opportunity View:</strong> Decision-maker sees the complete opportunity context</li>
+          <li><strong>Workflow Panel:</strong> EXISTING <code>&lt;app-stage-workflow&gt;</code> with Approve/Reject buttons</li>
+          <li><strong>NEW: Decision Guidance Message:</strong> Uses <code>p-message</code> component with info severity</li>
+          <li><strong>NEW: Decision Info Panel:</strong> <code>&lt;app-opportunity-decision-info-panel&gt;</code> in <code>features/partnerships/opportunities/components/opportunity/opportunity-decision-info-panel/</code></li>
+          <li><strong>Info Panel Data:</strong> Proposed initiative type, time to signing, concerning DD statuses (Pending/Expired/Expiring Soon), high risks, sender remarks from workflow submission</li>
+          <li><strong>Visibility condition:</strong> Both panels shown when workflow is pending approval and current user can approve</li>
+          <li><strong>Section Navigation:</strong> EXISTING chips - Statement tab is active when arriving from notification</li>
+          <li><strong>Statement Content:</strong> EXISTING <code>&lt;app-opportunity-statement-section&gt;</code> in main content area</li>
+          <li><strong>Button click:</strong> Approve/Reject triggers <code>customStageChangeHandler</code> to show enhanced dialogs</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ==================== MOCKUP 4: Go Decision Dialog ==================== -->
+    <section id="mockup-4" class="mockup-section">
+      <div class="mockup-title">
+        <h2>Mockup 4: Go Decision Dialog (Enhanced Approve)</h2>
+        <p>Custom dialog triggered via customStageChangeHandler when clicking Approve</p>
+      </div>
+
+      <div class="page-header page-dimmed">
+        <h1>South Sudan Water Infrastructure Development</h1>
+      </div>
+
+      <div class="dialog-backdrop">
+        <div class="dialog dialog-lg">
+          <div class="dialog-header">
+            <div class="dialog-header-content">
+              <i class="pi pi-check-circle dialog-header-icon success"></i>
+              <span class="dialog-title">Confirm Go Decision</span>
+            </div>
+            <button class="dialog-close"><i class="pi pi-times"></i></button>
+          </div>
+          <div class="dialog-body">
+            <div class="form-group">
+              <label class="form-label">Confirmation Statement <span class="required">*</span></label>
+              <div class="checkbox-group">
+                <input type="checkbox" id="go-confirm">
+                <label for="go-confirm">
+                  I confirm that, based on the information presented in the Opportunity Statement, I give approval 
+                  for UNOPS Org Unit <strong>'AFRO-SS - Africa Regional Office South Sudan'</strong> to continue 
+                  development of this Opportunity as a <strong>'Project'</strong>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Decision Rationale <span class="required">*</span></label>
+              <textarea class="form-textarea" rows="4" placeholder="Enter your decision rationale..."></textarea>
+              <div class="form-hint">
+                <i class="pi pi-info-circle"></i>
+                Add the reason for your decision or state any conditions of your decision
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Assigned Executive <span class="required">*</span></label>
+              <select class="form-select" required>
+                <option value="1" selected>Maria Garcia - OrgUnit Director (Suggested)</option>
+                <option value="2">James Wilson - OrgUnit Deputy Director</option>
+                <option value="3">David Chen - Regional Director</option>
+              </select>
+              <div class="form-hint">The OrgUnit Director of the responsible Org Unit is pre-selected. You may select another Director/Deputy Director if needed.</div>
+            </div>
+
+            <div class="alert alert-info" style="margin-bottom: 0;">
+              <i class="pi pi-info-circle"></i>
+              Upon approval, email notifications will be sent to the Opportunity Manager, initiator, and stakeholders.
+            </div>
+          </div>
+          <div class="dialog-footer">
+            <button class="btn btn-outlined">Cancel</button>
+            <button class="btn btn-success" disabled>
+              <i class="pi pi-check"></i> Confirm Go Decision
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mockup-notes">
+        <h3>Implementation Notes:</h3>
+        <ul>
+          <li><strong>Component:</strong> <code>&lt;app-approve-opportunity-dialog&gt;</code> in <code>features/partnerships/opportunities/components/opportunity/approve-opportunity-dialog/</code></li>
+          <li><strong>Triggered by:</strong> <code>customStageChangeHandler</code> input on <code>&lt;app-stage-workflow&gt;</code> component</li>
+          <li><strong>Flow:</strong> User clicks Approve → <code>customStageChangeHandler('GO', 'Approve')</code> → Show this dialog → Return <code>CustomStageChangeResult { proceed: true, comment: rationale }</code></li>
+          <li><strong>API:</strong> Enhanced <code>POST /api/workflow/approve</code> with <code>ApproveWorkflowRequest</code> body (entityName, entityId, rationale, confirmationAcknowledged, executiveId)</li>
+          <li><strong>Executive Lookup:</strong> <code>GET /api/opportunity/{opportunityId}/executives</code> returns Director/Deputy Director options from <code>EntityUserRole</code> table</li>
+          <li><strong>Executive Assignment:</strong> Mandatory field - OrgUnit Director pre-selected (marked as "Suggested"), stored on <code>Opportunity.ExecutiveId</code></li>
+          <li><strong>Validation:</strong> Submit disabled until checkbox checked AND rationale provided AND Executive selected</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ==================== MOCKUP 5: No-Go Decision Dialog ==================== -->
+    <section id="mockup-5" class="mockup-section">
+      <div class="mockup-title">
+        <h2>Mockup 5: No-Go Decision Dialog (Enhanced Reject)</h2>
+        <p>Custom dialog triggered via customStageChangeHandler when clicking Reject</p>
+      </div>
+
+      <div class="page-header page-dimmed">
+        <h1>South Sudan Water Infrastructure Development</h1>
+      </div>
+
+      <div class="dialog-backdrop">
+        <div class="dialog dialog-lg">
+          <div class="dialog-header">
+            <div class="dialog-header-content">
+              <i class="pi pi-times-circle dialog-header-icon danger"></i>
+              <span class="dialog-title">Confirm No-Go Decision</span>
+            </div>
+            <button class="dialog-close"><i class="pi pi-times"></i></button>
+          </div>
+          <div class="dialog-body">
+            <div class="alert alert-danger">
+              <strong>This action will reject the opportunity.</strong><br>
+              The opportunity will be moved to the NO GO stage immediately.
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Confirmation Statement <span class="required">*</span></label>
+              <div class="checkbox-group" style="background: #fce7f3; border-color: #fbcfe8;">
+                <input type="checkbox" id="nogo-confirm">
+                <label for="nogo-confirm" style="color: var(--unops-error);">
+                  The information presented is insufficient or I do not consider this to be an initiative 
+                  UNOPS should pursue.
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Decision Rationale <span class="required">*</span></label>
+              <textarea class="form-textarea" rows="4" placeholder="Enter your decision rationale..."></textarea>
+              <div class="form-hint">
+                <i class="pi pi-info-circle"></i>
+                Add the reason for your decision or comments regarding the information presented
+              </div>
+            </div>
+
+            <div class="alert alert-neutral" style="margin-bottom: 0;">
+              <i class="pi pi-info-circle"></i>
+              Upon rejection, email notifications will be sent to the Opportunity Manager and initiator.
+            </div>
+          </div>
+          <div class="dialog-footer">
+            <button class="btn btn-outlined">Cancel</button>
+            <button class="btn btn-danger" disabled>
+              <i class="pi pi-times"></i> Confirm No-Go Decision
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mockup-notes">
+        <h3>Implementation Notes:</h3>
+        <ul>
+          <li><strong>Component:</strong> <code>&lt;app-reject-opportunity-dialog&gt;</code> in <code>features/partnerships/opportunities/components/opportunity/reject-opportunity-dialog/</code></li>
+          <li><strong>Triggered by:</strong> <code>customStageChangeHandler</code> input on <code>&lt;app-stage-workflow&gt;</code> component</li>
+          <li><strong>Flow:</strong> User clicks Reject → <code>customStageChangeHandler('NO GO', 'Reject')</code> → Show this dialog → Return <code>CustomStageChangeResult { proceed: true, comment: rationale }</code></li>
+          <li><strong>API:</strong> Enhanced <code>POST /api/workflow/reject</code> with <code>RejectWorkflowRequest</code> body (entityName, entityId, rationale, confirmationAcknowledged)</li>
+          <li><strong>Stage update:</strong> Immediately updates to NO GO upon confirmation</li>
+          <li><strong>Immutability:</strong> After rejection, record becomes read-only until Reopened by Opportunity Manager</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ==================== MOCKUP 6: Approved Record ==================== -->
+    <section id="mockup-6" class="mockup-section">
+      <div class="mockup-title">
+        <h2>Mockup 6: Post-Decision Read-Only Record</h2>
+        <p>Approved opportunity showing immutable state with existing workflow component</p>
+      </div>
+
+      <div class="page-header">
+        <a href="#" class="page-header-back">← Back to Opportunities</a>
+        <h1>South Sudan Water Infrastructure Development</h1>
+        <div class="page-header-meta">
+          <span><strong>ID:</strong> OPP-2024-0123</span>
+          <span style="color: var(--unops-neutral-300);">|</span>
+          <span><strong>Manager:</strong> Jane Smith</span>
+          <span style="color: var(--unops-neutral-300);">|</span>
+          <span><strong>Org Unit:</strong> AFRO</span>
+          <span class="badge badge-success"><i class="pi pi-check"></i> GO</span>
+        </div>
+      </div>
+
+      <!-- Workflow Panel (EXISTING - shows completed state, no action buttons) -->
+      <div class="workflow-panel">
+        <div class="workflow-panel-header">
+          <div class="workflow-panel-header-left">
+            <span class="workflow-panel-title">Stage</span>
+            <div class="workflow-stage-info">
+              <div><label>Current Stage:</label> GO</div>
+            </div>
+          </div>
+          <!-- No action buttons - record is in final stage -->
+        </div>
+        <div class="workflow-tabs">
+          <button class="workflow-tab">Overview</button>
+          <button class="workflow-tab active">Stage Change History</button>
+        </div>
+        <!-- Stage Change History Table (shows decision details) -->
+        <div style="padding: 16px;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+            <thead>
+              <tr style="background: var(--unops-neutral-100); text-align: left;">
+                <th style="padding: 10px 12px; border-bottom: 1px solid var(--unops-neutral-200);">From Stage</th>
+                <th style="padding: 10px 12px; border-bottom: 1px solid var(--unops-neutral-200);">To Stage</th>
+                <th style="padding: 10px 12px; border-bottom: 1px solid var(--unops-neutral-200);">Completed On</th>
+                <th style="padding: 10px 12px; border-bottom: 1px solid var(--unops-neutral-200);">Action</th>
+                <th style="padding: 10px 12px; border-bottom: 1px solid var(--unops-neutral-200);">Comment</th>
+                <th style="padding: 10px 12px; border-bottom: 1px solid var(--unops-neutral-200);">User</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding: 10px 12px; border-bottom: 1px solid var(--unops-neutral-100);">IDENTIFY & PROFILE</td>
+                <td style="padding: 10px 12px; border-bottom: 1px solid var(--unops-neutral-100);"><span class="badge badge-success">GO</span></td>
+                <td style="padding: 10px 12px; border-bottom: 1px solid var(--unops-neutral-100);">25-Jan-2026 14:35</td>
+                <td style="padding: 10px 12px; border-bottom: 1px solid var(--unops-neutral-100);">Approve</td>
+                <td style="padding: 10px 12px; border-bottom: 1px solid var(--unops-neutral-100); max-width: 300px;">Approved based on strong alignment with UNOPS strategic priorities...</td>
+                <td style="padding: 10px 12px; border-bottom: 1px solid var(--unops-neutral-100);">Robert Johnson</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 12px; border-bottom: 1px solid var(--unops-neutral-100);">IDENTIFY & PROFILE</td>
+                <td style="padding: 10px 12px; border-bottom: 1px solid var(--unops-neutral-100);">GO</td>
+                <td style="padding: 10px 12px; border-bottom: 1px solid var(--unops-neutral-100);">20-Jan-2026 09:15</td>
+                <td style="padding: 10px 12px; border-bottom: 1px solid var(--unops-neutral-100);">Submit</td>
+                <td style="padding: 10px 12px; border-bottom: 1px solid var(--unops-neutral-100);">Please note the partner has expressed urgency...</td>
+                <td style="padding: 10px 12px; border-bottom: 1px solid var(--unops-neutral-100);">Jane Smith</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="mockup-notes">
+        <h3>Implementation Notes:</h3>
+        <ul>
+          <li><strong>Workflow Panel:</strong> EXISTING <code>&lt;app-stage-workflow&gt;</code> - no action buttons because record is in terminal stage (GO)</li>
+          <li><strong>Stage Change History:</strong> EXISTING tab shows decision details (decision maker, date, rationale) from <code>WorkflowLog</code></li>
+          <li><strong>Submit action:</strong> Requests transition IDENTIFY & PROFILE → GO (initiates approval workflow)</li>
+          <li><strong>Approve action:</strong> Confirms transition IDENTIFY & PROFILE → GO (completes the workflow)</li>
+          <li><strong>Data immutability:</strong> Backend throws <code>BusinessException</code> (400 Bad Request) for any edit attempts on GO/NO GO/CANCELLED stages. Permission endpoint returns <code>canUpdate: false</code> and <code>isImmutable: true</code></li>
+          <li><strong>Permanent vs Temporary:</strong> GO stage is permanent (no reopen). NO GO and CANCELLED can be reopened by OM, which lifts immutability</li>
+          <li><strong>Statement:</strong> Locked, cannot regenerate AI content</li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    function showMockup(id) {
+      // Hide all sections
+      document.querySelectorAll('.mockup-section').forEach(s => s.classList.remove('active'));
+      // Show selected section
+      document.getElementById('mockup-' + id).classList.add('active');
+      // Update nav buttons
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector('[data-mockup="' + id + '"]').classList.add('active');
+    }
+  </script>
+</body>
+</html>

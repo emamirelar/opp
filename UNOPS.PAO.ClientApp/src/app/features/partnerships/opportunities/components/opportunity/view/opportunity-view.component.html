@@ -1,5 +1,12 @@
 <p-confirmDialog></p-confirmDialog>
 
+<!-- Workflow Action Loading Overlay - Shows blur effect during Submit/Approve/Reject/Recall/Cancel/Reopen -->
+@if (workflowActionInProgress()) {
+  <div class="workflow-action-overlay">
+    <i class="pi pi-spin pi-spinner text-5xl text-white"></i>
+  </div>
+}
+
   <!-- Main Container - Fixed height with flexbox layout -->
   <div
     class="flex flex-col bg-unops-surface-secondary -m-unops-md overflow-hidden"
@@ -115,6 +122,19 @@
                     styleClass="whitespace-nowrap"
                   />
                 }
+                @if (oupEngagementUrl()) {
+                  <p-button
+                    label="Go to oUP"
+                    icon="pi pi-external-link"
+                    [outlined]="true"
+                    size="small"
+                    severity="secondary"
+                    (onClick)="openOUPEngagement()"
+                    styleClass="whitespace-nowrap"
+                    [pTooltip]="'Open this opportunity in oUP (Engagement ' + baseEngagementNumber() + ')'"
+                    tooltipPosition="bottom"
+                  />
+                }
               </div>
             </div>
 
@@ -164,22 +184,83 @@
             </div>
           </div>
 
+          <!-- Requirements Validation (only shows when NOT all requirements are met) -->
+          @if (opportunity()?.stage && canChangeStage()) {
+            <div class="px-unops-md md:px-unops-2xl pt-4 bg-unops-surface-secondary">
+              <app-requirements-validation
+                [entityName]="'opportunity'"
+                [entityId]="opportunity()?.id?.toString() ?? ''"
+                [formGroup]="opportunityForm"
+                [currentStage]="opportunity()?.stage ?? ''"
+                [entityData]="opportunity()"
+                [customValidators]="customValidators"
+                (requirementClick)="handleRequirementClick($event)"
+              />
+            </div>
+          }
+
+          <!-- Instructional Guidance for Decision Makers -->
+          @if (showDecisionGuidance()) {
+            <div class="px-unops-md md:px-unops-2xl pt-4 border-t border-unops-neutral-300 bg-unops-surface-secondary">
+              <p-message severity="info" [closable]="false">
+                <ng-template pTemplate="content">
+                  <div class="flex items-start gap-3">
+                    <i class="pi pi-info-circle text-blue-500 text-xl flex-shrink-0 mt-0.5"></i>
+                    <div class="flex flex-col gap-1">
+                      <span class="font-semibold">{{ 'workflow.goDecision.guidance.title' | translate }}</span>
+                      <span>{{ instructionalGuidanceText | translate }}</span>
+                    </div>
+                  </div>
+                </ng-template>
+              </p-message>
+            </div>
+          }
+
+          <!-- Decision Info Panel for Go/No-Go Decision Makers -->
+          @if (showDecisionInfoPanel()) {
+            <div class="px-unops-md md:px-unops-2xl pt-4 bg-unops-surface-secondary">
+              <app-opportunity-decision-info-panel
+                [opportunity]="opportunity()!"
+                [risks]="opportunityRisks()"
+                [senderRemarks]="workflowSubmissionComment()"
+              />
+            </div>
+          }
+        </div>
+        <!-- Right Spacer to match content padding -->
+        <div class="w-unops-md md:w-unops-2xl flex-shrink-0"></div>
+      </div>
+    </div>
+
+    <div class="flex-shrink-0 bg-unops-surface-secondary z-10">
+      <div class="flex">
+        <!-- Left Spacer for documents panel -->
+        <div
+          [class]="documentsCollapsed() ? 'w-12' : 'w-80 md:w-96'"
+          class="flex-shrink-0"
+        ></div>
+        <!-- Workflow and Section Navigation content -->
+        <div class="flex-1 min-w-0">
           <!-- Workflow Component -->
-          <div class="px-unops-md md:px-unops-2xl py-4 border-t border-unops-neutral-300 bg-unops-surface-secondary">
+          <div class="px-unops-md md:px-unops-2xl py-4 border-t border-unops-neutral-300">
             <app-stage-workflow
               #stageWorkflowComponent
               [entityName]="'opportunity'"
               [entityId]="opportunity()?.id?.toString() ?? ''"
               [canChangeStage]="canChangeStage()"
+              [isOpportunityManager]="isCurrentUserOpportunityManager()"
               [feedbackDialogService]="feedbackDialogService"
+              [customStageChangeHandler]="customStageChangeHandler"
+              [responsibleOrgUnitName]="opportunity()?.responsibleOrgUnitName ?? ''"
               (onStageChangeSuccess)="handleStageChangeSuccess()"
+              (onGoSubmissionSuccess)="handleGoSubmissionSuccess($event)"
+              (onGoApprovalSuccess)="handleGoApprovalSuccess($event)"
+              (onActionInProgressChange)="handleWorkflowActionInProgressChange($event)"
             />
           </div>
 
           <!-- Section Navigation - Dropdown on mobile, Chips on desktop -->
-          <div
-            class="px-unops-md md:px-unops-2xl py-3 border-t border-unops-neutral-300 bg-unops-surface-secondary"
-          >
+          <div class="px-unops-md md:px-unops-2xl py-3 border-t border-unops-neutral-300">
             <!-- Loading Progress Strip -->
             @if (showProgressBar()) {
               <div 
@@ -306,13 +387,13 @@
       </div>
     </div>
 
-    <!-- Content Layout - Documents Panel + Content (scrollable area, flex-1 takes remaining space) -->
+    <!-- Scrollable Content Area - Documents Panel + Content Sections -->
     <div #contentScrollContainer class="flex flex-1 min-h-0 overflow-y-auto">
       <!-- LEFT: Documents Panel (hidden on mobile by default) -->
       <div
-        class="flex-shrink-0 border-r border-unops-neutral-300 bg-unops-surface-primary sticky top-0 mt-6 transition-all duration-300"
+        class="flex-shrink-0 bg-unops-surface-primary sticky top-0 transition-all duration-300"
         [class.hidden]="documentsCollapsed() && innerWidth() < 768"
-        style="height: fit-content; max-height: 100%; align-self: flex-start"
+        style="align-self: flex-start"
       >
         <app-opportunity-documents
           [opportunityId]="opportunity()!.id!"
@@ -325,7 +406,8 @@
       </div>
 
       <!-- RIGHT: Content Sections -->
-      <div class="flex-1 min-w-0 px-4 sm:px-unops-md md:px-unops-2xl py-4 sm:py-6 bg-unops-surface-secondary">
+      <div class="flex-1 min-w-0 bg-unops-surface-secondary">
+        <div class="px-4 sm:px-unops-md md:px-unops-2xl py-4 sm:py-6">
         <div class="flex flex-col gap-6">
           <!-- ANALYSIS - Quick Stats & Insights -->
           <div id="section-analysis">
@@ -335,6 +417,7 @@
               [insights]="allInsights()"
               [suggestions]="allSuggestions()"
               [loadingInsights]="insightsLoading()"
+              [insightsRefreshingPending]="insightsRefreshingPending()"
               [insightsError]="insightsError()"
               (refreshRequested)="handleInsightsRefresh()"
             />
@@ -370,6 +453,7 @@
               [opportunity]="opportunity()!"
               [canUpdate]="canUpdate()"
               [suggestions]="whatSuggestions()"
+              [loadingInsightsSuggestions]="loadingInsightsSuggestions()"
               [documentUploadTrigger]="documentUploadTrigger()"
               [sectionSaveTrigger]="sectionSaveTrigger()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
@@ -390,9 +474,11 @@
               [opportunity]="opportunity()!"
               [canUpdate]="canUpdate()"
               [suggestions]="whySuggestions()"
+              [loadingInsightsSuggestions]="loadingInsightsSuggestions()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
               (changesDetected)="handleSectionChangesDetected('why')"
               (changesSavedOrDiscarded)="handleSectionChangesSaved('why')"
+              (unopsMissionsNotApplicableChange)="handleUnopsMissionsNotApplicableChange($event)"
             />
           </div>
 
@@ -408,6 +494,7 @@
               [opportunity]="opportunity()!"
               [canUpdate]="canUpdate()"
               [suggestions]="whoSuggestions()"
+              [loadingInsightsSuggestions]="loadingInsightsSuggestions()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
               (changesDetected)="handleSectionChangesDetected('who')"
               (changesSavedOrDiscarded)="handleSectionChangesSaved('who')"
@@ -426,6 +513,7 @@
               [opportunity]="opportunity()!"
               [canUpdate]="canUpdate()"
               [suggestions]="whereSuggestions()"
+              [loadingInsightsSuggestions]="loadingInsightsSuggestions()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
               (changesDetected)="handleSectionChangesDetected('where')"
               (changesSavedOrDiscarded)="handleSectionChangesSaved('where')"
@@ -444,6 +532,7 @@
               [opportunity]="opportunity()!"
               [canUpdate]="canUpdate()"
               [suggestions]="whenSuggestions()"
+              [loadingInsightsSuggestions]="loadingInsightsSuggestions()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
               (changesDetected)="handleSectionChangesDetected('when')"
               (changesSavedOrDiscarded)="handleSectionChangesSaved('when')"
@@ -486,6 +575,8 @@
             <app-opportunity-statement-section
               [opportunity]="opportunity()!"
               [canUpdate]="canUpdate()"
+              [showApproverGuidance]="showDecisionGuidance()"
+              [sectionSaveTrigger]="sectionSaveTrigger()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
             />
           </div>
@@ -502,6 +593,7 @@
               [opportunity]="opportunity()!"
               [canUpdate]="canUpdate()"
               [suggestions]="teamSuggestions()"
+              [loadingInsightsSuggestions]="loadingInsightsSuggestions()"
               [sectionSaveTrigger]="sectionSaveTrigger()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
               (changesDetected)="handleSectionChangesDetected('team')"
@@ -554,6 +646,7 @@
                   styleClass="w-full lg:w-auto"
                 />
               </div>
+              </div>
             </div>
           </div>
         </div>
@@ -563,3 +656,18 @@
   }
 </div>
 <!-- End Main Container -->
+
+<!-- Go/No-Go Decision Dialogs -->
+@if (opportunity()) {
+  <app-approve-opportunity-dialog
+    [(visible)]="showApproveDialog"
+    [opportunity]="opportunity()!"
+    (decisionConfirmed)="onApproveConfirmed($event)"
+  />
+
+  <app-reject-opportunity-dialog
+    [(visible)]="showRejectDialog"
+    [opportunity]="opportunity()!"
+    (decisionConfirmed)="onRejectConfirmed($event)"
+  />
+}

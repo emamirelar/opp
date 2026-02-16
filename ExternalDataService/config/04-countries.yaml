@@ -1,0 +1,85 @@
+metadata:
+  name: "countries"
+  description: "Country master data sync from ERP"
+  version: "1.0"
+  enabled: true
+  max_retry_attempts: 1
+  timeout_minutes: 5
+
+source:
+  type: "bigquery"
+  
+  query: |
+    SELECT
+      Country AS Country_ISO2
+      , Country_ISO3
+      , Country_Description AS Name
+      , Region_Description
+      , Continent_Description
+      , 1 AS Status
+      , CURRENT_TIMESTAMP() as last_modified
+    FROM
+      `unopsreporting.Partners.Country`
+    WHERE
+      Country_Status = 'N'
+  
+  primary_key_field: "Country_ISO2"
+  batch_size: 1000
+
+destination:
+  table_name: "Countries"
+  schema: "public"
+  manage_table_structure: true
+  add_standard_fields: true
+  
+  field_mappings:
+    - source_field: "Name"
+      destination_field: "Name"  # Needed to implement IBaseBusinessEntity
+      data_type: "varchar(255)"
+      is_required: true
+
+    - source_field: "Status"
+      destination_field: "Status"  # Needed to implement IBaseBusinessEntity
+      data_type: "integer"         # Must be integer (IBaseBusinessEntity requirement)
+      is_required: false
+
+    - source_field: "Country_ISO2"
+      destination_field: "Iso2Code"
+      data_type: "varchar(5)"
+      is_required: true
+      is_unique: true
+    
+    - source_field: "Country_ISO3"
+      destination_field: "Iso3Code"
+      data_type: "varchar(3)"
+      is_required: false
+    
+    - source_field: "Region_Description"
+      destination_field: "RegionDescription"
+      data_type: "varchar(255)"
+      is_required: false
+    
+    - source_field: "Continent_Description"
+      destination_field: "ContinentDescription"
+      data_type: "varchar(255)"
+      is_required: false
+
+sync_options:
+  sync_mode: Upsert
+  batch_processing: true
+  use_bulk_upsert: true  # Requires unique Iso2Code; run AddUniqueConstraintsForTables migration
+
+validation:
+  required_source_fields:
+    - "Country_ISO2"
+    - "Name"
+  
+error_handling:
+  on_connection_error: RetryWithBackoff
+  on_mapping_error: SkipRecord
+
+logging:
+  log_level: "Debug"
+  log_sql_queries: true
+  log_record_details: true
+

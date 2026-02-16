@@ -749,7 +749,7 @@ INTRODUCTORY_PARAGRAPH (Highlight key interactions from the last month with part
 - **DATE | INTERACTION_TYPE | CONTACT_NAME, CONTACT_TITLE | SUBJECT**
   - Key discussion: DESCRIPTION
   - Project context: PROJECT_INFO or "not related to a specific project"
-  - [See more](/#/partnerships/interactions/id){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/id){:target="_blank" rel="noopener noreferrer"}
 
 (Repeat for each partner with recent interactions)
 
@@ -789,7 +789,7 @@ Over the past month, UNOPS has maintained active engagement with 3 UN agencies, 
 - **October 2, 2025 | Meeting | Sarah Johnson, Regional Director | Joint Logistics Coordination in Sudan**
   - Key discussion: Discussed coordination of logistics operations for humanitarian response in Sudan, including shared warehousing and transport solutions
   - Project context: Sudan Emergency Response Programme
-  - [See more](/#/partnerships/interactions/id){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/id){:target="_blank" rel="noopener noreferrer"}
 
 - **September 28, 2025 | Email | Michael Chen, Procurement Officer | Framework Agreement Review**
   - Key discussion: Reviewed draft framework agreement for procurement services in the Asia-Pacific region
@@ -801,7 +801,7 @@ Over the past month, UNOPS has maintained active engagement with 3 UN agencies, 
 - **October 1, 2025 | Conference Call | Maria Rodriguez, Country Director | Education Infrastructure Project**
   - Key discussion: Planning phase for school construction project in Madagascar, including site selection and community engagement strategy
   - Project context: Madagascar Education Access Programme
-  - [See more](/#/partnerships/interactions/id){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/id){:target="_blank" rel="noopener noreferrer"}
 
 ## Partnership Analysis
 
@@ -902,7 +902,7 @@ INTRODUCTORY_PARAGRAPH (Highlight key interactions from the last month with this
   - Key discussion: DESCRIPTION
   - Participants: CONTACT_NAMES from partner
   - Project context: PROJECT_INFO or "not related to a specific project"
-  - [See more](/#/partnerships/interactions/INTERACTION_ID){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/INTERACTION_ID){:target="_blank" rel="noopener noreferrer"}
 
 (List up to 10 most recent interactions)
 
@@ -925,19 +925,19 @@ Over the past month, UNOPS has maintained strong engagement with the World Bank,
   - Key discussion: Discussed framework agreement for regional procurement services and capacity building initiatives
   - Participants: Michael Chen (Senior Procurement Officer), Lisa Wang (Regional Director) from partner
   - Project context: Regional Infrastructure Programme, Project #45678
-  - [See more](/#/partnerships/interactions/123){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/123){:target="_blank" rel="noopener noreferrer"}
 
 - **2025-10-05 | Email | David Martinez, B5516 | Proposal Follow-up**
   - Key discussion: Follow-up on submitted proposal for education infrastructure project
   - Participants: James Brown (Programme Specialist) from partner
   - Project context: not related to a specific project
-  - [See more](/#/partnerships/interactions/124){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/124){:target="_blank" rel="noopener noreferrer"}
 
 - **2025-09-28 | Conference Call | Anna Thompson, B5520 | Project Implementation Review**
   - Key discussion: Quarterly review of ongoing water infrastructure projects and budget allocation
   - Participants: Robert Lee (Country Manager), Maria Santos (Finance Officer) from partner
   - Project context: Kenya Water Supply Programme, Project #34567
-  - [See more](/#/partnerships/interactions/125){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/125){:target="_blank" rel="noopener noreferrer"}
 
 ## Interaction Statistics
 
@@ -973,7 +973,7 @@ Do not include markdown code blocks or backticks in the response. Focus on actio
 {recentInteractions}
 
 Each interaction includes:
-- id: Use this to create links like [See more](/#/partnerships/interactions/{id}){:target="_blank" rel="noopener noreferrer"}
+- id: Use this to create links like [See more](/partnerships/interactions/{id}){:target="_blank" rel="noopener noreferrer"}
 - subject: The interaction subject
 - description: Details about the interaction
 - date: Interaction date
@@ -1128,7 +1128,7 @@ INTRODUCTORY_PARAGRAPH (Highlight key interactions from the last month with part
 - **DATE | INTERACTION_TYPE | CONTACT_NAME, CONTACT_TITLE | SUBJECT**
   - Key discussion: DESCRIPTION
   - Project context: PROJECT_INFO or "not related to a specific project"
-  - [See more](/#/partnerships/interactions/id){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/id){:target="_blank" rel="noopener noreferrer"}
 
 (Repeat for each partner with recent interactions)
 
@@ -1168,19 +1168,19 @@ Over the past month, UNOPS has maintained active engagement with 3 UN agencies, 
 - **October 2, 2025 | Meeting | Sarah Johnson, Regional Director | Joint Logistics Coordination in Sudan**
   - Key discussion: Discussed coordination of logistics operations for humanitarian response in Sudan, including shared warehousing and transport solutions
   - Project context: Sudan Emergency Response Programme
-  - [See more](/#/partnerships/interactions/123){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/123){:target="_blank" rel="noopener noreferrer"}
 
 - **September 28, 2025 | Email | Michael Chen, Procurement Officer | Framework Agreement Review**
   - Key discussion: Reviewed draft framework agreement for procurement services in the Asia-Pacific region
   - Project context: not related to a specific project
-  - [See more](/#/partnerships/interactions/124){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/124){:target="_blank" rel="noopener noreferrer"}
 
 **UNICEF**
 
 - **October 1, 2025 | Conference Call | Maria Rodriguez, Country Director | Education Infrastructure Project**
   - Key discussion: Planning phase for school construction project in Madagascar, including site selection and community engagement strategy
   - Project context: Madagascar Education Access Programme
-  - [See more](/#/partnerships/interactions/125){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/125){:target="_blank" rel="noopener noreferrer"}
 
 ## Partnership Analysis
 
@@ -1234,7 +1234,7 @@ Do not include markdown code blocks or backticks in the response. Focus on actio
 {recentInteractions}
 
 Each interaction in recentInteractions includes:
-- id: Use this to create links like [See more](/#/partnerships/interactions/{id}){:target="_blank" rel="noopener noreferrer"}
+- id: Use this to create links like [See more](/partnerships/interactions/{id}){:target="_blank" rel="noopener noreferrer"}
 - subject: The interaction subject
 - description: Details about the interaction
 - date: Interaction date (YYYY-MM-DD format)
@@ -1468,7 +1468,7 @@ BRIEF_DESCRIPTION (Summarize the duration and nature of UNOPS engagement with th
 - **DATE | INTERACTION_TYPE | SUBJECT**
   - Description: BRIEF_DESCRIPTION
   - UNOPS participants: USER_NAMES
-  - [See more](/#/partnerships/interactions/INTERACTION_ID){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/INTERACTION_ID){:target="_blank" rel="noopener noreferrer"}
 
 (List up to 10 most recent interactions)
 
@@ -1516,17 +1516,17 @@ Dr. Sarah Johnson has been a key contact for UNOPS since 2022, with consistent e
 - **2025-10-08 | Meeting | Joint Procurement Framework Discussion**
   - Description: Discussed framework agreement for regional procurement services and capacity building initiatives
   - UNOPS participants: Michael Chen (B5507), Lisa Wang (B5516)
-  - [See more](/#/partnerships/interactions/123){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/123){:target="_blank" rel="noopener noreferrer"}
 
 - **2025-09-25 | Email | Project Budget Review**
   - Description: Follow-up on quarterly budget allocation for Kenya Water Supply Programme
   - UNOPS participants: David Martinez (B5520)
-  - [See more](/#/partnerships/interactions/124){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/124){:target="_blank" rel="noopener noreferrer"}
 
 - **2025-09-15 | Conference Call | Strategic Planning Session**
   - Description: Planning for 2026 joint initiatives and funding opportunities
   - UNOPS participants: Anna Thompson (B5507), James Brown (B5525)
-  - [See more](/#/partnerships/interactions/125){:target="_blank" rel="noopener noreferrer"}
+  - [See more](/partnerships/interactions/125){:target="_blank" rel="noopener noreferrer"}
 
 ### Contact Statistics
 
@@ -1601,7 +1601,7 @@ Do not include markdown code blocks or backticks in the response. Focus on provi
 {interactions}
 
 Each interaction includes:
-- id: Use this to create links like [See more](/#/partnerships/interactions/{id}){:target="_blank" rel="noopener noreferrer"}
+- id: Use this to create links like [See more](/partnerships/interactions/{id}){:target="_blank" rel="noopener noreferrer"}
 - subject: The interaction subject
 - description: Details about the interaction
 - date: Interaction date
@@ -2625,11 +2625,13 @@ Return a JSON object with this exact structure (NO actionLabel field):
 5. **CHECK BENEFICIARY DATA**: If beneficiaries to be determined is false but estimated counts are missing, flag as incomplete
 6. **CHECK HIGH RISKS**: If high risks not acknowledged and opportunity is in advanced workflow stage, flag as warning
 7. **CRITICAL - TEAM SECTION ANALYSIS**:
-   - **DO NOT suggest adding Opportunity Manager** - It defaults to the creator and can be edited by users. Do not generate insights or suggestions about Opportunity Manager assignment.
-   - **DO NOT suggest adding roles that already exist** - Check stakeholdersCount and stakeholders field. If roles like "Opportunity Manager", "Partnership Lead", "Reviewer", or "Internal Stakeholder" are already present, DO NOT suggest adding them.
-   - **FOCUS ON RESPONSIBLE ORG UNIT**: If responsibleOrgUnitName is empty, missing, or "-", generate HIGH PRIORITY suggestion with actionTarget "TEAM" to add Responsible Org Unit. Explain that adding an Org Unit will automatically populate Internal Stakeholders (like Director of Administration/DoA) that are relevant to that org unit. These auto-populated stakeholders cannot be manually edited but appear based on the org unit structure.
-   - **PERSONNEL IDENTIFICATION**: If Responsible Org Unit exists, identify if additional personnel (likely from that org unit) may be needed to support Opportunity Development post Go. Consider the opportunity scope, complexity, and delivery modality when suggesting personnel needs.
-   - **TEAM COMPLETENESS**: Only suggest adding Responsible Org Unit if it''s missing. Do not suggest adding individual stakeholders if they already exist in the stakeholders list.
+   - **DO NOT suggest adding Opportunity Manager** - It has a dedicated field and defaults to the creator. Do not generate insights or suggestions about Opportunity Manager assignment.
+   - **AUTO-POPULATED ROLES - NEVER SUGGEST ASSIGNING THESE**: The following roles are AUTO-POPULATED from the Responsible Org Unit and CANNOT be manually assigned by users: Regional Director, Region Deputy Director, Hub Director, Hub Deputy Director, OrgUnit Director / Manager, OrgUnit Deputy Director / Manager, DoA1, DoA2, DoA3, DoA4. NEVER suggest assigning specific individuals to these roles. If these roles show "Unknown" or empty users, this is an administrative configuration issue - do NOT flag this as something the user can fix.
+   - **DO NOT MENTION SPECIFIC ROLE NAMES**: Users can only add generic "Internal Stakeholders" or "Collaborators" (with expertise areas).
+   - **FOCUS ON RESPONSIBLE ORG UNIT**: If responsibleOrgUnitName is empty, missing, or "-", generate HIGH PRIORITY suggestion with actionTarget "TEAM" to add Responsible Org Unit. Explain that adding an Org Unit will automatically populate Internal Stakeholders (directors, managers, and DoA holders) that are relevant to that org unit. These auto-populated stakeholders cannot be manually edited.
+   - **ORG UNIT MISMATCH AWARENESS**: Check hasOrgUnitMismatch field. If "Yes", the selected Responsible Org Unit differs from the org units normally responsible for some implementation countries. The countriesWithDifferentOrgUnit field shows which countries have a different normally responsible org unit. This is NOT an error - it''s a valid business decision that users have already confirmed. Do NOT suggest changing the responsible org unit. You may note this as an observation but should not flag it as a problem.
+   - **WHAT USERS CAN ADD**: Users can only manually add: (1) "Internal Stakeholders" - generic internal team members, and (2) "Collaborators" - team members with specific expertise areas. Do NOT suggest adding specific role types.
+   - **TEAM COMPLETENESS**: Only suggest adding Responsible Org Unit if it''s missing. For personnel suggestions, suggest adding "Internal Stakeholders" or "Collaborators" (with relevant expertise) if team gaps are identified based on opportunity complexity. Do NOT mention specific role names.
 8. Generate 3-7 insights covering strengths, concerns, and observations
 9. Generate 3-7 actionable suggestions with specific recommendations
 10. **CRITICAL FOR SUGGESTIONS**: Aim to provide at least ONE suggestion per section (WHAT, WHY, WHO, WHEN, WHERE, TEAM) if improvement opportunities exist in those sections. Not all sections are mandatory, but cover the sections that need attention.
@@ -3529,578 +3531,63 @@ For each person, add a "relevanceExplanation" field with a one-line explanation 
         "Feature", "UseCache", "CacheInvalidationMinutes"
     ) VALUES (
         'opportunity_statement_validation',
-        'You are an expert analyst validating opportunity statement markdown against structured opportunity data. Return ONLY valid JSON.
-
-🚨🚨🚨 CRITICAL RULE #1 - READ THIS FIRST 🚨🚨🚨
-**IF MARKDOWN AND DATA SAY THE SAME THING → DO NOT FLAG IT**
-
-Examples of SAME (DO NOT FLAG):
-- Markdown: "No UNCF Outcomes" = Data: "No UNCF Outcomes" → IDENTICAL → DO NOT FLAG
-- Markdown: "No SDGs" = Data: "No SDGs" → IDENTICAL → DO NOT FLAG
-- Markdown: "No risks" = Data: "No risks" → IDENTICAL → DO NOT FLAG
-- Markdown: "5,214,368.48 USD (4,500,000.00 EUR)" = Data: "4,500,000.00 EUR (5,214,368.48 USD)" → SAME AMOUNTS → DO NOT FLAG
-- Markdown: "$45M" = Data: 45214368.48 → REASONABLE ROUNDING → DO NOT FLAG
-
-**ONLY FLAG when markdown states DIFFERENT facts than data**
-- Markdown: "No SDGs" but Data: "SDG 6: Clean Water" → DIFFERENT → FLAG THIS
-- Markdown: "$500K" but Data: 45214368.48 → DIFFERENT → FLAG THIS
-
-INPUT FORMAT:
-The input JSON contains:
-- existingStatementMarkdown: The current opportunity statement markdown stored in the database
-- opportunityData: The structured opportunity data (JSON object with all current opportunity information)
-- opportunityId: The opportunity identifier
-
-VALIDATION TASK:
-Validate whether the existingStatementMarkdown accurately reflects the information in opportunityData. Identify material factual inaccuracies where markdown states DIFFERENT facts than data shows.
-
-🚨🚨🚨 BEFORE YOU DO ANYTHING ELSE - READ THESE EXAMPLES 🚨🚨🚨
-
-**THESE ARE NOT INACCURACIES (DO NOT FLAG):**
-1. Markdown: "UNCF Outcomes: No UNCF Outcomes" | Data: uncfOutcomes = "No UNCF Outcomes"
-   → **THEY SAY THE SAME THING** → DO NOT FLAG
-
-2. Markdown: "SDGs: No SDGs" | Data: sdGs = "No SDGs"
-   → **THEY SAY THE SAME THING** → DO NOT FLAG
-
-3. Markdown: "UNOPS Mission alignments: No UNOPS Mission alignments" | Data: unopsMissions = "No UNOPS Mission alignments"
-   → **THEY SAY THE SAME THING** → DO NOT FLAG
-
-4. Markdown: "NIC-Union Europea: 5,214,368.48 USD (4,500,000.00 EUR)" | Data: fundingPartner amount = "4,500,000.00 EUR (5,214,368.48 USD)"
-   → **SAME AMOUNTS, JUST DIFFERENT ORDER OF USD/EUR** → DO NOT FLAG
-
-5. Markdown: "Budget of $45M" | Data: totalBudget = 45214368.48
-   → **REASONABLE ROUNDING (0.5% difference)** → DO NOT FLAG
-
-**THESE ARE INACCURACIES (SHOULD FLAG):**
-1. Markdown: "SDGs: No SDGs" | Data: sdGs = ["SDG 6: Clean Water and Sanitation"]
-   → **MARKDOWN SAYS "NO" BUT DATA HAS ACTUAL SDG** → FLAG THIS
-
-2. Markdown: "Budget of $5M" | Data: totalBudget = 45214368.48
-   → **MARKDOWN SHOWS $5M BUT DATA SHOWS $45M (88% off)** → FLAG THIS
-
-3. Markdown: "Funded by World Bank" | Data: fundingPartners = ["AfDB", "EU"]
-   → **MARKDOWN LISTS WRONG PARTNERS** → FLAG THIS
-
-VALIDATION PRINCIPLES:
-1. **Material Inaccuracies Only**: Only flag factual information in the markdown that contradicts the structured data
-2. **Ignore Absence**: DO NOT flag information that is missing/absent in both the markdown and the structured data
-3. **Placeholder Equivalence**: If structured data is null/empty/missing, ANY placeholder in markdown is acceptable ("No [field]", "[Information not available]", "[To be determined]", etc.)
-4. **Factual Accuracy**: Focus on verifying numbers, dates, names, locations, amounts match between markdown and data
-5. **Narrative vs Data**: The markdown is a narrative document - it may describe data in different words, formats, or structures as long as it''s factually accurate
-6. **Number Tolerance**: Markdown can round large numbers (e.g., $45,214,368.48 → "$45M") as long as rounding is reasonable and doesn''t materially misrepresent the value
-7. **🚨 SAME MEANS SAME**: If markdown and data say the SAME THING (even in slightly different words), DO NOT FLAG. Example: Markdown "No risks identified" = Data "No risks identified" → DO NOT FLAG (they agree!)
-8. **CRITICAL**: Only flag when markdown states something MATERIALLY DIFFERENT from what the data shows, not when they agree or are reasonably formatted
-
-WHAT TO FLAG AS INACCURACIES (Markdown contradicts data):
-
-**1. Budget/Financial Inaccuracies**
-- Markdown shows budget amount that differs from opportunityData.totalBudget
-- Markdown lists funding partners not in opportunityData.fundingPartners
-- Markdown shows funding amounts that don''t match opportunityData.fundingPartners[].amount
-
-**2. Timeline Inaccuracies**
-- Markdown shows start/end dates that differ from opportunityData.targetSigningDate or opportunityData.implementationStartDate or opportunityData.targetDeliveryDate
-- Markdown shows duration that contradicts calculated duration from data dates
-- **CRITICAL DATE VALIDATION**: Dates in opportunityData are in ISO format (yyyy-MM-dd, e.g., "2025-12-12"). The markdown may display dates in readable format (e.g., "December 12, 2025" or "12 December 2025"). When validating:
-  * Extract the actual date from markdown (e.g., "December 12, 2025" → 2025-12-12)
-  * Compare the extracted date with the ISO date in opportunityData
-  * **FLAG if dates differ by even ONE day** (e.g., data: "2025-12-12" but markdown: "December 11, 2025" or "11 December 2025" → FLAG THIS)
-  * **FLAG if dates differ by even ONE day** (e.g., data: "2025-05-15" but markdown: "May 14, 2025" or "14 May 2025" → FLAG THIS)
-  * Do NOT adjust for timezones - the date in opportunityData is the correct date
-
-**3. Geographic Inaccuracies**
-- Markdown mentions countries not in opportunityData.countries[]
-- Markdown excludes countries that are in opportunityData.countries[]
-
-**4. Partner/Stakeholder Inaccuracies**
-- Markdown lists funding partners not in opportunityData.fundingPartners[]
-- Markdown lists client partners not in opportunityData.clientPartners[]
-- Markdown lists stakeholders not in opportunityData.contactStakeholders[]
-
-**5. Scope/Deliverable Inaccuracies**
-- Markdown lists deliverables not in opportunityData.deliverables[]
-- Markdown shows delivery modality that contradicts opportunityData.deliveryModality
-
-**6. Strategic Alignment Inaccuracies**
-- Markdown lists SDGs not in opportunityData.sdGs[]
-- Markdown lists UNOPS missions not in opportunityData.unopsMissions[]
-- Markdown lists UNCF outcomes not in opportunityData.uncfOutcomes[]
-
-**7. Beneficiary Inaccuracies**
-- Markdown shows beneficiary numbers that differ from opportunityData.directBeneficiaries or opportunityData.indirectBeneficiaries
-- Markdown lists beneficiary institutions not in opportunityData.beneficiaryInstitutions
-
-**8. Basic Information Inaccuracies**
-- Markdown shows opportunity name that differs from opportunityData.name
-- Markdown shows org unit that differs from opportunityData.responsibleOrgUnitName
-- Markdown shows org unit code that differs from opportunityData.responsibleOrgUnitCode
-- **Opportunity Manager Inaccuracy**: Markdown shows Opportunity Manager name/email that differs from the stakeholder in opportunityData.stakeholders where RoleName equals "Opportunity Manager". The stakeholders list format is: "- UserName (UserEmail): RoleName [Auto-assigned/Manually assigned]". Extract the UserName and UserEmail from the entry where RoleName is "Opportunity Manager" and compare with what''s shown in the markdown. If data has an Opportunity Manager but markdown shows "[Information not available]" → FLAG THIS. If data has no Opportunity Manager (stakeholders list doesn''t contain RoleName "Opportunity Manager") but markdown shows a name → FLAG THIS.
-
-WHAT NOT TO FLAG (DO NOT REPORT AS INACCURACIES):
-
-**1. Formatting/Presentation Differences** (Same facts, different format)
-- "$45,000,000" in data shown as "$45 million" or "$45M" in markdown → DO NOT FLAG
-- "$45,214,368.48" in data shown as "$45M" or "$45 million" in markdown → DO NOT FLAG (reasonable rounding)
-- "$45,214,368.48" in data shown as "approximately $45 million" in markdown → DO NOT FLAG
-- "2026-03-30" in data shown as "March 30, 2026" or "March 2026" in markdown → DO NOT FLAG
-- "2500000" in data shown as "2.5 million people" in markdown → DO NOT FLAG
-- "World Bank" in data shown as "The World Bank" in markdown → DO NOT FLAG
-
-**CRITICAL - Number Rounding/Approximation:**
-- Markdown narratives commonly round large numbers to the nearest million, thousand, etc.
-- If data shows "$45,214,368.48", markdown can say "$45M", "$45 million", "approximately $45 million"
-- Only flag if rounding is so extreme it materially misrepresents the amount
-- Examples of acceptable rounding:
-  * $45,214,368 → "$45M" or "$45 million" ✓ DO NOT FLAG
-  * $1,234,567 → "$1.2M" or "approximately $1.2 million" ✓ DO NOT FLAG
-  * $987,654 → "nearly $1 million" or "$1M" ✓ DO NOT FLAG
-- Examples of unacceptable misrepresentation (should flag):
-  * $45,214,368 → "$500,000" or "$500K" ✗ FLAG (off by 90x)
-  * $45,214,368 → "$5M" ✗ FLAG (off by 9x)
-
-**2. Narrative vs Structured Data** (Markdown uses prose to describe data)
-- Data has 4 deliverables, markdown says "Multiple deliverables including..." → DO NOT FLAG if accurate
-- Data has 3 partners, markdown says "Several key partners" → DO NOT FLAG if accurate
-- Markdown reorganizes or summarizes data as long as facts are accurate → DO NOT FLAG
-
-**3. 🚨 CRITICAL - Missing Data in BOTH (Data is null/empty AND markdown uses placeholder)**
-- Data: opportunityData.uncfOutcomes = null/empty, Markdown: "No UNCF Outcomes" → DO NOT FLAG
-- Data: opportunityData.sdGs = null/empty, Markdown: "[Information not available]" → DO NOT FLAG
-- Data: opportunityData.clientPartners = null/empty, Markdown: "No client partners" → DO NOT FLAG
-- Data: opportunityData.unopsMissions = null/empty, Markdown: "[To be determined]" → DO NOT FLAG
-- **RULE**: If data field is null/empty/missing, ANY placeholder expression in markdown is acceptable
-
-**4. Placeholder Equivalence** (All placeholders for missing data are equivalent)
-- "No [field]", "[Information not available]", "[To be determined]", "[TBD]", "Not specified", "None specified"
-- ALL these mean the same thing: data is missing
-- If data is null/empty, markdown can use ANY of these placeholders → DO NOT FLAG
-
-**5. Information Present in Data but Reasonably Summarized**
-- Data has 8 countries, markdown says "Multiple countries in Eastern Africa" → DO NOT FLAG if factually accurate
-- Data has detailed description, markdown provides concise summary → DO NOT FLAG if no contradictions
-
-**6. Contextual Descriptions** (Markdown adds context that doesn''t contradict data)
-- Markdown adds "facing significant water scarcity" when data shows water-related project → DO NOT FLAG
-- Markdown provides background context not in structured data → DO NOT FLAG unless contradictory
-
-VALIDATION EXAMPLES (Markdown vs Data):
-
-**Example 1: SHOULD FLAG - Budget inaccuracy**
-Data: opportunityData.totalBudget = 45000000
-Markdown: "The project budget is $500,000"
-→ FLAG: "Budget - Markdown shows $500,000 but data indicates $45,000,000"
-
-**Example 2: SHOULD NOT FLAG - Same budget, different format**
-Data: opportunityData.totalBudget = 45000000
-Markdown: "The project budget is $45 million"
-→ DO NOT FLAG (same amount, formatted differently in markdown)
-
-**Example 2b: SHOULD NOT FLAG - Reasonable rounding**
-Data: opportunityData.totalBudget = 45214368.48
-Markdown: "With a budget of $45M"
-→ DO NOT FLAG (45.2M reasonably rounded to $45M for narrative purposes)
-
-**Example 3: SHOULD FLAG - Partners inaccuracy**
-Data: opportunityData.fundingPartners = ["World Bank", "AfDB", "EU", "Gates Foundation"]
-Markdown: "Funded by World Bank and USAID"
-→ FLAG: "Funding Partners - Markdown lists USAID which is not in data, and omits AfDB, EU, Gates Foundation"
-
-**Example 4: SHOULD NOT FLAG - Partner name variation**
-Data: opportunityData.fundingPartners = [{"name": "World Bank"}]
-Markdown: "Funded by The World Bank"
-→ DO NOT FLAG (same entity, markdown adds article "The")
-
-**Example 5: SHOULD FLAG - Date inaccuracy**
-Data: opportunityData.targetSigningDate = "2025-12-12"
-Markdown: "Target signing date: December 11, 2025"
-→ FLAG: "Target Signing Date - Opportunity Statement shows December 11, 2025 but data indicates December 12, 2025"
-
-**Example 5b: SHOULD FLAG - Date off by one day**
-Data: opportunityData.targetDeliveryDate = "2025-05-15"
-Markdown: "Target delivery date: May 14, 2025"
-→ FLAG: "Target Delivery Date - Opportunity Statement shows May 14, 2025 but data indicates May 15, 2025"
-
-**Example 6: SHOULD NOT FLAG - Date format variation**
-Data: opportunityData.targetSigningDate = "2026-03-30"
-Markdown: "Project starts March 2026"
-→ DO NOT FLAG (same date, markdown shows month/year format)
-
-**Example 6b: SHOULD NOT FLAG - Same date, different format**
-Data: opportunityData.targetSigningDate = "2025-12-12"
-Markdown: "Target signing date: December 12, 2025" or "12 December 2025"
-→ DO NOT FLAG (same date, just formatted differently)
-
-**Example 7: SHOULD FLAG - Beneficiaries inaccuracy**
-Data: opportunityData.directBeneficiaries = 2500000
-Markdown: "Direct beneficiaries: 1,000 people"
-→ FLAG: "Direct Beneficiaries - Markdown shows 1,000 people but data indicates 2,500,000"
-
-**Example 8: SHOULD NOT FLAG - Beneficiaries format**
-Data: opportunityData.directBeneficiaries = 2500000
-Markdown: "Direct beneficiaries: 2.5 million people"
-→ DO NOT FLAG (same number, formatted as millions in markdown)
-
-**Example 8b: SHOULD FLAG - Opportunity Manager missing**
-Data: opportunityData.stakeholders = "- John Doe (john.doe@unops.org): Opportunity Manager [Manually assigned]"
-Markdown: "Unit and opportunity manager: [Information not available], [Information not available]"
-→ FLAG: "Opportunity Manager - Opportunity Statement shows [Information not available] but data indicates John Doe (john.doe@unops.org) is the Opportunity Manager"
-
-**Example 8c: SHOULD FLAG - Opportunity Manager incorrect**
-Data: opportunityData.stakeholders = "- John Doe (john.doe@unops.org): Opportunity Manager [Manually assigned]"
-Markdown: "Unit and opportunity manager: Global Infrastructure Unit (B5507), Jane Smith (jane.smith@unops.org)"
-→ FLAG: "Opportunity Manager - Opportunity Statement shows Jane Smith (jane.smith@unops.org) but data indicates John Doe (john.doe@unops.org) is the Opportunity Manager"
-
-**Example 8d: SHOULD NOT FLAG - Opportunity Manager correct**
-Data: opportunityData.stakeholders = "- John Doe (john.doe@unops.org): Opportunity Manager [Manually assigned]"
-Data: opportunityData.responsibleOrgUnitName = "Global Infrastructure Unit"
-Data: opportunityData.responsibleOrgUnitCode = "B5507"
-Markdown: "Unit and opportunity manager: Global Infrastructure Unit (B5507), John Doe (john.doe@unops.org)"
-→ DO NOT FLAG (Opportunity Manager matches data)
-
-**Example 9: SHOULD NOT FLAG - Missing in both data and markdown**
-Data: opportunityData.uncfOutcomes = null
-Markdown: "UN Cooperation Framework: No UNCF Outcomes"
-→ DO NOT FLAG (data is null, markdown acknowledges absence with placeholder)
-
-**Example 10: SHOULD NOT FLAG - Missing in both (different placeholders)**
-Data: opportunityData.sdGs = null
-Markdown: "SDGs: [Information not available]"
-→ DO NOT FLAG (data is null, markdown uses placeholder - placeholders are equivalent)
-
-**Example 11: SHOULD NOT FLAG - Markdown and data say the same thing**
-Data: opportunityData.riskDescription = "No risks identified"
-Markdown: "Risk: No risks identified"
-→ DO NOT FLAG (markdown and data both say "No risks identified" - they agree!)
-
-**Example 12: SHOULD NOT FLAG - Semantic equivalence**
-Data: opportunityData.highRisksAcknowledged = false
-Markdown: "High risks acknowledged: No"
-→ DO NOT FLAG (false = "No" - semantically equivalent)
-
-VALIDATION DECISION FRAMEWORK:
-
-**Step 1: Check Data Availability**
-- Is the data field in opportunityData null/empty/missing?
-- If YES and markdown uses ANY placeholder → DO NOT FLAG (acceptable)
-- If NO, proceed to Step 2
-
-**Step 2: Extract Fact from Data**
-- What is the actual value/fact in the structured opportunityData?
-- Extract the relevant field (e.g., totalBudget, countries[], fundingPartners[])
-
-**Step 3: Extract Fact from Markdown**
-- What does the markdown statement say about this same fact?
-- Look for the corresponding information in the narrative
-
-**Step 4: Compare Facts (Not Formats)**
-- Do they represent the SAME factual information?
-- **🚨 CRITICAL CHECK**: Are markdown and data saying the SAME THING?
-  * If markdown = "No risks identified" and data = "No risks identified" → THEY AGREE → DO NOT FLAG
-  * If markdown = "High risks acknowledged: No" and data = "highRisksAcknowledged: false" → THEY AGREE → DO NOT FLAG
-- Consider format variations (45000000 = "$45 million" = "$45M")
-- Consider reasonable rounding (45214368.48 = "$45M" = "approximately $45 million")
-  * Calculate: Is markdown within 10% of data value? If yes → DO NOT FLAG
-  * Example: $45,214,368 rounded to "$45M" is 0.5% difference → acceptable
-- Consider name variations ("World Bank" = "The World Bank")
-- Consider date format variations ("2026-03-30" = "March 2026")
-- Consider semantic equivalence ("No risks" = "No risks identified" = "risks: []" = "risks: null")
-
-**Step 5: Apply Flagging Decision**
-- If markdown states DIFFERENT fact than data → FLAG (inaccuracy)
-- If markdown states SAME fact in different format/words → DO NOT FLAG
-- If data is null/empty and markdown uses placeholder → DO NOT FLAG
-- If uncertain whether it''s the same fact → DO NOT FLAG (err on the side of not flagging)
-
-INACCURACY DESCRIPTION FORMAT:
-
-When describing inaccuracies, use this format:
-**"[Topic] - Markdown [describes what markdown says], but data [describes what data shows]"**
-
-**IMPORTANT: Use the term "Opportunity Statement" instead of "Markdown" in the output.**
-
-Examples:
-- "Budget - Opportunity Statement shows $500,000, but data indicates $45,000,000"
-- "Funding Partners - Opportunity Statement lists World Bank and USAID, but data shows World Bank, AfDB, EU, and Gates Foundation (USAID not in data)"
-- "Start Date - Opportunity Statement shows January 2025, but data indicates March 30, 2026"
-- "Direct Beneficiaries - Opportunity Statement shows 1,000 people, but data indicates 2,500,000"
-- "Countries - Opportunity Statement lists Kenya only, but data includes Kenya, Tanzania, and Uganda"
-- "SDGs - Opportunity Statement shows SDG 6 (Clean Water), but data shows SDG 2 (Zero Hunger)"
-
-Use clear, specific descriptions that show the factual contradiction between markdown narrative and structured data.
-
-**IMPORTANT: Use the term "Opportunity Statement" instead of "Markdown" in the output.**
-
-OUTPUT FORMAT:
-
-**If NO inaccuracies found (markdown is accurate):**
-{
-  "isAligned": true,
-  "misalignmentItems": [],
-  "message": "The existing statement accurately reflects the current opportunity data."
-}
-
-**If inaccuracies found (markdown contradicts data):**
-{
-  "isAligned": false,
-  "misalignmentItems": [
-    "Budget - Markdown shows $500,000 but data indicates $45,000,000",
-    "Funding Partners - Markdown lists USAID (not in data) and omits AfDB, EU (which are in data)",
-    "Direct Beneficiaries - Markdown shows 1,000 people but data indicates 2,500,000"
-  ],
-  "message": "The existing statement has 3 factual inaccuracy(ies) that contradict the current opportunity data."
-}
-
-CRITICAL REQUIREMENTS:
-- **isAligned LOGIC**: 
-  * isAligned = true if misalignmentItems array is empty (markdown is accurate)
-  * isAligned = false if misalignmentItems array has any items (markdown has inaccuracies)
-- **misalignmentItems**: MUST be an array of strings, NOT objects
-  * Return empty array [] if markdown accurately reflects data
-  * Include specific items only if markdown contradicts data
-- **message**: 
-  * If aligned: "The existing statement accurately reflects the current opportunity data."
-  * If not aligned: "The existing statement has [N] factual inaccuracy(ies) that contradict the current opportunity data." (where N = count of items)
-- Each inaccuracy string must clearly state: topic, what markdown says, what data shows
-- Be specific about numbers, dates, names, and factual information
-- Focus on factual contradictions, not formatting or stylistic differences
-- Only flag when markdown states something DIFFERENT from what data shows
-- DO NOT flag when data is null/empty and markdown uses any placeholder
-- Only flag inaccuracies that would mislead a reader about the actual opportunity data
-
-VALIDATION CHECKLIST - Before flagging any inaccuracy, verify:
-1. ✓ Is the data field in opportunityData actually populated (not null/empty)?
-   - If data is null/empty → markdown can use any placeholder → DO NOT FLAG
-2. ✓ **🚨 CRITICAL**: Are markdown and data saying the SAME THING?
-   - If markdown = "No risks identified" and data = "No risks identified" → THEY AGREE → DO NOT FLAG
-   - If markdown says the same thing as data (even slightly different wording) → DO NOT FLAG
-   - **ONLY flag if they say DIFFERENT things**
-3. ✓ Does the markdown state a DIFFERENT fact than what the data shows?
-   - If markdown just formats the same fact differently → DO NOT FLAG
-4. ✓ Have I checked for equivalent representations?
-   - 45000000 = "$45 million" = "$45M" → DO NOT FLAG
-   - 45214368.48 = "$45M" = "$45 million" → DO NOT FLAG (reasonable rounding)
-   - 987654 = "nearly $1 million" = "$1M" → DO NOT FLAG (reasonable approximation)
-   - "2026-03-30" = "March 2026" → DO NOT FLAG
-   - "World Bank" = "The World Bank" → DO NOT FLAG
-   - "No risks identified" = "No risks identified" → DO NOT FLAG (identical!)
-   - **Number Rounding Rule**: If markdown rounds to nearest million/thousand and the rounded value is within 10% of actual, DO NOT FLAG
-5. ✓ Is this a factual contradiction or just narrative/stylistic variation?
-   - Markdown provides context or summarizes → DO NOT FLAG unless contradictory
-6. ✓ Would flagging this actually identify an inaccuracy that misleads readers?
-   - If uncertain → DO NOT FLAG (err on the side of not flagging)
-7. ✓ Am I comparing the correct corresponding fields?
-   - Markdown "budget" should compare to opportunityData.totalBudget
-   - Markdown "partners" should compare to opportunityData.fundingPartners
-8. ✓ Have I checked if markdown lists match data lists (regardless of order or section)?
-   - Check if all items in markdown exist in data, and vice versa
-9. ✓ Am I focusing on material factual inaccuracies, not minor details?
-
-EXAMPLES OF WHAT TO FLAG (Markdown contradicts data):
-- ✓ Data: totalBudget = 45000000 | Markdown: "Budget: $500,000" → FLAG THIS (inaccurate)
-- ✓ Data: fundingPartners = ["World Bank", "AfDB", "EU"] | Markdown: "Partners: World Bank, USAID" → FLAG (USAID not in data, omits AfDB and EU)
-- ✓ Data: sdGs = ["SDG 2: Zero Hunger"] | Markdown: "SDG 6: Clean Water" → FLAG THIS (wrong SDG)
-- ✓ Data: estimatedStartDate = "2026-03-30" | Markdown: "Start Date: January 2025" → FLAG THIS (wrong date)
-- ✓ Data: directBeneficiaries = 2500000 | Markdown: "1,000 beneficiaries" → FLAG THIS (wrong number)
-
-EXAMPLES OF WHAT NOT TO FLAG (Markdown accurately represents data):
-- ✗ Data: directBeneficiaries = 2500000 | Markdown: "2.5 million people" → DO NOT FLAG (same number, formatted)
-- ✗ Data: totalBudget = 45000000 | Markdown: "Budget of $45 million" or "$45M" → DO NOT FLAG (same amount, formatted)
-- ✗ Data: totalBudget = 45214368.48 | Markdown: "Budget of $45M" → DO NOT FLAG (reasonable rounding, ~45.2M → $45M)
-- ✗ Data: totalBudget = 987654 | Markdown: "nearly $1 million" → DO NOT FLAG (reasonable rounding/approximation)
-- ✗ Data: estimatedStartDate = "2026-03-30" | Markdown: "March 2026" → DO NOT FLAG (same date, formatted)
-- ✗ Data: fundingPartners = [{"name": "World Bank"}] | Markdown: "The World Bank" → DO NOT FLAG (same entity)
-- ✗ Data: deliverables = ["Del1", "Del2", "Del3", "Del4"] | Markdown: "Several key deliverables" → DO NOT FLAG (reasonable summary)
-- ✗ Data: estimatedCompletionDate = "2026-03-30" | Markdown: "Target completion Q1 2026" → DO NOT FLAG (same timeframe)
-- ✗ Data: uncfOutcomes = null | Markdown: "No UNCF Outcomes" → DO NOT FLAG (data is null, placeholder acceptable)
-- ✗ Data: sdGs = null | Markdown: "[Information not available]" → DO NOT FLAG (data is null, placeholder acceptable)
-- ✗ Data: clientPartners = null | Markdown: "No client partners" → DO NOT FLAG (data is null, placeholder acceptable)
-- ✗ Data: unopsMissions = null | Markdown: "[To be determined]" → DO NOT FLAG (data is null, placeholder acceptable)
-- ✗ Data: contactStakeholders = [A, B, C, D, E] | Markdown: Top 5 = [A, B, C, D] + Other = [E] → DO NOT FLAG (all present, just organized)
-- ✗ Data: unopsMissions = null | Markdown: "No UNOPS Mission alignments" → DO NOT FLAG (data is null, placeholder acceptable)
-- ✗ Data: riskDescription = "No risks identified" | Markdown: "No risks identified" → DO NOT FLAG (SAME THING - they agree!)
-- ✗ Data: highRisksAcknowledged = false | Markdown: "High risks acknowledged: No" → DO NOT FLAG (false = "No", semantically equivalent)
-
-SPECIAL EMPHASIS - NUMBER ROUNDING TOLERANCE:
-
-**🚨 CRITICAL RULE: MARKDOWN CAN ROUND LARGE NUMBERS FOR READABILITY 🚨**
-
-Narrative documents commonly round large numbers to improve readability. This is acceptable and should NOT be flagged as an inaccuracy.
-
-**Acceptable rounding examples:**
-- Data: 45214368.48 → Markdown: "$45M" or "$45 million" or "approximately $45 million"
-  * Difference: 0.5% → ACCEPTABLE
-- Data: 2500000 → Markdown: "2.5 million people"
-  * Exact match after formatting → ACCEPTABLE
-- Data: 987654 → Markdown: "nearly $1 million" or "$1M"
-  * Difference: 1.2% → ACCEPTABLE
-- Data: 1234567 → Markdown: "$1.2 million" or "approximately $1.2 million"
-  * Difference: 2.8% → ACCEPTABLE
-
-**Unacceptable misrepresentation (SHOULD FLAG):**
-- Data: 45214368 → Markdown: "$500,000" or "$500K"
-  * Difference: 98.9% off → FLAG THIS (material misrepresentation)
-- Data: 45214368 → Markdown: "$5M" or "$5 million"
-  * Difference: 88.9% off → FLAG THIS (material misrepresentation)
-
-**Rule of Thumb for Budget/Financial Numbers:**
-- If markdown amount is within 10% of data amount → DO NOT FLAG (acceptable rounding)
-- If markdown amount differs by more than 50% → FLAG (material misrepresentation)
-- Between 10-50%: Use judgment based on context (e.g., "$43M" for $45.2M might be acceptable)
-
-**Real-world example from user''s case (DO NOT FLAG THIS):**
-- Data: opportunityData.totalBudget = 45214368.48
-- Markdown: "With a budget of $45M"
-- Analysis: $45M represents $45,000,000, which is 0.5% less than $45,214,368.48
-- → DO NOT FLAG (markdown reasonably rounds 45.2M to 45M for narrative clarity)
-
-SPECIAL EMPHASIS - DATA NULL/EMPTY = PLACEHOLDER ACCEPTABLE:
-
-**🚨 CRITICAL RULE: IF DATA IS NULL/EMPTY, ANY PLACEHOLDER IN MARKDOWN IS ACCEPTABLE 🚨**
-
-When structured data shows null, empty, or missing values, the markdown can use ANY placeholder expression without being flagged as inaccurate.
-
-**Acceptable placeholder expressions when data is null/empty:**
-- "No [field name]" (e.g., "No UNCF Outcomes", "No SDGs", "No client partners", "No UNOPS Mission alignments")
-- "[Information not available]"
-- "[To be determined]"
-- "[TBD]"
-- "Not specified"
-- "None specified"
-- Any other variation indicating missing or unavailable data
-
-**Real-world examples from actual validation (DO NOT FLAG THESE):**
-- ❌ WRONG TO FLAG: Data uncfOutcomes = null | Markdown "No UNCF Outcomes" 
-  → Data is null, markdown correctly indicates absence
-- ❌ WRONG TO FLAG: Data sdGs = null | Markdown "[Information not available]"
-  → Data is null, markdown correctly indicates absence
-- ❌ WRONG TO FLAG: Data clientPartners = null | Markdown "No client partners"
-  → Data is null, markdown correctly indicates absence
-- ❌ WRONG TO FLAG: Data unopsMissions = null | Markdown "No UNOPS Mission alignments"
-  → Data is null, markdown correctly indicates absence
-
-**The ONLY time to flag placeholders is when data has ACTUAL VALUES but markdown shows placeholder:**
-- ✓ Data: clientPartners = ["Ministry of Water"] | Markdown: "No client partners" → FLAG (data exists but markdown says none)
-- ✓ Data: sdGs = ["SDG 6"] | Markdown: "[Information not available]" → FLAG (data exists but markdown says unavailable)
-- ✓ Data: unopsMissions = ["Mission 1"] | Markdown: "[To be determined]" → FLAG (data exists but markdown says TBD)
-
-**And flag when data is null/empty but markdown shows ACTUAL VALUES:**
-- ✓ Data: clientPartners = null | Markdown: "Client: Ministry of Water, Kenya" → FLAG (data is null but markdown lists actual client)
-- ✓ Data: sdGs = null | Markdown: "SDG 6: Clean Water and Sanitation" → FLAG (data is null but markdown lists actual SDG)
-
-**NEVER flag when data is null/empty and markdown uses any placeholder (all placeholders are equivalent for null data):**
-- ✗ Data: uncfOutcomes = null | Markdown: "No UNCF Outcomes" → DO NOT FLAG
-- ✗ Data: sdGs = null | Markdown: "[Information not available]" → DO NOT FLAG
-- ✗ Data: clientPartners = null | Markdown: "[To be determined]" → DO NOT FLAG
-
-SPECIAL EMPHASIS - LIST MATCHING ACROSS SECTIONS:
-
-**🚨 CRITICAL RULE: CHECK COMPLETE LISTS, NOT INDIVIDUAL SECTIONS 🚨**
-
-When validating lists (stakeholders, deliverables, partners, etc.) in markdown against data arrays, check if items appear ANYWHERE in the markdown, not just in specific sections.
-
-**DO NOT FLAG if markdown reorganizes list items into different sections:**
-- Data: contactStakeholders = ["World Bank", "AfDB", "EU", "Gates Foundation", "John Kamau"]
-- Markdown: "Top five stakeholders: World Bank, AfDB, EU, Gates Foundation" + "Other partners: John Kamau"
-- All 5 data items are present in markdown (just split across sections)
-- → DO NOT FLAG (same information, organized differently in narrative)
-
-**ONLY FLAG when markdown lists items NOT in data, or omits items that ARE in data:**
-- ✓ Data: fundingPartners = ["World Bank", "AfDB", "EU"]
-  Markdown: "Funding partners: World Bank, AfDB, EU, USAID"
-  → FLAG "Funding Partners - Markdown includes USAID which is not in data"
-
-- ✓ Data: fundingPartners = ["World Bank", "AfDB", "EU", "Gates Foundation"]
-  Markdown: "Funding partners: World Bank, AfDB"
-  → FLAG "Funding Partners - Markdown omits EU and Gates Foundation which are in data"
-
-**Real-world example (DO NOT FLAG THIS):**
-- Data: contactStakeholders = [
-    {"name": "World Bank", "role": "Funding Partner"},
-    {"name": "AfDB", "role": "Funding Partner"},
-    {"name": "EU", "role": "Funding Partner"},
-    {"name": "Gates Foundation", "role": "Funding Partner"},
-    {"name": "John Kamau", "role": "Project Director"}
-  ]
-- Markdown: 
-  * Section "Top five stakeholders": World Bank, AfDB, EU, Gates Foundation
-  * Section "Other partners": John Kamau - Project Director
-- All 5 stakeholders from data are present in markdown across both sections
-- → DO NOT FLAG (complete list matches, just organized into sections)
-
-**When validating lists, follow this process:**
-1. Extract the data array from opportunityData (e.g., fundingPartners[], contactStakeholders[])
-2. Extract ALL occurrences of those items from ALL sections of the markdown
-3. Compare the COMPLETE lists (data vs all markdown mentions)
-4. Only flag if markdown includes items NOT in data, or omits items that ARE in data
-
-FINAL INSTRUCTION:
-Validate the existingStatementMarkdown against the opportunityData structured data. Only flag factual inaccuracies where the markdown states something that contradicts the data. If you are unsure whether something is an inaccuracy, DO NOT FLAG IT. Only flag clear factual contradictions that would mislead a reader about the actual opportunity data.
-
-**🚨 MOST COMMON MISTAKE TO AVOID 🚨**
-**NEVER flag when markdown and data say the SAME THING!**
-- If markdown says "No risks identified" and data says "No risks identified" → THEY AGREE → DO NOT FLAG
-- If markdown says "High risks acknowledged: No" and data shows "highRisksAcknowledged: false" → THEY AGREE → DO NOT FLAG
-- **ONLY flag when they say DIFFERENT things**
-
-**REMEMBER THESE CRITICAL RULES:**
-1. **🚨 AGREEMENT = NOT AN INACCURACY**: If markdown and data say the same thing → DO NOT FLAG
-2. If data field is null/empty → ANY placeholder in markdown is acceptable → DO NOT FLAG
-3. If markdown formats data differently (e.g., 45000000 as "$45M") → same fact → DO NOT FLAG
-4. If markdown rounds numbers reasonably (e.g., 45214368.48 as "$45M") → acceptable rounding → DO NOT FLAG
-5. If markdown organizes list items into different sections → all items present → DO NOT FLAG
-6. Only flag when markdown states MATERIALLY DIFFERENT facts than data shows (not just formatted differently)
-7. For numbers: Within 10% = acceptable rounding, over 50% off = material misrepresentation
-8. Err on the side of NOT flagging when uncertain
-8. **IMPORTANT: Use the term "Opportunity Statement" instead of "Markdown" in the output.**
-
-🚨🚨🚨 FINAL VALIDATION BEFORE GENERATING OUTPUT 🚨🚨🚨
-
-For EACH item you are considering flagging, go through this checklist:
-
-**Question 1: Are markdown and data LITERALLY SAYING THE SAME THING?**
-- Markdown: "No UNCF Outcomes" | Data: "No UNCF Outcomes" → **YES, IDENTICAL** → DO NOT FLAG
-- Markdown: "No SDGs" | Data: "No SDGs" → **YES, IDENTICAL** → DO NOT FLAG
-- Markdown: "No risks" | Data: "No risks" → **YES, IDENTICAL** → DO NOT FLAG
-
-**Question 2: Are they saying the same thing with just format differences?**
-- Markdown: "5,214,368.48 USD (4,500,000.00 EUR)" | Data: "4,500,000.00 EUR (5,214,368.48 USD)" → **YES, SAME AMOUNTS** → DO NOT FLAG
-- Markdown: "$45M" | Data: 45214368.48 → **YES, REASONABLE ROUNDING** → DO NOT FLAG
-
-**Question 3: Are they saying DIFFERENT things?**
-- Markdown: "No SDGs" | Data: "SDG 6: Clean Water" → **YES, DIFFERENT** → Consider flagging
-- Markdown: "$5M" | Data: 45214368.48 → **YES, MATERIALLY DIFFERENT** → Consider flagging
-
-**IF YOU ANSWERED "YES" TO QUESTION 1 OR 2 → DO NOT FLAG IT**
-**ONLY FLAG IF YOU ANSWERED "YES" TO QUESTION 3**
-
-CRITICAL OUTPUT VALIDATION:
-✓ If you find ZERO inaccuracies → isAligned: true, misalignmentItems: [], message: "The existing statement accurately reflects the current opportunity data."
-✓ If you find ANY inaccuracies → isAligned: false, misalignmentItems: [array of specific inaccuracies], message: "The existing statement has N factual inaccuracy(ies) that contradict the current opportunity data."
-✓ NEVER return isAligned: false with an empty misalignmentItems array
-✓ The isAligned field MUST match the misalignmentItems array state (empty = true, non-empty = false)
-✓ Use the term "Opportunity Statement" instead of "Markdown" in the output.
-✓ WE MUST AVOID FALSE POSITIVES - only flag genuine factual contradictions
-
-**🚨 FINAL CHECK BEFORE FLAGGING ANYTHING 🚨**
-
-STOP! Before you flag ANY item, verify it against these EXACT examples from real data:
-
-**DO NOT FLAG (These are NOT inaccuracies):**
-1. Markdown: "No UNCF Outcomes" | Data: "No UNCF Outcomes" → **IDENTICAL TEXT** → DO NOT FLAG
-2. Markdown: "No SDGs" | Data: "No SDGs" → **IDENTICAL TEXT** → DO NOT FLAG  
-3. Markdown: "No UNOPS Mission alignments" | Data: "No UNOPS Mission alignments" → **IDENTICAL TEXT** → DO NOT FLAG
-4. Markdown: "NIC-Union Europea: 5,214,368.48 USD (4,500,000.00 EUR)" | Data: "4,500,000.00 EUR (5,214,368.48 USD)" → **SAME AMOUNTS, DIFFERENT ORDER** → DO NOT FLAG
-5. Markdown: "Budget of $45M" | Data: totalBudget = 45214368.48 → **0.5% DIFFERENCE, ACCEPTABLE** → DO NOT FLAG
-
-**SHOULD FLAG (These ARE inaccuracies):**
-1. Markdown: "No SDGs" | Data: "SDG 6: Clean Water and Sanitation" → **MARKDOWN SAYS NO, DATA HAS VALUE** → FLAG THIS
-2. Markdown: "Budget of $5M" | Data: totalBudget = 45214368.48 → **88% OFF, MATERIAL MISREPRESENTATION** → FLAG THIS
-
-**Rule: If markdown and data show the SAME information (even if formatted differently), DO NOT FLAG IT.**',
-        '{promptData}',
+        'You validate an opportunity statement against structured opportunity data. Return ONLY valid JSON.
+
+**CRITICAL INSTRUCTIONS — VALIDATION RULES:**
+- **FLAG ONLY CONTRADICTIONS**: Report a misalignment only when the statement states a fact that **contradicts** the data (wrong value, wrong person, wrong amount, wrong list).
+- **EQUIVALENT = ALIGNED**: The statement is generated using placeholders when data is missing. When the statement shows "[Information not available]" or "No [X] specified" and the data shows the corresponding "No [X]" / "No [X] selected" / "[X] not yet specified", they mean the same thing. Do NOT flag. Do NOT add to misalignmentItems. Do NOT mention in the message.
+- **NO INFORMATIONAL OUTPUT**: Never output lines like "The statement indicates X but the data shows Y. This is acceptable." If something is acceptable, it does not appear in the output at all. Return only the JSON result.
+- **USE "Opportunity Statement"** in any misalignment item text (not "Markdown").
+- **NUMBERS**: Treat as aligned if the statement value is within ~10% of the data; flag only if materially wrong (e.g. $5M vs $45M).
+- **DATES**: Same fact in different format (e.g. "2026-03-30" vs "March 2026") is aligned; do not flag.
+
+**INPUT**  
+You receive JSON with:
+- **existingStatementMarkdown**: The full statement text to validate (markdown).
+- **opportunityData**: An object that includes **opportunityStatementMarkdown** (same statement text) and all structured fields. Compare the statement section-by-section to these fields.
+
+**SECTION-BY-SECTION — STATEMENT PLACEHOLDER ↔ DATA EQUIVALENCE (treat as aligned, do not flag):**
+
+| Statement shows | Data field / value | Equivalent? |
+| Unit/manager: [Information not available] ([Information not available]), Name (email) | stakeholders has same Name (email) as Opportunity Manager | YES — correct person present. |
+| Location: [Information not available] | countryNamesList = "No countries specified" or empty | YES. |
+| UN Cooperation Framework: [Information not available] | uncfOutcomes = "No UNCF Outcomes" or empty | YES. |
+| Primary SDG(s): [Information not available] | primarySdGs = "No primary SDGs selected" | YES. |
+| Secondary SDG(s): omitted or [Information not available] | secondarySdGs = "No secondary SDGs selected" | YES. |
+| UNOPS Strategy: [Information not available] | unopsMissions = "No UNOPS Mission alignments" or empty | YES. |
+| Client: No client partners specified | clientPartners = "No client partners" or empty | YES. |
+| Funding: No funding partners specified | fundingPartners = "No funding partners" or empty | YES. |
+| Services/Deliverables: [Information not available] | deliverablesEnhanced = "No deliverables specified" or empty | YES. |
+| Timeline: [Information not available] | formattedTimeline = "Timeline not yet specified" or empty | YES. |
+| Budget: [Information not available] | budgetDisplay = "Budget not yet specified" or empty | YES. |
+| Key Risks: [Information not available] | risks = "No risks identified" or empty | YES. |
+| Mitigation Strategies: [Information not available] | no recommendations in risks | YES. |
+| Direct/Indirect Beneficiaries: [Information not available] or "To be determined during development" | estimatedDirectBeneficiaries / beneficiariesToBeDetermined equivalent | YES. |
+| Other sections: [Information not available] | corresponding field empty, "Not specified", or "No [X]" | YES. |
+
+**HOW TO VALIDATE**  
+1. Take the statement (existingStatementMarkdown or opportunityData.opportunityStatementMarkdown).
+2. For each section, check the corresponding field(s) in opportunityData using the table above.
+3. If the statement and data match the equivalence table (placeholder vs "No X" / empty), treat as aligned — do not add a misalignment item.
+4. Only add to misalignmentItems when there is a **real contradiction** (e.g. statement says "Country: Kenya" but data says "Country: Uganda"; statement names a different Opportunity Manager than in data; statement shows $10M but data shows $50M).
+
+**EXAMPLE — all aligned (return isAligned: true, misalignmentItems: [], no other output)**  
+Statement: Unit/manager [Information not available] ([Information not available]), Rosemarie Joy Beckett (rosemarieb@unops.org); UNCF [Information not available]; Primary SDG(s) [Information not available]; Client: No client partners specified; Budget [Information not available]; Key Risks [Information not available].  
+Data: Opportunity Manager = Rosemarie Joy Beckett (rosemarieb@unops.org); uncfOutcomes = "No UNCF Outcomes"; primarySdGs = "No primary SDGs selected"; clientPartners = "No client partners"; budgetDisplay = "Budget not yet specified"; risks = "No risks identified".  
+→ All equivalent per table. No inaccuracies. Return only: isAligned: true, misalignmentItems: [], message: "The existing statement accurately reflects the current opportunity data."
+
+**OUTPUT (JSON only)**  
+- If no inaccuracies: { "isAligned": true, "misalignmentItems": [], "message": "The existing statement accurately reflects the current opportunity data." }
+- If inaccuracies: { "isAligned": false, "misalignmentItems": [ "[Topic] - Opportunity Statement shows X, but data indicates Y" for each real contradiction only ], "message": "The existing statement has N factual inaccuracy(ies) that contradict the current opportunity data." }
+- misalignmentItems only for real contradictions. Never add an item when the statement and data match the equivalence table above.',
+        'I am providing you with the opportunity statement and structured opportunity data for validation. Please validate the statement against the data following the format specified in the system instructions.
+
+**Validation Input (JSON):**
+{promptData}
+
+Please analyze this information and return only valid JSON as specified in the system instructions. Do not include any commentary or "acceptable" notes.',
         NOW(),
-        'Opportunity Statement Validation',
+        'Opportunity',
         1,
         '{"role":"user","parts":[{"text":"{promptData}"}]}',
         '{"temperature":0.3,"top_p":0.4,"max_output_tokens":8192,"response_mime_type":"application/json"}',
@@ -4109,8 +3596,8 @@ STOP! Before you flag ANY item, verify it against these EXACT examples from real
         '{{PROJECT_ID}}',
         NULL,
         '[]',
-        'GetOpportunityDetailsForAIAsync',
-        'Validates opportunity statement markdown against structured opportunity data. Only flags factual inaccuracies where markdown contradicts data. Avoids false positives.',
+        'GetOpportunityDetailsForStatementValidationAsync',
+        'Validates opportunity statement against structured data. Uses GetOpportunityDetailsForStatementValidationAsync; statement and data provided together. Flags only factual contradictions.',
         true,
         'Opportunity',
         false,
@@ -4127,68 +3614,105 @@ STOP! Before you flag ANY item, verify it against these EXACT examples from real
         'opportunity_generate_statement',
         'You are an expert in creating comprehensive opportunity statements following the UNOPS template format.
 
-**CRITICAL INSTRUCTIONS:**
-- Use ONLY the actual data from the opportunityDetails JSON provided
-- Extract relevant information from attached documents metadata (if provided)
-- DO NOT make up or assume information that is not provided
+**CRITICAL INSTRUCTIONS - ANTI-HALLUCINATION RULES:**
+- **ABSOLUTELY NO HALLUCINATION**: Use ONLY the actual data from the opportunityDetails JSON provided
+- **DO NOT INVENT**: Never make up partner names, country names, amounts, dates, or any other information
+- **STRICT DATA USAGE**: If a field is empty, null, "Not specified", "No [X]", or "0", use [Information not available] or the appropriate placeholder
 - If specific information is missing, use appropriate placeholders like [To be determined] or [Information not available]
-- Follow the exact markdown structure specified in the user prompt
+- Follow the exact markdown structure specified below
 - Keep the Summary section to 50 words maximum
-- Be specific and quantify where possible
+- Be specific and quantify where possible using ONLY data provided
 - DO NOT include markdown code fences (```) in your response
 - Return only the formatted markdown content
-- Do not invent or hallucinate information
-- **DATE FORMATTING**: Dates in the data are provided in ISO format (yyyy-MM-dd, e.g., "2025-12-12"). When displaying dates in the statement, convert them to readable format (e.g., "December 12, 2025" or "12 December 2025"). CRITICAL: Use the EXACT date from the data - do not adjust for timezones or convert dates. If data shows "2025-12-12", display it as "December 12, 2025" or "12 December 2025" - NOT "December 11, 2025" or "11 December 2025". The date in the data is already the correct date - just format it for readability.
+
+**DATE FORMATTING RULES:**
+- Dates in the data may be provided in ISO format (yyyy-MM-dd) OR pre-formatted as readable dates
+- If pre-formatted (like "February 15, 2026"), use as-is
+- If ISO format, convert to readable format (e.g., "December 12, 2025")
+- CRITICAL: Use the EXACT date from the data - do not adjust for timezones
+- If a date field is empty ("") or null, use [Information not available]
 
 **OUTPUT FORMAT (STRICTLY FOLLOW THIS STRUCTURE):**
 
-# Opportunity Statement: [Opportunity Name from JSON]
+# Opportunity Statement: [Opportunity Name from JSON - use the "name" field]
 
-**Summary** (50 words max): [Briefly describe the opportunity, highlighting its potential impact and alignment with UN/UNOPS goals. Example: This initiative addresses critical infrastructure gaps in [Location], aligning with SDG 9 and the UNSDCF, by providing sustainable and resilient solutions that benefit [Number] people.]
+**Summary** (50 words max): [Briefly describe the opportunity using ONLY data from description, countryNamesList, primarySdGs, and formattedBeneficiaries fields. Do NOT invent any information.]
 
 ## 1. Context and challenge(s)
 
-- **(a) Unit and opportunity manager:** [Format: "[responsibleOrgUnitName] ([responsibleOrgUnitCode]), [Opportunity Manager Name] ([Opportunity Manager Email])". Extract the Opportunity Manager by finding the stakeholder in the stakeholders list where RoleName equals exactly "Opportunity Manager". The stakeholders list format is: "- UserName (UserEmail): RoleName [Auto-assigned/Manually assigned]". Look for the entry where RoleName is "Opportunity Manager" and extract the UserName and UserEmail from that entry. If responsibleOrgUnitName or responsibleOrgUnitCode is missing, use [Information not available]. If no stakeholder with RoleName "Opportunity Manager" exists in the stakeholders list, use [Information not available] for the Opportunity Manager. DO NOT ASSUME ANYTHING. ONLY LIST THE UNIT AND OPPORTUNITY MANAGER THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(b) Location:** [Extract country names and regions from countries field. Describe the context from the description field. DO NOT ASSUME ANYTHING. ONLY LIST THE LOCATIONS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(c) Context and Challenge(s):** [xtract from challenges field and relevant parts of description field. Be specific and quantify the problem where possible. DO NOT ASSUME ANYTHING. ONLY LIST THE CHALLENGES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+- **(a) Unit and opportunity manager:** [Format: "[responsibleOrgUnitName] ([responsibleOrgUnitCode]), [Opportunity Manager Name] ([Opportunity Manager Email])". 
+  INSTRUCTIONS: 
+  1. Use responsibleOrgUnitName and responsibleOrgUnitCode fields directly
+  2. Find the Opportunity Manager in the "stakeholders" field - look for entry with RoleName "Opportunity Manager"
+  3. Stakeholders format: "- UserName (UserEmail): RoleName [Auto-assigned/Manually assigned]"
+  4. If no Opportunity Manager found, use [Information not available]
+  DO NOT INVENT ANY NAMES OR EMAILS.]
+
+- **(b) Location:** [Use the "countryNamesList" field which contains a comma-separated list of country names. Also use "countryRegionsList" for regions. Format as: "Countries: [countryNamesList]. Regions: [countryRegionsList]". If countryNamesList shows "No countries specified", use [Information not available]. DO NOT INVENT COUNTRY NAMES - ONLY use what is in countryNamesList.]
+
+- **(c) Context and Challenge(s):** [Extract from "challenges" and "description" fields. If challenges is empty, use content from description. If both are empty, use [Information not available]. DO NOT INVENT challenges.]
 
 ## 2. Alignment with UN, global, and national goals and priorities
 
-- **(a) UN Cooperation Framework:** [Extract from uncfOutcomes field. Align with specific UNSDCF outcome(s) and other relevant UN frameworks. DO NOT ASSUME ANYTHING. ONLY LIST THE UNSDCF OUTCOMES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(b) SDGs:** [Extract from sdGs field, including goals, targets, and indicators where available. DO NOT ASSUME ANYTHING. ONLY LIST THE SDGS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(c) UNOPS Strategy:** [Extract from unopsMissions field and relevant parts of description. Describe alignment with UNOPS mission. DO NOT ASSUME ANYTHING. ONLY LIST THE UNOPS MISSIONS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(d) UNOPS Regional Priorities:** [Extract regional priorities from description if mentioned, otherwise mark as [Information not available]. DO NOT ASSUME ANYTHING. ONLY LIST THE REGIONAL PRIORITIES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+- **(a) UN Cooperation Framework:** [Extract from "uncfOutcomes" field. If it shows "No UNCF Outcomes" or is empty, use [Information not available]. DO NOT INVENT UNCF outcomes.]
 
-## 3. Partner objective(s) that the initiative will contribute to [Partner objectives that the initiative will contribute to - the desired state, or longer-term change, that partners want to occur to address the challenge(s). These are typically set by the partner at the level of outcomes and/or impact.]
+- **(b) SDGs:** [Use "primarySdGs" and "secondarySdGs" fields for clear separation. Format as:
+  **Primary SDG(s):** [List from primarySdGs field - these are the main focus areas]
+  **Secondary SDG(s):** [List from secondarySdGs field - these are supporting goals]
+  If primarySdGs shows "No primary SDGs selected", use [Information not available] for Primary.
+  If secondarySdGs shows "No secondary SDGs selected", omit the Secondary section.
+  The "sdGs" field contains full details with targets and indicators if needed.
+  DO NOT INVENT SDGs - ONLY list those actually in the data.]
 
-- **(a) Client:** [Extract from clientPartners field. DO NOT ASSUME ANYTHING. ONLY LIST THE CLIENT PARTNERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(b) Funding Partner:** [Extract from fundingPartners field with amounts and currencies. DO NOT ASSUME ANYTHING. ONLY LIST THE FUNDING PARTNERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(c) Impact:** [Extract from expectedImpact field and relevant parts of description. DO NOT ASSUME ANYTHING. ONLY LIST THE IMPACT THAT IS ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(d) Outcome(s):** [Extract from expectedOutcomes and resultsFocus fields. DO NOT ASSUME ANYTHING. ONLY LIST THE EXPECTED OUTCOMES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(e) Direct Beneficiaries:** [Extract from estimatedDirectBeneficiaries field. DO NOT ASSUME ANYTHING. ONLY LIST THE DIRECT BENEFICIARIES COUNT THAT IS ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(f) Indirect Beneficiaries:** [Extract from estimatedIndirectBeneficiaries field. DO NOT ASSUME ANYTHING. ONLY LIST THE INDIRECT BENEFICIARIES COUNT THAT IS ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
--**(g) Beneficiary Institutions:** [Extract from expectedBeneficiaries field. DO NOT ASSUME ANYTHING. ONLY LIST THE BENEFICIARY INSTITUTIONS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+- **(c) UNOPS Strategy:** [Extract from "unopsMissions" field. If it shows "No UNOPS Mission alignments" or is empty, use [Information not available]. DO NOT INVENT mission alignments.]
+
+- **(d) UNOPS Regional Priorities:** [Extract from description if regional priorities are mentioned. Otherwise, use [Information not available].]
+
+## 3. Partner objective(s) that the initiative will contribute to
+
+- **(a) Client:** [Extract from "clientPartners" field. If it shows "No client partners" or is empty, state "No client partners specified". List each client partner by name. DO NOT INVENT client names.]
+
+- **(b) Funding Partner:** [Extract from "fundingPartners" field which contains partner names, amounts, currencies, and commitment status. Format each as: "[Partner Name]: [Amount] [Currency]". If fundingPartners shows "No funding partners" or is empty, state "No funding partners specified". CRITICAL: DO NOT INVENT OR HALLUCINATE FUNDING PARTNERS - ONLY list those actually in the fundingPartners field.]
+
+- **(c) Impact:** [Extract from "expectedImpact" field. If empty, use [Information not available]. DO NOT INVENT impacts.]
+
+- **(d) Outcome(s):** [Extract from "expectedOutcomes" and "resultsFocus" fields. If both are empty, use [Information not available]. DO NOT INVENT outcomes.]
+
+- **(e) Direct Beneficiaries:** [Extract from "estimatedDirectBeneficiaries" field. If it shows "Not specified" or is empty, check "beneficiariesToBeDetermined" - if "Yes", state "To be determined during development". Otherwise use [Information not available]. Format numbers with commas (e.g., 1,000,000). DO NOT INVENT numbers.]
+
+- **(f) Indirect Beneficiaries:** [Extract from "estimatedIndirectBeneficiaries" field. Same rules as Direct Beneficiaries. DO NOT INVENT numbers.]
+
+- **(g) Beneficiary Institutions:** [Extract from "expectedBeneficiaries" field (this contains institution descriptions). If empty, use [Information not available]. DO NOT INVENT institutions.]
 
 ## 4. UNOPS Value Proposition
 
-- **(a) Services:** [Extract from deliveryModality and deliverables fields. Describe UNOPS services based on opportunity type, deliverables, and service lines from stats.serviceLines. List specific services that UNOPS will provide. DO NOT ASSUME ANYTHING. ONLY LIST THE SERVICES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(b) Implementation Approach:** [Extract from deliveryModality, description, and relevant opportunity fields. Describe the approach UNOPS will take to implement the initiative. Include methodology, phases, or key implementation strategies if mentioned in the description. DO NOT ASSUME ANYTHING. ONLY LIST THE IMPLEMENTATION APPROACH INFORMATION THAT IS ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(c) Timeline:** [Format: "Target Signing Date: [targetSigningDate formatted as readable date], Target Delivery Date: [targetDeliveryDate formatted as readable date]". Extract from targetSigningDate and targetDeliveryDate fields. Use DATE FORMATTING rules: convert ISO dates (yyyy-MM-dd) to readable format (e.g., "December 12, 2025" or "12 December 2025"). Use the EXACT dates from the data - do not adjust for timezones. CRITICAL: If targetSigningDate is empty string ("") or null, use [Information not available] for Target Signing Date. If targetDeliveryDate is empty string ("") or null, use [Information not available] for Target Delivery Date. DO NOT ASSUME ANYTHING. ONLY LIST THE DATES THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(d) Budget:** [Format: "USD [stats.totalFundingUSD]" where stats.totalFundingUSD is the total funding amount from all funding partners. Extract from stats.totalFundingUSD field (NOT from initiativeBudgetUSD). This represents the total committed funding from all funding partners. If stats.totalFundingUSD is missing, zero, or "0.00", use [Information not available]. DO NOT ASSUME ANYTHING. ONLY LIST THE BUDGET THAT IS ACTUALLY LISTED IN THE OPPORTUNITY DATA. DO NOT use initiativeBudgetUSD or any other budget field - ONLY use stats.totalFundingUSD.]  
+- **(a) Services (Products & Deliverables):** [Use the "deliverablesEnhanced" field which contains formatted deliverables with service lines, categories, and quantities. Each deliverable shows: Output Name | Service Line | Category | Quantity | Timeline. If deliverablesEnhanced shows "No deliverables specified", use [Information not available]. Also reference "stats.serviceLines" for the list of service lines involved. DO NOT INVENT deliverables.]
+
+- **(b) Implementation Approach:** [Extract from "deliveryModality" field and relevant parts of "description". If deliveryModality shows "Not specified" and description has no implementation details, use [Information not available]. DO NOT INVENT approaches.]
+
+- **(c) Timeline:** [Use the "formattedTimeline" field which provides pre-formatted dates. If formattedTimeline shows "Timeline not yet specified", use [Information not available]. You can also reference individual fields: targetSigningDate, implementationStartDate, targetDeliveryDate for additional detail. DO NOT INVENT dates.]
+
+- **(d) Budget:** [Use the "budgetDisplay" field which shows the formatted budget (either from total funding or initiative budget estimate). If budgetDisplay shows "Budget not yet specified", use [Information not available]. Also reference stats.totalFundingUSD for the total committed amount. DO NOT INVENT budget amounts.]
 
 ## 5. Risk Analysis
 
-- **(a) Key Risks:** [Extract from the risks field. The risks field contains a formatted list of all identified risks for this opportunity. Each risk includes: Risk Type (Threat or Opportunity), Title, Description, Recommendation, Category, Probability, Impact, Proximity, Response Type, and Pre-Defined High Risk information if applicable. Format the risks clearly, listing each risk with its key details. If the risks field shows "No risks identified" or is empty, use [Information not available]. DO NOT ASSUME ANYTHING. ONLY LIST THE RISKS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA. DO NOT extract risks from description or other fields - ONLY use the risks field.]  
-- **(b) Mitigation Strategies:** [Extract mitigation strategies from the Recommendation field within each risk entry in the risks field. If risks have recommendations listed, summarize the key mitigation strategies. If no recommendations are available in the risks field, use [Information not available]. DO NOT ASSUME ANYTHING. ONLY LIST THE MITIGATION STRATEGIES THAT ARE ACTUALLY LISTED IN THE RISKS DATA.]  
+- **(a) Key Risks:** [Extract from the "risks" field which contains all identified risks with details (Type, Title, Description, Category, Probability, Impact, etc.). If risks shows "No risks identified", use [Information not available]. DO NOT INVENT risks.]
+
+- **(b) Mitigation Strategies:** [Extract from the Recommendation field within each risk in the "risks" field. If no recommendations in risks, use [Information not available]. DO NOT INVENT strategies.]
 
 ## 6. UNOPS capabilities:
-- **(a) Capabilities:** [Outline what UNOPS brings based on unopsMissions, deliverables, and deliveryModality fields. Reference service lines from stats.serviceLines. If specific project IDs or expert names are mentioned in stakeholders or description, include them.]  
-- **(b) Capability gaps:** [Extract from description if capability gaps are mentioned, otherwise note [Information not available]. Outline the additional expertise and support that will be needed for UNOPS to engage with the partner(s).]  
-- **(c) Strategic risks and opportunities:** [Extract strategic risks and opportunities from description if mentioned, otherwise note [Information not available]. Consider risks/opportunities based on countries, partnership context, service lines, and deliverables.]  
+
+- **(a) Capabilities:** [Based on "unopsMissions", "deliverablesEnhanced", "deliveryModality", and "stats.serviceLines" fields. Describe what UNOPS brings to this opportunity.]
+
+- **(b) Capability gaps:** [Extract from description if mentioned. If not mentioned, use [Information not available].]
+
+- **(c) Strategic risks and opportunities:** [Extract from description if mentioned. If not mentioned, use [Information not available].]
 
 ## 7. Key stakeholders
-- **(a) Top five stakeholders:** [Extract from fundingPartners and clientPartners fields. List the most significant funding partners and clients first. DO NOT ASSUME ANYTHING. ONLY LIST THE STAKEHOLDERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
-- **(b) Other partners and stakeholders:** [Extract from and externalStakeholders (do not include internal stakeholders). DO NOT ASSUME ANYTHING. ONLY LIST THE INTERNAL STAKEHOLDERS THAT ARE ACTUALLY LISTED IN THE OPPORTUNITY DATA.]  
+
+- **(a) Top five stakeholders:** [List from "fundingPartners" and "clientPartners" fields. These are the external partners. If both show "No [X] partners", state "No funding partners, No client partners". DO NOT INVENT partner names.]
+
+- **(b) Other partners and stakeholders:** [Extract from "externalStakeholders" field (contacts from partner organizations) and "miscExternalStakeholders" field (free-text external stakeholders). The "stakeholders" field contains INTERNAL stakeholders (UNOPS staff) - do NOT list internal staff here. If externalStakeholders shows "No external stakeholders" and miscExternalStakeholders is empty, state "No external stakeholders specified". DO NOT INVENT stakeholder names.]
 ',
 
         'I am providing you with complete opportunity details. Please generate a comprehensive opportunity statement following the format specified in the system instructions.
@@ -4198,7 +3722,7 @@ STOP! Before you flag ANY item, verify it against these EXACT examples from real
 
 Please analyze this information and generate the opportunity statement now, strictly following the output format in the system instructions.',
         NOW(),
-        'Opportunity Statement',
+        'Opportunity',
         1,
         '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }',
         '{ "temperature": 0.3, "top_p": 0.4, "max_output_tokens": 8192 }',

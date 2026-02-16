@@ -320,6 +320,15 @@ export class ValuesService {
   private readonly baseUrl = '/api/values';
 
   /**
+   * @description Get frontend configuration settings
+   * @returns {Observable<any>}
+   * @since 1.0.0
+   */
+  getConfig(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/config`);
+  }
+
+  /**
    * @description Get all organization units (OrgUnit type only)
    * @returns {Observable<OrganizationUnit[]>}
    * @since 1.0.0

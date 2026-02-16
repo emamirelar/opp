@@ -65,6 +65,7 @@ public class UNOPSGeminiManager : IGeminiManager
     private readonly GoogleCredential _credentials;
     private readonly DataRepository<AiPrompt> _promptRepository;
     private readonly UNOPSAppDbContext _context;
+    private readonly IDbContextFactory<UNOPSAppDbContext> _dbContextFactory;
     private readonly GoogleTextToSpeechService _ttsService;
     private readonly TextExtractionService _textExtractionService;
     private readonly GoogleCloudStorageService _gcsService;
@@ -88,10 +89,11 @@ public class UNOPSGeminiManager : IGeminiManager
     private readonly string _sessionConfigCacheKey = "session_configuration";
     private readonly TimeSpan _sessionConfigCacheExpiration = TimeSpan.FromHours(1);
 
-    public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger<UNOPSGeminiManager> logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient)
+    public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger<UNOPSGeminiManager> logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient, IDbContextFactory<UNOPSAppDbContext> dbContextFactory)
     {
         _mapper = mapper;
         _context = context;
+        _dbContextFactory = dbContextFactory;
         _promptRepository = new DataRepository<AiPrompt>(context);
         _configuration = configuration;
         _logger = logger;
@@ -2598,6 +2600,9 @@ public class UNOPSGeminiManager : IGeminiManager
     /// <param name="userId">The user ID</param>
     private async Task CreateNotificationsFromModifications(JArray dataModifications, int userId)
     {
+        // Use factory to create a new DbContext for thread-safe background operations
+        await using var ctx = await _dbContextFactory.CreateDbContextAsync();
+        
         try
         {
             foreach (var modification in dataModifications)
@@ -2634,13 +2639,13 @@ public class UNOPSGeminiManager : IGeminiManager
                     CreatedAt = DateTime.UtcNow
                 };
 
-                _context.Notifications.Add(notification);
+                ctx.Notifications.Add(notification);
                 
                 _logger.LogInformation($"Created notification for user {userId}: {modificationType} on {entityType} {cleanEntityId}");
             }
 
             // Save all notifications to database
-            await _context.SaveChangesAsync();
+            await ctx.SaveChangesAsync();
             
             _logger.LogInformation($"Successfully saved {dataModifications.Count} notifications for user {userId}");
         }
@@ -4254,8 +4259,9 @@ public class UNOPSGeminiManager : IGeminiManager
         /// Uses the opportunity_generate_insights AI prompt
         /// </summary>
         public async Task<UNOPS.PAO.Models.OpportunityInsightsResponse> GenerateOpportunityInsightsAsync(
-            int opportunityId, 
-            ClaimsPrincipal? user = null)
+            int opportunityId,
+            ClaimsPrincipal? user = null,
+            bool forceRefresh = false)
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             
@@ -4290,7 +4296,7 @@ public class UNOPSGeminiManager : IGeminiManager
 
                 // Call AI service to generate insights
                 var opportunityContextJson = JsonConvert.SerializeObject(opportunityDetails);
-                var aiResponse = await _aiService.FetchResultFromGemini(insightsPrompt, opportunityContextJson, entityId: opportunityId.ToString(), bypassCache: false);
+                var aiResponse = await _aiService.FetchResultFromGemini(insightsPrompt, opportunityContextJson, entityId: opportunityId.ToString(), bypassCache: forceRefresh);
 
                 _logger.LogInformation($"📝 [INSIGHTS] Received AI response: {aiResponse?.Substring(0, Math.Min(200, aiResponse?.Length ?? 0))}...");
 
@@ -4869,8 +4875,9 @@ public class UNOPSGeminiManager : IGeminiManager
             }
 
             // Step 5: Get existing deliverables to avoid duplicates
+            // Filter out soft-deleted records
             var existingDeliverables = await _context.OpportunityDeliverables
-                .Where(od => od.OpportunityId == opportunityId)
+                .Where(od => od.OpportunityId == opportunityId && !od.IsDeleted)
                 .Include(od => od.Output)
                 .Select(od => new
                 {
@@ -5418,8 +5425,9 @@ public class UNOPSGeminiManager : IGeminiManager
             var response = new FrameworkStatusResponse();
 
             // Get funding partner frameworks (using existing DocumentId)
+            // Filter out soft-deleted records
             var fundingPartnerFrameworks = await _context.OpportunityFundingPartners
-                .Where(fp => fp.OpportunityId == opportunityId && fp.DocumentId.HasValue)
+                .Where(fp => fp.OpportunityId == opportunityId && !fp.IsDeleted && fp.DocumentId.HasValue)
                 .Include(fp => fp.Partner)
                 .Include(fp => fp.Document)
                 .Select(fp => new TaggedFrameworkInfo
@@ -5434,8 +5442,9 @@ public class UNOPSGeminiManager : IGeminiManager
                 .ToListAsync();
 
             // Get client partner frameworks (using existing DocumentId)
+            // Filter out soft-deleted records
             var clientPartnerFrameworks = await _context.OpportunityClientPartners
-                .Where(cp => cp.OpportunityId == opportunityId && cp.DocumentId.HasValue)
+                .Where(cp => cp.OpportunityId == opportunityId && !cp.IsDeleted && cp.DocumentId.HasValue)
                 .Include(cp => cp.Partner)
                 .Include(cp => cp.Document)
                 .Select(cp => new TaggedFrameworkInfo
@@ -5707,13 +5716,11 @@ public class UNOPSGeminiManager : IGeminiManager
                     throw new InvalidOperationException("UNOPSOpportunityManager is required for statement validation");
                 }
 
-                // Step 3: Get comprehensive opportunity data (same as generation)
+                // Step 3: Get comprehensive opportunity data including statement markdown (for validation context)
                 _logger.LogInformation($"📊 [STATEMENT-VALIDATION] Retrieving opportunity details...");
-                var opportunityDetails = await opportunityManager.GetOpportunityDetailsForAIAsync(opportunityId);
+                var opportunityDetails = await opportunityManager.GetOpportunityDetailsForStatementValidationAsync(opportunityId);
 
-                // Specifically remove the statementMarkdown, workflowStageName, and status fields from the opportunity details
-                // NOTE: targetSigningDate is now included for Timeline section validation
-                opportunityDetails["opportunityStatementMarkdown"] = null;
+                // Remove workflowStageName and status so validation focuses on factual data; keep opportunityStatementMarkdown for context
                 opportunityDetails["workflowStageName"] = null;
                 opportunityDetails["status"] = null;
 
@@ -5739,12 +5746,14 @@ public class UNOPSGeminiManager : IGeminiManager
                 var comparisonDataJson = JsonConvert.SerializeObject(comparisonData, Formatting.Indented);
                 _logger.LogInformation($"📝 [STATEMENT-VALIDATION] Prepared comparison data (markdown length: {opportunity.OpportunityStatementMarkdown.Length} chars, data keys: {opportunityDetails.Count})");
 
-                // Step 6: Process placeholders in system instructions and user prompt
+                // Step 6: Process placeholders in system instructions and user prompt (payload includes promptData so UserPrompt template can inject full JSON)
+                var placeholderPayload = new Dictionary<string, object> { ["promptData"] = comparisonDataJson };
+                var jsonForPlaceholders = JsonConvert.SerializeObject(placeholderPayload);
                 var systemInstructionsTemplate = validationPrompt.SystemInstructions ?? string.Empty;
-                var fullyFormedSystemInstructions = _aiService.ProcessPlaceholders(systemInstructionsTemplate, comparisonDataJson);
-                
+                var fullyFormedSystemInstructions = _aiService.ProcessPlaceholders(systemInstructionsTemplate, jsonForPlaceholders);
+
                 var userPromptTemplate = validationPrompt.UserPrompt ?? string.Empty;
-                var fullyFormedUserPrompt = _aiService.ProcessPlaceholders(userPromptTemplate, comparisonDataJson);
+                var fullyFormedUserPrompt = _aiService.ProcessPlaceholders(userPromptTemplate, jsonForPlaceholders);
 
                 // Step 7: Call Gemini API for validation
                 var userContent = new
@@ -5839,6 +5848,13 @@ public class UNOPSGeminiManager : IGeminiManager
                             throw new InvalidOperationException("AI response does not contain valid JSON");
                         }
                     }
+
+                    // Do not deserialize if the response is an internal error message (e.g. placeholder processing failed)
+                    if (validationResultJson.IndexOf("Error processing placeholders", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        _logger.LogError($"❌ [STATEMENT-VALIDATION] Response contains placeholder error message. Validation input may be invalid.");
+                        throw new InvalidOperationException("Statement validation could not process the request. Please try again or contact support if it persists.");
+                    }
                 }
                 catch (Newtonsoft.Json.JsonException jsonEx)
                 {
@@ -5867,6 +5883,14 @@ public class UNOPSGeminiManager : IGeminiManager
 
                 validationResult.OpportunityId = opportunityId;
                 validationResult.FreshlyGeneratedStatement = null; // No longer generating fresh markdown
+
+                // Remove any "acceptable" items: [Information not available] vs "No primary SDGs selected" / "No risks identified" etc. are the same — do not show as misalignments
+                if (validationResult.MisalignmentItems != null && validationResult.MisalignmentItems.Count > 0)
+                {
+                    validationResult.MisalignmentItems = validationResult.MisalignmentItems
+                        .Where(item => !item.Contains("This is acceptable", StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+                }
 
                 // Defensive check: Ensure isAligned is consistent with misalignmentItems array
                 var hasNoMisalignments = validationResult.MisalignmentItems == null || validationResult.MisalignmentItems.Count == 0;

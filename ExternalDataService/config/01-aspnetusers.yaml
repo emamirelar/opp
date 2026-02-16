@@ -1,0 +1,166 @@
+metadata:
+  name: "users"
+  description: "ASPNetUsers data sync"
+  version: "1.0"
+  enabled: true
+  max_retry_attempts: 1
+  timeout_minutes: 30   # ~8k records × ~50ms ≈ 7+ min; buffer for full run
+
+source:
+  type: "bigquery"
+  
+  query: |
+    SELECT
+      PARSE_NUMERIC(Resource) as Id
+      , true as IsInternal
+      , Resource_Email_Address_Primary as UserName
+      , UPPER(Resource_Email_Address_Primary) AS NormalizedUserName
+      , Resource_Email_Address_Primary as Email
+      , UPPER(Resource_Email_Address_Primary) AS NormalizedEmail
+      , true as EmailConfirmed
+      , NULL AS PasswordHash
+      , GENERATE_UUID() as SecurityStamp
+      , GENERATE_UUID() as ConcurrencyStamp
+      , NULL as PhoneNumber
+      , false as PhoneNumberConfirmed
+      , false as TwoFactorEnabled
+      , NULL as LockoutEnd
+      , true as LockoutEnabled
+      , 0 as AccessFailedCount
+      , TRUE AS ActiveUser
+    FROM
+      unopsreporting.Employment.People_Search_Report
+    WHERE
+      Effective_Date = CURRENT_DATE()
+      AND Employment_Status = 'N'
+      AND Employment_Type IN ('OPSSTAFF', 'OPSNONSTAFF')
+      AND UPPER(Resource_Email_Address_Primary) LIKE '%UNOPS.ORG'
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY UPPER(Resource_Email_Address_Primary)
+        ORDER BY Resource
+      ) = 1
+
+  primary_key_field: "NormalizedUserName"
+  batch_size: 1000
+
+  filter:
+    field: "IsInternal"
+    value: "true"
+
+destination:
+  table_name: "AspNetUsers"
+  schema: "public"
+  manage_table_structure: false  # Only validate, don't create/alter
+  add_standard_fields: false
+
+  field_mappings:
+    - source_field: "NormalizedUserName"
+      destination_field: "NormalizedUserName"
+      data_type: "varchar(255)"
+      is_required: true
+      is_unique: true   # Business key for upsert; enables use_bulk_upsert
+
+    - source_field: "Id"
+      destination_field: "Id"
+      data_type: "integer"
+      is_required: true
+
+    - source_field: "IsInternal"
+      destination_field: "IsInternal"
+      data_type: "boolean"
+      is_required: false
+
+    - source_field: "UserName"
+      destination_field: "UserName"
+      data_type: "varchar(255)"
+      is_required: true
+
+    - source_field: "Email"
+      destination_field: "Email"
+      data_type: "varchar(255)"
+      is_required: true
+
+    - source_field: "NormalizedEmail"
+      destination_field: "NormalizedEmail"
+      data_type: "varchar(255)"
+      is_required: true
+
+    - source_field: "EmailConfirmed"
+      destination_field: "EmailConfirmed"
+      data_type: "boolean"
+      is_required: false
+
+    - source_field: "PasswordHash"
+      destination_field: "PasswordHash"
+      data_type: "varchar(255)"
+      is_required: false
+
+    - source_field: "SecurityStamp"
+      destination_field: "SecurityStamp"
+      data_type: "varchar(255)"
+      is_required: false
+      insert_only: true  # Preserve existing SecurityStamp to avoid logging users out
+
+    - source_field: "ConcurrencyStamp"
+      destination_field: "ConcurrencyStamp"
+      data_type: "varchar(255)"
+      is_required: false
+      insert_only: true  # Preserve existing ConcurrencyStamp for concurrency control
+
+    - source_field: "PhoneNumber"
+      destination_field: "PhoneNumber"
+      data_type: "varchar(255)"
+      is_required: false
+
+    - source_field: "PhoneNumberConfirmed"
+      destination_field: "PhoneNumberConfirmed"
+      data_type: "boolean"
+      is_required: false
+
+    - source_field: "TwoFactorEnabled"
+      destination_field: "TwoFactorEnabled"
+      data_type: "boolean"
+      is_required: false
+
+    - source_field: "LockoutEnd"
+      destination_field: "LockoutEnd"
+      data_type: "timestamp"
+      is_required: false
+
+    - source_field: "LockoutEnabled"
+      destination_field: "LockoutEnabled"
+      data_type: "boolean"
+      is_required: false
+
+    - source_field: "AccessFailedCount"
+      destination_field: "AccessFailedCount"
+      data_type: "integer"
+      is_required: false
+
+    - source_field: "ActiveUser"
+      destination_field: "ActiveUser"
+      data_type: "boolean"
+      is_required: true
+
+  delete_handler:
+    field: "ActiveUser"
+    value: false
+
+sync_options:
+  sync_mode: Upsert
+  batch_processing: true
+  use_bulk_upsert: true
+
+validation:
+  required_source_fields:
+    - "NormalizedUserName"
+    - "UserName"
+  
+error_handling:
+  on_connection_error: RetryWithBackoff
+  on_mapping_error: SkipRecord
+
+logging:
+  log_level: "Info"
+  log_sql_queries: false   # Reduces I/O; set true only for debugging
+  log_record_details: false # Reduces I/O; set true only for debugging

@@ -114,6 +114,8 @@ export class OpportunityTeamSectionComponent implements OnInit {
    * @description Input signal for AI suggestions relevant to this section
    */
   readonly suggestions = input<any[]>([]);
+  /** True when insights/suggestions are loading or refreshing - show loading indicator */
+  readonly loadingInsightsSuggestions = input<boolean>(false);
 
   /**
    * @description Input signal for update permission - controls visibility of edit button
@@ -195,9 +197,22 @@ export class OpportunityTeamSectionComponent implements OnInit {
   // Collaborator expertise options (loaded from API)
   readonly collaboratorExpertises = signal<{ id: number; name: string; code: string }[]>([]);
 
-  // Computed signal for non-SME roles (excludes SME roles for use in Add Team Member dialog)
+  // Computed signal for non-SME roles (excludes SME roles, Opportunity Manager, and External Stakeholder for use in Add Internal Stakeholder dialog)
+  // Opportunity Manager is excluded because it has a dedicated field
+  // External Stakeholder is excluded because this is for INTERNAL stakeholders only
   readonly nonSmeRoles = computed(() => {
-    return this.entityRoles().filter((role) => role.type !== 'SME');
+    return this.entityRoles().filter((role) => {
+      // Exclude SME roles
+      if (role.type === 'SME') return false;
+      // Case insensitive check for role name and code
+      const roleName = (role.name || '').toLowerCase();
+      const roleCode = (role.code || '').toLowerCase();
+      // Exclude Opportunity Manager (has dedicated field)
+      if (roleName === 'opportunity manager' || roleCode === 'opportunity_manager_opportunity') return false;
+      // Exclude External Stakeholder (this dropdown is for INTERNAL stakeholders only)
+      if (roleName === 'external stakeholder' || roleCode.includes('external_stakeholder')) return false;
+      return true;
+    });
   });
 
   // Computed user-added stakeholders (non-auto-populated)
@@ -211,13 +226,21 @@ export class OpportunityTeamSectionComponent implements OnInit {
 
   // Combined stakeholders: user-added only (auto-populated are shown in separate "Role Holders" section)
   // Normally responsible org units are shown with org unit badge and cannot be deleted
+  // Excludes Opportunity Manager role (has dedicated field)
   readonly combinedInternalStakeholders = computed(() => {
     const userAdded = this.userAddedStakeholders();
     // NOTE: Don't include autoPopulated here - they're shown in the "Role Holders for Responsible Org Unit" section
     const normalOrgUnitIds = this.normallyResponsibleOrgUnits().map(ou => ou.id);
     
+    // Filter out Opportunity Manager role (has dedicated field) - case insensitive check
+    const filteredUserAdded = userAdded.filter(s => {
+      const roleName = (s.entityRoleName || '').toLowerCase();
+      const roleCode = (s.entityRoleCode || '').toLowerCase();
+      return roleName !== 'opportunity manager' && roleCode !== 'opportunity_manager_opportunity';
+    });
+    
     // Mark stakeholders from normally responsible org units
-    const enrichedStakeholders = userAdded.map(s => {
+    const enrichedStakeholders = filteredUserAdded.map(s => {
       // Check if this stakeholder is from a normally responsible org unit
       const isFromNormalOrgUnit = s.organizationHierarchyId && 
                                    normalOrgUnitIds.includes(s.organizationHierarchyId);
@@ -261,13 +284,44 @@ export class OpportunityTeamSectionComponent implements OnInit {
   readonly loadingAutoPopulatedStakeholders = signal<boolean>(false);
 
   // Displayed auto-populated stakeholders: uses dynamic when editing, enriched when viewing
+  // Includes deduplication to prevent duplicate entries for the same orgUnit+role
   readonly autoPopulatedStakeholders = computed(() => {
+    let stakeholders: OpportunityStakeholder[];
+    
     if (this.isEditing()) {
-      return this.dynamicAutoPopulatedStakeholders();
+      stakeholders = this.dynamicAutoPopulatedStakeholders();
+    } else {
+      // Use enriched data if available, otherwise fall back to raw data
+      const enriched = this.enrichedAutoPopulatedStakeholders();
+      stakeholders = enriched.length > 0 ? enriched : this.rawAutoPopulatedStakeholders();
     }
-    // Use enriched data if available, otherwise fall back to raw data
-    const enriched = this.enrichedAutoPopulatedStakeholders();
-    return enriched.length > 0 ? enriched : this.rawAutoPopulatedStakeholders();
+    
+    // Deduplicate by orgUnitId + roleId (unique key for auto-populated stakeholder)
+    // This prevents duplicate entries when data comes from multiple sources
+    // Prefer entries with more complete data (userName, position)
+    const stakeholderMap = new Map<string, OpportunityStakeholder>();
+    for (const s of stakeholders) {
+      const key = `${s.organizationHierarchyId}-${s.entityRoleId}`;
+      const existing = stakeholderMap.get(key);
+      
+      if (!existing) {
+        // First entry for this key
+        stakeholderMap.set(key, s);
+      } else {
+        // Prefer entry with more complete data
+        const existingScore = (existing.userName ? 1 : 0) + (existing.position ? 1 : 0);
+        const newScore = (s.userName ? 1 : 0) + (s.position ? 1 : 0);
+        
+        if (newScore > existingScore) {
+          stakeholderMap.set(key, s);
+        } else if (newScore === existingScore && s.userName && !existing.userName) {
+          // If scores are equal but new has userName and existing doesn't, prefer new
+          stakeholderMap.set(key, s);
+        }
+      }
+    }
+    
+    return Array.from(stakeholderMap.values());
   });
 
   // Getter for existing auto-populated stakeholders (used by startEditing)
@@ -295,10 +349,12 @@ export class OpportunityTeamSectionComponent implements OnInit {
   readonly groupedAutoPopulatedStakeholders = computed(() => {
     const stakeholders = this.autoPopulatedStakeholders();
     
-    // Filter out DoA1, DoA2, and DoA3 roles
+    // Filter out DoA roles and Opportunity Manager (has dedicated field)
     const filteredStakeholders = stakeholders.filter(stakeholder => {
       const roleName = stakeholder.entityRoleName || '';
-      return !['DoA1', 'DoA2', 'DoA3'].includes(roleName);
+      const roleCode = stakeholder.entityRoleCode || '';
+      return !['DoA1', 'DoA2', 'DoA3', 'Opportunity Manager'].includes(roleName) &&
+             roleCode !== 'Opportunity_Manager_Opportunity';
     });
     
     const groups = new Map<string, OpportunityStakeholder[]>();
@@ -355,14 +411,17 @@ export class OpportunityTeamSectionComponent implements OnInit {
   });
 
   // Grouped stakeholders from the SELECTED responsible org unit hierarchy
-  // Excludes DoA1, DoA2, and DoA3 roles from display
+  // Excludes DoA1, DoA2, DoA3 roles and Opportunity Manager (handled by dedicated field)
   readonly groupedResponsibleOrgUnitStakeholders = computed(() => {
     const stakeholders = this.responsibleOrgUnitStakeholders();
     
-    // Filter out DoA1, DoA2, and DoA3 roles
+    // Filter out DoA roles and Opportunity Manager (has dedicated field)
     const filteredStakeholders = stakeholders.filter(stakeholder => {
       const roleName = stakeholder.entityRoleName || '';
-      return !['DoA1', 'DoA2', 'DoA3'].includes(roleName);
+      const roleCode = stakeholder.entityRoleCode || '';
+      // Exclude DoA roles and Opportunity Manager (by name or code)
+      return !['DoA1', 'DoA2', 'DoA3', 'Opportunity Manager'].includes(roleName) &&
+             roleCode !== 'Opportunity_Manager_Opportunity';
     });
     
     const groups = new Map<string, OpportunityStakeholder[]>();
@@ -392,15 +451,19 @@ export class OpportunityTeamSectionComponent implements OnInit {
   });
 
   // Grouped stakeholders from NORMALLY RESPONSIBLE org units (for "Other Internal Stakeholders" section)
-  // Excludes DoA1, DoA2, and DoA3 roles from display
+  // Excludes DoA1 and Opportunity Manager (handled by dedicated field)
+  // Includes DoA2 and DoA3 as they should appear in Internal Stakeholders section
   readonly groupedNormallyResponsibleStakeholders = computed(() => {
     const stakeholders = this.normallyResponsibleOrgUnitStakeholders();
     const normalOrgUnits = this.normallyResponsibleOrgUnits();
     
-    // Filter out DoA1, DoA2, and DoA3 roles
+    // Filter out DoA1 and Opportunity Manager only (DoA2/DoA3 should be included)
     const filteredStakeholders = stakeholders.filter(stakeholder => {
       const roleName = stakeholder.entityRoleName || '';
-      return !['DoA1', 'DoA2', 'DoA3'].includes(roleName);
+      const roleCode = stakeholder.entityRoleCode || '';
+      // Exclude DoA1 and Opportunity Manager (by name or code)
+      return !['DoA1', 'Opportunity Manager'].includes(roleName) &&
+             roleCode !== 'Opportunity_Manager_Opportunity';
     });
     
     const groups = new Map<string, { stakeholders: OpportunityStakeholder[]; countryName: string }>();
@@ -432,11 +495,12 @@ export class OpportunityTeamSectionComponent implements OnInit {
       }));
   });
 
-  // Computed stakeholder count (user-added + auto-populated)
+  // Computed stakeholder count (user-added + auto-populated, excluding Opportunity Manager)
   readonly stakeholderCount = computed(() => {
-    const userAdded = this.userAddedStakeholders().length;
+    // Use combinedInternalStakeholders which already filters out Opportunity Manager
+    const userAddedFiltered = this.combinedInternalStakeholders().length;
     const autoPopulated = this.autoPopulatedStakeholders().length;
-    return userAdded + autoPopulated;
+    return userAddedFiltered + autoPopulated;
   });
 
   // Opportunity Development Team computed signals
@@ -465,8 +529,12 @@ export class OpportunityTeamSectionComponent implements OnInit {
   });
 
   // Opportunity Decision Making Pathway: DoA2 and DoA3 holders (DoA1 excluded)
+  // Includes flags to distinguish between Responsible Org Unit and Normally Responsible Org Units
   readonly decisionMakingPathwayStakeholders = computed(() => {
+    // autoPopulatedStakeholders already handles deduplication
     const stakeholders = this.autoPopulatedStakeholders();
+    const normalOrgUnits = this.normallyResponsibleOrgUnits();
+    const normalOrgUnitIds = normalOrgUnits.map(ou => ou.id);
     
     // Filter for DoA2 and DoA3 only
     const doaStakeholders = stakeholders.filter(stakeholder => {
@@ -474,27 +542,63 @@ export class OpportunityTeamSectionComponent implements OnInit {
       return ['DoA2', 'DoA3'].includes(roleName);
     });
 
-    // Group by org unit
-    const groups = new Map<string, OpportunityStakeholder[]>();
+    // Group by org unit with additional metadata
+    const groups = new Map<string, { 
+      stakeholders: OpportunityStakeholder[]; 
+      orgUnitId: number | undefined;
+      isNormallyResponsible: boolean;
+      countryName: string;
+    }>();
+    
     for (const stakeholder of doaStakeholders) {
       const key = stakeholder.organizationHierarchyName || 'Unknown';
+      const orgUnitId = stakeholder.organizationHierarchyId ?? undefined;
+      const isNormallyResponsible = orgUnitId ? normalOrgUnitIds.includes(orgUnitId) : false;
+      const countryName = isNormallyResponsible 
+        ? normalOrgUnits.find(ou => ou.id === orgUnitId)?.countryName || ''
+        : '';
+      
       if (!groups.has(key)) {
-        groups.set(key, []);
+        groups.set(key, { 
+          stakeholders: [], 
+          orgUnitId, 
+          isNormallyResponsible,
+          countryName
+        });
       }
-      groups.get(key)!.push(stakeholder);
+      groups.get(key)!.stakeholders.push(stakeholder);
     }
 
     // Sort by role: DoA2 first, then DoA3
     const roleOrder = { 'DoA2': 1, 'DoA3': 2 };
     
+    // Sort groups: Responsible Org Unit first, then Normally Responsible Org Units
     return Array.from(groups.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([orgUnitName, groupStakeholders]) => ({
+      .sort((a, b) => {
+        // Responsible org unit comes first
+        if (!a[1].isNormallyResponsible && b[1].isNormallyResponsible) return -1;
+        if (a[1].isNormallyResponsible && !b[1].isNormallyResponsible) return 1;
+        // Then sort alphabetically by name
+        return a[0].localeCompare(b[0]);
+      })
+      .map(([orgUnitName, groupData]) => ({
         orgUnitName,
-        stakeholders: groupStakeholders.sort(
+        isNormallyResponsible: groupData.isNormallyResponsible,
+        countryName: groupData.countryName,
+        stakeholders: groupData.stakeholders.sort(
           (a, b) => (roleOrder[a.entityRoleName as keyof typeof roleOrder] || 999) - (roleOrder[b.entityRoleName as keyof typeof roleOrder] || 999)
         ),
       }));
+  });
+
+  // Decision Making Pathway DOAs from RESPONSIBLE ORG UNIT ONLY (for Decision Making Pathway section)
+  readonly responsibleOrgUnitDecisionMakingPathway = computed(() => {
+    return this.decisionMakingPathwayStakeholders().filter(group => !group.isNormallyResponsible);
+  });
+
+  // Decision Making Pathway DOAs from NORMALLY RESPONSIBLE ORG UNITS (for Internal Stakeholders section)
+  readonly normallyResponsibleDecisionMakingPathway = computed(() => {
+    return this.decisionMakingPathwayStakeholders().filter(group => group.isNormallyResponsible);
   });
 
   // Relevant People signals
@@ -528,10 +632,17 @@ export class OpportunityTeamSectionComponent implements OnInit {
     for (const country of opp.countries) {
       if (!country.country?.organizationUnitHierarchy) continue;
       
-      // Find the OrgUnit (Type = "OrgUnit", level 3) in the hierarchy
-      const normalOrgUnit = country.country.organizationUnitHierarchy.find(
-        (ou: any) => ou.type === 'OrgUnit' && ou.level === 3
+      // Find the deepest OrgUnit (Type = "OrgUnit") in the hierarchy
+      // Note: Different countries may have different hierarchy depths (e.g., some have Hub level, some don't)
+      // So we find the OrgUnit with the highest level instead of hardcoding level 3
+      const orgUnitsInHierarchy = country.country.organizationUnitHierarchy.filter(
+        (ou: any) => ou.type === 'OrgUnit'
       );
+      const normalOrgUnit = orgUnitsInHierarchy.length > 0
+        ? orgUnitsInHierarchy.reduce((deepest: any, current: any) => 
+            current.level > deepest.level ? current : deepest
+          )
+        : null;
       
       // Only include if it's different from the selected responsible org unit
       if (normalOrgUnit && normalOrgUnit.id !== selectedOrgUnitId) {
@@ -563,10 +674,17 @@ export class OpportunityTeamSectionComponent implements OnInit {
     for (const country of opp.countries) {
       if (!country.country?.organizationUnitHierarchy) continue;
       
-      // Find the OrgUnit (Type = "OrgUnit", level 3) in the hierarchy
-      const normalOrgUnit = country.country.organizationUnitHierarchy.find(
-        (ou: any) => ou.type === 'OrgUnit' && ou.level === 3
+      // Find the deepest OrgUnit (Type = "OrgUnit") in the hierarchy
+      // Note: Different countries may have different hierarchy depths (e.g., some have Hub level, some don't)
+      // So we find the OrgUnit with the highest level instead of hardcoding level 3
+      const orgUnitsInHierarchy = country.country.organizationUnitHierarchy.filter(
+        (ou: any) => ou.type === 'OrgUnit'
       );
+      const normalOrgUnit = orgUnitsInHierarchy.length > 0
+        ? orgUnitsInHierarchy.reduce((deepest: any, current: any) => 
+            current.level > deepest.level ? current : deepest
+          )
+        : null;
       
       if (normalOrgUnit && !normalOrgUnitIds.includes(normalOrgUnit.id)) {
         normalOrgUnitIds.push(normalOrgUnit.id);
@@ -601,9 +719,16 @@ export class OpportunityTeamSectionComponent implements OnInit {
     for (const country of opp.countries || []) {
       if (!country.country?.organizationUnitHierarchy) continue;
       
-      const normalOrgUnit = country.country.organizationUnitHierarchy.find(
-        (ou: any) => ou.type === 'OrgUnit' && ou.level === 3
+      // Find the deepest OrgUnit (Type = "OrgUnit") in the hierarchy
+      // Note: Different countries may have different hierarchy depths (e.g., some have Hub level, some don't)
+      const orgUnitsInHierarchy = country.country.organizationUnitHierarchy.filter(
+        (ou: any) => ou.type === 'OrgUnit'
       );
+      const normalOrgUnit = orgUnitsInHierarchy.length > 0
+        ? orgUnitsInHierarchy.reduce((deepest: any, current: any) => 
+            current.level > deepest.level ? current : deepest
+          )
+        : null;
       
       if (normalOrgUnit && normalOrgUnit.id !== selectedOrgUnitId) {
         affectedCountries.push(country.country.name);
@@ -699,6 +824,11 @@ export class OpportunityTeamSectionComponent implements OnInit {
 
       // Only fetch user names when not editing and there are auto-populated stakeholders
       if (!isEditing && rawStakeholders.length > 0) {
+        // IMPORTANT: Clear enriched stakeholders immediately when raw data changes
+        // This ensures the UI uses the new rawAutoPopulatedStakeholders while we fetch enriched data
+        // Without this, old enriched data would be displayed until the API call completes
+        this.enrichedAutoPopulatedStakeholders.set([]);
+        
         // Get unique org unit IDs
         const orgUnitIds = [...new Set(rawStakeholders.map((s) => s.organizationHierarchyId).filter((id): id is number => id !== null))];
 
@@ -1319,8 +1449,10 @@ export class OpportunityTeamSectionComponent implements OnInit {
       }));
 
     // Get auto-populated stakeholders from the current org unit
+    // Include userId if available (resolved from EntityUserRoles)
+    // NOTE: Backend will filter out Opportunity Manager role - it is managed separately via opportunityManagerId field
     const autoPopulated = this.autoPopulatedStakeholders().map((s) => ({
-      userId: undefined,
+      userId: s.userId ?? undefined,  // Include userId if available from resolved EntityUserRoles
       entityRoleId: s.entityRoleId,
       organizationHierarchyId: s.organizationHierarchyId ?? undefined,
       notes: s.notes,
@@ -1370,8 +1502,18 @@ export class OpportunityTeamSectionComponent implements OnInit {
 
         this.cdr.detectChanges();
       },
-      error: () => {
+      error: (error: any) => {
         this.isSaving.set(false);
+        
+        // Show detailed error message if available from backend
+        const details = error?.error?.details || error?.error?.message || error?.message;
+        if (details) {
+          this.feedbackService.showErrorToast({
+            summary: this.translateService.instant('message.error'),
+            detail: details,
+          });
+        }
+        
         this.cdr.detectChanges();
       },
     });
@@ -1481,11 +1623,17 @@ export class OpportunityTeamSectionComponent implements OnInit {
   // ========================================================================
 
   /**
-   * @description Open dialog to add stakeholder
+   * @description Open dialog to add internal stakeholder
+   * Role is auto-set to "Internal Stakeholder" - no role selection needed
    */
   openAddStakeholderDialog(): void {
     this.userControl.setValue(null);
-    this.roleControl.setValue(null);
+    // Auto-set role to "Internal Stakeholder" - find the role from entityRoles
+    const internalStakeholderRole = this.entityRoles().find(
+      role => (role.name || '').toLowerCase() === 'internal stakeholder' || 
+              (role.code || '').toLowerCase().includes('internal_stakeholder')
+    );
+    this.roleControl.setValue(internalStakeholderRole || null);
     this.isEditingStakeholder.set(false);
     this.editingStakeholderIndex.set(-1);
     this.showStakeholderValidationError.set(false);
@@ -1789,6 +1937,7 @@ export class OpportunityTeamSectionComponent implements OnInit {
 
   /**
    * @description Confirm collaborator dialog (add or update collaborator)
+   * If adding a user that already exists as collaborator, merges the expertise areas
    */
   confirmCollaboratorDialog(): void {
     const user = this.collaboratorUserControl.value;
@@ -1813,21 +1962,6 @@ export class OpportunityTeamSectionComponent implements OnInit {
     const isEditing = this.isEditingCollaborator();
     const editingIndex = this.editingCollaboratorIndex();
 
-    // Check for duplicate collaborator (only when adding or changing the user)
-    if (!isEditing || (isEditing && currentCollaborators[editingIndex]?.id !== user.id)) {
-      const isDuplicate = currentCollaborators.some((c, i) => c.id === user.id && i !== editingIndex);
-
-      if (isDuplicate) {
-        this.feedbackService.showWarningToast({
-          summary: this.translateService.instant('message.warning'),
-          detail: this.translateService.instant(
-            'message.validation.collaboratorAlreadyAdded'
-          ),
-        });
-        return;
-      }
-    }
-
     // Check if user is already the Opportunity Manager
     const manager = this.opportunityManagerControl.value;
     if (manager && manager.id === user.id) {
@@ -1840,19 +1974,48 @@ export class OpportunityTeamSectionComponent implements OnInit {
       return;
     }
 
-    // Create collaborator with expertises
-    const collaboratorWithExpertise = {
-      ...user,
-      expertiseIds: expertiseIds
-    };
+    // Check for existing collaborator (to merge expertise if found)
+    const existingIndex = currentCollaborators.findIndex((c, i) => c.id === user.id && i !== editingIndex);
+    const hasExistingCollaborator = existingIndex !== -1;
 
-    if (isEditing && editingIndex >= 0) {
-      // Update existing collaborator
+    if (hasExistingCollaborator && !isEditing) {
+      // Merge expertise with existing collaborator
+      const existingCollaborator = currentCollaborators[existingIndex] as SimpleValue & { expertiseIds?: number[] };
+      const existingExpertiseIds = existingCollaborator.expertiseIds || [];
+      
+      // Combine and deduplicate expertise IDs
+      const mergedExpertiseIds = [...new Set([...existingExpertiseIds, ...expertiseIds])];
+      
+      // Update the existing collaborator with merged expertise
+      const updatedCollaborators = [...currentCollaborators] as Array<SimpleValue & { expertiseIds?: number[] }>;
+      updatedCollaborators[existingIndex] = {
+        ...existingCollaborator,
+        expertiseIds: mergedExpertiseIds
+      };
+      this.collaboratorsControl.setValue(updatedCollaborators);
+      
+      // Show info toast about merging
+      this.feedbackService.showSuccessToast({
+        summary: this.translateService.instant('message.success'),
+        detail: this.translateService.instant(
+          'message.collaboratorExpertiseMerged'
+        ),
+      });
+    } else if (isEditing && editingIndex >= 0) {
+      // Update existing collaborator (standard edit)
+      const collaboratorWithExpertise = {
+        ...user,
+        expertiseIds: expertiseIds
+      };
       const updatedCollaborators = [...currentCollaborators];
       updatedCollaborators[editingIndex] = collaboratorWithExpertise;
       this.collaboratorsControl.setValue(updatedCollaborators);
     } else {
       // Add new collaborator
+      const collaboratorWithExpertise = {
+        ...user,
+        expertiseIds: expertiseIds
+      };
       const updatedCollaborators = [...currentCollaborators, collaboratorWithExpertise];
       this.collaboratorsControl.setValue(updatedCollaborators);
     }

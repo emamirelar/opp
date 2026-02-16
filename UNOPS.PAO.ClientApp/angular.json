@@ -23,7 +23,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "baseHref": "./",
+            "baseHref": "/",
             "outputPath": "dist/UNOPS.PAO.ClientApp",
             "index": "src/index.html",
             "browser": "src/main.ts",
