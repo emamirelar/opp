@@ -2222,6 +2222,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }
         }
 
+        // Track previous OM for role transfer to Collaborator
+        int? previousOMUserId = null;
+
         // Update Opportunity Manager (from stakeholders with "Opportunity Manager" role)
         if (request.OpportunityManagerId.HasValue)
         {
@@ -2236,6 +2239,14 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                     .Where(s => s.OpportunityId == id 
                         && s.EntityRoleId == opportunityManagerRole.Id)
                     .ToListAsync();
+
+                // Capture previous OM before replacement — they will be demoted to Collaborator
+                var previousOM = allExistingManagers
+                    .FirstOrDefault(s => !s.IsDeleted && s.UserId.HasValue && s.UserId != request.OpportunityManagerId.Value);
+                if (previousOM != null)
+                {
+                    previousOMUserId = previousOM.UserId;
+                }
                 
                 foreach (var existingManager in allExistingManagers)
                 {
@@ -2280,6 +2291,35 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }
         }
 
+        // Add previous OM as Collaborator so they retain edit access
+        if (previousOMUserId.HasValue)
+        {
+            var alreadyCollaborator = await context.Set<OpportunityCollaborator>()
+                .AnyAsync(c => c.OpportunityId == id && c.UserId == previousOMUserId.Value && !c.IsDeleted);
+            if (!alreadyCollaborator)
+            {
+                int currentUserId = 0;
+                if (httpContextAccessor?.HttpContext?.User != null)
+                {
+                    var userIdClaim = httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+                    if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int parsedUserId))
+                    {
+                        currentUserId = parsedUserId;
+                    }
+                }
+
+                var newCollaborator = new OpportunityCollaborator
+                {
+                    OpportunityId = id,
+                    UserId = previousOMUserId.Value,
+                    Name = string.Empty,
+                    AddedDate = DateTime.UtcNow,
+                    AddedBy = currentUserId > 0 ? currentUserId : null
+                };
+                context.Set<OpportunityCollaborator>().Add(newCollaborator);
+            }
+        }
+
         // Update Collaborators (Opportunity Development Team) with Expertise assignments
         if (request.Collaborators != null)
         {
@@ -2296,8 +2336,12 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 }
             }
             
-            // Get requested user IDs
+            // Get requested user IDs: include previous OM so they are not removed
             var requestedUserIds = request.Collaborators.Select(c => c.UserId).ToHashSet();
+            if (previousOMUserId.HasValue)
+            {
+                requestedUserIds.Add(previousOMUserId.Value);
+            }
             
             // Get existing collaborators (need to load with expertises)
             // CRITICAL: Filter out soft-deleted records to avoid re-selection issues
