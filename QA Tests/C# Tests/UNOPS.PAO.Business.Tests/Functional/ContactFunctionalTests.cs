@@ -493,7 +493,7 @@ namespace UNOPS.PAO.Business.Tests.Functional
         [InlineData("Dr.", true)]
         [InlineData(null, true)]
         [InlineData("", true)]
-        public void BR_C024_Title_IsOptional(string? title, bool expectedValid)
+        public void BR_C024_Title_IsOptional(string? _title, bool expectedValid)
         {
             // Act - Title is always valid (optional field)
             var isValid = true;

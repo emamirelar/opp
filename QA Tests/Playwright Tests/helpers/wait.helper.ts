@@ -193,10 +193,11 @@ export async function waitForDialog(page: Page, timeout?: number): Promise<void>
   
   console.log('[Wait] Waiting for dialog to appear...');
   
-  // Wait for p-dialog component to be visible
-  // Note: p-dialog is the Angular component; role="dialog" is on the inner .p-dialog div
-  // We exclude p-confirmDialog which is used for confirmation dialogs (alertdialogs)
-  const dialog = page.locator('p-dialog').first();
+  // Wait for a visible p-dialog that is NOT the confirmation dialog (role="alertdialog").
+  // PrimeNG's p-confirmDialog renders as <p-dialog role="alertdialog" ...> and is always
+  // present (but hidden) in the DOM, so using p-dialog.first() would match it instead of
+  // the actual feature dialog we're waiting for.
+  const dialog = page.locator('p-dialog:not([role="alertdialog"]), .p-dynamic-dialog').first();
   await dialog.waitFor({ state: 'visible', timeout: maxTimeout });
   
   // Wait for dialog animation to complete

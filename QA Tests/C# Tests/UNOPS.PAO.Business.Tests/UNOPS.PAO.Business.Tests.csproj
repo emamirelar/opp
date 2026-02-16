@@ -10,8 +10,15 @@
   <!-- xUnit runner configuration for parallel test execution -->
   <ItemGroup>
     <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="appsettings.Testing.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="appsettings.Testing.json" CopyToOutputDirectory="PreserveNewest" Condition="Exists('appsettings.Testing.json')" />
+    <Content Include="appsettings.Testing.json.example" CopyToOutputDirectory="PreserveNewest" Link="appsettings.Testing.json" Condition="!Exists('appsettings.Testing.json')" />
   </ItemGroup>
+
+  <!-- CI fallback: copy .example file when appsettings.Testing.json is gitignored/absent -->
+  <Target Name="CopyTestingSettingsFromExample" BeforeTargets="BeforeBuild" Condition="!Exists('appsettings.Testing.json')">
+    <Message Importance="high" Text="appsettings.Testing.json not found — copying from appsettings.Testing.json.example" />
+    <Copy SourceFiles="appsettings.Testing.json.example" DestinationFiles="appsettings.Testing.json" />
+  </Target>
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.0">
