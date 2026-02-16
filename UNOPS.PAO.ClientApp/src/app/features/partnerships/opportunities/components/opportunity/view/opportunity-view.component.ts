@@ -2204,6 +2204,7 @@ export class OpportunityViewComponent
 
   /**
    * Get status severity class for badges
+   * Closed status uses light red for consistency across the application
    */
   getStatusSeverity(
     status: string | undefined,
@@ -2213,7 +2214,7 @@ export class OpportunityViewComponent
       case 'active':
         return 'success';
       case 'closed':
-        return 'warn';
+        return 'danger';
       case 'pending':
         return 'warn';
       case 'onhold':
