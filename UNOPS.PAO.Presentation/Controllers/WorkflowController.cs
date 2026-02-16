@@ -805,18 +805,6 @@ public class WorkflowController : BaseController
                 opportunity.LastModifiedDate = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
 
-                // Log the rejection with the NO GO stage (rationale stored in comment)
-                await _workflowManager.AddLog(new WorkflowLogModel
-                {
-                    EntityName = normalizedEntityName,
-                    EntityId = request.EntityId.ToString(),
-                    Stage = currentStage,
-                    NewStage = OpportunityWorkflow.Stages.NoGo,
-                    Comment = request.Rationale,  // Decision rationale stored as comment
-                    Action = "Rejected",
-                    UserId = CurrentUserId,
-                    CompletedOn = DateTime.UtcNow
-                });
 
                 // Complete the pending workflow task
                 await _workflowManager.Reject(
@@ -1747,21 +1735,24 @@ public class WorkflowController : BaseController
         if (!opportunity.ProposedInitiativeTypeId.HasValue || opportunity.ProposedInitiativeTypeId <= 0)
             unmetRequirements.Add("message.requirements.opportunity.initiativeTypeRequired");
 
-        // 21. DoA Level 2 Holder: Server-side only validation
+        // 21. DoA Holder (DoA2 or DoA3 fallback): Server-side only validation
         // EntityUserRole inherits from ModifiableDeletableEntity so it has IsDeleted
-        // It uses EntityRole instead of Role
+        // Requires DoA2 or DoA3 holder for ResponsibleOrgUnit; DoA3 used when no DoA2 exists
         if (opportunity.ResponsibleOrgUnitId.HasValue)
         {
+            var orgUnitId = opportunity.ResponsibleOrgUnitId.Value;
             var hasDoAHolder = await _context.EntityUserRoles
-                .AnyAsync(eur => 
+                .AnyAsync(eur =>
                     eur.EntityType == "OrganizationHierarchy" &&
-                    eur.EntityId == opportunity.ResponsibleOrgUnitId.Value &&
+                    eur.EntityId == orgUnitId &&
                     eur.EntityRole != null &&
-                    eur.EntityRole.Code == "DoA2_OrganizationHierarchy" &&
+                    (eur.EntityRole.Code == "DoA2_OrganizationHierarchy" || eur.EntityRole.Code == "DoA3_OrganizationHierarchy") &&
                     !eur.IsDeleted);
 
             if (!hasDoAHolder)
+            {
                 unmetRequirements.Add("message.requirements.opportunity.doaHolderRequired");
+            }
         }
         else
         {

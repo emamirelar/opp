@@ -3192,7 +3192,7 @@
   "message.requirements.opportunity.initiativeTypeRequired": "EQUIPE > Tipo de Iniciativa Proposto a Desenvolver",
   "message.requirements.opportunity.beneficiariesRequired": "PORQUÊ > Beneficiários (deve-se marcar 'será procurado', ou os beneficiários diretos e indiretos devem ser especificados)",
   "message.requirements.opportunity.managerRequired": "EQUIPE > Gestor de Oportunidade",
-  "message.requirements.opportunity.doaHolderRequired": "EQUIPE > O titular do DoA nível 2 deve existir para a unidade organizacional responsável",
+  "message.requirements.opportunity.doaHolderRequired": "EQUIPE > O titular do DoA nível 2 ou 3 deve existir para a unidade organizacional responsável",
   "message.requirements.opportunity.impactRequired": "PORQUÊ > Impacto",
   "message.requirements.opportunity.outcomesRequired": "PORQUÊ > Resultado(s)",
   "message.requirements.opportunity.sdgRequired": "PORQUÊ > Alinhamento ODS",
