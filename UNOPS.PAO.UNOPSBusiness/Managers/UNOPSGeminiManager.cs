@@ -5720,12 +5720,14 @@ public class UNOPSGeminiManager : IGeminiManager
                 var comparisonDataJson = JsonConvert.SerializeObject(comparisonData, Formatting.Indented);
                 _logger.LogInformation($"📝 [STATEMENT-VALIDATION] Prepared comparison data (markdown length: {opportunity.OpportunityStatementMarkdown.Length} chars, data keys: {opportunityDetails.Count})");
 
-                // Step 6: Process placeholders in system instructions and user prompt
+                // Step 6: Process placeholders in system instructions and user prompt (payload includes promptData so UserPrompt template can inject full JSON)
+                var placeholderPayload = new Dictionary<string, object> { ["promptData"] = comparisonDataJson };
+                var jsonForPlaceholders = JsonConvert.SerializeObject(placeholderPayload);
                 var systemInstructionsTemplate = validationPrompt.SystemInstructions ?? string.Empty;
-                var fullyFormedSystemInstructions = _aiService.ProcessPlaceholders(systemInstructionsTemplate, comparisonDataJson);
-                
+                var fullyFormedSystemInstructions = _aiService.ProcessPlaceholders(systemInstructionsTemplate, jsonForPlaceholders);
+
                 var userPromptTemplate = validationPrompt.UserPrompt ?? string.Empty;
-                var fullyFormedUserPrompt = _aiService.ProcessPlaceholders(userPromptTemplate, comparisonDataJson);
+                var fullyFormedUserPrompt = _aiService.ProcessPlaceholders(userPromptTemplate, jsonForPlaceholders);
 
                 // Step 7: Call Gemini API for validation
                 var userContent = new
@@ -5819,6 +5821,13 @@ public class UNOPSGeminiManager : IGeminiManager
                             _logger.LogError($"❌ [STATEMENT-VALIDATION] Could not find valid JSON in response. Full response: {validationResultJson}");
                             throw new InvalidOperationException("AI response does not contain valid JSON");
                         }
+                    }
+
+                    // Do not deserialize if the response is an internal error message (e.g. placeholder processing failed)
+                    if (validationResultJson.IndexOf("Error processing placeholders", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        _logger.LogError($"❌ [STATEMENT-VALIDATION] Response contains placeholder error message. Validation input may be invalid.");
+                        throw new InvalidOperationException("Statement validation could not process the request. Please try again or contact support if it persists.");
                     }
                 }
                 catch (Newtonsoft.Json.JsonException jsonEx)
