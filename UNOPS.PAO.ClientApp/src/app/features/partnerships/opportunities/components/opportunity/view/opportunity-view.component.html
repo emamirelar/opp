@@ -107,11 +107,15 @@
                 </div>
               </div>
               <div class="flex items-center gap-3 flex-shrink-0 flex-wrap justify-end">
-                <p-badge
-                  [value]="opportunity()?.status || ''"
-                  [severity]="getStatusSeverity(opportunity()?.status)"
-                  styleClass="whitespace-nowrap"
-                />
+                @if ((opportunity()?.status || '').toLowerCase() === 'closed') {
+                  <span class="px-2 py-1 text-xs rounded-full bg-badge-danger text-badge-danger whitespace-nowrap">{{ opportunity()?.status || '' }}</span>
+                } @else {
+                  <p-badge
+                    [value]="opportunity()?.status || ''"
+                    [severity]="getStatusSeverity(opportunity()?.status)"
+                    styleClass="whitespace-nowrap"
+                  />
+                }
                 @if (opportunity()?.stage) {
                   <p-badge
                     [value]="opportunity()?.stage || ''"
