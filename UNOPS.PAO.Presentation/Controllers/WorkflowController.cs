@@ -805,18 +805,6 @@ public class WorkflowController : BaseController
                 opportunity.LastModifiedDate = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
 
-                // Log the rejection with the NO GO stage (rationale stored in comment)
-                await _workflowManager.AddLog(new WorkflowLogModel
-                {
-                    EntityName = normalizedEntityName,
-                    EntityId = request.EntityId.ToString(),
-                    Stage = currentStage,
-                    NewStage = OpportunityWorkflow.Stages.NoGo,
-                    Comment = request.Rationale,  // Decision rationale stored as comment
-                    Action = "Rejected",
-                    UserId = CurrentUserId,
-                    CompletedOn = DateTime.UtcNow
-                });
 
                 // Complete the pending workflow task
                 await _workflowManager.Reject(
