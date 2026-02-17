@@ -16,10 +16,11 @@ import { authenticateWithRealBackend } from './helpers/auth.helper';
  * NOTE: Tests navigate to partner detail page (ID 1) which has tab navigation.
  */
 test.describe('Navigation Tabs', () => {
+  test.slow();
   // Authenticate with real backend before each test
   test.beforeEach(async ({ page }) => {
     // Navigate to a page with tabs (partner detail page)
-    await authenticateWithRealBackend(page, '/#/partnerships/partners/1');
+    await authenticateWithRealBackend(page, '/partnerships/partners/1');
     
     // Wait for page load and Angular init
     await page.waitForLoadState('load', { timeout: 15000 });

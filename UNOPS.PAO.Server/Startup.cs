@@ -28,6 +28,7 @@ using UNOPS.PAO.Identity.Context;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.Business;
+using UNOPS.PAO.Business.Workflow.Adapters;
 using UNOPS.PAO.MailSender;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -101,8 +102,14 @@ public class Startup
             app.UseMiddleware<DevelopmentIAPAuthHandler>();
         }
         
-        // Add IAP verification middleware AFTER development headers are set
-        app.UseIAPVerification();
+        // Add IAP verification middleware AFTER development headers are set.
+        // Skip entirely in Testing environment - tests authenticate via
+        // TestAuthHandler. The handler checks for a "Test-NoAuth" header to
+        // support unauthenticated-access tests.
+        if (!env.IsEnvironment("Testing"))
+        {
+            app.UseIAPVerification();
+        }
         
         // Add a second instance of logging AFTER development middleware to see modified headers in development
         if (env.IsDevelopment())
@@ -648,43 +655,49 @@ public class Startup
         }
         var dataSource = dataSourceBuilder.Build();
         
-        // Core DB context
-        services.AddDbContext<DataAccess.Context.AppDbContext>(options =>
-            options
-                .UseNpgsql(dataSource)
-                .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
+        // NOTE: In Testing environment, PAOWebApplicationFactory registers InMemory
+        // DbContexts via ConfigureTestServices. Skip Npgsql registrations here to
+        // prevent "multiple database providers" error from having both registered.
+        if (!CurrentEnvironment.IsEnvironment("Testing"))
+        {
+            // Core DB context
+            services.AddDbContext<DataAccess.Context.AppDbContext>(options =>
+                options
+                    .UseNpgsql(dataSource)
+                    .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
 
-        // Override / UNOPS DB context
-        services.AddDbContext<UNOPSAppDbContext>(options =>
-            options
-                .UseNpgsql(dataSource)
-                .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
+            // Override / UNOPS DB context
+            services.AddDbContext<UNOPSAppDbContext>(options =>
+                options
+                    .UseNpgsql(dataSource)
+                    .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
 
-        // Register IDbContextFactory for UNOPSAppDbContext
-        // Used for parallel query execution (thread-safe DbContext instances)
-        services.AddDbContextFactory<UNOPSAppDbContext>(options =>
-            options
-                .UseNpgsql(dataSource)
-                .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
+            // Register IDbContextFactory for UNOPSAppDbContext
+            // Used for parallel query execution (thread-safe DbContext instances)
+            services.AddDbContextFactory<UNOPSAppDbContext>(options =>
+                options
+                    .UseNpgsql(dataSource)
+                    .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
 
-        // Register IDbContextFactory for AppDbContext (base context)
-        // Used by workflow adapters to avoid DbContext concurrency issues
-        services.AddDbContextFactory<DataAccess.Context.AppDbContext>(options =>
-            options
-                .UseNpgsql(dataSource)
-                .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
+            // Register IDbContextFactory for AppDbContext (base context)
+            // Used by workflow adapters to avoid DbContext concurrency issues
+            services.AddDbContextFactory<DataAccess.Context.AppDbContext>(options =>
+                options
+                    .UseNpgsql(dataSource)
+                    .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
 
-        services.AddDbContext<PAOIdentityDbContext>(options =>
-            options
-                .UseNpgsql(dataSource)
-                .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
+            services.AddDbContext<PAOIdentityDbContext>(options =>
+                options
+                    .UseNpgsql(dataSource)
+                    .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
 
-        // PERFORMANCE: Add DbContextFactory for PAOIdentityDbContext to support thread-safe parallel operations
-        // This allows code that needs to run identity queries in parallel to create separate context instances
-        services.AddDbContextFactory<PAOIdentityDbContext>(options =>
-            options
-                .UseNpgsql(dataSource)
-                .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
+            // PERFORMANCE: Add DbContextFactory for PAOIdentityDbContext to support thread-safe parallel operations
+            // This allows code that needs to run identity queries in parallel to create separate context instances
+            services.AddDbContextFactory<PAOIdentityDbContext>(options =>
+                options
+                    .UseNpgsql(dataSource)
+                    .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
+        }
 
         // ==========================================
         // Workflow Submodule - DbContext and Services
@@ -697,19 +710,27 @@ public class Startup
         // - PaoEntityStageProvider (IEntityStageProvider)
         // - PaoWorkflowApproverProvider (IWorkflowApproverProvider)
         // - PaoWorkflowNotificationService (IWorkflowNotificationService)
-        services.AddPaoWorkflowServices(options =>
+        //
+        // NOTE: Skip in Testing environment because AddPaoWorkflowServices calls
+        // EnsureWorkflowSchemaCreated which eagerly opens a PostgreSQL connection
+        // to create/migrate the workflow schema. In tests, the WebApplicationFactory
+        // registers mock workflow services via ConfigureTestServices instead.
+        if (!CurrentEnvironment.IsEnvironment("Testing"))
         {
-            options.UsePostgreSqlStorage(optimizedConnectionString, "workflow");
-        });
+            services.AddPaoWorkflowServices(options =>
+            {
+                options.UsePostgreSqlStorage(optimizedConnectionString, "workflow");
+            });
 
-        // Override WorkflowDbContext registration to use dataSource (with IAM auth support)
-        // This ensures WorkflowDbContext uses the same IAM authentication as other DbContexts
-        services.AddDbContext<UNOPS.Workflow.DataAccess.WorkflowDbContext>(options =>
-            options
-                .UseNpgsql(dataSource, npgsql =>
-                {
-                    npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "workflow");
-                }));
+            // Override WorkflowDbContext registration to use dataSource (with IAM auth support)
+            // This ensures WorkflowDbContext uses the same IAM authentication as other DbContexts
+            services.AddDbContext<UNOPS.Workflow.DataAccess.WorkflowDbContext>(options =>
+                options
+                    .UseNpgsql(dataSource, npgsql =>
+                    {
+                        npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "workflow");
+                    }));
+        }
 
     }
     private string? GetConnectionStringFromSecretManager()

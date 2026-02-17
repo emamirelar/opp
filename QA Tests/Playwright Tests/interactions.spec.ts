@@ -13,10 +13,12 @@ import { authenticateWithRealBackend } from './helpers/auth.helper';
  * - Search and filter capabilities
  */
 test.describe('Interactions List', () => {
+  test.slow();
+
   // Authenticate with real backend before each test
   test.beforeEach(async ({ page }) => {
     // Use real backend authentication (cookie-based)
-    await authenticateWithRealBackend(page, '/#/partnerships/interactions');
+    await authenticateWithRealBackend(page, '/partnerships/interactions');
   });
   
   test('should display interactions page header', async ({ page }) => {

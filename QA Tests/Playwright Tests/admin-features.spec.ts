@@ -11,9 +11,10 @@ import { authenticateWithRealBackend } from './helpers/auth.helper';
 import { setupAPIMocks } from './helpers/api-mocks.helper';
 
 test.describe('User Roles Management (PNO-233)', () => {
-  
+  test.slow();
+
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/admin/user-management');
+    await authenticateWithRealBackend(page, '/admin/user-management');
   });
 
   test('POS_001 - Access User Roles management page', async ({ page }) => {
@@ -114,7 +115,7 @@ test.describe('User Roles Management (PNO-233)', () => {
       });
     });
     
-    await page.goto('http://127.0.0.1:4200/#/admin/user-management');
+    await page.goto('http://localhost:4200/admin/user-management');
     await page.waitForTimeout(3000);
     
     // Should be redirected or see access denied
@@ -126,9 +127,10 @@ test.describe('User Roles Management (PNO-233)', () => {
 });
 
 test.describe('AI Prompts Administration (PNO-120)', () => {
-  
+  test.slow();
+
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/admin/ai-prompts');
+    await authenticateWithRealBackend(page, '/admin/ai-prompts');
   });
 
   test('POS_001 - Access AI Prompts administration page', async ({ page }) => {
@@ -235,7 +237,7 @@ test.describe('AI Prompts Administration (PNO-120)', () => {
       });
     });
     
-    await page.goto('http://127.0.0.1:4200/#/admin/ai-prompts');
+    await page.goto('http://localhost:4200/admin/ai-prompts');
     await page.waitForTimeout(3000);
     
     // Should be redirected or denied
@@ -244,9 +246,10 @@ test.describe('AI Prompts Administration (PNO-120)', () => {
 });
 
 test.describe('Role Matrix Permission Tests (PNO-562)', () => {
-  
+  test.slow();
+
   test('POS_001 - Administrator can create partners', async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/partners');
+    await authenticateWithRealBackend(page, '/partnerships/partners');
     await page.waitForTimeout(3000);
     
     const createBtn = page.locator('[data-testid="new-partner-button"], button:has-text("New Partner"), button:has-text("Create")');
@@ -272,7 +275,7 @@ test.describe('Role Matrix Permission Tests (PNO-562)', () => {
       });
     });
     
-    await page.goto('http://127.0.0.1:4200/#/partnerships/partners');
+    await page.goto('http://localhost:4200/partnerships/partners');
     await page.waitForTimeout(3000);
     
     const createBtn = page.locator('button:has-text("New Partner"), button:has-text("Create")');
@@ -295,7 +298,7 @@ test.describe('Role Matrix Permission Tests (PNO-562)', () => {
       });
     });
     
-    await page.goto('http://127.0.0.1:4200/#/partnerships/partners');
+    await page.goto('http://localhost:4200/partnerships/partners');
     await page.waitForTimeout(3000);
     
     const createBtn = page.locator('[data-testid="new-partner-button"]');
@@ -320,7 +323,7 @@ test.describe('Role Matrix Permission Tests (PNO-562)', () => {
       });
     });
     
-    await page.goto('http://127.0.0.1:4200/#/partnerships/opportunities');
+    await page.goto('http://localhost:4200/partnerships/opportunities');
     await page.waitForTimeout(3000);
     
     const createBtn = page.locator('button:has-text("New Opportunity"), button:has-text("Create")');
@@ -342,7 +345,7 @@ test.describe('Role Matrix Permission Tests (PNO-562)', () => {
       });
     });
     
-    await page.goto('http://127.0.0.1:4200/#/partnerships/opportunities');
+    await page.goto('http://localhost:4200/partnerships/opportunities');
     await page.waitForTimeout(3000);
     
     const createBtn = page.locator('[data-testid="new-opportunity-button"]');
@@ -353,7 +356,7 @@ test.describe('Role Matrix Permission Tests (PNO-562)', () => {
   });
 
   test('POS_012 - Administrator can access all admin features', async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/admin');
+    await authenticateWithRealBackend(page, '/admin');
     await page.waitForTimeout(3000);
     
     // Check admin menu is visible
@@ -376,7 +379,7 @@ test.describe('Role Matrix Permission Tests (PNO-562)', () => {
       });
     });
     
-    await page.goto('http://127.0.0.1:4200/#/admin');
+    await page.goto('http://localhost:4200/admin');
     await page.waitForTimeout(3000);
     
     // Should be redirected or see access denied
@@ -399,7 +402,7 @@ test.describe('Role Matrix Permission Tests (PNO-562)', () => {
       });
     });
     
-    await page.goto('http://127.0.0.1:4200/#/partnerships/partners');
+    await page.goto('http://localhost:4200/partnerships/partners');
     await page.waitForTimeout(3000);
     
     // Should be able to view list

@@ -152,7 +152,11 @@ export async function assertUrlMatches(
  * @param page - Playwright page object
  */
 export async function assertDialogOpen(page: Page): Promise<void> {
-  const dialog = page.locator('p-dialog, [role="dialog"]').first();
+  // Match PrimeNG Dialog, DynamicDialog, and native role="dialog" elements.
+  // Exclude PrimeNG confirm dialogs (role="alertdialog") which are always in the DOM.
+  const dialog = page.locator(
+    'p-dialog:not([role="alertdialog"]), p-dynamicdialog, [role="dialog"]:not([role="alertdialog"])'
+  ).first();
   await assertVisible(dialog, getTimeout('short'));
 }
 
@@ -161,7 +165,8 @@ export async function assertDialogOpen(page: Page): Promise<void> {
  * @param page - Playwright page object
  */
 export async function assertDialogClosed(page: Page): Promise<void> {
-  const dialog = page.locator('p-dialog, [role="dialog"]').first();
+  // Exclude PrimeNG confirm dialogs (role="alertdialog") which are always in the DOM
+  const dialog = page.locator('p-dialog:not([role="alertdialog"]), [role="dialog"]:not([role="alertdialog"])').first();
   await assertHidden(dialog);
 }
 

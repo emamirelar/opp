@@ -17,14 +17,15 @@ import { setupAPIMocks } from './helpers/api-mocks.helper';
  * @note Uses hash-based routing (/#/) for Angular app navigation
  */
 test.describe('Form Validation', () => {
-  const BASE_URL = 'http://127.0.0.1:4200';
+  test.slow();
+  const BASE_URL = 'http://localhost:4200';
   
-  // Helper to navigate with hash-based routing and API mocks
+  // Helper to navigate with path-based routing and API mocks
   async function gotoHashWithMocks(page: any, path: string): Promise<void> {
     // Set up API mocks before navigation for permission checks
     await setupAPIMocks(page);
-    const hashUrl = path.startsWith('/#/') ? path : `/#${path.startsWith('/') ? path : '/' + path}`;
-    await page.goto(`${BASE_URL}${hashUrl}`);
+    const targetUrl = path.startsWith('/#/') ? path.substring(2) : (path.startsWith('/') ? path : '/' + path);
+    await page.goto(`${BASE_URL}${targetUrl}`);
     await page.waitForLoadState('load');
     await page.waitForTimeout(1000);
   }
@@ -51,7 +52,7 @@ test.describe('Form Validation', () => {
   
   test('should validate email format in partner form', async ({ page }) => {
     // Authenticate and navigate to partners page
-    await authenticateWithRealBackend(page, '/#/partnerships/partners');
+    await authenticateWithRealBackend(page, '/partnerships/partners');
     await page.waitForTimeout(2000);
     
     // Look for New Partner button
@@ -94,7 +95,7 @@ test.describe('Form Validation', () => {
   
   test('should validate required fields on contact form', async ({ page }) => {
     // Authenticate and navigate to contacts page
-    await authenticateWithRealBackend(page, '/#/partnerships/contacts');
+    await authenticateWithRealBackend(page, '/partnerships/contacts');
     await page.waitForTimeout(2000);
     
     // Look for New Contact button
@@ -133,7 +134,7 @@ test.describe('Form Validation', () => {
   
   test('should prevent form submission with invalid data', async ({ page }) => {
     // Authenticate and navigate to opportunities page
-    await authenticateWithRealBackend(page, '/#/opportunities');
+    await authenticateWithRealBackend(page, '/opportunities');
     await page.waitForTimeout(2000);
     
     // Look for New Opportunity button
@@ -193,7 +194,7 @@ test.describe('Form Validation', () => {
   
   test('should validate number fields accept only numbers', async ({ page }) => {
     // Authenticate and navigate to opportunities page
-    await authenticateWithRealBackend(page, '/#/opportunities');
+    await authenticateWithRealBackend(page, '/opportunities');
     await page.waitForTimeout(2000);
     
     // Look for New Opportunity button
@@ -229,7 +230,7 @@ test.describe('Form Validation', () => {
   
   test('should validate date fields with proper format', async ({ page }) => {
     // Authenticate and navigate to interactions page (has date fields)
-    await authenticateWithRealBackend(page, '/#/partnerships/interactions');
+    await authenticateWithRealBackend(page, '/partnerships/interactions');
     await page.waitForTimeout(2000);
     
     // Look for New Interaction button
@@ -290,7 +291,7 @@ test.describe('Form Validation', () => {
   
   test('should validate form fields on blur', async ({ page }) => {
     // Authenticate and navigate to partners page
-    await authenticateWithRealBackend(page, '/#/partnerships/partners');
+    await authenticateWithRealBackend(page, '/partnerships/partners');
     await page.waitForTimeout(2000);
     
     const newPartnerButton = page.locator('[data-testid="new-partner-button"]');
@@ -326,7 +327,7 @@ test.describe('Form Validation', () => {
   
   test('should disable submit button when form is invalid', async ({ page }) => {
     // Authenticate and navigate to contacts page
-    await authenticateWithRealBackend(page, '/#/partnerships/contacts');
+    await authenticateWithRealBackend(page, '/partnerships/contacts');
     await page.waitForTimeout(2000);
     
     const newContactButton = page.locator('[data-testid="new-contact-button"]');

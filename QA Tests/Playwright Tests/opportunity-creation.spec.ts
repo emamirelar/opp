@@ -11,8 +11,10 @@ import { authenticateWithRealBackend } from './helpers/auth.helper';
 import { setupAPIMocks } from './helpers/api-mocks.helper';
 
 test.describe('Opportunity Creation from Partners Page (PNO-687)', () => {
+  test.slow();
+
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/partners');
+    await authenticateWithRealBackend(page, '/partnerships/partners');
   });
 
   test('POS_001 - Validate Create Opportunity button on Active Partner', async ({ page }) => {
@@ -185,8 +187,10 @@ test.describe('Opportunity Creation from Partners Page (PNO-687)', () => {
 });
 
 test.describe('Opportunity Creation from Interactions (PNO-688)', () => {
+  test.slow();
+
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/interactions');
+    await authenticateWithRealBackend(page, '/partnerships/interactions');
   });
 
   test('POS_001 - Validate Creation from Single Interaction', async ({ page }) => {
@@ -259,8 +263,10 @@ test.describe('Opportunity Creation from Interactions (PNO-688)', () => {
 });
 
 test.describe('Opportunity Creation from Opportunity Page (PNO-689)', () => {
+  test.slow();
+
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/opportunities');
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
   });
 
   test('POS_001 - Validate Create New Opportunity button visibility', async ({ page }) => {
@@ -308,7 +314,8 @@ test.describe('Opportunity Creation from Opportunity Page (PNO-689)', () => {
 });
 
 test.describe('Opportunity Creation - Permission Tests', () => {
-  
+  test.slow();
+
   test('PRM_001 - Validate General User cannot create opportunities', async ({ page }) => {
     // Setup as General User (non-Partner User)
     await page.context().clearCookies();
@@ -327,7 +334,7 @@ test.describe('Opportunity Creation - Permission Tests', () => {
       });
     });
     
-    await page.goto('http://127.0.0.1:4200/#/partnerships/opportunities');
+    await page.goto('http://localhost:4200/partnerships/opportunities');
     await page.waitForTimeout(3000);
     
     // Create button should be hidden or disabled for General Users

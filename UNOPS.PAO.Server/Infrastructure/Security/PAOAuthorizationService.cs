@@ -1,6 +1,7 @@
 namespace UNOPS.PAO.Server.Infrastructure.Security;
 
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
 using System.Security.Claims;
 using UNOPS.PAO.Identity.Context;
 using UNOPS.PAO.Presentation.ContextPermissionHandlers;
@@ -33,6 +34,20 @@ public class PAOAuthorizationService : IAuthorizationService
         user = new ClaimsPrincipal(identity);
 
         var context = new AuthorizationHandlerContext(requirements, user, resource);
+
+        // Handle built-in ASP.NET Core requirements that have no custom handler registered.
+        // Without this, [Authorize] policies that include RequireAuthenticatedUser() fail
+        // because DenyAnonymousAuthorizationRequirement is never satisfied.
+        foreach (var requirement in requirements)
+        {
+            if (requirement is DenyAnonymousAuthorizationRequirement)
+            {
+                if (user.Identity?.IsAuthenticated == true)
+                {
+                    context.Succeed(requirement);
+                }
+            }
+        }
 
         foreach (var requirement in requirements)
         {

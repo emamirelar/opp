@@ -38,6 +38,7 @@ import { assertUrlMatches, assertDialogOpen } from './helpers/assertions.helper'
  * NOTE: Uses existing opportunity ID 1 from the database.
  */
 test.describe('Opportunity Detail Page', () => {
+  test.slow();
   let opportunityItemPage: OpportunityItemPage;
   
   // Use existing opportunity ID from database (matches opportunity-item-basic.spec.ts)
@@ -49,7 +50,7 @@ test.describe('Opportunity Detail Page', () => {
   test.beforeEach(async ({ page }) => {
     opportunityItemPage = new OpportunityItemPage(page, testOpportunityId);
     
-    await authenticateWithRealBackend(page, `/#/partnerships/opportunities/${testOpportunityId}`);
+    await authenticateWithRealBackend(page, `/partnerships/opportunities/${testOpportunityId}`);
     
     await opportunityItemPage.waitForLoad();
   });
@@ -340,12 +341,13 @@ test.describe('Opportunity Detail Page', () => {
  * Tests that verify each content section in detail
  */
 test.describe('Opportunity Detail Page - Section Details', () => {
+  test.slow();
   let opportunityItemPage: OpportunityItemPage;
   const testOpportunityId = 1;
   
   test.beforeEach(async ({ page }) => {
     opportunityItemPage = new OpportunityItemPage(page, testOpportunityId);
-    await authenticateWithRealBackend(page, `/#/partnerships/opportunities/${testOpportunityId}`);
+    await authenticateWithRealBackend(page, `/partnerships/opportunities/${testOpportunityId}`);
     await opportunityItemPage.waitForLoad();
   });
   

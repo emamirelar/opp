@@ -89,8 +89,12 @@ public abstract class ManagerTestBase : IDisposable
     {
         if (TestEnvironment.UseInMemory)
         {
-            Context.Database.EnsureDeleted();
-            Context.Database.EnsureCreated();
+            try
+            {
+                Context.Database.EnsureDeleted();
+                Context.Database.EnsureCreated();
+            }
+            catch { /* SQLite connection may already be closed during concurrent test runs */ }
         }
     }
 

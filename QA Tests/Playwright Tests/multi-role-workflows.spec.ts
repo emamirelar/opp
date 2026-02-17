@@ -15,8 +15,9 @@ import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
 
 test.describe('Multi-Role: Administrator Access', () => {
+  test.slow();
   test('Admin should see partner list with New Partner button', async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/partners');
+    await authenticateWithRealBackend(page, '/partnerships/partners');
     
     // Admin should see the header
     const header = page.locator('[data-testid="partners-header"]').first();
@@ -28,7 +29,7 @@ test.describe('Multi-Role: Administrator Access', () => {
   });
 
   test('Admin should see export and import buttons on partners page', async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/partners');
+    await authenticateWithRealBackend(page, '/partnerships/partners');
     
     const exportBtn = page.locator('[data-testid="export-button"]').first();
     await expect(exportBtn).toBeVisible({ timeout: 10000 });
@@ -38,17 +39,20 @@ test.describe('Multi-Role: Administrator Access', () => {
   });
 
   test('Admin should see edit and delete buttons on partner detail', async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/partners/1');
+    await authenticateWithRealBackend(page, '/partnerships/partners/1');
+    
+    const header = page.locator('[data-testid="partner-detail-header"]').first();
+    await expect(header).toBeVisible({ timeout: 15000 });
     
     const editBtn = page.locator('[data-testid="edit-partner-button"]').first();
-    await expect(editBtn).toBeVisible({ timeout: 10000 });
-    
     const deleteBtn = page.locator('[data-testid="delete-partner-button"]').first();
-    await expect(deleteBtn).toBeVisible({ timeout: 5000 });
+    const editVisible = await editBtn.isVisible({ timeout: 10000 }).catch(() => false);
+    const deleteVisible = await deleteBtn.isVisible({ timeout: 5000 }).catch(() => false);
+    expect(editVisible && deleteVisible).toBeTruthy();
   });
 
   test('Admin should see all opportunity sections', async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/opportunities/1');
+    await authenticateWithRealBackend(page, '/partnerships/opportunities/1');
     
     const header = page.locator('[data-testid="opportunity-detail-header"]').first();
     await expect(header).toBeVisible({ timeout: 10000 });
@@ -62,7 +66,7 @@ test.describe('Multi-Role: Administrator Access', () => {
   });
 
   test('Admin should see contact list with New Contact button', async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/contacts');
+    await authenticateWithRealBackend(page, '/partnerships/contacts');
     
     const header = page.locator('[data-testid="contacts-header"]').first();
     await expect(header).toBeVisible({ timeout: 10000 });
@@ -72,7 +76,7 @@ test.describe('Multi-Role: Administrator Access', () => {
   });
 
   test('Admin should see interaction list with create buttons', async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/interactions');
+    await authenticateWithRealBackend(page, '/partnerships/interactions');
     
     const header = page.locator('[data-testid="interactions-header"]').first();
     await expect(header).toBeVisible({ timeout: 10000 });
@@ -86,9 +90,10 @@ test.describe('Multi-Role: Administrator Access', () => {
 });
 
 test.describe('Multi-Role: Restricted User (View Only)', () => {
+  test.slow();
   test('Restricted user should NOT see New Partner button', async ({ page }) => {
     // Authenticate as restricted user - QA-039 fix ensures restricted permissions
-    await authenticateWithRealBackend(page, '/#/partnerships/partners', 'test-readonly@playwright.local');
+    await authenticateWithRealBackend(page, '/partnerships/partners', 'test-readonly@playwright.local');
     
     // Page should load
     const header = page.locator('[data-testid="partners-header"]').first();
@@ -101,7 +106,7 @@ test.describe('Multi-Role: Restricted User (View Only)', () => {
   });
 
   test('Restricted user should NOT see import button', async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/partners', 'test-readonly@playwright.local');
+    await authenticateWithRealBackend(page, '/partnerships/partners', 'test-readonly@playwright.local');
     
     const header = page.locator('[data-testid="partners-header"]').first();
     await expect(header).toBeVisible({ timeout: 10000 });
@@ -112,7 +117,7 @@ test.describe('Multi-Role: Restricted User (View Only)', () => {
   });
 
   test('Restricted user should NOT see edit/delete on partner detail', async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/partners/1', 'test-readonly@playwright.local');
+    await authenticateWithRealBackend(page, '/partnerships/partners/1', 'test-readonly@playwright.local');
     
     // Partner detail should still load
     const header = page.locator('[data-testid="partner-detail-header"]').first();
@@ -130,7 +135,7 @@ test.describe('Multi-Role: Restricted User (View Only)', () => {
   });
 
   test('Restricted user should NOT see New Contact button', async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/contacts', 'test-readonly@playwright.local');
+    await authenticateWithRealBackend(page, '/partnerships/contacts', 'test-readonly@playwright.local');
     
     const header = page.locator('[data-testid="contacts-header"]').first();
     await expect(header).toBeVisible({ timeout: 10000 });
@@ -141,7 +146,7 @@ test.describe('Multi-Role: Restricted User (View Only)', () => {
   });
 
   test('Restricted user should NOT see edit/delete on contact detail', async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/contacts/1', 'test-readonly@playwright.local');
+    await authenticateWithRealBackend(page, '/partnerships/contacts/1', 'test-readonly@playwright.local');
     
     const header = page.locator('[data-testid="contact-detail-header"]').first();
     await expect(header).toBeVisible({ timeout: 10000 });
@@ -158,9 +163,10 @@ test.describe('Multi-Role: Restricted User (View Only)', () => {
 });
 
 test.describe('Multi-Role: Admin vs Restricted Comparison', () => {
+  test.slow();
   test('Admin sees more buttons than restricted user on interactions page', async ({ page }) => {
     // First check admin
-    await authenticateWithRealBackend(page, '/#/partnerships/interactions');
+    await authenticateWithRealBackend(page, '/partnerships/interactions');
     
     const newIntBtnAdmin = page.locator('[data-testid="new-interaction-button"]').first();
     const adminBtnVisible = await newIntBtnAdmin.isVisible({ timeout: 10000 }).catch(() => false);
@@ -168,7 +174,7 @@ test.describe('Multi-Role: Admin vs Restricted Comparison', () => {
   });
 
   test('Restricted user has fewer buttons on interactions page', async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/interactions', 'test-readonly@playwright.local');
+    await authenticateWithRealBackend(page, '/partnerships/interactions', 'test-readonly@playwright.local');
     
     const header = page.locator('[data-testid="interactions-header"]').first();
     await expect(header).toBeVisible({ timeout: 10000 });

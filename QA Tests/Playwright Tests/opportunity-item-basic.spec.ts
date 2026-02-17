@@ -21,13 +21,14 @@ import { assertUrlMatches } from './helpers/assertions.helper';
  * Opportunity routes are under /partnerships/opportunities (not /opportunities).
  */
 test.describe('Opportunity Detail Page - Phase 1A Basic Tests', () => {
+  test.slow();
   // Use existing opportunity ID from database (assumes setup scripts have run)
   const testOpportunityId = 1;
   
   test.beforeEach(async ({ page }) => {
     // Authenticate with real backend and navigate to opportunity detail page
     // Note: Opportunities are under /partnerships/opportunities path
-    await authenticateWithRealBackend(page, `/#/partnerships/opportunities/${testOpportunityId}`);
+    await authenticateWithRealBackend(page, `/partnerships/opportunities/${testOpportunityId}`);
     
     // Wait for page load
     await page.waitForLoadState('load', { timeout: 15000 });

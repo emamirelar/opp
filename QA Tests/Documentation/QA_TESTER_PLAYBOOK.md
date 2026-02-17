@@ -1,7 +1,7 @@
 # QA Tester Playbook
 
-**Version:** 1.4  
-**Last Updated:** February 10, 2026  
+**Version:** 1.7  
+**Last Updated:** February 17, 2026  
 **Audience:** QA Testers (New and Experienced)  
 **Scope:** Universal guide applicable to any software project
 
@@ -13,7 +13,9 @@
 2. [QA Lifecycle Overview](#2-qa-lifecycle-overview)
 3. [Phase 1: Project Onboarding](#3-phase-1-project-onboarding)
    - [3.2 Test Case Locations & Project Map](#32-test-case-locations--project-map)
+   - [3.4 Git Repository Tracking Verification](#34-git-repository-tracking-verification)
 4. [Phase 2: Test Planning](#4-phase-2-test-planning)
+   - [4.3 Stakeholder Alignment on Test Cases](#43-stakeholder-alignment-on-test-cases)
 5. [Phase 3: Test Development](#5-phase-3-test-development)
 6. [Phase 4: Test Execution](#6-phase-4-test-execution)
 7. [Phase 5: Defect Management](#7-phase-5-defect-management)
@@ -146,6 +148,12 @@ Use this checklist when joining a new project:
   dotnet build     # .NET projects
   npm install      # Node.js projects
   ```
+
+- [ ] **Verify Git branch tracking** (see [Section 3.4](#34-git-repository-tracking-verification)):
+  - [ ] Confirm you are on the correct branch (`git branch --show-current`)
+  - [ ] Verify your branch tracks the correct remote branch (`git branch -vv`)
+  - [ ] Verify the remote URL points to the correct repository (`git remote -v`)
+  - [ ] If tracking is wrong, fix it immediately before making any commits
 
 #### Days 2-3: Documentation Review
 
@@ -352,6 +360,100 @@ What do you need to test?
 | What's been problematic historically? | High-risk areas to focus on |
 | What's the test data strategy? | Understand data dependencies |
 
+### 3.4 Git Repository Tracking Verification
+
+**MANDATORY**: Before making any commits, verify your local branch is correctly tracking the intended remote branch. Incorrect tracking can cause commits to be pushed to the wrong branch or repository, leading to lost work, merge conflicts, or accidental code leakage.
+
+#### Why This Matters
+
+| Risk | Consequence |
+|------|-------------|
+| **Wrong remote branch** | Commits pushed to `main` instead of your feature/QA branch |
+| **Wrong remote URL** | Code pushed to a different repository entirely |
+| **Detached HEAD** | Commits not associated with any branch, easily lost |
+| **Stale tracking** | Local branch tracks a deleted or renamed remote branch |
+| **No upstream set** | `git push` fails or pushes to unexpected destination |
+
+#### Verification Checklist
+
+Run these commands **every time** you start working on a new branch or return to an existing one:
+
+```bash
+# 1. Check which branch you are on
+git branch --show-current
+# Expected: Your working branch (e.g., QA-Tests, feature/my-feature)
+
+# 2. Check branch tracking (shows upstream remote/branch)
+git branch -vv
+# Expected: Your branch shows [origin/correct-branch-name]
+# Example: * QA-Tests  abc1234 [origin/QA-Tests] Last commit message
+
+# 3. Verify remote URL points to the correct repository
+git remote -v
+# Expected: origin  https://github.com/your-org/correct-repo.git (fetch)
+#           origin  https://github.com/your-org/correct-repo.git (push)
+
+# 4. Check the full tracking configuration
+git config --get branch.$(git branch --show-current).remote
+# Expected: origin (or the correct remote name)
+
+git config --get branch.$(git branch --show-current).merge
+# Expected: refs/heads/correct-branch-name
+```
+
+#### How to Fix Incorrect Tracking
+
+```bash
+# Fix 1: Set/change the upstream tracking branch
+git branch --set-upstream-to=origin/correct-branch-name
+
+# Fix 2: If the remote URL is wrong
+git remote set-url origin https://github.com/your-org/correct-repo.git
+
+# Fix 3: If you need to create a new tracking relationship
+git push -u origin your-branch-name
+
+# Fix 4: If on detached HEAD, create a branch first
+git checkout -b my-branch-name
+git push -u origin my-branch-name
+```
+
+#### When to Verify Tracking
+
+Perform the verification checklist at these key moments:
+
+| Moment | Why |
+|--------|-----|
+| **After cloning** a repository | Ensure default branch and remote are correct |
+| **After checking out** a branch | Confirm the branch tracks the right upstream |
+| **Before your first commit** of the day | Catch issues before they become problems |
+| **After a `git fetch` or `git pull`** | Remote state may have changed |
+| **After resolving merge conflicts** | Ensure you're still on the right branch |
+| **When switching between projects** | Prevent cross-project confusion |
+| **Before pushing** any commits | Last chance to catch tracking errors |
+
+#### Quick Verification One-Liner
+
+Use this single command to display all critical tracking information at a glance:
+
+```bash
+echo "Branch: $(git branch --show-current)" && echo "Remote: $(git remote -v | head -1)" && git branch -vv --list "$(git branch --show-current)"
+```
+
+#### Add to Git Aliases (Recommended)
+
+Add this alias to your global Git configuration for quick verification:
+
+```bash
+git config --global alias.check-tracking '!echo "Branch: $(git branch --show-current)" && echo "---" && git remote -v && echo "---" && git branch -vv --list "$(git branch --show-current)"'
+```
+
+Then simply run:
+
+```bash
+git check-tracking
+```
+
 ---
 
 ## 4. Phase 2: Test Planning
@@ -418,7 +520,67 @@ Total = Positive + (3 × Positive) = 4× coverage
 | **Performance Tests** | Load, stress, response times | 🟡 Medium |
 | **Accessibility Tests** | WCAG compliance, screen readers | 🟡 Medium |
 
-### 4.3 Risk-Based Testing
+### 4.3 Stakeholder Alignment on Test Cases
+
+**MANDATORY**: Before executing tests, share the created test cases with the **Project Manager (PM)** and/or **Business Analyst (BA)** for their review, agreement, and understanding of the level of testing planned for their project.
+
+#### Why This Matters
+
+| Reason | Benefit |
+|--------|---------|
+| **Shared understanding** | PM/BA confirm the testing scope matches business expectations |
+| **Coverage validation** | Stakeholders can identify missing scenarios or priorities |
+| **Risk alignment** | Ensures high-risk areas are tested to the level the business requires |
+| **No surprises** | PM/BA are aware of what will and won't be tested before execution begins |
+| **Traceability** | Documented agreement creates an audit trail for test scope decisions |
+
+#### Process
+
+1. **Prepare test case summary**: Compile the list of test cases organized by feature area, test type (positive, negative, edge case, security, etc.), and priority
+2. **Schedule a review session**: Set up a brief meeting or send the test cases for asynchronous review
+3. **Walk through coverage**: Explain the testing approach, the 3:1 ratio standard, and any risk-based prioritization decisions
+4. **Capture feedback**: Document any additional scenarios, priority changes, or scope adjustments requested by PM/BA
+5. **Obtain sign-off**: Get explicit agreement (email, meeting notes, or sign-off in test management tool) before proceeding to test execution
+6. **Update test plan**: Incorporate any agreed changes into the test cases and re-share if significant modifications were made
+
+#### What to Share
+
+| Artifact | Format | Purpose |
+|----------|--------|---------|
+| Test case list with categories | Markdown table or spreadsheet | Shows breadth of coverage |
+| Test coverage matrix | Requirements vs test cases mapping | Proves all requirements are covered |
+| Risk-based priority assignments | Sorted list by risk score | Shows where effort is focused |
+| Out-of-scope items | Explicit list | Prevents assumptions about untested areas |
+| Test data requirements | Summary | Highlights any data dependencies or constraints |
+
+#### Sign-Off Template
+
+```markdown
+## Test Case Review Sign-Off
+
+**Project:** [Project Name]
+**Feature/Sprint:** [Feature or Sprint Name]
+**Total Test Cases:** [Count]
+**Review Date:** YYYY-MM-DD
+
+### Reviewers
+
+| Role | Name | Agreement | Date | Notes |
+|------|------|-----------|------|-------|
+| PM | | ☐ Agreed / ☐ Changes Requested | | |
+| BA | | ☐ Agreed / ☐ Changes Requested | | |
+| QA Lead | | ☐ Agreed / ☐ Changes Requested | | |
+
+### Scope Agreement
+- [ ] Test coverage level is appropriate for project risk
+- [ ] All critical user journeys are covered
+- [ ] Out-of-scope items are acknowledged
+- [ ] Test data requirements are feasible
+```
+
+> **Note:** This step is not a gate to slow down testing — it is a quality checkpoint to ensure testing effort is aligned with business priorities. Keep the review lightweight and focused.
+
+### 4.4 Risk-Based Testing
 
 Prioritize testing based on risk:
 
@@ -1505,14 +1667,83 @@ All tests should be performed manually in a test environment before production d
 
 ---
 
+### TC-1.2: Alternative Workflow
+
+**Objective:** Verify alternative path through the feature
+
+**Test Steps:**
+1. [Alternative starting point]
+2. [Different path steps]
+3. [Alternative completion]
+
+**Expected Results:**
+- [ ] Alternative flow completes successfully
+- [ ] No conflicts with primary workflow
+
+---
+
 ## 2. Validation Rules Testing
 
 ### TC-2.1: Required Field Validation
 
+**Objective:** Verify required fields are enforced
+
 | Field | Test Input | Expected Error |
 |-------|------------|----------------|
 | Name | (empty) | "Name is required" |
+| Name | "   " (whitespace) | "Name is required" |
 | Email | (empty) | "Email is required" |
+
+---
+
+### TC-2.2: Format Validation
+
+**Objective:** Verify format constraints
+
+| Field | Test Input | Expected Error |
+|-------|------------|----------------|
+| Email | "not-an-email" | "Invalid email format" |
+| Phone | "abc123" | "Invalid phone format" |
+| Date | "99/99/9999" | "Invalid date" |
+
+---
+
+### TC-2.3: Length Validation
+
+**Objective:** Verify length constraints
+
+| Field | Max Length | Test Input | Expected |
+|-------|------------|------------|----------|
+| Name | 255 | 255 chars | Accepted |
+| Name | 255 | 256 chars | "Maximum 255 characters" |
+
+---
+
+### TC-2.4: Uniqueness Validation
+
+**Objective:** Verify duplicate detection
+
+**Test Steps:**
+1. Create entity with name "Test Entity"
+2. Try to create another with name "Test Entity"
+3. Try to create with name "test entity" (case insensitive)
+
+**Expected Results:**
+- [ ] Exact match rejected with clear error
+- [ ] Case-insensitive match rejected
+- [ ] Unique names accepted
+
+---
+
+### TC-2.5: Business Rule Validation
+
+**Objective:** Verify business logic constraints
+
+| Rule | Test Scenario | Expected |
+|------|---------------|----------|
+| Only published forms allowed | Select draft form | Error displayed |
+| End date after start date | End before start | Error displayed |
+| Minimum items required | Submit with 0 items | Error displayed |
 
 ---
 
@@ -1524,6 +1755,265 @@ All tests should be performed manually in a test environment before production d
 |-------------|-----------|----------|
 | Draft | Active | ✅ Allowed |
 | Active | Inactive | ✅ Allowed |
+| Inactive | Active | ✅ Allowed |
+
+**Test Steps:**
+1. Create entity in [initial status]
+2. Change status to [target status]
+3. Verify status updates in UI
+4. Verify status updates in database
+5. Verify audit trail updated
+
+---
+
+### TC-3.2: Invalid Status Transitions
+
+| From Status | To Status | Expected |
+|-------------|-----------|----------|
+| Draft | Inactive | ❌ Rejected |
+| Cancelled | Active | ❌ Rejected |
+| Deprecated | Any | ❌ Rejected (read-only) |
+
+**Expected Results:**
+- [ ] Invalid transitions prevented
+- [ ] Clear error message displayed
+- [ ] No database changes made
+
+---
+
+## 4. Delete/Archive Functionality
+
+### TC-4.1: Delete Allowed Entities
+
+**Objective:** Verify deletion works for eligible entities
+
+**Test Steps:**
+1. Create entity in Draft status
+2. Verify Delete button visible
+3. Click Delete
+4. Verify confirmation dialog
+5. Confirm deletion
+6. Verify soft delete in database (IsDeleted = true)
+7. Verify cascading delete to child records
+
+---
+
+### TC-4.2: Delete Prevented for Protected Entities
+
+**Objective:** Verify deletion blocked for active/protected entities
+
+**Test Steps:**
+1. Create entity and set status to Active
+2. Verify Delete button NOT visible
+3. Attempt API delete directly
+4. Verify rejection with error message
+
+---
+
+## 5. Filtering and Pagination
+
+### TC-5.1: Name Search Filter
+
+**Test Data:** Multiple entities with varying names
+
+| Search Term | Expected Results |
+|-------------|------------------|
+| "core" | All containing "Core", "CORE", "core" |
+| "test" | Only matching entities |
+| (clear) | All entities |
+
+---
+
+### TC-5.2: Status Filter
+
+| Filter | Expected |
+|--------|----------|
+| Draft | Only Draft entities |
+| Active | Only Active entities |
+| (all) | All entities |
+
+---
+
+### TC-5.3: Pagination
+
+**Prerequisites:** 30+ entities
+
+| Test | Expected |
+|------|----------|
+| Default page size | 10 items |
+| Navigate to page 2 | Next 10 items |
+| Change to 20 per page | 20 items shown |
+| Total count | Accurate count |
+
+---
+
+## 6. Inline Editing / Configuration
+
+### TC-6.1: Edit Field Inline
+
+**Test Steps:**
+1. Navigate to entity detail/configuration
+2. Click edit icon next to [field]
+3. Change value
+4. Click save (check button)
+5. Verify success message
+6. Verify value updated in UI
+7. Verify value persisted in database
+8. Verify ModifiedBy/ModifiedDate updated
+
+---
+
+### TC-6.2: Cancel Edit
+
+**Test Steps:**
+1. Begin editing field
+2. Change value
+3. Click cancel (X button)
+4. Verify original value restored
+5. Verify no API call made
+
+---
+
+### TC-6.3: Validation During Edit
+
+**Test Steps:**
+1. Begin editing
+2. Enter invalid value (empty, too long, duplicate)
+3. Attempt save
+4. Verify inline error message
+5. Verify save blocked
+
+---
+
+## 7. Referential Integrity
+
+### TC-7.1: Foreign Key Relationships
+
+**Objective:** Verify all relationships are valid
+
+| Parent | Child | Test |
+|--------|-------|------|
+| Entity → Related1 | Query child.ParentId | All reference valid parent |
+| Entity → Related2 | Query child.EntityId | All reference valid entity |
+
+---
+
+### TC-7.2: Cascading Relationships
+
+**Objective:** Verify relationship chain integrity
+
+**Test Steps:**
+1. Create entity with children
+2. Trace relationship chain through all levels
+3. Verify all references valid
+4. Verify no orphaned records
+
+---
+
+## 8. Audit Trail Verification
+
+### TC-8.1: Creation Audit
+
+| Field | Expected |
+|-------|----------|
+| CreatedBy | Current user ID |
+| CreatedDate | Current timestamp (±1 min) |
+| ModifiedBy | Same as CreatedBy |
+| ModifiedDate | Same as CreatedDate |
+
+---
+
+### TC-8.2: Modification Audit
+
+**Test Steps:**
+1. Create entity as User A
+2. Modify entity as User B
+3. Query audit fields
+
+| Field | Expected |
+|-------|----------|
+| CreatedBy | User A (unchanged) |
+| CreatedDate | Original (unchanged) |
+| ModifiedBy | User B (updated) |
+| ModifiedDate | Current timestamp |
+
+---
+
+## 9. Error Handling
+
+### TC-9.1: API Connection Error
+
+**Objective:** Verify graceful handling of API failures
+
+**Test Steps:**
+1. Stop backend API
+2. Attempt operation
+3. Verify user-friendly error message
+4. Verify app doesn't crash
+
+---
+
+### TC-9.2: Concurrent Modification
+
+**Test Steps:**
+1. User A opens entity
+2. User B opens same entity
+3. User A saves changes
+4. User B attempts save
+5. Verify appropriate handling (conflict message or last-write-wins)
+
+---
+
+### TC-9.3: Success/Error Messages
+
+| Operation | Expected Message |
+|-----------|------------------|
+| Create | "Created successfully" |
+| Update | "Updated successfully" |
+| Delete | "Deleted successfully" |
+| Validation error | Clear description of issue |
+
+---
+
+## 10. End-to-End Workflow
+
+### TC-10.1: Complete User Journey
+
+**Objective:** Verify full workflow from start to finish
+
+**Scenario:** [Describe complete user story]
+
+**Test Steps:**
+1. Log in as [role]
+2. Navigate to feature
+3. Create new entity
+4. Configure properties
+5. Change status
+6. Verify in list view
+7. Create related entity
+8. Return to dashboard
+9. Verify all data persisted
+
+---
+
+### TC-10.2: Data Consistency
+
+**Test Steps:**
+1. Perform operations via UI
+2. Query database directly
+3. Compare UI data with database
+4. Verify exact match
+
+---
+
+### TC-10.3: Performance
+
+| Operation | Target | Actual |
+|-----------|--------|--------|
+| List load (100 items) | < 2 sec | |
+| Create complex entity | < 5 sec | |
+| Filter response | < 1 sec | |
+| Update single field | < 1 sec | |
 
 ---
 
@@ -1531,14 +2021,39 @@ All tests should be performed manually in a test environment before production d
 
 **Test Date:** _______________
 **Tester Name:** _______________
+**Environment:** _______________
+
+### Results by Category
+
+| Category | Total | Passed | Failed | Blocked |
+|----------|-------|--------|--------|---------|
+| 1. Workflow | | | | |
+| 2. Validation | | | | |
+| 3. Status | | | | |
+| 4. Delete | | | | |
+| 5. Filtering | | | | |
+| 6. Editing | | | | |
+| 7. Referential | | | | |
+| 8. Audit | | | | |
+| 9. Error Handling | | | | |
+| 10. E2E | | | | |
+| **TOTAL** | | | | |
+
 **Pass Rate:** ___/___  = ___%
+
+### Critical Issues Found
+
+| ID | Description | Severity |
+|----|-------------|----------|
+| | | |
 
 ### Sign-Off
 
-| Role | Name | Date |
-|------|------|------|
-| Tester | | |
-| Reviewer | | |
+| Role | Name | Signature | Date |
+|------|------|-----------|------|
+| Tester | | | |
+| Reviewer | | | |
+| Approved | ☐ Yes ☐ No | | |
 ```
 
 ---
@@ -2122,6 +2637,9 @@ Fix: Add wait, verify selector, check for dynamic content
 | 1.2 | 2026-02-06 | QA Team | Added Combinatorial Testing: Value Permutations section with pairwise testing strategy and data-driven test patterns |
 | 1.3 | 2026-02-07 | QA Team | Added Section 3.2: Test Case Locations & Project Map — directory map, test type reference table, and decision guide for locating tests by purpose |
 | 1.4 | 2026-02-10 | QA Team | Restructured Core/Additional categories: Moved Functional Tests (≥50) and Integration Tests (≥50) to Core Categories; moved Security and Concurrency to Additional Categories. Updated all minimum counts, ratio examples, and calculator to reflect new structure. Grand Total Minimum updated from ~293+ to ~347+ per suite. |
+| 1.5 | 2026-02-16 | QA Team | Added Section 3.4: Git Repository Tracking Verification — mandatory checklist and commands to verify branch tracking, remote URL, and upstream configuration before committing. Prevents accidental commits to wrong branch/repository. Added tracking verification step to Day 1 onboarding checklist. |
+| 1.6 | 2026-02-17 | QA Team | Added Section 4.3: Stakeholder Alignment on Test Cases — mandatory step to share test cases with PM/BA for agreement on testing scope and coverage level before execution. Includes review process, what to share, and sign-off template. |
+| 1.7 | 2026-02-17 | QA Team | Aligned with PDJ playbook: Expanded Section 11.3 Integration Test Checklist Template to comprehensive version with 10 test categories (workflow, validation, status, delete, filtering, editing, referential integrity, audit, error handling, E2E), detailed sub-cases, and structured results summary. |
 
 ---
 

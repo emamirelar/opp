@@ -20,6 +20,15 @@ public class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions
 
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
+        // Allow tests to simulate unauthenticated requests by sending
+        // the "Test-NoAuth: true" header. CreateUnauthenticatedClient()
+        // helpers add this header so that security tests still get 401.
+        if (Request.Headers.TryGetValue("Test-NoAuth", out var noAuth) &&
+            string.Equals(noAuth.FirstOrDefault(), "true", StringComparison.OrdinalIgnoreCase))
+        {
+            return Task.FromResult(AuthenticateResult.NoResult());
+        }
+        
         var claims = new List<Claim>();
 
         // Extract claims from request headers (set by test client)

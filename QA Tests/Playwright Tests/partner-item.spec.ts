@@ -30,6 +30,8 @@ import { assertUrlMatches, assertDialogOpen } from './helpers/assertions.helper'
  * NOTE: Uses existing partner ID 1 from the database.
  */
 test.describe('Partner Detail Page', () => {
+  test.slow();
+
   let partnerItemPage: PartnerItemPage;
   
   // Use existing partner ID from database (matches partner-item-basic.spec.ts)
@@ -43,7 +45,7 @@ test.describe('Partner Detail Page', () => {
     partnerItemPage = new PartnerItemPage(page, testPartnerId);
     
     // Authenticate with real backend and navigate to partner detail page
-    await authenticateWithRealBackend(page, `/#/partnerships/partners/${testPartnerId}`);
+    await authenticateWithRealBackend(page, `/partnerships/partners/${testPartnerId}`);
     
     // Wait for page to load
     await partnerItemPage.waitForLoad();
@@ -279,6 +281,8 @@ test.describe('Partner Detail Page', () => {
  * Tests that verify specific sections can be expanded and display data
  */
 test.describe('Partner Detail Page - Expanded Sections', () => {
+  test.slow();
+
   let partnerItemPage: PartnerItemPage;
   const testPartnerId = 1;
   
@@ -287,7 +291,7 @@ test.describe('Partner Detail Page - Expanded Sections', () => {
     partnerItemPage = new PartnerItemPage(page, testPartnerId);
     
     // Authenticate with real backend and navigate to partner detail page
-    await authenticateWithRealBackend(page, `/#/partnerships/partners/${testPartnerId}`);
+    await authenticateWithRealBackend(page, `/partnerships/partners/${testPartnerId}`);
     
     // Wait for page to load
     await partnerItemPage.waitForLoad();

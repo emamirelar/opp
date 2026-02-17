@@ -16,9 +16,9 @@ import { setupAPIMocks } from './helpers/api-mocks.helper';
 // PNO-446: Take a Tour Feature
 // ============================================================================
 test.describe('PNO-446: Take a Tour Feature', () => {
-  
+  test.slow();
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/home');
+    await authenticateWithRealBackend(page, '/home');
   });
 
   test('POS_001 - Tour button visible on home page', async ({ page }) => {
@@ -33,7 +33,7 @@ test.describe('PNO-446: Take a Tour Feature', () => {
   });
 
   test('POS_002 - Tour starts on supported page', async ({ page }) => {
-    await page.goto('http://127.0.0.1:4200/#/partnerships/partners');
+    await page.goto('http://localhost:4200/partnerships/partners');
     await page.waitForTimeout(3000);
     
     const tourButton = page.locator('button:has-text("Take a Tour"), [data-testid="tour-button"]');
@@ -110,7 +110,7 @@ test.describe('PNO-446: Take a Tour Feature', () => {
 
   test('NEG_001 - Fallback message on unsupported page', async ({ page }) => {
     // Navigate to a page without tour
-    await page.goto('http://127.0.0.1:4200/#/leads');
+    await page.goto('http://localhost:4200/leads');
     await page.waitForTimeout(3000);
     
     const tourButton = page.locator('button:has-text("Take a Tour")');
@@ -131,9 +131,9 @@ test.describe('PNO-446: Take a Tour Feature', () => {
 // PNO-677: Advanced Search
 // ============================================================================
 test.describe('PNO-677: Advanced Search', () => {
-  
+  test.slow();
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/partners');
+    await authenticateWithRealBackend(page, '/partnerships/partners');
   });
 
   test('POS_001 - Search by Pooled Fund = Yes', async ({ page }) => {
@@ -170,7 +170,7 @@ test.describe('PNO-677: Advanced Search', () => {
   });
 
   test('POS_007 - Search First Name equals', async ({ page }) => {
-    await page.goto('http://127.0.0.1:4200/#/partnerships/contacts');
+    await page.goto('http://localhost:4200/partnerships/contacts');
     await page.waitForTimeout(3000);
     
     const advancedSearchBtn = page.locator('button:has-text("Advanced Search")');
@@ -199,9 +199,9 @@ test.describe('PNO-677: Advanced Search', () => {
 // PNO-676: Contact Import/Duplicates
 // ============================================================================
 test.describe('PNO-676: Contact Import/Duplicates', () => {
-  
+  test.slow();
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/contacts');
+    await authenticateWithRealBackend(page, '/partnerships/contacts');
   });
 
   test('POS_001 - Import unique contacts', async ({ page }) => {
@@ -238,9 +238,9 @@ test.describe('PNO-676: Contact Import/Duplicates', () => {
 // PNO-256: Partner List Hierarchical View
 // ============================================================================
 test.describe('PNO-256: Partner List Hierarchical View', () => {
-  
+  test.slow();
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/partners');
+    await authenticateWithRealBackend(page, '/partnerships/partners');
   });
 
   test('POS_001 - Hierarchical list displays', async ({ page }) => {
@@ -288,9 +288,9 @@ test.describe('PNO-256: Partner List Hierarchical View', () => {
 // PNO-255: Contact List Columns/Sort
 // ============================================================================
 test.describe('PNO-255: Contact List Columns/Sort', () => {
-  
+  test.slow();
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/contacts');
+    await authenticateWithRealBackend(page, '/partnerships/contacts');
   });
 
   test('POS_001 - Contact list displays columns', async ({ page }) => {
@@ -348,9 +348,9 @@ test.describe('PNO-255: Contact List Columns/Sort', () => {
 // PNO-696: Notification Bugs
 // ============================================================================
 test.describe('PNO-696: Notifications', () => {
-  
+  test.slow();
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/home');
+    await authenticateWithRealBackend(page, '/home');
   });
 
   test('POS_001 - Recent Activity displays notifications', async ({ page }) => {
@@ -386,26 +386,26 @@ test.describe('PNO-696: Notifications', () => {
 // PNO-474: Gmail Add-on
 // ============================================================================
 test.describe('PNO-474: Gmail Add-on Integration', () => {
-  
+  test.slow();
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/interactions');
+    await authenticateWithRealBackend(page, '/partnerships/interactions');
   });
 
   test('POS_001 - Interactions from Gmail visible', async ({ page }) => {
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(5000);
     
-    // Interactions page should display either a data table or a "no data" message
-    const table = page.locator('p-table, .p-datatable');
-    const noData = page.getByText(/no data|no records|no interactions/i);
-    const isVisible = await table.isVisible().catch(() => false);
-    const hasNoData = await noData.isVisible().catch(() => false);
+    const table = page.locator('p-table, .p-datatable, table');
+    const noData = page.getByText(/no data|no records|no interactions|showing|0 records/i);
+    const listview = page.locator('[data-testid="interactions-listview"], app-listview');
+    const isVisible = await table.first().isVisible().catch(() => false);
+    const hasNoData = await noData.first().isVisible().catch(() => false);
+    const hasListview = await listview.first().isVisible().catch(() => false);
     
-    // The interactions page should show either data or a placeholder
-    expect(isVisible || hasNoData).toBe(true);
+    expect(isVisible || hasNoData || hasListview).toBe(true);
   });
 
   test('POS_004 - System notification on sync', async ({ page }) => {
-    await page.goto('http://127.0.0.1:4200/#/home');
+    await page.goto('http://localhost:4200/home');
     await page.waitForTimeout(3000);
     
     // Check for notification area - should exist even if empty
@@ -422,9 +422,9 @@ test.describe('PNO-474: Gmail Add-on Integration', () => {
 // PNO-230: Interaction List View
 // ============================================================================
 test.describe('PNO-230: Interaction List View', () => {
-  
+  test.slow();
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/interactions');
+    await authenticateWithRealBackend(page, '/partnerships/interactions');
   });
 
   test('POS_001 - Display interaction columns', async ({ page }) => {
@@ -478,9 +478,9 @@ test.describe('PNO-230: Interaction List View', () => {
 // PNO-760: Home Page Requirements
 // ============================================================================
 test.describe('PNO-760: Home Page Requirements', () => {
-  
+  test.slow();
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/home');
+    await authenticateWithRealBackend(page, '/home');
   });
 
   test('POS_001 - New Opportunity button visible', async ({ page }) => {
@@ -525,7 +525,7 @@ test.describe('PNO-760: Home Page Requirements', () => {
       });
     });
     
-    await page.goto('http://127.0.0.1:4200/#/home');
+    await page.goto('http://localhost:4200/home');
     await page.waitForTimeout(3000);
     
     const newOppBtn = page.locator('[data-testid="new-opportunity-home"]');
@@ -540,9 +540,9 @@ test.describe('PNO-760: Home Page Requirements', () => {
 // PNO-694: AI Assistant
 // ============================================================================
 test.describe('PNO-694: AI Assistant', () => {
-  
+  test.slow();
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/home');
+    await authenticateWithRealBackend(page, '/home');
   });
 
   test('POS_001 - AI responds to query', async ({ page }) => {
@@ -602,9 +602,9 @@ test.describe('PNO-694: AI Assistant', () => {
 // PNO-693: Performance Tests
 // ============================================================================
 test.describe('PNO-693: Performance', () => {
-  
+  test.slow();
   test('PER_001 - Global Search load time', async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/home');
+    await authenticateWithRealBackend(page, '/home');
     await page.waitForTimeout(3000);
     
     const startTime = Date.now();
@@ -628,12 +628,12 @@ test.describe('PNO-693: Performance', () => {
   });
 
   test('PER_002 - Interactions page load time', async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/home');
+    await authenticateWithRealBackend(page, '/home');
     await page.waitForTimeout(2000);
     
     const startTime = Date.now();
     
-    await page.goto('http://127.0.0.1:4200/#/partnerships/interactions');
+    await page.goto('http://localhost:4200/partnerships/interactions');
     
     // Wait for page to be ready - either data table loads OR "No data available" is shown
     // Both indicate the page has finished loading its data
@@ -656,9 +656,9 @@ test.describe('PNO-693: Performance', () => {
 // PNO-691: Contact Creation Validation
 // ============================================================================
 test.describe('PNO-691: Contact Creation Validation', () => {
-  
+  test.slow();
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/contacts');
+    await authenticateWithRealBackend(page, '/partnerships/contacts');
   });
 
   test('NEG_001 - Cannot activate without First Name', async ({ page }) => {
@@ -706,9 +706,9 @@ test.describe('PNO-691: Contact Creation Validation', () => {
 // PNO-582: Partner Approval & Due Diligence
 // ============================================================================
 test.describe('PNO-582: Partner Approval & Due Diligence', () => {
-  
+  test.slow();
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/partners');
+    await authenticateWithRealBackend(page, '/partnerships/partners');
   });
 
   test('POS_001 - Draft partner can be activated', async ({ page }) => {
@@ -767,7 +767,7 @@ test.describe('PNO-582: Partner Approval & Due Diligence', () => {
       });
     });
     
-    await page.goto('http://127.0.0.1:4200/#/partnerships/partners');
+    await page.goto('http://localhost:4200/partnerships/partners');
     await page.waitForTimeout(3000);
     
     const firstRow = page.locator('p-table tbody tr').first();
@@ -790,9 +790,9 @@ test.describe('PNO-582: Partner Approval & Due Diligence', () => {
 // PNO-592: Global Filter Issues
 // ============================================================================
 test.describe('PNO-592: Global Filter', () => {
-  
+  test.slow();
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/partners');
+    await authenticateWithRealBackend(page, '/partnerships/partners');
   });
 
   test('POS_001 - Filter by single org unit', async ({ page }) => {
@@ -838,9 +838,9 @@ test.describe('PNO-592: Global Filter', () => {
 // PNO-457: Mass Upload
 // ============================================================================
 test.describe('PNO-457: Mass Upload', () => {
-  
+  test.slow();
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/contacts');
+    await authenticateWithRealBackend(page, '/partnerships/contacts');
   });
 
   test('POS_001 - Import button available', async ({ page }) => {

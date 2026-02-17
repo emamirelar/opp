@@ -17,8 +17,10 @@ import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
 
 test.describe('AI Assistant - Panel Visibility', () => {
+  test.slow();
+
   test('AI-001: AI panel/button is accessible from main pages', async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/');
+    await authenticateWithRealBackend(page, '/');
 
     // Look for AI panel toggle or assistant button
     const aiPanel = page.locator('app-ai-panel, app-ai-assistant-panel, .ai-panel, [class*="ai-assistant"]').first();
@@ -34,7 +36,7 @@ test.describe('AI Assistant - Panel Visibility', () => {
   });
 
   test('AI-002: AI assistant is available on opportunity detail', async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/opportunities/1');
+    await authenticateWithRealBackend(page, '/partnerships/opportunities/1');
 
     // AI panel or button should exist on opportunity pages
     const aiElements = page.locator('app-ai-panel, app-ai-assistant-panel, .ai-panel, [class*="ai"]');
@@ -46,8 +48,10 @@ test.describe('AI Assistant - Panel Visibility', () => {
 });
 
 test.describe('AI Assistant - Chat Interface', () => {
+  test.slow();
+
   test('AI-003: AI chat container exists when panel is open', async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/');
+    await authenticateWithRealBackend(page, '/');
 
     // Look for the chat container or welcome screen
     const chatContainer = page.locator('.ai-chat-container, #chatContainer, app-ai-assistant-panel').first();
@@ -61,7 +65,7 @@ test.describe('AI Assistant - Chat Interface', () => {
   });
 
   test('AI-004: AI has message input area', async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/');
+    await authenticateWithRealBackend(page, '/');
 
     // Look for AI message input
     const messageInput = page.locator('#messageInput, .ai-input-area textarea').first();
@@ -87,8 +91,10 @@ test.describe('AI Assistant - Chat Interface', () => {
 });
 
 test.describe('AI Assistant - Transcribe', () => {
+  test.slow();
+
   test('AI-005: AI transcribe component exists on interaction pages', async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/interactions/1');
+    await authenticateWithRealBackend(page, '/partnerships/interactions/1');
 
     // Interaction detail may have AI transcribe
     const transcribe = page.locator('app-ai-transcribe, .ai-transcribe-container, .interaction-ai-transcribe').first();
@@ -100,8 +106,10 @@ test.describe('AI Assistant - Transcribe', () => {
 });
 
 test.describe('AI Assistant - Opportunity Integration', () => {
+  test.slow();
+
   test('AI-006: Opportunity sections have AI suggestion capability', async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/opportunities/1');
+    await authenticateWithRealBackend(page, '/partnerships/opportunities/1');
 
     // Look for any AI-related buttons in the opportunity sections
     const aiButtons = page.locator('button').filter({ hasText: /ai|suggest|generate/i });
@@ -116,7 +124,7 @@ test.describe('AI Assistant - Opportunity Integration', () => {
   });
 
   test('AI-007: AI panel accessible from opportunity page', async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/opportunities/1');
+    await authenticateWithRealBackend(page, '/partnerships/opportunities/1');
 
     const header = page.locator('[data-testid="opportunity-detail-header"]').first();
     await expect(header).toBeVisible({ timeout: 10000 });
@@ -129,8 +137,10 @@ test.describe('AI Assistant - Opportunity Integration', () => {
 });
 
 test.describe('AI Admin - Prompt Management', () => {
+  test.slow();
+
   test('AI-008: AI prompt management page loads for admin', async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/admin/ai-prompt-management');
+    await authenticateWithRealBackend(page, '/admin/ai-prompt-management');
     await page.waitForTimeout(3000);
 
     expect(page.url()).toContain('ai-prompt-management');
@@ -142,7 +152,7 @@ test.describe('AI Admin - Prompt Management', () => {
   });
 
   test('AI-009: AI prompt management inaccessible to restricted user', async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/admin/ai-prompt-management', 'test-readonly@playwright.local');
+    await authenticateWithRealBackend(page, '/admin/ai-prompt-management', 'test-readonly@playwright.local');
     await page.waitForTimeout(3000);
 
     const url = page.url();

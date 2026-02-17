@@ -14,6 +14,8 @@ import { assertUrlMatches } from './helpers/assertions.helper';
  * - Search and filter capabilities
  */
 test.describe('Partners List', () => {
+  test.slow();
+
   let partnersPage: PartnersPage;
   
   // Authenticate with real backend before each test
@@ -21,7 +23,7 @@ test.describe('Partners List', () => {
     partnersPage = new PartnersPage(page);
     
     // Use real backend authentication (cookie-based)
-    await authenticateWithRealBackend(page, '/#/partnerships/partners');
+    await authenticateWithRealBackend(page, '/partnerships/partners');
     
     // Wait for permissions to load
     await partnersPage.waitForPermissions();

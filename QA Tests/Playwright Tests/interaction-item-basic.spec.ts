@@ -20,12 +20,13 @@ import { assertUrlMatches } from './helpers/assertions.helper';
  * Ensure database has at least one interaction record before running tests.
  */
 test.describe('Interaction Detail Page - Phase 1A Basic Tests', () => {
+  test.slow();
   // Use existing interaction ID from database (assumes setup scripts have run)
   const testInteractionId = 1;
   
   test.beforeEach(async ({ page }) => {
     // Authenticate with real backend and navigate to interaction detail page
-    await authenticateWithRealBackend(page, `/#/partnerships/interactions/${testInteractionId}`);
+    await authenticateWithRealBackend(page, `/partnerships/interactions/${testInteractionId}`);
     
     // Wait for page load
     await page.waitForLoadState('load', { timeout: 15000 });

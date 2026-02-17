@@ -20,12 +20,13 @@ import { assertUrlMatches } from './helpers/assertions.helper';
  * Ensure database has at least one partner record before running tests.
  */
 test.describe('Partner Detail Page - Phase 1A Basic Tests', () => {
+  test.slow();
   // Use existing partner ID from database (assumes setup scripts have run)
   const testPartnerId = 1;
   
   test.beforeEach(async ({ page }) => {
     // Authenticate with real backend and navigate to partner detail page
-    await authenticateWithRealBackend(page, `/#/partnerships/partners/${testPartnerId}`);
+    await authenticateWithRealBackend(page, `/partnerships/partners/${testPartnerId}`);
     
     // Wait for page load
     await page.waitForLoadState('load', { timeout: 15000 });

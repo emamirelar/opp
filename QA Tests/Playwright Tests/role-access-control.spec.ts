@@ -47,22 +47,23 @@ import {
 // ============================================================
 // CONSTANTS
 // ============================================================
-const PARTNER_LIST_URL = '/#/partnerships/partners';
-const PARTNER_DETAIL_URL = '/#/partnerships/partners/1';
-const CONTACTS_LIST_URL = '/#/partnerships/contacts';
-const INTERACTIONS_LIST_URL = '/#/partnerships/interactions';
-const OPPORTUNITIES_LIST_URL = '/#/partnerships/opportunities';
-const OPPORTUNITY_DETAIL_URL = '/#/partnerships/opportunities/1';
-const ADMIN_USER_MGMT_URL = '/#/admin/user-management';
-const ADMIN_AI_PROMPTS_URL = '/#/admin/ai-prompt-management';
-const ADMIN_ENTITY_MANAGER_URL = '/#/admin/entity-manager';
-const HOME_URL = '/#/home';
+const PARTNER_LIST_URL = '/partnerships/partners';
+const PARTNER_DETAIL_URL = '/partnerships/partners/1';
+const CONTACTS_LIST_URL = '/partnerships/contacts';
+const INTERACTIONS_LIST_URL = '/partnerships/interactions';
+const OPPORTUNITIES_LIST_URL = '/partnerships/opportunities';
+const OPPORTUNITY_DETAIL_URL = '/partnerships/opportunities/1';
+const ADMIN_USER_MGMT_URL = '/admin/user-management';
+const ADMIN_AI_PROMPTS_URL = '/admin/ai-prompt-management';
+const ADMIN_ENTITY_MANAGER_URL = '/admin/entity-manager';
+const HOME_URL = '/home';
 
 // ============================================================
 // 1. PARTNER LIST PAGE - POSITIVE TESTS
 // ============================================================
 
 test.describe('Partner List - Positive Role Access', () => {
+  test.slow();
 
   test('POS_P01 - Administrator can access partners list', async ({ page }) => {
     await authenticateAsRole(page, SYSTEM_ADMIN, PARTNER_LIST_URL);
@@ -173,6 +174,7 @@ test.describe('Partner List - Positive Role Access', () => {
 // ============================================================
 
 test.describe('Partner List - Negative Role Access', () => {
+  test.slow();
 
   test('NEG_P01 - General User does NOT see New Partner button', async ({ page }) => {
     await authenticateAsRole(page, GENERAL_USER, PARTNER_LIST_URL);
@@ -260,6 +262,7 @@ test.describe('Partner List - Negative Role Access', () => {
 // ============================================================
 
 test.describe('Partner Detail - Positive Role Access', () => {
+  test.slow();
 
   test('POS_PD01 - Administrator can access partner detail', async ({ page }) => {
     await authenticateAsRole(page, SYSTEM_ADMIN, PARTNER_DETAIL_URL);
@@ -302,6 +305,7 @@ test.describe('Partner Detail - Positive Role Access', () => {
 // ============================================================
 
 test.describe('Partner Detail - Negative Role Access', () => {
+  test.slow();
 
   test('NEG_PD01 - General User does NOT see Edit button on partner detail', async ({ page }) => {
     await authenticateAsRole(page, GENERAL_USER, PARTNER_DETAIL_URL);
@@ -379,6 +383,7 @@ test.describe('Partner Detail - Negative Role Access', () => {
 // ============================================================
 
 test.describe('Contacts List - Positive Role Access', () => {
+  test.slow();
 
   test('POS_C01 - Administrator can access contacts list', async ({ page }) => {
     await authenticateAsRole(page, SYSTEM_ADMIN, CONTACTS_LIST_URL);
@@ -435,6 +440,7 @@ test.describe('Contacts List - Positive Role Access', () => {
 // ============================================================
 
 test.describe('Contacts List - Negative Role Access', () => {
+  test.slow();
 
   test('NEG_C01 - General User does NOT see New Contact button', async ({ page }) => {
     await authenticateAsRole(page, GENERAL_USER, CONTACTS_LIST_URL);
@@ -534,6 +540,7 @@ test.describe('Contacts List - Negative Role Access', () => {
 // ============================================================
 
 test.describe('Interactions List - Positive Role Access', () => {
+  test.slow();
 
   test('POS_I01 - Administrator can access interactions list', async ({ page }) => {
     await authenticateAsRole(page, SYSTEM_ADMIN, INTERACTIONS_LIST_URL);
@@ -590,6 +597,7 @@ test.describe('Interactions List - Positive Role Access', () => {
 // ============================================================
 
 test.describe('Interactions List - Negative Role Access', () => {
+  test.slow();
 
   test('NEG_I01 - General User does NOT see New Interaction button', async ({ page }) => {
     await authenticateAsRole(page, GENERAL_USER, INTERACTIONS_LIST_URL);
@@ -676,6 +684,7 @@ test.describe('Interactions List - Negative Role Access', () => {
 // ============================================================
 
 test.describe('Opportunities List - Positive Role Access', () => {
+  test.slow();
 
   test('POS_O01 - Administrator can access opportunities list', async ({ page }) => {
     await authenticateAsRole(page, SYSTEM_ADMIN, OPPORTUNITIES_LIST_URL);
@@ -732,6 +741,7 @@ test.describe('Opportunities List - Positive Role Access', () => {
 // ============================================================
 
 test.describe('Opportunities List - Negative Role Access', () => {
+  test.slow();
 
   test('NEG_O01 - General User does NOT see New Opportunity button', async ({ page }) => {
     await authenticateAsRole(page, GENERAL_USER, OPPORTUNITIES_LIST_URL);
@@ -818,6 +828,7 @@ test.describe('Opportunities List - Negative Role Access', () => {
 // ============================================================
 
 test.describe('Opportunity Detail - Positive Role Access', () => {
+  test.slow();
 
   test('POS_OD01 - Administrator can access opportunity detail', async ({ page }) => {
     await authenticateAsRole(page, SYSTEM_ADMIN, OPPORTUNITY_DETAIL_URL);
@@ -849,6 +860,7 @@ test.describe('Opportunity Detail - Positive Role Access', () => {
 // ============================================================
 
 test.describe('Opportunity Detail - Negative Role Access', () => {
+  test.slow();
 
   test('NEG_OD01 - General User does NOT see Edit on opportunity detail', async ({ page }) => {
     await authenticateAsRole(page, GENERAL_USER, OPPORTUNITY_DETAIL_URL);
@@ -912,6 +924,7 @@ test.describe('Opportunity Detail - Negative Role Access', () => {
 // ============================================================
 
 test.describe('Admin Pages - Positive Role Access', () => {
+  test.slow();
 
   test('POS_A01 - Administrator can access User Management', async ({ page }) => {
     await authenticateAsRole(page, SYSTEM_ADMIN, ADMIN_USER_MGMT_URL);
@@ -943,6 +956,7 @@ test.describe('Admin Pages - Positive Role Access', () => {
 // ============================================================
 
 test.describe('Admin Pages - Negative Role Access', () => {
+  test.slow();
 
   // NOTE: Angular route guards rely on real backend calls which are mocked,
   // so direct URL access tests may not accurately reflect denial.
@@ -1026,6 +1040,7 @@ test.describe('Admin Pages - Negative Role Access', () => {
 // ============================================================
 
 test.describe('Sidebar Navigation - Positive Role Access', () => {
+  test.slow();
 
   test('POS_N01 - Administrator sees Administration menu in sidebar', async ({ page }) => {
     await authenticateAsRole(page, SYSTEM_ADMIN, PARTNER_LIST_URL);
@@ -1065,6 +1080,7 @@ test.describe('Sidebar Navigation - Positive Role Access', () => {
 // ============================================================
 
 test.describe('Sidebar Navigation - Negative Role Access', () => {
+  test.slow();
 
   test('NEG_N01 - General User does NOT see Administration menu', async ({ page }) => {
     await authenticateAsRole(page, GENERAL_USER, PARTNER_LIST_URL);
@@ -1092,6 +1108,7 @@ test.describe('Sidebar Navigation - Negative Role Access', () => {
 // ============================================================
 
 test.describe('Role Permission Matrix - Cross-Entity Verification', () => {
+  test.slow();
 
   // Administrator should have all permissions across all entities
   test('POS_M01 - Administrator has full CRUD on all entity list pages', async ({ page }) => {
@@ -1190,6 +1207,7 @@ test.describe('Role Permission Matrix - Cross-Entity Verification', () => {
 // ============================================================
 
 test.describe('Role Access - Edge Cases', () => {
+  test.slow();
 
   test('EDGE_01 - Page renders content even for read-only role', async ({ page }) => {
     await authenticateAsRole(page, GENERAL_USER, PARTNER_LIST_URL);
@@ -1266,7 +1284,7 @@ test.describe('Role Access - Edge Cases', () => {
     expect(newPartnerHidden1).toBe(true);
 
     // Navigate to contacts page (same role context should persist)
-    await page.goto(`http://127.0.0.1:4200${CONTACTS_LIST_URL}`);
+    await page.goto(`http://localhost:4200${CONTACTS_LIST_URL}`);
     await waitForRolePermissions(page);
 
     const newContactHidden = !(await isActionButtonVisible(page, {
@@ -1362,6 +1380,8 @@ test.describe('Role Access - Edge Cases', () => {
 // ============================================================
 
 test.describe('Data-Driven Role × Entity Permission Matrix', () => {
+  test.slow();
+
   // These tests systematically verify every role against every entity page
 
   const entityPages = [

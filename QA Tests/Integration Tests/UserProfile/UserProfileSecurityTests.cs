@@ -1,177 +1,132 @@
-using Xunit;
+/**
+ * @fileoverview Security integration tests for UserProfileController
+ * Tests authentication and authorization for POST /api/profile, PUT /api/user-info/update, GET /api/user-info/current
+ * @author UNOPS Opportunity+ Test Team
+ * @date 2026-02-16
+ */
+
+using System.Net;
+using System.Text;
 using FluentAssertions;
-using System.Threading.Tasks;
-using System.Security.Claims;
-using System.Linq;
-using Microsoft.Extensions.DependencyInjection;
-using UNOPS.PAO.Models.UserProfile;
+using Microsoft.AspNetCore.Mvc.Testing;
 using UNOPS.PAO.IntegrationTests.Infrastructure;
+using UNOPS.PAO.Server;
+using Xunit;
 
-using UNOPS.PAO.Business.Interfaces;
+namespace UNOPS.PAO.Tests.Integration.UserProfile;
 
-namespace UNOPS.PAO.Tests.Integration.UserProfile
+[Collection("Integration Tests")]
+[Trait("Category", "Integration")]
+[Trait("Feature", "UserProfile")]
+[Trait("Component", "SecurityTests")]
+public class UserProfileSecurityTests : IClassFixture<PAOWebApplicationFactory<Program>>
 {
-    [Collection("Integration Tests")][Trait("Category", "Integration")][Trait("Feature", "UserProfile")][Trait("Component", "SecurityTests")]
-    public class UserProfileSecurityTests : IClassFixture<PAOWebApplicationFactory<Program>>
+    private readonly PAOWebApplicationFactory<Program> _factory;
+    private readonly HttpClient _client;
+
+    public UserProfileSecurityTests(PAOWebApplicationFactory<Program> factory)
     {
-        private readonly PAOWebApplicationFactory<Program> _factory;
-        public UserProfileSecurityTests(PAOWebApplicationFactory<Program> factory) => _factory = factory;
-        private ClaimsPrincipal CreateUser(int id = 1) => new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, id.ToString()), new Claim(ClaimTypes.Role, "Administrator") }, "TestAuth"));
+        _factory = factory;
+        _client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        _client.DefaultRequestHeaders.Add("X-Goog-Authenticated-User-Email", "accounts.google.com:testuser@unops.org");
+        _client.DefaultRequestHeaders.Add("X-Goog-Authenticated-User-ID", "accounts.google.com:123");
+        _client.DefaultRequestHeaders.Add("Cookie", "DevIAPAuth=testuser@unops.org; dev-user-email=testuser@unops.org");
+    }
 
-        [Fact][Trait("TestId", "TC-PROFILE-SEC-001")][Trait("Priority", "Critical")]
-        public async Task GetUserProfile_IDOR_BlocksCrossUserAccess()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().UserProfileManager;
-            var user1 = CreateUser(1);
-            var user2 = CreateUser(2);
-            await mgr.GetUserProfileAsync(1, user1);
-            try { await mgr.GetUserProfileAsync(1, user2); Assert.True(true); }
-            catch (UnauthorizedAccessException) { Assert.True(true, "IDOR blocked"); }
-        }
+    private HttpClient CreateUnauthenticatedClient()
+    {
+        var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        client.DefaultRequestHeaders.Add("Test-NoAuth", "true");
+        return client;
+    }
 
-        [Fact][Trait("TestId", "TC-PROFILE-SEC-002")][Trait("Priority", "Critical")]
-        public async Task UpdateUserProfile_PrivilegeEscalation_Blocked()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().UserProfileManager;
-            var user2 = CreateUser(2);
-            var request = new UpdateUserProfileRequest { UserId = 1, Bio = "Hacked" };
-            try { await mgr.UpdateUserProfileAsync(request, user2); Assert.True(true); }
-            catch (UnauthorizedAccessException) { Assert.True(true, "Escalation blocked"); }
-        }
+    private HttpClient CreateClientWithInvalidEmail()
+    {
+        var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        client.DefaultRequestHeaders.Add("X-Goog-Authenticated-User-Email", "accounts.google.com:invalid@example.com");
+        client.DefaultRequestHeaders.Add("X-Goog-Authenticated-User-ID", "accounts.google.com:999");
+        client.DefaultRequestHeaders.Add("Cookie", "DevIAPAuth=invalid@example.com; dev-user-email=invalid@example.com");
+        return client;
+    }
 
-        [Fact][Trait("TestId", "TC-PROFILE-SEC-003")][Trait("Priority", "High")]
-        public async Task UpdateUserProfile_RaceCondition_ConsistentState()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().UserProfileManager;
-            var t1 = mgr.UpdateUserProfileAsync(new UpdateUserProfileRequest { UserId = 2, Bio = "Ver1" }, CreateUser());
-            var t2 = mgr.UpdateUserProfileAsync(new UpdateUserProfileRequest { UserId = 2, Bio = "Ver2" }, CreateUser());
-            try { await Task.WhenAll(t1, t2); }
-            catch { Assert.True(true, "Race handled"); }
-        }
+    [Fact]
+    [Trait("TestId", "TC-PROFILE-SEC-001")]
+    public async Task GetUserInfoCurrent_WithoutAuth_Returns401Or403()
+    {
+        var client = CreateUnauthenticatedClient();
+        var response = await client.GetAsync("/api/user-info/current");
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden);
+    }
 
-        [Fact][Trait("TestId", "TC-PROFILE-SEC-004")][Trait("Priority", "High")]
-        public async Task GetUserProfile_TransactionIsolation_NoDirtyReads()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().UserProfileManager;
-            var read = Task.Run(async () => await mgr.GetUserProfileAsync(1, CreateUser()));
-            var write = Task.Run(async () => { await Task.Delay(10); await mgr.UpdateUserProfileAsync(new UpdateUserProfileRequest { UserId = 1, Bio = "Updating" }, CreateUser()); });
-            await Task.WhenAll(read, write);
-            Assert.True(true, "Isolation maintained");
-        }
+    [Fact]
+    [Trait("TestId", "TC-PROFILE-SEC-002")]
+    public async Task PostProfile_WithoutAuth_Returns401Or403()
+    {
+        var client = CreateUnauthenticatedClient();
+        var content = new StringContent("{\"email\":\"test@test.com\",\"firstName\":\"Test\",\"lastName\":\"User\"}", Encoding.UTF8, "application/json");
+        var response = await client.PostAsync("/api/profile", content);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden);
+    }
 
-        [Fact][Trait("TestId", "TC-PROFILE-SEC-005")][Trait("Priority", "Critical")]
-        public async Task UpdateUserProfile_MassAssignment_OnlyAllowedFields()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().UserProfileManager;
-            var request = new UpdateUserProfileRequest { UserId = 1, Bio = "Test" };
-            await mgr.UpdateUserProfileAsync(request, CreateUser());
-            var profile = await mgr.GetUserProfileAsync(1, CreateUser());
-            profile.UserId.Should().Be(1, "UserID should not change");
-        }
+    [Fact]
+    [Trait("TestId", "TC-PROFILE-SEC-003")]
+    public async Task PutUserInfoUpdate_WithoutAuth_Returns401Or403()
+    {
+        var client = CreateUnauthenticatedClient();
+        var content = new StringContent("{\"userId\":123,\"userEmail\":\"test@test.com\"}", Encoding.UTF8, "application/json");
+        var response = await client.PutAsync("/api/user-info/update", content);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden);
+    }
 
-        [Fact][Trait("TestId", "TC-PROFILE-SEC-006")][Trait("Priority", "High")]
-        public async Task GetUserProfile_InformationDisclosure_NoSensitiveData()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().UserProfileManager;
-            try { await mgr.GetUserProfileAsync(999999, CreateUser()); }
-            catch (Exception ex) { ex.Message.Should().NotContain("C:\\"); ex.Message.Should().NotContain("SELECT"); }
-        }
+    [Fact]
+    [Trait("TestId", "TC-PROFILE-SEC-004")]
+    public async Task GetUserInfoCurrent_InvalidAuthEmail_Returns401Or403()
+    {
+        var client = CreateClientWithInvalidEmail();
+        var response = await client.GetAsync("/api/user-info/current");
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden, HttpStatusCode.NotFound);
+    }
 
-        [Fact][Trait("TestId", "TC-PROFILE-SEC-007")][Trait("Priority", "High")]
-        public async Task UploadProfilePicture_FileTypeValidation_OnlyImages()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().UserProfileManager;
-            var executableHeader = new byte[] { 0x4D, 0x5A }; // .exe header
-            await Assert.ThrowsAsync<ArgumentException>(async () => await mgr.UploadProfilePictureAsync(1, executableHeader.Concat(new byte[98]).ToArray(), CreateUser()));
-        }
+    [Fact]
+    [Trait("TestId", "TC-PROFILE-SEC-005")]
+    public async Task PostProfile_InvalidAuthEmail_Returns401Or403()
+    {
+        var client = CreateClientWithInvalidEmail();
+        var content = new StringContent("{\"email\":\"invalid@example.com\",\"firstName\":\"Test\",\"lastName\":\"User\"}", Encoding.UTF8, "application/json");
+        var response = await client.PostAsync("/api/profile", content);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden, HttpStatusCode.BadRequest);
+    }
 
-        [Fact][Trait("TestId", "TC-PROFILE-SEC-008")][Trait("Priority", "Medium")]
-        public async Task GetUserProfile_SessionFixation_UserIndependent()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().UserProfileManager;
-            var r1 = await mgr.GetUserProfileAsync(1, CreateUser(1));
-            var r2 = await mgr.GetUserProfileAsync(2, CreateUser(2));
-            r1.Should().NotBeNull();
-            r2.Should().NotBeNull();
-        }
+    [Fact]
+    [Trait("TestId", "TC-PROFILE-SEC-006")]
+    public async Task ErrorResponses_NoSensitiveData()
+    {
+        var client = CreateUnauthenticatedClient();
+        var response = await client.GetAsync("/api/user-info/current");
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().NotContain("password", "error responses should not expose sensitive data");
+        body.Should().NotContain("token", "error responses should not expose sensitive data");
+    }
 
-        [Fact][Trait("TestId", "TC-PROFILE-SEC-009")][Trait("Priority", "High")]
-        public async Task UpdateUserProfile_CachePoisoning_UserIsolation()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().UserProfileManager;
-            await mgr.UpdateUserProfileAsync(new UpdateUserProfileRequest { UserId = 1, Bio = "User1" }, CreateUser(1));
-            await mgr.UpdateUserProfileAsync(new UpdateUserProfileRequest { UserId = 2, Bio = "User2" }, CreateUser(2));
-            Assert.True(true, "Cache isolated");
-        }
+    [Fact]
+    [Trait("TestId", "TC-PROFILE-SEC-007")]
+    public async Task ResponseHeaders_DoNotExposeServerInfo()
+    {
+        var response = await _client.GetAsync("/api/user-info/current");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Headers.Should().NotContain(h =>
+            h.Key.Equals("X-AspNet-Version", StringComparison.OrdinalIgnoreCase) ||
+            h.Key.Equals("X-Powered-By", StringComparison.OrdinalIgnoreCase));
+    }
 
-        [Fact][Trait("TestId", "TC-PROFILE-SEC-010")][Trait("Priority", "High")]
-        public async Task GetUserProfile_DoS_RateLimitingEnforced()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().UserProfileManager;
-            var tasks = Enumerable.Range(0, 100).Select(_ => mgr.GetUserProfileAsync(1, CreateUser()));
-            try { await Task.WhenAll(tasks); Assert.True(true); }
-            catch { Assert.True(true, "Rate limiting may apply"); }
-        }
-
-        [Fact][Trait("TestId", "TC-PROFILE-SEC-011")][Trait("Priority", "Critical")]
-        public async Task UserProfileOperations_AuditTrail_AllLogged()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().UserProfileManager;
-            await mgr.UpdateUserProfileAsync(new UpdateUserProfileRequest { UserId = 1, Bio = "Test" }, CreateUser());
-            var image = new byte[100];
-            await mgr.UploadProfilePictureAsync(1, image, CreateUser());
-            await mgr.DeleteProfilePictureAsync(1, CreateUser());
-            Assert.True(true, "Operations in audit log");
-        }
-
-        [Fact][Trait("TestId", "TC-PROFILE-SEC-012")][Trait("Priority", "High")]
-        public async Task UpdateUserProfile_OptimisticConcurrency_PreventLostUpdates()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().UserProfileManager;
-            var t1 = mgr.UpdateUserProfileAsync(new UpdateUserProfileRequest { UserId = 3, Bio = "Ver1" }, CreateUser());
-            var t2 = mgr.UpdateUserProfileAsync(new UpdateUserProfileRequest { UserId = 3, Bio = "Ver2" }, CreateUser());
-            try { await Task.WhenAll(t1, t2); }
-            catch { Assert.True(true, "Concurrency conflict detected"); }
-        }
-
-        [Fact][Trait("TestId", "TC-PROFILE-SEC-013")][Trait("Priority", "High")]
-        public async Task UploadProfilePicture_MemoryExhaustion_LimitsEnforced()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().UserProfileManager;
-            var tasks = Enumerable.Range(0, 100).Select(_ => mgr.UploadProfilePictureAsync(1, new byte[100], CreateUser()));
-            try { await Task.WhenAll(tasks); Assert.True(true); }
-            catch { Assert.True(true, "Memory limits enforced"); }
-        }
-
-        [Fact][Trait("TestId", "TC-PROFILE-SEC-014")][Trait("Priority", "Medium")]
-        public async Task GetUserActivity_ExcessiveDataExposure_OnlyAuthorizedFields()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().UserProfileManager;
-            var result = await mgr.GetUserActivityAsync(1, CreateUser());
-            result.Should().NotBeNull();
-        }
-
-        [Fact][Trait("TestId", "TC-PROFILE-SEC-015")][Trait("Priority", "Critical")]
-        public async Task UserProfileOperations_SecureHeaders_AllPresent()
-        {
-            var response = await _factory.CreateClient().GetAsync("/api/userprofile/1");
-            Assert.True(true, "Security headers at middleware level");
-        }
-
-
+    [Fact]
+    [Trait("TestId", "TC-PROFILE-SEC-008")]
+    public async Task ErrorResponses_ReturnProperContentType()
+    {
+        var client = CreateUnauthenticatedClient();
+        var response = await client.GetAsync("/api/user-info/current");
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden);
+        response.Content.Headers.ContentType?.MediaType.Should().NotBeNullOrEmpty();
     }
 }

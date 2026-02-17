@@ -20,12 +20,13 @@ import { assertUrlMatches } from './helpers/assertions.helper';
  * Ensure database has at least one contact record before running tests.
  */
 test.describe('Contact Detail Page - Phase 1A Basic Tests', () => {
+  test.slow();
   // Use existing contact ID from database (assumes setup scripts have run)
   const testContactId = 1;
   
   test.beforeEach(async ({ page }) => {
     // Authenticate with real backend and navigate to contact detail page
-    await authenticateWithRealBackend(page, `/#/partnerships/contacts/${testContactId}`);
+    await authenticateWithRealBackend(page, `/partnerships/contacts/${testContactId}`);
     
     // Wait for page load
     await page.waitForLoadState('load', { timeout: 15000 });

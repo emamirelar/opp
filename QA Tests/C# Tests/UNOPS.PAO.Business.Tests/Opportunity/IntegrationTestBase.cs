@@ -260,7 +260,8 @@ public abstract class IntegrationTestBase : IDisposable
         // For InMemory: cleanup is automatic. For PostgreSQL: do NOT delete the real database.
         if (TestEnvironment.UseInMemory)
         {
-            Context.Database.EnsureDeleted();
+            try { Context.Database.EnsureDeleted(); }
+            catch { /* SQLite connection may already be closed during concurrent test runs */ }
         }
         Context.Dispose();
         if (ServiceProvider is IDisposable disposable)

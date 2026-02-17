@@ -410,18 +410,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
 
         private async Task<int> CreateTestUserAsync(string email)
         {
-            var user = _dbContext.PAOUsers.FirstOrDefault(u => u.Email == email);
-            if (user != null)
-                return user.Id;
-
-            // Use raw SQL to insert user with all AspNetUsers required columns (IsInternal as param to avoid literal issues)
-            var normalized = email.ToUpperInvariant();
-            var result = await _dbContext.Database.SqlQueryRaw<int>(
-                "INSERT INTO \"AspNetUsers\" (\"IsInternal\", \"Email\", \"NormalizedEmail\", \"EmailConfirmed\", \"UserName\", \"NormalizedUserName\", " +
-                "\"PhoneNumberConfirmed\", \"TwoFactorEnabled\", \"LockoutEnabled\", \"AccessFailedCount\") " +
-                "VALUES ({0}, {1}, {2}, true, {3}, {4}, false, false, false, 0) RETURNING \"Id\"",
-                false, email, normalized, email, normalized).ToListAsync();
-            return result[0];
+            return await TestDataHelper.GetOrCreateTestUserAsync(_dbContext, email);
         }
 
         private async Task<OrganizationHierarchy> CreateOrganizationHierarchyAsync(string code, string name)

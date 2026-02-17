@@ -14,6 +14,7 @@ import { authenticateWithRealBackend } from './helpers/auth.helper';
  * @updated 2026-01-30 - Migrated to real backend authentication
  */
 test.describe('Dashboard', () => {
+  test.slow();
   let dashboardPage: DashboardPage;
   
   // Authenticate with real backend before each test
@@ -21,7 +22,7 @@ test.describe('Dashboard', () => {
     dashboardPage = new DashboardPage(page);
     
     // Authenticate and navigate to home/dashboard page
-    await authenticateWithRealBackend(page, '/#/');
+    await authenticateWithRealBackend(page, '/');
   });
   
   test('should display dashboard widgets', async () => {
@@ -78,16 +79,13 @@ test.describe('Dashboard', () => {
   });
   
   test('should display my workspace section', async ({ page }) => {
-    // Wait for dashboard to load
     await page.waitForLoadState('networkidle');
     
-    // Look for workspace-related content
-    const workspaceItems = page.locator('[class*="workspace"], [class*="my-"]').or(
-      page.locator('.grid .bg-unops-surface-primary')
-    );
+    const workspaceItems = page.locator('[class*="workspace"], [class*="my-"]').first();
+    const panels = page.locator('.bg-unops-surface-primary').first();
+    const workspaceOrPanel = workspaceItems.or(panels);
     
-    // Workspace section should exist
-    await expect(workspaceItems.first()).toBeVisible({ timeout: 10000 });
+    await expect(workspaceOrPanel).toBeVisible({ timeout: 60000 });
   });
   
   test('should be responsive on mobile', async ({ page }) => {

@@ -1097,7 +1097,8 @@ public class OpportunityAdvancedFeaturesTests : IDisposable
 
         if (TestEnvironment.UseInMemory)
         {
-            _context.Database.EnsureDeleted();
+            try { _context.Database.EnsureDeleted(); }
+            catch { /* SQLite connection may already be closed during concurrent test runs */ }
         }
         if (_transaction != null)
         {

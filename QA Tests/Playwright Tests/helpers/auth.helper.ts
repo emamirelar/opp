@@ -78,6 +78,12 @@ const RESTRICTED_TEST_USERS: Record<string, { roles: string[]; isInternal: boole
     isInternal: true,
     name: 'Test Other User',
   },
+  /** Collaborator: can edit content but cannot perform workflow actions (Submit, Cancel, Reopen) */
+  'collaborator@example.com': {
+    roles: ['UNOPS_GEN_USER'],
+    isInternal: true,
+    name: 'Test Collaborator',
+  },
 };
 
 export async function authenticateWithRealBackend(
@@ -105,6 +111,7 @@ export async function authenticateWithRealBackend(
         { type: 'IsInternal', value: String(restrictedUser.isInternal) },
         { type: 'IAPAuthenticated', value: 'true' },
         { type: 'sub', value: '99999' },
+        { type: 'userId', value: '99999' }, // Required for topbar notification polling
       ]
     : [
         // Default: Administrator (backwards-compatible for all existing tests)
@@ -115,6 +122,7 @@ export async function authenticateWithRealBackend(
         { type: 'IsInternal', value: 'true' },
         { type: 'IAPAuthenticated', value: 'true' },
         { type: 'sub', value: '12345' },
+        { type: 'userId', value: '12345' }, // Required for topbar notification polling
       ];
   
   // Override the default empty claims with authenticated user
@@ -136,17 +144,22 @@ export async function authenticateWithRealBackend(
     authLog(`[Auth] Overriding permission mocks for restricted user: ${testUserEmail}`);
     
     // Override /api/permissions/check/* — route-level permission checks
+    // Admin routes (entity-manager, user-management, translations) must return hasAccess: false for restricted users
+    const adminBlockedPaths = ['admin/entity-manager', 'admin/user-management', 'admin/translations'];
     await page.route(url => url.toString().includes('/api/permissions/check/'), async (route) => {
-      authLog(`[API Mock] Intercepted: /api/permissions/check/ (RESTRICTED for ${testUserEmail})`);
+      const requestUrl = route.request().url();
+      const isAdminRoute = adminBlockedPaths.some(p => requestUrl.includes(p));
+      const hasAccess = !isAdminRoute;
+      authLog(`[API Mock] Intercepted: /api/permissions/check/ (RESTRICTED for ${testUserEmail}, adminRoute=${isAdminRoute}, hasAccess=${hasAccess})`);
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          hasAccess: true,
-          route: route.request().url(),
+          hasAccess,
+          route: requestUrl,
           entity: 'Contact',
           permissions: {
-            canRead: true,
+            canRead: !isAdminRoute,
             canCreate: false,
             canUpdate: false,
             canDelete: false,
@@ -162,6 +175,8 @@ export async function authenticateWithRealBackend(
     });
 
     // Override /api/{entity}/{id}/permissions — entity-level permission checks
+    // Collaborator: can edit content but NOT workflow actions (Submit, Cancel, Reopen)
+    const isCollaborator = testUserEmail === 'collaborator@example.com';
     await page.route(url => /\/api\/\w+\/\d+\/permissions/.test(url.toString()), async (route) => {
       authLog(`[API Mock] Intercepted: entity permissions (RESTRICTED for ${testUserEmail})`);
       await route.fulfill({
@@ -169,7 +184,7 @@ export async function authenticateWithRealBackend(
         contentType: 'application/json',
         body: JSON.stringify({
           canView: true,
-          canEdit: false,
+          canEdit: isCollaborator, // Collaborator can edit content; other restricted users cannot
           canDelete: false,
           canSubmit: false,
           canApprove: false,
@@ -202,9 +217,29 @@ export async function authenticateWithRealBackend(
     }
   ]);
   
+  // Step 4b: Prevent Driver.js welcome tour from blocking clicks (set before navigation)
+  await page.addInitScript(() => {
+    const state = {
+      hasSeenWelcome: true,
+      hasCompletedHomepageTour: true,
+      completedTours: ['homepage-tour'],
+      firstVisitDate: new Date().toISOString(),
+    };
+    try {
+      localStorage.setItem('unops-welcome-tour-state', JSON.stringify(state));
+    } catch (_) {}
+  });
+
   // Step 5: Navigate to target page with cookies and mocks already set
-  const baseURL = 'http://127.0.0.1:4200';
-  const fullUrl = targetUrl.startsWith('http') ? targetUrl : `${baseURL}${targetUrl}`;
+  const baseURL = 'http://localhost:4200';
+  // Strip legacy hash prefix if present — app uses PathLocationStrategy (path-based routing)
+  let cleanTargetUrl = targetUrl;
+  if (cleanTargetUrl.startsWith('/#/')) {
+    cleanTargetUrl = cleanTargetUrl.substring(2);
+  } else if (cleanTargetUrl.startsWith('#/')) {
+    cleanTargetUrl = `/${cleanTargetUrl.substring(2)}`;
+  }
+  const fullUrl = cleanTargetUrl.startsWith('http') ? cleanTargetUrl : `${baseURL}${cleanTargetUrl}`;
   authLog(`[Auth] Navigating to ${fullUrl} with mocks and cookies set...`);
   await page.goto(fullUrl);
   
@@ -213,6 +248,28 @@ export async function authenticateWithRealBackend(
   
   // Step 7: Give Angular time to initialize routing
   await page.waitForTimeout(2000);
+
+  // Step 8: Dismiss overlays that block clicks (Driver.js tour, toast messages)
+  authLog('[Auth] Checking for overlays that block clicks...');
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    await page.waitForTimeout(500);
+    const driverOverlay = page.locator('.driver-overlay');
+    const driverVisible = await driverOverlay.isVisible({ timeout: 300 }).catch(() => false);
+    if (driverVisible) {
+      authLog(`[Auth] Dismissing Driver.js overlay (attempt ${attempt})...`);
+      await page.locator('.driver-popover-close-btn').click({ timeout: 2000 }).catch(() => {});
+      await page.waitForTimeout(800);
+    } else {
+      // Also dismiss toast if it's blocking (e.g. from previous operations)
+      const toast = page.locator('.p-toast-message');
+      if (await toast.isVisible({ timeout: 200 }).catch(() => false)) {
+        await page.locator('.p-toast-message-close-icon').click({ timeout: 1000 }).catch(() => {});
+        await page.waitForTimeout(300);
+      }
+      if (!driverVisible) break;
+    }
+  }
+
   authLog('[Auth] authenticateWithRealBackend complete');
 }
 
@@ -285,7 +342,7 @@ export async function login(
   
   // Navigate to login page
   // Use baseURL from Playwright config or construct absolute URL
-  const baseURL = (page.context() as any)._options?.baseURL || 'http://127.0.0.1:4200';
+  const baseURL = (page.context() as any)._options?.baseURL || 'http://localhost:4200';
   const loginUrl = `${baseURL}/login`;
   
   authLog(`Navigating to ${loginUrl}...`);
@@ -478,8 +535,15 @@ export async function loginAndNavigate(
   }
   
   // Construct absolute URL if needed
-  const baseURL = (page.context() as any)._options?.baseURL || 'http://127.0.0.1:4200';
-  const fullUrl = targetUrl.startsWith('http') ? targetUrl : `${baseURL}${targetUrl}`;
+  const baseURL = (page.context() as any)._options?.baseURL || 'http://localhost:4200';
+  // Strip legacy hash prefix if present — app uses PathLocationStrategy (path-based routing)
+  let cleanUrl = targetUrl;
+  if (cleanUrl.startsWith('/#/')) {
+    cleanUrl = cleanUrl.substring(2);
+  } else if (cleanUrl.startsWith('#/')) {
+    cleanUrl = `/${cleanUrl.substring(2)}`;
+  }
+  const fullUrl = cleanUrl.startsWith('http') ? cleanUrl : `${baseURL}${cleanUrl}`;
   
   authLog(`[Auth] Navigating to ${fullUrl}...`);
   await page.goto(fullUrl);

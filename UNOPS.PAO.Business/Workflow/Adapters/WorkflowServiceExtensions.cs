@@ -5,6 +5,7 @@ using UNOPS.PAO.Business.Workflow.StageRequirements;
 using UNOPS.Workflow.Business.Interfaces;
 using UNOPS.Workflow.Business.Managers;
 using UNOPS.Workflow.DataAccess;
+using UNOPS.Workflow.Models.Requirements;
 
 namespace UNOPS.PAO.Business.Workflow.Adapters;
 

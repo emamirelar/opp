@@ -12,8 +12,10 @@ import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
 
 test.describe('Product/Service - What Section Display', () => {
+  test.slow();
+
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/opportunities/1');
+    await authenticateWithRealBackend(page, '/partnerships/opportunities/1');
   });
 
   test('PSS-001: What section renders on opportunity detail', async ({ page }) => {

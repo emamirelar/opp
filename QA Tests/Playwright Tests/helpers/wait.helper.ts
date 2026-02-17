@@ -83,10 +83,8 @@ export async function waitForElementReady(locator: Locator, timeout?: number): P
   // Wait for element to be visible
   await locator.waitFor({ state: 'visible', timeout: maxTimeout });
   
-  // Wait for element to be stable (not animating)
-  await locator.waitFor({ state: 'stable', timeout: 1000 }).catch(() => {
-    // Ignore stability timeout - element might not have animations
-  });
+  // Brief pause to allow animations/transitions to settle
+  await locator.page().waitForTimeout(300);
 }
 
 /**

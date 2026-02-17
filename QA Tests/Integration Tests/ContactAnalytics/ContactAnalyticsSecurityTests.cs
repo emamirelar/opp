@@ -1,175 +1,135 @@
-using Xunit;
+/**
+ * @fileoverview Security integration tests for ContactAnalyticsController
+ * Tests authentication and authorization against actual API: /api/contact-analytics/*
+ * @author UNOPS Opportunity+ Test Team
+ * @date 2026-02-16
+ */
+
+using System.Net;
+using System.Net.Http.Json;
+using System.Text.Json;
 using FluentAssertions;
-using System.Threading.Tasks;
-using System.Security.Claims;
-using System.Linq;
-using Microsoft.Extensions.DependencyInjection;
-using UNOPS.PAO.Models.ContactAnalytics;
+using Microsoft.AspNetCore.Mvc.Testing;
 using UNOPS.PAO.IntegrationTests.Infrastructure;
+using UNOPS.PAO.Server;
+using Xunit;
 
-using UNOPS.PAO.Business.Interfaces;
+namespace UNOPS.PAO.Tests.Integration.ContactAnalytics;
 
-namespace UNOPS.PAO.Tests.Integration.ContactAnalytics
+[Collection("Integration Tests")]
+[Trait("Category", "Integration")]
+[Trait("Feature", "ContactAnalytics")]
+[Trait("Component", "SecurityTests")]
+public class ContactAnalyticsSecurityTests : IClassFixture<PAOWebApplicationFactory<Program>>
 {
-    [Collection("Integration Tests")][Trait("Category", "Integration")][Trait("Feature", "ContactAnalytics")][Trait("Component", "SecurityTests")]
-    public class ContactAnalyticsSecurityTests : IClassFixture<PAOWebApplicationFactory<Program>>
+    private readonly PAOWebApplicationFactory<Program> _factory;
+    private readonly HttpClient _client;
+    private const string BaseUrl = "/api/contact-analytics";
+    private static readonly JsonSerializerOptions JsonOptions = new()
     {
-        private readonly PAOWebApplicationFactory<Program> _factory;
-        public ContactAnalyticsSecurityTests(PAOWebApplicationFactory<Program> factory) => _factory = factory;
-        private ClaimsPrincipal CreateUser(int id = 1) => new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, id.ToString()), new Claim(ClaimTypes.Role, "Administrator") }, "TestAuth"));
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true
+    };
 
-        [Fact][Trait("TestId", "TC-CONTACTANALYTICS-SEC-001")][Trait("Priority", "Critical")]
-        public async Task GetContactAnalytics_IDOR_BlocksCrossUserAccess()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().ContactAnalyticsManager;
-            var admin = CreateUser(1);
-            var viewer = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, "999"), new Claim(ClaimTypes.Role, "Viewer") }, "TestAuth"));
-            await mgr.GetContactAnalyticsAsync(1, admin);
-            await Assert.ThrowsAsync<UnauthorizedAccessException>(async () => await mgr.GetContactAnalyticsAsync(1, viewer));
-        }
+    public ContactAnalyticsSecurityTests(PAOWebApplicationFactory<Program> factory)
+    {
+        _factory = factory;
+        _client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        _client.DefaultRequestHeaders.Add("X-Goog-Authenticated-User-Email", "accounts.google.com:testuser@unops.org");
+        _client.DefaultRequestHeaders.Add("X-Goog-Authenticated-User-ID", "accounts.google.com:123");
+        _client.DefaultRequestHeaders.Add("Cookie", "DevIAPAuth=testuser@unops.org; dev-user-email=testuser@unops.org");
+    }
 
-        [Fact][Trait("TestId", "TC-CONTACTANALYTICS-SEC-002")][Trait("Priority", "High")]
-        public async Task GetContactAnalytics_RaceCondition_ConsistentCalculations()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().ContactAnalyticsManager;
-            var tasks = Enumerable.Range(0, 50).Select(_ => mgr.GetContactAnalyticsAsync(1, CreateUser()));
-            var results = await Task.WhenAll(tasks);
-            results.Should().HaveCount(50);
-        }
+    private HttpClient CreateUnauthenticatedClient()
+    {
+        var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        client.DefaultRequestHeaders.Clear();
+        client.DefaultRequestHeaders.Add("Test-NoAuth", "true");
+        return client;
+    }
 
-        [Fact][Trait("TestId", "TC-CONTACTANALYTICS-SEC-003")][Trait("Priority", "High")]
-        public async Task GetContactAnalytics_TransactionIsolation_NoDirtyReads()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().ContactAnalyticsManager;
-            var read = Task.Run(async () => await mgr.GetContactAnalyticsAsync(1, CreateUser()));
-            var refresh = Task.Run(async () => { await Task.Delay(10); await mgr.GetContactAnalyticsAsync(1, CreateUser(), refresh: true); });
-            await Task.WhenAll(read, refresh);
-            Assert.True(true, "Isolation maintained");
-        }
+    [Fact]
+    [Trait("TestId", "TC-CA-SEC-001")]
+    public async Task GetMostActiveContacts_Unauthenticated_Returns401Or403()
+    {
+        var client = CreateUnauthenticatedClient();
+        var response = await client.GetAsync($"{BaseUrl}/getMostActiveContacts");
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden);
+    }
 
-        [Fact][Trait("TestId", "TC-CONTACTANALYTICS-SEC-004")][Trait("Priority", "High")]
-        public async Task GetContactAnalytics_InformationDisclosure_NoSensitiveData()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().ContactAnalyticsManager;
-            try { await mgr.GetContactAnalyticsAsync(999999, CreateUser()); }
-            catch (Exception ex) { ex.Message.Should().NotContain("C:\\"); ex.Message.Should().NotContain("SELECT"); }
-        }
+    [Fact]
+    [Trait("TestId", "TC-CA-SEC-002")]
+    public async Task GetContactsByGeographicRegion_Unauthenticated_Returns401Or403()
+    {
+        var client = CreateUnauthenticatedClient();
+        var response = await client.GetAsync($"{BaseUrl}/getContactsByGeographicRegion");
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden);
+    }
 
-        [Fact][Trait("TestId", "TC-CONTACTANALYTICS-SEC-005")][Trait("Priority", "Critical")]
-        public async Task CompareContacts_HorizontalEscalation_OnlyAuthorizedOrg()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().ContactAnalyticsManager;
-            var user1 = CreateUser(100);
-            var user2 = CreateUser(200);
-            try { await mgr.CompareContactsAsync(1, 2, user2); Assert.True(true); }
-            catch (UnauthorizedAccessException) { Assert.True(true, "Horizontal blocked"); }
-        }
+    [Fact]
+    [Trait("TestId", "TC-CA-SEC-003")]
+    public async Task GetContactEngagementTrends_Unauthenticated_Returns401Or403()
+    {
+        var client = CreateUnauthenticatedClient();
+        var response = await client.GetAsync($"{BaseUrl}/getContactEngagementTrends");
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden);
+    }
 
-        [Fact][Trait("TestId", "TC-CONTACTANALYTICS-SEC-006")][Trait("Priority", "Medium")]
-        public async Task GetContactAnalytics_SessionFixation_UserIndependent()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().ContactAnalyticsManager;
-            var r1 = await mgr.GetContactAnalyticsAsync(1, CreateUser(1));
-            var r2 = await mgr.GetContactAnalyticsAsync(1, CreateUser(2));
-            r1.Should().NotBeNull();
-            r2.Should().NotBeNull();
-        }
+    [Fact]
+    [Trait("TestId", "TC-CA-SEC-004")]
+    public async Task GetContactsByInteractionType_Unauthenticated_Returns401Or403()
+    {
+        var client = CreateUnauthenticatedClient();
+        var response = await client.GetAsync($"{BaseUrl}/getContactsByInteractionType");
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden);
+    }
 
-        [Fact][Trait("TestId", "TC-CONTACTANALYTICS-SEC-007")][Trait("Priority", "High")]
-        public async Task GetContactAnalytics_CachePoisoning_UserIsolation()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().ContactAnalyticsManager;
-            await mgr.GetContactAnalyticsAsync(1, CreateUser(1));
-            await mgr.GetContactAnalyticsAsync(2, CreateUser(2));
-            Assert.True(true, "Cache isolated");
-        }
+    [Fact]
+    [Trait("TestId", "TC-CA-SEC-005")]
+    public async Task GetContactsByPartner_Unauthenticated_Returns401Or403()
+    {
+        var client = CreateUnauthenticatedClient();
+        var response = await client.GetAsync($"{BaseUrl}/getContactsByPartner");
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden);
+    }
 
-        [Fact][Trait("TestId", "TC-CONTACTANALYTICS-SEC-008")][Trait("Priority", "High")]
-        public async Task GetContactAnalytics_DoS_RateLimitingEnforced()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().ContactAnalyticsManager;
-            var tasks = Enumerable.Range(0, 100).Select(_ => mgr.GetContactAnalyticsAsync(1, CreateUser()));
-            try { await Task.WhenAll(tasks); Assert.True(true); }
-            catch { Assert.True(true, "Rate limiting may apply"); }
-        }
+    [Fact]
+    [Trait("TestId", "TC-CA-SEC-006")]
+    public async Task GetRecentlyActiveContacts_Unauthenticated_Returns401Or403()
+    {
+        var client = CreateUnauthenticatedClient();
+        var response = await client.GetAsync($"{BaseUrl}/getRecentlyActiveContacts");
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden);
+    }
 
-        [Fact][Trait("TestId", "TC-CONTACTANALYTICS-SEC-009")][Trait("Priority", "Medium")]
-        public async Task GetEngagementScore_TimingAttack_ConstantTime()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().ContactAnalyticsManager;
-            var sw1 = System.Diagnostics.Stopwatch.StartNew();
-            await mgr.GetEngagementScoreAsync(1, CreateUser());
-            sw1.Stop();
-            var sw2 = System.Diagnostics.Stopwatch.StartNew();
-            try { await mgr.GetEngagementScoreAsync(999999, CreateUser()); } catch { }
-            sw2.Stop();
-            Math.Abs(sw1.ElapsedMilliseconds - sw2.ElapsedMilliseconds).Should().BeLessThan(5000);
-        }
+    [Fact]
+    [Trait("TestId", "TC-CA-SEC-007")]
+    public async Task GetContactsByJobTitle_Unauthenticated_Returns401Or403()
+    {
+        var client = CreateUnauthenticatedClient();
+        var response = await client.GetAsync($"{BaseUrl}/getContactsByJobTitle");
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden);
+    }
 
-        [Fact][Trait("TestId", "TC-CONTACTANALYTICS-SEC-010")][Trait("Priority", "Critical")]
-        public async Task ContactAnalyticsOperations_AuditTrail_AllLogged()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().ContactAnalyticsManager;
-            await mgr.GetContactAnalyticsAsync(1, CreateUser());
-            await mgr.GetEngagementScoreAsync(1, CreateUser());
-            await mgr.CompareContactsAsync(1, 2, CreateUser());
-            Assert.True(true, "Operations in audit log");
-        }
+    [Fact]
+    [Trait("TestId", "TC-CA-SEC-008")]
+    public async Task GetContactGrowthTrends_Unauthenticated_Returns401Or403()
+    {
+        var client = CreateUnauthenticatedClient();
+        var response = await client.GetAsync($"{BaseUrl}/getContactGrowthTrends");
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden);
+    }
 
-        [Fact][Trait("TestId", "TC-CONTACTANALYTICS-SEC-011")][Trait("Priority", "High")]
-        public async Task GetContactAnalytics_IntegerOverflow_PreventedInQueries()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().ContactAnalyticsManager;
-            try { await mgr.GetContactAnalyticsAsync(int.MaxValue, CreateUser()); }
-            catch (KeyNotFoundException) { Assert.True(true, "Large ID handled"); }
-        }
-
-        [Fact][Trait("TestId", "TC-CONTACTANALYTICS-SEC-012")][Trait("Priority", "High")]
-        public async Task GetCommunicationHistory_MemoryExhaustion_LimitsEnforced()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().ContactAnalyticsManager;
-            var tasks = Enumerable.Range(0, 100).Select(_ => mgr.GetCommunicationHistoryAsync(1, DateTime.UtcNow.AddYears(-1), DateTime.UtcNow, CreateUser()));
-            try { await Task.WhenAll(tasks); Assert.True(true); }
-            catch { Assert.True(true, "Memory limits enforced"); }
-        }
-
-        [Fact][Trait("TestId", "TC-CONTACTANALYTICS-SEC-013")][Trait("Priority", "Medium")]
-        public async Task GetInteractionMetrics_ExcessiveDataExposure_OnlyAuthorizedFields()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().ContactAnalyticsManager;
-            var result = await mgr.GetInteractionMetricsAsync(1, CreateUser());
-            result.Should().NotBeNull();
-        }
-
-        [Fact][Trait("TestId", "TC-CONTACTANALYTICS-SEC-014")][Trait("Priority", "High")]
-        public async Task CompareContacts_ParameterPollution_HandlesDuplicates()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var mgr = scope.ServiceProvider.GetRequiredService<IManagerWrapper>().ContactAnalyticsManager;
-            var result = await mgr.CompareContactsAsync(1, 2, CreateUser());
-            result.Should().NotBeNull();
-        }
-
-        [Fact][Trait("TestId", "TC-CONTACTANALYTICS-SEC-015")][Trait("Priority", "Critical")]
-        public async Task ContactAnalyticsOperations_SecureHeaders_AllPresent()
-        {
-            var response = await _factory.CreateClient().GetAsync("/api/contactanalytics/1");
-            Assert.True(true, "Security headers at middleware level");
-        }
-
-
+    [Fact]
+    [Trait("TestId", "TC-CA-SEC-009")]
+    public async Task ErrorResponses_NoSensitiveDataExposed()
+    {
+        var response = await _client.GetAsync($"{BaseUrl}/getMostActiveContacts?limit=-1");
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
+        var content = await response.Content.ReadAsStringAsync();
+        var lower = content.ToLowerInvariant();
+        lower.Should().NotContain("password");
+        lower.Should().NotContain("connectionstring");
+        lower.Should().NotContain("c:\\");
     }
 }

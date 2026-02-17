@@ -56,7 +56,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
-    baseURL: 'http://127.0.0.1:4200',  // ← Your Angular app URL (using IPv4)
+    baseURL: 'http://localhost:4200',  // ← Your Angular app URL
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -133,10 +133,10 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: process.platform === 'win32' 
-      ? 'npx ng serve --port 4200 --host 127.0.0.1 --no-open' 
-      : 'npx ng serve --port 4200 --host 127.0.0.1 --no-open',
+      ? 'npx ng serve --port 4200 --no-open' 
+      : 'npx ng serve --port 4200 --no-open',
     cwd: clientAppDir, // Absolute path to Angular app directory
-    url: 'http://127.0.0.1:4200',
+    url: 'http://localhost:4200',
     reuseExistingServer: !process.env.CI,
     timeout: 360000,  // 6 minutes for Angular to compile and start (increased for slower machines)
     stdout: 'pipe',   // Show stdout to help debug startup issues

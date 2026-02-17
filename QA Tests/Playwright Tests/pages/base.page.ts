@@ -17,22 +17,24 @@ export abstract class BasePage {
   
   /**
    * Navigate to the page
-   * @param url - Relative URL (with or without hash prefix)
-   * @description Handles Angular hash-based routing by ensuring URLs are prefixed with /#/
+   * @param url - Relative URL path (e.g., '/partnerships/contacts')
+   * @description Angular uses PathLocationStrategy (path-based routing, no hash)
    */
   async goto(url: string): Promise<void> {
-    const BASE_URL = 'http://127.0.0.1:4200';
+    const BASE_URL = 'http://localhost:4200';
     
-    // Angular uses hash-based routing - ensure URLs are prefixed with /#/
-    let hashUrl = url;
-    if (!url.startsWith('/#/') && !url.startsWith('#/')) {
-      // Convert /login to /#/login
-      hashUrl = url.startsWith('/') ? `/#${url}` : `/#/${url}`;
-    } else if (url.startsWith('#/')) {
-      // Convert #/login to /#/login
-      hashUrl = `/${url}`;
+    // Angular uses path-based routing (PathLocationStrategy) - use paths directly
+    // Strip any legacy hash prefix if present (/#/ or #/)
+    let path = url;
+    if (path.startsWith('/#/')) {
+      path = path.substring(2); // '/#/foo' -> '/foo'
+    } else if (path.startsWith('#/')) {
+      path = path.substring(1); // '#/foo' -> '/foo'
     }
-    await this.page.goto(`${BASE_URL}${hashUrl}`);
+    if (!path.startsWith('/')) {
+      path = `/${path}`;
+    }
+    await this.page.goto(`${BASE_URL}${path}`);
     await waitForNetworkIdle(this.page);
   }
   

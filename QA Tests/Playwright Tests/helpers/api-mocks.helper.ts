@@ -32,7 +32,20 @@ const RESTRICTED_MOCK_USERS = [
   'test-no-permissions@playwright.local',
   'viewer@example.com',
   'doa2@example.com',
+  'collaborator@example.com',
+  'other-user@example.com',
 ];
+
+/** Go Decision workflow stages for opportunity */
+const OPPORTUNITY_STAGES = {
+  IDENTIFY_PROFILE: 'IDENTIFY & PROFILE',
+  GO: 'GO',
+  NO_GO: 'NO GO',
+  CANCELLED: 'CANCELLED',
+};
+
+/** In-memory state for workflow mocks (enables Cancel/Reopen/Submit transitions in tests) */
+const workflowMockState: Record<number, { stage: string; status: string; isInWorkflow: boolean }> = {};
 
 /**
  * Setup API mocks for authentication and configuration.
@@ -481,6 +494,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
         lastModifiedDate: '2024-06-15T12:00:00Z',
         createdBy: 'system',
         lastModifiedBy: 'system',
+        permissions: isRestrictedUser ? { canView: true, canEdit: false, canUpdate: false, canDelete: false } : { canView: true, canEdit: true, canUpdate: true, canDelete: true },
         // Tab configuration data
         contacts: [
           { id: 1, firstName: 'John', lastName: 'Smith', email: 'john@test.com' },
@@ -523,7 +537,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     });
   });
 
-  // Mock /api/opportunity/{id} - Opportunity detail (comprehensive mock with multiple stages)
+  // Mock /api/opportunity/{id} - Opportunity detail (comprehensive mock with Go Decision stages)
   await page.route(url => {
     const urlString = url.toString();
     return /\/api\/opportunity\/\d+$/.test(urlString);
@@ -532,10 +546,23 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     const opportunityId = url.match(/\/api\/opportunity\/(\d+)/)?.[1] || '1';
     const id = parseInt(opportunityId);
     mockLog(`[API Mock] Intercepted: /api/opportunity/${opportunityId}`);
-    
-    // Different mock data based on ID for testing various states
-    const stageByIdRange = id <= 3 ? 'Draft' : id <= 6 ? 'Active' : id <= 9 ? 'Pending Decision' : 'Active';
-    const statusByIdRange = id <= 3 ? 'Draft' : 'Active';
+
+    // Use workflowMockState if updated by POST, else default by ID
+    const stored = workflowMockState[id];
+    let stageByIdRange = stored?.stage ?? OPPORTUNITY_STAGES.IDENTIFY_PROFILE;
+    let statusByIdRange = stored?.status ?? 'Draft';
+    if (!stored) {
+      if (id === 10) {
+        stageByIdRange = OPPORTUNITY_STAGES.CANCELLED;
+        statusByIdRange = 'Closed';
+      } else if (id === 11) {
+        stageByIdRange = OPPORTUNITY_STAGES.NO_GO;
+        statusByIdRange = 'Closed';
+      } else if (id === 12) {
+        stageByIdRange = OPPORTUNITY_STAGES.IDENTIFY_PROFILE;
+        statusByIdRange = 'Active';
+      }
+    }
     
     await route.fulfill({
       status: 200,
@@ -610,16 +637,25 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
   });
 
   // Mock /api/opportunity/{id}/permissions - Opportunity permissions
-  // Returns restricted permissions for restricted users, full permissions for admin
+  // Collaborator: canEdit content but NOT workflow (canSubmit, canCancel)
+  const isCollaboratorUser = userEmail === 'collaborator@example.com';
   await page.route(url => {
     const urlString = url.toString();
     return /\/api\/opportunity\/\d+\/permissions/.test(urlString);
   }, async (route) => {
-    mockLog(`[API Mock] Intercepted: /api/opportunity/{id}/permissions (restricted=${isRestrictedUser})`);
+    mockLog(`[API Mock] Intercepted: /api/opportunity/{id}/permissions (restricted=${isRestrictedUser}, collaborator=${isCollaboratorUser})`);
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify(isRestrictedUser ? {
+      body: JSON.stringify(isCollaboratorUser ? {
+        canView: true,
+        canEdit: true,
+        canDelete: false,
+        canSubmit: false,
+        canApprove: false,
+        canActivate: false,
+        canCancel: false,
+      } : isRestrictedUser ? {
         canView: true,
         canEdit: false,
         canDelete: false,
@@ -661,6 +697,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
         department: 'Partnerships',
         status: 'Active',
         partner: { id: 1, name: 'Test Partner Organization' },
+        permissions: isRestrictedUser ? { canView: true, canEdit: false, canUpdate: false, canDelete: false } : { canView: true, canEdit: true, canUpdate: true, canDelete: true },
         createdDate: '2024-01-01T00:00:00Z',
         lastModifiedDate: '2024-06-15T12:00:00Z',
       }),
@@ -697,25 +734,271 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
   });
 
   // ==========================================
-  // WORKFLOW AND STAGE ENDPOINTS
+  // NOTIFICATION ENDPOINTS - Required for topbar notification panel
   // ==========================================
-  
-  // Mock /api/workflow/{entity}/{id} - Workflow status
+
+  // Mock GET /api/notifications - List notifications (unread and all)
   await page.route(url => {
     const urlString = url.toString();
-    return /\/api\/workflow\/\w+\/\d+/.test(urlString);
+    return urlString.includes('/api/notifications') &&
+           !urlString.match(/\/api\/notifications\/\d+\//);
   }, async (route) => {
-    mockLog('[API Mock] Intercepted: /api/workflow/{entity}/{id}');
+    const request = route.request();
+    const url = request.url();
+
+    if (request.method() === 'GET') {
+      mockLog('[API Mock] Intercepted: GET /api/notifications');
+      // Return sample notifications for panel rendering (empty state also valid)
+      const mockNotifications = [
+        {
+          id: 1,
+          message: 'Test notification - Opportunity review requested',
+          category: 'workflow_approval',
+          responseType: 'Pending',
+          entity: 'Opportunity',
+          entityId: 1,
+          status: 'Pending',
+          isRead: false,
+          createdAt: new Date().toISOString(),
+        },
+        {
+          id: 2,
+          message: 'Partner document uploaded successfully',
+          category: 'document',
+          responseType: 'Done',
+          status: 'Done',
+          isRead: true,
+          createdAt: new Date(Date.now() - 86400000).toISOString(),
+        },
+      ];
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(mockNotifications),
+      });
+    } else if (request.method() === 'PUT') {
+      mockLog('[API Mock] Intercepted: PUT /api/notifications (mark read or update)');
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      });
+    } else {
+      await route.continue();
+    }
+  });
+
+  // Mock PUT /api/notifications/{id}/read and /api/notifications/{id}/update
+  await page.route(url => {
+    const urlString = url.toString();
+    return /\/api\/notifications\/\d+\/(read|update)/.test(urlString);
+  }, async (route) => {
+    mockLog('[API Mock] Intercepted: PUT /api/notifications/{id}/read or update');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({}),
+    });
+  });
+
+  // ==========================================
+  // WORKFLOW AND STAGE ENDPOINTS (Go Decision)
+  // ==========================================
+
+  const isCollaborator = userEmail === 'collaborator@example.com';
+
+  // Mock /api/workflow/{entity} - Workflow stages list (no /id)
+  await page.route(url => {
+    const urlString = url.toString();
+    return /\/api\/workflow\/\w+(\?|$)/.test(urlString) && !/\/api\/workflow\/\w+\/\d+/.test(urlString);
+  }, async (route) => {
+    const url = route.request().url();
+    const entityMatch = url.match(/\/api\/workflow\/(\w+)/);
+    const entityName = entityMatch?.[1] || 'opportunity';
+    mockLog(`[API Mock] Intercepted: /api/workflow/${entityName}`);
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { stageCode: OPPORTUNITY_STAGES.IDENTIFY_PROFILE, displayName: 'Identify & Profile', sequence: 1 },
+        { stageCode: OPPORTUNITY_STAGES.GO, displayName: 'GO', sequence: 2 },
+        { stageCode: OPPORTUNITY_STAGES.NO_GO, displayName: 'NO GO', sequence: 3 },
+        { stageCode: OPPORTUNITY_STAGES.CANCELLED, displayName: 'Cancelled', sequence: 4 },
+      ]),
+    });
+  });
+
+  // Helper to get workflow state (uses in-memory state for state transitions)
+  const getWorkflowState = (id: number) => {
+    const stored = workflowMockState[id];
+    if (stored) return stored;
+    if (id === 10) return { stage: OPPORTUNITY_STAGES.CANCELLED, status: 'Closed', isInWorkflow: false };
+    if (id === 11) return { stage: OPPORTUNITY_STAGES.NO_GO, status: 'Closed', isInWorkflow: false };
+    if (id === 12) return { stage: OPPORTUNITY_STAGES.IDENTIFY_PROFILE, status: 'Active', isInWorkflow: true };
+    return { stage: OPPORTUNITY_STAGES.IDENTIFY_PROFILE, status: 'Draft', isInWorkflow: false };
+  };
+
+  // Mock /api/workflow/{entity}/{id} - Workflow state (ID-aware for opportunity)
+  await page.route(url => {
+    const urlString = url.toString();
+    return /\/api\/workflow\/\w+\/\d+$/.test(urlString);
+  }, async (route) => {
+    const url = route.request().url();
+    const match = url.match(/\/api\/workflow\/\w+\/(\d+)/);
+    const id = match ? parseInt(match[1], 10) : 1;
+    const entityMatch = url.match(/\/api\/workflow\/(\w+)\//);
+    const entityName = entityMatch?.[1] || 'opportunity';
+    mockLog(`[API Mock] Intercepted: /api/workflow/${entityName}/${id}`);
+
+    const { stage: currentStage, isInWorkflow } = getWorkflowState(id);
+
+    // Collaborator: no workflow actions
+    const nextActions = isCollaborator ? [] : (
+      currentStage === OPPORTUNITY_STAGES.IDENTIFY_PROFILE && !isInWorkflow
+        ? [
+            { actionName: 'Submit for Go', newStage: OPPORTUNITY_STAGES.GO, sequence: 1, comment: 'mandatory', requiresApproval: true },
+            { actionName: 'Cancel', newStage: OPPORTUNITY_STAGES.CANCELLED, sequence: 2, comment: 'mandatory', requiresApproval: false },
+          ]
+        : currentStage === OPPORTUNITY_STAGES.CANCELLED || currentStage === OPPORTUNITY_STAGES.NO_GO
+          ? [{ actionName: 'Reopen', newStage: OPPORTUNITY_STAGES.IDENTIFY_PROFILE, sequence: 1, comment: 'mandatory', requiresApproval: false }]
+          : isInWorkflow
+            ? [
+                { actionName: 'Recall', newStage: OPPORTUNITY_STAGES.IDENTIFY_PROFILE, sequence: 1, comment: 'mandatory', requiresApproval: false },
+                { actionName: 'Approve', newStage: OPPORTUNITY_STAGES.GO, sequence: 2, comment: 'optional', requiresApproval: false },
+                { actionName: 'Reject', newStage: OPPORTUNITY_STAGES.NO_GO, sequence: 3, comment: 'mandatory', requiresApproval: false },
+              ]
+            : []
+    );
+
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
-        currentStage: 'Active',
-        availableActions: ['Deactivate', 'Archive'],
-        history: [
-          { stage: 'Draft', date: '2024-01-01T00:00:00Z', user: 'system' },
-          { stage: 'Active', date: '2024-01-15T00:00:00Z', user: 'admin' },
-        ],
+        stage: currentStage,
+        displayName: currentStage,
+        comment: '',
+        nextActions,
+        isInWorkflow,
+      }),
+    });
+  });
+
+  // Mock /api/workflow/{entity}/{id}/details - Workflow details (for in-workflow)
+  await page.route(url => url.toString().includes('/api/workflow/') && url.toString().includes('/details'), async (route) => {
+    const url = route.request().url();
+    const match = url.match(/\/api\/workflow\/\w+\/(\d+)/);
+    const id = match ? parseInt(match[1], 10) : 1;
+    mockLog(`[API Mock] Intercepted: /api/workflow/.../details`);
+    const isInWorkflow = id === 12;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        currentStage: isInWorkflow ? OPPORTUNITY_STAGES.IDENTIFY_PROFILE : OPPORTUNITY_STAGES.CANCELLED,
+        canRecall: isInWorkflow && !isCollaborator,
+        recallComment: 'mandatory',
+        canApprove: isInWorkflow && !isCollaborator,
+        approvalComment: 'optional',
+        canReject: isInWorkflow && !isCollaborator,
+        rejectionComment: 'mandatory',
+        approvers: [],
+      }),
+    });
+  });
+
+  // Mock /api/workflow/{entity}/{id}/requirements - Stage requirements (ID 2 = missing statement)
+  await page.route(url => url.toString().includes('/api/workflow/') && url.toString().includes('/requirements'), async (route) => {
+    const url = route.request().url();
+    const match = url.match(/\/api\/workflow\/\w+\/(\d+)/);
+    const id = match ? parseInt(match[1], 10) : 1;
+    mockLog(`[API Mock] Intercepted: /api/workflow/.../requirements`);
+    const unmetForId2 = id === 2
+      ? [{ message: 'Opportunity Statement has not yet been generated', requirementType: 'OpportunityStatement' }]
+      : [];
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(unmetForId2),
+    });
+  });
+
+  // Mock /api/workflow/{entity}/{id}/history - Workflow history
+  await page.route(url => url.toString().includes('/api/workflow/') && url.toString().includes('/history'), async (route) => {
+    mockLog('[API Mock] Intercepted: /api/workflow/.../history');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { fromStage: OPPORTUNITY_STAGES.IDENTIFY_PROFILE, toStage: OPPORTUNITY_STAGES.IDENTIFY_PROFILE, action: 'Created', comment: '', performedOn: '2025-01-01T00:00:00Z' },
+      ]),
+    });
+  });
+
+  // Mock POST /api/workflow/submit, cancel, reopen, recall - Workflow actions (stateful)
+  await page.route(url => {
+    const urlString = url.toString();
+    return urlString.includes('/api/workflow/submit') || urlString.includes('/api/workflow/cancel') ||
+      urlString.includes('/api/workflow/reopen') || urlString.includes('/api/workflow/recall') ||
+      urlString.includes('/api/workflow/approve') || urlString.includes('/api/workflow/reject');
+  }, async (route) => {
+    const url = route.request().url();
+    const method = route.request().method();
+    mockLog(`[API Mock] Intercepted: ${method} ${url}`);
+    if (method !== 'POST') {
+      await route.continue();
+      return;
+    }
+    let newStage = OPPORTUNITY_STAGES.GO;
+    let entityId = 1;
+    try {
+      const body = route.request().postDataJSON();
+      entityId = body?.entityId ?? body?.EntityId ?? 1;
+      // ID 2 = missing Opportunity Statement — return requirements not met for TC-020
+      if (url.includes('/submit') && entityId === 2) {
+        await route.fulfill({
+          status: 400,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: false,
+            requirementsNotMet: true,
+            unmetRequirements: ['Opportunity Statement has not yet been generated'],
+            errorMessage: 'Opportunity Statement has not yet been generated',
+          }),
+        });
+        return;
+      }
+      if (url.includes('/cancel')) {
+        newStage = OPPORTUNITY_STAGES.CANCELLED;
+        workflowMockState[entityId] = { stage: OPPORTUNITY_STAGES.CANCELLED, status: 'Closed', isInWorkflow: false };
+      } else if (url.includes('/reopen')) {
+        newStage = OPPORTUNITY_STAGES.IDENTIFY_PROFILE;
+        workflowMockState[entityId] = { stage: OPPORTUNITY_STAGES.IDENTIFY_PROFILE, status: 'Draft', isInWorkflow: false };
+      } else if (url.includes('/recall')) {
+        newStage = OPPORTUNITY_STAGES.IDENTIFY_PROFILE;
+        workflowMockState[entityId] = { stage: OPPORTUNITY_STAGES.IDENTIFY_PROFILE, status: 'Draft', isInWorkflow: false };
+      } else if (url.includes('/submit')) {
+        newStage = OPPORTUNITY_STAGES.GO;
+        workflowMockState[entityId] = { stage: OPPORTUNITY_STAGES.IDENTIFY_PROFILE, status: 'Active', isInWorkflow: true };
+      } else if (url.includes('/approve')) {
+        newStage = OPPORTUNITY_STAGES.GO;
+        workflowMockState[entityId] = { stage: OPPORTUNITY_STAGES.GO, status: 'Active', isInWorkflow: false };
+      } else if (url.includes('/reject')) {
+        newStage = OPPORTUNITY_STAGES.NO_GO;
+        workflowMockState[entityId] = { stage: OPPORTUNITY_STAGES.NO_GO, status: 'Closed', isInWorkflow: false };
+      }
+    } catch {
+      // Ignore parse errors
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        newStage,
+        stage: newStage,
+        displayName: newStage,
+        nextActions: [],
+        isInWorkflow: false,
       }),
     });
   });
@@ -761,7 +1044,8 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
            !/\/api\/contact\/\d+$/.test(urlString) &&
            !/\/api\/interaction\/\d+$/.test(urlString) &&
            // Exclude only workflow URLs with entity AND id (handled above)
-           !/\/api\/workflow\/\w+\/\d+/.test(urlString);
+           !/\/api\/workflow\/\w+\/\d+/.test(urlString) &&
+           !urlString.includes('/api/workflow/');
   }, async (route) => {
     const url = route.request().url();
     const method = route.request().method();
@@ -805,13 +1089,48 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
           }),
         });
       }
-      // Entity configuration endpoints - return array of columns directly
-      else if (url.includes('/api/entity-configuration/')) {
+      // Entity configuration - /api/entities for entity manager dropdown
+      else if (url.includes('/api/entities') && !url.includes('/api/entity-configuration/')) {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify([]), // Returns empty array of columns
+          body: JSON.stringify([
+            { entityName: 'Partner', value: 'Organization/Partner', translatedLabel: 'Partner' },
+            { entityName: 'Contact', value: 'Contact', translatedLabel: 'Contact' },
+            { entityName: 'Interaction', value: 'Interaction', translatedLabel: 'Interaction' },
+            { entityName: 'Opportunity', value: 'Opportunity', translatedLabel: 'Opportunity' },
+          ]),
         });
+      }
+      // Entity configuration endpoints - return config with fields for entity manager
+      else if (url.includes('/api/entity-configuration/')) {
+        const match = url.match(/\/api\/entity-configuration\/([^/?]+)/);
+        const entityName = match ? decodeURIComponent(match[1]) : 'Partner';
+        if (entityName && !entityName.includes('save') && !entityName.includes('export') && !entityName.includes('fields')) {
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              id: 1,
+              entityName,
+              description: `Configuration for ${entityName}`,
+              fields: [
+                { id: 1, fieldName: 'Name', dataType: 'string', showInListView: true, listViewOrder: 1, listViewLabel: 'Name', listViewType: 'text' },
+                { id: 2, fieldName: 'Status', dataType: 'string', showInListView: true, listViewOrder: 2, listViewLabel: 'Status', listViewType: 'text' },
+              ],
+              listViewFields: [
+                { id: 1, fieldName: 'Name', listViewOrder: 1, listViewLabel: 'Name', listViewType: 'text' },
+                { id: 2, fieldName: 'Status', listViewOrder: 2, listViewLabel: 'Status', listViewType: 'text' },
+              ],
+            }),
+          });
+        } else {
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify([]),
+          });
+        }
       }
       // Role endpoints
       else if (url.includes('/api/role/')) {
@@ -835,6 +1154,43 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify({}),
+        });
+      }
+      // Base engagement - list and detail
+      else if (url.includes('/api/base-engagement')) {
+        const idMatch = url.match(/\/api\/base-engagement\/(\d+)/);
+        if (idMatch) {
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              id: parseInt(idMatch[1]),
+              name: 'Test Base Engagement',
+              description: 'Test engagement for E2E',
+              status: 'Active',
+              createdDate: '2024-01-01T00:00:00Z',
+            }),
+          });
+        } else {
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              records: [
+                { id: 1, name: 'Test Engagement 1', status: 'Active', createdDate: '2024-01-01T00:00:00Z' },
+                { id: 2, name: 'Test Engagement 2', status: 'Active', createdDate: '2024-02-01T00:00:00Z' },
+              ],
+              totalCount: 2,
+            }),
+          });
+        }
+      }
+      // SavedFilter
+      else if (url.includes('/api/SavedFilter')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([]),
         });
       }
       // Dashboard content
@@ -868,12 +1224,16 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
           body: JSON.stringify([]),
         });
       }
-      // Document types
-      else if (url.includes('/api/document-type/')) {
+      // Document types - required for document upload dialog
+      else if (url.includes('/api/document-type')) {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify([]),
+          body: JSON.stringify([
+            { id: 1, name: 'Contract', description: 'Contract document' },
+            { id: 2, name: 'Report', description: 'Report document' },
+            { id: 3, name: 'Proposal', description: 'Proposal document' },
+          ]),
         });
       }
       // Default for other GET requests

@@ -42,6 +42,22 @@ public class PaoWorkflowUserContext : IWorkflowUserContext
         out var id) ? id : 0;
 
     /// <summary>
+    /// Gets the current user's display name synchronously from cache or claims.
+    /// Required by IWorkflowUserContext interface.
+    /// </summary>
+    public string CurrentUserName => _cachedUserName 
+        ?? _httpContextAccessor.HttpContext?.User?.Identity?.Name 
+        ?? "Unknown";
+
+    /// <summary>
+    /// Gets the current user's email synchronously from claims or cache.
+    /// Required by IWorkflowUserContext interface.
+    /// </summary>
+    public string CurrentUserEmail => _cachedUserEmail 
+        ?? _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Email)?.Value 
+        ?? string.Empty;
+
+    /// <summary>
     /// Gets the current user's display name asynchronously.
     /// Queries the user profile from the database if available.
     /// Uses a separate DbContext instance to avoid concurrency issues.

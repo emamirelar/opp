@@ -737,6 +737,7 @@ public class DocumentControllerTests : IntegrationTestBase
         // Arrange
         var client = Factory.CreateClient();
         client.DefaultRequestHeaders.Clear(); // Remove authentication
+        client.DefaultRequestHeaders.Add("Test-NoAuth", "true");
 
         // Act
         var response = await client.GetAsync("/api/document/Partner/1");
@@ -758,6 +759,7 @@ public class DocumentControllerTests : IntegrationTestBase
         // Arrange
         var client = Factory.CreateClient();
         client.DefaultRequestHeaders.Clear(); // Remove authentication
+        client.DefaultRequestHeaders.Add("Test-NoAuth", "true");
 
         // Act
         var response = await client.GetAsync("/api/document/1");
@@ -779,6 +781,7 @@ public class DocumentControllerTests : IntegrationTestBase
         // Arrange
         var client = Factory.CreateClient();
         client.DefaultRequestHeaders.Clear(); // Remove authentication
+        client.DefaultRequestHeaders.Add("Test-NoAuth", "true");
         var updateData = new { id = 1, description = "Update" };
 
         // Act
@@ -801,6 +804,7 @@ public class DocumentControllerTests : IntegrationTestBase
         // Arrange
         var client = Factory.CreateClient();
         client.DefaultRequestHeaders.Clear(); // Remove authentication
+        client.DefaultRequestHeaders.Add("Test-NoAuth", "true");
         var generateData = new { content = "Test", fileName = "Test" };
 
         // Act

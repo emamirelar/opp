@@ -411,6 +411,7 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
         // Arrange
         var client = Factory.CreateClient();
         client.DefaultRequestHeaders.Clear(); // Remove authentication
+        client.DefaultRequestHeaders.Add("Test-NoAuth", "true");
 
         // Act
         var response = await client.GetAsync("/api/liaison-offices/lookup");

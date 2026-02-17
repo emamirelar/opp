@@ -122,7 +122,8 @@ async function waitForSync(checkFn: () => Promise<boolean>, timeoutMs: number = 
 // ============================================================================
 
 test.describe('Opportunity+ to oUP Integration Flow', () => {
-  
+  test.slow();
+
   // Skip all tests if oUP credentials not configured
   test.beforeEach(async () => {
     if (!hasOupCredentials()) {
@@ -139,7 +140,7 @@ test.describe('Opportunity+ to oUP Integration Flow', () => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
     
     // Step 1: Authenticate with Opportunity+
-    await authenticateWithRealBackend(page, '/#/partnerships/opportunities');
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
     
     // Step 2: Create new opportunity
     const opportunityPage = new OpportunityItemPage(page);
@@ -212,7 +213,8 @@ test.describe('Opportunity+ to oUP Integration Flow', () => {
 // ============================================================================
 
 test.describe('Field Mapping Validation', () => {
-  
+  test.slow();
+
   test.beforeEach(async () => {
     if (!hasOupCredentials()) {
       test.skip(true, 'oUP credentials not configured. See QA-014 in Defect List for QA.md');
@@ -332,7 +334,8 @@ test.describe('Field Mapping Validation', () => {
 // ============================================================================
 
 test.describe('High-Risk Checklist Mapping', () => {
-  
+  test.slow();
+
   test.beforeEach(async () => {
     if (!hasOupCredentials()) {
       test.skip(true, 'oUP credentials not configured. See QA-014 in Defect List for QA.md');
@@ -393,7 +396,8 @@ test.describe('High-Risk Checklist Mapping', () => {
 // ============================================================================
 
 test.describe('Email Notification Validation', () => {
-  
+  test.slow();
+
   test.beforeEach(async () => {
     if (!hasEmailCredentials()) {
       test.skip(true, 'Email credentials not configured. See QA-014 in Defect List for QA.md');
@@ -455,6 +459,7 @@ test.describe('Email Notification Validation', () => {
 // ============================================================================
 
 test.describe('Deep Linking Validation', () => {
+  test.slow();
 
   test('DL-001: Go to oUP Button in Opportunity+', async ({ page }) => {
     /**
@@ -484,7 +489,8 @@ test.describe('Deep Linking Validation', () => {
 // ============================================================================
 
 test.describe('Idempotency Validation', () => {
-  
+  test.slow();
+
   test.beforeEach(async () => {
     if (!hasOupCredentials()) {
       test.skip(true, 'oUP credentials not configured. See QA-014 in Defect List for QA.md');
@@ -530,7 +536,8 @@ test.describe('Idempotency Validation', () => {
 // ============================================================================
 
 test.describe('Error Handling', () => {
-  
+  test.slow();
+
   test('EH-001: Invalid User Email Resolution', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
     
@@ -570,6 +577,7 @@ test.describe('Error Handling', () => {
 // ============================================================================
 
 test.describe('Edge Cases', () => {
+  test.slow();
 
   test('EC-001: Empty Optional Fields', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');

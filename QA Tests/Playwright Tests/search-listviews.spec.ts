@@ -10,9 +10,10 @@ import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
 
 test.describe('General Search Features (PNO-146)', () => {
-  
+  test.slow();
+
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/partners');
+    await authenticateWithRealBackend(page, '/partnerships/partners');
   });
 
   test('POS_001 - Validate search box visibility', async ({ page }) => {
@@ -106,9 +107,10 @@ test.describe('General Search Features (PNO-146)', () => {
 });
 
 test.describe('List View Filtering', () => {
-  
+  test.slow();
+
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/opportunities');
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
   });
 
   test('POS_009 - Filter by status', async ({ page }) => {
@@ -156,9 +158,10 @@ test.describe('List View Filtering', () => {
 });
 
 test.describe('List View Columns', () => {
-  
+  test.slow();
+
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/partners');
+    await authenticateWithRealBackend(page, '/partnerships/partners');
   });
 
   test('POS_013 - Validate default columns display', async ({ page }) => {
@@ -208,9 +211,10 @@ test.describe('List View Columns', () => {
 });
 
 test.describe('Pagination', () => {
-  
+  test.slow();
+
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/partners');
+    await authenticateWithRealBackend(page, '/partnerships/partners');
   });
 
   test('POS_029 - Validate pagination controls', async ({ page }) => {
@@ -251,9 +255,10 @@ test.describe('Pagination', () => {
 });
 
 test.describe('Interactions List View (PNO-230)', () => {
-  
+  test.slow();
+
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/interactions');
+    await authenticateWithRealBackend(page, '/partnerships/interactions');
   });
 
   test('POS_019 - Validate Interactions list columns', async ({ page }) => {
@@ -279,9 +284,10 @@ test.describe('Interactions List View (PNO-230)', () => {
 });
 
 test.describe('Contact List View (PNO-235)', () => {
-  
+  test.slow();
+
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/contacts');
+    await authenticateWithRealBackend(page, '/partnerships/contacts');
   });
 
   test('POS_022 - Validate Contact list columns', async ({ page }) => {
@@ -307,9 +313,10 @@ test.describe('Contact List View (PNO-235)', () => {
 });
 
 test.describe('Partner Navigation (PNO-311)', () => {
-  
+  test.slow();
+
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/partners');
+    await authenticateWithRealBackend(page, '/partnerships/partners');
   });
 
   test('POS_025 - Navigate by Partner Category', async ({ page }) => {
@@ -351,9 +358,10 @@ test.describe('Partner Navigation (PNO-311)', () => {
 });
 
 test.describe('Export Functionality', () => {
-  
+  test.slow();
+
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/partners');
+    await authenticateWithRealBackend(page, '/partnerships/partners');
   });
 
   test('POS_033 - Export list to CSV', async ({ page }) => {

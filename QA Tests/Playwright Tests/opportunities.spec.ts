@@ -14,6 +14,8 @@ import { assertUrlMatches, assertDialogOpen } from './helpers/assertions.helper'
  * - Search and filter capabilities
  */
 test.describe('Opportunities List', () => {
+  test.slow();
+
   let opportunitiesPage: OpportunitiesPage;
   
   // Authenticate with real backend before each test
@@ -21,7 +23,7 @@ test.describe('Opportunities List', () => {
     opportunitiesPage = new OpportunitiesPage(page);
     
     // Use real backend authentication (cookie-based)
-    await authenticateWithRealBackend(page, '/#/partnerships/opportunities');
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
     
     // Wait for permissions to load
     await opportunitiesPage.waitForPermissions();

@@ -12,9 +12,10 @@ import { authenticateWithRealBackend } from './helpers/auth.helper';
  * @updated 2026-01-30 - Migrated to real backend authentication
  */
 test.describe('Home Page & Dashboard', () => {
+  test.slow();
   test('should load home page and display dashboard', async ({ page }) => {
     // Authenticate and navigate to home page
-    await authenticateWithRealBackend(page, '/#/');
+    await authenticateWithRealBackend(page, '/');
     
     // Verify page title contains "Opportunity" or "UNOPS"
     await expect(page).toHaveTitle(/Opportunity|UNOPS/);
@@ -36,7 +37,7 @@ test.describe('Home Page & Dashboard', () => {
   
   test('should display announcement banner', async ({ page }) => {
     // Authenticate and navigate to home page
-    await authenticateWithRealBackend(page, '/#/');
+    await authenticateWithRealBackend(page, '/');
     
     // Verify the gradient announcement banner is visible
     const banner = page.locator('.bg-gradient-to-r');
@@ -45,7 +46,7 @@ test.describe('Home Page & Dashboard', () => {
   
   test('should display dashboard content or loading state', async ({ page }) => {
     // Authenticate and navigate to home page using hash-based routing
-    await authenticateWithRealBackend(page, '/#/');
+    await authenticateWithRealBackend(page, '/');
     
     // Either loading skeleton OR actual content should be visible
     const loadingState = page.locator('.animate-pulse');
@@ -60,7 +61,7 @@ test.describe('Home Page & Dashboard', () => {
   
   test('should display quick actions toolbar for users with permissions', async ({ page }) => {
     // Authenticate and navigate to home page
-    await authenticateWithRealBackend(page, '/#/');
+    await authenticateWithRealBackend(page, '/');
     
     // Check if Quick Actions section exists (depends on user permissions)
     // The Quick Actions panel has specific buttons for creating entities
@@ -80,7 +81,7 @@ test.describe('Home Page & Dashboard', () => {
   
   test('should display dashboard panels (Actions Required, Recent Activity, My Workspace)', async ({ page }) => {
     // Authenticate and navigate to home page using hash-based routing
-    await authenticateWithRealBackend(page, '/#/');
+    await authenticateWithRealBackend(page, '/');
     
     // Look for the dashboard card components
     // These use app-dashboard-card or specific panel structures
@@ -96,7 +97,7 @@ test.describe('Home Page & Dashboard', () => {
   
   test('should handle error state gracefully', async ({ page }) => {
     // Authenticate and navigate to home page
-    await authenticateWithRealBackend(page, '/#/');
+    await authenticateWithRealBackend(page, '/');
     
     // If error state is shown, verify it has proper UI
     const errorIcon = page.locator('i.material-symbols-outlined').filter({ hasText: 'warning' });
@@ -115,7 +116,7 @@ test.describe('Home Page & Dashboard', () => {
   
   test('should display last updated timestamp', async ({ page }) => {
     // Authenticate and navigate to home page using hash-based routing
-    await authenticateWithRealBackend(page, '/#/');
+    await authenticateWithRealBackend(page, '/');
     
     // Look for "Last Updated" text or timestamp
     const lastUpdatedText = page.getByText(/last updated|updated/i);
@@ -131,7 +132,7 @@ test.describe('Home Page & Dashboard', () => {
     await page.setViewportSize({ width: 1920, height: 1080 });
     
     // Authenticate and navigate to home page
-    await authenticateWithRealBackend(page, '/#/');
+    await authenticateWithRealBackend(page, '/');
     
     // Desktop: Grid should show multiple columns
     const gridElement = page.locator('.grid').first();

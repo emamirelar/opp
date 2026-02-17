@@ -478,7 +478,8 @@ namespace UNOPS.PAO.Business.Tests.AI
         {
             if (TestEnvironment.UseInMemory)
             {
-                _context.Database.EnsureDeleted();
+                try { _context.Database.EnsureDeleted(); }
+                catch { /* SQLite connection may already be closed during concurrent test runs */ }
             }
             _context.Dispose();
         }

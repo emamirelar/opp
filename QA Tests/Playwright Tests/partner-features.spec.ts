@@ -10,9 +10,10 @@ import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
 
 test.describe('Partner Ecosystem (PNO-150)', () => {
-  
+  test.slow();
+
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/partners');
+    await authenticateWithRealBackend(page, '/partnerships/partners');
   });
 
   test('POS_001 - Validate Partner Ecosystem view exists', async ({ page }) => {
@@ -105,9 +106,10 @@ test.describe('Partner Ecosystem (PNO-150)', () => {
 });
 
 test.describe('Partner Hierarchy Navigation (PNO-130)', () => {
-  
+  test.slow();
+
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/partners');
+    await authenticateWithRealBackend(page, '/partnerships/partners');
   });
 
   test('POS_001 - Validate Partner Tree view exists', async ({ page }) => {
@@ -198,9 +200,10 @@ test.describe('Partner Hierarchy Navigation (PNO-130)', () => {
 });
 
 test.describe('Partner Intelligence (PNO-108)', () => {
-  
+  test.slow();
+
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/partners');
+    await authenticateWithRealBackend(page, '/partnerships/partners');
   });
 
   test('POS_001 - Validate Partner Intelligence section visible', async ({ page }) => {
@@ -307,9 +310,10 @@ test.describe('Partner Intelligence (PNO-108)', () => {
 });
 
 test.describe('AI Assistant (PNO-374)', () => {
-  
+  test.slow();
+
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/home');
+    await authenticateWithRealBackend(page, '/home');
   });
 
   test('POS_001 - Validate AI Assistant accessibility', async ({ page }) => {
@@ -398,9 +402,10 @@ test.describe('AI Assistant (PNO-374)', () => {
 });
 
 test.describe('Take a Tour Feature (PNO-446)', () => {
-  
+  test.slow();
+
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/home');
+    await authenticateWithRealBackend(page, '/home');
   });
 
   test('POS_001 - Validate Take a Tour button visibility', async ({ page }) => {

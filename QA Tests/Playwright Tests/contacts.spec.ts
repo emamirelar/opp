@@ -17,6 +17,8 @@ import { setupCameraMocks } from './helpers/api-mocks.helper';
  * - CanDelete: true
  */
 test.describe('Contacts List - WITH Permissions', () => {
+  test.slow();
+
   let contactsPage: ContactsPage;
   const TEST_USER_WITH_PERMISSIONS = 'test-contact-admin@playwright.local';
   
@@ -29,7 +31,7 @@ test.describe('Contacts List - WITH Permissions', () => {
     await setupCameraMocks(page);
     
     // Use shared auth helper with API mocks (matching partners/interactions/opportunities pattern)
-    await authenticateWithRealBackend(page, '/#/partnerships/contacts', TEST_USER_WITH_PERMISSIONS);
+    await authenticateWithRealBackend(page, '/partnerships/contacts', TEST_USER_WITH_PERMISSIONS);
     
     // Wait for permissions to load
     await contactsPage.waitForPermissions();
@@ -344,6 +346,8 @@ test.describe('Contacts List - WITH Permissions', () => {
  * - User should see "no permission" message or empty list
  */
 test.describe('Contacts List - WITHOUT Permissions (Negative Tests)', () => {
+  test.slow();
+
   let contactsPage: ContactsPage;
   const TEST_USER_WITHOUT_PERMISSIONS = 'test-readonly@playwright.local';
   
@@ -351,7 +355,7 @@ test.describe('Contacts List - WITHOUT Permissions (Negative Tests)', () => {
     contactsPage = new ContactsPage(page);
     
     // Use shared auth helper with API mocks (matching partners/interactions/opportunities pattern)
-    await authenticateWithRealBackend(page, '/#/partnerships/contacts', TEST_USER_WITHOUT_PERMISSIONS);
+    await authenticateWithRealBackend(page, '/partnerships/contacts', TEST_USER_WITHOUT_PERMISSIONS);
     
     // Wait for permissions to load
     await contactsPage.waitForPermissions();

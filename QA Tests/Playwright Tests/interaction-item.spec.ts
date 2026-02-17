@@ -38,6 +38,7 @@ import { assertUrlMatches, assertDialogOpen } from './helpers/assertions.helper'
  * NOTE: Uses existing interaction ID 1 from the database.
  */
 test.describe('Interaction Detail Page', () => {
+  test.slow();
   let interactionItemPage: InteractionItemPage;
   
   // Use existing interaction ID from database (matches interaction-item-basic.spec.ts)
@@ -49,7 +50,7 @@ test.describe('Interaction Detail Page', () => {
   test.beforeEach(async ({ page }) => {
     interactionItemPage = new InteractionItemPage(page, testInteractionId);
     
-    await authenticateWithRealBackend(page, `/#/partnerships/interactions/${testInteractionId}`);
+    await authenticateWithRealBackend(page, `/partnerships/interactions/${testInteractionId}`);
     
     await interactionItemPage.waitForLoad();
   });

@@ -14,7 +14,7 @@ import { test, expect, Page } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
 
 // Test configuration
-const BASE_URL = process.env.TEST_BASE_URL || 'http://127.0.0.1:4200';
+const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:4200';
 
 // Map of test opportunity IDs to numeric IDs for mocked environment
 // In real environment these would be actual DB IDs; in mocked mode we use fixed IDs
@@ -47,7 +47,7 @@ const OPPORTUNITY_IDS: Record<string, string> = {
 async function navigateToOpportunity(page: Page, opportunityId: string): Promise<void> {
   // Resolve named ID to numeric if needed
   const numericId = OPPORTUNITY_IDS[opportunityId] || opportunityId;
-  await page.goto(`${BASE_URL}/#/partnerships/opportunities/${numericId}`);
+  await page.goto(`${BASE_URL}/partnerships/opportunities/${numericId}`);
   await page.waitForLoadState('load');
   await page.waitForTimeout(3000);
 }
@@ -139,8 +139,10 @@ async function isOpportunityDetailLoaded(page: Page): Promise<boolean> {
 // ============================================================================
 
 test.describe('Team Section Tests (PNO-979)', () => {
+  test.slow();
+
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/opportunities/1');
+    await authenticateWithRealBackend(page, '/partnerships/opportunities/1');
   });
 
   test.describe('Team Section Layout', () => {
@@ -374,7 +376,7 @@ test.describe('Team Section Tests (PNO-979)', () => {
   test.describe('Permissions', () => {
     test('NEG_029 - View-only user sees opportunity detail page', async ({ page }) => {
       // Login as view-only user using shared auth helper
-      await authenticateWithRealBackend(page, '/#/partnerships/opportunities/1', 'viewer@example.com');
+      await authenticateWithRealBackend(page, '/partnerships/opportunities/1', 'viewer@example.com');
       
       // Verify the page loads (permissions are mocked, so user sees content)
       const loaded = await isOpportunityDetailLoaded(page);
@@ -389,8 +391,10 @@ test.describe('Team Section Tests (PNO-979)', () => {
 // ============================================================================
 
 test.describe('Opportunity Workflow Status Tests (PNO-940)', () => {
+  test.slow();
+
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/opportunities/1');
+    await authenticateWithRealBackend(page, '/partnerships/opportunities/1');
   });
 
   test.describe('Positive Status Transitions', () => {
@@ -424,7 +428,7 @@ test.describe('Opportunity Workflow Status Tests (PNO-940)', () => {
     });
 
     test('POS_009 - Status filter exists in opportunity list', async ({ page }) => {
-      await page.goto(`${BASE_URL}/#/partnerships/opportunities`);
+      await page.goto(`${BASE_URL}/partnerships/opportunities`);
       await page.waitForLoadState('load');
       await page.waitForTimeout(3000);
       
@@ -478,7 +482,7 @@ test.describe('Opportunity Workflow Status Tests (PNO-940)', () => {
 
     test('NEG_006 - Decision maker sees opportunity detail', async ({ page }) => {
       // Login as decision maker using shared auth helper
-      await authenticateWithRealBackend(page, '/#/partnerships/opportunities/1', 'doa2@example.com');
+      await authenticateWithRealBackend(page, '/partnerships/opportunities/1', 'doa2@example.com');
       
       const loaded = await isOpportunityDetailLoaded(page);
       console.log(`[Test] Decision maker view loaded: ${loaded}`);
@@ -489,7 +493,7 @@ test.describe('Opportunity Workflow Status Tests (PNO-940)', () => {
   test.describe('Security Tests', () => {
     test('SEC_002 - Different user can view opportunity detail', async ({ page }) => {
       // Login as a different user
-      await authenticateWithRealBackend(page, '/#/partnerships/opportunities/1', 'other-user@example.com');
+      await authenticateWithRealBackend(page, '/partnerships/opportunities/1', 'other-user@example.com');
       
       // In mocked environment, all users see the same content
       const loaded = await isOpportunityDetailLoaded(page);
@@ -499,7 +503,7 @@ test.describe('Opportunity Workflow Status Tests (PNO-940)', () => {
 
     test('SEC_004 - Viewer sees opportunity detail', async ({ page }) => {
       // Login as viewer
-      await authenticateWithRealBackend(page, '/#/partnerships/opportunities/1', 'viewer@example.com');
+      await authenticateWithRealBackend(page, '/partnerships/opportunities/1', 'viewer@example.com');
       
       const loaded = await isOpportunityDetailLoaded(page);
       const stageWorkflow = page.locator('app-stage-workflow');
@@ -532,8 +536,10 @@ test.describe('Opportunity Workflow Status Tests (PNO-940)', () => {
 // ============================================================================
 
 test.describe('WHY Section Tests (PNO-692/938)', () => {
+  test.slow();
+
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/opportunities/1');
+    await authenticateWithRealBackend(page, '/partnerships/opportunities/1');
   });
 
   test.describe('SDG Alignment', () => {
@@ -690,8 +696,10 @@ test.describe('WHY Section Tests (PNO-692/938)', () => {
 // ============================================================================
 
 test.describe('WHAT Section Tests (PNO-700)', () => {
+  test.slow();
+
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/opportunities/1');
+    await authenticateWithRealBackend(page, '/partnerships/opportunities/1');
   });
 
   test.describe('Scope Definition', () => {
@@ -878,8 +886,10 @@ test.describe('WHAT Section Tests (PNO-700)', () => {
 // ============================================================================
 
 test.describe('Cross-Section Integration', () => {
+  test.slow();
+
   test.beforeEach(async ({ page }) => {
-    await authenticateWithRealBackend(page, '/#/partnerships/opportunities/1');
+    await authenticateWithRealBackend(page, '/partnerships/opportunities/1');
   });
 
   test('Section navigation works across multiple sections', async ({ page }) => {

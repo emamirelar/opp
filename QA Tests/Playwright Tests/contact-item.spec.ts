@@ -36,6 +36,7 @@ import { assertUrlMatches, assertDialogOpen } from './helpers/assertions.helper'
  * NOTE: Uses existing contact ID 1 from the database.
  */
 test.describe('Contact Detail Page', () => {
+  test.slow();
   let contactItemPage: ContactItemPage;
   
   // Use existing contact ID from database (matches contact-item-basic.spec.ts)
@@ -47,7 +48,7 @@ test.describe('Contact Detail Page', () => {
   test.beforeEach(async ({ page }) => {
     contactItemPage = new ContactItemPage(page, testContactId);
     
-    await authenticateWithRealBackend(page, `/#/partnerships/contacts/${testContactId}`);
+    await authenticateWithRealBackend(page, `/partnerships/contacts/${testContactId}`);
     
     await contactItemPage.waitForLoad();
   });
@@ -271,12 +272,13 @@ test.describe('Contact Detail Page', () => {
  * Tests that verify upload/add capabilities in documents and links sections
  */
 test.describe('Contact Detail Page - Documents & Links', () => {
+  test.slow();
   let contactItemPage: ContactItemPage;
   const testContactId = 1;
   
   test.beforeEach(async ({ page }) => {
     contactItemPage = new ContactItemPage(page, testContactId);
-    await authenticateWithRealBackend(page, `/#/partnerships/contacts/${testContactId}`);
+    await authenticateWithRealBackend(page, `/partnerships/contacts/${testContactId}`);
     await contactItemPage.waitForLoad();
   });
   

@@ -492,6 +492,10 @@ public class AdvancedSearchService
     /// </summary>
     public async Task<List<GlobalSearchResult>> SearchPartnersAsync(string searchText, float textBoost = 1.0f, int snippetLength = 150)
     {
+        // Guard: PostgreSQL stored functions are not available on InMemory/SQLite providers
+        if (IsInMemoryProvider())
+            return new List<GlobalSearchResult>();
+
         try
         {
             _logger.LogInformation("Searching Partners with nested properties: '{SearchText}'", searchText);
@@ -540,6 +544,10 @@ public class AdvancedSearchService
     /// </summary>
     public async Task<List<GlobalSearchResult>> SearchContactsAsync(string searchText, float textBoost = 1.0f, int snippetLength = 150)
     {
+        // Guard: PostgreSQL stored functions are not available on InMemory/SQLite providers
+        if (IsInMemoryProvider())
+            return new List<GlobalSearchResult>();
+
         try
         {
             _logger.LogInformation("Searching Contacts with nested properties: '{SearchText}'", searchText);
@@ -588,6 +596,10 @@ public class AdvancedSearchService
     /// </summary>
     public async Task<List<GlobalSearchResult>> SearchInteractionsAsync(string searchText, float textBoost = 1.0f, int snippetLength = 150)
     {
+        // Guard: PostgreSQL stored functions are not available on InMemory/SQLite providers
+        if (IsInMemoryProvider())
+            return new List<GlobalSearchResult>();
+
         try
         {
             _logger.LogInformation("Searching Interactions with nested properties: '{SearchText}'", searchText);
@@ -636,6 +648,10 @@ public class AdvancedSearchService
     /// </summary>
     public async Task<List<GlobalSearchResult>> SearchOpportunitiesAsync(string searchText, float textBoost = 1.0f, int snippetLength = 150)
     {
+        // Guard: PostgreSQL stored functions are not available on InMemory/SQLite providers
+        if (IsInMemoryProvider())
+            return new List<GlobalSearchResult>();
+
         try
         {
             _logger.LogInformation("Searching Opportunities with nested properties: '{SearchText}'", searchText);
@@ -1049,6 +1065,10 @@ public class AdvancedSearchService
     /// </summary>
     private async Task<string> ExecutePostgreSQLSearchAsync(string searchText, string[]? entityFilter = null)
     {
+        // Guard: PostgreSQL stored functions are not available on InMemory/SQLite providers
+        if (IsInMemoryProvider())
+            return "[]";
+
         try
         {
             // Use DbContext's connection which has IAM authentication configured

@@ -257,7 +257,8 @@ public class PartnerErpDimValueFixTests : IDisposable
     [Fact]
     public async Task FixErpDimValues_WhenReassigning_ShouldSkipReservedRange()
     {
-        // Arrange - Get a value near the top of the valid range and one invalid value
+        // Arrange - Get a value near the top of the valid range.
+        // Use a wider search range (7900-7999) since exact boundary values may already be in use on a shared database.
         var nearBoundaryValues = await FindAvailableErpDimValues(1, 7900, VALID_RANGE_END);
         var invalidValues = await FindAvailableErpDimValues(1, INVALID_THRESHOLD + 1, 99999);
 
@@ -271,7 +272,9 @@ public class PartnerErpDimValueFixTests : IDisposable
         await _context.Partners.AddRangeAsync(partners);
         await _context.SaveChangesAsync();
 
-        // Act - Fix should skip 8000-9999 and assign above reserved range
+        // Act - Fix should skip 8000-9999 and assign above reserved range.
+        // The highestValidValue is computed across ALL partners in the database (not just test-created ones),
+        // so on a shared database it is likely already at or near 7999.
         var highestValidValue = await _context.Partners
             .Where(p => p.ErpDimValue.HasValue && p.ErpDimValue.Value < RESERVED_RANGE_START)
             .MaxAsync(p => (int?)p.ErpDimValue) ?? 0;

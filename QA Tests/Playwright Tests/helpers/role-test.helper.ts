@@ -409,7 +409,7 @@ export async function authenticateAsRole(
   ]);
 
   // Step 8: Navigate to target page
-  const baseURL = 'http://127.0.0.1:4200';
+  const baseURL = 'http://localhost:4200';
   const fullUrl = targetUrl.startsWith('http') ? targetUrl : `${baseURL}${targetUrl}`;
   console.log(`[Role Auth] Navigating to ${fullUrl}...`);
   await page.goto(fullUrl);
