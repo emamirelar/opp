@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="13.0.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
@@ -31,6 +32,7 @@
     <ProjectReference Include="..\..\UNOPS.PAO.UNOPSDataAccess\UNOPS.PAO.UNOPSDataAccess.csproj" />
     <ProjectReference Include="..\..\UNOPS.PAO.UNOPSDomain\UNOPS.PAO.UNOPSDomain.csproj" />
     <ProjectReference Include="..\..\UNOPS.PAO.Business\UNOPS.PAO.Business.csproj" />
+    <ProjectReference Include="..\..\UNOPS.PAO.UNOPSBusiness\UNOPS.PAO.UNOPSBusiness.csproj" />
     <!-- UNOPS.Workflow projects are in a separate repository - excluded from this test project -->
     <!-- <ProjectReference Include="..\..\UNOPS.Workflow\UNOPS.Workflow.DataAccess\UNOPS.Workflow.DataAccess.csproj" /> -->
     <!-- <ProjectReference Include="..\..\UNOPS.Workflow\UNOPS.Workflow.Models\UNOPS.Workflow.Models.csproj" /> -->
