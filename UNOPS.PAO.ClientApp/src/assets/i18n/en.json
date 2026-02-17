@@ -3317,7 +3317,7 @@
   "message.requirements.opportunity.initiativeTypeRequired": "TEAM > Proposed Initiative Type to be Developed",
   "message.requirements.opportunity.beneficiariesRequired": "WHY > Beneficiaries (either 'will be sought' must be checked, or Direct and Indirect beneficiaries must be specified)",
   "message.requirements.opportunity.managerRequired": "TEAM > Opportunity Manager",
-  "message.requirements.opportunity.doaHolderRequired": "TEAM > DoA Level 2 holder must exist for the responsible org unit",
+  "message.requirements.opportunity.doaHolderRequired": "TEAM > DoA Level 2 or Level 3 holder must exist for the responsible org unit",
   "message.requirements.opportunity.impactRequired": "WHY > Impact",
   "message.requirements.opportunity.outcomesRequired": "WHY > Outcome(s)",
   "message.requirements.opportunity.sdgRequired": "WHY > SDG Alignment",

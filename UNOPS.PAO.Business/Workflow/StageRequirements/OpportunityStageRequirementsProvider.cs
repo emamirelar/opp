@@ -300,8 +300,8 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
                 Validation = new RequirementValidation { Required = true }
             },
 
-            // 21. DoA Level 2 Holder (Server-side only validation)
-            // Checks if ResponsibleOrgUnit has DoA2 holders assigned
+            // 21. DoA Holder (Server-side only validation)
+            // Checks if ResponsibleOrgUnit has DoA2 or DoA3 holders assigned; DoA3 used when no DoA2 exists
             new StageRequirement
             {
                 Name = "doaHolders",
@@ -311,8 +311,8 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
                 OnlyServerSideEvaluation = true,
                 CustomValidatorConfig = new Dictionary<string, object>
                 {
-                    ["validatorName"] = "DoA2HolderValidator",
-                    ["entityRoleCode"] = "DoA2_OrganizationHierarchy",
+                    ["validatorName"] = "DoAHolderValidator",
+                    ["entityRoleCodes"] = new[] { "DoA2_OrganizationHierarchy", "DoA3_OrganizationHierarchy" },
                     ["lookupField"] = "responsibleOrgUnitId"
                 }
             }

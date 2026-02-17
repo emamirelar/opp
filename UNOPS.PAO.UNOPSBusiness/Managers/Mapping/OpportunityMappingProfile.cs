@@ -85,15 +85,17 @@ public class OpportunityMappingProfile : Profile
             .ForMember(dest => dest.Countries, opt => opt.Ignore())
             .ForMember(dest => dest.SDGs, opt => opt.Ignore());
             
-        CreateMap<UpdateOpportunityRequest, Opportunity>()
+        // overrides the Ignore rules. ForAllMembers returns void, so use separate statements.
+        var updateOpportunityMap = CreateMap<UpdateOpportunityRequest, Opportunity>();
+        updateOpportunityMap.ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+        updateOpportunityMap
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.FundingPartners, opt => opt.Ignore())
             .ForMember(dest => dest.ClientPartners, opt => opt.Ignore())
             .ForMember(dest => dest.Stakeholders, opt => opt.Ignore())
             .ForMember(dest => dest.Deliverables, opt => opt.Ignore())
             .ForMember(dest => dest.Countries, opt => opt.Ignore())
-            .ForMember(dest => dest.SDGs, opt => opt.Ignore())
-            .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+            .ForMember(dest => dest.SDGs, opt => opt.Ignore());
         
         // =================================================================
         // OpportunityFundingPartner mappings
