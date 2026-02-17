@@ -32,13 +32,15 @@ using UNOPS.PAO.IntegrationTests.Infrastructure.MockServices;
 using UNOPS.PAO.DataAccess.Interfaces;
 using Moq;
 using UNOPS.PAO.Business.Managers;
-using UNOPS.PAO.Business.Workflow.Adapters;
-using UNOPS.PAO.Business.Workflow.Interfaces;
 using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.MailSender.Interfaces;
+#if WORKFLOW_AVAILABLE
+using UNOPS.PAO.Business.Workflow.Adapters;
+using UNOPS.PAO.Business.Workflow.Interfaces;
 using UNOPS.Workflow.Business.Interfaces;
 using UNOPS.Workflow.DataAccess;
 using UNOPS.Workflow.Models.Requirements;
+#endif
 using Microsoft.AspNetCore.Authorization;
 
 namespace UNOPS.PAO.IntegrationTests.Infrastructure;
@@ -251,6 +253,7 @@ public class PAOWebApplicationFactory<TStartup> : WebApplicationFactory<TStartup
             // Add HttpClient for services that need it
             services.AddHttpClient();
             
+#if WORKFLOW_AVAILABLE
             // Register workflow services (skipped in Startup.cs for Testing environment
             // because AddPaoWorkflowServices eagerly connects to PostgreSQL for migrations).
             // Register mock/in-memory implementations instead.
@@ -296,6 +299,7 @@ public class PAOWebApplicationFactory<TStartup> : WebApplicationFactory<TStartup
             services.RemoveAll<DbContextOptions<WorkflowDbContext>>();
             services.AddDbContext<WorkflowDbContext>(options =>
                 options.UseInMemoryDatabase($"{Guid.NewGuid()}_Workflow"));
+#endif
         });
     }
     
