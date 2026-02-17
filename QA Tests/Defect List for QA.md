@@ -162,6 +162,7 @@ These items were originally logged as developer defects (DEF-XXX) but have been 
 | QA-067 | 🟡 Medium | Playwright test-config.ts base URL mismatch | Environment | URL alignment | N/A | 2026-02-17 | Resolved |
 | QA-068 | 🟡 Medium | api-mocks missing 'other-user@example.com' | Mocking | User sync fix | N/A | 2026-02-17 | Resolved |
 | QA-069 | 🟡 Medium | Dialog assertions match PrimeNG confirm dialogs | Tooling | 12 tests across 6 specs — FIXED | N/A | 2026-02-17 | Resolved |
+| QA-070 | 🟠 High | CI builds fail — Workflow submodule inaccessible | Infrastructure | 22+ Workflow tests excluded from CI; all CI jobs blocked until workaround | DEF-020 | 2026-02-17 | Workaround Applied |
 
 ---
 
@@ -957,13 +958,53 @@ Three compounding factors caused Node.js OOM after ~287 tests:
 
 ---
 
-## QA Issue Statistics (Updated 2026-02-17 — 3:1 Ratio Enforcement + Full Execution)
+#### QA-070: CI builds fail — Workflow submodule repos inaccessible (WORKAROUND APPLIED)
+
+**Status:** Workaround Applied (2026-02-17)  
+**Category:** Infrastructure  
+**Severity:** 🟠 High  
+**Impact:** All CI jobs blocked; 22+ Workflow-dependent test files excluded from CI compilation  
+**Related DEF:** DEF-020  
+**Date:** 2026-02-17
+
+**Description:** The `.gitmodules` file references two submodule repos (`unops-external-dataservice`, `unops-workflow`) that return `fatal: repository not found` from CI runners. This caused three cascading failures:
+
+1. **Checkout failure:** `actions/checkout@v4` with `submodules: true` could not clone the repos
+2. **Server build failure:** `Startup.cs` unconditionally references `UNOPS.PAO.Business.Workflow.Adapters`
+3. **IntegrationTests build failure:** `PAOWebApplicationFactory.cs` and 22+ test files reference Workflow types
+
+**Temporary Fix (QA):**
+
+1. Set `submodules: false` explicitly on all 9 checkout steps across `qa-tests.yml` and `playwright-tests.yml`
+2. Added `WORKFLOW_AVAILABLE` conditional compilation constant to:
+   - `UNOPS.PAO.Server.csproj` (defines constant when submodule exists)
+   - `UNOPS.PAO.IntegrationTests.csproj` (defines constant when submodule exists)
+3. Wrapped Workflow code with `#if WORKFLOW_AVAILABLE` in:
+   - `UNOPS.PAO.Server/Startup.cs` (using statement + service registration block)
+   - `PAOWebApplicationFactory.cs` (5 using statements + 45-line mock registration block)
+4. Conditionally excluded test files when submodule is missing:
+   - `Controllers/WorkflowControllerTests.cs`
+   - `UnitTests/Workflow/**/*.cs` (1 file)
+   - `PNO-1166_RejectDuplicateAndOMTransfer/**/*.cs` (10 files)
+   - `PNO-1197_DoA3Fallback/**/*.cs` (11 files)
+5. Changed commented-out Workflow project references in `IntegrationTests.csproj` to conditional references
+
+**Permanent Fix:** DEF-020 — Dev team to verify submodule repo access or update `.gitmodules` with correct URLs. Once repos are accessible, the `WORKFLOW_AVAILABLE` guards ensure everything works automatically (constant is defined, all code compiles, all tests run).
+
+**Commits:**
+- `dc06b498` — Set `submodules: false` on all checkout steps
+- `242e5135` — Guard Workflow code in Server project with `#if WORKFLOW_AVAILABLE`
+- `eb490d70` — Guard Workflow code in IntegrationTests project with `#if WORKFLOW_AVAILABLE`
+
+---
+
+## QA Issue Statistics (Updated 2026-02-17 — CI Submodule Fix + 3:1 Ratio Enforcement)
 
 - **Total Open:** 9 ⚠️ (QA-014, QA-015, QA-019, QA-020, QA-042, QA-043, QA-044, QA-045, QA-046, QA-047, QA-054)
 - **Total Partially Resolved:** 2 (QA-011, QA-016)
-- **Total Workaround Applied:** 2 (QA-056, QA-057)
+- **Total Workaround Applied:** 3 (QA-056, QA-057, QA-070)
 - **Total Resolved:** 57 ✅ (including QA-008, QA-052, QA-053, QA-058, QA-059 resolved 2026-02-17)
-- **No new QA issues discovered** — all test failures map to existing issues
+- **New QA issue:** QA-070 — CI Workflow submodule inaccessible (workaround applied, DEF-020 filed for dev team)
 - **New rule created:** `.cursor/rules/test-ratio-enforcement.mdc` — always-applied rule enforcing 3:1 ratio
 
 ### Test Execution Results (2026-02-17 — 3:1 Ratio Enforcement Cycle):

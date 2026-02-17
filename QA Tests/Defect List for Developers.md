@@ -44,6 +44,7 @@ This document tracks **production code defects** discovered during testing. Thes
 | DEF-017 | 🟡 Medium | WorkflowControllerTests: 6 Submit tests fail — endpoint behavior changed in pull | WorkflowController | 2026-02-16 | Resolved (2026-02-17) |
 | DEF-018 | 🟠 High | DuplicateDetectionService uses relational APIs incompatible with InMemory | DuplicateDetectionService | 2026-02-16 | Resolved (2026-02-17) |
 | DEF-019 | 🟡 Medium | PAOAuthorizationService doesn't handle DenyAnonymousAuthorizationRequirement | PAOAuthorizationService | 2026-02-16 | Resolved (2026-02-17) |
+| DEF-020 | 🟠 High | Submodule repos inaccessible — .gitmodules references non-existent repos | .gitmodules / CI Infrastructure | 2026-02-17 | Open |
 
 ---
 
@@ -700,6 +701,53 @@ Created **1,117 new tests** across 3 suites covering all 10 mandatory categories
 - Confirmed: Ignore rules correctly applied to collections
 - Confirmed: Non-null scalar updates work correctly
 - No new production defects discovered
+
+### DEF-020: Submodule Repos Inaccessible — .gitmodules References Non-Existent Repos
+
+**Severity:** 🟠 High  
+**Component:** `.gitmodules` / CI Infrastructure  
+**Date Reported:** 2026-02-17  
+**Status:** Open  
+**Reporter:** QA Team
+
+**Description:**
+
+The `.gitmodules` file references two submodule repositories that are inaccessible from GitHub Actions CI runners:
+
+- `UNOPS.PAO.ExternalDataService` → `https://github.com/UNOPS-ITG/unops-external-dataservice.git`
+- `UNOPS.Workflow` → `https://github.com/UNOPS-ITG/unops-workflow.git`
+
+Both return `fatal: repository not found` when CI attempts to clone them. This blocks all CI workflows that depend on the full project building.
+
+**Root Cause:** The submodule repos either no longer exist, have been renamed, or the CI runner's `GITHUB_TOKEN` lacks access to them.
+
+**Proper Fix:**
+- Verify if the repos still exist and grant CI access, OR
+- Update `.gitmodules` URLs to the correct repo locations, OR
+- If repos are permanently removed, delete the submodule entries from `.gitmodules` and clean up references
+
+**Wrong Fix:** ❌ Simply removing `.gitmodules` without addressing the code that depends on the submodule assemblies.
+
+**Workaround (Applied by QA — 2026-02-17):**
+- Set `submodules: false` on all `actions/checkout@v4` steps in CI workflows
+- Added `WORKFLOW_AVAILABLE` conditional compilation constant to `UNOPS.PAO.Server.csproj`, `UNOPS.PAO.IntegrationTests.csproj`
+- Wrapped all Workflow-dependent code in `Startup.cs` and `PAOWebApplicationFactory.cs` with `#if WORKFLOW_AVAILABLE`
+- Conditionally excluded 22+ Workflow-dependent test files when submodule is missing
+- Business.csproj already had conditional handling via `<Compile Remove="Workflow\**\*.cs" />`
+
+**Impact:** All CI builds were failing. Workaround allows builds to succeed without the submodule, but Workflow-related tests (22+ files) are skipped in CI.
+
+**Repro Steps:**
+1. Push any commit to `QA-Tests` branch
+2. Observe `qa-tests.yml` workflow fail at checkout or build step
+3. Error: `fatal: repository 'https://github.com/UNOPS-ITG/unops-external-dataservice.git/' not found`
+
+**Expected:** CI should be able to clone all submodules and build the full project.  
+**Actual:** Submodule repos return 404, blocking CI entirely.
+
+**Related QA:** QA-070
+
+---
 
 ### Production Code Quality Assessment
 
