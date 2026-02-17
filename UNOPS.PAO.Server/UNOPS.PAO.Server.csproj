@@ -52,6 +52,11 @@
     <ProjectReference Include="..\UNOPS.Workflow\UNOPS.Workflow.Business\UNOPS.Workflow.Business.csproj" Condition="Exists('..\UNOPS.Workflow\UNOPS.Workflow.Business\UNOPS.Workflow.Business.csproj')" />
   </ItemGroup>
 
+  <!-- Define WORKFLOW_AVAILABLE when the Workflow submodule is initialized -->
+  <PropertyGroup Condition="Exists('..\UNOPS.Workflow\UNOPS.Workflow.Business\UNOPS.Workflow.Business.csproj')">
+    <DefineConstants>$(DefineConstants);WORKFLOW_AVAILABLE</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <Folder Include="Controllers\" />
   </ItemGroup>

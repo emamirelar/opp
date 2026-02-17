@@ -28,7 +28,9 @@ using UNOPS.PAO.Identity.Context;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.Business;
+#if WORKFLOW_AVAILABLE
 using UNOPS.PAO.Business.Workflow.Adapters;
+#endif
 using UNOPS.PAO.MailSender;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -699,6 +701,7 @@ public class Startup
                     .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
         }
 
+#if WORKFLOW_AVAILABLE
         // ==========================================
         // Workflow Submodule - DbContext and Services
         // ==========================================
@@ -731,6 +734,7 @@ public class Startup
                         npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "workflow");
                     }));
         }
+#endif
 
     }
     private string? GetConnectionStringFromSecretManager()
