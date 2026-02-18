@@ -13,8 +13,6 @@ using UNOPS.PAO.Business.Tests.TestBase;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
-using UNOPS.PAO.UNOPSDataAccess.Context;
-using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.Business.Tests.EdgeCases
 {
@@ -25,26 +23,25 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
     /// </summary>
     public class DataIntegrityTests
     {
-        private readonly DbContextOptions<UNOPSAppDbContext> _options;
-        private int _partnerId;
-        private int _orgHierarchyId;
+        private readonly DbContextOptions<AppDbContext> _options;
 
         public DataIntegrityTests()
         {
-            _options = new DbContextOptionsBuilder<UNOPSAppDbContext>()
+            _options = new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(databaseName: $"TestDb_DataIntegrity_{Guid.NewGuid()}")
                 .Options;
             SeedTestData();
         }
 
-        private AppDbContext CreateContext() => TestDbContextFactory.CreateUNOPS(_options);
+        private AppDbContext CreateContext() => TestDbContextFactory.Create(_options);
 
         private void SeedTestData()
         {
             using var context = CreateContext();
-
-            var partner = new UNOPSPartner
+            
+            var partner = new Partner
             {
+                Id = 1,
                 Name = "Integrity Test Partner",
                 CreatedBy = 1,
                 LastModifiedBy = 1,
@@ -52,9 +49,10 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
                 LastModifiedDate = DateTime.UtcNow
             };
             context.Partners.Add(partner);
-
+            
             var orgHierarchy = new OrganizationHierarchy
             {
+                Id = 1,
                 Name = "Test Org Unit",
                 Code = "TOU",
                 Description = "Test Organization Unit",
@@ -66,8 +64,6 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
             };
             context.OrganizationHierarchies.Add(orgHierarchy);
             context.SaveChanges();
-            _partnerId = partner.Id;
-            _orgHierarchyId = orgHierarchy.Id;
         }
 
         #region Referential Integrity Tests (TC-DI-F001 to TC-DI-F015)
@@ -76,15 +72,14 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
         public async Task TC_DI_F001_Contact_ValidPartnerReference_Succeeds()
         {
             using var context = CreateContext();
-            var contact = new UNOPSContact
+            var contact = new Contact
             {
-                ContactNumber = "CN-Test",
                 Name = "Test Contact",
                 FirstName = "Test",
                 LastName = "Contact",
                 Title = "Manager",
                 Email = "test@example.com",
-                PartnerId = _partnerId,
+                PartnerId = 1,
                 CreatedBy = 1,
                 LastModifiedBy = 1,
                 CreatedDate = DateTime.UtcNow,
@@ -100,7 +95,7 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
         public async Task TC_DI_F002_Document_ValidInteractionReference_Succeeds()
         {
             using var context = CreateContext();
-            var document = new UNOPSDocument
+            var document = new Document
             {
                 Name = "Test Document",
                 Link = "https://storage.example.com/doc.pdf",
@@ -125,7 +120,7 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
                 Code = "CHILD",
                 Description = "Child Organization Unit",
                 Type = OrganizationUnitType.Office,
-                ParentId = _orgHierarchyId,
+                ParentId = 1,
                 CreatedBy = 1,
                 LastModifiedBy = 1,
                 CreatedDate = DateTime.UtcNow,
@@ -134,7 +129,7 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
             context.OrganizationHierarchies.Add(childOrg);
             await context.SaveChangesAsync();
             Assert.True(childOrg.Id > 0);
-            Assert.Equal(_orgHierarchyId, childOrg.ParentId);
+            Assert.Equal(1, childOrg.ParentId);
         }
 
         [Fact] public void TC_DI_F004_Contact_InvalidPartnerReference_Fails() => Assert.True(true);
@@ -158,7 +153,7 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
         public async Task TC_DI_F016_RequiredField_Name_Enforced()
         {
             using var context = CreateContext();
-            var partner = new UNOPSPartner
+            var partner = new Partner
             {
                 Name = "Required Name Partner",
                 CreatedBy = 1,
@@ -176,7 +171,7 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
         {
             using var context = CreateContext();
             var shortName = new string('A', 100);
-            var partner = new UNOPSPartner
+            var partner = new Partner
             {
                 Name = shortName,
                 PartnerShortDescription = shortName,
@@ -213,7 +208,7 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
         {
             using var context = CreateContext();
             var beforeCreate = DateTime.UtcNow;
-            var partner = new UNOPSPartner
+            var partner = new Partner
             {
                 Name = "Audit Test Partner",
                 CreatedBy = 1,
@@ -230,7 +225,7 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
         public async Task TC_DI_F032_CreatedBy_SetCorrectly()
         {
             using var context = CreateContext();
-            var partner = new UNOPSPartner
+            var partner = new Partner
             {
                 Name = "Created By Test",
                 CreatedBy = 99,
@@ -247,7 +242,7 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
         public async Task TC_DI_F033_LastModifiedDate_UpdatedOnChange()
         {
             using var context = CreateContext();
-            var partner = await context.Partners.FirstAsync(p => p.Id == _partnerId);
+            var partner = await context.Partners.FirstAsync(p => p.Id == 1);
             var beforeUpdate = DateTime.UtcNow;
             partner.Name = "Modified Partner";
             partner.LastModifiedDate = DateTime.UtcNow;

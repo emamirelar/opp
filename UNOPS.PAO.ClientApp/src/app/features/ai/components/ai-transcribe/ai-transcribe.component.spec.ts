@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { createMockTranslateService, createMockDialogService, createMockMarkdownService } from '@shared/testing/test-utilities';
 import { DomSanitizer } from '@angular/platform-browser';
 import { MessageService } from 'primeng/api';
 import { of, throwError } from 'rxjs';
@@ -18,10 +17,11 @@ describe('AiTranscribeComponent', () => {
   beforeEach(async () => {
     mockGeminiService = jasmine.createSpyObj('GeminiService', ['scanFile']);
     mockMessageService = jasmine.createSpyObj('MessageService', ['add']);
-    mockTranslateService = createMockTranslateService() as any;
+    mockTranslateService = jasmine.createSpyObj('TranslateService', ['instant']);
     mockSanitizer = jasmine.createSpyObj('DomSanitizer', ['bypassSecurityTrustUrl']);
     
-        mockSanitizer.bypassSecurityTrustUrl.and.returnValue('safe-url');
+    mockTranslateService.instant.and.returnValue('Translated text');
+    mockSanitizer.bypassSecurityTrustUrl.and.returnValue('safe-url');
 
     await TestBed.configureTestingModule({
       imports: [

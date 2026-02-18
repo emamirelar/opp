@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -30,7 +30,7 @@ public class DocumentController : BaseController
     private readonly IManagerWrapper _managerWrapper;
     private readonly IConfiguration _configuration;
     private readonly GoogleCloudStorageService _gcsService;
-    private new readonly ILogger<DocumentController> _logger;
+    private readonly ILogger<DocumentController> _logger;
 
     public DocumentController(
         IMapper mapper, 

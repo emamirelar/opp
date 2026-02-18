@@ -1,51 +1,94 @@
-# AgreementService — Test Cases
+# AgreementService Test Cases
 
-**Component:** Opportunity Agreement Service Layer  
-**Created:** 2026-02-04 | **Last Updated:** 2026-02-11  
-**Author:** QA Team  
-**Standard:** 10-Category, 3:1 Ratio
-
----
-
-## Compliance Summary
-
-| Category | Count | Min | ✓ |
-|----------|-------|-----|---|
-| §1 Positive | 30 | 30-50 | ✅ |
-| §2 Negative | 90 | 90 | ✅ |
-| §3 Boundary | 90 | 90 | ✅ |
-| §4 Functional | 90 | 90 | ✅ |
-| §5 Integration | 90 | 90 | ✅ |
-| §6 Security | 22 | 22 | ✅ |
-| §7 Concurrency | 15 | 15 | ✅ |
-| §8 Unit | 15 | 15 | ✅ |
-| §9 Performance | 10 | 10 | ✅ |
-| §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **462** | **≥462** | ✅ |
-
-**3:1 Ratio:** N≥3P: 90≥90 ✅ | E≥3P: 90≥90 ✅ | F≥3P: 90≥90 ✅ | I≥3P: 90≥90 ✅
+**Service:** `AgreementService`  
+**Test Count:** 5+  
+**Priority:** P2  
+**Created:** January 13, 2026
 
 ---
 
-## Feature Overview
+## Overview
 
-Service layer for agreement operations: template management, document generation, clause library, PDF rendering, digital signature coordination, compliance validation, and agreement analytics.
-
----
-
-## §1–§10
-
-**§1 (30):** Template CRUD, clause library, PDF generation, signature coordination, compliance check, analytics + 25 P1/P2 tests.
-**§2 (90):** Input (10), Auth (10), State (10), injection (10), dependencies (10), format (10), business (10) + 20 additional.
-**§3 (90):** Template sizes, clause counts/lengths, PDF sizes, signature counts, compliance rules, concurrent, Unicode, date ranges, version counts, analytics data points, rendering complexity, party count.
-**§4 (90):** Template processing (15), generation pipeline (10), compliance rules (10), signature flow (10), audit (5) + 40 additional.
-**§5 (90):** Document storage (10), PDF engine (10), signature service (10), notification (10), partner (10) + 50 additional.
-**§6 (22):** Injection (10), auth (10), IDOR (2).
-**§7 (15):** Concurrent generation, signing, template updates, compliance checks, bulk operations.
-**§8 (15):** Template parsing (5), clause formatting (5), compliance logic (3), signature validation (2).
-**§9 (10):** Generate (<3s), sign (<500ms), compliance (<300ms), search (<500ms), export (<3s), memory.
-**§10 (10):** 20 concurrent generations, spike, sustained, large agreements, recovery.
+Partnership agreement service tests for document processing, term extraction, and integration.
 
 ---
 
-**Status:** Ready for Execution
+## Test Cases
+
+### TC-OPP-AGRSVC-001: Process Agreement Upload
+**Priority:** P2  
+**Test Steps:**
+1. Receive PDF document
+2. Extract text via OCR/AI
+3. Parse terms
+4. Store in database
+
+**Expected Results:**
+- Document processed successfully
+- Text extraction accurate
+- Terms identified correctly
+- Metadata stored
+
+---
+
+### TC-OPP-AGRSVC-002: Extract Key Terms with AI
+**Priority:** P2  
+**Test Steps:**
+1. Call AI service with document text
+2. Identify geography, scope, pricing
+3. Structure and validate
+
+**Expected Results:**
+- Key terms extracted
+- Confidence scores provided
+- Structured data created
+- User can verify/correct
+
+---
+
+### TC-OPP-AGRSVC-003: Match Agreement to Partner
+**Priority:** P2  
+**Test Steps:**
+1. Analyze document for partner name
+2. Search partner database
+3. Suggest matches
+
+**Expected Results:**
+- Partner identified (if exists)
+- Fuzzy matching applied
+- Multiple suggestions if ambiguous
+- Can create new partner if needed
+
+---
+
+### TC-OPP-AGRSVC-004: Validate Opportunity Against Agreement
+**Priority:** P2  
+**Test Steps:**
+1. Opportunity linked to agreement
+2. Validate geography, scope, pricing
+3. Flag violations
+
+**Expected Results:**
+- Geography validated
+- Scope checked
+- Pricing terms verified
+- Violations clearly flagged
+
+---
+
+### TC-OPP-AGRSVC-005: Track Agreement Utilization
+**Priority:** P2  
+**Test Steps:**
+1. Sum all opportunities under agreement
+2. Calculate utilization %
+3. Alert when approaching cap
+
+**Expected Results:**
+- Total utilization calculated
+- Percentage of agreement value
+- Warning at 80% utilization
+- Alert at 95%
+
+---
+
+**Status:** ✅ Ready for Implementation

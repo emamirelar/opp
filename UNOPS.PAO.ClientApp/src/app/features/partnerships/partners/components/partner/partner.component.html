@@ -1,10 +1,10 @@
 <div class="flex flex-col gap-8">
   <div class="flex flex-wrap items-center gap-4">
-    <div class="flex items-center gap-3 partner-section-header" data-testid="partners-header">
-      <span class="material-symbols-outlined text-3xl" data-testid="partners-icon">corporate_fare</span>
-      <p class="text-3xl font-bold" data-testid="partners-title"> {{ 'title.partners' | translate }} </p>
+    <div class="flex items-center gap-3 partner-section-header">
+      <span class="material-symbols-outlined text-3xl">corporate_fare</span>
+      <p class="text-3xl font-bold"> {{ 'title.partners' | translate }} </p>
     </div>
-    <div class="ml-auto flex gap-2" data-testid="partners-actions">
+    <div class="ml-auto flex gap-2">
       @if (!permissionsLoading() && entityPermissions().permissions.canExport) {
         <p-button
           icon="pi pi-file-export"
@@ -13,7 +13,6 @@
           rounded
           text
           class="partner-export-button"
-          data-testid="export-button"
         />
       }
       @if (!permissionsLoading() && entityPermissions().permissions.canImport) {
@@ -25,14 +24,12 @@
           rounded
           text
           class="partner-import-button"
-          data-testid="import-button"
         />
         <p-menu 
           #importMenu 
           [model]="importMenuItems()" 
           [popup]="true"
-          appendTo="body"
-          data-testid="import-menu">
+          appendTo="body">
         </p-menu>
       }
       @if (!permissionsLoading() && entityPermissions().permissions.canCreate) {
@@ -43,7 +40,6 @@
           rounded
           (onClick)="openPartnerEditDialog()"
           class="partner-new-button"
-          data-testid="new-partner-button"
         />
       }
     </div>
@@ -58,7 +54,6 @@
     (rowClick)="handleOnOpenRecordDetails($event)"
     (searchChange)="onSearchChange($event)"
     class="partner-listview"
-    data-testid="partners-listview"
   >
   </app-listview>
 </div>

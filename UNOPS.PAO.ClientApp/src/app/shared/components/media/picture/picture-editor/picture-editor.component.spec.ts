@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { createMockTranslateService, createMockDialogService, createMockMarkdownService } from '@shared/testing/test-utilities';
 import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
 import { PictureEditorComponent } from './picture-editor.component';
 import { PictureEditorDataLoaderService } from './picture-editor-data-loader.service';
@@ -31,11 +30,12 @@ describe('PictureEditorComponent', () => {
         uploadProgress: jasmine.createSpy('uploadProgress').and.returnValue(0)
       }
     );
-    mockTranslateService = createMockTranslateService() as any;
+    mockTranslateService = jasmine.createSpyObj('TranslateService', ['instant']);
     mockFeedbackService = jasmine.createSpyObj('FeedbackDialogService', ['showErrorToast', 'showSuccessToast']);
     mockSanitizer = jasmine.createSpyObj('DomSanitizer', ['bypassSecurityTrustUrl']);
 
-        mockSanitizer.bypassSecurityTrustUrl.and.returnValue('safe-url' as any);
+    mockTranslateService.instant.and.returnValue('Translated message');
+    mockSanitizer.bypassSecurityTrustUrl.and.returnValue('safe-url' as any);
 
     await TestBed.configureTestingModule({
       imports: [PictureEditorComponent, TranslateModule.forRoot()],
@@ -415,7 +415,9 @@ describe('PictureEditorComponent', () => {
 
   describe('error handling', () => {
     it('should translate error messages', () => {
-            component.loadImageFailed();
+      mockTranslateService.instant.and.returnValue('Erreur traduite');
+
+      component.loadImageFailed();
 
       expect(mockTranslateService.instant).toHaveBeenCalledWith('message.failedToLoadImage');
       expect(mockFeedbackService.showErrorToast).toHaveBeenCalledWith(

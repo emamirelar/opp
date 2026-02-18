@@ -28,9 +28,9 @@ public class UNOPSGmailAddonManager : BaseUNOPSManager, IGmailAddonManager
     private readonly IPartnerManager _partnerManager;
     private readonly IUserDataManager _userDataManager;
     private readonly IInteractionManager _interactionManager;
-    private new readonly IPermissionService _permissionService;
-    private new readonly IConfiguration _configuration;
-    private new readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IPermissionService _permissionService;
+    private readonly IConfiguration _configuration;
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IUserInfoService _userInfoService;
     private readonly ILogger<UNOPSGmailAddonManager>? _logger;
     private readonly NotificationManager _notificationManager;

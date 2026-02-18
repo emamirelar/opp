@@ -3,20 +3,15 @@ using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Business.Tests.TestBase;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
-using UNOPS.PAO.UNOPSDomain.Entities;
 using Xunit;
 
 namespace UNOPS.PAO.Business.Tests.EdgeCases;
 
 /// <summary>
-/// Edge case tests for Contact operations against PostgreSQL.
-/// Uses UNOPSContact (TPH derived type) and creates parent Partners for FK constraints.
-/// Tests use unique markers to filter own data from the shared database.
+/// Edge case tests for Contact operations
 /// </summary>
 public class ContactEdgeCaseTests : ManagerTestBase
 {
-    private readonly string _testMarker = $"ECT_{Guid.NewGuid():N}";
-
     [Fact]
     public async Task GetContactById_WithZeroId_Should_ReturnNull()
     {
@@ -41,57 +36,47 @@ public class ContactEdgeCaseTests : ManagerTestBase
     public async Task Contact_WithVeryLongName_Should_BeHandled()
     {
         // Arrange
-        var partnerId = await CreateTestPartnerAsync($"Partner_{_testMarker}");
         var longName = new string('A', 255);
-        var contact = new UNOPSContact
+        var contact = new Contact
         {
-            Name = $"Long Name Test {_testMarker}",
+            Id = 1,
+            Name = "Long Name Test",
             FirstName = longName,
             LastName = "Doe",
-            Email = $"longname_{_testMarker}@test.com",
+            Email = "test@test.com",
             Title = "Manager",
-            PartnerId = partnerId,
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
+            Status = EntityStatus.Active
         };
         await Context.Contacts.AddAsync(contact);
         await SaveChangesAsync();
-        RegisterTableCleanup("Contacts", $"\"Id\" = {contact.Id}");
 
         // Act
-        var result = await Context.Contacts.FindAsync(contact.Id);
+        var result = await Context.Contacts.FindAsync(1);
 
         // Assert
         result.Should().NotBeNull();
-        result!.FirstName!.Length.Should().Be(255);
+        result!.FirstName.Length.Should().Be(255);
     }
 
     [Fact]
     public async Task Contact_WithUnicodeCharacters_Should_BeHandled()
     {
         // Arrange
-        var partnerId = await CreateTestPartnerAsync($"Partner_{_testMarker}");
-        var contact = new UNOPSContact
+        var contact = new Contact
         {
-            Name = $"Unicode Contact {_testMarker}",
+            Id = 1,
+            Name = "Unicode Contact",
             FirstName = "联系人 🧑",
             LastName = "Контакт",
-            Email = $"unicode_{_testMarker}@test.com",
+            Email = "unicode@test.com",
             Title = "Manager",
-            PartnerId = partnerId,
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
+            Status = EntityStatus.Active
         };
         await Context.Contacts.AddAsync(contact);
         await SaveChangesAsync();
-        RegisterTableCleanup("Contacts", $"\"Id\" = {contact.Id}");
 
         // Act
-        var result = await Context.Contacts.FindAsync(contact.Id);
+        var result = await Context.Contacts.FindAsync(1);
 
         // Assert
         result.Should().NotBeNull();
@@ -102,28 +87,23 @@ public class ContactEdgeCaseTests : ManagerTestBase
     public async Task Contact_WithEmptyOptionalFields_Should_BeCreated()
     {
         // Arrange
-        var partnerId = await CreateTestPartnerAsync($"Partner_{_testMarker}");
-        var contact = new UNOPSContact
+        var contact = new Contact
         {
-            Name = $"Empty Fields Test {_testMarker}",
+            Id = 1,
+            Name = "Empty Fields Test",
             FirstName = null,
             LastName = "Doe",
-            Email = $"empty_{_testMarker}@test.com",
+            Email = "test@test.com",
             Title = "Manager",
-            PartnerId = partnerId,
             Phone = null,
             Mobile = null,
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
+            Status = EntityStatus.Active
         };
         await Context.Contacts.AddAsync(contact);
         await SaveChangesAsync();
-        RegisterTableCleanup("Contacts", $"\"Id\" = {contact.Id}");
 
         // Act
-        var result = await Context.Contacts.FindAsync(contact.Id);
+        var result = await Context.Contacts.FindAsync(1);
 
         // Assert
         result.Should().NotBeNull();
@@ -131,12 +111,10 @@ public class ContactEdgeCaseTests : ManagerTestBase
     }
 
     [Fact]
-    public async Task GetContacts_EmptyDatabase_Should_ReturnFilteredEmpty()
+    public async Task GetContacts_EmptyDatabase_Should_ReturnEmpty()
     {
-        // Act - Query for contacts with a marker that doesn't exist
-        var result = await Context.Contacts
-            .Where(c => c.Name == "NONEXISTENT_MARKER_THAT_WILL_NEVER_MATCH")
-            .ToListAsync();
+        // Act
+        var result = await Context.Contacts.ToListAsync();
 
         // Assert
         result.Should().BeEmpty();
@@ -146,26 +124,21 @@ public class ContactEdgeCaseTests : ManagerTestBase
     public async Task Contact_WithSpecialCharactersInEmail_Should_BeHandled()
     {
         // Arrange
-        var partnerId = await CreateTestPartnerAsync($"Partner_{_testMarker}");
-        var contact = new UNOPSContact
+        var contact = new Contact
         {
-            Name = $"John Doe {_testMarker}",
+            Id = 1,
+            Name = "John Doe",
             FirstName = "John",
             LastName = "Doe",
-            Email = $"john+special.chars_test@sub.example-domain.com",
+            Email = "john+special.chars_test@sub.example-domain.com",
             Title = "Manager",
-            PartnerId = partnerId,
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
+            Status = EntityStatus.Active
         };
         await Context.Contacts.AddAsync(contact);
         await SaveChangesAsync();
-        RegisterTableCleanup("Contacts", $"\"Id\" = {contact.Id}");
 
         // Act
-        var result = await Context.Contacts.FindAsync(contact.Id);
+        var result = await Context.Contacts.FindAsync(1);
 
         // Assert
         result.Should().NotBeNull();
@@ -176,28 +149,21 @@ public class ContactEdgeCaseTests : ManagerTestBase
     public async Task SearchContacts_WithNoMatches_Should_ReturnEmpty()
     {
         // Arrange
-        var partnerId = await CreateTestPartnerAsync($"Partner_{_testMarker}");
-        var contact = new UNOPSContact
+        var contact = new Contact
         {
-            Name = $"John Doe {_testMarker}",
+            Id = 1,
+            Name = "John Doe",
             FirstName = "John",
             LastName = "Doe",
-            Email = $"john_{_testMarker}@test.com",
+            Email = "john@test.com",
             Title = "Manager",
-            PartnerId = partnerId,
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
+            Status = EntityStatus.Active
         };
         await Context.Contacts.AddAsync(contact);
         await SaveChangesAsync();
-        RegisterTableCleanup("Contacts", $"\"Id\" = {contact.Id}");
 
         // Act
-        var result = await Context.Contacts
-            .Where(c => c.FirstName == "NonExistent_ZZZZZ_Marker")
-            .ToListAsync();
+        var result = await Context.Contacts.Where(c => c.FirstName == "NonExistent").ToListAsync();
 
         // Assert
         result.Should().BeEmpty();
@@ -207,46 +173,20 @@ public class ContactEdgeCaseTests : ManagerTestBase
     public async Task DeletedContact_Should_BeExcludedFromActiveQueries()
     {
         // Arrange
-        var partnerId = await CreateTestPartnerAsync($"Partner_{_testMarker}");
-        var activeContact = new UNOPSContact
+        var contacts = new List<Contact>
         {
-            Name = $"Active User {_testMarker}",
-            FirstName = $"Active_{_testMarker}",
-            LastName = "User",
-            Email = $"active_{_testMarker}@test.com",
-            Title = "Manager",
-            PartnerId = partnerId,
-            Status = EntityStatus.Active,
-            IsDeleted = false,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
+            new() { Id = 1, Name = "Active User", FirstName = "Active", LastName = "User", Email = "active@test.com", Title = "Manager", Status = EntityStatus.Active, IsDeleted = false },
+            new() { Id = 2, Name = "Deleted User", FirstName = "Deleted", LastName = "User", Email = "deleted@test.com", Title = "Manager", Status = EntityStatus.Active, IsDeleted = true }
         };
-        var deletedContact = new UNOPSContact
-        {
-            Name = $"Deleted User {_testMarker}",
-            FirstName = $"Deleted_{_testMarker}",
-            LastName = "User",
-            Email = $"deleted_{_testMarker}@test.com",
-            Title = "Manager",
-            PartnerId = partnerId,
-            Status = EntityStatus.Active,
-            IsDeleted = true,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        };
-        await Context.Contacts.AddRangeAsync(activeContact, deletedContact);
+        await Context.Contacts.AddRangeAsync(contacts);
         await SaveChangesAsync();
-        RegisterTableCleanup("Contacts", $"\"Id\" IN ({activeContact.Id}, {deletedContact.Id})");
 
-        // Act - Filter by test marker AND not deleted
-        var result = await Context.Contacts
-            .Where(c => !c.IsDeleted && c.Name.Contains(_testMarker))
-            .ToListAsync();
+        // Act
+        var result = await Context.Contacts.Where(c => !c.IsDeleted).ToListAsync();
 
         // Assert
         result.Should().HaveCount(1);
-        result.First().FirstName.Should().StartWith("Active_");
+        result.First().FirstName.Should().Be("Active");
     }
 }
+

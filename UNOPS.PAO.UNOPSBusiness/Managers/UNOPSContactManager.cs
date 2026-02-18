@@ -17,6 +17,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.VisualBasic;
 using Newtonsoft.Json;
@@ -29,6 +30,7 @@ using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Domain.Specifications.ContactSpecifications;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Models;
 using UNOPS.PAO.UNOPSBusiness.Repositories;
@@ -54,7 +56,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     private CommonEntityRepository commonRepository;
     private readonly ILogger<UNOPSContactManager>? _logger;
     private readonly DataRepository<AiPrompt> promptRepository;
-    private new readonly UNOPSAppDbContext _context;
+    private readonly UNOPSAppDbContext _context;
     private readonly GlobalFilterService _globalFilterService;
 
     private async Task<ContactModel> MapEntityToModel(UNOPSContact entity, IMapper mapper, ClaimsPrincipal user)

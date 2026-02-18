@@ -1,0 +1,709 @@
+Test run for C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\bin\Debug\net9.0\UNOPS.PAO.Business.Tests.dll (.NETCoreApp,Version=v9.0)
+VSTest version 17.14.1 (x64)
+
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:06.08]     UNOPS.PAO.Business.Tests.Managers.ContactManagerTests.GetContactById_Should_ReturnNull_When_NotExists [FAIL]
+[xUnit.net 00:00:06.09]     UNOPS.PAO.Business.Tests.Managers.InteractionManagerTests.GetInteractionsByDateRange_Should_FilterCorrectly [FAIL]
+[xUnit.net 00:00:06.10]     UNOPS.PAO.Business.Tests.Managers.OrganizationHierarchyManagerTests.GetOrganizationById_Should_ReturnNull_When_NotExists [FAIL]
+[xUnit.net 00:00:06.10]     UNOPS.PAO.Business.Tests.Managers.OrganizationHierarchyManagerTests.GetAllOrganizations_Should_ReturnAllOrganizations [FAIL]
+[xUnit.net 00:00:06.10]     UNOPS.PAO.Business.Tests.Managers.InteractionManagerTests.UpdateInteraction_Should_UpdateFields [FAIL]
+[xUnit.net 00:00:06.10]     UNOPS.PAO.Business.Tests.Managers.OrganizationHierarchyManagerTests.GetOrganizationById_Should_ReturnOrganization_When_Exists [FAIL]
+[xUnit.net 00:00:06.11]     UNOPS.PAO.Business.Tests.Managers.InteractionManagerTests.CreateInteraction_Should_PersistInteraction [FAIL]
+  Failed UNOPS.PAO.Business.Tests.Managers.ContactManagerTests.GetContactById_Should_ReturnNull_When_NotExists [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.ContactManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.InteractionManagerTests.GetInteractionsByDateRange_Should_FilterCorrectly [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.InteractionManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.OrganizationHierarchyManagerTests.GetOrganizationById_Should_ReturnNull_When_NotExists [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.OrganizationHierarchyManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.OrganizationHierarchyManagerTests.GetAllOrganizations_Should_ReturnAllOrganizations [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.OrganizationHierarchyManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.InteractionManagerTests.UpdateInteraction_Should_UpdateFields [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.InteractionManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.OrganizationHierarchyManagerTests.GetOrganizationById_Should_ReturnOrganization_When_Exists [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.OrganizationHierarchyManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.InteractionManagerTests.CreateInteraction_Should_PersistInteraction [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.InteractionManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+[xUnit.net 00:00:06.13]     UNOPS.PAO.Business.Tests.Managers.ContactManagerTests.UpdateContact_Should_UpdateFields [FAIL]
+[xUnit.net 00:00:06.13]     UNOPS.PAO.Business.Tests.Managers.InteractionManagerTests.GetInteractionById_Should_ReturnNull_When_NotExists [FAIL]
+[xUnit.net 00:00:06.13]     UNOPS.PAO.Business.Tests.Managers.OrganizationHierarchyManagerTests.GetOrganizationsByType_Should_FilterByType [FAIL]
+[xUnit.net 00:00:06.13]     UNOPS.PAO.Business.Tests.Managers.ContactManagerTests.CreateContact_Should_PersistContact [FAIL]
+[xUnit.net 00:00:06.13]     UNOPS.PAO.Business.Tests.Managers.InteractionManagerTests.GetInteractionById_Should_ReturnInteraction_When_Exists [FAIL]
+[xUnit.net 00:00:06.14]     UNOPS.PAO.Business.Tests.Managers.ContactManagerTests.DeleteContact_Should_SoftDelete [FAIL]
+[xUnit.net 00:00:06.14]     UNOPS.PAO.Business.Tests.Managers.InteractionManagerTests.GetAllInteractions_Should_ReturnAllInteractions [FAIL]
+  Failed UNOPS.PAO.Business.Tests.Managers.ContactManagerTests.UpdateContact_Should_UpdateFields [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.ContactManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.InteractionManagerTests.GetInteractionById_Should_ReturnNull_When_NotExists [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.InteractionManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.OrganizationHierarchyManagerTests.GetOrganizationsByType_Should_FilterByType [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.OrganizationHierarchyManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.ContactManagerTests.CreateContact_Should_PersistContact [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.ContactManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.InteractionManagerTests.GetInteractionById_Should_ReturnInteraction_When_Exists [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.InteractionManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.ContactManagerTests.DeleteContact_Should_SoftDelete [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.ContactManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.InteractionManagerTests.GetAllInteractions_Should_ReturnAllInteractions [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.InteractionManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+[xUnit.net 00:00:06.15]     UNOPS.PAO.Business.Tests.Managers.OrganizationHierarchyManagerTests.GetOrganizations_Should_ReturnEmpty_When_NoOrganizations [FAIL]
+[xUnit.net 00:00:06.15]     UNOPS.PAO.Business.Tests.Managers.ContactManagerTests.SearchContacts_Should_FilterByName [FAIL]
+[xUnit.net 00:00:06.16]     UNOPS.PAO.Business.Tests.Managers.InteractionManagerTests.GetInteractionsByType_Should_FilterCorrectly [FAIL]
+[xUnit.net 00:00:06.16]     UNOPS.PAO.Business.Tests.Managers.ContactManagerTests.GetContactById_Should_ReturnContact_When_Exists [FAIL]
+[xUnit.net 00:00:06.16]     UNOPS.PAO.Business.Tests.Managers.InteractionManagerTests.DeleteInteraction_Should_SoftDelete [FAIL]
+[xUnit.net 00:00:06.16]     UNOPS.PAO.Business.Tests.Managers.ContactManagerTests.GetContacts_Should_ReturnAllContacts [FAIL]
+[xUnit.net 00:00:06.16]     UNOPS.PAO.Business.Tests.Managers.OrganizationHierarchyManagerTests.OrganizationHierarchy_Should_SupportParentChildRelationships [FAIL]
+[xUnit.net 00:00:06.16]     UNOPS.PAO.Business.Tests.Managers.ContactManagerTests.GetContactsByPartner_Should_ReturnFilteredContacts [FAIL]
+[xUnit.net 00:00:06.17]     UNOPS.PAO.Business.Tests.Managers.OrganizationHierarchyManagerTests.GetChildOrganizations_Should_ReturnChildren [FAIL]
+  Failed UNOPS.PAO.Business.Tests.Managers.OrganizationHierarchyManagerTests.GetOrganizations_Should_ReturnEmpty_When_NoOrganizations [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.OrganizationHierarchyManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.ContactManagerTests.SearchContacts_Should_FilterByName [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.ContactManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.InteractionManagerTests.GetInteractionsByType_Should_FilterCorrectly [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.InteractionManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.ContactManagerTests.GetContactById_Should_ReturnContact_When_Exists [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.ContactManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.InteractionManagerTests.DeleteInteraction_Should_SoftDelete [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.InteractionManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.ContactManagerTests.GetContacts_Should_ReturnAllContacts [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.ContactManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.OrganizationHierarchyManagerTests.OrganizationHierarchy_Should_SupportParentChildRelationships [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.OrganizationHierarchyManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.ContactManagerTests.GetContactsByPartner_Should_ReturnFilteredContacts [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.ContactManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.OrganizationHierarchyManagerTests.GetChildOrganizations_Should_ReturnChildren [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.OrganizationHierarchyManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+[xUnit.net 00:00:06.17]     UNOPS.PAO.Business.Tests.Managers.PartnerManagerTests.GetPartnerById_Should_ReturnNull_When_NotExists [FAIL]
+[xUnit.net 00:00:06.17]     UNOPS.PAO.Business.Tests.Managers.DocumentManagerTests.GetDocumentById_Should_ReturnDocument_When_Exists [FAIL]
+[xUnit.net 00:00:06.17]     UNOPS.PAO.Business.Tests.Managers.PartnerManagerTests.GetPartnersByStatus_Should_FilterCorrectly [FAIL]
+[xUnit.net 00:00:06.17]     UNOPS.PAO.Business.Tests.Managers.DocumentManagerTests.CreateDocument_Should_PersistDocument [FAIL]
+[xUnit.net 00:00:06.18]     UNOPS.PAO.Business.Tests.Managers.PartnerManagerTests.GetPartnerWithContacts_Should_IncludeContacts [FAIL]
+[xUnit.net 00:00:06.18]     UNOPS.PAO.Business.Tests.Managers.DocumentManagerTests.DeleteDocument_Should_SoftDelete [FAIL]
+[xUnit.net 00:00:06.18]     UNOPS.PAO.Business.Tests.Managers.PartnerManagerTests.SearchPartners_Should_FilterByName [FAIL]
+[xUnit.net 00:00:06.18]     UNOPS.PAO.Business.Tests.Managers.PartnerManagerTests.CreatePartner_Should_PersistPartner [FAIL]
+[xUnit.net 00:00:06.18]     UNOPS.PAO.Business.Tests.Managers.DocumentManagerTests.UpdateDocument_Should_UpdateFields [FAIL]
+  Failed UNOPS.PAO.Business.Tests.Managers.PartnerManagerTests.GetPartnerById_Should_ReturnNull_When_NotExists [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.PartnerManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.DocumentManagerTests.GetDocumentById_Should_ReturnDocument_When_Exists [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.DocumentManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.PartnerManagerTests.GetPartnersByStatus_Should_FilterCorrectly [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.PartnerManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.DocumentManagerTests.CreateDocument_Should_PersistDocument [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.DocumentManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.PartnerManagerTests.GetPartnerWithContacts_Should_IncludeContacts [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.PartnerManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.DocumentManagerTests.DeleteDocument_Should_SoftDelete [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.DocumentManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.PartnerManagerTests.SearchPartners_Should_FilterByName [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.PartnerManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.PartnerManagerTests.CreatePartner_Should_PersistPartner [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.PartnerManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.DocumentManagerTests.UpdateDocument_Should_UpdateFields [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.DocumentManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+[xUnit.net 00:00:06.19]     UNOPS.PAO.Business.Tests.Managers.PartnerManagerTests.ApprovePartner_Should_SetApprovalStatus [FAIL]
+[xUnit.net 00:00:06.19]     UNOPS.PAO.Business.Tests.Managers.PartnerManagerTests.GetPartnerById_Should_ReturnPartner_When_Exists [FAIL]
+[xUnit.net 00:00:06.19]     UNOPS.PAO.Business.Tests.Managers.PartnerManagerTests.UpdatePartner_Should_UpdateFields [FAIL]
+[xUnit.net 00:00:06.19]     UNOPS.PAO.Business.Tests.Managers.PartnerManagerTests.GetAllPartners_Should_ReturnAllPartners [FAIL]
+[xUnit.net 00:00:06.19]     UNOPS.PAO.Business.Tests.Managers.DocumentManagerTests.GetAllDocuments_Should_ReturnAllDocuments [FAIL]
+[xUnit.net 00:00:06.20]     UNOPS.PAO.Business.Tests.Managers.DocumentManagerTests.GetDocumentById_Should_ReturnNull_When_NotExists [FAIL]
+[xUnit.net 00:00:06.20]     UNOPS.PAO.Business.Tests.Managers.DocumentManagerTests.GetDocumentsByType_Should_FilterCorrectly [FAIL]
+  Failed UNOPS.PAO.Business.Tests.Managers.PartnerManagerTests.ApprovePartner_Should_SetApprovalStatus [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.PartnerManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.PartnerManagerTests.GetPartnerById_Should_ReturnPartner_When_Exists [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.PartnerManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.PartnerManagerTests.UpdatePartner_Should_UpdateFields [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.PartnerManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.PartnerManagerTests.GetAllPartners_Should_ReturnAllPartners [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.PartnerManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.DocumentManagerTests.GetAllDocuments_Should_ReturnAllDocuments [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.DocumentManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.DocumentManagerTests.GetDocumentById_Should_ReturnNull_When_NotExists [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.DocumentManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+  Failed UNOPS.PAO.Business.Tests.Managers.DocumentManagerTests.GetDocumentsByType_Should_FilterCorrectly [1 ms]
+  Error Message:
+   System.NotSupportedException : Unsupported expression: x => x.GetCurrentUserId()
+Non-overridable members (here: UserResolverService<int>.GetCurrentUserId) may not be used in setup / verification expressions.
+  Stack Trace:
+     at Moq.Guard.IsOverridable(MethodInfo method, Expression expression) in /_/src/Moq/Guard.cs:line 99
+   at Moq.MethodExpectation..ctor(LambdaExpression expression, MethodInfo method, IReadOnlyList`1 arguments, Boolean exactGenericTypeArguments, Boolean skipMatcherInitialization, Boolean allowNonOverridable) in /_/src/Moq/MethodExpectation.cs:line 236
+   at Moq.ExpressionExtensions.<Split>g__Split|5_0(Expression e, Expression& r, MethodExpectation& p, Boolean assignment, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 240
+   at Moq.ExpressionExtensions.Split(LambdaExpression expression, Boolean allowNonOverridableLastProperty) in /_/src/Moq/ExpressionExtensions.cs:line 170
+   at Moq.Mock.SetupRecursive[TSetup](Mock mock, LambdaExpression expression, Func`4 setupLast, Boolean allowNonOverridableLastProperty) in /_/src/Moq/Mock.cs:line 728
+   at Moq.Mock.Setup(Mock mock, LambdaExpression expression, Condition condition) in /_/src/Moq/Mock.cs:line 562
+   at Moq.Mock`1.Setup[TResult](Expression`1 expression) in /_/src/Moq/Mock`1.cs:line 645
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(DbContextOptions`1 options) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 34
+   at UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.Create(String databaseName) in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\TestDbContextFactory.cs:line 24
+   at UNOPS.PAO.Business.Tests.TestBase.ManagerTestBase..ctor() in C:\Users\Leonardc\git\opportunityplus\tests\UNOPS.PAO.Business.Tests\TestBase\ManagerTestBase.cs:line 19
+   at UNOPS.PAO.Business.Tests.Managers.DocumentManagerTests..ctor()
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+
+Failed!  - Failed:    39, Passed:     0, Skipped:     0, Total:    39, Duration: 108 ms - UNOPS.PAO.Business.Tests.dll (net9.0)

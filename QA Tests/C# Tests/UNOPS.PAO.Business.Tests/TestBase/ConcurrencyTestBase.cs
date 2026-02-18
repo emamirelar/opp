@@ -1,75 +1,29 @@
 using System.Collections.Concurrent;
 using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.DataAccess.Context;
-using UNOPS.PAO.Domain.Entities;
-using UNOPS.PAO.UNOPSDataAccess.Context;
-using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.Business.Tests.TestBase;
 
 /// <summary>
-/// Base class for concurrency tests with multi-threaded utilities.
-/// For PostgreSQL: all threads share the same real database via TestDbContextFactory.
-/// For SQLite: all threads share the same in-memory connection via UNOPS options.
+/// Base class for concurrency tests with multi-threaded utilities
 /// </summary>
 public abstract class ConcurrencyTestBase : IDisposable
 {
-    protected DbContextOptions<UNOPSAppDbContext> DbOptions { get; private set; }
+    protected DbContextOptions<AppDbContext> DbOptions { get; private set; }
     private readonly string _databaseName;
-
-    /// <summary>Tracks cleanup actions for PostgreSQL test data isolation.</summary>
-    private readonly List<Func<Task>> _cleanupActions = new();
 
     protected ConcurrencyTestBase()
     {
         _databaseName = $"ConcurrencyTest_{Guid.NewGuid()}";
-        DbOptions = TestDbContextFactory.CreateUNOPSOptions(_databaseName);
+        DbOptions = TestDbContextFactory.CreateOptions(_databaseName);
     }
 
     /// <summary>
-    /// Create a new context for each thread (important for concurrency).
-    /// Uses CreateUNOPS(options) to ensure shared database and SQLite compatibility.
+    /// Create a new context for each thread (important for concurrency)
     /// </summary>
     protected AppDbContext CreateContext()
     {
-        return TestDbContextFactory.CreateUNOPS(DbOptions);
-    }
-
-    /// <summary>
-    /// Creates a test partner in the database and returns its auto-generated ID.
-    /// </summary>
-    protected async Task<int> CreateTestPartnerAsync(string name = "Concurrency Test Partner")
-    {
-        using var context = CreateContext();
-        var partner = new UNOPSPartner
-        {
-            Name = name,
-            Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
-            LastModifiedDate = DateTime.UtcNow
-        };
-        await context.Partners.AddAsync(partner);
-        await context.SaveChangesAsync();
-        RegisterTableCleanup("Partners", $"\"Id\" = {partner.Id}");
-        return partner.Id;
-    }
-
-    protected void RegisterCleanup(Func<Task> cleanupAction) => _cleanupActions.Add(cleanupAction);
-
-    protected void RegisterTableCleanup(string tableName, string whereClause)
-    {
-        if (!TestEnvironment.UsePostgreSQL) return;
-
-        _cleanupActions.Add(async () =>
-        {
-            try
-            {
-                using var ctx = TestDbContextFactory.Create();
-                await ctx.Database.ExecuteSqlRawAsync($"DELETE FROM public.\"{tableName}\" WHERE {whereClause}");
-            }
-            catch { /* Best-effort cleanup */ }
-        });
+        return TestDbContextFactory.Create(DbOptions);
     }
 
     /// <summary>
@@ -171,26 +125,8 @@ public abstract class ConcurrencyTestBase : IDisposable
 
     public void Dispose()
     {
-        // Run cleanup actions for PostgreSQL
-        for (int i = _cleanupActions.Count - 1; i >= 0; i--)
-        {
-            try { _cleanupActions[i]().GetAwaiter().GetResult(); }
-            catch { /* Best-effort cleanup */ }
-        }
-        _cleanupActions.Clear();
-
-        if (TestEnvironment.UseInMemory)
-        {
-            try
-            {
-                using var context = CreateContext();
-                context.Database.EnsureDeleted();
-            }
-            catch
-            {
-                // Best effort cleanup
-            }
-        }
+        using var context = CreateContext();
+        context.Database.EnsureDeleted();
         GC.SuppressFinalize(this);
     }
 }

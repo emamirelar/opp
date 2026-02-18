@@ -1,0 +1,116 @@
+---
+description: Cure to generate a task list from a PRD
+globs: 
+alwaysApply: false
+---
+# Rule: Generating a Task List from a PRD
+
+## Goal
+
+To guide an AI assistant in creating a detailed, step-by-step task list in Markdown format based on an existing Product Requirements Document (PRD). The task list should guide a developer through implementation.
+
+## Output
+
+- **Format:** Markdown (`.md`)
+- **Location:** `/tasks/[prd-name]`
+- **Filename:** `[prd-name]-tasks.md` (e.g., `user-profile-editing-tasks.md`)
+
+## Process
+
+1.  **Receive PRD Reference:** The user points the AI to a specific PRD file
+2.  **Analyze Technical Requirements in PRD:** The AI reads and analyzes the architecture, any data model changes, any data and event flow changes, backend and frontend architecture changes, and technical considerations.
+3.  **Analyze Functional Requirements in PRD:** The AI reads and analyzes the functional requirements, user stories, and other sections of the specified PRD.
+4.  **Phase 1: Generate Parent Tasks:** Based on the PRD analysis, create the file and generate the main, high-level tasks required to implement the feature. Ensure that the high-level tasks are ordered in a way to do the technical groundwork / address foundational technical dependencies first.  Use your judgement on how many high-level tasks to use. It's likely to be about 5. Present these tasks to the user in the specified format (without sub-tasks yet). Inform the user: "I have generated the high-level tasks based on the PRD. Should I generate the sub-tasks? Respond with 'Yes' to proceed."
+5.  **Wait for Confirmation:** Pause and wait for the user to respond with "Yes".
+6.  **Phase 2: Generate Sub-Tasks:** Once the user confirms, break down each parent task into smaller, actionable sub-tasks necessary to complete the parent task. Ensure sub-tasks logically follow from the parent task and cover the implementation details implied by the PRD.  Ensure that the sub-tasks are ordered in a way to do the technical groundwork / address foundational technical dependencies first.
+7.  **Identify Relevant Files:** Based on the tasks and PRD, identify potential files that will need to be created or modified. List these under the `Relevant Files` section, including corresponding test files if applicable.
+8.  **Generate Final Output:** Combine the parent tasks, sub-tasks, relevant files, and notes into the final Markdown structure.
+9. **Review Task:** A final sub-task in all parent tasks should be to review the code of all the sub-tasks implemented under the parent task to ensure that the implementation is complete and everything is connected.
+10. **Unit Testing Requirements:** **CRITICAL - MANDATORY**: For each major component layer, include explicit unit test tasks:
+    
+    **File Organization:**
+    - **List all unit test files in "Relevant Files" section** at the top of the document organized by layer (Backend - Unit Tests, Frontend - Unit Tests)
+    - Group test files with their corresponding implementation files for clarity
+    
+    **Task Integration Pattern:**
+    - **Integrate unit test tasks as sub-tasks** immediately after the corresponding implementation tasks within the same parent task
+    - **Do NOT create a separate "Testing" parent task** - unit tests are sub-tasks within implementation parent tasks
+    - Place unit test tasks BEFORE the final review task in each parent section
+    
+    **Specific Placement Rules:**
+    - **Backend Seeders:** Add unit test task immediately after seeder creation (e.g., after 1.6 seeder creation → 1.7 seeder tests → 1.8 register seeder)
+    - **Backend Managers:** Add unit test task after manager registration (e.g., after 2.15 register manager → 2.16 manager tests → 2.17 review)
+    - **Backend Authorization Handlers:** Add unit test task after handler registration (e.g., after 3.6 register handler → 3.7 authorization tests → 3.8 create controller)
+    - **Frontend Components:** Add unit test task after component review (e.g., after 5.10 review components → 5.11 component tests → 5.12 service tests)
+    - **Frontend Services:** Add unit test task immediately after component tests (e.g., after 5.11 component tests → 5.12 service tests)
+    
+    **Test Content Requirements:**
+    - All unit tests **MUST compile and run without errors** - include this verification in each unit test task
+    - Specify testing framework and tools (InMemory database, Moq, HttpTestingController, TestBed)
+    - List specific test scenarios to be covered (CRUD operations, validation, authorization scenarios, component lifecycle, etc.)
+    - Include verification step: "Verify all tests compile and run successfully with no errors"
+    
+    **Naming Conventions:**
+    - Backend: `[ClassName]Tests.cs` (e.g., `EntityManagerTests.cs`, `EntitySeederTests.cs`)
+    - Frontend: `[component-name].component.spec.ts` or `[service-name].service.spec.ts`
+    
+    **Documentation:**
+    - Add "⚠️ CRITICAL Testing Requirements" section before Tasks section with comprehensive testing standards
+    - Include testing philosophy, required tools, test coverage expectations, and mandatory verification steps
+11.  **Save Task List:** Save the generated document in the `/tasks/[prd-name]` folder with the filename `[prd-name-prd]-tasks.md`, where the `prd-name` is derived from the `[file-name-prd]` specified as the input PRD file (e.g., if the input was `user-profile-editing-prd.md`, the output is `user-profile-editing-tasks.md`).
+
+## Output Format
+
+The generated task list _must_ follow this structure:
+
+```markdown
+## Relevant Files
+
+**Frontend Files (Angular):**
+- `UNOPS.PAO.ClientApp/src/app/features/[feature]/components/[component-name].component.ts` - Main Angular component
+- `UNOPS.PAO.ClientApp/src/app/features/[feature]/components/[component-name].component.html` - Component template
+- `UNOPS.PAO.ClientApp/src/app/features/[feature]/components/[component-name].component.scss` - Component styles
+- `UNOPS.PAO.ClientApp/src/app/features/[feature]/components/[component-name].component.spec.ts` - Component unit tests
+- `UNOPS.PAO.ClientApp/src/app/features/[feature]/services/[service-name].service.ts` - Angular service
+- `UNOPS.PAO.ClientApp/src/app/features/[feature]/models/[model-name].model.ts` - TypeScript models
+
+**Backend Files (.NET Core):**
+- `UNOPS.PAO.Presentation/Controllers/[Entity]Controller.cs` - API controller (or `UNOPS.PAO.UNOPSPresentation/Controllers/` for UNOPS-specific)
+- `UNOPS.PAO.Business/Managers/[Entity]Manager.cs` - Business logic manager (or `UNOPS.PAO.UNOPSBusiness/Managers/` for UNOPS-specific)
+- `UNOPS.PAO.Domain/Entities/[Entity].cs` - Domain entity (or `UNOPS.PAO.UNOPSDomain/Entities/` for UNOPS-specific)
+- `UNOPS.PAO.Models/[Entity]Model.cs` - DTO/Model for API responses
+- `UNOPS.PAO.UNOPSDataAccess/Migrations/[Migration].cs` - EF Core migration file (migrations use UNOPSDataAccess)
+- `UNOPS.PAO.Business/Managers/Mapping/MappingProfile.cs` - AutoMapper configuration (or both Business and UNOPSBusiness if UNOPS-overridden)
+
+### Notes
+
+- Unit tests should typically be placed alongside the code files they are testing (e.g., `MyComponent.tsx` and `MyComponent.test.tsx` in the same directory).
+- Run tests as needed.
+
+## Tasks
+
+- [ ] 1.0 Parent Task Title
+  - [ ] 1.1 Sub-task description 1.1
+  - [ ] 1.2 Sub-task description 1.2
+  - [ ] 1.3 Create unit tests for [component/feature] (MANDATORY)
+    - Test [specific scenarios]
+    - Verify all tests compile and run successfully with no errors
+  - [ ] 1.4 Review implementation
+- [ ] 2.0 Parent Task Title
+  - [ ] 2.1 Sub-task description 2.1
+  - [ ] 2.2 Create unit tests for [component/feature] (MANDATORY)
+    - Test [specific scenarios]
+    - Verify all tests compile and run successfully with no errors
+  - [ ] 2.3 Review implementation
+- [ ] 3.0 Parent Task Title (may not require sub-tasks if purely structural or configuration)
+```
+
+## Interaction Model
+
+The process explicitly requires a pause after generating parent tasks to get user confirmation ("Yes") before proceeding to generate the detailed sub-tasks. This ensures the high-level plan aligns with user expectations before diving into details.
+
+## Target Audience
+
+
+
+Assume the primary reader of the task list is a **junior developer** who will implement the feature.

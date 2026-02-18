@@ -10,7 +10,6 @@ import { OrganizationHierarchyService } from '@core/services/organization';
 import { AuthService } from '@core/services/auth';
 import { GlobalFiltersDialogService } from '@core/services/filters';
 import { of, Subject, BehaviorSubject } from 'rxjs';
-import { createMockTranslateService } from '@shared/testing/test-utilities';
 
 describe('SearchResultComponent', () => {
   let component: SearchResultComponent;
@@ -82,6 +81,7 @@ describe('SearchResultComponent', () => {
       dateTo: null
     }));
     mockAuthService.user.and.returnValue(of([{ type: 'userId', value: 'user123' }]));
+    mockTranslateService.instant.and.returnValue('Translated');
 
     await TestBed.configureTestingModule({
       imports: [SearchResultComponent, HttpClientTestingModule, TranslateModule.forRoot()],

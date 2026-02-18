@@ -33,7 +33,6 @@ public class PaoWorkflowNotificationServiceCCTests : IDisposable
     private readonly Mock<IConfiguration> _mockConfiguration;
     private readonly Mock<ILogger<PaoWorkflowNotificationService>> _mockLogger;
     private readonly Mock<NotificationManager> _mockNotificationManager;
-    private readonly Mock<IDbContextFactory<AppDbContext>> _mockContextFactory;
     private readonly PaoWorkflowNotificationService _notificationService;
 
     public PaoWorkflowNotificationServiceCCTests()
@@ -53,27 +52,19 @@ public class PaoWorkflowNotificationServiceCCTests : IDisposable
         var userResolverService = new UserResolverService<int>(mockHttpContextAccessor.Object);
         _appDbContext = new AppDbContext(appOptions, userResolverService, mockDbContextSchema.Object);
 
-        // Setup DbContextFactory mock to return the in-memory context
-        _mockContextFactory = new Mock<IDbContextFactory<AppDbContext>>();
-        _mockContextFactory
-            .Setup(f => f.CreateDbContextAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(() => new AppDbContext(appOptions, userResolverService, mockDbContextSchema.Object));
-        _mockContextFactory
-            .Setup(f => f.CreateDbContext())
-            .Returns(() => new AppDbContext(appOptions, userResolverService, mockDbContextSchema.Object));
-
         // Setup mocks
         _mockEmailSender = new Mock<IEmailSender>();
         _mockLogger = new Mock<ILogger<PaoWorkflowNotificationService>>();
         _mockConfiguration = new Mock<IConfiguration>();
         _mockConfiguration.Setup(c => c["AppBaseUrl"]).Returns("https://test.unops.org");
 
-        // NotificationManager requires AppDbContext + UserResolverService constructor args
-        _mockNotificationManager = new Mock<NotificationManager>(_appDbContext, userResolverService);
+        // Note: NotificationManager has complex dependencies, so we skip testing in-system notifications here
+        // The test focuses on the CC recipient building logic
+        _mockNotificationManager = new Mock<NotificationManager>();
 
         _notificationService = new PaoWorkflowNotificationService(
             _mockEmailSender.Object,
-            _mockContextFactory.Object,
+            _appDbContext,
             _mockLogger.Object,
             _mockConfiguration.Object,
             _mockNotificationManager.Object);
@@ -92,22 +83,26 @@ public class PaoWorkflowNotificationServiceCCTests : IDisposable
         var omUser = new PAOUser
         {
             Id = 100,
-            Email = "om@unops.org"
+            Email = "om@unops.org",
+            UserName = "om@unops.org"
         };
         var initiatorUser = new PAOUser
         {
             Id = 101,
-            Email = "initiator@unops.org"
+            Email = "initiator@unops.org",
+            UserName = "initiator@unops.org"
         };
         var directorUser = new PAOUser
         {
             Id = 102,
-            Email = "director@unops.org"
+            Email = "director@unops.org",
+            UserName = "director@unops.org"
         };
         var approverUser = new PAOUser
         {
             Id = 103,
-            Email = "approver@unops.org"
+            Email = "approver@unops.org",
+            UserName = "approver@unops.org"
         };
 
         await _appDbContext.PAOUsers.AddRangeAsync(omUser, initiatorUser, directorUser, approverUser);
@@ -117,7 +112,6 @@ public class PaoWorkflowNotificationServiceCCTests : IDisposable
         {
             Id = 1,
             Name = "Test Org Unit",
-            Description = "Test Org Unit Description",
             Code = "TEST-OU",
             IsDeleted = false
         };
@@ -152,7 +146,6 @@ public class PaoWorkflowNotificationServiceCCTests : IDisposable
         {
             Id = 1,
             Name = "Test Opportunity",
-            Description = "Test opportunity for CC tests",
             ResponsibleOrgUnitId = 1,
             Stage = "IDENTIFY & PROFILE",
             Status = EntityStatus.Active,
@@ -314,17 +307,16 @@ public class PaoWorkflowNotificationServiceCCTests : IDisposable
         using var context = new AppDbContext(appOptions, userResolverService, mockDbContextSchema.Object);
 
         // Add minimal test data without OM stakeholder
-        var approverUser = new PAOUser { Id = 103, Email = "approver@unops.org" };
+        var approverUser = new PAOUser { Id = 103, Email = "approver@unops.org", UserName = "approver@unops.org" };
         await context.PAOUsers.AddAsync(approverUser);
 
-        var orgUnit = new OrganizationHierarchy { Id = 1, Name = "Test Org", Description = "Test Org", Code = "TEST", IsDeleted = false };
+        var orgUnit = new OrganizationHierarchy { Id = 1, Name = "Test Org", Code = "TEST", IsDeleted = false };
         await context.OrganizationHierarchies.AddAsync(orgUnit);
 
         var opportunity = new Opportunity
         {
             Id = 1,
             Name = "Test Opportunity",
-            Description = "Test opportunity for no-OM test",
             ResponsibleOrgUnitId = 1,
             Stage = "IDENTIFY & PROFILE",
             Status = EntityStatus.Active,
@@ -333,16 +325,8 @@ public class PaoWorkflowNotificationServiceCCTests : IDisposable
         await context.Opportunities.AddAsync(opportunity);
         await context.SaveChangesAsync();
 
-        var localContextFactory = new Mock<IDbContextFactory<AppDbContext>>();
-        localContextFactory
-            .Setup(f => f.CreateDbContextAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(() => new AppDbContext(appOptions, userResolverService, mockDbContextSchema.Object));
-        localContextFactory
-            .Setup(f => f.CreateDbContext())
-            .Returns(() => new AppDbContext(appOptions, userResolverService, mockDbContextSchema.Object));
-
         var service = new PaoWorkflowNotificationService(
-            _mockEmailSender.Object, localContextFactory.Object, _mockLogger.Object, 
+            _mockEmailSender.Object, context, _mockLogger.Object, 
             _mockConfiguration.Object, _mockNotificationManager.Object);
 
         var notification = new WorkflowNotification

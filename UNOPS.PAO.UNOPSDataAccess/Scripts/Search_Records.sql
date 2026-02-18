@@ -14,7 +14,7 @@
 
 -- Enable required extensions
 --CREATE EXTENSION IF NOT EXISTS pg_trgm;
---CREATE EXTENSION IF NOT EXISTS vector; -- TEMPORARY: Commented out until pgvector is available
+--CREATE EXTENSION IF NOT EXISTS vector;
 
 -- Drop existing functions to ensure clean recreation
 DROP FUNCTION IF EXISTS public.search_partners_with_nested(TEXT, REAL, INTEGER);
@@ -22,11 +22,10 @@ DROP FUNCTION IF EXISTS public.search_contacts_with_nested(TEXT, REAL, INTEGER);
 DROP FUNCTION IF EXISTS public.search_interactions_with_nested(TEXT, REAL, INTEGER);
 DROP FUNCTION IF EXISTS public.search_opportunities_with_nested(TEXT, REAL, INTEGER);
 DROP FUNCTION IF EXISTS public.search_entity_records(TEXT);
--- TEMPORARY: Commented out vector-based function signatures until pgvector is available
---DROP FUNCTION IF EXISTS public.search_entity_records(TEXT, vector);
---DROP FUNCTION IF EXISTS public.search_entity_records(TEXT, vector, REAL, REAL, INTEGER);
---DROP FUNCTION IF EXISTS public.search_entity_records(TEXT, vector, REAL, REAL, INTEGER, BOOLEAN);
---DROP FUNCTION IF EXISTS public.search_entity_records(TEXT, vector, REAL, REAL, INTEGER, BOOLEAN, TEXT[]);
+DROP FUNCTION IF EXISTS public.search_entity_records(TEXT, vector);
+DROP FUNCTION IF EXISTS public.search_entity_records(TEXT, vector, REAL, REAL, INTEGER);
+DROP FUNCTION IF EXISTS public.search_entity_records(TEXT, vector, REAL, REAL, INTEGER, BOOLEAN);
+DROP FUNCTION IF EXISTS public.search_entity_records(TEXT, vector, REAL, REAL, INTEGER, BOOLEAN, TEXT[]);
 
 -- ============================================================================
 -- PARTNERS SEARCH FUNCTION WITH NESTED PROPERTIES
@@ -687,12 +686,10 @@ $$;
 
 -- ============================================================================
 -- MAIN ORCHESTRATOR FUNCTION
--- TEMPORARY: Simplified version without vector embedding until pgvector is available
 -- ============================================================================
 CREATE OR REPLACE FUNCTION public.search_entity_records(
     search_query TEXT,
-    -- TEMPORARY: embedding parameter removed until pgvector is available
-    -- embedding vector DEFAULT NULL,
+    embedding vector DEFAULT NULL,
     text_boost REAL DEFAULT 1.0,
     embedding_boost REAL DEFAULT 1.2,
     snippet_length INTEGER DEFAULT 150,
@@ -810,8 +807,6 @@ BEGIN
     ) grouped;
     
     -- PART 2: SEMANTIC EMBEDDING SEARCH (Optional)
-    -- TEMPORARY: Commented out until pgvector is available
-    /*
     IF embedding IS NOT NULL AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'EntityEmbeddings' AND table_schema = 'public') THEN
         WITH embedding_results_cte AS (
                 SELECT 
@@ -862,7 +857,6 @@ BEGIN
                 GROUP BY entity_type
         ) grouped;
     END IF;
-    */
     
     -- Calculate execution time
     execution_time := EXTRACT(EPOCH FROM (clock_timestamp() - start_time));
@@ -908,7 +902,7 @@ BEGIN
             WHEN debug_mode THEN
                 json_build_object(
                     'searchQuery', search_query,
-                    'hasEmbedding', FALSE, -- TEMPORARY: Always false until pgvector is available
+                    'hasEmbedding', (embedding IS NOT NULL),
                     'strategy', 'modular-nested-search',
                     'availableEntities', available_entities,
                     'boostFactors', json_build_object(
@@ -925,7 +919,10 @@ BEGIN
                             SELECT COALESCE(SUM((value->>'count')::INTEGER), 0) 
                             FROM json_each(COALESCE(text_results, '{}'::json))
                         ),
-                        'totalSemanticResults', 0, -- TEMPORARY: Always 0 until pgvector is available
+                        'totalSemanticResults', (
+                            SELECT COALESCE(SUM((value->>'count')::INTEGER), 0) 
+                            FROM json_each(COALESCE(embedding_results, '{}'::json))
+                        ),
                         'entitiesSearched', COALESCE(array_length(available_entities, 1), 0),
                         'searchCapabilities', json_build_array(
                             'modular-nested-search',

@@ -60,26 +60,7 @@ public class OpportunityImmutabilityTests : IDisposable
         _context = new UNOPSAppDbContext(_dbContextOptions, mockUserService.Object, mockDbSchema.Object);
 
         _mockMapper = new Mock<IMapper>();
-        // AiContextualService (instantiated by BaseRepository) requires these config values.
-        // A bare Mock<IConfiguration> returns null and causes constructor failures.
-        var configValues = new Dictionary<string, string?>
-        {
-            ["ConnectionStrings:DbSchema"] = "public",
-            ["AISettings:DisableExternalCalls"] = "true",
-            ["AISettings:ProjectId"] = "test-project",
-            ["AISettings:Location"] = "us-central1",
-            ["AISettings:EmbeddingModelName"] = "textembedding-gecko@003",
-            ["AISettings:ModelName"] = "gemini-pro",
-            ["GoogleCloud:ProjectId"] = "test-project",
-            ["GoogleCloud:PubSubTopic"] = "test-topic",
-            ["ASPNETCORE_ENVIRONMENT"] = "Testing"
-        };
-        var realConfig = new ConfigurationBuilder()
-            .AddInMemoryCollection(configValues)
-            .Build();
         _mockConfiguration = new Mock<IConfiguration>();
-        _mockConfiguration.Setup(c => c[It.IsAny<string>()]).Returns<string>(key => realConfig[key]);
-        _mockConfiguration.Setup(c => c.GetSection(It.IsAny<string>())).Returns<string>(key => realConfig.GetSection(key));
         _mockPermissionService = new Mock<IPermissionService>();
         _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
         _mockDbContextFactory = new Mock<IDbContextFactory<UNOPSAppDbContext>>();
@@ -287,11 +268,6 @@ public class OpportunityImmutabilityTests : IDisposable
 
     #region Non-Immutable Stage Tests (Should Allow Updates)
 
-    // Note: These tests verify that the immutability guard does NOT block updates for non-immutable stages.
-    // BaseRepository.UpdateAsync uses Z.EntityFramework.Extensions.BulkUpdate which requires a relational
-    // database model and throws InvalidOperationException on InMemory DB. We accept that as a pass
-    // condition since it proves the immutability check was passed successfully.
-
     [Fact]
     public async Task UpdateOverviewSectionAsync_Succeeds_WhenOpportunityIsInIdentifyAndProfileStage()
     {
@@ -306,22 +282,11 @@ public class OpportunityImmutabilityTests : IDisposable
             Name = "Updated Name"
         };
 
-        // Act & Assert - Should NOT throw BusinessException (immutability check passed).
-        // May throw InvalidOperationException from BulkUpdate on InMemory DB, which is acceptable.
-        try
-        {
-            var result = await _manager.UpdateOverviewSectionAsync(opportunityId, request);
-            result.Should().NotBeNull();
-        }
-        catch (BusinessException)
-        {
-            throw; // Immutability guard fired unexpectedly - fail the test
-        }
-        catch (InvalidOperationException)
-        {
-            // Expected on InMemory DB: BulkUpdate requires relational model
-            // The immutability check passed (no BusinessException), which is what we're testing
-        }
+        // Act
+        var result = await _manager.UpdateOverviewSectionAsync(opportunityId, request);
+
+        // Assert
+        result.Should().NotBeNull();
     }
 
     [Fact]
@@ -338,20 +303,11 @@ public class OpportunityImmutabilityTests : IDisposable
             Name = "Updated Name"
         };
 
-        // Act & Assert
-        try
-        {
-            var result = await _manager.UpdateOverviewSectionAsync(opportunityId, request);
-            result.Should().NotBeNull();
-        }
-        catch (BusinessException)
-        {
-            throw; // Immutability guard fired unexpectedly - fail the test
-        }
-        catch (InvalidOperationException)
-        {
-            // Expected on InMemory DB: BulkUpdate requires relational model
-        }
+        // Act
+        var result = await _manager.UpdateOverviewSectionAsync(opportunityId, request);
+
+        // Assert
+        result.Should().NotBeNull();
     }
 
     [Fact]
@@ -368,20 +324,11 @@ public class OpportunityImmutabilityTests : IDisposable
             Name = "Updated Name"
         };
 
-        // Act & Assert
-        try
-        {
-            var result = await _manager.UpdateOverviewSectionAsync(opportunityId, request);
-            result.Should().NotBeNull();
-        }
-        catch (BusinessException)
-        {
-            throw; // Immutability guard fired unexpectedly - fail the test
-        }
-        catch (InvalidOperationException)
-        {
-            // Expected on InMemory DB: BulkUpdate requires relational model
-        }
+        // Act
+        var result = await _manager.UpdateOverviewSectionAsync(opportunityId, request);
+
+        // Assert
+        result.Should().NotBeNull();
     }
 
     #endregion
@@ -407,20 +354,11 @@ public class OpportunityImmutabilityTests : IDisposable
             Name = "Reopened Opportunity"
         };
 
-        // Act & Assert - Should NOT throw BusinessException after reopen
-        try
-        {
-            var result = await _manager.UpdateOverviewSectionAsync(opportunityId, request);
-            result.Should().NotBeNull();
-        }
-        catch (BusinessException)
-        {
-            throw; // Immutability guard fired unexpectedly after reopen - fail the test
-        }
-        catch (InvalidOperationException)
-        {
-            // Expected on InMemory DB: BulkUpdate requires relational model
-        }
+        // Act - Should succeed because opportunity is no longer in immutable stage
+        var result = await _manager.UpdateOverviewSectionAsync(opportunityId, request);
+
+        // Assert
+        result.Should().NotBeNull();
     }
 
     [Fact]
@@ -442,32 +380,16 @@ public class OpportunityImmutabilityTests : IDisposable
             Name = "Reopened Opportunity"
         };
 
-        // Act & Assert - Should NOT throw BusinessException after reopen
-        try
-        {
-            var result = await _manager.UpdateOverviewSectionAsync(opportunityId, request);
-            result.Should().NotBeNull();
-        }
-        catch (BusinessException)
-        {
-            throw; // Immutability guard fired unexpectedly after reopen - fail the test
-        }
-        catch (InvalidOperationException)
-        {
-            // Expected on InMemory DB: BulkUpdate requires relational model
-        }
+        // Act - Should succeed because opportunity is no longer in immutable stage
+        var result = await _manager.UpdateOverviewSectionAsync(opportunityId, request);
+
+        // Assert
+        result.Should().NotBeNull();
     }
 
     #endregion
 
     #region Permission Endpoint Tests
-
-    // Note: GetOpportunityAsync uses complex queries with many includes and navigation properties
-    // that may not fully resolve on InMemory DB. The mapper mock returns null for the base
-    // GetOpportunityAsync(int id) call because the mapper is set up for the model type but the
-    // base method queries with many includes that return different entity shapes on InMemory.
-    // We test the immutability permission logic via the EntityPermissionsModel unit tests and
-    // the immutable stage blocking tests above.
 
     [Fact]
     public async Task GetOpportunityAsync_WithUser_ReturnsIsImmutableTrue_WhenOpportunityIsInGoStage()
@@ -484,24 +406,20 @@ public class OpportunityImmutabilityTests : IDisposable
                 Permissions = new EntityPermissionsModel
                 {
                     CanRead = true,
-                    CanUpdate = true,
-                    CanDelete = true
+                    CanUpdate = true, // Will be overridden by immutability check
+                    CanDelete = true  // Will be overridden by immutability check
                 }
             });
 
         // Act
         var result = await _manager.GetOpportunityAsync(_testUser, opportunityId);
 
-        // Assert - On InMemory DB the base GetOpportunityAsync may return null due to complex includes.
-        // If non-null, verify immutability flags are set correctly.
-        if (result != null)
-        {
-            result.Permissions.Should().NotBeNull();
-            result.Permissions!.IsImmutable.Should().BeTrue();
-            result.Permissions.CanUpdate.Should().BeFalse();
-            result.Permissions.CanDelete.Should().BeFalse();
-        }
-        // If null, the test still passes - immutability blocking is verified by other tests above
+        // Assert
+        result.Should().NotBeNull();
+        result!.Permissions.Should().NotBeNull();
+        result.Permissions!.IsImmutable.Should().BeTrue();
+        result.Permissions.CanUpdate.Should().BeFalse();
+        result.Permissions.CanDelete.Should().BeFalse();
     }
 
     [Fact]
@@ -528,13 +446,11 @@ public class OpportunityImmutabilityTests : IDisposable
         var result = await _manager.GetOpportunityAsync(_testUser, opportunityId);
 
         // Assert
-        if (result != null)
-        {
-            result.Permissions.Should().NotBeNull();
-            result.Permissions!.IsImmutable.Should().BeTrue();
-            result.Permissions.CanUpdate.Should().BeFalse();
-            result.Permissions.CanDelete.Should().BeFalse();
-        }
+        result.Should().NotBeNull();
+        result!.Permissions.Should().NotBeNull();
+        result.Permissions!.IsImmutable.Should().BeTrue();
+        result.Permissions.CanUpdate.Should().BeFalse();
+        result.Permissions.CanDelete.Should().BeFalse();
     }
 
     [Fact]
@@ -560,12 +476,11 @@ public class OpportunityImmutabilityTests : IDisposable
         // Act
         var result = await _manager.GetOpportunityAsync(_testUser, opportunityId);
 
-        // Assert - On InMemory DB the base GetOpportunityAsync may return null due to complex includes.
-        if (result != null)
-        {
-            result.Permissions.Should().NotBeNull();
-            (result.Permissions!.IsImmutable == null || result.Permissions.IsImmutable == false).Should().BeTrue();
-        }
+        // Assert
+        result.Should().NotBeNull();
+        result!.Permissions.Should().NotBeNull();
+        // IsImmutable should be null or false for editable opportunities
+        (result.Permissions!.IsImmutable == null || result.Permissions.IsImmutable == false).Should().BeTrue();
     }
 
     #endregion
@@ -644,8 +559,7 @@ public class OpportunityImmutabilityTests : IDisposable
 
     public void Dispose()
     {
-        try { _context.Database.EnsureDeleted(); }
-        catch { /* SQLite connection may already be closed during concurrent test runs */ }
+        _context.Database.EnsureDeleted();
         _context.Dispose();
     }
 }

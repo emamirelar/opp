@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ListviewCardComponent } from './listview-card.component';
 import { TranslateModule } from '@ngx-translate/core';
-import { createMockTranslateService, createMockDialogService, createMockMarkdownService } from '@shared/testing/test-utilities';
 import { SimpleChanges } from '@angular/core';
 
 describe('ListviewCardComponent', () => {

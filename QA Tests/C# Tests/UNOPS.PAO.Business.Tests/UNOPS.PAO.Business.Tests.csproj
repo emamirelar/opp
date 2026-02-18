@@ -7,19 +7,6 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
-  <!-- xUnit runner configuration for parallel test execution -->
-  <ItemGroup>
-    <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="appsettings.Testing.json" CopyToOutputDirectory="PreserveNewest" Condition="Exists('appsettings.Testing.json')" />
-    <Content Include="appsettings.Testing.json.example" CopyToOutputDirectory="PreserveNewest" Link="appsettings.Testing.json" Condition="!Exists('appsettings.Testing.json')" />
-  </ItemGroup>
-
-  <!-- CI fallback: copy .example file when appsettings.Testing.json is gitignored/absent -->
-  <Target Name="CopyTestingSettingsFromExample" BeforeTargets="BeforeBuild" Condition="!Exists('appsettings.Testing.json')">
-    <Message Importance="high" Text="appsettings.Testing.json not found — copying from appsettings.Testing.json.example" />
-    <Copy SourceFiles="appsettings.Testing.json.example" DestinationFiles="appsettings.Testing.json" />
-  </Target>
-
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -31,10 +18,8 @@
     </PackageReference>
     <PackageReference Include="FluentAssertions" Version="6.12.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="Moq" Version="4.20.70" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.2" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
   </ItemGroup>
@@ -52,8 +37,6 @@
     <None Include="Authorization\RolePermissionComprehensiveTests.cs" />
     <Compile Remove="Performance\RateLimitingTests.cs" />
     <None Include="Performance\RateLimitingTests.cs" />
-    <!-- DEF-007 RESOLVED (2026-02-07): IntegrationTests now builds. Re-enabling 5 excluded files. -->
-    <!-- If these fail, re-exclude and investigate individually. -->
   </ItemGroup>
 
   <ItemGroup>
@@ -62,8 +45,6 @@
     <ProjectReference Include="..\..\..\UNOPS.PAO.UNOPSBusiness\UNOPS.PAO.UNOPSBusiness.csproj" />
     <ProjectReference Include="..\..\..\UNOPS.PAO.Domain\UNOPS.PAO.Domain.csproj" />
     <ProjectReference Include="..\..\..\UNOPS.PAO.DataAccess\UNOPS.PAO.DataAccess.csproj" />
-    <!-- DEF-007 RESOLVED: IntegrationTests project now builds successfully -->
-    <ProjectReference Include="..\..\Integration Tests\UNOPS.PAO.IntegrationTests.csproj" />
   </ItemGroup>
 
 </Project>

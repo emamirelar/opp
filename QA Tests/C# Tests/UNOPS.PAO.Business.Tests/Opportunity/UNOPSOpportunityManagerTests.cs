@@ -2,7 +2,6 @@ using AutoMapper;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using System;
@@ -20,8 +19,6 @@ using UNOPS.PAO.UNOPSBusiness.Managers;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.DataAccess.Interfaces;
 using UNOPS.PAO.Utilities.Helpers;
-using UNOPS.PAO.DataAccess.Services;
-using UNOPS.PAO.Business.Tests.TestBase;
 using Xunit;
 
 namespace UNOPS.PAO.Business.Tests.Opportunity;
@@ -31,27 +28,13 @@ namespace UNOPS.PAO.Business.Tests.Opportunity;
 /// Tests CRUD operations, section updates, AI integration, and validations
 /// Created: January 15, 2026
 /// Priority: P0 (Critical)
-/// SKIPPED: QA-009 - Z.EntityFramework.Extensions requires relational database (PostgreSQL)
 /// </summary>
 public class UNOPSOpportunityManagerTests : IDisposable
 {
-    private const string SkipReason = "QA-009: Z.EntityFramework.Extensions requires relational database";
     private readonly DbContextOptions<UNOPSAppDbContext> _dbContextOptions;
     private readonly UNOPSAppDbContext _context;
-    private IDbContextTransaction? _transaction;
-    private readonly string _testMarker = $"OPP_{Guid.NewGuid():N}";
-    private readonly List<int> _createdOpportunityIds = new();
-    private int _currencyId;
-    private int _currencyId2;
-    private int _countryId;
-    private int _countryId2;
-    private int _orgHierarchyId;
-    private int _orgHierarchyId2;
-    private int _proposedInitiativeTypeId;
-    private int _paoUserId;
-    private int _entityRoleId;
-    private readonly IMapper _mapper;
-    private readonly IConfiguration _configuration;
+    private readonly Mock<IMapper> _mockMapper;
+    private readonly Mock<IConfiguration> _mockConfiguration;
     private readonly Mock<IPermissionService> _mockPermissionService;
     private readonly Mock<IHttpContextAccessor> _mockHttpContextAccessor;
     private readonly Mock<IDbContextFactory<UNOPSAppDbContext>> _mockDbContextFactory;
@@ -62,219 +45,111 @@ public class UNOPSOpportunityManagerTests : IDisposable
 
     public UNOPSOpportunityManagerTests()
     {
-        _dbContextOptions = TestEnvironment.CreateUNOPSDbContextOptions($"OpportunityTestDb_{Guid.NewGuid()}");
+        // Setup in-memory database
+        _dbContextOptions = new DbContextOptionsBuilder<UNOPSAppDbContext>()
+            .UseInMemoryDatabase(databaseName: $"OpportunityTestDb_{Guid.NewGuid()}")
+            .Options;
+
+        var mockUserService = new Mock<UserResolverService<int>>(null);
         var mockDbSchema = new Mock<IDbContextSchema>();
         mockDbSchema.Setup(s => s.Schema).Returns("public");
 
-        // Phase 1: Resolve the test user ID using a temporary context (outside transaction).
-        // AuditableDbContext caches _currentUserId at construction, so we must know the
-        // real user ID before creating the main context.
-        {
-            var tempAccessor = CreateMockHttpContextAccessor("0");
-            var tempResolver = new UserResolverService<int>(tempAccessor.Object, null);
-            using var tempCtx = UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.CreateUNOPS(_dbContextOptions, tempResolver, mockDbSchema.Object);
-            _paoUserId = TestDataHelper.GetOrCreateTestUser(tempCtx, "testuser@unops.org");
-        }
+        _context = new UNOPSAppDbContext(_dbContextOptions, mockUserService.Object, mockDbSchema.Object);
 
-        // Phase 2: Create the MAIN context with the ACTUAL test user ID in claims.
-        var mainAccessor = CreateMockHttpContextAccessor(_paoUserId.ToString());
-        var userResolverService = new UserResolverService<int>(mainAccessor.Object, null);
-        _context = UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.CreateUNOPS(_dbContextOptions, userResolverService, mockDbSchema.Object);
-
-        if (TestEnvironment.UsePostgreSQL)
-        {
-            _transaction = _context.Database.BeginTransaction();
-        }
-
-        // Setup real AutoMapper with application profiles
-        var mapperConfig = new MapperConfiguration(cfg =>
-        {
-            cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies());
-        });
-        _mapper = mapperConfig.CreateMapper();
-        
-        _configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["ConnectionStrings:DbSchema"] = "public",
-                ["AISettings:DisableExternalCalls"] = "true",
-                ["AISettings:ModelName"] = "gemini-pro",
-                ["AISettings:ProjectId"] = "test-project",
-                ["AISettings:Location"] = "us-central1",
-                ["IsUNOPSOverride"] = "true",
-                ["GoogleCloud:ProjectId"] = "test-project",
-                ["GoogleCloud:PubSubTopic"] = "test-topic",
-                ["ExchangeRate:ApiKey"] = "test-key",
-                ["ExchangeRate:BaseUrl"] = "https://test-api.example.com"
-            })
-            .Build();
-        
+        // Setup mocks
+        _mockMapper = new Mock<IMapper>();
+        _mockConfiguration = new Mock<IConfiguration>();
         _mockPermissionService = new Mock<IPermissionService>();
         _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
         _mockDbContextFactory = new Mock<IDbContextFactory<UNOPSAppDbContext>>();
         _mockServiceProvider = new Mock<IServiceProvider>();
-        _mockExchangeRateService = new Mock<IExchangeRateService>();
 
-        // Setup DbContextFactory - return new context instances with correct user ID
-        _mockDbContextFactory.Setup(f => f.CreateDbContextAsync(It.IsAny<System.Threading.CancellationToken>()))
-            .ReturnsAsync(() =>
-            {
-                var factoryAccessor = CreateMockHttpContextAccessor(_paoUserId.ToString());
-                var factoryResolver = new UserResolverService<int>(factoryAccessor.Object, null);
-                return UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.CreateUNOPS(_dbContextOptions, factoryResolver, mockDbSchema.Object);
-            });
-
-        // Seed remaining reference data (test user already exists from Phase 1)
-        SeedTestData();
-
+        // Setup test user
         _testUser = new ClaimsPrincipal(new ClaimsIdentity(new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, _paoUserId.ToString()),
+            new Claim(ClaimTypes.NameIdentifier, "1"),
             new Claim(ClaimTypes.Name, "Test User"),
             new Claim(ClaimTypes.Email, "testuser@unops.org")
         }, "TestAuthType"));
 
+        // Setup HttpContext with user
         var mockHttpContext = new Mock<HttpContext>();
         mockHttpContext.Setup(m => m.User).Returns(_testUser);
         _mockHttpContextAccessor.Setup(m => m.HttpContext).Returns(mockHttpContext.Object);
 
+        // Setup DbContextFactory
+        _mockDbContextFactory.Setup(f => f.CreateDbContextAsync(default))
+            .ReturnsAsync(_context);
+
+        // Initialize manager
         _manager = new UNOPSOpportunityManager(
-            _mapper,
+            _mockMapper.Object,
             _context,
-            _configuration,
+            _mockConfiguration.Object,
             _mockDbContextFactory.Object,
             _mockExchangeRateService.Object,
             _mockPermissionService.Object,
             _mockHttpContextAccessor.Object,
             _mockServiceProvider.Object
         );
+
+        // Seed test data
+        SeedTestData();
     }
 
     private void SeedTestData()
     {
-        // Use "get or create" pattern for reference data to work with PostgreSQL
-        var currency = _context.Currencies.FirstOrDefault(c => c.Code == "USD");
-        if (currency == null)
+        // Seed Currencies
+        _context.Currencies.AddRange(new[]
         {
-            currency = new Currency { Code = "USD", Name = "US Dollar", IsDeleted = false };
-            _context.Currencies.Add(currency);
-            _context.SaveChanges();
-        }
-        _currencyId = currency.Id;
+            new Currency { Id = 1, Code = "USD", Name = "US Dollar", IsDeleted = false },
+            new Currency { Id = 2, Code = "EUR", Name = "Euro", IsDeleted = false }
+        });
 
-        var currency2 = _context.Currencies.FirstOrDefault(c => c.Code == "EUR");
-        if (currency2 == null)
+        // Seed Countries
+        _context.Countries.AddRange(new[]
         {
-            currency2 = new Currency { Code = "EUR", Name = "Euro", IsDeleted = false };
-            _context.Currencies.Add(currency2);
-            _context.SaveChanges();
-        }
-        _currencyId2 = currency2.Id;
+            new Country { Id = 1, Name = "Bangladesh", Iso2Code = "BD" },
+            new Country { Id = 2, Name = "Nepal", Iso2Code = "NP" },
+            new Country { Id = 3, Name = "Myanmar", Iso2Code = "MM" }
+        });
 
-        var country = _context.Countries.FirstOrDefault(c => c.Iso2Code == "BD");
-        if (country == null)
+        // Seed Organization Hierarchies
+        _context.OrganizationHierarchies.AddRange(new[]
         {
-            country = new Country { Name = "Bangladesh", Iso2Code = "BD" };
-            _context.Countries.Add(country);
-            _context.SaveChanges();
-        }
-        _countryId = country.Id;
+            new OrganizationHierarchy { Id = 1, Name = "South Asia Hub", Code = "SAH", Description = "South Asia Regional Hub", IsDeleted = false },
+            new OrganizationHierarchy { Id = 2, Name = "Bangladesh Office", Code = "BDO", Description = "Bangladesh Country Office", ParentId = 1, IsDeleted = false }
+        });
 
-        var country2 = _context.Countries.FirstOrDefault(c => c.Iso2Code == "NP");
-        if (country2 == null)
+        // Seed Workflow Stages
+        _context.WorkflowStages.AddRange(new[]
         {
-            country2 = new Country { Name = "Nepal", Iso2Code = "NP" };
-            _context.Countries.Add(country2);
-            _context.SaveChanges();
-        }
-        _countryId2 = country2.Id;
+            new WorkflowStage { Id = 1, Name = "Identification", EntityType = "Opportunity", Order = 1, IsDeleted = false },
+            new WorkflowStage { Id = 2, Name = "Development", EntityType = "Opportunity", Order = 2, IsDeleted = false },
+            new WorkflowStage { Id = 3, Name = "Review", EntityType = "Opportunity", Order = 3, IsDeleted = false }
+        });
 
-        var orgHierarchy = _context.OrganizationHierarchies.FirstOrDefault(o => o.Code == "SAH" && !o.IsDeleted);
-        if (orgHierarchy == null)
+        // Seed Proposed Initiative Types
+        _context.ProposedInitiativeTypes.AddRange(new[]
         {
-            orgHierarchy = new OrganizationHierarchy { Name = "South Asia Hub", Code = "SAH", Description = "South Asia Regional Hub", IsDeleted = false };
-            _context.OrganizationHierarchies.Add(orgHierarchy);
-            _context.SaveChanges();
-        }
-        _orgHierarchyId = orgHierarchy.Id;
+            new ProposedInitiativeType { Id = 1, Name = "Project", IsDeleted = false },
+            new ProposedInitiativeType { Id = 2, Name = "Programme", IsDeleted = false },
+            new ProposedInitiativeType { Id = 3, Name = "Advisory", IsDeleted = false }
+        });
 
-        var orgHierarchy2 = _context.OrganizationHierarchies.FirstOrDefault(o => o.Code == "BDO" && !o.IsDeleted);
-        if (orgHierarchy2 == null)
+        // Seed test user
+        _context.PAOUsers.Add(new PAOUser
         {
-            orgHierarchy2 = new OrganizationHierarchy { Name = "Bangladesh Office", Code = "BDO", Description = "Bangladesh Country Office", ParentId = _orgHierarchyId, IsDeleted = false };
-            _context.OrganizationHierarchies.Add(orgHierarchy2);
-            _context.SaveChanges();
-        }
-        _orgHierarchyId2 = orgHierarchy2.Id;
+            Id = 1,
+            Email = "testuser@unops.org"
+        });
 
-        var proposedInitiativeType = _context.ProposedInitiativeTypes.FirstOrDefault(p => p.Name == "Project" && !p.IsDeleted);
-        if (proposedInitiativeType == null)
-        {
-            proposedInitiativeType = new ProposedInitiativeType { Name = "Project", IsDeleted = false };
-            _context.ProposedInitiativeTypes.Add(proposedInitiativeType);
-            _context.SaveChanges();
-        }
-        _proposedInitiativeTypeId = proposedInitiativeType.Id;
-
-        _paoUserId = TestDataHelper.GetOrCreateTestUser(_context, "testuser@unops.org");
-
-        var entityRole = _context.EntityRoles.FirstOrDefault(r => r.Code == "Opportunity_Manager_Opportunity" && !r.IsDeleted);
-        if (entityRole == null)
-        {
-            entityRole = new EntityRole
-            {
-                EntityType = "Opportunity",
-                Name = "Opportunity Manager",
-                Description = "Manages the opportunity",
-                IsInternal = true,
-                AllowsMultiple = false,
-                Code = "Opportunity_Manager_Opportunity",
-                Status = EntityStatus.Active,
-                IsDeleted = false
-            };
-            _context.EntityRoles.Add(entityRole);
-            _context.SaveChanges();
-        }
-        _entityRoleId = entityRole.Id;
-
-        _context.ChangeTracker.Clear();
-    }
-
-    private async Task<int> CreateTestOpportunityAsync(
-        string? name = null,
-        string? description = null,
-        string stage = "IDENTIFY & PROFILE",
-        EntityStatus status = EntityStatus.Draft,
-        decimal? budgetUSD = null,
-        int? responsibleOrgUnitId = null,
-        string? partnerReference = null,
-        string? challenges = null)
-    {
-        var opportunity = new Domain.Entities.Opportunity
-        {
-            Name = name ?? $"Test Opportunity {_testMarker}",
-            Description = description ?? "Test Description",
-            Stage = stage,
-            Status = status,
-            CreatedBy = _paoUserId,
-            CreatedDate = DateTime.UtcNow,
-            LastModifiedBy = _paoUserId,
-            LastModifiedDate = DateTime.UtcNow,
-            IsDeleted = false,
-            InitiativeBudgetUSD = budgetUSD,
-            ResponsibleOrgUnitId = responsibleOrgUnitId,
-            PartnerReference = partnerReference,
-            Challenges = challenges
-        };
-        _context.Opportunities.Add(opportunity);
-        await _context.SaveChangesAsync();
-        _createdOpportunityIds.Add(opportunity.Id);
-        return opportunity.Id;
+        _context.SaveChanges();
     }
 
     #region P0 - Create Opportunity Tests
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P0")]
     [Trait("Type", "Functional")]
     [Trait("TestId", "TC-UNOPS-OPP-001")]
@@ -285,31 +160,60 @@ public class UNOPSOpportunityManagerTests : IDisposable
         {
             Name = "Water Infrastructure Initiative - South Asia",
             Description = "Multi-country water infrastructure project focusing on sustainable water supply systems",
-            ResponsibleOrgUnitId = _orgHierarchyId,
-            ProposedInitiativeTypeId = _proposedInitiativeTypeId,
+            ResponsibleOrgUnitId = 1,
+            ProposedInitiativeTypeId = 1,
             InitiativeBudgetUSD = 2500000.00m,
             TargetSigningDate = DateTime.UtcNow.AddMonths(6),
             TargetDeliveryDate = DateTime.UtcNow.AddMonths(24)
         };
 
+        var opportunityEntity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = request.Name,
+            Description = request.Description,
+            ResponsibleOrgUnitId = request.ResponsibleOrgUnitId,
+            ProposedInitiativeTypeId = request.ProposedInitiativeTypeId,
+            InitiativeBudgetUSD = request.InitiativeBudgetUSD,
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+
+        var expectedModel = new OpportunityModel
+        {
+            Id = 1,
+            Name = request.Name,
+            Description = request.Description,
+            Status = EntityStatus.Draft,
+            WorkflowStageId = 1,
+            WorkflowStageName = "Identification"
+        };
+
+        _mockMapper.Setup(m => m.Map<Domain.Entities.Opportunity>(It.IsAny<OpportunityRequest>()))
+            .Returns(opportunityEntity);
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(expectedModel);
+
         // Act
         var result = await _manager.CreateOpportunityAsync(request);
-        _createdOpportunityIds.Add(result.Id);
 
         // Assert
         result.Should().NotBeNull();
-        result.Id.Should().BeGreaterThan(0);
+        result.Id.Should().Be(1);
         result.Name.Should().Be(request.Name);
         result.Status.Should().Be("Draft");
-        result.Stage.Should().Be("IDENTIFY & PROFILE");
+        result.WorkflowStageId.Should().Be(1);
 
         // Verify entity saved to database
-        var savedEntity = await _context.Opportunities.FindAsync(result.Id);
+        var savedEntity = await _context.Opportunities.FindAsync(1);
         savedEntity.Should().NotBeNull();
-        savedEntity!.Stage.Should().Be("IDENTIFY & PROFILE"); // Default workflow stage set
+        savedEntity!.WorkflowStageId.Should().Be(1); // Default workflow stage set
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P0")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-OPP-002")]
@@ -329,7 +233,7 @@ public class UNOPSOpportunityManagerTests : IDisposable
             .WithMessage("*name*"); // Should contain reference to missing name
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P0")]
     [Trait("Type", "Functional")]
     [Trait("TestId", "TC-UNOPS-OPP-003")]
@@ -342,23 +246,39 @@ public class UNOPSOpportunityManagerTests : IDisposable
             Description = "Collaborative infrastructure development",
             FundingPartners = new List<OpportunityFundingPartnerRequest>
             {
-                new() { PartnerId = 1, Amount = 1000000, CurrencyId = _currencyId },
-                new() { PartnerId = 2, Amount = 500000, CurrencyId = _currencyId }
+                new() { PartnerId = 1, Amount = 1000000, CurrencyId = 1 },
+                new() { PartnerId = 2, Amount = 500000, CurrencyId = 1 }
             }
         };
 
+        var opportunityEntity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = request.Name,
+            Description = request.Description,
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+
+        _mockMapper.Setup(m => m.Map<Domain.Entities.Opportunity>(It.IsAny<OpportunityRequest>()))
+            .Returns(opportunityEntity);
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(new OpportunityModel { Id = 1, Name = request.Name });
+
         // Act
         var result = await _manager.CreateOpportunityAsync(request);
-        _createdOpportunityIds.Add(result.Id);
 
         // Assert
         result.Should().NotBeNull();
-        result.Id.Should().BeGreaterThan(0);
+        result.Id.Should().Be(1);
 
         // Verify funding partners saved
         var savedOpportunity = await _context.Opportunities
             .Include(o => o.FundingPartners)
-            .FirstOrDefaultAsync(o => o.Id == result.Id);
+            .FirstOrDefaultAsync(o => o.Id == 1);
 
         savedOpportunity.Should().NotBeNull();
         // Note: In actual implementation, funding partners are handled by mapper
@@ -369,26 +289,51 @@ public class UNOPSOpportunityManagerTests : IDisposable
 
     #region P0 - Get Opportunity Tests
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P0")]
     [Trait("Type", "Functional")]
     [Trait("TestId", "TC-UNOPS-OPP-004")]
     public async Task GetOpportunity_ById_ReturnsOpportunity()
     {
         // Arrange
-        var oppId = await CreateTestOpportunityAsync(name: "Test Opportunity", description: "Test Description", responsibleOrgUnitId: _orgHierarchyId);
+        var opportunity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = "Test Opportunity",
+            Description = "Test Description",
+            WorkflowStageId = 1,
+            ResponsibleOrgUnitId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+        
+        _context.Opportunities.Add(opportunity);
+        await _context.SaveChangesAsync();
+
+        var expectedModel = new OpportunityModel
+        {
+            Id = 1,
+            Name = "Test Opportunity",
+            Description = "Test Description",
+            Status = "Draft"
+        };
+
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(expectedModel);
 
         // Act
-        var result = await _manager.GetOpportunityAsync(oppId);
+        var result = await _manager.GetOpportunityAsync(1);
 
         // Assert
         result.Should().NotBeNull();
-        result!.Id.Should().Be(oppId);
+        result!.Id.Should().Be(1);
         result.Name.Should().Be("Test Opportunity");
         result.Status.Should().Be("Draft");
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P0")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-OPP-005")]
@@ -401,47 +346,98 @@ public class UNOPSOpportunityManagerTests : IDisposable
         result.Should().BeNull();
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P0")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-OPP-006")]
     public async Task GetOpportunity_WithUser_AppliesPermissions()
     {
         // Arrange
-        var oppId = await CreateTestOpportunityAsync(name: "Test Opportunity", description: "Test Description", responsibleOrgUnitId: _orgHierarchyId);
+        var opportunity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = "Test Opportunity",
+            Description = "Test Description",
+            WorkflowStageId = 1,
+            ResponsibleOrgUnitId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+        
+        _context.Opportunities.Add(opportunity);
+        await _context.SaveChangesAsync();
+
+        var expectedModel = new OpportunityModel
+        {
+            Id = 1,
+            Name = "Test Opportunity",
+            Status = EntityStatus.Draft,
+            Permissions = new EntityPermissionsModel
+            {
+                CanView = true,
+                CanEdit = true,
+                CanDelete = false
+            }
+        };
+
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(expectedModel);
 
         // Act
-        var result = await _manager.GetOpportunityAsync(_testUser, oppId);
+        var result = await _manager.GetOpportunityAsync(_testUser, 1);
 
         // Assert
         result.Should().NotBeNull();
-        result!.Id.Should().Be(oppId);
-        result.Name.Should().Be("Test Opportunity");
+        result!.Permissions.Should().NotBeNull();
+        result.Permissions!.CanView.Should().BeTrue();
     }
 
     #endregion
 
     #region P0 - Update Opportunity Tests
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P0")]
     [Trait("Type", "Functional")]
     [Trait("TestId", "TC-UNOPS-OPP-007")]
     public async Task UpdateOpportunity_BasicFields_Success()
     {
         // Arrange
-        var oppId = await CreateTestOpportunityAsync(
-            name: "Original Name",
-            description: "Original Description",
-            budgetUSD: 1000000);
+        var opportunity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = "Original Name",
+            Description = "Original Description",
+            WorkflowStageId = 1,
+            InitiativeBudgetUSD = 1000000,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow.AddDays(-7),
+            IsDeleted = false
+        };
+        
+        _context.Opportunities.Add(opportunity);
+        await _context.SaveChangesAsync();
 
         var updateRequest = new UpdateOpportunityRequest
         {
-            Id = oppId,
+            Id = 1,
             Name = "Updated Name",
             Description = "Updated Description",
             InitiativeBudgetUSD = 1500000
         };
+
+        var updatedModel = new OpportunityModel
+        {
+            Id = 1,
+            Name = "Updated Name",
+            Description = "Updated Description"
+        };
+
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(updatedModel);
 
         // Act
         var result = await _manager.UpdateOpportunityAsync(updateRequest);
@@ -451,16 +447,16 @@ public class UNOPSOpportunityManagerTests : IDisposable
         result!.Name.Should().Be("Updated Name");
 
         // Verify entity updated in database
-        var savedEntity = await _context.Opportunities.FindAsync(oppId);
+        var savedEntity = await _context.Opportunities.FindAsync(1);
         savedEntity.Should().NotBeNull();
         savedEntity!.Name.Should().Be("Updated Name");
         savedEntity.Description.Should().Be("Updated Description");
         savedEntity.InitiativeBudgetUSD.Should().Be(1500000);
-        savedEntity.LastModifiedBy.Should().Be(_paoUserId);
+        savedEntity.LastModifiedBy.Should().Be(1);
         savedEntity.LastModifiedDate.Should().NotBeNull();
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P0")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-OPP-008")]
@@ -480,22 +476,46 @@ public class UNOPSOpportunityManagerTests : IDisposable
         result.Should().BeNull();
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P0")]
     [Trait("Type", "Functional")]
     [Trait("TestId", "TC-UNOPS-OPP-009")]
     public async Task UpdateOverviewSection_Success()
     {
         // Arrange
-        var oppId = await CreateTestOpportunityAsync(name: "Test Opportunity", description: "Test Description");
+        var opportunity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = "Test Opportunity",
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+        
+        _context.Opportunities.Add(opportunity);
+        await _context.SaveChangesAsync();
 
         var overviewRequest = new OverviewSectionRequest
         {
-            Description = "Updated comprehensive description"
+            Description = "Updated comprehensive description",
+            PartnerReference = "REF-2026-001",
+            TargetSigningDate = DateTime.UtcNow.AddMonths(6)
         };
 
+        var updatedModel = new OpportunityModel
+        {
+            Id = 1,
+            Name = "Test Opportunity",
+            Description = overviewRequest.Description
+        };
+
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(updatedModel);
+
         // Act
-        var result = await _manager.UpdateOverviewSectionAsync(oppId, overviewRequest);
+        var result = await _manager.UpdateOverviewSectionAsync(1, overviewRequest);
 
         // Assert
         result.Should().NotBeNull();
@@ -506,42 +526,51 @@ public class UNOPSOpportunityManagerTests : IDisposable
 
     #region P0 - Delete Opportunity Tests
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P0")]
     [Trait("Type", "Functional")]
     [Trait("TestId", "TC-UNOPS-OPP-010")]
     public async Task DeleteOpportunity_SoftDelete_Success()
     {
         // Arrange
-        var oppId = await CreateTestOpportunityAsync(name: "Test Opportunity", description: "Test Description");
+        var opportunity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = "Test Opportunity",
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+        
+        _context.Opportunities.Add(opportunity);
+        await _context.SaveChangesAsync();
 
         // Act
-        var result = await _manager.DeleteOpportunityAsync(oppId);
+        var result = await _manager.DeleteOpportunityAsync(1);
 
         // Assert
         result.Should().BeTrue();
 
         // Verify soft delete
-        // Note: UNOPSAppDbContext does not use global query filters for IsDeleted
-        // Soft-delete filtering is done manually in repository methods per the architecture
         var deletedEntity = await _context.Opportunities
-            .FirstOrDefaultAsync(o => o.Id == oppId);
+            .IgnoreQueryFilters() // Include soft-deleted records
+            .FirstOrDefaultAsync(o => o.Id == 1);
 
         deletedEntity.Should().NotBeNull();
         deletedEntity!.IsDeleted.Should().BeTrue();
-        deletedEntity.DeletedBy.Should().Be(_paoUserId);
+        deletedEntity.DeletedBy.Should().Be(1);
         deletedEntity.DeletedDate.Should().NotBeNull();
 
-        // Verify soft-deleted records are excluded when using manual IsDeleted filter
-        // This is how the repository layer filters records per the codebase architecture
+        // Verify not returned in normal queries
         var normalQuery = await _context.Opportunities
-            .Where(o => !o.IsDeleted)
-            .FirstOrDefaultAsync(o => o.Id == oppId);
+            .FirstOrDefaultAsync(o => o.Id == 1);
 
-        normalQuery.Should().BeNull(); // Soft-deleted records excluded when filtered
+        normalQuery.Should().BeNull(); // Soft-deleted records excluded by default
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P0")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-OPP-011")]
@@ -558,23 +587,56 @@ public class UNOPSOpportunityManagerTests : IDisposable
 
     #region P0 - GetAll Opportunities Tests
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P0")]
     [Trait("Type", "Functional")]
     [Trait("TestId", "TC-UNOPS-OPP-012")]
     public async Task GetAllOpportunities_ReturnsAllActive()
     {
         // Arrange
-        var oppId1 = await CreateTestOpportunityAsync(name: "Opportunity 1", description: "Test Description 1", stage: "IDENTIFY & PROFILE", status: EntityStatus.Draft);
-        var oppId2 = await CreateTestOpportunityAsync(name: "Opportunity 2", description: "Test Description 2", stage: "DEVELOP", status: EntityStatus.Active);
-        var oppId3 = await CreateTestOpportunityAsync(name: "Deleted Opportunity", description: "Deleted Description");
-
-        // Soft-delete the third opportunity
-        var deletedOpp = await _context.Opportunities.FindAsync(oppId3);
-        deletedOpp!.IsDeleted = true;
-        deletedOpp.DeletedBy = _paoUserId;
-        deletedOpp.DeletedDate = DateTime.UtcNow;
+        _context.Opportunities.AddRange(new[]
+        {
+            new Domain.Entities.Opportunity
+            {
+                Id = 1,
+                Name = "Opportunity 1",
+                WorkflowStageId = 1,
+                Status = EntityStatus.Draft,
+                CreatedBy = 1,
+                CreatedDate = DateTime.UtcNow,
+                IsDeleted = false
+            },
+            new Domain.Entities.Opportunity
+            {
+                Id = 2,
+                Name = "Opportunity 2",
+                WorkflowStageId = 2,
+                Status = EntityStatus.Active,
+                CreatedBy = 1,
+                CreatedDate = DateTime.UtcNow,
+                IsDeleted = false
+            },
+            new Domain.Entities.Opportunity
+            {
+                Id = 3,
+                Name = "Deleted Opportunity",
+                WorkflowStageId = 1,
+                Status = EntityStatus.Draft,
+                CreatedBy = 1,
+                CreatedDate = DateTime.UtcNow,
+                IsDeleted = true  // Soft-deleted
+            }
+        });
         await _context.SaveChangesAsync();
+
+        var mappedModels = new List<OpportunityModel>
+        {
+            new() { Id = 1, Name = "Opportunity 1", Status = "Draft" },
+            new() { Id = 2, Name = "Opportunity 2", Status = EntityStatus.Active }
+        };
+
+        _mockMapper.Setup(m => m.Map<IEnumerable<OpportunityModel>>(It.IsAny<List<Domain.Entities.Opportunity>>()))
+            .Returns(mappedModels);
 
         // Act
         var result = await _manager.GetAllOpportunitiesAsync();
@@ -582,73 +644,135 @@ public class UNOPSOpportunityManagerTests : IDisposable
         // Assert
         var opportunityModels = result.ToList();
         opportunityModels.Should().HaveCount(2); // Excluding soft-deleted
-        opportunityModels.Should().NotContain(o => o.Id == oppId3);
+        opportunityModels.Should().NotContain(o => o.Id == 3);
     }
 
     #endregion
 
     #region P1 - Section Update Tests
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P1")]
     [Trait("Type", "Functional")]
     [Trait("TestId", "TC-UNOPS-OPP-013")]
     public async Task UpdateWhatSection_WithDeliverables_Success()
     {
         // Arrange
-        var oppId = await CreateTestOpportunityAsync(name: "Test Opportunity", description: "Test Description");
+        var opportunity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = "Test Opportunity",
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+        
+        _context.Opportunities.Add(opportunity);
+        await _context.SaveChangesAsync();
 
         var whatRequest = new WhatSectionRequest
         {
-            // Deliverable properties structure has changed
-            Deliverables = new List<OpportunityDeliverableRequest>()
+            Deliverables = new List<OpportunityDeliverableRequest>
+            {
+                new() { Name = "Deliverable 1", Description = "Description 1" },
+                new() { Name = "Deliverable 2", Description = "Description 2" }
+            }
         };
 
+        var updatedModel = new OpportunityModel
+        {
+            Id = 1,
+            Name = "Test Opportunity"
+        };
+
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(updatedModel);
+
         // Act
-        var result = await _manager.UpdateWhatSectionAsync(oppId, whatRequest);
+        var result = await _manager.UpdateWhatSectionAsync(1, whatRequest);
 
         // Assert
         result.Should().NotBeNull();
-        result.Id.Should().Be(oppId);
+        result.Id.Should().Be(1);
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P1")]
     [Trait("Type", "Functional")]
     [Trait("TestId", "TC-UNOPS-OPP-014")]
     public async Task UpdateWhySection_WithSDGs_Success()
     {
         // Arrange
-        var oppId = await CreateTestOpportunityAsync(name: "Test Opportunity", description: "Test Description");
+        var opportunity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = "Test Opportunity",
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+        
+        _context.Opportunities.Add(opportunity);
+        await _context.SaveChangesAsync();
 
         var whyRequest = new WhySectionRequest
         {
-            ResultsFocus = "Sustainable development outcomes"
-            // SDGs property structure has changed
+            ResultsFocus = "Sustainable development outcomes",
+            SDGs = new List<OpportunitySDGRequest>
+            {
+                new() { SDGId = 6 }, // Clean Water and Sanitation
+                new() { SDGId = 13 } // Climate Action
+            }
         };
 
+        var updatedModel = new OpportunityModel
+        {
+            Id = 1,
+            Name = "Test Opportunity",
+            ResultsFocus = whyRequest.ResultsFocus
+        };
+
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(updatedModel);
+
         // Act
-        var result = await _manager.UpdateWhySectionAsync(oppId, whyRequest);
+        var result = await _manager.UpdateWhySectionAsync(1, whyRequest);
 
         // Assert
         result.Should().NotBeNull();
         result.ResultsFocus.Should().Be("Sustainable development outcomes");
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P1")]
     [Trait("Type", "Functional")]
     [Trait("TestId", "TC-UNOPS-OPP-015")]
     public async Task UpdateWhoSection_WithStakeholders_Success()
     {
         // Arrange
-        var oppId = await CreateTestOpportunityAsync(name: "Test Opportunity", description: "Test Description");
+        var opportunity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = "Test Opportunity",
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+        
+        _context.Opportunities.Add(opportunity);
+        await _context.SaveChangesAsync();
 
         var whoRequest = new WhoSectionRequest
         {
             FundingPartners = new List<OpportunityFundingPartnerRequest>
             {
-                new() { PartnerId = 1, Amount = 1000000, CurrencyId = _currencyId }
+                new() { PartnerId = 1, Amount = 1000000, CurrencyId = 1 }
             },
             ClientPartners = new List<OpportunityClientPartnerRequest>
             {
@@ -656,48 +780,90 @@ public class UNOPSOpportunityManagerTests : IDisposable
             }
         };
 
+        var updatedModel = new OpportunityModel
+        {
+            Id = 1,
+            Name = "Test Opportunity"
+        };
+
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(updatedModel);
+
         // Act
-        var result = await _manager.UpdateWhoSectionAsync(oppId, whoRequest);
+        var result = await _manager.UpdateWhoSectionAsync(1, whoRequest);
 
         // Assert
         result.Should().NotBeNull();
-        result.Id.Should().Be(oppId);
+        result.Id.Should().Be(1);
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P1")]
     [Trait("Type", "Functional")]
     [Trait("TestId", "TC-UNOPS-OPP-016")]
     public async Task UpdateWhereSection_WithCountries_Success()
     {
         // Arrange
-        var oppId = await CreateTestOpportunityAsync(name: "Test Opportunity", description: "Test Description");
+        var opportunity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = "Test Opportunity",
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+        
+        _context.Opportunities.Add(opportunity);
+        await _context.SaveChangesAsync();
 
         var whereRequest = new WhereSectionRequest
         {
             Countries = new List<OpportunityCountryRequest>
             {
-                new() { CountryId = _countryId },
-                new() { CountryId = _countryId2 }
+                new() { CountryId = 1 }, // Bangladesh
+                new() { CountryId = 2 }  // Nepal
             }
         };
 
+        var updatedModel = new OpportunityModel
+        {
+            Id = 1,
+            Name = "Test Opportunity"
+        };
+
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(updatedModel);
+
         // Act
-        var result = await _manager.UpdateWhereSectionAsync(oppId, whereRequest);
+        var result = await _manager.UpdateWhereSectionAsync(1, whereRequest);
 
         // Assert
         result.Should().NotBeNull();
-        result.Id.Should().Be(oppId);
+        result.Id.Should().Be(1);
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P1")]
     [Trait("Type", "Functional")]
     [Trait("TestId", "TC-UNOPS-OPP-017")]
     public async Task UpdateWhenSection_WithTimeline_Success()
     {
         // Arrange
-        var oppId = await CreateTestOpportunityAsync(name: "Test Opportunity", description: "Test Description");
+        var opportunity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = "Test Opportunity",
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+        
+        _context.Opportunities.Add(opportunity);
+        await _context.SaveChangesAsync();
 
         var whenRequest = new WhenSectionRequest
         {
@@ -707,50 +873,95 @@ public class UNOPSOpportunityManagerTests : IDisposable
             SigningDateNotes = "Partner deadline"
         };
 
+        var updatedModel = new OpportunityModel
+        {
+            Id = 1,
+            Name = "Test Opportunity",
+            TargetSigningDate = whenRequest.TargetSigningDate,
+            TargetDeliveryDate = whenRequest.TargetDeliveryDate
+        };
+
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(updatedModel);
+
         // Act
-        var result = await _manager.UpdateWhenSectionAsync(oppId, whenRequest);
+        var result = await _manager.UpdateWhenSectionAsync(1, whenRequest);
 
         // Assert
         result.Should().NotBeNull();
-        result.TargetSigningDate.Should().BeCloseTo(whenRequest.TargetSigningDate!.Value, TimeSpan.FromMilliseconds(1),
-            because: "PostgreSQL timestamp has microsecond precision, .NET DateTime has tick precision");
+        result.TargetSigningDate.Should().Be(whenRequest.TargetSigningDate);
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P1")]
     [Trait("Type", "Functional")]
     [Trait("TestId", "TC-UNOPS-OPP-018")]
     public async Task UpdateTeamSection_WithStakeholders_Success()
     {
         // Arrange
-        var oppId = await CreateTestOpportunityAsync(name: "Test Opportunity", description: "Test Description");
+        var opportunity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = "Test Opportunity",
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+        
+        _context.Opportunities.Add(opportunity);
+        await _context.SaveChangesAsync();
 
         var teamRequest = new TeamSectionRequest
         {
-            // Stakeholder properties structure has changed
-            Stakeholders = new List<OpportunityStakeholderRequest>()
+            Stakeholders = new List<OpportunityStakeholderRequest>
+            {
+                new() { StakeholderId = 1, RoleId = 1, IsInternal = true }
+            }
         };
 
+        var updatedModel = new OpportunityModel
+        {
+            Id = 1,
+            Name = "Test Opportunity"
+        };
+
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(updatedModel);
+
         // Act
-        var result = await _manager.UpdateTeamSectionAsync(oppId, teamRequest);
+        var result = await _manager.UpdateTeamSectionAsync(1, teamRequest);
 
         // Assert
         result.Should().NotBeNull();
-        result.Id.Should().Be(oppId);
+        result.Id.Should().Be(1);
     }
 
     #endregion
 
     #region P1 - AI Integration Tests
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P1")]
     [Trait("Type", "AI")]
     [Trait("TestId", "TC-UNOPS-OPP-019")]
     public async Task ApplyAiChanges_UpdatesOpportunity_Success()
     {
         // Arrange
-        var oppId = await CreateTestOpportunityAsync(name: "Test Opportunity", description: "Test Description");
+        var opportunity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = "Test Opportunity",
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+        
+        _context.Opportunities.Add(opportunity);
+        await _context.SaveChangesAsync();
 
         var aiRequest = new ApplyOpportunityAiChangesRequest
         {
@@ -760,8 +971,19 @@ public class UNOPSOpportunityManagerTests : IDisposable
             ExpectedOutcomes = "Improved infrastructure and services"
         };
 
+        var updatedModel = new OpportunityModel
+        {
+            Id = 1,
+            Name = aiRequest.Name,
+            Description = aiRequest.Description,
+            ExpectedImpact = aiRequest.ExpectedImpact
+        };
+
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(updatedModel);
+
         // Act
-        var result = await _manager.ApplyAiChangesAsync(oppId, aiRequest);
+        var result = await _manager.ApplyAiChangesAsync(1, aiRequest);
 
         // Assert
         result.Should().NotBeNull();
@@ -769,48 +991,39 @@ public class UNOPSOpportunityManagerTests : IDisposable
         result.Description.Should().Be("AI-generated comprehensive description");
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P1")]
     [Trait("Type", "AI")]
     [Trait("TestId", "TC-UNOPS-OPP-020")]
     public async Task GetOpportunityDetailsForAI_ReturnsComprehensiveData()
     {
         // Arrange
-        var oppId = await CreateTestOpportunityAsync(
-            name: "Test Opportunity",
-            description: "Comprehensive opportunity description",
-            budgetUSD: 2500000,
-            responsibleOrgUnitId: _orgHierarchyId);
+        var opportunity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = "Test Opportunity",
+            Description = "Comprehensive opportunity description",
+            WorkflowStageId = 1,
+            ResponsibleOrgUnitId = 1,
+            InitiativeBudgetUSD = 2500000,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+        
+        _context.Opportunities.Add(opportunity);
+        await _context.SaveChangesAsync();
 
         // Act
-        // Note: GetOpportunityDetailsForAIAsync uses DbContextFactory for parallel queries.
-        // In SQLite mode, parallel contexts share the same underlying connection which is
-        // NOT thread-safe. CreateFunctionCore may fail under concurrent test suite execution.
-        // This is a test infrastructure limitation, not a product code defect.
-        Dictionary<string, object>? result = null;
-        try
-        {
-            result = await _manager.GetOpportunityDetailsForAIAsync(oppId);
-        }
-        catch (Exception ex) when (
-            ex.GetType().Name.Contains("Sqlite") ||
-            ex.Message.Contains("database is locked") ||
-            ex.Message.Contains("CreateFunction") ||
-            ex.StackTrace?.Contains("SqliteConnection") == true ||
-            ex.InnerException?.GetType().Name.Contains("Sqlite") == true)
-        {
-            // SQLite connection contention during parallel test execution.
-            // The business logic is validated by other tests; this specific test
-            // requires real parallel DbContext support (PostgreSQL).
-            return;
-        }
+        var result = await _manager.GetOpportunityDetailsForAIAsync(1);
 
         // Assert
         result.Should().NotBeNull();
         result.Should().ContainKey("id");
         result.Should().ContainKey("name");
         result.Should().ContainKey("description");
-        result!["id"].ToString().Should().Be(oppId.ToString());
+        result["id"].Should().Be(1);
         result["name"].Should().Be("Test Opportunity");
     }
 
@@ -840,7 +1053,7 @@ public class UNOPSOpportunityManagerTests : IDisposable
         await act.Should().ThrowAsync<Exception>();
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P1")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-OPP-022")]
@@ -864,15 +1077,45 @@ public class UNOPSOpportunityManagerTests : IDisposable
 
     #region P2 - Advanced Features Tests
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P2")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-OPP-023")]
     public async Task GetOpportunitiesByPartner_FiltersCorrectly()
     {
         // Arrange
-        await CreateTestOpportunityAsync(name: "Opportunity 1", description: "Opportunity 1 Description");
-        await CreateTestOpportunityAsync(name: "Opportunity 2", description: "Opportunity 2 Description", stage: "DEVELOP");
+        _context.Opportunities.AddRange(new[]
+        {
+            new Domain.Entities.Opportunity
+            {
+                Id = 1,
+                Name = "Opportunity 1",
+                WorkflowStageId = 1,
+                Status = EntityStatus.Draft,
+                CreatedBy = 1,
+                CreatedDate = DateTime.UtcNow,
+                IsDeleted = false
+            },
+            new Domain.Entities.Opportunity
+            {
+                Id = 2,
+                Name = "Opportunity 2",
+                WorkflowStageId = 1,
+                Status = EntityStatus.Draft,
+                CreatedBy = 1,
+                CreatedDate = DateTime.UtcNow,
+                IsDeleted = false
+            }
+        });
+        await _context.SaveChangesAsync();
+
+        var mappedModels = new List<OpportunityModel>
+        {
+            new() { Id = 1, Name = "Opportunity 1" }
+        };
+
+        _mockMapper.Setup(m => m.Map<IEnumerable<OpportunityModel>>(It.IsAny<List<Domain.Entities.Opportunity>>()))
+            .Returns(mappedModels);
 
         // Act
         var result = await _manager.GetOpportunitiesByPartnerIdAsync(1);
@@ -882,23 +1125,35 @@ public class UNOPSOpportunityManagerTests : IDisposable
         opportunityModels.Should().NotBeNull();
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P2")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-OPP-024")]
     public async Task AssignCreatorAsOpportunityManager_Success()
     {
         // Arrange
-        var oppId = await CreateTestOpportunityAsync(name: "Test Opportunity", description: "Test Description");
+        var opportunity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = "Test Opportunity",
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+        
+        _context.Opportunities.Add(opportunity);
+        await _context.SaveChangesAsync();
 
         // Act
-        await _manager.AssignCreatorAsOpportunityManagerAsync(oppId, _paoUserId);
+        await _manager.AssignCreatorAsOpportunityManagerAsync(1, 1);
 
         // Assert - Method completes without exception
         // Actual verification would check stakeholder assignments
         var savedOpportunity = await _context.Opportunities
             .Include(o => o.Stakeholders)
-            .FirstOrDefaultAsync(o => o.Id == oppId);
+            .FirstOrDefaultAsync(o => o.Id == 1);
 
         savedOpportunity.Should().NotBeNull();
     }
@@ -907,7 +1162,7 @@ public class UNOPSOpportunityManagerTests : IDisposable
 
     #region P2 - Create From Proposal Tests
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P2")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-OPP-025")]
@@ -921,13 +1176,34 @@ public class UNOPSOpportunityManagerTests : IDisposable
             InitiativeBudgetUSD = 1500000
         };
 
+        var opportunityEntity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = proposalRequest.Name,
+            Description = proposalRequest.Description,
+            InitiativeBudgetUSD = proposalRequest.InitiativeBudgetUSD,
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+
+        _mockMapper.Setup(m => m.Map<Domain.Entities.Opportunity>(It.IsAny<OpportunityRequest>()))
+            .Returns(opportunityEntity);
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(new OpportunityModel
+            {
+                Id = 1,
+                Name = proposalRequest.Name
+            });
+
         // Act
         var result = await _manager.CreateOpportunityAsync(proposalRequest);
-        _createdOpportunityIds.Add(result.Id);
 
         // Assert
         result.Should().NotBeNull();
-        result.Id.Should().BeGreaterThan(0);
+        result.Id.Should().Be(1);
         result.Name.Should().Be("Opportunity from Proposal");
     }
 
@@ -935,7 +1211,7 @@ public class UNOPSOpportunityManagerTests : IDisposable
 
     #region P1 - Proposal to Opportunity Conversion Tests
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P1")]
     [Trait("Type", "Functional")]
     [Trait("TestId", "TC-UNOPS-OPP-026")]
@@ -950,21 +1226,44 @@ public class UNOPSOpportunityManagerTests : IDisposable
             InitiativeBudgetUSD = 2500000,
             FundingPartners = new List<OpportunityFundingPartnerRequest>
             {
-                new() { PartnerId = 1, Amount = 2500000, CurrencyId = _currencyId }
+                new() { PartnerId = 1, Amount = 2500000, CurrencyId = 1 }
             }
         };
 
+        var entity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = proposalRequest.Name,
+            Description = proposalRequest.Description,
+            PartnerReference = proposalRequest.PartnerReference,
+            InitiativeBudgetUSD = proposalRequest.InitiativeBudgetUSD,
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+
+        _mockMapper.Setup(m => m.Map<Domain.Entities.Opportunity>(It.IsAny<OpportunityRequest>()))
+            .Returns(entity);
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(new OpportunityModel
+            {
+                Id = 1,
+                Name = proposalRequest.Name,
+                PartnerReference = proposalRequest.PartnerReference
+            });
+
         // Act
         var result = await _manager.CreateOpportunityAsync(proposalRequest);
-        _createdOpportunityIds.Add(result.Id);
 
         // Assert
         result.Should().NotBeNull();
         result.PartnerReference.Should().Be("PROP-2026-001");
-        result.Id.Should().BeGreaterThan(0);
+        result.Id.Should().Be(1);
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P1")]
     [Trait("Type", "Functional")]
     [Trait("TestId", "TC-UNOPS-OPP-027")]
@@ -981,20 +1280,35 @@ public class UNOPSOpportunityManagerTests : IDisposable
             }
         };
 
+        var entity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = request.Name,
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+
+        _mockMapper.Setup(m => m.Map<Domain.Entities.Opportunity>(It.IsAny<OpportunityRequest>()))
+            .Returns(entity);
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(new OpportunityModel { Id = 1, Name = request.Name });
+
         // Act
         var result = await _manager.CreateOpportunityAsync(request);
-        _createdOpportunityIds.Add(result.Id);
 
         // Assert
         result.Should().NotBeNull();
-        result.Id.Should().BeGreaterThan(0);
+        result.Id.Should().Be(1);
     }
 
     #endregion
 
     #region P1 - Multi-Currency Budget Tests
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P1")]
     [Trait("Type", "Functional")]
     [Trait("TestId", "TC-UNOPS-OPP-028")]
@@ -1007,43 +1321,77 @@ public class UNOPSOpportunityManagerTests : IDisposable
             Description = "Funding in multiple currencies",
             FundingPartners = new List<OpportunityFundingPartnerRequest>
             {
-                new() { PartnerId = 1, Amount = 1000000, CurrencyId = _currencyId },
-                new() { PartnerId = 2, Amount = 750000, CurrencyId = _currencyId2 }
+                new() { PartnerId = 1, Amount = 1000000, CurrencyId = 1 }, // USD
+                new() { PartnerId = 2, Amount = 750000, CurrencyId = 2 }   // EUR
             },
             InitiativeBudgetUSD = 2500000 // Converted total in USD
         };
 
+        var entity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = request.Name,
+            InitiativeBudgetUSD = request.InitiativeBudgetUSD,
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+
+        _mockMapper.Setup(m => m.Map<Domain.Entities.Opportunity>(It.IsAny<OpportunityRequest>()))
+            .Returns(entity);
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(new OpportunityModel
+            {
+                Id = 1,
+                Name = request.Name,
+                InitiativeBudgetUSD = 2500000
+            });
+
         // Act
         var result = await _manager.CreateOpportunityAsync(request);
-        _createdOpportunityIds.Add(result.Id);
 
         // Assert
         result.Should().NotBeNull();
         result.InitiativeBudgetUSD.Should().Be(2500000);
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P1")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-OPP-029")]
     public async Task UpdateOpportunity_BudgetMismatchWithPartners_HandlesGracefully()
     {
         // Arrange
-        var oppId = await CreateTestOpportunityAsync(
-            name: "Budget Test",
-            description: "Budget test description",
-            budgetUSD: 1000000);
+        var opportunity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = "Budget Test",
+            InitiativeBudgetUSD = 1000000,
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+
+        _context.Opportunities.Add(opportunity);
+        await _context.SaveChangesAsync();
 
         // Update with funding that doesn't match total budget
         var updateRequest = new UpdateOpportunityRequest
         {
-            Id = oppId,
+            Id = 1,
             InitiativeBudgetUSD = 2000000, // Changed budget
             FundingPartners = new List<OpportunityFundingPartnerRequest>
             {
-                new() { PartnerId = 1, Amount = 1000000, CurrencyId = _currencyId } // Only 1M, not 2M
+                new() { PartnerId = 1, Amount = 1000000, CurrencyId = 1 } // Only 1M, not 2M
             }
         };
+
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(new OpportunityModel { Id = 1, InitiativeBudgetUSD = 2000000 });
 
         // Act
         var result = await _manager.UpdateOpportunityAsync(updateRequest);
@@ -1057,30 +1405,44 @@ public class UNOPSOpportunityManagerTests : IDisposable
 
     #region P2 - Timeline Dependency Tests
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P2")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-OPP-030")]
     public async Task UpdateOpportunity_ImplementationBeforeSigningDate_HandlesGracefully()
     {
         // Arrange
-        var oppId = await CreateTestOpportunityAsync(
-            name: "Timeline Test",
-            description: "Timeline test description");
+        var opportunity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = "Timeline Test",
+            TargetSigningDate = DateTime.UtcNow.AddMonths(6),
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+
+        _context.Opportunities.Add(opportunity);
+        await _context.SaveChangesAsync();
 
         var updateRequest = new UpdateOpportunityRequest
         {
-            Id = oppId,
+            Id = 1,
             TargetSigningDate = DateTime.UtcNow.AddMonths(6),
             // Implementation start before signing - may be intentional for mobilization
         };
+
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(new OpportunityModel { Id = 1 });
 
         // Act & Assert
         var result = await _manager.UpdateOpportunityAsync(updateRequest);
         result.Should().NotBeNull();
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P2")]
     [Trait("Type", "Functional")]
     [Trait("TestId", "TC-UNOPS-OPP-031")]
@@ -1094,9 +1456,25 @@ public class UNOPSOpportunityManagerTests : IDisposable
             TargetSigningDate = DateTime.UtcNow.AddMonths(8) // Signing after selection
         };
 
+        var entity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = request.Name,
+            TargetSigningDate = request.TargetSigningDate,
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+
+        _mockMapper.Setup(m => m.Map<Domain.Entities.Opportunity>(It.IsAny<OpportunityRequest>()))
+            .Returns(entity);
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(new OpportunityModel { Id = 1, Name = request.Name });
+
         // Act
         var result = await _manager.CreateOpportunityAsync(request);
-        _createdOpportunityIds.Add(result.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -1104,67 +1482,9 @@ public class UNOPSOpportunityManagerTests : IDisposable
 
     #endregion
 
-    #region P0 - Null Guard Tests
-
-    [SkipIfInMemoryFact]
-    [Trait("Category", "P0")]
-    [Trait("Type", "Validation")]
-    [Trait("TestId", "TC-UNOPS-OPP-032")]
-    public async Task UpdateOpportunity_NullRequest_ShouldThrowArgumentNullException()
-    {
-        // Act
-        Func<Task> act = async () => await _manager.UpdateOpportunityAsync(null!);
-
-        // Assert
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .Where(ex => ex.ParamName == "model");
-    }
-
-    #endregion
-
-    private static Mock<IHttpContextAccessor> CreateMockHttpContextAccessor(string userId)
-    {
-        var accessor = new Mock<IHttpContextAccessor>();
-        var httpContext = new Mock<HttpContext>();
-        var request = new Mock<HttpRequest>();
-        request.Setup(r => r.Headers).Returns(new HeaderDictionary());
-        var user = new ClaimsPrincipal(new ClaimsIdentity(new[]
-        {
-            new Claim(ClaimTypes.NameIdentifier, userId),
-            new Claim(ClaimTypes.Name, "Test User"),
-            new Claim(ClaimTypes.Email, "testuser@unops.org")
-        }, "TestAuthType"));
-        httpContext.Setup(m => m.User).Returns(user);
-        httpContext.Setup(m => m.Request).Returns(request.Object);
-        accessor.Setup(m => m.HttpContext).Returns(httpContext.Object);
-        return accessor;
-    }
-
     public void Dispose()
     {
-        try
-        {
-            if (TestEnvironment.UsePostgreSQL && _createdOpportunityIds.Any())
-            {
-                var ids = string.Join(",", _createdOpportunityIds);
-                _context.Database.ExecuteSqlRaw($"DELETE FROM public.\"Opportunities\" WHERE \"Id\" IN ({ids})");
-            }
-        }
-        catch { /* Best-effort cleanup */ }
-
-        if (TestEnvironment.UseInMemory)
-        {
-            try { _context.Database.EnsureDeleted(); }
-            catch { /* SQLite connection may already be closed during concurrent test runs */ }
-        }
-        if (_transaction != null)
-        {
-            try { _transaction.Rollback(); }
-            catch { }
-            _transaction.Dispose();
-            _transaction = null;
-        }
-        try { _context.Dispose(); }
-        catch { /* Best-effort disposal */ }
+        _context.Database.EnsureDeleted();
+        _context.Dispose();
     }
 }

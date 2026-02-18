@@ -9,11 +9,11 @@
 
 <div class="flex flex-col gap-8">
   <div class="flex flex-wrap items-center gap-4">
-    <div class="flex items-center gap-3 opportunity-section-header" data-testid="opportunities-header">
-      <span class="material-symbols-outlined text-3xl" data-testid="opportunities-icon">lightbulb</span>
-      <p class="text-3xl font-bold" data-testid="opportunities-title">{{ "title.opportunities" | translate }}</p>
+    <div class="flex items-center gap-3 opportunity-section-header">
+      <span class="material-symbols-outlined text-3xl">lightbulb</span>
+      <p class="text-3xl font-bold">{{ "title.opportunities" | translate }}</p>
     </div>
-    <div class="ml-auto flex gap-2 flex-wrap" data-testid="opportunities-actions">
+    <div class="ml-auto flex gap-2 flex-wrap">
       <p-button
         *ngIf="entityPermissions().permissions.canExport"
         icon="pi pi-file-export"
@@ -22,7 +22,6 @@
         text
         rounded
         class="opportunity-export-button"
-        data-testid="export-button"
       />
       <p-button
         *ngIf="entityPermissions().permissions.canCreate"
@@ -31,7 +30,6 @@
         (onClick)="openOpportunityEditDialog()"
         rounded
         class="opportunity-new-button"
-        data-testid="new-opportunity-button"
       />
     </div>
   </div>
@@ -76,7 +74,6 @@
     (rowClick)="onRowClick($event)"
     (searchChange)="onSearchChange($event)"
     class="opportunity-listview"
-    data-testid="opportunities-listview"
   >
   </app-listview>
 </div>
