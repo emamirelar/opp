@@ -21,12 +21,12 @@ public class DocumentUploadModel: DocumentBaseCreateModel
     /// <summary>
     /// Google Drive link (optional - for files sourced from Drive)
     /// </summary>
-    public new string? Link { get; set; }
+    public string? Link { get; set; }
     
     /// <summary>
     /// Google Drive file ID (optional - for files sourced from Drive)
     /// </summary>
-    public new string? GoogleId { get; set; }
+    public string? GoogleId { get; set; }
 
     public bool? AITranscribed { get; set; }
 }

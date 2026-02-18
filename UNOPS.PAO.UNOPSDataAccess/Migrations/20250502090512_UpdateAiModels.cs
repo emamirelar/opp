@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -36,7 +36,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 name: "NameEmbedding",
                 schema: "public",
                 table: "EntityEmbeddings",
-                type: "bytea",
+                type: "vector(768)",
                 nullable: true);
         }
     }

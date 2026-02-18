@@ -9,615 +9,324 @@ on:
     # Run daily at 2 AM UTC
     - cron: '0 2 * * *'
 
-permissions:
-  contents: read
-  actions: read
-  checks: write    # Required by dorny/test-reporter to create check runs
-
 env:
   DOTNET_VERSION: '9.0.x'
+  PYTHON_VERSION: '3.11'
 
 jobs:
-  # ===========================================================================
-  # BUILD JOB - Build once, share artifacts with all test jobs
-  # ===========================================================================
-  build:
-    name: Build Test Projects
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    
-    outputs:
-      business-tests-exist: ${{ steps.check-projects.outputs.business-exists }}
-      fast-tests-exist: ${{ steps.check-projects.outputs.fast-exists }}
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # Full history for affected file detection
-        submodules: false
-    
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
-    
-    - name: Cache NuGet packages
-      uses: actions/cache@v4
-      with:
-        path: ~/.nuget/packages
-        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-        restore-keys: |
-          ${{ runner.os }}-nuget-
-    
-    - name: Check if test projects exist
-      id: check-projects
-      run: |
-        if [ -f "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj" ]; then
-          echo "business-exists=true" >> $GITHUB_OUTPUT
-          echo "✅ Business Tests project found"
-        else
-          echo "business-exists=false" >> $GITHUB_OUTPUT
-          echo "ℹ️ Business Tests project not found"
-        fi
-        
-        if [ -f "QA Tests/C# Tests/UNOPS.PAO.FastTests/UNOPS.PAO.FastTests.csproj" ]; then
-          echo "fast-exists=true" >> $GITHUB_OUTPUT
-          echo "✅ FastTests project found"
-        else
-          echo "fast-exists=false" >> $GITHUB_OUTPUT
-          echo "ℹ️ FastTests project not found"
-        fi
-    
-    - name: Restore Business Tests
-      if: steps.check-projects.outputs.business-exists == 'true'
-      run: dotnet restore "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj"
-    
-    - name: Build Business Tests
-      if: steps.check-projects.outputs.business-exists == 'true'
-      run: dotnet build "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj" --no-restore --configuration Release
-    
-    - name: Restore FastTests
-      if: steps.check-projects.outputs.fast-exists == 'true'
-      run: dotnet restore "QA Tests/C# Tests/UNOPS.PAO.FastTests/UNOPS.PAO.FastTests.csproj"
-    
-    - name: Build FastTests
-      if: steps.check-projects.outputs.fast-exists == 'true'
-      run: dotnet build "QA Tests/C# Tests/UNOPS.PAO.FastTests/UNOPS.PAO.FastTests.csproj" --no-restore --configuration Release
-    
-    - name: Upload Build Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-build-artifacts
-        path: |
-          QA Tests/C# Tests/UNOPS.PAO.Business.Tests/bin/Release/
-          QA Tests/C# Tests/UNOPS.PAO.FastTests/bin/Release/
-          QA Tests/C# Tests/UNOPS.PAO.Business.Tests/obj/
-          QA Tests/C# Tests/UNOPS.PAO.FastTests/obj/
-        retention-days: 1
-        if-no-files-found: warn
-
-  # ===========================================================================
-  # FAST TESTS - Quick validation tests
-  # ===========================================================================
   fast-tests:
     name: Fast Logic Tests
-    runs-on: ubuntu-latest
-    needs: build
-    if: needs.build.outputs.fast-tests-exist == 'true'
-    timeout-minutes: 15
+    runs-on: windows-latest
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        submodules: false
     
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
     
-    - name: Cache NuGet packages
-      uses: actions/cache@v4
-      with:
-        path: ~/.nuget/packages
-        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-        restore-keys: |
-          ${{ runner.os }}-nuget-
+    - name: Restore dependencies
+      run: dotnet restore
     
-    - name: Download Build Artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: test-build-artifacts
-        path: QA Tests/C# Tests/
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
     
     - name: Run FastTests
+      id: run-fast-tests
       continue-on-error: true
       run: |
-        testResultsDir="${{ github.workspace }}/TestResults"
-        mkdir -p "$testResultsDir"
-        dotnet test "QA Tests/C# Tests/UNOPS.PAO.FastTests/UNOPS.PAO.FastTests.csproj" \
-          --no-build \
-          --configuration Release \
-          --verbosity normal \
-          --logger "trx;LogFileName=fast-tests.trx" \
-          --results-directory "$testResultsDir"
+        $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
+        New-Item -ItemType Directory -Force -Path $testResultsDir | Out-Null
+        dotnet test "QA Tests/C# Tests/UNOPS.PAO.FastTests/UNOPS.PAO.FastTests.csproj" `
+          --no-build `
+          --configuration Release `
+          --verbosity normal `
+          --logger "trx;LogFileName=fast-tests.trx" `
+          --results-directory $testResultsDir
     
-    - name: Check if Test Results Exist
-      id: check-fast-results
+    - name: List Test Results (Debug)
       if: always()
       run: |
-        if find "${{ github.workspace }}/TestResults" -name "*.trx" 2>/dev/null | grep -q .; then
-          echo "has-results=true" >> $GITHUB_OUTPUT
-        else
-          echo "has-results=false" >> $GITHUB_OUTPUT
-          echo "No .trx files found - tests may not have produced results"
-        fi
+        $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
+        echo "Looking for test results in: $testResultsDir"
+        if (Test-Path $testResultsDir) {
+          Get-ChildItem -Path $testResultsDir -Recurse -Filter "*.trx" -ErrorAction SilentlyContinue | ForEach-Object { 
+            Write-Host "Found: $($_.FullName)"
+          }
+          $trxCount = (Get-ChildItem -Path $testResultsDir -Filter "*.trx" -Recurse -ErrorAction SilentlyContinue).Count
+          echo "Total .trx files found: $trxCount"
+        } else {
+          echo "ERROR: TestResults directory does not exist at $testResultsDir"
+        }
     
     - name: Publish Test Results
       uses: dorny/test-reporter@v1
-      if: always() && steps.check-fast-results.outputs.has-results == 'true'
+      if: always()
       with:
         name: FastTests Results
-        path: 'TestResults/**/*.trx'
+        path: '**/TestResults/**/*.trx'
         reporter: dotnet-trx
         fail-on-error: false
-    
-    - name: Upload Test Results
+
+    - name: Upload Test Results Artifact
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: fast-tests-results
         path: TestResults
         if-no-files-found: warn
+    
+    - name: Check FastTests Result
+      if: steps.run-fast-tests.outcome != 'success'
+      run: |
+        echo "::error::FastTests failed or encountered errors"
+        exit 1
 
-  # ===========================================================================
-  # BUSINESS TESTS - Split into 5 parallel jobs for maximum speed
-  # ===========================================================================
+  business-tests:
+    name: Business Logic Tests
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
+    
+    - name: Run Business Tests
+      id: run-business-tests
+      continue-on-error: true
+      run: |
+        $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
+        New-Item -ItemType Directory -Force -Path $testResultsDir | Out-Null
+        dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj" `
+          --no-build `
+          --configuration Release `
+          --verbosity normal `
+          --logger "trx;LogFileName=business-tests.trx" `
+          --results-directory $testResultsDir
+    
+    - name: List Test Results (Debug)
+      if: always()
+      run: |
+        $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
+        echo "Looking for test results in: $testResultsDir"
+        if (Test-Path $testResultsDir) {
+          Get-ChildItem -Path $testResultsDir -Recurse -Filter "*.trx" -ErrorAction SilentlyContinue | ForEach-Object { 
+            Write-Host "Found: $($_.FullName)"
+          }
+          $trxCount = (Get-ChildItem -Path $testResultsDir -Filter "*.trx" -Recurse -ErrorAction SilentlyContinue).Count
+          echo "Total .trx files found: $trxCount"
+        } else {
+          echo "ERROR: TestResults directory does not exist at $testResultsDir"
+        }
+    
+    - name: Publish Test Results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Business Tests Results
+        path: '**/TestResults/**/*.trx'
+        reporter: dotnet-trx
+        fail-on-error: false
+
+    - name: Upload Test Results Artifact
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: business-tests-results
+        path: TestResults
+        if-no-files-found: warn
+    
+    - name: Check Business Tests Result
+      if: steps.run-business-tests.outcome != 'success'
+      run: |
+        echo "::error::Business Tests failed or encountered errors"
+        exit 1
+
+  # ============================================================================
+  # INTEGRATION TESTS - Run manually or in staging environment
+  # ============================================================================
+  # Integration tests are commented out for PR checks because they require:
+  # - Database connection with seed data
+  # - Google Cloud credentials (for IAM auth tests)
+  # - AI service running (for AI integration tests)
+  # - Complex authorization setup
+  #
+  # To run integration tests:
+  # 1. Locally: Follow QA Tests/ENVIRONMENT_SETUP_GUIDE.md
+  # 2. Staging: Configure staging environment with required services
+  # 3. Manual: Run "dotnet test QA Tests/Integration Tests/UNOPS.PAO.IntegrationTests.csproj"
+  # ============================================================================
   
-  business-tests-managers:
-    name: Business Tests (Managers)
-    runs-on: ubuntu-latest
-    needs: build
-    if: needs.build.outputs.business-tests-exist == 'true'
-    timeout-minutes: 30
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        submodules: false
-    
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
-    
-    - name: Cache NuGet packages
-      uses: actions/cache@v4
-      with:
-        path: ~/.nuget/packages
-        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-        restore-keys: |
-          ${{ runner.os }}-nuget-
-    
-    - name: Download Build Artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: test-build-artifacts
-        path: QA Tests/C# Tests/
-    
-    - name: Run Manager Tests
-      continue-on-error: true
-      run: |
-        testResultsDir="${{ github.workspace }}/TestResults"
-        mkdir -p "$testResultsDir"
-        dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj" \
-          --no-build \
-          --configuration Release \
-          --verbosity normal \
-          --filter "FullyQualifiedName~Manager" \
-          --logger "trx;LogFileName=managers-tests.trx" \
-          --results-directory "$testResultsDir"
-    
-    - name: Check if Test Results Exist
-      id: check-managers-results
-      if: always()
-      run: |
-        if find "${{ github.workspace }}/TestResults" -name "*.trx" 2>/dev/null | grep -q .; then
-          echo "has-results=true" >> $GITHUB_OUTPUT
-        else
-          echo "has-results=false" >> $GITHUB_OUTPUT
-          echo "No .trx files found - tests may not have produced results"
-        fi
-    
-    - name: Publish Test Results
-      uses: dorny/test-reporter@v1
-      if: always() && steps.check-managers-results.outputs.has-results == 'true'
-      with:
-        name: Manager Tests Results
-        path: 'TestResults/**/*.trx'
-        reporter: dotnet-trx
-        fail-on-error: false
-    
-    - name: Upload Test Results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: managers-tests-results
-        path: TestResults
-        if-no-files-found: warn
+  # integration-tests:
+  #   name: Integration Tests
+  #   runs-on: windows-latest
+  #   
+  #   services:
+  #     postgres:
+  #       image: postgres:15
+  #       env:
+  #         POSTGRES_DB: unops_pao_test
+  #         POSTGRES_USER: test_user
+  #         POSTGRES_PASSWORD: test_password
+  #       ports:
+  #         - 5432:5432
+  #       options: >-
+  #         --health-cmd pg_isready
+  #         --health-interval 10s
+  #         --health-timeout 5s
+  #         --health-retries 5
+  #   
+  #   steps:
+  #   - name: Checkout code
+  #     uses: actions/checkout@v4
+  #   
+  #   - name: Setup .NET
+  #     uses: actions/setup-dotnet@v4
+  #     with:
+  #       dotnet-version: ${{ env.DOTNET_VERSION }}
+  #   
+  #   - name: Restore dependencies
+  #     run: dotnet restore
+  #   
+  #   - name: Build
+  #     run: dotnet build --no-restore --configuration Release
+  #   
+  #   - name: Install EF Core tools
+  #     run: dotnet tool install --global dotnet-ef
+  #   
+  #   - name: Run Migrations
+  #     run: dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess/UNOPS.PAO.UNOPSDataAccess.csproj --startup-project UNOPS.PAO.Server/UNOPS.PAO.Server.csproj
+  #     env:
+  #       ConnectionStrings__DefaultConnection: 'Host=localhost;Port=5432;Database=unops_pao_test;Username=test_user;Password=test_password;'
+  #   
+  #   - name: Run Seed Scripts
+  #     run: |
+  #       $env:PGPASSWORD='test_password'
+  #       psql -h localhost -p 5432 -U test_user -d unops_pao_test -f "UNOPS.PAO.UNOPSDataAccess/Scripts/seed-entities.sql" || echo "Seed script execution attempted"
+  #       psql -h localhost -p 5432 -U test_user -d unops_pao_test -f "UNOPS.PAO.UNOPSDataAccess/Scripts/seed-entity-field-managers.sql" || echo "Seed script execution attempted"
+  #       psql -h localhost -p 5432 -U test_user -d unops_pao_test -f "UNOPS.PAO.UNOPSDataAccess/Scripts/seed-liaison-offices.sql" || echo "Seed script execution attempted"
+  #     shell: pwsh
+  #   
+  #   - name: Run Integration Tests
+  #     run: dotnet test "QA Tests/Integration Tests/UNOPS.PAO.IntegrationTests.csproj" --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=integration-tests.trx"
+  #     env:
+  #       ConnectionStrings__DefaultConnection: 'Host=localhost;Port=5432;Database=unops_pao_test;Username=test_user;Password=test_password;'
+  #       ConnectionStrings__UseIamAuthentication: 'false'
+  #   
+  #   - name: Publish Test Results
+  #     uses: dorny/test-reporter@v1
+  #     if: always()
+  #     with:
+  #       name: Integration Tests Results
+  #       path: '**/TestResults/**/*.trx'
+  #       reporter: dotnet-trx
 
-  business-tests-services:
-    name: Business Tests (Services)
-    runs-on: ubuntu-latest
-    needs: build
-    if: needs.build.outputs.business-tests-exist == 'true'
-    timeout-minutes: 30
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        submodules: false
-    
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
-    
-    - name: Cache NuGet packages
-      uses: actions/cache@v4
-      with:
-        path: ~/.nuget/packages
-        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-        restore-keys: |
-          ${{ runner.os }}-nuget-
-    
-    - name: Download Build Artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: test-build-artifacts
-        path: QA Tests/C# Tests/
-    
-    - name: Run Service Tests
-      continue-on-error: true
-      run: |
-        testResultsDir="${{ github.workspace }}/TestResults"
-        mkdir -p "$testResultsDir"
-        dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj" \
-          --no-build \
-          --configuration Release \
-          --verbosity normal \
-          --filter "FullyQualifiedName~Service" \
-          --logger "trx;LogFileName=services-tests.trx" \
-          --results-directory "$testResultsDir"
-    
-    - name: Check if Test Results Exist
-      id: check-services-results
-      if: always()
-      run: |
-        if find "${{ github.workspace }}/TestResults" -name "*.trx" 2>/dev/null | grep -q .; then
-          echo "has-results=true" >> $GITHUB_OUTPUT
-        else
-          echo "has-results=false" >> $GITHUB_OUTPUT
-          echo "No .trx files found - tests may not have produced results"
-        fi
-    
-    - name: Publish Test Results
-      uses: dorny/test-reporter@v1
-      if: always() && steps.check-services-results.outputs.has-results == 'true'
-      with:
-        name: Service Tests Results
-        path: 'TestResults/**/*.trx'
-        reporter: dotnet-trx
-        fail-on-error: false
-    
-    - name: Upload Test Results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: services-tests-results
-        path: TestResults
-        if-no-files-found: warn
+  # python-tests:
+  #   name: Python AI Tests
+  #   runs-on: ubuntu-latest
+  #   
+  #   steps:
+  #   - name: Checkout code
+  #     uses: actions/checkout@v4
+  #   
+  #   - name: Setup Python
+  #     uses: actions/setup-python@v5
+  #     with:
+  #       python-version: ${{ env.PYTHON_VERSION }}
+  #       cache: 'pip'
+  #   
+  #   - name: Install dependencies
+  #     run: |
+  #       cd UNOPS.PAO.AIService
+  #       pip install pytest pytest-asyncio pytest-cov
+  #       pip install -r requirements.txt || echo "No requirements.txt found"
+  #   
+  #   - name: Run Python tests
+  #     run: |
+  #       cd UNOPS.PAO.AIService
+  #       pytest tests/ -v --junitxml=test-results.xml --cov=ai_assistant --cov-report=xml --cov-report=html
+  #   
+  #   - name: Publish Test Results
+  #     uses: dorny/test-reporter@v1
+  #     if: always()
+  #     with:
+  #       name: Python Tests Results
+  #       path: '**/test-results.xml'
+  #       reporter: java-junit
+  #   
+  #   - name: Upload Coverage to Codecov
+  #     uses: codecov/codecov-action@v4
+  #     with:
+  #       files: ./UNOPS.PAO.AIService/coverage.xml
+  #       flags: python-tests
+  #       name: python-coverage
 
-  business-tests-opportunity:
-    name: Business Tests (Opportunity)
-    runs-on: ubuntu-latest
-    needs: build
-    if: needs.build.outputs.business-tests-exist == 'true'
-    timeout-minutes: 30
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        submodules: false
-    
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
-    
-    - name: Cache NuGet packages
-      uses: actions/cache@v4
-      with:
-        path: ~/.nuget/packages
-        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-        restore-keys: |
-          ${{ runner.os }}-nuget-
-    
-    - name: Download Build Artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: test-build-artifacts
-        path: QA Tests/C# Tests/
-    
-    - name: Run Opportunity Tests
-      continue-on-error: true
-      run: |
-        testResultsDir="${{ github.workspace }}/TestResults"
-        mkdir -p "$testResultsDir"
-        dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj" \
-          --no-build \
-          --configuration Release \
-          --verbosity normal \
-          --filter "FullyQualifiedName~Opportunity" \
-          --logger "trx;LogFileName=opportunity-tests.trx" \
-          --results-directory "$testResultsDir"
-    
-    - name: Check if Test Results Exist
-      id: check-opportunity-results
-      if: always()
-      run: |
-        if find "${{ github.workspace }}/TestResults" -name "*.trx" 2>/dev/null | grep -q .; then
-          echo "has-results=true" >> $GITHUB_OUTPUT
-        else
-          echo "has-results=false" >> $GITHUB_OUTPUT
-          echo "No .trx files found - tests may not have produced results"
-        fi
-    
-    - name: Publish Test Results
-      uses: dorny/test-reporter@v1
-      if: always() && steps.check-opportunity-results.outputs.has-results == 'true'
-      with:
-        name: Opportunity Tests Results
-        path: 'TestResults/**/*.trx'
-        reporter: dotnet-trx
-        fail-on-error: false
-    
-    - name: Upload Test Results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: opportunity-tests-results
-        path: TestResults
-        if-no-files-found: warn
-
-  business-tests-edge-cases:
-    name: Business Tests (Edge Cases)
-    runs-on: ubuntu-latest
-    needs: build
-    if: needs.build.outputs.business-tests-exist == 'true'
-    timeout-minutes: 30
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        submodules: false
-    
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
-    
-    - name: Cache NuGet packages
-      uses: actions/cache@v4
-      with:
-        path: ~/.nuget/packages
-        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-        restore-keys: |
-          ${{ runner.os }}-nuget-
-    
-    - name: Download Build Artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: test-build-artifacts
-        path: QA Tests/C# Tests/
-    
-    - name: Run Edge Case Tests
-      continue-on-error: true
-      run: |
-        testResultsDir="${{ github.workspace }}/TestResults"
-        mkdir -p "$testResultsDir"
-        dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj" \
-          --no-build \
-          --configuration Release \
-          --verbosity normal \
-          --filter "FullyQualifiedName~EdgeCase|FullyQualifiedName~Concurrency|FullyQualifiedName~Performance" \
-          --logger "trx;LogFileName=edge-cases-tests.trx" \
-          --results-directory "$testResultsDir"
-    
-    - name: Check if Test Results Exist
-      id: check-edge-results
-      if: always()
-      run: |
-        if find "${{ github.workspace }}/TestResults" -name "*.trx" 2>/dev/null | grep -q .; then
-          echo "has-results=true" >> $GITHUB_OUTPUT
-        else
-          echo "has-results=false" >> $GITHUB_OUTPUT
-          echo "No .trx files found - tests may not have produced results"
-        fi
-    
-    - name: Publish Test Results
-      uses: dorny/test-reporter@v1
-      if: always() && steps.check-edge-results.outputs.has-results == 'true'
-      with:
-        name: Edge Case Tests Results
-        path: 'TestResults/**/*.trx'
-        reporter: dotnet-trx
-        fail-on-error: false
-    
-    - name: Upload Test Results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: edge-cases-tests-results
-        path: TestResults
-        if-no-files-found: warn
-
-  business-tests-other:
-    name: Business Tests (Other)
-    runs-on: ubuntu-latest
-    needs: build
-    if: needs.build.outputs.business-tests-exist == 'true'
-    timeout-minutes: 30
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        submodules: false
-    
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
-    
-    - name: Cache NuGet packages
-      uses: actions/cache@v4
-      with:
-        path: ~/.nuget/packages
-        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-        restore-keys: |
-          ${{ runner.os }}-nuget-
-    
-    - name: Download Build Artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: test-build-artifacts
-        path: QA Tests/C# Tests/
-    
-    - name: Run Other Tests (Validation, Search, Integration, etc.)
-      continue-on-error: true
-      run: |
-        testResultsDir="${{ github.workspace }}/TestResults"
-        mkdir -p "$testResultsDir"
-        # Run tests that don't match other categories
-        dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj" \
-          --no-build \
-          --configuration Release \
-          --verbosity normal \
-          --filter "FullyQualifiedName!~Manager&FullyQualifiedName!~Service&FullyQualifiedName!~Opportunity&FullyQualifiedName!~EdgeCase&FullyQualifiedName!~Concurrency&FullyQualifiedName!~Performance" \
-          --logger "trx;LogFileName=other-tests.trx" \
-          --results-directory "$testResultsDir"
-    
-    - name: Check if Test Results Exist
-      id: check-other-results
-      if: always()
-      run: |
-        if find "${{ github.workspace }}/TestResults" -name "*.trx" 2>/dev/null | grep -q .; then
-          echo "has-results=true" >> $GITHUB_OUTPUT
-        else
-          echo "has-results=false" >> $GITHUB_OUTPUT
-          echo "No .trx files found - tests may not have produced results"
-        fi
-    
-    - name: Publish Test Results
-      uses: dorny/test-reporter@v1
-      if: always() && steps.check-other-results.outputs.has-results == 'true'
-      with:
-        name: Other Tests Results
-        path: 'TestResults/**/*.trx'
-        reporter: dotnet-trx
-        fail-on-error: false
-    
-    - name: Upload Test Results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: other-tests-results
-        path: TestResults
-        if-no-files-found: warn
-
-  # ===========================================================================
-  # TEST SUMMARY - Aggregate results from all test jobs
-  # ===========================================================================
   test-summary:
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [build, fast-tests, business-tests-managers, business-tests-services, business-tests-opportunity, business-tests-edge-cases, business-tests-other]
+    needs: [fast-tests, business-tests]
     if: always()
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        submodules: false
-    
-    - name: Download All Test Results
-      uses: actions/download-artifact@v4
-      with:
-        path: all-test-results
-        pattern: '*-tests-results'
-        merge-multiple: true
     
     - name: Generate Summary
       run: |
-        echo "# 🧪 QA Tests Summary" >> $GITHUB_STEP_SUMMARY
+        echo "# QA Tests Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        
-        if [[ "${{ needs.build.outputs.business-tests-exist }}" == "false" ]]; then
-          echo "## ℹ️ Test Projects Not Yet Available" >> $GITHUB_STEP_SUMMARY
-          echo "The QA test projects are not present on this branch yet." >> $GITHUB_STEP_SUMMARY
-          exit 0
-        fi
-        
-        echo "## Test Results by Category" >> $GITHUB_STEP_SUMMARY
+        echo "## Automated Test Results (PR Checks)" >> $GITHUB_STEP_SUMMARY
+        echo "- Fast Logic Tests (78 tests): ${{ needs.fast-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Business Logic Tests (2,135 tests): ${{ needs.business-tests.result }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "| Test Suite | Status |" >> $GITHUB_STEP_SUMMARY
-        echo "|------------|--------|" >> $GITHUB_STEP_SUMMARY
-        echo "| Fast Logic Tests | ${{ needs.fast-tests.result }} |" >> $GITHUB_STEP_SUMMARY
-        echo "| Business Tests (Managers) | ${{ needs.business-tests-managers.result }} |" >> $GITHUB_STEP_SUMMARY
-        echo "| Business Tests (Services) | ${{ needs.business-tests-services.result }} |" >> $GITHUB_STEP_SUMMARY
-        echo "| Business Tests (Opportunity) | ${{ needs.business-tests-opportunity.result }} |" >> $GITHUB_STEP_SUMMARY
-        echo "| Business Tests (Edge Cases) | ${{ needs.business-tests-edge-cases.result }} |" >> $GITHUB_STEP_SUMMARY
-        echo "| Business Tests (Other) | ${{ needs.business-tests-other.result }} |" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        
-        # Check overall status
-        FAST="${{ needs.fast-tests.result }}"
-        MGR="${{ needs.business-tests-managers.result }}"
-        SVC="${{ needs.business-tests-services.result }}"
-        OPP="${{ needs.business-tests-opportunity.result }}"
-        EDGE="${{ needs.business-tests-edge-cases.result }}"
-        OTHER="${{ needs.business-tests-other.result }}"
-        
-        # Count successes (success or skipped is OK)
-        SUCCESS_COUNT=0
-        for result in "$FAST" "$MGR" "$SVC" "$OPP" "$EDGE" "$OTHER"; do
-          if [[ "$result" == "success" || "$result" == "skipped" ]]; then
-            SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
-          fi
-        done
-        
         echo "## Overall Status" >> $GITHUB_STEP_SUMMARY
-        if [[ $SUCCESS_COUNT -ge 5 ]]; then
-          echo "✅ **All critical tests passed!**" >> $GITHUB_STEP_SUMMARY
-        else
-          echo "⚠️ **Some tests had issues** ($SUCCESS_COUNT/6 passed)" >> $GITHUB_STEP_SUMMARY
+        if [[ "${{ needs.fast-tests.result }}" == "success" ]] && [[ "${{ needs.business-tests.result }}" == "success" ]]; then
+          echo "✅ All critical tests passing (2,213 tests)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Note: Cancelled jobs may indicate timeout. Run tests locally to verify:" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "dotnet test \"QA Tests/C# Tests/UNOPS.PAO.Business.Tests\"" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Permission Logic (6 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Workflow Logic (7 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Notification Logic (7 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Export Logic (6 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Document Validation (11 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Partner Manager (1,127 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Other Business Logic (1,049 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "ℹ️ **Note**: Integration tests must be run manually or in staging" >> $GITHUB_STEP_SUMMARY
+          echo "- See: QA Tests/ENVIRONMENT_SETUP_GUIDE.md" >> $GITHUB_STEP_SUMMARY
+          echo "- Run: dotnet test \"QA Tests/Integration Tests/UNOPS.PAO.IntegrationTests.csproj\"" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ Critical tests failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ needs.fast-tests.result }}" != "success" ]]; then
+            echo "- ❌ Fast Logic Tests: ${{ needs.fast-tests.result }}" >> $GITHUB_STEP_SUMMARY
+            echo "  - Check the FastTests Results for detailed failure information" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [[ "${{ needs.business-tests.result }}" != "success" ]]; then
+            echo "- ❌ Business Logic Tests: ${{ needs.business-tests.result }}" >> $GITHUB_STEP_SUMMARY
+            echo "  - Check the Business Tests Results for detailed failure information" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Troubleshooting" >> $GITHUB_STEP_SUMMARY
+          echo "1. Review test logs above for specific failures" >> $GITHUB_STEP_SUMMARY
+          echo "2. Run tests locally: dotnet test --configuration Release" >> $GITHUB_STEP_SUMMARY
+          echo "3. Check for environment-specific issues (paths, configuration)" >> $GITHUB_STEP_SUMMARY
         fi
     
     - name: Check Critical Tests
-      # Only fail if fast-tests actually failed
-      if: needs.build.outputs.fast-tests-exist == 'true' && needs.fast-tests.result == 'failure'
+      if: needs.fast-tests.result != 'success' || needs.business-tests.result != 'success'
       run: |
-        echo "Critical fast tests failed!"
+        echo "Critical tests failed!"
         exit 1

@@ -28,9 +28,7 @@ using UNOPS.PAO.Identity.Context;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.Business;
-#if WORKFLOW_AVAILABLE
 using UNOPS.PAO.Business.Workflow.Adapters;
-#endif
 using UNOPS.PAO.MailSender;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -45,6 +43,8 @@ using System.IO;
 using UNOPS.PAO.Presentation.Security;
 using UNOPS.PAO.Business.Services;
 using Google.Apis.Auth.OAuth2;
+using UNOPS.PAO.Business.Workflow.Adapters;
+using UNOPS.Workflow.DataAccess;
 
 namespace UNOPS.PAO.Server;
 
@@ -104,14 +104,8 @@ public class Startup
             app.UseMiddleware<DevelopmentIAPAuthHandler>();
         }
         
-        // Add IAP verification middleware AFTER development headers are set.
-        // Skip entirely in Testing environment - tests authenticate via
-        // TestAuthHandler. The handler checks for a "Test-NoAuth" header to
-        // support unauthenticated-access tests.
-        if (!env.IsEnvironment("Testing"))
-        {
-            app.UseIAPVerification();
-        }
+        // Add IAP verification middleware AFTER development headers are set
+        app.UseIAPVerification();
         
         // Add a second instance of logging AFTER development middleware to see modified headers in development
         if (env.IsDevelopment())
@@ -187,13 +181,10 @@ public class Startup
 
     public void ConfigureContainer(ServiceRegistry services)
     {
-        // Always configure data access (DbContext registration)
-        // Migrations are conditionally skipped later for Testing environment
-        ConfigureDataAccess(services);
-
-        // Register TimeProvider (required by ASP.NET Core Identity in .NET 8+)
-        // Lamar doesn't auto-register this like the default DI container
-        services.AddSingleton(TimeProvider.System);
+        if (!CurrentEnvironment.IsEnvironment("Testing"))
+        {
+            ConfigureDataAccess(services);
+        }
 
         services.Scan(x =>
         {
@@ -251,21 +242,11 @@ public class Startup
         }
         else
         {
-            // Check if JWT secret is provided in configuration (for local development)
-            var localJwtSecret = Configuration["JWTSettings:SecretKey"];
-            if (!string.IsNullOrEmpty(localJwtSecret))
-            {
-                jwtSecret = localJwtSecret;
-            }
-            else
-            {
-                // Fetch from Google Cloud Secret Manager (production/staging)
-                var projectId = Configuration["AppConfig:ProjectId"];
-                var secretManager = SecretManagerServiceClient.Create();
-                var secretName = $"projects/{projectId}/secrets/Bearer_Auth_Secret/versions/latest";
-                var secret = secretManager.AccessSecretVersion(secretName);
-                jwtSecret = secret.Payload.Data.ToStringUtf8();
-            }
+            var projectId = Configuration["AppConfig:ProjectId"];
+            var secretManager = SecretManagerServiceClient.Create();
+            var secretName = $"projects/{projectId}/secrets/Bearer_Auth_Secret/versions/latest";
+            var secret = secretManager.AccessSecretVersion(secretName);
+            jwtSecret = secret.Payload.Data.ToStringUtf8();
         }
 
         // Configure authentication with support for both IAP and cookies
@@ -464,44 +445,16 @@ public class Startup
         services.AddSingleton<GoogleCredential>(provider =>
         {
             var configuration = provider.GetRequiredService<IConfiguration>();
-            var logger = provider.GetRequiredService<ILogger<Startup>>();
-            
-            // Check if external calls are disabled (test environment)
-            var disableExternalCalls = configuration.GetValue<bool>("AISettings:DisableExternalCalls");
-            if (disableExternalCalls)
-            {
-                logger.LogInformation("Startup: External calls disabled (test environment), using mock Google credentials");
-                return GoogleCredential.FromAccessToken("fake-access-token-for-testing");
-            }
-            
             var credentialParams = configuration.GetSection("AISettings")
                 .Get<JsonCredentialParameters>();
             if (credentialParams == null)
-            {
-                logger.LogWarning("Startup: AISettings configuration is missing, using mock Google credentials");
-                return GoogleCredential.FromAccessToken("fake-access-token-for-testing");
-            }
+                throw new Exception("AISettings configuration is missing.");
         
             var secretName = configuration.GetValue<string>("AISettings:AIServiceAccountJSONSecretName");
             
-            try
-            {
-                var basicProvider = new GoogleSecretManagerConfigurationProvider(credentialParams.ProjectId);
-                var secretValue = basicProvider.GetSecretVersion(secretName, "latest");
-                
-                if (string.IsNullOrEmpty(secretValue))
-                {
-                    logger.LogWarning("Startup: Google Secret Manager returned empty value, using mock credentials");
-                    return GoogleCredential.FromAccessToken("fake-access-token-for-testing");
-                }
-                
-                return GoogleCredential.FromJson(secretValue);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Startup: Failed to retrieve Google credentials from Secret Manager, using mock credentials");
-                return GoogleCredential.FromAccessToken("fake-access-token-for-testing");
-            }
+            var basicProvider = new GoogleSecretManagerConfigurationProvider(credentialParams.ProjectId);
+            var secretValue = basicProvider.GetSecretVersion(secretName, "latest");
+            return GoogleCredential.FromJson(secretValue);
         });
         
         // Register AI Contextual Service for similarity search and embeddings
@@ -547,7 +500,7 @@ public class Startup
         services.SeedAsync();
         ConfigureRegisters(services);
         
-        if (!CurrentEnvironment.IsEnvironment("Testing") && !CurrentEnvironment.IsEnvironment("Development"))
+        if (!CurrentEnvironment.IsEnvironment("Testing"))
         {
             services.AddHostedService<PubSubPullService>(); // Register your background service
             services.AddHostedService<DueDiligenceNotificationService>(); // Register due diligence notification service
@@ -657,51 +610,44 @@ public class Startup
         }
         var dataSource = dataSourceBuilder.Build();
         
-        // NOTE: In Testing environment, PAOWebApplicationFactory registers InMemory
-        // DbContexts via ConfigureTestServices. Skip Npgsql registrations here to
-        // prevent "multiple database providers" error from having both registered.
-        if (!CurrentEnvironment.IsEnvironment("Testing"))
-        {
-            // Core DB context
-            services.AddDbContext<DataAccess.Context.AppDbContext>(options =>
-                options
-                    .UseNpgsql(dataSource)
-                    .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
+        // Core DB context
+        services.AddDbContext<DataAccess.Context.AppDbContext>(options =>
+            options
+                .UseNpgsql(dataSource)
+                .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
 
-            // Override / UNOPS DB context
-            services.AddDbContext<UNOPSAppDbContext>(options =>
-                options
-                    .UseNpgsql(dataSource)
-                    .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
+        // Override / UNOPS DB context
+        services.AddDbContext<UNOPSAppDbContext>(options =>
+            options
+                .UseNpgsql(dataSource)
+                .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
 
-            // Register IDbContextFactory for UNOPSAppDbContext
-            // Used for parallel query execution (thread-safe DbContext instances)
-            services.AddDbContextFactory<UNOPSAppDbContext>(options =>
-                options
-                    .UseNpgsql(dataSource)
-                    .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
+        // Register IDbContextFactory for UNOPSAppDbContext
+        // Used for parallel query execution (thread-safe DbContext instances)
+        services.AddDbContextFactory<UNOPSAppDbContext>(options =>
+            options
+                .UseNpgsql(dataSource)
+                .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
 
-            // Register IDbContextFactory for AppDbContext (base context)
-            // Used by workflow adapters to avoid DbContext concurrency issues
-            services.AddDbContextFactory<DataAccess.Context.AppDbContext>(options =>
-                options
-                    .UseNpgsql(dataSource)
-                    .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
+        // Register IDbContextFactory for AppDbContext (base context)
+        // Used by workflow adapters to avoid DbContext concurrency issues
+        services.AddDbContextFactory<DataAccess.Context.AppDbContext>(options =>
+            options
+                .UseNpgsql(dataSource)
+                .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
 
-            services.AddDbContext<PAOIdentityDbContext>(options =>
-                options
-                    .UseNpgsql(dataSource)
-                    .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
+        services.AddDbContext<PAOIdentityDbContext>(options =>
+            options
+                .UseNpgsql(dataSource)
+                .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
 
-            // PERFORMANCE: Add DbContextFactory for PAOIdentityDbContext to support thread-safe parallel operations
-            // This allows code that needs to run identity queries in parallel to create separate context instances
-            services.AddDbContextFactory<PAOIdentityDbContext>(options =>
-                options
-                    .UseNpgsql(dataSource)
-                    .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
-        }
+        // PERFORMANCE: Add DbContextFactory for PAOIdentityDbContext to support thread-safe parallel operations
+        // This allows code that needs to run identity queries in parallel to create separate context instances
+        services.AddDbContextFactory<PAOIdentityDbContext>(options =>
+            options
+                .UseNpgsql(dataSource)
+                .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
 
-#if WORKFLOW_AVAILABLE
         // ==========================================
         // Workflow Submodule - DbContext and Services
         // ==========================================
@@ -713,28 +659,19 @@ public class Startup
         // - PaoEntityStageProvider (IEntityStageProvider)
         // - PaoWorkflowApproverProvider (IWorkflowApproverProvider)
         // - PaoWorkflowNotificationService (IWorkflowNotificationService)
-        //
-        // NOTE: Skip in Testing environment because AddPaoWorkflowServices calls
-        // EnsureWorkflowSchemaCreated which eagerly opens a PostgreSQL connection
-        // to create/migrate the workflow schema. In tests, the WebApplicationFactory
-        // registers mock workflow services via ConfigureTestServices instead.
-        if (!CurrentEnvironment.IsEnvironment("Testing"))
+        services.AddPaoWorkflowServices(options =>
         {
-            services.AddPaoWorkflowServices(options =>
-            {
-                options.UsePostgreSqlStorage(optimizedConnectionString, "workflow");
-            });
+            options.UsePostgreSqlStorage(optimizedConnectionString, "workflow");
+        });
 
-            // Override WorkflowDbContext registration to use dataSource (with IAM auth support)
-            // This ensures WorkflowDbContext uses the same IAM authentication as other DbContexts
-            services.AddDbContext<UNOPS.Workflow.DataAccess.WorkflowDbContext>(options =>
-                options
-                    .UseNpgsql(dataSource, npgsql =>
-                    {
-                        npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "workflow");
-                    }));
-        }
-#endif
+        // Override WorkflowDbContext registration to use dataSource (with IAM auth support)
+        // This ensures WorkflowDbContext uses the same IAM authentication as other DbContexts
+        services.AddDbContext<UNOPS.Workflow.DataAccess.WorkflowDbContext>(options =>
+            options
+                .UseNpgsql(dataSource, npgsql =>
+                {
+                    npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "workflow");
+                }));
 
     }
     private string? GetConnectionStringFromSecretManager()

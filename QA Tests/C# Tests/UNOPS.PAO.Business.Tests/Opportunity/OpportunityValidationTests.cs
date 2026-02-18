@@ -2,7 +2,6 @@ using AutoMapper;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using System;
@@ -20,8 +19,6 @@ using UNOPS.PAO.UNOPSBusiness.Managers;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.DataAccess.Interfaces;
 using UNOPS.PAO.Utilities.Helpers;
-using UNOPS.PAO.DataAccess.Services;
-using UNOPS.PAO.Business.Tests.TestBase;
 using Xunit;
 
 namespace UNOPS.PAO.Business.Tests.Opportunity;
@@ -31,22 +28,13 @@ namespace UNOPS.PAO.Business.Tests.Opportunity;
 /// Tests data validation, business constraints, and error handling
 /// Created: January 15, 2026
 /// Priority: P1-P2
-/// SKIPPED: QA-009 - Z.EntityFramework.Extensions requires relational database (PostgreSQL)
 /// </summary>
 public class OpportunityValidationTests : IDisposable
 {
     private readonly DbContextOptions<UNOPSAppDbContext> _dbContextOptions;
     private readonly UNOPSAppDbContext _context;
-    private IDbContextTransaction? _transaction;
-    private readonly string _testMarker = $"VAL_{Guid.NewGuid():N}";
-    private readonly List<int> _createdOpportunityIds = new();
-    private int _currencyId;
-    private int _countryId;
-    private int _orgHierarchyId;
-    private int _proposedInitiativeTypeId;
-    private int _paoUserId;
-    private readonly IMapper _mapper;
-    private readonly IConfiguration _configuration;
+    private readonly Mock<IMapper> _mockMapper;
+    private readonly Mock<IConfiguration> _mockConfiguration;
     private readonly Mock<IPermissionService> _mockPermissionService;
     private readonly Mock<IHttpContextAccessor> _mockHttpContextAccessor;
     private readonly Mock<IDbContextFactory<UNOPSAppDbContext>> _mockDbContextFactory;
@@ -56,65 +44,26 @@ public class OpportunityValidationTests : IDisposable
 
     public OpportunityValidationTests()
     {
-        _dbContextOptions = TestEnvironment.CreateUNOPSDbContextOptions($"OpportunityValidationTestDb_{Guid.NewGuid()}");
+        _dbContextOptions = new DbContextOptionsBuilder<UNOPSAppDbContext>()
+            .UseInMemoryDatabase(databaseName: $"OpportunityValidationTestDb_{Guid.NewGuid()}")
+            .Options;
+
+        var mockUserService = new Mock<UserResolverService<int>>(null);
         var mockDbSchema = new Mock<IDbContextSchema>();
         mockDbSchema.Setup(s => s.Schema).Returns("public");
 
-        // Phase 1: Resolve the test user ID using a temporary context (outside transaction).
-        // AuditableDbContext caches _currentUserId at construction, so we must know the
-        // real user ID before creating the main context.
-        {
-            var tempAccessor = CreateMockHttpContextAccessor("0");
-            var tempResolver = new UserResolverService<int>(tempAccessor.Object, null);
-            using var tempCtx = UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.CreateUNOPS(_dbContextOptions, tempResolver, mockDbSchema.Object);
-            _paoUserId = TestDataHelper.GetOrCreateTestUser(tempCtx, "testuser@unops.org");
-        }
+        _context = new UNOPSAppDbContext(_dbContextOptions, mockUserService.Object, mockDbSchema.Object);
 
-        // Phase 2: Create the MAIN context with the ACTUAL test user ID in claims.
-        var mainAccessor = CreateMockHttpContextAccessor(_paoUserId.ToString());
-        var userResolverService = new UserResolverService<int>(mainAccessor.Object, null);
-        _context = UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.CreateUNOPS(_dbContextOptions, userResolverService, mockDbSchema.Object);
-
-        if (TestEnvironment.UsePostgreSQL)
-        {
-            _transaction = _context.Database.BeginTransaction();
-        }
-
-        // Seed remaining reference data (test user already exists from Phase 1)
-        SeedTestData();
-
-        // Setup real AutoMapper
-        var mapperConfig = new MapperConfiguration(cfg =>
-        {
-            cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies());
-        });
-        _mapper = mapperConfig.CreateMapper();
-        
-        _configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["ConnectionStrings:DbSchema"] = "public",
-                ["AISettings:DisableExternalCalls"] = "true",
-                ["AISettings:ModelName"] = "gemini-pro",
-                ["AISettings:ProjectId"] = "test-project",
-                ["AISettings:Location"] = "us-central1",
-                ["IsUNOPSOverride"] = "true",
-                ["GoogleCloud:ProjectId"] = "test-project",
-                ["GoogleCloud:PubSubTopic"] = "test-topic",
-                ["ExchangeRate:ApiKey"] = "test-key",
-                ["ExchangeRate:BaseUrl"] = "https://test-api.example.com"
-            })
-            .Build();
-        
+        _mockMapper = new Mock<IMapper>();
+        _mockConfiguration = new Mock<IConfiguration>();
         _mockPermissionService = new Mock<IPermissionService>();
         _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
         _mockDbContextFactory = new Mock<IDbContextFactory<UNOPSAppDbContext>>();
         _mockServiceProvider = new Mock<IServiceProvider>();
-        _mockExchangeRateService = new Mock<IExchangeRateService>();
 
         var testUser = new ClaimsPrincipal(new ClaimsIdentity(new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, _paoUserId.ToString()),
+            new Claim(ClaimTypes.NameIdentifier, "1"),
             new Claim(ClaimTypes.Name, "Test User")
         }, "TestAuthType"));
 
@@ -122,98 +71,32 @@ public class OpportunityValidationTests : IDisposable
         mockHttpContext.Setup(m => m.User).Returns(testUser);
         _mockHttpContextAccessor.Setup(m => m.HttpContext).Returns(mockHttpContext.Object);
 
-        _mockDbContextFactory.Setup(f => f.CreateDbContextAsync(It.IsAny<System.Threading.CancellationToken>()))
-            .ReturnsAsync(() =>
-            {
-                var factoryAccessor = CreateMockHttpContextAccessor(_paoUserId.ToString());
-                var factoryResolver = new UserResolverService<int>(factoryAccessor.Object, null);
-                return UNOPS.PAO.Business.Tests.TestBase.TestDbContextFactory.CreateUNOPS(_dbContextOptions, factoryResolver, mockDbSchema.Object);
-            });
+        _mockDbContextFactory.Setup(f => f.CreateDbContextAsync(default))
+            .ReturnsAsync(_context);
 
         _manager = new UNOPSOpportunityManager(
-            _mapper,
+            _mockMapper.Object,
             _context,
-            _configuration,
+            _mockConfiguration.Object,
             _mockDbContextFactory.Object,
             _mockExchangeRateService.Object,
             _mockPermissionService.Object,
             _mockHttpContextAccessor.Object,
             _mockServiceProvider.Object
         );
+
+        SeedTestData();
     }
 
     private void SeedTestData()
     {
-        // Use "get or create" pattern for reference data to work with PostgreSQL
-        var currency = _context.Currencies.FirstOrDefault(c => c.Code == "USD");
-        if (currency == null)
-        {
-            currency = new Currency { Code = "USD", Name = "US Dollar", IsDeleted = false };
-            _context.Currencies.Add(currency);
-            _context.SaveChanges();
-        }
-        _currencyId = currency.Id;
-
-        var country = _context.Countries.FirstOrDefault(c => c.Iso2Code == "BD");
-        if (country == null)
-        {
-            country = new Country { Name = "Bangladesh", Iso2Code = "BD" };
-            _context.Countries.Add(country);
-            _context.SaveChanges();
-        }
-        _countryId = country.Id;
-
-        var orgHierarchy = _context.OrganizationHierarchies.FirstOrDefault(o => o.Code == "TOU" && !o.IsDeleted);
-        if (orgHierarchy == null)
-        {
-            orgHierarchy = new OrganizationHierarchy { Name = "Test Org Unit", Code = "TOU", Description = "Test Organization Unit", IsDeleted = false };
-            _context.OrganizationHierarchies.Add(orgHierarchy);
-            _context.SaveChanges();
-        }
-        _orgHierarchyId = orgHierarchy.Id;
-
-        var proposedInitiativeType = _context.ProposedInitiativeTypes.FirstOrDefault(p => p.Name == "Project" && !p.IsDeleted);
-        if (proposedInitiativeType == null)
-        {
-            proposedInitiativeType = new ProposedInitiativeType { Name = "Project", IsDeleted = false };
-            _context.ProposedInitiativeTypes.Add(proposedInitiativeType);
-            _context.SaveChanges();
-        }
-        _proposedInitiativeTypeId = proposedInitiativeType.Id;
-
-        _paoUserId = TestDataHelper.GetOrCreateTestUser(_context, "testuser@unops.org");
-
-        _context.ChangeTracker.Clear();
-    }
-
-    private async Task<int> CreateTestOpportunityAsync(
-        string? name = null,
-        string? description = null,
-        string stage = "IDENTIFY & PROFILE",
-        EntityStatus status = EntityStatus.Draft,
-        decimal? budgetUSD = null,
-        int? responsibleOrgUnitId = null,
-        string? challenges = null)
-    {
-        var opportunity = new Domain.Entities.Opportunity
-        {
-            Name = name ?? $"Test Opportunity {_testMarker}",
-            Description = description ?? "Test Description",
-            Stage = stage,
-            Status = status,
-            CreatedBy = _paoUserId,
-            CreatedDate = DateTime.UtcNow,
-            LastModifiedBy = _paoUserId,
-            LastModifiedDate = DateTime.UtcNow,
-            IsDeleted = false,
-            InitiativeBudgetUSD = budgetUSD,
-            ResponsibleOrgUnitId = responsibleOrgUnitId,
-            Challenges = challenges
-        };
-        _context.Opportunities.Add(opportunity);
-        await _context.SaveChangesAsync();
-        _createdOpportunityIds.Add(opportunity.Id);
-        return opportunity.Id;
+        _context.Currencies.Add(new Currency { Id = 1, Code = "USD", Name = "US Dollar", IsDeleted = false });
+        _context.Countries.Add(new Country { Id = 1, Name = "Bangladesh", Iso2Code = "BD" });
+        _context.OrganizationHierarchies.Add(new OrganizationHierarchy { Id = 1, Name = "Test Org Unit", Code = "TOU", Description = "Test Organization Unit", IsDeleted = false });
+        _context.WorkflowStages.Add(new WorkflowStage { Id = 1, Name = "Identification", EntityType = "Opportunity", Order = 1, IsDeleted = false });
+        _context.ProposedInitiativeTypes.Add(new ProposedInitiativeType { Id = 1, Name = "Project", IsDeleted = false });
+        _context.PAOUsers.Add(new PAOUser { Id = 1, Email = "test@unops.org" });
+        _context.SaveChanges();
     }
 
     #region P1 - Name Validation Tests
@@ -239,7 +122,7 @@ public class OpportunityValidationTests : IDisposable
         await act.Should().ThrowAsync<Exception>();
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P1")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-002")]
@@ -257,7 +140,7 @@ public class OpportunityValidationTests : IDisposable
         await act.Should().ThrowAsync<Exception>().WithMessage("*length*");
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P1")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-003")]
@@ -270,9 +153,24 @@ public class OpportunityValidationTests : IDisposable
             Description = "Valid description with special characters"
         };
 
+        var entity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = request.Name,
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+
+        _mockMapper.Setup(m => m.Map<Domain.Entities.Opportunity>(It.IsAny<OpportunityRequest>()))
+            .Returns(entity);
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(new OpportunityModel { Id = 1, Name = request.Name });
+
         // Act
         var result = await _manager.CreateOpportunityAsync(request);
-        _createdOpportunityIds.Add(result.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -299,22 +197,19 @@ public class OpportunityValidationTests : IDisposable
             InitiativeBudgetUSD = negativeBudget
         };
 
-        // Act & Assert - Implementation may either throw exception or set to zero
-        OpportunityModel? created = null;
-        Func<Task> act = async () => created = await _manager.CreateOpportunityAsync(request);
+        // Act & Assert
+        // Implementation may either throw exception or set to zero
+        Func<Task> act = async () => await _manager.CreateOpportunityAsync(request);
+        
+        // Should either throw or handle gracefully
         var exception = await Record.ExceptionAsync(act);
-
         if (exception != null)
         {
-            exception.Message.Should().Contain("budget", because: "error should mention budget");
-        }
-        else if (created != null)
-        {
-            _createdOpportunityIds.Add(created.Id);
+            exception.Message.Should().Contain("budget", Because: "error should mention budget");
         }
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P1")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-005")]
@@ -328,16 +223,32 @@ public class OpportunityValidationTests : IDisposable
             InitiativeBudgetUSD = 0
         };
 
+        var entity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = request.Name,
+            InitiativeBudgetUSD = 0,
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+
+        _mockMapper.Setup(m => m.Map<Domain.Entities.Opportunity>(It.IsAny<OpportunityRequest>()))
+            .Returns(entity);
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(new OpportunityModel { Id = 1, Name = request.Name, InitiativeBudgetUSD = 0 });
+
         // Act
         var result = await _manager.CreateOpportunityAsync(request);
-        _createdOpportunityIds.Add(result.Id);
 
         // Assert
         result.Should().NotBeNull();
         result.InitiativeBudgetUSD.Should().Be(0);
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P1")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-006")]
@@ -351,9 +262,25 @@ public class OpportunityValidationTests : IDisposable
             InitiativeBudgetUSD = 999999999.99m // Very large budget
         };
 
+        var entity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = request.Name,
+            InitiativeBudgetUSD = request.InitiativeBudgetUSD,
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+
+        _mockMapper.Setup(m => m.Map<Domain.Entities.Opportunity>(It.IsAny<OpportunityRequest>()))
+            .Returns(entity);
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(new OpportunityModel { Id = 1, Name = request.Name, InitiativeBudgetUSD = request.InitiativeBudgetUSD });
+
         // Act
         var result = await _manager.CreateOpportunityAsync(request);
-        _createdOpportunityIds.Add(result.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -364,7 +291,7 @@ public class OpportunityValidationTests : IDisposable
 
     #region P1 - Date Validation Tests
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P1")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-007")]
@@ -379,22 +306,18 @@ public class OpportunityValidationTests : IDisposable
             TargetDeliveryDate = DateTime.UtcNow // Before signing date
         };
 
-        // Act & Assert - Should validate date logic
-        OpportunityModel? created = null;
-        Func<Task> act = async () => created = await _manager.CreateOpportunityAsync(request);
+        // Act & Assert
+        Func<Task> act = async () => await _manager.CreateOpportunityAsync(request);
+        
+        // Should validate date logic
         var exception = await Record.ExceptionAsync(act);
-
         if (exception != null)
         {
-            exception.Message.Should().MatchRegex("date|timeline|invalid", because: "error should mention date validation");
-        }
-        else if (created != null)
-        {
-            _createdOpportunityIds.Add(created.Id);
+            exception.Message.Should().MatchRegex("date|timeline|invalid", Because: "error should mention date validation");
         }
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P1")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-008")]
@@ -409,9 +332,26 @@ public class OpportunityValidationTests : IDisposable
             TargetDeliveryDate = DateTime.UtcNow.AddMonths(-3)
         };
 
+        var entity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = request.Name,
+            TargetSigningDate = request.TargetSigningDate,
+            TargetDeliveryDate = request.TargetDeliveryDate,
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+
+        _mockMapper.Setup(m => m.Map<Domain.Entities.Opportunity>(It.IsAny<OpportunityRequest>()))
+            .Returns(entity);
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(new OpportunityModel { Id = 1, Name = request.Name });
+
         // Act
         var result = await _manager.CreateOpportunityAsync(request);
-        _createdOpportunityIds.Add(result.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -421,7 +361,7 @@ public class OpportunityValidationTests : IDisposable
 
     #region P1 - Description Validation Tests
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P1")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-009")]
@@ -434,15 +374,31 @@ public class OpportunityValidationTests : IDisposable
             Description = ""
         };
 
+        var entity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = request.Name,
+            Description = request.Description,
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+
+        _mockMapper.Setup(m => m.Map<Domain.Entities.Opportunity>(It.IsAny<OpportunityRequest>()))
+            .Returns(entity);
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(new OpportunityModel { Id = 1, Name = request.Name });
+
         // Act
         var result = await _manager.CreateOpportunityAsync(request);
-        _createdOpportunityIds.Add(result.Id);
 
         // Assert
         result.Should().NotBeNull();
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P1")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-010")]
@@ -456,9 +412,25 @@ public class OpportunityValidationTests : IDisposable
             Description = longDescription
         };
 
+        var entity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = request.Name,
+            Description = longDescription,
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+
+        _mockMapper.Setup(m => m.Map<Domain.Entities.Opportunity>(It.IsAny<OpportunityRequest>()))
+            .Returns(entity);
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(new OpportunityModel { Id = 1, Name = request.Name, Description = longDescription });
+
         // Act
         var result = await _manager.CreateOpportunityAsync(request);
-        _createdOpportunityIds.Add(result.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -469,7 +441,7 @@ public class OpportunityValidationTests : IDisposable
 
     #region P2 - Challenges Field Validation Tests
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P2")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-011")]
@@ -489,14 +461,11 @@ public class OpportunityValidationTests : IDisposable
         var exception = await Record.ExceptionAsync(act);
         if (exception != null)
         {
-            // Check full exception chain (EF Core wraps DB errors in DbUpdateException)
-            var fullMessage = GetFullExceptionMessage(exception);
-            fullMessage.Should().MatchRegex("challenge|length|1020|value too long|22001",
-                because: "should validate challenges field length");
+            exception.Message.Should().MatchRegex("challenge|length|1020", Because: "should validate challenges field length");
         }
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P2")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-012")]
@@ -511,9 +480,25 @@ public class OpportunityValidationTests : IDisposable
             Challenges = maxLengthChallenges
         };
 
+        var entity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = request.Name,
+            Challenges = maxLengthChallenges,
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+
+        _mockMapper.Setup(m => m.Map<Domain.Entities.Opportunity>(It.IsAny<OpportunityRequest>()))
+            .Returns(entity);
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(new OpportunityModel { Id = 1, Name = request.Name, Challenges = maxLengthChallenges });
+
         // Act
         var result = await _manager.CreateOpportunityAsync(request);
-        _createdOpportunityIds.Add(result.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -541,24 +526,16 @@ public class OpportunityValidationTests : IDisposable
         };
 
         // Act & Assert
-        OpportunityModel? created = null;
-        Func<Task> act = async () => created = await _manager.CreateOpportunityAsync(request);
+        Func<Task> act = async () => await _manager.CreateOpportunityAsync(request);
+        
         var exception = await Record.ExceptionAsync(act);
-
         if (exception != null)
         {
-            // Check full exception chain (EF Core wraps DB errors in DbUpdateException)
-            var fullMessage = GetFullExceptionMessage(exception);
-            fullMessage.Should().MatchRegex("impact|length|510|value too long|22001",
-                because: "should validate impact field length");
-        }
-        else if (created != null)
-        {
-            _createdOpportunityIds.Add(created.Id);
+            exception.Message.Should().MatchRegex("impact|length|510", Because: "should validate impact field length");
         }
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P2")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-014")]
@@ -573,9 +550,25 @@ public class OpportunityValidationTests : IDisposable
             ExpectedOutcomes = maxLengthOutcomes
         };
 
+        var entity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = request.Name,
+            ExpectedOutcomes = maxLengthOutcomes,
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+
+        _mockMapper.Setup(m => m.Map<Domain.Entities.Opportunity>(It.IsAny<OpportunityRequest>()))
+            .Returns(entity);
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(new OpportunityModel { Id = 1, Name = request.Name, ExpectedOutcomes = maxLengthOutcomes });
+
         // Act
         var result = await _manager.CreateOpportunityAsync(request);
-        _createdOpportunityIds.Add(result.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -603,21 +596,16 @@ public class OpportunityValidationTests : IDisposable
         };
 
         // Act & Assert
-        OpportunityModel? created = null;
-        Func<Task> act = async () => created = await _manager.CreateOpportunityAsync(request);
+        Func<Task> act = async () => await _manager.CreateOpportunityAsync(request);
+        
         var exception = await Record.ExceptionAsync(act);
-
         if (exception != null)
         {
-            exception.Message.Should().MatchRegex("beneficiaries|negative|invalid", because: "should validate beneficiaries count");
-        }
-        else if (created != null)
-        {
-            _createdOpportunityIds.Add(created.Id);
+            exception.Message.Should().MatchRegex("beneficiaries|negative|invalid", Because: "should validate beneficiaries count");
         }
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P2")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-016")]
@@ -632,9 +620,25 @@ public class OpportunityValidationTests : IDisposable
             EstimatedDirectBeneficiaries = null
         };
 
+        var entity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = request.Name,
+            BeneficiariesToBeDetermined = true,
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+
+        _mockMapper.Setup(m => m.Map<Domain.Entities.Opportunity>(It.IsAny<OpportunityRequest>()))
+            .Returns(entity);
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(new OpportunityModel { Id = 1, Name = request.Name, BeneficiariesToBeDetermined = true });
+
         // Act
         var result = await _manager.CreateOpportunityAsync(request);
-        _createdOpportunityIds.Add(result.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -645,7 +649,7 @@ public class OpportunityValidationTests : IDisposable
 
     #region P2 - Collection Validation Tests
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P2")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-017")]
@@ -661,15 +665,30 @@ public class OpportunityValidationTests : IDisposable
             SDGs = new List<OpportunitySDGRequest>()
         };
 
+        var entity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = request.Name,
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+
+        _mockMapper.Setup(m => m.Map<Domain.Entities.Opportunity>(It.IsAny<OpportunityRequest>()))
+            .Returns(entity);
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(new OpportunityModel { Id = 1, Name = request.Name });
+
         // Act
         var result = await _manager.CreateOpportunityAsync(request);
-        _createdOpportunityIds.Add(result.Id);
 
         // Assert
         result.Should().NotBeNull();
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P2")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-018")]
@@ -685,9 +704,24 @@ public class OpportunityValidationTests : IDisposable
             SDGs = null
         };
 
+        var entity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = request.Name,
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+
+        _mockMapper.Setup(m => m.Map<Domain.Entities.Opportunity>(It.IsAny<OpportunityRequest>()))
+            .Returns(entity);
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(new OpportunityModel { Id = 1, Name = request.Name });
+
         // Act
         var result = await _manager.CreateOpportunityAsync(request);
-        _createdOpportunityIds.Add(result.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -697,39 +731,53 @@ public class OpportunityValidationTests : IDisposable
 
     #region P2 - Update Validation Tests
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P2")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-019")]
     public async Task UpdateOpportunity_PartialUpdate_OnlyUpdatesProvidedFields()
     {
-        // Arrange - Create opportunity via helper
-        var oppId = await CreateTestOpportunityAsync(
-            name: "Original Name",
-            description: "Original Description",
-            budgetUSD: 1000000);
+        // Arrange - Create opportunity
+        var opportunity = new Domain.Entities.Opportunity
+        {
+            Id = 1,
+            Name = "Original Name",
+            Description = "Original Description",
+            InitiativeBudgetUSD = 1000000,
+            WorkflowStageId = 1,
+            Status = EntityStatus.Draft,
+            CreatedBy = 1,
+            CreatedDate = DateTime.UtcNow,
+            IsDeleted = false
+        };
+
+        _context.Opportunities.Add(opportunity);
+        await _context.SaveChangesAsync();
 
         // Act - Update only name, leave others unchanged
         var updateRequest = new UpdateOpportunityRequest
         {
-            Id = oppId,
+            Id = 1,
             Name = "Updated Name Only"
             // Description and budget not provided - should remain unchanged
         };
+
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+            .Returns(new OpportunityModel { Id = 1, Name = "Updated Name Only" });
 
         var result = await _manager.UpdateOpportunityAsync(updateRequest);
 
         // Assert
         result.Should().NotBeNull();
-
-        var savedOpportunity = await _context.Opportunities.FindAsync(oppId);
+        
+        var savedOpportunity = await _context.Opportunities.FindAsync(1);
         savedOpportunity.Should().NotBeNull();
         savedOpportunity!.Name.Should().Be("Updated Name Only");
         savedOpportunity.Description.Should().Be("Original Description"); // Unchanged
         savedOpportunity.InitiativeBudgetUSD.Should().Be(1000000); // Unchanged
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P2")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-020")]
@@ -751,65 +799,9 @@ public class OpportunityValidationTests : IDisposable
 
     #endregion
 
-    /// <summary>
-    /// Concatenates all messages in the exception chain (outer + inner exceptions).
-    /// EF Core wraps database errors in DbUpdateException; the actual PostgreSQL
-    /// error details are in inner exceptions.
-    /// </summary>
-    private static string GetFullExceptionMessage(Exception ex)
-    {
-        var messages = new List<string>();
-        var current = ex;
-        while (current != null)
-        {
-            messages.Add(current.Message);
-            current = current.InnerException;
-        }
-        return string.Join(" | ", messages);
-    }
-
-    private static Mock<IHttpContextAccessor> CreateMockHttpContextAccessor(string userId)
-    {
-        var accessor = new Mock<IHttpContextAccessor>();
-        var httpContext = new Mock<HttpContext>();
-        var request = new Mock<HttpRequest>();
-        request.Setup(r => r.Headers).Returns(new HeaderDictionary());
-        var user = new ClaimsPrincipal(new ClaimsIdentity(new[]
-        {
-            new Claim(ClaimTypes.NameIdentifier, userId),
-            new Claim(ClaimTypes.Name, "Test User"),
-            new Claim(ClaimTypes.Email, "testuser@unops.org")
-        }, "TestAuthType"));
-        httpContext.Setup(m => m.User).Returns(user);
-        httpContext.Setup(m => m.Request).Returns(request.Object);
-        accessor.Setup(m => m.HttpContext).Returns(httpContext.Object);
-        return accessor;
-    }
-
     public void Dispose()
     {
-        try
-        {
-            if (TestEnvironment.UsePostgreSQL && _createdOpportunityIds.Any())
-            {
-                var ids = string.Join(",", _createdOpportunityIds);
-                _context.Database.ExecuteSqlRaw($"DELETE FROM public.\"Opportunities\" WHERE \"Id\" IN ({ids})");
-            }
-        }
-        catch { /* Best-effort cleanup */ }
-
-        if (TestEnvironment.UseInMemory)
-        {
-            try { _context.Database.EnsureDeleted(); }
-            catch { /* SQLite connection may already be closed during concurrent test runs */ }
-        }
-        if (_transaction != null)
-        {
-            try { _transaction.Rollback(); }
-            catch { }
-            _transaction.Dispose();
-            _transaction = null;
-        }
+        _context.Database.EnsureDeleted();
         _context.Dispose();
     }
 }

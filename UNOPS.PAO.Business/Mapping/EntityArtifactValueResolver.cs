@@ -13,22 +13,9 @@ namespace UNOPS.PAO.Business.Mapping;
 /// </summary>
 public class EntityArtifactValueResolver : IValueResolver<object, object, List<EntityArtifactModel>>
 {
-    private readonly AppDbContext? _context;
-    private readonly IMapper? _mapper;
+    private readonly AppDbContext _context;
+    private readonly IMapper _mapper;
 
-    /// <summary>
-    /// Parameterless constructor for AutoMapper when DI is not available (e.g., unit tests).
-    /// When instantiated this way, the resolver returns an empty list.
-    /// </summary>
-    public EntityArtifactValueResolver()
-    {
-        _context = null;
-        _mapper = null;
-    }
-
-    /// <summary>
-    /// Constructor for production use with dependency injection.
-    /// </summary>
     public EntityArtifactValueResolver(AppDbContext context, IMapper mapper)
     {
         _context = context;
@@ -37,12 +24,6 @@ public class EntityArtifactValueResolver : IValueResolver<object, object, List<E
 
     public List<EntityArtifactModel> Resolve(object source, object destination, List<EntityArtifactModel> destMember, ResolutionContext context)
     {
-        // If context is not available (unit tests without DI), return empty list
-        if (_context == null)
-        {
-            return new List<EntityArtifactModel>();
-        }
-
         // Extract entity type and ID from the source object
         var entityType = GetEntityType(source);
         var entityId = GetEntityId(source);

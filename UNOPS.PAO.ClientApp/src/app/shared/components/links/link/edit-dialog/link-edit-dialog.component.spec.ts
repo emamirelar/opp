@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LinkEditDialogComponent } from './link-edit-dialog.component';
 import { TranslateModule } from '@ngx-translate/core';
-import { createMockTranslateService, createMockDialogService, createMockMarkdownService } from '@shared/testing/test-utilities';
 import { EntityType } from '../../../../models/link.model';
 
 describe('LinkEditDialogComponent', () => {

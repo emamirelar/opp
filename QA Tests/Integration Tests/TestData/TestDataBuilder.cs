@@ -37,42 +37,6 @@ public static class TestDataBuilder
             .RuleFor(p => p.LastModifiedDate, f => f.Date.Recent());
     }
 
-    public static Faker<Contact> GetContactFaker()
-    {
-        return new Faker<Contact>()
-            .RuleFor(c => c.Name, f => f.Name.FullName()) // Required: inherited from ModifiableDeletableEntity
-            .RuleFor(c => c.FirstName, f => f.Name.FirstName())
-            .RuleFor(c => c.LastName, f => f.Name.LastName()) // Required
-            .RuleFor(c => c.Title, f => f.Name.JobTitle()) // Required
-            .RuleFor(c => c.Email, f => f.Internet.Email()) // Required
-            .RuleFor(c => c.Salutation, f => f.PickRandom(new[] { "Mr.", "Ms.", "Mrs.", "Dr.", "Prof." }))
-            .RuleFor(c => c.Phone, f => f.Phone.PhoneNumber())
-            .RuleFor(c => c.Mobile, f => f.Phone.PhoneNumber())
-            .RuleFor(c => c.Department, f => f.Commerce.Department())
-            .RuleFor(c => c.Description, f => f.Lorem.Sentence())
-            .RuleFor(c => c.MailingStreet, f => f.Address.StreetAddress())
-            .RuleFor(c => c.MailingCity, f => f.Address.City())
-            .RuleFor(c => c.MailingStateProvince, f => f.Address.State())
-            .RuleFor(c => c.MailingPostalCode, f => f.Address.ZipCode())
-            .RuleFor(c => c.MailingCountry, f => f.Address.Country())
-            .RuleFor(c => c.Status, f => f.PickRandom<Domain.Entities.EntityStatus>())
-            .RuleFor(c => c.PartnerId, f => f.Random.Int(1, 100)) // Will be overridden by seeder
-            .RuleFor(c => c.CreatedDate, f => f.Date.Past(2))
-            .RuleFor(c => c.LastModifiedDate, f => f.Date.Recent());
-    }
-
-    public static Faker<OrganizationUnitRelationship> GetOrganizationUnitRelationshipFaker()
-    {
-        return new Faker<OrganizationUnitRelationship>()
-            .RuleFor(r => r.Name, (f, r) => $"{r.EntityType}-{r.EntityId}-OrgUnit-{r.OrganizationHierarchyId}") // Required: inherited from ModifiableDeletableEntity
-            .RuleFor(r => r.OrganizationHierarchyId, f => f.Random.Int(1, 100)) // Will be overridden by seeder
-            .RuleFor(r => r.EntityId, f => f.Random.Int(1, 100)) // Will be overridden by seeder
-            .RuleFor(r => r.EntityType, f => f.PickRandom(new[] { "Partner", "UNOPSPartner", "Contact", "Interaction", "Opportunity" })) // Will be overridden by seeder
-            .RuleFor(r => r.Status, f => f.PickRandom<Domain.Entities.EntityStatus>())
-            .RuleFor(r => r.CreatedDate, f => f.Date.Past(2))
-            .RuleFor(r => r.LastModifiedDate, f => f.Date.Recent());
-    }
-
     public static PartnerFilterRequest CreatePartnerFilterRequest(
         int pageIndex = 1,
         int pageSize = 10,

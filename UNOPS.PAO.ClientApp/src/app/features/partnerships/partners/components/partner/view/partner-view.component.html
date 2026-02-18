@@ -15,16 +15,15 @@
     <div [class]="responsiveLayoutClasses().leftColumn">
       <p-panel class="{{infoLoading() ? 'opacity-50' : ''}} unops-card unops-surface-elevated unops-rounded-lg unops-shadow-lg">
         <ng-template pTemplate="header">
-          <div data-testid="partner-detail-header" class="flex justify-between items-center w-full">
+          <div class="flex justify-between items-center w-full">
             <div class="flex items-center gap-2">
-              <span data-testid="partner-title" class="unops-text-headline-medium">{{ 'title.partnerInformation' | translate }}</span>
+              <span class="unops-text-headline-medium">{{ 'title.partnerInformation' | translate }}</span>
               <app-entity-tags [tags]="recordData().tags"></app-entity-tags>
             </div>
             <div class="flex items-center gap-1 flex-wrap">
               <!-- Primary Actions Group -->
               @if (recordData().permissions?.canApprove) {
-                <p-button data-testid="approve-partner-button"
-                          icon="pi pi-check"
+                <p-button icon="pi pi-check"
                           [rounded]="true"
                           [text]="true"
                           [size]="'small'"
@@ -35,8 +34,7 @@
                           (onClick)="handleApprovalClick()"></p-button>
               }
               @if (recordData().permissions?.canUnapprove) {
-                <p-button data-testid="unapprove-partner-button"
-                          icon="pi pi-times"
+                <p-button icon="pi pi-times"
                           [rounded]="true"
                           [text]="true"
                           [size]="'small'"
@@ -47,8 +45,7 @@
                           (onClick)="handleUnapprovalClick()"></p-button>
               }
               @if (recordData().permissions?.canActivate) {
-                <p-button data-testid="activate-partner-button"
-                          icon="pi pi-play"
+                <p-button icon="pi pi-play"
                           [rounded]="true"
                           [text]="true"
                           [size]="'small'"
@@ -61,8 +58,7 @@
 
               <!-- Status Actions Group -->
               @if (recordData().permissions?.canClose) {
-                <p-button data-testid="close-partner-button"
-                          icon="pi pi-times-circle"
+                <p-button icon="pi pi-times-circle"
                           [rounded]="true"
                           [text]="true"
                           [size]="'small'"
@@ -72,8 +68,7 @@
                           (onClick)="handleCloseClick()"></p-button>
               }
               @if (recordData().permissions?.canArchive) {
-                <p-button data-testid="archive-partner-button"
-                          icon="pi pi-inbox"
+                <p-button icon="pi pi-inbox"
                           [rounded]="true"
                           [text]="true"
                           [size]="'small'"
@@ -85,8 +80,7 @@
 
               <!-- Utility Actions Group -->
               @if (recordData().permissions?.canUpdate) {
-                <p-button data-testid="edit-partner-button"
-                          icon="pi pi-pencil"
+                <p-button icon="pi pi-pencil"
                           [rounded]="true"
                           [text]="true"
                           [size]="'small'"
@@ -96,8 +90,7 @@
                           (onClick)="handleEditClick()"></p-button>
               }
               @if (recordData().permissions?.canDelete) {
-                <p-button data-testid="delete-partner-button"
-                          icon="pi pi-trash"
+                <p-button icon="pi pi-trash"
                           [rounded]="true"
                           [text]="true"
                           [size]="'small'"
@@ -116,13 +109,12 @@
           <div class="flex flex-col gap-4 pb-2">
 
                 @if(recordData().partnerCategoryId){
-                  <div data-testid="partner-category-group" class="unops-p-lg unops-mb-md unops-rounded-lg" style="background-color: var(--unops-surface-cool); border: 1px solid var(--unops-neutral-200);">
+                  <div class="unops-p-lg unops-mb-md unops-rounded-lg" style="background-color: var(--unops-surface-cool); border: 1px solid var(--unops-neutral-200);">
                     <div class="unops-text-body-large unops-text-secondary unops-mb-sm">{{ 'label.partnerTree.partnerGroup' | translate }}</div>
                     <div class="flex items-center gap-3">
                       <div class="unops-flex unops-items-center unops-gap-sm">
                         <i class="pi pi-sitemap unops-text-secondary" style="font-size: 1.2rem;"></i>
-                        <a data-testid="partner-category-link"
-                           [routerLink]="['/admin/partner-tree', recordData().partnerCategoryId]"
+                        <a [routerLink]="['/admin/partner-tree', recordData().partnerCategoryId]"
                            class="unops-text-title-medium unops-text-secondary hover:unops-text-primary unops-transition cursor-pointer"
                            style="font-weight: var(--unops-font-weight-bold); text-decoration: none; border-bottom: 2px solid transparent;"
                            onmouseover="this.style.borderBottom='2px solid var(--unops-secondary)'; this.style.transform='translateY(-1px)'"
@@ -134,8 +126,7 @@
                         <i class="pi pi-chevron-right unops-text-secondary" style="font-size: 1rem"></i>
                         <div class="unops-flex unops-items-center unops-gap-sm">
                           <i class="pi pi-folder unops-text-secondary" style="font-size: 1.2rem;"></i>
-                          <a data-testid="partner-group-link"
-                             [routerLink]="['/admin/partner-tree', recordData().partnerGroupId]"
+                          <a [routerLink]="['/admin/partner-tree', recordData().partnerGroupId]"
                              class="unops-text-title-medium unops-text-secondary hover:unops-text-primary unops-transition cursor-pointer"
                              style="font-weight: var(--unops-font-weight-bold); text-decoration: none; border-bottom: 2px solid transparent;"
                              onmouseover="this.style.borderBottom='2px solid var(--unops-secondary)'; this.style.transform='translateY(-1px)'"
@@ -150,7 +141,7 @@
 
                 <!-- Address -->
                 @if(recordData().address1Street || recordData().address1Street2 || recordData().address1City || recordData().address1Country){
-                <div data-testid="partner-address-section" class="unops-mb-md">
+                <div class="unops-mb-md">
                   <div class="unops-text-label-large unops-text-secondary unops-mb-sm unops-flex unops-items-center unops-gap-sm">
                     <i class="pi pi-map-marker unops-text-info" style="font-size: 1rem;"></i>
                     {{ 'label.address' | translate }}
@@ -158,7 +149,7 @@
 
                   <!-- Primary Information: Country -->
                   @if(recordData().address1Country) {
-                  <div data-testid="partner-country" class="unops-p-md unops-rounded-md unops-mb-sm" style="background-color: var(--unops-neutral-100); border: 1px solid var(--unops-neutral-200);">
+                  <div class="unops-p-md unops-rounded-md unops-mb-sm" style="background-color: var(--unops-neutral-100); border: 1px solid var(--unops-neutral-200);">
                     <div class="unops-text-label-large unops-text-muted unops-mb-sm">{{ 'label.address.country' | translate }}</div>
                     <div class="unops-text-body-large unops-text-secondary" style="font-weight: var(--unops-font-weight-semibold);">{{recordData().address1Country}}</div>
                   </div>
@@ -198,14 +189,14 @@
 
 
             @if(getPrimaryOrganizationUnit(recordData())){
-            <div data-testid="partner-orgunit-section" class="unops-mb-md">
+            <div class="unops-mb-md">
               <div class="unops-text-label-large unops-text-secondary unops-mb-sm unops-flex unops-items-center unops-gap-sm">
                 <i class="pi pi-building unops-text-warning" style="font-size: 1rem;"></i>
                 {{ 'label.partner.partnerOrgUnit' | translate }}
               </div>
 
               <!-- Primary Information: Primary Organization Unit -->
-              <div data-testid="partner-orgunit" class="unops-p-md unops-rounded-md unops-mb-sm" style="background-color: var(--unops-neutral-100); border: 1px solid var(--unops-neutral-200);">
+              <div class="unops-p-md unops-rounded-md unops-mb-sm" style="background-color: var(--unops-neutral-100); border: 1px solid var(--unops-neutral-200);">
                 <div class="unops-text-label-large unops-text-muted unops-mb-sm">{{ 'label.organization.primaryUnit' | translate }}</div>
                 <div class="unops-text-body-large unops-text-secondary" style="font-weight: var(--unops-font-weight-semibold);">{{getPrimaryOrganizationUnit(recordData())?.name}}</div>
               </div>
@@ -249,14 +240,14 @@
             @if(showAdditionalInfo() && showFullContent()) {
 
               <!-- ========== CHECKBOX FIELDS ========== -->
-              <div data-testid="partner-attributes-section" class="unops-mb-lg">
+              <div class="unops-mb-lg">
                 <div class="unops-text-headline-small unops-text-secondary unops-mb-md unops-flex unops-items-center unops-gap-sm">
                   <i class="pi pi-check-circle unops-text-info" style="font-size: 1rem;"></i>
                   {{ 'title.partnerAttributes' | translate }}
                 </div>
 
                 <!-- Primary Information: Key Global Partner -->
-                <div data-testid="partner-key-global-partner" class="unops-p-md unops-rounded-md unops-mb-md" style="background-color: var(--unops-neutral-100); border: 1px solid var(--unops-neutral-200);">
+                <div class="unops-p-md unops-rounded-md unops-mb-md" style="background-color: var(--unops-neutral-100); border: 1px solid var(--unops-neutral-200);">
                   <div class="unops-text-label-large unops-text-muted unops-mb-sm">{{ "label.partner.keyGlobalPartner" | translate }}</div>
                   <div class="unops-flex unops-items-center unops-gap-sm">
                     @if(recordData().keyGlobalPartner) {
@@ -417,7 +408,7 @@
 
                 <!-- Primary Information: Status -->
                 @if(recordData().status){
-                <div data-testid="partner-status" class="unops-p-md unops-rounded-md unops-mb-md" style="background-color: var(--unops-neutral-100); border: 1px solid var(--unops-neutral-200);">
+                <div class="unops-p-md unops-rounded-md unops-mb-md" style="background-color: var(--unops-neutral-100); border: 1px solid var(--unops-neutral-200);">
                   <div class="unops-text-label-large unops-text-muted unops-mb-sm">{{ 'label.partner.status' | translate }}</div>
                   <div class="unops-text-body-large unops-text-secondary" style="font-weight: var(--unops-font-weight-semibold);">{{recordData().status}}</div>
                 </div>
@@ -504,14 +495,13 @@
 
           <p-divider></p-divider>
 
-          <div data-testid="partner-links-section" class="flex justify-between items-center unops-mb-sm">
+          <div class="flex justify-between items-center unops-mb-sm">
             <div class="unops-text-headline-medium unops-text-secondary unops-flex unops-items-center unops-gap-sm">
               <i class="pi pi-link unops-text-info" style="font-size: 1.1rem;"></i>
               {{ 'title.links' | translate }}
             </div>
             @if (recordPermissions().permissions.canUpdate) {
               <p-button
-                data-testid="add-link-button"
                 icon="pi pi-plus"
                 rounded
                 styleClass="p-button-text"
@@ -530,14 +520,13 @@
 
           <p-divider></p-divider>
 
-          <div data-testid="partner-documents-section" class="flex justify-between items-center unops-mb-md">
+          <div class="flex justify-between items-center unops-mb-md">
             <div class="unops-text-headline-medium unops-text-secondary unops-flex unops-items-center unops-gap-sm">
               <i class="pi pi-file unops-text-success" style="font-size: 1.1rem;"></i>
               {{ 'title.doc' | translate }}
             </div>
             @if (recordPermissions().permissions.canUpdate) {
               <p-button
-                data-testid="upload-document-button"
                 icon="pi pi-google"
                 rounded
                 styleClass="p-button-text"

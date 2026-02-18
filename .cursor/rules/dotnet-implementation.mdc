@@ -1,0 +1,768 @@
+---
+description: UNOPS Opportunity+ System - .NET Implementation Guidelines and Patterns
+globs: *.cs
+alwaysApply: true
+---
+
+# UNOPS Opportunity+ System - .NET Implementation Guidelines
+
+Comprehensive implementation guidelines for .NET development in the UNOPS Opportunity+ Partnership and Opportunity Management System. This rule defines the architectural patterns, conventions, and best practices used throughout the codebase.
+
+Based on analysis of the existing codebase patterns and established architectural decisions.
+
+## Entity Framework & Data Access
+
+### Entity Configuration
+- **Use inline configuration** in `OnModelCreating()` method rather than separate `IEntityTypeConfiguration<T>` files
+- Configure entities directly in the DbContext using fluent API
+- Example pattern:
+```csharp
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    base.OnModelCreating(modelBuilder);
+    
+    modelBuilder.Entity<EntityName>(entity =>
+    {
+        entity.HasOne(x => x.RelatedEntity)
+            .WithMany()
+            .HasForeignKey(x => x.RelatedEntityId);
+    });
+}
+```
+
+### Entity Base Classes
+### Entity Base Classes
+- **Inherit from `ModifiableDeletableEntity`** (parameterless) for new entities - this is a convenience class that inherits from `ModifiableDeletableEntity<int, int>`
+- **Alternative**: Can also inherit directly from `ModifiableDeletableEntity<int, int>` if needed
+- **Location**: `UNOPS.PAO.Domain/Infrastructure/Audit/ModifiableDeletableEntity.cs`
+- Provides: `Id`, `Name`, `Status`, audit fields (`CreatedBy`, `CreatedDate`, `LastModifiedBy`, `LastModifiedDate`), soft delete (`IsDeleted`, `DeletedBy`, `DeletedDate`), `WorkflowStatus`
+- Use `EntityStatus` enum for entity status management
+- Implement audit trails automatically via `AuditableDbContext`
+
+### **CRITICAL: Soft Delete Pattern - IsDeleted Flag**
+
+The system uses **soft delete** for all entities inheriting from `ModifiableDeletableEntity`. This means records are **never physically deleted** from the database; instead, they are marked as deleted using the `IsDeleted` flag.
+
+#### **What is Soft Delete?**
+- **`IsDeleted`**: Boolean flag indicating if a record is logically deleted
+- **`DeletedBy`**: User ID who performed the soft delete
+- **`DeletedDate`**: Timestamp when the record was soft deleted
+- Physical database records remain intact for audit trails and data recovery
+
+#### **MANDATORY: Always Filter by IsDeleted**
+
+**❌ COMMON MISTAKE**: Forgetting to filter out deleted records in queries
+
+```csharp
+// ❌ WRONG - Returns deleted records
+var entities = await context.Entities
+    .Where(e => e.SomeProperty == value)
+    .ToListAsync();
+
+// ❌ WRONG - May return a deleted record
+var entity = await context.Entities
+    .FirstOrDefaultAsync(e => e.Id == id);
+
+// ❌ WRONG - Includes deleted records in count
+var count = await context.Entities
+    .CountAsync(e => e.Status == EntityStatus.Active);
+```
+
+**✅ CORRECT PATTERNS**:
+
+```csharp
+// ✅ CORRECT - Explicitly filter deleted records
+var entities = await context.Entities
+    .Where(e => !e.IsDeleted && e.SomeProperty == value)
+    .ToListAsync();
+
+// ✅ CORRECT - Single record with IsDeleted check
+var entity = await context.Entities
+    .FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted);
+
+// ✅ CORRECT - Count only non-deleted records
+var count = await context.Entities
+    .CountAsync(e => !e.IsDeleted && e.Status == EntityStatus.Active);
+
+// ✅ CORRECT - Complex query with IsDeleted filter
+var results = await context.ParentEntity
+    .Include(p => p.ChildEntities.Where(c => !c.IsDeleted))
+    .Where(p => !p.IsDeleted && p.Status == EntityStatus.Active)
+    .ToListAsync();
+```
+
+#### **Where to Apply IsDeleted Filters**
+
+**1. Manager Layer (Primary Location)**
+```csharp
+public async Task<IEnumerable<EntityModel>> GetAllAsync()
+{
+    // ✅ Always filter in manager methods
+    var entities = await context.Entities
+        .Where(e => !e.IsDeleted)
+        .ToListAsync();
+    
+    return mapper.Map<IEnumerable<EntityModel>>(entities);
+}
+
+public async Task<EntityModel?> GetByIdAsync(int id)
+{
+    // ✅ Check IsDeleted when fetching by ID
+    var entity = await context.Entities
+        .FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted);
+    
+    if (entity == null)
+        throw new KeyNotFoundException($"Entity with ID {id} not found or has been deleted");
+    
+    return mapper.Map<EntityModel>(entity);
+}
+```
+
+**2. Related Entity Queries**
+```csharp
+// ✅ Filter child collections
+var parent = await context.ParentEntities
+    .Include(p => p.Children.Where(c => !c.IsDeleted))
+    .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
+
+// ✅ Filter in navigation property queries
+var childCount = await context.ChildEntities
+    .CountAsync(c => !c.IsDeleted && c.ParentId == parentId);
+```
+
+**3. Dropdown/Typeahead Data**
+```csharp
+// ✅ Exclude deleted records from selection lists
+public async Task<IEnumerable<TypeaheadInput>> GetEntityDropdownAsync()
+{
+    return await context.Entities
+        .Where(e => !e.IsDeleted && e.Status == EntityStatus.Active)
+        .Select(e => new TypeaheadInput 
+        { 
+            Id = e.Id, 
+            Name = e.Name 
+        })
+        .ToListAsync();
+}
+```
+
+#### **Soft Delete Implementation**
+
+```csharp
+// ✅ CORRECT - Soft delete an entity
+public async Task<bool> DeleteAsync(int id)
+{
+    var entity = await repository.GetByIdAsync(id);
+    if (entity == null)
+        throw new KeyNotFoundException($"Entity with ID {id} not found");
+    
+    // Set soft delete properties
+    entity.IsDeleted = true;
+    entity.DeletedBy = currentUserId;
+    entity.DeletedDate = DateTime.UtcNow;
+    
+    await context.SaveChangesAsync();
+    return true;
+}
+
+// ❌ WRONG - Never physically delete
+public async Task<bool> DeleteAsync(int id)
+{
+    var entity = await repository.GetByIdAsync(id);
+    context.Entities.Remove(entity); // ❌ Physical delete
+    await context.SaveChangesAsync();
+    return true;
+}
+```
+
+#### **IsDeleted Checklist**
+
+When writing any query or business logic:
+
+- [ ] **Direct queries**: Added `Where(e => !e.IsDeleted)` to all entity queries
+- [ ] **Get by ID**: Included `&& !e.IsDeleted` in single record queries
+- [ ] **Related entities**: Filtered child collections with `.Include(p => p.Children.Where(c => !c.IsDeleted))`
+- [ ] **Counts/aggregations**: Applied `!e.IsDeleted` filter before Count/Sum/Average
+- [ ] **Dropdown data**: Excluded deleted records from selection lists
+- [ ] **Foreign key lookups**: Verified related entities are not deleted
+- [ ] **Delete operations**: Implemented soft delete (set flags) instead of physical delete
+- [ ] **Business rules**: Considered IsDeleted in validation and permission checks
+
+**Missing `IsDeleted` filters is a CRITICAL bug** that can lead to:
+- Incorrect business calculations
+- Displaying deleted data to users
+- Foreign key constraint violations
+- Failed data integrity validations
+
+### Name Property Requirement for ModifiableDeletableEntity
+- **CRITICAL**: The `Name` property inherited from `ModifiableDeletableEntity` is a required non-nullable field in the database
+- **MUST** always set the `Name` property when creating entities, even if the name is not used in the UI
+- For entities where the name field is not semantically meaningful, use a descriptive placeholder:
+  - **Recommended patterns**: `"Item {SequenceNumber}"`, `"Record {Id}"`, `"Entry-{DateTime}"`, or simply `string.Empty`
+- Set the `Name` property **after** AutoMapper mapping and **before** calling `AddAsync()` or `UpdateAsync()`
+
+### Database Context
+- Use PostgreSQL as the primary database
+- **Base Context**: `AppDbContext` in `UNOPS.PAO.DataAccess/Context/AppDbContext.cs` inherits from `AuditableDbContext<int, int>`
+- **UNOPS Override Context**: `UNOPSAppDbContext` in `UNOPS.PAO.UNOPSDataAccess/Context/UNOPSAppDbContext.cs` inherits from `AppDbContext`
+- **For Entity Configuration**: Configure entities in `UNOPSAppDbContext.OnModelCreating()` for UNOPS-specific entities, or in `AppDbContext.OnModelCreating()` for base entities
+- Set default schema to "public": `modelBuilder.HasDefaultSchema("public")`
+- Configure warning suppression: `optionsBuilder.ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning))`
+- **For Migrations**: Use `UNOPSAppDbContext` context (see migration-creation.mdc rule)
+
+## Repository Pattern
+
+### Generic Repositories
+- Use `DataRepository<TEntity>` for basic CRUD operations
+- Use `GenericDataRepository<TEntity>` for advanced operations with filtering and pagination
+- Repository pattern with `ApplyIncludes()` method for eager loading
+- Example:
+```csharp
+private readonly DataRepository<EntityName> repository;
+
+public Manager(AppDbContext context)
+{
+    repository = new DataRepository<EntityName>(context);
+}
+```
+
+### Repository Methods
+- Async methods: `GetByIdAsync()`, `AddAsync()`, `UpdateAsync()`
+- Include support: `GetByIdAsync(int id, string[] includes)`
+- Pagination support via `GetAllWithPagination<TFilter, TResponse>()`
+- Specification pattern for complex queries
+
+## Business Layer (Managers)
+
+### Manager Pattern
+- Business logic encapsulated in managers (e.g., `ContactManager`, `PartnerManager`, `InteractionManager`, `OpportunityManager`, `DocumentManager`)
+- Naming convention: Classes in `UNOPS.PAO.Business/Managers` use the `*Manager` suffix (not `Service`).
+- Managers injected via `IManagerWrapper` facade pattern
+- Constructor injection: `IMapper mapper, AppDbContext context, IManagerWrapper managerWrapper`
+- Example structure:
+```csharp
+public class EntityManager : IEntityManager
+{
+    private readonly IMapper mapper;
+    private readonly AppDbContext context;
+    private readonly DataRepository<Entity> repository;
+    private readonly IManagerWrapper managerWrapper;
+    
+    private int currentUserId => managerWrapper.CurrentUser?.Id ?? 0;
+    
+    public EntityManager(IMapper mapper, AppDbContext context, IManagerWrapper managerWrapper)
+    {
+        this.mapper = mapper;
+        this.context = context;
+        this.repository = new DataRepository<Entity>(context);
+        this.managerWrapper = managerWrapper;
+    }
+}
+```
+
+### Manager Wrapper
+- Central facade: `ManagerWrapper` implements `IManagerWrapper`
+- Provides access to all managers, AutoMapper, DbContext, current user
+- Register new managers in constructor and interface
+- Conditional logic for UNOPS override scenarios
+
+## Presentation Layer (Controllers)
+
+### Controller Structure
+- Inherit from `ControllerBase`
+- Use constructor injection for dependencies
+- Standard decorators: `[Route("/")]`, `[ApiController]`, `[Authorize]`
+- Permission-based authorization: `[PermissionAuthorize(PermissionNames.CanAction)]`
+
+### Response Models and Data Transfer
+- **NEVER return database entities directly from controllers**
+- **ALWAYS use DTOs/Models for API responses**
+- Controllers must transform entity data through mapping before returning to clients
+- This ensures separation of concerns, API stability, and prevents exposure of internal data structures
+- Example:
+```csharp
+// BAD - Never do this
+public async Task<IActionResult> GetEntity(int id)
+{
+    var entity = await manager.EntityManager.GetByIdAsync(id);
+    return Ok(entity); // Direct entity exposure
+}
+
+// GOOD - Always use DTOs/Models
+public async Task<IActionResult> GetEntity(int id)
+{
+    var entity = await manager.EntityManager.GetByIdAsync(id);
+    var model = mapper.Map<EntityModel>(entity);
+    return Ok(model); // Mapped DTO/Model
+}
+```
+
+### API Routing
+- Use `APIDictionary` constants for route definitions
+- Pattern: `[HttpGet(APIDictionary.EntityName)]`
+- RESTful conventions: GET, POST, PUT, DELETE
+- Route parameters: `APIDictionary.EntityName + "/{id}"`
+
+### Controller Dependencies
+- Standard injections: `IManagerWrapper`, `IAuthorizationService`, `IMapper`, `UserResolverService<int>`
+- Current user access: `private int _currentUserId => userResolverService.GetCurrentUserId();`
+- Example:
+```csharp
+public class EntityController : ControllerBase
+{
+    private readonly IManagerWrapper manager;
+    private readonly IAuthorizationService authorizationService;
+    private readonly IMapper mapper;
+    
+    public EntityController(IManagerWrapper manager, IAuthorizationService authorizationService, IMapper mapper)
+    {
+        this.manager = manager;
+        this.authorizationService = authorizationService;
+        this.mapper = mapper;
+    }
+}
+```
+
+## Models & DTOs
+
+### Model Conventions
+- Separate Internal/External DTOs: `EntityInternalDTO`, `EntityExternalDTO`
+- Naming convention: Classes in `UNOPS.PAO.Models` end with `Model` (for read models) or `DTO` (for transport objects). Avoid `Service` in names.
+- Request models: `EntityRequest`, `EntityCreateRequest`, `EntityUpdateRequest`
+- Response models: `EntityModel`, `EntityResponse`
+- Filter models: `EntityFilterRequest` inheriting from `PaginationRequest`
+
+### Model Structure
+- Use nullable reference types appropriately
+- Required properties: `required` keyword or constructor parameters
+- Extend `ExtensibleModel` for entities with dynamic properties
+- Use `TypeaheadInput` for dropdown/typeahead data
+
+## Authorization & Security
+
+### Authorization Handlers
+- Custom handlers inherit from `AuthorizationHandler<OperationAuthorizationRequirement, TResource>`
+- Permission-based system using `OperationAuthorizationRequirement`
+- User ID extraction: `int.Parse(context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0")`
+- Entity-level permissions via `EntityRoleFilter`
+
+### **CRITICAL: Authorization Handler Registration**
+
+**MANDATORY**: After creating authorization handlers, they MUST be registered in `AuthorizationContextWrapper` and `IAuthorizationContextWrapper`.
+
+#### **Required Steps for Handler Registration**
+
+**1. Add using statement to both files:**
+```csharp
+// In IAuthorizationContextWrapper.cs and AuthorizationContextWrapper.cs
+using UNOPS.PAO.Models.YourFeature; // Add the model namespace
+```
+
+**2. Add handler field declarations:**
+```csharp
+// In AuthorizationContextWrapper.cs - Add to private fields section
+private YourFeatureAuthorizationHandler yourFeatureAuthorizationHandler;
+```
+
+**3. Add handler instantiation in constructor:**
+```csharp
+// In AuthorizationContextWrapper.cs constructor
+yourFeatureAuthorizationHandler = new YourFeatureAuthorizationHandler(executionContext, managerWrapper);
+```
+
+**4. Add public properties to expose handlers:**
+```csharp
+// In AuthorizationContextWrapper.cs - Add to public properties section
+public virtual AuthorizationHandler<OperationAuthorizationRequirement, YourFeatureModel> YourFeatureAuthorizationHandler => yourFeatureAuthorizationHandler;
+```
+
+**5. Add interface properties:**
+```csharp
+// In IAuthorizationContextWrapper.cs
+AuthorizationHandler<OperationAuthorizationRequirement, YourFeatureModel> YourFeatureAuthorizationHandler { get; }
+```
+
+**Why This Matters:**
+- **Authorization handlers are resolved through the wrapper** by the authorization service
+- **Missing registration = authorization will fail silently** - the handler won't be invoked
+- **UNOPS override pattern**: The `UNOPSAuthorizationContextWrapper` inherits from base, so registration in base is sufficient
+
+### Permission System
+- Define permissions in `PermissionNames` enum
+- Use `[PermissionAuthorize(PermissionNames.Permission)]` attribute
+- Implement authorization requirements as static classes (e.g., `EntityActions.View`)
+
+## Error Handling & Validation
+
+### Exception Handling
+- `GlobalExceptionHandler` implements `IExceptionHandler`
+- `BusinessException` for business rule violations (400 status)
+- `UnauthorizedAccessException` for forbidden access (403 status)
+- `KeyNotFoundException` for not found scenarios (404 status)
+- Return `ProblemDetails` with appropriate HTTP status codes
+
+### Validation
+- Business rule validation in managers
+- Throw `BusinessException` with descriptive messages
+- Use `ErrorDetails` for structured error information
+- Model validation via data annotations where appropriate
+
+## Dependency Injection
+
+### Service Registration
+- Use Lamar container
+- Manager registration: `services.AddScoped<IManagerWrapper, ManagerWrapper>()`
+- AutoMapper: `services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies())`
+- Conditional services based on `IsUNOPSOverride` configuration
+- Service discovery: `services.Scan()` for auto-registration patterns
+
+### Service Lifetime
+- **Scoped**: Controllers, Managers, DbContext, Authorization services
+- **Singleton**: Configuration, immutable services
+- **Transient**: Rarely used, for lightweight services
+
+## AutoMapper Integration
+
+### Mapping Configuration
+- Register all assemblies: `AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies())`
+- Create mapping profiles: inherit from `Profile`
+- Inject `IMapper` into managers and controllers
+- Standard mapping: `mapper.Map<DestinationType>(source)`
+
+### Mapping Patterns
+- Entity to Model: `mapper.Map<EntityModel>(entity)`
+- Request to Entity: `mapper.Map<Entity>(request)`
+- Collection mapping: `mapper.Map<IEnumerable<ModelType>>(entities)`
+
+### **AutoMapper Configuration Strategy**
+
+**DECISION**: AutoMapper profiles should only be added to the UNOPS override project (`UNOPS.PAO.UNOPSBusiness`) when the entities being mapped are actually UNOPS-overridden entities.
+
+#### **For Regular Domain Entities (No Override)**
+
+- **ONLY update**: `UNOPS.PAO.Business/Managers/Mapping/MappingProfile.cs`
+- **DO NOT update**: `UNOPS.PAO.UNOPSBusiness/Managers/Mapping/MappingProfile.cs`
+- **Examples**: `Partner`, `Contact`, `Interaction`, `Opportunity` (regular Domain entities)
+
+```csharp
+// In UNOPS.PAO.Business/Managers/Mapping/MappingProfile.cs
+public MappingProfile()
+{
+    // Add mappings for regular Domain entities
+    CreateMap<Partner, PartnerModel>();
+    CreateMap<CreatePartnerRequest, Partner>();
+    // etc.
+}
+```
+
+#### **For UNOPS-Overridden Entities**
+
+- **Update BOTH**:
+  - `UNOPS.PAO.Business/Managers/Mapping/MappingProfile.cs`
+  - `UNOPS.PAO.UNOPSBusiness/Managers/Mapping/MappingProfile.cs`
+- **Both profiles must have identical AutoMapper configuration** for consistent behavior
+- **Examples**: Entities that have UNOPS-specific implementations or are in `UNOPS.PAO.UNOPSDomain`
+
+#### **How to Determine if an Entity is Overridden**
+
+**Regular Domain Entity** (single profile):
+- Located in `UNOPS.PAO.Domain/Entities/`
+- No corresponding entity in `UNOPS.PAO.UNOPSDomain/`
+- Manager only exists in `UNOPS.PAO.Business/Managers/`
+
+**UNOPS-Overridden Entity** (dual profile):
+- Entity exists in both `UNOPS.PAO.Domain/` AND `UNOPS.PAO.UNOPSDomain/`
+- Override entity inherits from base entity
+- Manager exists in both `UNOPS.PAO.Business/Managers/` AND `UNOPS.PAO.UNOPSBusiness/Managers/`
+- System switches between implementations based on `IsUNOPSOverride` configuration
+
+#### **Checklist for New AutoMapper Profiles**
+
+**For Regular Domain Entities:**
+- [ ] Created/updated profile in `UNOPS.PAO.Business/Managers/Mapping/MappingProfile.cs`
+- [ ] Verified entity is NOT in `UNOPS.PAO.UNOPSDomain/`
+- [ ] Verified manager is NOT in `UNOPS.PAO.UNOPSBusiness/Managers/`
+- [ ] Profile registered via assembly scanning
+
+**For UNOPS-Overridden Entities:**
+- [ ] Created/updated profile in `UNOPS.PAO.Business/Managers/Mapping/MappingProfile.cs`
+- [ ] Created/updated **identical** profile in `UNOPS.PAO.UNOPSBusiness/Managers/Mapping/MappingProfile.cs`
+- [ ] Both profiles handle the same entity-to-model mappings
+- [ ] Both profiles registered via assembly scanning
+- [ ] Verified entity exists in `UNOPS.PAO.UNOPSDomain/` and inherits from base entity
+- [ ] Verified manager exists in `UNOPS.PAO.UNOPSBusiness/Managers/`
+
+## Async/Await Patterns
+
+### Async Guidelines
+- Use async/await throughout the stack
+- Repository methods: `async Task<T>` return types
+- Manager methods: `async Task<T>` for operations
+- Controller actions: `async Task<IActionResult>`
+- No blocking calls (avoid `.Result` or `.Wait()`)
+
+## Database Migrations
+
+### Migration Patterns
+- Use Entity Framework migrations
+- Descriptive migration names
+- Include both `Up()` and `Down()` methods
+- Test migrations on development data
+- Coordinate migration deployment with releases
+
+## Logging
+
+### Logging Implementation
+- Inject `ILogger<T>` into classes that need logging
+- Use structured logging with message templates
+- Log levels: Error for exceptions, Warning for business rule violations, Information for operations
+- Log context information (user ID, entity ID, operation)
+
+## Configuration Management
+
+### Configuration Patterns
+- Use `IConfiguration` for app settings
+- Environment-specific configurations: `appsettings.{Environment}.json`
+- Secure secret management for production
+- Feature flags: `IsUNOPSOverride` pattern for conditional behavior
+
+## Data Validation & Business Rules
+
+### Validation Strategy
+- Domain validation in entity models
+- Business rule validation in managers
+- Input validation via model binding and data annotations
+- Use `BusinessException` for business rule violations
+- Consistent error message format
+
+## Testing Considerations
+
+### Testable Design
+- Dependency injection enables testing
+- Interface-based abstractions
+- Separate business logic from data access
+- Manager pattern isolates business rules
+- Repository pattern enables data mocking
+
+---
+
+## Permission Endpoints
+
+### **MANDATORY: Server-Side Permission Endpoints**
+
+**CRITICAL**: All permission checks must be performed server-side via dedicated permission endpoints. The client should NEVER manually check permissions based on roles, user ID, or entity state.
+
+### **Permission Endpoint Pattern**
+
+**Standard Permission Endpoint URL:**
+```
+GET /api/{entity-name}/{id}/permissions
+```
+
+**Controller Implementation:**
+
+```csharp
+[HttpGet(APIDictionary.Partner + "/{id}/permissions")]
+public async Task<IActionResult> GetPartnerPermissions(int id)
+{
+    var partner = await manager.PartnerManager.GetPartnerAsync(id);
+    if (partner == null)
+    {
+        return NotFound();
+    }
+
+    // Verify user can view the entity
+    var authResult = await authorizationService.AuthorizeAsync(User, partner, PartnerActions.View);
+    if (!authResult.Succeeded)
+    {
+        return Forbid();
+    }
+
+    // Get permissions for the partner
+    var canEdit = await authorizationService.AuthorizeAsync(User, partner, PartnerActions.Edit);
+    var canDelete = await authorizationService.AuthorizeAsync(User, partner, PartnerActions.Delete);
+
+    var permissions = new
+    {
+        canView = true, // If we got here, user can view
+        canEdit = canEdit.Succeeded,
+        canDelete = canDelete.Succeeded
+    };
+
+    return Ok(permissions);
+}
+```
+
+### **Authorization Handler Pattern**
+
+**1. Define Entity Actions:**
+
+```csharp
+// In UNOPS.PAO.ContextPermissions/Handlers/{EntityName}Actions.cs
+public static class PartnerActions
+{
+    public static OperationAuthorizationRequirement View = new OperationAuthorizationRequirement { Name = "View" };
+    public static OperationAuthorizationRequirement Edit = new OperationAuthorizationRequirement { Name = "Edit" };
+    public static OperationAuthorizationRequirement Delete = new OperationAuthorizationRequirement { Name = "Delete" };
+}
+```
+
+**2. Create Authorization Handler:**
+
+```csharp
+// In UNOPS.PAO.ContextPermissions/Handlers/{EntityName}AuthorizationHandler.cs
+public class PartnerAuthorizationHandler :
+    AuthorizationHandler<OperationAuthorizationRequirement, PartnerModel>
+{
+    private readonly IExecutionContext executionContext;
+    private readonly IManagerWrapper managerWrapper;
+
+    public PartnerAuthorizationHandler(IExecutionContext executionContext, IManagerWrapper managerWrapper)
+    {
+        this.executionContext = executionContext;
+        this.managerWrapper = managerWrapper;
+    }
+
+    protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context,
+                                                   OperationAuthorizationRequirement requirement,
+                                                   PartnerModel partnerModel)
+    {
+        var userId = int.Parse(context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+
+        if (requirement.Name == PartnerActions.View.Name)
+        {
+            await HandleViewRequirementAsync(context, requirement, partnerModel, userId);
+        }
+        else if (requirement.Name == PartnerActions.Edit.Name)
+        {
+            await HandleEditRequirementAsync(context, requirement, partnerModel, userId);
+        }
+        else if (requirement.Name == PartnerActions.Delete.Name)
+        {
+            await HandleDeleteRequirementAsync(context, requirement, partnerModel, userId);
+        }
+    }
+
+    private async Task HandleViewRequirementAsync(AuthorizationHandlerContext context,
+                                       OperationAuthorizationRequirement requirement,
+                                       PartnerModel partnerModel,
+                                       int userId)
+    {
+        if (await executionContext.CurrentUserHasPermissionAsync(Permission.CanViewAllPartners.Name))
+        {
+            context.Succeed(requirement);
+        }
+    }
+
+    private async Task HandleEditRequirementAsync(AuthorizationHandlerContext context,
+                                           OperationAuthorizationRequirement requirement,
+                                           PartnerModel partnerModel,
+                                           int userId)
+    {
+        if (await executionContext.CurrentUserHasPermissionAsync(Permission.CanEditPartners.Name))
+        {
+            context.Succeed(requirement);
+        }
+    }
+
+    private async Task HandleDeleteRequirementAsync(AuthorizationHandlerContext context,
+                                           OperationAuthorizationRequirement requirement,
+                                           PartnerModel partnerModel,
+                                           int userId)
+    {
+        if (await executionContext.CurrentUserHasPermissionAsync(Permission.CanDeletePartners.Name))
+        {
+            context.Succeed(requirement);
+        }
+    }
+}
+```
+
+**3. Register Authorization Handler** (See "Authorization Handler Registration" section above)
+
+### **Permission Flags by Entity Type**
+
+Different entities expose different permission flags based on their business rules:
+
+**Common Permission Flags:**
+- `canView` - Can view the entity
+- `canEdit` - Can modify entity fields
+- `canDelete` - Can delete the entity
+- `canSubmit` - Can submit for review
+- `canApprove` - Can approve the entity
+- `canActivate` - Can activate the entity
+- `canCancel` - Can cancel the entity
+
+**Example Permission Responses:**
+
+```json
+// Partner Permissions
+{
+  "canView": true,
+  "canEdit": true,
+  "canDelete": false
+}
+
+// Contact Permissions
+{
+  "canView": true,
+  "canEdit": true,
+  "canDelete": true
+}
+
+// Opportunity Permissions
+{
+  "canView": true,
+  "canEdit": false,
+  "canDelete": false,
+  "canActivate": true
+}
+```
+
+### **Permission Integration Checklist**
+
+When adding permissions to an entity:
+
+- [ ] Create entity actions class: `{EntityName}Actions.cs` with `OperationAuthorizationRequirement` properties
+- [ ] Create authorization handler: `{EntityName}AuthorizationHandler.cs` inheriting from `AuthorizationHandler<OperationAuthorizationRequirement, {EntityName}Model>`
+- [ ] Implement permission check methods for each action (View, Edit, Delete, etc.)
+- [ ] **CRITICAL**: Register handler in `AuthorizationContextWrapper` and `IAuthorizationContextWrapper`
+- [ ] Add permission endpoint in controller: `[HttpGet(APIDictionary.{EntityName} + "/{id}/permissions")]`
+- [ ] Verify user can view entity before returning permissions
+- [ ] Check all relevant authorization actions using `authorizationService.AuthorizeAsync()`
+- [ ] Return anonymous object with permission flags (`canEdit`, `canDelete`, etc.)
+- [ ] Consider entity state (stage, status) when determining permissions
+- [ ] Never expose permission logic to client - all checks server-side
+
+---
+
+## Implementation Checklist
+
+When implementing new features:
+
+- [ ] Create entity inheriting from `ModifiableDeletableEntity` (parameterless) or `ModifiableDeletableEntity<int, int>`
+- [ ] Add inline EF configuration in `OnModelCreating()`
+- [ ] **CRITICAL: Add `Where(e => !e.IsDeleted)` to ALL entity queries in managers and repositories**
+- [ ] **Verify IsDeleted filters in related entity queries, includes, counts, and aggregations**
+- [ ] **Implement soft delete (set IsDeleted flag) instead of physical delete operations**
+- [ ] Create manager with `IManagerInterface` and implementation
+- [ ] Add manager to `ManagerWrapper` and `IManagerWrapper`
+- [ ] Create appropriate DTOs (Internal/External, Request/Response)
+- [ ] Implement controller with proper authorization
+- [ ] Add API routes to `APIDictionary`
+- [ ] Create authorization handler if needed
+- [ ] **CRITICAL: Register authorization handlers in `AuthorizationContextWrapper` and `IAuthorizationContextWrapper`** (add using statement, handler field, instantiation in constructor, and public property)
+- [ ] **Add AutoMapper profiles for entity-model mapping** (ONLY in UNOPS.PAO.Business for regular Domain entities, in BOTH Business and UNOPSBusiness only if entity is UNOPS-overridden)
+- [ ] Implement error handling with `BusinessException`
+- [ ] Add comprehensive logging
+- [ ] Write unit tests for business logic
+- [ ] **Ensure controllers never return entities directly - always use DTOs/Models**
+- [ ] **PERMISSION INTEGRATION**:
+  - [ ] Create entity actions class: `{EntityName}Actions.cs`
+  - [ ] Create authorization handler: `{EntityName}AuthorizationHandler.cs`
+  - [ ] **CRITICAL: Register authorization handler in `AuthorizationContextWrapper` and `IAuthorizationContextWrapper`**
+  - [ ] Add permission endpoint in controller: `GET /api/{entity-name}/{id}/permissions`
+  - [ ] Implement permission check methods (View, Edit, Delete, etc.)
+  - [ ] Return appropriate permission flags based on user roles and entity state
+
+This implementation guide ensures consistency with the established codebase patterns and architectural decisions.

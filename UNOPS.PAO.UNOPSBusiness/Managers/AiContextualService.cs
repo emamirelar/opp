@@ -222,10 +222,6 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
 
         public async Task PersistEmbedding(string entityName, int entityId, string text, string vectorString)
         {
-            // Guard: stored procedure requires a relational (PostgreSQL) provider
-            if (!_context.Database.IsRelational())
-                return;
-
             var sql = "CALL public.\"InsertEntityEmbedding\"(@entityName, @entityId, @text, @embedding)";
 
             var parameters = new[] 
@@ -2694,13 +2690,6 @@ Keywords:";
             float fieldMatchThreshold = 0.5f,
             int? excludeRecordId = null)
          {
-             // Guard: duplicate detection uses PostgreSQL stored functions via raw SQL.
-             // Return empty result when running against a non-relational provider (InMemory/SQLite).
-             if (!_context.Database.IsRelational())
-             {
-                 return new ComprehensiveDuplicateResult();
-             }
-
              try
              {
                 // Ensure entity name is singular for the SQL function

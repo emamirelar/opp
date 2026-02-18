@@ -2,8 +2,7 @@ using FluentAssertions;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using UNOPS.PAO.Models;
-using UNOPS.PAO.Business.Tests.TestBase;
+using UNOPS.PAO.Models.Opportunities;
 using Xunit;
 
 namespace UNOPS.PAO.Business.Tests.Opportunity;
@@ -13,15 +12,12 @@ namespace UNOPS.PAO.Business.Tests.Opportunity;
 /// Uses real services with in-memory database (no mocks)
 /// Tests end-to-end behavior as users would experience it
 /// Created: January 16, 2026
-/// SKIPPED: QA-009 - Z.EntityFramework.Extensions requires relational database (PostgreSQL)
 /// </summary>
 public class OpportunityManagerIntegrationTests : IntegrationTestBase
 {
-    private const string SkipReason = "QA-009: Z.EntityFramework.Extensions requires relational database";
-
     #region P0 - Create Opportunity Integration Tests
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P0")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-CREATE-001")]
@@ -51,7 +47,7 @@ public class OpportunityManagerIntegrationTests : IntegrationTestBase
         savedOpportunity!.Name.Should().Be(request.Name);
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P0")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-CREATE-002")]
@@ -78,7 +74,7 @@ public class OpportunityManagerIntegrationTests : IntegrationTestBase
         savedOpportunity!.InitiativeBudgetUSD.Should().Be(2500000.00m);
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P0")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-CREATE-003")]
@@ -111,7 +107,7 @@ public class OpportunityManagerIntegrationTests : IntegrationTestBase
 
     #region P0 - Read Opportunity Integration Tests
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P0")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-READ-001")]
@@ -138,7 +134,7 @@ public class OpportunityManagerIntegrationTests : IntegrationTestBase
         result.Description.Should().Be(createRequest.Description);
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P0")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-READ-002")]
@@ -155,7 +151,7 @@ public class OpportunityManagerIntegrationTests : IntegrationTestBase
 
     #region P1 - Update Opportunity Integration Tests
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P1")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-UPDATE-001")]
@@ -191,7 +187,7 @@ public class OpportunityManagerIntegrationTests : IntegrationTestBase
         savedOpportunity!.Name.Should().Be("Updated Name");
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P1")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-UPDATE-002")]
@@ -226,7 +222,7 @@ public class OpportunityManagerIntegrationTests : IntegrationTestBase
         savedOpportunity!.InitiativeBudgetUSD.Should().Be(2000000m);
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P1")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-UPDATE-003")]
@@ -238,35 +234,34 @@ public class OpportunityManagerIntegrationTests : IntegrationTestBase
             Name = "Workflow Test",
             Description = "Testing workflow progression",
             ResponsibleOrgUnitId = 1,
-            ProposedInitiativeTypeId = 1
-            // WorkflowStageId property removed - stage managed by workflow system
+            ProposedInitiativeTypeId = 1,
+            WorkflowStageId = 1
         };
 
         var created = await Manager.CreateOpportunityAsync(createRequest);
 
-        // Act - Workflow stage progression now handled by workflow service, not direct update
+        // Act - Move to Development stage
         var updateRequest = new UpdateOpportunityRequest
         {
             Id = created.Id,
-            Name = "Updated Name"
-            // WorkflowStageId property removed - stage managed by workflow system
+            WorkflowStageId = 2
         };
 
         var result = await Manager.UpdateOpportunityAsync(updateRequest);
 
         // Assert
         result.Should().NotBeNull();
-        result!.Stage.Should().NotBeNullOrEmpty();
+        result!.WorkflowStageId.Should().Be(2);
 
         var savedOpportunity = await Context.Opportunities.FindAsync(created.Id);
-        savedOpportunity!.Stage.Should().NotBeNullOrEmpty();
+        savedOpportunity!.WorkflowStageId.Should().Be(2);
     }
 
     #endregion
 
     #region P1 - Delete Opportunity Integration Tests
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P1")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-DELETE-001")]
@@ -295,7 +290,7 @@ public class OpportunityManagerIntegrationTests : IntegrationTestBase
         deletedOpportunity!.IsDeleted.Should().BeTrue();
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P1")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-DELETE-002")]
@@ -312,7 +307,7 @@ public class OpportunityManagerIntegrationTests : IntegrationTestBase
 
     #region P1 - Complete Lifecycle Integration Test
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P1")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-LIFECYCLE-001")]
@@ -364,7 +359,7 @@ public class OpportunityManagerIntegrationTests : IntegrationTestBase
 
     #region P2 - List Operations Integration Tests
 
-    [SkipIfInMemoryFact]
+    [Fact]
     [Trait("Category", "P2")]
     [Trait("Type", "Integration")]
     [Trait("TestId", "TC-UNOPS-INT-LIST-001")]

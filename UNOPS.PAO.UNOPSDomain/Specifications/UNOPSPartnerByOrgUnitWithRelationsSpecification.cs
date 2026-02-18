@@ -5,6 +5,7 @@ using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Domain.Entities;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
+using UNOPS.PAO.Domain.Entities;
 
 /// <summary>
 /// Specification to filter UNOPS partners by organizational unit hierarchy including indirect relations through contacts

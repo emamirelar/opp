@@ -1228,7 +1228,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     b.Property<byte[]>("FullEmbedding")
                         .IsRequired()
-                        .HasColumnType("bytea");
+                        .HasColumnType("vector(768)");
 
                     b.Property<string>("Keywords")
                         .HasMaxLength(1000)

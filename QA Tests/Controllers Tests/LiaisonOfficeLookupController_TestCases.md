@@ -1,631 +1,138 @@
-# LiaisonOfficeLookupController — Test Cases
+# LiaisonOfficeLookupController Test Cases
 
-**Component:** `OpportunityPlus.API/Controllers/LiaisonOfficeLookupController`  
-**Created:** 2026-02-04 | **Last Updated:** 2026-02-11  
-**Author:** QA Team  
-**Standard:** 10-Category, 3:1 Ratio
-
----
-
-## Compliance Summary
-
-| Category | Count | Min | ✓ |
-|----------|-------|-----|---|
-| §1 Positive | 30 | 30-50 | ✅ |
-| §2 Negative | 90 | 90 | ✅ |
-| §3 Boundary | 90 | 90 | ✅ |
-| §4 Functional | 90 | 90 | ✅ |
-| §5 Integration | 90 | 90 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
-| §7 Concurrency | 25 | 25 | ✅ |
-| §8 Unit | 21 | 21 | ✅ |
-| §9 Performance | 16 | 16 | ✅ |
-| §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **462** | **≥462** | ✅ |
-
-**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
+**Controller**: `UNOPS.PAO.Presentation/Controllers/LiaisonOffices/LiaisonOfficeLookupController.cs`  
+**Priority**: P1 - High  
+**Total Test Cases**: 18  
 
 ---
 
-## Feature Overview
+## Overview
 
-REST API for liaison office lookup: search offices, typeahead, filter by region/country.
-
----
-
-## §1 Positive Tests (30)
-
-| ID | Test Name | Steps | Expected Result |
-|----|-----------|-------|-----------------|
-| POS-001 | Get all offices | GET /api/liaison-office-lookup | Office list |
-| POS-002 | Search offices | GET /api/liaison-office-lookup?search=text | Filtered |
-| POS-003 | Typeahead | GET /api/liaison-office-lookup/typeahead?q=text | Suggestions |
-| POS-004 | Filter by region | GET ?region=East Africa | Filtered |
-| POS-005 | Filter by country | GET ?countryId=1 | Filtered |
-| POS-006 | Filter by region and country | GET ?region=X&countryId=1 | Combined |
-| POS-007 | Pagination | GET ?page=1&pageSize=20 | Paginated |
-| POS-008 | Sort by name | GET ?sortBy=name | Sorted |
-| POS-009 | Sort by code | GET ?sortBy=code | Sorted |
-| POS-010 | Get by ID | GET /api/liaison-office-lookup/{id} | Office details |
-| POS-011 | Get dropdown | GET /api/liaison-office-lookup/dropdown | ID/name pairs |
-| POS-012 | Empty result | GET for empty filter | [] |
-| POS-013 | Single result | GET for single match | [item] |
-| POS-014 | Authenticated access | GET with token | 200 |
-| POS-015 | Active only | GET ?active=true | Active only |
-| POS-016 | Get by code | GET /api/liaison-office-lookup/code/{code} | By code |
-| POS-017 | Min typeahead length | GET typeahead?q=a | Suggestions |
-| POS-018 | Region filter exact | GET ?region=Exact | Filtered |
-| POS-019 | Country filter valid | GET ?countryId=valid | Filtered |
-| POS-020 | Combined search filter | GET ?search=text&region=X | Combined |
-| POS-021 | Sort ascending | GET ?sortBy=name&sortOrder=asc | Sorted |
-| POS-022 | Sort descending | GET ?sortBy=name&sortOrder=desc | Sorted |
-| POS-023 | First page | GET ?page=1 | First page |
-| POS-024 | Last page | GET ?page=last | Partial |
-| POS-025 | Default page size | GET no pageSize | Default |
-| POS-026 | Empty search | GET ?search= | All |
-| POS-027 | Whitespace trim | GET ?search= sp | Trimmed |
-| POS-028 | Multiple regions | GET ?region=East,West | Filtered |
-| POS-029 | Unicode search | GET ?search=中文 | Matches |
-| POS-030 | Partial match | GET ?search=partial | Fuzzy |
+The LiaisonOfficeLookupController provides lookup operations for liaison offices:
+- Quick lookup by ID/code
+- Typeahead search for dropdowns
+- Filtered listings for UI components
 
 ---
 
-## §2 Negative Tests (70)
+## Test Categories
 
-| ID | Test Name | Invalid Input | Expected Error |
-|----|-----------|--------------|----------------|
-| NEG-001 | No auth | No token | 401 |
-| NEG-002 | Expired token | Expired JWT | 401 |
-| NEG-003 | Invalid ID | id=abc | 400 |
-| NEG-004 | Negative ID | id=-1 | 400 |
-| NEG-005 | Non-existent ID | id=999999 | 404 |
-| NEG-006 | Invalid code | code=invalid | 404 |
-| NEG-007 | Null search | POST null | 400 |
-| NEG-008 | Invalid countryId | countryId=999999 | 404 |
-| NEG-009 | Invalid parentId | parentId=999999 | 404 |
-| NEG-010 | SQL injection | search='; DROP | Sanitized |
-| NEG-011 | XSS in search | search=<script> | Sanitized |
-| NEG-012 | Negative page | page=-1 | 400 |
-| NEG-013 | Zero pageSize | pageSize=0 | 400 |
-| NEG-014 | Excessive pageSize | pageSize=10000 | 400 |
-| NEG-015 | Invalid sort | sortBy=invalid | 400 |
-| NEG-016 | No permission | User without CanView | 403 |
-| NEG-017 | Cross-org access | Other org office | 403 |
-| NEG-018 | Deleted office | id of deleted | 404 |
-| NEG-019 | Malformed JSON | Invalid JSON | 400 |
-| NEG-020 | Wrong content-type | Application/xml | 415 |
-| NEG-021 | Rate limit | Too many | 429 |
-| NEG-022 | Payload too large | Huge body | 413 |
-| NEG-023 | Invalid Accept | Accept: text/plain | 406 |
-| NEG-024 | HTTP method | PUT for create | 405 |
-| NEG-025 | Trailing slash | /api/liaison-office-lookup/ | Redirect |
-| NEG-026 | Case sensitivity | /api/Liaison-Office-Lookup | 404 |
-| NEG-027 | Extra path | /api/liaison-office-lookup/1/extra | 404 |
-| NEG-028 | Invalid bearer | Bearer malformed | 401 |
-| NEG-029 | Revoked token | Revoked JWT | 401 |
-| NEG-030 | Service account | Service for UI | 403 |
-| NEG-031 | DB timeout | Simulate | 503 |
-| NEG-032 | Invalid region | region=invalid | 400 |
-| NEG-033 | Empty typeahead | q= | 400 |
-| NEG-034 | Typeahead too short | q=x | 400 if min=2 |
-| NEG-035 | Invalid region ID | regionId=999999 | 404 |
-| NEG-036 | Zero ID | id=0 | 400 |
-| NEG-037 | Invalid UUID | id=invalid-guid | 400 |
-| NEG-038 | Blocked IP | From blocked | 403 |
-| NEG-039 | Control chars | search with \0 | 400 |
-| NEG-040 | Unicode overflow | Very long | 400 |
-| NEG-041 | Export no permission | No export permission | 403 |
-| NEG-042 | Invalid filter combo | Invalid filter combo | 400 |
-| NEG-043 | Orphan country | countryId deleted | 404 |
-| NEG-044 | Orphan parent | parentId deleted | 404 |
-| NEG-045 | Deleted filter | Query deleted | Excluded |
-| NEG-046 | Max URL length | Very long URL | 414 |
-| NEG-047 | Invalid sort order | sortOrder=invalid | 400 |
-| NEG-048 | Invalid region format | region malformed | 400 |
-| NEG-049 | Mismatched IDs | Path != body | 400 |
-| NEG-050 | Read-only field | Update createdDate | Ignored |
-| NEG-051 | Version conflict | Stale version | 409 |
-| NEG-052 | CORS fail | Invalid origin | CORS error |
-| NEG-053 | Inactive org | Org inactive | 403 |
-| NEG-054 | OPTIONS | OPTIONS | 200 |
-| NEG-055 | HEAD | HEAD | 200 or 405 |
-| NEG-056 | Invalid filter param | filter=invalid | 400 |
-| NEG-057 | Negative countryId | countryId=-1 | 400 |
-| NEG-058 | Invalid page | page=1.5 | 400 |
-| NEG-059 | Invalid pageSize | pageSize=abc | 400 |
-| NEG-060 | Too many params | 50+ params | 400 |
-| NEG-061 | Reserved code | code=RESERVED | 403 |
-| NEG-062 | Audit failure | Audit down | Continue |
-| NEG-063 | Duplicate IDs | bulk with dupes | 400 |
-| NEG-064 | Empty bulk | POST [] | 400 |
-| NEG-065 | Excessive bulk | 1000 IDs | 400 |
-| NEG-066 | Invalid endpoint | /api/liaison-office-lookup/invalid | 404 |
-| NEG-067 | Invalid method | PATCH | 405 |
-| NEG-068 | Missing query | GET no params | 200 or 400 |
-| NEG-069 | Invalid encoding | Malformed URL | 400 |
-| NEG-070 | Soft-deleted filter | Query deleted | Excluded |
-| NEG-071 | Invalid JSON schema | Schema mismatch | 400 |
-| NEG-072 | Missing search param | Search null | 400 |
-| NEG-073 | Invalid region enum | region=invalid | 400 |
-| NEG-074 | Empty typeahead | q= | 400 |
-| NEG-075 | Invalid country format | countryId malformed | 400 |
-| NEG-076 | Lookup locked | Locked lookup | 423 |
-| NEG-077 | Maintenance mode | During maintenance | 503 |
-| NEG-078 | Quota exceeded | Lookup quota | 507 |
-| NEG-079 | Invalid description | desc too long | 400 |
-| NEG-080 | Orphan country | countryId deleted | 404 |
-| NEG-081 | Migration mode | During migration | 503 |
-| NEG-082 | Session invalid | Invalid session | 401 |
-| NEG-083 | Token type wrong | Wrong token type | 401 |
-| NEG-084 | Scope insufficient | OAuth scope | 403 |
-| NEG-085 | Rate limit per user | User rate limit | 429 |
-| NEG-086 | Concurrent limit | Too many concurrent | 429 |
-| NEG-087 | Request timeout | Slow request | 408 |
-| NEG-088 | Lookup archived | Archived lookup | 410 |
-| NEG-089 | Invalid coordinate | coord out of range | 400 |
-| NEG-090 | Hierarchy depth exceeded | Max depth | 400 |
+| Category | Count | Priority |
+|----------|-------|----------|
+| Lookup Operations | 8 | P0 |
+| Typeahead/Search | 6 | P1 |
+| Authorization | 4 | P0 |
 
 ---
 
-## §3 Boundary Tests (90)
+## P0 - Critical Tests
 
-| ID | Field/Scenario | Min | Max | At Min | At Max | Over Max |
-|----|----------------|-----|-----|--------|--------|----------|
-| BND-001 | search length | 0 | 200 | ✅ | ✅ | ❌ |
-| BND-002 | page | 1 | 9999 | ✅ | ✅ | ❌ |
-| BND-003 | pageSize | 1 | 100 | ✅ | ✅ | ❌ |
-| BND-004 | id | 1 | int.Max | ✅ | ✅ | ❌ |
-| BND-005 | countryId | 1 | int.Max | ✅ | ✅ | ❌ |
-| BND-006 | parentId | 0 | int.Max | ✅ | ✅ | ❌ |
-| BND-007 | Empty list | - | - | [] | - | - |
-| BND-008 | Single item | - | - | [item] | - | - |
-| BND-009 | First page | page=1 | - | ✅ | - | - |
-| BND-010 | Last page | - | - | Partial | - | - |
-| BND-011 | Zero length search | - | - | [] | - | - |
-| BND-012 | Max length search | 200 | - | - | ✅ | ❌ |
-| BND-013 | Unicode search | - | - | Accept | - | - |
-| BND-014 | Arabic search | - | - | Display | - | - |
-| BND-015 | Chinese search | - | - | Display | - | - |
-| BND-016 | Null optional | - | - | Default | - | - |
-| BND-017 | Empty string | - | - | No filter | - | - |
-| BND-018 | Whitespace | - | - | Trim | - | - |
-| BND-019 | Sort empty | - | - | [] | - | - |
-| BND-020 | Sort single | - | - | [item] | - | - |
-| BND-021 | Filter no match | - | - | [] | - | - |
-| BND-022 | Filter all | - | - | Full | - | - |
-| BND-023 | Typeahead min | 1 | - | ✅ | - | - |
-| BND-024 | Typeahead max | - | 20 | - | ✅ | ❌ |
-| BND-025 | URL length | - | 2048 | - | ✅ | ❌ |
-| BND-026 | Query params | - | 20 | ✅ | ✅ | ❌ |
-| BND-027 | Pagination boundary | - | - | Exact | - | - |
-| BND-028 | Zero ID | id=0 | - | 400 | - | - |
-| BND-029 | Max int ID | - | int.Max | ✅ | ✅ | ❌ |
-| BND-030 | Root office | parentId=0 | - | Root | - | - |
-| BND-031 | Region length | - | 100 | ✅ | ✅ | ❌ |
-| BND-032 | Country name | - | 255 | ✅ | ✅ | ❌ |
-| BND-033 | Concurrent requests | - | 100 | ✅ | ✅ | ❌ |
-| BND-034 | Empty region | - | - | All | - | - |
-| BND-035 | Empty country | - | - | All | - | - |
-| BND-036 | Single region | - | - | Filtered | - | - |
-| BND-037 | Single country | - | - | Filtered | - | - |
-| BND-038 | Multiple regions | - | 10 | ✅ | ✅ | ❌ |
-| BND-039 | Multiple countries | - | 10 | ✅ | ✅ | ❌ |
-| BND-040 | Soft-deleted | - | - | Excluded | - | - |
-| BND-041 | Inactive | - | - | Excluded | - | - |
-| BND-042 | Case code | - | - | Normalize | - | - |
-| BND-043 | Leaf office | No children | - | Leaf | - | - |
-| BND-044 | Active flag | - | - | Boolean | - | - |
-| BND-045 | Order | 0 | 9999 | ✅ | ✅ | ❌ |
-| BND-046 | Created date | - | - | UTC | - | - |
-| BND-047 | Modified date | - | - | UTC | - | - |
-| BND-048 | Full path | - | 1000 | ✅ | ✅ | ❌ |
-| BND-049 | Hierarchy depth | 1 | 10 | ✅ | ✅ | ❌ |
-| BND-050 | Typeahead results | 0 | 20 | [] | ✅ | Truncate |
-| BND-051 | Pagination overflow | - | - | [] | - | - |
-| BND-052 | Filter combination | - | 5 | ✅ | ✅ | ❌ |
-| BND-053 | Sort fields | - | 5 | ✅ | ✅ | ❌ |
-| BND-054 | Export rows | - | 10000 | ✅ | ✅ | ❌ |
-| BND-055 | Export empty | - | - | Headers | - | - |
-| BND-056 | Version | 1 | - | ✅ | ❌ | - |
-| BND-057 | Region list | 0 | 50 | ✅ | ✅ | ❌ |
-| BND-058 | Country list | 0 | 250 | ✅ | ✅ | ❌ |
-| BND-059 | Map bounds | - | - | Valid | - | - |
-| BND-060 | Timezone | - | 50 | ✅ | ✅ | ❌ |
-| BND-061 | Code length | 1 | 50 | ✅ | ✅ | ❌ |
-| BND-062 | Name length | 1 | 255 | ✅ | ✅ | ❌ |
-| BND-063 | Notes length | - | 2000 | ✅ | ✅ | ❌ |
-| BND-064 | IsHeadOffice | - | - | Boolean | - | - |
-| BND-065 | IsActive | - | - | Boolean | - | - |
-| BND-066 | Hierarchy path | - | 500 | ✅ | ✅ | ❌ |
-| BND-067 | Partial match | - | - | Fuzzy | - | - |
-| BND-068 | Exact match | - | - | Exact | - | - |
-| BND-069 | Combined filter | - | - | AND | - | - |
-| BND-070 | Round-trip | Search → Get | - | Match | - | - |
-| BND-071 | Search charset | - | - | Valid | - | - |
-| BND-072 | Name encoding | - | UTF-8 | Valid | Valid | ❌ |
-| BND-073 | Request size | - | 1MB | - | ✅ | ❌ |
-| BND-074 | Header count | - | 50 | ✅ | ✅ | ❌ |
-| BND-075 | Session duration | - | 24h | Valid | Valid | ❌ |
-| BND-076 | Token lifetime | - | 1h | Valid | Valid | ❌ |
-| BND-077 | Retry count | 0 | 3 | ✅ | ✅ | ❌ |
-| BND-078 | Backoff max | - | 30s | - | ✅ | ❌ |
-| BND-079 | Connection timeout | - | 30s | - | ✅ | ❌ |
-| BND-080 | Read timeout | - | 60s | - | ✅ | ❌ |
-| BND-081 | Write timeout | - | 60s | - | ✅ | ❌ |
-| BND-082 | Idle timeout | - | 90s | - | ✅ | ❌ |
-| BND-083 | Keep-alive | - | 60s | - | ✅ | ❌ |
-| BND-084 | Chunk size | - | 8KB | - | ✅ | ❌ |
-| BND-085 | Buffer size | - | 64KB | - | ✅ | ❌ |
-| BND-086 | Pool size | - | 100 | - | ✅ | ❌ |
-| BND-087 | Queue depth | - | 1000 | - | ✅ | ❌ |
-| BND-088 | Batch size | 1 | 100 | ✅ | ✅ | ❌ |
-| BND-089 | Region enum | - | max | Valid | Valid | ❌ |
-| BND-090 | Country enum | - | max | Valid | Valid | ❌ |
+### TC-LOLC-001: Get liaison office by ID
+**Description**: Retrieve office by ID  
+**Test Steps**:
+1. Call `GET /api/liaison-offices/lookup/{id}`
+**Expected Result**: Office details returned
+
+### TC-LOLC-002: Get liaison office by code
+**Description**: Retrieve by code  
+**Test Steps**:
+1. Call `GET /api/liaison-offices/lookup/code/{code}`
+**Expected Result**: Matching office
+
+### TC-LOLC-003: Get all for dropdown
+**Description**: Simplified list for UI  
+**Test Steps**:
+1. Call `GET /api/liaison-offices/lookup/dropdown`
+**Expected Result**: ID/name pairs
+
+### TC-LOLC-004: Get by ID - not found
+**Description**: Non-existing ID  
+**Test Steps**:
+1. Call with invalid ID
+**Expected Result**: 404 Not Found
+
+### TC-LOLC-005: Get by code - not found
+**Description**: Non-existing code  
+**Test Steps**:
+1. Call with invalid code
+**Expected Result**: 404 Not Found
+
+### TC-LOLC-006: Get active offices only
+**Description**: Filter by status  
+**Test Steps**:
+1. Call `GET /api/liaison-offices/lookup?status=active`
+**Expected Result**: Only active offices
+
+### TC-LOLC-007: Get by country
+**Description**: Filter by country  
+**Test Steps**:
+1. Call with countryId parameter
+**Expected Result**: Offices in country
+
+### TC-LOLC-008: Get by region
+**Description**: Filter by region  
+**Test Steps**:
+1. Call with regionId parameter
+**Expected Result**: Offices in region
 
 ---
 
-## §4 Functional Tests (90)
+## P1 - High Priority Tests
 
-| ID | Category | Rule | Trigger | Expected |
-|----|----------|------|---------|----------|
-| FUN-001 | Workflow | Get all | GET | List |
-| FUN-002 | Workflow | Get by ID | GET id | Details |
-| FUN-003 | Workflow | Get by code | GET code | Match |
-| FUN-004 | Workflow | Search | GET ?search | Searched |
-| FUN-005 | Workflow | Typeahead | GET typeahead | Suggestions |
-| FUN-006 | Workflow | Filter country | GET ?countryId | Filtered |
-| FUN-007 | Workflow | Filter region | GET ?region | Filtered |
-| FUN-008 | Workflow | Filter parent | GET ?parentId | Filtered |
-| FUN-009 | Workflow | Paginate | GET ?page | Paginated |
-| FUN-010 | Workflow | Sort | GET ?sortBy | Sorted |
-| FUN-011 | Workflow | Filter parent | GET ?parentId | Filtered |
-| FUN-012 | Workflow | Combined filter | GET multi | Combined |
-| FUN-013 | Workflow | Empty search | GET ?search= | All |
-| FUN-014 | Workflow | Dropdown | GET dropdown | Pairs |
-| FUN-015 | Workflow | Active only | GET ?active=true | Active |
-| FUN-016 | Validation | Valid country | Invalid | 404 |
-| FUN-017 | Validation | Valid parent | Invalid | 404 |
-| FUN-018 | Validation | Permission | No permission | 403 |
-| FUN-019 | Validation | ID format | Invalid | 400 |
-| FUN-020 | Validation | Search length | Too long | 400 |
-| FUN-021 | Validation | Page bounds | Invalid | 400 |
-| FUN-022 | Validation | Permission | Query | Scoped |
-| FUN-023 | Validation | Admin write | User write | 403 |
-| FUN-024 | Validation | Region format | Invalid | 400 |
-| FUN-025 | Validation | Coordinate range | Out of range | 400 |
-| FUN-026 | Constraint | FK country | Invalid | 404 |
-| FUN-027 | Constraint | FK parent | Invalid | 404 |
-| FUN-028 | Constraint | Soft delete | Query | Excluded |
-| FUN-029 | Constraint | Org scope | Cross-org | 403 |
-| FUN-030 | Constraint | Max bulk | >100 | 400 |
-| FUN-031 | Constraint | Typeahead limit | >20 | Truncate |
-| FUN-032 | Constraint | Export limit | >10K | Truncate |
-| FUN-033 | Constraint | URL length | >2048 | 414 |
-| FUN-034 | Constraint | Query params | >20 | 400 |
-| FUN-035 | Constraint | Hierarchy depth | >10 | 400 |
-| FUN-036 | Audit | Get | GET | Audit |
-| FUN-037 | Audit | Search | GET search | Audit |
-| FUN-038 | Audit | Typeahead | GET typeahead | Audit |
-| FUN-039 | Audit | Timestamp | Any | UTC |
-| FUN-040 | Audit | User ID | Any | User ID |
-| FUN-041 | Audit | IP | Any | IP |
-| FUN-042 | Audit | Resource | Any | Resource |
-| FUN-043 | Audit | Outcome | Any | Outcome |
-| FUN-044 | Audit | Export | GET export | Audit |
-| FUN-045 | Audit | Filter | GET filter | Audit |
-| FUN-046 | Business | Soft-deleted | Query | Excluded |
-| FUN-047 | Business | Inactive | Query | Excluded |
-| FUN-048 | Business | Permission | Query | Scoped |
-| FUN-049 | Business | Hierarchy | Parent-child | Linked |
-| FUN-050 | Business | Timezone | Location | Correct |
-| FUN-051 | Workflow | Root offices | GET ?parentId=0 | Roots |
-| FUN-052 | Workflow | Parent filter | GET ?parentId | Children |
-| FUN-053 | Validation | Region format | Invalid | 400 |
-| FUN-054 | Validation | Country exists | Invalid | 404 |
-| FUN-055 | Constraint | Lookup lock | Locked | 423 |
-| FUN-056 | Audit | Search | GET search | Audit |
-| FUN-057 | Audit | Typeahead | GET typeahead | Audit |
-| FUN-058 | Business | Hierarchy depth | >10 | 400 |
-| FUN-059 | Business | No circular | Circular | 400 |
-| FUN-060 | Workflow | Case insensitive | GET ?search | Matches |
-| FUN-061 | Validation | Parent exists | Invalid | 404 |
-| FUN-062 | Constraint | Typeahead limit | >20 | Truncate |
-| FUN-063 | Audit | Get | GET | Audit |
-| FUN-064 | Business | Lookup cascade | Delete country | 404 |
-| FUN-065 | Workflow | Cached response | GET same | 200 |
-| FUN-066 | Validation | Search length | Too long | 400 |
-| FUN-067 | Constraint | Export limit | >10K | Truncate |
-| FUN-068 | Audit | Filter | GET filter | Audit |
-| FUN-069 | Business | Region scope | Org scope | Correct |
-| FUN-070 | Workflow | Unicode search | GET ?search | Matches |
-| FUN-071 | Validation | Coordinate range | Out of range | 400 |
-| FUN-072 | Constraint | Query params | >20 | 400 |
-| FUN-073 | Audit | Export | GET export | Audit |
-| FUN-074 | Business | Cross-org office | Other org | 403 |
-| FUN-075 | Workflow | Full round-trip | Search → Get | Match |
-| FUN-076 | Validation | Page bounds | Invalid | 400 |
-| FUN-077 | Constraint | URL length | >2048 | 414 |
-| FUN-078 | Audit | Dropdown | GET dropdown | Audit |
-| FUN-079 | Business | Inactive office | Office disabled | 403 |
-| FUN-080 | Workflow | Partial match | GET ?search | Fuzzy |
-| FUN-081 | Validation | Region format | Invalid | 400 |
-| FUN-082 | Constraint | Hierarchy depth | >10 | 400 |
-| FUN-083 | Audit | Typeahead view | GET typeahead | Audit |
-| FUN-084 | Business | Country scope | Country filter | Correct |
-| FUN-085 | Workflow | Dropdown flow | GET dropdown | Pairs |
-| FUN-086 | Validation | Country format | Invalid | 400 |
-| FUN-087 | Constraint | Max bulk | >100 | 400 |
-| FUN-088 | Audit | Country filter | GET countryId | Audit |
-| FUN-089 | Business | Parent-child | Linked | Correct |
-| FUN-090 | Workflow | Combined filter | GET multi | Combined |
+### TC-LOLC-009: Typeahead search
+**Description**: Quick search for autocomplete  
+**Test Steps**:
+1. Call `GET /api/liaison-offices/lookup/typeahead?q=Cop`
+**Expected Result**: Matching suggestions
+
+### TC-LOLC-010: Typeahead - minimum chars
+**Description**: Require minimum input  
+**Test Steps**:
+1. Call with single character
+**Expected Result**: Empty or error
+
+### TC-LOLC-011: Typeahead - result limit
+**Description**: Limit results  
+**Test Steps**:
+1. Call with common prefix
+**Expected Result**: Max 10 results
+
+### TC-LOLC-012: Search with filters
+**Description**: Combined search and filter  
+**Test Steps**:
+1. Call with q and country filter
+**Expected Result**: Filtered matches
+
+### TC-LOLC-013: Sort by name
+**Description**: Alphabetical ordering  
+**Test Steps**:
+1. Call with sortBy=name
+**Expected Result**: A-Z order
+
+### TC-LOLC-014: Include inactive
+**Description**: Show all statuses  
+**Test Steps**:
+1. Call with includeInactive=true
+**Expected Result**: All offices
 
 ---
 
-## §5 Integration Tests (90)
+## Authorization Tests
 
-| ID | Category | Scenario | Entities | Expected |
-|----|----------|----------|----------|----------|
-| INT-001 | CRUD | Get by ID | Office | Match |
-| INT-002 | CRUD | Get by code | Office | Match |
-| INT-003 | CRUD | Get dropdown | Office | Pairs |
-| INT-004 | CRUD | Search | Office | Matches |
-| INT-005 | CRUD | Typeahead | Office | Suggestions |
-| INT-006 | CRUD | Filter country | Office | Filtered |
-| INT-007 | CRUD | Filter region | Office | Filtered |
-| INT-008 | CRUD | Filter parent | Office | Filtered |
-| INT-009 | CRUD | Pagination | Office | Paginated |
-| INT-010 | CRUD | Sort | Office | Sorted |
-| INT-011 | Search | Search by name | Office | Matches |
-| INT-012 | Search | Typeahead | Office | Suggestions |
-| INT-013 | Search | Filter country | Office | Filtered |
-| INT-014 | Search | Filter region | Office | Filtered |
-| INT-015 | Search | Filter parent | Office | Filtered |
-| INT-016 | Search | Multi-filter | Office | Combined |
-| INT-017 | Search | Empty search | - | [] |
-| INT-018 | Search | Partial match | Office | Fuzzy |
-| INT-019 | Search | Sort + filter | Office | Both |
-| INT-020 | Search | Filter + pagination | Office | Both |
-| INT-021 | Pagination | Page 1 | Office | First |
-| INT-022 | Pagination | Last page | Office | Partial |
-| INT-023 | Pagination | Size | Office | Correct |
-| INT-024 | Pagination | Invalid | Office | 400 |
-| INT-025 | Pagination | Boundary | Office | Exact |
-| INT-026 | Relationships | Office → Country | Office, Country | Linked |
-| INT-027 | Relationships | Office → Parent | Office | Linked |
-| INT-028 | Relationships | Office → Children | Office | Linked |
-| INT-029 | Relationships | Orphan | Deleted country | 404 |
-| INT-030 | Relationships | Region hierarchy | Office | Linked |
-| INT-031 | Error | DB down | DB | 503 |
-| INT-032 | Error | Auth down | Auth | 401/503 |
-| INT-033 | Error | Validation | Bad input | 400 |
-| INT-034 | Error | NotFound | Invalid ID | 404 |
-| INT-035 | Error | Forbidden | No permission | 403 |
-| INT-036 | Error | Conflict | Duplicate | 409 |
-| INT-037 | Error | Rate limit | Too many | 429 |
-| INT-038 | Error | Timeout | Slow | 504 |
-| INT-039 | Error | Payload | Huge | 413 |
-| INT-040 | Error | Media | Wrong type | 415 |
-| INT-041 | Error | Method | Wrong verb | 405 |
-| INT-042 | Error | Service | Dependency | 503 |
-| INT-043 | Error | Gateway | Upstream | 504 |
-| INT-044 | Error | Gone | Deleted | 410 |
-| INT-045 | Error | Locked | Locked | 423 |
-| INT-046 | E2E | Full search flow | Office | Search → Get |
-| INT-047 | E2E | Full typeahead flow | Office | Typeahead → Get |
-| INT-048 | E2E | Full filter flow | Office | Filter → Get |
-| INT-049 | E2E | Hierarchy flow | Office | Parent → Children |
-| INT-050 | E2E | Session expiry | Auth | Clean fail |
-| INT-051 | CRUD | Get by ID | Office | Match |
-| INT-052 | CRUD | Get by code | Office | Match |
-| INT-053 | Search | Search flow | Office | Matches |
-| INT-054 | Search | Typeahead flow | Office | Suggestions |
-| INT-055 | Filter | Country flow | Office | Filtered |
-| INT-056 | Relationships | Office → Country | Office, Country | Linked |
-| INT-057 | Error | Validation chain | Bad input | 400 |
-| INT-058 | Error | Auth chain | No auth | 401 |
-| INT-059 | E2E | Dropdown flow | Office | Pairs |
-| INT-060 | E2E | Region flow | Office | Filtered |
-| INT-061 | CRUD | Dropdown | Office | Pairs |
-| INT-062 | Filter | Region flow | Office | Filtered |
-| INT-063 | Hierarchy | Parent filter | Office | Children |
-| INT-064 | Relationships | Office → Parent | Office | Linked |
-| INT-065 | Error | Permission chain | No perm | 403 |
-| INT-066 | E2E | Full lookup flow | Office | Search → Get |
-| INT-067 | CRUD | Search | Office | Matches |
-| INT-068 | Filter | Combined filter | Office | Combined |
-| INT-069 | Hierarchy | Root offices | Office | Roots |
-| INT-070 | Relationships | Orphan country | Office | 404 |
-| INT-071 | Error | Conflict resolution | Stale | 409 |
-| INT-072 | E2E | Country flow | Office | Filtered |
-| INT-073 | CRUD | Pagination | Office | Paginated |
-| INT-074 | Filter | Parent filter | Office | Children |
-| INT-075 | Hierarchy | Hierarchy depth | Office | Valid |
-| INT-076 | Relationships | Office → Audit | Office | Audit |
-| INT-077 | Error | Timeout handling | Slow | 504 |
-| INT-078 | E2E | Pagination flow | Office | Paginated |
-| INT-079 | CRUD | Typeahead | Office | Suggestions |
-| INT-080 | Filter | Empty search | Office | All |
-| INT-081 | Hierarchy | Hierarchy validation | Office | Valid |
-| INT-082 | Relationships | Region hierarchy | Office | Linked |
-| INT-083 | Error | Service unavailable | Down | 503 |
-| INT-084 | E2E | Sort flow | Office | Sorted |
-| INT-085 | CRUD | Sort | Office | Sorted |
-| INT-086 | Search | Search concurrent | Office | All |
-| INT-087 | Filter | Filter concurrent | Office | All |
-| INT-088 | Relationships | Office → Children | Office | Linked |
-| INT-089 | Error | Payload too large | Huge | 413 |
-| INT-090 | E2E | Full auth flow | Auth | Token |
+### TC-LOLC-A001: Unauthenticated denied
+**Expected Result**: 401 Unauthorized
+
+### TC-LOLC-A002: Authenticated access
+**Expected Result**: 200 OK
+
+### TC-LOLC-A003: Org unit filter applied
+**Expected Result**: Only permitted offices
+
+### TC-LOLC-A004: Admin sees all
+**Expected Result**: No filtering for admin
 
 ---
 
-## §6 Security Tests (50)
+**Last Updated**: December 18, 2025  
+**C# Test File**: `QA Tests/Integration Tests/Controllers/LiaisonOfficeLookupControllerTests.cs`
 
-| ID | Category | Attack | Target | Expected |
-|----|----------|--------|-------|----------|
-| SEC-001 | Injection | SQL | Search | Sanitized |
-| SEC-002 | Injection | XSS | Search | Encoded |
-| SEC-003 | Injection | Path traversal | Path | Rejected |
-| SEC-004 | Injection | NoSQL | Filter | Rejected |
-| SEC-005 | Injection | Command | Export | Rejected |
-| SEC-006 | Injection | Header | Header | Rejected |
-| SEC-007 | Injection | Log | Input | Sanitized |
-| SEC-008 | Injection | LDAP | Search | Rejected |
-| SEC-009 | Injection | Log4j | Input | Rejected |
-| SEC-010 | Injection | SSRF | URL | Rejected |
-| SEC-011 | Access | No auth | All | 401 |
-| SEC-012 | Access | Wrong role | Admin | 403 |
-| SEC-013 | Access | Cross-org | Other org | 403 |
-| SEC-014 | Access | Horizontal | Other user | 403 |
-| SEC-015 | Access | Vertical | Admin | 403 |
-| SEC-016 | Access | Expired | Token | 401 |
-| SEC-017 | Access | Revoked | Token | 401 |
-| SEC-018 | Access | Tampered | Token | 401 |
-| SEC-019 | Access | Scope | OAuth | 403 |
-| SEC-020 | Access | Service | UI | 403 |
-| SEC-021 | IDOR | Other org office | ID | 403 |
-| SEC-022 | IDOR | Other user | ID | 403 |
-| SEC-023 | IDOR | Manipulate | Path | 403 |
-| SEC-024 | IDOR | Enumeration | IDs | Rate limit |
-| SEC-025 | IDOR | Pollution | Params | First |
-| SEC-026 | Mass Assign | Admin | Body | Ignored |
-| SEC-027 | Mass Assign | Role | Body | Ignored |
-| SEC-028 | Mass Assign | Org | Body | Ignored |
-| SEC-029 | Mass Assign | User | Body | Ignored |
-| SEC-030 | Mass Assign | Permission | Body | Ignored |
-| SEC-031 | Auth | Fixation | Session | New |
-| SEC-032 | Auth | Hijack | Token | Invalid |
-| SEC-033 | Auth | Replay | Old token | Reject |
-| SEC-034 | Auth | CSRF | State | Token |
-| SEC-035 | Auth | Brute | Login | Rate limit |
-| SEC-036 | Data | PII in export | Export | Masked |
-| SEC-037 | Data | Logs | Sensitive | No PII |
-| SEC-038 | Data | Error | 500 | Generic |
-| SEC-039 | Data | Stack | Exception | Hidden |
-| SEC-040 | Data | Debug | Prod | Off |
-| SEC-041 | OWASP | A01 | Access | 403 |
-| SEC-042 | OWASP | A02 | Crypto | TLS |
-| SEC-043 | OWASP | A03 | Injection | Param |
-| SEC-044 | OWASP | A04 | Design | Defensive |
-| SEC-045 | OWASP | A05 | Misconfig | Secure |
-| SEC-046 | OWASP | A06 | Vulnerable | No CVE |
-| SEC-047 | OWASP | A07 | Auth | Strong |
-| SEC-048 | OWASP | A08 | Integrity | Checks |
-| SEC-049 | OWASP | A09 | Logging | Audit |
-| SEC-050 | OWASP | A10 | SSRF | No internal |
-
----
-
-## §7 Concurrency Tests (25)
-
-| ID | Scenario | Expected |
-|----|----------|----------|
-| CON-001 | 2 users get same | Both succeed |
-| CON-002 | 2 users search same | Both succeed |
-| CON-003 | 2 users typeahead same | Both succeed |
-| CON-004 | 10 concurrent gets | All succeed |
-| CON-005 | 50 concurrent list | All succeed |
-| CON-006 | Double-click search | Single |
-| CON-007 | Rapid filter | Last wins |
-| CON-008 | Delete during read | Snapshot |
-| CON-009 | Cache invalidation | No stale |
-| CON-010 | Connection pool | Queue/503 |
-| CON-011 | Transaction | No dirty |
-| CON-012 | Optimistic | Last write |
-| CON-013 | Deadlock | Timeout |
-| CON-014 | Hierarchy update | Snapshot |
-| CON-015 | Rate limit | Fair |
-| CON-016 | Session expiry | Clean |
-| CON-017 | Multiple searches | All succeed |
-| CON-018 | Cache stampede | Single |
-| CON-019 | Lock | Timeout |
-| CON-020 | Memory | Graceful |
-| CON-021 | Typeahead concurrent | All succeed |
-| CON-022 | Filter change | Consistent |
-| CON-023 | Permission change | Old |
-| CON-024 | Region change | Consistent |
-| CON-025 | Replica lag | Eventual |
-
----
-
-## §8 Unit Tests (21)
-
-| ID | Category | Input | Expected |
-|----|----------|-------|----------|
-| UNT-001 | Validation | Valid search | Accept |
-| UNT-002 | Validation | Invalid search | Reject |
-| UNT-003 | Validation | Valid ID | Accept |
-| UNT-004 | Validation | Invalid ID | Reject |
-| UNT-005 | Validation | Valid code | Accept |
-| UNT-006 | Formatting | Name | Formatted |
-| UNT-007 | Formatting | Code | Formatted |
-| UNT-008 | Formatting | Date | ISO 8601 |
-| UNT-009 | Calculation | Hierarchy path | Correct |
-| UNT-010 | Calculation | Bounding box | Correct |
-| UNT-011 | Calculation | Center point | Correct |
-| UNT-012 | Calculation | Depth | Correct |
-| UNT-013 | Calculation | Filter count | Correct |
-| UNT-014 | Status | Active | Active only |
-| UNT-015 | Status | Inactive | Inactive only |
-| UNT-016 | Status | All | All |
-| UNT-017 | Status | Head office | Head only |
-| UNT-018 | Status | Branch | Branch only |
-| UNT-019 | Collections | Empty | [] |
-| UNT-020 | Collections | Single | [item] |
-| UNT-021 | Collections | Dedupe | No dupes |
-
----
-
-## §9 Performance Tests (16)
-
-| ID | Operation | Threshold |
-|----|-----------|-----------|
-| PRF-001 | Get all | < 500ms |
-| PRF-002 | Get by ID | < 50ms |
-| PRF-003 | Get by code | < 50ms |
-| PRF-004 | Search | < 300ms |
-| PRF-005 | Filter country | < 200ms |
-| PRF-006 | Filter region | < 200ms |
-| PRF-007 | Typeahead | < 100ms |
-| PRF-008 | Dropdown | < 100ms |
-| PRF-009 | Pagination | < 200ms |
-| PRF-010 | 10 concurrent | < 1s each |
-| PRF-011 | 50 concurrent | < 2s each |
-| PRF-012 | 5 concurrent search | < 500ms each |
-| PRF-013 | Memory list | < 50MB |
-| PRF-014 | Memory export | < 100MB |
-| PRF-015 | Cache hit | > 80% |
-| PRF-016 | DB queries | < 5 per request |
-
----
-
-## §10 Load Tests (10)
-
-| ID | Load Profile | Duration | Success Criteria |
-|----|--------------|----------|-------------------|
-| LDT-001 | 10 users | 10 min | 95% < 500ms |
-| LDT-002 | 50 users | 10 min | 95% < 1s |
-| LDT-003 | 100 users | 10 min | 95% < 2s |
-| LDT-004 | Spike 10→100 | 5 min | No crash |
-| LDT-005 | Spike 50→200 | 5 min | Graceful |
-| LDT-006 | Stress 200 | Until fail | Document |
-| LDT-007 | Stress 500 | Until fail | Document |
-| LDT-008 | 50 concurrent | 5 min | Queue/limit |
-| LDT-009 | Recovery spike | 5 min | Baseline |
-| LDT-010 | Recovery stress | 10 min | Full |
-
----
-
-## Traceability Matrix
-
-| Requirement | Test Cases |
-|-------------|------------|
-| Search offices | POS-001–002, FUN-001–004 |
-| Typeahead | POS-003, FUN-005 |
-| Filter by region | POS-004, FUN-006–007 |
-| Filter by country | POS-005, FUN-006 |
-| 3:1 Ratio | NEG-001–090, BND-001–090, FUN-001–090, INT-001–090 |
-
----
-
-**Last Updated:** 2026-02-11  
-**Status:** Ready for Execution

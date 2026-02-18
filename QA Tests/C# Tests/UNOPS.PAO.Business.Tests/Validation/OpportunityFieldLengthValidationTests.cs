@@ -217,7 +217,7 @@ namespace UNOPS.PAO.Business.Tests.Validation
         public void OpportunityChallenges_AtMaxLength_HasCorrectMaxLengthAttribute()
         {
             // Arrange: Get Challenges property info
-            var challengesProperty = typeof(OpportunityEntity).GetProperty("Challenges");
+            var challengesProperty = typeof(Opportunity).GetProperty("Challenges");
             
             // Act: Get MaxLength attribute
             var maxLengthAttr = challengesProperty?.GetCustomAttributes(typeof(MaxLengthAttribute), true)

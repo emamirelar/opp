@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { IapStatusComponent } from './iap-status.component';
 import { TranslateModule } from '@ngx-translate/core';
-import { createMockTranslateService, createMockDialogService, createMockMarkdownService } from '@shared/testing/test-utilities';
 import { AuthService } from '@core/services/auth';
 import { of } from 'rxjs';
 

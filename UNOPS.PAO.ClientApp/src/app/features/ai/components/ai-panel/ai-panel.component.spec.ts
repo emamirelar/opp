@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { createMockTranslateService, createMockDialogService, createMockMarkdownService } from '@shared/testing/test-utilities';
 import { of, throwError } from 'rxjs';
 import { AiPanelComponent, AiDataService } from './ai-panel.component';
 import { MarkdownPipe } from '@shared/pipes/markdown.pipe';
@@ -13,8 +12,10 @@ describe('AiPanelComponent', () => {
 
   beforeEach(async () => {
     mockAiService = jasmine.createSpyObj('AiDataService', ['get']);
-    mockTranslateService = createMockTranslateService() as any;
-        await TestBed.configureTestingModule({
+    mockTranslateService = jasmine.createSpyObj('TranslateService', ['instant']);
+    mockTranslateService.instant.and.returnValue('Translated text');
+
+    await TestBed.configureTestingModule({
       imports: [
         AiPanelComponent,
         TranslateModule.forRoot(),

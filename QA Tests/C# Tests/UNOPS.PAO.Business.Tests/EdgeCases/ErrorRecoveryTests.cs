@@ -12,8 +12,6 @@ using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Business.Tests.TestBase;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
-using UNOPS.PAO.UNOPSDataAccess.Context;
-using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.Business.Tests.EdgeCases
 {
@@ -24,24 +22,25 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
     /// </summary>
     public class ErrorRecoveryTests
     {
-        private readonly DbContextOptions<UNOPSAppDbContext> _options;
+        private readonly DbContextOptions<AppDbContext> _options;
 
         public ErrorRecoveryTests()
         {
-            _options = new DbContextOptionsBuilder<UNOPSAppDbContext>()
+            _options = new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(databaseName: $"TestDb_ErrorRecovery_{Guid.NewGuid()}")
                 .Options;
             SeedTestData();
         }
 
-        private AppDbContext CreateContext() => TestDbContextFactory.CreateUNOPS(_options);
+        private AppDbContext CreateContext() => TestDbContextFactory.Create(_options);
 
         private void SeedTestData()
         {
             using var context = CreateContext();
             
-            var partner = new UNOPSPartner
+            var partner = new Partner
             {
+                Id = 1,
                 Name = "Error Recovery Test Partner",
                 CreatedBy = 1,
                 LastModifiedBy = 1,

@@ -2,19 +2,15 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Business.Tests.TestBase;
 using UNOPS.PAO.Domain.Entities;
-using UNOPS.PAO.UNOPSDomain.Entities;
 using Xunit;
 
 namespace UNOPS.PAO.Business.Tests.EdgeCases;
 
 /// <summary>
-/// Edge case tests for PartnerTreeManager against PostgreSQL.
-/// Uses test markers and auto-generated IDs for data isolation.
+/// Edge case tests for PartnerTreeManager
 /// </summary>
 public class PartnerTreeManagerEdgeCaseTests : ManagerTestBase
 {
-    private readonly string _testMarker = $"PTEC_{Guid.NewGuid():N}";
-
     [Fact]
     public async Task GetPartnerTree_WithZeroId_Should_ReturnNull()
     {
@@ -29,20 +25,20 @@ public class PartnerTreeManagerEdgeCaseTests : ManagerTestBase
     public async Task PartnerTree_WithEmptyCode_Should_BeHandled()
     {
         // Arrange
-        var tree = new UNOPSPartnerTree
+        var tree = new PartnerTree
         {
+            Id = 1,
             Code = "",
-            Name = $"Empty Code Tree {_testMarker}",
+            Name = "Empty Code Tree",
             Type = "Category",
             Description = "Empty Code Tree Description",
             Parent = null
         };
         await Context.PartnerTrees.AddAsync(tree);
         await SaveChangesAsync();
-        RegisterTableCleanup("PartnerTrees", $"\"Id\" = {tree.Id}");
 
         // Act
-        var result = await Context.PartnerTrees.FindAsync(tree.Id);
+        var result = await Context.PartnerTrees.FindAsync(1);
 
         // Assert
         result.Should().NotBeNull();
@@ -53,68 +49,68 @@ public class PartnerTreeManagerEdgeCaseTests : ManagerTestBase
     public async Task PartnerTree_WithSelfReference_Should_BeStorable()
     {
         // Arrange - Note: This tests storage capability, not validity
-        var tree = new UNOPSPartnerTree
+        var tree = new PartnerTree
         {
-            Code = $"SELF_{_testMarker}",
-            Name = $"Self Reference {_testMarker}",
+            Id = 1,
+            Code = "SELF",
+            Name = "Self Reference",
             Type = "Category",
             Description = "Self Reference Description",
-            Parent = $"SELF_{_testMarker}" // Self-referencing parent by code
+            Parent = "SELF" // Self-referencing parent
         };
         await Context.PartnerTrees.AddAsync(tree);
         await SaveChangesAsync();
-        RegisterTableCleanup("PartnerTrees", $"\"Id\" = {tree.Id}");
 
         // Act
-        var result = await Context.PartnerTrees.FindAsync(tree.Id);
+        var result = await Context.PartnerTrees.FindAsync(1);
 
         // Assert
         result.Should().NotBeNull();
-        result!.Parent.Should().Contain("SELF_");
+        result!.Parent.Should().Be("SELF");
     }
 
     [Fact]
     public async Task PartnerTree_WithNonExistentParent_Should_BeStorable()
     {
         // Arrange
-        var tree = new UNOPSPartnerTree
+        var tree = new PartnerTree
         {
-            Code = $"ORPHAN_{_testMarker}",
-            Name = $"Orphan Node {_testMarker}",
+            Id = 1,
+            Code = "ORPHAN",
+            Name = "Orphan Node",
             Type = "Category",
             Description = "Orphan Node Description",
-            Parent = "NON_EXISTENT_PARENT_ZZZZZ"
+            Parent = "NON_EXISTENT_PARENT"
         };
         await Context.PartnerTrees.AddAsync(tree);
         await SaveChangesAsync();
-        RegisterTableCleanup("PartnerTrees", $"\"Id\" = {tree.Id}");
 
         // Act
-        var result = await Context.PartnerTrees.FindAsync(tree.Id);
+        var result = await Context.PartnerTrees.FindAsync(1);
 
         // Assert
         result.Should().NotBeNull();
-        result!.Parent.Should().Be("NON_EXISTENT_PARENT_ZZZZZ");
+        result!.Parent.Should().Be("NON_EXISTENT_PARENT");
     }
 
     [Fact]
     public async Task PartnerTree_WithSpecialCharactersInCode_Should_BeHandled()
     {
         // Arrange
-        var tree = new UNOPSPartnerTree
+        var tree = new PartnerTree
         {
-            Code = $"CODE-WITH_SPECIAL.CHARS_{_testMarker}",
-            Name = $"Special Code {_testMarker}",
+            Id = 1,
+            Code = "CODE-WITH_SPECIAL.CHARS",
+            Name = "Special Code",
             Type = "Category",
             Description = "Special Code Description",
             Parent = null
         };
         await Context.PartnerTrees.AddAsync(tree);
         await SaveChangesAsync();
-        RegisterTableCleanup("PartnerTrees", $"\"Id\" = {tree.Id}");
 
         // Act
-        var result = await Context.PartnerTrees.FindAsync(tree.Id);
+        var result = await Context.PartnerTrees.FindAsync(1);
 
         // Assert
         result.Should().NotBeNull();
@@ -126,9 +122,10 @@ public class PartnerTreeManagerEdgeCaseTests : ManagerTestBase
     {
         // Arrange
         var longName = new string('A', 500);
-        var tree = new UNOPSPartnerTree
+        var tree = new PartnerTree
         {
-            Code = $"LONG_{_testMarker}",
+            Id = 1,
+            Code = "LONG",
             Name = longName,
             Type = "Category",
             Description = "Long Name Description",
@@ -136,10 +133,9 @@ public class PartnerTreeManagerEdgeCaseTests : ManagerTestBase
         };
         await Context.PartnerTrees.AddAsync(tree);
         await SaveChangesAsync();
-        RegisterTableCleanup("PartnerTrees", $"\"Id\" = {tree.Id}");
 
         // Act
-        var result = await Context.PartnerTrees.FindAsync(tree.Id);
+        var result = await Context.PartnerTrees.FindAsync(1);
 
         // Assert
         result.Should().NotBeNull();
@@ -151,23 +147,13 @@ public class PartnerTreeManagerEdgeCaseTests : ManagerTestBase
     {
         // Arrange
         var trees = Enumerable.Range(1, 10)
-            .Select(i => new UNOPSPartnerTree
-            {
-                Code = $"ROOT{i}_{_testMarker}",
-                Name = $"Root {i} {_testMarker}",
-                Type = "Category",
-                Description = $"Root {i} Description",
-                Parent = null
-            })
+            .Select(i => new PartnerTree { Id = i, Code = $"ROOT{i}", Name = $"Root {i}", Type = "Category", Description = $"Root {i} Description", Parent = null })
             .ToList();
         await Context.PartnerTrees.AddRangeAsync(trees);
         await SaveChangesAsync();
-        foreach (var t in trees) RegisterTableCleanup("PartnerTrees", $"\"Id\" = {t.Id}");
 
         // Act
-        var result = await Context.PartnerTrees
-            .Where(t => t.Parent == null && t.Name.Contains(_testMarker))
-            .ToListAsync();
+        var result = await Context.PartnerTrees.Where(t => t.Parent == null).ToListAsync();
 
         // Assert
         result.Should().HaveCount(10);
@@ -177,20 +163,20 @@ public class PartnerTreeManagerEdgeCaseTests : ManagerTestBase
     public async Task PartnerTree_WithUnicodeInName_Should_BeHandled()
     {
         // Arrange
-        var tree = new UNOPSPartnerTree
+        var tree = new PartnerTree
         {
-            Code = $"UNICODE_{_testMarker}",
-            Name = $"분류 🌳 Категория {_testMarker}",
+            Id = 1,
+            Code = "UNICODE",
+            Name = "분류 🌳 Категория",
             Type = "Category",
             Description = "Unicode Description",
             Parent = null
         };
         await Context.PartnerTrees.AddAsync(tree);
         await SaveChangesAsync();
-        RegisterTableCleanup("PartnerTrees", $"\"Id\" = {tree.Id}");
 
         // Act
-        var result = await Context.PartnerTrees.FindAsync(tree.Id);
+        var result = await Context.PartnerTrees.FindAsync(1);
 
         // Assert
         result.Should().NotBeNull();
@@ -201,18 +187,17 @@ public class PartnerTreeManagerEdgeCaseTests : ManagerTestBase
     public async Task GetPartnerTrees_EmptyParentVsNullParent_Should_BothBeRoots()
     {
         // Arrange
-        var trees = new List<UNOPSPartnerTree>
+        var trees = new List<PartnerTree>
         {
-            new() { Code = $"NULL_PARENT_{_testMarker}", Name = $"Null Parent {_testMarker}", Type = "Category", Description = "Null Parent Description", Parent = null },
-            new() { Code = $"EMPTY_PARENT_{_testMarker}", Name = $"Empty Parent {_testMarker}", Type = "Category", Description = "Empty Parent Description", Parent = "" }
+            new() { Id = 1, Code = "NULL_PARENT", Name = "Null Parent", Type = "Category", Description = "Null Parent Description", Parent = null },
+            new() { Id = 2, Code = "EMPTY_PARENT", Name = "Empty Parent", Type = "Category", Description = "Empty Parent Description", Parent = "" }
         };
         await Context.PartnerTrees.AddRangeAsync(trees);
         await SaveChangesAsync();
-        foreach (var t in trees) RegisterTableCleanup("PartnerTrees", $"\"Id\" = {t.Id}");
 
         // Act
         var result = await Context.PartnerTrees
-            .Where(t => string.IsNullOrEmpty(t.Parent) && t.Name.Contains(_testMarker))
+            .Where(t => string.IsNullOrEmpty(t.Parent))
             .ToListAsync();
 
         // Assert

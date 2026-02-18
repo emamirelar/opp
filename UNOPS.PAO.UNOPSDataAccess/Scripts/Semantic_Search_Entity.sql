@@ -15,7 +15,6 @@
 -- Enable required extensions
 --CREATE EXTENSION IF NOT EXISTS vector;
 
--- TEMPORARY: Commenting out until pgvector is available
 -- Drop existing functions to ensure clean recreation
 DROP FUNCTION IF EXISTS public.search_opportunities_semantic(INTEGER, INTEGER, REAL);
 DROP FUNCTION IF EXISTS public.search_entity_semantic(TEXT, INTEGER, INTEGER, REAL);
@@ -24,8 +23,6 @@ DROP FUNCTION IF EXISTS public.semantic_search_entity(TEXT, INTEGER, INTEGER, RE
 -- ============================================================================
 -- GENERIC SEMANTIC ENTITY SEARCH FUNCTION
 -- ============================================================================
--- TEMPORARY: This function requires pgvector extension and is disabled for local development
-/*
 -- Searches for similar entities of any type using vector embeddings
 -- This is the primary function to use for semantic similarity search
 -- Parameters:
@@ -116,7 +113,6 @@ BEGIN
     RETURN result_json;
 END
 $$;
-*/
 
 -- ============================================================================
 -- EXAMPLE USAGE

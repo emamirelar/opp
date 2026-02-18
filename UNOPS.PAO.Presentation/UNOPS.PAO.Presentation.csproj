@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -43,14 +43,6 @@
     <ProjectReference Include="..\UNOPS.PAO.GoogleServices\UNOPS.PAO.GoogleServices.csproj" />
     <ProjectReference Include="..\UNOPS.PAO.Models\UNOPS.PAO.Models.csproj" />
     <ProjectReference Include="..\UNOPS.PAO.UNOPSBusiness\UNOPS.PAO.UNOPSBusiness.csproj" />
-    <!-- Workflow submodule references - only include if project files exist -->
-    <ProjectReference Include="..\UNOPS.Workflow\UNOPS.Workflow.Business\UNOPS.Workflow.Business.csproj" Condition="Exists('..\UNOPS.Workflow\UNOPS.Workflow.Business\UNOPS.Workflow.Business.csproj')" />
-    <ProjectReference Include="..\UNOPS.Workflow\UNOPS.Workflow.Models\UNOPS.Workflow.Models.csproj" Condition="Exists('..\UNOPS.Workflow\UNOPS.Workflow.Models\UNOPS.Workflow.Models.csproj')" />
-  </ItemGroup>
-
-  <!-- Conditional compilation: Exclude WorkflowController when UNOPS.Workflow submodule project files are not available -->
-  <ItemGroup Condition="!Exists('..\UNOPS.Workflow\UNOPS.Workflow.Business\UNOPS.Workflow.Business.csproj')">
-    <Compile Remove="Controllers\WorkflowController.cs" />
   </ItemGroup>
   
 </Project>

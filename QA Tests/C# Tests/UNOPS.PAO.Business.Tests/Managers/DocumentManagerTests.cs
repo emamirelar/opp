@@ -3,67 +3,61 @@ using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Business.Tests.TestBase;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
-using UNOPS.PAO.UNOPSDomain.Entities;
 using Xunit;
 
 namespace UNOPS.PAO.Business.Tests.Managers;
 
 /// <summary>
 /// Unit tests for DocumentManager
-/// Uses unique test markers for PostgreSQL data isolation.
 /// </summary>
 public class DocumentManagerTests : ManagerTestBase
 {
-    private readonly string _testMarker = $"DocTest_{Guid.NewGuid():N}";
-
     [Fact]
     public async Task GetDocumentById_Should_ReturnDocument_When_Exists()
     {
         // Arrange
-        var document = new UNOPSDocument
+        var document = new Document
         {
-            Name = $"Test Document {_testMarker}",
+            Id = 1,
+            Name = "Test Document",
             Link = "https://example.com/doc.pdf",
-            Status = EntityStatus.Active,
-            LastModifiedDate = DateTime.UtcNow
+            Status = EntityStatus.Active
         };
         await Context.Documents.AddAsync(document);
         await SaveChangesAsync();
 
         // Act
-        var result = await Context.Documents.FindAsync(document.Id);
+        var result = await Context.Documents.FindAsync(1);
 
         // Assert
         result.Should().NotBeNull();
-        result!.Name.Should().Contain("Test Document");
+        result!.Name.Should().Be("Test Document");
     }
 
     [Fact]
     public async Task GetDocumentById_Should_ReturnNull_When_NotExists()
     {
-        // Act - Use a very high ID that won't exist
-        var result = await Context.Documents.FindAsync(int.MaxValue);
+        // Act
+        var result = await Context.Documents.FindAsync(999);
 
         // Assert
         result.Should().BeNull();
     }
 
     [Fact]
-    public async Task GetAllDocuments_Should_ReturnCreatedDocuments()
+    public async Task GetAllDocuments_Should_ReturnAllDocuments()
     {
         // Arrange
-        var documents = new List<UNOPSDocument>
+        var documents = new List<Document>
         {
-            new() { Name = $"Doc 1 {_testMarker}", Link = "https://example.com/doc1.pdf", Status = EntityStatus.Active, LastModifiedDate = DateTime.UtcNow },
-            new() { Name = $"Doc 2 {_testMarker}", Link = "https://example.com/doc2.pdf", Status = EntityStatus.Active, LastModifiedDate = DateTime.UtcNow }
+            new() { Id = 1, Name = "Doc 1", Link = "https://example.com/doc1.pdf", Status = EntityStatus.Active },
+            new() { Id = 2, Name = "Doc 2", Link = "https://example.com/doc2.pdf", Status = EntityStatus.Active }
         };
         await Context.Documents.AddRangeAsync(documents);
         await SaveChangesAsync();
 
-        // Act - Filter to test-created documents only
-        var result = await Context.Documents
-            .Where(d => d.Name.Contains(_testMarker))
-            .ToListAsync();
+        // Act
+        var result = await Context.Documents.ToListAsync();
 
         // Assert
         result.Should().HaveCount(2);
@@ -73,12 +67,12 @@ public class DocumentManagerTests : ManagerTestBase
     public async Task CreateDocument_Should_PersistDocument()
     {
         // Arrange
-        var document = new UNOPSDocument
+        var document = new Document
         {
-            Name = $"New Document {_testMarker}",
+            Id = 1,
+            Name = "New Document",
             Link = "https://example.com/new.pdf",
-            Status = EntityStatus.Active,
-            LastModifiedDate = DateTime.UtcNow
+            Status = EntityStatus.Active
         };
 
         // Act
@@ -86,7 +80,7 @@ public class DocumentManagerTests : ManagerTestBase
         await SaveChangesAsync();
 
         // Assert
-        var result = await Context.Documents.FindAsync(document.Id);
+        var result = await Context.Documents.FindAsync(1);
         result.Should().NotBeNull();
         result!.Link.Should().Be("https://example.com/new.pdf");
     }
@@ -95,36 +89,36 @@ public class DocumentManagerTests : ManagerTestBase
     public async Task UpdateDocument_Should_UpdateFields()
     {
         // Arrange
-        var document = new UNOPSDocument
+        var document = new Document
         {
-            Name = $"Original Name {_testMarker}",
+            Id = 1,
+            Name = "Original Name",
             Link = "https://example.com/original.pdf",
-            Status = EntityStatus.Active,
-            LastModifiedDate = DateTime.UtcNow
+            Status = EntityStatus.Active
         };
         await Context.Documents.AddAsync(document);
         await SaveChangesAsync();
 
         // Act
-        document.Name = $"Updated Name {_testMarker}";
+        document.Name = "Updated Name";
         await SaveChangesAsync();
 
         // Assert
         Context.ChangeTracker.Clear();
-        var result = await Context.Documents.FindAsync(document.Id);
-        result!.Name.Should().Contain("Updated Name");
+        var result = await Context.Documents.FindAsync(1);
+        result!.Name.Should().Be("Updated Name");
     }
 
     [Fact]
     public async Task DeleteDocument_Should_SoftDelete()
     {
         // Arrange
-        var document = new UNOPSDocument
+        var document = new Document
         {
-            Name = $"To Delete {_testMarker}",
+            Id = 1,
+            Name = "To Delete",
             Link = "https://example.com/delete.pdf",
-            Status = EntityStatus.Active,
-            LastModifiedDate = DateTime.UtcNow
+            Status = EntityStatus.Active
         };
         await Context.Documents.AddAsync(document);
         await SaveChangesAsync();
@@ -136,30 +130,29 @@ public class DocumentManagerTests : ManagerTestBase
 
         // Assert
         Context.ChangeTracker.Clear();
-        var result = await Context.Documents.FindAsync(document.Id);
+        var result = await Context.Documents.FindAsync(1);
         result!.IsDeleted.Should().BeTrue();
     }
 
     [Fact]
     public async Task GetDocumentsByType_Should_FilterCorrectly()
     {
-        // Arrange - Use unique names to scope assertions
-        var documents = new List<UNOPSDocument>
+        // Arrange
+        var documents = new List<Document>
         {
-            new() { Name = $"PDF Doc {_testMarker}", Link = "https://example.com/doc.pdf", Type = "PDF", Status = EntityStatus.Active, LastModifiedDate = DateTime.UtcNow },
-            new() { Name = $"Word Doc {_testMarker}", Link = "https://example.com/doc.docx", Type = "DOCX", Status = EntityStatus.Active, LastModifiedDate = DateTime.UtcNow },
-            new() { Name = $"Excel Doc {_testMarker}", Link = "https://example.com/doc.xlsx", Type = "XLSX", Status = EntityStatus.Active, LastModifiedDate = DateTime.UtcNow }
+            new() { Id = 1, Name = "PDF Doc", Link = "https://example.com/doc.pdf", Type = "PDF", Status = EntityStatus.Active },
+            new() { Id = 2, Name = "Word Doc", Link = "https://example.com/doc.docx", Type = "DOCX", Status = EntityStatus.Active },
+            new() { Id = 3, Name = "Excel Doc", Link = "https://example.com/doc.xlsx", Type = "XLSX", Status = EntityStatus.Active }
         };
         await Context.Documents.AddRangeAsync(documents);
         await SaveChangesAsync();
 
-        // Act - Filter by type AND test marker
-        var result = await Context.Documents
-            .Where(d => d.Name.Contains(_testMarker) && d.Type == "PDF")
-            .ToListAsync();
+        // Act
+        var result = await Context.Documents.Where(d => d.Type == "PDF").ToListAsync();
 
         // Assert
         result.Should().HaveCount(1);
-        result.First().Name.Should().Contain("PDF Doc");
+        result.First().Name.Should().Be("PDF Doc");
     }
 }
+

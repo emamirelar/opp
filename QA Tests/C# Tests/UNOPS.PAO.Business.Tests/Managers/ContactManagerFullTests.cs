@@ -12,7 +12,6 @@ using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Business.Tests.TestBase;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
-using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.Business.Tests.Managers
 {
@@ -37,8 +36,9 @@ namespace UNOPS.PAO.Business.Tests.Managers
         private void SeedTestData()
         {
             // Create a partner first
-            var partner = new UNOPSPartner
+            var partner = new Partner
             {
+                Id = 1,
                 Name = "Test Partner",
                 CreatedBy = 1,
                 LastModifiedBy = 1,
@@ -49,15 +49,16 @@ namespace UNOPS.PAO.Business.Tests.Managers
             _context.SaveChanges();
 
             // Create contacts
-            var contacts = Enumerable.Range(1, 30).Select(i => new UNOPSContact
+            var contacts = Enumerable.Range(1, 30).Select(i => new Contact
             {
+                Id = i,
                 Name = $"First{i} Last{i}",  // Base class property
                 FirstName = $"First{i}",
                 LastName = $"Last{i}",
                 Title = $"Title {i}",
                 Email = $"contact{i}@example.com",
                 Phone = $"+1-555-000-{i:D4}",
-                PartnerId = partner.Id,
+                PartnerId = 1,
                 CreatedBy = 1,
                 LastModifiedBy = 1,
                 CreatedDate = DateTime.UtcNow,
@@ -72,14 +73,14 @@ namespace UNOPS.PAO.Business.Tests.Managers
         [Fact]
         public async Task TC_CM_F001_CreateContact_ValidData_Succeeds()
         {
-            var contact = new UNOPSContact
+            var contact = new Contact
             {
                 Name = "New Contact",  // Base class property
                 FirstName = "New",
                 LastName = "Contact",
                 Title = "Manager",
                 Email = "new.contact@example.com",
-                PartnerId = (await _context.Partners.FirstAsync(p => p.Name == "Test Partner")).Id,
+                PartnerId = 1,
                 CreatedBy = 1,
                 LastModifiedBy = 1,
                 CreatedDate = DateTime.UtcNow,
@@ -93,14 +94,13 @@ namespace UNOPS.PAO.Business.Tests.Managers
         [Fact]
         public async Task TC_CM_F002_CreateContact_MinimalFields_Succeeds()
         {
-            var partner = await _context.Partners.FirstAsync(p => p.Name == "Test Partner");
-            var contact = new UNOPSContact
+            var contact = new Contact
             {
                 Name = "MinimalContact",  // Base class property
                 LastName = "MinimalContact",
                 Title = "Staff",
                 Email = "minimal@example.com",
-                PartnerId = partner.Id,
+                PartnerId = 1,
                 CreatedBy = 1,
                 LastModifiedBy = 1,
                 CreatedDate = DateTime.UtcNow,
@@ -114,8 +114,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         [Fact]
         public async Task TC_CM_F003_CreateContact_WithAllFields_Succeeds()
         {
-            var partner = await _context.Partners.FirstAsync(p => p.Name == "Test Partner");
-            var contact = new UNOPSContact
+            var contact = new Contact
             {
                 Name = "John Q Public Jr.",  // Base class property
                 Salutation = "Mr.",
@@ -138,7 +137,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
                 MailingStateProvince = "NY",
                 MailingPostalCode = "10001",
                 MailingCountry = "USA",
-                PartnerId = partner.Id,
+                PartnerId = 1,
                 CreatedBy = 1,
                 LastModifiedBy = 1,
                 CreatedDate = DateTime.UtcNow,
@@ -194,7 +193,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         [Fact]
         public async Task TC_CM_F028_GetContactById_Exists_ReturnsContact()
         {
-            var contact = await _context.Contacts.FirstOrDefaultAsync(c => c.FirstName == "First1");
+            var contact = await _context.Contacts.FirstOrDefaultAsync(c => c.Id == 1);
             Assert.NotNull(contact);
             Assert.Equal("First1", contact.FirstName);
         }
@@ -202,8 +201,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         [Fact]
         public async Task TC_CM_F029_GetContacts_ByPartnerId_Works()
         {
-            var partner = await _context.Partners.FirstAsync(p => p.Name == "Test Partner");
-            var contacts = await _context.Contacts.Where(c => c.PartnerId == partner.Id).ToListAsync();
+            var contacts = await _context.Contacts.Where(c => c.PartnerId == 1).ToListAsync();
             Assert.Equal(30, contacts.Count);
         }
 
