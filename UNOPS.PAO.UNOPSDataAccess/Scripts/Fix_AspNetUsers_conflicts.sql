@@ -1,8 +1,9 @@
 -- =============================================================================
--- Fix AspNetUsers ID conflicts: migrate users from placeholder IDs to Resource IDs
+-- Fix AspNetUsers conflicts before BQ sync (01-aspnetusers.yaml)
 --
--- Uses users where Id <= 999 and Id > 0 (placeholder IDs).
--- Migration map: static list of users present in BigQuery (Resource IDs).
+-- Case 1: Placeholder ID migration - users with Id <= 999 -> Resource IDs from BQ
+-- Case 2: Same UserID, different email - update existing row to BQ canonical email
+--         (e.g. PauloR@unops.org -> PAULINERO@UNOPS.ORG for UserID 240666)
 -- =============================================================================
 
 DROP TABLE IF EXISTS _aspnetusers_migration_map;
@@ -47,6 +48,56 @@ VALUES
     ('ALESSIOAM@UNOPS.ORG', 244555),
     ('MAALEXANDRAM@UNOPS.ORG', 244579),
     ('LINADA@UNOPS.ORG', 244821);
+
+-- =============================================================================
+-- Case 2: Same UserID, different email (BQ has new canonical email)
+-- Update existing row to new email so BQ upsert succeeds (avoids PK conflict).
+-- Example: PauloR@unops.org (existing) -> PAULINERO@UNOPS.ORG (from BQ), UserID 240666
+-- =============================================================================
+
+DROP TABLE IF EXISTS _aspnetusers_email_update_map;
+CREATE TEMP TABLE _aspnetusers_email_update_map (
+    user_id int PRIMARY KEY,
+    new_email text NOT NULL,
+    new_normalized_email text NOT NULL
+);
+
+INSERT INTO _aspnetusers_email_update_map (user_id, new_email, new_normalized_email)
+VALUES
+    (240666, 'PAULINERO@UNOPS.ORG', 'PAULINERO@UNOPS.ORG');
+
+DO $$
+DECLARE
+    rec RECORD;
+BEGIN
+    FOR rec IN
+        SELECT m.user_id, m.new_email, m.new_normalized_email
+        FROM _aspnetusers_email_update_map m
+        INNER JOIN public."AspNetUsers" u ON u."Id" = m.user_id
+        WHERE UPPER(u."NormalizedUserName") != m.new_normalized_email
+          AND NOT EXISTS (
+              SELECT 1 FROM public."AspNetUsers" a
+              WHERE a."NormalizedUserName" = m.new_normalized_email AND a."Id" != m.user_id
+          )
+    LOOP
+        RAISE NOTICE 'Updating user Id % email to %', rec.user_id, rec.new_email;
+
+        UPDATE public."AspNetUsers"
+        SET "UserName" = rec.new_email,
+            "NormalizedUserName" = rec.new_normalized_email,
+            "Email" = rec.new_email,
+            "NormalizedEmail" = rec.new_normalized_email
+        WHERE "Id" = rec.user_id;
+
+        RAISE NOTICE 'Done updating user % to new email', rec.user_id;
+    END LOOP;
+END $$;
+
+DROP TABLE IF EXISTS _aspnetusers_email_update_map;
+
+-- =============================================================================
+-- Case 1: Placeholder ID migration (Id <= 999 -> Resource ID)
+-- =============================================================================
 
 DO $$
 DECLARE
