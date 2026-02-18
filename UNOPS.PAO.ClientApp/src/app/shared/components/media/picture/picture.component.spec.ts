@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { createMockTranslateService, createMockDialogService, createMockMarkdownService } from '@shared/testing/test-utilities';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { of } from 'rxjs';
 import { PictureComponent } from './picture.component';
@@ -18,10 +19,8 @@ describe('PictureComponent', () => {
     mockDialogService = jasmine.createSpyObj('DialogService', ['open']);
     mockDialogService.open.and.returnValue(mockDialogRef);
     
-    mockTranslateService = jasmine.createSpyObj('TranslateService', ['instant']);
-    mockTranslateService.instant.and.returnValue('Edit Picture');
-
-    await TestBed.configureTestingModule({
+    mockTranslateService = createMockTranslateService() as any;
+        await TestBed.configureTestingModule({
       imports: [
         PictureComponent,
         TranslateModule.forRoot()

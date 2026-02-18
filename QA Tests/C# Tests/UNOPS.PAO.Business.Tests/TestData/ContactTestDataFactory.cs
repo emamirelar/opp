@@ -1,20 +1,21 @@
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.Business.Tests.TestData;
 
 /// <summary>
-/// Factory for creating Contact test data
+/// Factory for creating Contact test data.
+/// Uses UNOPSContact (not base Contact) to match PostgreSQL TPH schema.
 /// </summary>
 public class ContactTestDataFactory
 {
     private int _sequenceNumber = 1;
 
-    public Contact CreateContact(Action<Contact>? customize = null)
+    public UNOPSContact CreateContact(Action<UNOPSContact>? customize = null)
     {
-        var contact = new Contact
+        var contact = new UNOPSContact
         {
-            Id = _sequenceNumber++,
             Name = $"Contact {_sequenceNumber}",
             FirstName = $"FirstName{_sequenceNumber}",
             LastName = $"LastName{_sequenceNumber}",
@@ -23,23 +24,26 @@ public class ContactTestDataFactory
             Phone = $"+123456789{_sequenceNumber:D2}",
             Status = EntityStatus.Active,
             CreatedDate = DateTime.UtcNow,
+            CreatedBy = 1,
+            LastModifiedBy = 1,
+            LastModifiedDate = DateTime.UtcNow,
             IsDeleted = false
         };
+        _sequenceNumber++;
 
         customize?.Invoke(contact);
         return contact;
     }
 
-    public Contact CreateContactWithPartner(int partnerId, string partnerName = "Test Partner")
+    public UNOPSContact CreateContactWithPartner(int partnerId, string partnerName = "Test Partner")
     {
         return CreateContact(c =>
         {
             c.PartnerId = partnerId;
-            c.Partner = new Partner { Id = partnerId, Name = partnerName };
         });
     }
 
-    public Contact CreateDeletedContact()
+    public UNOPSContact CreateDeletedContact()
     {
         return CreateContact(c =>
         {
@@ -48,7 +52,7 @@ public class ContactTestDataFactory
         });
     }
 
-    public Contact CreateContactForDuplicateTesting(string firstName, string lastName, string email)
+    public UNOPSContact CreateContactForDuplicateTesting(string firstName, string lastName, string email)
     {
         return CreateContact(c =>
         {

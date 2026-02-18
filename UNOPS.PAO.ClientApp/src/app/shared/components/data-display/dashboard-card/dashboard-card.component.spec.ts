@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DashboardCardComponent } from './dashboard-card.component';
 import { TranslateModule } from '@ngx-translate/core';
+import { createMockTranslateService, createMockDialogService, createMockMarkdownService } from '@shared/testing/test-utilities';
 import { DashboardCardConfig } from './dashboard-card.models';
 
 describe('DashboardCardComponent', () => {

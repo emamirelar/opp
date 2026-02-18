@@ -40,7 +40,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UNOPS.PAO.UNOPSPresentation
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UNOPS.PAO.Presentation", "UNOPS.PAO.Presentation\UNOPS.PAO.Presentation.csproj", "{5DFBCBED-87B5-4F60-9F7A-938B66F31F25}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestSpecification", "TestSpecification\TestSpecification.csproj", "{94AFCCE2-04DE-4630-9A87-9B191394B9BF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestSpecification", "QA Tests\TestSpecification\TestSpecification.csproj", "{94AFCCE2-04DE-4630-9A87-9B191394B9BF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UNOPS.PAO.MailSender", "UNOPS.PAO.MailSender\UNOPS.PAO.MailSender.csproj", "{786A682A-2C7D-4E35-BCD8-25F92F5E6CFD}"
 EndProject

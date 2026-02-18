@@ -12,6 +12,8 @@ using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Business.Tests.TestBase;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.UNOPSDataAccess.Context;
+using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.Business.Tests.EdgeCases
 {
@@ -22,25 +24,24 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
     /// </summary>
     public class AuditTrailTests
     {
-        private readonly DbContextOptions<AppDbContext> _options;
+        private readonly DbContextOptions<UNOPSAppDbContext> _options;
 
         public AuditTrailTests()
         {
-            _options = new DbContextOptionsBuilder<AppDbContext>()
+            _options = new DbContextOptionsBuilder<UNOPSAppDbContext>()
                 .UseInMemoryDatabase(databaseName: $"TestDb_AuditTrail_{Guid.NewGuid()}")
                 .Options;
             SeedTestData();
         }
 
-        private AppDbContext CreateContext() => TestDbContextFactory.Create(_options);
+        private AppDbContext CreateContext() => TestDbContextFactory.CreateUNOPS(_options);
 
         private void SeedTestData()
         {
             using var context = CreateContext();
-            
-            var partner = new Partner
+
+            var partner = new UNOPSPartner
             {
-                Id = 1,
                 Name = "Audit Trail Test Partner",
                 CreatedBy = 1,
                 LastModifiedBy = 1,
@@ -57,7 +58,7 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
         public async Task TC_AT_F001_CreateOperation_LogsAudit()
         {
             using var context = CreateContext();
-            var partner = new Partner
+            var partner = new UNOPSPartner
             {
                 Name = "New Audited Partner",
                 CreatedBy = 1,
@@ -74,7 +75,7 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
         public async Task TC_AT_F002_CreateOperation_RecordsUser()
         {
             using var context = CreateContext();
-            var partner = new Partner
+            var partner = new UNOPSPartner
             {
                 Name = "User Audited Partner",
                 CreatedBy = 99,
@@ -92,7 +93,7 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
         {
             using var context = CreateContext();
             var beforeCreate = DateTime.UtcNow;
-            var partner = new Partner
+            var partner = new UNOPSPartner
             {
                 Name = "Timestamp Audited Partner",
                 CreatedBy = 1,

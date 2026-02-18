@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TranslateModule, TranslateStore } from '@ngx-translate/core';
+import { createMockTranslateService, createMockDialogService, createMockMarkdownService } from '@shared/testing/test-utilities';
 import { MessageService } from 'primeng/api';
 import { DialogService } from 'primeng/dynamicdialog';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';

@@ -29,9 +29,9 @@ public class UserRoleDto
 
 public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManager
 {
-    private readonly UserManager<PAOIdentityUser> _userManager;
+    private new readonly UserManager<PAOIdentityUser> _userManager;
     private readonly RoleManager<PAOIdentityRole> _roleManager;
-    private readonly IPermissionService _permissionService;
+    private new readonly IPermissionService _permissionService;
     private readonly IGeminiManager _geminiManager;
     private readonly ILogger<UNOPSUserManagementManager> _logger;
 

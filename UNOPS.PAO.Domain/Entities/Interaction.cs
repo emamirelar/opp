@@ -12,7 +12,13 @@ namespace UNOPS.PAO.Domain.Entities
     public class Interaction : ModifiableDeletableEntity
     {
         public new int Id { get; set; }
-        
+
+        /// <summary>
+        /// Direct FK to Contact for Contact.Interactions navigation (legacy/simple relationship).
+        /// Many-to-many is also supported via InteractionContacts.
+        /// </summary>
+        public int? ContactId { get; set; }
+
         public InteractionType Type { get; set; }
         
         public DateTime Date { get; set; }

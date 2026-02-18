@@ -173,6 +173,17 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
     public async Task<OpportunityModel> CreateOpportunityAsync(OpportunityRequest model)
     {
+        // ✅ Validate required fields
+        if (string.IsNullOrWhiteSpace(model.Name))
+        {
+            throw new ArgumentException("Opportunity name is required and cannot be empty or whitespace.", nameof(model.Name));
+        }
+        
+        if (model.Name.Length > 255)
+        {
+            throw new ArgumentException($"Opportunity name cannot exceed 255 characters. Current length: {model.Name.Length}", nameof(model.Name));
+        }
+        
         var entity = mapper.Map<Opportunity>(model);
 
         // Set default workflow stage if not provided
@@ -1258,6 +1269,22 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
     public async Task<OpportunityModel?> UpdateOpportunityAsync(UpdateOpportunityRequest model)
     {
+        ArgumentNullException.ThrowIfNull(model);
+
+        // ✅ Validate name if provided
+        if (!string.IsNullOrEmpty(model.Name))
+        {
+            if (string.IsNullOrWhiteSpace(model.Name))
+            {
+                throw new ArgumentException("Opportunity name cannot be whitespace only.", nameof(model.Name));
+            }
+            
+            if (model.Name.Length > 255)
+            {
+                throw new ArgumentException($"Opportunity name cannot exceed 255 characters. Current length: {model.Name.Length}", nameof(model.Name));
+            }
+        }
+        
         var entity = await context.Opportunities
             .Include(o => o.FundingPartners.Where(fp => !fp.IsDeleted))
             .Include(o => o.ClientPartners.Where(cp => !cp.IsDeleted))

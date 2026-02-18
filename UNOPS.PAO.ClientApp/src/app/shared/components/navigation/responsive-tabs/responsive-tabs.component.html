@@ -1,5 +1,5 @@
 <!-- Mobile dropdown -->
-<div class="block md:hidden p-4 bg-white shadow-sm rounded-lg">
+<div class="block md:hidden p-4 bg-white shadow-sm rounded-lg" data-testid="tabs-mobile-dropdown">
   <p-dropdown
     [options]="tabs"
     [ngModel]="getActiveTab()"
@@ -7,15 +7,16 @@
     optionLabel="translatedLabel"
     [placeholder]="dropdownPlaceholder"
     class="w-full"
-    [disabled]="disabled">
+    [disabled]="disabled"
+    data-testid="tabs-dropdown">
     <ng-template pTemplate="selectedItem" let-selectedOption>
-      <div class="flex items-center gap-2" *ngIf="selectedOption">
+      <div class="flex items-center gap-2" *ngIf="selectedOption" data-testid="tab-selected-item">
         <span *ngIf="selectedOption.icon" class="material-symbols-outlined text-xl">{{ selectedOption.icon }}</span>
         <span>{{ selectedOption.translatedLabel }}</span>
       </div>
     </ng-template>
     <ng-template pTemplate="item" let-option>
-      <div class="flex items-center gap-2" [class.opacity-50]="option.disabled">
+      <div class="flex items-center gap-2" [class.opacity-50]="option.disabled" [attr.data-testid]="'tab-option-' + option.route">
         <span *ngIf="option.icon" class="material-symbols-outlined text-xl">{{ option.icon }}</span>
         <span>{{ option.translatedLabel }}</span>
       </div>
@@ -24,8 +25,8 @@
 </div>
 
 <!-- Desktop tabs -->
-<div class="hidden md:block">
-  <p-tabs [value]="activeRoute" [class]="tabsClass">
+<div class="hidden md:block" data-testid="tabs-desktop">
+  <p-tabs [value]="activeRoute" [class]="tabsClass" data-testid="tabs-container">
     <p-tablist [class]="tabListClass">
       <p-tab 
         *ngFor="let tab of tabs"
@@ -33,7 +34,8 @@
         [routerLink]="tab.route"
         [disabled]="tab.disabled"
         [class]="getTabClass(tab)"
-        class="flex items-center !gap-2 text-inherit">
+        class="flex items-center !gap-2 text-inherit"
+        [attr.data-testid]="'tab-' + tab.route">
         <span *ngIf="tab.icon" class="material-symbols-outlined text-xl">{{ tab.icon }}</span>
         <span>{{ tab.label | translate }}</span>
       </p-tab>

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -481,7 +481,7 @@ namespace UNOPS.PAO.DataAccess.Migrations.AppDb
                     EntityName = table.Column<string>(type: "text", nullable: false),
                     EntityId = table.Column<int>(type: "integer", nullable: false),
                     EntityData = table.Column<string>(type: "text", nullable: false),
-                    FullEmbedding = table.Column<byte[]>(type: "vector(768)", nullable: false)
+                    FullEmbedding = table.Column<byte[]>(type: "bytea", nullable: false)
                 },
                 constraints: table =>
                 {

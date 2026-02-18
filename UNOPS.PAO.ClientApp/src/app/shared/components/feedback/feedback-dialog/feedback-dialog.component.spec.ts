@@ -3,6 +3,7 @@ import { FeedbackDialogComponent } from './feedback-dialog.component';
 import { MessageService } from 'primeng/api';
 import { FeedbackDialogService } from '@shared/services/ui/feedback-dialog.service';
 import { TranslateModule } from '@ngx-translate/core';
+import { createMockTranslateService, createMockDialogService, createMockMarkdownService } from '@shared/testing/test-utilities';
 import { of } from 'rxjs';
 
 describe('FeedbackDialogComponent', () => {

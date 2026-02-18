@@ -1,0 +1,2 @@
+# Generated schema file (too large to commit, baked into Docker image)
+init-scripts/02-schema.sql

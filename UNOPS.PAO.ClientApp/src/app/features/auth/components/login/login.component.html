@@ -2,16 +2,16 @@
   <div class="login-container">
     <!-- Show loading indicator while checking authentication status -->
     @if (checkingAuthentication) {
-      <div class="mb-4 text-center">
-        <h2 class="mb-2">Checking authentication...</h2>
-        <div class="spinner"></div>
+      <div class="mb-4 text-center" data-testid="auth-checking-container">
+        <h2 class="mb-2" data-testid="auth-checking-message">Checking authentication...</h2>
+        <div class="spinner" data-testid="auth-spinner"></div>
       </div>
     } 
     <!-- Show IAP authentication status if authenticated -->
     @else if (isIapAuthenticated) {
-      <div class="mb-4">
-        <h2 class="text-center mb-2">You are authenticated with IAP</h2>
-        <p class="text-center text-gray-500">Redirecting to home page...</p>
+      <div class="mb-4" data-testid="iap-authenticated-container">
+        <h2 class="text-center mb-2" data-testid="iap-auth-message">You are authenticated with IAP</h2>
+        <p class="text-center text-gray-500" data-testid="redirect-message">Redirecting to home page...</p>
         <app-iap-status></app-iap-status>
       </div>
     } 
@@ -31,18 +31,18 @@
             <div class="flex flex-col gap-3 w-full">
               <div class="p-float-label w-full">
                 <input pInputText id="userEmail" type="text" name="userEmail" ngModel #userEmail="ngModel"
-                  class="w-full" />
+                  class="w-full" data-testid="username-input" />
                 <label for="userEmail">Email</label>
               </div>
 
               <div class="p-float-label w-full">
                 <p-password [toggleMask]="true" [feedback]="false" name="password" ngModel #password="ngModel"
-                  [style]="{ width: '100%' }" [inputStyle]="{ width: '100%' }"></p-password>
+                  [style]="{ width: '100%' }" [inputStyle]="{ width: '100%' }" data-testid="password-input"></p-password>
                 <label for="password">Password</label>
               </div>
 
               <div class="text-center">
-                <p-button type="submit" label="Sign In" [raised]="true"></p-button>
+                <p-button type="submit" label="Sign In" [raised]="true" data-testid="login-button"></p-button>
               </div>
             </div>
           </form>
@@ -56,9 +56,9 @@
         }
 
         @if (canDoSignUp) {
-        <div class="mt-5 mb-2 text-center">
+        <div class="mt-5 mb-2 text-center" data-testid="signup-section">
           Not a member?
-          <p-button label="Sign Up" [style]="{ width: 'auto' }" (click)="onOpenSignUpDialog()" />
+          <p-button label="Sign Up" [style]="{ width: 'auto' }" (click)="onOpenSignUpDialog()" data-testid="signup-button" />
           <app-sign-up *ngIf="displaySignUpDialog" (closeSignUp)="onCloseSignUp()"></app-sign-up>
         </div>
         }

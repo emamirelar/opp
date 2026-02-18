@@ -1,0 +1,529 @@
+/**
+ * BOUNDARY TESTS TEMPLATE
+ * 
+ * This template follows the comprehensive-test-strategy.mdc requirements:
+ * - Minimum: ≥50 tests AND ≥2×P (where P = Positive Tests count)
+ * - Purpose: Edge cases, boundary values, extreme inputs, timing issues
+ * 
+ * Copy this template and replace [ENTITY] with your entity name.
+ * 
+ * @see .cursor/rules/comprehensive-test-strategy.mdc
+ */
+
+using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
+using Xunit;
+
+namespace UNOPS.PAO.Business.Tests.[MODULE]
+{
+    /// <summary>
+    /// Boundary/Edge Case Tests for [ENTITY] Manager
+    /// 
+    /// Test Strategy: These tests cover boundary conditions and edge cases
+    /// to ensure robust handling of extreme inputs and unusual scenarios.
+    /// 
+    /// Required: ≥50 tests AND ≥2×P (where P = number of positive tests)
+    /// </summary>
+    public class [ENTITY]BoundaryTests : ManagerTestBase
+    {
+        private readonly [ENTITY]Manager _manager;
+
+        public [ENTITY]BoundaryTests()
+        {
+            _manager = new [ENTITY]Manager(Context);
+        }
+
+        #region String Length Boundaries
+        
+        /// <summary>
+        /// Test exact maximum length for Name field (boundary value analysis)
+        /// </summary>
+        [Fact]
+        public async Task Create_NameAtMaxLength_Succeeds()
+        {
+            // Arrange
+            var maxLength = 500; // Adjust to actual max length
+            var name = new string('A', maxLength);
+            var request = new Create[ENTITY]Request { Name = name };
+            
+            // Act
+            var result = await _manager.CreateAsync(request);
+            
+            // Assert
+            result.Should().NotBeNull();
+            result.Name.Should().HaveLength(maxLength);
+        }
+
+        /// <summary>
+        /// Test one character over maximum length (boundary + 1)
+        /// </summary>
+        [Fact]
+        public async Task Create_NameExceedsMaxLength_ThrowsValidationException()
+        {
+            // Arrange
+            var maxLength = 500;
+            var name = new string('A', maxLength + 1);
+            var request = new Create[ENTITY]Request { Name = name };
+            
+            // Act
+            var act = () => _manager.CreateAsync(request);
+            
+            // Assert
+            await act.Should().ThrowAsync<ValidationException>();
+        }
+
+        /// <summary>
+        /// Test minimum valid length (single character)
+        /// </summary>
+        [Fact]
+        public async Task Create_NameSingleCharacter_Succeeds()
+        {
+            // Arrange
+            var request = new Create[ENTITY]Request { Name = "A" };
+            
+            // Act
+            var result = await _manager.CreateAsync(request);
+            
+            // Assert
+            result.Should().NotBeNull();
+            result.Name.Should().Be("A");
+        }
+
+        #endregion
+
+        #region Numeric Boundaries
+
+        /// <summary>
+        /// Test zero value for numeric field
+        /// </summary>
+        [Fact]
+        public async Task Create_ZeroAmount_HandledCorrectly()
+        {
+            // Arrange
+            var request = new Create[ENTITY]Request 
+            { 
+                Name = "Test",
+                Amount = 0 
+            };
+            
+            // Act
+            var result = await _manager.CreateAsync(request);
+            
+            // Assert
+            result.Amount.Should().Be(0);
+        }
+
+        /// <summary>
+        /// Test maximum decimal value
+        /// </summary>
+        [Fact]
+        public async Task Create_MaxDecimalValue_Succeeds()
+        {
+            // Arrange
+            var request = new Create[ENTITY]Request 
+            { 
+                Name = "Test",
+                Amount = decimal.MaxValue 
+            };
+            
+            // Act
+            var result = await _manager.CreateAsync(request);
+            
+            // Assert
+            result.Amount.Should().Be(decimal.MaxValue);
+        }
+
+        /// <summary>
+        /// Test negative values when not allowed
+        /// </summary>
+        [Fact]
+        public async Task Create_NegativeAmount_ThrowsValidationException()
+        {
+            // Arrange
+            var request = new Create[ENTITY]Request 
+            { 
+                Name = "Test",
+                Amount = -1 
+            };
+            
+            // Act
+            var act = () => _manager.CreateAsync(request);
+            
+            // Assert
+            await act.Should().ThrowAsync<ValidationException>();
+        }
+
+        #endregion
+
+        #region Date/Time Boundaries
+
+        /// <summary>
+        /// Test date at exact minimum valid date
+        /// </summary>
+        [Fact]
+        public async Task Create_MinDateTime_Succeeds()
+        {
+            // Arrange
+            var request = new Create[ENTITY]Request 
+            { 
+                Name = "Test",
+                StartDate = DateTime.MinValue.AddYears(1900) // Reasonable minimum
+            };
+            
+            // Act
+            var result = await _manager.CreateAsync(request);
+            
+            // Assert
+            result.Should().NotBeNull();
+        }
+
+        /// <summary>
+        /// Test date at far future (boundary for max date)
+        /// </summary>
+        [Fact]
+        public async Task Create_FarFutureDate_Succeeds()
+        {
+            // Arrange
+            var request = new Create[ENTITY]Request 
+            { 
+                Name = "Test",
+                EndDate = new DateTime(9999, 12, 31) 
+            };
+            
+            // Act
+            var result = await _manager.CreateAsync(request);
+            
+            // Assert
+            result.Should().NotBeNull();
+        }
+
+        /// <summary>
+        /// Test leap year date (Feb 29)
+        /// </summary>
+        [Fact]
+        public async Task Create_LeapYearDate_HandledCorrectly()
+        {
+            // Arrange
+            var leapDate = new DateTime(2024, 2, 29);
+            var request = new Create[ENTITY]Request 
+            { 
+                Name = "Test",
+                StartDate = leapDate 
+            };
+            
+            // Act
+            var result = await _manager.CreateAsync(request);
+            
+            // Assert
+            result.StartDate.Should().Be(leapDate);
+        }
+
+        /// <summary>
+        /// Test end-of-month boundaries
+        /// </summary>
+        [Theory]
+        [InlineData(2024, 1, 31)]  // January 31
+        [InlineData(2024, 2, 29)]  // February 29 (leap year)
+        [InlineData(2023, 2, 28)]  // February 28 (non-leap)
+        [InlineData(2024, 4, 30)]  // April 30
+        public async Task Create_EndOfMonthDates_HandledCorrectly(int year, int month, int day)
+        {
+            // Arrange
+            var date = new DateTime(year, month, day);
+            var request = new Create[ENTITY]Request 
+            { 
+                Name = "Test",
+                StartDate = date 
+            };
+            
+            // Act
+            var result = await _manager.CreateAsync(request);
+            
+            // Assert
+            result.StartDate.Should().Be(date);
+        }
+
+        #endregion
+
+        #region Collection Boundaries
+
+        /// <summary>
+        /// Test empty collection handling
+        /// </summary>
+        [Fact]
+        public async Task Create_EmptyRelatedItems_Succeeds()
+        {
+            // Arrange
+            var request = new Create[ENTITY]Request 
+            { 
+                Name = "Test",
+                RelatedItems = new List<RelatedItemRequest>() 
+            };
+            
+            // Act
+            var result = await _manager.CreateAsync(request);
+            
+            // Assert
+            result.Should().NotBeNull();
+        }
+
+        /// <summary>
+        /// Test single item in collection
+        /// </summary>
+        [Fact]
+        public async Task Create_SingleRelatedItem_Succeeds()
+        {
+            // Arrange
+            var request = new Create[ENTITY]Request 
+            { 
+                Name = "Test",
+                RelatedItems = new List<RelatedItemRequest> { new RelatedItemRequest() } 
+            };
+            
+            // Act
+            var result = await _manager.CreateAsync(request);
+            
+            // Assert
+            result.Should().NotBeNull();
+        }
+
+        /// <summary>
+        /// Test large collection (stress boundary)
+        /// </summary>
+        [Fact]
+        public async Task Create_LargeCollection_HandledWithinLimits()
+        {
+            // Arrange
+            var maxItems = 100;
+            var request = new Create[ENTITY]Request 
+            { 
+                Name = "Test",
+                RelatedItems = Enumerable.Range(1, maxItems)
+                    .Select(_ => new RelatedItemRequest())
+                    .ToList()
+            };
+            
+            // Act
+            var result = await _manager.CreateAsync(request);
+            
+            // Assert
+            result.Should().NotBeNull();
+        }
+
+        #endregion
+
+        #region Unicode and Special Characters
+
+        /// <summary>
+        /// Test Unicode characters (internationalization)
+        /// </summary>
+        [Theory]
+        [InlineData("日本語テスト")]           // Japanese
+        [InlineData("Тест кириллица")]         // Cyrillic
+        [InlineData("عربي")]                    // Arabic
+        [InlineData("🚀💻🎯")]                   // Emojis
+        [InlineData("Ñoño España")]            // Spanish with special chars
+        public async Task Create_UnicodeCharacters_PreservedCorrectly(string name)
+        {
+            // Arrange
+            var request = new Create[ENTITY]Request { Name = name };
+            
+            // Act
+            var result = await _manager.CreateAsync(request);
+            
+            // Assert
+            result.Name.Should().Be(name);
+        }
+
+        /// <summary>
+        /// Test whitespace handling
+        /// </summary>
+        [Theory]
+        [InlineData("  Leading spaces")]
+        [InlineData("Trailing spaces  ")]
+        [InlineData("  Both sides  ")]
+        [InlineData("Multiple   internal   spaces")]
+        public async Task Create_WhitespaceVariations_HandledCorrectly(string name)
+        {
+            // Arrange
+            var request = new Create[ENTITY]Request { Name = name };
+            
+            // Act
+            var result = await _manager.CreateAsync(request);
+            
+            // Assert
+            result.Should().NotBeNull();
+            // Check if whitespace is trimmed or preserved based on requirements
+        }
+
+        #endregion
+
+        #region Precision Boundaries
+
+        /// <summary>
+        /// Test decimal precision at maximum (financial calculations)
+        /// </summary>
+        [Fact]
+        public async Task Create_MaxDecimalPrecision_PreservedCorrectly()
+        {
+            // Arrange
+            var preciseAmount = 123456789.123456789m;
+            var request = new Create[ENTITY]Request 
+            { 
+                Name = "Test",
+                Amount = preciseAmount 
+            };
+            
+            // Act
+            var result = await _manager.CreateAsync(request);
+            
+            // Assert
+            // Check precision is maintained within acceptable tolerance
+            result.Amount.Should().BeApproximately(preciseAmount, 0.0001m);
+        }
+
+        /// <summary>
+        /// Test percentage at exact 0%
+        /// </summary>
+        [Fact]
+        public async Task Create_ZeroPercentage_HandledCorrectly()
+        {
+            // Arrange
+            var request = new Create[ENTITY]Request 
+            { 
+                Name = "Test",
+                Percentage = 0 
+            };
+            
+            // Act
+            var result = await _manager.CreateAsync(request);
+            
+            // Assert
+            result.Percentage.Should().Be(0);
+        }
+
+        /// <summary>
+        /// Test percentage at exact 100%
+        /// </summary>
+        [Fact]
+        public async Task Create_HundredPercentage_Succeeds()
+        {
+            // Arrange
+            var request = new Create[ENTITY]Request 
+            { 
+                Name = "Test",
+                Percentage = 100 
+            };
+            
+            // Act
+            var result = await _manager.CreateAsync(request);
+            
+            // Assert
+            result.Percentage.Should().Be(100);
+        }
+
+        #endregion
+
+        #region ID Boundaries
+
+        /// <summary>
+        /// Test with ID = 0 (boundary for invalid ID)
+        /// </summary>
+        [Fact]
+        public async Task GetById_ZeroId_ThrowsNotFoundException()
+        {
+            // Act
+            var act = () => _manager.GetByIdAsync(0);
+            
+            // Assert
+            await act.Should().ThrowAsync<KeyNotFoundException>();
+        }
+
+        /// <summary>
+        /// Test with negative ID
+        /// </summary>
+        [Fact]
+        public async Task GetById_NegativeId_ThrowsNotFoundException()
+        {
+            // Act
+            var act = () => _manager.GetByIdAsync(-1);
+            
+            // Assert
+            await act.Should().ThrowAsync<KeyNotFoundException>();
+        }
+
+        /// <summary>
+        /// Test with maximum int ID
+        /// </summary>
+        [Fact]
+        public async Task GetById_MaxIntId_ThrowsNotFoundForNonExistent()
+        {
+            // Act
+            var act = () => _manager.GetByIdAsync(int.MaxValue);
+            
+            // Assert
+            await act.Should().ThrowAsync<KeyNotFoundException>();
+        }
+
+        #endregion
+
+        #region State Transition Boundaries
+
+        /// <summary>
+        /// Test transition from initial to final state (skip intermediate)
+        /// </summary>
+        [Fact]
+        public async Task UpdateStatus_DirectToFinalState_HandledCorrectly()
+        {
+            // Arrange
+            var entity = await CreateTestEntityAsync();
+            
+            // Act - Attempt to skip intermediate states
+            var act = () => _manager.UpdateStatusAsync(entity.Id, EntityStatus.Completed);
+            
+            // Assert - Should either succeed or throw based on business rules
+            // Adjust assertion based on actual behavior
+        }
+
+        /// <summary>
+        /// Test rapid state changes (timing boundary)
+        /// </summary>
+        [Fact]
+        public async Task UpdateStatus_RapidChanges_AllProcessedInOrder()
+        {
+            // Arrange
+            var entity = await CreateTestEntityAsync();
+            var statuses = new[] 
+            { 
+                EntityStatus.InProgress, 
+                EntityStatus.Review, 
+                EntityStatus.Completed 
+            };
+            
+            // Act
+            foreach (var status in statuses)
+            {
+                await _manager.UpdateStatusAsync(entity.Id, status);
+            }
+            
+            // Assert
+            var result = await _manager.GetByIdAsync(entity.Id);
+            result.Status.Should().Be(EntityStatus.Completed);
+        }
+
+        #endregion
+
+        #region Helper Methods
+
+        private async Task<[ENTITY]Model> CreateTestEntityAsync()
+        {
+            var request = new Create[ENTITY]Request 
+            { 
+                Name = "Test Entity " + Guid.NewGuid().ToString("N")[..8]
+            };
+            return await _manager.CreateAsync(request);
+        }
+
+        #endregion
+    }
+}

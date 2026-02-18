@@ -1,3 +1,4 @@
+-- TEMPORARY: Commenting out until pgvector is available
 -- Hybrid search function for Output entities
 -- Combines: Semantic search (embeddings) + Keyword matching (full-text) + Similarity (pg_trgm)
 
@@ -6,6 +7,8 @@ DROP FUNCTION IF EXISTS public.retrieve_hybrid_search_outputs(bytea, TEXT, FLOAT
 DROP FUNCTION IF EXISTS public.retrieve_hybrid_search_outputs(vector, TEXT, FLOAT, FLOAT, FLOAT, INT);
 DROP FUNCTION IF EXISTS public.retrieve_hybrid_search_outputs(TEXT, TEXT, FLOAT, FLOAT, FLOAT, INT);
 DROP FUNCTION IF EXISTS public.retrieve_hybrid_search_outputs(vector(768), TEXT, FLOAT, FLOAT, FLOAT, INT);
+
+/*
 
 CREATE OR REPLACE FUNCTION public.retrieve_hybrid_search_outputs(
     search_embedding TEXT,                     -- Embedding as TEXT string "[val1,val2,...]" - will be cast to vector internally
@@ -114,4 +117,4 @@ $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION public.retrieve_hybrid_search_outputs IS 
 'Hybrid search for Output entities combining semantic search (embeddings), keyword matching (full-text), and text similarity (pg_trgm). 
 Returns top matches with individual and combined scores for transparency. Embedding passed as TEXT and cast to vector(768) internally.';
-
+*/

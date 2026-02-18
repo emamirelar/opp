@@ -43,9 +43,9 @@ using UNOPS.PAO.Models.Contacts;
 
 public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 {
-    private readonly IMapper _mapper;
-    private readonly UNOPSAppDbContext _context;
-    private readonly IConfiguration _configuration;
+    private new readonly IMapper _mapper;
+    private new readonly UNOPSAppDbContext _context;
+    private new readonly IConfiguration _configuration;
     private readonly ILogger<UNOPSPartnerManager> _logger;
     private readonly GlobalFilterService? _globalFilterService;
     private readonly IDbContextFactory<UNOPSAppDbContext>? _dbContextFactory;

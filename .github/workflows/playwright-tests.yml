@@ -1,0 +1,97 @@
+# =============================================================================
+# PLAYWRIGHT E2E TESTS - Mocked API Tests (Fast)
+# =============================================================================
+# These tests use API mocks at the browser level, so they DON'T need:
+# - Real database
+# - Real .NET backend
+# - EF migrations
+#
+# This makes them fast (~5-10 min) and suitable for every PR.
+# =============================================================================
+
+name: Playwright Tests
+
+on:
+  push:
+    branches: [ main, dev, QA-Tests ]
+  pull_request:
+    branches: [ main, dev ]
+  workflow_dispatch:
+
+jobs:
+  # ===========================================================================
+  # SMOKE TESTS - Run on every push/PR (fast feedback)
+  # ===========================================================================
+  smoke-tests:
+    name: E2E Smoke Tests (Mocked)
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: UNOPS.PAO.ClientApp/package-lock.json
+      
+      - name: Install root dependencies (Playwright)
+        run: npm ci
+      
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+      
+      - name: Install Angular dependencies
+        working-directory: ./UNOPS.PAO.ClientApp
+        run: npm ci
+      
+      - name: Run Playwright Smoke Tests
+        run: |
+          npx playwright test \
+            "QA Tests/Playwright Tests/contacts.spec.ts" \
+            "QA Tests/Playwright Tests/partners.spec.ts" \
+            "QA Tests/Playwright Tests/interactions.spec.ts" \
+            "QA Tests/Playwright Tests/opportunities.spec.ts" \
+            --project=chromium
+        env:
+          CI: true
+      
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-smoke
+          path: QA Tests/Playwright Tests/playwright-report/
+          retention-days: 30
+      
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-smoke
+          path: QA Tests/Playwright Tests/test-results/
+          retention-days: 30
+      
+      - name: Post Test Summary
+        if: always()
+        run: |
+          echo "## Playwright Smoke Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Mocked E2E Tests** - No backend/database required" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -d "QA Tests/Playwright Tests/test-results" ]; then
+            echo "Test results uploaded as artifact" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ===========================================================================
+  # FULL E2E TESTS - DISABLED (pending dedicated test database)
+  # ===========================================================================
+  # This job previously spun up a PostgreSQL container, ran EF migrations,
+  # started the .NET backend, and ran Playwright against the full stack.
+  # It has been removed until a dedicated test database is available.
+  # When ready, re-add the full-e2e-tests job targeting the real DB.
