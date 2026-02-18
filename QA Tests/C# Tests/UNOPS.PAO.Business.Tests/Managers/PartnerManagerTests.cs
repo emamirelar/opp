@@ -12,7 +12,6 @@ using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Business.Tests.TestBase;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
-using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.Business.Tests.Managers
 {
@@ -36,8 +35,9 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         private void SeedTestData()
         {
-            var partners = Enumerable.Range(1, 50).Select(i => new UNOPSPartner
+            var partners = Enumerable.Range(1, 50).Select(i => new Partner
             {
+                Id = i,
                 Name = $"Partner {i}",
                 PartnerShortDescription = $"Short desc {i}",
                 PartnerLongDescription = $"Long description for partner {i}",
@@ -56,7 +56,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         public async Task TC_PM_F001_CreatePartner_ValidData_Succeeds()
         {
             // Arrange
-            var partner = new UNOPSPartner
+            var partner = new Partner
             {
                 Name = "New Test Partner",
                 PartnerShortDescription = "NTP",
@@ -77,7 +77,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         [Fact]
         public async Task TC_PM_F002_CreatePartner_MinimalFields_Succeeds()
         {
-            var partner = new UNOPSPartner
+            var partner = new Partner
             {
                 Name = "Minimal Partner",
                 CreatedBy = 1,

@@ -1,10 +1,10 @@
 <div class="flex flex-col gap-8 w-full">
   <div class="flex items-center gap-4 flex-wrap">
-    <div class="flex items-center gap-4 interaction-section-header" data-testid="interactions-header">
-      <span class="material-symbols-outlined text-3xl" data-testid="interactions-icon">chat</span>
-      <p class="text-3xl font-bold" data-testid="interactions-title">{{ 'title.interactions' | translate }}</p>
+    <div class="flex items-center gap-4 interaction-section-header">
+      <span class="material-symbols-outlined text-3xl">chat</span>
+      <p class="text-3xl font-bold">{{ 'title.interactions' | translate }}</p>
     </div>
-    <div class="ml-auto flex gap-2" data-testid="interactions-actions">
+    <div class="ml-auto flex gap-2">
       @if(!permissionsLoading() && entityPermissions().permissions.canExport) {
         <p-button
           icon="pi pi-file-export"
@@ -12,7 +12,6 @@
           (click)="exportData()"
           text rounded
           class="interaction-export-button"
-          data-testid="export-button"
         />
       }
       @if(!permissionsLoading() && entityPermissions().permissions.canImport) {
@@ -24,14 +23,12 @@
             (click)="importMenu.toggle($event)"
             text rounded
             class="interaction-import-button"
-            data-testid="import-button"
           />
           <p-menu 
             #importMenu 
             [model]="importMenuItems()" 
             [popup]="true"
-            appendTo="body"
-            data-testid="import-menu">
+            appendTo="body">
           </p-menu>
         </div>
       }
@@ -42,7 +39,6 @@
           (click)="openNewInteractionModal()"
           rounded
           class="interaction-new-button"
-          data-testid="new-interaction-button"
         ></p-button>
       }
       @if(!permissionsLoading() && permissionUtilityService.canCreate(opportunityEntityPermissions())) {
@@ -53,7 +49,6 @@
           severity="secondary"
           rounded
           class="interaction-create-opportunity-button"
-          data-testid="create-opportunity-button"
         ></p-button>
       }
     </div>
@@ -68,7 +63,6 @@
     (rowClick)="handleOnOpenRecordDetails($event)"
     (searchChange)="onSearchChange($event)"
     class="interaction-listview"
-    data-testid="interactions-listview"
   >
   </app-listview>
 

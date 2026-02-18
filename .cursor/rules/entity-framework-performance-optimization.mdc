@@ -1,0 +1,825 @@
+---
+description: Entity Framework Core Performance Optimization Guidelines
+globs: *Manager.cs
+alwaysApply: true
+---
+
+# Entity Framework Core Performance Optimization Guidelines
+
+## Purpose
+
+This rule provides comprehensive guidelines for optimizing Entity Framework Core queries in manager classes to achieve dramatic performance improvements (80-90% faster execution times). These patterns were developed and proven through optimization of the `GetOpportunityDetailsForAIAsync` method, which went from 310+ seconds to 32-63 seconds.
+
+## When to Apply These Optimizations
+
+Apply these optimizations when:
+- Methods load large amounts of related data (10+ includes)
+- Queries execute in loops (N+1 problems)
+- Read-only operations don't require change tracking
+- Multiple independent queries can run concurrently
+- Execution time exceeds 5+ seconds
+- Processing large datasets with complex relationships
+
+## Optimization Priority Order
+
+### 🔴 **Priority 1: Split Query Strategy + AsNoTracking() (60-80% improvement)**
+**Apply First** - Eliminates Cartesian product explosion and change tracking overhead
+
+### 🟠 **Priority 2: Add AsNoTracking() to All Read-Only Queries (5-15% improvement)**
+**Quick Win** - Simple addition with significant impact
+
+### 🟡 **Priority 3: Batch Queries to Eliminate N+1 (10-20% improvement)**
+**High Impact** - Replaces loops with batch operations
+
+### 🟢 **Priority 4: Parallel Query Execution (20-30% improvement)**
+**Advanced** - Requires DbContextFactory setup
+
+---
+
+## Priority 1: Split Query Strategy + AsNoTracking()
+
+### Problem: Cartesian Product Explosion
+
+**Symptoms:**
+- Single query with 10+ `Include()` statements
+- Multiple `ThenInclude()` chains
+- Query returns massive result sets
+- Memory consumption spikes
+- Execution time increases exponentially with data size
+
+**Root Cause:**
+When EF Core loads multiple collections in one query, it creates a Cartesian product. Example:
+- 10 FundingPartners × 5 ClientPartners × 20 Stakeholders = 1,000 rows for 1 entity!
+- With more collections, this explodes: 10 × 5 × 20 × 15 × 8 = 60,000+ rows!
+
+### Solution Pattern
+
+**❌ BEFORE (Anti-Pattern):**
+```csharp
+public async Task<SomeModel> GetDetailedDataAsync(int id)
+{
+    var entity = await context.Set<Entity>()
+        .Include(e => e.Collection1).ThenInclude(c1 => c1.Related1)
+        .Include(e => e.Collection1).ThenInclude(c1 => c1.Related2)
+        .Include(e => e.Collection2).ThenInclude(c2 => c2.Related1)
+        .Include(e => e.Collection3).ThenInclude(c3 => c3.Related1)
+        .Include(e => e.Collection4).ThenInclude(c4 => c4.Related1)
+        .Include(e => e.Collection5).ThenInclude(c5 => c5.Related1)
+        .Include(e => e.SimpleNavigation1)
+        .Include(e => e.SimpleNavigation2)
+        // ... more includes creating Cartesian explosion
+        .FirstOrDefaultAsync(e => e.Id == id);
+    
+    if (entity == null)
+        throw new KeyNotFoundException($"Entity with ID {id} not found");
+    
+    // Process entity...
+    return MapToModel(entity);
+}
+```
+
+**✅ AFTER (Optimized Pattern):**
+```csharp
+public async Task<SomeModel> GetDetailedDataAsync(int id)
+{
+    // ==========================================
+    // QUERY 1: Main entity with SIMPLE navigation properties only
+    // ==========================================
+    var entity = await context.Set<Entity>()
+        .AsNoTracking() // ✅ No change tracking for read-only operation
+        .Include(e => e.SimpleNavigation1)
+        .Include(e => e.SimpleNavigation2)
+        .Include(e => e.SimpleNavigation3)
+        .FirstOrDefaultAsync(e => e.Id == id);
+    
+    if (entity == null)
+        throw new KeyNotFoundException($"Entity with ID {id} not found");
+    
+    // ==========================================
+    // QUERY 2-N: Load each COLLECTION independently
+    // ==========================================
+    var collection1 = await context.Set<Collection1Entity>()
+        .AsNoTracking()
+        .Where(c => c.EntityId == id)
+        .Include(c => c.Related1)
+        .Include(c => c.Related2)
+        .ToListAsync();
+    
+    var collection2 = await context.Set<Collection2Entity>()
+        .AsNoTracking()
+        .Where(c => c.EntityId == id)
+        .Include(c => c.Related1)
+        .ToListAsync();
+    
+    var collection3 = await context.Set<Collection3Entity>()
+        .AsNoTracking()
+        .Where(c => c.EntityId == id)
+        .Include(c => c.Related1)
+        .ToListAsync();
+    
+    // Assign collections back to entity (if needed for processing)
+    entity.Collection1 = collection1;
+    entity.Collection2 = collection2;
+    entity.Collection3 = collection3;
+    
+    // Process entity...
+    return MapToModel(entity);
+}
+```
+
+### Key Rules for Split Queries
+
+1. **Load main entity first** with ONLY simple navigation properties (1:1 or N:1 relationships)
+2. **Load each collection separately** in independent queries
+3. **Always use `.AsNoTracking()`** for read-only operations
+4. **Filter collections by parent ID** using `.Where(c => c.ParentId == id)`
+5. **Include related data in each query** as needed
+6. **Assign collections back** to parent entity if needed for processing logic
+
+---
+
+## Priority 2: Add AsNoTracking() to All Read-Only Queries
+
+### Problem: Unnecessary Change Tracking Overhead
+
+**Symptoms:**
+- High memory usage during queries
+- Slow query execution even for simple queries
+- Data being used only for reading/display
+- No updates/deletes after query
+
+**Solution:**
+Add `.AsNoTracking()` immediately after `context.Set<T>()`
+
+### Pattern
+
+**❌ BEFORE:**
+```csharp
+var risks = await context.Set<Risk>()
+    .Include(r => r.Category)
+    .Include(r => r.Type)
+    .Where(r => r.EntityId == id)
+    .ToListAsync();
+
+var stakeholders = await context.Set<Stakeholder>()
+    .Include(s => s.User)
+    .Where(s => s.EntityId == id)
+    .ToListAsync();
+```
+
+**✅ AFTER:**
+```csharp
+var risks = await context.Set<Risk>()
+    .AsNoTracking() // ✅ Added - no updates will be made
+    .Include(r => r.Category)
+    .Include(r => r.Type)
+    .Where(r => r.EntityId == id)
+    .ToListAsync();
+
+var stakeholders = await context.Set<Stakeholder>()
+    .AsNoTracking() // ✅ Added - read-only query
+    .Include(s => s.User)
+    .Where(s => s.EntityId == id)
+    .ToListAsync();
+```
+
+### When to Use AsNoTracking()
+
+✅ **USE for:**
+- Read-only queries (no updates/deletes after loading)
+- Data formatting/transformation operations
+- API response generation
+- Report generation
+- Export operations
+- AI/ML data processing
+
+❌ **DON'T USE for:**
+- Queries where you'll update entities after loading
+- Queries followed by `SaveChanges()`
+- Entities that need change tracking for audit
+
+---
+
+## Priority 3: Batch Queries to Eliminate N+1 Problems
+
+### Problem: N+1 Query Anti-Pattern
+
+**Symptoms:**
+- Queries inside loops
+- One query per collection item
+- Execution time scales linearly with collection size
+- Database logs show many similar queries
+
+**Example N+1 Problem:**
+```csharp
+// 1 query to get partners
+var partners = await context.Partners.Where(p => p.Active).ToListAsync();
+
+// N queries (one per partner) - ANTI-PATTERN!
+foreach (var partner in partners)
+{
+    var agreements = await LoadPartnerAgreementsAsync(partner.Id); // ❌ Database call in loop
+}
+```
+
+### Solution Pattern
+
+**❌ BEFORE (N+1 Anti-Pattern):**
+```csharp
+var partnerSummaries = new List<string>();
+foreach (var partner in partners.Take(10))
+{
+    // ❌ Separate query for EACH partner
+    var agreements = await context.Agreements
+        .Where(a => a.PartnerId == partner.Id)
+        .ToListAsync();
+    
+    // ❌ Another query for EACH partner
+    var contacts = await context.Contacts
+        .Where(c => c.PartnerId == partner.Id)
+        .ToListAsync();
+    
+    partnerSummaries.Add($"{partner.Name}: {agreements.Count} agreements, {contacts.Count} contacts");
+}
+// Total: 1 + (10 × 2) = 21 queries!
+```
+
+**✅ AFTER (Batched Queries):**
+```csharp
+var partnerSummaries = new List<string>();
+
+// Get all partner IDs upfront
+var partnerIds = partners.Take(10).Select(p => p.Id).ToList();
+
+// ✅ BATCH QUERY 1: Load ALL agreements for ALL partners in ONE query
+var allAgreements = await context.Agreements
+    .AsNoTracking()
+    .Where(a => partnerIds.Contains(a.PartnerId))
+    .ToListAsync();
+
+// ✅ BATCH QUERY 2: Load ALL contacts for ALL partners in ONE query
+var allContacts = await context.Contacts
+    .AsNoTracking()
+    .Where(c => partnerIds.Contains(c.PartnerId))
+    .ToListAsync();
+
+// Group by partner for in-memory processing
+var agreementsByPartner = allAgreements.GroupBy(a => a.PartnerId).ToDictionary(g => g.Key, g => g.ToList());
+var contactsByPartner = allContacts.GroupBy(c => c.PartnerId).ToDictionary(g => g.Key, g => g.ToList());
+
+// Process in-memory (no more database calls)
+foreach (var partner in partners.Take(10))
+{
+    var agreements = agreementsByPartner.TryGetValue(partner.Id, out var partnerAgreements) 
+        ? partnerAgreements : new List<Agreement>();
+    var contacts = contactsByPartner.TryGetValue(partner.Id, out var partnerContacts) 
+        ? partnerContacts : new List<Contact>();
+    
+    partnerSummaries.Add($"{partner.Name}: {agreements.Count} agreements, {contacts.Count} contacts");
+}
+// Total: 1 + 2 = 3 queries! (7x reduction)
+```
+
+### Batch Query Pattern Template
+
+```csharp
+// Step 1: Get all IDs to query
+var ids = collection.Select(item => item.Id).ToList();
+
+// Step 2: Load ALL related data in ONE query using .Contains()
+var allRelatedData = await context.Set<RelatedEntity>()
+    .AsNoTracking()
+    .Where(r => ids.Contains(r.ForeignKeyId))
+    .ToListAsync();
+
+// Step 3: Group by foreign key for fast lookup
+var dataByParentId = allRelatedData
+    .GroupBy(r => r.ForeignKeyId)
+    .ToDictionary(g => g.Key, g => g.ToList());
+
+// Step 4: Process in-memory (no more database calls)
+foreach (var item in collection)
+{
+    var relatedItems = dataByParentId.TryGetValue(item.Id, out var items) 
+        ? items : new List<RelatedEntity>();
+    // Process relatedItems...
+}
+```
+
+---
+
+## Priority 4: Parallel Query Execution with DbContextFactory
+
+### Problem: Sequential Query Execution
+
+**Symptoms:**
+- Multiple independent queries execute one after another
+- Total execution time = sum of all query times
+- CPU and database are underutilized during sequential waits
+
+### Prerequisites
+
+1. **Verify DbContextFactory is registered in Startup.cs:**
+```csharp
+// In ConfigureDataAccess method
+services.AddDbContextFactory<YourDbContext>(options =>
+    options.UseNpgsql(connectionString));
+```
+
+2. **Verify connection pool settings support concurrency:**
+```csharp
+var connectionStringBuilder = new NpgsqlConnectionStringBuilder(connectionString)
+{
+    MinPoolSize = 10,              // Keep connections warm
+    MaxPoolSize = 100,             // Allow concurrent connections
+    Multiplexing = true,           // Enable multiplexing
+    // ... other settings
+};
+```
+
+### Implementation Pattern
+
+**Step 1: Add DbContextFactory to Manager Constructor**
+
+```csharp
+public class YourManager : BaseManager
+{
+    private readonly IMapper mapper;
+    private readonly AppDbContext context;
+    private readonly IDbContextFactory<AppDbContext> _dbContextFactory; // ✅ Add this
+    
+    public YourManager(
+        IMapper mapper,
+        AppDbContext context,
+        IDbContextFactory<AppDbContext> dbContextFactory, // ✅ Add parameter
+        IConfiguration configuration,
+        IPermissionService permissionService = null,
+        IHttpContextAccessor httpContextAccessor = null,
+        IServiceProvider serviceProvider = null)
+    {
+        this.mapper = mapper;
+        this.context = context;
+        this._dbContextFactory = dbContextFactory; // ✅ Store factory
+        // ... other initializations
+    }
+}
+```
+
+**Step 2: Update ManagerWrapper Instantiation**
+
+```csharp
+// In ManagerWrapper.cs
+using Microsoft.EntityFrameworkCore; // ✅ Add this using
+
+// In constructor:
+var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<YourDbContext>>();
+yourManager = new YourManager(mapper, context, dbContextFactory, configuration, 
+    permissionService, httpContextAccessor, serviceProvider);
+```
+
+**Step 3: Implement Parallel Query Execution**
+
+**❌ BEFORE (Sequential Execution):**
+```csharp
+public async Task<DetailedModel> GetDetailedDataAsync(int id)
+{
+    // Total time = T1 + T2 + T3 + T4 + T5 (e.g., 50 seconds)
+    var collection1 = await context.Set<Collection1>()...ToListAsync(); // 10s
+    var collection2 = await context.Set<Collection2>()...ToListAsync(); // 10s
+    var collection3 = await context.Set<Collection3>()...ToListAsync(); // 10s
+    var collection4 = await context.Set<Collection4>()...ToListAsync(); // 10s
+    var collection5 = await context.Set<Collection5>()...ToListAsync(); // 10s
+    
+    return MapToModel(collection1, collection2, collection3, collection4, collection5);
+}
+```
+
+**✅ AFTER (Parallel Execution):**
+```csharp
+public async Task<DetailedModel> GetDetailedDataAsync(int id)
+{
+    // ==========================================
+    // QUERY 1: Main entity (must run first - not parallelized)
+    // ==========================================
+    var entity = await context.Set<Entity>()
+        .AsNoTracking()
+        .Include(e => e.SimpleNavigation)
+        .FirstOrDefaultAsync(e => e.Id == id);
+    
+    if (entity == null)
+        throw new KeyNotFoundException($"Entity with ID {id} not found");
+    
+    // ==========================================
+    // PARALLEL WAVE 1: Execute independent queries concurrently
+    // Each task uses its own DbContext instance for thread safety
+    // Total time = MAX(T1, T2, T3, T4, T5) (e.g., 10 seconds instead of 50!)
+    // ==========================================
+    var task1 = Task.Run(async () => 
+    {
+        await using var ctx = await _dbContextFactory.CreateDbContextAsync();
+        return await ctx.Set<Collection1>()
+            .AsNoTracking()
+            .Where(c => c.EntityId == id)
+            .Include(c => c.Related)
+            .ToListAsync();
+    });
+    
+    var task2 = Task.Run(async () => 
+    {
+        await using var ctx = await _dbContextFactory.CreateDbContextAsync();
+        return await ctx.Set<Collection2>()
+            .AsNoTracking()
+            .Where(c => c.EntityId == id)
+            .Include(c => c.Related)
+            .ToListAsync();
+    });
+    
+    var task3 = Task.Run(async () => 
+    {
+        await using var ctx = await _dbContextFactory.CreateDbContextAsync();
+        return await ctx.Set<Collection3>()
+            .AsNoTracking()
+            .Where(c => c.EntityId == id)
+            .ToListAsync();
+    });
+    
+    var task4 = Task.Run(async () => 
+    {
+        await using var ctx = await _dbContextFactory.CreateDbContextAsync();
+        return await ctx.Set<Collection4>()
+            .AsNoTracking()
+            .Where(c => c.EntityId == id)
+            .ToListAsync();
+    });
+    
+    var task5 = Task.Run(async () => 
+    {
+        await using var ctx = await _dbContextFactory.CreateDbContextAsync();
+        return await ctx.Set<Collection5>()
+            .AsNoTracking()
+            .Where(c => c.EntityId == id)
+            .ToListAsync();
+    });
+    
+    // Wait for ALL parallel queries to complete
+    await Task.WhenAll(task1, task2, task3, task4, task5);
+    
+    // Get results (tasks already completed)
+    var collection1 = await task1;
+    var collection2 = await task2;
+    var collection3 = await task3;
+    var collection4 = await task4;
+    var collection5 = await task5;
+    
+    // ==========================================
+    // PARALLEL WAVE 2: Dependent queries (if needed)
+    // Execute queries that depend on Wave 1 results
+    // ==========================================
+    var ids1 = collection1.Select(c => c.Id).ToList();
+    var ids2 = collection2.Select(c => c.Id).ToList();
+    
+    if (ids1.Any() || ids2.Any())
+    {
+        var dependentTask1 = ids1.Any() ? Task.Run(async () => 
+        {
+            await using var ctx = await _dbContextFactory.CreateDbContextAsync();
+            return await ctx.Set<DependentCollection1>()
+                .AsNoTracking()
+                .Where(d => ids1.Contains(d.ParentId))
+                .ToListAsync();
+        }) : Task.FromResult(new List<DependentCollection1>());
+        
+        var dependentTask2 = ids2.Any() ? Task.Run(async () => 
+        {
+            await using var ctx = await _dbContextFactory.CreateDbContextAsync();
+            return await ctx.Set<DependentCollection2>()
+                .AsNoTracking()
+                .Where(d => ids2.Contains(d.ParentId))
+                .ToListAsync();
+        }) : Task.FromResult(new List<DependentCollection2>());
+        
+        await Task.WhenAll(dependentTask1, dependentTask2);
+        
+        var dependent1 = await dependentTask1;
+        var dependent2 = await dependentTask2;
+        
+        // Assign dependent collections...
+    }
+    
+    // Assign collections to entity
+    entity.Collection1 = collection1;
+    entity.Collection2 = collection2;
+    entity.Collection3 = collection3;
+    entity.Collection4 = collection4;
+    entity.Collection5 = collection5;
+    
+    return MapToModel(entity);
+}
+```
+
+### Critical Rules for Parallel Execution
+
+1. **✅ DO:**
+   - Use `Task.Run()` to ensure tasks execute on thread pool
+   - Create separate DbContext for each parallel task using factory
+   - Use `await using` for automatic DbContext disposal
+   - Always add `.AsNoTracking()` to queries
+   - Group independent queries in Wave 1, dependent queries in Wave 2
+   - Use `Task.WhenAll()` to wait for all parallel tasks
+
+2. **❌ DON'T:**
+   - Share DbContext across parallel tasks (NOT thread-safe!)
+   - Parallelize queries that depend on each other
+   - Forget to dispose DbContext (memory leak!)
+   - Use parallel execution if only 2-3 simple queries
+   - Parallelize the main entity query (it must run first)
+
+### When to Use Parallel Execution
+
+**✅ Good Candidates:**
+- 5+ independent queries
+- Each query takes 1+ seconds
+- Queries don't depend on each other's results
+- System has available CPU/database capacity
+
+**❌ Poor Candidates:**
+- Only 2-3 simple queries
+- Queries are very fast (<100ms each)
+- Queries have complex dependencies
+- Limited database connection pool
+- Sequential execution time is already acceptable
+
+---
+
+## Complete Optimization Workflow
+
+### Step 1: Analyze Current Implementation
+
+**Questions to Ask:**
+1. How many `Include()` statements are in the main query?
+2. Are there queries inside loops?
+3. Is change tracking needed for this operation?
+4. Are there multiple independent queries that could run in parallel?
+5. What is the current execution time?
+
+### Step 2: Apply Optimizations in Priority Order
+
+**Priority 1: Split Queries + AsNoTracking** (if 5+ includes)
+- Identify Cartesian products
+- Split into main entity + collection queries
+- Add `.AsNoTracking()` to all
+
+**Priority 2: Add AsNoTracking** (if not already done)
+- Add to all read-only queries
+- Verify no updates occur after loading
+
+**Priority 3: Batch Queries** (if queries in loops)
+- Identify N+1 patterns
+- Replace loops with batch queries
+- Group results for in-memory processing
+
+**Priority 4: Parallelize** (if 5+ independent queries)
+- Verify DbContextFactory is available
+- Group independent queries
+- Implement parallel execution pattern
+
+### Step 3: Test and Measure
+
+**Before Optimization:**
+```csharp
+var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+var result = await YourMethodAsync(id);
+stopwatch.Stop();
+Console.WriteLine($"Execution time: {stopwatch.ElapsedMilliseconds}ms");
+```
+
+**After Optimization:**
+- Measure again with same data
+- Compare execution times
+- Monitor memory usage
+- Check database query logs
+
+**Expected Improvements:**
+- Priority 1: 60-80% faster
+- Priority 1 + 2: 65-85% faster
+- Priority 1 + 2 + 3: 75-90% faster
+- Priority 1 + 2 + 3 + 4: 80-95% faster
+
+---
+
+## Real-World Example Summary
+
+**Case Study: `GetOpportunityDetailsForAIAsync`**
+
+**Before Optimization:**
+- 1 massive query with 22 `Include()` statements
+- Cartesian product: 10 × 5 × 20 × 15 × 8 × 10 = 1,200,000+ rows
+- N+1 query loop for partner agreements (5+ extra queries)
+- Change tracking enabled on all queries
+- **Execution time: 310+ seconds**
+
+**After All Optimizations:**
+- 10 separate queries for collections (no Cartesian product)
+- All queries use `.AsNoTracking()`
+- Partner agreements batch query (eliminated N+1)
+- 10 queries execute in parallel using DbContextFactory
+- **Execution time: 32-63 seconds**
+- **Improvement: 80-90% faster!**
+
+---
+
+## Common Pitfalls to Avoid
+
+### ❌ Pitfall 1: Forgetting AsNoTracking on New Queries
+```csharp
+// ❌ WRONG - Added query but forgot AsNoTracking
+var newCollection = await context.Set<Entity>()
+    .Where(e => e.ParentId == id)
+    .ToListAsync();
+
+// ✅ CORRECT - Always add AsNoTracking for read-only
+var newCollection = await context.Set<Entity>()
+    .AsNoTracking()
+    .Where(e => e.ParentId == id)
+    .ToListAsync();
+```
+
+### ❌ Pitfall 2: Sharing DbContext in Parallel Tasks
+```csharp
+// ❌ WRONG - Sharing context (NOT thread-safe!)
+var task1 = Task.Run(() => context.Set<Entity1>()...ToListAsync());
+var task2 = Task.Run(() => context.Set<Entity2>()...ToListAsync());
+await Task.WhenAll(task1, task2); // ❌ Can cause corruption!
+
+// ✅ CORRECT - Separate context per task
+var task1 = Task.Run(async () => {
+    await using var ctx = await _dbContextFactory.CreateDbContextAsync();
+    return await ctx.Set<Entity1>()...ToListAsync();
+});
+var task2 = Task.Run(async () => {
+    await using var ctx = await _dbContextFactory.CreateDbContextAsync();
+    return await ctx.Set<Entity2>()...ToListAsync();
+});
+await Task.WhenAll(task1, task2); // ✅ Thread-safe
+```
+
+### ❌ Pitfall 3: Not Disposing DbContext in Parallel Tasks
+```csharp
+// ❌ WRONG - Forgot to dispose (memory leak!)
+var task1 = Task.Run(async () => {
+    var ctx = await _dbContextFactory.CreateDbContextAsync();
+    return await ctx.Set<Entity>()...ToListAsync();
+    // ❌ Context never disposed!
+});
+
+// ✅ CORRECT - Auto-dispose with await using
+var task1 = Task.Run(async () => {
+    await using var ctx = await _dbContextFactory.CreateDbContextAsync();
+    return await ctx.Set<Entity>()...ToListAsync();
+}); // ✅ Context disposed automatically
+```
+
+### ❌ Pitfall 4: Parallelizing Dependent Queries
+```csharp
+// ❌ WRONG - Task2 depends on Task1's result
+var task1 = Task.Run(async () => { /* Load parents */ });
+var task2 = Task.Run(async () => { /* Load children using parent IDs */ });
+await Task.WhenAll(task1, task2); // ❌ Task2 will fail!
+
+// ✅ CORRECT - Execute in waves
+// Wave 1: Load parents
+var parents = await LoadParentsAsync();
+var parentIds = parents.Select(p => p.Id).ToList();
+
+// Wave 2: Load children (depends on Wave 1)
+var children = await LoadChildrenAsync(parentIds);
+```
+
+---
+
+## Checklist: Before and After Optimization
+
+### Before Starting Optimization
+- [ ] Measure current execution time with realistic data
+- [ ] Identify all `Include()` statements in queries
+- [ ] Check for queries inside loops (N+1 patterns)
+- [ ] Verify if change tracking is needed
+- [ ] Review database query logs
+- [ ] Document current memory usage
+
+### During Optimization
+- [ ] Split queries with 5+ includes into separate queries
+- [ ] Add `.AsNoTracking()` to all read-only queries
+- [ ] Replace query loops with batch queries using `.Contains()`
+- [ ] Add DbContextFactory to constructor (if using parallel execution)
+- [ ] Implement parallel execution for 5+ independent queries
+- [ ] Use `await using` for DbContext disposal in parallel tasks
+
+### After Optimization
+- [ ] Measure new execution time with same data
+- [ ] Verify all data is still loaded correctly
+- [ ] Check for any compilation errors
+- [ ] Review database query logs (should see fewer, better queries)
+- [ ] Test with various data sizes
+- [ ] Monitor memory usage (should be lower)
+- [ ] Document performance improvement percentage
+
+### Code Review Checklist
+- [ ] All read-only queries have `.AsNoTracking()`
+- [ ] No queries inside loops (N+1 eliminated)
+- [ ] Collections loaded independently (no Cartesian products)
+- [ ] Parallel tasks each create their own DbContext
+- [ ] All DbContexts properly disposed with `await using`
+- [ ] Main entity query runs first (not parallelized)
+- [ ] Dependent queries run after their dependencies
+
+---
+
+## Performance Targets
+
+### Good Performance Indicators
+✅ **Query execution time**: < 2 seconds for complex operations  
+✅ **Memory usage**: Stable, no exponential growth  
+✅ **Database queries**: 5-20 queries instead of 50-100+  
+✅ **No Cartesian products**: Result set size proportional to data  
+✅ **No N+1 patterns**: Query count doesn't scale with collection size  
+
+### When to Optimize Further
+🔴 **Execution time**: > 10 seconds  
+🔴 **Memory spikes**: > 500MB for single operation  
+🔴 **Query count**: > 50 queries  
+🔴 **Cartesian explosion**: Result rows >> actual entities  
+
+---
+
+## Additional Resources
+
+### Monitoring and Diagnostics
+
+**Enable EF Core Query Logging:**
+```csharp
+// In Startup.cs
+services.AddDbContext<YourDbContext>(options =>
+{
+    options.UseNpgsql(connectionString)
+        .EnableSensitiveDataLogging() // Shows parameter values
+        .LogTo(Console.WriteLine, LogLevel.Information); // Logs queries
+});
+```
+
+**SQL Profiling:**
+- Use database query logs to see actual SQL generated
+- Look for repeated similar queries (N+1 pattern)
+- Check for large result sets (Cartesian products)
+- Monitor query execution times
+
+### Testing Performance
+
+**Load Testing Pattern:**
+```csharp
+[Fact]
+public async Task PerformanceTest_OptimizedMethod_ExecutesWithin5Seconds()
+{
+    // Arrange
+    var entityId = 123; // Use entity with realistic amount of data
+    var maxAllowedTime = TimeSpan.FromSeconds(5);
+    
+    // Act
+    var stopwatch = Stopwatch.StartNew();
+    var result = await manager.GetOptimizedMethodAsync(entityId);
+    stopwatch.Stop();
+    
+    // Assert
+    Assert.NotNull(result);
+    Assert.True(stopwatch.Elapsed < maxAllowedTime, 
+        $"Method took {stopwatch.Elapsed.TotalSeconds}s, expected < {maxAllowedTime.TotalSeconds}s");
+}
+```
+
+---
+
+## Summary
+
+**Key Takeaways:**
+1. **Split queries** to eliminate Cartesian products (biggest impact)
+2. **Always use `.AsNoTracking()`** for read-only operations
+3. **Batch queries** to eliminate N+1 problems
+4. **Parallelize** independent queries for maximum throughput
+5. **Measure before and after** to validate improvements
+6. **Use DbContextFactory** for thread-safe parallel execution
+
+**Expected Results:**
+- **80-90% faster** execution times with all optimizations
+- **Significantly lower** memory usage
+- **Better database** resource utilization
+- **More scalable** code that handles larger datasets
+
+**Remember:**
+> "Premature optimization is the root of all evil, but measured optimization based on profiling is the path to performance enlightenment."
+
+Apply these patterns when performance matters, measure the impact, and iterate as needed.
+
+---
+
+*Based on real-world optimization of `GetOpportunityDetailsForAIAsync` in UNOPS Opportunity+ System*  
+*Performance improvement: From 310+ seconds to 32-63 seconds (80-90% faster)*

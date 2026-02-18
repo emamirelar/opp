@@ -13,7 +13,6 @@ using UNOPS.PAO.Business.Tests.TestBase;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
-using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.Business.Tests.Managers
 {
@@ -38,8 +37,9 @@ namespace UNOPS.PAO.Business.Tests.Managers
         private void SeedTestData()
         {
             // Create partners first
-            var partner = new UNOPSPartner
+            var partner = new Partner
             {
+                Id = 1,
                 Name = "Test Partner",
                 CreatedBy = 1,
                 LastModifiedBy = 1,
@@ -50,14 +50,15 @@ namespace UNOPS.PAO.Business.Tests.Managers
             _context.SaveChanges();
 
             // Create contacts
-            var contact = new UNOPSContact
+            var contact = new Contact
             {
+                Id = 1,
                 Name = "Test Contact",  // Base class property
                 FirstName = "Test",
                 LastName = "Contact",
                 Title = "Manager",
                 Email = "test@example.com",
-                PartnerId = partner.Id,
+                PartnerId = 1,
                 CreatedBy = 1,
                 LastModifiedBy = 1,
                 CreatedDate = DateTime.UtcNow,
@@ -67,8 +68,9 @@ namespace UNOPS.PAO.Business.Tests.Managers
             _context.SaveChanges();
 
             // Create interactions
-            var interactions = Enumerable.Range(1, 25).Select(i => new UNOPSInteraction
+            var interactions = Enumerable.Range(1, 25).Select(i => new Interaction
             {
+                Id = i,
                 Name = $"Interaction {i}",
                 Subject = $"Subject for interaction {i}",
                 Type = InteractionType.InPersonMeeting,
@@ -88,7 +90,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         [Fact]
         public async Task TC_IM_F001_CreateInteraction_ValidData_Succeeds()
         {
-            var interaction = new UNOPSInteraction
+            var interaction = new Interaction
             {
                 Name = "New Interaction",
                 Subject = "New Subject",
@@ -108,7 +110,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         [Fact]
         public async Task TC_IM_F002_CreateInteraction_MeetingType_Succeeds()
         {
-            var interaction = new UNOPSInteraction
+            var interaction = new Interaction
             {
                 Name = "Meeting Interaction",
                 Subject = "Meeting Subject",
@@ -127,7 +129,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         [Fact]
         public async Task TC_IM_F003_CreateInteraction_EmailType_Succeeds()
         {
-            var interaction = new UNOPSInteraction
+            var interaction = new Interaction
             {
                 Name = "Email Interaction",
                 Subject = "Email Subject",
@@ -187,7 +189,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         [Fact]
         public async Task TC_IM_F028_GetInteractionById_Exists_ReturnsInteraction()
         {
-            var interaction = await _context.Interactions.FirstOrDefaultAsync(i => i.Name == "Interaction 1");
+            var interaction = await _context.Interactions.FirstOrDefaultAsync(i => i.Id == 1);
             Assert.NotNull(interaction);
             Assert.Equal("Interaction 1", interaction.Name);
         }

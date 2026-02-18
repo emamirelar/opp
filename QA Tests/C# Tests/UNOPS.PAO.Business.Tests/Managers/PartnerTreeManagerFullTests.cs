@@ -12,7 +12,6 @@ using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Business.Tests.TestBase;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
-using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.Business.Tests.Managers
 {
@@ -24,7 +23,6 @@ namespace UNOPS.PAO.Business.Tests.Managers
     public class PartnerTreeManagerFullTests : ManagerTestBase
     {
         private readonly AppDbContext _context;
-        private Partner[] _seededPartners = Array.Empty<Partner>();
 
         public PartnerTreeManagerFullTests()
         {
@@ -40,20 +38,19 @@ namespace UNOPS.PAO.Business.Tests.Managers
             // NOTE: Partner hierarchy has changed - ParentPartnerId no longer exists
             // Partner grouping is now managed through PartnerGroupId (FK to PartnerTree)
             // These tests need to be redesigned to match the new architecture
-            // PostgreSQL uses IDENTITY auto-generation - no hardcoded Ids
-
+            
+            // Create partner hierarchy - simplified without ParentPartnerId
             var partners = new[]
             {
-                new UNOPSPartner { Name = "Global Corp", CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new UNOPSPartner { Name = "Regional Corp A", CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new UNOPSPartner { Name = "Regional Corp B", CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new UNOPSPartner { Name = "Local Corp A1", CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new UNOPSPartner { Name = "Local Corp A2", CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new UNOPSPartner { Name = "Local Corp B1", CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow }
+                new Partner { Id = 1, Name = "Global Corp", CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new Partner { Id = 2, Name = "Regional Corp A", CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new Partner { Id = 3, Name = "Regional Corp B", CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new Partner { Id = 4, Name = "Local Corp A1", CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new Partner { Id = 5, Name = "Local Corp A2", CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new Partner { Id = 6, Name = "Local Corp B1", CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow }
             };
             _context.Partners.AddRange(partners);
             _context.SaveChanges();
-            _seededPartners = partners;
         }
 
         #region Tree Navigation Tests (TC-PT-F001 to TC-PT-F020)
@@ -81,7 +78,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         public async Task TC_PT_F003_GetParent_ReturnsParent()
         {
             // NOTE: Partner hierarchy redesign needed - check PartnerGroupId instead
-            var partner = await _context.Partners.FirstAsync(p => p.Name == "Local Corp A1");
+            var partner = await _context.Partners.FirstAsync(p => p.Id == 4);
             Assert.NotNull(partner);
             // PartnerGroupId could be checked here if test data includes PartnerTree
         }
@@ -119,12 +116,11 @@ namespace UNOPS.PAO.Business.Tests.Managers
         public async Task TC_PT_F021_SetParent_ValidParent_Succeeds()
         {
             // NOTE: Partner hierarchy redesign needed - use PartnerGroupId
-            var localCorpB1 = _seededPartners.First(p => p.Name == "Local Corp B1");
-            var partner = await _context.Partners.FirstAsync(p => p.Id == localCorpB1.Id);
+            var partner = await _context.Partners.FirstAsync(p => p.Id == 6);
             partner.LastModifiedDate = DateTime.UtcNow;
             // Could set PartnerGroupId here if PartnerTree data exists
             await _context.SaveChangesAsync();
-            var updated = await _context.Partners.FindAsync(localCorpB1.Id);
+            var updated = await _context.Partners.FindAsync(6);
             Assert.NotNull(updated);
         }
 
@@ -132,11 +128,10 @@ namespace UNOPS.PAO.Business.Tests.Managers
         public async Task TC_PT_F022_RemoveParent_MakesRoot_Succeeds()
         {
             // NOTE: Partner hierarchy redesign needed - use PartnerGroupId
-            var localCorpA1 = _seededPartners.First(p => p.Name == "Local Corp A1");
-            var partner = await _context.Partners.FirstAsync(p => p.Id == localCorpA1.Id);
+            var partner = await _context.Partners.FirstAsync(p => p.Id == 4);
             partner.PartnerGroupId = null; // Remove from group
             await _context.SaveChangesAsync();
-            var updated = await _context.Partners.FindAsync(localCorpA1.Id);
+            var updated = await _context.Partners.FindAsync(4);
             Assert.Null(updated!.PartnerGroupId);
         }
 

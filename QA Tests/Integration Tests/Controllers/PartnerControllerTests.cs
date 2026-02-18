@@ -75,8 +75,7 @@ public class PartnerControllerTests : IntegrationTestBase
         {
             new Contact 
             { 
-                Id = 1,
-                Name = "John Smith", // Required by ModifiableDeletableEntity
+                Id = 1, 
                 FirstName = "John", 
                 LastName = "Smith", 
                 Title = "Manager",
@@ -87,8 +86,7 @@ public class PartnerControllerTests : IntegrationTestBase
             },
             new Contact 
             { 
-                Id = 2,
-                Name = "Jane Doe", // Required by ModifiableDeletableEntity
+                Id = 2, 
                 FirstName = "Jane", 
                 LastName = "Doe",
                 Title = "Director", 
@@ -99,8 +97,7 @@ public class PartnerControllerTests : IntegrationTestBase
             },
             new Contact 
             { 
-                Id = 3,
-                Name = "Bob Johnson", // Required by ModifiableDeletableEntity
+                Id = 3, 
                 FirstName = "Bob", 
                 LastName = "Johnson",
                 Title = "Coordinator", 

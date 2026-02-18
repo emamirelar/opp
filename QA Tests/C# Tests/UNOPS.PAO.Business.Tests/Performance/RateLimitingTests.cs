@@ -272,11 +272,7 @@ namespace UNOPS.PAO.Business.Tests.Performance
 
         public void Dispose()
         {
-            if (TestEnvironment.UseInMemory)
-            {
-                try { _context.Database.EnsureDeleted(); }
-                catch { /* SQLite connection may already be closed during concurrent test runs */ }
-            }
+            _context.Database.EnsureDeleted();
             _context.Dispose();
         }
     }

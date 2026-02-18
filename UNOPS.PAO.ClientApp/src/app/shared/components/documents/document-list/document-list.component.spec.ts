@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { createMockTranslateService, createMockDialogService, createMockMarkdownService } from '@shared/testing/test-utilities';
 import { of } from 'rxjs';
 import { DocumentListComponent } from './document-list.component';
 import { FeedbackDialogService } from '@shared/services/ui/feedback-dialog.service';
@@ -18,7 +17,8 @@ describe('DocumentListComponent', () => {
       onTranslationChange: of({ lang: 'en', translations: {} }),
       onDefaultLangChange: of({ lang: 'en', translations: {} })
     });
-        mockTranslateService.get.and.returnValue(of('Translated text'));
+    mockTranslateService.instant.and.returnValue('Translated text');
+    mockTranslateService.get.and.returnValue(of('Translated text'));
 
     await TestBed.configureTestingModule({
       imports: [

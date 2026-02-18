@@ -8,14 +8,13 @@
     <div [class]="responsiveLayoutClasses().leftColumn">
       <p-panel class="{{infoLoading() ? 'opacity-50' : ''}} unops-card unops-surface-elevated unops-rounded-lg unops-shadow-lg">
         <ng-template pTemplate="header">
-          <div data-testid="contact-detail-header" class="flex justify-between items-center w-full">
+          <div class="flex justify-between items-center w-full">
             <div class="flex items-center gap-2">
-              <span data-testid="contact-title" class="unops-text-headline-medium">{{ 'label.contact.information' | translate }}</span>
+              <span class="unops-text-headline-medium">{{ 'label.contact.information' | translate }}</span>
             </div>
             <div class="flex items-center gap-2">
               @if (recordPermissions().permissions.canUpdate) {
-                <p-button data-testid="edit-contact-button"
-                          icon="pi pi-pencil"
+                <p-button icon="pi pi-pencil"
                           [rounded]="true"
                           [text]="true"
                           [size]="'small'"
@@ -23,8 +22,7 @@
                           (onClick)="handleEditClick()"></p-button>
               }
               @if (recordPermissions().permissions.canDelete) {
-                <p-button data-testid="delete-contact-button"
-                          icon="pi pi-trash"
+                <p-button icon="pi pi-trash"
                           [rounded]="true"
                           [text]="true"
                           [size]="'small'"
@@ -40,13 +38,12 @@
 
           <!-- Primary Information: Partner -->
           @if(recordData().partner?.name){
-            <div data-testid="contact-partner-section" class="unops-p-lg unops-mb-md unops-rounded-lg" style="background-color: var(--unops-surface-cool); border: 1px solid var(--unops-neutral-200);">
+            <div class="unops-p-lg unops-mb-md unops-rounded-lg" style="background-color: var(--unops-surface-cool); border: 1px solid var(--unops-neutral-200);">
               <div class="unops-text-body-large unops-text-secondary unops-mb-sm">{{ 'fieldLabels.partner' | translate }}</div>
               <div class="flex items-center gap-3">
                 <div class="unops-flex unops-items-center unops-gap-sm">
                   <i class="pi pi-building unops-text-secondary" style="font-size: 1.1rem;"></i>
-                  <a data-testid="contact-partner-link"
-                     [routerLink]="['/partnerships/partners', recordData().partner?.id]"
+                  <a [routerLink]="['/partnerships/partners', recordData().partner?.id]"
                      class="unops-text-title-medium unops-text-secondary hover:unops-text-primary unops-transition cursor-pointer contact-partner-link"
                      style="font-weight: var(--unops-font-weight-bold); text-decoration: none; border-bottom: 2px solid transparent;"
                      onmouseover="this.style.borderBottom='2px solid var(--unops-secondary)'; this.style.transform='translateY(-1px)'"
@@ -60,7 +57,7 @@
 
           <!-- Contact Information Section -->
           @if(recordData().email || recordData().phone || recordData().mobile){
-            <div data-testid="contact-info-section" class="unops-mb-md">
+            <div class="unops-mb-md">
               <div class="unops-text-label-large unops-text-secondary unops-mb-sm unops-flex unops-items-center unops-gap-sm">
                 <i class="pi pi-phone unops-text-info" style="font-size: 1rem;"></i>
                 {{ 'label.contact.information' | translate }}
@@ -68,7 +65,7 @@
               
               <!-- Primary Information: Email -->
               @if(recordData().email) {
-                <div data-testid="contact-email" class="unops-p-md unops-rounded-md unops-mb-sm" style="background-color: var(--unops-neutral-100); border: 1px solid var(--unops-neutral-200);">
+                <div class="unops-p-md unops-rounded-md unops-mb-sm" style="background-color: var(--unops-neutral-100); border: 1px solid var(--unops-neutral-200);">
                   <div class="unops-text-label-large unops-text-muted unops-mb-sm">{{ 'label.contact.email' | translate }}</div>
                   <a [href]="'mailto:' + recordData().email" 
                      class="unops-text-body-large unops-text-secondary hover:unops-text-primary unops-transition cursor-pointer"
@@ -83,13 +80,13 @@
               <!-- Other Contact Information -->
               <div class="unops-flex unops-flex-col unops-gap-sm">
                 @if(recordData().phone){
-                  <div data-testid="contact-phone" class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                  <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
                     <span class="unops-text-label-large unops-text-muted">{{ 'label.contact.phone' | translate }} ({{ 'office' | translate }})</span>
                     <span class="unops-text-body-medium unops-text-secondary">{{recordData().phone}}</span>
                   </div>
                 }
                 @if(recordData().mobile){
-                  <div data-testid="contact-mobile" class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                  <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
                     <span class="unops-text-label-large unops-text-muted">{{ 'label.contact.mobile' | translate }}</span>
                     <span class="unops-text-body-medium unops-text-secondary">{{recordData().mobile}}</span>
                   </div>
@@ -219,7 +216,7 @@
               
               <!-- Primary Information: Status -->
               @if(recordData().status){
-                <div data-testid="contact-status" class="unops-p-md unops-rounded-md unops-mb-md" style="background-color: var(--unops-neutral-100); border: 1px solid var(--unops-neutral-200);">
+                <div class="unops-p-md unops-rounded-md unops-mb-md" style="background-color: var(--unops-neutral-100); border: 1px solid var(--unops-neutral-200);">
                   <div class="unops-text-label-large unops-text-muted unops-mb-sm">{{ 'label.contact.status' | translate }}</div>
                   <div class="unops-text-body-large unops-text-secondary" style="font-weight: var(--unops-font-weight-semibold);">{{recordData().status}}</div>
                 </div>
@@ -284,14 +281,13 @@
 
           <p-divider></p-divider>
 
-          <div data-testid="contact-links-section" class="flex justify-between items-center unops-mb-sm">
+          <div class="flex justify-between items-center unops-mb-sm">
             <div class="unops-text-headline-medium unops-text-secondary unops-flex unops-items-center unops-gap-sm">
               <i class="pi pi-link unops-text-info" style="font-size: 1.1rem;"></i>
               {{ 'title.links' | translate }}
             </div>
             @if (recordPermissions().permissions.canUpdate) {
               <p-button
-                data-testid="add-link-button"
                 icon="pi pi-plus"
                 rounded
                 styleClass="p-button-text"
@@ -311,14 +307,13 @@
 
           <p-divider></p-divider>
 
-          <div data-testid="contact-documents-section" class="flex justify-between items-center unops-mb-md">
+          <div class="flex justify-between items-center unops-mb-md">
             <div class="unops-text-headline-medium unops-text-secondary unops-flex unops-items-center unops-gap-sm">
               <i class="pi pi-file unops-text-success" style="font-size: 1.1rem;"></i>
               {{ 'title.doc' | translate }}
             </div>
             @if (recordPermissions().permissions.canUpdate) {
               <p-button
-                data-testid="upload-document-button"
                 icon="pi pi-google"
                 rounded
                 styleClass="p-button-text"

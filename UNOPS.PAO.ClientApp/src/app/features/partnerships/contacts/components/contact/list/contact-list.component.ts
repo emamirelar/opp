@@ -409,20 +409,14 @@ export class ContactListComponent implements OnInit, OnDestroy {
    * @permissions CONTACT_CREATE, CONTACT_UPDATE
    */
   openContactEditDialog(contactData: Contact = {}) {
-    // QA-008 Diagnostic: Log method entry
-    console.log('[ContactList] openContactEditDialog() called', { contactData });
-    console.log('[ContactList] DialogService available:', !!this.dialogService);
-    
     // Check if user has appropriate permission
     if (contactData.id && !this.permissionUtilityService.canUpdate(this.entityPermissions())) {
-      console.warn('[ContactList] Permission denied for edit - showing error toast');
       this.feedbackDialogService.showErrorToast({
         detail: 'message.noPermissionToEdit',
         summary: 'message.permissionDenied'
       });
       return;
     } else if (!contactData.id && !this.permissionUtilityService.canCreate(this.entityPermissions())) {
-      console.warn('[ContactList] Permission denied for create - showing error toast');
       this.feedbackDialogService.showErrorToast({
         detail: 'message.noPermissionToCreate',
         summary: 'message.permissionDenied'
@@ -430,7 +424,6 @@ export class ContactListComponent implements OnInit, OnDestroy {
       return;
     }
 
-    console.log('[ContactList] Opening dialog with ContactEditDialogComponent');
     const ref = this.dialogService.open(ContactEditDialogComponent, {
       header: contactData.id ? this.translateService.instant('title.editContact') : this.translateService.instant('title.newContact'),
       width: '40vw',
@@ -442,23 +435,12 @@ export class ContactListComponent implements OnInit, OnDestroy {
       }
     });
 
-    console.log('[ContactList] Dialog ref:', ref);
-    console.log('[ContactList] Dialog ref type:', typeof ref);
-    
-    if (!ref) {
-      console.error('[ContactList] ❌ DialogService.open() returned null/undefined!');
-      return;
-    }
-
     const refSub = ref.onClose.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((result) => {
-      console.log('[ContactList] Dialog closed with result:', result);
       if (result) {
         this._handleOnRecordCreation(result);
       }
       refSub.unsubscribe();
     });
-    
-    console.log('[ContactList] Dialog opened, subscription created');
   }
 
   onRowClick(contact: Contact) {
@@ -474,15 +456,8 @@ export class ContactListComponent implements OnInit, OnDestroy {
    * @permissions CONTACT_CREATE
    */
   openBusinessCardScanner() {
-    // QA-007 Diagnostic: Log method entry
-    console.log('[ContactList] openBusinessCardScanner() called');
-    
     // Check if user has create permission
-    const canCreate = this.permissionUtilityService.canCreate(this.entityPermissions());
-    console.log('[ContactList] Permission check - canCreate:', canCreate);
-    
-    if (!canCreate) {
-      console.warn('[ContactList] Permission denied for scanner - showing error toast');
+    if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
         detail: 'message.noPermissionToCreate',
         summary: 'message.permissionDenied'
@@ -490,9 +465,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
       return;
     }
 
-    console.log('[ContactList] Setting showBusinessCardScanner signal to true');
     this.showBusinessCardScanner.set(true);
-    console.log('[ContactList] Signal set - current value:', this.showBusinessCardScanner());
   }
 
   /**

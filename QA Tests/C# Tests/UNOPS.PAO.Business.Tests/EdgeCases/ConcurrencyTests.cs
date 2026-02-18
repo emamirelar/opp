@@ -13,8 +13,6 @@ using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Business.Tests.TestBase;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
-using UNOPS.PAO.UNOPSDataAccess.Context;
-using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.Business.Tests.EdgeCases
 {
@@ -25,26 +23,25 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
     /// </summary>
     public class ConcurrencyTests
     {
-        private readonly DbContextOptions<UNOPSAppDbContext> _options;
-        private int _partnerId;
-        private List<int> _contactIds;
+        private readonly DbContextOptions<AppDbContext> _options;
 
         public ConcurrencyTests()
         {
-            _options = new DbContextOptionsBuilder<UNOPSAppDbContext>()
+            _options = new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(databaseName: $"TestDb_Concurrency_{Guid.NewGuid()}")
                 .Options;
             SeedTestData();
         }
 
-        private AppDbContext CreateContext() => TestDbContextFactory.CreateUNOPS(_options);
+        private AppDbContext CreateContext() => TestDbContextFactory.Create(_options);
 
         private void SeedTestData()
         {
             using var context = CreateContext();
-
-            var partner = new UNOPSPartner
+            
+            var partner = new Partner
             {
+                Id = 1,
                 Name = "Concurrent Test Partner",
                 CreatedBy = 1,
                 LastModifiedBy = 1,
@@ -53,17 +50,16 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
             };
             context.Partners.Add(partner);
             context.SaveChanges();
-            _partnerId = partner.Id;
 
-            var contacts = Enumerable.Range(1, 10).Select(i => new UNOPSContact
+            var contacts = Enumerable.Range(1, 10).Select(i => new Contact
             {
-                ContactNumber = $"CN-{i}",
+                Id = i,
                 Name = $"Contact {i} Last {i}",  // Base class property
                 FirstName = $"Contact {i}",
                 LastName = $"Last {i}",
                 Title = $"Title {i}",
                 Email = $"contact{i}@example.com",
-                PartnerId = _partnerId,
+                PartnerId = 1,
                 CreatedBy = 1,
                 LastModifiedBy = 1,
                 CreatedDate = DateTime.UtcNow,
@@ -71,7 +67,6 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
             }).ToList();
             context.Contacts.AddRange(contacts);
             context.SaveChanges();
-            _contactIds = contacts.Select(c => c.Id).OrderBy(id => id).ToList();
         }
 
         #region Concurrent Read Tests (TC-CC-F001 to TC-CC-F010)
@@ -82,7 +77,7 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
             var tasks = Enumerable.Range(1, 10).Select(async _ =>
             {
                 using var context = CreateContext();
-                var partner = await context.Partners.FirstOrDefaultAsync(p => p.Id == _partnerId);
+                var partner = await context.Partners.FirstOrDefaultAsync(p => p.Id == 1);
                 return partner?.Name;
             });
             
@@ -93,11 +88,10 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
         [Fact]
         public async Task TC_CC_F002_ConcurrentReads_MultipleContacts_Succeeds()
         {
-            var tasks = Enumerable.Range(0, 10).Select(async i =>
+            var tasks = Enumerable.Range(1, 10).Select(async i =>
             {
                 using var context = CreateContext();
-                var id = i < _contactIds.Count ? _contactIds[i] : 0;
-                var contact = id > 0 ? await context.Contacts.FirstOrDefaultAsync(c => c.Id == id) : null;
+                var contact = await context.Contacts.FirstOrDefaultAsync(c => c.Id == i);
                 return contact;
             });
             
@@ -143,15 +137,14 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
             var tasks = Enumerable.Range(1, 5).Select(async i =>
             {
                 using var context = CreateContext();
-                var contact = new UNOPSContact
+                var contact = new Contact
                 {
-                    ContactNumber = $"CN-Concurrent-{i}",
                     Name = $"Concurrent {i} Write {i}",  // Base class property
                     FirstName = $"Concurrent {i}",
                     LastName = $"Write {i}",
                     Title = $"Title {i}",
                     Email = $"concurrent{i}@example.com",
-                    PartnerId = _partnerId,
+                    PartnerId = 1,
                     CreatedBy = 1,
                     LastModifiedBy = 1,
                     CreatedDate = DateTime.UtcNow,
@@ -172,21 +165,21 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
             // First update
             using (var context1 = CreateContext())
             {
-                var partner = await context1.Partners.FirstAsync(p => p.Id == _partnerId);
+                var partner = await context1.Partners.FirstAsync(p => p.Id == 1);
                 partner.Name = "First Update";
                 await context1.SaveChangesAsync();
             }
-
+            
             // Second update
             using (var context2 = CreateContext())
             {
-                var partner = await context2.Partners.FirstAsync(p => p.Id == _partnerId);
+                var partner = await context2.Partners.FirstAsync(p => p.Id == 1);
                 partner.Name = "Second Update";
                 await context2.SaveChangesAsync();
             }
-
+            
             using var context = CreateContext();
-            var result = await context.Partners.FirstAsync(p => p.Id == _partnerId);
+            var result = await context.Partners.FirstAsync(p => p.Id == 1);
             Assert.Equal("Second Update", result.Name);
         }
 
@@ -214,15 +207,15 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
             var writeTask = Task.Run(async () =>
             {
                 using var context = CreateContext();
-                var partner = await context.Partners.FirstAsync(p => p.Id == _partnerId);
+                var partner = await context.Partners.FirstAsync(p => p.Id == 1);
                 partner.Name = "Updated During Read";
                 await context.SaveChangesAsync();
             });
-
+            
             var readTasks = Enumerable.Range(1, 5).Select(async _ =>
             {
                 using var context = CreateContext();
-                return await context.Partners.FirstOrDefaultAsync(p => p.Id == _partnerId);
+                return await context.Partners.FirstOrDefaultAsync(p => p.Id == 1);
             });
             
             await Task.WhenAll(readTasks.Append(writeTask));

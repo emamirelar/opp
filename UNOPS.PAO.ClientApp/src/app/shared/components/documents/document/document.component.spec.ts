@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { createMockTranslateService, createMockDialogService, createMockMarkdownService } from '@shared/testing/test-utilities';
 import { of } from 'rxjs';
 import { DocumentComponent } from './document.component';
 import { DocumentService } from '@shared/services/api/document.service';
@@ -34,7 +33,8 @@ describe('DocumentComponent', () => {
     });
     mockAuthService = jasmine.createSpyObj('AuthService', ['isAuthenticated']);
 
-        mockDocumentService.getDocuments.and.returnValue(of([]));
+    mockTranslateService.instant.and.returnValue('Translated text');
+    mockDocumentService.getDocuments.and.returnValue(of([]));
     mockDocumentService.getDocumentTypesByEntityName.and.returnValue(of({ records: [] }));
     mockTranslateService.get.and.returnValue(of('Translated text'));
 

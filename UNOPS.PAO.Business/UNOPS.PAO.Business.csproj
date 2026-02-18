@@ -25,19 +25,11 @@
     <ProjectReference Include="..\UNOPS.PAO.Models\UNOPS.PAO.Models.csproj" />
     <ProjectReference Include="..\UNOPS.PAO.MailSender\UNOPS.PAO.MailSender.csproj" />
     <ProjectReference Include="..\UNOPS.PAO.GoogleServices\UNOPS.PAO.GoogleServices.csproj" />
-  </ItemGroup>
-
-  <!-- Workflow submodule projects - Only included when submodule is initialized -->
-  <ItemGroup Condition="Exists('..\UNOPS.Workflow\UNOPS.Workflow.Business\UNOPS.Workflow.Business.csproj')">
+    <!-- Workflow submodule projects -->
     <ProjectReference Include="..\UNOPS.Workflow\UNOPS.Workflow.Business\UNOPS.Workflow.Business.csproj" />
     <ProjectReference Include="..\UNOPS.Workflow\UNOPS.Workflow.DataAccess\UNOPS.Workflow.DataAccess.csproj" />
     <ProjectReference Include="..\UNOPS.Workflow\UNOPS.Workflow.Models\UNOPS.Workflow.Models.csproj" />
     <ProjectReference Include="..\UNOPS.Workflow\UNOPS.Workflow.Domain\UNOPS.Workflow.Domain.csproj" />
-  </ItemGroup>
-
-  <!-- Exclude workflow adapter files when submodule is not available -->
-  <ItemGroup Condition="!Exists('..\UNOPS.Workflow\UNOPS.Workflow.Business\UNOPS.Workflow.Business.csproj')">
-    <Compile Remove="Workflow\**\*.cs" />
   </ItemGroup>
 
   <ItemGroup>

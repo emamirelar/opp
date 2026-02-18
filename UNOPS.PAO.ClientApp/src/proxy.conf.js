@@ -4,7 +4,7 @@ const target = env.ASPNETCORE_HTTPS_PORT
   ? `https://localhost:${env.ASPNETCORE_HTTPS_PORT}`
   : env.ASPNETCORE_URLS
     ? env.ASPNETCORE_URLS.split(";")[0]
-    : "http://localhost:5159";  // Changed to match local development backend
+    : "https://localhost:7123";
 
 const PROXY_CONFIG = [
   // {
@@ -20,7 +20,7 @@ const PROXY_CONFIG = [
   // },
   {
     // All other API routes to .NET backend
-    context: ["/user/", "/api/**", "/dev-login"],
+    context: ["/user/", "/api/**"],
     target: target,
     secure: false,
     changeOrigin: true,

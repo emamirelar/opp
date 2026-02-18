@@ -1,38 +1,40 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System.Diagnostics;
-using System.Net;
 using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Threading.Tasks;
-using UNOPS.PAO.Business.Interfaces;
-using UNOPS.PAO.DataAccess.Services;
-using UNOPS.PAO.Domain.Entities;
-using UNOPS.PAO.Domain.Infrastructure;
+using System.Net;
 using UNOPS.PAO.Domain.Specifications;
-using UNOPS.PAO.Domain.Specifications.ContactSpecifications;
-using UNOPS.PAO.Models.AI;
-using UNOPS.PAO.Models.Contacts;
-using UNOPS.PAO.Models.Search;
-using UNOPS.PAO.Models.Shared;
-using UNOPS.PAO.Presentation;
-using UNOPS.PAO.Presentation.Controllers.Shared;
 using UNOPS.PAO.Presentation.Helpers;
-using UNOPS.PAO.Presentation.Security;
+using UNOPS.PAO.Domain.Specifications.ContactSpecifications;
+using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSBusiness.Attributes;
+using UNOPS.PAO.UNOPSBusiness.Specifications;
+using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Managers;
-using UNOPS.PAO.UNOPSBusiness.Services;
-using UNOPS.PAO.UNOPSBusiness.Specifications;
 using UNOPS.PAO.UNOPSDomain.Entities;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Text.Json;
 using static UNOPS.PAO.UNOPSBusiness.Services.AdvancedSearchService;
+using UNOPS.PAO.Models.Shared;
 
 namespace UNOPS.PAO.Presentation.Controllers.Contacts;
+
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using UNOPS.PAO.Business.Interfaces;
+using UNOPS.PAO.DataAccess.Services;
+using UNOPS.PAO.Presentation.Security;
+using System.Text.Json.Nodes;
+using System.Diagnostics;
+using Microsoft.Extensions.Logging;
+using UNOPS.PAO.Domain.Infrastructure;
+using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Presentation;
+using UNOPS.PAO.Models.Contacts;
+using UNOPS.PAO.Models.Search;
+using UNOPS.PAO.Models.AI;
+using UNOPS.PAO.Presentation.Controllers.Shared;
 
 [Route("/")]
 [Authorize(AuthenticationSchemes = "IAP")]

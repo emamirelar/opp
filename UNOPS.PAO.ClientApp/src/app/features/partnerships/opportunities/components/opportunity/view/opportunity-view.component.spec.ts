@@ -9,7 +9,6 @@ import { Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { createMockTranslateService, createMockDialogService, createMockMarkdownService } from '@shared/testing/test-utilities';
 import { of, throwError } from 'rxjs';
 import { signal } from '@angular/core';
 
@@ -338,12 +337,12 @@ describe('OpportunityViewComponent - Workflow Integration', () => {
 
   describe('Workflow Component ViewChild', () => {
     it('should have stageWorkflowComponent ViewChild reference available after view init', () => {
-      // Create a mock StageWorkflowComponent (using InputSignal-compatible spies for Angular 19)
+      // Create a mock StageWorkflowComponent
       const mockWorkflowComponent = {
-        entityName: jasmine.createSpy('entityName').and.returnValue('opportunity'),
-        entityId: jasmine.createSpy('entityId').and.returnValue('123'),
-        canChangeStage: jasmine.createSpy('canChangeStage').and.returnValue(true),
-      } as unknown as StageWorkflowComponent;
+        entityName: 'opportunity',
+        entityId: '123',
+        canChangeStage: true,
+      } as Partial<StageWorkflowComponent>;
 
       // Simulate ViewChild being set
       component.stageWorkflowComponent = mockWorkflowComponent as StageWorkflowComponent;
