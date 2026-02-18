@@ -50,7 +50,7 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
             // ============================================
 
             // 1. Opportunity Name
-            new StageRequirement
+            new PaoStageRequirement
             {
                 Name = "name",
                 Description = "message.requirements.opportunity.nameRequired",
@@ -60,7 +60,7 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
             },
 
             // 2. Description
-            new StageRequirement
+            new PaoStageRequirement
             {
                 Name = "description",
                 Description = "message.requirements.opportunity.descriptionRequired",
@@ -70,7 +70,7 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
             },
 
             // 3. Proposed Budget (Initiative Budget USD)
-            new StageRequirement
+            new PaoStageRequirement
             {
                 Name = "initiativeBudgetUSD",
                 Description = "message.requirements.opportunity.budgetRequired",
@@ -84,7 +84,7 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
             // ============================================
 
             // 4. Products & Services (Deliverables)
-            new StageRequirement
+            new PaoStageRequirement
             {
                 Name = "deliverables",
                 Description = "message.requirements.opportunity.productsRequired",
@@ -98,7 +98,7 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
             // ============================================
 
             // 5. Context & Challenges
-            new StageRequirement
+            new PaoStageRequirement
             {
                 Name = "challenges",
                 Description = "message.requirements.opportunity.challengesRequired",
@@ -108,7 +108,7 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
             },
 
             // 6. Expected Impact
-            new StageRequirement
+            new PaoStageRequirement
             {
                 Name = "expectedImpact",
                 Description = "message.requirements.opportunity.impactRequired",
@@ -118,7 +118,7 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
             },
 
             // 7. Expected Outcomes
-            new StageRequirement
+            new PaoStageRequirement
             {
                 Name = "expectedOutcomes",
                 Description = "message.requirements.opportunity.outcomesRequired",
@@ -129,7 +129,7 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
 
             // 8. Beneficiaries (Conditional validation)
             // Either BeneficiariesToBeDetermined == true OR (EstimatedDirectBeneficiaries > 0 AND EstimatedIndirectBeneficiaries >= 0)
-            new StageRequirement
+            new PaoStageRequirement
             {
                 Name = "beneficiaries",
                 Description = "message.requirements.opportunity.beneficiariesRequired",
@@ -144,7 +144,7 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
             },
 
             // 9. SDG Alignment
-            new StageRequirement
+            new PaoStageRequirement
             {
                 Name = "sdgs",
                 Description = "message.requirements.opportunity.sdgRequired",
@@ -155,15 +155,15 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
 
             // 10. Strategic Missions (UNOPS Missions)
             // Required: At least one mission selected, UNLESS "Not Applicable" flag is checked
-            new StageRequirement
+            new PaoStageRequirement
             {
                 Name = "unopsMissions",
                 Description = "message.requirements.opportunity.missionsRequired",
                 FieldName = "unopsMissions",
                 FieldType = FieldTypes.Array,
-                Validation = new RequirementValidation 
-                { 
-                    Required = true, 
+                Validation = new RequirementValidation
+                {
+                    Required = true,
                     MinLength = 1,
                     // Only require missions when "Not Applicable" is false
                     Conditional = new ConditionalValidation
@@ -179,7 +179,7 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
             // ============================================
 
             // 11. Funding Partners
-            new StageRequirement
+            new PaoStageRequirement
             {
                 Name = "fundingPartners",
                 Description = "message.requirements.opportunity.fundingPartnerRequired",
@@ -189,7 +189,7 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
             },
 
             // 12. Client Partners
-            new StageRequirement
+            new PaoStageRequirement
             {
                 Name = "clientPartners",
                 Description = "message.requirements.opportunity.clientPartnerRequired",
@@ -203,7 +203,7 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
             // ============================================
 
             // 13. Countries of Implementation
-            new StageRequirement
+            new PaoStageRequirement
             {
                 Name = "countries",
                 Description = "message.requirements.opportunity.countriesRequired",
@@ -217,7 +217,7 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
             // ============================================
 
             // 14. Target Signing Date
-            new StageRequirement
+            new PaoStageRequirement
             {
                 Name = "targetSigningDate",
                 Description = "message.requirements.opportunity.signingDateRequired",
@@ -227,7 +227,7 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
             },
 
             // 15. Implementation Start Date
-            new StageRequirement
+            new PaoStageRequirement
             {
                 Name = "implementationStartDate",
                 Description = "message.requirements.opportunity.startDateRequired",
@@ -237,7 +237,7 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
             },
 
             // 16. Implementation End Date (Target Delivery Date)
-            new StageRequirement
+            new PaoStageRequirement
             {
                 Name = "targetDeliveryDate",
                 Description = "message.requirements.opportunity.endDateRequired",
@@ -251,7 +251,7 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
             // ============================================
 
             // 17. Opportunity Statement
-            new StageRequirement
+            new PaoStageRequirement
             {
                 Name = "opportunityStatementMarkdown",
                 Description = "message.requirements.opportunity.statementRequired",
@@ -266,7 +266,7 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
 
             // 18. Opportunity Manager (Role-based validation)
             // At least one stakeholder with "Opportunity Manager" role
-            new StageRequirement
+            new PaoStageRequirement
             {
                 Name = "opportunityManager",
                 Description = "message.requirements.opportunity.managerRequired",
@@ -281,7 +281,7 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
             },
 
             // 19. Responsible Org Unit
-            new StageRequirement
+            new PaoStageRequirement
             {
                 Name = "responsibleOrgUnitId",
                 Description = "message.requirements.opportunity.orgUnitRequired",
@@ -291,7 +291,7 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
             },
 
             // 20. Proposed Initiative Type
-            new StageRequirement
+            new PaoStageRequirement
             {
                 Name = "proposedInitiativeTypeId",
                 Description = "message.requirements.opportunity.initiativeTypeRequired",
@@ -302,7 +302,7 @@ public class OpportunityStageRequirementsProvider : IStageRequirementsProvider
 
             // 21. DoA Holder (Server-side only validation)
             // Checks if ResponsibleOrgUnit has DoA2 or DoA3 holders assigned; DoA3 used when no DoA2 exists
-            new StageRequirement
+            new PaoStageRequirement
             {
                 Name = "doaHolders",
                 Description = "message.requirements.opportunity.doaHolderRequired",

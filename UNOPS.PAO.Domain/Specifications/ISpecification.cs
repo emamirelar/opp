@@ -32,12 +32,12 @@ public interface ISpecification<T>
     /// <summary>
     /// Expression to order entities by
     /// </summary>
-    Expression<Func<T, object>> OrderBy { get; }
+    Expression<Func<T, object>>? OrderBy { get; }
     
     /// <summary>
     /// Expression to order entities by descending
     /// </summary>
-    Expression<Func<T, object>> OrderByDescending { get; }
+    Expression<Func<T, object>>? OrderByDescending { get; }
     
     /// <summary>
     /// Additional ordering expressions

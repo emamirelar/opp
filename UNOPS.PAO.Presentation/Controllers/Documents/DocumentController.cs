@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -96,7 +96,8 @@ public class DocumentController : BaseController
     /// </example_uses>
     /// <when_to_use>Use this when the user asks to see documents, files, or attachments for a specific partner, contact, or interaction.</when_to_use>
     /// <returns>List of documents with metadata for the specified entity</returns>
-    [HttpGet(APIDictionary.Document + "/{entityName}/{entityId}")]
+    /// <remarks>entityName excludes "download" to avoid route conflict with DocumentController.Download (DEF-021)</remarks>
+    [HttpGet(APIDictionary.Document + "/{entityName:regex(^(?!download$).+)}/{entityId:int}")]
     public async Task<ActionResult> GetAll(string entityName, int entityId)
     {
         return await HandleOperationAsync(() => 
@@ -362,15 +363,12 @@ public class DocumentController : BaseController
     }
 
     /// <summary>
-    /// Downloads document blob content (for backward compatibility with blob storage)
+    /// Downloads document blob content (for backward compatibility with blob storage).
+    /// Marked NonAction: UNOPS override (UNOPSPresentation.DocumentController.Download) provides the active endpoint.
+    /// When both assemblies are loaded, only the UNOPS endpoint is registered to avoid AmbiguousMatchException (DEF-021).
     /// </summary>
     /// <param name="id">Document ID</param>
-    /// <example_uses>
-    /// Download document 123 content
-    /// Get document blob data
-    /// </example_uses>
-    /// <when_to_use>Use this for downloading documents stored as blobs (deprecated)</when_to_use>
-    /// <returns>File content</returns>
+    [NonAction]
     [HttpGet(APIDictionary.DocumentDownload + "/{id}")]
     public async Task<ActionResult> DownloadDocument(int id)
     {
