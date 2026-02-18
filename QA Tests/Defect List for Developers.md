@@ -45,6 +45,8 @@ This document tracks **production code defects** discovered during testing. Thes
 | DEF-018 | 🟠 High | DuplicateDetectionService uses relational APIs incompatible with InMemory | DuplicateDetectionService | 2026-02-16 | Resolved (2026-02-17) |
 | DEF-019 | 🟡 Medium | PAOAuthorizationService doesn't handle DenyAnonymousAuthorizationRequirement | PAOAuthorizationService | 2026-02-16 | Resolved (2026-02-17) |
 | DEF-020 | 🟠 High | Submodule repos inaccessible — .gitmodules references non-existent repos | .gitmodules / CI Infrastructure | 2026-02-17 | Open |
+| DEF-021 | 🟠 High | AmbiguousMatchException — DocumentController route conflict with UNOPS override | DocumentController / UNOPSDocumentController | 2026-02-18 | Open |
+| DEF-022 | 🟠 High | Restricted user can access AI Prompt Management admin page | AIPromptManagement / Authorization | 2026-02-18 | Open |
 
 ---
 
@@ -390,6 +392,119 @@ The `DashboardController` is the landing page controller for all users and expos
 4. Include permission-based testing (different users see different dashboard data)
 
 **Note:** Some dashboard-related tests may exist in the 58 excluded integration test files (DEF-007). Unblocking those files should be attempted first before writing new tests from scratch.
+
+---
+
+### DEF-021: AmbiguousMatchException — DocumentController Route Conflict with UNOPS Override
+
+**Severity:** 🟠 High  
+**Component:** DocumentController (`UNOPS.PAO.Presentation`), UNOPSDocumentController (`UNOPS.PAO.UNOPSPresentation`)  
+**Date Reported:** 2026-02-18  
+**Status:** Open  
+**Priority:** P2 — Breaks all document download endpoints at runtime  
+**Discovered By:** Integration test run (2026-02-18) — 6 tests throwing `AmbiguousMatchException`
+
+**Description:**
+
+When the integration test host loads both the base `UNOPS.PAO.Presentation` assembly and the `UNOPS.PAO.UNOPSPresentation` assembly together, ASP.NET Core routing throws `AmbiguousMatchException` because two controllers register conflicting routes for the document download endpoint:
+
+- `UNOPS.PAO.Presentation.Controllers.Documents.DocumentController.DownloadDocument`
+- `UNOPS.PAO.UNOPSPresentation.Controllers.DocumentController.Download`
+
+Both match the same HTTP verb + route pattern, causing the router to be unable to select a single endpoint.
+
+**Error:**
+```
+Microsoft.AspNetCore.Routing.Matching.AmbiguousMatchException : The request matched multiple endpoints. Matches:
+  UNOPS.PAO.Presentation.Controllers.Documents.DocumentController.DownloadDocument (UNOPS.PAO.Presentation)
+  UNOPS.PAO.UNOPSPresentation.Controllers.DocumentController.Download (UNOPS.PAO.UNOPSPresentation)
+  UNOPS.PAO.Presentation.Controllers.Documents.DocumentController.GetAll (UNOPS.PAO.Presentation)
+  Fallback {*path:nonfile}
+```
+
+**Root Cause:** The UNOPS override `DocumentController.Download` uses the same route as the base `DocumentController.DownloadDocument` without properly overriding or suppressing the base route. When both assemblies are registered in the DI container, ASP.NET Core sees both endpoints and cannot determine which one to use.
+
+**Reproduction Steps:**
+1. Run integration tests that hit the document download endpoint
+2. Observe `AmbiguousMatchException` in `DocumentEdgeCaseTests.GetDocumentDownload_NonExistent_Returns404`
+3. Affected tests: any request to the document download route
+
+**Expected Result:** The UNOPS override controller takes precedence, or the base controller's route is suppressed when the override is registered.
+
+**Actual Result:** `AmbiguousMatchException` — request returns HTTP 500 instead of expected response.
+
+**Proper Fix:**
+- Option A: Apply `[ApiExplorerSettings(IgnoreApi = true)]` to the base `DownloadDocument` action so it is excluded when the override is registered
+- Option B: Give the UNOPS override a distinct route path that does not conflict with the base
+- Option C: Use a route constraint or `[Route]` ordering to ensure the override takes precedence
+- Option D: Ensure the override controller inherits from the base and uses `override` keyword so only one endpoint is registered
+
+**Wrong Fix:** ❌ Suppressing the exception in tests — the production API would return HTTP 500 for all document download requests when both assemblies are loaded.
+
+**Impact:**
+- 6 integration tests fail with `AmbiguousMatchException`
+- Document download endpoint (`/api/document/{id}/download` or similar) returns HTTP 500 in production when UNOPS override is active
+- All users unable to download documents
+
+**Related Tests:** `DocumentEdgeCaseTests.cs` — `GetDocumentDownload_NonExistent_Returns404` and related tests
+
+**Environment:** Integration test host (both assemblies loaded) / Production (UNOPS deployment)  
+**Reporter:** QA Automation (2026-02-18 test run)
+
+---
+
+### DEF-022: Restricted User Can Access AI Prompt Management Admin Page
+
+**Severity:** 🟠 High  
+**Component:** AIPromptManagement (`/admin/ai-prompts` route), Authorization / Route Guards  
+**Date Reported:** 2026-02-18  
+**Status:** Open  
+**Priority:** P2 — Unauthorized access to admin configuration  
+**Discovered By:** Playwright E2E test `ai-assistant.spec.ts` — AI-009 (2026-02-18)
+
+**Description:**
+
+A Restricted User (view-only role) is able to navigate to or access the AI Prompt Management administration page (`/admin/ai-prompts` or equivalent), when this page should be blocked and inaccessible to non-admin roles.
+
+The Playwright test `AI-009: AI prompt management inaccessible to restricted user` authenticates as a Restricted User, navigates to the AI admin prompt page, and asserts that access is blocked (`isBlocked = true`). The assertion fails, meaning the page loads without redirecting or showing an access-denied state.
+
+**Error:**
+```
+Error: expect(received).toBeTruthy()
+Expected: true (isBlocked)
+Received: false
+```
+
+**Root Cause (suspected):** Either:
+- The route guard for the AI Prompt Management page does not check the `Restricted User` role
+- The permission check for this route is missing or evaluating incorrectly
+- The Angular route guard is present but returns `true` for all authenticated users regardless of role
+
+**Reproduction Steps:**
+1. Log in as a Restricted User (view-only role, no admin permissions)
+2. Navigate to the AI Prompt Management admin page (e.g. `/admin/ai-prompts`)
+3. Observe: page loads without access-denied error or redirect
+
+**Expected Result:** Restricted User is redirected to an access-denied page or the route is blocked. The page does not load.
+
+**Actual Result:** The AI Prompt Management page loads successfully for the Restricted User.
+
+**Proper Fix:**
+1. Identify the Angular route guard protecting `/admin/ai-prompts`
+2. Verify the guard checks for the correct admin permission (e.g. `CanManageAIPrompts` or `IsAdministrator`)
+3. Add or fix the server-side permission endpoint to return `canAccess: false` for Restricted Users
+4. Ensure the backend controller also validates permissions (defense in depth — don't rely solely on client-side guards)
+
+**Wrong Fix:** ❌ Only hiding the navigation menu link — the route itself must be guarded.
+
+**Impact:**
+- Restricted Users can view and potentially modify AI prompt configurations
+- AI prompts control system-wide AI assistant behavior — unauthorized modification is a security risk
+- 1 Playwright test failing; likely more tests blocked due to maxFailures limit
+
+**Related Tests:** `ai-assistant.spec.ts:154` — `AI-009: AI prompt management inaccessible to restricted user`  
+**Environment:** Dev (http://localhost:4200 / http://localhost:5159)  
+**Reporter:** QA Automation — Playwright E2E run 2026-02-18
 
 ---
 

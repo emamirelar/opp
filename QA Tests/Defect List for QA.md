@@ -31,7 +31,71 @@ This document tracks test infrastructure issues, test implementation bugs, tempo
 
 ## Open QA Issues
 
-**Status**: ⚠️ 14 open + 3 partial + 4 workaround applied — **2026-02-17 Full Execution Complete:** All 5 test suites executed. C# Business.Tests (PostgreSQL): **3,951 passed, 0 failed, 229 skipped** (100% clean). C# FastTests: **78 passed, 0 failed** (100%). Presentation.Tests: **29 passed, 0 failed** (100%). Integration Tests: **546 passed, 127 failed, 43 skipped** (all failures are test infrastructure). Playwright E2E (chromium): **415 passed, 20 failed, 59 skipped** (all failures are test infrastructure/mock issues). **No new production defects discovered.**
+**Status**: ⚠️ 14 open + 3 partial + 4 workaround applied — **2026-02-18 Full Execution Complete:** All suites executed. C# Business.Tests (PostgreSQL): **3,955 passed, 0 failed, 229 skipped** (100% clean). C# FastTests: **78 passed, 0 failed** (100%). Presentation.Tests: **29 passed, 0 failed** (100%). Integration Tests: **2,081 passed, 1,355 failed, 43 skipped** (infrastructure failures). Playwright E2E (chromium): **618 passed, 23 failed, 109 skipped, 275 did not run** (stopped at maxFailures=20 limit). **2 new production defects discovered: DEF-021 (route conflict), DEF-022 (AI admin permission bypass).**
+
+---
+
+### 2026-02-18 Test Execution Summary
+
+| Suite | Total | Passed | Failed | Skipped | Status |
+|---|---|---|---|---|---|
+| Business Tests (PostgreSQL) | 4,184 | 3,955 | 0 | 229 | ✅ 100% clean |
+| FastTests | 78 | 78 | 0 | 0 | ✅ 100% clean |
+| Presentation Tests | 29 | 29 | 0 | 0 | ✅ 100% clean |
+| Integration Tests | 3,479 | 2,081 | 1,355 | 43 | ❌ Infra failures |
+| Playwright E2E | — | — | — | — | ⏸ App not running |
+
+**Integration Test Failure Breakdown (2026-02-18):**
+
+| Category | Count | Root Cause | Owner |
+|---|---|---|---|
+| Auth 401/403 wrong response | 549 | Test host auth middleware not invoked in unit-style controller tests | QA (QA-062) |
+| 404 Not Found (missing test data) | 332 | In-memory DB has no seeded data for these tests | QA (QA-019) |
+| Expected 200, got other | 223 | Auth / routing issues cascading | QA |
+| Expected BadRequest, got other | 50 | Controller validation differs in test host | QA |
+| OkObjectResult vs ObjectResult | 30 | Type assertion too strict — OkObjectResult is a subclass | QA |
+| HTTP 500 Internal Server Error | 20 | Mix of real failures and test infra | QA / DEV |
+| **Route AmbiguousMatchException** | **6** | **Two controllers register same route** | **DEV (DEF-021)** |
+| Performance timing too tight | 6 | Sub-5ms assertions unreliable in any environment | QA (QA-064) |
+| DoA/Workflow requirements | 5 | Test data not matching seeded workflow state | QA |
+| AutoMapper Duplicate Config | 3 | Both base + UNOPS mapping profiles loaded | QA |
+| Concurrency (second operation started) | 16 | InMemory DbContext not thread-safe | QA (QA-063) |
+| NullReferenceException | 2 | Missing test data / mock setup | QA |
+| Other | ~63 | Various pre-existing infra issues | QA |
+
+**Note:** Test count increased from 1,400 (2026-02-17) to 3,479 (2026-02-18) due to addition of PNO-1166, PNO-1197, and DEF-012 test suites (~2,079 new tests). The majority of new failures apply the same pre-existing infrastructure issues (QA-062 auth, QA-019 InMemory DB) to the newly added test files.
+
+---
+
+### 2026-02-18 Playwright E2E Execution Summary (Chromium only, 4 workers)
+
+| Metric | Count |
+|---|---|
+| **Passed** | 618 ✅ |
+| **Failed** | 23 ❌ |
+| **Skipped** | 109 ⏭ |
+| **Did Not Run** | 275 (maxFailures=20 limit hit) |
+| **Duration** | 23 minutes |
+| **Browser** | Chromium only |
+
+**Playwright Failure Breakdown (2026-02-18):**
+
+| Test | Failure | Category | Owner |
+|---|---|---|---|
+| `login.spec.ts` — 4 login backend tests | TimeoutError: real auth not available in mock mode | QA Infra (pre-existing) | QA |
+| `contact-item.spec.ts` — edit/delete dialog (2) | TimeoutError: PrimeNG DynamicDialog not interceptable | QA Tooling (pre-existing) | QA |
+| `partner-item.spec.ts` — edit dialog, delete dialog, workflow badge, interactions summary (4) | TimeoutError / element not found | QA Tooling (pre-existing) | QA |
+| `opportunity-risk-register.spec.ts` — RR-011, RR-012 (2) | `hasDialog \|\| hasForm` = false; dialog not opening | QA Tooling (pre-existing) | QA |
+| `crm-related-panels.spec.ts` — PTR-038, CON-021c (2) | Status badge not visible (21s timeout) | QA / Possible regression | QA |
+| `base-engagements.spec.ts` — BE-002, BE-009 (2) | Page body insufficient (length ≤ 50) | QA / Missing content | QA |
+| `comments.spec.ts` + `cross-entity-workflows.spec.ts` — COM-006 (2) | Comment input not visible and no empty state shown | QA / UI element | QA |
+| `document-management.spec.ts` — DOC-010 (1) | Upload button not visible on opportunity documents | QA / Missing element | QA |
+| `opportunity-dst.spec.ts` — OPP-053 (1) | Analysis section chip not visible (timeout) | QA / Missing element | QA |
+| `admin-entity-config.spec.ts` — EC-004 (1) | Entity selector dropdown not visible (23s timeout) | QA / Timing | QA |
+| `accessibility.spec.ts` — A11Y-003 (1) | Partner detail buttons have no accessible name (ARIA) | **DEV (potential DEF)** | DEV |
+| `ai-assistant.spec.ts` — AI-009 (1) | Restricted user NOT blocked from AI admin prompt mgmt | **DEV — DEF-022** | DEV |
+
+**Note:** 275 tests did not run because the `maxFailures: 20` config limit was hit. To run the full suite, increase `maxFailures` or run: `npx playwright test --project=chromium --max-failures=0`.
 
 ### Latest RBAC Test Execution (2026-02-07)
 
